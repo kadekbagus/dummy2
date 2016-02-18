@@ -908,99 +908,99 @@ class CampaignReportAPIController extends ControllerAPI
             }
 
             $sql = "
-                    (SELECT
-                        comp_date AS campaign_date,
-                        campaign_id,
-                        campaign_number_tenant AS total_tenant,
-                        tenant_name,
-                        mall_name,
-                        unique_users,
-                        campaign_pages_views,
-                        campaign_pages_view_rate,
-                        popup_views,
-                        popup_view_rate,
-                        popup_clicks,
-                        popup_click_rate,
-                        daily_cost AS spending,
-                        campaign_status
-                    FROM
-                    (
-                        SELECT *,
-                        (
-                            SELECT count(distinct user_id)
-                            FROM {$tablePrefix}user_signin
-                            WHERE location_id = {$this->quote($current_mall)}
-                            AND DATE(created_at) = comp_date
-                        ) AS unique_users,
-                        (
-                            SELECT count(campaign_page_view_id) AS value
-                            FROM {$tablePrefix}campaign_page_views
-                            WHERE campaign_id = campaign_id
-                            AND location_id = {$this->quote($current_mall)}
-                            AND DATE(created_at) = comp_date
-                        ) AS campaign_pages_views,
-                        (
-                            SELECT count(campaign_popup_view_id) AS value
-                            FROM {$tablePrefix}campaign_popup_views
-                            WHERE campaign_id = campaign_id
-                            AND location_id = {$this->quote($current_mall)}
-                            AND DATE(created_at) = comp_date
-                        ) AS popup_views,
-                        (
-                            SELECT count(campaign_click_id) AS value
-                            FROM {$tablePrefix}campaign_clicks
-                            WHERE campaign_id = campaign_id
-                            AND location_id = {$this->quote($current_mall)}
-                            AND DATE(created_at) = comp_date
-                        ) AS popup_clicks,
-                        (
-                            SELECT IFNULL(ROUND((campaign_pages_views / unique_users) * 100, 2), 0)
-                        ) AS campaign_pages_view_rate,
-                        (
-                            SELECT IFNULL (ROUND((popup_views / unique_users) * 100, 2), 0)
-                        ) AS popup_view_rate,
-                        (
-                            SELECT IFNULL (ROUND((popup_clicks / popup_views) * 100, 2), 0)
-                        ) AS popup_click_rate
-
+                        (SELECT
+                            comp_date AS campaign_date,
+                            campaign_id,
+                            campaign_number_tenant AS total_tenant,
+                            tenant_name,
+                            om_mall.name AS mall_name,
+                            unique_users,
+                            campaign_pages_views,
+                            campaign_pages_view_rate,
+                            popup_views,
+                            popup_view_rate,
+                            popup_clicks,
+                            popup_click_rate,
+                            daily_cost AS spending,
+                            campaign_status
                         FROM
-                            ( SELECT * FROM tmp_campaign_cost_detail AS tccd ) AS x
-
-                            -- JOIN to get tenant list per date
-                            LEFT JOIN
+                        (
+                            SELECT *,
                             (
-                                SELECT
-                                    och.campaign_history_action_id,
-                                    och.campaign_external_value,
-                                    om.name as tenant_name,
-                                    DATE_FORMAT(j_on.end_date, '%Y-%m-%d') AS end_date,
-                                    DATE_FORMAT(CONVERT_TZ(och.created_at, '+00:00', {$this->quote($timezoneOffset)}), '%Y-%m-%d') AS history_created_date,
-                                    om_mall.name AS mall_name
+                                SELECT COUNT(DISTINCT user_id)
+                                FROM {$tablePrefix}user_signin
+                                WHERE location_id = {$this->quote($current_mall)}
+                                AND DATE(created_at) = comp_date
+                            ) AS unique_users,
+                            (
+                                SELECT COUNT(campaign_page_view_id) AS value
+                                FROM {$tablePrefix}campaign_page_views
+                                WHERE campaign_id = campaign_id
+                                AND location_id = {$this->quote($current_mall)}
+                                AND DATE(created_at) = comp_date
+                            ) AS campaign_pages_views,
+                            (
+                                SELECT COUNT(campaign_popup_view_id) AS value
+                                FROM {$tablePrefix}campaign_popup_views
+                                WHERE campaign_id = campaign_id
+                                AND location_id = {$this->quote($current_mall)}
+                                AND DATE(created_at) = comp_date
+                            ) AS popup_views,
+                            (
+                                SELECT COUNT(campaign_click_id) AS value
+                                FROM {$tablePrefix}campaign_clicks
+                                WHERE campaign_id = campaign_id
+                                AND location_id = {$this->quote($current_mall)}
+                                AND DATE(created_at) = comp_date
+                            ) AS popup_clicks,
+                            (
+                                SELECT IFNULL(ROUND((campaign_pages_views / unique_users) * 100, 2), 0)
+                            ) AS campaign_pages_view_rate,
+                            (
+                                SELECT IFNULL (ROUND((popup_views / unique_users) * 100, 2), 0)
+                            ) AS popup_view_rate,
+                            (
+                                SELECT IFNULL (ROUND((popup_clicks / popup_views) * 100, 2), 0)
+                            ) AS popup_click_rate
 
-                                FROM {$tablePrefix}campaign_histories och
-                                LEFT JOIN {$tablePrefix}merchants om
-                                ON om.merchant_id = och.campaign_external_value
-                                LEFT JOIN {$tablePrefix}news j_on
-                                ON j_on.news_id = och.campaign_id
-                                LEFT JOIN {$tablePrefix}merchants om_mall
-                                ON mall_id = om_mall.merchant_id
+                            FROM
+                                ( SELECT comp_date, campaign_number_tenant, daily_cost, campaign_status, mall_id  FROM tmp_campaign_cost_detail AS tccd ) AS x
 
-                                WHERE
-                                    och.campaign_history_action_id IN ({$this->quote($idAddTenant)}, {$this->quote($idDeleteTenant)})
-                                    AND och.campaign_type = 'news'
-                                    AND och.campaign_id = 'KewRrVO-zU0wFypB'
-                                ORDER BY och.created_at DESC
-                            ) AS b ON DATE_FORMAT(CONVERT_TZ(b.history_created_date, '+00:00', {$this->quote($timezoneOffset)}), '%Y-%m-%d') <= x.comp_date
-                        group by comp_date, campaign_id, campaign_external_value
-                    ) as c
-                    WHERE (
-                        case when campaign_history_action_id = {$this->quote($idDeleteTenant)}
-                        and DATE_FORMAT(CONVERT_TZ(history_created_date, '+00:00', {$this->quote($timezoneOffset)}), '%Y-%m-%d') < comp_date
-                        then campaign_history_action_id != {$this->quote($idDeleteTenant)} else true end
-                    )
-                    ORDER BY comp_date desc
-                    ) AS tbl
-            ";
+                                -- JOIN to get tenant list per date
+                                LEFT JOIN
+                                (
+                                    SELECT
+                                        och.campaign_id,
+                                        och.campaign_history_action_id,
+                                        och.campaign_external_value,
+                                        om.name as tenant_name,
+                                        DATE_FORMAT(och.created_at, '%Y-%m-%d') AS history_created_date
+                                    FROM
+                                        {$tablePrefix}campaign_histories och
+                                    LEFT JOIN {$tablePrefix}merchants om
+                                    ON om.merchant_id = och.campaign_external_value
+                                    WHERE
+                                        och.campaign_history_action_id IN ({$this->quote($idAddTenant)}, {$this->quote($idDeleteTenant)})
+                                        AND och.campaign_type = {$this->quote($campaign_type)}
+                                        AND och.campaign_id = {$this->quote($campaign_id)}
+                                    ORDER BY och.created_at DESC
+                                ) yy
+                                ON DATE_FORMAT(CONVERT_TZ(history_created_date, '+00:00', {$this->quote($timezoneOffset)}), '%Y-%m-%d') <= comp_date
+
+                                group by comp_date, yy.campaign_id, campaign_external_value
+                            ) as c
+
+                            LEFT JOIN {$tablePrefix}merchants om_mall
+                            ON mall_id = om_mall.merchant_id
+
+                            WHERE (
+                                case when campaign_history_action_id = {$this->quote($idDeleteTenant)}
+                                and DATE_FORMAT(CONVERT_TZ(history_created_date, '+00:00', {$this->quote($timezoneOffset)}), '%Y-%m-%d') < comp_date
+                                then campaign_history_action_id != {$this->quote($idDeleteTenant)} else true end
+                            )
+                            ORDER BY comp_date desc
+                        ) AS tbl
+                    ";
 
             $campaign = DB::table(DB::raw($sql))->where("campaign_status", '=', 'activate');
 
@@ -1339,6 +1339,15 @@ class CampaignReportAPIController extends ControllerAPI
 
             $tablePrefix = DB::getTablePrefix();
 
+            // Get the end_date from campaign
+            if ($campaign_type == 'news' || $campaign_type == 'promotion') {
+                $sqlEndDate = News::select('end_date')->where('news_id', $campaign_id)->get();
+            } elseif ($campaign_type == 'coupon') {
+                $sqlEndDate = Coupon::select('end_date')->where('promotion_id', $campaign_id)->get();
+            }
+
+            $endDate = $sqlEndDate[0]->end_date;
+
             // Builder object
             $linkToTenants = DB::select(DB::raw("
                     SELECT name FROM
@@ -1369,7 +1378,7 @@ class CampaignReportAPIController extends ControllerAPI
                         group by campaign_external_value) as B
                     WHERE (
                         case when action_name = 'delete_tenant'
-                        and DATE_FORMAT(CONVERT_TZ(history_created_date, '+00:00', {$this->quote($timezoneOffset)}), '%Y-%m-%d') < {$this->quote($now)}
+                        and DATE_FORMAT(CONVERT_TZ(history_created_date, '+00:00', {$this->quote($timezoneOffset)}), '%Y-%m-%d') < IF( DATE_FORMAT({$this->quote($now)}, '%Y-%m-%d') < DATE_FORMAT({$this->quote($endDate)}, '%Y-%m-%d'), DATE_FORMAT({$this->quote($now)}, '%Y-%m-%d'), DATE_FORMAT({$this->quote($endDate)}, '%Y-%m-%d') )
                         then action_name != 'delete_tenant' else true end
                     )
                      ORDER by name asc
