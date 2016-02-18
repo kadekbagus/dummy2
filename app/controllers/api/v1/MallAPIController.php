@@ -268,7 +268,11 @@ class MallAPIController extends ControllerAPI
             $newmall->contact_person_email = $contact_person_email;
             $newmall->sector_of_activity = $sector_of_activity;
             $newmall->object_type = $object_type;
-            $newmall->parent_id = $parent_id;
+            if (empty($parent_id)) {
+                $newmall->parent_id = null;
+            } else {
+                $newmall->parent_id = $parent_id;
+            }
             $newmall->url = $url;
             $newmall->masterbox_number = $masterbox_number;
             $newmall->slavebox_number = $slavebox_number;
@@ -1019,8 +1023,8 @@ class MallAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $email = OrbitInput::post('email');
             $merchant_id = OrbitInput::post('merchant_id');
+            $email = OrbitInput::post('email');
             $password = OrbitInput::post('password');
             $country = OrbitInput::post('country');
             $url = OrbitInput::post('url');
@@ -1036,8 +1040,8 @@ class MallAPIController extends ControllerAPI
 
             $validator = Validator::make(
                 array(
-                    'email'                => $email,
                     'merchant_id'          => $merchant_id,
+                    'email'                => $email,
                     'password'             => $password,
                     'country'              => $country,
                     'url'                  => $url,
@@ -1052,8 +1056,8 @@ class MallAPIController extends ControllerAPI
                     'end_date_activity'        => $end_date_activity,
                 ),
                 array(
-                    'email'                => 'email|email_exists_but_me',
                     'merchant_id'          => 'required|orbit.empty.mall',
+                    'email'                => 'email|email_exists_but_me',
                     'password'             => 'min:6',
                     'country'              => 'orbit.empty.country',
                     'url'                  => 'orbit.formaterror.url.web',
@@ -1177,11 +1181,19 @@ class MallAPIController extends ControllerAPI
             });
 
             OrbitInput::post('start_date_activity', function($start_date_activity) use ($updatedmall) {
-                $updatedmall->start_date_activity = $start_date_activity;
+                if (empty(trim($start_date_activity))) {
+                    $updatedmall->start_date_activity = NULL;
+                } else {
+                    $updatedmall->start_date_activity = $start_date_activity;
+                }
             });
 
             OrbitInput::post('end_date_activity', function($end_date_activity) use ($updatedmall) {
-                $updatedmall->end_date_activity = $end_date_activity;
+                if (empty(trim($end_date_activity))) {
+                    $updatedmall->end_date_activity = NULL;
+                } else {
+                    $updatedmall->end_date_activity = $end_date_activity;
+                }
             });
 
             OrbitInput::post('status', function($status) use ($updatedmall) {
@@ -1249,8 +1261,8 @@ class MallAPIController extends ControllerAPI
             });
 
             OrbitInput::post('parent_id', function($parent_id) use ($updatedmall) {
-                if (empty($parent_id)) {
-                    $updatedmall->parent_id = null;
+                if (empty(trim($parent_id))) {
+                    $updatedmall->parent_id = NULL;
                 } else {
                     $updatedmall->parent_id = $parent_id;
                 }

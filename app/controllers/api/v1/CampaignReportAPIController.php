@@ -167,7 +167,7 @@ class CampaignReportAPIController extends ControllerAPI
 
             // Get data all campaign (news, promotions, coupons), and then use union to join all campaign
             $news = DB::table('news')->selectraw(DB::raw("{$tablePrefix}news.news_id AS campaign_id, news_name AS campaign_name, {$tablePrefix}news.object_type AS campaign_type,
-                IFNULL(total_tenant, 0) AS total_tenant,
+                IFNULL(total_tenant, 0) AS total_tenant, tenant_name,
                 merchants2.name AS mall_name, {$tablePrefix}news.begin_date, {$tablePrefix}news.end_date, {$tablePrefix}news.updated_at, {$tablePrefix}campaign_price.base_price,
                 total_tenant * {$tablePrefix}campaign_price.base_price AS daily,
                 total_tenant * {$tablePrefix}campaign_price.base_price * (DATEDIFF( {$tablePrefix}news.end_date, {$tablePrefix}news.begin_date) + 1) AS estimated_total,
@@ -235,14 +235,50 @@ class CampaignReportAPIController extends ControllerAPI
                         // On
                         DB::raw('lf_total_tenant.v_campaign_id'), '=', 'news.news_id')
 
+                        // Join for provide searching by tenant
+                        ->leftJoin(DB::raw("
+                                (
+                                    SELECT campaign_id as t_campaign_id, tenant_name
+                                    FROM
+                                        (
+                                            SELECT * FROM
+                                            (
+                                                SELECT
+                                                    och.campaign_id,
+                                                    och.campaign_history_action_id,
+                                                    och.campaign_external_value,
+                                                    om.name as tenant_name,
+                                                    DATE_FORMAT(j_on.end_date, '%Y-%m-%d') AS end_date,
+                                                    DATE_FORMAT(och.created_at, '%Y-%m-%d %H:00:00') AS history_created_date
+                                                FROM {$tablePrefix}campaign_histories och
+                                                LEFT JOIN {$tablePrefix}merchants om
+                                                ON om.merchant_id = och.campaign_external_value
+                                                LEFT JOIN {$tablePrefix}news j_on
+                                                ON j_on.news_id = och.campaign_id
+                                                WHERE
+                                                    och.campaign_history_action_id IN ({$this->quote($idAddTenant)}, {$this->quote($idDeleteTenant)})
+                                                    AND och.campaign_type = 'news'
+                                                    AND DATE_FORMAT(CONVERT_TZ(och.created_at, '+00:00', {$this->quote($timezoneOffset)}), '%Y-%m-%d') <= IF( DATE_FORMAT(NOW(), '%Y-%m-%d') < end_date, DATE_FORMAT(NOW(), '%Y-%m-%d'), end_date )
+                                                ORDER BY och.created_at DESC
+                                            ) as A
+                                            group by campaign_id, campaign_external_value) as B
+                                            WHERE (
+                                                case when campaign_history_action_id = {$this->quote($idDeleteTenant)}
+                                                and DATE_FORMAT(CONVERT_TZ(history_created_date, '+00:00', {$this->quote($timezoneOffset)}), '%Y-%m-%d') < IF( DATE_FORMAT(NOW(), '%Y-%m-%d') < end_date, DATE_FORMAT(NOW(), '%Y-%m-%d'), end_date )
+                                                then campaign_history_action_id != {$this->quote($idDeleteTenant)} else true end
+                                        )
+                                    ) as tenant
+                            "),
+                        // On
+                        DB::raw('tenant.t_campaign_id'), '=', 'news.news_id')
+
                         ->where('news.mall_id', '=', $current_mall)
                         ->where('campaign_price.campaign_type', '=', 'news')
                         ->where('news.object_type', '=', 'news')
-                        ->groupBy('news.news_id')
                         ;
 
             $promotions = DB::table('news')->selectraw(DB::raw("{$tablePrefix}news.news_id AS campaign_id, news_name AS campaign_name, {$tablePrefix}news.object_type AS campaign_type,
-                IFNULL(total_tenant, 0) AS total_tenant,
+                IFNULL(total_tenant, 0) AS total_tenant, tenant_name,
                 merchants2.name AS mall_name, {$tablePrefix}news.begin_date, {$tablePrefix}news.end_date, {$tablePrefix}news.updated_at, {$tablePrefix}campaign_price.base_price,
                 total_tenant * {$tablePrefix}campaign_price.base_price AS daily,
                 total_tenant * {$tablePrefix}campaign_price.base_price * (DATEDIFF({$tablePrefix}news.end_date, {$tablePrefix}news.begin_date) + 1) AS estimated_total,
@@ -309,15 +345,51 @@ class CampaignReportAPIController extends ControllerAPI
                         // On
                         DB::raw('lf_total_tenant.v_campaign_id'), '=', 'news.news_id')
 
+                        // Join for get tenant percampaign
+                        ->leftJoin(DB::raw("
+                                (
+                                    SELECT campaign_id as t_campaign_id, tenant_name
+                                    FROM
+                                        (
+                                            SELECT * FROM
+                                            (
+                                                SELECT
+                                                    och.campaign_id,
+                                                    och.campaign_history_action_id,
+                                                    och.campaign_external_value,
+                                                    om.name as tenant_name,
+                                                    DATE_FORMAT(j_on.end_date, '%Y-%m-%d') AS end_date,
+                                                    DATE_FORMAT(och.created_at, '%Y-%m-%d %H:00:00') AS history_created_date
+                                                FROM {$tablePrefix}campaign_histories och
+                                                LEFT JOIN {$tablePrefix}merchants om
+                                                ON om.merchant_id = och.campaign_external_value
+                                                LEFT JOIN {$tablePrefix}news j_on
+                                                ON j_on.news_id = och.campaign_id
+                                                WHERE
+                                                    och.campaign_history_action_id IN ({$this->quote($idAddTenant)}, {$this->quote($idDeleteTenant)})
+                                                    AND och.campaign_type = 'promotion'
+                                                    AND DATE_FORMAT(CONVERT_TZ(och.created_at, '+00:00', {$this->quote($timezoneOffset)}), '%Y-%m-%d') <= IF( DATE_FORMAT(NOW(), '%Y-%m-%d') < end_date, DATE_FORMAT(NOW(), '%Y-%m-%d'), end_date )
+                                                ORDER BY och.created_at DESC
+                                            ) as A
+                                            group by campaign_id, campaign_external_value) as B
+                                            WHERE (
+                                                case when campaign_history_action_id = {$this->quote($idDeleteTenant)}
+                                                and DATE_FORMAT(CONVERT_TZ(history_created_date, '+00:00', {$this->quote($timezoneOffset)}), '%Y-%m-%d') < IF( DATE_FORMAT(NOW(), '%Y-%m-%d') < end_date, DATE_FORMAT(NOW(), '%Y-%m-%d'), end_date )
+                                                then campaign_history_action_id != {$this->quote($idDeleteTenant)} else true end
+                                        )
+                                    ) as tenant
+                            "),
+                        // On
+                        DB::raw('tenant.t_campaign_id'), '=', 'news.news_id')
+
                         ->where('news.mall_id', '=', $current_mall)
                         ->where('campaign_price.campaign_type', '=', 'promotion')
                         ->where('news.object_type', '=', 'promotion')
-                        ->groupBy('news.news_id')
                         ;
 
 
             $coupons = DB::table('promotions')->selectraw(DB::raw("{$tablePrefix}promotions.promotion_id AS campaign_id, promotion_name AS campaign_name, IF(1=1,'coupon', '') AS campaign_type,
-                IFNULL(total_tenant, 0) AS total_tenant,
+                IFNULL(total_tenant, 0) AS total_tenant, tenant_name,
                 merchants2.name AS mall_name, {$tablePrefix}promotions.begin_date, {$tablePrefix}promotions.end_date, {$tablePrefix}promotions.updated_at, {$tablePrefix}campaign_price.base_price,
                 total_tenant * {$tablePrefix}campaign_price.base_price AS daily,
                 total_tenant * {$tablePrefix}campaign_price.base_price * (DATEDIFF({$tablePrefix}promotions.end_date, {$tablePrefix}promotions.begin_date) + 1) AS estimated_total,
@@ -383,9 +455,46 @@ class CampaignReportAPIController extends ControllerAPI
                         "),
                         // On
                         DB::raw('lf_total_tenant.v_campaign_id'), '=', 'promotions.promotion_id')
+
+                        // Join for get tenant percampaign
+                        ->leftJoin(DB::raw("
+                                (
+                                    SELECT campaign_id as t_campaign_id, tenant_name
+                                    FROM
+                                        (
+                                            SELECT * FROM
+                                            (
+                                                SELECT
+                                                    och.campaign_id,
+                                                    och.campaign_history_action_id,
+                                                    och.campaign_external_value,
+                                                    om.name as tenant_name,
+                                                    DATE_FORMAT(j_on.end_date, '%Y-%m-%d') AS end_date,
+                                                    DATE_FORMAT(och.created_at, '%Y-%m-%d %H:00:00') AS history_created_date
+                                                FROM {$tablePrefix}campaign_histories och
+                                                LEFT JOIN {$tablePrefix}merchants om
+                                                ON om.merchant_id = och.campaign_external_value
+                                                LEFT JOIN {$tablePrefix}news j_on
+                                                ON j_on.news_id = och.campaign_id
+                                                WHERE
+                                                    och.campaign_history_action_id IN ({$this->quote($idAddTenant)}, {$this->quote($idDeleteTenant)})
+                                                    AND och.campaign_type = 'coupon'
+                                                    AND DATE_FORMAT(CONVERT_TZ(och.created_at, '+00:00', {$this->quote($timezoneOffset)}), '%Y-%m-%d') <= IF( DATE_FORMAT(NOW(), '%Y-%m-%d') < end_date, DATE_FORMAT(NOW(), '%Y-%m-%d'), end_date )
+                                                ORDER BY och.created_at DESC
+                                            ) as A
+                                            group by campaign_id, campaign_external_value) as B
+                                            WHERE (
+                                                case when campaign_history_action_id = {$this->quote($idDeleteTenant)}
+                                                and DATE_FORMAT(CONVERT_TZ(history_created_date, '+00:00', {$this->quote($timezoneOffset)}), '%Y-%m-%d') < IF( DATE_FORMAT(NOW(), '%Y-%m-%d') < end_date, DATE_FORMAT(NOW(), '%Y-%m-%d'), end_date )
+                                                then campaign_history_action_id != {$this->quote($idDeleteTenant)} else true end
+                                        )
+                                    ) as tenant
+                            "),
+                        // On
+                        DB::raw('tenant.t_campaign_id'), '=', 'promotions.promotion_id')
+
                         ->where('promotions.merchant_id', '=', $current_mall)
                         ->where('campaign_price.campaign_type', '=', 'coupon')
-                        ->groupBy('promotions.promotion_id')
                         ;
 
             $campaign = $news->unionAll($promotions)->unionAll($coupons);
@@ -400,20 +509,21 @@ class CampaignReportAPIController extends ControllerAPI
             // Make union result subquery
             $campaign = DB::table(DB::raw('(' . $sql . ') as a'));
 
+
             // Filter by campaign name
             OrbitInput::get('campaign_name', function($campaign_name) use ($campaign) {
                 $campaign->where('campaign_name', 'like', "%$campaign_name%");
             });
 
-            // Filter by campaign type
+
             OrbitInput::get('campaign_type', function($campaign_type) use ($campaign) {
-                $campaign->where('campaign_type', 'like', "%$campaign_type%");
+                $campaign->whereIn('campaign_type', $campaign_type);
             });
 
             // Filter by tenant
-            // OrbitInput::get('tenant', function($tenant) use ($campaign) {
-            //     $campaign->where('campaign_name', 'like', "%$campaign_name%");
-            // });
+            OrbitInput::get('tenant_name', function($tenant_name) use ($campaign) {
+                $campaign->where('tenant_name', 'like', "%$tenant_name%");
+            });
 
             // Filter by mall
             OrbitInput::get('mall_name', function($mall_name) use ($campaign) {
@@ -422,12 +532,11 @@ class CampaignReportAPIController extends ControllerAPI
 
             // Filter by campaign status
             OrbitInput::get('status', function($status) use ($campaign) {
-                $status = (array)$status;
-                $campaign->whereIn('status', $status);
+                $campaign->whereIn('status', (array)$status);
             });
 
             // Filter by range date
-            if($start_date != '' && $end_date != ''){
+            if ($start_date != '' && $end_date != ''){
 
                 // Convert UTC to Mall Time
                 $startConvert = Carbon::createFromFormat('Y-m-d H:i:s', $start_date, 'UTC');
@@ -452,10 +561,25 @@ class CampaignReportAPIController extends ControllerAPI
                 $campaign->where('mall_name', 'like', "%$mall_name%");
             });
 
+            // Grouping campaign
+            $campaign = $campaign->groupBy('campaign_id');
 
             // Clone the query builder which still does not include the take,
             $_campaign = clone $campaign;
-            $__campaign = clone $campaign;
+
+            // Need to sub select after group by
+            $_campaign_sql = $_campaign->toSql();
+
+            //Cek exist binding
+            if (count($campaign->getBindings()) > 0) {
+                foreach($campaign->getBindings() as $binding)
+                {
+                  $value = is_numeric($binding) ? $binding : "'" . $binding . "'";
+                  $_campaign_sql = preg_replace('/\?/', $value, $_campaign_sql, 1);
+                }
+            }
+
+            $_campaign = DB::table(DB::raw('(' . $_campaign_sql . ') as b'));
 
             $query_sum = array(
                 'SUM(page_views) AS page_views',
@@ -464,19 +588,19 @@ class CampaignReportAPIController extends ControllerAPI
                 'SUM(spending) AS spending'
             );
 
-            $total = $__campaign->selectRaw(implode(',', $query_sum))->get();
+            $total = $_campaign->selectRaw(implode(',', $query_sum))->get();
 
             // Get total page views
-            $totalPageViews = $total[0]->page_views;
+            $totalPageViews = isset($total[0]->page_views)?$total[0]->page_views:0;
 
             // Get total popup views
-            $totalPopupViews = $total[0]->popup_views;
+            $totalPopupViews = isset($total[0]->popup_views)?$total[0]->popup_views:0;
 
             // Get total estimate
-            $totalEstimated = $total[0]->estimated_total;
+            $totalEstimated = isset($total[0]->estimated_total)?$total[0]->estimated_total:0;
 
             // Get total spending
-            $totalSpending = $total[0]->spending;
+            $totalSpending = isset($total[0]->spending)?$total[0]->spending:0;
 
             $_campaign->select('campaign_id');
 
@@ -507,7 +631,7 @@ class CampaignReportAPIController extends ControllerAPI
             // If request page from export (print/csv), showing without page limitation
             $export = OrbitInput::get('export');
 
-            if(!isset($export)){
+            if (!isset($export)){
                 $campaign->take($take);
                 $campaign->skip($skip);
             }
@@ -766,60 +890,117 @@ class CampaignReportAPIController extends ControllerAPI
                 // Do Nothing
             }
 
+            // Get id add_tenant and delete_tenant for counting total tenant percampaign
+            $campaignHistoryAction = DB::table('campaign_history_actions')
+                            ->select('campaign_history_action_id','action_name')
+                            ->where('action_name','add_tenant')
+                            ->orWhere('action_name','delete_tenant')
+                            ->get();
+
+            $idAddTenant = '';
+            $idDeleteTenant = '';
+            foreach ($campaignHistoryAction as $key => $value) {
+                if ($value->action_name === 'add_tenant') {
+                    $idAddTenant = $value->campaign_history_action_id;
+                } elseif ($value->action_name === 'delete_tenant') {
+                    $idDeleteTenant = $value->campaign_history_action_id;
+                }
+            }
+
             $sql = "
                     (SELECT
-                        tmp_campaign_cost_detail.comp_date AS campaign_date,
-                        tmp_campaign_cost_detail.campaign_id,
-                        tmp_campaign_cost_detail.campaign_status AS campaign_status,
-                        tmp_campaign_cost_detail.campaign_number_tenant AS total_tenant,
-                        tmp_campaign_cost_detail.base_price,
-                        tmp_campaign_cost_detail.daily_cost AS spending,
-                        tmp_campaign_cost_detail.campaign_start_date,
-                        tmp_campaign_cost_detail.campaign_end_date,
-                        tmp_campaign_cost_detail.mall_id,
-                        name AS mall_name,
-                    (
-                        SELECT count(distinct user_id)
-                        FROM {$tablePrefix}user_signin
-                        WHERE location_id = {$this->quote($current_mall)}
-                        AND DATE(created_at) = campaign_date
-                    ) AS unique_users,
-                    (
-                        SELECT count(campaign_page_view_id) AS value
-                        FROM {$tablePrefix}campaign_page_views
-                        WHERE campaign_id = tmp_campaign_cost_detail.campaign_id
-                        AND location_id = {$this->quote($current_mall)}
-                        AND DATE(created_at) = campaign_date
-                    ) AS campaign_pages_views,
-                    (
-                        SELECT count(campaign_popup_view_id) AS value
-                        FROM {$tablePrefix}campaign_popup_views
-                        WHERE campaign_id = tmp_campaign_cost_detail.campaign_id
-                        AND location_id = {$this->quote($current_mall)}
-                        AND DATE(created_at) = campaign_date
-                    ) AS popup_views,
-                    (
-                        SELECT count(campaign_click_id) AS value
-                        FROM {$tablePrefix}campaign_clicks
-                        WHERE campaign_id = tmp_campaign_cost_detail.campaign_id
-                        AND location_id = {$this->quote($current_mall)}
-                        AND DATE(created_at) = campaign_date
-                    ) AS popup_clicks,
-                    (
-                        SELECT IFNULL(ROUND((campaign_pages_views / unique_users) * 100, 2), 0)
-                    ) AS campaign_pages_view_rate,
-                    (
-                        SELECT IFNULL (ROUND((popup_views / unique_users) * 100, 2), 0)
-                    ) AS popup_view_rate,
-                    (
-                        SELECT IFNULL (ROUND((popup_clicks / popup_views) * 100, 2), 0)
-                    ) AS popup_click_rate
+                        comp_date AS campaign_date,
+                        campaign_id,
+                        campaign_number_tenant AS total_tenant,
+                        tenant_name,
+                        mall_name,
+                        unique_users,
+                        campaign_pages_views,
+                        campaign_pages_view_rate,
+                        popup_views,
+                        popup_view_rate,
+                        popup_clicks,
+                        popup_click_rate,
+                        daily_cost AS spending,
+                        campaign_status
                     FROM
-                    tmp_campaign_cost_detail
-                    LEFT JOIN {$tablePrefix}merchants
-                    ON tmp_campaign_cost_detail.mall_id = {$tablePrefix}merchants.merchant_id
+                    (
+                        SELECT *,
+                        (
+                            SELECT count(distinct user_id)
+                            FROM {$tablePrefix}user_signin
+                            WHERE location_id = {$this->quote($current_mall)}
+                            AND DATE(created_at) = comp_date
+                        ) AS unique_users,
+                        (
+                            SELECT count(campaign_page_view_id) AS value
+                            FROM {$tablePrefix}campaign_page_views
+                            WHERE campaign_id = campaign_id
+                            AND location_id = {$this->quote($current_mall)}
+                            AND DATE(created_at) = comp_date
+                        ) AS campaign_pages_views,
+                        (
+                            SELECT count(campaign_popup_view_id) AS value
+                            FROM {$tablePrefix}campaign_popup_views
+                            WHERE campaign_id = campaign_id
+                            AND location_id = {$this->quote($current_mall)}
+                            AND DATE(created_at) = comp_date
+                        ) AS popup_views,
+                        (
+                            SELECT count(campaign_click_id) AS value
+                            FROM {$tablePrefix}campaign_clicks
+                            WHERE campaign_id = campaign_id
+                            AND location_id = {$this->quote($current_mall)}
+                            AND DATE(created_at) = comp_date
+                        ) AS popup_clicks,
+                        (
+                            SELECT IFNULL(ROUND((campaign_pages_views / unique_users) * 100, 2), 0)
+                        ) AS campaign_pages_view_rate,
+                        (
+                            SELECT IFNULL (ROUND((popup_views / unique_users) * 100, 2), 0)
+                        ) AS popup_view_rate,
+                        (
+                            SELECT IFNULL (ROUND((popup_clicks / popup_views) * 100, 2), 0)
+                        ) AS popup_click_rate
+
+                        FROM
+                            ( SELECT * FROM tmp_campaign_cost_detail AS tccd ) AS x
+
+                            -- JOIN to get tenant list per date
+                            LEFT JOIN
+                            (
+                                SELECT
+                                    och.campaign_history_action_id,
+                                    och.campaign_external_value,
+                                    om.name as tenant_name,
+                                    DATE_FORMAT(j_on.end_date, '%Y-%m-%d') AS end_date,
+                                    DATE_FORMAT(CONVERT_TZ(och.created_at, '+00:00', {$this->quote($timezoneOffset)}), '%Y-%m-%d') AS history_created_date,
+                                    om_mall.name AS mall_name
+
+                                FROM {$tablePrefix}campaign_histories och
+                                LEFT JOIN {$tablePrefix}merchants om
+                                ON om.merchant_id = och.campaign_external_value
+                                LEFT JOIN {$tablePrefix}news j_on
+                                ON j_on.news_id = och.campaign_id
+                                LEFT JOIN {$tablePrefix}merchants om_mall
+                                ON mall_id = om_mall.merchant_id
+
+                                WHERE
+                                    och.campaign_history_action_id IN ({$this->quote($idAddTenant)}, {$this->quote($idDeleteTenant)})
+                                    AND och.campaign_type = 'news'
+                                    AND och.campaign_id = 'KewRrVO-zU0wFypB'
+                                ORDER BY och.created_at DESC
+                            ) AS b ON DATE_FORMAT(CONVERT_TZ(b.history_created_date, '+00:00', {$this->quote($timezoneOffset)}), '%Y-%m-%d') <= x.comp_date
+                        group by comp_date, campaign_id, campaign_external_value
+                    ) as c
+                    WHERE (
+                        case when campaign_history_action_id = {$this->quote($idDeleteTenant)}
+                        and DATE_FORMAT(CONVERT_TZ(history_created_date, '+00:00', {$this->quote($timezoneOffset)}), '%Y-%m-%d') < comp_date
+                        then campaign_history_action_id != {$this->quote($idDeleteTenant)} else true end
+                    )
+                    ORDER BY comp_date desc
                     ) AS tbl
-                ";
+            ";
 
             $campaign = DB::table(DB::raw($sql))->where("campaign_status", '=', 'activate');
 
@@ -828,13 +1009,31 @@ class CampaignReportAPIController extends ControllerAPI
                 $campaign->where('mall_name', 'like', "%$campaign_name%");
             });
 
-            if($start_date != '' && $end_date != ''){
+            // Filter by tenant name
+            OrbitInput::get('tenant_name', function($tenant_name) use ($campaign) {
+                $campaign->where('tenant_name', 'like', "%$tenant_name%");
+            });
+
+            if ($start_date != '' && $end_date != ''){
                 $campaign->whereRaw("campaign_date between ? and ?", [$start_date, $end_date]);
             }
 
+            // Grouping after filter
+            $campaign->groupBy('campaign_date');
+
             // Clone the query builder which still does not include the take,
             $_campaign = clone $campaign;
-            $__campaign = clone $campaign;
+
+            // Need to sub select after group by
+            $_campaign_sql = $_campaign->toSql();
+
+            foreach($campaign->getBindings() as $binding)
+            {
+              $value = is_numeric($binding) ? $binding : "'" . $binding . "'";
+              $_campaign_sql = preg_replace('/\?/', $value, $_campaign_sql, 1);
+            }
+
+            $_campaign = DB::table(DB::raw('(' . $_campaign_sql . ') as b'));
 
             $query_sum = array(
                 'SUM(spending) AS spending',
@@ -843,22 +1042,15 @@ class CampaignReportAPIController extends ControllerAPI
                 'SUM(popup_clicks) AS popup_clicks'
             );
 
-            $total = $__campaign->selectRaw(implode(',', $query_sum))->get();
+            $total = $_campaign->selectRaw(implode(',', $query_sum))->get();
 
-            // Get total page views
-            $totalPageViews = round($total[0]->campaign_pages_views, 2);
+            // Get info total bottom page
+            $totalPageViews = round(isset($total[0]->campaign_pages_views)?$total[0]->campaign_pages_views:0, 2);
+            $totalPopupViews = round(isset($total[0]->popup_views)?$total[0]->popup_views:0, 2);
+            $totalPopupClicks = round(isset($total[0]->popup_clicks)?$total[0]->popup_clicks:0, 2);
+            $totalSpending = isset($total[0]->spending)?$total[0]->spending:0;
 
-            // Get total popup views
-            $totalPopupViews = round($total[0]->popup_views, 2);
-
-            // Get total estimate
-            $totalPopupClicks = round($total[0]->popup_clicks, 2);
-
-            // Get total spending
-            $totalSpending = $total[0]->spending;
-
-
-            $_campaign->select('campaign_id');
+            $_campaign->select('campaign_date');
 
             // Get the take args
             $take = $perPage;
@@ -887,7 +1079,7 @@ class CampaignReportAPIController extends ControllerAPI
             // If request page from export (print/csv), showing without page limitation
             $export = OrbitInput::get('export');
 
-            if(!isset($export)){
+            if (!isset($export)){
                 $campaign->take($take);
                 $campaign->skip($skip);
             }
@@ -943,11 +1135,13 @@ class CampaignReportAPIController extends ControllerAPI
 
             $campaign->orderBy($sortBy, $sortMode);
 
+            $totalCampaign = $_campaign->count();
+
             // Return the instance of Query Builder
             if ($this->returnBuilder) {
                 return [
                     'builder' => $campaign,
-                    'count' => $_campaign->count(),
+                    'count' => $totalCampaign,
                     'totalPageViews' => $totalPageViews,
                     'totalPopupViews' => $totalPopupViews,
                     'totalPopupClicks' => $totalPopupClicks,
@@ -956,7 +1150,6 @@ class CampaignReportAPIController extends ControllerAPI
                 ];
             }
 
-            $totalCampaign = $_campaign->count();
             $listOfCampaign = $campaign->get();
 
             $data = new stdclass();
@@ -1016,7 +1209,7 @@ class CampaignReportAPIController extends ControllerAPI
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = 'null';
+            $this->response->data = null;
         }
 
         $output = $this->render($httpCode);
@@ -1562,8 +1755,8 @@ class CampaignReportAPIController extends ControllerAPI
             $total = 0;
 
             foreach (Config::get('orbit.age_ranges') as $key => $ageRange) {
-                if( $demograhicFemale[0]->$ageRange !== null ) {
-                    if($demograhicFemale[0]->total !== 0){
+                if ( $demograhicFemale[0]->$ageRange !== null ) {
+                    if ($demograhicFemale[0]->total !== 0){
                         $percent = ($demograhicFemale[0]->$ageRange / $demograhicFemale[0]->total) * 100;
                         $total = $demograhicFemale[0]->$ageRange;
                     }
@@ -1575,8 +1768,8 @@ class CampaignReportAPIController extends ControllerAPI
             }
 
             foreach (Config::get('orbit.age_ranges') as $key => $ageRange) {
-                if( $demograhicMale[0]->$ageRange !== null ) {
-                    if($demograhicMale[0]->total !== 0){
+                if ( $demograhicMale[0]->$ageRange !== null ) {
+                    if ($demograhicMale[0]->total !== 0){
                         $percent = ($demograhicMale[0]->$ageRange / $demograhicMale[0]->total) * 100;
                         $total = $demograhicMale[0]->$ageRange;
                     }

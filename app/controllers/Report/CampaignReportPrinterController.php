@@ -58,7 +58,7 @@ class CampaignReportPrinterController extends DataPrinterController
         $filter = '';
         $campaignName = OrbitInput::get('campaign_name');
         $campaignType = OrbitInput::get('campaign_type');
-        $tenant = OrbitInput::get('tenant');
+        $tenantName = OrbitInput::get('tenant_name');
         $mallName = OrbitInput::get('mall_name');
         $startDate = OrbitInput::get('start_date');
         $endDate = OrbitInput::get('end_date');
@@ -76,27 +76,46 @@ class CampaignReportPrinterController extends DataPrinterController
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Campaign Summary Report', '', '', '', '', '');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
 
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Number of campaigns', $totalRecord, '', '', '','');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total page views', $totalPageViews, '', '', '','');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total pop up views', $totalPopUpViews, '', '', '','');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Estimated total cost (IDR)', $totalEstimatedCost, '', '', '','');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total spending (IDR)', $totalSpending, '', '', '','');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Number of Campaigns', $totalRecord, '', '', '','');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Page Views', $totalPageViews, '', '', '','');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Pop Up Views', $totalPopUpViews, '', '', '','');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Estimated Total Cost (IDR)', $totalEstimatedCost, '', '', '','');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Spending (IDR)', $totalSpending, '', '', '','');
 
                 // Filtering
-                if($startDate != '' && $endDate != ''){
-                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Campaign date', $this->printDateTime($startDate, $timezone, 'd M Y') . ' - ' . $this->printDateTime($endDate, $timezone, 'd M Y'), '', '', '','');
+                if ($startDate != '' && $endDate != ''){
+                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Campaign Date', $this->printDateTime($startDate, $timezone, 'd M Y') . ' - ' . $this->printDateTime($endDate, $timezone, 'd M Y'), '', '', '','');
                 }
 
                 if ($campaignName != '') {
                     printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Campaign Name', htmlentities($campaignName), '', '', '','');
-                } elseif($campaignType != '') {
-                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Campaign Type', htmlentities($campaignType), '', '', '','');
-                } elseif($tenant != '') {
-                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Tenant', htmlentities($tenant), '', '', '','');
-                } elseif($mallName != '') {
+                }
+
+                if ( is_array($campaignType) && count($campaignType) > 0) {
+                    $campaignTypeString = '';
+                    foreach ($campaignType as $key => $valCampaignType){
+                        $campaignTypeString .= $valCampaignType . ', ';
+                    }
+                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Campaign Type', htmlentities(rtrim($campaignTypeString, ', ')), '', '', '','');
+                }
+
+                if ($tenantName != '') {
+                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Tenant', htmlentities($tenantName), '', '', '','');
+                }
+
+                if ($mallName != '') {
                     printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Mall', htmlentities($mallName), '', '', '','');
-                } elseif($status != '') {
-                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Status', $status, '', '', '','');
+                }
+
+                if ( is_array($status) && count($status) > 0) {
+                    $statusString = '';
+                    foreach ($status as $key => $valstatus){
+                        $statusString .= $valstatus . ', ';
+                    }
+                    echo htmlentities(rtrim($statusString, ', '));
+
+
+                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Status', htmlentities(rtrim($statusString, ', ')), '', '', '','');
                 }
 
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
@@ -172,7 +191,7 @@ class CampaignReportPrinterController extends DataPrinterController
 
         // Filter mode
         $filter = '';
-        $tenant = OrbitInput::get('tenant');
+        $tenantName = OrbitInput::get('tenant_name');
         $mallName = OrbitInput::get('mall_name');
         $startDate = OrbitInput::get('start_date');
         $endDate = OrbitInput::get('end_date');
@@ -189,20 +208,22 @@ class CampaignReportPrinterController extends DataPrinterController
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', $pageTitle, '', '', '', '', '');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
 
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Active campaign days', $totalCampaign, '', '', '','');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total page views', $totalPageViews, '', '', '','');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total pop up views', $totalPopupViews, '', '', '','');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total pop up clicks', $totalPopupClicks, '', '', '','');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total spending (IDR)', $totalSpending, '', '', '','');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Active Campaign Days', $totalCampaign, '', '', '','');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Page Views', $totalPageViews, '', '', '','');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Pop Up Views', $totalPopupViews, '', '', '','');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Pop Up Clicks', $totalPopupClicks, '', '', '','');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Spending (IDR)', $totalSpending, '', '', '','');
 
                 // Filtering
                 if ($startDate != '' && $endDate != ''){
-                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Campaign date', $this->printDateTime($startDate, $timezone, 'd M Y') . ' - ' . $this->printDateTime($endDate, $timezone, 'd M Y'), '', '', '','');
+                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Campaign Date', $this->printDateTime($startDate, $timezone, 'd M Y') . ' - ' . $this->printDateTime($endDate, $timezone, 'd M Y'), '', '', '','');
                 }
 
-                if ($tenant != '') {
-                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Tenant', htmlentities($tenant), '', '', '','');
-                } elseif($mallName != '') {
+                if ($tenantName != '') {
+                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Tenant', htmlentities($tenantName), '', '', '','');
+                }
+
+                if ($mallName != '') {
                     printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by  Mall', htmlentities($mallName), '', '', '','');
                 }
 

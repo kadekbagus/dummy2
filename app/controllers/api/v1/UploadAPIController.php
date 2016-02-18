@@ -4637,7 +4637,7 @@ class UploadAPIController extends ControllerAPI
 
             // We already had Merchant instance on the RegisterCustomValidation
             // get it from there no need to re-query the database
-            $merchant = App::make('orbit.empty.tenant');
+            $merchant = App::make('orbit.empty.mall');
 
             // Callback to rename the file, we will format it as follow
             // [MERCHANT_ID]-[MERCHANT_NAME_SLUG]
