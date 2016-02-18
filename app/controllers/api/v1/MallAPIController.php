@@ -1063,7 +1063,7 @@ class MallAPIController extends ControllerAPI
                     'url'                  => 'orbit.formaterror.url.web',
                     'contact_person_email' => 'email',
                     // 'user_id'           => 'orbit.empty.user',
-                    'status'               => 'orbit.empty.mall_status|orbit_check_link_mallgroup',//|orbit.exists.merchant_retailers_is_box_current_retailer:'.$merchant_id,
+                    'status'               => 'orbit.empty.mall_status|orbit_check_link_mallgroup|orbit_check_link_campaign',//|orbit.exists.merchant_retailers_is_box_current_retailer:'.$merchant_id,
                     'parent_id'            => 'orbit.empty.mallgroup',//|orbit.exists.merchant_retailers_is_box_current_retailer:'.$merchant_id,
                     // 'orid'              => 'orid_exists_but_me',
                     'ticket_header'        => 'ticket_header_max_length',
@@ -1077,6 +1077,7 @@ class MallAPIController extends ControllerAPI
                    // 'orid_exists_but_me'      => Lang::get('validation.orbit.exists.orid'),
                    'orbit.empty.mall_status'    => 'Mall status you specified is not found',
                    'orbit_check_link_mallgroup' => 'Please active mall group to active mall',
+                   'orbit_check_link_campaign'  => 'Please inactive campaign to inactive mall',
                    'ticket_header_max_length'   => Lang::get('validation.orbit.formaterror.merchant.ticket_header.max_length'),
                    'ticket_footer_max_length'   => Lang::get('validation.orbit.formaterror.merchant.ticket_footer.max_length')
                )
@@ -1802,6 +1803,43 @@ class MallAPIController extends ControllerAPI
                             ->first();
 
                 if (! empty($mallgroup)) {
+                    return FALSE;
+                }
+            }
+            return TRUE;
+        });
+
+        // Check link campaign, it should not inactive (for update)
+        Validator::extend('orbit_check_link_campaign', function ($attribute, $value, $parameters) {
+            $mall_id = OrbitInput::post('merchant_id');
+
+            if ($value === 'inactive') {
+                $coupon = Coupon::excludeDeleted()
+                                ->where('merchant_id', '=', $mall_id)
+                                ->where('status', '=', 'active')
+                                ->first();
+
+                if (! empty($coupon)) {
+                    return FALSE;
+                }
+
+                $news = News::excludeDeleted()
+                            ->where('mall_id', '=', $mall_id)
+                            ->where('object_type', '=', 'news')
+                            ->where('status', '=', 'active')
+                            ->first();
+
+                if (! empty($news)) {
+                    return FALSE;
+                }
+
+                $promotion = News::excludeDeleted()
+                            ->where('mall_id', '=', $mall_id)
+                            ->where('object_type', '=', 'promotion')
+                            ->where('status', '=', 'active')
+                            ->first();
+
+                if (! empty($promotion)) {
                     return FALSE;
                 }
             }
