@@ -9,7 +9,7 @@ return [
             'Coupon Redemption Successful',
             'Coupon Issuance',
         ],
-        'Lucky draws' => [
+        'Lucky Draws' => [
             'View Lucky Draw List',
             'View Lucky Draw Detail',
             'View Prizes & Winning Numbers',
@@ -26,7 +26,7 @@ return [
             'Read Coupon Issuance Notification',
             'Read Activation Notification',
         ],
-        'Pop ups' => [
+        'Pop Ups' => [
             'View Coupon Pop Up',
             'Click Coupon Pop Up',
             'View Promotion Pop Up',
