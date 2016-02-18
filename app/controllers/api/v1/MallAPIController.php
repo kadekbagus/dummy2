@@ -1082,7 +1082,7 @@ class MallAPIController extends ControllerAPI
                    // 'orid_exists_but_me'      => Lang::get('validation.orbit.exists.orid'),
                    'orbit.empty.mall_status'    => 'Mall status you specified is not found',
                    'orbit_check_link_mallgroup' => 'Mall is not linked to active mall group',
-                   'orbit_check_link_campaign'  => 'Mall is linked to active campaign',
+                   'orbit_check_link_campaign'  => 'Mall is linked to active campaign(s)',
                    'ticket_header_max_length'   => Lang::get('validation.orbit.formaterror.merchant.ticket_header.max_length'),
                    'ticket_footer_max_length'   => Lang::get('validation.orbit.formaterror.merchant.ticket_footer.max_length')
                )
