@@ -1339,6 +1339,15 @@ class CampaignReportAPIController extends ControllerAPI
 
             $tablePrefix = DB::getTablePrefix();
 
+            // Get the end_date from campaign
+            if ($campaign_type == 'news' || $campaign_type == 'promotion') {
+                $sqlEndDate = News::select('end_date')->where('news_id', $campaign_id)->get();
+            } elseif ($campaign_type == 'coupon') {
+                $sqlEndDate = Coupon::select('end_date')->where('promotion_id', $campaign_id)->get();
+            }
+
+            $endDate = $sqlEndDate[0]->end_date;
+
             // Builder object
             $linkToTenants = DB::select(DB::raw("
                     SELECT name FROM
@@ -1369,7 +1378,7 @@ class CampaignReportAPIController extends ControllerAPI
                         group by campaign_external_value) as B
                     WHERE (
                         case when action_name = 'delete_tenant'
-                        and DATE_FORMAT(CONVERT_TZ(history_created_date, '+00:00', {$this->quote($timezoneOffset)}), '%Y-%m-%d') < {$this->quote($now)}
+                        and DATE_FORMAT(CONVERT_TZ(history_created_date, '+00:00', {$this->quote($timezoneOffset)}), '%Y-%m-%d') < IF( DATE_FORMAT({$this->quote($now)}, '%Y-%m-%d') < DATE_FORMAT({$this->quote($endDate)}, '%Y-%m-%d'), DATE_FORMAT({$this->quote($now)}, '%Y-%m-%d'), DATE_FORMAT({$this->quote($endDate)}, '%Y-%m-%d') )
                         then action_name != 'delete_tenant' else true end
                     )
                      ORDER by name asc
