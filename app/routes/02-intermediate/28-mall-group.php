@@ -24,4 +24,14 @@ Route::post('/app/v1/mallgroup/update', 'IntermediateAuthController@MallGroup_po
  */
 Route::get('/app/v1/mallgroup/{search}', 'IntermediateAuthController@MallGroup_getSearchMallGroup')->where('search', '(list|search)');
 
+/**
+ * Upload Mall Group Logo
+ */
+Route::post('/app/v1/mallgroup-logo/upload', 'IntermediateAuthController@Upload_postUploadMallGroupLogo');
+
+/**
+ * Delete Mall Group Logo
+ */
+Route::post('/app/v1/mallgroup-logo/delete', 'IntermediateAuthController@Upload_postDeleteMallGroupLogo');
+
 ?>

@@ -365,7 +365,7 @@ class Mall extends Eloquent
      * @author Ahmad Anshori <ahmad@dominopos.com>
      *
      */
-    public function getLogoAttribute($value)
+    public function getLogo2Attribute($value)
     {
         $domain = Request::getHost();
         // Prevent directory travelsal
