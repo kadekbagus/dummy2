@@ -159,7 +159,9 @@
                 <td>:</td>
                 <td><strong><?php echo htmlentities($tenantName); ?></strong></td>
             </tr>
-        <?php } elseif($mallName != '') { ?>
+        <?php } ?>
+
+        <?php if ($mallName != '') { ?>
             <tr>
                 <td>Filter by Mall</td>
                 <td>:</td>

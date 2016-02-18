@@ -144,7 +144,7 @@
 
 
         <!-- Filtering -->
-        <?php if($startDate != '' && $endDate != ''){ ?>
+        <?php if ($startDate != '' && $endDate != ''){ ?>
             <tr>
                 <td>Campaign Date</td>
                 <td>:</td>
@@ -158,29 +158,57 @@
                 <td>:</td>
                 <td><strong><?php echo htmlentities($campaignName); ?></strong></td>
             </tr>
-        <?php } elseif($campaignType != '') { ?>
+        <?php } ?>
+
+        <?php if (is_array($campaignType) && count($campaignType) > 0) { ?>
             <tr>
                 <td>Filter by Campaign Type</td>
                 <td>:</td>
-                <td><strong><?php echo htmlentities($campaignType); ?></strong></td>
+                <td>
+                    <strong>
+                        <?php
+                            $campaignTypeString = '';
+                            foreach ($campaignType as $key => $valCampaignType){
+                                $campaignTypeString .= $valCampaignType . ', ';
+                            }
+                            echo htmlentities(rtrim($campaignTypeString, ', '));
+                        ?>
+                    </strong>
+                </td>
             </tr>
-        <?php } elseif($tenantName != '') { ?>
+        <?php } ?>
+
+        <?php if ($tenantName != '') { ?>
             <tr>
                 <td>Filter by Tenant</td>
                 <td>:</td>
                 <td><strong><?php echo htmlentities($tenantName); ?></strong></td>
             </tr>
-        <?php } elseif($mallName != '') { ?>
+        <?php } ?>
+
+        <?php if ($mallName != '') { ?>
             <tr>
                 <td>Filter by Mall</td>
                 <td>:</td>
                 <td><strong><?php echo htmlentities($mallName); ?></strong></td>
             </tr>
-        <?php } elseif($status != '') { ?>
+        <?php } ?>
+
+        <?php if ($status != '') { ?>
             <tr>
                 <td>Filter by Status</td>
                 <td>:</td>
-                <td><strong><?php echo htmlentities($status); ?></strong></td>
+                <td>
+                    <strong>
+                        <?php
+                            $statusString = '';
+                            foreach ($status as $key => $valstatus){
+                                $statusString .= $valstatus . ', ';
+                            }
+                            echo htmlentities(rtrim($statusString, ', '));
+                        ?>
+                    </strong>
+                </td>
             </tr>
         <?php } ?>
 
