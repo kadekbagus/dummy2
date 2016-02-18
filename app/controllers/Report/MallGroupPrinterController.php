@@ -68,10 +68,10 @@ class MallGroupPrinterController extends DataPrinterController
                     printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
                         '', $this->printUtf8($row->name), 
                             $this->printLocation($row), 
-                            $this->printDateTime($row->start_date_activity, 'UTC', 'Y-m-d H:i:s'),
-                            $this->printDateTime($row->end_date_activity, 'UTC', 'Y-m-d H:i:s'),
+                            $this->printDateTime($row->start_date_activity, $timezone, 'd F Y'),
+                            $this->printDateTime($row->end_date_activity, $timezone, 'd F Y'),
                             $row->total_mall,
-                            $this->printUtf8($row->mall_name),
+                            $this->printUtf8($row->malls),
                             $row->status
                        );
 

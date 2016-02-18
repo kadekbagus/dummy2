@@ -136,8 +136,8 @@
                 <!-- <td><?php echo ($count); ?></td> -->
                 <td><?php echo $me->printUtf8($row->name); ?></td>
                 <td><?php echo $me->printLocation($row); ?></td>
-                <td><?php echo $me->printDateTime($row->start_date_activity, 'UTC'); ?></td>
-                <td><?php echo $me->printDateTime($row->end_date_activity, 'UTC'); ?></td>
+                <td><?php echo $me->printDateTime($row->start_date_activity, 'UTC', 'd F Y'); ?></td>
+                <td><?php echo $me->printDateTime($row->end_date_activity, 'UTC', 'd F Y'); ?></td>
                 <td><?php echo ($row->total_mall); ?></td>
                 <td><?php echo $me->printUtf8($row->malls); ?></td>
                 <td><?php echo ($row->status); ?></td>
