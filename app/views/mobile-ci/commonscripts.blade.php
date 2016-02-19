@@ -156,6 +156,7 @@
 
 {{ HTML::script('mobile-ci/scripts/jquery.cookie.js') }}
 <script type="text/javascript">
+    var keyword = '{{{Input::get('keyword', '')}}}';
     var take = {{Config::get('orbit.pagination.per_page', 25)}}, 
         skip = {{Config::get('orbit.pagination.per_page', 25)}};
         total_x_item = 0;
@@ -175,6 +176,7 @@
             method: 'GET',
             data: {
                 take: take,
+                keyword: keyword,
                 skip: skip,
                 ids: ids
             }
@@ -438,7 +440,8 @@
                     method: 'GET'
                 }).done(function(data) {
                     if (data.data.total_records > 0) {
-                        var show_result = '<div class="search-btn"><a id="show_all_result"><span class="col-xs-8"><strong>{{Lang::get('mobileci.search.show_all_result')}}</strong></span><span class="col-xs-4 text-right"><i class="fa fa-chevron-right"></i></span></a></div>';
+                        // var show_result = '<div class="search-btn"><a id="show_all_result"><span class="col-xs-8"><strong>{{Lang::get('mobileci.search.show_all_result')}}</strong></span><span class="col-xs-4 text-right"><i class="fa fa-chevron-right"></i></span></a></div>';
+                        var show_result = '';
                         var tenants='',promotions='',news='',coupons='',lucky_draws='';
                         if (data.data.grouped_records.tenants.length > 0) {
                             search_results.tenants = data.data.grouped_records.tenants;
@@ -456,6 +459,9 @@
                                             </div>\
                                         </a>\
                                     </li>';
+                            }
+                            if (data.data.grouped_records.tenants_counts > 3) {
+                                tenants += '<a href="'+ data.data.grouped_records.tenants_url +'" class="text-right" style="display:block;color:#fff;">Show more</a>';
                             }
                             tenants += '</ul>';
                         }
@@ -476,6 +482,9 @@
                                         </a>\
                                     </li>';
                             }
+                            if (data.data.grouped_records.promotions_counts > 3) {
+                                promotions += '<a href="'+ data.data.grouped_records.promotions_url +'" class="text-right" style="display:block;color:#fff;">Show more</a>';
+                            }
                             promotions += '</ul>';
                         }
                         if (data.data.grouped_records.news.length > 0) {
@@ -494,6 +503,9 @@
                                             </div>\
                                         </a>\
                                     </li>';
+                            }
+                            if (data.data.grouped_records.news_counts > 3) {
+                                news += '<a href="'+ data.data.grouped_records.news_url +'" class="text-right" style="display:block;color:#fff;">Show more</a>';
                             }
                             news += '</ul>';
                         }
@@ -514,6 +526,9 @@
                                         </a>\
                                     </li>';
                             }
+                            if (data.data.grouped_records.coupons_counts > 3) {
+                                coupons += '<a href="'+ data.data.grouped_records.coupons_url +'" class="text-right" style="display:block;color:#fff;">Show more</a>';
+                            }
                             coupons += '</ul>';
                         }
                         if (data.data.grouped_records.lucky_draws.length > 0) {
@@ -532,6 +547,9 @@
                                             </div>\
                                         </a>\
                                     </li>';
+                            }
+                            if (data.data.grouped_records.lucky_draws_counts > 3) {
+                                lucky_draws += '<a href="'+ data.data.grouped_records.lucky_draws_url +'" class="text-right" style="display:block;color:#fff;">Show more</a>';
                             }
                             lucky_draws += '</ul>';
                         }
