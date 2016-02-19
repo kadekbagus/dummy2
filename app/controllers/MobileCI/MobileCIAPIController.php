@@ -3358,9 +3358,25 @@ class MobileCIAPIController extends ControllerAPI
 
             $mallTime = Carbon::now($retailer->timezone->timezone_name);
             $luckydraws = LuckyDraw::with('translations')
-                ->active()
+                ->active('lucky_draws')
                 ->where('mall_id', $retailer->merchant_id)
                 ->whereRaw("? between start_date and grace_period_date", [$mallTime]);
+
+            OrbitInput::get(
+                'keyword',
+                function ($keyword) use ($luckydraws, $retailer, $alternateLanguage) {
+                    $luckydraws->leftJoin('lucky_draw_translations', function($join) use ($alternateLanguage){
+                            $join->on('lucky_draws.lucky_draw_id', '=', 'lucky_draw_translations.lucky_draw_id');
+                            $join->where('lucky_draw_translations.merchant_language_id', '=', $alternateLanguage->merchant_language_id);
+                        })
+                        ->where(function($q) use ($keyword) {
+                            $q->where('lucky_draw_translations.lucky_draw_name', 'like', "%$keyword%")
+                                ->orWhere('lucky_draw_translations.description', 'like', "%$keyword%");
+                        });
+                }
+            );
+
+            $luckydraws->groupBy('lucky_draws.lucky_draw_id');
 
             $_luckydraws = clone $luckydraws;
 
@@ -3392,7 +3408,7 @@ class MobileCIAPIController extends ControllerAPI
 
             $luckydraws->orderBy(DB::raw('RAND()'));
 
-            $totalRec = $_luckydraws->count();
+            $totalRec = count($_luckydraws->get());
             $listOfRec = $luckydraws->get();
 
             if (!empty($alternateLanguage) && !empty($listOfRec)) {
@@ -3518,10 +3534,26 @@ class MobileCIAPIController extends ControllerAPI
                 ->where('mall_id', $retailer->merchant_id)
                 ->whereRaw("? between start_date and grace_period_date", [$mallTime]);
 
+            OrbitInput::get(
+                'keyword',
+                function ($keyword) use ($luckydraws, $retailer, $alternateLanguage) {
+                    $luckydraws->leftJoin('lucky_draw_translations', function($join) use ($alternateLanguage){
+                            $join->on('lucky_draws.lucky_draw_id', '=', 'lucky_draw_translations.lucky_draw_id');
+                            $join->where('lucky_draw_translations.merchant_language_id', '=', $alternateLanguage->merchant_language_id);
+                        })
+                        ->where(function($q) use ($keyword) {
+                            $q->where('lucky_draw_translations.lucky_draw_name', 'like', "%$keyword%")
+                                ->orWhere('lucky_draw_translations.description', 'like', "%$keyword%");
+                        });
+                }
+            );
+
             OrbitInput::get('ids', function($ids) use ($luckydraws)
             {
                 $luckydraws->whereNotIn('lucky_draws.lucky_draw_id', $ids);
             });
+
+            $luckydraws->groupBy('lucky_draw_id');
 
             $_luckydraws = clone $luckydraws;
 
@@ -3553,7 +3585,7 @@ class MobileCIAPIController extends ControllerAPI
 
             $luckydraws->orderBy(DB::raw('RAND()'));
 
-            $totalRec = $_luckydraws->count();
+            $totalRec = count($_luckydraws->get());
             $listOfRec = $luckydraws->get();
 
             if (!empty($alternateLanguage) && !empty($listOfRec)) {
@@ -4099,8 +4131,33 @@ class MobileCIAPIController extends ControllerAPI
                 })
                 ->where('issued_coupons.expired_date', '>=', Carbon::now($retailer->timezone->timezone_name))
                 ->where('promotions.merchant_id', $retailer->merchant_id)
-                ->where('issued_coupons.user_id', $user->user_id)
-                ->groupBy('promotions.promotion_id');
+                ->where('issued_coupons.user_id', $user->user_id);
+
+            OrbitInput::get(
+                'keyword',
+                function ($keyword) use ($coupons, $retailer, $alternateLanguage) {
+                    $coupons->leftJoin('coupon_translations', function($join) use ($alternateLanguage){
+                            $join->on('promotions.promotion_id', '=', 'coupon_translations.promotion_id');
+                            $join->where('coupon_translations.merchant_language_id', '=', $alternateLanguage->merchant_language_id);
+                        })
+                        ->leftJoin('keyword_object', function($join) {
+                            $join->on('promotions.promotion_id', '=', 'keyword_object.object_id');
+                            $join->where('keyword_object.object_type', '=', 'coupon');
+                        })
+                        ->leftJoin('keywords', function($join) use ($retailer) {
+                            $join->on('keywords.keyword_id', '=', 'keyword_object.keyword_id');
+                            $join->where('keywords.merchant_id', '=', $retailer->merchant_id);
+                        })
+                        ->where(function($q) use ($keyword) {
+                            $q->where('coupon_translations.promotion_name', 'like', "%$keyword%")
+                                ->orWhere('coupon_translations.description', 'like', "%$keyword%")
+                                ->orWhere('coupon_translations.long_description', 'like', "%$keyword%")
+                                ->orWhere('keyword', '=', $keyword);
+                        });
+                }
+            );
+
+            $coupons->groupBy('promotions.promotion_id');
 
             $_coupons = clone $coupons;
 
@@ -4260,6 +4317,30 @@ class MobileCIAPIController extends ControllerAPI
                 ->where('promotions.merchant_id', $retailer->merchant_id)
                 ->where('issued_coupons.user_id', $user->user_id);
             
+            OrbitInput::get(
+                'keyword',
+                function ($keyword) use ($coupons, $retailer, $alternateLanguage) {
+                    $coupons->leftJoin('coupon_translations', function($join) use ($alternateLanguage){
+                            $join->on('promotions.promotion_id', '=', 'coupon_translations.promotion_id');
+                            $join->where('coupon_translations.merchant_language_id', '=', $alternateLanguage->merchant_language_id);
+                        })
+                        ->leftJoin('keyword_object', function($join) {
+                            $join->on('promotions.promotion_id', '=', 'keyword_object.object_id');
+                            $join->where('keyword_object.object_type', '=', 'coupon');
+                        })
+                        ->leftJoin('keywords', function($join) use ($retailer) {
+                            $join->on('keywords.keyword_id', '=', 'keyword_object.keyword_id');
+                            $join->where('keywords.merchant_id', '=', $retailer->merchant_id);
+                        })
+                        ->where(function($q) use ($keyword) {
+                            $q->where('coupon_translations.promotion_name', 'like', "%$keyword%")
+                                ->orWhere('coupon_translations.description', 'like', "%$keyword%")
+                                ->orWhere('coupon_translations.long_description', 'like', "%$keyword%")
+                                ->orWhere('keyword', '=', $keyword);
+                        });
+                }
+            );
+
             OrbitInput::get('ids', function($ids) use ($coupons)
             {
                 $coupons->whereNotIn('promotions.promotion_id', $ids);
@@ -4805,8 +4886,33 @@ class MobileCIAPIController extends ControllerAPI
 
             $promotions = $promotions->where('news.status', '=', 'active')
                         ->where('mall_id', $retailer->merchant_id)
-                        ->where('object_type', 'promotion')
+                        ->where('news.object_type', 'promotion')
                         ->whereRaw("? between begin_date and end_date", [$mallTime]);
+
+            OrbitInput::get(
+                'keyword',
+                function ($keyword) use ($promotions, $retailer, $alternateLanguage) {
+                    $promotions->leftJoin('news_translations', function($join) use ($alternateLanguage){
+                            $join->on('news.news_id', '=', 'news_translations.news_id');
+                            $join->where('news_translations.merchant_language_id', '=', $alternateLanguage->merchant_language_id);
+                        })
+                        ->leftJoin('keyword_object', function($join) {
+                            $join->on('news.news_id', '=', 'keyword_object.object_id');
+                            $join->where('keyword_object.object_type', '=', 'promotion');
+                        })
+                        ->leftJoin('keywords', function($join) use ($retailer) {
+                            $join->on('keywords.keyword_id', '=', 'keyword_object.keyword_id');
+                            $join->where('keywords.merchant_id', '=', $retailer->merchant_id);
+                        })
+                        ->where(function($q) use ($keyword) {
+                            $q->where('news_translations.news_name', 'like', "%$keyword%")
+                                ->orWhere('news_translations.description', 'like', "%$keyword%")
+                                ->orWhere('keyword', '=', $keyword);
+                        });
+                }
+            );
+
+            $promotions = $promotions->groupBy('news.news_id');
 
             $_promotions = clone $promotions;
 
@@ -4838,7 +4944,7 @@ class MobileCIAPIController extends ControllerAPI
 
             $promotions->orderBy(DB::raw('RAND()'));
 
-            $totalRec = $_promotions->count();
+            $totalRec = count($_promotions->get());
             $listOfRec = $promotions->get();
 
             if (!empty($alternateLanguage) && !empty($listOfRec)) {
@@ -4997,8 +5103,33 @@ class MobileCIAPIController extends ControllerAPI
 
             $promotions = $promotions->where('news.status', '=', 'active')
                 ->where('mall_id', $retailer->merchant_id)
-                ->where('object_type', 'promotion')
+                ->where('news.object_type', 'promotion')
                 ->whereRaw("? between begin_date and end_date", [$mallTime]);
+
+            OrbitInput::get(
+                'keyword',
+                function ($keyword) use ($promotions, $retailer, $alternateLanguage) {
+                    $promotions->leftJoin('news_translations', function($join) use ($alternateLanguage){
+                            $join->on('news.news_id', '=', 'news_translations.news_id');
+                            $join->where('news_translations.merchant_language_id', '=', $alternateLanguage->merchant_language_id);
+                        })
+                        ->leftJoin('keyword_object', function($join) {
+                            $join->on('news.news_id', '=', 'keyword_object.object_id');
+                            $join->where('keyword_object.object_type', '=', 'promotion');
+                        })
+                        ->leftJoin('keywords', function($join) use ($retailer) {
+                            $join->on('keywords.keyword_id', '=', 'keyword_object.keyword_id');
+                            $join->where('keywords.merchant_id', '=', $retailer->merchant_id);
+                        })
+                        ->where(function($q) use ($keyword) {
+                            $q->where('news_translations.news_name', 'like', "%$keyword%")
+                                ->orWhere('news_translations.description', 'like', "%$keyword%")
+                                ->orWhere('keyword', '=', $keyword);
+                        });
+                }
+            );
+
+            $promotions = $promotions->groupBy('news.news_id');
 
             $_promotions = clone $promotions;
 
@@ -5030,7 +5161,7 @@ class MobileCIAPIController extends ControllerAPI
 
             $promotions->orderBy(DB::raw('RAND()'));
 
-            $totalRec = $_promotions->count();
+            $totalRec = count($_promotions->get());
             $listOfRec = $promotions->get();
 
             if (!empty($alternateLanguage) && !empty($listOfRec)) {
@@ -5326,8 +5457,33 @@ class MobileCIAPIController extends ControllerAPI
 
             $news = $news->where('news.status', '=', 'active')
                 ->where('mall_id', $retailer->merchant_id)
-                ->where('object_type', 'news')
+                ->where('news.object_type', 'news')
                 ->whereRaw("? between begin_date and end_date", [$mallTime]);
+
+            OrbitInput::get(
+                'keyword',
+                function ($keyword) use ($news, $retailer, $alternateLanguage) {
+                    $news->leftJoin('news_translations', function($join) use ($alternateLanguage){
+                            $join->on('news.news_id', '=', 'news_translations.news_id');
+                            $join->where('news_translations.merchant_language_id', '=', $alternateLanguage->merchant_language_id);
+                        })
+                        ->leftJoin('keyword_object', function($join) {
+                            $join->on('news.news_id', '=', 'keyword_object.object_id');
+                            $join->where('keyword_object.object_type', '=', 'news');
+                        })
+                        ->leftJoin('keywords', function($join) use ($retailer) {
+                            $join->on('keywords.keyword_id', '=', 'keyword_object.keyword_id');
+                            $join->where('keywords.merchant_id', '=', $retailer->merchant_id);
+                        })
+                        ->where(function($q) use ($keyword) {
+                            $q->where('news_translations.news_name', 'like', "%$keyword%")
+                                ->orWhere('news_translations.description', 'like', "%$keyword%")
+                                ->orWhere('keyword', '=', $keyword);
+                        });
+                }
+            );
+
+            $news->groupBy('news.news_id');
 
             $_news = clone $news;
 
@@ -5359,7 +5515,7 @@ class MobileCIAPIController extends ControllerAPI
 
             $news->orderBy(DB::raw('RAND()'));
 
-            $totalRec = $_news->count();
+            $totalRec = count($_news->get());
             $listOfRec = $news->get();
 
             if (!empty($alternateLanguage) && !empty($listOfRec)) {
@@ -5517,8 +5673,33 @@ class MobileCIAPIController extends ControllerAPI
 
             $news = $news->where('news.status', '=', 'active')
                 ->where('mall_id', $retailer->merchant_id)
-                ->where('object_type', 'news')
+                ->where('news.object_type', 'news')
                 ->whereRaw("? between begin_date and end_date", [$mallTime]);
+
+            OrbitInput::get(
+                'keyword',
+                function ($keyword) use ($news, $retailer, $alternateLanguage) {
+                    $news->leftJoin('news_translations', function($join) use ($alternateLanguage){
+                            $join->on('news.news_id', '=', 'news_translations.news_id');
+                            $join->where('news_translations.merchant_language_id', '=', $alternateLanguage->merchant_language_id);
+                        })
+                        ->leftJoin('keyword_object', function($join) {
+                            $join->on('news.news_id', '=', 'keyword_object.object_id');
+                            $join->where('keyword_object.object_type', '=', 'news');
+                        })
+                        ->leftJoin('keywords', function($join) use ($retailer) {
+                            $join->on('keywords.keyword_id', '=', 'keyword_object.keyword_id');
+                            $join->where('keywords.merchant_id', '=', $retailer->merchant_id);
+                        })
+                        ->where(function($q) use ($keyword) {
+                            $q->where('news_translations.news_name', 'like', "%$keyword%")
+                                ->orWhere('news_translations.description', 'like', "%$keyword%")
+                                ->orWhere('keyword', '=', $keyword);
+                        });
+                }
+            );
+
+            $news = $news->groupBy('news.news_id');
 
             $_news = clone $news;
 
@@ -6395,8 +6576,7 @@ class MobileCIAPIController extends ControllerAPI
                     $q->where('news_translations.news_name', 'like', "%$keyword%")
                         ->orWhere('news_translations.description', 'like', "%$keyword%")
                         ->orWhere('keyword', '=', $keyword);
-                })
-                ->groupBy('news.news_id');
+                });
 
             $news = DB::table('news')
                 ->selectRaw("{$prefix}news.news_id as object_id, {$prefix}news.news_name as object_name, {$prefix}news.description as object_description, {$prefix}news.image as object_image, 'news' as object_type")
@@ -6423,8 +6603,7 @@ class MobileCIAPIController extends ControllerAPI
                     $q->where('news_translations.news_name', 'like', "%$keyword%")
                         ->orWhere('news_translations.description', 'like', "%$keyword%")
                         ->orWhere('keyword', '=', $keyword);
-                })
-                ->groupBy('news.news_id');
+                });
 
             $coupon = DB::table('promotions')
                 ->selectRaw("{$prefix}issued_coupons.promotion_id as object_id, {$prefix}promotions.promotion_name as object_name, {$prefix}promotions.description as object_description, {$prefix}promotions.image as object_image, 'coupon' as object_type")
@@ -6455,11 +6634,10 @@ class MobileCIAPIController extends ControllerAPI
                         ->orWhere('coupon_translations.description', 'like', "%$keyword%")
                         ->orWhere('coupon_translations.long_description', 'like', "%$keyword%")
                         ->orWhere('keyword', '=', $keyword);
-                })
-                ->groupBy('promotions.promotion_id');
+                });
 
             $tenant = DB::table('merchants')
-                ->selectRaw("{$prefix}merchants.merchant_id as object_id, {$prefix}merchants.name as object_name, {$prefix}merchants.description as object_description, {$prefix}media.path as object_image, 'tenant' as object_type")
+                ->selectRaw("{$prefix}merchants.merchant_id as object_id, {$prefix}merchants.name as object_name, {$prefix}merchants.description as object_description, {$prefix}media.path as object_image, 'tenant' as object_type, COUNT(DISTINCT {$prefix}merchants.merchant_id) as counter")
                 ->leftJoin('merchant_translations', function($join) use ($alternateLanguage){
                     $join->on('merchants.merchant_id', '=', 'merchant_translations.merchant_id');
                     $join->where('merchant_translations.merchant_language_id', '=', $alternateLanguage->merchant_language_id);
@@ -6484,8 +6662,7 @@ class MobileCIAPIController extends ControllerAPI
                     $q->where('merchants.name', 'like', "%$keyword%")
                         ->orWhere('merchant_translations.description', 'like', "%$keyword%")
                         ->orWhere('keyword', '=', $keyword);
-                })
-                ->groupBy('merchants.merchant_id');
+                });
 
             $lucky_draw = DB::table('lucky_draws')
                 ->selectRaw("{$prefix}lucky_draws.lucky_draw_id as object_id, {$prefix}lucky_draws.lucky_draw_name as object_name, {$prefix}lucky_draws.description as object_description, {$prefix}lucky_draws.image as object_image, 'lucky_draw' as object_type")
@@ -6499,8 +6676,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->where(function($q) use ($keyword) {
                     $q->where('lucky_draw_translations.lucky_draw_name', 'like', "%$keyword%")
                         ->orWhere('lucky_draw_translations.description', 'like', "%$keyword%");
-                })
-                ->groupBy('lucky_draws.lucky_draw_id');
+                });
 
             if ($userGender !== null) {
                 $promo = $promo->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
@@ -6526,12 +6702,18 @@ class MobileCIAPIController extends ControllerAPI
                 }
             }
 
-            $limit = 10; // <---- Config;
-            $promo->orderBy(DB::raw('RAND()'))->limit($limit);
-            $news->orderBy(DB::raw('RAND()'))->limit($limit);
-            $coupon->orderBy(DB::raw('RAND()'))->limit($limit);
-            $tenant->orderBy(DB::raw('RAND()'))->limit($limit);
-            $lucky_draw->orderBy(DB::raw('RAND()'))->limit($limit);
+            $_promo = clone($promo);
+            $_news = clone($news);
+            $_coupon = clone($coupon);
+            $_tenant = clone($tenant);
+            $_lucky_draw = clone($lucky_draw);
+
+            $limit = 0; // <---- Config;
+            $promo->groupBy('news.news_id')->orderBy(DB::raw('RAND()'))->limit($limit);
+            $news->groupBy('news.news_id')->orderBy(DB::raw('RAND()'))->limit($limit);
+            $coupon->groupBy('promotions.promotion_id')->orderBy(DB::raw('RAND()'))->limit($limit);
+            $tenant->groupBy('merchants.merchant_id')->orderBy(DB::raw('RAND()'))->limit($limit);
+            $lucky_draw->groupBy('lucky_draws.lucky_draw_id')->orderBy(DB::raw('RAND()'))->limit($limit);
 
             $search_results = [];
 
@@ -6553,10 +6735,20 @@ class MobileCIAPIController extends ControllerAPI
 
             $grouped_search_result = new stdclass();
             $grouped_search_result->tenants = [];
+            $grouped_search_result->tenants_counts = $_tenant->count();
+            $grouped_search_result->tenants_url = URL::to('customer/tenants?keyword=' . urlencode($keyword));
             $grouped_search_result->news = [];
+            $grouped_search_result->news_counts = $_news->count();
+            $grouped_search_result->news_url = URL::to('customer/mallnews?keyword=' . urlencode($keyword));
             $grouped_search_result->promotions = [];
+            $grouped_search_result->promotions_counts = $_promo->count();
+            $grouped_search_result->promotions_url = URL::to('customer/mallpromotions?keyword=' . urlencode($keyword));
             $grouped_search_result->coupons = [];
+            $grouped_search_result->coupons_counts = $_coupon->count();
+            $grouped_search_result->coupons_url = URL::to('customer/mallcoupons?keyword=' . urlencode($keyword));
             $grouped_search_result->lucky_draws = [];
+            $grouped_search_result->lucky_draws_counts = $_lucky_draw->count();
+            $grouped_search_result->lucky_draws_url = URL::to('customer/luckydraws?keyword=' . urlencode($keyword));
 
             foreach($search_results as $near_end_result) {
                 if ($near_end_result->object_type === 'promotion') {
