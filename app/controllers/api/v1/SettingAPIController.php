@@ -440,6 +440,24 @@ class SettingAPIController extends ControllerAPI
                 $mall->media_background = $response->data;
             });
 
+            OrbitInput::files('logo', function($files) use ($mall, $user) {
+                $_POST['merchant_id'] = $mall->merchant_id;
+
+                // This will be used on UploadAPIController
+                App::instance('orbit.upload.user', $user);
+
+                $response = UploadAPIController::create('raw')
+                                               ->setCalledFrom('mall.update')
+                                               ->postUploadMallLogo();
+
+                if ($response->code !== 0)
+                {
+                    throw new \Exception($response->message, $response->code);
+                }
+
+                $mall->load('mediaLogo');
+            });
+
             OrbitInput::post('start_button', function($label) use (&$startButtonSetting, $mall, $user) {
                 // Start button label setting
                 if (is_null($startButtonSetting)) {
@@ -1223,9 +1241,7 @@ class SettingAPIController extends ControllerAPI
             return $valid;
         });
 
-        // @Todo: Refactor by adding allowedForUser for mall
-        $user = $this->api->user;
-        Validator::extend('orbit.empty.mall', function ($attribute, $value, $parameters) use ($user) {
+        Validator::extend('orbit.empty.mall', function ($attribute, $value, $parameters) {
             $merchant = Mall::excludeDeleted()
                         ->where('merchant_id', $value)
                         ->first();
@@ -1234,13 +1250,12 @@ class SettingAPIController extends ControllerAPI
                 return FALSE;
             }
 
-            App::instance('orbit.empty.tenant', $merchant);
+            App::instance('orbit.empty.mall', $merchant);
 
             return TRUE;
         });
 
-
-        // $user = $this->api->user;
+        $user = $this->api->user;
         Validator::extend('orbit.empty.merchant', function ($attribute, $value, $parameters) use ($user) {
             $merchant = Mall::excludeDeleted()
                 /* ->allowedForUser($user) */

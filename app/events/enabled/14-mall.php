@@ -50,10 +50,24 @@ Event::listen('orbit.mall.postnewmall.after.save', function($controller, $mall)
 Event::listen('orbit.mall.postupdatemall.after.save', function($controller, $mall)
 {
     $logo = OrbitInput::files('logo');
+    $_POST['merchant_id'] = $mall->merchant_id;
 
-    if (! empty($logo)) {
-        $_POST['merchant_id'] = $mall->merchant_id;
+    if (empty($logo)) {
+        OrbitInput::post('logo', function($logo_string) use ($controller) {
+            if (empty(trim($logo_string))) {
+                // This will be used on UploadAPIController
+                App::instance('orbit.upload.user', $controller->api->user);
 
+                $response = UploadAPIController::create('raw')
+                                               ->setCalledFrom('mall.update')
+                                               ->postDeleteMallLogo();
+                if ($response->code !== 0)
+                {
+                    throw new \Exception($response->message, $response->code);
+                }
+            }
+        });
+    } else {
         // This will be used on UploadAPIController
         App::instance('orbit.upload.user', $controller->api->user);
 

@@ -2928,6 +2928,7 @@ class ActivityAPIController extends ControllerAPI
      * GET - CRM summary report
      *
      * @author kadek <kadek@dominopos.com>
+     * @author Qosdil A. <qosdil@dominopos.com>
      *
      * List Of Parameters
      * ------------------

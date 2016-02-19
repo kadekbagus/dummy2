@@ -2113,6 +2113,8 @@ class EmployeeAPIController extends ControllerAPI
                 }
             }
 
+            $prefix = DB::getTablePrefix();
+
             // Available merchant to query
             $listOfMerchantIds = [];
 
@@ -2192,8 +2194,9 @@ class EmployeeAPIController extends ControllerAPI
             });
 
            // Filter user by their employee_id_char pattern
-            OrbitInput::get('employee_id_char_like', function ($idCharLike) use ($users, $joined) {
-                $users->where('employees.employee_id_char', 'like', "%$idCharLike%");
+            OrbitInput::get('employee_id_char_like', function ($idCharLike) use ($users, $joined, $prefix) {
+                $idCharLike = strtolower($idCharLike);
+                $users->whereRaw("LOWER({$prefix}employees.employee_id_char) like '%{$idCharLike}%'");
             });
 
             // Filter user by their firstname pattern
@@ -2217,7 +2220,7 @@ class EmployeeAPIController extends ControllerAPI
             });
 
             // Filter user by their status
-            OrbitInput::get('statuses', function ($status) use ($users) {
+            OrbitInput::get('status', function ($status) use ($users) {
                 $status = (array)$status;
                 $users->whereIn('users.status', $status);
             });

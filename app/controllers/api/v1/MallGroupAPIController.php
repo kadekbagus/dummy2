@@ -103,7 +103,7 @@ class MallGroupAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $name = OrbitInput::post('name');
+            $name = trim(OrbitInput::post('name'));
             $email = OrbitInput::post('email');
             $password = OrbitInput::post('password');
             $description = OrbitInput::post('description');
@@ -159,7 +159,7 @@ class MallGroupAPIController extends ControllerAPI
                     'end_date_activity'        => $end_date_activity,
                 ),
                 array(
-                    'name'                     => 'required',
+                    'name'                     => 'required|orbit.exists.mallgroup_name',
                     'email'                    => 'required|email|orbit.exists.email',
                     'password'                 => 'required|min:6',
                     'address_line1'            => 'required',
@@ -177,6 +177,7 @@ class MallGroupAPIController extends ControllerAPI
                 ),
                 array(
                     'name.required'                     => 'Mall group name is required',
+                    'orbit.exists.mallgroup_name'       => 'Mall group name already exists',
                     'email.required'                    => 'Email address is required',
                     'address_line1.required'            => 'Address is required',
                     'phone.required'                    => 'Mall group phone number is required',
@@ -975,8 +976,9 @@ class MallGroupAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $email = OrbitInput::post('email');
             $merchant_id = OrbitInput::post('merchant_id');
+            $name = trim(OrbitInput::post('name'));
+            $email = OrbitInput::post('email');
             $password = OrbitInput::post('password');
             $country = OrbitInput::post('country');
             $url = OrbitInput::post('url');
@@ -989,8 +991,9 @@ class MallGroupAPIController extends ControllerAPI
 
             $validator = Validator::make(
                 array(
-                    'email'                => $email,
                     'merchant_id'          => $merchant_id,
+                    'name'                 => $name,
+                    'email'                => $email,
                     'password'             => $password,
                     'country'              => $country,
                     'url'                  => $url,
@@ -1002,23 +1005,26 @@ class MallGroupAPIController extends ControllerAPI
                     // 'omid'              => $omid,
                 ),
                 array(
-                    'email'                => 'email|email_exists_but_me',
                     'merchant_id'          => 'required|orbit.empty.mallgroup',
+                    'name'                 => 'mallgroup_name_exists_but_me',
+                    'email'                => 'email|email_exists_but_me',
                     'password'             => 'min:6',
                     'country'              => 'orbit.empty.country',
                     'url'                  => 'orbit.formaterror.url.web',
                     'contact_person_email' => 'email',
                     // 'user_id'           => 'orbit.empty.user',
-                    'status'               => 'orbit.empty.mall_status',
+                    'status'               => 'orbit.empty.mall_status|orbit_check_link_mall',
                     'start_date_activity'  => 'date_format:Y-m-d H:i:s',
                     'end_date_activity'    => 'date_format:Y-m-d H:i:s'
                     // 'omid'              => 'omid_exists_but_me',
                 ),
                 array(
-                   'email_exists_but_me'        => Lang::get('validation.orbit.exists.email'),
-                   'contact_person_email.email' => 'Email must be a valid email address',
-                   'orbit.empty.mall_status'    => 'Mall group status you specified is not found',
-                   // 'omid_exists_but_me'       => Lang::get('validation.orbit.exists.omid'),
+                   'mallgroup_name_exists_but_me' => 'Mall group name already exists',
+                   'email_exists_but_me'          => Lang::get('validation.orbit.exists.email'),
+                   'contact_person_email.email'   => 'Email must be a valid email address',
+                   'orbit.empty.mall_status'      => 'Mall group status you specified is not found',
+                   'orbit_check_link_mall'        => 'Mall group is linked to active mall(s)',
+                   // 'omid_exists_but_me'        => Lang::get('validation.orbit.exists.omid'),
                )
             );
 
@@ -1116,11 +1122,19 @@ class MallGroupAPIController extends ControllerAPI
             });
 
             OrbitInput::post('start_date_activity', function($start_date_activity) use ($updatedmallgroup) {
-                $updatedmallgroup->start_date_activity = $start_date_activity;
+                if (empty(trim($start_date_activity))) {
+                    $updatedmallgroup->start_date_activity = NUll;
+                } else {
+                    $updatedmallgroup->start_date_activity = $start_date_activity;
+                }
             });
 
             OrbitInput::post('end_date_activity', function($end_date_activity) use ($updatedmallgroup) {
-                $updatedmallgroup->end_date_activity = $end_date_activity;
+                if (empty(trim($end_date_activity))) {
+                    $updatedmallgroup->end_date_activity = NULL;
+                } else {
+                    $updatedmallgroup->end_date_activity = $end_date_activity;
+                }
             });
 
             OrbitInput::post('status', function($status) use ($updatedmallgroup) {
@@ -1615,6 +1629,59 @@ class MallGroupAPIController extends ControllerAPI
             }
 
             App::instance('orbit.validation.mallgroup', $mall);
+
+            return TRUE;
+        });
+
+        // Check link mall, it should not inactive (for update)
+        Validator::extend('orbit_check_link_mall', function ($attribute, $value, $parameters) {
+            $mallgroup_id = OrbitInput::post('merchant_id');
+
+            if ($value === 'inactive') {
+                $mall = Mall::excludeDeleted()
+                            ->where('parent_id', '=', $mallgroup_id)
+                            ->where('status', '=', 'active')
+                            ->first();
+
+                if (! empty($mall)) {
+                    return FALSE;
+                }
+            }
+
+            return TRUE;
+        });
+
+        // Check mall group name, it should not exists
+        Validator::extend('orbit.exists.mallgroup_name', function ($attribute, $value, $parameters) {
+            $mallGroup = MallGroup::excludeDeleted()
+                        ->where('name', $value)
+                        ->where('object_type', 'mall_group')
+                        ->first();
+
+            if (! empty($mallGroup)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.validation.mallgroup_name', $mallGroup);
+
+            return TRUE;
+        });
+
+        // Check mall group name, it should not exists (for update)
+        Validator::extend('mallgroup_name_exists_but_me', function ($attribute, $value, $parameters) {
+            $mallgroup_id = OrbitInput::post('merchant_id');
+
+            $mallGroup = MallGroup::excludeDeleted()
+                        ->where('name', $value)
+                        ->where('merchant_id', '!=', $mallgroup_id)
+                        ->where('object_type', 'mall_group')
+                        ->first();
+
+            if (! empty($mallGroup)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.validation.mallgroup_name', $mallGroup);
 
             return TRUE;
         });

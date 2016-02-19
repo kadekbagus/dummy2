@@ -12,7 +12,9 @@
             </ul>
         </div>
         <div class="col-xs-8 text-center">
+        @if (!empty($retailer->logo))
             <img class="img-responsive toolbar-header-logo img-center" src="{{asset($retailer->logo)}}" />
+        @endif
         </div>
     </div>
     @if(!is_null($page_title))

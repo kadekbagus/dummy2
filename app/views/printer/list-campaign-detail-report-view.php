@@ -118,27 +118,27 @@
         </tr>
 
         <tr>
-            <td>Active campaign days</td>
+            <td>Active Campaign Days</td>
             <td>:</td>
             <td><strong><?php echo number_format($totalCampaign, 0); ?></strong></td>
         </tr>
         <tr>
-            <td>Total page views</td>
+            <td>Total Page Views</td>
             <td>:</td>
             <td><strong><?php echo number_format($totalPageViews, 0); ?></strong></td>
         </tr>
         <tr>
-            <td>Total pop up views</td>
+            <td>Total Pop Up Views</td>
             <td>:</td>
             <td><strong><?php echo number_format($totalPopupViews, 0); ?></strong></td>
         </tr>
         <tr>
-            <td>Total pop up clicks</td>
+            <td>Total Pop Up Clicks</td>
             <td>:</td>
             <td><strong><?php echo number_format($totalPopupClicks, 0); ?></strong></td>
         </tr>
         <tr>
-            <td>Total spending (IDR)</td>
+            <td>Total Spending (IDR)</td>
             <td>:</td>
             <td><strong><?php echo number_format($totalSpending, 0); ?></strong></td>
         </tr>
@@ -147,19 +147,33 @@
         <!-- Filtering -->
         <?php if ($startDate != '' && $endDate != ''){ ?>
             <tr>
-                <td>Campaign date</td>
+                <td>Campaign Date</td>
                 <td>:</td>
-                <td><strong><?php echo $this->printDateTime($startDate, $timezone, 'd M Y') . ' - ' . $this->printDateTime($endDate, $timezone, 'd M Y'); ?></strong></td>
+                <td>
+                    <?php
+                        if ($startDate != '' && $endDate != ''){
+                            $startDateRangeMallTime = $this->printDateTime($startDate, $timezone, 'd M Y');
+                            $endDateRangeMallTime = $this->printDateTime($endDate, $timezone, 'd M Y');
+                            $dateRange = $startDateRangeMallTime . ' - ' . $endDateRangeMallTime;
+                            if ($startDateRangeMallTime === $endDateRangeMallTime) {
+                                $dateRange = $startDateRangeMallTime;
+                            }
+                        }
+                    ?>
+                    <strong><?php echo $dateRange; ?></strong>
+                </td>
             </tr>
         <?php } ?>
 
-        <?php if ($tenant != '') { ?>
+        <?php if ($tenantName != '') { ?>
             <tr>
                 <td>Filter by Tenant</td>
                 <td>:</td>
-                <td><strong><?php echo htmlentities($tenant); ?></strong></td>
+                <td><strong><?php echo htmlentities($tenantName); ?></strong></td>
             </tr>
-        <?php } elseif($mallName != '') { ?>
+        <?php } ?>
+
+        <?php if ($mallName != '') { ?>
             <tr>
                 <td>Filter by Mall</td>
                 <td>:</td>
@@ -175,13 +189,13 @@
             <th style="text-align:left;">Date</th>
             <th style="text-align:left;">Tenants</th>
             <th style="text-align:left;">Mall</th>
-            <th style="text-align:left;">Unique users</th>
-            <th style="text-align:left;">Campaign page views</th>
-            <th style="text-align:left;">Campaign page view rate (%)</th>
-            <th style="text-align:left;">Pop up views</th>
-            <th style="text-align:left;">Pop up view rate (%)</th>
-            <th style="text-align:left;">Pop up clicks</th>
-            <th style="text-align:left;">Pop up click rate (%)</th>
+            <th style="text-align:left;">Unique Users</th>
+            <th style="text-align:left;">Campaign Page Views</th>
+            <th style="text-align:left;">Campaign Page View Rate (%)</th>
+            <th style="text-align:left;">Pop Up Views</th>
+            <th style="text-align:left;">Pop Up View Rate (%)</th>
+            <th style="text-align:left;">Pop Up Clicks</th>
+            <th style="text-align:left;">Pop Up Click Rate (%)</th>
             <th style="text-align:left;">Spending (IDR)</th>
         </thead>
         <tbody>
