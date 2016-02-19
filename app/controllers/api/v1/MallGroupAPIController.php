@@ -721,7 +721,17 @@ class MallGroupAPIController extends ControllerAPI
 
             // Filter mall group by location (city country)
             OrbitInput::get('location', function($data) use ($mallgroups, $prefix) {
-                $mallgroups->where(DB::raw("CONCAT(COALESCE({$prefix}merchants.city, ''), ' ', COALESCE({$prefix}merchants.country, ''))"), 'like', "%$data%");
+                $check = strpos($data, ",");
+
+                if(! empty($check)) {
+                    $loc = explode(",", $data);
+                    $city = $loc[0];
+                    $country = substr($loc[1], 1);
+                    $mallgroups->where('merchants.city', 'like', "%$city%");
+                    $mallgroups->where('merchants.country', 'like', "%$country%");
+                } else {
+                    $mallgroups->where(DB::raw("CONCAT(COALESCE({$prefix}merchants.city, ''), ' ', COALESCE({$prefix}merchants.country, ''))"), 'like', "%$data%");
+                }
             });
 
             // Filter user by first_visit date begin_date
