@@ -84,7 +84,13 @@ class CampaignReportPrinterController extends DataPrinterController
 
                 // Filtering
                 if ($startDate != '' && $endDate != ''){
-                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Campaign Date', $this->printDateTime($startDate, $timezone, 'd M Y') . ' - ' . $this->printDateTime($endDate, $timezone, 'd M Y'), '', '', '','');
+                    $startDateRangeMallTime = $this->printDateTime($startDate, $timezone, 'd M Y');
+                    $endDateRangeMallTime = $this->printDateTime($endDate, $timezone, 'd M Y');
+                    $dateRange = $startDateRangeMallTime . ' - ' . $endDateRangeMallTime;
+                    if ($startDateRangeMallTime === $endDateRangeMallTime) {
+                        $dateRange = $startDateRangeMallTime;
+                    }
+                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Campaign Date', $dateRange, '', '', '','');
                 }
 
                 if ($campaignName != '') {
@@ -216,7 +222,13 @@ class CampaignReportPrinterController extends DataPrinterController
 
                 // Filtering
                 if ($startDate != '' && $endDate != ''){
-                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Campaign Date', $this->printDateTime($startDate, $timezone, 'd M Y') . ' - ' . $this->printDateTime($endDate, $timezone, 'd M Y'), '', '', '','');
+                    $startDateRangeMallTime = $this->printDateTime($startDate, $timezone, 'd M Y');
+                    $endDateRangeMallTime = $this->printDateTime($endDate, $timezone, 'd M Y');
+                    $dateRange = $startDateRangeMallTime . ' - ' . $endDateRangeMallTime;
+                    if ($startDateRangeMallTime === $endDateRangeMallTime) {
+                        $startDateRangeMallTime;
+                    }
+                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Campaign Date', $dateRange, '', '', '','');
                 }
 
                 if ($tenantName != '') {

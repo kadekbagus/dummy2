@@ -205,14 +205,11 @@ class CampaignReportAPIController extends ControllerAPI
                                                 SELECT
                                                     och.campaign_id,
                                                     och.campaign_history_action_id,
-                                                    ocha.action_name,
                                                     och.campaign_external_value,
                                                     om.name,
                                                     DATE_FORMAT(j_on.end_date, '%Y-%m-%d') AS end_date,
                                                     DATE_FORMAT(och.created_at, '%Y-%m-%d %H:00:00') AS history_created_date
                                                 FROM {$tablePrefix}campaign_histories och
-                                                LEFT JOIN {$tablePrefix}campaign_history_actions ocha
-                                                ON och.campaign_history_action_id = ocha.campaign_history_action_id
                                                 LEFT JOIN {$tablePrefix}merchants om
                                                 ON om.merchant_id = och.campaign_external_value
                                                 LEFT JOIN {$tablePrefix}news j_on
@@ -225,9 +222,9 @@ class CampaignReportAPIController extends ControllerAPI
                                             ) as A
                                         group by campaign_id, campaign_external_value) as B
                                     WHERE (
-                                        case when action_name = 'delete_tenant'
+                                        case when campaign_history_action_id = {$this->quote($idDeleteTenant)}
                                         and DATE_FORMAT(CONVERT_TZ(history_created_date, '+00:00', {$this->quote($timezoneOffset)}), '%Y-%m-%d') < IF( DATE_FORMAT({$this->quote($now)}, '%Y-%m-%d') < end_date, DATE_FORMAT({$this->quote($now)}, '%Y-%m-%d'), end_date )
-                                        then action_name != 'delete_tenant' else true end
+                                        then campaign_history_action_id != {$this->quote($idDeleteTenant)} else true end
                                     )
                                     group by campaign_id
                                 ) AS lf_total_tenant
@@ -315,14 +312,11 @@ class CampaignReportAPIController extends ControllerAPI
                                                 SELECT
                                                     och.campaign_id,
                                                     och.campaign_history_action_id,
-                                                    ocha.action_name,
                                                     och.campaign_external_value,
                                                     om.name,
                                                     DATE_FORMAT(j_on.end_date, '%Y-%m-%d') AS end_date,
                                                     DATE_FORMAT(och.created_at, '%Y-%m-%d %H:00:00') AS history_created_date
                                                 FROM {$tablePrefix}campaign_histories och
-                                                LEFT JOIN {$tablePrefix}campaign_history_actions ocha
-                                                ON och.campaign_history_action_id = ocha.campaign_history_action_id
                                                 LEFT JOIN {$tablePrefix}merchants om
                                                 ON om.merchant_id = och.campaign_external_value
                                                 LEFT JOIN {$tablePrefix}news j_on
@@ -335,9 +329,9 @@ class CampaignReportAPIController extends ControllerAPI
                                             ) as A
                                         group by campaign_id, campaign_external_value) as B
                                     WHERE (
-                                        case when action_name = 'delete_tenant'
+                                        case when campaign_history_action_id = {$this->quote($idDeleteTenant)}
                                         and DATE_FORMAT(CONVERT_TZ(history_created_date, '+00:00', {$this->quote($timezoneOffset)}), '%Y-%m-%d') < IF( DATE_FORMAT({$this->quote($now)}, '%Y-%m-%d') < end_date, DATE_FORMAT({$this->quote($now)}, '%Y-%m-%d'), end_date )
-                                        then action_name != 'delete_tenant' else true end
+                                        then campaign_history_action_id != {$this->quote($idDeleteTenant)} else true end
                                     )
                                     group by campaign_id
                                 ) AS lf_total_tenant
@@ -426,14 +420,11 @@ class CampaignReportAPIController extends ControllerAPI
                                                 SELECT
                                                     och.campaign_id,
                                                     och.campaign_history_action_id,
-                                                    ocha.action_name,
                                                     och.campaign_external_value,
                                                     om.name,
                                                     DATE_FORMAT(j_on.end_date, '%Y-%m-%d') AS end_date,
                                                     DATE_FORMAT(och.created_at, '%Y-%m-%d %H:00:00') AS history_created_date
                                                 FROM {$tablePrefix}campaign_histories och
-                                                LEFT JOIN {$tablePrefix}campaign_history_actions ocha
-                                                ON och.campaign_history_action_id = ocha.campaign_history_action_id
                                                 LEFT JOIN {$tablePrefix}merchants om
                                                 ON om.merchant_id = och.campaign_external_value
                                                 LEFT JOIN {$tablePrefix}promotions j_on
@@ -446,9 +437,9 @@ class CampaignReportAPIController extends ControllerAPI
                                             ) as A
                                         group by campaign_id, campaign_external_value) as B
                                     WHERE (
-                                        case when action_name = 'delete_tenant'
+                                        case when campaign_history_action_id = {$this->quote($idDeleteTenant)}
                                         and DATE_FORMAT(CONVERT_TZ(history_created_date, '+00:00', {$this->quote($timezoneOffset)}), '%Y-%m-%d') < IF( DATE_FORMAT({$this->quote($now)}, '%Y-%m-%d') < end_date, DATE_FORMAT({$this->quote($now)}, '%Y-%m-%d'), end_date )
-                                        then action_name != 'delete_tenant' else true end
+                                        then campaign_history_action_id != {$this->quote($idDeleteTenant)} else true end
                                     )
                                     group by campaign_id
                                 ) AS lf_total_tenant
@@ -1356,7 +1347,6 @@ class CampaignReportAPIController extends ControllerAPI
                                 SELECT
                                     och.campaign_id,
                                     och.campaign_history_action_id,
-                                    ocha.action_name,
                                     och.campaign_external_value,
                                     om.name,
                                     DATE_FORMAT(och.created_at, '%Y-%m-%d %H:00:00') AS history_created_date
@@ -1377,9 +1367,9 @@ class CampaignReportAPIController extends ControllerAPI
                             ) as A
                         group by campaign_external_value) as B
                     WHERE (
-                        case when action_name = 'delete_tenant'
+                        case when campaign_history_action_id = {$this->quote($idDeleteTenant)}
                         and DATE_FORMAT(CONVERT_TZ(history_created_date, '+00:00', {$this->quote($timezoneOffset)}), '%Y-%m-%d') < IF( DATE_FORMAT({$this->quote($now)}, '%Y-%m-%d') < DATE_FORMAT({$this->quote($endDate)}, '%Y-%m-%d'), DATE_FORMAT({$this->quote($now)}, '%Y-%m-%d'), DATE_FORMAT({$this->quote($endDate)}, '%Y-%m-%d') )
-                        then action_name != 'delete_tenant' else true end
+                        then campaign_history_action_id != {$this->quote($idDeleteTenant)} else true end
                     )
                      ORDER by name asc
                 "));
@@ -1585,9 +1575,9 @@ class CampaignReportAPIController extends ControllerAPI
                             ) as A
                         group by campaign_external_value) as B
                     WHERE (
-                        case when action_name = 'delete_tenant'
+                        case when campaign_history_action_id = {$this->quote($idDeleteTenant)}
                         and DATE_FORMAT(CONVERT_TZ(history_created_date, '+00:00', {$this->quote($timezoneOffset)}), '%Y-%m-%d') < {$this->quote($campaign_date)}
-                        then action_name != 'delete_tenant' else true end
+                        then campaign_history_action_id != {$this->quote($idDeleteTenant)} else true end
                     )
                      ORDER by name asc
                 "));
