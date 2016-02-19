@@ -36,3 +36,9 @@ Route::group(['before' => 'orbit-settings'], function() {
     Route::post('/app/v1/agreement', ['as' => 'post-app-agreement', 'uses' => 'IntermediateLoginController@Setting_postUpdateAgreement']);
 
 });
+
+
+/**
+ * get mobile ci signin language
+ */
+Route::get('/app/v1/mobile-ci-sign-in-language/search', 'IntermediateAuthController@Setting_getMobileCiSigninLanguage');
