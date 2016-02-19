@@ -100,6 +100,10 @@ class CampaignReportPrinterController extends DataPrinterController
                 if ( is_array($campaignType) && count($campaignType) > 0) {
                     $campaignTypeString = '';
                     foreach ($campaignType as $key => $valCampaignType){
+                        // Change singular to plural, because in DB campaign_type is singular
+                        if ($valCampaignType !== 'news') {
+                            $valCampaignType =  $valCampaignType . 's';
+                        }
                         $campaignTypeString .= $valCampaignType . ', ';
                     }
                     printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Campaign Type', htmlentities(rtrim($campaignTypeString, ', ')), '', '', '','');
