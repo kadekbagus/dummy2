@@ -765,8 +765,8 @@ class MallAPIController extends ControllerAPI
                     $malls->addSelect('media.path as mall_image');
                     $malls->leftJoin('media', function($join) {
                         $join->on('media.object_id', '=', 'merchants.merchant_id')
-                            ->where('media.media_name_id', '=', 'retailer_background')
-                            ->where('media.media_name_long', '=', 'retailer_background_orig')
+                            ->where('media.media_name_id', '=', 'mall_logo')
+                            ->where('media.media_name_long', '=', 'mall_logo_orig')
                             ->where('media.object_name', '=', 'mall');
                     });
                 }
