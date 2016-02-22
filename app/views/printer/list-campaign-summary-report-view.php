@@ -117,38 +117,50 @@
             <td><strong></strong></td>
         </tr>
         <tr>
-            <td>Number of campaigns</td>
+            <td>Number of Campaigns</td>
             <td>:</td>
             <td><strong><?php echo number_format($totalRecord, 0); ?></strong></td>
         </tr>
         <tr>
-            <td>Total page views</td>
+            <td>Total Page Views</td>
             <td>:</td>
             <td><strong><?php echo number_format($totalPageViews, 0); ?></strong></td>
         </tr>
         <tr>
-            <td>Total pop up views</td>
+            <td>Total Pop Up Views</td>
             <td>:</td>
             <td><strong><?php echo number_format($totalPopUpViews, 0); ?></strong></td>
         </tr>
         <tr>
-            <td>Estimated total cost (IDR)</td>
+            <td>Estimated Total Cost (IDR)</td>
             <td>:</td>
             <td><strong><?php echo number_format($totalEstimatedCost, 0); ?></strong></td>
         </tr>
         <tr>
-            <td>Total spending (IDR)</td>
+            <td>Total Spending (IDR)</td>
             <td>:</td>
             <td><strong><?php echo number_format($totalSpending, 0); ?></strong></td>
         </tr>
 
 
         <!-- Filtering -->
-        <?php if($startDate != '' && $endDate != ''){ ?>
+        <?php if ($startDate != '' && $endDate != ''){ ?>
             <tr>
-                <td>Campaign date</td>
+                <td>Campaign Date</td>
                 <td>:</td>
-                <td><strong><?php echo $this->printDateTime($startDate, $timezone, 'd M Y') . ' - ' . $this->printDateTime($endDate, $timezone, 'd M Y'); ?></strong></td>
+                <td>
+                    <?php
+                        if ($startDate != '' && $endDate != ''){
+                            $startDateRangeMallTime = $this->printDateTime($startDate, $timezone, 'd M Y');
+                            $endDateRangeMallTime = $this->printDateTime($endDate, $timezone, 'd M Y');
+                            $dateRange = $startDateRangeMallTime . ' - ' . $endDateRangeMallTime;
+                            if ($startDateRangeMallTime === $endDateRangeMallTime) {
+                                $dateRange = $startDateRangeMallTime;
+                            }
+                        }
+                    ?>
+                    <strong><?php echo $dateRange; ?></strong>
+                </td>
             </tr>
         <?php } ?>
 
@@ -158,29 +170,61 @@
                 <td>:</td>
                 <td><strong><?php echo htmlentities($campaignName); ?></strong></td>
             </tr>
-        <?php } elseif($campaignType != '') { ?>
+        <?php } ?>
+
+        <?php if (is_array($campaignType) && count($campaignType) > 0) { ?>
             <tr>
                 <td>Filter by Campaign Type</td>
                 <td>:</td>
-                <td><strong><?php echo htmlentities($campaignType); ?></strong></td>
+                <td>
+                    <strong>
+                        <?php
+                            $campaignTypeString = '';
+                            foreach ($campaignType as $key => $valCampaignType){
+                                // Change singular to plural, because in DB campaign_type is singular
+                                if ($valCampaignType !== 'news') {
+                                    $valCampaignType =  $valCampaignType . 's';
+                                }
+                                $campaignTypeString .= $valCampaignType . ', ';
+                            }
+                            echo htmlentities(rtrim($campaignTypeString, ', '));
+                        ?>
+                    </strong>
+                </td>
             </tr>
-        <?php } elseif($tenant != '') { ?>
+        <?php } ?>
+
+        <?php if ($tenantName != '') { ?>
             <tr>
                 <td>Filter by Tenant</td>
                 <td>:</td>
-                <td><strong><?php echo htmlentities($tenant); ?></strong></td>
+                <td><strong><?php echo htmlentities($tenantName); ?></strong></td>
             </tr>
-        <?php } elseif($mallName != '') { ?>
+        <?php } ?>
+
+        <?php if ($mallName != '') { ?>
             <tr>
                 <td>Filter by Mall</td>
                 <td>:</td>
                 <td><strong><?php echo htmlentities($mallName); ?></strong></td>
             </tr>
-        <?php } elseif($status != '') { ?>
+        <?php } ?>
+
+        <?php if ($status != '') { ?>
             <tr>
                 <td>Filter by Status</td>
                 <td>:</td>
-                <td><strong><?php echo htmlentities($status); ?></strong></td>
+                <td>
+                    <strong>
+                        <?php
+                            $statusString = '';
+                            foreach ($status as $key => $valstatus){
+                                $statusString .= $valstatus . ', ';
+                            }
+                            echo htmlentities(rtrim($statusString, ', '));
+                        ?>
+                    </strong>
+                </td>
             </tr>
         <?php } ?>
 

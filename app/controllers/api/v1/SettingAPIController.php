@@ -440,6 +440,65 @@ class SettingAPIController extends ControllerAPI
                 $mall->media_background = $response->data;
             });
 
+            OrbitInput::post('backgrounds', function($files_string) use ($mall, $user, &$backgroundSetting) {
+                if (empty(trim($files_string))) {
+                    $_POST['merchant_id'] = $mall->merchant_id;
+
+                    // This will be used on UploadAPIController
+                    App::instance('orbit.upload.user', $user);
+
+                    $response = UploadAPIController::create('raw')
+                                                   ->setCalledFrom('mall.update')
+                                                   ->postDeleteMallBackground();
+
+                    if ($response->code !== 0)
+                    {
+                        throw new \Exception($response->message, $response->code);
+                    }
+
+                    $mall->setRelation('mediaBackground', $response->data);
+                    $mall->media_background = $response->data;
+                }
+            });
+
+            OrbitInput::files('logo', function($files) use ($mall, $user) {
+                $_POST['merchant_id'] = $mall->merchant_id;
+
+                // This will be used on UploadAPIController
+                App::instance('orbit.upload.user', $user);
+
+                $response = UploadAPIController::create('raw')
+                                               ->setCalledFrom('mall.update')
+                                               ->postUploadMallLogo();
+
+                if ($response->code !== 0)
+                {
+                    throw new \Exception($response->message, $response->code);
+                }
+
+                $mall->load('mediaLogo');
+            });
+
+            OrbitInput::post('logo', function($files_string) use ($mall, $user) {
+                if (empty(trim($files_string))) {
+                    $_POST['merchant_id'] = $mall->merchant_id;
+
+                    // This will be used on UploadAPIController
+                    App::instance('orbit.upload.user', $user);
+
+                    $response = UploadAPIController::create('raw')
+                                                   ->setCalledFrom('mall.update')
+                                                   ->postDeleteMallLogo();
+
+                    if ($response->code !== 0)
+                    {
+                        throw new \Exception($response->message, $response->code);
+                    }
+
+                    $mall->load('mediaLogo');
+                }
+            });
+
             OrbitInput::post('start_button', function($label) use (&$startButtonSetting, $mall, $user) {
                 // Start button label setting
                 if (is_null($startButtonSetting)) {
@@ -1195,6 +1254,74 @@ class SettingAPIController extends ControllerAPI
 
     }
 
+
+    /**
+     * GET - Mobile CI Signin Language
+     *
+     * @author <kadek> <kadek@dominopos.com>
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function getMobileCiSigninLanguage()
+    {
+        try {
+            $httpCode=200;
+
+            Event::fire('orbit.setting.getmobilecisigninlanguage.before.auth', array($this));
+
+            // Require authentication
+            $this->checkAuth();
+
+            Event::fire('orbit.setting.getmobilecisigninlanguage.after.auth', array($this));
+
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user = $this->api->user;
+            Event::fire('orbit.setting.getmobilecisigninlanguage.before.authz', array($this, $user));
+
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = $this->settingViewRoles;
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            $langs = array();
+            App::setLocale('en');
+            $langs['en'] = Lang::get('mobileci.signin');
+            App::setLocale('ja');
+            $langs['ja'] = Lang::get('mobileci.signin');
+            App::setLocale('zh');
+            $langs['zh'] = Lang::get('mobileci.signin');
+            App::setLocale('en');
+
+            $this->response->data = $langs;
+
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.setting.getmobilecisigninlanguage.access.forbidden', array($this, $e));
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.setting.getmobilecisigninlanguage.invalid.arguments', array($this, $e));
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        }  catch (Exception $e) {
+            Event::fire('orbit.setting.getmobilecisigninlanguage.general.exception', array($this, $e));
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+        }
+        return $this->render($httpCode);
+    }
+
     protected function registerCustomValidation()
     {
         // Check the existance of id_language_default
@@ -1223,9 +1350,7 @@ class SettingAPIController extends ControllerAPI
             return $valid;
         });
 
-        // @Todo: Refactor by adding allowedForUser for mall
-        $user = $this->api->user;
-        Validator::extend('orbit.empty.mall', function ($attribute, $value, $parameters) use ($user) {
+        Validator::extend('orbit.empty.mall', function ($attribute, $value, $parameters) {
             $merchant = Mall::excludeDeleted()
                         ->where('merchant_id', $value)
                         ->first();
@@ -1234,13 +1359,12 @@ class SettingAPIController extends ControllerAPI
                 return FALSE;
             }
 
-            App::instance('orbit.empty.tenant', $merchant);
+            App::instance('orbit.empty.mall', $merchant);
 
             return TRUE;
         });
 
-
-        // $user = $this->api->user;
+        $user = $this->api->user;
         Validator::extend('orbit.empty.merchant', function ($attribute, $value, $parameters) use ($user) {
             $merchant = Mall::excludeDeleted()
                 /* ->allowedForUser($user) */

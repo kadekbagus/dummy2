@@ -3609,7 +3609,6 @@ class DashboardAPIController extends ControllerAPI
             $sort_by = OrbitInput::get('sortby');
 
             $configMallId = OrbitInput::get('merchant_id', OrbitInput::get('mall_id'));
-
             $this->registerCustomValidation();
 
             $validator = Validator::make(
@@ -3657,6 +3656,8 @@ class DashboardAPIController extends ControllerAPI
             $now = date('Y-m-d H:i:s');
             $prefix = DB::getTablePrefix();
             $take_top = OrbitInput::get('take_top');
+            $start_date = OrbitInput::get('start_date', date('Y-m-d 00:00:00'));
+            $end_date = OrbitInput::get('end_date', date('Y-m-d 23:59:59'));
 
             if (empty($take_top)) {
                 $take_top = 0;
@@ -3667,18 +3668,26 @@ class DashboardAPIController extends ControllerAPI
                     'promotions.promotion_name',
                     'issued_coupons.issued_coupon_id',
                     DB::raw("sum(case
-                        when {$prefix}issued_coupons.status in ('active', 'redeemed') then 1
+                        when {$prefix}issued_coupons.status in ('active') then 1
                         else 0
                         end) as total_issued"),
                     DB::raw("sum(case
                         when {$prefix}issued_coupons.status in ('redeemed') then 1
                         else 0
-                        end) as total_redeemed"),
-                    'issued_coupons.issued_date',
-                    'issued_coupons.redeemed_date'
+                        end) as total_redeemed")
                 )
                 ->join('issued_coupons','issued_coupons.promotion_id','=','promotions.promotion_id')
                 ->where('promotions.merchant_id','=',$configMallId)
+                ->where(function($q) use ($start_date, $end_date) {
+                        $q->where(function($q2) use ($start_date, $end_date) {
+                            $q2->where('issued_date', '>=', $start_date);
+                            $q2->where('issued_date', '<=', $end_date);
+                        });
+                        $q->orWhere(function($q3) use ($start_date, $end_date) {
+                            $q3->Where('redeemed_date', '>=', $start_date);
+                            $q3->Where('redeemed_date', '<=', $end_date);
+                        });
+                })
                 ->groupBy('promotions.promotion_name');
 
             // Filter by Promotion Name
@@ -3691,26 +3700,6 @@ class DashboardAPIController extends ControllerAPI
                 $coupons->where('retailer_name', 'like', "%$name%");
             });
 
-            // Filter by date
-            // Less Than Equals
-            OrbitInput::get('start_date', function($date) use ($coupons) {
-                $coupons->where('issued_date', '>=', $date);
-            });
-
-            // Greater Than Equals
-            OrbitInput::get('end_date', function($date) use ($coupons) {
-                $coupons->where('issued_date', '<=', $date);
-            });
-
-            // Less Than Equals
-            OrbitInput::get('start_date', function($date) use ($coupons) {
-                $coupons->orWhere('redeemed_date', '>=', $date);
-            });
-
-            // Greater Than Equals
-            OrbitInput::get('end_date', function($date) use ($coupons) {
-                $coupons->orWhere('redeemed_date', '<=', $date);
-            });
             // Clone the query builder which still does not include the take,
             // skip, and order by
             $_coupons = clone $coupons;

@@ -327,7 +327,7 @@ class NewsAPIController extends ControllerAPI
             Event::fire('orbit.news.postnewnews.after.save', array($this, $newnews));
 
             //save campaign price
-            $campaignbaseprice = CampaignBasePrices::where('merchant_id', '=', $newnews->mall_id)
+            $campaignbaseprice = CampaignBasePrice::where('merchant_id', '=', $newnews->mall_id)
                                             ->where('campaign_type', '=', $object_type)
                                             ->first();
 
@@ -350,8 +350,8 @@ class NewsAPIController extends ControllerAPI
             if ($status === 'inactive') {
                 $actionstatus = 'deactivate';
             }
-            $activeid = CampaignHistoryActions::getIdFromAction($actionstatus);
-            $addtenantid = CampaignHistoryActions::getIdFromAction('add_tenant');
+            $activeid = CampaignHistoryAction::getIdFromAction($actionstatus);
+            $addtenantid = CampaignHistoryAction::getIdFromAction('add_tenant');
 
             // campaign history status
             $campaignhistory = new CampaignHistory();
@@ -923,7 +923,7 @@ class NewsAPIController extends ControllerAPI
                 $deactivate = substr($enddatedb, 0, 10) . " " . '23:59:59';
                 $utcenddatedb = Carbon::createFromFormat('Y-m-d H:i:s', $deactivate, $mall->timezone->timezone_name);
                 $utcenddatedb->setTimezone('UTC');
-                $activeid = CampaignHistoryActions::getIdFromAction($actionstatus);
+                $activeid = CampaignHistoryAction::getIdFromAction($actionstatus);
                 $rowcost = CampaignHistory::getRowCost($news_id, $status, $actionhistory, $now, FALSE)->first();
                 // campaign history status
                 if (! empty($rowcost)) {
@@ -943,7 +943,7 @@ class NewsAPIController extends ControllerAPI
                 if ($status === 'inactive') {
                     $actionstatus = 'deactivate';
                 }
-                $activeid = CampaignHistoryActions::getIdFromAction($actionstatus);
+                $activeid = CampaignHistoryAction::getIdFromAction($actionstatus);
                 $rowcost = CampaignHistory::getRowCost($news_id, $status, $actionhistory, $now, FALSE)->first();
                 // campaign history status
                 if (! empty($rowcost)) {
@@ -963,7 +963,7 @@ class NewsAPIController extends ControllerAPI
                 if ($status === 'inactive') {
                     $actionstatus = 'deactivate';
                 }
-                $activeid = CampaignHistoryActions::getIdFromAction($actionstatus);
+                $activeid = CampaignHistoryAction::getIdFromAction($actionstatus);
                 $rowcost = CampaignHistory::getRowCost($news_id, $status, $actionhistory, $now, FALSE)->first();
                 // campaign history status
                 if (! empty($rowcost)) {
@@ -986,7 +986,7 @@ class NewsAPIController extends ControllerAPI
                     if ($statusdb === 'inactive') {
                         $actionstatus = 'deactivate';
                     }
-                    $activeid = CampaignHistoryActions::getIdFromAction($actionstatus);
+                    $activeid = CampaignHistoryAction::getIdFromAction($actionstatus);
                     $rowcost = CampaignHistory::getRowCost($news_id, $status, $actionhistory, $now, FALSE)->first();
                     // campaign history status
                     if (! empty($rowcost)) {
@@ -1008,7 +1008,7 @@ class NewsAPIController extends ControllerAPI
             $addtenant = array_diff($retailernew, $merchantdb);
             if (! empty($removetenant)) {
                 $actionhistory = 'delete';
-                $addtenantid = CampaignHistoryActions::getIdFromAction('delete_tenant');
+                $addtenantid = CampaignHistoryAction::getIdFromAction('delete_tenant');
                 //save campaign histories (tenant)
                 foreach ($removetenant as $retailer_id) {
                     // insert tenant/merchant to campaign history
@@ -1032,7 +1032,7 @@ class NewsAPIController extends ControllerAPI
             } 
             if (! empty($addtenant)) {
                 $actionhistory = 'add';
-                $addtenantid = CampaignHistoryActions::getIdFromAction('add_tenant');
+                $addtenantid = CampaignHistoryAction::getIdFromAction('add_tenant');
                 //save campaign histories (tenant)
                 foreach ($addtenant as $retailer_id) {
                     // insert tenant/merchant to campaign history
@@ -1535,7 +1535,11 @@ class NewsAPIController extends ControllerAPI
             // Filter news by matching news name pattern
             OrbitInput::get('news_name_like', function($newsname) use ($news)
             {
-                $news->where('news.news_name', 'like', "%$newsname%");
+                $news->leftJoin('news_translations', 'news_translations.news_id', '=', 'news.news_id')
+                    ->leftJoin('merchant_languages', 'merchant_languages.merchant_language_id', '=', 'news_translations.merchant_language_id')
+                    ->leftJoin('languages', 'languages.language_id', '=', 'merchant_languages.language_id')
+                    ->where('news_translations.news_name', 'like', "%$newsname%")
+                    ->where('languages.name', '=', 'en');
             });
 
             // Filter news by object type
@@ -1591,12 +1595,20 @@ class NewsAPIController extends ControllerAPI
             });
 
             // Filter news by estimated total cost
+            OrbitInput::get('etc_from', function ($etcfrom) use ($news) {
+                $etcto = OrbitInput::get('etc_to');
+                if (empty($etcto)) {
+                    $news->havingRaw('estimated >= ' . floatval(str_replace(',', '', $etcfrom)));
+                }
+            });
+
+            // Filter news by estimated total cost
             OrbitInput::get('etc_to', function ($etcto) use ($news) {
                 $etcfrom = OrbitInput::get('etc_from');
                 if (empty($etcfrom)) {
                     $etcfrom = 0;
                 }
-                $news->havingRaw('estimated between ' . $etcfrom . ' and '. $etcto);
+                $news->havingRaw('estimated between ' . floatval(str_replace(',', '', $etcfrom)) . ' and '. floatval(str_replace(',', '', $etcto)));
             });
 
             // Add new relation based on request

@@ -22,6 +22,7 @@ class MallGroupPrinterController extends DataPrinterController
         $user = $this->loggedUser;
 
         $current_mall = OrbitInput::get('current_mall');
+        $current_date_and_time = OrbitInput::get('currentDateAndTime');
 
         $timezone = $this->getTimeZone($current_mall);
 
@@ -47,11 +48,19 @@ class MallGroupPrinterController extends DataPrinterController
         $statement->execute($binds);
 
         $pageTitle = 'Mall Group List';
+
+        // the frontend send the current date and time, because admin doesn't have timezone
+        if ( !empty($current_date_and_time) ) {
+            $filename = $this->getFilename(preg_replace("/[\s_]/", "-", $pageTitle), '.csv', $current_date_and_time);
+        } else {
+            $filename = OrbitText::exportFilename(preg_replace("/[\s_]/", "-", $pageTitle), '.csv', $timezone);
+        }
+
         switch ($mode) {
             case 'csv':
                 @header('Content-Description: File Transfer');
                 @header('Content-Type: text/csv');
-                @header('Content-Disposition: attachment; filename=' . OrbitText::exportFilename($pageTitle, '.csv', $timezone));
+                @header('Content-Disposition: attachment; filename=' . $filename );
 
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','','');
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Mall Group List', '', '', '', '', '','','','','');
@@ -68,10 +77,10 @@ class MallGroupPrinterController extends DataPrinterController
                     printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
                         '', $this->printUtf8($row->name), 
                             $this->printLocation($row), 
-                            $this->printDateTime($row->start_date_activity, 'UTC', 'Y-m-d H:i:s'),
-                            $this->printDateTime($row->end_date_activity, 'UTC', 'Y-m-d H:i:s'),
+                            $this->printDateTime($row->start_date_activity, $timezone, 'd F Y'),
+                            $this->printDateTime($row->end_date_activity, $timezone, 'd F Y'),
                             $row->total_mall,
-                            $this->printUtf8($row->mall_name),
+                            $this->printUtf8($row->malls),
                             $row->status
                        );
 
@@ -196,4 +205,12 @@ class MallGroupPrinterController extends DataPrinterController
         return utf8_encode($row->city.", ".$row->country);
     }
 
+
+    public function getFilename($pageTitle, $ext = ".csv", $current_date_and_time=null)
+    {
+        if (empty($current_date_and_time)) {
+            $current_date_and_time = Carbon::now();
+        }
+        return 'orbit-export-' . $pageTitle . '-' . Carbon::createFromFormat('Y-m-d H:i:s', $current_date_and_time)->format('D_d_M_Y_Hi') . $ext;
+    }
 }

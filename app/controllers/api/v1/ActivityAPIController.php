@@ -19,6 +19,7 @@ class ActivityAPIController extends ControllerAPI
 
     protected $newsViewRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee'];
     protected $newsModifiyRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee'];
+    protected $returnBuilder = false;
 
     /**
      * GET - List of Activities history
@@ -2600,7 +2601,9 @@ class ActivityAPIController extends ControllerAPI
                     left join (
                         select DATE_FORMAT(login_at, '%Y-%m-%d') `dt`,
                         ROUND(AVG(IFNULL(timestampdiff(minute, login_at, logout_at), 15))) connect_time
-                        from {$tablePrefix}connection_times GROUP BY 1
+                        from {$tablePrefix}connection_times
+                        WHERE location_id = {$quote($current_mall)}
+                        GROUP BY 1
                     ) ct on `tmp`.`date` = `ct`.`dt`
                 ") );
 
@@ -2926,6 +2929,7 @@ class ActivityAPIController extends ControllerAPI
      * GET - CRM summary report
      *
      * @author kadek <kadek@dominopos.com>
+     * @author Qosdil A. <qosdil@dominopos.com>
      *
      * List Of Parameters
      * ------------------
@@ -3092,11 +3096,20 @@ class ActivityAPIController extends ControllerAPI
 
             // e.g. 'Email sign up'
             if ($activityGroupSearch) {
-                $key = ucwords($activityGroupSearch);
-                $column = Config::get('orbit.activity_columns.'.$key);
+                $activityColumns = Config::get('orbit.activity_columns');
+                
+                $activityColumnsKeys = array_keys($activityColumns);
 
-                if ($column) {
-                    $columns = array_merge($columns, [$key => $column]);
+                $lowerActivityColumns = array_change_key_case($activityColumns, CASE_LOWER);
+                $lowerActivityGroupSearch = strtolower($activityGroupSearch);
+                
+                // Compare them after being lowered
+                $columnKey = array_search($lowerActivityGroupSearch, array_keys($lowerActivityColumns));
+
+                // Column found
+                if ($columnKey !== false) {
+                    $key = $activityColumnsKeys[$columnKey];
+                    $columns = array_merge($columns, [$key => $activityColumns[$key]]);
                 }
             }
 
@@ -3114,7 +3127,7 @@ class ActivityAPIController extends ControllerAPI
 
                         $date = [];
                         $date['name'] = $y->activity_name_long;
-                        $date['count'] = number_format($y->count, 0,'.','.');
+                        $date['count'] = ($this->returnBuilder) ? $y->count : number_format($y->count, 0,'.','.');
 
                         $responses[$value][] = $date;
                     }
@@ -3135,6 +3148,10 @@ class ActivityAPIController extends ControllerAPI
 
             foreach ($dateRange2 as $x => $y) {
                 $responses[$dateRange2[$x]] = array();
+            }
+
+            if ($this->returnBuilder) {
+                return compact('columns', 'responses');
             }
 
             ksort($responses);
@@ -3292,6 +3309,13 @@ class ActivityAPIController extends ControllerAPI
             $age -= 1;
         }
         return $age;
+    }
+
+    public function setReturnBuilder($bool)
+    {
+        $this->returnBuilder = $bool;
+
+        return $this;
     }
 
     public function setReturnQuery($bool) {

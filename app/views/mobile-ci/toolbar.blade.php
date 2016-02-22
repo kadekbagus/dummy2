@@ -12,11 +12,14 @@
             </ul>
         </div>
         <div class="col-xs-8 text-center">
+        @if (!empty($retailer->logo))
             <img class="img-responsive toolbar-header-logo img-center" src="{{asset($retailer->logo)}}" />
+        @endif
         </div>
     </div>
     @if(!is_null($page_title))
     <div class="header-location-banner">
+        @if(Input::get('keyword') === null)
         <span>
             @if(is_null($page_title))
             {{ 'ORBIT' }}
@@ -28,6 +31,31 @@
                 @endif
             @endif
         </span>
+        @else
+        <div class="col-xs-6">
+            <span>
+                @if(is_null($page_title))
+                {{ 'ORBIT' }}
+                @else
+                    @if(mb_strlen($page_title) >= 30)
+                    {{ substr($page_title, 0, 30) . '...' }}
+                    @else
+                    {{ $page_title }}
+                    @endif
+                @endif
+            </span>
+        </div>
+        <div class="col-xs-6 text-right">
+            <div class="col-xs-10 text-right search-keyword search-text">
+                <span>
+                    All search results "{{{Input::get('keyword')}}}"
+                </span>
+            </div>
+            <div class="col-xs-2 text-right search-keyword">
+                <a href="{{Request::url()}}"><i class="fa fa-close"></i></a>
+            </div>
+        </div>
+        @endif
     </div>
     @endif
     @yield('tenant_tab')

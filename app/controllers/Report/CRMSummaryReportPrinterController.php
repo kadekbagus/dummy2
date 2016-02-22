@@ -27,6 +27,8 @@ class CRMSummaryReportPrinterController extends DataPrinterController
         $start_date = OrbitInput::get('start_date');
         $end_date = OrbitInput::get('end_date');
 
+        $builder = \ActivityAPIController::create('raw')->setReturnBuilder(true)->getCRMSummaryReport();
+
         // check if the days is more than 7 or not
         $_startDate = strtotime($start_date);
         $_endDate = strtotime($end_date);
@@ -55,6 +57,8 @@ class CRMSummaryReportPrinterController extends DataPrinterController
 
         $dateRange = [];
         $responses = [];
+        $records = [];
+        $columns = [];
 
         foreach ($_dateRange as $date) {
             $dateRange[] = $date->format("Y-m-d");
@@ -62,55 +66,12 @@ class CRMSummaryReportPrinterController extends DataPrinterController
 
 
         if (!$flag_7days) {
-
-            $activities = DB::select("
-                select date_format(convert_tz(created_at, '+00:00', ?), '%Y-%m-%d') activity_date, activity_name_long, count(activity_id) as `count`
-                from {$tablePrefix}activities
-                -- filter by date
-                where (`group` = 'mobile-ci'
-                    or (`group` = 'portal' and activity_type in ('activation','create'))
-                    or (`group` = 'cs-portal' and activity_type in ('registration')))
-                    and response_status = 'OK' and location_id = ?
-                    and created_at between ? and ?
-                group by 1, 2;
-            ", array($timezoneOffset, $current_mall, $start_date, $end_date));
-
-
-            foreach ($dateRange as $key => $value) {
-
-                foreach ($activities as $x => $y) {
-                    if ($y->activity_date === $value) {
-
-                        $date = [];
-                        $date['name'] = $y->activity_name_long;
-                        $date['count'] = $y->count;
-
-                        $responses[$value][] = $date;
-                    }
-                }
-            }
-
-            // if there is date that have no data
-            $dateRange2 = $dateRange;
-
-            foreach ($responses as $a => $b) {
-                $length = count($dateRange);
-                for ($i = 0; $i < $length; $i++) {
-                    if ($a === $dateRange[$i]) {
-                        unset($dateRange2[$i]);
-                    }
-                }
-            }
-
-            foreach ($dateRange2 as $x => $y) {
-                $responses[$dateRange2[$x]] = array();
-            }
-
+            $responses = $builder['responses'];
         }
 
-        $activity_columns = Config::get('orbit.activity_columns');
+        $activity_columns = $builder['columns'];
 
-        if (count($activity_columns) > 1) {
+        if (count($activity_columns) > 0) {
             $columns = [];
 
             $i = 0;

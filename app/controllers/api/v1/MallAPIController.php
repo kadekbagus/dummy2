@@ -105,7 +105,7 @@ class MallAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $email = OrbitInput::post('email');
-            $name = OrbitInput::post('name');
+            $name = trim(OrbitInput::post('name'));
             $password = OrbitInput::post('password');
             $description = OrbitInput::post('description');
             $address_line1 = OrbitInput::post('address_line1');
@@ -146,23 +146,52 @@ class MallAPIController extends ControllerAPI
 
             $validator = Validator::make(
                 array(
-                    'email'    => $email,
-                    'name'     => $name,
-                    'status'   => $status,
-                    'country'  => $country,
-                    'url'      => $url,
-                    'password' => $password,
+                    'name'                     => $name,
+                    'email'                    => $email,
+                    'password'                 => $password,
+                    'address_line1'            => $address_line1,
+                    'city'                     => $city,
+                    'country'                  => $country,
+                    'phone'                    => $phone,
+                    'url'                      => $url,
+                    'contact_person_firstname' => $contact_person_firstname,
+                    'contact_person_lastname'  => $contact_person_lastname,
+                    'contact_person_phone'     => $contact_person_phone,
+                    'contact_person_email'     => $contact_person_email,
+                    'status'                   => $status,
+                    'parent_id'                => $parent_id,
+                    'start_date_activity'      => $start_date_activity,
+                    'end_date_activity'        => $end_date_activity,
                 ),
                 array(
-                    'email'         => 'required|email|orbit.exists.email',
-                    'name'          => 'required',
-                    'status'        => 'required|orbit.empty.mall_status',
-                    'country'       => 'required|orbit.empty.country',
-                    'url'           => 'orbit.formaterror.url.web',
-                    'password'      => 'required|min:6'
+                    'name'                     => 'required|orbit.exists.mall_name',
+                    'email'                    => 'required|email|orbit.exists.email',
+                    'password'                 => 'required|min:6',
+                    'address_line1'            => 'required',
+                    'city'                     => 'required',
+                    'country'                  => 'required|orbit.empty.country',
+                    'phone'                    => 'required',
+                    'url'                      => 'orbit.formaterror.url.web',
+                    'contact_person_firstname' => 'required',
+                    'contact_person_lastname'  => 'required',
+                    'contact_person_phone'     => 'required',
+                    'contact_person_email'     => 'required|email',
+                    'status'                   => 'required|orbit.empty.mall_status',
+                    'parent_id'                => 'orbit.empty.mallgroup',
+                    'start_date_activity'      => 'date_format:Y-m-d H:i:s',
+                    'end_date_activity'        => 'date_format:Y-m-d H:i:s'
                 ),
                 array(
-                    'name.required' => 'Mall name is required',
+                    'name.required'                     => 'Mall name is required',
+                    'orbit.exists.mall_name'            => 'Mall name already exists',
+                    'email.required'                    => 'The email address is required',
+                    'address_line1.required'            => 'The address is required',
+                    'phone.required'                    => 'The mall phone number is required',
+                    'contact_person_firstname.required' => 'The first name is required',
+                    'contact_person_lastname.required'  => 'The last name is required',
+                    'contact_person_phone.required'     => 'The phone number 1 is required',
+                    'contact_person_email.required'     => 'The email address is required',
+                    'orbit.empty.mall_status'           => 'Mall status you specified is not found',
                 )
             );
 
@@ -240,7 +269,11 @@ class MallAPIController extends ControllerAPI
             $newmall->contact_person_email = $contact_person_email;
             $newmall->sector_of_activity = $sector_of_activity;
             $newmall->object_type = $object_type;
-            $newmall->parent_id = $parent_id;
+            if (empty($parent_id)) {
+                $newmall->parent_id = null;
+            } else {
+                $newmall->parent_id = $parent_id;
+            }
             $newmall->url = $url;
             $newmall->masterbox_number = $masterbox_number;
             $newmall->slavebox_number = $slavebox_number;
@@ -444,7 +477,7 @@ class MallAPIController extends ControllerAPI
                     'sort_by' => $sort_by,
                 ),
                 array(
-                    'sort_by' => 'in:merchant_orid,registered_date,merchant_name,merchant_email,merchant_userid,merchant_description,merchantid,merchant_address1,merchant_address2,merchant_address3,merchant_cityid,merchant_city,merchant_countryid,merchant_country,merchant_phone,merchant_fax,merchant_status,merchant_currency,start_date_activity,total_retailer,mallgroup',
+                    'sort_by' => 'in:merchant_orid,registered_date,merchant_name,merchant_email,merchant_userid,merchant_description,merchantid,merchant_address1,merchant_address2,merchant_address3,merchant_cityid,merchant_city,merchant_countryid,merchant_country,merchant_phone,merchant_fax,merchant_status,merchant_currency,start_date_activity,end_date_activity,total_retailer,mallgroup',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.merchant_sortby'),
@@ -699,19 +732,29 @@ class MallAPIController extends ControllerAPI
 
             // Filter mall by location (city country)
             OrbitInput::get('location', function($data) use ($malls, $prefix) {
-                $malls->where(DB::raw("CONCAT(COALESCE({$prefix}merchants.city, ''), ' ', COALESCE({$prefix}merchants.country, ''))"), 'like', "%$data%");
+                $check = strpos($data, ",");
+
+                if(! empty($check)) {
+                    $loc = explode(",", $data);
+                    $city = $loc[0];
+                    $country = substr($loc[1], 1);
+                    $malls->where('merchants.city', 'like', "%$city%");
+                    $malls->where('merchants.country', 'like', "%$country%");
+                } else {
+                    $malls->where(DB::raw("CONCAT(COALESCE({$prefix}merchants.city, ''), ' ', COALESCE({$prefix}merchants.country, ''))"), 'like', "%$data%");
+                }
             });
 
             // Filter user by first_visit date begin_date
-            OrbitInput::get('start_date_activity', function($begindate) use ($malls)
+            OrbitInput::get('start_date_activity_from', function($begindate) use ($malls)
             {
                 $malls->where('merchants.start_date_activity', '>=', $begindate);
             });
 
             // Filter user by first visit date end_date
-            OrbitInput::get('end_date_activity', function($enddate) use ($malls)
+            OrbitInput::get('start_date_activity_to', function($enddate) use ($malls)
             {
-                $malls->where('merchants.end_date_activity', '<=', $enddate);
+                $malls->where('merchants.start_date_activity', '<=', $enddate);
             });
 
             // Add new relation based on request
@@ -992,43 +1035,66 @@ class MallAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $merchant_id = OrbitInput::post('merchant_id');
-            // $user_id = OrbitInput::post('user_id');
+            $name = trim(OrbitInput::post('name'));
             $email = OrbitInput::post('email');
+            $password = OrbitInput::post('password');
+            $country = OrbitInput::post('country');
+            $url = OrbitInput::post('url');
+            $contact_person_email = OrbitInput::post('contact_person_email');
+            // $user_id = OrbitInput::post('user_id');
             $status = OrbitInput::post('status');
+            $parent_id = OrbitInput::post('parent_id');
             // $orid = OrbitInput::post('orid');
             $ticket_header = OrbitInput::post('ticket_header');
             $ticket_footer = OrbitInput::post('ticket_footer');
-            $url = OrbitInput::post('url');
-            $password = OrbitInput::post('password');
+            $start_date_activity = OrbitInput::post('start_date_activity');
+            $end_date_activity = OrbitInput::post('end_date_activity');
 
             $validator = Validator::make(
                 array(
-                    'merchant_id'   => $merchant_id,
-                    // 'user_id'    => $user_id,
-                    'email'         => $email,
-                    'status'        => $status,
-                    // 'orid'       => $orid,
-                    'ticket_header' => $ticket_header,
-                    'ticket_footer' => $ticket_footer,
-                    'url'           => $url,
-                    'password'      => $password,
+                    'merchant_id'          => $merchant_id,
+                    'name'                 => $name,
+                    'email'                => $email,
+                    'password'             => $password,
+                    'country'              => $country,
+                    'url'                  => $url,
+                    'contact_person_email' => $contact_person_email,
+                    // 'user_id'           => $user_id,
+                    'status'               => $status,
+                    'parent_id'            => $parent_id,
+                    // 'orid'              => $orid,
+                    'ticket_header'        => $ticket_header,
+                    'ticket_footer'        => $ticket_footer,
+                    'start_date_activity'  => $start_date_activity,
+                    'end_date_activity'    => $end_date_activity,
                 ),
                 array(
-                    'merchant_id'   => 'required|orbit.empty.mall',
-                    // 'user_id'    => 'orbit.empty.user',
-                    'email'         => 'email|email_exists_but_me',
-                    'status'        => 'orbit.empty.mall_status',//|orbit.exists.merchant_retailers_is_box_current_retailer:'.$merchant_id,
-                    // 'orid'       => 'orid_exists_but_me',
-                    'ticket_header' => 'ticket_header_max_length',
-                    'ticket_footer' => 'ticket_footer_max_length',
-                    'url'           => 'orbit.formaterror.url.web',
-                    'password'      => 'min:6'
+                    'merchant_id'          => 'required|orbit.empty.mall',
+                    'name'                 => 'mall_name_exists_but_me',
+                    'email'                => 'email|email_exists_but_me',
+                    'password'             => 'min:6',
+                    'country'              => 'orbit.empty.country',
+                    'url'                  => 'orbit.formaterror.url.web',
+                    'contact_person_email' => 'email',
+                    // 'user_id'           => 'orbit.empty.user',
+                    'status'               => 'orbit.empty.mall_status|orbit_check_link_mallgroup|orbit_check_link_campaign',//|orbit.exists.merchant_retailers_is_box_current_retailer:'.$merchant_id,
+                    'parent_id'            => 'orbit.empty.mallgroup',//|orbit.exists.merchant_retailers_is_box_current_retailer:'.$merchant_id,
+                    // 'orid'              => 'orid_exists_but_me',
+                    'ticket_header'        => 'ticket_header_max_length',
+                    'ticket_footer'        => 'ticket_footer_max_length',
+                    'start_date_activity'  => 'date_format:Y-m-d H:i:s',
+                    'end_date_activity'    => 'date_format:Y-m-d H:i:s'
                 ),
                 array(
-                   'email_exists_but_me'      => Lang::get('validation.orbit.exists.email'),
-                   // 'orid_exists_but_me'       => Lang::get('validation.orbit.exists.orid'),
-                   'ticket_header_max_length' => Lang::get('validation.orbit.formaterror.merchant.ticket_header.max_length'),
-                   'ticket_footer_max_length' => Lang::get('validation.orbit.formaterror.merchant.ticket_footer.max_length')
+                   'mall_name_exists_but_me'    => 'Mall name already exists',
+                   'email_exists_but_me'        => Lang::get('validation.orbit.exists.email'),
+                   'contact_person_email.email' => 'Email must be a valid email address',
+                   // 'orid_exists_but_me'      => Lang::get('validation.orbit.exists.orid'),
+                   'orbit.empty.mall_status'    => 'Mall status you specified is not found',
+                   'orbit_check_link_mallgroup' => 'Mall is not linked to active mall group',
+                   'orbit_check_link_campaign'  => 'Mall is linked to active campaign(s)',
+                   'ticket_header_max_length'   => Lang::get('validation.orbit.formaterror.merchant.ticket_header.max_length'),
+                   'ticket_footer_max_length'   => Lang::get('validation.orbit.formaterror.merchant.ticket_footer.max_length')
                )
             );
 
@@ -1132,11 +1198,19 @@ class MallAPIController extends ControllerAPI
             });
 
             OrbitInput::post('start_date_activity', function($start_date_activity) use ($updatedmall) {
-                $updatedmall->start_date_activity = $start_date_activity;
+                if (empty(trim($start_date_activity))) {
+                    $updatedmall->start_date_activity = NULL;
+                } else {
+                    $updatedmall->start_date_activity = $start_date_activity;
+                }
             });
 
             OrbitInput::post('end_date_activity', function($end_date_activity) use ($updatedmall) {
-                $updatedmall->end_date_activity = $end_date_activity;
+                if (empty(trim($end_date_activity))) {
+                    $updatedmall->end_date_activity = NULL;
+                } else {
+                    $updatedmall->end_date_activity = $end_date_activity;
+                }
             });
 
             OrbitInput::post('status', function($status) use ($updatedmall) {
@@ -1204,7 +1278,11 @@ class MallAPIController extends ControllerAPI
             });
 
             OrbitInput::post('parent_id', function($parent_id) use ($updatedmall) {
-                $updatedmall->parent_id = $parent_id;
+                if (empty(trim($parent_id))) {
+                    $updatedmall->parent_id = NULL;
+                } else {
+                    $updatedmall->parent_id = $parent_id;
+                }
             });
 
             OrbitInput::post('url', function($url) use ($updatedmall) {
@@ -1651,6 +1729,21 @@ class MallAPIController extends ControllerAPI
             return TRUE;
         });
 
+        // Check the existance of parent id
+        Validator::extend('orbit.empty.mallgroup', function ($attribute, $value, $parameters) {
+            $mallgroup = MallGroup::excludeDeleted()
+                        ->where('merchant_id', $value)
+                        ->first();
+
+            if (empty($mallgroup)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.empty.mallgroup', $mallgroup);
+
+            return TRUE;
+        });
+
         // Check user email address, it should not exists
         Validator::extend('orbit.exists.email', function ($attribute, $value, $parameters) {
             $mall = Mall::excludeDeleted()
@@ -1710,6 +1803,95 @@ class MallAPIController extends ControllerAPI
             }
 
             App::instance('orbit.validation.mall', $mall);
+
+            return TRUE;
+        });
+
+        // Check link mall group, it should active (for update)
+        Validator::extend('orbit_check_link_mallgroup', function ($attribute, $value, $parameters) {
+            $mallgroup_id = OrbitInput::post('parent_id');
+
+            if ($value === 'active') {
+                $mallgroup = MallGroup::excludeDeleted()
+                            ->where('merchant_id', '=', $mallgroup_id)
+                            ->where('status', '=', 'inactive')
+                            ->first();
+
+                if (! empty($mallgroup)) {
+                    return FALSE;
+                }
+            }
+            return TRUE;
+        });
+
+        // Check link campaign, it should not inactive (for update)
+        Validator::extend('orbit_check_link_campaign', function ($attribute, $value, $parameters) {
+            $mall_id = OrbitInput::post('merchant_id');
+
+            if ($value === 'inactive') {
+                $coupon = Coupon::excludeDeleted()
+                                ->where('merchant_id', '=', $mall_id)
+                                ->where('status', '=', 'active')
+                                ->first();
+
+                if (! empty($coupon)) {
+                    return FALSE;
+                }
+
+                $news = News::excludeDeleted()
+                            ->where('mall_id', '=', $mall_id)
+                            ->where('object_type', '=', 'news')
+                            ->where('status', '=', 'active')
+                            ->first();
+
+                if (! empty($news)) {
+                    return FALSE;
+                }
+
+                $promotion = News::excludeDeleted()
+                            ->where('mall_id', '=', $mall_id)
+                            ->where('object_type', '=', 'promotion')
+                            ->where('status', '=', 'active')
+                            ->first();
+
+                if (! empty($promotion)) {
+                    return FALSE;
+                }
+            }
+            return TRUE;
+        });
+
+        // Check mall name, it should not exists
+        Validator::extend('orbit.exists.mall_name', function ($attribute, $value, $parameters) {
+            $mall = Mall::excludeDeleted()
+                        ->where('name', $value)
+                        ->where('object_type', 'mall')
+                        ->first();
+
+            if (! empty($mall)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.validation.mall_name', $mall);
+
+            return TRUE;
+        });
+
+        // Check mall name, it should not exists (for update)
+        Validator::extend('mall_name_exists_but_me', function ($attribute, $value, $parameters) {
+            $mall_id = OrbitInput::post('merchant_id');
+
+            $mall = Mall::excludeDeleted()
+                        ->where('name', $value)
+                        ->where('merchant_id', '!=', $mall_id)
+                        ->where('object_type', 'mall')
+                        ->first();
+
+            if (! empty($mall)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.validation.mall_name', $mall);
 
             return TRUE;
         });
@@ -2045,7 +2227,7 @@ class MallAPIController extends ControllerAPI
             $this->registerCustomValidation();
             $merchant_id = OrbitInput::get('merchant_id', null);
 
-            $base_price = CampaignBasePrices::where('merchant_id', '=', $merchant_id);
+            $base_price = CampaignBasePrice::where('merchant_id', '=', $merchant_id);
 
             // Filter base price by campaign_type
             OrbitInput::get('campaign_type', function ($campaign_type) use ($base_price) {

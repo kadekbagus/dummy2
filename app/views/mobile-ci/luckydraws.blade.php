@@ -73,19 +73,27 @@
                     </div>
                 @endif
             @else
-				@if(! empty($data->custom_message))
-				<div class="row padded">
-				    <div class="col-xs-12">
-				        {{ $data->custom_message }}
-				    </div>
-				</div>
-				@else
-				<div class="row padded">
-				    <div class="col-xs-12">
-				        <h4>{{ Lang::get('mobileci.greetings.latest_luckydraw_coming_soon') }}</h4>
-				    </div>
-				</div>
-				@endif
+                @if(Input::get('keyword') === null)
+                    @if(! empty($data->custom_message))
+                    <div class="row padded">
+                        <div class="col-xs-12">
+                            {{ $data->custom_message }}
+                        </div>
+                    </div>
+                    @else
+                    <div class="row padded">
+                        <div class="col-xs-12">
+                            <h4>{{ Lang::get('mobileci.greetings.latest_luckydraw_coming_soon') }}</h4>
+                        </div>
+                    </div>
+                    @endif
+                @else
+                <div class="row padded">
+                    <div class="col-xs-12">
+                        <h4>{{ Lang::get('mobileci.search.no_result') }}</h4>
+                    </div>
+                </div>
+                @endif
             @endif
             </div>
         </div>

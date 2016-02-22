@@ -50,3 +50,12 @@ Route::post('/api/v1/agreement', ['as' => 'post-api-agreement', function()
 {
     return SettingAPIController::create()->postUpdateAgreement();
 }]);
+
+
+/**
+ * get mobile ci signin language
+ */
+Route::get('/api/v1/mobile-ci-sign-in-language/search', function()
+{
+    return SettingAPIController::create()->getMobileCiSigninLanguage();
+});
