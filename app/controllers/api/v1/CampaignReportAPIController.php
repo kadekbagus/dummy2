@@ -270,9 +270,7 @@ class CampaignReportAPIController extends ControllerAPI
                         DB::raw('tenant.t_campaign_id'), '=', 'news.news_id')
 
                         ->where('news.mall_id', '=', $current_mall)
-                        ->where('campaign_price.campaign_type', '=', 'news')
-                        ->where('news.object_type', '=', 'news')
-                        ;
+                        ->where('news.object_type', '=', 'news');
 
             $promotions = DB::table('news')->selectraw(DB::raw("{$tablePrefix}news.news_id AS campaign_id, news_name AS campaign_name, {$tablePrefix}news.object_type AS campaign_type,
                 IFNULL(total_tenant, 0) AS total_tenant, tenant_name,
@@ -377,9 +375,7 @@ class CampaignReportAPIController extends ControllerAPI
                         DB::raw('tenant.t_campaign_id'), '=', 'news.news_id')
 
                         ->where('news.mall_id', '=', $current_mall)
-                        ->where('campaign_price.campaign_type', '=', 'promotion')
-                        ->where('news.object_type', '=', 'promotion')
-                        ;
+                        ->where('news.object_type', '=', 'promotion');
 
 
             $coupons = DB::table('promotions')->selectraw(DB::raw("{$tablePrefix}promotions.promotion_id AS campaign_id, promotion_name AS campaign_name, IF(1=1,'coupon', '') AS campaign_type,
@@ -465,8 +461,8 @@ class CampaignReportAPIController extends ControllerAPI
                                                 FROM {$tablePrefix}campaign_histories och
                                                 LEFT JOIN {$tablePrefix}merchants om
                                                 ON om.merchant_id = och.campaign_external_value
-                                                LEFT JOIN {$tablePrefix}news j_on
-                                                ON j_on.news_id = och.campaign_id
+                                                LEFT JOIN {$tablePrefix}promotions j_on
+                                                ON j_on.promotion_id = och.campaign_id
                                                 WHERE
                                                     och.campaign_history_action_id IN ({$this->quote($idAddTenant)}, {$this->quote($idDeleteTenant)})
                                                     AND och.campaign_type = 'coupon'
@@ -483,10 +479,7 @@ class CampaignReportAPIController extends ControllerAPI
                             "),
                         // On
                         DB::raw('tenant.t_campaign_id'), '=', 'promotions.promotion_id')
-
-                        ->where('promotions.merchant_id', '=', $current_mall)
-                        ->where('campaign_price.campaign_type', '=', 'coupon')
-                        ;
+                        ->where('promotions.merchant_id', '=', $current_mall);
 
             $campaign = $news->unionAll($promotions)->unionAll($coupons);
 
