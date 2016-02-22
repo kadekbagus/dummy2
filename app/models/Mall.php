@@ -300,6 +300,28 @@ class Mall extends Eloquent
     }
 
     /**
+     * Merchant has many uploaded background.
+     *
+     * @author Irianto <irianto@dominopos.com>
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function mediaBackground()
+    {
+        return $this->media()->where('media_name_id', 'retailer_background');
+    }
+
+    /**
+     * Mall has many uploaded background.
+     *
+     * @author Irianto <irianto@dominopos.com>
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function mediaBackgroundOrig()
+    {
+        return $this->mediaOrig()->where('media_name_id', 'retailer_background');
+    }
+
+    /**
      * Merchant has one uploaded icon.
      *
      * @author Rio Astamal <me@rioastamal.net>
