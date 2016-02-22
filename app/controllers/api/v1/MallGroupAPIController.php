@@ -735,15 +735,15 @@ class MallGroupAPIController extends ControllerAPI
             });
 
             // Filter user by first_visit date begin_date
-            OrbitInput::get('start_date_activity', function($begindate) use ($mallgroups)
+            OrbitInput::get('start_date_activity_from', function($begindate) use ($mallgroups)
             {
                 $mallgroups->where('merchants.start_date_activity', '>=', $begindate);
             });
 
             // Filter user by first visit date end_date
-            OrbitInput::get('end_date_activity', function($enddate) use ($mallgroups)
+            OrbitInput::get('start_date_activity_to', function($enddate) use ($mallgroups)
             {
-                $mallgroups->where('merchants.end_date_activity', '<=', $enddate);
+                $mallgroups->where('merchants.start_date_activity', '<=', $enddate);
             });
 
             // Add new relation based on request
