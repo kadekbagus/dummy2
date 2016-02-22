@@ -6,6 +6,8 @@ return [
             'View Coupon List',
             'View Coupon Detail',
             'View Coupon Campaign Detail',
+            'View Coupon Redemption Places',
+            'View Coupon Tenant List',
             'Coupon Redemption Successful',
             'Coupon Issuance',
         ],

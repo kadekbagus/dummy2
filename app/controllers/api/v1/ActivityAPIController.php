@@ -3095,11 +3095,18 @@ class ActivityAPIController extends ControllerAPI
 
             // e.g. 'Email sign up'
             if ($activityGroupSearch) {
-                $key = ucwords($activityGroupSearch);
-                $column = Config::get('orbit.activity_columns.'.$key);
+                $activityColumns = Config::get('orbit.activity_columns');
+                
+                $activityColumnsKeys = array_keys($activityColumns);
 
-                if ($column) {
-                    $columns = array_merge($columns, [$key => $column]);
+                $lowerActivityColumns = array_change_key_case($activityColumns, CASE_LOWER);
+                $lowerActivityGroupSearch = strtolower($activityGroupSearch);
+                
+                $columnKey = array_search($lowerActivityGroupSearch, array_keys($lowerActivityColumns));
+
+                if ($columnKey !== false) {
+                    $key = $activityColumnsKeys[$columnKey];
+                    $columns = array_merge($columns, [$key => $activityColumns[$key]]);
                 }
             }
 
