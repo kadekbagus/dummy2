@@ -4648,7 +4648,13 @@ class UploadAPIController extends ControllerAPI
                 $file['new']->name = sprintf('%s-%s-%s', $merchant_id, $slug, time());
             };
 
-            $message = new UploaderMessage([]);
+            $custom_message = array(
+                    'errors' => array(
+                        'file_too_big'          => 'Login Page Background Image size is too big, maximum size allowed is :size :unit.',
+                    ),
+                );
+
+            $message = new UploaderMessage($custom_message);
             $config = new UploaderConfig($uploadLogoConfig);
             $config->setConfig('before_saving', $renameFile);
 
@@ -5074,7 +5080,13 @@ class UploadAPIController extends ControllerAPI
                 $file['new']->name = sprintf('%s-%s-%s', $merchant_id, $slug, time());
             };
 
-            $message = new UploaderMessage([]);
+            $custom_message = array(
+                    'errors' => array(
+                        'file_too_big'          => 'Mobile Toolbar Logo Image size is too big, maximum size allowed is :size :unit.',
+                    ),
+                );
+
+            $message = new UploaderMessage($custom_message);
             $config = new UploaderConfig($uploadLogoConfig);
             $config->setConfig('before_saving', $renameFile);
 
