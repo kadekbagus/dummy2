@@ -3104,7 +3104,7 @@ class ActivityAPIController extends ControllerAPI
                 
                 $columnKey = array_search($lowerActivityGroupSearch, array_keys($lowerActivityColumns));
 
-                if ($columnKey >= 0) {
+                if ($columnKey !== false) {
                     $key = $activityColumnsKeys[$columnKey];
                     $columns = array_merge($columns, [$key => $activityColumns[$key]]);
                 }
