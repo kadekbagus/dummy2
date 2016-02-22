@@ -1,4 +1,4 @@
-<?php
+e<?php
 /**
  * An API controller for managing file uploads.
  *
@@ -7152,23 +7152,6 @@ class UploadAPIController extends ControllerAPI
             // get it from there no need to re-query the database
             $membership = App::make('orbit.empty.membership');
 
-            // Delete old membership image
-            $pastMedia = Media::where('object_id', $membership->membership_id)
-                              ->where('object_name', 'membership')
-                              ->where('media_name_id', 'membership_image');
-
-            // Delete each files
-            $oldMediaFiles = $pastMedia->get();
-            foreach ($oldMediaFiles as $oldMedia) {
-                // No need to check the return status, just delete and forget
-                @unlink($oldMedia->realpath);
-            }
-
-            // Delete from database
-            if (count($oldMediaFiles) > 0) {
-                $pastMedia->delete();
-            }
-
             // Callback to rename the file, we will format it as follow
             // [MERCHANT_ID]-[MERCHANT_NAME_SLUG]
             $renameFile = function($uploader, &$file, $dir) use ($membership)
@@ -7189,6 +7172,23 @@ class UploadAPIController extends ControllerAPI
 
             // Begin uploading the files
             $uploaded = $uploader->upload($images);
+
+            // Delete old membership image
+            $pastMedia = Media::where('object_id', $membership->membership_id)
+                              ->where('object_name', 'membership')
+                              ->where('media_name_id', 'membership_image');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
 
             // Save the files metadata
             $object = array(
