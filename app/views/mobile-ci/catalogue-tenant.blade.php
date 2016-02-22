@@ -285,7 +285,7 @@
                     promotion_id: promotion_id
                 }
             }).done(function(data) {
-                skip = skip + skip;
+                skip = skip + take;
                 if(data.records.length > 0) {
                     for(var i = 0; i < data.records.length; i++) {
                         var list = '<div class="col-xs-12 col-sm-12" id="item-'+data.records[i].merchant_id+'">\
