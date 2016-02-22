@@ -353,7 +353,7 @@ class WidgetAPIController extends ControllerAPI
                 )
             );
 
-            Event::fire('orbit.widget.postnewwidget.before.validation', array($this, $validator));
+            Event::fire('orbit.widget.postupdatewidget.before.validation', array($this, $validator));
 
             // Begin database transaction
             $this->beginTransaction();
@@ -461,7 +461,13 @@ class WidgetAPIController extends ControllerAPI
                 //     $updatedwidget->retailers()->sync($listOfRetailerIds);
                 // }
 
-                Event::fire('orbit.widget.postnewwidget.after.save', array($this, $updatedwidget));
+                Event::fire('orbit.widget.postupdatewidget.after.save', array($this, $updatedwidget));
+
+                OrbitInput::post('image_' . $updatedwidget->widget_type, function ($files_string) use ($updatedwidget) {
+                    if (empty(trim($files_string))) {
+                        $this->deleteWidgetImage($updatedwidget->widget_id);
+                    }
+                });
 
                 // Default translation
                 $default_translation = [
@@ -792,24 +798,28 @@ class WidgetAPIController extends ControllerAPI
             Event::fire('orbit.widget.postdeletewigetimage.before.auth', array($this));
 
             // Require authentication
-            $this->checkAuth();
+           if (! $this->calledFrom('widget.new, widget.update'))
+            {
+                $this->checkAuth();
+                Event::fire('orbit.widget.postdeletewigetimage.after.auth', array($this));
 
-            Event::fire('orbit.widget.postdeletewigetimage.after.auth', array($this));
+                // Try to check access control list, does this user allowed to
+                // perform this action
+                $user = $this->api->user;
+                Event::fire('orbit.widget.postdeletewigetimage.before.authz', array($this, $user));
 
-            // Try to check access control list, does this user allowed to
-            // perform this action
-            $user = $this->api->user;
-            Event::fire('orbit.widget.postdeletewigetimage.before.authz', array($this, $user));
+                if (! ACL::create($user)->isAllowed('delete_widget')) {
+                    Event::fire('orbit.widget.postdeletewigetimage.authz.notallowed', array($this, $user));
 
-            if (! ACL::create($user)->isAllowed('delete_widget')) {
-                Event::fire('orbit.widget.postdeletewigetimage.authz.notallowed', array($this, $user));
+                    $errorMessage = Lang::get('validation.orbit.actionlist.delete_widget');
+                    $message = Lang::get('validation.orbit.access.forbidden', array('action' => $errorMessage));
 
-                $errorMessage = Lang::get('validation.orbit.actionlist.delete_widget');
-                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $errorMessage));
-
-                ACL::throwAccessForbidden($message);
+                    ACL::throwAccessForbidden($message);
+                }
+                Event::fire('orbit.widget.postdeletewigetimage.after.authz', array($this, $user));
+            } else {
+                $user = App::make('orbit.upload.user');
             }
-            Event::fire('orbit.widget.postdeletewigetimage.after.authz', array($this, $user));
 
             $this->registerCustomValidation();
 
@@ -826,6 +836,173 @@ class WidgetAPIController extends ControllerAPI
             Event::fire('orbit.widget.postdeletewigetimage.before.validation', array($this, $validator));
 
             // Begin database transaction
+           if (! $this->calledFrom('widget.new, widget.update'))
+            {
+                $this->beginTransaction();
+            }
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.widget.postdeletewigetimage.after.validation', array($this, $validator));
+
+            $imgs = Media::where('object_name', 'widget')->where('object_id', $widgetId)->get();
+            // dd($img);
+            foreach ($imgs as $img) {
+                $img->delete(TRUE);
+            }
+
+            Event::fire('orbit.widget.postdeletewigetimage.after.save', array($this, $imgs));
+            $this->response->data = NULL;
+
+            // Commit the changes
+           if (! $this->calledFrom('widget.new, widget.update'))
+            {
+                $this->commit();
+            }
+
+            // Successfull Creation
+            $activityNotes = sprintf('Widget Image Deleted');
+            $activity->setUser($user)
+                    ->setActivityName('delete_widget_image')
+                    ->setActivityNameLong('Delete Widget Image OK')
+                    ->setObject($widget)
+                    ->setNotes($activityNotes)
+                    ->responseOK();
+
+            Event::fire('orbit.widget.postdeletewigetimage.after.commit', array($this, $imgs));
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.widget.postdeletewigetimage.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+           if (! $this->calledFrom('widget.new, widget.update'))
+            {
+                $this->rollBack();
+            }
+
+            // Deletion failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('delete_widget')
+                    ->setActivityNameLong('Delete Widget Failed')
+                    ->setObject($widget)
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.widget.postdeletewigetimage.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+           if (! $this->calledFrom('widget.new, widget.update'))
+            {
+                $this->rollBack();
+            }
+
+            // Deletion failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('delete_widget')
+                    ->setActivityNameLong('Delete Widget Failed')
+                    ->setObject($widget)
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        } catch (QueryException $e) {
+            Event::fire('orbit.widget.postdeletewigetimage.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            // Rollback the changes
+           if (! $this->calledFrom('widget.new, widget.update'))
+            {
+                $this->rollBack();
+            }
+
+            // Deletion failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('delete_widget')
+                    ->setActivityNameLong('Delete Widget Failed')
+                    ->setObject($widget)
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        } catch (Exception $e) {
+            Event::fire('orbit.widget.postdeletewigetimage.general.exception', array($this, $e));
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+
+            if (Config::get('app.debug')) {
+                $this->response->data = $e->__toString();
+            } else {
+                $this->response->data = null;
+            }
+
+            // Rollback the changes\
+           if (! $this->calledFrom('widget.new, widget.update'))
+            {
+                $this->rollBack();
+            }
+
+            // Deletion failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('delete_widget')
+                    ->setActivityNameLong('Delete Widget Failed')
+                    ->setObject($widget)
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        }
+
+        // Save the activity
+        $activity->save();
+
+        return $this->render($httpCode);
+    }
+
+    public function deleteWidgetImage($widgetId)
+    {
+        $activity = Activity::portal()
+                          ->setActivityType('delete');
+
+        $user = NULL;
+        $widget = NULL;
+        try {
+            $httpCode = 200;
+
+            $this->registerCustomValidation();
+
+            $widgetId = $widgetId;
+            $validator = Validator::make(
+                array(
+                    'widget_id'             => $widgetId,
+                ),
+                array(
+                    'widget_id'             => 'required|orbit.empty.widget',
+                )
+            );
+
+            Event::fire('orbit.widget.postdeletewigetimage.before.validation', array($this, $validator));
+
             $this->beginTransaction();
 
             // Run the validation
@@ -1473,6 +1650,21 @@ class WidgetAPIController extends ControllerAPI
                 $existing_translation->delete();
             }
         }
+    }
+
+    /**
+     * Set the called from value.
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @author Irianto <irianto@dominopos.com>
+     * @param string $from The source of the caller
+     * @return UploadAPIController
+     */
+    public function setCalledFrom($from)
+    {
+        $this->calledFrom = $from;
+
+        return $this;
     }
 
 }
