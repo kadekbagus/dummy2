@@ -3103,8 +3103,10 @@ class ActivityAPIController extends ControllerAPI
                 $lowerActivityColumns = array_change_key_case($activityColumns, CASE_LOWER);
                 $lowerActivityGroupSearch = strtolower($activityGroupSearch);
                 
+                // Compare them after being lowered
                 $columnKey = array_search($lowerActivityGroupSearch, array_keys($lowerActivityColumns));
 
+                // Column found
                 if ($columnKey !== false) {
                     $key = $activityColumnsKeys[$columnKey];
                     $columns = array_merge($columns, [$key => $activityColumns[$key]]);
