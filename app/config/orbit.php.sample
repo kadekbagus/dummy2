@@ -2798,6 +2798,8 @@ return array(
         'View News Pop Up'                             => 'View News Pop Up',
         'Click News Pop Up'                            => 'Click News Pop Up',
         'Search'                                       => 'Search',
+        'View My Account'                              => 'View My Account',
+        'View Notification List'                       => 'View Notification List',
     ),
 
     'menus' => array(
