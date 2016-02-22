@@ -479,6 +479,26 @@ class SettingAPIController extends ControllerAPI
                 $mall->load('mediaLogo');
             });
 
+            OrbitInput::post('logo', function($files_string) use ($mall, $user) {
+                if (empty(trim($files_string))) {
+                    $_POST['merchant_id'] = $mall->merchant_id;
+
+                    // This will be used on UploadAPIController
+                    App::instance('orbit.upload.user', $user);
+
+                    $response = UploadAPIController::create('raw')
+                                                   ->setCalledFrom('mall.update')
+                                                   ->postDeleteMallLogo();
+
+                    if ($response->code !== 0)
+                    {
+                        throw new \Exception($response->message, $response->code);
+                    }
+
+                    $mall->load('mediaLogo');
+                }
+            });
+
             OrbitInput::post('start_button', function($label) use (&$startButtonSetting, $mall, $user) {
                 // Start button label setting
                 if (is_null($startButtonSetting)) {
