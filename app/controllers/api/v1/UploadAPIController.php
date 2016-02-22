@@ -1,4 +1,4 @@
-e<?php
+<?php
 /**
  * An API controller for managing file uploads.
  *
