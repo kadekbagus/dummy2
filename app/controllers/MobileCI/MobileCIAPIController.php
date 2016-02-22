@@ -70,6 +70,7 @@ use \Object;
 use \App;
 use \Media;
 use Artdarek\OAuth\Facade\OAuth;
+use UserSignin;
 
 class MobileCIAPIController extends ControllerAPI
 {
@@ -642,13 +643,16 @@ class MobileCIAPIController extends ControllerAPI
         $mac_model = null;
         if ($mac !== '') {
             $mac_model = \MacAddress::excludeDeleted()->with('user')->where('mac_address', $mac)->orderBy('mac_addresses.created_at', 'desc')->first();
+            if (! empty($mac_model)) {
+                $loginFrom = UserSignin::where('user_id', $mac_model->user->user_id)->orderBy('created_at', 'desc')->first();  
+            }
         }
 
         $landing_url = URL::route('ci-customer-home');
-        $cookie_fname = isset($_COOKIE['orbit_firstname']) ? $_COOKIE['orbit_firstname'] : (isset($mac_model) ? $mac_model->user->user_firstname : '');
-        $cookie_email = isset($_COOKIE['orbit_email']) ? $_COOKIE['orbit_email'] : (isset($mac_model) ? $mac_model->user->user_email : '');
+        $cookie_fname = isset($_COOKIE['orbit_firstname']) ? $_COOKIE['orbit_firstname'] : (! empty($mac_model) ? $mac_model->user->user_firstname : '');
+        $cookie_email = isset($_COOKIE['orbit_email']) ? $_COOKIE['orbit_email'] : (! empty($mac_model) ? $mac_model->user->user_email : '');
         $cookie_lang = isset($_COOKIE['orbit_preferred_language']) ? $_COOKIE['orbit_preferred_language'] : '';
-        $cookie_login_from = isset($_COOKIE['login_from']) ? $_COOKIE['login_from'] : '';
+        $cookie_login_from = isset($_COOKIE['login_from']) ? $_COOKIE['login_from'] : (! empty($loginFrom) ? ucfirst($loginFrom->signin_via) : 'Form');
         $display_name = '';
         $error = \Input::get('error') !== '' ? \Input::get('error') : 'No Error';
         $isInProgress = \Input::get('isInProgress') !== '' ? \Input::get('isInProgress') : false;

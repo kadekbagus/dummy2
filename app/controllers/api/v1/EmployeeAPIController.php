@@ -2348,6 +2348,11 @@ class EmployeeAPIController extends ControllerAPI
             });
             $users->orderBy($sortBy, $sortMode);
 
+            // If it's "Name" sorting, also sort users' last name
+            if ($sortBy === 'users.user_firstname') {
+                $users->orderBy('users.user_lastname', $sortMode);
+            }
+
             $totalUsers = RecordCounter::create($_users)->count();
             $listOfUsers = $users->get();
 
