@@ -732,19 +732,29 @@ class MallAPIController extends ControllerAPI
 
             // Filter mall by location (city country)
             OrbitInput::get('location', function($data) use ($malls, $prefix) {
-                $malls->where(DB::raw("CONCAT(COALESCE({$prefix}merchants.city, ''), ' ', COALESCE({$prefix}merchants.country, ''))"), 'like', "%$data%");
+                $check = strpos($data, ",");
+
+                if(! empty($check)) {
+                    $loc = explode(",", $data);
+                    $city = $loc[0];
+                    $country = substr($loc[1], 1);
+                    $malls->where('merchants.city', 'like', "%$city%");
+                    $malls->where('merchants.country', 'like', "%$country%");
+                } else {
+                    $malls->where(DB::raw("CONCAT(COALESCE({$prefix}merchants.city, ''), ' ', COALESCE({$prefix}merchants.country, ''))"), 'like', "%$data%");
+                }
             });
 
             // Filter user by first_visit date begin_date
-            OrbitInput::get('start_date_activity', function($begindate) use ($malls)
+            OrbitInput::get('start_date_activity_from', function($begindate) use ($malls)
             {
                 $malls->where('merchants.start_date_activity', '>=', $begindate);
             });
 
             // Filter user by first visit date end_date
-            OrbitInput::get('end_date_activity', function($enddate) use ($malls)
+            OrbitInput::get('start_date_activity_to', function($enddate) use ($malls)
             {
-                $malls->where('merchants.end_date_activity', '<=', $enddate);
+                $malls->where('merchants.start_date_activity', '<=', $enddate);
             });
 
             // Add new relation based on request

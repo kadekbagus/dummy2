@@ -24,6 +24,8 @@ class CRMSummaryReportPrinterController extends DataPrinterController
         $flag_noconfig = false;
 
         $current_mall = OrbitInput::get('current_mall');
+        $activityGroups = OrbitInput::get('activity_groups');
+        $activityGroupSearch = OrbitInput::get('activity_group_search');
         $start_date = OrbitInput::get('start_date');
         $end_date = OrbitInput::get('end_date');
 
@@ -55,6 +57,8 @@ class CRMSummaryReportPrinterController extends DataPrinterController
 
         $dateRange = [];
         $responses = [];
+        $records = [];
+        $columns = [];
 
         foreach ($_dateRange as $date) {
             $dateRange[] = $date->format("Y-m-d");
@@ -63,17 +67,79 @@ class CRMSummaryReportPrinterController extends DataPrinterController
 
         if (!$flag_7days) {
 
-            $activities = DB::select("
-                select date_format(convert_tz(created_at, '+00:00', ?), '%Y-%m-%d') activity_date, activity_name_long, count(activity_id) as `count`
-                from {$tablePrefix}activities
-                -- filter by date
-                where (`group` = 'mobile-ci'
-                    or (`group` = 'portal' and activity_type in ('activation','create'))
-                    or (`group` = 'cs-portal' and activity_type in ('registration')))
-                    and response_status = 'OK' and location_id = ?
-                    and created_at between ? and ?
-                group by 1, 2;
-            ", array($timezoneOffset, $current_mall, $start_date, $end_date));
+
+            $sql = "select date_format(convert_tz(created_at, '+00:00', ?), '%Y-%m-%d') activity_date, activity_name_long, count(activity_id) as `count`
+                    from {$tablePrefix}activities
+                    -- filter by date
+                    where (`group` = 'mobile-ci'
+                        or (`group` = 'portal' and activity_type in ('activation','create'))
+                        or (`group` = 'cs-portal' and activity_type in ('registration')))
+                        {{where:longActivityName}}
+                        and response_status = 'OK' and location_id = ?
+                        and created_at between ? and ?
+                    group by 1, 2;";
+
+            // Filter with activity names (activity_name_long)
+            $longActivityNameWhere = '';
+            $activityValues = [];
+            if ($activityGroups) {
+                foreach ($activityGroups as $activityGroup) {
+                    foreach (Config::get('orbit_activity.groups.'.$activityGroup) as $key) {
+                        $activityValues[] = Config::get('orbit.activity_columns.'.$key);
+                    }
+                }
+            }
+
+            if ($activityGroupSearch) {
+                $column = Config::get('orbit.activity_columns.'.ucwords($activityGroupSearch));
+
+                if ($column) {
+                    $activityValues[] = $column;
+                }
+            }
+
+            if ($activityValues) {
+                $longActivityNameWhere = "AND activity_name_long IN ('".implode("','", $activityValues)."')";
+            }
+            
+            $sql = str_replace('{{where:longActivityName}}', $longActivityNameWhere, $sql);
+            $activities = DB::select($sql, array($timezoneOffset, $current_mall, $start_date, $end_date));
+
+            // sel = selected
+            $selActivityGroups = $activityGroups;
+            if ($selActivityGroups) {
+                foreach ($selActivityGroups as $selActivityGroup) {
+
+                    // Retrieve from config
+                    $selActivityGroupArray = Config::get('orbit_activity.groups.'.$selActivityGroup);
+
+                    // Not found in config
+                    if (!$selActivityGroupArray) {
+                        continue;
+                    }
+
+                    foreach ($selActivityGroupArray as $key) {
+                        $columns = array_merge($columns, [$key => Config::get('orbit.activity_columns.'.$key)]);
+                    }
+                }
+            }
+
+            // e.g. 'Email sign up'
+            if ($activityGroupSearch) {
+                $key = ucwords($activityGroupSearch);
+                $column = Config::get('orbit.activity_columns.'.$key);
+
+                if ($column) {
+                    $columns = array_merge($columns, [$key => $column]);
+                }
+            }
+
+            if (!($selActivityGroups || $activityGroupSearch)) {
+                // get column name from config
+                $columns = Config::get('orbit.activity_columns');
+            }
+
+            $records['columns'] = $columns;
 
 
             foreach ($dateRange as $key => $value) {
@@ -108,9 +174,9 @@ class CRMSummaryReportPrinterController extends DataPrinterController
 
         }
 
-        $activity_columns = Config::get('orbit.activity_columns');
+        $activity_columns = $columns;
 
-        if (count($activity_columns) > 1) {
+        if (count($activity_columns) > 0) {
             $columns = [];
 
             $i = 0;
