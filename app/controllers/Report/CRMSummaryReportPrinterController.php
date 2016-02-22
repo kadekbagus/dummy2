@@ -135,7 +135,7 @@ class CRMSummaryReportPrinterController extends DataPrinterController
                 
                 $columnKey = array_search($lowerActivityGroupSearch, array_keys($lowerActivityColumns));
 
-                if ($columnKey) {
+                if ($columnKey >= 0) {
                     $key = $activityColumnsKeys[$columnKey];
                     $columns = array_merge($columns, [$key => $activityColumns[$key]]);
                 }
