@@ -24,10 +24,10 @@ class CRMSummaryReportPrinterController extends DataPrinterController
         $flag_noconfig = false;
 
         $current_mall = OrbitInput::get('current_mall');
-        $activityGroups = OrbitInput::get('activity_groups');
-        $activityGroupSearch = OrbitInput::get('activity_group_search');
         $start_date = OrbitInput::get('start_date');
         $end_date = OrbitInput::get('end_date');
+
+        $builder = \ActivityAPIController::create('raw')->setReturnBuilder(true)->getCRMSummaryReport();
 
         // check if the days is more than 7 or not
         $_startDate = strtotime($start_date);
@@ -66,115 +66,10 @@ class CRMSummaryReportPrinterController extends DataPrinterController
 
 
         if (!$flag_7days) {
-
-
-            $sql = "select date_format(convert_tz(created_at, '+00:00', ?), '%Y-%m-%d') activity_date, activity_name_long, count(activity_id) as `count`
-                    from {$tablePrefix}activities
-                    -- filter by date
-                    where (`group` = 'mobile-ci'
-                        or (`group` = 'portal' and activity_type in ('activation','create'))
-                        or (`group` = 'cs-portal' and activity_type in ('registration')))
-                        {{where:longActivityName}}
-                        and response_status = 'OK' and location_id = ?
-                        and created_at between ? and ?
-                    group by 1, 2;";
-
-            // Filter with activity names (activity_name_long)
-            $longActivityNameWhere = '';
-            $activityValues = [];
-            if ($activityGroups) {
-                foreach ($activityGroups as $activityGroup) {
-                    foreach (Config::get('orbit_activity.groups.'.$activityGroup) as $key) {
-                        $activityValues[] = Config::get('orbit.activity_columns.'.$key);
-                    }
-                }
-            }
-
-            if ($activityGroupSearch) {
-                $column = Config::get('orbit.activity_columns.'.ucwords($activityGroupSearch));
-
-                if ($column) {
-                    $activityValues[] = $column;
-                }
-            }
-
-            if ($activityValues) {
-                $longActivityNameWhere = "AND activity_name_long IN ('".implode("','", $activityValues)."')";
-            }
-            
-            $sql = str_replace('{{where:longActivityName}}', $longActivityNameWhere, $sql);
-            $activities = DB::select($sql, array($timezoneOffset, $current_mall, $start_date, $end_date));
-
-            // sel = selected
-            $selActivityGroups = $activityGroups;
-            if ($selActivityGroups) {
-                foreach ($selActivityGroups as $selActivityGroup) {
-
-                    // Retrieve from config
-                    $selActivityGroupArray = Config::get('orbit_activity.groups.'.$selActivityGroup);
-
-                    // Not found in config
-                    if (!$selActivityGroupArray) {
-                        continue;
-                    }
-
-                    foreach ($selActivityGroupArray as $key) {
-                        $columns = array_merge($columns, [$key => Config::get('orbit.activity_columns.'.$key)]);
-                    }
-                }
-            }
-
-            // e.g. 'Email sign up'
-            if ($activityGroupSearch) {
-                $key = ucwords($activityGroupSearch);
-                $column = Config::get('orbit.activity_columns.'.$key);
-
-                if ($column) {
-                    $columns = array_merge($columns, [$key => $column]);
-                }
-            }
-
-            if (!($selActivityGroups || $activityGroupSearch)) {
-                // get column name from config
-                $columns = Config::get('orbit.activity_columns');
-            }
-
-            $records['columns'] = $columns;
-
-
-            foreach ($dateRange as $key => $value) {
-
-                foreach ($activities as $x => $y) {
-                    if ($y->activity_date === $value) {
-
-                        $date = [];
-                        $date['name'] = $y->activity_name_long;
-                        $date['count'] = $y->count;
-
-                        $responses[$value][] = $date;
-                    }
-                }
-            }
-
-            // if there is date that have no data
-            $dateRange2 = $dateRange;
-
-            foreach ($responses as $a => $b) {
-                $length = count($dateRange);
-                for ($i = 0; $i < $length; $i++) {
-                    if ($a === $dateRange[$i]) {
-                        unset($dateRange2[$i]);
-                    }
-                }
-            }
-
-            foreach ($dateRange2 as $x => $y) {
-                $responses[$dateRange2[$x]] = array();
-            }
-
+            $responses = $builder['responses'];
         }
 
-        $activity_columns = $columns;
+        $activity_columns = $builder['columns'];
 
         if (count($activity_columns) > 0) {
             $columns = [];
