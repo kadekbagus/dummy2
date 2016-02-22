@@ -440,6 +440,27 @@ class SettingAPIController extends ControllerAPI
                 $mall->media_background = $response->data;
             });
 
+            OrbitInput::post('backgrounds', function($files_string) use ($mall, $user, &$backgroundSetting) {
+                if (empty(trim($files_string))) {
+                    $_POST['merchant_id'] = $mall->merchant_id;
+
+                    // This will be used on UploadAPIController
+                    App::instance('orbit.upload.user', $user);
+
+                    $response = UploadAPIController::create('raw')
+                                                   ->setCalledFrom('mall.update')
+                                                   ->postDeleteMallBackground();
+
+                    if ($response->code !== 0)
+                    {
+                        throw new \Exception($response->message, $response->code);
+                    }
+
+                    $mall->setRelation('mediaBackground', $response->data);
+                    $mall->media_background = $response->data;
+                }
+            });
+
             OrbitInput::files('logo', function($files) use ($mall, $user) {
                 $_POST['merchant_id'] = $mall->merchant_id;
 
