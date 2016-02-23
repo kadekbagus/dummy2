@@ -6756,7 +6756,7 @@ class MobileCIAPIController extends ControllerAPI
             $grouped_search_result->promotions_counts = $_promo->count();
             $grouped_search_result->promotions_url = URL::to('customer/mallpromotions?keyword=' . urlencode($keyword));
             $grouped_search_result->coupons = [];
-            $grouped_search_result->coupons_counts = $_coupon->count();
+            $grouped_search_result->coupons_counts = count($_coupon->groupBy('promotions.promotion_id')->get());
             $grouped_search_result->coupons_url = URL::to('customer/mallcoupons?keyword=' . urlencode($keyword));
             $grouped_search_result->lucky_draws = [];
             $grouped_search_result->lucky_draws_counts = $_lucky_draw->count();
