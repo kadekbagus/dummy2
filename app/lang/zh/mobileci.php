@@ -302,6 +302,7 @@ return array(
         'show_all_result'=> '显示所有结果',
         'show_by_categories'=> '按类别显示',
         'search_placeholder'=> '在这里搜索',
+        'all_search_results' => '所有搜索结果',
     ),
 
     'thank_you' => array(
