@@ -2769,7 +2769,7 @@ class ActivityAPIController extends ControllerAPI
                         FROM 
                             {$tablePrefix}sequence osn
                         WHERE
-                            osn.sequence_number < 24
+                            osn.sequence_number <= 24
                     ) AS q_hours
                     LEFT JOIN
                     (
