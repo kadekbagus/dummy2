@@ -453,7 +453,11 @@
         @endif
         $(document).ready(function () {
             $.removeCookie('dismiss_campaign_cards', {path: '/'}); // remove campaign cards popup flags from cookie
-            localStorage.removeItem('campaign_popup');
+            
+            if (localStorage) {
+                localStorage.removeItem('campaign_popup');
+            }
+            
             var em;
             var user_em = '{{ strtolower($user_email) }}';
 

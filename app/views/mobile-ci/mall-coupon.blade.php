@@ -61,12 +61,12 @@
             @if(count($tenants) <=0)
                 @if($cs_reedem)
                     <div class="col-xs-12 text-center">
-                        <button class="btn btn-info btn-block" id="useBtn">{{{ Lang::get('mobileci.modals.coupon_use') }}}</button>
+                        <button class="btn btn-info btn-block" id="useBtn">{{{ Lang::get('mobileci.coupon.use_coupon') }}}</button>
                     </div>
                     @endif
             @else
             <div class="col-xs-12 text-center">
-                <button class="btn btn-info btn-block" id="useBtn">{{{ Lang::get('mobileci.modals.coupon_use') }}}</button>
+                <button class="btn btn-info btn-block" id="useBtn">{{{ Lang::get('mobileci.coupon.use_coupon') }}}</button>
             </div>
             @endif
         </div>

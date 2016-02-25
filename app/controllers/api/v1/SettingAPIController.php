@@ -307,10 +307,15 @@ class SettingAPIController extends ControllerAPI
 
             $language = OrbitInput::post('language', NULL);
             $background = OrbitInput::files('backgrounds');
+            $mall_logo = OrbitInput::files('logo');
             $landingPage = OrbitInput::post('landing_page');
             $password = OrbitInput::post('password');
             $password2 = OrbitInput::post('password_confirmation');
             $id_language_default = OrbitInput::post('id_language_default');
+            $background_config = Config::get('orbit.upload.retailer.background');
+            $logo_config = Config::get('orbit.upload.mall.logo');
+            $background_units = static::bytesToUnits($background_config['file_size']);
+            $logo_units = static::bytesToUnits($logo_config['file_size']);
 
             // Catch the supported language for mall
             $supportedMallLanguageIds = OrbitInput::post('mall_supported_language_ids');
@@ -326,6 +331,10 @@ class SettingAPIController extends ControllerAPI
                     'password'              => $password,
                     'password_confirmation' => $password2,
                     'id_language_default'   => $id_language_default,
+                    'background_type'       => $background['type'],
+                    'logo_type'             => $mall_logo['type'],
+                    'background_size'       => $background['size'],
+                    'logo_size'             => $mall_logo['size'],
                 ),
                 array(
                     'current_mall'        => 'required|orbit.empty.mall',
@@ -333,6 +342,14 @@ class SettingAPIController extends ControllerAPI
                     'landing_page'        => 'required|in:widget,news,promotion,tenant,my-coupon,lucky-draw',
                     'password'            => 'min:5|confirmed',
                     'id_language_default' => 'required|orbit.empty.language_default',
+                    'background_type'     => 'in:image/jpg,image/png,image/jpeg,image/gif',
+                    'logo_type'           => 'in:image/jpg,image/png,image/jpeg,image/gif',
+                    'background_size'     => 'orbit.max.file_size:' . $background_config['file_size'],
+                    'logo_size'           => 'orbit.max.file_size:' . $logo_config['file_size'],
+                ),
+                array(
+                    'background_size.orbit.max.file_size' => 'Login Page Background Image size is too big, maximum size allowed is '. $background_units['newsize'] . $background_units['unit'],
+                    'logo_size.orbit.max.file_size' => 'Mobile Toolbar Logo Image size is too big, maximum size allowed is '. $logo_units['newsize'] . $logo_units['unit']
                 )
             );
 
@@ -1391,6 +1408,17 @@ class SettingAPIController extends ControllerAPI
             return true;
         });
 
+        Validator::extend('orbit.max.file_size', function ($attribute, $value, $parameters) {
+            $config_size = $parameters[0];
+            $file_size = $value;
+
+            if ($file_size > $config_size) {
+                return false;
+            }
+
+            return true;
+        });
+
     }
 
 
@@ -1494,6 +1522,52 @@ class SettingAPIController extends ControllerAPI
                 $existing_translation->delete();
             }
         }
+    }
+
+    /**
+     * Method to convert the size from bytes to more human readable units. As
+     * an example:
+     *
+     * Input 356 produces => array('unit' => 'bytes', 'newsize' => 356)
+     * Input 2045 produces => array('unit' => 'kB', 'newsize' => 2.045)
+     * Input 1055000 produces => array('unit' => 'MB', 'newsize' => 1.055)
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @author Irianto <irianto@dominopos.com>
+     * @param int $size - The size in bytes
+     * @return array
+     */
+    public static function bytesToUnits($size)
+    {
+       $kb = 1000;
+       $mb = $kb * 1000;
+       $gb = $mb * 1000;
+
+       if ($size > $gb) {
+            return array(
+                    'unit' => 'GB',
+                    'newsize' => $size / $gb
+                   );
+       }
+
+       if ($size > $mb) {
+            return array(
+                    'unit' => 'MB',
+                    'newsize' => $size / $mb
+                   );
+       }
+
+       if ($size > $kb) {
+            return array(
+                    'unit' => 'kB',
+                    'newsize' => $size / $kb
+                   );
+       }
+
+       return array(
+                'unit' => 'bytes',
+                'newsize' => 1
+              );
     }
 
 }

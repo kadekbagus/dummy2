@@ -302,6 +302,7 @@ return array(
         'show_all_result'   => '結果をすべて表示します',
         'show_by_categories'=> 'カテゴリ別表示します',
         'search_placeholder'=> 'ここで検索します',
+        'all_search_results' => 'すべての検索結果',
     ),
 
     'thank_you' => array(
