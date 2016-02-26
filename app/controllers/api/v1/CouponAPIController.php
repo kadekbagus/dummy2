@@ -2090,12 +2090,18 @@ class CouponAPIController extends ControllerAPI
 
             $table_prefix = DB::getTablePrefix();
 
-            $now = date('Y-m-d H:i:s');
+            $timezone = Mall::leftJoin('timezones','timezones.timezone_id','=','merchants.timezone_id')
+                ->where('merchants.merchant_id','=', $currentmall)
+                ->first();
+
+            $now = Carbon::now($timezone->timezone_name);
 
             // Builder object
             // Addition select case and join for sorting by discount_value.
             $coupons = Coupon::with('couponRule')
-                ->select(DB::raw("{$table_prefix}promotions.*, {$table_prefix}campaign_price.campaign_price_id, {$table_prefix}campaign_status.campaign_status_name AS campaign_status, {$table_prefix}campaign_status.order,
+                ->select(DB::raw("{$table_prefix}promotions.*, {$table_prefix}campaign_price.campaign_price_id,
+                    CASE WHEN {$table_prefix}promotions.end_date < {$this->quote($now)} THEN 'expired' ELSE {$table_prefix}campaign_status.campaign_status_name END  AS campaign_status,
+                    {$table_prefix}campaign_status.order,
                     CASE rule_type
                         WHEN 'cart_discount_by_percentage' THEN 'percentage'
                         WHEN 'product_discount_by_percentage' THEN 'percentage'
@@ -2238,11 +2244,6 @@ class CouponAPIController extends ControllerAPI
             OrbitInput::get('campaign_status', function ($statuses) use ($coupons) {
                 $coupons->whereIn('campaign_status.campaign_status_name', $statuses);
             });
-
-            // // Filter coupon by status
-            // OrbitInput::get('status', function ($statuses) use ($coupons) {
-            //     $coupons->whereIn('promotions.status', $statuses);
-            // });
 
             // Filter coupon rule by rule type
             OrbitInput::get('rule_type', function ($ruleTypes) use ($coupons) {
@@ -2484,11 +2485,6 @@ class CouponAPIController extends ControllerAPI
             if ($sortBy !== 'campaign_status.campaign_status_name') {
                 $coupons->orderBy('campaign_status.order', 'asc');
             }
-
-            // // sort by status first
-            // if ($sortBy !== 'promotions.status') {
-            //     $coupons->orderBy('promotions.status', 'asc');
-            // }
 
             OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
             {
@@ -3797,5 +3793,10 @@ class CouponAPIController extends ControllerAPI
                 $existing_translation->delete();
             }
         }
+    }
+
+    protected function quote($arg)
+    {
+        return DB::connection()->getPdo()->quote($arg);
     }
 }
