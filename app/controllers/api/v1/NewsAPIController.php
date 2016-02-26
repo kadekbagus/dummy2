@@ -1707,13 +1707,13 @@ class NewsAPIController extends ControllerAPI
                     'begin_date'        => 'news.begin_date',
                     'end_date'          => 'news.end_date',
                     'updated_at'        => 'news.updated_at',
-                    'status'            => 'campaign_status.campaign_status_name'
+                    'status'            => 'campaign_status.order'
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];
             });
 
-            if ($sortBy !== 'campaign_status.campaign_status_name') {
+            if ($sortBy !== 'campaign_status.order') {
                 $news->orderBy('campaign_status.order', 'asc');
             }
 
