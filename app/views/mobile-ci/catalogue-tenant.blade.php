@@ -46,7 +46,7 @@
                         </div>
                     </div>
                     <div class="col-xs-2 search-tool-col text-right">
-                        <a href="{{ url('/customer/tenants') }}" class="btn btn-info btn-block reset-btn">
+                        <a href="{{{ url('/customer/tenants?keyword='.Input::get('keyword')) }}}" class="btn btn-info btn-block reset-btn">
                             <span class="fa-stack fa-lg">
                                 <i class="fa fa-filter fa-stack-2x"></i>
                                 <i class="fa fa-times fa-stack-1x"></i>
@@ -178,7 +178,7 @@
                         </div>
                     </div>
                     <div class="col-xs-2 search-tool-col text-right">
-                        <a href="{{ url('/customer/tenants') }}" class="btn btn-info btn-block reset-btn">
+                        <a href="{{{ url('/customer/tenants?keyword='.Input::get('keyword')) }}}" class="btn btn-info btn-block reset-btn">
                             <span class="fa-stack fa-lg">
                                 <i class="fa fa-filter fa-stack-2x"></i>
                                 <i class="fa fa-times fa-stack-1x"></i>
