@@ -112,7 +112,7 @@ class CouponAPIController extends ControllerAPI
             $merchant_id = OrbitInput::post('current_mall');
             $promotion_name = OrbitInput::post('promotion_name');
             $promotion_type = OrbitInput::post('promotion_type');
-            $status = OrbitInput::post('status');
+            $campaignStatus = OrbitInput::post('campaign_status');
             $description = OrbitInput::post('description');
             $long_description = OrbitInput::post('long_description');
             $begin_date = OrbitInput::post('begin_date');
@@ -161,6 +161,15 @@ class CouponAPIController extends ControllerAPI
             $keywords = (array) $keywords;
             $linkToTenantIds = OrbitInput::post('link_to_tenant_ids');
             $linkToTenantIds = (array) $linkToTenantIds;
+
+            if (empty($campaignStatus)) {
+                $campaignStatus = 'not started';
+            }
+
+            $status = 'inactive';
+            if ($campaignStatus === 'ongoing') {
+                $status = 'active';
+            }
 
             $validator = Validator::make(
                 array(
@@ -348,11 +357,14 @@ class CouponAPIController extends ControllerAPI
             Event::fire('orbit.coupon.postnewcoupon.after.validation', array($this, $validator));
 
             // save Coupon.
+            $idStatus = CampaignStatus::select('campaign_status_id')->where('campaign_status_name', $campaignStatus)->first();
+
             $newcoupon = new Coupon();
             $newcoupon->merchant_id = $merchant_id;
             $newcoupon->promotion_name = $promotion_name;
             $newcoupon->promotion_type = $promotion_type;
             $newcoupon->status = $status;
+            $newcoupon->campaign_status_id = $idStatus->campaign_status_id;
             $newcoupon->description = $description;
             $newcoupon->long_description = $long_description;
             $newcoupon->begin_date = $begin_date;
@@ -836,7 +848,7 @@ class CouponAPIController extends ControllerAPI
             $promotion_id = OrbitInput::post('promotion_id');
             $merchant_id = OrbitInput::post('current_mall');
             $promotion_type = OrbitInput::post('promotion_type');
-            $status = OrbitInput::post('status');
+            $campaignStatus = OrbitInput::post('campaign_status');
             $rule_type = OrbitInput::post('rule_type');
             $rule_object_type = OrbitInput::post('rule_object_type');
             $rule_object_id1 = OrbitInput::post('rule_object_id1');
@@ -870,6 +882,12 @@ class CouponAPIController extends ControllerAPI
 
             $retailernew = OrbitInput::post('link_to_tenant_ids');
             $retailernew = (array) $retailernew;
+
+            $idStatus = CampaignStatus::select('campaign_status_id')->where('campaign_status_name', $campaignStatus)->first();
+            $status = 'inactive';
+            if ($campaignStatus === 'ongoing') {
+                $status = 'active';
+            }
 
             $data = array(
                 'promotion_id'            => $promotion_id,
@@ -1111,8 +1129,9 @@ class CouponAPIController extends ControllerAPI
                 $updatedcoupon->promotion_type = $promotion_type;
             });
 
-            OrbitInput::post('status', function($status) use ($updatedcoupon) {
+            OrbitInput::post('campaign_status', function($campaignStatus) use ($updatedcoupon, $idStatus, $status) {
                 $updatedcoupon->status = $status;
+                $updatedcoupon->campaign_status_id = $idStatus->campaign_status_id;
             });
 
             OrbitInput::post('description', function($description) use ($updatedcoupon) {
@@ -1210,7 +1229,7 @@ class CouponAPIController extends ControllerAPI
                 $updatedcoupon_default_language->long_description = $long_description;
             });
 
-            OrbitInput::post('status', function($status) use ($updatedcoupon_default_language) {
+            OrbitInput::post('campaign_status', function($campaignStatus) use ($updatedcoupon_default_language, $status) {
                 $updatedcoupon_default_language->status = $status;
             });
 
