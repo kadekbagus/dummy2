@@ -217,7 +217,7 @@ class WidgetTemplateAPIController extends ControllerAPI
                 if ($currentSetting->setting_name === 'widget_template') {
                     $widgetTemplateSetting = $currentSetting;
                     $widget_template = WidgetTemplate::excludeDeleted()->where('widget_template_id', $widgetTemplateSetting->setting_value)->first();
-                    if (! is_object($widget_template)) {
+                    if (is_object($widget_template)) {
                     	$widgettemplates = $widget_template;
                     }
                 }
