@@ -12,6 +12,7 @@ class News extends Eloquent
      * with `status` field.
      */
     use ModelStatusTrait;
+    use CampaignStatusTrait;
 
     protected $table = 'news';
 
