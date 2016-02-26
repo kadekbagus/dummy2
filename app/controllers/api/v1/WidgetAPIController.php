@@ -485,6 +485,36 @@ class WidgetAPIController extends ControllerAPI
                 $dataResponse[$widgetType] = $updatedwidget;
             }
 
+            OrbitInput::post('widget_template', function($label) use ($mall, $user) {
+                $widget_template = WidgetTemplate::active()->where('template_file_name', $label)->first();
+                if(! is_object($widget_template)) {
+                    $errorMessage = 'Template name cannot be found.';
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+                $widgetTemplateSetting = NULL;
+                $updatedsetting = Setting::active()
+                    ->where('object_id', $mall->merchant_id)
+                    ->where('object_type', 'merchant')
+                    ->get();
+
+                foreach ($updatedsetting as $currentSetting) {
+                    if ($currentSetting->setting_name === 'widget_template') {
+                        $widgetTemplateSetting = $currentSetting;
+                    }
+                }
+
+                if (is_null($widgetTemplateSetting)) {
+                    $widgetTemplateSetting = new Setting();
+                    $widgetTemplateSetting->setting_name = 'widget_template';
+                    $widgetTemplateSetting->object_id = $mall->merchant_id;
+                    $widgetTemplateSetting->object_type = 'merchant';
+                }
+
+                $widgetTemplateSetting->setting_value = $widget_template->widget_template_id;
+                $widgetTemplateSetting->modified_by = $user->user_id;
+                $widgetTemplateSetting->save();
+            });
+
             $this->response->data = $dataResponse;
 
             // Commit the changes

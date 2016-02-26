@@ -234,6 +234,18 @@ class MobileCIAPIController extends ControllerAPI
             $widget_flags->enable_lucky_draw = $this->getObjFromArray($retailer->settings, 'enable_lucky_draw');
             $widget_flags->enable_lucky_draw_widget = $this->getObjFromArray($retailer->settings, 'enable_lucky_draw_widget');
 
+            $widget_template_id = ! $this->getObjFromArray($retailer->settings, 'widget_template') ? NULL : $this->getObjFromArray($retailer->settings, 'widget_template')->setting_value;
+            if (! empty($widget_template_id)) {
+                $template = \WidgetTemplate::active()->where('widget_template_id', $widget_template_id)->first();
+                if (! is_object($template)) {
+                    $widget_template = 'default';
+                } else {
+                    $widget_template = $template->template_file_name;
+                }
+            } else {
+                $widget_template = 'default';
+            }
+
             $widgets = Widget::with('media')
                 ->active()
                 ->where('merchant_id', $retailer->merchant_id)
@@ -600,7 +612,12 @@ class MobileCIAPIController extends ControllerAPI
                 'user' => $user
             );
 
-            return View::make('mobile-ci.home', $data);
+            // check view file existance, if not fallback to default
+            if (View::exists('mobile-ci.templates.widget.' . $widget_template)) {
+                return View::make('mobile-ci.templates.widget.' . $widget_template, $data);
+            } else {
+                return View::make('mobile-ci.templates.widget.default', $data);
+            }
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: %s', 'Home');
             $activityPage->setUser($user)
