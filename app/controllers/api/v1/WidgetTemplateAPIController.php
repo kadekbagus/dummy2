@@ -165,4 +165,119 @@ class WidgetTemplateAPIController extends ControllerAPI
 
         return $output;
     }
+
+    /**
+     * GET - List of Setting Widget Templates.
+     *
+     * @author Ahmad Anshori <ahmad@dominopos.com>
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function getSearchSettingWidgetTemplate()
+    {
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.widget.getwidgettemplate.before.auth', array($this));
+
+            // Require authentication
+            $this->checkAuth();
+
+            Event::fire('orbit.widget.getwidgettemplate.after.auth', array($this));
+
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user = $this->api->user;
+            Event::fire('orbit.widget.getwidgettemplate.before.authz', array($this, $user));
+
+            if (! ACL::create($user)->isAllowed('view_widget')) {
+                Event::fire('orbit.widget.getwidgettemplate.authz.notallowed', array($this, $user));
+
+                $errorMessage = Lang::get('validation.orbit.actionlist.view_widget');
+                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $errorMessage));
+
+                ACL::throwAccessForbidden($message);
+            }
+            Event::fire('orbit.widget.getwidgettemplate.after.authz', array($this, $user));
+
+            // Builder object
+            $widgettemplates = NULL;
+            $widgetTemplateSetting = NULL;
+            
+            $merchantId = OrbitInput::get('current_mall');
+
+            $mall = Mall::findOrFail($merchantId);
+
+            $mallsetting = Setting::active()
+                ->where('object_id', $mall->merchant_id)
+                ->where('object_type', 'merchant')
+                ->get();
+
+            foreach ($mallsetting as $currentSetting) {
+                if ($currentSetting->setting_name === 'widget_template') {
+                    $widgetTemplateSetting = $currentSetting;
+                    $widget_template = WidgetTemplate::excludeDeleted()->where('widget_template_id', $widgetTemplateSetting->setting_value)->first();
+                    if (! is_object($widget_template)) {
+                    	$widgettemplates = $widget_template;
+                    }
+                }
+            }
+
+            $data = new stdclass();
+            $data->records = $widgettemplates;
+
+            $this->response->data = $data;
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.widget.getwidgettemplate.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.widget.getwidgettemplate.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $result['total_records'] = 0;
+            $result['returned_records'] = 0;
+            $result['records'] = null;
+
+            $this->response->data = $result;
+            $httpCode = 403;
+        } catch (QueryException $e) {
+            Event::fire('orbit.widget.getwidgettemplate.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+        } catch (Exception $e) {
+            Event::fire('orbit.widget.getwidgettemplate.general.exception', array($this, $e));
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+
+            if (Config::get('app.debug')) {
+                $this->response->data = $e->__toString();
+            } else {
+                $this->response->data = null;
+            }
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.widget.getwidgettemplate.before.render', array($this, &$output));
+
+        return $output;
+    }
 }
