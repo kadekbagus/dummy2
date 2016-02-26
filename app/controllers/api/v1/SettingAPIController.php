@@ -935,27 +935,6 @@ class SettingAPIController extends ControllerAPI
             $totalSettings = RecordCounter::create($_settings)->count();
             $listOfSettings = $settings->get();
 
-            // Append widget template if param with=widget_template is specified
-            OrbitInput::get('with', function ($with) use ($listOfSettings) {
-                $with = (array) $with;
-                foreach ($with as $wth) {
-                    if ($wth === 'widget_template') {
-                        $widgetTemplateSetting = NULL;
-                        foreach ($listOfSettings as $currentSetting) {
-                            if ($currentSetting->setting_name === 'widget_template') {
-                                if (! empty($currentSetting->setting_value)) {
-                                    $currentSetting->widget_template = WidgetTemplate::where('widget_template_id', $currentSetting->setting_value)->first();
-                                } else {
-                                    $currentSetting->widget_template = NULL;
-                                }
-                            } else {
-                                $currentSetting->widget_template = NULL;
-                            }
-                        }
-                    }
-                }
-            });
-
             $data = new stdclass();
             $data->total_records = $totalSettings;
             $data->returned_records = count($listOfSettings);

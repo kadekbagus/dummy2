@@ -105,6 +105,7 @@
                         showDuration: 30,
                         timeOut: 2500,
                         positionClass: 'toast-bottom-right',
+                        escapeHtml: true,
                         onclick: function() {
                             window.location.href = inboxUrl;
                         },
@@ -122,7 +123,7 @@
                             });
                         }
                     };
-                    toastr.info(inboxSubject);
+                    toastr.info('<div class="toast-header"><i class="fa fa-circle toast-bullet"></i> &nbsp {{ucwords(strtolower(Lang::get('mobileci.page_title.my_message')))}}</div><div>' + inboxSubject + '</div>');
                 }
             }, 2730);
         }

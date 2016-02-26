@@ -486,7 +486,7 @@ class WidgetAPIController extends ControllerAPI
             }
 
             OrbitInput::post('widget_template', function($label) use ($mall, $user) {
-                $widget_template = WidgetTemplate::where('template_file_name', $label)->first();
+                $widget_template = WidgetTemplate::active()->where('template_file_name', $label)->first();
                 if(! is_object($widget_template)) {
                     $errorMessage = 'Template name cannot be found.';
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
@@ -503,7 +503,6 @@ class WidgetAPIController extends ControllerAPI
                     }
                 }
 
-                // Start button label setting
                 if (is_null($widgetTemplateSetting)) {
                     $widgetTemplateSetting = new Setting();
                     $widgetTemplateSetting->setting_name = 'widget_template';
