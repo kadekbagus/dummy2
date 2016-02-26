@@ -302,6 +302,7 @@ return array(
         'show_all_result'=> 'Show All Results',
         'show_by_categories'=> 'Show By Categories',
         'search_placeholder'=> 'Search here',
+        'all_search_results' => 'All search results',
     ),
 
     'thank_you' => array(

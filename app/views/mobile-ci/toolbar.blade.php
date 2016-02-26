@@ -19,7 +19,7 @@
     </div>
     @if(!is_null($page_title))
     <div class="header-location-banner">
-        @if(Input::get('keyword') === null)
+        @if(empty(Input::get('keyword')))
         <span>
             @if(is_null($page_title))
             {{ 'ORBIT' }}
@@ -48,7 +48,7 @@
         <div class="col-xs-6 text-right">
             <div class="col-xs-10 text-right search-keyword search-text">
                 <span>
-                    All search results "{{{Input::get('keyword')}}}"
+                    {{Lang::get('mobileci.search.all_search_results')}} "{{{Input::get('keyword')}}}"
                 </span>
             </div>
             <div class="col-xs-2 text-right search-keyword">
