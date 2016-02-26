@@ -1202,7 +1202,7 @@ class LuckyDrawAPIController extends ControllerAPI
                     'start_date'                     => 'lucky_draws.start_date',
                     'end_date'                       => 'lucky_draws.end_date',
                     'draw_date'                      => 'lucky_draws.draw_date',
-                    'status'                         => 'campaign_status.order',
+                    'status'                         => 'campaign_status',
                     'external_lucky_draw_id'         => 'lucky_draws.external_lucky_draw_id',
                     'minimum_amount'                 => 'lucky_draws.minimum_amount',
                     'updated_at'                     => 'lucky_draws.updated_at',
@@ -1215,8 +1215,8 @@ class LuckyDrawAPIController extends ControllerAPI
                 }
             });
 
-            if ($sortBy !== 'campaign_status.order') {
-                $luckydraws->orderBy('campaign_status.order', 'asc');
+            if ($sortBy !== 'campaign_status') {
+                $luckydraws->orderBy('campaign_status', 'asc');
             }
 
             OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
