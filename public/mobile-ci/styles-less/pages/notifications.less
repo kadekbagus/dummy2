@@ -379,7 +379,7 @@ button.toast-close-button {
   background-color: #bd362f;
 }
 .toast-info {
-  background-color: @theme-main-complimentary;
+  background-color: #222;
 }
 .toast-warning {
   background-color: #f89406;
@@ -393,6 +393,12 @@ button.toast-close-button {
   opacity: 0.4;
   -ms-filter: progid:DXImageTransform.Microsoft.Alpha(Opacity=40);
   filter: alpha(opacity=40);
+}
+.toast-header{
+  font-weight:bold;
+  .toast-bullet{
+    color: @theme-main-complimentary;
+  }
 }
 /*Responsive Design*/
 @media all and (max-width: 240px) {
