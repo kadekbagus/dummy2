@@ -38,6 +38,7 @@ return array(
         'orbit_tour'         => 'ORBIT巡视',
         'lucky_draws'        => '幸运大抽奖',
         'my_messages'        => '我的消息',
+        'my_message'         => '我的消息',
     ),
 
     'widgets' => array(
