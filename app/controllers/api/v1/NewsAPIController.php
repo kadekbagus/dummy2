@@ -88,7 +88,7 @@ class NewsAPIController extends ControllerAPI
             $mall_id = OrbitInput::post('current_mall');;
             $news_name = OrbitInput::post('news_name');
             $object_type = OrbitInput::post('object_type');
-            $status = OrbitInput::post('status');
+            $campaignStatus = OrbitInput::post('campaign_status');
             $description = OrbitInput::post('description');
             $begin_date = OrbitInput::post('begin_date');
             $end_date = OrbitInput::post('end_date');
@@ -106,6 +106,15 @@ class NewsAPIController extends ControllerAPI
             $keywords = OrbitInput::post('keywords');
             $keywords = (array) $keywords;
             $is_popup = OrbitInput::post('is_popup');
+
+            if (empty($campaignStatus)) {
+                $campaignStatus = 'not started';
+            }
+
+            $status = 'inactive';
+            if ($campaignStatus === 'ongoing') {
+                $status = 'active';
+            }
 
             $validator = Validator::make(
                 array(
@@ -219,11 +228,14 @@ class NewsAPIController extends ControllerAPI
             $sticky_order = (string)$sticky_order === 'true' && (string)$sticky_order !== '0' ? 1 : 0;
 
             // save News.
+            $idStatus = CampaignStatus::select('campaign_status_id')->where('campaign_status_name', $campaignStatus)->first();
+
             $newnews = new News();
             $newnews->mall_id = $mall_id;
             $newnews->news_name = $news_name;
             $newnews->object_type = $object_type;
             $newnews->status = $status;
+            $newnews->campaign_status_id = $idStatus->campaign_status_id;
             $newnews->description = $description;
             $newnews->begin_date = $begin_date;
             $newnews->end_date = $end_date;
@@ -566,7 +578,7 @@ class NewsAPIController extends ControllerAPI
             $news_id = OrbitInput::post('news_id');
             $mall_id = OrbitInput::post('current_mall');;
             $object_type = OrbitInput::post('object_type');
-            $status = OrbitInput::post('status');
+            $campaignStatus = OrbitInput::post('campaign_status');
             $link_object_type = OrbitInput::post('link_object_type');
             $end_date = OrbitInput::post('end_date');
             $id_language_default = OrbitInput::post('id_language_default');
@@ -574,6 +586,12 @@ class NewsAPIController extends ControllerAPI
             $is_all_age = OrbitInput::post('is_all_age');
             $retailernew = OrbitInput::post('retailer_ids');
             $retailernew = (array) $retailernew;
+
+            $idStatus = CampaignStatus::select('campaign_status_id')->where('campaign_status_name', $campaignStatus)->first();
+            $status = 'inactive';
+            if ($campaignStatus === 'ongoing') {
+                $status = 'active';
+            }
 
             $data = array(
                 'news_id'             => $news_id,
@@ -654,8 +672,9 @@ class NewsAPIController extends ControllerAPI
                 $updatednews->object_type = $object_type;
             });
 
-            OrbitInput::post('status', function($status) use ($updatednews) {
+            OrbitInput::post('campaign_status', function($campaignStatus) use ($updatednews, $status, $idStatus) {
                 $updatednews->status = $status;
+                $updatednews->campaign_status_id = $idStatus->campaign_status_id;
             });
 
             OrbitInput::post('begin_date', function($begin_date) use ($updatednews) {
@@ -708,7 +727,7 @@ class NewsAPIController extends ControllerAPI
                 $updatednews_default_language->description = $description;
             });
 
-            OrbitInput::post('status', function($status) use ($updatednews_default_language) {
+            OrbitInput::post('campaign_status', function($campaignStatus) use ($updatednews_default_language, $status) {
                 $updatednews_default_language->status = $status;
             });
 
@@ -919,6 +938,7 @@ class NewsAPIController extends ControllerAPI
             $now = Carbon::now($mall->timezone->timezone_name);
 
             if ($enddatedb < $now) {
+                // handle user extend date when campaing was expired
                 $actionstatus = 'deactivate';
                 $deactivate = substr($enddatedb, 0, 10) . " " . '23:59:59';
                 $utcenddatedb = Carbon::createFromFormat('Y-m-d H:i:s', $deactivate, $mall->timezone->timezone_name);
@@ -1496,15 +1516,25 @@ class NewsAPIController extends ControllerAPI
 
             $object_type = OrbitInput::get('object_type');
 
+            $current_mall = OrbitInput::get('current_mall');
+
+            $timezone = Mall::leftJoin('timezones','timezones.timezone_id','=','merchants.timezone_id')
+                ->where('merchants.merchant_id','=', $current_mall)
+                ->first();
+
+            $now = Carbon::now($timezone->timezone_name);
+
             // Builder object
             $prefix = DB::getTablePrefix();
-            $news = News::select('news.*', 'campaign_price.campaign_price_id', DB::raw("CASE WHEN {$prefix}campaign_price.base_price is null THEN 0 ELSE {$prefix}campaign_price.base_price END AS base_price, 
-                            ((CASE WHEN {$prefix}campaign_price.base_price is null THEN 0 ELSE {$prefix}campaign_price.base_price END) * (DATEDIFF({$prefix}news.end_date, {$prefix}news.begin_date) + 1) * (COUNT({$prefix}news_merchant.news_merchant_id))) AS estimated"))
+            $news = News::select('news.*', 'campaign_status.order', 'campaign_price.campaign_price_id', 
+                            DB::raw("CASE WHEN {$prefix}news.end_date < {$this->quote($now)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END  AS campaign_status"), 
+                            DB::raw("CASE WHEN {$prefix}campaign_price.base_price is null THEN 0 ELSE {$prefix}campaign_price.base_price END AS base_price, ((CASE WHEN {$prefix}campaign_price.base_price is null THEN 0 ELSE {$prefix}campaign_price.base_price END) * (DATEDIFF({$prefix}news.end_date, {$prefix}news.begin_date) + 1) * (COUNT({$prefix}news_merchant.news_merchant_id))) AS estimated"))
                         ->leftJoin('campaign_price', function ($join) use ($object_type) {
                                 $join->on('news.news_id', '=', 'campaign_price.campaign_id')
                                      ->where('campaign_price.campaign_type', '=', $object_type);
                           })
                         ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
+                        ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
                         ->excludeDeleted('news')
                         ->groupBy('news.news_id');
 
@@ -1578,8 +1608,8 @@ class NewsAPIController extends ControllerAPI
             });
 
             // Filter news by status
-            OrbitInput::get('status', function ($statuses) use ($news) {
-                $news->whereIn('news.status', $statuses);
+            OrbitInput::get('campaign_status', function ($statuses) use ($news) {
+                $news->whereIn('campaign_status.campaign_status_name', $statuses);
             });
 
             // Filter news by link object type
@@ -1677,14 +1707,14 @@ class NewsAPIController extends ControllerAPI
                     'begin_date'        => 'news.begin_date',
                     'end_date'          => 'news.end_date',
                     'updated_at'        => 'news.updated_at',
-                    'status'            => 'news.status'
+                    'status'            => 'campaign_status.order'
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];
             });
 
-            if ($sortBy !== 'news.status') {
-                $news->orderBy('news.status', 'asc');
+            if ($sortBy !== 'campaign_status.order') {
+                $news->orderBy('campaign_status.order', 'asc');
             }
 
             OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
@@ -2423,6 +2453,11 @@ class NewsAPIController extends ControllerAPI
             }
         }
 
+    }
+
+    protected function quote($arg)
+    {
+        return DB::connection()->getPdo()->quote($arg);
     }
 
 }

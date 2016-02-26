@@ -38,6 +38,7 @@ return array(
         'orbit_tour'         => 'ORBIT巡视',
         'lucky_draws'        => '幸运大抽奖',
         'my_messages'        => '我的消息',
+        'my_message'         => '我的消息',
     ),
 
     'widgets' => array(
@@ -295,14 +296,15 @@ return array(
     ),
 
     'search' => array(
-        'no_item'        => '无店铺匹配条件',
-        'too_much_items' => '搜索结果的范围太广，请缩小它',
-        'no_result'      => '对不起，搜索有没有结果',
-        'error'          => '发出请求时有错误',
-        'show_all_result'=> '显示所有结果',
-        'show_by_categories'=> '按类别显示',
-        'search_placeholder'=> '在这里搜索',
+        'no_item'            => '无店铺匹配条件',
+        'too_much_items'     => '搜索结果的范围太广，请缩小它',
+        'no_result'          => '对不起，搜索有没有结果',
+        'error'              => '发出请求时有错误',
+        'show_all_result'    => '显示所有结果',
+        'show_by_categories' => '按类别显示',
+        'search_placeholder' => '在这里搜索',
         'all_search_results' => '所有搜索结果',
+        'show_more'          => '展示更多',
     ),
 
     'thank_you' => array(

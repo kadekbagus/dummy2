@@ -112,7 +112,7 @@ class CouponAPIController extends ControllerAPI
             $merchant_id = OrbitInput::post('current_mall');
             $promotion_name = OrbitInput::post('promotion_name');
             $promotion_type = OrbitInput::post('promotion_type');
-            $status = OrbitInput::post('status');
+            $campaignStatus = OrbitInput::post('campaign_status');
             $description = OrbitInput::post('description');
             $long_description = OrbitInput::post('long_description');
             $begin_date = OrbitInput::post('begin_date');
@@ -161,6 +161,15 @@ class CouponAPIController extends ControllerAPI
             $keywords = (array) $keywords;
             $linkToTenantIds = OrbitInput::post('link_to_tenant_ids');
             $linkToTenantIds = (array) $linkToTenantIds;
+
+            if (empty($campaignStatus)) {
+                $campaignStatus = 'not started';
+            }
+
+            $status = 'inactive';
+            if ($campaignStatus === 'ongoing') {
+                $status = 'active';
+            }
 
             $validator = Validator::make(
                 array(
@@ -348,11 +357,14 @@ class CouponAPIController extends ControllerAPI
             Event::fire('orbit.coupon.postnewcoupon.after.validation', array($this, $validator));
 
             // save Coupon.
+            $idStatus = CampaignStatus::select('campaign_status_id')->where('campaign_status_name', $campaignStatus)->first();
+
             $newcoupon = new Coupon();
             $newcoupon->merchant_id = $merchant_id;
             $newcoupon->promotion_name = $promotion_name;
             $newcoupon->promotion_type = $promotion_type;
             $newcoupon->status = $status;
+            $newcoupon->campaign_status_id = $idStatus->campaign_status_id;
             $newcoupon->description = $description;
             $newcoupon->long_description = $long_description;
             $newcoupon->begin_date = $begin_date;
@@ -836,7 +848,7 @@ class CouponAPIController extends ControllerAPI
             $promotion_id = OrbitInput::post('promotion_id');
             $merchant_id = OrbitInput::post('current_mall');
             $promotion_type = OrbitInput::post('promotion_type');
-            $status = OrbitInput::post('status');
+            $campaignStatus = OrbitInput::post('campaign_status');
             $rule_type = OrbitInput::post('rule_type');
             $rule_object_type = OrbitInput::post('rule_object_type');
             $rule_object_id1 = OrbitInput::post('rule_object_id1');
@@ -870,6 +882,12 @@ class CouponAPIController extends ControllerAPI
 
             $retailernew = OrbitInput::post('link_to_tenant_ids');
             $retailernew = (array) $retailernew;
+
+            $idStatus = CampaignStatus::select('campaign_status_id')->where('campaign_status_name', $campaignStatus)->first();
+            $status = 'inactive';
+            if ($campaignStatus === 'ongoing') {
+                $status = 'active';
+            }
 
             $data = array(
                 'promotion_id'            => $promotion_id,
@@ -1111,8 +1129,9 @@ class CouponAPIController extends ControllerAPI
                 $updatedcoupon->promotion_type = $promotion_type;
             });
 
-            OrbitInput::post('status', function($status) use ($updatedcoupon) {
+            OrbitInput::post('campaign_status', function($campaignStatus) use ($updatedcoupon, $idStatus, $status) {
                 $updatedcoupon->status = $status;
+                $updatedcoupon->campaign_status_id = $idStatus->campaign_status_id;
             });
 
             OrbitInput::post('description', function($description) use ($updatedcoupon) {
@@ -1210,7 +1229,7 @@ class CouponAPIController extends ControllerAPI
                 $updatedcoupon_default_language->long_description = $long_description;
             });
 
-            OrbitInput::post('status', function($status) use ($updatedcoupon_default_language) {
+            OrbitInput::post('campaign_status', function($campaignStatus) use ($updatedcoupon_default_language, $status) {
                 $updatedcoupon_default_language->status = $status;
             });
 
@@ -1947,6 +1966,7 @@ class CouponAPIController extends ControllerAPI
      * GET - Search Coupon
      *
      * @author Tian <tian@dominopos.com>
+     * @author Irianto <irianto@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -2070,12 +2090,18 @@ class CouponAPIController extends ControllerAPI
 
             $table_prefix = DB::getTablePrefix();
 
-            $now = date('Y-m-d H:i:s');
+            $timezone = Mall::leftJoin('timezones','timezones.timezone_id','=','merchants.timezone_id')
+                ->where('merchants.merchant_id','=', $currentmall)
+                ->first();
+
+            $now = Carbon::now($timezone->timezone_name);
 
             // Builder object
             // Addition select case and join for sorting by discount_value.
             $coupons = Coupon::with('couponRule')
                 ->select(DB::raw("{$table_prefix}promotions.*, {$table_prefix}campaign_price.campaign_price_id,
+                    CASE WHEN {$table_prefix}promotions.end_date < {$this->quote($now)} THEN 'expired' ELSE {$table_prefix}campaign_status.campaign_status_name END  AS campaign_status,
+                    {$table_prefix}campaign_status.order,
                     CASE rule_type
                         WHEN 'cart_discount_by_percentage' THEN 'percentage'
                         WHEN 'product_discount_by_percentage' THEN 'percentage'
@@ -2108,6 +2134,7 @@ class CouponAPIController extends ControllerAPI
                          $join->on('promotions.promotion_id', '=', 'campaign_price.campaign_id')
                               ->where('campaign_price.campaign_type', '=', 'coupon');
                   })
+                ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
                 ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                 ->joinPromotionRules()
                 ->groupBy('promotions.promotion_id');
@@ -2213,9 +2240,9 @@ class CouponAPIController extends ControllerAPI
                 $coupons->whereIn('promotions.coupon_notification', $couponNotification);
             });
 
-            // Filter coupon by status
-            OrbitInput::get('status', function ($statuses) use ($coupons) {
-                $coupons->whereIn('promotions.status', $statuses);
+            // Filter coupons by status
+            OrbitInput::get('campaign_status', function ($statuses) use ($coupons) {
+                $coupons->whereIn('campaign_status.campaign_status_name', $statuses);
             });
 
             // Filter coupon rule by rule type
@@ -2444,7 +2471,7 @@ class CouponAPIController extends ControllerAPI
                     'end_date'                 => 'promotions.end_date',
                     'updated_at'               => 'promotions.updated_at',
                     'is_permanent'             => 'promotions.is_permanent',
-                    'status'                   => 'promotions.status',
+                    'status'                   => 'campaign_status.order',
                     'rule_type'                => 'rule_type',
                     'tenant_name'              => 'tenant_name',
                     'is_auto_issuance'         => 'is_auto_issue_on_signup',
@@ -2455,9 +2482,8 @@ class CouponAPIController extends ControllerAPI
                 $sortBy = $sortByMapping[$_sortBy];
             });
 
-            // sort by status first
-            if ($sortBy !== 'promotions.status') {
-                $coupons->orderBy('promotions.status', 'asc');
+            if ($sortBy !== 'campaign_status.order') {
+                $coupons->orderBy('campaign_status.order', 'asc');
             }
 
             OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
@@ -3767,5 +3793,10 @@ class CouponAPIController extends ControllerAPI
                 $existing_translation->delete();
             }
         }
+    }
+
+    protected function quote($arg)
+    {
+        return DB::connection()->getPdo()->quote($arg);
     }
 }
