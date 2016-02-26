@@ -2471,7 +2471,7 @@ class CouponAPIController extends ControllerAPI
                     'end_date'                 => 'promotions.end_date',
                     'updated_at'               => 'promotions.updated_at',
                     'is_permanent'             => 'promotions.is_permanent',
-                    'status'                   => 'campaign_status.campaign_status_name',
+                    'status'                   => 'campaign_status.order',
                     'rule_type'                => 'rule_type',
                     'tenant_name'              => 'tenant_name',
                     'is_auto_issuance'         => 'is_auto_issue_on_signup',
@@ -2482,7 +2482,7 @@ class CouponAPIController extends ControllerAPI
                 $sortBy = $sortByMapping[$_sortBy];
             });
 
-            if ($sortBy !== 'campaign_status.campaign_status_name') {
+            if ($sortBy !== 'campaign_status.order') {
                 $coupons->orderBy('campaign_status.order', 'asc');
             }
 
