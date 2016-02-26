@@ -918,6 +918,7 @@ class LuckyDrawAPIController extends ControllerAPI
 
             $sort_by = OrbitInput::get('sortby');
             $details_view = OrbitInput::get('details');
+            $current_mall = OrbitInput::get('current_mall');
 
             $validator = Validator::make(
                 array(
@@ -959,12 +960,20 @@ class LuckyDrawAPIController extends ControllerAPI
                 }
             }
 
+            $timezone = Mall::leftJoin('timezones','timezones.timezone_id','=','merchants.timezone_id')
+                ->where('merchants.merchant_id','=', $current_mall)
+                ->first();
+
+            $now = Carbon::now($timezone->timezone_name);
+
             // Builder object
-            $luckydraws = LuckyDraw::excludeDeleted('lucky_draws')->select('lucky_draws.*');
+            $prefix = DB::getTablePrefix();
+            $luckydraws = LuckyDraw::excludeDeleted('lucky_draws')
+                                    ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'lucky_draws.campaign_status_id')
+                                    ->select('lucky_draws.*', 'campaign_status.order', DB::raw("CASE WHEN {$prefix}lucky_draws.end_date < {$this->quote($now)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END  AS campaign_status"));
 
             if ($details_view === 'yes') {
-                $prefix = DB::getTablePrefix();
-                $luckydraws->select('lucky_draws.*', 'merchants.name',
+                $luckydraws->select('lucky_draws.*', 'campaign_status.order', DB::raw("CASE WHEN {$prefix}lucky_draws.end_date < {$this->quote($now)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END  AS campaign_status"), 'merchants.name',
                                     DB::raw("count({$prefix}lucky_draw_numbers.lucky_draw_number_id) as total_issued_lucky_draw_number"))
                                     ->joinLuckyDrawNumbers()
                                     ->joinMerchant()
@@ -1041,9 +1050,9 @@ class LuckyDrawAPIController extends ControllerAPI
                 $luckydraws->where('lucky_draws.draw_date', '>=', $drawDate);
             });
 
-            // Filter lucky draw by status
-            OrbitInput::get('status', function ($status) use ($luckydraws) {
-                $luckydraws->whereIn('lucky_draws.status', $status);
+            // Filter news by status
+            OrbitInput::get('campaign_status', function ($statuses) use ($luckydraws) {
+                $luckydraws->whereIn('campaign_status.campaign_status_name', $statuses);
             });
 
             // Filter by start date
@@ -1193,7 +1202,7 @@ class LuckyDrawAPIController extends ControllerAPI
                     'start_date'                     => 'lucky_draws.start_date',
                     'end_date'                       => 'lucky_draws.end_date',
                     'draw_date'                      => 'lucky_draws.draw_date',
-                    'status'                         => 'lucky_draws.status',
+                    'status'                         => 'campaign_status.order',
                     'external_lucky_draw_id'         => 'lucky_draws.external_lucky_draw_id',
                     'minimum_amount'                 => 'lucky_draws.minimum_amount',
                     'updated_at'                     => 'lucky_draws.updated_at',
@@ -1206,8 +1215,8 @@ class LuckyDrawAPIController extends ControllerAPI
                 }
             });
 
-            if ($sortBy !== 'lucky_draws.status') {
-                $luckydraws->orderBy('lucky_draws.status', 'asc');
+            if ($sortBy !== 'campaign_status.order') {
+                $luckydraws->orderBy('campaign_status.order', 'asc');
             }
 
             OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
@@ -4315,5 +4324,10 @@ class LuckyDrawAPIController extends ControllerAPI
                 $existing_translation->delete();
             }
         }
+    }
+
+    protected function quote($arg)
+    {
+        return DB::connection()->getPdo()->quote($arg);
     }
 }
