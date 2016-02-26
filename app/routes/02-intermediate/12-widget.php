@@ -32,3 +32,8 @@ Route::post('/app/v1/widget/deleteimage', 'IntermediateAuthController@Widget_pos
  * List Widget Templates
  */
 Route::get('/app/v1/widget-template/list', 'IntermediateAuthController@WidgetTemplate_getSearchWidgetTemplate');
+
+/**
+ * List Setting Widget Templates
+ */
+Route::get('/app/v1/setting-widget-template/list', 'IntermediateAuthController@WidgetTemplate_getSearchSettingWidgetTemplate');

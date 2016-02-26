@@ -50,3 +50,11 @@ Route::get('/api/v1/widget-template/list', function()
 {
     return WidgetTemplateAPIController::create()->getSearchWidgetTemplate();
 });
+
+/**
+ * List Setting Widget Templates
+ */
+Route::get('/api/v1/setting-widget-template/list', function()
+{
+    return WidgetTemplateAPIController::create()->getSearchSettingWidgetTemplate();
+});
