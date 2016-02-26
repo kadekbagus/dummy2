@@ -72,6 +72,9 @@
     -o-transform: skew(-45deg, 0deg);
      transform: skew(-45deg, 0deg); 
 }
+.widget-col{
+    overflow: hidden;
+}
 </style>
 @stop
 

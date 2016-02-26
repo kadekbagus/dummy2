@@ -38,6 +38,7 @@ return array(
         'orbit_tour'         => 'ORBIT ツアー',
         'lucky_draws'        => '抽選',
         'my_messages'        => '私のメッセージ',
+        'my_message'         => '私のメッセージ',
     ),
 
     'widgets' => array(
