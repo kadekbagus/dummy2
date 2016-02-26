@@ -1966,6 +1966,7 @@ class CouponAPIController extends ControllerAPI
      * GET - Search Coupon
      *
      * @author Tian <tian@dominopos.com>
+     * @author Irianto <irianto@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -2094,7 +2095,7 @@ class CouponAPIController extends ControllerAPI
             // Builder object
             // Addition select case and join for sorting by discount_value.
             $coupons = Coupon::with('couponRule')
-                ->select(DB::raw("{$table_prefix}promotions.*, {$table_prefix}campaign_price.campaign_price_id,
+                ->select(DB::raw("{$table_prefix}promotions.*, {$table_prefix}campaign_price.campaign_price_id, {$table_prefix}campaign_status.campaign_status_name AS campaign_status, {$table_prefix}campaign_status.order,
                     CASE rule_type
                         WHEN 'cart_discount_by_percentage' THEN 'percentage'
                         WHEN 'product_discount_by_percentage' THEN 'percentage'
@@ -2127,6 +2128,7 @@ class CouponAPIController extends ControllerAPI
                          $join->on('promotions.promotion_id', '=', 'campaign_price.campaign_id')
                               ->where('campaign_price.campaign_type', '=', 'coupon');
                   })
+                ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
                 ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                 ->joinPromotionRules()
                 ->groupBy('promotions.promotion_id');
@@ -2232,10 +2234,15 @@ class CouponAPIController extends ControllerAPI
                 $coupons->whereIn('promotions.coupon_notification', $couponNotification);
             });
 
-            // Filter coupon by status
-            OrbitInput::get('status', function ($statuses) use ($coupons) {
-                $coupons->whereIn('promotions.status', $statuses);
+            // Filter coupons by status
+            OrbitInput::get('campaign_status', function ($statuses) use ($coupons) {
+                $coupons->whereIn('campaign_status.campaign_status_name', $statuses);
             });
+
+            // // Filter coupon by status
+            // OrbitInput::get('status', function ($statuses) use ($coupons) {
+            //     $coupons->whereIn('promotions.status', $statuses);
+            // });
 
             // Filter coupon rule by rule type
             OrbitInput::get('rule_type', function ($ruleTypes) use ($coupons) {
@@ -2463,7 +2470,7 @@ class CouponAPIController extends ControllerAPI
                     'end_date'                 => 'promotions.end_date',
                     'updated_at'               => 'promotions.updated_at',
                     'is_permanent'             => 'promotions.is_permanent',
-                    'status'                   => 'promotions.status',
+                    'status'                   => 'campaign_status.campaign_status_name',
                     'rule_type'                => 'rule_type',
                     'tenant_name'              => 'tenant_name',
                     'is_auto_issuance'         => 'is_auto_issue_on_signup',
@@ -2474,10 +2481,14 @@ class CouponAPIController extends ControllerAPI
                 $sortBy = $sortByMapping[$_sortBy];
             });
 
-            // sort by status first
-            if ($sortBy !== 'promotions.status') {
-                $coupons->orderBy('promotions.status', 'asc');
+            if ($sortBy !== 'campaign_status.campaign_status_name') {
+                $coupons->orderBy('campaign_status.order', 'asc');
             }
+
+            // // sort by status first
+            // if ($sortBy !== 'promotions.status') {
+            //     $coupons->orderBy('promotions.status', 'asc');
+            // }
 
             OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
             {
