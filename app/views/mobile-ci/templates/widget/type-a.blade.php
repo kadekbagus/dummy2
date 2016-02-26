@@ -3,6 +3,7 @@
 @section('ext_style')
 <style type="text/css">
 #particles-js1{
+    pointer-events: none;
     background:rgba(0,0,0,.3);
     position: absolute;
     top:0px;
@@ -17,6 +18,7 @@
      transform: skew(-45deg, 0deg); 
 }
 #particles-js2{
+    pointer-events: none;
     background:rgba(0,0,0,.3);
     position: absolute;
     top:0px;
@@ -31,6 +33,7 @@
      transform: skew(45deg, 0deg); 
 }
 #particles-js3{
+    pointer-events: none;
     background:rgba(0,0,0,.3);
     position: absolute;
     top:0px;
@@ -45,6 +48,7 @@
      transform: skew(-45deg, 0deg); 
 }
 #particles-js4{
+    pointer-events: none;
     background:rgba(0,0,0,.3);
     position: absolute;
     top:0px;
@@ -59,6 +63,7 @@
      transform: skew(45deg, 0deg); 
 }
 #particles-js5{
+    pointer-events: none;
     background:rgba(0,0,0,.3);
     position: absolute;
     top:0px;
