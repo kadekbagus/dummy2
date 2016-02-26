@@ -1294,6 +1294,8 @@ class SettingAPIController extends ControllerAPI
             $langs['ja'] = Lang::get('mobileci.signin');
             App::setLocale('zh');
             $langs['zh'] = Lang::get('mobileci.signin');
+            App::setLocale('id');
+            $langs['id'] = Lang::get('mobileci.signin');
             App::setLocale('en');
 
             $this->response->data = $langs;
