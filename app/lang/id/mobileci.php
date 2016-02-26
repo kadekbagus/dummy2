@@ -38,6 +38,7 @@ return array(
         'orbit_tour'        => 'TUR ORBIT',
         'lucky_draws'       => 'UNDIAN BERHADIAH',
         'my_messages'       => 'PESAN SAYA',
+        'my_message'        => 'PESAN SAYA',
     ),
 
     'widgets'   => array(
@@ -294,14 +295,16 @@ return array(
         'validity_label'      => 'Masa Berlaku',
     ),
 
-    'search'               => array(
-        'no_item'           => 'Tidak ada tenant yang sesuai kriteria.',
-        'too_much_items'    => 'Hasil pencarian terlalu banyak, tolong persempit pencarian Anda.',
-        'no_result'         => 'Maaf, tidak ada hasil pencarian.',
-        'error'             => 'Ada error pada waktu melakukan request.',
-        'show_all_result'   => 'Tampilkan Semua Hasil Pencarian',
-        'show_by_categories'=> 'Tampilkan Berdasarkan Kategori',
-        'search_placeholder'=> 'Cari di sini',
+    'search'                => array(
+        'no_item'            => 'Tidak ada tenant yang sesuai kriteria.',
+        'too_much_items'     => 'Hasil pencarian terlalu banyak, tolong persempit pencarian Anda.',
+        'no_result'          => 'Maaf, tidak ada hasil pencarian.',
+        'error'              => 'Ada error pada waktu melakukan request.',
+        'show_all_result'    => 'Tampilkan Semua Hasil Pencarian',
+        'show_by_categories' => 'Tampilkan Berdasarkan Kategori',
+        'search_placeholder' => 'Cari di sini',
+        'all_search_results' => 'Semua hasil pencarian',
+        'show_more'          => 'Tampilkan lebih',
     ),
 
     'thank_you'            => array(
