@@ -428,6 +428,7 @@ return array(
         'prizes_and_winners'        => '奖品和获奖者',
         'lucky_draw_prizes'         => '幸运抽奖',
         'no_prize'                  => '该奖项即将到来',
+        'lucky_draw_download_title' => '下载抽奖号码',
     ),
 
     'notification' => array(
