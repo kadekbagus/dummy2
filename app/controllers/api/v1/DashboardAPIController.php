@@ -4390,29 +4390,32 @@ class DashboardAPIController extends ControllerAPI
      */
     public function getCampaignStatus()
     {
-        $date = OrbitInput::get('date');
+        // $date = OrbitInput::get('date');
         $mallId = OrbitInput::get('current_mall');
 
+        $mall = Mall::excludeDeleted()->where('merchant_id', $mallId)->first();
+        $mallTime = Carbon::now($mall->timezone->timezone_name);
+
         // Promotions
-        $notStartedPromotionCount = News::ofMallId($mallId)->isPromotion()->notStarted('news')->count();
-        $ongoingPromotionCount = News::ofMallId($mallId)->isPromotion()->ongoing('news')->count();
-        $pausedPromotionCount = News::ofMallId($mallId)->isPromotion()->paused('news')->count();
-        $stoppedPromotionCount = News::ofMallId($mallId)->isPromotion()->stopped('news')->count();
-        $expiredPromotionCount = News::ofMallId($mallId)->isPromotion()->expired('news')->count();
+        $notStartedPromotionCount = News::ofMallId($mallId)->isPromotion()->campaignStatus('not started', $mallTime)->count();
+        $ongoingPromotionCount = News::ofMallId($mallId)->isPromotion()->campaignStatus('ongoing', $mallTime)->count();
+        $pausedPromotionCount = News::ofMallId($mallId)->isPromotion()->campaignStatus('paused', $mallTime)->count();
+        $stoppedPromotionCount = News::ofMallId($mallId)->isPromotion()->campaignStatus('stopped', $mallTime)->count();
+        $expiredPromotionCount = News::ofMallId($mallId)->isPromotion()->campaignStatus('expired', $mallTime)->count();
 
         // News
-        $notStartedNewsCount = News::ofMallId($mallId)->isNews()->notStarted('news')->count();
-        $ongoingNewsCount = News::ofMallId($mallId)->isNews()->ongoing('news')->count();
-        $pausedNewsCount = News::ofMallId($mallId)->isNews()->paused('news')->count();
-        $stoppedNewsCount = News::ofMallId($mallId)->isNews()->stopped('news')->count();
-        $expiredNewsCount = News::ofMallId($mallId)->isNews()->expired('news')->count();
+        $notStartedNewsCount = News::ofMallId($mallId)->isNews()->campaignStatus('not started', $mallTime)->count();
+        $ongoingNewsCount = News::ofMallId($mallId)->isNews()->campaignStatus('ongoing', $mallTime)->count();
+        $pausedNewsCount = News::ofMallId($mallId)->isNews()->campaignStatus('paused', $mallTime)->count();
+        $stoppedNewsCount = News::ofMallId($mallId)->isNews()->campaignStatus('stopped', $mallTime)->count();
+        $expiredNewsCount = News::ofMallId($mallId)->isNews()->campaignStatus('expired', $mallTime)->count();
 
         // Coupons
-        $notStartedCouponCount = Coupon::ofMerchantId($mallId)->notStarted('promotions')->count();
-        $ongoingCouponCount = Coupon::ofMerchantId($mallId)->ongoing('promotions')->count();
-        $pausedCouponCount = Coupon::ofMerchantId($mallId)->paused('promotions')->count();
-        $stoppedCouponCount = Coupon::ofMerchantId($mallId)->stopped('promotions')->count();
-        $expiredCouponCount = Coupon::ofMerchantId($mallId)->expired('promotions')->count();
+        $notStartedCouponCount = Coupon::ofMerchantId($mallId)->campaignStatus('not started', $mallTime)->count();
+        $ongoingCouponCount = Coupon::ofMerchantId($mallId)->campaignStatus('ongoing', $mallTime)->count();
+        $pausedCouponCount = Coupon::ofMerchantId($mallId)->campaignStatus('paused', $mallTime)->count();
+        $stoppedCouponCount = Coupon::ofMerchantId($mallId)->campaignStatus('stopped', $mallTime)->count();
+        $expiredCouponCount = Coupon::ofMerchantId($mallId)->campaignStatus('expired', $mallTime)->count();
 
         $this->response->data = [
             'promotions_not_started'    => $notStartedPromotionCount,
