@@ -32,9 +32,9 @@ class TenantAPIController extends ControllerAPI
      */
     private function saveSocmedUri($socmedCode, $merchantId, $uri)
     {
-        $socmedId = SocialMedia::whereCode($socmedCode)->find();
+        $socmedId = SocialMedia::whereSocialMediaCode($socmedCode)->first()->social_media_id;
 
-        $merchantSocmed = MerchantSocialMedia::whereMerchantId($merchantId)->whereSocialMediaId($socmedId)->find();
+        $merchantSocmed = MerchantSocialMedia::whereMerchantId($merchantId)->whereSocialMediaId($socmedId)->first();
 
         if (!$merchantSocmed) {
             $merchantSocmed = new MerchantSocialMedia;
