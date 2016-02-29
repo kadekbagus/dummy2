@@ -32,9 +32,9 @@ class TenantAPIController extends ControllerAPI
      */
     private function saveSocmedUri($socmedCode, $merchantId, $uri)
     {
-        $socmedId = SocialMedia::whereCode($socmedCode)->find();
+        $socmedId = SocialMedia::whereSocialMediaCode($socmedCode)->first()->social_media_id;
 
-        $merchantSocmed = MerchantSocialMedia::whereMerchantId($merchantId)->whereSocialMediaId($socmedId)->find();
+        $merchantSocmed = MerchantSocialMedia::whereMerchantId($merchantId)->whereSocialMediaId($socmedId)->first();
 
         if (!$merchantSocmed) {
             $merchantSocmed = new MerchantSocialMedia;
@@ -1107,7 +1107,10 @@ class TenantAPIController extends ControllerAPI
             $updatedtenant->save();
 
             if (OrbitInput::post('facebook_uri')) {
-                $this->saveSocmedUri('facebook', $retailer_id, OrbitInput::get('facebook_uri'));
+                $this->saveSocmedUri('facebook', $retailer_id, OrbitInput::post('facebook_uri'));
+
+                // For response
+                $updatedtenant->facebook_uri = OrbitInput::post('facebook_uri');
             }
 
             // save CategoryMerchant
