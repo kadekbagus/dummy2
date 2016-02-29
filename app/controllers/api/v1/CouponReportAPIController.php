@@ -900,7 +900,7 @@ class CouponReportAPIController extends ControllerAPI
             });
 
             // sort by status first
-            if ($sortBy !== 'promotions.status') {
+            if ($sortBy !== 'campaign_status') {
                 $coupons->orderBy('campaign_status', 'asc');
             }
 
