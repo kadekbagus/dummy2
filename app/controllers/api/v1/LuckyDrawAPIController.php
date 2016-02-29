@@ -314,6 +314,7 @@ class LuckyDrawAPIController extends ControllerAPI
      * POST - Update Lucky Draw
      *
      * @author Tian <tian@dominopos.com>
+     * @author Irianto Pratama<irianto@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -391,6 +392,9 @@ class LuckyDrawAPIController extends ControllerAPI
             $end_date = OrbitInput::post('end_date');
             $draw_date = OrbitInput::post('draw_date');
             $grace_period_date = OrbitInput::post('grace_period_date');
+            $luckydraw_image = OrbitInput::files('images');
+            $luckydraw_image_config = Config::get('orbit.upload.lucky_draw.main');
+            $luckydraw_image_units = static::bytesToUnits($luckydraw_image_config['file_size']);
 
             $default_merchant_language_id = MerchantLanguage::getLanguageIdByMerchant($mall_id, static::DEFAULT_LANG);
             $id_language_default = OrbitInput::post('id_language_default', $default_merchant_language_id);
@@ -398,12 +402,14 @@ class LuckyDrawAPIController extends ControllerAPI
             $now = date('Y-m-d H:i:s');
 
             $data = array(
-                'lucky_draw_id'        => $lucky_draw_id,
-                'mall_id'              => $mall_id,
-                'start_date'           => $start_date,
-                'end_date'             => $end_date,
-                'grace_period_date'    => $grace_period_date,
-                'id_language_default'  => $id_language_default,
+                'lucky_draw_id'       => $lucky_draw_id,
+                'mall_id'             => $mall_id,
+                'start_date'          => $start_date,
+                'end_date'            => $end_date,
+                'grace_period_date'   => $grace_period_date,
+                'id_language_default' => $id_language_default,
+                'images_type'         => $luckydraw_image['type'],
+                'images_size'         => $luckydraw_image['size'],
             );
 
             // Validate lucky_draw_name only if exists in POST.
@@ -422,20 +428,23 @@ class LuckyDrawAPIController extends ControllerAPI
             $validator = Validator::make(
                 $data,
                 array(
-                    'lucky_draw_id'        => 'required|orbit.empty.lucky_draw:' . $mall_id,
-                    'mall_id'              => 'orbit.empty.mall',
-                    'lucky_draw_name'      => 'sometimes|required|min:3|max:255|lucky_draw_name_exists_but_me:' . $lucky_draw_id . ',' . $mall_id,
-                    'status'               => 'sometimes|required|orbit.empty.lucky_draw_status',
-                    'start_date'           => 'date_format:Y-m-d H:i:s',
-                    'end_date'             => 'date_format:Y-m-d H:i:s',
-                    'draw_date'            => 'date_format:Y-m-d H:i:s',
-                    'grace_period_date'    => 'date_format:Y-m-d H:i:s',
-                    'id_language_default'  => 'required|orbit.empty.language_default',
+                    'lucky_draw_id'       => 'required|orbit.empty.lucky_draw:' . $mall_id,
+                    'mall_id'             => 'orbit.empty.mall',
+                    'lucky_draw_name'     => 'sometimes|required|min:3|max:255|lucky_draw_name_exists_but_me:' . $lucky_draw_id . ',' . $mall_id,
+                    'status'              => 'sometimes|required|orbit.empty.lucky_draw_status',
+                    'start_date'          => 'date_format:Y-m-d H:i:s',
+                    'end_date'            => 'date_format:Y-m-d H:i:s',
+                    'draw_date'           => 'date_format:Y-m-d H:i:s',
+                    'grace_period_date'   => 'date_format:Y-m-d H:i:s',
+                    'id_language_default' => 'required|orbit.empty.language_default',
+                    'images_type'         => 'in:image/jpg,image/png,image/jpeg,image/gif',
+                    'images_size'         => 'orbit.max.file_size:' . $luckydraw_image_config['file_size'],
                 ),
                 array(
-                   'lucky_draw_name_exists_but_me' => Lang::get('validation.orbit.exists.lucky_draw_name'),
-                   'end_date_greater_than_start_date_and_current_date' => 'The end datetime should be greater than the start datetime or current datetime.',
-                   'draw_date_greater_than_end_date_and_current_date' => 'The draw datetime should be greater than the end datetime or current datetime.'
+                    'lucky_draw_name_exists_but_me' => Lang::get('validation.orbit.exists.lucky_draw_name'),
+                    'end_date_greater_than_start_date_and_current_date' => 'The end datetime should be greater than the start datetime or current datetime.',
+                    'draw_date_greater_than_end_date_and_current_date' => 'The draw datetime should be greater than the end datetime or current datetime.',
+                    'orbit.max.file_size' => 'Lucky Draw Image size is too big, maximum size allowed is '. $luckydraw_image_units['newsize'] . $luckydraw_image_units['unit']
                 )
             );
 
@@ -4095,6 +4104,17 @@ class LuckyDrawAPIController extends ControllerAPI
             return TRUE;
         });
 
+        Validator::extend('orbit.max.file_size', function ($attribute, $value, $parameters) {
+            $config_size = $parameters[0];
+            $file_size = $value;
+
+            if ($file_size > $config_size) {
+                return false;
+            }
+
+            return true;
+        });
+
     }
 
     /**
@@ -4330,5 +4350,51 @@ class LuckyDrawAPIController extends ControllerAPI
     protected function quote($arg)
     {
         return DB::connection()->getPdo()->quote($arg);
+    }
+
+    /**
+     * Method to convert the size from bytes to more human readable units. As
+     * an example:
+     *
+     * Input 356 produces => array('unit' => 'bytes', 'newsize' => 356)
+     * Input 2045 produces => array('unit' => 'kB', 'newsize' => 2.045)
+     * Input 1055000 produces => array('unit' => 'MB', 'newsize' => 1.055)
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @author Irianto <irianto@dominopos.com>
+     * @param int $size - The size in bytes
+     * @return array
+     */
+    public static function bytesToUnits($size)
+    {
+       $kb = 1000;
+       $mb = $kb * 1000;
+       $gb = $mb * 1000;
+
+       if ($size > $gb) {
+            return array(
+                    'unit' => 'GB',
+                    'newsize' => $size / $gb
+                   );
+       }
+
+       if ($size > $mb) {
+            return array(
+                    'unit' => 'MB',
+                    'newsize' => $size / $mb
+                   );
+       }
+
+       if ($size > $kb) {
+            return array(
+                    'unit' => 'kB',
+                    'newsize' => $size / $kb
+                   );
+       }
+
+       return array(
+                'unit' => 'bytes',
+                'newsize' => 1
+              );
     }
 }
