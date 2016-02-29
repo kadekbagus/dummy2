@@ -296,14 +296,15 @@ return array(
     ),
 
     'search' => array(
-        'no_item'           => '基準にマッチしているテナントがありません。',
-        'too_much_items'    => '検索結果が広すぎる、それを絞り込むください.',
-        'no_result'         => '申し訳ありませんが、検索結果がないです',
-        'error'             => '要求の発行中にエラーがあります',
-        'show_all_result'   => '結果をすべて表示します',
-        'show_by_categories'=> 'カテゴリ別表示します',
-        'search_placeholder'=> 'ここで検索します',
+        'no_item'            => '基準にマッチしているテナントがありません。',
+        'too_much_items'     => '検索結果が広すぎる、それを絞り込むください.',
+        'no_result'          => '申し訳ありませんが、検索結果がないです',
+        'error'              => '要求の発行中にエラーがあります',
+        'show_all_result'    => '結果をすべて表示します',
+        'show_by_categories' => 'カテゴリ別表示します',
+        'search_placeholder' => 'ここで検索します',
         'all_search_results' => 'すべての検索結果',
+        'show_more'          => 'もっと見せる',
     ),
 
     'thank_you' => array(
@@ -427,6 +428,7 @@ return array(
         'prizes_and_winners'        => '賞と受賞者',
         'lucky_draw_prizes'         => '幸運な抽選賞',
         'no_prize'                  => '賞金はすぐに来ています',
+        'lucky_draw_download_title' => '抽選番号をダウンロード',
     ),
 
     'notification' => array(

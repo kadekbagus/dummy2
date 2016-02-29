@@ -1535,6 +1535,10 @@ class NewsAPIController extends ControllerAPI
                           })
                         ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
+                        ->leftJoin('news_translations', 'news_translations.news_id', '=', 'news.news_id')
+                        ->leftJoin('merchant_languages', 'merchant_languages.merchant_language_id', '=', 'news_translations.merchant_language_id')
+                        ->leftJoin('languages', 'languages.language_id', '=', 'merchant_languages.language_id')
+                        ->where('languages.name', '=', 'en')
                         ->excludeDeleted('news')
                         ->groupBy('news.news_id');
 
@@ -1565,11 +1569,7 @@ class NewsAPIController extends ControllerAPI
             // Filter news by matching news name pattern
             OrbitInput::get('news_name_like', function($newsname) use ($news)
             {
-                $news->leftJoin('news_translations', 'news_translations.news_id', '=', 'news.news_id')
-                    ->leftJoin('merchant_languages', 'merchant_languages.merchant_language_id', '=', 'news_translations.merchant_language_id')
-                    ->leftJoin('languages', 'languages.language_id', '=', 'merchant_languages.language_id')
-                    ->where('news_translations.news_name', 'like', "%$newsname%")
-                    ->where('languages.name', '=', 'en');
+                $news->where('news_translations.news_name', 'like', "%$newsname%");
             });
 
             // Filter news by object type
@@ -1608,8 +1608,8 @@ class NewsAPIController extends ControllerAPI
             });
 
             // Filter news by status
-            OrbitInput::get('campaign_status', function ($statuses) use ($news) {
-                $news->whereIn('campaign_status.campaign_status_name', $statuses);
+            OrbitInput::get('campaign_status', function ($statuses) use ($news, $prefix, $now) {
+                $news->whereIn(DB::raw("CASE WHEN {$prefix}news.end_date < {$this->quote($now)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END"), $statuses);
             });
 
             // Filter news by link object type
@@ -1692,7 +1692,7 @@ class NewsAPIController extends ControllerAPI
             $news->skip($skip);
 
             // Default sort by
-            $sortBy = 'news.news_name';
+            $sortBy = 'news_translations.news_name';
             // Default sort mode
             $sortMode = 'asc';
 
@@ -1701,20 +1701,20 @@ class NewsAPIController extends ControllerAPI
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
                     'registered_date'   => 'news.created_at',
-                    'news_name'         => 'news.news_name',
+                    'news_name'         => 'news_translations.news_name',
                     'object_type'       => 'news.object_type',
                     'description'       => 'news.description',
                     'begin_date'        => 'news.begin_date',
                     'end_date'          => 'news.end_date',
                     'updated_at'        => 'news.updated_at',
-                    'status'            => 'campaign_status.campaign_status_name'
+                    'status'            => 'campaign_status'
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];
             });
 
-            if ($sortBy !== 'campaign_status.campaign_status_name') {
-                $news->orderBy('campaign_status.order', 'asc');
+            if ($sortBy !== 'campaign_status') {
+                $news->orderBy('campaign_status', 'asc');
             }
 
             OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)

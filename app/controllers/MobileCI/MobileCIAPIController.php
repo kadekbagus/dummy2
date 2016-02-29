@@ -6219,7 +6219,7 @@ class MobileCIAPIController extends ControllerAPI
                     $totalImage = ceil($totalLuckyDrawNumber / $totalPerImage);
 
                     return View::make('mobile-ci.lucky-draw-number-download', [
-                                     'page_title'   => 'Download Lucky Draw Number',
+                                     'page_title'   => Lang::get('mobileci.lucky_draw.lucky_draw_download_title'),
                                      'luckydraw'    => $luckyDraw,
                                      'retailer'     => $retailer,
                                      'user'         => $user,

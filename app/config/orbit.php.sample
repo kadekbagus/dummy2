@@ -2822,6 +2822,7 @@ return array(
             'pmp_campaigns',
             'pmp_news',
             'pmp_coupons',
+            'pmp_coupon_reports',
             'pmp_promotions',
             'pmp_report_news',
             'pmp_report_promotions',

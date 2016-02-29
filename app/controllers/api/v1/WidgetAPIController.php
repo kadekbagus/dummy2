@@ -292,6 +292,7 @@ class WidgetAPIController extends ControllerAPI
      *
      * @author Rio Astamal <me@rioastamal.net>
      * @author Firmansyah <firmansyah@dominopos.net>
+     * @author Irianto Pratama <irianto@dominopos.net>
      *
      * List of API Parameters
      * ----------------------
@@ -364,48 +365,48 @@ class WidgetAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
+            // split all validation for validation image first
             foreach ($widgetbatch as $key => $value) {
                 $widgetId = $value['widget_id'];
                 $widgetType = $value['widget_type'];
                 $widgetObjectId = $value['object_id'];
                 $merchantId = $value['merchant_id'];
-                // $retailerIds = $value['retailer_ids'];
                 $slogan = $value['slogan'];
                 $animation = $value['animation'];
                 $widgetOrder = $value['widget_order'];
-                $images = OrbitInput::files('widget');
+                $images = OrbitInput::files('image_' . $widgetType);
                 $idLanguageDefault = $value['id_language_default'];
+                $widgetImageConfig = Config::get('orbit.upload.widget.main');
+                $widget_units = static::bytesToUnits($widgetImageConfig['file_size']);
 
                 $validator = Validator::make(
                     array(
-                        'widget_id'             => $widgetId,
-                        'object_id'             => $widgetObjectId,
-                        'merchant_id'           => $merchantId,
-                        'widget_type'           => $widgetType,
-                        // 'retailer_ids'          => $retailerIds,
-                        // 'slogan'                => $slogan,
-                        'animation'             => $animation,
-                        'widget_order'          => $widgetOrder,
-                        // 'images'                => $images,
-                        'id_language_default'   => $idLanguageDefault,
+                        'widget_id'           => $widgetId,
+                        'object_id'           => $widgetObjectId,
+                        'merchant_id'         => $merchantId,
+                        'widget_type'         => $widgetType,
+                        'animation'           => $animation,
+                        'widget_order'        => $widgetOrder,
+                        'widget_image_type'   => $images['type'],
+                        'widget_image_size'   => $images['size'],
+                        'id_language_default' => $idLanguageDefault,
                     ),
                     array(
-                        'widget_id'             => 'required|orbit.empty.widget',
-                        'object_id'             => '',
-                        'merchant_id'           => 'orbit.empty.merchant',
-                        'widget_type'           => 'required|in:tenant,lucky_draw,promotion,coupon,news|orbit.exists.widget_type_but_me:' . $merchantId . ', ' . $widgetId,
-                        'animation'             => 'in:none,horizontal,vertical',
-                        // 'images'                => 'required_if:animation,none',
-                        'widget_order'          => 'numeric',
-                        // 'retailer_ids'          => 'array|orbit.empty.retailer',
-                        'id_language_default'   => 'required|orbit.empty.language_default',
+                        'widget_id'           => 'required|orbit.empty.widget',
+                        'object_id'           => '',
+                        'merchant_id'         => 'orbit.empty.merchant',
+                        'widget_type'         => 'required|in:tenant,lucky_draw,promotion,coupon,news|orbit.exists.widget_type_but_me:' . $merchantId . ', ' . $widgetId,
+                        'animation'           => 'in:none,horizontal,vertical',
+                        'widget_order'        => 'numeric',
+                        'widget_image_type'   => 'in:image/jpg,image/png,image/jpeg,image/gif',
+                        'widget_image_size'   => 'orbit.max.file_size:' . $widgetImageConfig['file_size'],
+                        'id_language_default' => 'required|orbit.empty.language_default',
                     ),
                     array(
                         'orbit.exists.widget_type_but_me' => Lang::get('validation.orbit.exists.widget_type'),
+                        'orbit.max.file_size' => 'Picture ' . $widgetOrder . ' size is too big, maximum size allowed is ' . $widget_units['newsize'] . $widget_units['unit'],
                     )
                 );
-
-                $updatedwidget = Widget::where('widget_id', $widgetId)->first();
 
                 Event::fire('orbit.widget.postupdatewidget.before.validation', array($this, $validator));
 
@@ -415,6 +416,23 @@ class WidgetAPIController extends ControllerAPI
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
                 Event::fire('orbit.widget.postupdatewidget.after.validation', array($this, $validator));
+            }
+
+            foreach ($widgetbatch as $key => $value) {
+                $widgetId = $value['widget_id'];
+                $widgetType = $value['widget_type'];
+                $widgetObjectId = $value['object_id'];
+                $merchantId = $value['merchant_id'];
+                // $retailerIds = $value['retailer_ids'];
+                $slogan = $value['slogan'];
+                $animation = $value['animation'];
+                $widgetOrder = $value['widget_order'];
+                $images = OrbitInput::files('image_' . $widgetType);
+                $idLanguageDefault = $value['id_language_default'];
+                $widgetImageConfig = Config::get('orbit.upload.widget.main');
+                $widget_units = static::bytesToUnits($widgetImageConfig['file_size']);
+
+                $updatedwidget = Widget::where('widget_id', $widgetId)->first();
 
                 $mall = Mall::find($merchantId);
 
@@ -1579,6 +1597,18 @@ class WidgetAPIController extends ControllerAPI
 
             return TRUE;
         });
+
+        Validator::extend('orbit.max.file_size', function ($attribute, $value, $parameters) {
+            $config_size = $parameters[0];
+            $file_size = $value;
+
+            if ($file_size > $config_size) {
+                return false;
+            }
+
+            return true;
+        });
+
     }
 
     /**
@@ -1695,6 +1725,52 @@ class WidgetAPIController extends ControllerAPI
         $this->calledFrom = $from;
 
         return $this;
+    }
+
+    /**
+     * Method to convert the size from bytes to more human readable units. As
+     * an example:
+     *
+     * Input 356 produces => array('unit' => 'bytes', 'newsize' => 356)
+     * Input 2045 produces => array('unit' => 'kB', 'newsize' => 2.045)
+     * Input 1055000 produces => array('unit' => 'MB', 'newsize' => 1.055)
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @author Irianto <irianto@dominopos.com>
+     * @param int $size - The size in bytes
+     * @return array
+     */
+    public static function bytesToUnits($size)
+    {
+       $kb = 1000;
+       $mb = $kb * 1000;
+       $gb = $mb * 1000;
+
+       if ($size > $gb) {
+            return array(
+                    'unit' => 'GB',
+                    'newsize' => $size / $gb
+                   );
+       }
+
+       if ($size > $mb) {
+            return array(
+                    'unit' => 'MB',
+                    'newsize' => $size / $mb
+                   );
+       }
+
+       if ($size > $kb) {
+            return array(
+                    'unit' => 'kB',
+                    'newsize' => $size / $kb
+                   );
+       }
+
+       return array(
+                'unit' => 'bytes',
+                'newsize' => 1
+              );
     }
 
 }

@@ -23,6 +23,30 @@ class TenantAPIController extends ControllerAPI
     const DEFAULT_LANG = 'en';
 
     /**
+     * saveSocmedUri()
+     *
+     * @author Qosdil A. <qosdil@dominopos.com>
+     * @param string $socmedCode
+     * @param string $merchantId
+     * @param string $uri
+     */
+    private function saveSocmedUri($socmedCode, $merchantId, $uri)
+    {
+        $socmedId = SocialMedia::whereSocialMediaCode($socmedCode)->first()->social_media_id;
+
+        $merchantSocmed = MerchantSocialMedia::whereMerchantId($merchantId)->whereSocialMediaId($socmedId)->first();
+
+        if (!$merchantSocmed) {
+            $merchantSocmed = new MerchantSocialMedia;
+            $merchantSocmed->social_media_id = $socmedId;
+            $merchantSocmed->merchant_id = $merchantId;
+        }
+
+        $merchantSocmed->social_media_uri = $uri;
+        $merchantSocmed->save();
+    }
+
+    /**
      * POST - Delete Tenant
      *
      * @author Rio Astamal <me@rioastamal.net>
@@ -1082,6 +1106,13 @@ class TenantAPIController extends ControllerAPI
 
             $updatedtenant->save();
 
+            if (OrbitInput::post('facebook_uri')) {
+                $this->saveSocmedUri('facebook', $retailer_id, OrbitInput::post('facebook_uri'));
+
+                // For response
+                $updatedtenant->facebook_uri = OrbitInput::post('facebook_uri');
+            }
+
             // save CategoryMerchant
             OrbitInput::post('no_category', function($no_category) use ($updatedtenant) {
                 if ($no_category == 'Y') {
@@ -1437,8 +1468,19 @@ class TenantAPIController extends ControllerAPI
                                  ->select('merchant_id', 'name', 'status')
                                  ->excludeDeleted('merchants');
             } else {
+
+                // Get Facebook social media ID
+                $facebookSocmedId = SocialMedia::whereSocialMediaCode('facebook')->first()->social_media_id;
+
                 $tenants = Tenant::with('link_to_tenant')
-                                 ->select('merchants.*', DB::raw('CONCAT(floor, " - ", unit) AS location'))
+                                 ->select('merchants.*', DB::raw('CONCAT(floor, " - ", unit) AS location'), 'merchant_social_media.social_media_uri as facebook_uri')
+
+                                 // A left join to get tenants' Facebook URIs
+                                 ->leftJoin('merchant_social_media', function ($join) use ($facebookSocmedId) {
+                                    $join->on('merchants.merchant_id', '=', 'merchant_social_media.merchant_id')
+                                        ->where('social_media_id', '=', $facebookSocmedId);
+                                    })
+
                                  ->excludeDeleted('merchants');
             }
 
