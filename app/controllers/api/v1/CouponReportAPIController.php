@@ -558,7 +558,7 @@ class CouponReportAPIController extends ControllerAPI
                 ),
                 array(
                     'current_mall' => 'required|orbit.empty.mall',
-                    'sort_by' => 'in:promotion_id,promotion_name,begin_date,end_date,is_auto_issue_on_signup,total_redeemed,total_issued,coupon_status,status',
+                    'sort_by' => 'in:promotion_id,promotion_name,begin_date,end_date,is_auto_issue_on_signup,total_redeemed,total_issued,coupon_status,status,campaign_status',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.couponsummaryreport_sortby'),
@@ -711,10 +711,16 @@ class CouponReportAPIController extends ControllerAPI
                                                 END"), $status);
             });
 
-            // Filter by coupon campaign status
+            // Filter by coupon status
             OrbitInput::get('status', function($status) use ($coupons) {
                 $status = (array)$status;
                 $coupons->whereIn('promotions.status', $status);
+            });
+
+            // Filter by coupon by campaign_status
+            OrbitInput::get('campaign_status', function ($statuses) use ($coupons, $prefix, $now) {
+                $statuses = (array)$statuses;
+                $coupons->whereIn(DB::raw("CASE WHEN {$prefix}promotions.end_date < {$this->quote($now)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END"), $statuses);
             });
 
             // Filter by date
@@ -813,6 +819,7 @@ class CouponReportAPIController extends ControllerAPI
                     'total_redeemed'            => 'total_redeemed',
                     'coupon_status'             => 'coupon_status',
                     'status'                    => 'campaign_status',
+                    'campaign_status'           => 'campaign_status',
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];
