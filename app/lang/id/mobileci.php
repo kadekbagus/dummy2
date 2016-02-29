@@ -428,6 +428,7 @@ return array(
         'prizes_and_winners'        => 'Hadiah &amp; Pemenang',
         'lucky_draw_prizes'         => 'Hadiah Undian Berhadiah',
         'no_prize'                  => 'Hadiah segera tersedia',
+        'lucky_draw_download_title' => 'Unduh Nomor Undian Berhadiah',
     ),
 
     'notification' => array(

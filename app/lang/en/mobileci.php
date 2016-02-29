@@ -428,6 +428,7 @@ return array(
         'prizes_and_winners'        => 'Prizes &amp; Winners',
         'lucky_draw_prizes'         => 'Lucky Draw Prizes',
         'no_prize'                  => 'The prize is coming soon',
+        'lucky_draw_download_title' => 'Download Lucky Draw Number',
     ),
 
     'notification' => array(
