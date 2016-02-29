@@ -428,6 +428,7 @@ return array(
         'prizes_and_winners'        => '賞と受賞者',
         'lucky_draw_prizes'         => '幸運な抽選賞',
         'no_prize'                  => '賞金はすぐに来ています',
+        'lucky_draw_download_title' => '抽選番号をダウンロード',
     ),
 
     'notification' => array(
