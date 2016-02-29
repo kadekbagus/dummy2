@@ -1108,6 +1108,9 @@ class TenantAPIController extends ControllerAPI
 
             if (OrbitInput::post('facebook_uri')) {
                 $this->saveSocmedUri('facebook', $retailer_id, OrbitInput::post('facebook_uri'));
+
+                // For response
+                $updatedtenant->facebook_uri = OrbitInput::post('facebook_uri');
             }
 
             // save CategoryMerchant
