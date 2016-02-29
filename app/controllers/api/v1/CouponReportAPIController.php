@@ -10,6 +10,7 @@ use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Helper\EloquentRecordCounter as RecordCounter;
+use Carbon\Carbon as Carbon;
 
 class CouponReportAPIController extends ControllerAPI
 {
@@ -557,7 +558,7 @@ class CouponReportAPIController extends ControllerAPI
                 ),
                 array(
                     'current_mall' => 'required|orbit.empty.mall',
-                    'sort_by' => 'in:promotion_id,promotion_name,begin_date,end_date,is_auto_issue_on_signup,total_redeemed,total_issued,coupon_status,status',
+                    'sort_by' => 'in:promotion_id,promotion_name,begin_date,end_date,is_auto_issue_on_signup,total_redeemed,total_issued,coupon_status,status,campaign_status',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.couponsummaryreport_sortby'),
@@ -616,11 +617,18 @@ class CouponReportAPIController extends ControllerAPI
                 $dateFilterForRedeemed = 'and (ic.redeemed_date >= ' . $beginDate . ')';
             }
 
+            $timezone = Mall::leftJoin('timezones','timezones.timezone_id','=','merchants.timezone_id')
+                ->where('merchants.merchant_id','=', $configMallId)
+                ->first();
+
+            $now = Carbon::now($timezone->timezone_name);
+
             // Builder object
             $now = date('Y-m-d H:i:s');
             $prefix = DB::getTablePrefix();
             $coupons = Coupon::select('promotions.promotion_id', 'promotions.merchant_id as mall_id', 'promotions.is_coupon', 'promotions.promotion_name',
-                                      'promotions.begin_date', 'promotions.end_date',
+                                      'promotions.begin_date', 'promotions.end_date', 'campaign_status.order',
+                                      DB::raw("CASE WHEN {$prefix}promotions.end_date < {$this->quote($now)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END  AS campaign_status"),
                                       DB::raw("CASE {$prefix}promotion_rules.rule_type WHEN 'auto_issue_on_signup' THEN 'Y' ELSE 'N' END as 'is_auto_issue_on_signup'"),
                                       DB::raw("CASE WHEN issued.total_issued IS NULL THEN 0 ELSE issued.total_issued END AS total_issued"),
                                       DB::raw("CASE WHEN redeemed.total_redeemed IS NULL THEN 0 ELSE redeemed.total_redeemed END AS total_redeemed"),
@@ -636,6 +644,7 @@ class CouponReportAPIController extends ControllerAPI
                                                     {$prefix}promotions.status
                                                 END as 'coupon_status'"), 'promotions.status')
                             ->join('promotion_rules', 'promotion_rules.promotion_id', '=', 'promotions.promotion_id')
+                            ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
                             ->leftJoin(DB::raw("(select ic.promotion_id AS promotionid, count(ic.promotion_id) as total_issued
                                               from {$prefix}issued_coupons ic
                                               where (ic.status = 'active' or ic.status = 'redeemed') " . $dateFilterForIssued .
@@ -702,10 +711,16 @@ class CouponReportAPIController extends ControllerAPI
                                                 END"), $status);
             });
 
-            // Filter by coupon campaign status
+            // Filter by coupon status
             OrbitInput::get('status', function($status) use ($coupons) {
                 $status = (array)$status;
                 $coupons->whereIn('promotions.status', $status);
+            });
+
+            // Filter by coupon by campaign_status
+            OrbitInput::get('campaign_status', function ($statuses) use ($coupons, $prefix, $now) {
+                $statuses = (array)$statuses;
+                $coupons->whereIn(DB::raw("CASE WHEN {$prefix}promotions.end_date < {$this->quote($now)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END"), $statuses);
             });
 
             // Filter by date
@@ -803,7 +818,8 @@ class CouponReportAPIController extends ControllerAPI
                     'total_issued'              => 'total_issued',
                     'total_redeemed'            => 'total_redeemed',
                     'coupon_status'             => 'coupon_status',
-                    'status'                    => 'promotions.status',
+                    'status'                    => 'campaign_status',
+                    'campaign_status'           => 'campaign_status',
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];
@@ -811,7 +827,7 @@ class CouponReportAPIController extends ControllerAPI
 
             // sort by status first
             if ($sortBy !== 'promotions.status') {
-                $coupons->orderBy('promotions.status', 'asc');
+                $coupons->orderBy('campaign_status', 'asc');
             }
 
             OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
@@ -2079,4 +2095,10 @@ class CouponReportAPIController extends ControllerAPI
             return TRUE;
         });
     }
+
+    protected function quote($arg)
+    {
+        return DB::connection()->getPdo()->quote($arg);
+    }
+
 }

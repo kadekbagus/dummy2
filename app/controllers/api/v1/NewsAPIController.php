@@ -1608,8 +1608,8 @@ class NewsAPIController extends ControllerAPI
             });
 
             // Filter news by status
-            OrbitInput::get('campaign_status', function ($statuses) use ($news) {
-                $news->whereIn('campaign_status.campaign_status_name', $statuses);
+            OrbitInput::get('campaign_status', function ($statuses) use ($news, $prefix, $now) {
+                $news->whereIn(DB::raw("CASE WHEN {$prefix}news.end_date < {$this->quote($now)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END"), $statuses);
             });
 
             // Filter news by link object type
@@ -1707,14 +1707,14 @@ class NewsAPIController extends ControllerAPI
                     'begin_date'        => 'news.begin_date',
                     'end_date'          => 'news.end_date',
                     'updated_at'        => 'news.updated_at',
-                    'status'            => 'campaign_status.order'
+                    'status'            => 'campaign_status'
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];
             });
 
-            if ($sortBy !== 'campaign_status.order') {
-                $news->orderBy('campaign_status.order', 'asc');
+            if ($sortBy !== 'campaign_status') {
+                $news->orderBy('campaign_status', 'asc');
             }
 
             OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
