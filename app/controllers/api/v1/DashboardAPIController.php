@@ -4385,6 +4385,7 @@ class DashboardAPIController extends ControllerAPI
      * Get campaign status
      *
      * @author Qosdil A. <qosdil@dominopos.com>
+     * @author Irianto <irianto@dominopos.com>
      * @return \OrbitShop\API\v1\ResponseProvider | string
      * @todo Validations
      */
@@ -4394,24 +4395,42 @@ class DashboardAPIController extends ControllerAPI
         $mallId = OrbitInput::get('current_mall');
 
         // Promotions
-        $activePromotionCount = News::ofMallId($mallId)->isPromotion()->ofRunningDate($date)->active()->count();
-        $inactivePromotionCount = News::ofMallId($mallId)->isPromotion()->ofRunningDate($date)->inactive()->count();
+        $notStartedPromotionCount = News::ofMallId($mallId)->isPromotion()->ofRunningDate($date)->notStarted('news')->count();
+        $ongoingPromotionCount = News::ofMallId($mallId)->isPromotion()->ofRunningDate($date)->ongoing('news')->count();
+        $pausedPromotionCount = News::ofMallId($mallId)->isPromotion()->ofRunningDate($date)->paused('news')->count();
+        $stoppedPromotionCount = News::ofMallId($mallId)->isPromotion()->ofRunningDate($date)->stopped('news')->count();
+        $expiredPromotionCount = News::ofMallId($mallId)->isPromotion()->ofRunningDate($date)->expired('news')->count();
 
         // News
-        $activeNewsCount = News::ofMallId($mallId)->isNews()->ofRunningDate($date)->active()->count();
-        $inactiveNewsCount = News::ofMallId($mallId)->isNews()->ofRunningDate($date)->inactive()->count();
+        $notStartedNewsCount = News::ofMallId($mallId)->isNews()->ofRunningDate($date)->notStarted('news')->count();
+        $ongoingNewsCount = News::ofMallId($mallId)->isNews()->ofRunningDate($date)->ongoing('news')->count();
+        $pausedNewsCount = News::ofMallId($mallId)->isNews()->ofRunningDate($date)->paused('news')->count();
+        $stoppedNewsCount = News::ofMallId($mallId)->isNews()->ofRunningDate($date)->stopped('news')->count();
+        $expiredNewsCount = News::ofMallId($mallId)->isNews()->ofRunningDate($date)->expired('news')->count();
 
         // Coupons
-        $activeCouponCount = Coupon::ofMerchantId($mallId)->ofRunningDate($date)->active()->count();
-        $inactiveCouponCount = Coupon::ofMerchantId($mallId)->ofRunningDate($date)->inactive()->count();
+        $notStartedCouponCount = Coupon::ofMerchantId($mallId)->ofRunningDate($date)->notStarted('promotions')->count();
+        $ongoingCouponCount = Coupon::ofMerchantId($mallId)->ofRunningDate($date)->ongoing('promotions')->count();
+        $pausedCouponCount = Coupon::ofMerchantId($mallId)->ofRunningDate($date)->paused('promotions')->count();
+        $stoppedCouponCount = Coupon::ofMerchantId($mallId)->ofRunningDate($date)->stopped('promotions')->count();
+        $expiredCouponCount = Coupon::ofMerchantId($mallId)->ofRunningDate($date)->expired('promotions')->count();
 
         $this->response->data = [
-            'promotions_active'    => $activePromotionCount,
-            'promotions_inactive'  => $inactivePromotionCount,
-            'news_active'          => $activeNewsCount,
-            'news_inactive'        => $inactiveNewsCount,
-            'coupons_active'       => $activeCouponCount,
-            'coupons_inactive'     => $inactiveCouponCount,
+            'promotions_not_started'    => $notStartedPromotionCount,
+            'promotions_ongoing'  => $ongoingPromotionCount,
+            'promotions_paused'  => $pausedPromotionCount,
+            'promotions_stopped'  => $stoppedPromotionCount,
+            'promotions_expired'  => $expiredPromotionCount,
+            'news_not_started'          => $notStartedNewsCount,
+            'news_ongoing'          => $ongoingNewsCount,
+            'news_paused'          => $pausedNewsCount,
+            'news_stopped'          => $stoppedNewsCount,
+            'news_expired'        => $expiredNewsCount,
+            'coupons_not_started'       => $notStartedCouponCount,
+            'coupons_ongoing'       => $ongoingCouponCount,
+            'coupons_paused'       => $pausedCouponCount,
+            'coupons_stopped'       => $stoppedCouponCount,
+            'coupons_expired'     => $expiredCouponCount,
         ];
 
         return $this->render(200);

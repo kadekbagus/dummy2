@@ -1707,14 +1707,14 @@ class NewsAPIController extends ControllerAPI
                     'begin_date'        => 'news.begin_date',
                     'end_date'          => 'news.end_date',
                     'updated_at'        => 'news.updated_at',
-                    'status'            => 'campaign_status.order'
+                    'status'            => 'campaign_status'
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];
             });
 
-            if ($sortBy !== 'campaign_status.order') {
-                $news->orderBy('campaign_status.order', 'asc');
+            if ($sortBy !== 'campaign_status') {
+                $news->orderBy('campaign_status', 'asc');
             }
 
             OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
