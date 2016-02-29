@@ -925,7 +925,7 @@ class LuckyDrawAPIController extends ControllerAPI
                     'sort_by' => $sort_by,
                 ),
                 array(
-                    'sort_by' => 'in:registered_date,lucky_draw_name,description,start_date,end_date,status,total_issued_lucky_draw_number,external_lucky_draw_id,mall_name,minimum_amount,updated_at,draw_date',
+                    'sort_by' => 'in:registered_date,lucky_draw_name,description,start_date,end_date,status,total_issued_lucky_draw_number,external_lucky_draw_id,mall_name,minimum_amount,updated_at,draw_date,campaign_status',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.lucky_draw_sortby'),
@@ -1203,6 +1203,7 @@ class LuckyDrawAPIController extends ControllerAPI
                     'end_date'                       => 'lucky_draws.end_date',
                     'draw_date'                      => 'lucky_draws.draw_date',
                     'status'                         => 'campaign_status',
+                    'campaign_status'                => 'campaign_status',
                     'external_lucky_draw_id'         => 'lucky_draws.external_lucky_draw_id',
                     'minimum_amount'                 => 'lucky_draws.minimum_amount',
                     'updated_at'                     => 'lucky_draws.updated_at',
