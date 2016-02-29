@@ -112,8 +112,10 @@ class CouponReportAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $sort_by = OrbitInput::get('sortby');
-
             $current_mall = OrbitInput::get('current_mall');
+            $start_validity_date = OrbitInput::get('start_validity_date');
+            $end_validity_date = OrbitInput::get('end_validity_date');
+
 
             $this->registerCustomValidation();
 
@@ -317,7 +319,7 @@ class CouponReportAPIController extends ControllerAPI
                                         ->where('promotions.merchant_id', '=', $current_mall);
 
             // Filter by Promotion Name
-            OrbitInput::get('promotion_name_like', function($name) use ($coupons) {
+            OrbitInput::get('promotion_name', function($name) use ($coupons) {
                 $coupons->where('promotions.promotion_name', 'like', "%$name%");
             });
 
@@ -370,34 +372,16 @@ class CouponReportAPIController extends ControllerAPI
                 $coupons->whereIn('promotions.status', $status);
             });
 
-            // Filter by date
-            // Less Than Equals
-            OrbitInput::get('begin_date_lte', function($date) use ($coupons) {
-                $coupons->where('promotions.begin_date', '<=', $date);
-            });
-
-            // Greater Than Equals
-            OrbitInput::get('begin_date_gte', function($date) use ($coupons) {
-                $coupons->where('promotions.begin_date', '>=', $date);
-            });
-
-            // Less Than Equals
-            OrbitInput::get('end_date_lte', function($date) use ($coupons) {
-                $coupons->where('promotions.end_date', '<=', $date);
-            });
-
-            // Greater Than Equals
-            OrbitInput::get('end_date_gte', function($date) use ($coupons) {
-                $coupons->where('promotions.end_date', '>=', $date);
-            });
-
+            // Filter by validate date
+            if ($start_validity_date != '' && $end_validity_date != '') {
+                $coupons->whereRaw("coupon_validity_in_date between ? and ?", [$start_validity_date, $end_validity_date])
+            }
 
             // Grouping after filter
             $coupons->groupBy('promotions.promotion_id');
 
             // Clone the query builder which still does not include the take,
             $_coupons = clone $coupons;
-
 
             // Need to sub select after group by
             $_coupons_sql = $_coupons->toSql();
@@ -504,7 +488,12 @@ class CouponReportAPIController extends ControllerAPI
 
             // Return the instance of Query Builder
             if ($this->returnBuilder) {
-                return ['builder' => $coupons, 'count' => $totalRecord];
+                return [
+                            'builder' => $coupons,
+                            'count' => $totalRecord,
+                            'total_issued' => $totalIssued,
+                            'total_redeemed' => $totalRedeemed,
+                        ];
             }
 
             $listOfCoupons = $coupons->get();
