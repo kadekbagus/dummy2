@@ -63,12 +63,12 @@ class CouponReportAPIController extends ControllerAPI
      *
      * @author Rio Astamal <me@rioastamal.net>
      * @author Tian <tian@dominopos.com>
+     * @author Firmansyah <firmansyah@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
      * @param string   `sortby`                (optional) - Column order by. Valid value: registered_date, promotion_name, promotion_type, description, begin_date, end_date, status.
      * @param string   `sortmode`              (optional) - ASC or DESC
-     * @param string   `redeemed_by            (optional) - Filtering redeemed by cs or tenant only
      * @param integer  `take`                  (optional) - Limit
      * @param integer  `skip`                  (optional) - Limit offset
      *
@@ -113,20 +113,18 @@ class CouponReportAPIController extends ControllerAPI
 
             $sort_by = OrbitInput::get('sortby');
 
-            $configMallId = OrbitInput::get('current_mall');
-
-            $redeemedBy = OrbitInput::get('redeemed_by');
+            $current_mall = OrbitInput::get('current_mall');
 
             $this->registerCustomValidation();
 
             $validator = Validator::make(
                 array(
-                    'current_mall' => $configMallId,
+                    'current_mall' => $current_mall,
                     'sort_by' => $sort_by,
                 ),
                 array(
                     'current_mall' => 'required|orbit.empty.mall',
-                    'sort_by' => 'in:promotion_id,promotion_name,begin_date,end_date,is_auto_issue_on_signup,retailer_name,total_redeemed,total_issued,coupon_status,status',
+                    'sort_by' => 'in:promotion_id,promotion_name,begin_date,end_date,coupon_validity_in_date,total_tenant,mall_name,rule_type,total_issued,total_redeemed,campaign_statuscoupon_status,status',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.couponreportgeneral_sortby'),
@@ -163,84 +161,194 @@ class CouponReportAPIController extends ControllerAPI
 
             // Builder object
             $now = date('Y-m-d H:i:s');
+
+            $mall = App::make('orbit.empty.mall');
+            $now = Carbon::now($mall->timezone->timezone_name);
+            $now_ymd = $now->toDateString();
+
+            $timezone = $this->getTimezone($mall->merchant_id);
+
+            // Get now date with timezone
+            $timezoneOffset = $this->getTimezoneOffset($timezone);
+
+            // get prefix DB
             $prefix = DB::getTablePrefix();
-            $coupons = null;
-            if ($redeemedBy === 'tenant') {
-                $coupons = Coupon::select('promotions.promotion_id', 'promotions.merchant_id as mall_id', 'promotions.is_coupon', 'promotions.promotion_name',
-                                          'promotions.begin_date', 'promotions.end_date', 'merchants.name as retailer_name',
-                                          DB::raw("CASE {$prefix}promotion_rules.rule_type WHEN 'auto_issue_on_signup' THEN 'Y' ELSE 'N' END as 'is_auto_issue_on_signup'"),
-                                          DB::raw("issued.*"),
-                                          DB::raw("redeemed.*"),
-                                          DB::raw("CASE WHEN {$prefix}promotions.end_date IS NOT NULL THEN
-                                                        CASE WHEN
-                                                            DATE_FORMAT({$prefix}promotions.end_date, '%Y-%m-%d %H:%i:%s') = '0000-00-00 00:00:00' THEN {$prefix}promotions.status
-                                                        WHEN
-                                                            {$prefix}promotions.end_date < '{$now}' THEN 'expired'
-                                                        ELSE
-                                                            {$prefix}promotions.status
-                                                        END
-                                                    ELSE
-                                                        {$prefix}promotions.status
-                                                    END as 'coupon_status'"), 'promotions.status')
-                                ->join('promotion_rules', 'promotion_rules.promotion_id', '=', 'promotions.promotion_id')
-                                ->leftJoin(DB::raw("(select ic.promotion_id, count(ic.promotion_id) as total_issued
-                                                  from {$prefix}issued_coupons ic
-                                                  where ic.status = 'active' or ic.status = 'redeemed'
-                                                  group by promotion_id) issued"),
-                                // On
-                                DB::raw('issued.promotion_id'), '=', 'promotions.promotion_id')
 
-                                ->join(DB::raw("(select promotion_id, redeem_retailer_id, count(promotion_id) as total_redeemed
-                                                    from {$prefix}issued_coupons ic
-                                                    where ic.status = 'redeemed'
-                                                    and ic.redeem_retailer_id != 'NULL'
-                                                    group by promotion_id, redeem_retailer_id) redeemed"),
-                                // On
-                                DB::raw('redeemed.promotion_id'), '=', 'promotions.promotion_id')
-                                ->join('merchants', 'merchants.merchant_id', '=', DB::raw('redeemed.redeem_retailer_id'));
-            } elseif ($redeemedBy === 'cs') {
-                $coupons = Coupon::select('promotions.promotion_id', 'promotions.merchant_id as mall_id', 'promotions.is_coupon', 'promotions.promotion_name',
-                                          'promotions.begin_date', 'promotions.end_date',
-                                          DB::raw("CONCAT(user_firstname, ' ', user_lastname) AS retailer_name"),
-                                          DB::raw("CASE {$prefix}promotion_rules.rule_type WHEN 'auto_issue_on_signup' THEN 'Y' ELSE 'N' END as 'is_auto_issue_on_signup'"),
-                                          DB::raw("issued.*"),
-                                          DB::raw("redeemed.*"),
-                                          DB::raw("CASE WHEN {$prefix}promotions.end_date IS NOT NULL THEN
-                                                        CASE WHEN
-                                                            DATE_FORMAT({$prefix}promotions.end_date, '%Y-%m-%d %H:%i:%s') = '0000-00-00 00:00:00' THEN {$prefix}promotions.status
-                                                        WHEN
-                                                            {$prefix}promotions.end_date < '{$now}' THEN 'expired'
-                                                        ELSE
-                                                            {$prefix}promotions.status
-                                                        END
-                                                    ELSE
-                                                        {$prefix}promotions.status
-                                                    END as 'coupon_status'"), 'promotions.status')
-                                ->join('promotion_rules', 'promotion_rules.promotion_id', '=', 'promotions.promotion_id')
-                                ->leftJoin(DB::raw("(select ic.promotion_id, count(ic.promotion_id) as total_issued
-                                                  from {$prefix}issued_coupons ic
-                                                  where ic.status = 'active' or ic.status = 'redeemed'
-                                                  group by promotion_id) issued"),
-                                // On
-                                DB::raw('issued.promotion_id'), '=', 'promotions.promotion_id')
+            // Get id add_tenant and delete_tenant for counting total tenant percampaign
+            $campaignHistoryAction = DB::table('campaign_history_actions')
+                            ->select('campaign_history_action_id','action_name')
+                            ->where('action_name','add_tenant')
+                            ->orWhere('action_name','delete_tenant')
+                            ->get();
 
-                                ->join(DB::raw("(select promotion_id, redeem_user_id, count(promotion_id) as total_redeemed
-                                                    from {$prefix}issued_coupons ic
-                                                    where ic.status = 'redeemed'
-                                                    and ic.redeem_user_id != 'NULL'
-                                                    group by promotion_id, redeem_user_id) redeemed"),
-                                // On
-                                DB::raw('redeemed.promotion_id'), '=', 'promotions.promotion_id')
-                                ->join('users', 'users.user_id', '=', DB::raw('redeemed.redeem_user_id'));
+            $idAddTenant = '';
+            $idDeleteTenant = '';
+            foreach ($campaignHistoryAction as $key => $value) {
+                if ($value->action_name === 'add_tenant') {
+                    $idAddTenant = $value->campaign_history_action_id;
+                } elseif ($value->action_name === 'delete_tenant') {
+                    $idDeleteTenant = $value->campaign_history_action_id;
+                }
             }
 
+            $coupons = Coupon::select(
+                                        'promotions.promotion_id',
+                                        'promotions.promotion_name',
+                                        'promotions.begin_date',
+                                        'promotions.end_date',
+                                        'promotions.coupon_validity_in_date',
+                                        DB::raw("IFNULL(total_tenant, 0) AS total_tenant"),
+                                        'tenant_name',
+                                        DB::raw("merchants2.name AS mall_name"),
+                                        'promotion_rules.rule_type',
+                                        DB::raw("IFNULL(issued.total_issued, 0) AS total_issued"),
+                                        DB::raw("IFNULL(redeemed.total_redeemed, 0) AS total_redeemed"),
+                                        DB::raw("IF(maximum_issued_coupon = 0, 'unlimited', maximum_issued_coupon) as maximum_issued_coupon"),
+                                        DB::raw("CASE WHEN {$prefix}promotions.maximum_issued_coupon = 0 THEN
+                                                    'unlimited'
+                                                ELSE
+                                                    IFNULL({$prefix}promotions.maximum_issued_coupon - total_issued, {$prefix}promotions.maximum_issued_coupon)
+                                                END as available"),
+                                        'promotions.updated_at',
+                                        DB::raw("CASE WHEN {$prefix}promotions.end_date IS NOT NULL THEN
+                                                    CASE WHEN DATE_FORMAT({$prefix}promotions.end_date, '%Y-%m-%d %H:%i:%s') = '0000-00-00 00:00:00' THEN
+                                                        {$prefix}promotions.status
+                                                    WHEN
+                                                        {$prefix}promotions.end_date < '{$now}' THEN 'expired'
+                                                    ELSE
+                                                        {$prefix}promotions.status
+                                                    END
+                                                ELSE
+                                                    {$prefix}promotions.status
+                                                END as 'coupon_status'"),
+                                        DB::raw("CASE WHEN {$prefix}promotions.end_date < {$this->quote($now)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END  AS campaign_status"),
+                                        'promotions.status',
+                                        'campaign_status.order'
+                                        )
+                                        // Join rules
+                                        ->join('promotion_rules', 'promotion_rules.promotion_id', '=', 'promotions.promotion_id')
+                                        // Left Join merchant for get mall name
+                                        ->leftJoin('merchants AS merchants2', 'promotions.merchant_id', '=', DB::raw('merchants2.merchant_id'))
+                                        // Left Join for get campaign_status
+                                        ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
+                                        // Left Join for get total issued
+                                        ->leftJoin(DB::raw("(select ic_issued.promotion_id, count(ic_issued.promotion_id) as total_issued
+                                                          FROM {$prefix}issued_coupons ic_issued
+                                                          WHERE ic_issued.status = 'active' or ic_issued.status = 'redeemed'
+                                                          GROUP BY promotion_id) issued"),
+                                            // On
+                                            DB::raw('issued.promotion_id'), '=', 'promotions.promotion_id')
+                                        // Left Join for get total redeem
+                                        ->leftJoin(DB::raw("(select ic_redeemed.promotion_id, count(ic_redeemed.promotion_id) as total_redeemed
+                                                            FROM {$prefix}issued_coupons ic_redeemed
+                                                            WHERE ic_redeemed.status = 'redeemed'
+                                                            and (ic_redeemed.redeem_retailer_id != 'NULL' OR ic_redeemed.redeem_user_id != 'NULL')
+                                                            GROUP BY promotion_id
+                                                        ) redeemed"),
+                                            // On
+                                            DB::raw('redeemed.promotion_id'), '=', 'promotions.promotion_id')
+                                        // Joint for get total tenant percampaign
+                                        ->leftJoin(DB::raw("(
+                                                    SELECT campaign_id as v_campaign_id, count(campaign_id) as total_tenant FROM
+                                                        (SELECT * FROM
+                                                            (
+                                                                SELECT
+                                                                    och.campaign_id,
+                                                                    och.campaign_history_action_id,
+                                                                    och.campaign_external_value,
+                                                                    om.name,
+                                                                    DATE_FORMAT(j_on.end_date, '%Y-%m-%d') AS end_date,
+                                                                    DATE_FORMAT(och.created_at, '%Y-%m-%d %H:00:00') AS history_created_date
+                                                                FROM {$prefix}campaign_histories och
+                                                                LEFT JOIN {$prefix}merchants om
+                                                                ON om.merchant_id = och.campaign_external_value
+                                                                LEFT JOIN {$prefix}promotions j_on
+                                                                ON j_on.promotion_id = och.campaign_id
+                                                                WHERE
+                                                                    och.campaign_history_action_id IN ({$this->quote($idAddTenant)}, {$this->quote($idDeleteTenant)})
+                                                                    AND och.campaign_type = 'coupon'
+                                                                    AND DATE_FORMAT(CONVERT_TZ(och.created_at, '+00:00', {$this->quote($timezoneOffset)}), '%Y-%m-%d') <= IF( DATE_FORMAT({$this->quote($now)}, '%Y-%m-%d') < end_date, DATE_FORMAT({$this->quote($now)}, '%Y-%m-%d'), end_date )
+                                                                ORDER BY och.created_at DESC
+                                                            ) as A
+                                                        group by campaign_id, campaign_external_value) as B
+                                                    WHERE (
+                                                        case when campaign_history_action_id = {$this->quote($idDeleteTenant)}
+                                                        and DATE_FORMAT(CONVERT_TZ(history_created_date, '+00:00', {$this->quote($timezoneOffset)}), '%Y-%m-%d') < IF( DATE_FORMAT({$this->quote($now)}, '%Y-%m-%d') < end_date, DATE_FORMAT({$this->quote($now)}, '%Y-%m-%d'), end_date )
+                                                        then campaign_history_action_id != {$this->quote($idDeleteTenant)} else true end
+                                                    )
+                                                    group by campaign_id
+                                                ) AS lf_total_tenant"),
+                                        // On
+                                        DB::raw('lf_total_tenant.v_campaign_id'), '=', 'promotions.promotion_id')
+                                        // Join for get tenant percampaign
+                                        ->leftJoin(DB::raw("(
+                                                    SELECT campaign_id as t_campaign_id, tenant_name
+                                                    FROM
+                                                        (
+                                                            SELECT * FROM
+                                                            (
+                                                                SELECT
+                                                                    och.campaign_id,
+                                                                    och.campaign_history_action_id,
+                                                                    och.campaign_external_value,
+                                                                    om.name as tenant_name,
+                                                                    DATE_FORMAT(j_on.end_date, '%Y-%m-%d') AS end_date,
+                                                                    DATE_FORMAT(och.created_at, '%Y-%m-%d %H:00:00') AS history_created_date
+                                                                FROM {$prefix}campaign_histories och
+                                                                LEFT JOIN {$prefix}merchants om
+                                                                ON om.merchant_id = och.campaign_external_value
+                                                                LEFT JOIN {$prefix}promotions j_on
+                                                                ON j_on.promotion_id = och.campaign_id
+                                                                WHERE
+                                                                    och.campaign_history_action_id IN ({$this->quote($idAddTenant)}, {$this->quote($idDeleteTenant)})
+                                                                    AND och.campaign_type = 'coupon'
+                                                                    AND DATE_FORMAT(CONVERT_TZ(och.created_at, '+00:00', {$this->quote($timezoneOffset)}), '%Y-%m-%d') <= IF( DATE_FORMAT(NOW(), '%Y-%m-%d') < end_date, DATE_FORMAT(NOW(), '%Y-%m-%d'), end_date )
+                                                                ORDER BY och.created_at DESC
+                                                            ) as A
+                                                            group by campaign_id, campaign_external_value) as B
+                                                            WHERE (
+                                                                case when campaign_history_action_id = {$this->quote($idDeleteTenant)}
+                                                                and DATE_FORMAT(CONVERT_TZ(history_created_date, '+00:00', {$this->quote($timezoneOffset)}), '%Y-%m-%d') < IF( DATE_FORMAT(NOW(), '%Y-%m-%d') < end_date, DATE_FORMAT(NOW(), '%Y-%m-%d'), end_date )
+                                                                then campaign_history_action_id != {$this->quote($idDeleteTenant)} else true end
+                                                        )
+                                                ) as tenant"),
+                                        // On
+                                        DB::raw('tenant.t_campaign_id'), '=', 'promotions.promotion_id')
+                                        ->where('promotions.merchant_id', '=', $current_mall);
+
+            // Filter by Promotion Name
+            OrbitInput::get('promotion_name_like', function($name) use ($coupons) {
+                $coupons->where('promotions.promotion_name', 'like', "%$name%");
+            });
+
+            // Filter by Tenant Name
+            OrbitInput::get('tenant_name', function($tenant_name) use ($coupons) {
+                $coupons->where('tenant_name', 'like', "%$tenant_name%");
+            });
+
+            // Filter by Mall Name
+            OrbitInput::get('mall_name', function($mall_name) use ($coupons) {
+                $coupons->where('mall_name', 'like', "%$mall_name%");
+            });
+
+            //Filter With Checkbox
+            //Filter by Campaign Status
+            OrbitInput::get('campaign_status', function($campaign_status) use ($coupons) {
+                $coupons->whereIn('campaign_status', (array)$campaign_status);
+            });
+
+            //Filter by Coupon Rule
+            OrbitInput::get('rule_type', function($rule_type) use ($coupons) {
+                $coupons->whereIn('rule_type', (array)$rule_type);
+            });
+
             // Filter by mall id
-            OrbitInput::get('mall_id', function($mallId) use ($coupons, $configMallId) {
+            OrbitInput::get('mall_id', function($mallId) use ($coupons) {
                 $coupons->where('promotions.merchant_id', $mallId);
             });
 
             // Filter by merchant id / dupes, same as above
-            OrbitInput::get('merchant_id', function($mallId) use ($coupons, $configMallId) {
+            OrbitInput::get('merchant_id', function($mallId) use ($coupons) {
                 $coupons->where('promotions.merchant_id', $mallId);
             });
 
@@ -254,45 +362,6 @@ class CouponReportAPIController extends ControllerAPI
             OrbitInput::get('is_coupon', function($isCoupon) use ($coupons) {
                 $isCoupon = (array)$isCoupon;
                 $coupons->whereIn('promotions.is_coupon', $isCoupon);
-            });
-
-            // Filter by Promotion Name
-            OrbitInput::get('promotion_name_like', function($name) use ($coupons) {
-                $coupons->where('promotions.promotion_name', 'like', "%$name%");
-            });
-
-            // Filter by Retailer name
-            OrbitInput::get('retailer_name_like', function($name) use ($coupons) {
-                $coupons->where('merchants.name', 'like', "%$name%");
-            });
-
-            // Filter by Customer Service name (first + last name)
-            OrbitInput::get('cs_name_like', function($name) use ($coupons) {
-                // user_firstname, " ", user_lastname
-                $coupons->where(DB::raw('CONCAT(COALESCE(user_firstname, ""), " ", COALESCE(user_lastname, ""))'), 'like', "%$name%");
-                // $coupons->where('merchants.retailer_name', 'like', "%$name%");
-            });
-
-            // Filter by auto issue on sign up
-            OrbitInput::get('is_auto_issue_on_signup', function($auto) use ($coupons, $prefix) {
-                $auto = (array)$auto;
-                $coupons->whereIn(DB::raw("CASE {$prefix}promotion_rules.rule_type WHEN 'auto_issue_on_signup' THEN 'Y' ELSE 'N' END"), $auto);
-            });
-
-            // Filter by coupon status with expired
-            OrbitInput::get('coupon_status', function($status) use ($coupons, $prefix, $now) {
-                $status = (array)$status;
-                $coupons->whereIn(DB::raw("CASE WHEN {$prefix}promotions.end_date IS NOT NULL THEN
-                                                    CASE WHEN
-                                                        DATE_FORMAT({$prefix}promotions.end_date, '%Y-%m-%d %H:%i:%s') = '0000-00-00 00:00:00' THEN {$prefix}promotions.status
-                                                    WHEN
-                                                        {$prefix}promotions.end_date < '{$now}' THEN 'expired'
-                                                    ELSE
-                                                        {$prefix}promotions.status
-                                                    END
-                                                ELSE
-                                                    {$prefix}promotions.status
-                                                END"), $status);
             });
 
             // Filter by coupon campaign status
@@ -322,37 +391,43 @@ class CouponReportAPIController extends ControllerAPI
                 $coupons->where('promotions.end_date', '>=', $date);
             });
 
-            // Filter by CS
-            OrbitInput::get('cs', function($cs) use ($coupons) {
-                $coupons->where('redeem_retailer_id', '=', $cs);
-            });
+
+            // Grouping after filter
+            $coupons->groupBy('promotions.promotion_id');
 
             // Clone the query builder which still does not include the take,
             $_coupons = clone $coupons;
 
-            $_couponsCountReddem = clone $coupons;
-            $_couponsCountIssued = clone $coupons;
 
-            $_coupons->select('promotions.promotion_id');
+            // Need to sub select after group by
+            $_coupons_sql = $_coupons->toSql();
 
-            $_couponsCountReddem = $_couponsCountReddem->get();
-            $_couponsCountIssued = $_couponsCountIssued->groupBy('promotions.promotion_id')->get();
-
-            // Get total reddem
-            $totalRedeemed = 0 ;
-            if (isset($_couponsCountReddem) && count($_couponsCountReddem) > 0){
-                foreach ($_couponsCountReddem as $key => $valReddem) {
-                    $totalRedeemed = $totalRedeemed + $valReddem->total_redeemed;
+            //Cek exist binding
+            if (count($coupons->getBindings()) > 0) {
+                foreach($coupons->getBindings() as $binding)
+                {
+                  $value = is_numeric($binding) ? $binding : "'" . $binding . "'";
+                  $_coupons_sql = preg_replace('/\?/', $value, $_coupons_sql, 1);
                 }
             }
 
-            // Get total issued coupon
-            $totalIssued = 0;
-            if (isset($_couponsCountIssued) && count($_couponsCountIssued) > 0){
-                foreach ($_couponsCountIssued as $key => $valIssued) {
-                    $totalIssued = $totalIssued + $valIssued->total_issued;
-                }
-            }
+            $_coupons = DB::table(DB::raw('(' . $_coupons_sql . ') as b'));
+
+            $query_sum = array(
+                'COUNT(promotion_id) AS total_record',
+                'SUM(total_redeemed) AS total_redeemed',
+                'SUM(total_issued) AS total_issued'
+            );
+
+            $total = $_coupons->selectRaw(implode(',', $query_sum))->get();
+
+            // Get total issued
+            $totalIssued = isset($total[0]->total_issued)?$total[0]->total_issued:0;
+            // Get total redeemed
+            $totalRedeemed = isset($total[0]->total_redeemed)?$total[0]->total_redeemed:0;
+            // Get total record
+            $totalRecord = isset($total[0]->total_record)?$total[0]->total_record:0;
+
 
             // Get the take args
             $take = $perPage;
@@ -390,19 +465,19 @@ class CouponReportAPIController extends ControllerAPI
             {
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
-                    'promotion_id'              => 'promotions.promotion_id',
-                    'mall_id'                   => 'mall_id',
-                    'is_coupon'                 => 'is_coupon',
-                    'promotion_name'            => 'promotions.promotion_name',
-                    'begin_date'                => 'promotions.begin_date',
-                    'end_date'                  => 'promotions.end_date',
-                    'is_auto_issue_on_signup'   => 'is_auto_issue_on_signup',
-                    'total_issued'              => 'total_issued',
-                    'redeem_retailer_id'        => 'redeem_retailer_id',
-                    'retailer_name'             => 'retailer_name',
-                    'total_redeemed'            => 'total_redeemed',
-                    'coupon_status'             => 'coupon_status',
-                    'status'                    => 'promotions.status'
+                    'promotion_id'            => 'promotions.promotion_id',
+                    'promotion_name'          => 'promotions.promotion_name',
+                    'begin_date'              => 'promotions.begin_date',
+                    'coupon_validity_in_date' => 'promotions.coupon_validity_in_date',
+                    'total_tenant'            => 'total_tenant',
+                    'mall_name'               => 'mall_name',
+                    'rule_type'               => 'rule_type',
+                    'total_issued'            => 'total_issued',
+                    'total_redeemed'          => 'total_redeemed',
+                    'campaign_status'         => 'campaign_status',
+                    'order'                   => 'order',
+                    'coupon_status'           => 'coupon_status',
+                    'status'                  => 'promotions.status'
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];
@@ -423,27 +498,26 @@ class CouponReportAPIController extends ControllerAPI
             $coupons->orderBy($sortBy, $sortMode);
 
             // also to sort tenant name
-            if ($sortBy !== 'retailer_name') {
-                $coupons->orderBy('retailer_name', 'asc');
+            if ($sortBy !== 'promotion_name') {
+                $coupons->orderBy('promotion_name', 'asc');
             }
 
             // Return the instance of Query Builder
             if ($this->returnBuilder) {
-                return ['builder' => $coupons, 'count' => RecordCounter::create($_coupons)->count()];
+                return ['builder' => $coupons, 'count' => $totalRecord];
             }
 
-            $totalCoupons = RecordCounter::create($_coupons)->count();
             $listOfCoupons = $coupons->get();
 
             $data = new stdclass();
-            $data->total_records = $totalCoupons;
+            $data->total_records = $totalRecord;
             $data->returned_records = count($listOfCoupons);
-            $data->records = $listOfCoupons;
             $data->total_redeemed = $totalRedeemed;
             $data->total_issued = $totalIssued;
+            $data->records = $listOfCoupons;
 
-            if ($totalCoupons === 0) {
-                $data->records = NULL;
+            if ($totalRecord === 0) {
+                $data->records = null;
                 $this->response->message = Lang::get('statuses.orbit.nodata.coupon');
             }
 
@@ -826,7 +900,7 @@ class CouponReportAPIController extends ControllerAPI
             });
 
             // sort by status first
-            if ($sortBy !== 'promotions.status') {
+            if ($sortBy !== 'campaign_status') {
                 $coupons->orderBy('campaign_status', 'asc');
             }
 
