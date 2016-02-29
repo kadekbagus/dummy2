@@ -292,6 +292,7 @@ class WidgetAPIController extends ControllerAPI
      *
      * @author Rio Astamal <me@rioastamal.net>
      * @author Firmansyah <firmansyah@dominopos.net>
+     * @author Irianto Pratama <irianto@dominopos.net>
      *
      * List of API Parameters
      * ----------------------
