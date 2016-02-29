@@ -364,12 +364,12 @@ class WidgetAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
+            // split all validation for validation image first
             foreach ($widgetbatch as $key => $value) {
                 $widgetId = $value['widget_id'];
                 $widgetType = $value['widget_type'];
                 $widgetObjectId = $value['object_id'];
                 $merchantId = $value['merchant_id'];
-                // $retailerIds = $value['retailer_ids'];
                 $slogan = $value['slogan'];
                 $animation = $value['animation'];
                 $widgetOrder = $value['widget_order'];
@@ -384,8 +384,6 @@ class WidgetAPIController extends ControllerAPI
                         'object_id'           => $widgetObjectId,
                         'merchant_id'         => $merchantId,
                         'widget_type'         => $widgetType,
-                        // 'retailer_ids'     => $retailerIds,
-                        // 'slogan'           => $slogan,
                         'animation'           => $animation,
                         'widget_order'        => $widgetOrder,
                         'widget_image_type'   => $images['type'],
@@ -401,7 +399,6 @@ class WidgetAPIController extends ControllerAPI
                         'widget_order'        => 'numeric',
                         'widget_image_type'   => 'in:image/jpg,image/png,image/jpeg,image/gif',
                         'widget_image_size'   => 'orbit.max.file_size:' . $widgetImageConfig['file_size'],
-                        // 'retailer_ids'     => 'array|orbit.empty.retailer',
                         'id_language_default' => 'required|orbit.empty.language_default',
                     ),
                     array(
@@ -409,8 +406,6 @@ class WidgetAPIController extends ControllerAPI
                         'orbit.max.file_size' => 'Picture ' . $widgetOrder . ' size is too big, maximum size allowed is ' . $widget_units['newsize'] . $widget_units['unit'],
                     )
                 );
-
-                $updatedwidget = Widget::where('widget_id', $widgetId)->first();
 
                 Event::fire('orbit.widget.postupdatewidget.before.validation', array($this, $validator));
 
@@ -420,6 +415,23 @@ class WidgetAPIController extends ControllerAPI
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
                 Event::fire('orbit.widget.postupdatewidget.after.validation', array($this, $validator));
+            }
+
+            foreach ($widgetbatch as $key => $value) {
+                $widgetId = $value['widget_id'];
+                $widgetType = $value['widget_type'];
+                $widgetObjectId = $value['object_id'];
+                $merchantId = $value['merchant_id'];
+                // $retailerIds = $value['retailer_ids'];
+                $slogan = $value['slogan'];
+                $animation = $value['animation'];
+                $widgetOrder = $value['widget_order'];
+                $images = OrbitInput::files('image_' . $widgetType);
+                $idLanguageDefault = $value['id_language_default'];
+                $widgetImageConfig = Config::get('orbit.upload.widget.main');
+                $widget_units = static::bytesToUnits($widgetImageConfig['file_size']);
+
+                $updatedwidget = Widget::where('widget_id', $widgetId)->first();
 
                 $mall = Mall::find($merchantId);
 
