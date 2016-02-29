@@ -1051,8 +1051,9 @@ class LuckyDrawAPIController extends ControllerAPI
             });
 
             // Filter news by status
-            OrbitInput::get('campaign_status', function ($statuses) use ($luckydraws) {
-                $luckydraws->whereIn('campaign_status.campaign_status_name', $statuses);
+            OrbitInput::get('campaign_status', function ($statuses) use ($luckydraws, $prefix, $now) {
+                $statuses = (array)$statuses;
+                $luckydraws->whereIn(DB::raw("CASE WHEN {$prefix}lucky_draws.end_date < {$this->quote($now)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END"), $statuses);
             });
 
             // Filter by start date
@@ -1203,6 +1204,7 @@ class LuckyDrawAPIController extends ControllerAPI
                     'end_date'                       => 'lucky_draws.end_date',
                     'draw_date'                      => 'lucky_draws.draw_date',
                     'status'                         => 'campaign_status',
+                    'campaign_status'                => 'campaign_status',
                     'external_lucky_draw_id'         => 'lucky_draws.external_lucky_draw_id',
                     'minimum_amount'                 => 'lucky_draws.minimum_amount',
                     'updated_at'                     => 'lucky_draws.updated_at',
