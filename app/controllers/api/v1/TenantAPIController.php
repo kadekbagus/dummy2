@@ -23,6 +23,30 @@ class TenantAPIController extends ControllerAPI
     const DEFAULT_LANG = 'en';
 
     /**
+     * saveSocmedUri()
+     *
+     * @author Qosdil A. <qosdil@dominopos.com>
+     * @param string $socmedCode
+     * @param string $merchantId
+     * @param string $uri
+     */
+    private function saveSocmedUri($socmedCode, $merchantId, $uri)
+    {
+        $socmedId = SocialMedia::whereCode($socmedCode)->find();
+
+        $merchantSocmed = MerchantSocialMedia::whereMerchantId($merchantId)->whereSocialMediaId($socmedId)->find();
+
+        if (!$merchantSocmed) {
+            $merchantSocmed = new MerchantSocialMedia;
+            $merchantSocmed->social_media_id = $socmedId;
+            $merchantSocmed->merchant_id = $merchantId;
+        }
+
+        $merchantSocmed->social_media_uri = $uri;
+        $merchantSocmed->save();
+    }
+
+    /**
      * POST - Delete Tenant
      *
      * @author Rio Astamal <me@rioastamal.net>
@@ -1081,6 +1105,10 @@ class TenantAPIController extends ControllerAPI
             Event::fire('orbit.tenant.postupdatetenant.before.save', array($this, $updatedtenant));
 
             $updatedtenant->save();
+
+            if (OrbitInput::post('facebook_uri')) {
+                $this->saveSocmedUri('facebook', $retailer_id, OrbitInput::get('facebook_uri'));
+            }
 
             // save CategoryMerchant
             OrbitInput::post('no_category', function($no_category) use ($updatedtenant) {
