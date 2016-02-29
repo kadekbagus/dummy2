@@ -2100,7 +2100,7 @@ class CouponAPIController extends ControllerAPI
             // Addition select case and join for sorting by discount_value.
             $coupons = Coupon::with('couponRule')
                 ->select(DB::raw("{$table_prefix}promotions.*, {$table_prefix}campaign_price.campaign_price_id,
-                    CASE WHEN {$table_prefix}promotions.end_date < {$this->quote($now)} THEN 'expired' ELSE {$table_prefix}campaign_status.campaign_status_name END  AS campaign_status,
+                    CASE WHEN {$table_prefix}promotions.end_date < {$this->quote($now)} THEN 'expired' ELSE {$table_prefix}campaign_status.campaign_status_name END AS campaign_status,
                     {$table_prefix}campaign_status.order,
                     CASE rule_type
                         WHEN 'cart_discount_by_percentage' THEN 'percentage'
@@ -2241,8 +2241,8 @@ class CouponAPIController extends ControllerAPI
             });
 
             // Filter coupons by status
-            OrbitInput::get('campaign_status', function ($statuses) use ($coupons) {
-                $coupons->whereIn('campaign_status.campaign_status_name', $statuses);
+            OrbitInput::get('campaign_status', function ($statuses) use ($coupons, $table_prefix, $now) {
+                $coupons->whereIn(DB::raw("CASE WHEN {$table_prefix}promotions.end_date < {$this->quote($now)} THEN 'expired' ELSE {$table_prefix}campaign_status.campaign_status_name END"), $statuses);
             });
 
             // Filter coupon rule by rule type
