@@ -57,7 +57,7 @@ class CouponReportPrinterController extends DataPrinterController
         $tenant_name = OrbitInput::get('tenant_name');
         $mall_name = OrbitInput::get('mall_name');
         $rule_type = OrbitInput::get('rule_type');
-        $status = OrbitInput::get('status');
+        $status = OrbitInput::get('campaign_status');
         $start_validity_date = OrbitInput::get('start_validity_date');
         $end_validity_date = OrbitInput::get('end_validity_date');
 
@@ -119,6 +119,7 @@ class CouponReportPrinterController extends DataPrinterController
                 if ( is_array($rule_type) && count($rule_type) > 0) {
                     $rule_type_string = '';
                     foreach ($rule_type as $key => $val_rule_type){
+                        $val_rule_type = str_replace('_', ' ', $val_rule_type);
                         $rule_type_string .= $val_rule_type . ', ';
                     }
                     printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Coupon Rule', htmlentities(rtrim($rule_type_string, ', ')), '', '', '', '','','','');
