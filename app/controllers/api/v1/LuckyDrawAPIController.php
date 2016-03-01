@@ -29,6 +29,12 @@ class LuckyDrawAPIController extends ControllerAPI
      */
     const DEFAULT_LANG = 'en';
 
+    private function getCampaignStatusTable()
+    {
+        $campaignStatus = new CampaignStatus;
+        return $campaignStatus->getTable();
+    }
+
     /**
      * New & Update handler for Status related items
      * 
@@ -132,8 +138,6 @@ class LuckyDrawAPIController extends ControllerAPI
             $default_merchant_language_id = MerchantLanguage::getLanguageIdByMerchant($mall_id, static::DEFAULT_LANG);
             $id_language_default = OrbitInput::post('id_language_default', $default_merchant_language_id);
 
-            list($campaignStatusId, $status) = $this->handleStatus();
-
             // Begin database transaction
             $this->beginTransaction();
 
@@ -151,7 +155,7 @@ class LuckyDrawAPIController extends ControllerAPI
                     'external_lucky_draw_id'   => $external_lucky_draw_id,
                     'grace_period_date'        => $grace_period_date,
                     'grace_period_in_days'     => $grace_period_in_days,
-                    'status'                   => $status,
+                    'campaign_status'          => OrbitInput::post('campaign_status'),
                     'id_language_default'      => $id_language_default,
                 ),
                 array(
@@ -167,7 +171,7 @@ class LuckyDrawAPIController extends ControllerAPI
                     'external_lucky_draw_id'   => 'required',
                     'grace_period_date'        => 'date_format:Y-m-d H:i:s|after:' . $end_date,
                     'grace_period_in_days'     => 'numeric',
-                    'status'                   => 'orbit.empty.lucky_draw_status',
+                    'campaign_status'          => 'required|exists:'.$this->getCampaignStatusTable().',campaign_status_name',
                     'id_language_default'      => 'required|orbit.empty.language_default',
                 )
             );
@@ -196,10 +200,10 @@ class LuckyDrawAPIController extends ControllerAPI
             $newluckydraw->external_lucky_draw_id = $external_lucky_draw_id;
             $newluckydraw->grace_period_date = $grace_period_date;
             $newluckydraw->grace_period_in_days = $grace_period_in_days;
-            $newluckydraw->status = $status;
-            $newluckydraw->campaign_status_id = $campaignStatusId;
             $newluckydraw->created_by = $this->api->user->user_id;
             $newluckydraw->modified_by = $this->api->user->user_id;
+
+            list($newluckydraw->campaign_status_id, $newluckydraw->status) = $this->handleStatus();
 
             Event::fire('orbit.luckydraw.postnewluckydraw.before.save', array($this, $newluckydraw));
 
@@ -416,6 +420,7 @@ class LuckyDrawAPIController extends ControllerAPI
             $now = date('Y-m-d H:i:s');
 
             $data = array(
+                'campaign_status'     => OrbitInput::post('campaign_status'),
                 'lucky_draw_id'       => $lucky_draw_id,
                 'mall_id'             => $mall_id,
                 'start_date'          => $start_date,
@@ -431,14 +436,13 @@ class LuckyDrawAPIController extends ControllerAPI
                 $data['lucky_draw_name'] = $lucky_draw_name;
             });
 
-            list($data['campaign_status_id'], $data['status']) = $this->handleStatus();
-
             // Begin database transaction
             $this->beginTransaction();
 
             $validator = Validator::make(
                 $data,
                 array(
+                    'campaign_status'     => 'required|exists:'.$this->getCampaignStatusTable().',campaign_status_name',
                     'lucky_draw_id'       => 'required|orbit.empty.lucky_draw:' . $mall_id,
                     'mall_id'             => 'orbit.empty.mall',
                     'lucky_draw_name'     => 'sometimes|required|min:3|max:255|lucky_draw_name_exists_but_me:' . $lucky_draw_id . ',' . $mall_id,
@@ -467,6 +471,8 @@ class LuckyDrawAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.luckydraw.postupdateluckydraw.after.validation', array($this, $validator));
+
+            list($data['campaign_status_id'], $data['status']) = $this->handleStatus();
 
             $updatedluckydraw = LuckyDraw::excludeDeleted()->where('lucky_draw_id', $lucky_draw_id)->first();
 
