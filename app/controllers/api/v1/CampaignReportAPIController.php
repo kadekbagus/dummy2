@@ -566,6 +566,7 @@ class CampaignReportAPIController extends ControllerAPI
             $_campaign = DB::table(DB::raw('(' . $_campaign_sql . ') as b'));
 
             $query_sum = array(
+                'COUNT(campaign_id) AS total_records',
                 'SUM(page_views) AS page_views',
                 'SUM(popup_views) AS popup_views',
                 'SUM(estimated_total) AS estimated_total',
@@ -573,6 +574,9 @@ class CampaignReportAPIController extends ControllerAPI
             );
 
             $total = $_campaign->selectRaw(implode(',', $query_sum))->get();
+
+            // Get total page views
+            $totalRecords = isset($total[0]->total_records)?$total[0]->total_records:0;
 
             // Get total page views
             $totalPageViews = isset($total[0]->page_views)?$total[0]->page_views:0;
@@ -663,7 +667,7 @@ class CampaignReportAPIController extends ControllerAPI
             if ($this->returnBuilder) {
                 return [
                     'builder' => $campaign,
-                    'count' => $_campaign->count(),
+                    'count' => $totalRecords,
                     'totalPageViews' => $totalPageViews,
                     'totalPopUpViews' => $totalPopupViews,
                     'totalSpending' => $totalSpending,
@@ -671,11 +675,10 @@ class CampaignReportAPIController extends ControllerAPI
                 ];
             }
 
-            $totalCampaign = $_campaign->count();
             $listOfCampaign = $campaign->get();
 
             $data = new stdclass();
-            $data->total_records = $totalCampaign;
+            $data->total_records = $totalRecords;
             $data->total_page_views = $totalPageViews;
             $data->total_pop_up_views = $totalPopupViews;
             $data->total_estimated_cost = $totalEstimated;
@@ -683,7 +686,7 @@ class CampaignReportAPIController extends ControllerAPI
             $data->returned_records = count($listOfCampaign);
             $data->records = $listOfCampaign;
 
-            if ($totalCampaign === 0) {
+            if ($totalRecords === 0) {
                 $data->records = NULL;
                 $this->response->message = Lang::get('statuses.orbit.nodata.coupon');
             }
