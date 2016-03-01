@@ -2743,6 +2743,7 @@ return array(
             'path'  => '/home/orbitadmin/scripts/helpers/screen-display.sh'
         )
     ),
+
     'social_login' => [
         'facebook' => [
             'app_id'        => '',
@@ -2750,6 +2751,11 @@ return array(
             'version'       => 'v2.4'
         ],
     ],
+
+    // set the external crawler user agent
+    'social_crawler' => array(
+        'facebook' => ['facebookexternalhit/1.1', 'Facebot']
+    ),
 
     // YOU MUST also update /app/config/orbit_activity.php if you update this
     'activity_columns' => array(

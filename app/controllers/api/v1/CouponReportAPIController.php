@@ -374,7 +374,7 @@ class CouponReportAPIController extends ControllerAPI
 
             // Filter by validate date
             if ($start_validity_date != '' && $end_validity_date != '') {
-                $coupons->whereRaw("coupon_validity_in_date between ? and ?", [$start_validity_date, $end_validity_date])
+                $coupons->whereRaw("coupon_validity_in_date between ? and ?", [$start_validity_date, $end_validity_date]);
             }
 
             // Grouping after filter
