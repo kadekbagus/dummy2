@@ -2,6 +2,7 @@
 
 @section('fb_scripts')
 @if(! empty($facebookInfo))
+@if(! empty($facebookInfo['version']) && ! empty($facebookInfo['app_id']))
 <div id="fb-root"></div>
 <script>(function(d, s, id) {
   var js, fjs = d.getElementsByTagName(s)[0];
@@ -10,6 +11,7 @@
   js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version={{$facebookInfo['version']}}&appId={{$facebookInfo['app_id']}}";
   fjs.parentNode.insertBefore(js, fjs);
 }(document, 'script', 'facebook-jssdk'));</script>
+@endif
 @endif
 @stop
 
