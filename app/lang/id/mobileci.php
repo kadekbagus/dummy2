@@ -118,7 +118,7 @@ return array(
         'membership_notfound'    => 'Data Keanggotaan Tidak Ditemukan',
         'membership_want_member' => 'Ingin menjadi anggota?',
         'membership_great_deal'  => 'Untuk mendapatkan berbagai penawaran menarik dari kami',
-        'membership_contact_our' => 'Silakan hubungi petugas layanan pelanggan mall untuk mendapatkan nomor keanggotaan',
+        'membership_contact_our' => 'Silakan hubungi customer service untuk mendapatkan nomor keanggotaan',
 
         'enjoy_free'             => 'NIKMATI GRATIS',
         'unlimited'              => 'TANPA BATAS',
@@ -440,7 +440,7 @@ return array(
         'view_coupons_btn'          => 'Lihat kupon anda',
         'congratulation'            => 'Selamat!',
         'you_won'                   => 'Anda mendapatkan hadiah dari ',
-        'to_redeem'                 => '. Untuk penukaran hadiah, silahkan tunjukan nomor undian berhadiah anda yang terdapat di <b>Halaman Beranda -> Undian Berhadiah</b> ke pelayanan pelanggan mall.',
+        'to_redeem'                 => '. Untuk penukaran hadiah, silahkan tunjukan nomor undian berhadiah anda yang terdapat di <b>Halaman Beranda -> Undian Berhadiah</b> ke customer service mall.',
     ),
 
     'tour' => array(
