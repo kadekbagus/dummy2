@@ -72,7 +72,7 @@ use \Media;
 use Artdarek\OAuth\Facade\OAuth;
 use UserSignin;
 
-class MobileCIAPIController extends ControllerAPI
+class MobileCIAPIController extends BaseCIController
 {
     const APPLICATION_ID = 1;
     const PAYLOAD_KEY = '--orbit-mall--';
@@ -92,6 +92,7 @@ class MobileCIAPIController extends ControllerAPI
         try {
             $email = trim(OrbitInput::post('email'));
             $payload = OrbitInput::post('payload');
+            $socmed_redirect_to = OrbitInput::post('socmed_redirect_to');
 
             if (Config::get('orbit.shop.guest_mode')) {
                 $guest = User::whereHas('role', function ($q) {
@@ -666,6 +667,11 @@ class MobileCIAPIController extends ControllerAPI
         }
 
         $landing_url = URL::route('ci-customer-home');
+        $socmed_redirect_to = \Input::get('socmed_redirect_to', '');
+        if (! empty($socmed_redirect_to)) {
+            $landing_url = $socmed_redirect_to;
+        }
+
         $cookie_fname = isset($_COOKIE['orbit_firstname']) ? $_COOKIE['orbit_firstname'] : (! empty($mac_model) ? $mac_model->user->user_firstname : '');
         $cookie_email = isset($_COOKIE['orbit_email']) ? $_COOKIE['orbit_email'] : (! empty($mac_model) ? $mac_model->user->user_email : '');
         $cookie_lang = isset($_COOKIE['orbit_preferred_language']) ? $_COOKIE['orbit_preferred_language'] : '';
@@ -727,6 +733,11 @@ class MobileCIAPIController extends ControllerAPI
             }
 
             $landing_url = $this->getLandingUrl($mall);
+
+            $socmed_redirect_to = \Input::get('socmed_redirect_to', '');
+            if (! empty($socmed_redirect_to)) {
+                $landing_url = $socmed_redirect_to;
+            }
 
             try {
                 $bg = Media::where('object_id', $retailer->merchant_id)
@@ -1051,45 +1062,6 @@ class MobileCIAPIController extends ControllerAPI
             return View::make('mobile-ci.welcome', array('retailer'=>$retailer, 'user'=>$user, 'cartdata' => $cartdata, 'user_email' => $user_email));
         } catch (Exception $e) {
             return $this->redirectIfNotLoggedIn($e);
-        }
-    }
-
-    /**
-     * GET - Get current active mall
-     *
-     * @author Ahmad Anshori <ahmad@dominopos.com>
-     *
-     * @return \Mall
-     */
-    public function getRetailerInfo()
-    {
-        try {
-            $retailer_id = App::make('orbitSetting')->getSetting('current_retailer');
-            $retailer = Mall::with('parent')->where('merchant_id', $retailer_id)->first();
-            $membership_card = Setting::where('setting_name','enable_membership_card')->where('object_id',$retailer_id)->first();
-
-            if (! empty($membership_card)){
-                $retailer->enable_membership=$membership_card->setting_value;
-            } else {
-                $retailer->enable_membership='false';
-            }
-
-            return $retailer;
-        } catch (ACLForbiddenException $e) {
-            $this->response->code = $e->getCode();
-            $this->response->status = 'error';
-            $this->response->message = $e->getMessage();
-            $this->response->data = null;
-        } catch (InvalidArgsException $e) {
-            $this->response->code = $e->getCode();
-            $this->response->status = 'error';
-            $this->response->message = $e->getMessage();
-            $this->response->data = null;
-        } catch (Exception $e) {
-            $this->response->code = $e->getCode();
-            $this->response->status = 'error';
-            $this->response->message = $e->getMessage();
-            $this->response->data = null;
         }
     }
 
@@ -1659,100 +1631,6 @@ class MobileCIAPIController extends ControllerAPI
 
             return TRUE;
         });
-    }
-
-    /**
-     * Redirect user if not logged in to sign page
-     *
-     * @param object $e - Error object
-     *
-     * @return Illuminate\Support\Facades\Redirect
-     *
-     * @author Ahmad Anshori <ahmad@dominopos.com>
-     */
-    public function redirectIfNotLoggedIn($e)
-    {
-        if (Config::get('app.debug')) {
-            return $e;
-        }
-
-        switch ($e->getCode()) {
-            case Session::ERR_UNKNOWN;
-            case Session::ERR_IP_MISS_MATCH;
-            case Session::ERR_UA_MISS_MATCH;
-            case Session::ERR_SESS_NOT_FOUND;
-            case Session::ERR_SESS_EXPIRE;
-                return \Redirect::to('/customer/logout');
-                break;
-
-            default:
-                return \Redirect::to('/customer');
-        }
-    }
-
-    /**
-     * Get current logged in user used in view related page.
-     *
-     * @author Rio Astamal <me@rioastamal.net>
-     * @return User $user
-     */
-    protected function getLoggedInUser()
-    {
-        $this->prepareSession();
-
-        $userId = $this->session->read('user_id');
-
-        if ($this->session->read('logged_in') !== true || ! $userId) {
-            throw new Exception('Invalid session data.');
-        }
-
-        $retailer = $this->getRetailerInfo();
-
-        $user = User::with(['userDetail',
-            'membershipNumbers' => function($q) use ($retailer) {
-                $q->select('membership_numbers.*')
-                    ->with('membership.media')
-                    ->join('memberships', 'memberships.membership_id', '=', 'membership_numbers.membership_id')
-                    ->excludeDeleted('membership_numbers')
-                    ->excludeDeleted('memberships')
-                    ->where('memberships.merchant_id', $retailer->merchant_id);
-            }])->where('user_id', $userId)->first();
-
-        if (! $user) {
-            throw new Exception('Session error: user not found.');
-        } else {
-            $_user = clone($user);
-            if (count($_user->membershipNumbers)) {
-               $user->membership_number = $_user->membershipNumbers[0]->membership_number;
-            }
-        }
-
-        return $user;
-    }
-
-    /**
-     * Prepare session.
-     *
-     * @author Rio Astamal <me@rioastamal.net>
-     * @return void
-     */
-    protected function prepareSession()
-    {
-        if (! is_object($this->session)) {
-            // This user assumed are Consumer, which has been checked at login process
-            $config = new SessionConfig(Config::get('orbit.session'));
-            $config->setConfig('session_origin.header.name', 'X-Orbit-Session');
-            $config->setConfig('session_origin.query_string.name', 'orbit_session');
-            $config->setConfig('session_origin.cookie.name', 'orbit_sessionx');
-            $config->setConfig('application_id', MobileCIAPIController::APPLICATION_ID);
-
-            try {
-                $this->session = new Session($config);
-                $this->session->start();
-            } catch (Exception $e) {
-                Redirect::to('/customer/logout');
-            }
-        }
     }
 
     /**
@@ -2792,7 +2670,7 @@ class MobileCIAPIController extends ControllerAPI
             if (empty($tenant->logo)) {
                 $tenant->logo = 'mobile-ci/images/default_tenants_directory.png';
             }
-
+            $tenant->facebook = 'https://www.facebook.com/NusaBalicom/';
             $languages = $this->getListLanguages($retailer);
 
             // cek if any language active
@@ -2863,6 +2741,7 @@ class MobileCIAPIController extends ControllerAPI
                 'retailer' => $retailer,
                 'tenant' => $tenant,
                 'languages' => $languages,
+                'facebookAppID' => Config::get('orbit.social_login.facebook.app_id'),
                 'box_url' => $box_url));
 
         } catch (Exception $e) {
@@ -7297,28 +7176,6 @@ class MobileCIAPIController extends ControllerAPI
     }
 
     /**
-    * Get list language from current merchant or mall
-    *
-    * @param mall     `mall`    mall object
-    *
-    * @author Firmansyah <firmansyah@dominopos.com>
-    * @author Irianto Pratama <irianto@dominopos.com>
-    *
-    * @return array or collection
-    */
-    protected function getListLanguages($mall)
-    {
-        $languages = MerchantLanguage::with('language')
-                                     ->where('merchant_languages.status', '!=', 'deleted')
-                                     ->where('merchant_id', $mall->merchant_id)
-                                     ->join('languages', 'languages.language_id', '=','merchant_languages.language_id')
-                                     ->orderBy('languages.name_long', 'ASC')
-                                     ->get();
-
-        return $languages;
-    }
-
-    /**
      * Returns an appropriate MerchantLanguage (if any) that the user wants and the mall supports.
      *
      * @param \User $user
@@ -7851,6 +7708,8 @@ class MobileCIAPIController extends ControllerAPI
 
         $from_captive = OrbitInput::post('from_captive', 'no');
         $auto_login = OrbitInput::post('auto_login', 'no');
+        $socmed_redirect_to = OrbitInput::post('socmed_redirect_to', '');
+
         $values = [
             'email' => $email,
             'retailer_id' => $retailer->merchant_id,
@@ -7860,7 +7719,8 @@ class MobileCIAPIController extends ControllerAPI
             'full_data' => 'no',
             'check_only' => 'no',
             'auto_login' => $auto_login,
-            'from_captive' => $from_captive
+            'from_captive' => $from_captive,
+            'socmed_redirect_to' => $socmed_redirect_to,
         ];
 
         Log::info('-- CI REDIRECT TO CLOUD getUri(): ' . $callback_req->getUri());
@@ -7903,6 +7763,7 @@ class MobileCIAPIController extends ControllerAPI
             }
             $email = OrbitInput::get('email');
             $from = OrbitInput::get('from');
+            $socmed_redirect_to = OrbitInput::get('socmed_redirect_to', 'xxx');
 
             $socialid = null;
 
@@ -8009,7 +7870,7 @@ class MobileCIAPIController extends ControllerAPI
                 'user_email' => $user->user_email,
                 'apikey_id' => $user->apikey->apikey_id,
                 'user_detail_id' => $user->userdetail->user_detail_id,
-                'user_acquisition_id' => isset($acq) ? $acq->user_acquisition_id : '',
+                'user_acquisition_id' => isset($acq) ? $acq->user_acquisition_id : ''
             ];
             $this->commit();
         } catch (ACLForbiddenException $e) {
