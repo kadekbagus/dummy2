@@ -21,8 +21,31 @@ class MallAPIController extends ControllerAPI
      */
     protected $returnBuilder = FALSE;
 
+    /**
+     * saveSocmedUri()
+     *
+     * @author Qosdil A. <qosdil@dominopos.com>
+     * @param string $socmedCode
+     * @param string $merchantId
+     * @param string $uri
+     */
+    private function saveSocmedUri($socmedCode, $merchantId, $uri)
+    {
+        $socmedId = SocialMedia::whereSocialMediaCode($socmedCode)->first()->social_media_id;
 
-     /**
+        $merchantSocmed = MerchantSocialMedia::whereMerchantId($merchantId)->whereSocialMediaId($socmedId)->first();
+
+        if (!$merchantSocmed) {
+            $merchantSocmed = new MerchantSocialMedia;
+            $merchantSocmed->social_media_id = $socmedId;
+            $merchantSocmed->merchant_id = $merchantId;
+        }
+
+        $merchantSocmed->social_media_uri = $uri;
+        $merchantSocmed->save();
+    }
+
+    /**
      * POST - Add new mall
      *
      * @author Kadek <kadek@dominopos.com>
@@ -284,6 +307,12 @@ class MallAPIController extends ControllerAPI
             Event::fire('orbit.mall.postnewmall.before.save', array($this, $newmall));
 
             $newmall->save();
+            if (OrbitInput::post('facebook_uri')) {
+                $this->saveSocmedUri('facebook', $newmall->merchant_id, OrbitInput::post('facebook_uri'));
+
+                // For response
+                $newmall->facebook_uri = OrbitInput::post('facebook_uri');
+            }
 
             Event::fire('orbit.mall.postnewmall.after.save', array($this, $newmall));
             $this->response->data = $newmall;
@@ -515,12 +544,20 @@ class MallAPIController extends ControllerAPI
 
             $prefix = DB::getTablePrefix();
 
+            // Get Facebook social media ID
+            $facebookSocmedId = SocialMedia::whereSocialMediaCode('facebook')->first()->social_media_id;
+
             $malls = Mall::excludeDeleted('merchants')
                                 ->select('merchants.*', DB::raw('count(tenant.merchant_id) AS total_tenant'), DB::raw('mall_group.name AS mall_group_name'))
                                 ->leftJoin('merchants AS tenant', function($join) {
                                         $join->on(DB::raw('tenant.parent_id'), '=', 'merchants.merchant_id')
                                             ->where(DB::raw('tenant.status'), '!=', 'deleted')
                                             ->where(DB::raw('tenant.object_type'), '=', 'tenant');
+                                    })
+                                // A left join to get tenants' Facebook URIs
+                                ->leftJoin('merchant_social_media', function ($join) use ($facebookSocmedId) {
+                                        $join->on('merchants.merchant_id', '=', 'merchant_social_media.merchant_id')
+                                            ->where('social_media_id', '=', $facebookSocmedId);
                                     })
                                 ->leftJoin('merchants AS mall_group', DB::raw('mall_group.merchant_id'), '=', 'merchants.parent_id')
                                 ->groupBy('merchants.merchant_id');
@@ -1321,6 +1358,13 @@ class MallAPIController extends ControllerAPI
             Event::fire('orbit.mall.postupdatemall.before.save', array($this, $updatedmall));
 
             $updatedmall->save();
+
+            if (OrbitInput::post('facebook_uri')) {
+                $this->saveSocmedUri('facebook', $merchant_id, OrbitInput::post('facebook_uri'));
+
+                // For response
+                $updatedmall->facebook_uri = OrbitInput::post('facebook_uri');
+            }
 
             // update user status
             OrbitInput::post('status', function($status) use ($updatedmall) {
