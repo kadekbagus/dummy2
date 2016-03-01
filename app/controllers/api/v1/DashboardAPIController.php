@@ -904,42 +904,41 @@ class DashboardAPIController extends ControllerAPI
 
             $tablePrefix = DB::getTablePrefix();
 
-            // @todo change to eloquent if posible for orderby
-            // $coupon = DB::table('promotions')
-            //     ->selectRaw("promotion_id campaign_id, promotion_name campaign_name, DATEDIFF(end_date, '" . $now_date . "') expire_days, IF(is_coupon = 'Y','coupon', '') type")
-            //     ->where('is_coupon', '=', 'Y')
-            //     ->where('end_date', '>', $now_date)
-            //     ->where('merchant_id', $current_mall)
-            //     ->where('status', '=', 'active')
-            //     ->orderBy('expire_days','asc');
+            $newsAndPromotions = DB::table('news')
+                ->selectRaw("news_id campaign_id, news_name campaign_name, DATEDIFF(end_date, {$this->quote($now_date)}) expire_days, object_type type,
+                    CASE WHEN {$tablePrefix}news.end_date < {$this->quote($now_date)} THEN 'expired' ELSE {$tablePrefix}campaign_status.campaign_status_name END  AS campaign_status")
+                ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
+                ->where('end_date', '>', $now_date)
+                ->where('mall_id', $current_mall)
+                ->where('status', '=', 'active')
+                ->orderBy('expire_days','asc');
 
-            // $newsAndPromotion = DB::table('news')
-            //     ->selectRaw("news_id campaign_id, news_name campaign_name, DATEDIFF(end_date, '" . $now_date . "') expire_days, object_type type")
-            //     ->where('end_date', '>', $now_date)
-            //     ->where('mall_id', $current_mall)
-            //     ->where('status', '=', 'active')
-            //     ->orderBy('expire_days','asc');
+            $coupons = DB::table('promotions')
+                ->selectRaw("promotion_id campaign_id, promotion_name campaign_name, DATEDIFF(end_date, {$this->quote($now_date)}) expire_days, IF(is_coupon = 'Y','coupon', '') type,
+                    CASE WHEN {$tablePrefix}promotions.end_date < {$this->quote($now_date)} THEN 'expired' ELSE {$tablePrefix}campaign_status.campaign_status_name END AS campaign_status")
+                ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
+                ->where('is_coupon', '=', 'Y')
+                ->where('end_date', '>', $now_date)
+                ->where('merchant_id', $current_mall)
+                ->where('status', '=', 'active')
+                ->orderBy('expire_days','asc');
 
-            // $expiringCampaign = $newsAndPromotion->union($coupon)->orderBy('expire_days','asc')->take(10)->get();
+            $expiringCampaign = $newsAndPromotions->unionAll($coupons)
+                                ->orderBy('expire_days','asc');
 
-            $expiringCampaign = DB::select(
-                DB::raw("
-                        SELECT promotion_id campaign_id, promotion_name campaign_name, DATEDIFF(end_date, '" . $now_date . "') expire_days, IF(is_coupon = 'Y','coupon', '') type
-                        FROM {$tablePrefix}promotions
-                        WHERE is_coupon = 'Y'
-                        AND end_date > '" . $now_date . "'
-                        AND merchant_id = '" . $current_mall . "'
-                        AND status = 'active'
-                        union all
-                        SELECT news_id campaign_id, news_name campaign_name, DATEDIFF(end_date, '" . $now_date . "') expire_days, object_type type
-                        FROM {$tablePrefix}news
-                        WHERE end_date > '" . $now_date . "'
-                        AND mall_id = '" . $current_mall . "'
-                        AND status = 'active'
-                        ORDER BY expire_days ASC
-                        LIMIT 0, 10
-                    ")
-            );
+            $sql = $expiringCampaign->toSql();
+            foreach($expiringCampaign->getBindings() as $binding)
+            {
+              $value = is_numeric($binding) ? $binding : "'" . $binding . "'";
+              $sql = preg_replace('/\?/', $value, $sql, 1);
+            }
+
+            // Make union result subquery so that data can be ordering
+            $expiringCampaign = DB::table(DB::raw('(' . $sql . ') as a'))
+                ->whereNotIn('campaign_status', array('stopped', 'expired'))
+                ->orderBy('expire_days','asc')
+                ->take(10)
+                ->get();
 
             $this->response->data = $expiringCampaign;
 
@@ -4330,9 +4329,9 @@ class DashboardAPIController extends ControllerAPI
               $value = is_numeric($binding) ? $binding : "'".$binding."'";
               $sql = preg_replace('/\?/', $value, $sql, 1);
             }
-            
+
             $grandtotal['estimated_total_cost'] = DB::table(DB::raw('(' . $sql . ') as a'))->sum('total');
-            
+
             $this->response->data = $grandtotal;
 
         } catch (ACLForbiddenException $e) {
@@ -4391,29 +4390,32 @@ class DashboardAPIController extends ControllerAPI
      */
     public function getCampaignStatus()
     {
-        $date = OrbitInput::get('date');
+        // $date = OrbitInput::get('date');
         $mallId = OrbitInput::get('current_mall');
 
+        $mall = Mall::excludeDeleted()->where('merchant_id', $mallId)->first();
+        $mallTime = Carbon::now($mall->timezone->timezone_name);
+
         // Promotions
-        $notStartedPromotionCount = News::ofMallId($mallId)->isPromotion()->notStarted('news')->count();
-        $ongoingPromotionCount = News::ofMallId($mallId)->isPromotion()->ongoing('news')->count();
-        $pausedPromotionCount = News::ofMallId($mallId)->isPromotion()->paused('news')->count();
-        $stoppedPromotionCount = News::ofMallId($mallId)->isPromotion()->stopped('news')->count();
-        $expiredPromotionCount = News::ofMallId($mallId)->isPromotion()->expired('news')->count();
+        $notStartedPromotionCount = News::ofMallId($mallId)->isPromotion()->campaignStatus('not started', $mallTime)->count();
+        $ongoingPromotionCount = News::ofMallId($mallId)->isPromotion()->campaignStatus('ongoing', $mallTime)->count();
+        $pausedPromotionCount = News::ofMallId($mallId)->isPromotion()->campaignStatus('paused', $mallTime)->count();
+        $stoppedPromotionCount = News::ofMallId($mallId)->isPromotion()->campaignStatus('stopped', $mallTime)->count();
+        $expiredPromotionCount = News::ofMallId($mallId)->isPromotion()->campaignStatus('expired', $mallTime)->count();
 
         // News
-        $notStartedNewsCount = News::ofMallId($mallId)->isNews()->notStarted('news')->count();
-        $ongoingNewsCount = News::ofMallId($mallId)->isNews()->ongoing('news')->count();
-        $pausedNewsCount = News::ofMallId($mallId)->isNews()->paused('news')->count();
-        $stoppedNewsCount = News::ofMallId($mallId)->isNews()->stopped('news')->count();
-        $expiredNewsCount = News::ofMallId($mallId)->isNews()->expired('news')->count();
+        $notStartedNewsCount = News::ofMallId($mallId)->isNews()->campaignStatus('not started', $mallTime)->count();
+        $ongoingNewsCount = News::ofMallId($mallId)->isNews()->campaignStatus('ongoing', $mallTime)->count();
+        $pausedNewsCount = News::ofMallId($mallId)->isNews()->campaignStatus('paused', $mallTime)->count();
+        $stoppedNewsCount = News::ofMallId($mallId)->isNews()->campaignStatus('stopped', $mallTime)->count();
+        $expiredNewsCount = News::ofMallId($mallId)->isNews()->campaignStatus('expired', $mallTime)->count();
 
         // Coupons
-        $notStartedCouponCount = Coupon::ofMerchantId($mallId)->notStarted('promotions')->count();
-        $ongoingCouponCount = Coupon::ofMerchantId($mallId)->ongoing('promotions')->count();
-        $pausedCouponCount = Coupon::ofMerchantId($mallId)->paused('promotions')->count();
-        $stoppedCouponCount = Coupon::ofMerchantId($mallId)->stopped('promotions')->count();
-        $expiredCouponCount = Coupon::ofMerchantId($mallId)->expired('promotions')->count();
+        $notStartedCouponCount = Coupon::ofMerchantId($mallId)->campaignStatus('not started', $mallTime)->count();
+        $ongoingCouponCount = Coupon::ofMerchantId($mallId)->campaignStatus('ongoing', $mallTime)->count();
+        $pausedCouponCount = Coupon::ofMerchantId($mallId)->campaignStatus('paused', $mallTime)->count();
+        $stoppedCouponCount = Coupon::ofMerchantId($mallId)->campaignStatus('stopped', $mallTime)->count();
+        $expiredCouponCount = Coupon::ofMerchantId($mallId)->campaignStatus('expired', $mallTime)->count();
 
         $this->response->data = [
             'promotions_not_started'    => $notStartedPromotionCount,
@@ -4510,7 +4512,7 @@ class DashboardAPIController extends ControllerAPI
 
             $total = 0;
 
-            foreach ($campaigns as $key => $value) 
+            foreach ($campaigns as $key => $value)
             {
                 if( in_array($campaigns[$key]->campaign_group_name, $campaignList) )
                 {
@@ -4646,7 +4648,7 @@ class DashboardAPIController extends ControllerAPI
             $query = DB::select("select date_format(created_at, '%Y-%m-%d') as days, count(distinct user_id) as unique_visit_perday
                         from {$tablePrefix}user_signin
                         where location_id = ?
-                            and created_at between ? and ? 
+                            and created_at between ? and ?
                         group by 1
                         order by 1
                         ", array($current_mall, $start_date, $end_date));
@@ -4839,9 +4841,9 @@ class DashboardAPIController extends ControllerAPI
                         array('campaign_type'=>'coupons', 'campaign_spending'=>$coupon, 'percentage'=>0)
                     );
                 }
-                
+
             }
-            
+
             $data['total'] = $total;
             $this->response->data = $data;
 

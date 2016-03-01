@@ -573,6 +573,13 @@ class TenantAPIController extends ControllerAPI
             Event::fire('orbit.tenant.postnewtenant.before.save', array($this, $newtenant));
 
             $newtenant->save();
+            
+            if (OrbitInput::post('facebook_uri')) {
+                $this->saveSocmedUri('facebook', $newtenant->merchant_id, OrbitInput::post('facebook_uri'));
+
+                // For response
+                $newtenant->facebook_uri = OrbitInput::post('facebook_uri');
+            }
 
             // save merchant categories
             $categoryMerchants = array();
@@ -1468,8 +1475,19 @@ class TenantAPIController extends ControllerAPI
                                  ->select('merchant_id', 'name', 'status')
                                  ->excludeDeleted('merchants');
             } else {
+
+                // Get Facebook social media ID
+                $facebookSocmedId = SocialMedia::whereSocialMediaCode('facebook')->first()->social_media_id;
+
                 $tenants = Tenant::with('link_to_tenant')
-                                 ->select('merchants.*', DB::raw('CONCAT(floor, " - ", unit) AS location'))
+                                 ->select('merchants.*', DB::raw('CONCAT(floor, " - ", unit) AS location'), 'merchant_social_media.social_media_uri as facebook_uri')
+
+                                 // A left join to get tenants' Facebook URIs
+                                 ->leftJoin('merchant_social_media', function ($join) use ($facebookSocmedId) {
+                                    $join->on('merchants.merchant_id', '=', 'merchant_social_media.merchant_id')
+                                        ->where('social_media_id', '=', $facebookSocmedId);
+                                    })
+
                                  ->excludeDeleted('merchants');
             }
 
