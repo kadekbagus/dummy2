@@ -444,11 +444,11 @@ Route::group(
         );
 
         Route::get(
-            '/customer/tenant',
+            '/customer/tenant', ['as' => 'ci-tenant',
             function () {
 
                 return MobileCI\MobileCIAPIController::create()->getTenantDetailView();
-            }
+            }]
         );
 
         Route::group(
@@ -501,11 +501,11 @@ Route::group(
         );
 
         Route::get(
-            '/customer/mallcouponcampaign',
+            '/customer/mallcouponcampaign', ['as' => 'ci-mall-coupon-campaign',
             function () {
 
                 return MobileCI\MobileCIAPIController::create()->getMallCouponCampaignDetailView();
-            }
+            }]
         );
 
         Route::get(
@@ -516,11 +516,11 @@ Route::group(
         );
 
         Route::get(
-            '/customer/mallpromotion',
+            '/customer/mallpromotion', ['as' => 'ci-mall-promotion',
             function () {
 
                 return MobileCI\MobileCIAPIController::create()->getMallPromotionDetailView();
-            }
+            }]
         );
 
         Route::get(
@@ -531,10 +531,10 @@ Route::group(
         );
 
         Route::get(
-            '/customer/mallnewsdetail',
+            '/customer/mallnewsdetail', ['as' => 'ci-mall-news-detail',
             function () {
                 return MobileCI\MobileCIAPIController::create()->getMallNewsDetailView();
-            }
+            }]
         );
 
         Route::get(
@@ -678,5 +678,3 @@ Route::group(
         Route::get('/app/v1/customer/login-callback-show-id', ['as' => 'customer-login-callback-show-id', 'uses' => 'IntermediateLoginController@getCloudLoginCallbackShowId']);
     }
 );
-
-
