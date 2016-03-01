@@ -225,7 +225,7 @@ class MobileCIAPIController extends BaseCIController
                             ->setActivityType('view');
         try {
             $user = $this->getLoggedInUser();
-            $retailer = $this->getRetailerInfo();
+            $retailer = $this->getRetailerInfo('merchantSocialMedia');
 
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
 
@@ -592,6 +592,18 @@ class MobileCIAPIController extends BaseCIController
 
             $languages = $this->getListLanguages($retailer);
 
+            // set mall facebook page url
+            $retailer->facebook_like_url = '';
+            if (count($retailer->merchantSocialMedia) > 0) {
+                foreach ($retailer->merchantSocialMedia as $merchantSocialMedia) {
+                    if ($merchantSocialMedia->socialMedia->social_media_code === 'facebook') {
+                        $retailer->facebook_like_url = '//' . $merchantSocialMedia->socialMedia->social_media_main_url . '/' . $merchantSocialMedia->social_media_uri;
+                    }
+                }
+            }
+            // set mall facebook share url
+            $retailer->facebook_share_url = $this->getFBShareDummyPage('home', NULL);
+
             $activityPageNotes = sprintf('Page viewed: %s', 'Home');
             $activityPage->setUser($user)
                 ->setActivityName('view_page_home')
@@ -610,7 +622,8 @@ class MobileCIAPIController extends BaseCIController
                 'languages' => $languages,
                 'active_user' => ($user->status === 'active'),
                 'user_email' => $user->user_email,
-                'user' => $user
+                'user' => $user,
+                'facebookInfo' => Config::get('orbit.social_login.facebook')
             );
 
             // check view file existance, if not fallback to default
@@ -8095,6 +8108,9 @@ class MobileCIAPIController extends BaseCIController
                 break;
             case 'lucky-draw':
                 $url = URL::route('share-lucky-draw', ['id' => $id]);
+                break;
+            case 'home':
+                $url = URL::route('share-home');
                 break;
 
             default:
