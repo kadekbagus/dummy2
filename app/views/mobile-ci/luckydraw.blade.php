@@ -4,6 +4,22 @@
     {{ HTML::style('mobile-ci/stylesheet/featherlight.min.css') }}
 @stop
 
+@section('fb_scripts')
+@if(! empty($facebookInfo))
+@if(! empty($facebookInfo['version']) && ! empty($facebookInfo['app_id']))
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version={{$facebookInfo['version']}}&appId={{$facebookInfo['app_id']}}";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+@endif
+@endif
+@stop
+
+
 @section('content')
 <div class="row">
     <div class="col-xs-12 main-theme product-detail">
@@ -32,6 +48,11 @@
             {{ date('d M Y', strtotime($luckydraw->draw_date)) }}
         </p>
     </div>
+    @if(! empty($luckydraw->facebook_share_url))
+    <div class="col-xs-12">
+        <div class="fb-share-button" data-href="{{$luckydraw->facebook_share_url}}" data-layout="button_count"></div>
+    </div>
+    @endif
 </div>
 @if(!empty($luckydraw))
     @if(strtotime($servertime) > strtotime($luckydraw->draw_date))

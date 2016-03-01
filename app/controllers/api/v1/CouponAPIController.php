@@ -2136,6 +2136,10 @@ class CouponAPIController extends ControllerAPI
                   })
                 ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
                 ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
+                ->leftJoin('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
+                ->leftJoin('merchant_languages', 'merchant_languages.merchant_language_id', '=', 'coupon_translations.merchant_language_id')
+                ->leftJoin('languages', 'languages.language_id', '=', 'merchant_languages.language_id')
+                ->where('languages.name', '=', 'en')
                 ->joinPromotionRules()
                 ->groupBy('promotions.promotion_id');
 
@@ -2181,11 +2185,7 @@ class CouponAPIController extends ControllerAPI
             // Filter coupon by matching promotion name pattern
             OrbitInput::get('promotion_name_like', function($promotionName) use ($coupons)
             {
-                $coupons->leftJoin('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
-                    ->leftJoin('merchant_languages', 'merchant_languages.merchant_language_id', '=', 'coupon_translations.merchant_language_id')
-                    ->leftJoin('languages', 'languages.language_id', '=', 'merchant_languages.language_id')
-                    ->where('coupon_translations.promotion_name', 'like', "%$promotionName%")
-                    ->where('languages.name', '=', 'en');
+                $coupons->where('coupon_translations.promotion_name', 'like', "%$promotionName%");
             });
 
             // Filter coupon by promotion type
@@ -2455,7 +2455,7 @@ class CouponAPIController extends ControllerAPI
             $coupons->skip($skip);
 
             // Default sort by
-            $sortBy = 'promotions.status';
+            $sortBy = 'coupon_translations.promotion_name';
             // Default sort mode
             $sortMode = 'asc';
 
@@ -2464,7 +2464,7 @@ class CouponAPIController extends ControllerAPI
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
                     'registered_date'          => 'promotions.created_at',
-                    'promotion_name'           => 'promotions.promotion_name',
+                    'promotion_name'           => 'coupon_translations.promotion_name',
                     'promotion_type'           => 'promotions.promotion_type',
                     'description'              => 'promotions.description',
                     'begin_date'               => 'promotions.begin_date',
@@ -2482,10 +2482,6 @@ class CouponAPIController extends ControllerAPI
                 $sortBy = $sortByMapping[$_sortBy];
             });
 
-            if ($sortBy !== 'campaign_status') {
-                $coupons->orderBy('campaign_status', 'asc');
-            }
-
             OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
             {
                 if (strtolower($_sortMode) !== 'asc') {
@@ -2495,9 +2491,9 @@ class CouponAPIController extends ControllerAPI
 
             $coupons->orderBy($sortBy, $sortMode);
 
-            // also to sort coupon name
-            if ($sortBy !== 'promotion_name') {
-                $coupons->orderBy('promotion_name', 'asc');
+            //with name 
+            if ($sortBy !== 'coupon_translations.promotion_name') {
+                $coupons->orderBy('coupon_translations.promotion_name', 'asc');
             }
 
             $totalCoupons = RecordCounter::create($_coupons)->count();
