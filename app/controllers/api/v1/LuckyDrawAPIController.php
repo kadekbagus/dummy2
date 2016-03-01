@@ -4173,8 +4173,27 @@ class LuckyDrawAPIController extends ControllerAPI
                     }
                 }
                 if (empty($existing_translation)) {
+                    foreach ($translations as $field => $value) {
+                        $lucky_draw_translation = LuckyDrawTranslation::excludeDeleted()
+                                                    ->where('merchant_language_id', '=', $merchant_language_id)
+                                                    ->where('lucky_draw_name', '=', $translations->lucky_draw_name)
+                                                    ->first();
+                        if (! empty($lucky_draw_translation)) {
+                            OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.exists.lucky_draw_name'));
+                        }
+                    }
                     $operations[] = ['create', $merchant_language_id, $translations];
                 } else {
+                    foreach ($translations as $field => $value) {
+                        $lucky_draw_translation_but_not_me = LuckyDrawTranslation::excludeDeleted()
+                                                    ->where('merchant_language_id', '=', $merchant_language_id)
+                                                    ->where('lucky_draw_id', '!=', $lucky_draw->lucky_draw_id)
+                                                    ->where('lucky_draw_name', '=', $translations->lucky_draw_name)
+                                                    ->first();
+                        if (! empty($lucky_draw_translation_but_not_me)) {
+                            OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.exists.lucky_draw_name'));
+                        }
+                    }
                     $operations[] = ['update', $existing_translation, $translations];
                 }
             }

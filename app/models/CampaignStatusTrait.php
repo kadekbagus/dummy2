@@ -3,7 +3,6 @@
  * Traits for storing common method that used by models campaign which has 'campaign_status'
  * column.
  *
- * @author Rio Astamal <me@rioastamal.net>
  * @author Irianto <irianto@dominopos.com>
  */
 trait CampaignStatusTrait
