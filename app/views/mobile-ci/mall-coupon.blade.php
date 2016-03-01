@@ -21,6 +21,19 @@
     </style>
 @stop
 
+@section('fb_scripts')
+@if(! empty($facebookInfo))
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version={{$facebookInfo['version']}}&appId={{$facebookInfo['app_id']}}";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+@endif
+@stop
+
 @section('content')
 <div class="row">
     <div class="col-xs-12  main-theme product-detail">
@@ -44,6 +57,11 @@
                 <h4><strong>{{{ Lang::get('mobileci.coupon_detail.validity_label') }}}</strong></h4>
                 <p>{{{ date('d M Y', strtotime($coupon->begin_date)) }}} - {{{ date('d M Y', strtotime($coupon->end_date)) }}}</p>
             </div>
+            @if(! empty($coupon->facebook_share_url))
+            <div class="col-xs-12">
+                <div class="fb-share-button" data-href="{{$coupon->facebook_share_url}}" data-layout="button_count"></div>
+            </div>
+            @endif
         </div>
     </div>
 </div>
