@@ -115,6 +115,9 @@ Route::filter('fb-bot', function() {
             case 'share-lucky-draw':
                 $redirect_to = URL::route('ci-luckydraw', array('id' => Input::get('id')));
                 break;
+            case 'share-home':
+                $redirect_to = URL::route('ci-customer-home', array('id' => Input::get('id')));
+                break;
             default:
                 $redirect_to = NULL;
                 break;
