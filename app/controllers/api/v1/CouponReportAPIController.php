@@ -124,9 +124,10 @@ class CouponReportAPIController extends ControllerAPI
                     'current_mall' => $current_mall,
                     'sort_by' => $sort_by,
                 ),
+
                 array(
                     'current_mall' => 'required|orbit.empty.mall',
-                    'sort_by' => 'in:promotion_id,promotion_name,begin_date,end_date,coupon_validity_in_date,total_tenant,mall_name,rule_type,total_issued,total_redeemed,campaign_statuscoupon_status,status',
+                    'sort_by' => 'in:promotion_id,promotion_name,begin_date,coupon_validity_in_date,total_tenant,mall_name,rule_type,total_issued,total_redeemed,campaign_status,order',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.couponreportgeneral_sortby'),
@@ -212,19 +213,7 @@ class CouponReportAPIController extends ControllerAPI
                                                     IFNULL({$prefix}promotions.maximum_issued_coupon - total_issued, {$prefix}promotions.maximum_issued_coupon)
                                                 END as available"),
                                         'promotions.updated_at',
-                                        DB::raw("CASE WHEN {$prefix}promotions.end_date IS NOT NULL THEN
-                                                    CASE WHEN DATE_FORMAT({$prefix}promotions.end_date, '%Y-%m-%d %H:%i:%s') = '0000-00-00 00:00:00' THEN
-                                                        {$prefix}promotions.status
-                                                    WHEN
-                                                        {$prefix}promotions.end_date < '{$now}' THEN 'expired'
-                                                    ELSE
-                                                        {$prefix}promotions.status
-                                                    END
-                                                ELSE
-                                                    {$prefix}promotions.status
-                                                END as 'coupon_status'"),
-                                        DB::raw("CASE WHEN {$prefix}promotions.end_date < {$this->quote($now)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END  AS campaign_status"),
-                                        'promotions.status',
+                                        DB::raw("CASE WHEN {$prefix}promotions.end_date < {$this->quote($now)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END AS campaign_status"),
                                         'campaign_status.order'
                                         )
                                         // Join rules
@@ -335,8 +324,8 @@ class CouponReportAPIController extends ControllerAPI
 
             //Filter With Checkbox
             //Filter by Campaign Status
-            OrbitInput::get('campaign_status', function($campaign_status) use ($coupons) {
-                $coupons->whereIn('campaign_status', (array)$campaign_status);
+            OrbitInput::get('campaign_status', function ($statuses) use ($coupons, $prefix, $now) {
+                $coupons->whereIn(DB::raw("CASE WHEN {$prefix}promotions.end_date < {$this->quote($now)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END"), $statuses);
             });
 
             //Filter by Coupon Rule
@@ -458,10 +447,8 @@ class CouponReportAPIController extends ControllerAPI
                     'rule_type'               => 'rule_type',
                     'total_issued'            => 'total_issued',
                     'total_redeemed'          => 'total_redeemed',
-                    'campaign_status'         => 'campaign_status',
+                    'campaign_status'         => 'campaign_status.campaign_status_name',
                     'order'                   => 'order',
-                    'coupon_status'           => 'coupon_status',
-                    'status'                  => 'promotions.status'
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];
