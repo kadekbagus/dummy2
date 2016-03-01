@@ -349,7 +349,7 @@ class SettingAPIController extends ControllerAPI
                 ),
                 array(
                     'background_size.orbit.max.file_size' => 'Login Page Background Image size is too big, maximum size allowed is '. $background_units['newsize'] . $background_units['unit'],
-                    'logo_size.orbit.max.file_size' => 'Mobile Toolbar Logo Image size is too big, maximum size allowed is '. $logo_units['newsize'] . $logo_units['unit']
+                    'logo_size.orbit.max.file_size'       => 'Mobile Toolbar Logo Image size is too big, maximum size allowed is ' . $logo_units['newsize'] . $logo_units['unit']
                 )
             );
 
