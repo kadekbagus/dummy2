@@ -191,13 +191,13 @@
             <tr class="{{ $rowCounter % 2 === 0 ? 'zebra' : '' }}">
                 <td><?php echo (++$rowCounter); ?></td>
                 <td><?php echo $row->promotion_name; ?></td>
-                <td><?php echo $this->printDateTime($row->begin_date, $timezoneCurrentMall, 'no') . ' - ' . $this->printDateTime($row->end_date, $timezoneCurrentMall, 'no'); ?></td>
-                <td><?php echo $row->coupon_validity_in_date; ?></td>
+                <td><?php echo date('d M Y', strtotime($row->begin_date)) . ' - ' . date('d M Y', strtotime($row->end_date)); ?></td>
+                <td><?php echo date('d M Y', strtotime($row->coupon_validity_in_date)); ?></td>
                 <td><?php echo $row->total_tenant; ?></td>
                 <td><?php echo $row->mall_name; ?></td>
-                <td><?php echo $row->rule_type; ?></td>
-                <td><?php echo $row->total_issued . ' - ' . $row->available; ?></td>
-                <td><?php echo $row->total_redeemed . ' - ' .$row->total_issued; ?></td>
+                <td><?php echo str_replace('_', ' ', $row->rule_type); ?></td>
+                <td><?php echo $row->total_issued . ' / ' . $row->available; ?></td>
+                <td><?php echo $row->total_redeemed . ' / ' .$row->total_issued; ?></td>
                 <td><?php echo $row->campaign_status; ?></td>
             </tr>
         <?php endwhile; ?>
