@@ -1864,7 +1864,7 @@ class MobileCIAPIController extends BaseCIController
                 ->groupBy('object_name')
                 ->get();
 
-            $tenants = Tenant::with('mediaLogo');
+            $tenants = Tenant::with('mediaLogo', 'merchantSocialMedia.socialMedia');
             if (!empty($alternateLanguage)) {
                 $tenants = $tenants->with(['categories' => function ($q) use ($alternateLanguage) {
                     $prefix = DB::getTablePrefix();
@@ -2093,6 +2093,7 @@ class MobileCIAPIController extends BaseCIController
 
             // Get the take args
             $take = Config::get('orbit.pagination.per_page');
+
             OrbitInput::get(
                 'take',
                 function ($_take) use (&$take, $maxRecord) {
@@ -2300,6 +2301,15 @@ class MobileCIAPIController extends BaseCIController
                     }
                 }
 
+                // set tenant facebook page url
+                $tenant->facebook_like_url = '';
+                if (count($tenant->merchantSocialMedia) > 0) {
+                    foreach ($tenant->merchantSocialMedia as $merchantSocialMedia) {
+                        if ($merchantSocialMedia->socialMedia->social_media_code === 'facebook') {
+                            $tenant->facebook_like_url = '//' . $merchantSocialMedia->socialMedia->social_media_main_url . '/' . $merchantSocialMedia->social_media_uri;
+                        }
+                    }
+                }
             }
 
             $data = new stdclass();
@@ -2403,7 +2413,9 @@ class MobileCIAPIController extends BaseCIController
                 'floorList' => $floorList,
                 'user_email' => $user->user_email,
                 'languages' => $languages,
-                'link_to_coupon_data' => $couponTenantRedeem));
+                'link_to_coupon_data' => $couponTenantRedeem,
+                'facebookInfo' => Config::get('orbit.social_login.facebook')
+            ));
 
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view: Tenant Listing Page');
@@ -2465,6 +2477,7 @@ class MobileCIAPIController extends BaseCIController
                     'mediaLogoOrig',
                     'mediaMapOrig',
                     'mediaImageOrig',
+                    'merchantSocialMedia.socialMedia',
                     'newsProfiling' => function($q) use ($userGender, $userAge, $mallTime) {
                         if ($userGender !== null) {
                             $q->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
@@ -2670,7 +2683,19 @@ class MobileCIAPIController extends BaseCIController
             if (empty($tenant->logo)) {
                 $tenant->logo = 'mobile-ci/images/default_tenants_directory.png';
             }
-            $tenant->facebook = 'https://www.facebook.com/NusaBalicom/';
+
+            // set tenant facebook page url
+            $tenant->facebook_like_url = '';
+            if (count($tenant->merchantSocialMedia) > 0) {
+                foreach ($tenant->merchantSocialMedia as $merchantSocialMedia) {
+                    if ($merchantSocialMedia->socialMedia->social_media_code === 'facebook') {
+                        $tenant->facebook_like_url = '//' . $merchantSocialMedia->socialMedia->social_media_main_url . '/' . $merchantSocialMedia->social_media_uri;
+                    }
+                }
+            }
+            // set tenant facebook share url
+            $tenant->facebook_share_url = $this->getFBShareDummyPage('tenant', $tenant->merchant_id);
+
             $languages = $this->getListLanguages($retailer);
 
             // cek if any language active
@@ -2741,7 +2766,7 @@ class MobileCIAPIController extends BaseCIController
                 'retailer' => $retailer,
                 'tenant' => $tenant,
                 'languages' => $languages,
-                'facebookAppID' => Config::get('orbit.social_login.facebook.app_id'),
+                'facebookInfo' => Config::get('orbit.social_login.facebook'),
                 'box_url' => $box_url));
 
         } catch (Exception $e) {
@@ -3194,6 +3219,15 @@ class MobileCIAPIController extends BaseCIController
                 }
 
                 $tenant->url = URL::to('customer/tenant?id=' . $tenant->merchant_id);
+                // set tenant facebook page url
+                $tenant->facebook_like_url = '';
+                if (count($tenant->merchantSocialMedia) > 0) {
+                    foreach ($tenant->merchantSocialMedia as $merchantSocialMedia) {
+                        if ($merchantSocialMedia->socialMedia->social_media_code === 'facebook') {
+                            $tenant->facebook_like_url = '//' . $merchantSocialMedia->socialMedia->social_media_main_url . '/' . $merchantSocialMedia->social_media_uri;
+                        }
+                    }
+                }
             }
 
             $data = new stdclass();
@@ -3635,6 +3669,9 @@ class MobileCIAPIController extends BaseCIController
                 ]);
             }
 
+            // set facebook share url
+            $luckydraw->facebook_share_url = $this->getFBShareDummyPage('lucky-draw', $luckydraw->lucky_draw_id);
+
             if (!empty($alternateLanguage) && !empty($luckydraw)) {
                 $luckyDrawTranslation = \LuckyDrawTranslation::excludeDeleted()
                     ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
@@ -3766,7 +3803,8 @@ class MobileCIAPIController extends BaseCIController
                                 'per_page'      => $take,
                                 'servertime'    => $servertime,
                                 'languages'     => $languages,
-                                'paginationPage'=> $paginationPage
+                                'paginationPage'=> $paginationPage,
+                                'facebookInfo' => Config::get('orbit.social_login.facebook'),
             ]);
         } catch (Exception $e) {
             $activityProductNotes = sprintf('Failed to view: Lucky Draw Page');
@@ -4433,6 +4471,9 @@ class MobileCIAPIController extends BaseCIController
                 return View::make('mobile-ci.404', array('page_title'=>Lang::get('mobileci.page_title.not_found'), 'retailer'=>$retailer, 'languages' => $languages));
             }
 
+            // set facebook share url
+            $coupons->facebook_share_url = $this->getFBShareDummyPage('coupon', $coupons->promotion_id);
+
             $coupon_id = $coupons->promotion_id;
 
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
@@ -4578,8 +4619,9 @@ class MobileCIAPIController extends BaseCIController
                 'languages' => $languages,
                 'cso_exists' => $cso_exists,
                 'cs_reedem' => $cs_reedem,
-                'link_to_all_tenant' => $linkToAllTenant
-                ));
+                'link_to_all_tenant' => $linkToAllTenant,
+                'facebookInfo' => Config::get('orbit.social_login.facebook'),
+            ));
 
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: Coupon Detail, Issued Coupon Id: %s', $issued_coupon_id);
@@ -4627,6 +4669,9 @@ class MobileCIAPIController extends BaseCIController
             if (empty($coupons)) {
                 return View::make('mobile-ci.404', array('page_title'=>Lang::get('mobileci.page_title.not_found'), 'retailer'=>$retailer, 'languages' => $languages));
             }
+
+            // set facebook share url
+            $coupons->facebook_share_url = $this->getFBShareDummyPage('coupon', $coupons->promotion_id);
 
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
 
@@ -4710,8 +4755,9 @@ class MobileCIAPIController extends BaseCIController
                 'languages' => $languages,
                 'cso_exists' => $cso_exists,
                 'cs_reedem' => $cs_reedem,
-                'link_to_all_tenant' => $linkToAllTenant
-                ));
+                'link_to_all_tenant' => $linkToAllTenant,
+                'facebookInfo' => Config::get('orbit.social_login.facebook'),
+            ));
 
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: Coupon Detail, Coupon Id: %s', $coupon_id);
@@ -5177,40 +5223,43 @@ class MobileCIAPIController extends BaseCIController
     public function getMallPromotionDetailView()
     {
         $user = null;
-        $product_id = 0;
+        $promotion_id = 0;
         $activityPage = Activity::mobileci()
                                    ->setActivityType('view');
-        $product = null;
+        $promotion = null;
         try {
             $user = $this->getLoggedInUser();
             $retailer = $this->getRetailerInfo();
 
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
 
-            $product_id = trim(OrbitInput::get('id'));
+            $promotion_id = trim(OrbitInput::get('id'));
 
-            $coupons = \News::with(['tenants' => function($q) {
+            $promotion = \News::with(['tenants' => function($q) {
                     $q->where('merchants.status', 'active');
                 }])
                 ->active()
                 ->where('mall_id', $retailer->merchant_id)
                 ->where('object_type', 'promotion')
-                ->where('news_id', $product_id)
+                ->where('news_id', $promotion_id)
                 ->first();
 
-            if (empty($coupons)) {
-                // throw new Exception('Product id ' . $product_id . ' not found');
+            if (empty($promotion)) {
+                // throw new Exception('Product id ' . $promotion_id . ' not found');
                 return View::make('mobile-ci.404', array('page_title'=>Lang::get('mobileci.page_title.not_found'), 'retailer'=>$retailer));
             }
 
-            if (empty($coupons->image)) {
-                $coupons->image = 'mobile-ci/images/default_promotion.png';
+            if (empty($promotion->image)) {
+                $promotion->image = 'mobile-ci/images/default_promotion.png';
             }
+
+            // set facebook share url
+            $promotion->facebook_share_url = $this->getFBShareDummyPage('promotion', $promotion->news_id);
 
             // checking if all tenant linked to this promotion inactive or not
             // so that if all tenant inactive we can disable the 'see tenant' button on the view
             // for fix bug OM-724
-            $_tenants = $coupons->tenants;
+            $_tenants = $promotion->tenants;
 
             $allTenantInactive = false;
 
@@ -5230,13 +5279,13 @@ class MobileCIAPIController extends BaseCIController
             if (! empty($alternateLanguage)) {
                 $promotionTranslation = \NewsTranslation::excludeDeleted()
                     ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
-                    ->where('news_id', $coupons->news_id)->first();
+                    ->where('news_id', $promotion->news_id)->first();
 
                 if (!empty($promotionTranslation)) {
                     foreach (['news_name', 'description'] as $field) {
                         //if field translation empty or null, value of field back to english (default)
                         if (isset($promotionTranslation->{$field}) && $promotionTranslation->{$field} !== '') {
-                            $coupons->{$field} = $promotionTranslation->{$field};
+                            $promotion->{$field} = $promotionTranslation->{$field};
                         }
                     }
 
@@ -5245,7 +5294,7 @@ class MobileCIAPIController extends BaseCIController
                         ->first();
 
                     if (isset($media->path)) {
-                        $coupons->image = $media->path;
+                        $promotion->image = $media->path;
                     } else {
                         // back to default image if in the content multilanguage not have image
                         // check the system language
@@ -5253,7 +5302,7 @@ class MobileCIAPIController extends BaseCIController
                         if ($defaultLanguage !== NULL) {
                             $contentDefaultLanguage = \NewsTranslation::excludeDeleted()
                                 ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
-                                ->where('news_id', $coupons->news_id)->first();
+                                ->where('news_id', $promotion->news_id)->first();
 
                             // get default image
                             $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->news_translation_id)
@@ -5261,7 +5310,7 @@ class MobileCIAPIController extends BaseCIController
                                 ->first();
 
                             if (isset($mediaDefaultLanguage->path)) {
-                                $coupons->image = $mediaDefaultLanguage->path;
+                                $promotion->image = $mediaDefaultLanguage->path;
                             }
                         }
                     }
@@ -5270,21 +5319,29 @@ class MobileCIAPIController extends BaseCIController
 
             $languages = $this->getListLanguages($retailer);
 
-            $activityPageNotes = sprintf('Page viewed: Promotion Detail, promotion Id: %s', $product_id);
+            $activityPageNotes = sprintf('Page viewed: Promotion Detail, promotion Id: %s', $promotion_id);
             $activityPage->setUser($user)
                 ->setActivityName('view_promotion')
                 ->setActivityNameLong('View Promotion Detail')
-                ->setObject($coupons)
-                ->setNews($coupons)
+                ->setObject($promotion)
+                ->setNews($promotion)
                 ->setModuleName('Promotion')
                 ->setNotes($activityPageNotes)
                 ->responseOK()
                 ->save();
 
-            return View::make('mobile-ci.mall-promotion', array('page_title' => $coupons->news_name, 'user' => $user, 'retailer' => $retailer, 'product' => $coupons, 'languages' => $languages, 'all_tenant_inactive' => $allTenantInactive));
+            return View::make('mobile-ci.mall-promotion', array(
+                'page_title' => $promotion->news_name,
+                'user' => $user,
+                'retailer' => $retailer,
+                'promotion' => $promotion,
+                'languages' => $languages,
+                'all_tenant_inactive' => $allTenantInactive,
+                'facebookInfo' => Config::get('orbit.social_login.facebook'),
+            ));
 
         } catch (Exception $e) {
-            $activityPageNotes = sprintf('Failed to view Page: Promotion Detail, promotion Id: %s', $product_id);
+            $activityPageNotes = sprintf('Failed to view Page: Promotion Detail, promotion Id: %s', $promotion_id);
             $activityPage->setUser($user)
                 ->setActivityName('view_promotion')
                 ->setActivityNameLong('View Promotion Failed')
@@ -5778,6 +5835,9 @@ class MobileCIAPIController extends BaseCIController
                 $news->image = 'mobile-ci/images/default_news.png';
             }
 
+            // set facebook share url
+            $news->facebook_share_url = $this->getFBShareDummyPage('news', $news->news_id);
+
             // checking if all tenant linked to this news inactive or not
             // so that if all tenant inactive we can disable the 'see tenant' button on the view
             // for fix bug OM-724
@@ -5853,7 +5913,15 @@ class MobileCIAPIController extends BaseCIController
                 ->responseOK()
                 ->save();
 
-            return View::make('mobile-ci.mall-news-detail', array('page_title' => $news->news_name, 'user' => $user, 'retailer' => $retailer, 'product' => $news, 'languages' => $languages, 'all_tenant_inactive' => $allTenantInactive));
+            return View::make('mobile-ci.mall-news-detail', array(
+                'page_title' => $news->news_name,
+                'user' => $user,
+                'retailer' => $retailer,
+                'news' => $news,
+                'languages' => $languages,
+                'all_tenant_inactive' => $allTenantInactive,
+                'facebookInfo' => Config::get('orbit.social_login.facebook'),
+            ));
 
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: News Detail, news Id: %s', $product_id);
@@ -8007,5 +8075,32 @@ class MobileCIAPIController extends BaseCIController
         $data = http_build_query($payloadData);
 
         return (new Encrypter($key))->encrypt($data);
+    }
+
+    // get the url for Facebook Share dummy page
+    protected function getFBShareDummyPage($type, $id) {
+        $url = '';
+        switch ($type) {
+            case 'tenant':
+                $url = URL::route('share-tenant', ['id' => $id]);
+                break;
+            case 'promotion':
+                $url = URL::route('share-promotion', ['id' => $id]);
+                break;
+            case 'news':
+                $url = URL::route('share-news', ['id' => $id]);
+                break;
+            case 'coupon':
+                $url = URL::route('share-coupon', ['id' => $id]);
+                break;
+            case 'lucky-draw':
+                $url = URL::route('share-lucky-draw', ['id' => $id]);
+                break;
+
+            default:
+                $url = '';
+                break;
+        }
+        return $url;
     }
 }
