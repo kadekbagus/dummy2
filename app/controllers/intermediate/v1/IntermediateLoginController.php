@@ -252,6 +252,7 @@ class IntermediateLoginController extends IntermediateBaseController
         $check_only = OrbitInput::get('check_only', '');
         $auto_login = OrbitInput::get('auto_login', 'no');
         $from_captive = OrbitInput::get('from_captive', 'no');
+        $socmed_redirect_to = OrbitInput::get('socmed_redirect_to', '');
 
         $mac = OrbitInput::get('mac', '');
         $timestamp = (int)OrbitInput::get('timestamp', 0);
@@ -265,7 +266,8 @@ class IntermediateLoginController extends IntermediateBaseController
             'full_data' => $full_data,
             'check_only' => $check_only,
             'auto_login' => $auto_login,
-            'from_captive' => $from_captive
+            'from_captive' => $from_captive,
+            'socmed_redirect_to' => $socmed_redirect_to
         ])) {
             return $this->displayValidationError();
         }
@@ -287,6 +289,7 @@ class IntermediateLoginController extends IntermediateBaseController
                 $params['user_email'] = $response->data->user_email;
                 $params['payload'] = $payload;
                 $params['user_acquisition_id'] = $response->data->user_acquisition_id;
+                $params['socmed_redirect_to'] = $socmed_redirect_to;
             } else {
                 $params['user_id'] = '';
                 $params['user_status'] = '';
@@ -295,6 +298,7 @@ class IntermediateLoginController extends IntermediateBaseController
                 $params['user_email'] = '';
                 $params['payload'] = '';
                 $params['user_acquisition_id'] = '';
+                $params['socmed_redirect_to'] = '';
             }
 
             $params['auto_login'] = $auto_login;
@@ -365,6 +369,7 @@ class IntermediateLoginController extends IntermediateBaseController
         $user_status = OrbitInput::get('user_status', '');
         $auto_login = OrbitInput::get('auto_login', 'no');
         $from_captive = OrbitInput::get('from_captive', 'no');
+        $socmed_redirect_to = OrbitInput::get('socmed_redirect_to', '');
 
         $mac = OrbitInput::get('mac', '');
         $timestamp = (int)OrbitInput::get('timestamp', 0);
@@ -393,7 +398,8 @@ class IntermediateLoginController extends IntermediateBaseController
             'payload' => $payload,
             'user_acquisition_id' => $user_acquisition_id,
             'auto_login' => $auto_login,
-            'from_captive' => $from_captive
+            'from_captive' => $from_captive,
+            'socmed_redirect_to' => $socmed_redirect_to
         ])) {
             return [false, $this->displayValidationError()];
         }
@@ -434,7 +440,7 @@ class IntermediateLoginController extends IntermediateBaseController
             }
 
             DB::connection()->commit();
-            return [true, $user->user_id, $email];
+            return [true, $user->user_id, $email, $socmed_redirect_to];
         } catch (Exception $e) {
             DB::connection()->rollBack();
             throw $e; // TODO display error?
@@ -485,6 +491,7 @@ class IntermediateLoginController extends IntermediateBaseController
     public function getCloudLoginCallback()
     {
         $callback_result = $this->internalCloudLoginCallback();
+
         if ($callback_result[0] === false) {
             // error, returns [false, string_error]
             // we return the error as is
@@ -492,9 +499,10 @@ class IntermediateLoginController extends IntermediateBaseController
         }
         // else ok return [true, user_id, user_email]
         $email = $callback_result[2];
-
+        $socmed_redirect_to = $callback_result[3];
         // do the usual login stuff
         $_POST['email'] = $email;
+        $_POST['socmed_redirect_to'] = $socmed_redirect_to;
 
         $this->postLoginMobileCI(); // sets cookies & inserts activity - we ignore the JSON result
 
@@ -512,6 +520,7 @@ class IntermediateLoginController extends IntermediateBaseController
         // hack: we get the landing URL from the sign in view's data so we don't duplicate logic.
         $view = $mobile_ci->getSignInView();
         $view_data = $view->getData();
+
         return Redirect::away($view_data['landing_url']);
     }
 
