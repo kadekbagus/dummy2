@@ -69,7 +69,7 @@ class CouponReportPrinterController extends DataPrinterController
         // Instantiate the CouponReportAPIController to get the query builder of Coupons
         $response = CouponReportAPIController::create('raw')
                                             ->setReturnBuilder(TRUE)
-                                            ->getCouponReportByCouponName();
+                                            ->getCouponReportGeneral();
 
         if (! is_array($response)) {
             return Response::make($response->message);
@@ -148,22 +148,20 @@ class CouponReportPrinterController extends DataPrinterController
 
                 $count = 1;
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
-                    printf("\"%s\",\"%s\",\"=\"\"%s\"\"\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
+                    printf("\"%s\",\"%s\",\"%s - %s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s / %s\",\"%s / %s\",\"%s\"\n",
                             $count,
                             $row->promotion_name,
-                            // date('d M Y', strtotime($row->begin_date)),
-                            // date('d M Y', strtotime($row->end_date)),
-                            $this->printDateTime($row->begin_date, $timezoneCurrentMall, 'no'),
-                            $this->printDateTime($row->end_date, $timezoneCurrentMall, 'no'),
-                            $row->coupon_validity_in_date,
+                            date('d M Y', strtotime($row->begin_date)),
+                            date('d M Y', strtotime($row->end_date)),
+                            date('d M Y', strtotime($row->coupon_validity_in_date)),
                             $row->total_tenant,
                             $row->mall_name,
-                            $row->rule_type,
+                            str_replace('_', ' ', $row->rule_type),
                             $row->total_issued,
                             $row->available,
                             $row->total_redeemed,
                             $row->total_issued,
-                            $row->campaign_status,
+                            $row->campaign_status
                     );
                     $count++;
                 }
