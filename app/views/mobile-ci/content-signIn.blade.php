@@ -242,7 +242,8 @@
                     payload: "{{{ Input::get('payload', '') }}}",
                     mac_address: {{ json_encode(Input::get('mac_address', '')) }},
                     auto_login: "{{{ Input::get('auto_login', 'no') }}}",
-                    from_captive: "{{{ Input::get('from_captive', 'no') }}}"
+                    from_captive: "{{{ Input::get('from_captive', 'no') }}}",
+                    socmed_redirect_to: "{{{ Input::get('socmed_redirect_to', '') }}}"
                 }
             }).done(function (response, status, xhr) {
                 if (response.code !== 0 && response.code !== 302) {
@@ -341,7 +342,8 @@
                     first_name: $('#firstName').val(),
                     last_name: $('#lastName').val(),
                     gender: $('#gender').val(),
-                    birth_date: birthdate.day + '-' + birthdate.month + '-' + birthdate.year
+                    birth_date: birthdate.day + '-' + birthdate.month + '-' + birthdate.year,
+                    socmed_redirect_to: "{{{ Input::get('socmed_redirect_to', '') }}}"
                 }
             }).done(function (resp, status, xhr) {
                 if (resp.status === 'error') {
