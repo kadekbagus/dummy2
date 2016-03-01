@@ -319,7 +319,7 @@ class CouponReportAPIController extends ControllerAPI
 
             // Filter by Mall Name
             OrbitInput::get('mall_name', function($mall_name) use ($coupons) {
-                $coupons->where('mall_name', 'like', "%$mall_name%");
+                $coupons->whereRaw("merchants2.name like '%{$mall_name}%' ");
             });
 
             //Filter With Checkbox
@@ -429,7 +429,7 @@ class CouponReportAPIController extends ControllerAPI
             $coupons->skip($skip);
 
             // Default sort by
-            $sortBy = 'promotions.status';
+            $sortBy = 'promotions.promotion_name';
 
             // Default sort mode
             $sortMode = 'asc';
@@ -447,17 +447,14 @@ class CouponReportAPIController extends ControllerAPI
                     'rule_type'               => 'rule_type',
                     'total_issued'            => 'total_issued',
                     'total_redeemed'          => 'total_redeemed',
-                    'campaign_status'         => 'campaign_status.campaign_status_name',
+                    'campaign_status'         => 'campaign_status',
                     'order'                   => 'order',
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];
             });
 
-            // sort by status first
-            if ($sortBy !== 'promotions.status') {
-                $coupons->orderBy('promotions.status', 'asc');
-            }
+
 
             OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
             {
