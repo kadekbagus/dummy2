@@ -8092,6 +8092,9 @@ class MobileCIAPIController extends BaseCIController
 
     // get the url for Facebook Share dummy page
     protected function getFBShareDummyPage($type, $id) {
+        $oldRouteSessionConfigValue = Config::get('orbit.session.availability.query_string');
+        Config::set('orbit.session.availability.query_string', false);
+
         $url = '';
         switch ($type) {
             case 'tenant':
@@ -8117,6 +8120,8 @@ class MobileCIAPIController extends BaseCIController
                 $url = '';
                 break;
         }
+        Config::set('orbit.session.availability.query_string', $oldRouteSessionConfigValue);
+        
         return $url;
     }
 }

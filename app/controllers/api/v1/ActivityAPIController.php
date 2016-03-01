@@ -3175,7 +3175,7 @@ class ActivityAPIController extends ControllerAPI
                 return compact('columns', 'responses');
             }
 
-            ksort($responses);
+            krsort($responses);
 
             $records['records'] = $responses;
 
