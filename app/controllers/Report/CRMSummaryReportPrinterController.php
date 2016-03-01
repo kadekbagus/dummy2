@@ -110,7 +110,7 @@ class CRMSummaryReportPrinterController extends DataPrinterController
                 $i++;
             }
 
-            usort($dates, function ($a, $b) {
+            usort($dates, function ($b, $a) {
                 return strtotime($a['label']) - strtotime($b['label']);
             });
 
