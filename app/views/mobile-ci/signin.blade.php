@@ -404,7 +404,8 @@
                     payload: "{{{ Input::get('payload', '') }}}",
                     mac_address: {{ json_encode(Input::get('mac_address', '')) }},
                     auto_login: "{{{ Input::get('auto_login', 'no') }}}",
-                    from_captive: "{{{ Input::get('from_captive', 'no') }}}"
+                    from_captive: "{{{ Input::get('from_captive', 'no') }}}",
+                    socmed_redirect_to: "{{{ Input::get('socmed_redirect_to', '') }}}"
                 }
             }).done(function (data, status, xhr) {
                 orbit_login_processing = false;
