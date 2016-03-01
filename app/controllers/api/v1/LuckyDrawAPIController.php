@@ -4185,7 +4185,7 @@ class LuckyDrawAPIController extends ControllerAPI
                     }
                 }
                 if (empty($existing_translation)) {
-                    foreach ($translations as $field => $value) {
+                    if (! empty(trim($translations->lucky_draw_name))) {
                         $lucky_draw_translation = LuckyDrawTranslation::excludeDeleted()
                                                     ->where('merchant_language_id', '=', $merchant_language_id)
                                                     ->where('lucky_draw_name', '=', $translations->lucky_draw_name)
@@ -4196,7 +4196,7 @@ class LuckyDrawAPIController extends ControllerAPI
                     }
                     $operations[] = ['create', $merchant_language_id, $translations];
                 } else {
-                    foreach ($translations as $field => $value) {
+                    if (! empty(trim($translations->lucky_draw_name))) {
                         $lucky_draw_translation_but_not_me = LuckyDrawTranslation::excludeDeleted()
                                                     ->where('merchant_language_id', '=', $merchant_language_id)
                                                     ->where('lucky_draw_id', '!=', $lucky_draw->lucky_draw_id)
