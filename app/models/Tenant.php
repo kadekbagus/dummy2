@@ -382,4 +382,8 @@ class Tenant extends Eloquent
     {
         return Tenant::where('merchant_id', '=', $idtenant)->pluck('status'); 
     }
+
+    public function merchantSocialMedia() {
+        return $this->hasMany('MerchantSocialMedia', 'merchant_id', 'merchant_id');
+    }
 }
