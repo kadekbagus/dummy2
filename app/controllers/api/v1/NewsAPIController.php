@@ -2391,8 +2391,27 @@ class NewsAPIController extends ControllerAPI
                     }
                 }
                 if (empty($existing_translation)) {
+                    if (! empty(trim($translations->news_name))) {
+                        $news_translation = NewsTranslation::excludeDeleted()
+                                                    ->where('merchant_language_id', '=', $merchant_language_id)
+                                                    ->where('news_name', '=', $translations->news_name)
+                                                    ->first();
+                        if (! empty($news_translation)) {
+                            OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.exists.news_name'));
+                        }
+                    }
                     $operations[] = ['create', $merchant_language_id, $translations];
                 } else {
+                    if (! empty(trim($translations->news_name))) {
+                        $news_translation_but_not_me = NewsTranslation::excludeDeleted()
+                                                    ->where('merchant_language_id', '=', $merchant_language_id)
+                                                    ->where('news_id', '!=', $news->news_id)
+                                                    ->where('news_name', '=', $translations->news_name)
+                                                    ->first();
+                        if (! empty($news_translation_but_not_me)) {
+                            OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.exists.news_name'));
+                        }
+                    }
                     $operations[] = ['update', $existing_translation, $translations];
                 }
             }
