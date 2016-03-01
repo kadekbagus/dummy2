@@ -573,6 +573,13 @@ class TenantAPIController extends ControllerAPI
             Event::fire('orbit.tenant.postnewtenant.before.save', array($this, $newtenant));
 
             $newtenant->save();
+            
+            if (OrbitInput::post('facebook_uri')) {
+                $this->saveSocmedUri('facebook', $newtenant->merchant_id, OrbitInput::post('facebook_uri'));
+
+                // For response
+                $newtenant->facebook_uri = OrbitInput::post('facebook_uri');
+            }
 
             // save merchant categories
             $categoryMerchants = array();

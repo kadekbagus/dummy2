@@ -99,4 +99,23 @@ class News extends Eloquent
         return $query->where('begin_date', '<=', $date)->where('end_date', '>=', $date);
     }
 
+    /**
+     * Campaign Status scope
+     *
+     * @author Irianto <irianto@dominopos.com>
+     * @todo change campaign status to expired when over the end date
+     */
+    public function scopeCampaignStatus($query, $campaign_status, $mallTime)
+    {
+        $prefix = DB::getTablePrefix();
+
+        return $query->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
+                    ->where(DB::raw("CASE WHEN {$prefix}news.end_date < {$this->quote($mallTime)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END"), $campaign_status);
+    }
+
+    protected function quote($arg)
+    {
+        return DB::connection()->getPdo()->quote($arg);
+    }
+
 }
