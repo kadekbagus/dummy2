@@ -133,6 +133,7 @@
         if ( is_array($rule_type) && count($rule_type) > 0) {
             $rule_type_string = '';
             foreach ($rule_type as $key => $val_rule_type){
+                $val_rule_type = str_replace('_', ' ', $val_rule_type);
                 $rule_type_string .= $val_rule_type . ', ';
             }
         ?>

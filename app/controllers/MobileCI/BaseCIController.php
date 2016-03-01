@@ -95,11 +95,20 @@ class BaseCIController extends ControllerAPI
      *
      * @return \Mall
      */
-    public function getRetailerInfo()
+    public function getRetailerInfo($with = null)
     {
         try {
             $retailer_id = App::make('orbitSetting')->getSetting('current_retailer');
-            $retailer = Mall::with('parent')->where('merchant_id', $retailer_id)->first();
+
+            $retailer = Mall::with('parent')->where('merchant_id', $retailer_id);
+            if (! is_null($with)) {
+                $with = (array) $with;
+                foreach ($with as $rel) {
+                    $retailer->with($rel);
+                }
+            }
+            $retailer = $retailer->first();
+            
             $membership_card = Setting::where('setting_name','enable_membership_card')->where('object_id',$retailer_id)->first();
 
             if (! empty($membership_card)){

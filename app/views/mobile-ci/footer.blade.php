@@ -1,4 +1,5 @@
 <footer>
+	@yield('mall-fb-footer')
     <div class="row text-center">
     	<div class="col-xs-12">
 	    	<span>{{ 'Orbit v' . ORBIT_APP_VERSION }}</span>
