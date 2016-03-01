@@ -1692,7 +1692,7 @@ class NewsAPIController extends ControllerAPI
             $news->skip($skip);
 
             // Default sort by
-            $sortBy = 'news_translations.news_name';
+            $sortBy = 'campaign_status';
             // Default sort mode
             $sortMode = 'asc';
 
@@ -1713,10 +1713,6 @@ class NewsAPIController extends ControllerAPI
                 $sortBy = $sortByMapping[$_sortBy];
             });
 
-            if ($sortBy !== 'campaign_status') {
-                $news->orderBy('campaign_status', 'asc');
-            }
-
             OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
             {
                 if (strtolower($_sortMode) !== 'asc') {
@@ -1724,6 +1720,11 @@ class NewsAPIController extends ControllerAPI
                 }
             });
             $news->orderBy($sortBy, $sortMode);
+
+            //with name 
+            if ($sortBy !== 'news_translations.news_name') {
+                $news->orderBy('news_translations.news_name', 'asc');
+            }
 
             $totalNews = RecordCounter::create($_news)->count();
             $listOfNews = $news->get();

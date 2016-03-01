@@ -1188,7 +1188,7 @@ class LuckyDrawAPIController extends ControllerAPI
             }
 
             // Default sort by
-            $sortBy = 'lucky_draws.lucky_draw_name';
+            $sortBy = 'campaign_status';
             // Default sort mode
             $sortMode = 'asc';
 
@@ -1216,10 +1216,6 @@ class LuckyDrawAPIController extends ControllerAPI
                 }
             });
 
-            if ($sortBy !== 'campaign_status') {
-                $luckydraws->orderBy('campaign_status', 'asc');
-            }
-
             OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
             {
                 if (strtolower($_sortMode) !== 'asc') {
@@ -1228,6 +1224,11 @@ class LuckyDrawAPIController extends ControllerAPI
             });
 
             $luckydraws->orderBy($sortBy, $sortMode);
+
+            //with name
+            if ($sortBy !== 'lucky_draws.lucky_draw_name') {
+                $luckydraws->orderBy('lucky_draws.lucky_draw_name', 'asc');
+            }
 
             $totalLuckyDraws = RecordCounter::create($_luckydraws)->count();
             $listOfLuckyDraws = $luckydraws->get();
