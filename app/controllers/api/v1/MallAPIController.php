@@ -548,7 +548,7 @@ class MallAPIController extends ControllerAPI
             $facebookSocmedId = SocialMedia::whereSocialMediaCode('facebook')->first()->social_media_id;
 
             $malls = Mall::excludeDeleted('merchants')
-                                ->select('merchants.*', DB::raw('count(tenant.merchant_id) AS total_tenant'), DB::raw('mall_group.name AS mall_group_name'))
+                                ->select('merchants.*', DB::raw('count(tenant.merchant_id) AS total_tenant'), DB::raw('mall_group.name AS mall_group_name'), 'merchant_social_media.social_media_uri as facebook_uri')
                                 ->leftJoin('merchants AS tenant', function($join) {
                                         $join->on(DB::raw('tenant.parent_id'), '=', 'merchants.merchant_id')
                                             ->where(DB::raw('tenant.status'), '!=', 'deleted')
