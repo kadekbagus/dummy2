@@ -285,11 +285,9 @@ class CouponReportPrinterController extends DataPrinterController
 
         //Filter
         $couponCode = OrbitInput::get('issued_coupon_code');
-        $issuedAge = OrbitInput::get('issued_age');
-        $redeemedAge = OrbitInput::get('redeemed_age');
+        $customerAge = OrbitInput::get('customer_age');
         $redemtionPlace = OrbitInput::get('redemption_place');
-        $issuedGender = OrbitInput::get('issued_gender');
-        $redeemedGender = OrbitInput::get('redeemed_gender');
+        $customerGender = OrbitInput::get('customer_gender');
         $issuedDateGte = OrbitInput::get('issued_date_gte');
         $issuedDateLte = OrbitInput::get('issued_date_lte');
         $redeemedDateGte = OrbitInput::get('redeemed_date_gte');
@@ -342,24 +340,16 @@ class CouponReportPrinterController extends DataPrinterController
                     printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Coupon Code', htmlentities($couponCode), '', '', '', '','','','');
                 }
 
-                if ($issuedAge != '') {
-                    printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Issued Age', htmlentities($issuedAge), '', '', '', '','','','');
+                if ($customerAge != '') {
+                    printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Customer Age', htmlentities($customerAge), '', '', '', '','','','');
                 }
 
-                if ($redeemedAge != '') {
-                    printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Redeemed Age', htmlentities($redeemedAge), '', '', '', '','','','');
+                if ($customerGender != '') {
+                    printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Customer Gender', htmlentities($customerGender), '', '', '', '','','','');
                 }
 
                 if ($redemtionPlace != '') {
                     printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Redemtion Place', htmlentities($redemtionPlace), '', '', '', '','','','');
-                }
-
-                if ($issuedGender != '') {
-                    printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Issued Gender', htmlentities($issuedGender), '', '', '', '','','','');
-                }
-
-                if ($redeemedGender != '') {
-                    printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Redeemed Gender', htmlentities($redeemedGender), '', '', '', '','','','');
                 }
 
                 if ($issuedDateGte != '' && $issuedDateLte != ''){

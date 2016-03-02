@@ -1618,23 +1618,12 @@ class CouponReportAPIController extends ControllerAPI
             });
 
             // Filter by age
-            $issuedAge = OrbitInput::get('issued_age');
-            $redeemedAge = OrbitInput::get('redeemed_age');
-            $sql = "CASE WHEN ({$prefix}user_details.birthdate IS NOT NULL AND {$prefix}user_details.birthdate != '')
+            OrbitInput::get('customer_age', function($age) use ($coupons, $prefix) {
+                $coupons->where(DB::raw("CASE WHEN ({$prefix}user_details.birthdate IS NOT NULL AND {$prefix}user_details.birthdate != '')
                         THEN DATE_FORMAT(NOW(), '%Y') - DATE_FORMAT({$prefix}user_details.birthdate, '%Y') - (DATE_FORMAT(NOW(), '00-%m-%d') < DATE_FORMAT({$prefix}user_details.birthdate, '00-%m-%d'))
                         ELSE 'unknown'
-                    END";
-
-            if ( $issuedAge != '' && $redeemedAge != '' ) {
-                $coupons->whereIn(DB::raw($sql), array($issuedAge, $redeemedAge));
-            } elseif ( $issuedAge != '' || $redeemedAge != '' ) {
-                if ($issuedAge != '') {
-                    $age = $issuedAge;
-                } else {
-                    $age = $redeemedAge;
-                }
-                $coupons->where(DB::raw($sql), $age);
-            }
+                    END"), $age);
+            });
 
             // Filter by redemption place
             OrbitInput::get('redemption_place', function($place) use ($coupons, $prefix) {
@@ -1642,23 +1631,10 @@ class CouponReportAPIController extends ControllerAPI
             });
 
             // Filter by gender
-            $issuedGender = OrbitInput::get('issued_gender');
-            $redeemedGender = OrbitInput::get('redeemed_gender');
-
-            if ((! empty($issuedGender)) && (! empty($redeemedGender))) {
-                $genderArray = array_merge($issuedGender, $redeemedGender);
-                $gender = array_unique($genderArray);
+            OrbitInput::get('customer_gender', function($gender) use ($coupons, $prefix) {
                 $coupons->whereIn(DB::raw("CASE WHEN {$prefix}user_details.gender = 'f' THEN 'female' WHEN 'm' THEN 'male' ELSE 'unknown' END"), $gender);
-            } elseif ((! empty($issuedGender)) || (! empty($redeemedGender))) {
-                if (! empty($issuedGender)) {
-                    $gender = $issuedGender;
-                } else {
-                    $gender = $redeemedGender;
-                }
-                $coupons->where(DB::raw("CASE WHEN {$prefix}user_details.gender = 'f' THEN 'female' WHEN 'm' THEN 'male' ELSE 'unknown' END"), $gender);
-            }
-
-
+            });
+            
             // Clone the query builder which still does not include the take,
             $_coupons = clone $coupons;
 
