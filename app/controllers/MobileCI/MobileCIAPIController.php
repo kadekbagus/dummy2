@@ -225,7 +225,7 @@ class MobileCIAPIController extends BaseCIController
                             ->setActivityType('view');
         try {
             $user = $this->getLoggedInUser();
-            $retailer = $this->getRetailerInfo();
+            $retailer = $this->getRetailerInfo('merchantSocialMedia');
 
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
 
@@ -592,6 +592,20 @@ class MobileCIAPIController extends BaseCIController
 
             $languages = $this->getListLanguages($retailer);
 
+            // set mall facebook page url
+            $retailer->facebook_like_url = '';
+            if (count($retailer->merchantSocialMedia) > 0) {
+                foreach ($retailer->merchantSocialMedia as $merchantSocialMedia) {
+                    if ($merchantSocialMedia->socialMedia->social_media_code === 'facebook') {
+                        if (! empty($merchantSocialMedia->social_media_uri)) {
+                            $retailer->facebook_like_url = '//' . $merchantSocialMedia->socialMedia->social_media_main_url . '/' . $merchantSocialMedia->social_media_uri;
+                        }
+                    }
+                }
+            }
+            // set mall facebook share url
+            $retailer->facebook_share_url = $this->getFBShareDummyPage('home', NULL);
+
             $activityPageNotes = sprintf('Page viewed: %s', 'Home');
             $activityPage->setUser($user)
                 ->setActivityName('view_page_home')
@@ -610,7 +624,8 @@ class MobileCIAPIController extends BaseCIController
                 'languages' => $languages,
                 'active_user' => ($user->status === 'active'),
                 'user_email' => $user->user_email,
-                'user' => $user
+                'user' => $user,
+                'facebookInfo' => Config::get('orbit.social_login.facebook')
             );
 
             // check view file existance, if not fallback to default
@@ -2306,7 +2321,9 @@ class MobileCIAPIController extends BaseCIController
                 if (count($tenant->merchantSocialMedia) > 0) {
                     foreach ($tenant->merchantSocialMedia as $merchantSocialMedia) {
                         if ($merchantSocialMedia->socialMedia->social_media_code === 'facebook') {
-                            $tenant->facebook_like_url = '//' . $merchantSocialMedia->socialMedia->social_media_main_url . '/' . $merchantSocialMedia->social_media_uri;
+                            if (! empty($merchantSocialMedia->social_media_uri)) {
+                                $tenant->facebook_like_url = '//' . $merchantSocialMedia->socialMedia->social_media_main_url . '/' . $merchantSocialMedia->social_media_uri;
+                            }
                         }
                     }
                 }
@@ -2689,7 +2706,9 @@ class MobileCIAPIController extends BaseCIController
             if (count($tenant->merchantSocialMedia) > 0) {
                 foreach ($tenant->merchantSocialMedia as $merchantSocialMedia) {
                     if ($merchantSocialMedia->socialMedia->social_media_code === 'facebook') {
-                        $tenant->facebook_like_url = '//' . $merchantSocialMedia->socialMedia->social_media_main_url . '/' . $merchantSocialMedia->social_media_uri;
+                        if (! empty($merchantSocialMedia->social_media_uri)) {
+                            $tenant->facebook_like_url = '//' . $merchantSocialMedia->socialMedia->social_media_main_url . '/' . $merchantSocialMedia->social_media_uri;
+                        }
                     }
                 }
             }
@@ -3224,7 +3243,9 @@ class MobileCIAPIController extends BaseCIController
                 if (count($tenant->merchantSocialMedia) > 0) {
                     foreach ($tenant->merchantSocialMedia as $merchantSocialMedia) {
                         if ($merchantSocialMedia->socialMedia->social_media_code === 'facebook') {
-                            $tenant->facebook_like_url = '//' . $merchantSocialMedia->socialMedia->social_media_main_url . '/' . $merchantSocialMedia->social_media_uri;
+                            if (! empty($merchantSocialMedia->social_media_uri)) {
+                                $tenant->facebook_like_url = '//' . $merchantSocialMedia->socialMedia->social_media_main_url . '/' . $merchantSocialMedia->social_media_uri;
+                            }
                         }
                     }
                 }
@@ -8079,6 +8100,9 @@ class MobileCIAPIController extends BaseCIController
 
     // get the url for Facebook Share dummy page
     protected function getFBShareDummyPage($type, $id) {
+        $oldRouteSessionConfigValue = Config::get('orbit.session.availability.query_string');
+        Config::set('orbit.session.availability.query_string', false);
+
         $url = '';
         switch ($type) {
             case 'tenant':
@@ -8096,11 +8120,16 @@ class MobileCIAPIController extends BaseCIController
             case 'lucky-draw':
                 $url = URL::route('share-lucky-draw', ['id' => $id]);
                 break;
+            case 'home':
+                $url = URL::route('share-home');
+                break;
 
             default:
                 $url = '';
                 break;
         }
+        Config::set('orbit.session.availability.query_string', $oldRouteSessionConfigValue);
+
         return $url;
     }
 }

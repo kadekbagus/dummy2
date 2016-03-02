@@ -52,17 +52,16 @@ class CouponReportPrinterController extends DataPrinterController
         $mode = OrbitInput::get('export', 'print');
         $current_mall = OrbitInput::get('current_mall');
 
+        $timezone = $this->getTimezoneMall($current_mall);
+
         // Filter
         $promotion_name = OrbitInput::get('promotion_name');
         $tenant_name = OrbitInput::get('tenant_name');
         $mall_name = OrbitInput::get('mall_name');
         $rule_type = OrbitInput::get('rule_type');
-        $status = OrbitInput::get('status');
+        $status = OrbitInput::get('campaign_status');
         $start_validity_date = OrbitInput::get('start_validity_date');
         $end_validity_date = OrbitInput::get('end_validity_date');
-
-        // TimeZone
-        $timezoneCurrentMall = $this->getTimezoneMall($current_mall);
 
         $user = $this->loggedUser;
 
@@ -119,6 +118,7 @@ class CouponReportPrinterController extends DataPrinterController
                 if ( is_array($rule_type) && count($rule_type) > 0) {
                     $rule_type_string = '';
                     foreach ($rule_type as $key => $val_rule_type){
+                        $val_rule_type = str_replace('_', ' ', $val_rule_type);
                         $rule_type_string .= $val_rule_type . ', ';
                     }
                     printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Coupon Rule', htmlentities(rtrim($rule_type_string, ', ')), '', '', '', '','','','');
@@ -133,8 +133,8 @@ class CouponReportPrinterController extends DataPrinterController
                 }
 
                 if ($start_validity_date != '' && $end_validity_date != ''){
-                    $startDateRangeMallTime = $this->printDateTime($start_validity_date, $timezone, 'd M Y');
-                    $endDateRangeMallTime = $this->printDateTime($end_validity_date, $timezone, 'd M Y');
+                    $startDateRangeMallTime = date('d M Y', strtotime($start_validity_date));
+                    $endDateRangeMallTime = date('d M Y', strtotime($end_validity_date));
                     $dateRange = $startDateRangeMallTime . ' - ' . $endDateRangeMallTime;
                     if ($startDateRangeMallTime === $endDateRangeMallTime) {
                         $dateRange = $startDateRangeMallTime;

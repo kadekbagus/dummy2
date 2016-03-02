@@ -133,6 +133,7 @@
         if ( is_array($rule_type) && count($rule_type) > 0) {
             $rule_type_string = '';
             foreach ($rule_type as $key => $val_rule_type){
+                $val_rule_type = str_replace('_', ' ', $val_rule_type);
                 $rule_type_string .= $val_rule_type . ', ';
             }
         ?>
@@ -159,8 +160,8 @@
 
         <?php
         if ($start_validity_date != '' && $end_validity_date != ''){
-            $startDateRangeMallTime = $this->printDateTime($start_validity_date, $timezone, 'd M Y');
-            $endDateRangeMallTime = $this->printDateTime($end_validity_date, $timezone, 'd M Y');
+            $startDateRangeMallTime = date('d M Y', strtotime($start_validity_date));
+            $endDateRangeMallTime = date('d M Y', strtotime($end_validity_date));
             $dateRange = $startDateRangeMallTime . ' - ' . $endDateRangeMallTime;
             if ($startDateRangeMallTime === $endDateRangeMallTime) {
                 $dateRange = $startDateRangeMallTime;

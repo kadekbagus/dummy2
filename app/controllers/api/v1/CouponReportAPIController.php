@@ -124,9 +124,10 @@ class CouponReportAPIController extends ControllerAPI
                     'current_mall' => $current_mall,
                     'sort_by' => $sort_by,
                 ),
+
                 array(
                     'current_mall' => 'required|orbit.empty.mall',
-                    'sort_by' => 'in:promotion_id,promotion_name,begin_date,end_date,coupon_validity_in_date,total_tenant,mall_name,rule_type,total_issued,total_redeemed,campaign_statuscoupon_status,status',
+                    'sort_by' => 'in:promotion_id,promotion_name,begin_date,coupon_validity_in_date,total_tenant,mall_name,rule_type,total_issued,total_redeemed,campaign_status,order',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.couponreportgeneral_sortby'),
@@ -212,19 +213,7 @@ class CouponReportAPIController extends ControllerAPI
                                                     IFNULL({$prefix}promotions.maximum_issued_coupon - total_issued, {$prefix}promotions.maximum_issued_coupon)
                                                 END as available"),
                                         'promotions.updated_at',
-                                        DB::raw("CASE WHEN {$prefix}promotions.end_date IS NOT NULL THEN
-                                                    CASE WHEN DATE_FORMAT({$prefix}promotions.end_date, '%Y-%m-%d %H:%i:%s') = '0000-00-00 00:00:00' THEN
-                                                        {$prefix}promotions.status
-                                                    WHEN
-                                                        {$prefix}promotions.end_date < '{$now}' THEN 'expired'
-                                                    ELSE
-                                                        {$prefix}promotions.status
-                                                    END
-                                                ELSE
-                                                    {$prefix}promotions.status
-                                                END as 'coupon_status'"),
-                                        DB::raw("CASE WHEN {$prefix}promotions.end_date < {$this->quote($now)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END  AS campaign_status"),
-                                        'promotions.status',
+                                        DB::raw("CASE WHEN {$prefix}promotions.end_date < {$this->quote($now)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END AS campaign_status"),
                                         'campaign_status.order'
                                         )
                                         // Join rules
@@ -330,13 +319,13 @@ class CouponReportAPIController extends ControllerAPI
 
             // Filter by Mall Name
             OrbitInput::get('mall_name', function($mall_name) use ($coupons) {
-                $coupons->where('mall_name', 'like', "%$mall_name%");
+                $coupons->whereRaw("merchants2.name like '%{$mall_name}%' ");
             });
 
             //Filter With Checkbox
             //Filter by Campaign Status
-            OrbitInput::get('campaign_status', function($campaign_status) use ($coupons) {
-                $coupons->whereIn('campaign_status', (array)$campaign_status);
+            OrbitInput::get('campaign_status', function ($statuses) use ($coupons, $prefix, $now) {
+                $coupons->whereIn(DB::raw("CASE WHEN {$prefix}promotions.end_date < {$this->quote($now)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END"), $statuses);
             });
 
             //Filter by Coupon Rule
@@ -440,7 +429,7 @@ class CouponReportAPIController extends ControllerAPI
             $coupons->skip($skip);
 
             // Default sort by
-            $sortBy = 'promotions.status';
+            $sortBy = 'promotions.promotion_name';
 
             // Default sort mode
             $sortMode = 'asc';
@@ -460,17 +449,12 @@ class CouponReportAPIController extends ControllerAPI
                     'total_redeemed'          => 'total_redeemed',
                     'campaign_status'         => 'campaign_status',
                     'order'                   => 'order',
-                    'coupon_status'           => 'coupon_status',
-                    'status'                  => 'promotions.status'
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];
             });
 
-            // sort by status first
-            if ($sortBy !== 'promotions.status') {
-                $coupons->orderBy('promotions.status', 'asc');
-            }
+
 
             OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
             {
@@ -1463,8 +1447,15 @@ class CouponReportAPIController extends ControllerAPI
             }
 
             // Builder object
-            $now = date('Y-m-d H:i:s');
+            //$now = date('Y-m-d H:i:s');
             $prefix = DB::getTablePrefix();
+
+            $mall = App::make('orbit.empty.mall');
+            $timezone = $this->getTimezone($mall->merchant_id);
+
+            // Change Now Date to Mall Time
+            $now = Carbon::now($mall->timezone->timezone_name);
+            $now = $now->toDateString();
 
             if ($redeemedBy === 'tenant') {
                 $coupons = IssuedCoupon::select('issued_coupons.*', 'promotions.promotion_name', 'merchants.name AS redeem_retailer_name', 'users.user_email',
@@ -1516,6 +1507,18 @@ class CouponReportAPIController extends ControllerAPI
                                                          ->on(DB::raw('redeemed.user_id'), '=', 'issued_coupons.user_id');
                                                 })
                             ->where('issued_coupons.status', 'redeemed');
+            } elseif ($redeemedBy === 'all') {
+                $coupons = IssuedCoupon::select('issued_coupons.*', 'promotions.begin_date', 'promotions.end_date',
+                                            DB::raw("CASE WHEN {$prefix}user_details.gender = 'f' THEN 'female' WHEN 'm' THEN 'male' ELSE 'unknown' END AS gender"),
+                                            DB::raw("CASE WHEN ({$prefix}user_details.birthdate IS NOT NULL AND {$prefix}user_details.birthdate != '')
+                                                    THEN DATE_FORMAT(NOW(), '%Y') - DATE_FORMAT({$prefix}user_details.birthdate, '%Y') - (DATE_FORMAT(NOW(), '00-%m-%d') < DATE_FORMAT({$prefix}user_details.birthdate, '00-%m-%d'))
+                                                    ELSE 'unknown'
+                                                END AS age"),
+                                            DB::raw("CASE WHEN {$prefix}issued_coupons.redeem_user_id IS NOT NULL THEN CONCAT({$prefix}users.user_firstname, ' ', {$prefix}users.user_lastname) ELSE {$prefix}merchants.name END AS redemtion_place"))
+                                       ->join('promotions', 'promotions.promotion_id', '=', 'issued_coupons.promotion_id')
+                                       ->leftJoin('user_details', 'user_details.user_id', '=', 'issued_coupons.user_id')
+                                       ->leftJoin('merchants', 'merchants.merchant_id', '=', 'issued_coupons.redeem_retailer_id')
+                                       ->leftJoin('users', 'users.user_id', '=', 'issued_coupons.redeem_user_id');
             }
 
             if ($user->isSuperAdmin()) {
@@ -1581,6 +1584,16 @@ class CouponReportAPIController extends ControllerAPI
 
             // Filter by Redeemed date
             // Greater Than Equals
+            OrbitInput::get('issued_date_gte', function($date) use ($coupons) {
+                $coupons->where('issued_coupons.issued_date', '>=', $date);
+            });
+            // Less Than Equals
+            OrbitInput::get('issued_date_lte', function($date) use ($coupons) {
+                $coupons->where('issued_coupons.issued_date', '<=', $date);
+            });
+
+            // Filter by Redeemed date
+            // Greater Than Equals
             OrbitInput::get('redeemed_date_gte', function($date) use ($coupons) {
                 $coupons->where('issued_coupons.redeemed_date', '>=', $date);
             });
@@ -1599,10 +1612,85 @@ class CouponReportAPIController extends ControllerAPI
                 $coupons->where('total_redeemed', $data);
             });
 
+            // Filter by issued age
+            OrbitInput::get('issued_age', function($age) use ($coupons, $prefix) {
+                $coupons->where(DB::raw("CASE WHEN ({$prefix}user_details.birthdate IS NOT NULL AND {$prefix}user_details.birthdate != '')
+                                                    THEN DATE_FORMAT(NOW(), '%Y') - DATE_FORMAT({$prefix}user_details.birthdate, '%Y') - (DATE_FORMAT(NOW(), '00-%m-%d') < DATE_FORMAT({$prefix}user_details.birthdate, '00-%m-%d'))
+                                                    ELSE 'unknown'
+                                                END"), $age);
+            });
+
+            // Filter by redeem age
+            OrbitInput::get('redeemed_age', function($age) use ($coupons, $prefix) {
+                $issuedAge = OrbitInput::get('issued_age');
+                $sql = "CASE WHEN ({$prefix}user_details.birthdate IS NOT NULL AND {$prefix}user_details.birthdate != '')
+                                                    THEN DATE_FORMAT(NOW(), '%Y') - DATE_FORMAT({$prefix}user_details.birthdate, '%Y') - (DATE_FORMAT(NOW(), '00-%m-%d') < DATE_FORMAT({$prefix}user_details.birthdate, '00-%m-%d'))
+                                                    ELSE 'unknown'
+                                                END";
+                if (empty($issuedAge)) {
+                    $coupons->where(DB::raw($sql), $age);
+                } else {
+                    $coupons->orWhere(DB::raw($sql), $age);
+                }
+                
+            });
+
+            // Filter by redemption place
+            OrbitInput::get('redemption_place', function($place) use ($coupons, $prefix) {
+                $coupons->whereRaw("CASE WHEN {$prefix}issued_coupons.redeem_user_id IS NOT NULL THEN CONCAT({$prefix}users.user_firstname, ' ', {$prefix}users.user_lastname) ELSE {$prefix}merchants.name END like '%{$place}%' ");
+            });
+
+            // Filter by issued gender
+            OrbitInput::get('issued_gender', function($gender) use ($coupons, $prefix) {
+                $coupons->whereIn(DB::raw("CASE WHEN {$prefix}user_details.gender = 'f' THEN 'female' WHEN 'm' THEN 'male' ELSE 'unknown' END"), $gender);
+            });
+
+            // Filter by redeemed gender
+            OrbitInput::get('redeemed_gender', function($gender) use ($coupons, $prefix) {
+                $issuedGender = OrbitInput::get('issued_gender');
+                if (empty($issuedGender)) {
+                    $coupons->whereIn(DB::raw("CASE WHEN {$prefix}user_details.gender = 'f' THEN 'female' WHEN 'm' THEN 'male' ELSE 'unknown' END"), $gender);
+                } else {
+                    $coupons->orWhereIn(DB::raw("CASE WHEN {$prefix}user_details.gender = 'f' THEN 'female' WHEN 'm' THEN 'male' ELSE 'unknown' END"), $gender);
+                }
+                
+            });
+
+
             // Clone the query builder which still does not include the take,
-            // skip, and order by
             $_coupons = clone $coupons;
-            $_coupons->select('issued_coupons.issued_coupon_id');
+
+            // Need to sub select after group by
+            $_coupons_sql = $_coupons->toSql();
+
+            //Cek exist binding
+            if (count($coupons->getBindings()) > 0) {
+                foreach($coupons->getBindings() as $binding)
+                {
+                  $value = is_numeric($binding) ? $binding : "'" . $binding . "'";
+                  $_coupons_sql = preg_replace('/\?/', $value, $_coupons_sql, 1);
+                }
+            }
+
+            $_coupons = DB::table(DB::raw('(' . $_coupons_sql . ') as b'));
+
+            $query_sum = array(
+                "COUNT(issued_coupon_id) AS total_record",
+                "COUNT(DISTINCT(user_id)) AS total_acquiring_customers",
+                "DATEDIFF((CASE WHEN {$this->quote($now)} < DATE_FORMAT(end_date, '%Y-%m-%d') THEN {$this->quote($now)} ELSE DATE_FORMAT(end_date, '%Y-%m-%d') END), DATE_FORMAT(begin_date, '%Y-%m-%d'))+1 AS total_active_days",
+                "COUNT(DISTINCT(redemtion_place)) AS total_redemtion_place"
+            );
+
+            $total = $_coupons->selectRaw(implode(',', $query_sum))->get();
+
+            // Get total record
+            $totalRecord = isset($total[0]->total_record)?$total[0]->total_record:0;
+            // Get total acquiring customers
+            $totalAcquiringCustomers = isset($total[0]->total_acquiring_customers)?$total[0]->total_acquiring_customers:0;
+            // Get total active days
+            $totalActiveDays = isset($total[0]->total_active_days)?$total[0]->total_active_days:0;
+            // Get total redemption place
+            $totalRedemtionPlace = isset($total[0]->total_redemtion_place)?$total[0]->total_redemtion_place:0;
 
             // if not printing / exporting data then do pagination.
             if (! $this->returnBuilder) {
@@ -1672,18 +1760,28 @@ class CouponReportAPIController extends ControllerAPI
 
             // Return the instance of Query Builder
             if ($this->returnBuilder) {
-                return ['builder' => $coupons, 'count' => RecordCounter::create($_coupons)->count()];
+                return [
+                            'builder' => $coupons,
+                            'count' => $totalRecord,
+                            'total_coupons' => $totalRecord,
+                            'total_acquiring_customers' => $totalAcquiringCustomers,
+                            'total_active_days' => $totalActiveDays,
+                            'total_redemtion_place' => $totalRedemtionPlace,
+                        ];
             }
 
-            $totalCoupons = RecordCounter::create($_coupons)->count();
             $listOfCoupons = $coupons->get();
 
             $data = new stdclass();
-            $data->total_records = $totalCoupons;
+            $data->total_records = $totalRecord;
             $data->returned_records = count($listOfCoupons);
+            $data->total_coupons = $totalRecord;
+            $data->total_acquiring_customers = $totalAcquiringCustomers;
+            $data->total_active_days = $totalActiveDays;
+            $data->total_redemtion_place = $totalRedemtionPlace;
             $data->records = $listOfCoupons;
 
-            if ($totalCoupons === 0) {
+            if ($totalRecord === 0) {
                 $data->records = NULL;
                 $this->response->message = Lang::get('statuses.orbit.nodata.coupon');
             }
@@ -2129,222 +2227,6 @@ class CouponReportAPIController extends ControllerAPI
 
         $output = $this->render($httpCode);
         Event::fire('orbit.couponreport.getissuedcouponreport.before.render', array($this, &$output));
-
-        return $output;
-    }
-
-
-    /**
-     * GET - Get Pop Up Tenant Per Coupon
-     *
-     * @author Firmansyah <firmansyah@dominopos.com>
-     *
-     * List of API Parameters
-     * ----------------------
-     * @param string   `campaign_id            (required) - Campaign id (news_id, promotion_id, coupon_id)
-     * @param string   `campaign_type          (required) - news, promotion, coupon
-     *
-     * @return Illuminate\Support\Facades\Response
-     */
-    public function getTenantCampaignSummary()
-    {
-        try {
-            $httpCode = 200;
-
-            Event::fire('orbit.campaignreportdetail.gettenantcampaigndetail.before.auth', array($this));
-
-            // Require authentication
-            $this->checkAuth();
-
-            Event::fire('orbit.campaignreportdetail.gettenantcampaigndetail.after.auth', array($this));
-
-            // Try to check access control list, does this user allowed to
-            // perform this action
-            $user = $this->api->user;
-            Event::fire('orbit.campaignreportdetail.gettenantcampaigndetail.before.authz', array($this, $user));
-
-            // @Todo: Use ACL authentication instead
-            $role = $user->role;
-            $validRoles = $this->viewRoles;
-            if (! in_array( strtolower($role->role_name), $validRoles)) {
-                $message = 'Your role are not allowed to access this resource.';
-                ACL::throwAccessForbidden($message);
-            }
-
-            Event::fire('orbit.campaignreportdetail.gettenantcampaigndetail.after.authz', array($this, $user));
-
-            $this->registerCustomValidation();
-
-            $campaign_id = OrbitInput::get('campaign_id');
-            $campaign_type = OrbitInput::get('campaign_type');
-            $current_mall = OrbitInput::get('current_mall');
-
-            $this->registerCustomValidation();
-
-            $validator = Validator::make(
-                array(
-                    'campaign_id' => $campaign_id,
-                    'campaign_type' => $campaign_type,
-                    'current_mall' => $current_mall,
-                ),
-                array(
-                    'campaign_id' => 'required',
-                    'campaign_type' => 'required',
-                    'current_mall' => 'required|orbit.empty.mall',
-                ),
-                array(
-                    'in' => Lang::get('validation.orbit.empty.campaignreportgeneral_sortby'),
-                )
-            );
-
-            Event::fire('orbit.campaignreportdetail.gettenantcampaigndetail.before.validation', array($this, $validator));
-
-            // Run the validation
-            if ($validator->fails()) {
-                $errorMessage = $validator->messages()->first();
-                OrbitShopAPI::throwInvalidArgument($errorMessage);
-            }
-            Event::fire('orbit.campaignreportdetail.gettenantcampaigndetail.after.validation', array($this, $validator));
-
-            // Get the maximum record
-            $maxRecord = (int) Config::get('orbit.pagination.coupon.max_record');
-            if ($maxRecord <= 0) {
-                // Fallback
-                $maxRecord = (int) Config::get('orbit.pagination.max_record');
-                if ($maxRecord <= 0) {
-                    $maxRecord = 20;
-                }
-            }
-            // Get default per page (take)
-            $perPage = (int) Config::get('orbit.pagination.coupon.per_page');
-            if ($perPage <= 0) {
-                // Fallback
-                $perPage = (int) Config::get('orbit.pagination.per_page');
-                if ($perPage <= 0) {
-                    $perPage = 20;
-                }
-            }
-
-            $mall = App::make('orbit.empty.mall');
-            $timezone = $this->getTimezone($mall->merchant_id);
-
-            // Change Now Date to Mall Time
-            $now = Carbon::now($mall->timezone->timezone_name);
-            $now = $now->toDateString();
-
-            // Get now date with timezone
-            $timezoneOffset = $this->getTimezoneOffset($timezone);
-
-            // Get id add_tenant and delete_tenant for counting total tenant percampaign
-            $campaignHistoryAction = DB::table('campaign_history_actions')
-                            ->select('campaign_history_action_id','action_name')
-                            ->where('action_name','add_tenant')
-                            ->orWhere('action_name','delete_tenant')
-                            ->get();
-
-            $idAddTenant = '';
-            $idDeleteTenant = '';
-            foreach ($campaignHistoryAction as $key => $value) {
-                if ($value->action_name === 'add_tenant') {
-                    $idAddTenant = $value->campaign_history_action_id;
-                } elseif ($value->action_name === 'delete_tenant') {
-                    $idDeleteTenant = $value->campaign_history_action_id;
-                }
-            }
-
-            $tablePrefix = DB::getTablePrefix();
-
-            // Get the end_date from campaign
-            if ($campaign_type == 'news' || $campaign_type == 'promotion') {
-                $sqlEndDate = News::select('end_date')->where('news_id', $campaign_id)->get();
-            } elseif ($campaign_type == 'coupon') {
-                $sqlEndDate = Coupon::select('end_date')->where('promotion_id', $campaign_id)->get();
-            }
-
-            $endDate = $sqlEndDate[0]->end_date;
-
-            // Builder object
-            $linkToTenants = DB::select(DB::raw("
-                    SELECT name FROM
-                        (SELECT * FROM
-                            (
-                                SELECT
-                                    och.campaign_id,
-                                    och.campaign_history_action_id,
-                                    och.campaign_external_value,
-                                    om.name,
-                                    DATE_FORMAT(och.created_at, '%Y-%m-%d %H:00:00') AS history_created_date
-                                FROM
-                                    {$tablePrefix}campaign_histories och
-                                LEFT JOIN
-                                    {$tablePrefix}campaign_history_actions ocha
-                                ON och.campaign_history_action_id = ocha.campaign_history_action_id
-                                LEFT JOIN
-                                    {$tablePrefix}merchants om
-                                ON om.merchant_id = och.campaign_external_value
-                                WHERE
-                                    och.campaign_history_action_id IN ({$this->quote($idAddTenant)}, {$this->quote($idDeleteTenant)})
-                                    AND och.campaign_type = {$this->quote($campaign_type)}
-                                    AND och.campaign_id = {$this->quote($campaign_id)}
-                                    AND DATE_FORMAT(CONVERT_TZ(och.created_at, '+00:00', {$this->quote($timezoneOffset)}), '%Y-%m-%d') <= {$this->quote($now)}
-                                ORDER BY och.created_at DESC
-                            ) as A
-                        group by campaign_external_value) as B
-                    WHERE (
-                        case when campaign_history_action_id = {$this->quote($idDeleteTenant)}
-                        and DATE_FORMAT(CONVERT_TZ(history_created_date, '+00:00', {$this->quote($timezoneOffset)}), '%Y-%m-%d') < IF( DATE_FORMAT({$this->quote($now)}, '%Y-%m-%d') < DATE_FORMAT({$this->quote($endDate)}, '%Y-%m-%d'), DATE_FORMAT({$this->quote($now)}, '%Y-%m-%d'), DATE_FORMAT({$this->quote($endDate)}, '%Y-%m-%d') )
-                        then campaign_history_action_id != {$this->quote($idDeleteTenant)} else true end
-                    )
-                     ORDER by name asc
-                "));
-
-            $this->response->data = $linkToTenants;
-
-        } catch (ACLForbiddenException $e) {
-            Event::fire('orbit.campaignreportdetail.gettenantcampaigndetail.access.forbidden', array($this, $e));
-
-            $this->response->code = $e->getCode();
-            $this->response->status = 'error';
-            $this->response->message = $e->getMessage();
-            $this->response->data = null;
-            $httpCode = 403;
-        } catch (InvalidArgsException $e) {
-            Event::fire('orbit.campaignreportdetail.gettenantcampaigndetail.invalid.arguments', array($this, $e));
-
-            $this->response->code = $e->getCode();
-            $this->response->status = 'error';
-            $this->response->message = $e->getMessage();
-            $result['total_records'] = 0;
-            $result['returned_records'] = 0;
-            $result['records'] = null;
-
-            $this->response->data = $result;
-            $httpCode = 400;
-        } catch (QueryException $e) {
-            Event::fire('orbit.campaignreportdetail.gettenantcampaigndetail.query.error', array($this, $e));
-
-            $this->response->code = $e->getCode();
-            $this->response->status = 'error';
-
-            // Only shows full query error when we are in debug mode
-            if (Config::get('app.debug')) {
-                $this->response->message = $e->getMessage();
-            } else {
-                $this->response->message = Lang::get('validation.orbit.queryerror');
-            }
-            $this->response->data = null;
-            $httpCode = 500;
-        } catch (Exception $e) {
-            Event::fire('orbit.campaignreportdetail.gettenantcampaigndetail.general.exception', array($this, $e));
-
-            $this->response->code = $this->getNonZeroCode($e->getCode());
-            $this->response->status = 'error';
-            $this->response->message = $e->getMessage();
-            $this->response->data = 'null';
-        }
-
-        $output = $this->render($httpCode);
-        Event::fire('orbit.campaignreportdetail.gettenantcampaigndetail.before.render', array($this, &$output));
 
         return $output;
     }

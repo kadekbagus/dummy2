@@ -996,10 +996,10 @@ class LuckyDrawAPIController extends ControllerAPI
             $prefix = DB::getTablePrefix();
             $luckydraws = LuckyDraw::excludeDeleted('lucky_draws')
                                     ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'lucky_draws.campaign_status_id')
-                                    ->select('lucky_draws.*', 'campaign_status.order', DB::raw("CASE WHEN {$prefix}lucky_draws.end_date < {$this->quote($now)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END AS campaign_status"));
+                                    ->select('lucky_draws.*', 'campaign_status.order', DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$prefix}lucky_draws.end_date < {$this->quote($now)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END AS campaign_status"));
 
             if ($details_view === 'yes') {
-                $luckydraws->select('lucky_draws.*', 'campaign_status.order', DB::raw("CASE WHEN {$prefix}lucky_draws.end_date < {$this->quote($now)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END  AS campaign_status"), 'merchants.name',
+                $luckydraws->select('lucky_draws.*', 'campaign_status.order', DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$prefix}lucky_draws.end_date < {$this->quote($now)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END  AS campaign_status"), 'merchants.name',
                                     DB::raw("count({$prefix}lucky_draw_numbers.lucky_draw_number_id) as total_issued_lucky_draw_number"))
                                     ->joinLuckyDrawNumbers()
                                     ->joinMerchant()
@@ -1078,7 +1078,7 @@ class LuckyDrawAPIController extends ControllerAPI
 
             // Filter news by status
             OrbitInput::get('campaign_status', function ($statuses) use ($luckydraws, $prefix, $now) {
-                $luckydraws->whereIn(DB::raw("CASE WHEN {$prefix}lucky_draws.end_date < {$this->quote($now)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END"), $statuses);
+                $luckydraws->whereIn(DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$prefix}lucky_draws.end_date < {$this->quote($now)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END"), $statuses);
             });
 
             // Filter by start date

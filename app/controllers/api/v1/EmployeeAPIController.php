@@ -2231,10 +2231,10 @@ class EmployeeAPIController extends ControllerAPI
                 $users->whereIn('users.user_role_id', $roleId);
             });
 
-            $portal = null;
-            $searchable_roles = null;
+            $portal = 'mall';
             $searchable_roles_mall = ['mall admin', 'mall customer service'];
             $searchable_roles_pmp = ['campaign owner', 'campaign employee'];
+            $searchable_roles = $searchable_roles_mall;
 
             if (in_array(strtolower($role->role_name), $searchable_roles_mall)) { // determine the where the user came from
                 $portal = 'mall';
@@ -2242,9 +2242,15 @@ class EmployeeAPIController extends ControllerAPI
             } elseif (in_array(strtolower($role->role_name), $searchable_roles_pmp)) {
                 $portal = 'pmp';
                 $searchable_roles = $searchable_roles_pmp;
-            } else {
-                $portal = 'mall';
+            }
+
+            $list_request = OrbitInput::get('list_request');
+            if ($list_request === 'mall') {
                 $searchable_roles = $searchable_roles_mall;
+            } elseif ($list_request === 'pmp') {
+                $searchable_roles = $searchable_roles_pmp;
+            } else {
+                $searchable_roles = $searchable_roles;
             }
 
             // Filter user by their role name

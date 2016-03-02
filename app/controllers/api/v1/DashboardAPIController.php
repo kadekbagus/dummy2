@@ -910,7 +910,6 @@ class DashboardAPIController extends ControllerAPI
                 ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
                 ->where('end_date', '>', $now_date)
                 ->where('mall_id', $current_mall)
-                ->where('status', '=', 'active')
                 ->orderBy('expire_days','asc');
 
             $coupons = DB::table('promotions')
@@ -920,7 +919,6 @@ class DashboardAPIController extends ControllerAPI
                 ->where('is_coupon', '=', 'Y')
                 ->where('end_date', '>', $now_date)
                 ->where('merchant_id', $current_mall)
-                ->where('status', '=', 'active')
                 ->orderBy('expire_days','asc');
 
             $expiringCampaign = $newsAndPromotions->unionAll($coupons)
