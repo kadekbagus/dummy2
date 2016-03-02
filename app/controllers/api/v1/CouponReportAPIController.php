@@ -206,9 +206,9 @@ class CouponReportAPIController extends ControllerAPI
                                         'promotion_rules.rule_type',
                                         DB::raw("IFNULL(issued.total_issued, 0) AS total_issued"),
                                         DB::raw("IFNULL(redeemed.total_redeemed, 0) AS total_redeemed"),
-                                        DB::raw("IF(maximum_issued_coupon = 0, 'unlimited', maximum_issued_coupon) as maximum_issued_coupon"),
+                                        DB::raw("IF(maximum_issued_coupon = 0, 'Unlimited', maximum_issued_coupon) as maximum_issued_coupon"),
                                         DB::raw("CASE WHEN {$prefix}promotions.maximum_issued_coupon = 0 THEN
-                                                    'unlimited'
+                                                    'Unlimited'
                                                 ELSE
                                                     IFNULL({$prefix}promotions.maximum_issued_coupon - total_issued, {$prefix}promotions.maximum_issued_coupon)
                                                 END as available"),
@@ -414,7 +414,6 @@ class CouponReportAPIController extends ControllerAPI
                     $take = $maxRecord;
                 }
             });
-            $coupons->take($take);
 
             // skip, and order by
             $skip = 0;
@@ -426,7 +425,14 @@ class CouponReportAPIController extends ControllerAPI
 
                 $skip = $_skip;
             });
-            $coupons->skip($skip);
+
+            // If request page from export (print/csv), showing without page limitation
+            $export = OrbitInput::get('export');
+
+            if (!isset($export)) {
+                $coupons->take($take);
+                $coupons->skip($skip);
+            }
 
             // Default sort by
             $sortBy = 'promotions.promotion_name';
@@ -1632,7 +1638,7 @@ class CouponReportAPIController extends ControllerAPI
                 } else {
                     $coupons->orWhere(DB::raw($sql), $age);
                 }
-                
+
             });
 
             // Filter by redemption place
@@ -1653,7 +1659,7 @@ class CouponReportAPIController extends ControllerAPI
                 } else {
                     $coupons->orWhereIn(DB::raw("CASE WHEN {$prefix}user_details.gender = 'f' THEN 'female' WHEN 'm' THEN 'male' ELSE 'unknown' END"), $gender);
                 }
-                
+
             });
 
 
