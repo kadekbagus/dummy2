@@ -414,6 +414,7 @@ class CouponReportAPIController extends ControllerAPI
                     $take = $maxRecord;
                 }
             });
+            $coupons->take($take);
 
             // skip, and order by
             $skip = 0;
@@ -1616,49 +1617,46 @@ class CouponReportAPIController extends ControllerAPI
                 $coupons->where('total_redeemed', $data);
             });
 
-            // Filter by issued age
-            OrbitInput::get('issued_age', function($age) use ($coupons, $prefix) {
-                $coupons->where(DB::raw("CASE WHEN ({$prefix}user_details.birthdate IS NOT NULL AND {$prefix}user_details.birthdate != '')
-                                                    THEN DATE_FORMAT(NOW(), '%Y') - DATE_FORMAT({$prefix}user_details.birthdate, '%Y') - (DATE_FORMAT(NOW(), '00-%m-%d') < DATE_FORMAT({$prefix}user_details.birthdate, '00-%m-%d'))
-                                                    ELSE 'unknown'
-                                                END"), $age);
-            });
+            // Filter by age
+            $issuedAge = OrbitInput::get('issued_age');
+            $redeemedAge = OrbitInput::get('redeemed_age');
+            $sql = "CASE WHEN ({$prefix}user_details.birthdate IS NOT NULL AND {$prefix}user_details.birthdate != '')
+                        THEN DATE_FORMAT(NOW(), '%Y') - DATE_FORMAT({$prefix}user_details.birthdate, '%Y') - (DATE_FORMAT(NOW(), '00-%m-%d') < DATE_FORMAT({$prefix}user_details.birthdate, '00-%m-%d'))
+                        ELSE 'unknown'
+                    END";
 
-            // Filter by redeem age
-            OrbitInput::get('redeemed_age', function($age) use ($coupons, $prefix) {
-                $issuedAge = OrbitInput::get('issued_age');
-                $sql = "CASE WHEN ({$prefix}user_details.birthdate IS NOT NULL AND {$prefix}user_details.birthdate != '')
-                                                    THEN DATE_FORMAT(NOW(), '%Y') - DATE_FORMAT({$prefix}user_details.birthdate, '%Y') - (DATE_FORMAT(NOW(), '00-%m-%d') < DATE_FORMAT({$prefix}user_details.birthdate, '00-%m-%d'))
-                                                    ELSE 'unknown'
-                                                END";
-                if (empty($issuedAge)) {
-                    $coupons->where(DB::raw($sql), $age);
+            if ( $issuedAge != '' && $redeemedAge != '' ) {
+                $coupons->whereIn(DB::raw($sql), array($issuedAge, $redeemedAge));
+            } elseif ( $issuedAge != '' || $redeemedAge != '' ) {
+                if ($issuedAge != '') {
+                    $age = $issuedAge;
                 } else {
-                    $coupons->orWhere(DB::raw($sql), $age);
+                    $age = $redeemedAge;
                 }
-
-            });
+                $coupons->where(DB::raw($sql), $age);
+            }
 
             // Filter by redemption place
             OrbitInput::get('redemption_place', function($place) use ($coupons, $prefix) {
                 $coupons->whereRaw("CASE WHEN {$prefix}issued_coupons.redeem_user_id IS NOT NULL THEN CONCAT({$prefix}users.user_firstname, ' ', {$prefix}users.user_lastname) ELSE {$prefix}merchants.name END like '%{$place}%' ");
             });
 
-            // Filter by issued gender
-            OrbitInput::get('issued_gender', function($gender) use ($coupons, $prefix) {
+            // Filter by gender
+            $issuedGender = OrbitInput::get('issued_gender');
+            $redeemedGender = OrbitInput::get('redeemed_gender');
+
+            if ((! empty($issuedGender)) && (! empty($redeemedGender))) {
+                $genderArray = array_merge($issuedGender, $redeemedGender);
+                $gender = array_unique($genderArray);
                 $coupons->whereIn(DB::raw("CASE WHEN {$prefix}user_details.gender = 'f' THEN 'female' WHEN 'm' THEN 'male' ELSE 'unknown' END"), $gender);
-            });
-
-            // Filter by redeemed gender
-            OrbitInput::get('redeemed_gender', function($gender) use ($coupons, $prefix) {
-                $issuedGender = OrbitInput::get('issued_gender');
-                if (empty($issuedGender)) {
-                    $coupons->whereIn(DB::raw("CASE WHEN {$prefix}user_details.gender = 'f' THEN 'female' WHEN 'm' THEN 'male' ELSE 'unknown' END"), $gender);
+            } elseif ((! empty($issuedGender)) || (! empty($redeemedGender))) {
+                if (! empty($issuedGender)) {
+                    $gender = $issuedGender;
                 } else {
-                    $coupons->orWhereIn(DB::raw("CASE WHEN {$prefix}user_details.gender = 'f' THEN 'female' WHEN 'm' THEN 'male' ELSE 'unknown' END"), $gender);
+                    $gender = $redeemedGender;
                 }
-
-            });
+                $coupons->where(DB::raw("CASE WHEN {$prefix}user_details.gender = 'f' THEN 'female' WHEN 'm' THEN 'male' ELSE 'unknown' END"), $gender);
+            }
 
 
             // Clone the query builder which still does not include the take,

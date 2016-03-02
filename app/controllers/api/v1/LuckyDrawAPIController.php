@@ -472,8 +472,6 @@ class LuckyDrawAPIController extends ControllerAPI
             }
             Event::fire('orbit.luckydraw.postupdateluckydraw.after.validation', array($this, $validator));
 
-            list($data['campaign_status_id'], $data['status']) = $this->handleStatus();
-
             $updatedluckydraw = LuckyDraw::excludeDeleted()->where('lucky_draw_id', $lucky_draw_id)->first();
 
             $updatedluckydraw_default_language = LuckyDrawTranslation::excludeDeleted()->where('lucky_draw_id', $lucky_draw_id)->where('merchant_language_id', $id_language_default)->first();
@@ -543,9 +541,7 @@ class LuckyDrawAPIController extends ControllerAPI
                 $updatedluckydraw->external_lucky_draw_id = $data;
             });
 
-            OrbitInput::post('status', function($status) use ($updatedluckydraw) {
-                $updatedluckydraw->status = $status;
-            });
+            list($updatedluckydraw->campaign_status_id, $updatedluckydraw->status) = $this->handleStatus();
 
             $updatedluckydraw->modified_by = $this->api->user->user_id;
 
