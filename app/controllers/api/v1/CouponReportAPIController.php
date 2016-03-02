@@ -494,7 +494,7 @@ class CouponReportAPIController extends ControllerAPI
             $data->total_issued = $totalIssued;
             $data->records = $listOfCoupons;
 
-            if ($totalRecord === 0) {
+            if ($totalRecord == 0) {
                 $data->records = null;
                 $this->response->message = Lang::get('statuses.orbit.nodata.coupon');
             }
