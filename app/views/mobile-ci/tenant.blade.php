@@ -268,6 +268,9 @@
         <ul class="where-list">
             <li><i class="fa fa-map-marker fa-lg" style="padding-left: 11px;"></i>  {{{ !empty($tenant->floor) ? $tenant->floor : '' }}}{{{ !empty($tenant->unit) ? ' - ' . $tenant->unit : '' }}}</li>
             <li><i class="fa fa-globe fa-lg"></i>  {{{ (($tenant->url) != '') ? 'http://'.$tenant->url : '-' }}}</li>
+            @if(! empty($tenant->facebook_like_url))
+            <li><i class="fa fa-facebook-square fa-lg"></i>  {{{ str_replace('//', '', $tenant->facebook_like_url) }}}</li>
+            @endif
             <li><i class="fa fa-phone-square fa-lg"></i>  @if($tenant->phone != '') <a href="tel:{{{ $tenant->phone }}}"> {{{ $tenant->phone }}}</a> @else - @endif</li>
         </ul>
         @if(! empty($tenant->facebook_like_url))

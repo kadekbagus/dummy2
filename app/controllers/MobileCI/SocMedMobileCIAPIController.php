@@ -77,6 +77,35 @@ class SocMedMobileCIAPIController extends BaseCIController
 	}
 
 	/**
+     * GET - FB Tenant Share dummy page
+     *
+     * @param string    `id`          (required)
+     *
+     * @return Illuminate\View\View
+     *
+     * @author Ahmad Anshori <ahmad@dominopos.com>
+     */
+	public function getHomeView()
+	{
+		$id = OrbitInput::get('id');
+		$mall = $this->getRetailerInfo('mediaLogoOrig');
+
+		$data = new stdclass();
+		$data->url = URL::route('share-home');
+		$data->title = $mall->name;
+		$data->description = $mall->description;
+		$data->mall = $mall;
+
+		if (! empty($mall->mediaLogoOrig)) {
+			$data->image_url = $mall->mediaLogoOrig[0]->path;
+		} else {
+			$data->image_url = NULL;
+		}
+
+		return View::make('mobile-ci.templates.fb-sharer', compact('data'));
+	}
+
+	/**
      * GET - FB Promotion Share dummy page
      *
      * @param string    `id`          (required)

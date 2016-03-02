@@ -8,6 +8,21 @@
 </style>
 @stop
 
+@section('fb_scripts')
+@if(! empty($facebookInfo))
+@if(! empty($facebookInfo['version']) && ! empty($facebookInfo['app_id']))
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version={{$facebookInfo['version']}}&appId={{$facebookInfo['app_id']}}";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+@endif
+@endif
+@stop
+
 @section('content')
     @yield('widget-template')
 @stop
@@ -47,6 +62,17 @@
         </div>
     </div>
 </div>
+@stop
+
+@section('mall-fb-footer')
+    <div class="text-center" style="padding-bottom: 20px;">
+        @if(! empty($retailer->facebook_like_url))
+        <div class="fb-like" data-href="{{{$retailer->facebook_like_url}}}" data-layout="button_count" data-action="like" data-show-faces="false" data-share="false"></div>
+        @endif
+        @if(! empty($retailer->facebook_share_url))
+        <div class="fb-share-button" data-href="{{$retailer->facebook_share_url}}" data-layout="button_count"></div>
+        @endif
+    </div>
 @stop
 
 @section('ext_script_bot')

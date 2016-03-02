@@ -57,6 +57,16 @@ Route::group(
             	);
             }
         );
+
+        Route::get('/sharer/facebook/home',
+			array(
+				'as' => 'share-home',
+			 	function()
+				{
+				    return MobileCI\SocMedMobileCIAPIController::create()->getHomeView();
+				}
+			)
+		);
 	}
 );
 

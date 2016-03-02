@@ -63,11 +63,11 @@ return array(
 
     'greetings'         => array(
         'welcome'                       => 'Selamat Datang',
-        'latest_news_coming_soon'       => 'Periksa berita terbaru kami akan segera hadir.',
-        'new_promotions_coming_soon'    => 'Periksa promosi baru kami akan segera hadir.',
-        'how_to_get_coupons'            => 'Silahkan periksa dengan layanan pelanggan bagaimana untuk mendapatkan kupon.',
+        'latest_news_coming_soon'       => 'Periksa berita terbaru kami yang akan datang.',
+        'new_promotions_coming_soon'    => 'Periksa promosi baru kami yang akan datang.',
+        'how_to_get_coupons'            => 'Silahkan hubungi customer service untuk mengetahui cara mendapatkan kupon.',
         'find_our_exciting'             => 'Temukan penawaran menarik dan berita terbaru dari kami disini. Jangan lupa tukarkan struk belanja anda dan dapatkan kesempatan untuk memenangkan sebuah mobil !',
-        'latest_luckydraw_coming_soon'  => 'Periksa Undian berhadiah kami akan segera hadir.',
+        'latest_luckydraw_coming_soon'  => 'Periksa undian berhadiah kami yang akan datang.',
     ),
 
     // modal specific lang
@@ -118,7 +118,7 @@ return array(
         'membership_notfound'    => 'Data Keanggotaan Tidak Ditemukan',
         'membership_want_member' => 'Ingin menjadi anggota?',
         'membership_great_deal'  => 'Untuk mendapatkan berbagai penawaran menarik dari kami',
-        'membership_contact_our' => 'Silakan hubungi petugas layanan pelanggan mall untuk mendapatkan nomor keanggotaan',
+        'membership_contact_our' => 'Silakan hubungi customer service untuk mendapatkan nomor keanggotaan',
 
         'enjoy_free'             => 'NIKMATI GRATIS',
         'unlimited'              => 'TANPA BATAS',
@@ -177,7 +177,7 @@ return array(
     'signup' => array(
         'first_name' => 'Nama Depan',
         'last_name' => 'Nama Belakang',
-        'gender' => 'Pilih Jenis Kelamin',
+        'gender' => 'Jenis Kelamin',
         'male' => 'Laki Laki',
         'female' => 'Perempuan',
         'day' => 'Hari',
@@ -417,7 +417,7 @@ return array(
         'draw_date'                 => 'Tanggal Pengundian',
         'my_lucky_draw_number'      => 'Nomor Undian Berhadiah Saya',
         'no_lucky_draw_number_1'    => 'Dapatkan nomor undian berhadiah anda sekarang!',
-        'no_lucky_draw_number_2'    => 'Hubungi pelayanan pelanggan untuk mengetahui cara berpartisipasi',
+        'no_lucky_draw_number_2'    => 'Hubungi customer service untuk mengetahui cara berlangganan',
         'see_prizes'                => 'Lihat Hadiah',
         'see_prizes_and_winner'     => 'Lihat Hadiah &amp; Pemenang',
         'prizes'                    => 'Hadiah',
@@ -440,7 +440,7 @@ return array(
         'view_coupons_btn'          => 'Lihat kupon anda',
         'congratulation'            => 'Selamat!',
         'you_won'                   => 'Anda mendapatkan hadiah dari ',
-        'to_redeem'                 => '. Untuk penukaran hadiah, silahkan tunjukan nomor undian berhadiah anda yang terdapat di <b>Halaman Beranda -> Undian Berhadiah</b> ke pelayanan pelanggan mall.',
+        'to_redeem'                 => '. Untuk penukaran hadiah, silahkan tunjukan nomor undian berhadiah anda yang terdapat di <b>Halaman Beranda -> Undian Berhadiah</b> ke customer service mall.',
     ),
 
     'tour' => array(
@@ -504,7 +504,7 @@ return array(
     ),
 
     'campaign_cards' => array(
-        'go_to_page' => 'Ke halaman',
+        'go_to_page' => 'Buka halaman',
     ),
 );
 
