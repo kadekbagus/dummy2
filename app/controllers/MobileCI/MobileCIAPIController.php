@@ -597,7 +597,9 @@ class MobileCIAPIController extends BaseCIController
             if (count($retailer->merchantSocialMedia) > 0) {
                 foreach ($retailer->merchantSocialMedia as $merchantSocialMedia) {
                     if ($merchantSocialMedia->socialMedia->social_media_code === 'facebook') {
-                        $retailer->facebook_like_url = '//' . $merchantSocialMedia->socialMedia->social_media_main_url . '/' . $merchantSocialMedia->social_media_uri;
+                        if (! empty($merchantSocialMedia->social_media_uri)) {
+                            $retailer->facebook_like_url = '//' . $merchantSocialMedia->socialMedia->social_media_main_url . '/' . $merchantSocialMedia->social_media_uri;
+                        }
                     }
                 }
             }
@@ -2319,7 +2321,9 @@ class MobileCIAPIController extends BaseCIController
                 if (count($tenant->merchantSocialMedia) > 0) {
                     foreach ($tenant->merchantSocialMedia as $merchantSocialMedia) {
                         if ($merchantSocialMedia->socialMedia->social_media_code === 'facebook') {
-                            $tenant->facebook_like_url = '//' . $merchantSocialMedia->socialMedia->social_media_main_url . '/' . $merchantSocialMedia->social_media_uri;
+                            if (! empty($merchantSocialMedia->social_media_uri)) {
+                                $tenant->facebook_like_url = '//' . $merchantSocialMedia->socialMedia->social_media_main_url . '/' . $merchantSocialMedia->social_media_uri;
+                            }
                         }
                     }
                 }
@@ -2702,7 +2706,9 @@ class MobileCIAPIController extends BaseCIController
             if (count($tenant->merchantSocialMedia) > 0) {
                 foreach ($tenant->merchantSocialMedia as $merchantSocialMedia) {
                     if ($merchantSocialMedia->socialMedia->social_media_code === 'facebook') {
-                        $tenant->facebook_like_url = '//' . $merchantSocialMedia->socialMedia->social_media_main_url . '/' . $merchantSocialMedia->social_media_uri;
+                        if (! empty($merchantSocialMedia->social_media_uri)) {
+                            $tenant->facebook_like_url = '//' . $merchantSocialMedia->socialMedia->social_media_main_url . '/' . $merchantSocialMedia->social_media_uri;
+                        }
                     }
                 }
             }
@@ -3237,7 +3243,9 @@ class MobileCIAPIController extends BaseCIController
                 if (count($tenant->merchantSocialMedia) > 0) {
                     foreach ($tenant->merchantSocialMedia as $merchantSocialMedia) {
                         if ($merchantSocialMedia->socialMedia->social_media_code === 'facebook') {
-                            $tenant->facebook_like_url = '//' . $merchantSocialMedia->socialMedia->social_media_main_url . '/' . $merchantSocialMedia->social_media_uri;
+                            if (! empty($merchantSocialMedia->social_media_uri)) {
+                                $tenant->facebook_like_url = '//' . $merchantSocialMedia->socialMedia->social_media_main_url . '/' . $merchantSocialMedia->social_media_uri;
+                            }
                         }
                     }
                 }
@@ -8121,7 +8129,7 @@ class MobileCIAPIController extends BaseCIController
                 break;
         }
         Config::set('orbit.session.availability.query_string', $oldRouteSessionConfigValue);
-        
+
         return $url;
     }
 }
