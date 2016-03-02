@@ -188,6 +188,7 @@ return array(
             <a target="_blank" href="%s">を確認します</a>',
         'already_have_an_account' => 'すでにアカウントをお持ちですか',
         'fields_are_mandatory' => 'すべてのフィールドが必須です',
+        'date_of_birth' => '生年月日',
     ),
 
     'catalogue' => array(
