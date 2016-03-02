@@ -2795,7 +2795,7 @@ return array(
         'View Coupon Redemption Places'                => 'View Coupon Redemption Places',
         'Coupon Issuance'                              => 'Coupon Issuance',
         'Read coupon issuance notification'            => 'Read coupon issuance notification',
-        'Coupon redeemed'                              => 'Coupon redeemed',
+        'Coupon Redemption Successful'                 => 'Coupon Redemption Successful',
         'Widget click lucky draw'                      => 'Widget click lucky draw',
         'View lucky draw list'                         => 'View lucky draw list',
         'View lucky draw detail'                       => 'View lucky draw detail',
