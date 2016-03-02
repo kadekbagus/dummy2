@@ -188,6 +188,7 @@ return array(
                         <a target="_blank" href="%s">Syarat dan ketentuan</a>',
         'already_have_an_account' => 'Sudah punya akun',
         'fields_are_mandatory' => 'Semua kolom wajib diisi',
+        'date_of_birth' => 'Tanggal Lahir',
     ),
 
     'catalogue'         => array(
