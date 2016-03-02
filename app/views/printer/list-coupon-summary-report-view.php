@@ -61,11 +61,11 @@
             <option value="9">9</option>
             <option value="10">10</option>
             <option value="11">11</option>
-            <option value="12">12</option>
+            <option value="12" selected="selected">12</option>
             <option value="13">13</option>
             <option value="14">14</option>
             <option value="15">15</option>
-            <option value="16" selected="selected">16</option>
+            <option value="16">16</option>
             <option value="17">17</option>
             <option value="18">18</option>
             <option value="19">19</option>
@@ -133,8 +133,19 @@
         if ( is_array($rule_type) && count($rule_type) > 0) {
             $rule_type_string = '';
             foreach ($rule_type as $key => $val_rule_type){
-                $val_rule_type = str_replace('_', ' ', $val_rule_type);
-                $rule_type_string .= $val_rule_type . ', ';
+
+                $rule_type = $val_rule_type;
+                if ($rule_type === 'auto_issue_on_first_signin') {
+                    $rule_type = 'Coupon blast upon first sign in';
+                } elseif ($rule_type === 'auto_issue_on_signup') {
+                    $rule_type = 'Coupon blast upon sign up';
+                } elseif ($rule_type === 'auto_issue_on_every_signin') {
+                    $rule_type = 'Coupon blast upon every sign in';
+                } elseif ($rule_type === 'manual') {
+                    $rule_type = 'Manual issued';
+                }
+
+                $rule_type_string .= $rule_type . ', ';
             }
         ?>
             <tr>
@@ -196,7 +207,22 @@
                 <td><?php echo date('d M Y', strtotime($row->coupon_validity_in_date)); ?></td>
                 <td><?php echo $row->total_tenant; ?></td>
                 <td><?php echo $row->mall_name; ?></td>
-                <td><?php echo str_replace('_', ' ', $row->rule_type); ?></td>
+                <td>
+                    <?php
+                        $rule_type = $row->rule_type;
+                        if ($rule_type === 'auto_issue_on_first_signin') {
+                            $rule_type = 'Coupon blast upon first sign in';
+                        } elseif ($rule_type === 'auto_issue_on_signup') {
+                            $rule_type = 'Coupon blast upon sign up';
+                        } elseif ($rule_type === 'auto_issue_on_every_signin') {
+                            $rule_type = 'Coupon blast upon every sign in';
+                        } elseif ($rule_type === 'manual') {
+                            $rule_type = 'Manual issued';
+                        }
+
+                        echo $rule_type;
+                    ?>
+                </td>
                 <td><?php echo $row->total_issued . ' / ' . $row->available; ?></td>
                 <td><?php echo $row->total_redeemed . ' / ' .$row->total_issued; ?></td>
                 <td><?php echo $row->campaign_status; ?></td>

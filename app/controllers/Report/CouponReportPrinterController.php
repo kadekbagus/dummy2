@@ -118,8 +118,19 @@ class CouponReportPrinterController extends DataPrinterController
                 if ( is_array($rule_type) && count($rule_type) > 0) {
                     $rule_type_string = '';
                     foreach ($rule_type as $key => $val_rule_type){
-                        $val_rule_type = str_replace('_', ' ', $val_rule_type);
-                        $rule_type_string .= $val_rule_type . ', ';
+
+                        $rule_type = $val_rule_type;
+                        if ($rule_type === 'auto_issue_on_first_signin') {
+                            $rule_type = 'Coupon blast upon first sign in';
+                        } elseif ($rule_type === 'auto_issue_on_signup') {
+                            $rule_type = 'Coupon blast upon sign up';
+                        } elseif ($rule_type === 'auto_issue_on_every_signin') {
+                            $rule_type = 'Coupon blast upon every sign in';
+                        } elseif ($rule_type === 'manual') {
+                            $rule_type = 'Manual issued';
+                        }
+
+                        $rule_type_string .= $rule_type . ', ';
                     }
                     printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Coupon Rule', htmlentities(rtrim($rule_type_string, ', ')), '', '', '', '','','','');
                 }
@@ -148,6 +159,18 @@ class CouponReportPrinterController extends DataPrinterController
 
                 $count = 1;
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
+
+                    $rule_type = $row->rule_type;
+                    if ($rule_type === 'auto_issue_on_first_signin') {
+                        $rule_type = 'Coupon blast upon first sign in';
+                    } elseif ($rule_type === 'auto_issue_on_signup') {
+                        $rule_type = 'Coupon blast upon sign up';
+                    } elseif ($rule_type === 'auto_issue_on_every_signin') {
+                        $rule_type = 'Coupon blast upon every sign in';
+                    } elseif ($rule_type === 'manual') {
+                        $rule_type = 'Manual issued';
+                    }
+
                     printf("\"%s\",\"%s\",\"%s - %s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s / %s\",\"%s / %s\",\"%s\"\n",
                             $count,
                             $row->promotion_name,
@@ -156,7 +179,7 @@ class CouponReportPrinterController extends DataPrinterController
                             date('d M Y', strtotime($row->coupon_validity_in_date)),
                             $row->total_tenant,
                             $row->mall_name,
-                            str_replace('_', ' ', $row->rule_type),
+                            $rule_type,
                             $row->total_issued,
                             $row->available,
                             $row->total_redeemed,
