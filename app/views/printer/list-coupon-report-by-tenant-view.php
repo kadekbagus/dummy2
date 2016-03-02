@@ -166,12 +166,10 @@
         <thead>
             <th style="text-align:left;">No</th>
             <th style="text-align:left;">Coupon Code</th>
+            <th style="text-align:left;">Customer Age</th>
+            <th style="text-align:left;">Customer Gender</th>
             <th style="text-align:left;">Issued Date</th>
-            <th style="text-align:left;">Issued Age</th>
-            <th style="text-align:left;">Issued Gender</th>
             <th style="text-align:left;">Redeemed Date</th>
-            <th style="text-align:left;">Redeemed Age</th>
-            <th style="text-align:left;">Redeemed Gender</th>
             <th style="text-align:left;">Redemtion Place</th>
             <th style="text-align:left;">Status</th>
         </thead>
@@ -180,12 +178,10 @@
             <tr class="{{ $rowCounter % 2 === 0 ? 'zebra' : '' }}">
                 <td><?php echo (++$rowCounter); ?></td>
                 <td><?php echo htmlentities(($row->issued_coupon_code)); ?></td>
+                <td><?php echo htmlentities(($row->age)); ?></td>
+                <td><?php echo htmlentities(($row->gender)); ?></td>
                 <td><?php echo htmlentities(($row->issued_date)); ?></td>
-                <td><?php echo htmlentities(($row->age)); ?></td>
-                <td><?php echo htmlentities(($row->gender)); ?></td>
                 <td><?php echo htmlentities(($row->redeemed_date)); ?></td>
-                <td><?php echo htmlentities(($row->age)); ?></td>
-                <td><?php echo htmlentities(($row->gender)); ?></td>
                 <td><?php echo htmlentities(($row->redemtion_place)); ?></td>
                 <td><?php echo htmlentities(($row->status)); ?></td>
             </tr>
