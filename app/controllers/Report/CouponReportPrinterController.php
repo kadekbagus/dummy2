@@ -256,9 +256,22 @@ class CouponReportPrinterController extends DataPrinterController
         $prefix = DB::getTablePrefix();
 
         $tenantName = OrbitInput::get('tenant_name', 'Tenant');
+        $couponName = OrbitInput::get('coupon_name', 'Coupon');
         $mode = OrbitInput::get('export', 'print');
         $current_mall = OrbitInput::get('current_mall');
         $redeemed_by = OrbitInput::get('redeemed_by');
+
+        //Filter
+        $couponCode = OrbitInput::get('issued_coupon_code');
+        $issuedAge = OrbitInput::get('issued_age');
+        $redeemedAge = OrbitInput::get('redeemed_age');
+        $redemtionPlace = OrbitInput::get('redemption_place');
+        $issuedGender = OrbitInput::get('issued_gender');
+        $redeemedGender = OrbitInput::get('redeemed_gender');
+        $issuedDateGte = OrbitInput::get('issued_date_gte');
+        $issuedDateLte = OrbitInput::get('issued_date_lte');
+        $redeemedDateGte = OrbitInput::get('redeemed_date_gte');
+        $redeemedDateLte = OrbitInput::get('redeemed_date_lte');
 
         $timezoneCurrentMall = $this->getTimezoneMall($current_mall);
 
@@ -275,6 +288,10 @@ class CouponReportPrinterController extends DataPrinterController
 
         $coupons = $response['builder'];
         $totalCoupons = $response['count'];
+        $totalRecord = $response['totalRecord'];
+        $totalAcquiringCustomers = $response['total_acquiring_customers'];
+        $totalActiveDays = $response['total_active_days'];
+        $totalRedemtionPlace = $response['total_redemtion_place'];
 
         $this->prepareUnbufferedQuery();
 
@@ -284,7 +301,7 @@ class CouponReportPrinterController extends DataPrinterController
         $statement = $this->pdo->prepare($sql);
         $statement->execute($binds);
 
-        $pageTitle = 'Redeemed Coupon Report for ' . $tenantName;
+        $pageTitle = 'Coupon Detail Report for ' . $couponName;
 
         switch ($mode) {
             case 'csv':
@@ -293,25 +310,73 @@ class CouponReportPrinterController extends DataPrinterController
                 @header('Content-Disposition: attachment; filename=' . OrbitText::exportFilename($pageTitle, '.csv', $timezoneCurrentMall));
 
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Redeemed Coupon Report for ' . $tenantName, '', '', '', '', '');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Coupon Detail Report for ' . $couponName, '', '', '', '', '');
 
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Redeemed Coupons', $totalCoupons, '', '', '', '','','','');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Coupons', $totalCoupons, '', '', '', '','','','');
+
+                // Filtering
+                if ($couponCode != '') {
+                    printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Coupon Code', htmlentities($couponCode), '', '', '', '','','','');
+                }
+
+                if ($issuedAge != '') {
+                    printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Issued Age', htmlentities($issuedAge), '', '', '', '','','','');
+                }
+
+                if ($redeemedAge != '') {
+                    printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Redeemed Age', htmlentities($redeemedAge), '', '', '', '','','','');
+                }
+
+                if ($redemtionPlace != '') {
+                    printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Redemtion Place', htmlentities($redemtionPlace), '', '', '', '','','','');
+                }
+
+                if ($issuedGender != '') {
+                    printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Issued Gender', htmlentities($issuedGender), '', '', '', '','','','');
+                }
+
+                if ($redeemedGender != '') {
+                    printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Redeemed Gender', htmlentities($redeemedGender), '', '', '', '','','','');
+                }
+
+                if ($issuedDateGte != '' && $issuedDateLte != ''){
+                    $startDate = $this->printDateTime($issuedDateGte, $timezone, 'd M Y');
+                    $endDate = $this->printDateTime($issuedDateLte, $timezone, 'd M Y');
+                    $dateRange = $startDate . ' - ' . $endDate;
+                    if ($startDate === $endDate) {
+                        $dateRange = $startDate;
+                    }
+                    printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Issued Date', $dateRange, '', '', '', '','','','');
+                }
+
+                if ($redeemedDateGte != '' && $redeemedDateLte != ''){
+                    $startDate = $this->printDateTime($redeemedDateGte, $timezone, 'd M Y');
+                    $endDate = $this->printDateTime($redeemedDateLte, $timezone, 'd M Y');
+                    $dateRange = $startDate . ' - ' . $endDate;
+                    if ($startDate === $endDate) {
+                        $dateRange = $startDate;
+                    }
+                    printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Redeemed Date', $dateRange, '', '', '', '','','','');
+                }
 
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Coupon Name', 'Redeemed/Issued', 'Customer', 'Coupon Code', 'Redeemed Date & Time', 'Verification Number');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Coupon Code', 'Issued Date', 'Issued Age', 'Issued Gender', 'Redeemed Date', 'Redeemed Age', 'Redeemed Gender', 'Redemtion Place', 'Coupon Status');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
 
                 $count = 1;
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
                     printf("\"%s\",\"%s\",\"=\"\"%s\"\"\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
                             $count,
-                            $row->promotion_name,
-                            '1 / ' . $row->total_issued,
-                            $row->user_email,
                             $row->issued_coupon_code,
-                            $this->printDateTime($row->redeemed_date, $timezoneCurrentMall, 'no'),
-                            $row->redeem_verification_code
+                            $row->issued_date,
+                            $row->age,
+                            $row->gender,
+                            $row->redeemed_date,
+                            $row->age,
+                            $row->gender,
+                            $row->redemtion_place,
+                            $row->status
                     );
                     $count++;
                 }
