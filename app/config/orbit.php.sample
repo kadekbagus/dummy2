@@ -2757,7 +2757,7 @@ return array(
         'facebook' => ['facebookexternalhit/1.1', 'Facebot']
     ),
 
-    // YOU MUST also update /app/config/orbit_activity.php if you update this
+    // The grouping of the following items is located in /app/config/orbit_activity.php
     'activity_columns' => array(
         'Network Check In'                             => 'Network Check In',
         'Network Check Out'                            => 'Network Check Out',

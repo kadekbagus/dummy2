@@ -110,7 +110,7 @@ class News extends Eloquent
         $prefix = DB::getTablePrefix();
 
         return $query->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
-                    ->where(DB::raw("CASE WHEN {$prefix}news.end_date < {$this->quote($mallTime)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END"), $campaign_status);
+                    ->where(DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$prefix}news.end_date < {$this->quote($mallTime)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END"), $campaign_status);
     }
 
     protected function quote($arg)
