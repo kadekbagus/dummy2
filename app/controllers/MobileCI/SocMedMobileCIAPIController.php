@@ -73,6 +73,8 @@ class SocMedMobileCIAPIController extends BaseCIController
 			$data->image_url = NULL;
 		}
 
+		$data->image_dimension = $this->getImageDimension($tenant->mediaLogoOrig[0]->path);
+
 		return View::make('mobile-ci.templates.fb-sharer', compact('data'));
 	}
 
@@ -101,6 +103,8 @@ class SocMedMobileCIAPIController extends BaseCIController
 		} else {
 			$data->image_url = NULL;
 		}
+
+		$data->image_dimension = $this->getImageDimension($mall->mediaLogoOrig[0]->path);
 
 		return View::make('mobile-ci.templates.fb-sharer', compact('data'));
 	}
@@ -168,6 +172,8 @@ class SocMedMobileCIAPIController extends BaseCIController
 			$data->image_url = $promotion->image;
 		}
 
+		$data->image_dimension = $this->getImageDimension($promotion->image);
+
 		return View::make('mobile-ci.templates.fb-sharer', compact('data'));
 	}
 
@@ -234,6 +240,8 @@ class SocMedMobileCIAPIController extends BaseCIController
 			$data->image_url = $promotion->image;
 		}
 
+		$data->image_dimension = $this->getImageDimension($promotion->image);
+
 		return View::make('mobile-ci.templates.fb-sharer', compact('data'));
 	}
 
@@ -298,6 +306,8 @@ class SocMedMobileCIAPIController extends BaseCIController
 		} else {
 			$data->image_url = $coupon->image;
 		}
+
+		$data->image_dimension = $this->getImageDimension($coupon->image);
 
 		return View::make('mobile-ci.templates.fb-sharer', compact('data'));
 	}
@@ -364,6 +374,24 @@ class SocMedMobileCIAPIController extends BaseCIController
 			$data->image_url = $luckydraw->image;
 		}
 
+		$data->image_dimension = $this->getImageDimension($luckydraw->image);
+
 		return View::make('mobile-ci.templates.fb-sharer', compact('data'));
+	}
+
+	private function getImageDimension($url = '') {
+		try {
+			if(empty($url)) {
+				return NULL;
+			}
+
+			list($width, $height) = getimagesize($url);
+				
+			$dimension = [$width, $height];
+
+			return $dimension;
+		} catch (Exception $e) {
+			return NULL;
+		}
 	}
 }
