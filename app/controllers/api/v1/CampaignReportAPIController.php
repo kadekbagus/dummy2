@@ -631,7 +631,7 @@ class CampaignReportAPIController extends ControllerAPI
             // If request page from export (print/csv), showing without page limitation
             $export = OrbitInput::get('export');
 
-            if (!isset($export)){
+            if (!isset($export)) {
                 $campaign->take($take);
                 $campaign->skip($skip);
             }
