@@ -80,7 +80,7 @@
 </div>
 
 <div id="main">
-    <h2 style="margin-bottom:0.5em;">Redeemed Coupon Report for <?php echo ($tenantName); ?></h2>
+    <h2 style="margin-bottom:0.5em;">Coupon Detail Report for <?php echo ($couponName); ?></h2>
     <table style="width:100%; margin-bottom:1em;" class="noborder">
         <tr>
             <td style="width:150px"></td>
@@ -88,31 +88,122 @@
             <td><strong></strong></td>
         </tr>
         <tr>
-            <td>Total Redeemed Coupons</td>
+            <td>Total Coupons</td>
             <td>:</td>
             <td><strong><?php echo number_format($totalCoupons, 0, '.', '.'); ?></strong></td>
         </tr>
+
+        <!-- Filtering -->
+        <?php if ($couponCode != '') { ?>
+            <tr>
+                <td>Filter by Coupon Name</td>
+                <td>:</td>
+                <td><strong><?php echo htmlentities($couponCode); ?></strong></td>
+            </tr>
+        <?php } ?>
+
+        <?php if ($issuedAge != '') { ?>
+            <tr>
+                <td>Filter by Coupon Name</td>
+                <td>:</td>
+                <td><strong><?php echo htmlentities($issuedAge); ?></strong></td>
+            </tr>
+        <?php } ?>
+
+        <?php if ($redeemedAge != '') { ?>
+            <tr>
+                <td>Filter by Coupon Name</td>
+                <td>:</td>
+                <td><strong><?php echo htmlentities($redeemedAge); ?></strong></td>
+            </tr>
+        <?php } ?>
+
+        <?php if ($redemtionPlace != '') { ?>
+            <tr>
+                <td>Filter by Coupon Name</td>
+                <td>:</td>
+                <td><strong><?php echo htmlentities($redemtionPlace); ?></strong></td>
+            </tr>
+        <?php } ?>
+
+        <?php if ($issuedGender != '') { ?>
+            <tr>
+                <td>Filter by Coupon Name</td>
+                <td>:</td>
+                <td><strong><?php echo htmlentities($issuedGender); ?></strong></td>
+            </tr>
+        <?php } ?>
+
+        <?php if ($redeemedGender != '') { ?>
+            <tr>
+                <td>Filter by Coupon Name</td>
+                <td>:</td>
+                <td><strong><?php echo htmlentities($redeemedGender); ?></strong></td>
+            </tr>
+        <?php } ?>
+
+        <?php 
+            if ($issuedDateGte != '' && $issuedDateLte != ''){
+                $startDate = date('d M Y', strtotime($issuedDateGte));
+                $endDate = date('d M Y', strtotime($issuedDateLte));
+                $dateRange = $startDate . ' - ' . $endDate;
+                if ($startDate === $endDate) {
+                    $dateRange = $startDate;
+                }
+        ?>
+                    <tr>
+                        <td>Issued Date</td>
+                        <td>:</td>
+                        <td><strong><?php echo $dateRange; ?></strong></td>
+                    </tr>
+        <?php
+            }
+        ?>
+
+        <?php 
+            if ($redeemedDateGte != '' && $redeemedDateLte != ''){
+                $startDate = date('d M Y', strtotime($redeemedDateGte);
+                $endDate = date('d M Y', strtotime($redeemedDateLte);
+                $dateRange = $startDate . ' - ' . $endDate;
+                if ($startDate === $endDate) {
+                    $dateRange = $startDate;
+                }
+        ?>
+                    <tr>
+                        <td>Redeemed Date</td>
+                        <td>:</td>
+                        <td><strong><?php echo $dateRange; ?></strong></td>
+                    </tr>
+        <?php
+            }
+        ?>
     </table>
     <table style="width:100%">
         <thead>
             <th style="text-align:left;">No</th>
-            <th style="text-align:left;">Coupon Name</th>
-            <th style="text-align:left;">Redeemed/Issued</th>
-            <th style="text-align:left;">Customer</th>
             <th style="text-align:left;">Coupon Code</th>
-            <th style="text-align:left;">Redeemed Date & Time</th>
-            <th style="text-align:left;">Verification Number</th>
+            <th style="text-align:left;">Issued Date</th>
+            <th style="text-align:left;">Issued Age</th>
+            <th style="text-align:left;">Issued Gender</th>
+            <th style="text-align:left;">Redeemed Date</th>
+            <th style="text-align:left;">Redeemed Age</th>
+            <th style="text-align:left;">Redeemed Gender</th>
+            <th style="text-align:left;">Redemtion Place</th>
+            <th style="text-align:left;">Status</th>
         </thead>
         <tbody>
         <?php while ($row = $statement->fetch(PDO::FETCH_OBJ)) : ?>
             <tr class="{{ $rowCounter % 2 === 0 ? 'zebra' : '' }}">
                 <td><?php echo (++$rowCounter); ?></td>
-                <td><?php echo htmlentities(($row->promotion_name)); ?></td>
-                <td><?php printf('%s / %s', '1', $row->total_issued); ?></td>
-                <td><?php echo htmlentities($row->user_email); ?></td>
-                <td><?php echo htmlentities($row->issued_coupon_code); ?></td>
-                <td><?php echo $me->printDateTime($row->redeemed_date, $timezoneCurrentMall, 'd M Y H:i'); ?></td>
-                <td><?php echo htmlentities($row->redeem_verification_code); ?></td>
+                <td><?php echo htmlentities(($row->issued_coupon_code)); ?></td>
+                <td><?php echo htmlentities(($row->issued_date)); ?></td>
+                <td><?php echo htmlentities(($row->age)); ?></td>
+                <td><?php echo htmlentities(($row->gender)); ?></td>
+                <td><?php echo htmlentities(($row->redeemed_date)); ?></td>
+                <td><?php echo htmlentities(($row->age)); ?></td>
+                <td><?php echo htmlentities(($row->gender)); ?></td>
+                <td><?php echo htmlentities(($row->redemtion_place)); ?></td>
+                <td><?php echo htmlentities(($row->status)); ?></td>
             </tr>
         <?php endwhile; ?>
         </tbody>
