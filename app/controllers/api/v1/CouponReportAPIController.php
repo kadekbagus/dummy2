@@ -399,7 +399,7 @@ class CouponReportAPIController extends ControllerAPI
             // Get total redeemed
             $totalRedeemed = isset($total[0]->total_redeemed)?$total[0]->total_redeemed:0;
             // Get total record
-            $totalRecord = isset($total[0]->total_record)?$total[0]->total_record:0;
+            $totalRecord = (int) isset($total[0]->total_record)?$total[0]->total_record:0;
 
 
             // Get the take args
@@ -494,7 +494,7 @@ class CouponReportAPIController extends ControllerAPI
             $data->total_issued = $totalIssued;
             $data->records = $listOfCoupons;
 
-            if ($totalRecord == 0) {
+            if ($totalRecord === 0) {
                 $data->records = null;
                 $this->response->message = Lang::get('statuses.orbit.nodata.coupon');
             }
@@ -1634,7 +1634,7 @@ class CouponReportAPIController extends ControllerAPI
             OrbitInput::get('customer_gender', function($gender) use ($coupons, $prefix) {
                 $coupons->whereIn(DB::raw("CASE WHEN {$prefix}user_details.gender = 'f' THEN 'female' WHEN 'm' THEN 'male' ELSE 'unknown' END"), $gender);
             });
-            
+
             // Clone the query builder which still does not include the take,
             $_coupons = clone $coupons;
 
