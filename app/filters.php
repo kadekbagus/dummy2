@@ -232,7 +232,7 @@ Route::filter('orbit-settings', function()
     }
 
     if(empty(Config::get('shop.start_button_label'))) {
-        Config::set('shop.start_button_label', Lang::get('mobileci.signin.start_button_mall'));
+        Config::set('shop.start_button_label', '');
     }
 });
 

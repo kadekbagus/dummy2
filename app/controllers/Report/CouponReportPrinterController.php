@@ -278,7 +278,6 @@ class CouponReportPrinterController extends DataPrinterController
         $this->preparePDO();
         $prefix = DB::getTablePrefix();
 
-        $tenantName = OrbitInput::get('tenant_name', 'Tenant');
         $couponName = OrbitInput::get('coupon_name', 'Coupon');
         $mode = OrbitInput::get('export', 'print');
         $current_mall = OrbitInput::get('current_mall');
@@ -286,11 +285,9 @@ class CouponReportPrinterController extends DataPrinterController
 
         //Filter
         $couponCode = OrbitInput::get('issued_coupon_code');
-        $issuedAge = OrbitInput::get('issued_age');
-        $redeemedAge = OrbitInput::get('redeemed_age');
+        $customerAge = OrbitInput::get('customer_age');
         $redemtionPlace = OrbitInput::get('redemption_place');
-        $issuedGender = OrbitInput::get('issued_gender');
-        $redeemedGender = OrbitInput::get('redeemed_gender');
+        $customerGender = OrbitInput::get('customer_gender');
         $issuedDateGte = OrbitInput::get('issued_date_gte');
         $issuedDateLte = OrbitInput::get('issued_date_lte');
         $redeemedDateGte = OrbitInput::get('redeemed_date_gte');
@@ -343,29 +340,21 @@ class CouponReportPrinterController extends DataPrinterController
                     printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Coupon Code', htmlentities($couponCode), '', '', '', '','','','');
                 }
 
-                if ($issuedAge != '') {
-                    printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Issued Age', htmlentities($issuedAge), '', '', '', '','','','');
+                if ($customerAge != '') {
+                    printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Customer Age', htmlentities($customerAge), '', '', '', '','','','');
                 }
 
-                if ($redeemedAge != '') {
-                    printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Redeemed Age', htmlentities($redeemedAge), '', '', '', '','','','');
+                if ($customerGender != '') {
+                    printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Customer Gender', htmlentities($customerGender), '', '', '', '','','','');
                 }
 
                 if ($redemtionPlace != '') {
                     printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Redemtion Place', htmlentities($redemtionPlace), '', '', '', '','','','');
                 }
 
-                if ($issuedGender != '') {
-                    printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Issued Gender', htmlentities($issuedGender), '', '', '', '','','','');
-                }
-
-                if ($redeemedGender != '') {
-                    printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Redeemed Gender', htmlentities($redeemedGender), '', '', '', '','','','');
-                }
-
                 if ($issuedDateGte != '' && $issuedDateLte != ''){
-                    $startDate = $this->printDateTime($issuedDateGte, $timezone, 'd M Y');
-                    $endDate = $this->printDateTime($issuedDateLte, $timezone, 'd M Y');
+                    $startDate = date('d M Y', strtotime($issuedDateGte));
+                    $endDate = date('d M Y', strtotime($issuedDateLte));
                     $dateRange = $startDate . ' - ' . $endDate;
                     if ($startDate === $endDate) {
                         $dateRange = $startDate;
@@ -374,8 +363,8 @@ class CouponReportPrinterController extends DataPrinterController
                 }
 
                 if ($redeemedDateGte != '' && $redeemedDateLte != ''){
-                    $startDate = $this->printDateTime($redeemedDateGte, $timezone, 'd M Y');
-                    $endDate = $this->printDateTime($redeemedDateLte, $timezone, 'd M Y');
+                    $startDate = date('d M Y', strtotime($redeemedDateG)Y');
+                    $endDate = date('d M Y', strtotime($redeemedDateL)Y');
                     $dateRange = $startDate . ' - ' . $endDate;
                     if ($startDate === $endDate) {
                         $dateRange = $startDate;
@@ -384,7 +373,7 @@ class CouponReportPrinterController extends DataPrinterController
                 }
 
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Coupon Code', 'Issued Date', 'Issued Age', 'Issued Gender', 'Redeemed Date', 'Redeemed Age', 'Redeemed Gender', 'Redemtion Place', 'Coupon Status');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Coupon Code', 'Customer Age', 'Customer Gender', 'Issued Date', 'Redeemed Date', 'Redemtion Place', 'Coupon Status');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
 
                 $count = 1;
@@ -392,12 +381,10 @@ class CouponReportPrinterController extends DataPrinterController
                     printf("\"%s\",\"%s\",\"=\"\"%s\"\"\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
                             $count,
                             $row->issued_coupon_code,
+                            $row->age,
+                            $row->gender,
                             $row->issued_date,
-                            $row->age,
-                            $row->gender,
                             $row->redeemed_date,
-                            $row->age,
-                            $row->gender,
                             $row->redemtion_place,
                             $row->status
                     );
