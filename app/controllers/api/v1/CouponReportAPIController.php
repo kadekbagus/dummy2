@@ -414,7 +414,6 @@ class CouponReportAPIController extends ControllerAPI
                     $take = $maxRecord;
                 }
             });
-            $coupons->take($take);
 
             // skip, and order by
             $skip = 0;
@@ -426,7 +425,14 @@ class CouponReportAPIController extends ControllerAPI
 
                 $skip = $_skip;
             });
-            $coupons->skip($skip);
+
+            // If request page from export (print/csv), showing without page limitation
+            $export = OrbitInput::get('export');
+
+            if (!isset($export)) {
+                $coupons->take($take);
+                $coupons->skip($skip);
+            }
 
             // Default sort by
             $sortBy = 'promotions.promotion_name';
@@ -1632,7 +1638,7 @@ class CouponReportAPIController extends ControllerAPI
                 } else {
                     $coupons->orWhere(DB::raw($sql), $age);
                 }
-                
+
             });
 
             // Filter by redemption place
@@ -1653,7 +1659,7 @@ class CouponReportAPIController extends ControllerAPI
                 } else {
                     $coupons->orWhereIn(DB::raw("CASE WHEN {$prefix}user_details.gender = 'f' THEN 'female' WHEN 'm' THEN 'male' ELSE 'unknown' END"), $gender);
                 }
-                
+
             });
 
 
