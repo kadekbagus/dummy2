@@ -177,7 +177,7 @@ return array(
     'signup' => array(
         'first_name' => 'First Name',
         'last_name' => 'Last Name',
-        'gender' => 'Select Gender',
+        'gender' => 'Gender',
         'male' => 'Male',
         'female' => 'Female',
         'day' => 'Day',

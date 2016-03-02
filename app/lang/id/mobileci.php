@@ -26,7 +26,7 @@ return array(
         'promotion'         => 'PROMOSI',
         'not_found'         => 'ERROR',
         'recognize_me'      => 'KENALI SAYA',
-        'tenant_directory'  => 'DIREKTORI GERAI',
+        'tenant_directory'  => 'GERAI',
         'promotions_tenants'=> 'PROMOSI GERAI',
         'coupons_tenants'   => 'KUPON GERAI',
         'news_tenants'      => 'INFORMASI GERAI',

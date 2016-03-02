@@ -278,7 +278,6 @@ class CouponReportPrinterController extends DataPrinterController
         $this->preparePDO();
         $prefix = DB::getTablePrefix();
 
-        $tenantName = OrbitInput::get('tenant_name', 'Tenant');
         $couponName = OrbitInput::get('coupon_name', 'Coupon');
         $mode = OrbitInput::get('export', 'print');
         $current_mall = OrbitInput::get('current_mall');
@@ -364,8 +363,8 @@ class CouponReportPrinterController extends DataPrinterController
                 }
 
                 if ($issuedDateGte != '' && $issuedDateLte != ''){
-                    $startDate = $this->printDateTime($issuedDateGte, $timezone, 'd M Y');
-                    $endDate = $this->printDateTime($issuedDateLte, $timezone, 'd M Y');
+                    $startDate = date('d M Y', strtotime($issuedDateGte));
+                    $endDate = date('d M Y', strtotime($issuedDateLte));
                     $dateRange = $startDate . ' - ' . $endDate;
                     if ($startDate === $endDate) {
                         $dateRange = $startDate;
@@ -374,8 +373,8 @@ class CouponReportPrinterController extends DataPrinterController
                 }
 
                 if ($redeemedDateGte != '' && $redeemedDateLte != ''){
-                    $startDate = $this->printDateTime($redeemedDateGte, $timezone, 'd M Y');
-                    $endDate = $this->printDateTime($redeemedDateLte, $timezone, 'd M Y');
+                    $startDate = date('d M Y', strtotime($redeemedDateG)Y');
+                    $endDate = date('d M Y', strtotime($redeemedDateL)Y');
                     $dateRange = $startDate . ' - ' . $endDate;
                     if ($startDate === $endDate) {
                         $dateRange = $startDate;
