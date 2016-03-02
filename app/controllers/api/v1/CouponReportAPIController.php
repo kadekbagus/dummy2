@@ -461,8 +461,6 @@ class CouponReportAPIController extends ControllerAPI
                 $sortBy = $sortByMapping[$_sortBy];
             });
 
-
-
             OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
             {
                 if (strtolower($_sortMode) !== 'asc') {
@@ -496,7 +494,7 @@ class CouponReportAPIController extends ControllerAPI
             $data->total_issued = $totalIssued;
             $data->records = $listOfCoupons;
 
-            if ($totalRecord === 0) {
+            if ($totalRecord == 0) {
                 $data->records = null;
                 $this->response->message = Lang::get('statuses.orbit.nodata.coupon');
             }
@@ -880,8 +878,8 @@ class CouponReportAPIController extends ControllerAPI
             });
 
             // sort by status first
-            if ($sortBy !== 'campaign_status') {
-                $coupons->orderBy('campaign_status', 'asc');
+            if ($sortBy !== 'promotion_name') {
+                $coupons->orderBy('promotion_name', 'asc');
             }
 
             OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
