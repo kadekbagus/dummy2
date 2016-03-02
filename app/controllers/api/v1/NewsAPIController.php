@@ -1527,7 +1527,7 @@ class NewsAPIController extends ControllerAPI
             // Builder object
             $prefix = DB::getTablePrefix();
             $news = News::select('news.*', 'campaign_status.order', 'campaign_price.campaign_price_id', 
-                            DB::raw("CASE WHEN {$prefix}news.end_date < {$this->quote($now)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END  AS campaign_status"), 
+                            DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$prefix}news.end_date < {$this->quote($now)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END  AS campaign_status"), 
                             DB::raw("CASE WHEN {$prefix}campaign_price.base_price is null THEN 0 ELSE {$prefix}campaign_price.base_price END AS base_price, ((CASE WHEN {$prefix}campaign_price.base_price is null THEN 0 ELSE {$prefix}campaign_price.base_price END) * (DATEDIFF({$prefix}news.end_date, {$prefix}news.begin_date) + 1) * (COUNT({$prefix}news_merchant.news_merchant_id))) AS estimated"))
                         ->leftJoin('campaign_price', function ($join) use ($object_type) {
                                 $join->on('news.news_id', '=', 'campaign_price.campaign_id')
@@ -1609,7 +1609,7 @@ class NewsAPIController extends ControllerAPI
 
             // Filter news by status
             OrbitInput::get('campaign_status', function ($statuses) use ($news, $prefix, $now) {
-                $news->whereIn(DB::raw("CASE WHEN {$prefix}news.end_date < {$this->quote($now)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END"), $statuses);
+                $news->whereIn(DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$prefix}news.end_date < {$this->quote($now)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END"), $statuses);
             });
 
             // Filter news by link object type
