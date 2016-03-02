@@ -6,7 +6,9 @@
 		<meta property="og:type"          content="website" />
 		<meta property="og:title"         content="{{$data->title}}" />
 		<meta property="og:description"   content="{{$data->description}}" />
-		<meta property="og:image"         content="{{is_null($data->image_url) ? '' : asset($data->image_url)}}" />
+		@if(! empty($data->image_url))
+		<meta property="og:image"         content="{{asset($data->image_url)}}" />
+		@endif
 		@if(! empty($data->image_dimension))
 		<meta property="og:image:width"   content="{{$data->image_dimension[0]}}" />
 		<meta property="og:image:height"  content="{{$data->image_dimension[1]}}" />

@@ -175,19 +175,21 @@ return array(
     ),
 
     'signup' => array(
-        'first_name' => '名字',
-        'last_name' => '姓',
-        'gender' => '选择性别',
+        'email_placeholder' => '电子邮件地址*',
+        'first_name' => '名字*',
+        'last_name' => '姓*',
+        'gender' => '选择性别*',
         'male' => '男',
         'female' => '女',
-        'day' => '日',
-        'month' => '月',
-        'year' => '年',
+        'day' => '日*',
+        'month' => '月*',
+        'year' => '年*',
         'policy_terms_message' => '通过点击<strong>签署</strong>您证实您接受
                         <a target="_blank" href="%s">隐私权政策</a>和
                         <a target="_blank" href="%s">期限和条件</a>',
         'already_have_an_account' => '已经有一个帐户',
         'fields_are_mandatory' => '所有字段是强制性的',
+        'date_of_birth' => '出生日期',
     ),
 
     'catalogue' => array(

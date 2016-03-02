@@ -588,7 +588,7 @@ class CampaignReportAPIController extends ControllerAPI
             $total = $_campaign->selectRaw(implode(',', $query_sum))->get();
 
             // Get total page views
-            $totalRecords = isset($total[0]->total_records)?$total[0]->total_records:0;
+            $totalRecords = (int) isset($total[0]->total_records)?$total[0]->total_records:0;
 
             // Get total page views
             $totalPageViews = isset($total[0]->page_views)?$total[0]->page_views:0;
@@ -703,7 +703,7 @@ class CampaignReportAPIController extends ControllerAPI
             $data->returned_records = count($listOfCampaign);
             $data->records = $listOfCampaign;
 
-            if ($totalRecords === 0) {
+            if ($totalRecords == 0) {
                 $data->records = NULL;
                 $this->response->message = Lang::get('statuses.orbit.nodata.coupon');
             }

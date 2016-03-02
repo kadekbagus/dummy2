@@ -175,19 +175,21 @@ return array(
     ),
 
     'signup' => array(
-        'first_name' => 'First Name',
-        'last_name' => 'Last Name',
-        'gender' => 'Select Gender',
+        'email_placeholder' => 'Email Address*',
+        'first_name' => 'First Name*',
+        'last_name' => 'Last Name*',
+        'gender' => 'Gender*',
         'male' => 'Male',
         'female' => 'Female',
-        'day' => 'Day',
-        'month' => 'Month',
-        'year' => 'Year',
+        'day' => 'Day*',
+        'month' => 'Month*',
+        'year' => 'Year*',
         'policy_terms_message' => 'By clicking <strong>Sign up</strong> you confirm that you accept
                         <a target="_blank" href="%s">Privacy Policy</a> and
                         <a target="_blank" href="%s">Terms and Conditions</a>',
         'already_have_an_account' => 'Already have an account',
         'fields_are_mandatory' => 'All fields are mandatory',
+        'date_of_birth' => 'Date of Birth',
     ),
 
     'catalogue' => array(

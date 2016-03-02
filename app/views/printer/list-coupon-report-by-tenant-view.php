@@ -61,11 +61,11 @@
             <option value="9">9</option>
             <option value="10">10</option>
             <option value="11">11</option>
-            <option value="12">12</option>
+            <option value="12" selected="selected">12</option>
             <option value="13">13</option>
             <option value="14">14</option>
             <option value="15">15</option>
-            <option value="16" selected="selected">16</option>
+            <option value="16">16</option>
             <option value="17">17</option>
             <option value="18">18</option>
             <option value="19">19</option>
@@ -96,49 +96,33 @@
         <!-- Filtering -->
         <?php if ($couponCode != '') { ?>
             <tr>
-                <td>Filter by Coupon Name</td>
+                <td>Filter by Coupon Code</td>
                 <td>:</td>
                 <td><strong><?php echo htmlentities($couponCode); ?></strong></td>
             </tr>
         <?php } ?>
 
-        <?php if ($issuedAge != '') { ?>
+        <?php if ($customerAge != '') { ?>
             <tr>
-                <td>Filter by Coupon Name</td>
+                <td>Filter by Customer Age</td>
                 <td>:</td>
-                <td><strong><?php echo htmlentities($issuedAge); ?></strong></td>
+                <td><strong><?php echo htmlentities($customerAge); ?></strong></td>
             </tr>
         <?php } ?>
 
-        <?php if ($redeemedAge != '') { ?>
+        <?php if ($customerGender != '') { ?>
             <tr>
-                <td>Filter by Coupon Name</td>
+                <td>Filter by Customer Gender</td>
                 <td>:</td>
-                <td><strong><?php echo htmlentities($redeemedAge); ?></strong></td>
+                <td><strong><?php echo htmlentities($customerGender); ?></strong></td>
             </tr>
         <?php } ?>
 
         <?php if ($redemtionPlace != '') { ?>
             <tr>
-                <td>Filter by Coupon Name</td>
+                <td>Filter by Redemtion Place</td>
                 <td>:</td>
                 <td><strong><?php echo htmlentities($redemtionPlace); ?></strong></td>
-            </tr>
-        <?php } ?>
-
-        <?php if ($issuedGender != '') { ?>
-            <tr>
-                <td>Filter by Coupon Name</td>
-                <td>:</td>
-                <td><strong><?php echo htmlentities($issuedGender); ?></strong></td>
-            </tr>
-        <?php } ?>
-
-        <?php if ($redeemedGender != '') { ?>
-            <tr>
-                <td>Filter by Coupon Name</td>
-                <td>:</td>
-                <td><strong><?php echo htmlentities($redeemedGender); ?></strong></td>
             </tr>
         <?php } ?>
 
@@ -182,12 +166,10 @@
         <thead>
             <th style="text-align:left;">No</th>
             <th style="text-align:left;">Coupon Code</th>
+            <th style="text-align:left;">Customer Age</th>
+            <th style="text-align:left;">Customer Gender</th>
             <th style="text-align:left;">Issued Date</th>
-            <th style="text-align:left;">Issued Age</th>
-            <th style="text-align:left;">Issued Gender</th>
             <th style="text-align:left;">Redeemed Date</th>
-            <th style="text-align:left;">Redeemed Age</th>
-            <th style="text-align:left;">Redeemed Gender</th>
             <th style="text-align:left;">Redemtion Place</th>
             <th style="text-align:left;">Status</th>
         </thead>
@@ -196,12 +178,10 @@
             <tr class="{{ $rowCounter % 2 === 0 ? 'zebra' : '' }}">
                 <td><?php echo (++$rowCounter); ?></td>
                 <td><?php echo htmlentities(($row->issued_coupon_code)); ?></td>
+                <td><?php echo htmlentities(($row->age)); ?></td>
+                <td><?php echo htmlentities(($row->gender)); ?></td>
                 <td><?php echo htmlentities(($row->issued_date)); ?></td>
-                <td><?php echo htmlentities(($row->age)); ?></td>
-                <td><?php echo htmlentities(($row->gender)); ?></td>
                 <td><?php echo htmlentities(($row->redeemed_date)); ?></td>
-                <td><?php echo htmlentities(($row->age)); ?></td>
-                <td><?php echo htmlentities(($row->gender)); ?></td>
                 <td><?php echo htmlentities(($row->redemtion_place)); ?></td>
                 <td><?php echo htmlentities(($row->status)); ?></td>
             </tr>
@@ -226,7 +206,7 @@
         };
 
         document.getElementById('main').style.fontFamily = "Arial";
-        document.getElementById('main').style.fontSize = "16px";
+        document.getElementById('main').style.fontSize = "12px";
     }
 </script>
 
