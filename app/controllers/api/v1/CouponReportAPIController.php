@@ -1416,7 +1416,7 @@ class CouponReportAPIController extends ControllerAPI
                 ),
                 array(
                     'current_mall' => 'required|orbit.empty.mall',
-                    'sort_by' => 'in:promotion_id,promotion_name,begin_date,end_date,user_email,issued_coupon_code,redeemed_date,redeem_verification_code,total_issued,total_redeemed',
+                    'sort_by' => 'in:promotion_id,promotion_name,begin_date,end_date,user_email,issued_coupon_code,redeemed_date,issued_date,redeem_verification_code,total_issued,total_redeemed, gender, age, redemtion_place, status',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.couponreportbytenant_sortby'),
@@ -1634,7 +1634,7 @@ class CouponReportAPIController extends ControllerAPI
             OrbitInput::get('customer_gender', function($gender) use ($coupons, $prefix) {
                 $coupons->whereIn(DB::raw("CASE WHEN {$prefix}user_details.gender = 'f' THEN 'female' WHEN 'm' THEN 'male' ELSE 'unknown' END"), $gender);
             });
-            
+
             // Clone the query builder which still does not include the take,
             $_coupons = clone $coupons;
 
@@ -1699,7 +1699,7 @@ class CouponReportAPIController extends ControllerAPI
             }
 
             // Default sort by
-            $sortBy = 'promotions.promotion_name';
+            $sortBy = 'issued_coupons.issued_date';
 
             // Default sort mode
             $sortMode = 'asc';
@@ -1712,11 +1712,16 @@ class CouponReportAPIController extends ControllerAPI
                     'promotion_name'            => 'promotions.promotion_name',
                     'redeem_retailer_name'      => 'merchants.name',
                     'redeemed_date'             => 'issued_coupons.redeemed_date',
+                    'issued_date'               => 'issued_coupons.issued_date',
                     'redeem_verification_code'  => 'issued_coupons.redeem_verification_code',
                     'issued_coupon_code'        => 'issued_coupons.issued_coupon_code',
                     'user_email'                => 'users.user_email',
                     'total_issued'              => 'total_issued',
-                    'total_redeemed'            => 'total_redeemed'
+                    'total_redeemed'            => 'total_redeemed',
+                    'gender'                    => 'gender',
+                    'age'                       => 'age',
+                    'redemtion_place'           => 'redemtion_place',
+                    'status'                    => 'issued_coupons.status',
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];
@@ -1731,9 +1736,9 @@ class CouponReportAPIController extends ControllerAPI
 
             $coupons->orderBy($sortBy, $sortMode);
 
-            // include sorting user_email
-            if ($sortBy !== 'users.user_email') {
-                $coupons->orderBy('users.user_email', 'asc');
+            // include sorting coupon code
+            if ($sortBy !== 'issued_coupons.issued_coupon_code') {
+                $coupons->orderBy('issued_coupons.issued_coupon_code', 'asc');
             }
 
             // Return the instance of Query Builder
