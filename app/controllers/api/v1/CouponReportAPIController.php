@@ -399,7 +399,7 @@ class CouponReportAPIController extends ControllerAPI
             // Get total redeemed
             $totalRedeemed = isset($total[0]->total_redeemed)?$total[0]->total_redeemed:0;
             // Get total record
-            $totalRecord = isset($total[0]->total_record)?$total[0]->total_record:0;
+            $totalRecord = (int) isset($total[0]->total_record)?$total[0]->total_record:0;
 
 
             // Get the take args
@@ -494,7 +494,7 @@ class CouponReportAPIController extends ControllerAPI
             $data->total_issued = $totalIssued;
             $data->records = $listOfCoupons;
 
-            if ($totalRecord == 0) {
+            if ($totalRecord === 0) {
                 $data->records = null;
                 $this->response->message = Lang::get('statuses.orbit.nodata.coupon');
             }
@@ -1416,7 +1416,7 @@ class CouponReportAPIController extends ControllerAPI
                 ),
                 array(
                     'current_mall' => 'required|orbit.empty.mall',
-                    'sort_by' => 'in:promotion_id,promotion_name,begin_date,end_date,user_email,issued_coupon_code,redeemed_date,redeem_verification_code,total_issued,total_redeemed',
+                    'sort_by' => 'in:promotion_id,promotion_name,begin_date,end_date,user_email,issued_coupon_code,redeemed_date,issued_date,redeem_verification_code,total_issued,total_redeemed, gender, age, redemtion_place, status',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.couponreportbytenant_sortby'),
@@ -1618,23 +1618,12 @@ class CouponReportAPIController extends ControllerAPI
             });
 
             // Filter by age
-            $issuedAge = OrbitInput::get('issued_age');
-            $redeemedAge = OrbitInput::get('redeemed_age');
-            $sql = "CASE WHEN ({$prefix}user_details.birthdate IS NOT NULL AND {$prefix}user_details.birthdate != '')
+            OrbitInput::get('customer_age', function($age) use ($coupons, $prefix) {
+                $coupons->where(DB::raw("CASE WHEN ({$prefix}user_details.birthdate IS NOT NULL AND {$prefix}user_details.birthdate != '')
                         THEN DATE_FORMAT(NOW(), '%Y') - DATE_FORMAT({$prefix}user_details.birthdate, '%Y') - (DATE_FORMAT(NOW(), '00-%m-%d') < DATE_FORMAT({$prefix}user_details.birthdate, '00-%m-%d'))
                         ELSE 'unknown'
-                    END";
-
-            if ( $issuedAge != '' && $redeemedAge != '' ) {
-                $coupons->whereIn(DB::raw($sql), array($issuedAge, $redeemedAge));
-            } elseif ( $issuedAge != '' || $redeemedAge != '' ) {
-                if ($issuedAge != '') {
-                    $age = $issuedAge;
-                } else {
-                    $age = $redeemedAge;
-                }
-                $coupons->where(DB::raw($sql), $age);
-            }
+                    END"), $age);
+            });
 
             // Filter by redemption place
             OrbitInput::get('redemption_place', function($place) use ($coupons, $prefix) {
@@ -1642,22 +1631,9 @@ class CouponReportAPIController extends ControllerAPI
             });
 
             // Filter by gender
-            $issuedGender = OrbitInput::get('issued_gender');
-            $redeemedGender = OrbitInput::get('redeemed_gender');
-
-            if ((! empty($issuedGender)) && (! empty($redeemedGender))) {
-                $genderArray = array_merge($issuedGender, $redeemedGender);
-                $gender = array_unique($genderArray);
+            OrbitInput::get('customer_gender', function($gender) use ($coupons, $prefix) {
                 $coupons->whereIn(DB::raw("CASE WHEN {$prefix}user_details.gender = 'f' THEN 'female' WHEN 'm' THEN 'male' ELSE 'unknown' END"), $gender);
-            } elseif ((! empty($issuedGender)) || (! empty($redeemedGender))) {
-                if (! empty($issuedGender)) {
-                    $gender = $issuedGender;
-                } else {
-                    $gender = $redeemedGender;
-                }
-                $coupons->where(DB::raw("CASE WHEN {$prefix}user_details.gender = 'f' THEN 'female' WHEN 'm' THEN 'male' ELSE 'unknown' END"), $gender);
-            }
-
+            });
 
             // Clone the query builder which still does not include the take,
             $_coupons = clone $coupons;
@@ -1723,7 +1699,7 @@ class CouponReportAPIController extends ControllerAPI
             }
 
             // Default sort by
-            $sortBy = 'promotions.promotion_name';
+            $sortBy = 'issued_coupons.issued_date';
 
             // Default sort mode
             $sortMode = 'asc';
@@ -1736,11 +1712,16 @@ class CouponReportAPIController extends ControllerAPI
                     'promotion_name'            => 'promotions.promotion_name',
                     'redeem_retailer_name'      => 'merchants.name',
                     'redeemed_date'             => 'issued_coupons.redeemed_date',
+                    'issued_date'               => 'issued_coupons.issued_date',
                     'redeem_verification_code'  => 'issued_coupons.redeem_verification_code',
                     'issued_coupon_code'        => 'issued_coupons.issued_coupon_code',
                     'user_email'                => 'users.user_email',
                     'total_issued'              => 'total_issued',
-                    'total_redeemed'            => 'total_redeemed'
+                    'total_redeemed'            => 'total_redeemed',
+                    'gender'                    => 'gender',
+                    'age'                       => 'age',
+                    'redemtion_place'           => 'redemtion_place',
+                    'status'                    => 'issued_coupons.status',
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];
@@ -1755,9 +1736,9 @@ class CouponReportAPIController extends ControllerAPI
 
             $coupons->orderBy($sortBy, $sortMode);
 
-            // include sorting user_email
-            if ($sortBy !== 'users.user_email') {
-                $coupons->orderBy('users.user_email', 'asc');
+            // include sorting coupon code
+            if ($sortBy !== 'issued_coupons.issued_coupon_code') {
+                $coupons->orderBy('issued_coupons.issued_coupon_code', 'asc');
             }
 
             // Return the instance of Query Builder
