@@ -188,6 +188,7 @@ return array(
                         <a target="_blank" href="%s">期限和条件</a>',
         'already_have_an_account' => '已经有一个帐户',
         'fields_are_mandatory' => '所有字段是强制性的',
+        'date_of_birth' => '出生日期',
     ),
 
     'catalogue' => array(
