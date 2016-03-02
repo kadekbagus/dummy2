@@ -5,13 +5,14 @@
         body {
         @if(!empty($bg) && !empty($bg->path))
             background: url('{{ asset($bg->path) }}');
-        @else
-            background: url('{{ asset('mobile-ci/images/skelatal_weave.png') }}');
-        @endif
             background-size: cover;
             background-repeat: no-repeat;
             background-position: center;
             width: 100%;
+        @else
+            background: url('{{ asset('mobile-ci/images/skelatal_weave.png') }}');
+            background-repeat: repeat;
+        @endif
         }
 
         .content-signin{
