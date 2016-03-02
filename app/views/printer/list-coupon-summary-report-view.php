@@ -248,7 +248,7 @@
         };
 
         document.getElementById('main').style.fontFamily = "Arial";
-        document.getElementById('main').style.fontSize = "16px";
+        document.getElementById('main').style.fontSize = "12px";
     }
 </script>
 
