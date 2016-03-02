@@ -68,7 +68,11 @@ class SocMedMobileCIAPIController extends BaseCIController
 		$data->mall = $mall;
 
 		if (! empty($tenant->mediaLogoOrig)) {
-			$data->image_url = $tenant->mediaLogoOrig[0]->path;
+			if (! empty($tenant->mediaLogoOrig[0]->path)) {
+				$data->image_url = $tenant->mediaLogoOrig[0]->path;
+			} else {
+				$data->image_url = NULL;
+			}
 		} else {
 			$data->image_url = NULL;
 		}
@@ -99,7 +103,11 @@ class SocMedMobileCIAPIController extends BaseCIController
 		$data->mall = $mall;
 
 		if (! empty($mall->mediaLogoOrig)) {
-			$data->image_url = $mall->mediaLogoOrig[0]->path;
+			if (! empty($mall->mediaLogoOrig[0]->path)) {
+				$data->image_url = $mall->mediaLogoOrig[0]->path;
+			} else {
+				$data->image_url = NULL;
+			}
 		} else {
 			$data->image_url = NULL;
 		}
