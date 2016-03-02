@@ -1359,12 +1359,13 @@ class MallAPIController extends ControllerAPI
 
             $updatedmall->save();
 
-            if (OrbitInput::post('facebook_uri')) {
-                $this->saveSocmedUri('facebook', $merchant_id, OrbitInput::post('facebook_uri'));
+            OrbitInput::post('facebook_uri', function ($fb_uri) use ($merchant_id, $updatedmall) {
+                $this->saveSocmedUri('facebook', $merchant_id, $fb_uri);
 
                 // For response
-                $updatedmall->facebook_uri = OrbitInput::post('facebook_uri');
-            }
+                $updatedmall->facebook_uri = $fb_uri;
+            });
+
 
             // update user status
             OrbitInput::post('status', function($status) use ($updatedmall) {
