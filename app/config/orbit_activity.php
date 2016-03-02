@@ -32,9 +32,8 @@ return [
             'View Coupon Detail',
             'View Coupon Campaign Detail',
             'View Coupon Redemption Places',
-            'Coupon Issued',
-            'Read Coupon Issuance Notification',
             'Coupon Issuance',
+            'Read Coupon Issuance Notification',
         ],
         'Lucky Draws' => [
             'Widget Click Lucky Draw',
