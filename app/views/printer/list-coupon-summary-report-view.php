@@ -160,8 +160,8 @@
 
         <?php
         if ($start_validity_date != '' && $end_validity_date != ''){
-            $startDateRangeMallTime = $this->printDateTime($start_validity_date, $timezone, 'd M Y');
-            $endDateRangeMallTime = $this->printDateTime($end_validity_date, $timezone, 'd M Y');
+            $startDateRangeMallTime = date('d M Y', strtotime($start_validity_date));
+            $endDateRangeMallTime = date('d M Y', strtotime($end_validity_date));
             $dateRange = $startDateRangeMallTime . ' - ' . $endDateRangeMallTime;
             if ($startDateRangeMallTime === $endDateRangeMallTime) {
                 $dateRange = $startDateRangeMallTime;

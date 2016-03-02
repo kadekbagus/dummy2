@@ -192,7 +192,7 @@ class CampaignReportAPIController extends ControllerAPI
                     where campaign_id = {$tablePrefix}news.news_id
                     and location_id = {$this->quote($current_mall)}
                 ) as popup_clicks,
-                {$tablePrefix}news.status, CASE WHEN {$tablePrefix}news.end_date < {$this->quote($now)} THEN 'expired' ELSE {$tablePrefix}campaign_status.campaign_status_name END  AS campaign_status, {$tablePrefix}campaign_status.order"))
+                {$tablePrefix}news.status, CASE WHEN {$tablePrefix}campaign_status.campaign_status_name = 'expired' THEN {$tablePrefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$tablePrefix}news.end_date < {$this->quote($now)} THEN 'expired' ELSE {$tablePrefix}campaign_status.campaign_status_name END) END  AS campaign_status, {$tablePrefix}campaign_status.order"))
                         ->leftJoin('campaign_price', 'campaign_price.campaign_id', '=', 'news.news_id')
                         // Join for get mall name
                         ->leftJoin('merchants as merchants2', 'news.mall_id', '=', DB::raw('merchants2.merchant_id'))
@@ -300,7 +300,7 @@ class CampaignReportAPIController extends ControllerAPI
                     where campaign_id = {$tablePrefix}news.news_id
                     and location_id = {$this->quote($current_mall)}
                 ) as popup_clicks,
-                {$tablePrefix}news.status, CASE WHEN {$tablePrefix}news.end_date < {$this->quote($now)} THEN 'expired' ELSE {$tablePrefix}campaign_status.campaign_status_name END  AS campaign_status, {$tablePrefix}campaign_status.order"))
+                {$tablePrefix}news.status, CASE WHEN {$tablePrefix}campaign_status.campaign_status_name = 'expired' THEN {$tablePrefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$tablePrefix}news.end_date < {$this->quote($now)} THEN 'expired' ELSE {$tablePrefix}campaign_status.campaign_status_name END) END  AS campaign_status, {$tablePrefix}campaign_status.order"))
                         ->leftJoin('campaign_price', 'campaign_price.campaign_id', '=', 'news.news_id')
                         ->leftJoin('merchants as merchants2', 'news.mall_id', '=', DB::raw('merchants2.merchant_id'))
                         // Joint for get total tenant percampaign
@@ -408,7 +408,7 @@ class CampaignReportAPIController extends ControllerAPI
                     where campaign_id = {$tablePrefix}promotions.promotion_id
                     and location_id = {$this->quote($current_mall)}
                 ) as popup_clicks,
-                {$tablePrefix}promotions.status, CASE WHEN {$tablePrefix}promotions.end_date < {$this->quote($now)} THEN 'expired' ELSE {$tablePrefix}campaign_status.campaign_status_name END AS campaign_status, {$tablePrefix}campaign_status.order"))
+                {$tablePrefix}promotions.status, CASE WHEN {$tablePrefix}campaign_status.campaign_status_name = 'expired' THEN {$tablePrefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$tablePrefix}promotions.end_date < {$this->quote($now)} THEN 'expired' ELSE {$tablePrefix}campaign_status.campaign_status_name END) END AS campaign_status, {$tablePrefix}campaign_status.order"))
                         ->leftJoin('campaign_price', 'campaign_price.campaign_id', '=', 'promotions.promotion_id')
                         ->leftJoin('merchants as merchants2', 'promotions.merchant_id', '=', DB::raw('merchants2.merchant_id'))
                         // Joint for get total tenant percampaign
@@ -528,7 +528,7 @@ class CampaignReportAPIController extends ControllerAPI
 
             // Filter coupons by status
             OrbitInput::get('campaign_status', function ($statuses) use ($campaign, $tablePrefix, $now) {
-                $campaign->whereIn(DB::raw("CASE WHEN end_date < {$this->quote($now)} THEN 'expired' ELSE campaign_status END"), $statuses);
+                $campaign->whereIn(DB::raw("CASE WHEN campaign_status = 'expired' THEN campaign_status ELSE (CASE WHEN end_date < {$this->quote($now)} THEN 'expired' ELSE campaign_status END) END"), $statuses);
             });
 
             // Filter by range date
@@ -674,6 +674,11 @@ class CampaignReportAPIController extends ControllerAPI
             });
 
             $campaign->orderBy($sortBy, $sortMode);
+
+            //with name
+            if ($sortBy !== 'campaign_name') {
+                $campaign->orderBy('campaign_name', 'asc');
+            }
 
             // Return the instance of Query Builder
             if ($this->returnBuilder) {
