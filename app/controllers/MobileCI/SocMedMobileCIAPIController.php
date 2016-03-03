@@ -67,13 +67,18 @@ class SocMedMobileCIAPIController extends BaseCIController
 		$data->description = $tenant->description;
 		$data->mall = $mall;
 
-		if (! empty($tenant->mediaLogoOrig)) {
-			$data->image_url = $tenant->mediaLogoOrig[0]->path;
-		} else {
-			$data->image_url = NULL;
-		}
-
-		$data->image_dimension = $this->getImageDimension($tenant->mediaLogoOrig[0]->path);
+		if (count($tenant->mediaLogoOrig) > 0) {
+            if (! empty($tenant->mediaLogoOrig[0]->path)) {
+                $data->image_dimension = $this->getImageDimension($tenant->mediaLogoOrig[0]->path);
+                $data->image_url = $tenant->mediaLogoOrig[0]->path;
+            } else {
+                $data->image_dimension = NULL;
+                $data->image_url = NULL;
+            }
+        } else {
+            $data->image_dimension = NULL;
+            $data->image_url = NULL;
+        }
 
 		return View::make('mobile-ci.templates.fb-sharer', compact('data'));
 	}
@@ -98,13 +103,18 @@ class SocMedMobileCIAPIController extends BaseCIController
 		$data->description = $mall->description;
 		$data->mall = $mall;
 
-		if (! empty($mall->mediaLogoOrig)) {
-			$data->image_url = $mall->mediaLogoOrig[0]->path;
-		} else {
-			$data->image_url = NULL;
-		}
-
-		$data->image_dimension = $this->getImageDimension($mall->mediaLogoOrig[0]->path);
+		if (count($mall->mediaLogoOrig) > 0) {
+            if (! empty($mall->mediaLogoOrig[0]->path)) {
+                $data->image_dimension = $this->getImageDimension($mall->mediaLogoOrig[0]->path);
+                $data->image_url = $mall->mediaLogoOrig[0]->path;
+            } else {
+                $data->image_dimension = NULL;
+                $data->image_url = NULL;
+            }
+        } else {
+            $data->image_dimension = NULL;
+            $data->image_url = NULL;
+        }
 
 		return View::make('mobile-ci.templates.fb-sharer', compact('data'));
 	}

@@ -1635,6 +1635,11 @@ class CouponReportAPIController extends ControllerAPI
                 $coupons->whereIn(DB::raw("CASE WHEN {$prefix}user_details.gender = 'f' THEN 'female' WHEN 'm' THEN 'male' ELSE 'unknown' END"), $gender);
             });
 
+            // Filter by status
+            OrbitInput::get('status', function($data) use ($coupons) {
+                $coupons->where('issued_coupons.status', $data);
+            });
+
             // Clone the query builder which still does not include the take,
             $_coupons = clone $coupons;
 

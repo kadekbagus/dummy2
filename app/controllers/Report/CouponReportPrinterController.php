@@ -372,8 +372,8 @@ class CouponReportPrinterController extends DataPrinterController
                 }
 
                 if ($redeemedDateGte != '' && $redeemedDateLte != ''){
-                    $startDate = date('d M Y', strtotime($redeemedDateG)Y');
-                    $endDate = date('d M Y', strtotime($redeemedDateL)Y');
+                    $startDate = date('d M Y', strtotime($redeemedDateG));
+                    $endDate = date('d M Y', strtotime($redeemedDateL));
                     $dateRange = $startDate . ' - ' . $endDate;
                     if ($startDate === $endDate) {
                         $dateRange = $startDate;
