@@ -106,3 +106,11 @@ Route::post('/api/v1/user/changepassword', ['as' => 'change-password', function(
 {
     return UserAPIController::create()->postChangePassword();
 }]);
+
+/**
+ * User Report Listing
+ */
+Route::get('/api/v1/user-report/list', function()
+{
+    return UserReportAPIController::create()->getUserReport();
+});
