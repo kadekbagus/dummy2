@@ -70,6 +70,8 @@
         @yield('ext_style')
     </head>
     <body>
+        @yield('fb_scripts')
+
         @include('mobile-ci.toolbar')
         <div class="headed-layout content-container" @if(is_null($page_title)) style="padding-top:3.1em;"  @endif>
             @yield('content')

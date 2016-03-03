@@ -29,6 +29,29 @@ class LuckyDrawAPIController extends ControllerAPI
      */
     const DEFAULT_LANG = 'en';
 
+    private function getCampaignStatusTable()
+    {
+        $campaignStatus = new CampaignStatus;
+        return $campaignStatus->getTable();
+    }
+
+    /**
+     * New & Update handler for Status related items
+     * 
+     * @author Qosdil A. <qosdil@dominopos.com>
+     * @return array
+     */
+    private function handleStatus() {
+        // The campaign status: not started, ongoing, paused, stopped, expired
+        $campaignStatusName = OrbitInput::post('campaign_status');
+        $campaignStatusId = CampaignStatus::whereCampaignStatusName($campaignStatusName)->pluck('campaign_status_id');
+
+        // The Active / Inactive status of the campaigns
+        $status = ($campaignStatusName == 'ongoing') ? 'active' : 'inactive';
+
+        return [$campaignStatusId, $status];
+    }
+
     /**
      * POST - Create New Lucky Draw
      *
@@ -115,12 +138,6 @@ class LuckyDrawAPIController extends ControllerAPI
             $default_merchant_language_id = MerchantLanguage::getLanguageIdByMerchant($mall_id, static::DEFAULT_LANG);
             $id_language_default = OrbitInput::post('id_language_default', $default_merchant_language_id);
 
-            // set default value for status
-            $status = OrbitInput::post('status');
-            if (trim($status) === '') {
-                $status = 'inactive';
-            }
-
             // Begin database transaction
             $this->beginTransaction();
 
@@ -138,7 +155,7 @@ class LuckyDrawAPIController extends ControllerAPI
                     'external_lucky_draw_id'   => $external_lucky_draw_id,
                     'grace_period_date'        => $grace_period_date,
                     'grace_period_in_days'     => $grace_period_in_days,
-                    'status'                   => $status,
+                    'campaign_status'          => OrbitInput::post('campaign_status'),
                     'id_language_default'      => $id_language_default,
                 ),
                 array(
@@ -154,7 +171,7 @@ class LuckyDrawAPIController extends ControllerAPI
                     'external_lucky_draw_id'   => 'required',
                     'grace_period_date'        => 'date_format:Y-m-d H:i:s|after:' . $end_date,
                     'grace_period_in_days'     => 'numeric',
-                    'status'                   => 'orbit.empty.lucky_draw_status',
+                    'campaign_status'          => 'required|exists:'.$this->getCampaignStatusTable().',campaign_status_name',
                     'id_language_default'      => 'required|orbit.empty.language_default',
                 )
             );
@@ -183,9 +200,10 @@ class LuckyDrawAPIController extends ControllerAPI
             $newluckydraw->external_lucky_draw_id = $external_lucky_draw_id;
             $newluckydraw->grace_period_date = $grace_period_date;
             $newluckydraw->grace_period_in_days = $grace_period_in_days;
-            $newluckydraw->status = $status;
             $newluckydraw->created_by = $this->api->user->user_id;
             $newluckydraw->modified_by = $this->api->user->user_id;
+
+            list($newluckydraw->campaign_status_id, $newluckydraw->status) = $this->handleStatus();
 
             Event::fire('orbit.luckydraw.postnewluckydraw.before.save', array($this, $newluckydraw));
 
@@ -314,6 +332,7 @@ class LuckyDrawAPIController extends ControllerAPI
      * POST - Update Lucky Draw
      *
      * @author Tian <tian@dominopos.com>
+     * @author Irianto Pratama<irianto@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -391,6 +410,9 @@ class LuckyDrawAPIController extends ControllerAPI
             $end_date = OrbitInput::post('end_date');
             $draw_date = OrbitInput::post('draw_date');
             $grace_period_date = OrbitInput::post('grace_period_date');
+            $luckydraw_image = OrbitInput::files('images');
+            $luckydraw_image_config = Config::get('orbit.upload.lucky_draw.main');
+            $luckydraw_image_units = static::bytesToUnits($luckydraw_image_config['file_size']);
 
             $default_merchant_language_id = MerchantLanguage::getLanguageIdByMerchant($mall_id, static::DEFAULT_LANG);
             $id_language_default = OrbitInput::post('id_language_default', $default_merchant_language_id);
@@ -398,22 +420,20 @@ class LuckyDrawAPIController extends ControllerAPI
             $now = date('Y-m-d H:i:s');
 
             $data = array(
-                'lucky_draw_id'        => $lucky_draw_id,
-                'mall_id'              => $mall_id,
-                'start_date'           => $start_date,
-                'end_date'             => $end_date,
-                'grace_period_date'    => $grace_period_date,
-                'id_language_default'  => $id_language_default,
+                'campaign_status'     => OrbitInput::post('campaign_status'),
+                'lucky_draw_id'       => $lucky_draw_id,
+                'mall_id'             => $mall_id,
+                'start_date'          => $start_date,
+                'end_date'            => $end_date,
+                'grace_period_date'   => $grace_period_date,
+                'id_language_default' => $id_language_default,
+                'images_type'         => $luckydraw_image['type'],
+                'images_size'         => $luckydraw_image['size'],
             );
 
             // Validate lucky_draw_name only if exists in POST.
             OrbitInput::post('lucky_draw_name', function($lucky_draw_name) use (&$data) {
                 $data['lucky_draw_name'] = $lucky_draw_name;
-            });
-
-            // Validate status only if exists in POST.
-            OrbitInput::post('status', function($status) use (&$data) {
-                $data['status'] = $status;
             });
 
             // Begin database transaction
@@ -422,20 +442,24 @@ class LuckyDrawAPIController extends ControllerAPI
             $validator = Validator::make(
                 $data,
                 array(
-                    'lucky_draw_id'        => 'required|orbit.empty.lucky_draw:' . $mall_id,
-                    'mall_id'              => 'orbit.empty.mall',
-                    'lucky_draw_name'      => 'sometimes|required|min:3|max:255|lucky_draw_name_exists_but_me:' . $lucky_draw_id . ',' . $mall_id,
-                    'status'               => 'sometimes|required|orbit.empty.lucky_draw_status',
-                    'start_date'           => 'date_format:Y-m-d H:i:s',
-                    'end_date'             => 'date_format:Y-m-d H:i:s',
-                    'draw_date'            => 'date_format:Y-m-d H:i:s',
-                    'grace_period_date'    => 'date_format:Y-m-d H:i:s',
-                    'id_language_default'  => 'required|orbit.empty.language_default',
+                    'campaign_status'     => 'required|exists:'.$this->getCampaignStatusTable().',campaign_status_name',
+                    'lucky_draw_id'       => 'required|orbit.empty.lucky_draw:' . $mall_id,
+                    'mall_id'             => 'orbit.empty.mall',
+                    'lucky_draw_name'     => 'sometimes|required|min:3|max:255|lucky_draw_name_exists_but_me:' . $lucky_draw_id . ',' . $mall_id,
+                    'status'              => 'sometimes|required|orbit.empty.lucky_draw_status',
+                    'start_date'          => 'date_format:Y-m-d H:i:s',
+                    'end_date'            => 'date_format:Y-m-d H:i:s',
+                    'draw_date'           => 'date_format:Y-m-d H:i:s',
+                    'grace_period_date'   => 'date_format:Y-m-d H:i:s',
+                    'id_language_default' => 'required|orbit.empty.language_default',
+                    'images_type'         => 'in:image/jpg,image/png,image/jpeg,image/gif',
+                    'images_size'         => 'orbit.max.file_size:' . $luckydraw_image_config['file_size'],
                 ),
                 array(
-                   'lucky_draw_name_exists_but_me' => Lang::get('validation.orbit.exists.lucky_draw_name'),
-                   'end_date_greater_than_start_date_and_current_date' => 'The end datetime should be greater than the start datetime or current datetime.',
-                   'draw_date_greater_than_end_date_and_current_date' => 'The draw datetime should be greater than the end datetime or current datetime.'
+                    'lucky_draw_name_exists_but_me' => Lang::get('validation.orbit.exists.lucky_draw_name'),
+                    'end_date_greater_than_start_date_and_current_date' => 'The end datetime should be greater than the start datetime or current datetime.',
+                    'draw_date_greater_than_end_date_and_current_date' => 'The draw datetime should be greater than the end datetime or current datetime.',
+                    'orbit.max.file_size' => 'Lucky Draw Image size is too big, maximum size allowed is '. $luckydraw_image_units['newsize'] . $luckydraw_image_units['unit']
                 )
             );
 
@@ -517,9 +541,7 @@ class LuckyDrawAPIController extends ControllerAPI
                 $updatedluckydraw->external_lucky_draw_id = $data;
             });
 
-            OrbitInput::post('status', function($status) use ($updatedluckydraw) {
-                $updatedluckydraw->status = $status;
-            });
+            list($updatedluckydraw->campaign_status_id, $updatedluckydraw->status) = $this->handleStatus();
 
             $updatedluckydraw->modified_by = $this->api->user->user_id;
 
@@ -918,13 +940,14 @@ class LuckyDrawAPIController extends ControllerAPI
 
             $sort_by = OrbitInput::get('sortby');
             $details_view = OrbitInput::get('details');
+            $current_mall = OrbitInput::get('current_mall');
 
             $validator = Validator::make(
                 array(
                     'sort_by' => $sort_by,
                 ),
                 array(
-                    'sort_by' => 'in:registered_date,lucky_draw_name,description,start_date,end_date,status,total_issued_lucky_draw_number,external_lucky_draw_id,mall_name,minimum_amount,updated_at,draw_date',
+                    'sort_by' => 'in:registered_date,lucky_draw_name,description,start_date,end_date,status,total_issued_lucky_draw_number,external_lucky_draw_id,mall_name,minimum_amount,updated_at,draw_date,campaign_status',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.lucky_draw_sortby'),
@@ -959,12 +982,20 @@ class LuckyDrawAPIController extends ControllerAPI
                 }
             }
 
+            $timezone = Mall::leftJoin('timezones','timezones.timezone_id','=','merchants.timezone_id')
+                ->where('merchants.merchant_id','=', $current_mall)
+                ->first();
+
+            $now = Carbon::now($timezone->timezone_name);
+
             // Builder object
-            $luckydraws = LuckyDraw::excludeDeleted('lucky_draws')->select('lucky_draws.*');
+            $prefix = DB::getTablePrefix();
+            $luckydraws = LuckyDraw::excludeDeleted('lucky_draws')
+                                    ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'lucky_draws.campaign_status_id')
+                                    ->select('lucky_draws.*', 'campaign_status.order', DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$prefix}lucky_draws.end_date < {$this->quote($now)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END AS campaign_status"));
 
             if ($details_view === 'yes') {
-                $prefix = DB::getTablePrefix();
-                $luckydraws->select('lucky_draws.*', 'merchants.name',
+                $luckydraws->select('lucky_draws.*', 'campaign_status.order', DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$prefix}lucky_draws.end_date < {$this->quote($now)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END  AS campaign_status"), 'merchants.name',
                                     DB::raw("count({$prefix}lucky_draw_numbers.lucky_draw_number_id) as total_issued_lucky_draw_number"))
                                     ->joinLuckyDrawNumbers()
                                     ->joinMerchant()
@@ -1041,9 +1072,9 @@ class LuckyDrawAPIController extends ControllerAPI
                 $luckydraws->where('lucky_draws.draw_date', '>=', $drawDate);
             });
 
-            // Filter lucky draw by status
-            OrbitInput::get('status', function ($status) use ($luckydraws) {
-                $luckydraws->whereIn('lucky_draws.status', $status);
+            // Filter news by status
+            OrbitInput::get('campaign_status', function ($statuses) use ($luckydraws, $prefix, $now) {
+                $luckydraws->whereIn(DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$prefix}lucky_draws.end_date < {$this->quote($now)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END"), $statuses);
             });
 
             // Filter by start date
@@ -1179,7 +1210,7 @@ class LuckyDrawAPIController extends ControllerAPI
             }
 
             // Default sort by
-            $sortBy = 'lucky_draws.lucky_draw_name';
+            $sortBy = 'campaign_status';
             // Default sort mode
             $sortMode = 'asc';
 
@@ -1193,7 +1224,8 @@ class LuckyDrawAPIController extends ControllerAPI
                     'start_date'                     => 'lucky_draws.start_date',
                     'end_date'                       => 'lucky_draws.end_date',
                     'draw_date'                      => 'lucky_draws.draw_date',
-                    'status'                         => 'lucky_draws.status',
+                    'status'                         => 'campaign_status',
+                    'campaign_status'                => 'campaign_status',
                     'external_lucky_draw_id'         => 'lucky_draws.external_lucky_draw_id',
                     'minimum_amount'                 => 'lucky_draws.minimum_amount',
                     'updated_at'                     => 'lucky_draws.updated_at',
@@ -1206,10 +1238,6 @@ class LuckyDrawAPIController extends ControllerAPI
                 }
             });
 
-            if ($sortBy !== 'lucky_draws.status') {
-                $luckydraws->orderBy('lucky_draws.status', 'asc');
-            }
-
             OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
             {
                 if (strtolower($_sortMode) !== 'asc') {
@@ -1218,6 +1246,11 @@ class LuckyDrawAPIController extends ControllerAPI
             });
 
             $luckydraws->orderBy($sortBy, $sortMode);
+
+            //with name
+            if ($sortBy !== 'lucky_draws.lucky_draw_name') {
+                $luckydraws->orderBy('lucky_draws.lucky_draw_name', 'asc');
+            }
 
             $totalLuckyDraws = RecordCounter::create($_luckydraws)->count();
             $listOfLuckyDraws = $luckydraws->get();
@@ -4085,6 +4118,17 @@ class LuckyDrawAPIController extends ControllerAPI
             return TRUE;
         });
 
+        Validator::extend('orbit.max.file_size', function ($attribute, $value, $parameters) {
+            $config_size = $parameters[0];
+            $file_size = $value;
+
+            if ($file_size > $config_size) {
+                return false;
+            }
+
+            return true;
+        });
+
     }
 
     /**
@@ -4143,8 +4187,27 @@ class LuckyDrawAPIController extends ControllerAPI
                     }
                 }
                 if (empty($existing_translation)) {
+                    if (! empty(trim($translations->lucky_draw_name))) {
+                        $lucky_draw_translation = LuckyDrawTranslation::excludeDeleted()
+                                                    ->where('merchant_language_id', '=', $merchant_language_id)
+                                                    ->where('lucky_draw_name', '=', $translations->lucky_draw_name)
+                                                    ->first();
+                        if (! empty($lucky_draw_translation)) {
+                            OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.exists.lucky_draw_name'));
+                        }
+                    }
                     $operations[] = ['create', $merchant_language_id, $translations];
                 } else {
+                    if (! empty(trim($translations->lucky_draw_name))) {
+                        $lucky_draw_translation_but_not_me = LuckyDrawTranslation::excludeDeleted()
+                                                    ->where('merchant_language_id', '=', $merchant_language_id)
+                                                    ->where('lucky_draw_id', '!=', $lucky_draw->lucky_draw_id)
+                                                    ->where('lucky_draw_name', '=', $translations->lucky_draw_name)
+                                                    ->first();
+                        if (! empty($lucky_draw_translation_but_not_me)) {
+                            OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.exists.lucky_draw_name'));
+                        }
+                    }
                     $operations[] = ['update', $existing_translation, $translations];
                 }
             }
@@ -4315,5 +4378,56 @@ class LuckyDrawAPIController extends ControllerAPI
                 $existing_translation->delete();
             }
         }
+    }
+
+    protected function quote($arg)
+    {
+        return DB::connection()->getPdo()->quote($arg);
+    }
+
+    /**
+     * Method to convert the size from bytes to more human readable units. As
+     * an example:
+     *
+     * Input 356 produces => array('unit' => 'bytes', 'newsize' => 356)
+     * Input 2045 produces => array('unit' => 'kB', 'newsize' => 2.045)
+     * Input 1055000 produces => array('unit' => 'MB', 'newsize' => 1.055)
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @author Irianto <irianto@dominopos.com>
+     * @param int $size - The size in bytes
+     * @return array
+     */
+    public static function bytesToUnits($size)
+    {
+       $kb = 1000;
+       $mb = $kb * 1000;
+       $gb = $mb * 1000;
+
+       if ($size > $gb) {
+            return array(
+                    'unit' => 'GB',
+                    'newsize' => $size / $gb
+                   );
+       }
+
+       if ($size > $mb) {
+            return array(
+                    'unit' => 'MB',
+                    'newsize' => $size / $mb
+                   );
+       }
+
+       if ($size > $kb) {
+            return array(
+                    'unit' => 'kB',
+                    'newsize' => $size / $kb
+                   );
+       }
+
+       return array(
+                'unit' => 'bytes',
+                'newsize' => 1
+              );
     }
 }

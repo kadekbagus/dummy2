@@ -8,126 +8,23 @@
 </style>
 @stop
 
+@section('fb_scripts')
+@if(! empty($facebookInfo))
+@if(! empty($facebookInfo['version']) && ! empty($facebookInfo['app_id']))
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version={{$facebookInfo['version']}}&appId={{$facebookInfo['app_id']}}";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+@endif
+@endif
+@stop
+
 @section('content')
-<div class="container">
-    <div class="mobile-ci home-widget widget-container">
-        <div class="row">
-            @foreach($widgets as $i => $widget)
-                @if($i % 3 === 0)
-                <div class="col-xs-12 col-sm-12">
-                    <section class="widget-single">
-                        <a class="widget-link" data-widget="{{ $widget->widget_id }}" href="{{ url('customer/' . $widget->url) }}">
-                            @if(! empty($widget->new_item_count))
-                            <div class="widget-new-badge">
-                                <div class="new-number">{{$widget->new_item_count}}</div>
-                                <div class="new-number-label">new</div>
-                            </div>
-                            @endif
-                            <div class="widget-info">
-                                <header class="widget-title">
-                                    <div><strong>{{ucwords(strtolower($widget->display_title))}}</strong></div>
-                                </header>
-                                <header class="widget-subtitle">
-                                    @if($widget->item_count > 0)
-                                    <div>{{$widget->item_count}} {{$widget->display_sub_title}}</div>
-                                    @else
-                                    <div>&nbsp;</div>
-                                    @endif
-                                </header>
-                            </div>
-                            <div class="list-vignette"></div>
-                            <img class="img-responsive img-fit" src="{{ asset($widget->image) }}" />
-                        </a>
-                    </section>
-                </div>
-                @elseif($i % 3 === 1)
-                    @if($i === count($widgets) - 1)
-                        <div class="col-xs-12 col-sm-12">
-                            <section class="widget-single">
-                                <a class="widget-link" data-widget="{{ $widget->widget_id }}" href="{{ url('customer/' . $widget->url) }}">
-                                    @if(! empty($widget->new_item_count))
-                                    <div class="widget-new-badge">
-                                        <div class="new-number">{{$widget->new_item_count}}</div>
-                                        <div class="new-number-label">new</div>
-                                    </div>
-                                    @endif
-                                    <div class="widget-info">
-                                        <header class="widget-title">
-                                            <div><strong>{{ucwords(strtolower($widget->display_title))}}</strong></div>
-                                        </header>
-                                        <header class="widget-subtitle">
-                                            @if($widget->item_count > 0)
-                                            <div>{{$widget->item_count}} {{$widget->display_sub_title}}</div>
-                                            @else
-                                            <div>&nbsp;</div>
-                                            @endif
-                                        </header>
-                                    </div>
-                                    <div class="list-vignette"></div>
-                                    <img class="img-responsive img-fit" src="{{ asset($widget->image) }}" />
-                                </a>
-                            </section>
-                        </div>
-                    @else
-                        <div class="col-xs-6 col-sm-6">
-                            <section class="widget-single">
-                                <a class="widget-link" data-widget="{{ $widget->widget_id }}" href="{{ url('customer/' . $widget->url) }}">
-                                    @if(! empty($widget->new_item_count))
-                                    <div class="widget-new-badge">
-                                        <div class="new-number">{{$widget->new_item_count}}</div>
-                                        <div class="new-number-label">new</div>
-                                    </div>
-                                    @endif
-                                    <div class="widget-info">
-                                        <header class="widget-title">
-                                            <div><strong>{{ucwords(strtolower($widget->display_title))}}</strong></div>
-                                        </header>
-                                        <header class="widget-subtitle">
-                                            @if($widget->item_count > 0)
-                                            <div>{{$widget->item_count}} {{$widget->display_sub_title}}</div>
-                                            @else
-                                            <div>&nbsp;</div>
-                                            @endif
-                                        </header>
-                                    </div>
-                                    <div class="list-vignette"></div>
-                                    <img class="img-responsive img-fit" src="{{ asset($widget->image) }}" />
-                                </a>
-                            </section>
-                        </div>
-                    @endif
-                @else
-                    <div class="col-xs-6 col-sm-6">
-                        <section class="widget-single">
-                            <a class="widget-link" data-widget="{{ $widget->widget_id }}" href="{{ url('customer/' . $widget->url) }}">
-                                @if(! empty($widget->new_item_count))
-                                <div class="widget-new-badge">
-                                    <div class="new-number">{{$widget->new_item_count}}</div>
-                                    <div class="new-number-label">new</div>
-                                </div>
-                                @endif
-                                <div class="widget-info">
-                                    <header class="widget-title">
-                                        <div><strong>{{ucwords(strtolower($widget->display_title))}}</strong></div>
-                                    </header>
-                                    <header class="widget-subtitle">
-                                        @if($widget->item_count > 0)
-                                        <div>{{$widget->item_count}} {{$widget->display_sub_title}}</div>
-                                        @else
-                                        <div>&nbsp;</div>
-                                        @endif
-                                    </header>
-                                </div>
-                                <div class="list-vignette"></div>
-                                <img class="img-responsive img-fit" src="{{ asset($widget->image) }}" />
-                            </a>
-                        </section>
-                    </div>
-                @endif
-            @endforeach
-        </div>
-    </div>
-</div>
+    @yield('widget-template')
 @stop
 
 @section('modals')
@@ -165,6 +62,17 @@
         </div>
     </div>
 </div>
+@stop
+
+@section('mall-fb-footer')
+    <div class="text-center" style="padding-bottom: 20px;">
+        @if(! empty($retailer->facebook_like_url))
+        <div class="fb-like" data-href="{{{$retailer->facebook_like_url}}}" data-layout="button_count" data-action="like" data-show-faces="false" data-share="false" style="margin-right:25px;"></div>
+        @endif
+        @if(! empty($retailer->facebook_share_url))
+        <div class="fb-share-button" data-href="{{$retailer->facebook_share_url}}" data-layout="button_count"></div>
+        @endif
+    </div>
 @stop
 
 @section('ext_script_bot')

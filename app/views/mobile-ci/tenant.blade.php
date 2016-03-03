@@ -9,6 +9,21 @@
     </style>
 @stop
 
+@section('fb_scripts')
+@if(! empty($facebookInfo))
+@if(! empty($facebookInfo['version']) && ! empty($facebookInfo['app_id']))
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version={{$facebookInfo['version']}}&appId={{$facebookInfo['app_id']}}";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+@endif
+@endif
+@stop
+
 @section('tenant_tab')
     {{-- todo: create flag for this tabs --}}
     @if(sizeof($tenant->newsPromotionsProfiling) > 0 || sizeof($tenant->newsProfiling) > 0 || sizeof($tenant->couponsProfiling) > 0)
@@ -253,8 +268,17 @@
         <ul class="where-list">
             <li><i class="fa fa-map-marker fa-lg" style="padding-left: 11px;"></i>  {{{ !empty($tenant->floor) ? $tenant->floor : '' }}}{{{ !empty($tenant->unit) ? ' - ' . $tenant->unit : '' }}}</li>
             <li><i class="fa fa-globe fa-lg"></i>  {{{ (($tenant->url) != '') ? 'http://'.$tenant->url : '-' }}}</li>
+            @if(! empty($tenant->facebook_like_url))
+            <li><i class="fa fa-facebook-square fa-lg"></i>  {{{ str_replace('//', '', $tenant->facebook_like_url) }}}</li>
+            @endif
             <li><i class="fa fa-phone-square fa-lg"></i>  @if($tenant->phone != '') <a href="tel:{{{ $tenant->phone }}}"> {{{ $tenant->phone }}}</a> @else - @endif</li>
         </ul>
+        @if(! empty($tenant->facebook_like_url))
+        <div class="fb-like" data-href="{{{$tenant->facebook_like_url}}}" data-layout="button_count" data-action="like" data-show-faces="false" data-share="false" style="margin-right:25px;"></div>
+        @endif
+        @if(! empty($tenant->facebook_share_url))
+        <div class="fb-share-button" data-href="{{$tenant->facebook_share_url}}" data-layout="button_count"></div>
+        @endif
     </div>
 </div>
 <div class="row padded vertically-spaced">

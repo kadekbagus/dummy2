@@ -474,5 +474,9 @@ class Mall extends Eloquent
                                      ->where('parent_id', $this->merchant_id)
                                      ->lists('merchant_id');
     }
+
+    public function merchantSocialMedia() {
+        return $this->hasMany('MerchantSocialMedia', 'merchant_id', 'merchant_id');
+    }
 }
 ?>

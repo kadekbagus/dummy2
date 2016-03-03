@@ -38,6 +38,7 @@ return array(
         'orbit_tour'         => 'ORBIT ツアー',
         'lucky_draws'        => '抽選',
         'my_messages'        => '私のメッセージ',
+        'my_message'         => '私のメッセージ',
     ),
 
     'widgets' => array(
@@ -174,19 +175,21 @@ return array(
     ),
 
     'signup' => array(
-        'first_name' => 'ファーストネーム',
-        'last_name' => '苗字',
-        'gender' => '選択ジェンダー',
+        'email_placeholder' => '電子メールアドレス*',
+        'first_name' => 'ファーストネーム*',
+        'last_name' => '苗字*',
+        'gender' => '選択ジェンダー*',
         'male' => '男性',
         'female' => '女性',
-        'day' => '日',
-        'month' => '月',
-        'year' => '年',
+        'day' => '日*',
+        'month' => '月*',
+        'year' => '年*',
         'policy_terms_message' => '<strong>サインアップ</strong>クリックすると、あなたは
             <a target="_blank" href="%s">プライバシーポリシーと利用規約に同意するこ</a>と
             <a target="_blank" href="%s">を確認します</a>',
         'already_have_an_account' => 'すでにアカウントをお持ちですか',
         'fields_are_mandatory' => 'すべてのフィールドが必須です',
+        'date_of_birth' => '生年月日',
     ),
 
     'catalogue' => array(
@@ -295,14 +298,15 @@ return array(
     ),
 
     'search' => array(
-        'no_item'           => '基準にマッチしているテナントがありません。',
-        'too_much_items'    => '検索結果が広すぎる、それを絞り込むください.',
-        'no_result'         => '申し訳ありませんが、検索結果がないです',
-        'error'             => '要求の発行中にエラーがあります',
-        'show_all_result'   => '結果をすべて表示します',
-        'show_by_categories'=> 'カテゴリ別表示します',
-        'search_placeholder'=> 'ここで検索します',
+        'no_item'            => '基準にマッチしているテナントがありません。',
+        'too_much_items'     => '検索結果が広すぎる、それを絞り込むください.',
+        'no_result'          => '申し訳ありませんが、検索結果がないです',
+        'error'              => '要求の発行中にエラーがあります',
+        'show_all_result'    => '結果をすべて表示します',
+        'show_by_categories' => 'カテゴリ別表示します',
+        'search_placeholder' => 'ここで検索します',
         'all_search_results' => 'すべての検索結果',
+        'show_more'          => 'もっと見せる',
     ),
 
     'thank_you' => array(
@@ -426,6 +430,7 @@ return array(
         'prizes_and_winners'        => '賞と受賞者',
         'lucky_draw_prizes'         => '幸運な抽選賞',
         'no_prize'                  => '賞金はすぐに来ています',
+        'lucky_draw_download_title' => '抽選番号をダウンロード',
     ),
 
     'notification' => array(

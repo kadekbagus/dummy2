@@ -1,5 +1,20 @@
 @extends('mobile-ci.layout')
 
+@section('fb_scripts')
+@if(! empty($facebookInfo))
+@if(! empty($facebookInfo['version']) && ! empty($facebookInfo['app_id']))
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version={{$facebookInfo['version']}}&appId={{$facebookInfo['app_id']}}";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+@endif
+@endif
+@stop
+
 @section('content')
     @if($data->status === 1)
         @if(sizeof($data->records) > 0)
@@ -46,7 +61,7 @@
                         </div>
                     </div>
                     <div class="col-xs-2 search-tool-col text-right">
-                        <a href="{{ url('/customer/tenants') }}" class="btn btn-info btn-block reset-btn">
+                        <a href="{{{ url('/customer/tenants?keyword='.Input::get('keyword')) }}}" class="btn btn-info btn-block reset-btn">
                             <span class="fa-stack fa-lg">
                                 <i class="fa fa-filter fa-stack-2x"></i>
                                 <i class="fa fa-times fa-stack-1x"></i>
@@ -95,6 +110,9 @@
                                                         @endif
                                                     </div>
                                                 </div>
+                                                @if(! empty($tenant->facebook_like_url))
+                                                <div class="fb-like" data-href="{{{$tenant->facebook_like_url}}}" data-layout="button_count" data-action="like" data-show-faces="false" data-share="false"></div>
+                                                @endif
                                             </header>
                                             <header class="list-item-badges">
                                                 <div class="col-xs-12 badges-wrapper text-right">
@@ -178,7 +196,7 @@
                         </div>
                     </div>
                     <div class="col-xs-2 search-tool-col text-right">
-                        <a href="{{ url('/customer/tenants') }}" class="btn btn-info btn-block reset-btn">
+                        <a href="{{{ url('/customer/tenants?keyword='.Input::get('keyword')) }}}" class="btn btn-info btn-block reset-btn">
                             <span class="fa-stack fa-lg">
                                 <i class="fa fa-filter fa-stack-2x"></i>
                                 <i class="fa fa-times fa-stack-1x"></i>
@@ -305,8 +323,12 @@
                                                         <i class="fa fa-list" style="padding-left: 2px;padding-right: 4px;"></i>\
                                                         <span>'+ (data.records[i].category_string ? data.records[i].category_string : '-') +'</span>\
                                                     </div>\
-                                                </div>\
-                                            </header>\
+                                                </div>';
+                            if (data.records[i].facebook_like_url) {
+                                list += '<div class="fb-like" data-href="' + data.records[i].facebook_like_url + '" data-layout="button_count" data-action="like" data-show-faces="false" data-share="false"></div>';
+                            }
+
+                            list += '</header>\
                                             <header class="list-item-badges">\
                                                 <div class="col-xs-12 badges-wrapper text-right">\
                                                     '+ (data.records[i].promotion_flag ? '<span class="badges promo-badges text-center"><i class="fa fa-bullhorn"></i></span>' : '') +'\
@@ -321,7 +343,8 @@
                                 </section>\
                             </div>';
                         $('.catalogue-wrapper').append(list);
-                    }
+                    };
+                    FB.XFBML.parse();
                 }
                 if (skip >= data.total_records) {
                     btn.remove();

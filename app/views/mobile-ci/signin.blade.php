@@ -5,13 +5,14 @@
         body {
         @if(!empty($bg) && !empty($bg->path))
             background: url('{{ asset($bg->path) }}');
-        @else
-            background: url('{{ asset('mobile-ci/images/skelatal_weave.png') }}');
-        @endif
             background-size: cover;
             background-repeat: no-repeat;
             background-position: center;
             width: 100%;
+        @else
+            background: url('{{ asset('mobile-ci/images/skelatal_weave.png') }}');
+            background-repeat: repeat;
+        @endif
         }
 
         .content-signin{
@@ -404,7 +405,8 @@
                     payload: "{{{ Input::get('payload', '') }}}",
                     mac_address: {{ json_encode(Input::get('mac_address', '')) }},
                     auto_login: "{{{ Input::get('auto_login', 'no') }}}",
-                    from_captive: "{{{ Input::get('from_captive', 'no') }}}"
+                    from_captive: "{{{ Input::get('from_captive', 'no') }}}",
+                    socmed_redirect_to: "{{{ Input::get('socmed_redirect_to', '') }}}"
                 }
             }).done(function (data, status, xhr) {
                 orbit_login_processing = false;

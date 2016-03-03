@@ -38,6 +38,7 @@ return array(
         'orbit_tour'         => 'ORBIT巡视',
         'lucky_draws'        => '幸运大抽奖',
         'my_messages'        => '我的消息',
+        'my_message'         => '我的消息',
     ),
 
     'widgets' => array(
@@ -174,19 +175,21 @@ return array(
     ),
 
     'signup' => array(
-        'first_name' => '名字',
-        'last_name' => '姓',
-        'gender' => '选择性别',
+        'email_placeholder' => '电子邮件地址*',
+        'first_name' => '名字*',
+        'last_name' => '姓*',
+        'gender' => '选择性别*',
         'male' => '男',
         'female' => '女',
-        'day' => '日',
-        'month' => '月',
-        'year' => '年',
+        'day' => '日*',
+        'month' => '月*',
+        'year' => '年*',
         'policy_terms_message' => '通过点击<strong>签署</strong>您证实您接受
                         <a target="_blank" href="%s">隐私权政策</a>和
                         <a target="_blank" href="%s">期限和条件</a>',
         'already_have_an_account' => '已经有一个帐户',
         'fields_are_mandatory' => '所有字段是强制性的',
+        'date_of_birth' => '出生日期',
     ),
 
     'catalogue' => array(
@@ -295,14 +298,15 @@ return array(
     ),
 
     'search' => array(
-        'no_item'        => '无店铺匹配条件',
-        'too_much_items' => '搜索结果的范围太广，请缩小它',
-        'no_result'      => '对不起，搜索有没有结果',
-        'error'          => '发出请求时有错误',
-        'show_all_result'=> '显示所有结果',
-        'show_by_categories'=> '按类别显示',
-        'search_placeholder'=> '在这里搜索',
+        'no_item'            => '无店铺匹配条件',
+        'too_much_items'     => '搜索结果的范围太广，请缩小它',
+        'no_result'          => '对不起，搜索有没有结果',
+        'error'              => '发出请求时有错误',
+        'show_all_result'    => '显示所有结果',
+        'show_by_categories' => '按类别显示',
+        'search_placeholder' => '在这里搜索',
         'all_search_results' => '所有搜索结果',
+        'show_more'          => '展示更多',
     ),
 
     'thank_you' => array(
@@ -426,6 +430,7 @@ return array(
         'prizes_and_winners'        => '奖品和获奖者',
         'lucky_draw_prizes'         => '幸运抽奖',
         'no_prize'                  => '该奖项即将到来',
+        'lucky_draw_download_title' => '下载抽奖号码',
     ),
 
     'notification' => array(

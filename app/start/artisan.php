@@ -41,6 +41,9 @@ Artisan::add(new MysqlStoredProcedure);
 // Delete Inactive CI sessions
 Artisan::add(new MerchantLogoCommand);
 
+// Set campaign status to expired when past the date and time
+Artisan::add(new CampaignSetToExpired);
+
 // Insert or update data on settings table
 // @Todo investigate why its error
 // Artisan::add(new MerchantSetting);

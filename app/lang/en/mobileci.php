@@ -38,6 +38,7 @@ return array(
         'orbit_tour'        => 'ORBIT TOUR',
         'lucky_draws'       => 'LUCKY DRAWS',
         'my_messages'       => 'MY MESSAGES',
+        'my_message'        => 'MY MESSAGE',
     ),
 
     'widgets' => array(
@@ -174,19 +175,21 @@ return array(
     ),
 
     'signup' => array(
-        'first_name' => 'First Name',
-        'last_name' => 'Last Name',
-        'gender' => 'Select Gender',
+        'email_placeholder' => 'Email Address*',
+        'first_name' => 'First Name*',
+        'last_name' => 'Last Name*',
+        'gender' => 'Gender*',
         'male' => 'Male',
         'female' => 'Female',
-        'day' => 'Day',
-        'month' => 'Month',
-        'year' => 'Year',
+        'day' => 'Day*',
+        'month' => 'Month*',
+        'year' => 'Year*',
         'policy_terms_message' => 'By clicking <strong>Sign up</strong> you confirm that you accept
                         <a target="_blank" href="%s">Privacy Policy</a> and
                         <a target="_blank" href="%s">Terms and Conditions</a>',
         'already_have_an_account' => 'Already have an account',
         'fields_are_mandatory' => 'All fields are mandatory',
+        'date_of_birth' => 'Date of Birth',
     ),
 
     'catalogue' => array(
@@ -295,14 +298,15 @@ return array(
     ),
 
     'search' => array(
-        'no_item'        => 'There is no store matching the criteria.',
-        'too_much_items' => 'Search result is too broad, please narrow it down.',
-        'no_result'      => 'Sorry, search has no results.',
-        'error'          => 'There is an error while making the request.',
-        'show_all_result'=> 'Show All Results',
-        'show_by_categories'=> 'Show By Categories',
-        'search_placeholder'=> 'Search here',
-        'all_search_results' => 'All search results',
+        'no_item'               => 'There is no store matching the criteria.',
+        'too_much_items'        => 'Search result is too broad, please narrow it down.',
+        'no_result'             => 'Sorry, search has no results.',
+        'error'                 => 'There is an error while making the request.',
+        'show_all_result'       => 'Show All Results',
+        'show_by_categories'    => 'Show By Categories',
+        'search_placeholder'    => 'Search here',
+        'all_search_results'    => 'All search results',
+        'show_more'             => 'Show more',
     ),
 
     'thank_you' => array(
@@ -426,6 +430,7 @@ return array(
         'prizes_and_winners'        => 'Prizes &amp; Winners',
         'lucky_draw_prizes'         => 'Lucky Draw Prizes',
         'no_prize'                  => 'The prize is coming soon',
+        'lucky_draw_download_title' => 'Download Lucky Draw Number',
     ),
 
     'notification' => array(

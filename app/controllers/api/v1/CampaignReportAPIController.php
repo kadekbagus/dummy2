@@ -192,7 +192,7 @@ class CampaignReportAPIController extends ControllerAPI
                     where campaign_id = {$tablePrefix}news.news_id
                     and location_id = {$this->quote($current_mall)}
                 ) as popup_clicks,
-                {$tablePrefix}news.status"))
+                {$tablePrefix}news.status, CASE WHEN {$tablePrefix}campaign_status.campaign_status_name = 'expired' THEN {$tablePrefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$tablePrefix}news.end_date < {$this->quote($now)} THEN 'expired' ELSE {$tablePrefix}campaign_status.campaign_status_name END) END  AS campaign_status, {$tablePrefix}campaign_status.order"))
                         ->leftJoin('campaign_price', 'campaign_price.campaign_id', '=', 'news.news_id')
                         // Join for get mall name
                         ->leftJoin('merchants as merchants2', 'news.mall_id', '=', DB::raw('merchants2.merchant_id'))
@@ -269,6 +269,8 @@ class CampaignReportAPIController extends ControllerAPI
                         // On
                         DB::raw('tenant.t_campaign_id'), '=', 'news.news_id')
 
+                        ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
+
                         ->where('news.mall_id', '=', $current_mall)
                         ->where('news.object_type', '=', 'news');
 
@@ -298,7 +300,7 @@ class CampaignReportAPIController extends ControllerAPI
                     where campaign_id = {$tablePrefix}news.news_id
                     and location_id = {$this->quote($current_mall)}
                 ) as popup_clicks,
-                {$tablePrefix}news.status"))
+                {$tablePrefix}news.status, CASE WHEN {$tablePrefix}campaign_status.campaign_status_name = 'expired' THEN {$tablePrefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$tablePrefix}news.end_date < {$this->quote($now)} THEN 'expired' ELSE {$tablePrefix}campaign_status.campaign_status_name END) END  AS campaign_status, {$tablePrefix}campaign_status.order"))
                         ->leftJoin('campaign_price', 'campaign_price.campaign_id', '=', 'news.news_id')
                         ->leftJoin('merchants as merchants2', 'news.mall_id', '=', DB::raw('merchants2.merchant_id'))
                         // Joint for get total tenant percampaign
@@ -374,6 +376,8 @@ class CampaignReportAPIController extends ControllerAPI
                         // On
                         DB::raw('tenant.t_campaign_id'), '=', 'news.news_id')
 
+                        ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
+
                         ->where('news.mall_id', '=', $current_mall)
                         ->where('news.object_type', '=', 'promotion');
 
@@ -404,7 +408,7 @@ class CampaignReportAPIController extends ControllerAPI
                     where campaign_id = {$tablePrefix}promotions.promotion_id
                     and location_id = {$this->quote($current_mall)}
                 ) as popup_clicks,
-                {$tablePrefix}promotions.status"))
+                {$tablePrefix}promotions.status, CASE WHEN {$tablePrefix}campaign_status.campaign_status_name = 'expired' THEN {$tablePrefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$tablePrefix}promotions.end_date < {$this->quote($now)} THEN 'expired' ELSE {$tablePrefix}campaign_status.campaign_status_name END) END AS campaign_status, {$tablePrefix}campaign_status.order"))
                         ->leftJoin('campaign_price', 'campaign_price.campaign_id', '=', 'promotions.promotion_id')
                         ->leftJoin('merchants as merchants2', 'promotions.merchant_id', '=', DB::raw('merchants2.merchant_id'))
                         // Joint for get total tenant percampaign
@@ -479,6 +483,9 @@ class CampaignReportAPIController extends ControllerAPI
                             "),
                         // On
                         DB::raw('tenant.t_campaign_id'), '=', 'promotions.promotion_id')
+
+                        ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
+
                         ->where('promotions.merchant_id', '=', $current_mall);
 
             $campaign = $news->unionAll($promotions)->unionAll($coupons);
@@ -514,9 +521,14 @@ class CampaignReportAPIController extends ControllerAPI
                 $campaign->where('mall_name', 'like', "%$mall_name%");
             });
 
-            // Filter by campaign status
-            OrbitInput::get('status', function($status) use ($campaign) {
-                $campaign->whereIn('status', (array)$status);
+            // // Filter by campaign status
+            // OrbitInput::get('status', function($status) use ($campaign) {
+            //     $campaign->whereIn('status', (array)$status);
+            // });
+
+            // Filter coupons by status
+            OrbitInput::get('campaign_status', function ($statuses) use ($campaign, $tablePrefix, $now) {
+                $campaign->whereIn(DB::raw("CASE WHEN campaign_status = 'expired' THEN campaign_status ELSE (CASE WHEN end_date < {$this->quote($now)} THEN 'expired' ELSE campaign_status END) END"), $statuses);
             });
 
             // Filter by range date
@@ -566,6 +578,7 @@ class CampaignReportAPIController extends ControllerAPI
             $_campaign = DB::table(DB::raw('(' . $_campaign_sql . ') as b'));
 
             $query_sum = array(
+                'COUNT(campaign_id) AS total_records',
                 'SUM(page_views) AS page_views',
                 'SUM(popup_views) AS popup_views',
                 'SUM(estimated_total) AS estimated_total',
@@ -573,6 +586,9 @@ class CampaignReportAPIController extends ControllerAPI
             );
 
             $total = $_campaign->selectRaw(implode(',', $query_sum))->get();
+
+            // Get total page views
+            $totalRecords = (int) isset($total[0]->total_records)?$total[0]->total_records:0;
 
             // Get total page views
             $totalPageViews = isset($total[0]->page_views)?$total[0]->page_views:0;
@@ -615,7 +631,7 @@ class CampaignReportAPIController extends ControllerAPI
             // If request page from export (print/csv), showing without page limitation
             $export = OrbitInput::get('export');
 
-            if (!isset($export)){
+            if (!isset($export)) {
                 $campaign->take($take);
                 $campaign->skip($skip);
             }
@@ -644,7 +660,7 @@ class CampaignReportAPIController extends ControllerAPI
                     'daily'           => 'daily',
                     'estimated_total' => 'estimated_total',
                     'spending'        => 'spending',
-                    'status'          => 'status'
+                    'status'          => 'campaign_status'
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];
@@ -659,11 +675,16 @@ class CampaignReportAPIController extends ControllerAPI
 
             $campaign->orderBy($sortBy, $sortMode);
 
+            //with name
+            if ($sortBy !== 'campaign_name') {
+                $campaign->orderBy('campaign_name', 'asc');
+            }
+
             // Return the instance of Query Builder
             if ($this->returnBuilder) {
                 return [
                     'builder' => $campaign,
-                    'count' => $_campaign->count(),
+                    'count' => $totalRecords,
                     'totalPageViews' => $totalPageViews,
                     'totalPopUpViews' => $totalPopupViews,
                     'totalSpending' => $totalSpending,
@@ -671,11 +692,10 @@ class CampaignReportAPIController extends ControllerAPI
                 ];
             }
 
-            $totalCampaign = $_campaign->count();
             $listOfCampaign = $campaign->get();
 
             $data = new stdclass();
-            $data->total_records = $totalCampaign;
+            $data->total_records = $totalRecords;
             $data->total_page_views = $totalPageViews;
             $data->total_pop_up_views = $totalPopupViews;
             $data->total_estimated_cost = $totalEstimated;
@@ -683,7 +703,7 @@ class CampaignReportAPIController extends ControllerAPI
             $data->returned_records = count($listOfCampaign);
             $data->records = $listOfCampaign;
 
-            if ($totalCampaign === 0) {
+            if ($totalRecords == 0) {
                 $data->records = NULL;
                 $this->response->message = Lang::get('statuses.orbit.nodata.coupon');
             }

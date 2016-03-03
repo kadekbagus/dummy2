@@ -27,3 +27,13 @@ Route::get('/app/v1/widget/list', 'IntermediateAuthController@Widget_getSearchWi
  * Delete Widget Image
  */
 Route::post('/app/v1/widget/deleteimage', 'IntermediateAuthController@Widget_postDeleteWidgetImage');
+
+/**
+ * List Widget Templates
+ */
+Route::get('/app/v1/widget-template/list', 'IntermediateAuthController@WidgetTemplate_getSearchWidgetTemplate');
+
+/**
+ * List Setting Widget Templates
+ */
+Route::get('/app/v1/setting-widget-template/list', 'IntermediateAuthController@WidgetTemplate_getSearchSettingWidgetTemplate');

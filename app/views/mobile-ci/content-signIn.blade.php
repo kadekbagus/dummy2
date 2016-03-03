@@ -109,9 +109,9 @@
                         <i class="fa fa-times"></i>
                     </button>
 
-                    <span class="mandatory-label">{{ Lang::get('mobileci.signup.fields_are_mandatory') }}</span>
+                    <span class="mandatory-label" style="display:none;">{{ Lang::get('mobileci.signup.fields_are_mandatory') }}</span>
                     <div class="form-group">
-                        <input type="email" value="{{{ $user_email }}}" class="form-control orbit-auto-login" name="email" id="email" placeholder="{{ Lang::get('mobileci.signin.email_placeholder') }}">
+                        <input type="email" value="{{{ $user_email }}}" class="form-control orbit-auto-login" name="email" id="email" placeholder="{{ Lang::get('mobileci.signup.email_placeholder') }}">
                     </div>
                     <div class="form-group">
                         <input type="text" class="form-control userName" value="" placeholder="{{ Lang::get('mobileci.signup.first_name') }}" name="firstname" id="firstName">
@@ -127,6 +127,11 @@
                         </select>
                     </div>
                     <div class="form-group date-of-birth">
+                        <div class="row">
+                            <div class="col-xs-12">
+                                <b>{{ Lang::get('mobileci.signup.date_of_birth') }}</b>
+                            </div>
+                        </div>
                         <div class="row">
                             <div class="col-xs-4">
                                 <select class="form-control" name="day">
@@ -164,7 +169,7 @@
                             <span>{{{ Lang::get('mobileci.signup.already_have_an_account') }}}? <a href="#" id="sign-in-link">{{{ Lang::get('mobileci.signin.sign_in') }}}</a></span>
                         </div>
                         <div class="col-xs-4 text-right orbit-auto-login">
-                            <input type="submit" name="submit" id="btn-signup-form" class="btn btn-info icon-button form text-center orbit-auto-login" disabled value="{{ Lang::get('mobileci.signin.sign_up') }}">
+                            <input type="submit" name="submit" id="btn-signup-form" class="btn btn-info icon-button form text-center orbit-auto-login" value="{{ Lang::get('mobileci.signin.sign_up') }}">
                         </div>
                     </div>
                 </div>
@@ -242,7 +247,8 @@
                     payload: "{{{ Input::get('payload', '') }}}",
                     mac_address: {{ json_encode(Input::get('mac_address', '')) }},
                     auto_login: "{{{ Input::get('auto_login', 'no') }}}",
-                    from_captive: "{{{ Input::get('from_captive', 'no') }}}"
+                    from_captive: "{{{ Input::get('from_captive', 'no') }}}",
+                    socmed_redirect_to: "{{{ Input::get('socmed_redirect_to', '') }}}"
                 }
             }).done(function (response, status, xhr) {
                 if (response.code !== 0 && response.code !== 302) {
@@ -341,7 +347,8 @@
                     first_name: $('#firstName').val(),
                     last_name: $('#lastName').val(),
                     gender: $('#gender').val(),
-                    birth_date: birthdate.day + '-' + birthdate.month + '-' + birthdate.year
+                    birth_date: birthdate.day + '-' + birthdate.month + '-' + birthdate.year,
+                    socmed_redirect_to: "{{{ Input::get('socmed_redirect_to', '') }}}"
                 }
             }).done(function (resp, status, xhr) {
                 if (resp.status === 'error') {
@@ -427,7 +434,7 @@
         } else {
             $('#signin-form-wrapper').addClass('hide');
             $('#signup-form-wrapper').removeClass('hide');
-            $('#signupForm #firstName').focus();
+            $('#signupForm #email').focus();
         }
     };
 
@@ -486,7 +493,11 @@
      * @return void
      */
     orbitSignUpForm.enableDisableSignup = function() {
-        orbitSignUpForm.dataCompleted = $('#firstName').val() &&
+        $('#signupForm #email, #firstName, #lastName, #gender, #signupForm [name=day], #signupForm [name=month], #signupForm [name=year]').css('border-color', '#ccc');
+        $('.mandatory-label').hide();
+        orbitSignUpForm.dataCompleted = $('#signupForm #email').val() &&
+            isValidEmailAddress($('#signupForm #email').val()) &&
+            $('#firstName').val() &&
             $('#lastName').val() &&
             $('#gender').val() &&
             $('#signupForm [name=day]').val() &&
@@ -494,9 +505,36 @@
             $('#signupForm [name=year]').val();
 
         if (orbitSignUpForm.dataCompleted) {
-            $('#btn-signup-form').removeAttr('disabled');
+            // $('#btn-signup-form').removeAttr('disabled');
+            return true;
         } else {
-            $('#btn-signup-form').attr('disabled', 'disabled');
+            $('.mandatory-label').css('color', 'red').show();
+            if (! isValidEmailAddress($('#signupForm #email').val()))    {
+                $('#signupForm #email').css('border-color', 'red');
+            }
+            if (! $('#signupForm #email').val()) {
+                $('#signupForm #email').css('border-color', 'red');
+            }
+            if (! $('#firstName').val()) {
+                $('#firstName').css('border-color', 'red');
+            }
+            if (! $('#lastName').val()) {
+                $('#lastName').css('border-color', 'red');
+            }
+            if (! $('#gender').val()) {
+                $('#gender').css('border-color', 'red');
+            }
+            if (! $('#signupForm [name=day]').val()) {
+                $('#signupForm [name=day]').css('border-color', 'red');
+            }
+            if (! $('#signupForm [name=month]').val()) {
+                $('#signupForm [name=month]').css('border-color', 'red');
+            }
+            if (! $('#signupForm [name=year]').val()) {
+                $('#signupForm [name=year]').css('border-color', 'red');
+            }
+            // $('#btn-signup-form').attr('disabled', 'disabled');
+            return false;
         }
     }
 
@@ -546,13 +584,13 @@
 
         for (var i=0; i<orbitSignUpForm.formElementsInput.length; i++) {
             $(orbitSignUpForm.formElementsInput[i]).keyup(function(e) {
-                orbitSignUpForm.enableDisableSignup();
+                // orbitSignUpForm.enableDisableSignup();
             });
         }
 
         for (var i=0; i<orbitSignUpForm.formElementsSelect.length; i++) {
             $(orbitSignUpForm.formElementsSelect[i]).change(function(e) {
-                orbitSignUpForm.enableDisableSignup();
+                // orbitSignUpForm.enableDisableSignup();
             });
         }
 
@@ -603,7 +641,11 @@
         });
 
         $('#btn-signup-form').click(function(e) {
-            orbitSignUpForm.doRegister();
+            console.log('ooo');
+            if(orbitSignUpForm.enableDisableSignup()) {
+                console.log('ppp');
+                orbitSignUpForm.doRegister();
+            }
             return false;
         });
 

@@ -122,9 +122,6 @@ class CampaignReportPrinterController extends DataPrinterController
                     foreach ($status as $key => $valstatus){
                         $statusString .= $valstatus . ', ';
                     }
-                    echo htmlentities(rtrim($statusString, ', '));
-
-
                     printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Status', htmlentities(rtrim($statusString, ', ')), '', '', '','');
                 }
 

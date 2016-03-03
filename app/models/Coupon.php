@@ -12,6 +12,7 @@ class Coupon extends Eloquent
      * with `status` field.
      */
     use ModelStatusTrait;
+    use CampaignStatusTrait;
 
     /**
      * Use Trait PromotionTypeTrait so we only displaying records with value
@@ -271,5 +272,24 @@ class Coupon extends Eloquent
     public function scopeOfRunningDate($query, $date)
     {
         return $query->where('begin_date', '<=', $date)->where('end_date', '>=', $date);
+    }
+
+    /**
+     * Campaign Status scope
+     *
+     * @author Irianto <irianto@dominopos.com>
+     * @todo change campaign status to expired when over the end date
+     */
+    public function scopeCampaignStatus($query, $campaign_status, $mallTime)
+    {
+        $prefix = DB::getTablePrefix();
+
+        return $query->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
+                     ->where(DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$prefix}promotions.end_date < {$this->quote($mallTime)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END"), $campaign_status);
+    }
+
+    protected function quote($arg)
+    {
+        return DB::connection()->getPdo()->quote($arg);
     }
 }
