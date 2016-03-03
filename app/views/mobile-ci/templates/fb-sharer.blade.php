@@ -9,9 +9,11 @@
 		@if(! empty($data->image_url))
 		<meta property="og:image"         content="{{asset($data->image_url)}}" />
 		@endif
+		@if(! empty($data->image_url))
 		@if(! empty($data->image_dimension))
 		<meta property="og:image:width"   content="{{$data->image_dimension[0]}}" />
 		<meta property="og:image:height"  content="{{$data->image_dimension[1]}}" />
+		@endif
 		@endif
     </head>
     <body>

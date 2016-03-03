@@ -34,7 +34,7 @@ return [
             'View Coupon Redemption Places',
             'Coupon Issuance',
             'Read Coupon Issuance Notification',
-            'Coupon Redemption Successful',
+            'Coupon Redemption (Successful)',
         ],
         'Lucky Draws' => [
             'Widget Click Lucky Draw',

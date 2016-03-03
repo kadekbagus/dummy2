@@ -72,3 +72,8 @@ Route::post('/app/v1/membership/update', 'IntermediateAuthController@User_postUp
  * Delete Membership
  */
 Route::post('/app/v1/membership/delete', 'IntermediateAuthController@User_postDeleteMembership');
+
+/**
+ * User Report Listing
+ */
+Route::get('/app/v1/user-report/list', 'IntermediateAuthController@UserReport_getUserReport');
