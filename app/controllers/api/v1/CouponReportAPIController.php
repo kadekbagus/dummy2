@@ -877,11 +877,6 @@ class CouponReportAPIController extends ControllerAPI
                 $sortBy = $sortByMapping[$_sortBy];
             });
 
-            // sort by status first
-            if ($sortBy !== 'promotion_name') {
-                $coupons->orderBy('promotion_name', 'asc');
-            }
-
             OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
             {
                 if (strtolower($_sortMode) !== 'asc') {
@@ -890,6 +885,11 @@ class CouponReportAPIController extends ControllerAPI
             });
 
             $coupons->orderBy($sortBy, $sortMode);
+
+            // sort by status first
+            if ($sortBy !== 'promotion_name') {
+                $coupons->orderBy('promotion_name', 'asc');
+            }
 
             // Return the instance of Query Builder
             if ($this->returnBuilder) {
