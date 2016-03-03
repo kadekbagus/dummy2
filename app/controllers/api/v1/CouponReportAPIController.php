@@ -1415,7 +1415,7 @@ class CouponReportAPIController extends ControllerAPI
                 ),
                 array(
                     'current_mall' => 'required|orbit.empty.mall',
-                    'sort_by' => 'in:promotion_id,promotion_name,begin_date,end_date,user_email,issued_coupon_code,redeemed_date,issued_date,redeem_verification_code,total_issued,total_redeemed, gender, age, redemtion_place, status',
+                    'sort_by' => 'in:promotion_id,promotion_name,begin_date,end_date,user_email,issued_coupon_code,redeemed_date,issued_date,redeem_verification_code,total_issued,total_redeemed,gender,age,redemption_place,status',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.couponreportbytenant_sortby'),
@@ -1514,11 +1514,8 @@ class CouponReportAPIController extends ControllerAPI
             } elseif ($redeemedBy === 'all') {
                 $coupons = IssuedCoupon::select('issued_coupons.*', 'promotions.begin_date', 'promotions.end_date',
                                             DB::raw("CASE WHEN {$prefix}user_details.gender = 'f' THEN 'female' WHEN 'm' THEN 'male' ELSE 'unknown' END AS gender"),
-                                            DB::raw("CASE WHEN ({$prefix}user_details.birthdate IS NOT NULL AND {$prefix}user_details.birthdate != '')
-                                                    THEN DATE_FORMAT(NOW(), '%Y') - DATE_FORMAT({$prefix}user_details.birthdate, '%Y') - (DATE_FORMAT(NOW(), '00-%m-%d') < DATE_FORMAT({$prefix}user_details.birthdate, '00-%m-%d'))
-                                                    ELSE 'unknown'
-                                                END AS age"),
-                                            DB::raw("CASE WHEN {$prefix}issued_coupons.redeem_user_id IS NOT NULL THEN CONCAT({$prefix}users.user_firstname, ' ', {$prefix}users.user_lastname) ELSE {$prefix}merchants.name END AS redemtion_place"))
+                                            DB::raw("IFNULL(timestampdiff(year, {$prefix}user_details.birthdate, curdate()), 'unknown') AS age"),
+                                            DB::raw("CASE WHEN {$prefix}issued_coupons.redeem_user_id IS NOT NULL THEN CONCAT({$prefix}users.user_firstname, ' ', {$prefix}users.user_lastname) ELSE {$prefix}merchants.name END AS redemption_place"))
                                        ->join('promotions', 'promotions.promotion_id', '=', 'issued_coupons.promotion_id')
                                        ->leftJoin('user_details', 'user_details.user_id', '=', 'issued_coupons.user_id')
                                        ->leftJoin('merchants', 'merchants.merchant_id', '=', 'issued_coupons.redeem_retailer_id')
@@ -1618,10 +1615,7 @@ class CouponReportAPIController extends ControllerAPI
 
             // Filter by age
             OrbitInput::get('customer_age', function($age) use ($coupons, $prefix) {
-                $coupons->where(DB::raw("CASE WHEN ({$prefix}user_details.birthdate IS NOT NULL AND {$prefix}user_details.birthdate != '')
-                        THEN DATE_FORMAT(NOW(), '%Y') - DATE_FORMAT({$prefix}user_details.birthdate, '%Y') - (DATE_FORMAT(NOW(), '00-%m-%d') < DATE_FORMAT({$prefix}user_details.birthdate, '00-%m-%d'))
-                        ELSE 'unknown'
-                    END"), $age);
+                $coupons->where(DB::raw("IFNULL(timestampdiff(year, {$prefix}user_details.birthdate, curdate()), 'unknown')"), $age);
             });
 
             // Filter by redemption place
@@ -1660,7 +1654,7 @@ class CouponReportAPIController extends ControllerAPI
                 "COUNT(issued_coupon_id) AS total_record",
                 "COUNT(DISTINCT(user_id)) AS total_acquiring_customers",
                 "DATEDIFF((CASE WHEN {$this->quote($now)} < DATE_FORMAT(end_date, '%Y-%m-%d') THEN {$this->quote($now)} ELSE DATE_FORMAT(end_date, '%Y-%m-%d') END), DATE_FORMAT(begin_date, '%Y-%m-%d'))+1 AS total_active_days",
-                "COUNT(DISTINCT(redemtion_place)) AS total_redemtion_place"
+                "COUNT(DISTINCT(redemption_place)) AS total_redemption_place"
             );
 
             $total = $_coupons->selectRaw(implode(',', $query_sum))->get();
@@ -1672,7 +1666,7 @@ class CouponReportAPIController extends ControllerAPI
             // Get total active days
             $totalActiveDays = isset($total[0]->total_active_days)?$total[0]->total_active_days:0;
             // Get total redemption place
-            $totalRedemtionPlace = isset($total[0]->total_redemtion_place)?$total[0]->total_redemtion_place:0;
+            $totalRedemptionPlace = isset($total[0]->total_redemption_place)?$total[0]->total_redemption_place:0;
 
             // if not printing / exporting data then do pagination.
             if (! $this->returnBuilder) {
@@ -1724,7 +1718,7 @@ class CouponReportAPIController extends ControllerAPI
                     'total_redeemed'            => 'total_redeemed',
                     'gender'                    => 'gender',
                     'age'                       => 'age',
-                    'redemtion_place'           => 'redemtion_place',
+                    'redemption_place'          => 'redemption_place',
                     'status'                    => 'issued_coupons.status',
                 );
 
@@ -1738,7 +1732,11 @@ class CouponReportAPIController extends ControllerAPI
                 }
             });
 
-            $coupons->orderBy($sortBy, $sortMode);
+            if ($sortBy === 'age') {
+                $coupons->orderByRaw('CAST(age AS UNSIGNED) ' . $sortMode);
+            } else {
+                $coupons->orderBy($sortBy, $sortMode);
+            }
 
             // include sorting coupon code
             if ($sortBy !== 'issued_coupons.issued_coupon_code') {
@@ -1753,7 +1751,7 @@ class CouponReportAPIController extends ControllerAPI
                             'total_coupons' => $totalRecord,
                             'total_acquiring_customers' => $totalAcquiringCustomers,
                             'total_active_days' => $totalActiveDays,
-                            'total_redemtion_place' => $totalRedemtionPlace,
+                            'total_redemption_place' => $totalRedemptionPlace,
                         ];
             }
 
@@ -1765,7 +1763,7 @@ class CouponReportAPIController extends ControllerAPI
             $data->total_coupons = $totalRecord;
             $data->total_acquiring_customers = $totalAcquiringCustomers;
             $data->total_active_days = $totalActiveDays;
-            $data->total_redemtion_place = $totalRedemtionPlace;
+            $data->total_redemption_place = $totalRedemptionPlace;
             $data->records = $listOfCoupons;
 
             if ($totalRecord === 0) {
