@@ -414,7 +414,6 @@ class CouponReportAPIController extends ControllerAPI
                     $take = $maxRecord;
                 }
             });
-            $coupons->take($take);
 
             // skip, and order by
             $skip = 0;
@@ -877,11 +876,6 @@ class CouponReportAPIController extends ControllerAPI
                 $sortBy = $sortByMapping[$_sortBy];
             });
 
-            // sort by status first
-            if ($sortBy !== 'promotion_name') {
-                $coupons->orderBy('promotion_name', 'asc');
-            }
-
             OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
             {
                 if (strtolower($_sortMode) !== 'asc') {
@@ -890,6 +884,11 @@ class CouponReportAPIController extends ControllerAPI
             });
 
             $coupons->orderBy($sortBy, $sortMode);
+
+            // sort by status first
+            if ($sortBy !== 'promotion_name') {
+                $coupons->orderBy('promotion_name', 'asc');
+            }
 
             // Return the instance of Query Builder
             if ($this->returnBuilder) {
@@ -1633,6 +1632,11 @@ class CouponReportAPIController extends ControllerAPI
             // Filter by gender
             OrbitInput::get('customer_gender', function($gender) use ($coupons, $prefix) {
                 $coupons->whereIn(DB::raw("CASE WHEN {$prefix}user_details.gender = 'f' THEN 'female' WHEN 'm' THEN 'male' ELSE 'unknown' END"), $gender);
+            });
+
+            // Filter by status
+            OrbitInput::get('status', function($data) use ($coupons) {
+                $coupons->where('issued_coupons.status', $data);
             });
 
             // Clone the query builder which still does not include the take,
