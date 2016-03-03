@@ -314,7 +314,7 @@ class SocMedMobileCIAPIController extends BaseCIController
         if (empty($coupon->image)) {
             $data->image_url = NULL;
         } else {
-            if (strpos($data->image, 'default_coupon.png') > 0) {
+            if (strpos($coupon->image, 'default_coupon.png') > 0) {
                 $data->image_url = NULL;
             } else {
                 $data->image_url = $coupon->image;
