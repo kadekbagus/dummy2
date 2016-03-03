@@ -95,11 +95,12 @@ class CouponReportPrinterController extends DataPrinterController
                 @header('Content-Type: text/csv');
                 @header('Content-Disposition: attachment; filename=' . OrbitText::exportFilename($pageTitle, '.csv', $timezoneCurrentMall));
 
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Coupon Summary Report', '', '', '', '', '');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
+
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Coupon Campaigns', $totalCoupons, '', '', '', '','','','');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','');
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Issued Coupons', $totalIssued, '', '', '', '','','','');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','');
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Redeemed Coupons', $totalRedeemed, '', '', '', '','','','');
 
                 // Filtering
@@ -121,13 +122,13 @@ class CouponReportPrinterController extends DataPrinterController
 
                         $rule_type = $val_rule_type;
                         if ($rule_type === 'auto_issue_on_first_signin') {
-                            $rule_type = 'Coupon blast upon first sign in';
+                            $rule_type = 'coupon blast upon first sign in';
                         } elseif ($rule_type === 'auto_issue_on_signup') {
-                            $rule_type = 'Coupon blast upon sign up';
+                            $rule_type = 'coupon blast upon sign up';
                         } elseif ($rule_type === 'auto_issue_on_every_signin') {
-                            $rule_type = 'Coupon blast upon every sign in';
+                            $rule_type = 'coupon blast upon every sign in';
                         } elseif ($rule_type === 'manual') {
-                            $rule_type = 'Manual issued';
+                            $rule_type = 'manual issued';
                         }
 
                         $rule_type_string .= $rule_type . ', ';
