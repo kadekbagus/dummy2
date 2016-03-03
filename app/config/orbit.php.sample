@@ -2764,6 +2764,8 @@ return array(
     ),
 
     // The grouping of the following items is located in /app/config/orbit_activity.php
+    // key   = db:activities.activity_name_long
+    // value = alias
     'activity_columns' => array(
         'Network Check In'                             => 'Network Check In',
         'Network Check Out'                            => 'Network Check Out',
