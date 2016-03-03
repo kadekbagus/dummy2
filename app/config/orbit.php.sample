@@ -314,6 +314,12 @@ return array(
             'per_page'      => 15,
             'max_record'    => 100,
         ),
+
+        // User Report
+        'user_report' => array(
+            'per_page'      => 15,
+            'max_record'    => 100,
+        ),
     ),
 
     'registration' => array(
@@ -2819,7 +2825,8 @@ return array(
             'mall_membership',
             'mall_crm_detail',
             'mall_crm_summary',
-            'mall_consumer'
+            'mall_consumer',
+            'mall_user_report'
         ),
         'pmp' => array(
             'pmp_dashboard',
