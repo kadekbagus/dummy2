@@ -2958,6 +2958,7 @@ class ActivityAPIController extends ControllerAPI
      * @param date    `start_date`    (required) - start date
      * @param date    `end_date`      (required) - end date
      * @return Illuminate\Support\Facades\Response
+     * @todo Change $activityGroupSearch to something else
      */
     public function getCRMSummaryReport()
     {
@@ -3077,11 +3078,18 @@ class ActivityAPIController extends ControllerAPI
                 }
             }
 
-            if ($activityGroupSearch) {
-                $column = Config::get('orbit.activity_columns.'.ucwords($activityGroupSearch));
+            $columns = [];
 
-                if ($column) {
-                    $activityKeys[] = $column;
+            // e.g. 'Email sign up'
+            // It's case insensitive
+            if ($activityGroupSearch) {
+                $lowerActivityGroupSearch = strtolower($activityGroupSearch);
+                $lowerActivityColumns = array_map('strtolower', Config::get('orbit.activity_columns'));
+
+                $activityKey = array_search($lowerActivityGroupSearch, $lowerActivityColumns);
+                if ($activityKey) {
+                    $columns = array_merge($columns, [$activityKey => Config::get('orbit.activity_columns.'.$activityKey)]);
+                    $activityKeys[] = $activityKey;
                 }
             }
 
@@ -3094,7 +3102,6 @@ class ActivityAPIController extends ControllerAPI
 
             $responses = [];
             $records = [];
-            $columns = [];
 
             // sel = selected
             $selActivityGroups = $activityGroups;
@@ -3112,25 +3119,6 @@ class ActivityAPIController extends ControllerAPI
                     foreach ($selActivityGroupArray as $key) {
                         $columns = array_merge($columns, [$key => Config::get('orbit.activity_columns.'.$key)]);
                     }
-                }
-            }
-
-            // e.g. 'Email sign up'
-            if ($activityGroupSearch) {
-                $activityColumns = Config::get('orbit.activity_columns');
-                
-                $activityColumnsKeys = array_keys($activityColumns);
-
-                $lowerActivityColumns = array_change_key_case($activityColumns, CASE_LOWER);
-                $lowerActivityGroupSearch = strtolower($activityGroupSearch);
-                
-                // Compare them after being lowered
-                $columnKey = array_search($lowerActivityGroupSearch, array_keys($lowerActivityColumns));
-
-                // Column found
-                if ($columnKey !== false) {
-                    $key = $activityColumnsKeys[$columnKey];
-                    $columns = array_merge($columns, [$key => $activityColumns[$key]]);
                 }
             }
 
