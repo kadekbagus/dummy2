@@ -114,7 +114,7 @@
 
         <?php if ($tenant_name != '') { ?>
             <tr>
-                <td>Filter by Coupon Name</td>
+                <td>Filter by Tenant Name</td>
                 <td>:</td>
                 <td><strong><?php echo htmlentities($tenant_name); ?></strong></td>
             </tr>

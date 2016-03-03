@@ -1724,7 +1724,7 @@ class CouponReportAPIController extends ControllerAPI
                     'total_redeemed'            => 'total_redeemed',
                     'gender'                    => 'gender',
                     'age'                       => 'age',
-                    'redemption_place'           => 'redemption_place',
+                    'redemption_place'          => 'redemption_place',
                     'status'                    => 'issued_coupons.status',
                 );
 
@@ -1738,7 +1738,11 @@ class CouponReportAPIController extends ControllerAPI
                 }
             });
 
-            $coupons->orderBy($sortBy, $sortMode);
+            if ($sortBy === 'age') {
+                $coupons->orderByRaw('CAST(age AS UNSIGNED) ' . $sortMode);
+            } else {
+                $coupons->orderBy($sortBy, $sortMode);
+            }
 
             // include sorting coupon code
             if ($sortBy !== 'issued_coupons.issued_coupon_code') {
