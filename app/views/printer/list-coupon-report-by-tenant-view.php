@@ -118,11 +118,11 @@
             </tr>
         <?php } ?>
 
-        <?php if ($redemtionPlace != '') { ?>
+        <?php if ($redemptionPlace != '') { ?>
             <tr>
-                <td>Filter by Redemtion Place</td>
+                <td>Filter by Redemption Place</td>
                 <td>:</td>
-                <td><strong><?php echo htmlentities($redemtionPlace); ?></strong></td>
+                <td><strong><?php echo htmlentities($redemptionPlace); ?></strong></td>
             </tr>
         <?php } ?>
 
@@ -170,7 +170,7 @@
             <th style="text-align:left;">Customer Gender</th>
             <th style="text-align:left;">Issued Date</th>
             <th style="text-align:left;">Redeemed Date</th>
-            <th style="text-align:left;">Redemtion Place</th>
+            <th style="text-align:left;">Redemption Place</th>
             <th style="text-align:left;">Status</th>
         </thead>
         <tbody>
@@ -182,7 +182,7 @@
                 <td><?php echo htmlentities(($row->gender)); ?></td>
                 <td><?php echo htmlentities(($row->issued_date)); ?></td>
                 <td><?php echo htmlentities(($row->redeemed_date)); ?></td>
-                <td><?php echo htmlentities(($row->redemtion_place)); ?></td>
+                <td><?php echo htmlentities(($row->redemption_place)); ?></td>
                 <td><?php echo htmlentities(($row->status)); ?></td>
             </tr>
         <?php endwhile; ?>

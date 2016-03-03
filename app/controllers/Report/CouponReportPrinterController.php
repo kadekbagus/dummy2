@@ -286,7 +286,7 @@ class CouponReportPrinterController extends DataPrinterController
         //Filter
         $couponCode = OrbitInput::get('issued_coupon_code');
         $customerAge = OrbitInput::get('customer_age');
-        $redemtionPlace = OrbitInput::get('redemption_place');
+        $redemptionPlace = OrbitInput::get('redemption_place');
         $customerGender = OrbitInput::get('customer_gender');
         $issuedDateGte = OrbitInput::get('issued_date_gte');
         $issuedDateLte = OrbitInput::get('issued_date_lte');
@@ -311,7 +311,7 @@ class CouponReportPrinterController extends DataPrinterController
         $totalRecord = $response['totalRecord'];
         $totalAcquiringCustomers = $response['total_acquiring_customers'];
         $totalActiveDays = $response['total_active_days'];
-        $totalRedemtionPlace = $response['total_redemtion_place'];
+        $totalRedemptionPlace = $response['total_redemption_place'];
 
         $this->prepareUnbufferedQuery();
 
@@ -342,7 +342,7 @@ class CouponReportPrinterController extends DataPrinterController
                 printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Active Days', $totalActiveDays, '', '', '', '', '');
 
                 printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Redemtion Place', $totalRedemtionPlace, '', '', '', '', '');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Redemption Place', $totalRedemptionPlace, '', '', '', '', '');
 
                 // Filtering
                 if ($couponCode != '') {
@@ -357,8 +357,8 @@ class CouponReportPrinterController extends DataPrinterController
                     printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Customer Gender', htmlentities($customerGender), '', '', '', '', '');
                 }
 
-                if ($redemtionPlace != '') {
-                    printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Redemtion Place', htmlentities($redemtionPlace), '', '', '', '', '');
+                if ($redemptionPlace != '') {
+                    printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Redemption Place', htmlentities($redemptionPlace), '', '', '', '', '');
                 }
 
                 if ($issuedDateGte != '' && $issuedDateLte != ''){
@@ -382,7 +382,7 @@ class CouponReportPrinterController extends DataPrinterController
                 }
 
                 printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Coupon Code', 'Customer Age', 'Customer Gender', 'Issued Date', 'Redeemed Date', 'Redemtion Place', 'Coupon Status');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Coupon Code', 'Customer Age', 'Customer Gender', 'Issued Date', 'Redeemed Date', 'Redemption Place', 'Coupon Status');
                 printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
 
                 $count = 1;
@@ -394,7 +394,7 @@ class CouponReportPrinterController extends DataPrinterController
                             $row->gender,
                             $row->issued_date,
                             $row->redeemed_date,
-                            $row->redemtion_place,
+                            $row->redemption_place,
                             $row->status
                     );
                     $count++;
