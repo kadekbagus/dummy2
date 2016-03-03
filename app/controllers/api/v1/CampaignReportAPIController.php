@@ -703,7 +703,7 @@ class CampaignReportAPIController extends ControllerAPI
             $data->returned_records = count($listOfCampaign);
             $data->records = $listOfCampaign;
 
-            if ($totalRecords === 0) {
+            if ($totalRecords == 0) {
                 $data->records = NULL;
                 $this->response->message = Lang::get('statuses.orbit.nodata.coupon');
             }

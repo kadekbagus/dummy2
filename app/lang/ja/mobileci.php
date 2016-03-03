@@ -175,19 +175,21 @@ return array(
     ),
 
     'signup' => array(
-        'first_name' => 'ファーストネーム',
-        'last_name' => '苗字',
-        'gender' => '選択ジェンダー',
+        'email_placeholder' => '電子メールアドレス*',
+        'first_name' => 'ファーストネーム*',
+        'last_name' => '苗字*',
+        'gender' => '選択ジェンダー*',
         'male' => '男性',
         'female' => '女性',
-        'day' => '日',
-        'month' => '月',
-        'year' => '年',
+        'day' => '日*',
+        'month' => '月*',
+        'year' => '年*',
         'policy_terms_message' => '<strong>サインアップ</strong>クリックすると、あなたは
             <a target="_blank" href="%s">プライバシーポリシーと利用規約に同意するこ</a>と
             <a target="_blank" href="%s">を確認します</a>',
         'already_have_an_account' => 'すでにアカウントをお持ちですか',
         'fields_are_mandatory' => 'すべてのフィールドが必須です',
+        'date_of_birth' => '生年月日',
     ),
 
     'catalogue' => array(

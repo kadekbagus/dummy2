@@ -175,19 +175,21 @@ return array(
     ),
 
     'signup' => array(
-        'first_name' => 'Nama Depan',
-        'last_name' => 'Nama Belakang',
-        'gender' => 'Jenis Kelamin',
+        'email_placeholder' => 'Alamat Email*',
+        'first_name' => 'Nama Depan*',
+        'last_name' => 'Nama Belakang*',
+        'gender' => 'Jenis Kelamin*',
         'male' => 'Laki Laki',
         'female' => 'Perempuan',
-        'day' => 'Hari',
-        'month' => 'Bulan',
-        'year' => 'Tahun',
+        'day' => 'Hari*',
+        'month' => 'Bulan*',
+        'year' => 'Tahun*',
         'policy_terms_message' => 'Dengan mengklik <strong>Daftar</strong> berarti anda setuju dengan
                         <a target="_blank" href="%s">Kebijakan</a> dan 
                         <a target="_blank" href="%s">Syarat dan ketentuan</a>',
         'already_have_an_account' => 'Sudah punya akun',
         'fields_are_mandatory' => 'Semua kolom wajib diisi',
+        'date_of_birth' => 'Tanggal Lahir',
     ),
 
     'catalogue'         => array(
