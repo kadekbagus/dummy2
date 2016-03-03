@@ -261,7 +261,7 @@
                     <td><?php echo number_format($row->daily, 0); ?></td>
                     <td><?php echo number_format($row->estimated_total, 0); ?></td>
                     <td><?php echo number_format($row->spending, 0); ?></td>
-                    <td><?php echo $row->status; ?></td>
+                    <td><?php echo $row->campaign_status; ?></td>
                 </tr>
             <?php endwhile ; ?>
         </tbody>
