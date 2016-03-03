@@ -1415,7 +1415,7 @@ class CouponReportAPIController extends ControllerAPI
                 ),
                 array(
                     'current_mall' => 'required|orbit.empty.mall',
-                    'sort_by' => 'in:promotion_id,promotion_name,begin_date,end_date,user_email,issued_coupon_code,redeemed_date,issued_date,redeem_verification_code,total_issued,total_redeemed, gender, age, redemption_place, status',
+                    'sort_by' => 'in:promotion_id,promotion_name,begin_date,end_date,user_email,issued_coupon_code,redeemed_date,issued_date,redeem_verification_code,total_issued,total_redeemed,gender,age,redemption_place,status',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.couponreportbytenant_sortby'),
