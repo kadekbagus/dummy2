@@ -309,7 +309,7 @@ class CouponReportPrinterController extends DataPrinterController
 
         $coupons = $response['builder'];
         $totalCoupons = $response['count'];
-        $totalRecord = $response['totalRecord'];
+        $totalRecord = $response['total_coupons'];
         $totalAcquiringCustomers = $response['total_acquiring_customers'];
         $totalActiveDays = $response['total_active_days'];
         $totalRedemptionPlace = $response['total_redemption_place'];
@@ -369,34 +369,53 @@ class CouponReportPrinterController extends DataPrinterController
                     if ($startDate === $endDate) {
                         $dateRange = $startDate;
                     }
-                    printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Issued Date', $dateRange, '', '', '', '','','','');
+                    printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Issued Date', $dateRange, '', '', '', '','');
                 }
 
                 if ($redeemedDateGte != '' && $redeemedDateLte != ''){
-                    $startDate = date('d M Y', strtotime($redeemedDateG));
-                    $endDate = date('d M Y', strtotime($redeemedDateL));
+                    $startDate = date('d M Y', strtotime($redeemedDateGte));
+                    $endDate = date('d M Y', strtotime($redeemedDateLte));
                     $dateRange = $startDate . ' - ' . $endDate;
                     if ($startDate === $endDate) {
                         $dateRange = $startDate;
                     }
-                    printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Redeemed Date', $dateRange, '', '', '', '','','','');
+                    printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Redeemed Date', $dateRange, '', '', '', '', '');
                 }
 
-                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '');
                 printf("%s,%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Coupon Code', 'Customer Age', 'Customer Gender', 'Issued Date', 'Redeemed Date', 'Redemption Place', 'Coupon Status');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '');
 
                 $count = 1;
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
-                    printf("\"%s\",\"%s\",\"%s\",\"=\"\"%s\"\"\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
+                    
+                    if ($row->status === 'active') {
+                        $stat = 'ISSUED';
+                    } else {
+                        $stat = strtoupper($row->status);
+                    }
+
+                    if (empty($row->redeemed_date)) {
+                        $dateRedeem = '--';
+                    } else {
+                        $dateRedeem = date('d M Y', strtotime($row->redeemed_date));
+                    }
+
+                    if (empty($row->redemption_place)) {
+                        $place = '--';
+                    } else {
+                        $place = $row->redemption_place;
+                    }
+
+                    printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
                             $count,
                             $row->issued_coupon_code,
                             $row->age,
                             $row->gender,
-                            $row->issued_date,
-                            $row->redeemed_date,
-                            $row->redemption_place,
-                            $row->status
+                            date('d M Y', strtotime($row->issued_date)),
+                            $dateRedeem,
+                            $place,
+                            $stat
                     );
                     $count++;
                 }

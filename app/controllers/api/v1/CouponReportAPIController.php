@@ -1514,10 +1514,7 @@ class CouponReportAPIController extends ControllerAPI
             } elseif ($redeemedBy === 'all') {
                 $coupons = IssuedCoupon::select('issued_coupons.*', 'promotions.begin_date', 'promotions.end_date',
                                             DB::raw("CASE WHEN {$prefix}user_details.gender = 'f' THEN 'female' WHEN 'm' THEN 'male' ELSE 'unknown' END AS gender"),
-                                            DB::raw("CASE WHEN ({$prefix}user_details.birthdate IS NOT NULL AND {$prefix}user_details.birthdate != '')
-                                                    THEN DATE_FORMAT(NOW(), '%Y') - DATE_FORMAT({$prefix}user_details.birthdate, '%Y') - (DATE_FORMAT(NOW(), '00-%m-%d') < DATE_FORMAT({$prefix}user_details.birthdate, '00-%m-%d'))
-                                                    ELSE 'unknown'
-                                                END AS age"),
+                                            DB::raw("IFNULL(timestampdiff(year, {$prefix}user_details.birthdate, curdate()), 'unknown') AS age"),
                                             DB::raw("CASE WHEN {$prefix}issued_coupons.redeem_user_id IS NOT NULL THEN CONCAT({$prefix}users.user_firstname, ' ', {$prefix}users.user_lastname) ELSE {$prefix}merchants.name END AS redemption_place"))
                                        ->join('promotions', 'promotions.promotion_id', '=', 'issued_coupons.promotion_id')
                                        ->leftJoin('user_details', 'user_details.user_id', '=', 'issued_coupons.user_id')
@@ -1618,10 +1615,7 @@ class CouponReportAPIController extends ControllerAPI
 
             // Filter by age
             OrbitInput::get('customer_age', function($age) use ($coupons, $prefix) {
-                $coupons->where(DB::raw("CASE WHEN ({$prefix}user_details.birthdate IS NOT NULL AND {$prefix}user_details.birthdate != '')
-                        THEN DATE_FORMAT(NOW(), '%Y') - DATE_FORMAT({$prefix}user_details.birthdate, '%Y') - (DATE_FORMAT(NOW(), '00-%m-%d') < DATE_FORMAT({$prefix}user_details.birthdate, '00-%m-%d'))
-                        ELSE 'unknown'
-                    END"), $age);
+                $coupons->where(DB::raw("IFNULL(timestampdiff(year, {$prefix}user_details.birthdate, curdate()), 'unknown')"), $age);
             });
 
             // Filter by redemption place
@@ -1724,7 +1718,7 @@ class CouponReportAPIController extends ControllerAPI
                     'total_redeemed'            => 'total_redeemed',
                     'gender'                    => 'gender',
                     'age'                       => 'age',
-                    'redemption_place'           => 'redemption_place',
+                    'redemption_place'          => 'redemption_place',
                     'status'                    => 'issued_coupons.status',
                 );
 
@@ -1738,7 +1732,11 @@ class CouponReportAPIController extends ControllerAPI
                 }
             });
 
-            $coupons->orderBy($sortBy, $sortMode);
+            if ($sortBy === 'age') {
+                $coupons->orderByRaw('CAST(age AS UNSIGNED) ' . $sortMode);
+            } else {
+                $coupons->orderBy($sortBy, $sortMode);
+            }
 
             // include sorting coupon code
             if ($sortBy !== 'issued_coupons.issued_coupon_code') {
