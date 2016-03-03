@@ -3147,7 +3147,7 @@ class ActivityAPIController extends ControllerAPI
                     if ( $y->activity_date === $value ) {
 
                         $date = [];
-                        $date['name'] = $y->activity_name_long;
+                        $date['name'] = isset($columns[$y->activity_name_long]) ? $columns[$y->activity_name_long] : $y->activity_name_long;
                         $date['count'] = ($this->returnBuilder) ? $y->count : number_format($y->count, 0,'.','.');
 
                         $responses[$value][] = $date;
