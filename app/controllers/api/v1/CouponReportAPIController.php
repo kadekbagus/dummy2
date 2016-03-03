@@ -414,7 +414,6 @@ class CouponReportAPIController extends ControllerAPI
                     $take = $maxRecord;
                 }
             });
-            $coupons->take($take);
 
             // skip, and order by
             $skip = 0;
