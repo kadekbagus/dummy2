@@ -92,6 +92,21 @@
             <td>:</td>
             <td><strong><?php echo number_format($totalCoupons, 0, '.', '.'); ?></strong></td>
         </tr>
+        <tr>
+            <td>Total Acquiring Customers</td>
+            <td>:</td>
+            <td><strong><?php echo number_format($totalAcquiringCustomers, 0, '.', '.'); ?></strong></td>
+        </tr>
+        <tr>
+            <td>Total Active Days</td>
+            <td>:</td>
+            <td><strong><?php echo number_format($totalActiveDays, 0, '.', '.'); ?></strong></td>
+        </tr>
+        <tr>
+            <td>Total Redemption Place</td>
+            <td>:</td>
+            <td><strong><?php echo number_format($totalRedemptionPlace, 0, '.', '.'); ?></strong></td>
+        </tr>
 
         <!-- Filtering -->
         <?php if ($couponCode != '') { ?>

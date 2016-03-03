@@ -372,8 +372,8 @@ class CouponReportPrinterController extends DataPrinterController
                 }
 
                 if ($redeemedDateGte != '' && $redeemedDateLte != ''){
-                    $startDate = date('d M Y', strtotime($redeemedDateG));
-                    $endDate = date('d M Y', strtotime($redeemedDateL));
+                    $startDate = date('d M Y', strtotime($redeemedDateGte));
+                    $endDate = date('d M Y', strtotime($redeemedDateLte));
                     $dateRange = $startDate . ' - ' . $endDate;
                     if ($startDate === $endDate) {
                         $dateRange = $startDate;
@@ -397,7 +397,7 @@ class CouponReportPrinterController extends DataPrinterController
                     if (empty($row->redeemed_date)) {
                         $dateRedeem = '--';
                     } else {
-                        $dateRedeem = $row->redeemed_date;
+                        $dateRedeem = date('d M Y', strtotime($row->redeemed_date));
                     }
 
                     if (empty($row->redemption_place)) {
@@ -406,12 +406,12 @@ class CouponReportPrinterController extends DataPrinterController
                         $place = $row->redemption_place;
                     }
 
-                    printf("\"%s\",\"%s\",\"%s\",\"=\"\"%s\"\"\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
+                    printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
                             $count,
                             $row->issued_coupon_code,
                             $row->age,
                             $row->gender,
-                            $row->issued_date,
+                            date('d M Y', strtotime($row->issued_date)),
                             $dateRedeem,
                             $place,
                             $stat
