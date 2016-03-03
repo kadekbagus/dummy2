@@ -1,6 +1,7 @@
 @extends('mobile-ci.home')
 
 @section('ext_style')
+@parent
 <style type="text/css">
 #particles-js1{
     pointer-events: none;
@@ -210,11 +211,12 @@
 @stop
 
 @section('ext_script_bot')
+@parent
 {{ HTML::script('mobile-ci/scripts/particles.min.js') }}
 <script type="text/javascript">
     @foreach($widgets as $i => $widget)
     particlesJS.load('particles-js{{$i+1}}', '{{asset('mobile-ci/scripts/particlesjs-config.json')}}', function() {
-        console.log('callback - particles.js config loaded');
+
     });
     @endforeach
 </script>
