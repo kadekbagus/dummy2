@@ -146,8 +146,8 @@
 
         <?php 
             if ($redeemedDateGte != '' && $redeemedDateLte != ''){
-                $startDate = date('d M Y', strtotime($redeemedDateGte);
-                $endDate = date('d M Y', strtotime($redeemedDateLte);
+                $startDate = date('d M Y', strtotime($redeemedDateGte));
+                $endDate = date('d M Y', strtotime($redeemedDateLte));
                 $dateRange = $startDate . ' - ' . $endDate;
                 if ($startDate === $endDate) {
                     $dateRange = $startDate;
@@ -180,10 +180,10 @@
                 <td><?php echo htmlentities(($row->issued_coupon_code)); ?></td>
                 <td><?php echo htmlentities(($row->age)); ?></td>
                 <td><?php echo htmlentities(($row->gender)); ?></td>
-                <td><?php echo htmlentities(($row->issued_date)); ?></td>
-                <td><?php echo htmlentities(($row->redeemed_date)); ?></td>
-                <td><?php echo htmlentities(($row->redemption_place)); ?></td>
-                <td><?php echo htmlentities(($row->status)); ?></td>
+                <td><?php echo date('d M Y', strtotime($row->issued_date)); ?></td>
+                <td><?php if (! empty($row->redeemed_date)) { echo date('d M Y', strtotime($row->redeemed_date)); } else { echo '--'; } ?></td>
+                <td><?php if (! empty($row->redemption_place)) { echo htmlentities($row->redemption_place); } else { echo '--'; } ?></td>
+                <td><?php if ($row->status != 'active') { echo htmlentities(strtoupper($row->status)); } else { echo 'ISSUED'; } ?></td>
             </tr>
         <?php endwhile; ?>
         </tbody>
