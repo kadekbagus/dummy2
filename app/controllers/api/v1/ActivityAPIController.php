@@ -3068,11 +3068,11 @@ class ActivityAPIController extends ControllerAPI
 
             // Filter with activity names (activity_name_long)
             $longActivityNameWhere = '';
-            $activityValues = [];
+            $activityKeys = [];
             if ($activityGroups) {
                 foreach ($activityGroups as $activityGroup) {
                     foreach (Config::get('orbit_activity.groups.'.$activityGroup) as $key) {
-                        $activityValues[] = Config::get('orbit.activity_columns.'.$key);
+                        $activityKeys[] = $key;
                     }
                 }
             }
@@ -3081,12 +3081,12 @@ class ActivityAPIController extends ControllerAPI
                 $column = Config::get('orbit.activity_columns.'.ucwords($activityGroupSearch));
 
                 if ($column) {
-                    $activityValues[] = $column;
+                    $activityKeys[] = $column;
                 }
             }
 
-            if ($activityValues) {
-                $longActivityNameWhere = "AND activity_name_long IN ('".implode("','", $activityValues)."')";
+            if ($activityKeys) {
+                $longActivityNameWhere = "AND activity_name_long IN ('".implode("','", $activityKeys)."')";
             }
             
             $sql = str_replace('{{where:longActivityName}}', $longActivityNameWhere, $sql);
@@ -3147,7 +3147,7 @@ class ActivityAPIController extends ControllerAPI
                     if ( $y->activity_date === $value ) {
 
                         $date = [];
-                        $date['name'] = $y->activity_name_long;
+                        $date['name'] = isset($columns[$y->activity_name_long]) ? $columns[$y->activity_name_long] : $y->activity_name_long;
                         $date['count'] = ($this->returnBuilder) ? $y->count : number_format($y->count, 0,'.','.');
 
                         $responses[$value][] = $date;
