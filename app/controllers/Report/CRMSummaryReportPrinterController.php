@@ -79,7 +79,7 @@ class CRMSummaryReportPrinterController extends DataPrinterController
                 $colTemp = [];
                 $colTemp['order'] = $i;
                 $colTemp['value'] = $value;
-                $colTemp['label'] = $key;
+                $colTemp['label'] = $value;
                 array_push($columns, $colTemp);
                 $i++;
             }
