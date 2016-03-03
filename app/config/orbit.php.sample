@@ -2803,7 +2803,7 @@ return array(
         'View Coupon Redemption Places'                => 'View Coupon Redemption Places',
         'Coupon Issuance'                              => 'Coupon Issued',
         'Read Coupon Issuance Notification'            => 'Read Coupon Issuance Notification',
-        'Coupon Redemption (Successful)'               => 'Coupon Redeem',
+        'Coupon Redemption (Successful)'               => 'Coupon Redeemed',
         'Widget click lucky draw'                      => 'Widget Click Lucky Draw',
         'View lucky draw list'                         => 'View Lucky Draw List',
         'View lucky draw detail'                       => 'View Lucky Draw Detail',
