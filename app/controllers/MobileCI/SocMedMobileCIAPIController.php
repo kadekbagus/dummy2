@@ -39,7 +39,7 @@ use Redirect;
 
 class SocMedMobileCIAPIController extends BaseCIController
 {
-	/**
+    /**
      * GET - FB Tenant Share dummy page
      *
      * @param string    `id`          (required)
@@ -48,26 +48,26 @@ class SocMedMobileCIAPIController extends BaseCIController
      *
      * @author Ahmad Anshori <ahmad@dominopos.com>
      */
-	public function getTenantDetailView()
-	{
-		$id = OrbitInput::get('id');
-		$mall = $this->getRetailerInfo();
+    public function getTenantDetailView()
+    {
+        $id = OrbitInput::get('id');
+        $mall = $this->getRetailerInfo();
 
-		$tenant = Tenant::with(
-					'media',
+        $tenant = Tenant::with(
+                    'media',
                     'mediaLogoOrig'
                 )
-				->active()
+                ->active()
                 ->where('merchant_id', $id)
                 ->firstOrFail();
 
-		$data = new stdclass();
-		$data->url = URL::route('share-tenant', array('id' => $tenant->merchant_id));
-		$data->title = $tenant->name;
-		$data->description = $tenant->description;
-		$data->mall = $mall;
+        $data = new stdclass();
+        $data->url = URL::route('share-tenant', array('id' => $tenant->merchant_id));
+        $data->title = $tenant->name;
+        $data->description = $tenant->description;
+        $data->mall = $mall;
 
-		if (count($tenant->mediaLogoOrig) > 0) {
+        if (count($tenant->mediaLogoOrig) > 0) {
             if (! empty($tenant->mediaLogoOrig[0]->path)) {
                 $data->image_dimension = $this->getImageDimension($tenant->mediaLogoOrig[0]->path);
                 $data->image_url = $tenant->mediaLogoOrig[0]->path;
@@ -80,10 +80,10 @@ class SocMedMobileCIAPIController extends BaseCIController
             $data->image_url = NULL;
         }
 
-		return View::make('mobile-ci.templates.fb-sharer', compact('data'));
-	}
+        return View::make('mobile-ci.templates.fb-sharer', compact('data'));
+    }
 
-	/**
+    /**
      * GET - FB Tenant Share dummy page
      *
      * @param string    `id`          (required)
@@ -92,18 +92,18 @@ class SocMedMobileCIAPIController extends BaseCIController
      *
      * @author Ahmad Anshori <ahmad@dominopos.com>
      */
-	public function getHomeView()
-	{
-		$id = OrbitInput::get('id');
-		$mall = $this->getRetailerInfo('mediaLogoOrig');
+    public function getHomeView()
+    {
+        $id = OrbitInput::get('id');
+        $mall = $this->getRetailerInfo('mediaLogoOrig');
 
-		$data = new stdclass();
-		$data->url = URL::route('share-home');
-		$data->title = $mall->name;
-		$data->description = $mall->description;
-		$data->mall = $mall;
+        $data = new stdclass();
+        $data->url = URL::route('share-home');
+        $data->title = $mall->name;
+        $data->description = $mall->description;
+        $data->mall = $mall;
 
-		if (count($mall->mediaLogoOrig) > 0) {
+        if (count($mall->mediaLogoOrig) > 0) {
             if (! empty($mall->mediaLogoOrig[0]->path)) {
                 $data->image_dimension = $this->getImageDimension($mall->mediaLogoOrig[0]->path);
                 $data->image_url = $mall->mediaLogoOrig[0]->path;
@@ -116,10 +116,10 @@ class SocMedMobileCIAPIController extends BaseCIController
             $data->image_url = NULL;
         }
 
-		return View::make('mobile-ci.templates.fb-sharer', compact('data'));
-	}
+        return View::make('mobile-ci.templates.fb-sharer', compact('data'));
+    }
 
-	/**
+    /**
      * GET - FB Promotion Share dummy page
      *
      * @param string    `id`          (required)
@@ -128,24 +128,24 @@ class SocMedMobileCIAPIController extends BaseCIController
      *
      * @author Ahmad Anshori <ahmad@dominopos.com>
      */
-	public function getPromotionDetailView()
-	{		
-		$id = OrbitInput::get('id');
-		$mall = $this->getRetailerInfo();
+    public function getPromotionDetailView()
+    {       
+        $id = OrbitInput::get('id');
+        $mall = $this->getRetailerInfo();
 
-		$promotion = News::with('media')
-				->active()
-				->where('object_type', 'promotion')
+        $promotion = News::with('media')
+                ->active()
+                ->where('object_type', 'promotion')
                 ->where('news_id', $id)
                 ->firstOrFail();
 
-		$data = new stdclass();
-		$data->url = URL::route('share-promotion', array('id' => $promotion->news_id));
-		$data->title = $promotion->news_name;
-		$data->description = $promotion->description;
-		$data->mall = $mall;
+        $data = new stdclass();
+        $data->url = URL::route('share-promotion', array('id' => $promotion->news_id));
+        $data->title = $promotion->news_name;
+        $data->description = $promotion->description;
+        $data->mall = $mall;
 
-		$promotionTranslation = \NewsTranslation::excludeDeleted()
+        $promotionTranslation = \NewsTranslation::excludeDeleted()
             ->where('news_id', $promotion->news_id)
             ->first();
 
@@ -176,18 +176,18 @@ class SocMedMobileCIAPIController extends BaseCIController
             }
         }
 
-		if (empty($promotion->image)) {
-			$data->image_url = NULL;
-		} else {
-			$data->image_url = $promotion->image;
-		}
+        if (empty($promotion->image)) {
+            $data->image_url = NULL;
+        } else {
+            $data->image_url = $promotion->image;
+        }
 
-		$data->image_dimension = $this->getImageDimension($promotion->image);
+        $data->image_dimension = $this->getImageDimension($promotion->image);
 
-		return View::make('mobile-ci.templates.fb-sharer', compact('data'));
-	}
+        return View::make('mobile-ci.templates.fb-sharer', compact('data'));
+    }
 
-	/**
+    /**
      * GET - FB News Share dummy page
      *
      * @param string    `id`          (required)
@@ -196,24 +196,24 @@ class SocMedMobileCIAPIController extends BaseCIController
      *
      * @author Ahmad Anshori <ahmad@dominopos.com>
      */
-	public function getNewsDetailView()
-	{		
-		$id = OrbitInput::get('id');
-		$mall = $this->getRetailerInfo();
+    public function getNewsDetailView()
+    {       
+        $id = OrbitInput::get('id');
+        $mall = $this->getRetailerInfo();
 
-		$promotion = News::with('media')
-				->active()
-				->where('object_type', 'news')
+        $promotion = News::with('media')
+                ->active()
+                ->where('object_type', 'news')
                 ->where('news_id', $id)
                 ->firstOrFail();
 
-		$data = new stdclass();
-		$data->url = URL::route('share-news', array('id' => $promotion->news_id));
-		$data->title = $promotion->news_name;
-		$data->description = $promotion->description;
-		$data->mall = $mall;
+        $data = new stdclass();
+        $data->url = URL::route('share-news', array('id' => $promotion->news_id));
+        $data->title = $promotion->news_name;
+        $data->description = $promotion->description;
+        $data->mall = $mall;
 
-		$promotionTranslation = \NewsTranslation::excludeDeleted()
+        $promotionTranslation = \NewsTranslation::excludeDeleted()
             ->where('news_id', $promotion->news_id)
             ->first();
 
@@ -244,18 +244,18 @@ class SocMedMobileCIAPIController extends BaseCIController
             }
         }
 
-		if (empty($promotion->image)) {
-			$data->image_url = NULL;
-		} else {
-			$data->image_url = $promotion->image;
-		}
+        if (empty($promotion->image)) {
+            $data->image_url = NULL;
+        } else {
+            $data->image_url = $promotion->image;
+        }
 
-		$data->image_dimension = $this->getImageDimension($promotion->image);
+        $data->image_dimension = $this->getImageDimension($promotion->image);
 
-		return View::make('mobile-ci.templates.fb-sharer', compact('data'));
-	}
+        return View::make('mobile-ci.templates.fb-sharer', compact('data'));
+    }
 
-	/**
+    /**
      * GET - FB Coupon Share dummy page
      *
      * @param string    `id`          (required)
@@ -264,23 +264,23 @@ class SocMedMobileCIAPIController extends BaseCIController
      *
      * @author Ahmad Anshori <ahmad@dominopos.com>
      */
-	public function getCouponDetailView()
-	{		
-		$id = OrbitInput::get('id');
-		$mall = $this->getRetailerInfo();
+    public function getCouponDetailView()
+    {       
+        $id = OrbitInput::get('id');
+        $mall = $this->getRetailerInfo();
 
-		$coupon = Coupon::with('media')
-				->active()
+        $coupon = Coupon::with('media')
+                ->active()
                 ->where('promotion_id', $id)
                 ->firstOrFail();
 
-		$data = new stdclass();
-		$data->url = URL::route('share-coupon', array('id' => $coupon->promotion_id));
-		$data->title = $coupon->promotion_name;
-		$data->description = $coupon->description;
-		$data->mall = $mall;
+        $data = new stdclass();
+        $data->url = URL::route('share-coupon', array('id' => $coupon->promotion_id));
+        $data->title = $coupon->promotion_name;
+        $data->description = $coupon->description;
+        $data->mall = $mall;
 
-		$couponTranslation = \CouponTranslation::excludeDeleted()
+        $couponTranslation = \CouponTranslation::excludeDeleted()
             ->where('promotion_id', $coupon->promotion_id)
             ->first();
 
@@ -311,22 +311,22 @@ class SocMedMobileCIAPIController extends BaseCIController
             }
         }
 
-		if (empty($coupon->image)) {
-			$data->image_url = NULL;
-		} else {
-			if (strpos($data->image, 'default_coupon.png') > 0) {
-				$data->image_url = NULL;
-			} else {
-				$data->image_url = $coupon->image;
-			}
-		}
+        if (empty($coupon->image)) {
+            $data->image_url = NULL;
+        } else {
+            if (strpos($data->image, 'default_coupon.png') > 0) {
+                $data->image_url = NULL;
+            } else {
+                $data->image_url = $coupon->image;
+            }
+        }
 
-		$data->image_dimension = $this->getImageDimension($coupon->image);
+        $data->image_dimension = $this->getImageDimension($coupon->image);
 
-		return View::make('mobile-ci.templates.fb-sharer', compact('data'));
-	}
+        return View::make('mobile-ci.templates.fb-sharer', compact('data'));
+    }
 
-	/**
+    /**
      * GET - FB Lucky Draw Share dummy page
      *
      * @param string    `id`          (required)
@@ -335,23 +335,23 @@ class SocMedMobileCIAPIController extends BaseCIController
      *
      * @author Ahmad Anshori <ahmad@dominopos.com>
      */
-	public function getLuckyDrawDetailView()
-	{		
-		$id = OrbitInput::get('id');
-		$mall = $this->getRetailerInfo();
+    public function getLuckyDrawDetailView()
+    {       
+        $id = OrbitInput::get('id');
+        $mall = $this->getRetailerInfo();
 
-		$luckydraw = LuckyDraw::with('media')
-				->active()
+        $luckydraw = LuckyDraw::with('media')
+                ->active()
                 ->where('lucky_draw_id', $id)
                 ->firstOrFail();
 
-		$data = new stdclass();
-		$data->url = URL::route('share-lucky-draw', array('id' => $luckydraw->lucky_draw_id));
-		$data->title = $luckydraw->lucky_draw_name;
-		$data->description = $luckydraw->description;
-		$data->mall = $mall;
+        $data = new stdclass();
+        $data->url = URL::route('share-lucky-draw', array('id' => $luckydraw->lucky_draw_id));
+        $data->title = $luckydraw->lucky_draw_name;
+        $data->description = $luckydraw->description;
+        $data->mall = $mall;
 
-		$luckyDrawTranslation = \LuckyDrawTranslation::excludeDeleted()
+        $luckyDrawTranslation = \LuckyDrawTranslation::excludeDeleted()
             ->where('lucky_draw_id', $luckydraw->lucky_draw_id)
             ->first();
 
@@ -382,30 +382,30 @@ class SocMedMobileCIAPIController extends BaseCIController
             }
         }
 
-		if (empty($luckydraw->image)) {
-			$data->image_url = NULL;
-		} else {
-			$data->image_url = $luckydraw->image;
-		}
+        if (empty($luckydraw->image)) {
+            $data->image_url = NULL;
+        } else {
+            $data->image_url = $luckydraw->image;
+        }
 
-		$data->image_dimension = $this->getImageDimension($luckydraw->image);
+        $data->image_dimension = $this->getImageDimension($luckydraw->image);
 
-		return View::make('mobile-ci.templates.fb-sharer', compact('data'));
-	}
+        return View::make('mobile-ci.templates.fb-sharer', compact('data'));
+    }
 
-	private function getImageDimension($url = '') {
-		try {
-			if(empty($url)) {
-				return NULL;
-			}
+    private function getImageDimension($url = '') {
+        try {
+            if(empty($url)) {
+                return NULL;
+            }
 
-			list($width, $height) = getimagesize($url);
-				
-			$dimension = [$width, $height];
+            list($width, $height) = getimagesize($url);
+                
+            $dimension = [$width, $height];
 
-			return $dimension;
-		} catch (Exception $e) {
-			return NULL;
-		}
-	}
+            return $dimension;
+        } catch (Exception $e) {
+            return NULL;
+        }
+    }
 }
