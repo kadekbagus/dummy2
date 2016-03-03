@@ -40,9 +40,9 @@ return [
             'Widget Click Lucky Draw',
             'View Lucky Draw List',
             'View Lucky Draw Detail',
-            'Lucky Draw Number Issued',
+            'Lucky Draw Number Issuance',
             'Read Lucky Draw Number Issuance Notification',
-            'View Prizes & Winning Numbers',
+            'View Winning Numbers & Prizes',
             'Read Winner Announcement Notification',
         ],
         'Notifications' => [
