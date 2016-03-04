@@ -3315,6 +3315,7 @@ class UserAPIController extends ControllerAPI
             $check_only = OrbitInput::get('check_only', 'no') === 'yes';
             $auto_login = OrbitInput::get('auto_login', 'no');
             $from_captive = OrbitInput::get('from_captive', 'no');
+            $socmed_redirect_to = OrbitInput::get('socmed_redirect_to', '');
 
             $this->registerCustomValidation();
 
@@ -3346,7 +3347,8 @@ class UserAPIController extends ControllerAPI
                 'full_data' => 'yes',
                 'check_only' => $check_only ? 'yes' : 'no',
                 'auto_login' => $auto_login,
-                'from_captive' => $from_captive
+                'from_captive' => $from_captive,
+                'socmed_redirect_to' = $socmed_redirect_to
             ];
             $values = CloudMAC::wrapDataFromBox($values);
             $req = \Symfony\Component\HttpFoundation\Request::create($url, 'GET', $values);

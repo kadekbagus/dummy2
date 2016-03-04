@@ -257,7 +257,7 @@ class IntermediateLoginController extends IntermediateBaseController
         $mac = OrbitInput::get('mac', '');
         $timestamp = (int)OrbitInput::get('timestamp', 0);
 
-        if (!CloudMAC::validateDataFromBox($mac, $timestamp, [
+        if ($from !== 'cs' && !CloudMAC::validateDataFromBox($mac, $timestamp, [
             'email' => $email,
             'retailer_id' => $retailer_id,
             'callback_url' => $callback_url,
