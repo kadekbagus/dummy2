@@ -121,15 +121,26 @@
             <tr>
                 <td>Filter by Customer Age</td>
                 <td>:</td>
-                <td><strong><?php echo htmlentities($customerAge); ?></strong></td>
+                <td><strong><?php echo $customerAge; ?></strong></td>
             </tr>
         <?php } ?>
 
-        <?php if ($customerGender != '') { ?>
+        <?php if ($customerGender != '') { 
+            $gender_string = '';
+            $count = 1;
+            foreach ($customerGender as $key => $valgender){
+                if ($count == 1) {
+                    $gender_string .= $valgender ;
+                } else {
+                    $gender_string .= ', ' .$valgender;
+                }
+                $count++;
+            }
+        ?>
             <tr>
                 <td>Filter by Customer Gender</td>
                 <td>:</td>
-                <td><strong><?php echo htmlentities($customerGender); ?></strong></td>
+                <td><strong><?php echo $gender_string; ?></strong></td>
             </tr>
         <?php } ?>
 
@@ -137,7 +148,7 @@
             <tr>
                 <td>Filter by Redemption Place</td>
                 <td>:</td>
-                <td><strong><?php echo htmlentities($redemptionPlace); ?></strong></td>
+                <td><strong><?php echo $redemptionPlace; ?></strong></td>
             </tr>
         <?php } ?>
 
@@ -192,13 +203,13 @@
         <?php while ($row = $statement->fetch(PDO::FETCH_OBJ)) : ?>
             <tr class="{{ $rowCounter % 2 === 0 ? 'zebra' : '' }}">
                 <td><?php echo (++$rowCounter); ?></td>
-                <td><?php echo htmlentities(($row->issued_coupon_code)); ?></td>
-                <td><?php echo htmlentities(($row->age)); ?></td>
-                <td><?php echo htmlentities(($row->gender)); ?></td>
+                <td><?php echo $row->issued_coupon_code; ?></td>
+                <td><?php echo $row->age; ?></td>
+                <td><?php echo $row->gender; ?></td>
                 <td><?php echo date('d M Y', strtotime($row->issued_date)); ?></td>
                 <td><?php if (! empty($row->redeemed_date)) { echo date('d M Y', strtotime($row->redeemed_date)); } else { echo '--'; } ?></td>
                 <td><?php if (! empty($row->redemption_place)) { echo htmlentities($row->redemption_place); } else { echo '--'; } ?></td>
-                <td><?php if ($row->status != 'active') { echo htmlentities(strtoupper($row->status)); } else { echo 'ISSUED'; } ?></td>
+                <td><?php if ($row->status != 'active') { echo $row->status; } else { echo 'issued'; } ?></td>
             </tr>
         <?php endwhile; ?>
         </tbody>

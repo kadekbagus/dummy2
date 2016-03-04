@@ -335,31 +335,36 @@ class CouponReportPrinterController extends DataPrinterController
 
                 printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '');
                 printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Coupons', $totalCoupons, '', '', '', '', '');
-
-                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','');
                 printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Acquiring Customers', $totalAcquiringCustomers, '', '', '', '', '');
-
-                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','');
                 printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Active Days', $totalActiveDays, '', '', '', '', '');
-
-                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','');
                 printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Redemption Place', $totalRedemptionPlace, '', '', '', '', '');
 
                 // Filtering
                 if ($couponCode != '') {
-                    printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Coupon Code', htmlentities($couponCode), '', '', '', '', '');
+                    printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Coupon Code', $couponCode, '', '', '', '', '');
                 }
 
                 if ($customerAge != '') {
-                    printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Customer Age', htmlentities($customerAge), '', '', '', '', '');
+                    printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Customer Age', $customerAge, '', '', '', '', '');
                 }
 
                 if ($customerGender != '') {
-                    printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Customer Gender', htmlentities($customerGender), '', '', '', '', '');
+                    $gender_string = '';
+                    $count = 1;
+                    foreach ($customerGender as $key => $valgender){
+                        if ($count == 1) {
+                            $gender_string .= $valgender ;
+                        } else {
+                            $gender_string .= ', ' .$valgender;
+                        }
+                        
+                        $count++;
+                    }
+                    printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Customer Gender', $gender_string, '', '', '', '', '');
                 }
 
                 if ($redemptionPlace != '') {
-                    printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Redemption Place', htmlentities($redemptionPlace), '', '', '', '', '');
+                    printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Redemption Place', $redemptionPlace, '', '', '', '', '');
                 }
 
                 if ($issuedDateGte != '' && $issuedDateLte != ''){
@@ -390,9 +395,9 @@ class CouponReportPrinterController extends DataPrinterController
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
 
                     if ($row->status === 'active') {
-                        $stat = 'ISSUED';
+                        $stat = 'issued';
                     } else {
-                        $stat = strtoupper($row->status);
+                        $stat = $row->status;
                     }
 
                     if (empty($row->redeemed_date)) {
