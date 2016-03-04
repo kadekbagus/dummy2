@@ -2769,7 +2769,7 @@ return array(
     'activity_columns' => array(
         'Network Check In'                             => 'Network Check In',
         'Network Check Out'                            => 'Network Check Out',
-        'Sign up via mobile (email address)'           => 'Email Sign Up',
+        'Sign up via mobile (Email Address)'           => 'Email Sign Up',
         'Sign Up via Mobile (Facebook)'                => 'Facebook Sign Up',
         'Sign Up via Mobile (Google+)'                 => 'Google Sign Up',
         'Sign up via customer service'                 => 'Sign Up via CS',
