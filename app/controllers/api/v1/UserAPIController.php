@@ -3348,7 +3348,7 @@ class UserAPIController extends ControllerAPI
                 'check_only' => $check_only ? 'yes' : 'no',
                 'auto_login' => $auto_login,
                 'from_captive' => $from_captive,
-                'socmed_redirect_to' = $socmed_redirect_to
+                'socmed_redirect_to' => $socmed_redirect_to
             ];
             $values = CloudMAC::wrapDataFromBox($values);
             $req = \Symfony\Component\HttpFoundation\Request::create($url, 'GET', $values);
