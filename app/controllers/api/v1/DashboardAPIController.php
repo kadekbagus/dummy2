@@ -305,6 +305,7 @@ class DashboardAPIController extends ControllerAPI
                                     $q->on('news_translations.news_id', '=', 'news.news_id');
                                     $q->on('news.object_type', '=', DB::raw("'News'"));
                                     $q->where('news_translations.merchant_language_id', '=', $merchant_language->merchant_language_id);
+                                    $q->where('news_translations.news_name', '!=', '');
                             })
                             ->whereBetween('campaign_page_views.created_at', [$start_date, $end_date])
                             ->where('location_id', $merchant_id)
@@ -333,6 +334,7 @@ class DashboardAPIController extends ControllerAPI
                             ->leftJoin('event_translations', function($q) use ($merchant_language) {
                                     $q->on('event_translations.event_id', '=', 'events.event_id');
                                     $q->where('event_translations.merchant_language_id', '=', $merchant_language->merchant_language_id);
+                                    $q->where('event_translations.event_name', '!=', '');
                             })
                             ->whereBetween('campaign_popup_views.created_at', [$start_date, $end_date])
                             ->where('events.merchant_id', $merchant_id)
@@ -361,6 +363,7 @@ class DashboardAPIController extends ControllerAPI
                                     $q->on('news_translations.news_id', '=', 'news.news_id');
                                     $q->on('news.object_type', '=', DB::raw("'Promotion'"));
                                     $q->where('news_translations.merchant_language_id', '=', $merchant_language->merchant_language_id);
+                                    $q->where('news_translations.news_name', '!=', '');
                             })
                             ->whereBetween('campaign_page_views.created_at', [$start_date, $end_date])
                             ->where('location_id', $merchant_id)
@@ -389,6 +392,7 @@ class DashboardAPIController extends ControllerAPI
                             ->leftJoin('lucky_draw_translations', function($q) use ($merchant_language) {
                                     $q->on('lucky_draw_translations.lucky_draw_id', '=', 'lucky_draws.lucky_draw_id');
                                     $q->where('lucky_draw_translations.merchant_language_id', '=', $merchant_language->merchant_language_id);
+                                    $q->where('lucky_draw_translations.lucky_draw_name', '!=', '');
                             })
                             ->whereBetween('campaign_page_views.created_at', [$start_date, $end_date])
                             ->where('lucky_draws.mall_id', $merchant_id)
@@ -418,6 +422,7 @@ class DashboardAPIController extends ControllerAPI
                                     $q->on('promotion_translations.promotion_id', '=', 'promotions.promotion_id');
                                     $q->where('promotions.is_coupon', '=', DB::raw($quote('Y')) );
                                     $q->where('promotion_translations.merchant_language_id', '=', $merchant_language->merchant_language_id);
+                                    $q->where('promotion_translations.promotion_name', '!=', '');
                             })
                             ->whereBetween('campaign_page_views.created_at', [$start_date, $end_date])
                             ->where('promotions.merchant_id', $merchant_id)
