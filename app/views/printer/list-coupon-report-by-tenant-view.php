@@ -103,7 +103,7 @@
             <td><strong><?php echo number_format($totalActiveDays, 0, '.', '.'); ?></strong></td>
         </tr>
         <tr>
-            <td>Total Redemption Place</td>
+            <td>Total Redemption Places</td>
             <td>:</td>
             <td><strong><?php echo number_format($totalRedemptionPlace, 0, '.', '.'); ?></strong></td>
         </tr>
@@ -206,7 +206,7 @@
                 <td><?php echo $row->issued_coupon_code; ?></td>
                 <td><?php echo $row->age; ?></td>
                 <td><?php echo $row->gender; ?></td>
-                <td><?php echo date('d M Y', strtotime($row->issued_date)); ?></td>
+                <td><?php echo date('d M Y H:i', strtotime($row->issued_date)); ?></td>
                 <td><?php if (! empty($row->redeemed_date)) { echo date('d M Y', strtotime($row->redeemed_date)); } else { echo '--'; } ?></td>
                 <td><?php if (! empty($row->redemption_place)) { echo htmlentities($row->redemption_place); } else { echo '--'; } ?></td>
                 <td><?php if ($row->status != 'active') { echo $row->status; } else { echo 'issued'; } ?></td>
