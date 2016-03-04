@@ -23,6 +23,106 @@ class UserReportAPIController extends ControllerAPI
      */
     protected $returnBuilder = FALSE;
 
+    private function generateCountRandom()
+    {
+        return rand(201, 999);
+    }
+
+    private function generateTotalRandom()
+    {
+        return rand(10001, 99999);
+    }
+
+    /**
+     * A temporary method to output dummy data with the accepted structure
+     * so that frontend guys can work on their part
+     * without waiting for the real data.
+     *
+     * @author Qosdil A. <qosdil@dominopos.com>
+     */
+    public function getDummyUserReport()
+    {
+        $data = new stdClass();
+        $data->columns = [
+            'date' => [
+                'title' => 'Date',
+            ],
+            'sign_up' => [
+                'title' => 'Sign Up',
+                'total_title' => 'Sign Up',
+                'total' => $this->generateTotalRandom(),
+            ],
+            'sign_up_by_type' => [
+                'title' => 'Sign Up by Type',
+                'sub_columns' => [
+                    'sign_up_by_type_facebook' => [
+                        'title' => 'Facebook',
+                        'total_title' => 'Sign Up via Facebook',
+                        'total' => $this->generateTotalRandom(),
+                    ],
+                    'sign_up_by_type_google' => [
+                        'title' => 'Google+',
+                        'total_title' => 'Sign Up via Google+',
+                        'total' => $this->generateTotalRandom(),
+                    ],
+                    'sign_up_by_type_form' => [
+                        'title' => 'Form',
+                        'total_title' => 'Sign Up via Form',
+                        'total' => $this->generateTotalRandom(),
+                    ],
+                ],
+            ],
+            'sign_in' => [
+                'title' => 'Sign In',
+                'total_title' => 'Sign In',
+                'total' => $this->generateTotalRandom(),
+            ],
+            'unique_sign_in' => [
+                'title' => 'Unique Sign In',
+                'total_title' => 'Unique Sign In',
+                'total' => $this->generateTotalRandom(),
+            ],
+            'returning' => [
+                'title' => 'Returning',
+                'total_title' => 'Returning',
+                'total' => $this->generateTotalRandom(),
+            ],
+            'status' => [
+                'title' => 'Status',
+                'sub_columns' => [
+                    'status_active' => [
+                        'title' => 'Active',
+                        'total_title' => 'Active Status',
+                        'total' => $this->generateTotalRandom(),
+                    ],
+                    'status_pending' => [
+                        'title' => 'Pending',
+                        'total_title' => 'Pending Status',
+                        'total' => $this->generateTotalRandom(),
+                    ],
+                ],
+            ],
+        ];
+
+        for ($date = 22; $date > 15; $date--) {
+            $data->records[] = [
+                'date' => $date.' Feb 2016',
+                'sign_up' => $this->generateCountRandom(),
+                'sign_up_by_type_facebook' => $this->generateCountRandom(),
+                'sign_up_by_type_google' => $this->generateCountRandom(),
+                'sign_up_by_type_form' => $this->generateCountRandom(),
+                'sign_in' => $this->generateCountRandom(),
+                'unique_sign_in' => $this->generateCountRandom(),
+                'returning' => $this->generateCountRandom(),
+                'status_active' => $this->generateCountRandom(),
+                'status_pending' => $this->generateCountRandom(),
+            ];
+        }
+
+        $this->response->data = $data;
+        return $this->render(200);
+    }
+
     /**
      * GET - User Report List
      *
@@ -39,6 +139,8 @@ class UserReportAPIController extends ControllerAPI
      */
     public function getUserReport()
     {
+        return $this->getDummyUserReport();
+
         try {
             $httpCode = 200;
 
