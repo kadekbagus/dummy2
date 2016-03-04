@@ -23,6 +23,116 @@ class UserReportAPIController extends ControllerAPI
      */
     protected $returnBuilder = FALSE;
 
+    private function generateCountRandom()
+    {
+        return rand(201, 999);
+    }
+
+    private function generateTotalRandom()
+    {
+        return rand(10001, 99999);
+    }
+
+    /**
+     * A temporary method to output dummy data with the accepted structure
+     * so that frontend guys can work on their part
+     * without waiting for the real data.
+     *
+     * @author Qosdil A. <qosdil@dominopos.com>
+     */
+    public function getDummyUserReport()
+    {
+        $data = new stdClass();
+        $data->columns = [
+            'date' => [
+                'title' => 'Date',
+                'sort_key' => 'date',
+            ],
+            'sign_up' => [
+                'title' => 'Sign Up',
+                'sort_key' => 'sign_up',
+                'total_title' => 'Sign Up',
+                'total' => $this->generateTotalRandom(),
+            ],
+            'sign_up_by_type' => [
+                'title' => 'Sign Up by Type',
+                'sub_columns' => [
+                    'sign_up_by_type_facebook' => [
+                        'title' => 'Facebook',
+                        'sort_key' => 'sign_up_by_type_facebook',
+                        'total_title' => 'Sign Up via Facebook',
+                        'total' => $this->generateTotalRandom(),
+                    ],
+                    'sign_up_by_type_google' => [
+                        'title' => 'Google+',
+                        'sort_key' => 'sign_up_by_type_google',
+                        'total_title' => 'Sign Up via Google+',
+                        'total' => $this->generateTotalRandom(),
+                    ],
+                    'sign_up_by_type_form' => [
+                        'title' => 'Form',
+                        'sort_key' => 'sign_up_by_type_form',
+                        'total_title' => 'Sign Up via Form',
+                        'total' => $this->generateTotalRandom(),
+                    ],
+                ],
+            ],
+            'sign_in' => [
+                'title' => 'Sign In',
+                'sort_key' => 'sign_in',
+                'total_title' => 'Sign In',
+                'total' => $this->generateTotalRandom(),
+            ],
+            'unique_sign_in' => [
+                'title' => 'Unique Sign In',
+                'sort_key' => 'unique_sign_in',
+                'total_title' => 'Unique Sign In',
+                'total' => $this->generateTotalRandom(),
+            ],
+            'returning' => [
+                'title' => 'Returning',
+                'sort_key' => 'returning',
+                'total_title' => 'Returning',
+                'total' => $this->generateTotalRandom(),
+            ],
+            'status' => [
+                'title' => 'Status',
+                'sub_columns' => [
+                    'status_active' => [
+                        'title' => 'Active',
+                        'sort_key' => 'status_active',
+                        'total_title' => 'Active Status',
+                        'total' => $this->generateTotalRandom(),
+                    ],
+                    'status_pending' => [
+                        'title' => 'Pending',
+                        'sort_key' => 'status_pending',
+                        'total_title' => 'Pending Status',
+                        'total' => $this->generateTotalRandom(),
+                    ],
+                ],
+            ],
+        ];
+
+        for ($date = 22; $date > 15; $date--) {
+            $data->records[] = [
+                'date' => $date.' Feb 2016',
+                'sign_up' => $this->generateCountRandom(),
+                'sign_up_by_type_facebook' => $this->generateCountRandom(),
+                'sign_up_by_type_google' => $this->generateCountRandom(),
+                'sign_up_by_type_form' => $this->generateCountRandom(),
+                'sign_in' => $this->generateCountRandom(),
+                'unique_sign_in' => $this->generateCountRandom(),
+                'returning' => $this->generateCountRandom(),
+                'status_active' => $this->generateCountRandom(),
+                'status_pending' => $this->generateCountRandom(),
+            ];
+        }
+
+        $this->response->data = $data;
+        return $this->render(200);
+    }
+
     /**
      * GET - User Report List
      *
@@ -39,6 +149,8 @@ class UserReportAPIController extends ControllerAPI
      */
     public function getUserReport()
     {
+        return $this->getDummyUserReport();
+
         try {
             $httpCode = 200;
 
@@ -175,19 +287,19 @@ class UserReportAPIController extends ControllerAPI
                     select count(campaign_page_view_id) as value
                     from {$tablePrefix}campaign_page_views
                     where campaign_id = {$tablePrefix}news.news_id
-                    and location_id = {$this->quote($current_mall)}
+                    and location_id = {$this->quote($mallId)}
                 ) as page_views,
                 (
                     select count(campaign_popup_view_id) as value
                     from {$tablePrefix}campaign_popup_views
                     where campaign_id = {$tablePrefix}news.news_id
-                    and location_id = {$this->quote($current_mall)}
+                    and location_id = {$this->quote($mallId)}
                 ) as popup_views,
                 (
                     select count(campaign_click_id) as value
                     from {$tablePrefix}campaign_clicks
                     where campaign_id = {$tablePrefix}news.news_id
-                    and location_id = {$this->quote($current_mall)}
+                    and location_id = {$this->quote($mallId)}
                 ) as popup_clicks,
                 {$tablePrefix}news.status"))
                         ->leftJoin('campaign_price', 'campaign_price.campaign_id', '=', 'news.news_id')
@@ -266,7 +378,7 @@ class UserReportAPIController extends ControllerAPI
                         // On
                         DB::raw('tenant.t_campaign_id'), '=', 'news.news_id')
 
-                        ->where('news.mall_id', '=', $current_mall)
+                        ->where('news.mall_id', '=', $mallId)
                         ->where('news.object_type', '=', 'news');
 
             $promotions = DB::table('news')->selectraw(DB::raw("{$tablePrefix}news.news_id AS campaign_id, news_name AS campaign_name, {$tablePrefix}news.object_type AS campaign_type,
@@ -281,19 +393,19 @@ class UserReportAPIController extends ControllerAPI
                     select count(campaign_page_view_id) as value
                     from {$tablePrefix}campaign_page_views
                     where campaign_id = {$tablePrefix}news.news_id
-                    and location_id = {$this->quote($current_mall)}
+                    and location_id = {$this->quote($mallId)}
                 ) as page_views,
                 (
                     select count(campaign_popup_view_id) as value
                     from {$tablePrefix}campaign_popup_views
                     where campaign_id = {$tablePrefix}news.news_id
-                    and location_id = {$this->quote($current_mall)}
+                    and location_id = {$this->quote($mallId)}
                 ) as popup_views,
                 (
                     select count(campaign_click_id) as value
                     from {$tablePrefix}campaign_clicks
                     where campaign_id = {$tablePrefix}news.news_id
-                    and location_id = {$this->quote($current_mall)}
+                    and location_id = {$this->quote($mallId)}
                 ) as popup_clicks,
                 {$tablePrefix}news.status"))
                         ->leftJoin('campaign_price', 'campaign_price.campaign_id', '=', 'news.news_id')
@@ -371,7 +483,7 @@ class UserReportAPIController extends ControllerAPI
                         // On
                         DB::raw('tenant.t_campaign_id'), '=', 'news.news_id')
 
-                        ->where('news.mall_id', '=', $current_mall)
+                        ->where('news.mall_id', '=', $mallId)
                         ->where('news.object_type', '=', 'promotion');
 
 
@@ -387,19 +499,19 @@ class UserReportAPIController extends ControllerAPI
                     select count(campaign_page_view_id) as value
                     from {$tablePrefix}campaign_page_views
                     where campaign_id = {$tablePrefix}promotions.promotion_id
-                    and location_id = {$this->quote($current_mall)}
+                    and location_id = {$this->quote($mallId)}
                 ) as page_views,
                 (
                     select count(campaign_popup_view_id) as value
                     from {$tablePrefix}campaign_popup_views
                     where campaign_id = {$tablePrefix}promotions.promotion_id
-                    and location_id = {$this->quote($current_mall)}
+                    and location_id = {$this->quote($mallId)}
                 ) as popup_views,
                 (
                     select count(campaign_click_id) as value
                     from {$tablePrefix}campaign_clicks
                     where campaign_id = {$tablePrefix}promotions.promotion_id
-                    and location_id = {$this->quote($current_mall)}
+                    and location_id = {$this->quote($mallId)}
                 ) as popup_clicks,
                 {$tablePrefix}promotions.status"))
                         ->leftJoin('campaign_price', 'campaign_price.campaign_id', '=', 'promotions.promotion_id')
@@ -476,7 +588,7 @@ class UserReportAPIController extends ControllerAPI
                             "),
                         // On
                         DB::raw('tenant.t_campaign_id'), '=', 'promotions.promotion_id')
-                        ->where('promotions.merchant_id', '=', $current_mall);
+                        ->where('promotions.merchant_id', '=', $mallId);
 
             $campaign = $news->unionAll($promotions)->unionAll($coupons);
 
