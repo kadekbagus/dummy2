@@ -175,19 +175,19 @@ class UserReportAPIController extends ControllerAPI
                     select count(campaign_page_view_id) as value
                     from {$tablePrefix}campaign_page_views
                     where campaign_id = {$tablePrefix}news.news_id
-                    and location_id = {$this->quote($current_mall)}
+                    and location_id = {$this->quote($mallId)}
                 ) as page_views,
                 (
                     select count(campaign_popup_view_id) as value
                     from {$tablePrefix}campaign_popup_views
                     where campaign_id = {$tablePrefix}news.news_id
-                    and location_id = {$this->quote($current_mall)}
+                    and location_id = {$this->quote($mallId)}
                 ) as popup_views,
                 (
                     select count(campaign_click_id) as value
                     from {$tablePrefix}campaign_clicks
                     where campaign_id = {$tablePrefix}news.news_id
-                    and location_id = {$this->quote($current_mall)}
+                    and location_id = {$this->quote($mallId)}
                 ) as popup_clicks,
                 {$tablePrefix}news.status"))
                         ->leftJoin('campaign_price', 'campaign_price.campaign_id', '=', 'news.news_id')
@@ -266,7 +266,7 @@ class UserReportAPIController extends ControllerAPI
                         // On
                         DB::raw('tenant.t_campaign_id'), '=', 'news.news_id')
 
-                        ->where('news.mall_id', '=', $current_mall)
+                        ->where('news.mall_id', '=', $mallId)
                         ->where('news.object_type', '=', 'news');
 
             $promotions = DB::table('news')->selectraw(DB::raw("{$tablePrefix}news.news_id AS campaign_id, news_name AS campaign_name, {$tablePrefix}news.object_type AS campaign_type,
@@ -281,19 +281,19 @@ class UserReportAPIController extends ControllerAPI
                     select count(campaign_page_view_id) as value
                     from {$tablePrefix}campaign_page_views
                     where campaign_id = {$tablePrefix}news.news_id
-                    and location_id = {$this->quote($current_mall)}
+                    and location_id = {$this->quote($mallId)}
                 ) as page_views,
                 (
                     select count(campaign_popup_view_id) as value
                     from {$tablePrefix}campaign_popup_views
                     where campaign_id = {$tablePrefix}news.news_id
-                    and location_id = {$this->quote($current_mall)}
+                    and location_id = {$this->quote($mallId)}
                 ) as popup_views,
                 (
                     select count(campaign_click_id) as value
                     from {$tablePrefix}campaign_clicks
                     where campaign_id = {$tablePrefix}news.news_id
-                    and location_id = {$this->quote($current_mall)}
+                    and location_id = {$this->quote($mallId)}
                 ) as popup_clicks,
                 {$tablePrefix}news.status"))
                         ->leftJoin('campaign_price', 'campaign_price.campaign_id', '=', 'news.news_id')
@@ -371,7 +371,7 @@ class UserReportAPIController extends ControllerAPI
                         // On
                         DB::raw('tenant.t_campaign_id'), '=', 'news.news_id')
 
-                        ->where('news.mall_id', '=', $current_mall)
+                        ->where('news.mall_id', '=', $mallId)
                         ->where('news.object_type', '=', 'promotion');
 
 
@@ -387,19 +387,19 @@ class UserReportAPIController extends ControllerAPI
                     select count(campaign_page_view_id) as value
                     from {$tablePrefix}campaign_page_views
                     where campaign_id = {$tablePrefix}promotions.promotion_id
-                    and location_id = {$this->quote($current_mall)}
+                    and location_id = {$this->quote($mallId)}
                 ) as page_views,
                 (
                     select count(campaign_popup_view_id) as value
                     from {$tablePrefix}campaign_popup_views
                     where campaign_id = {$tablePrefix}promotions.promotion_id
-                    and location_id = {$this->quote($current_mall)}
+                    and location_id = {$this->quote($mallId)}
                 ) as popup_views,
                 (
                     select count(campaign_click_id) as value
                     from {$tablePrefix}campaign_clicks
                     where campaign_id = {$tablePrefix}promotions.promotion_id
-                    and location_id = {$this->quote($current_mall)}
+                    and location_id = {$this->quote($mallId)}
                 ) as popup_clicks,
                 {$tablePrefix}promotions.status"))
                         ->leftJoin('campaign_price', 'campaign_price.campaign_id', '=', 'promotions.promotion_id')
@@ -476,7 +476,7 @@ class UserReportAPIController extends ControllerAPI
                             "),
                         // On
                         DB::raw('tenant.t_campaign_id'), '=', 'promotions.promotion_id')
-                        ->where('promotions.merchant_id', '=', $current_mall);
+                        ->where('promotions.merchant_id', '=', $mallId);
 
             $campaign = $news->unionAll($promotions)->unionAll($coupons);
 
