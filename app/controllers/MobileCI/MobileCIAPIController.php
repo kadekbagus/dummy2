@@ -1222,17 +1222,34 @@ class MobileCIAPIController extends BaseCIController
             }
 
             $widget = Widget::active()->where('widget_id', $widget_id)->first();
+            $widget_type = ucwords(str_replace('_', ' ', $widget->widget_type));
 
             $activityNotes = sprintf('Widget Click. Widget Id : %s', $widget_id);
             $activity->setUser($user)
                 ->setActivityName('widget_click')
-                ->setActivityNameLong('Widget Click ' . ucwords(str_replace('_', ' ', $widget->widget_type)))
+                ->setActivityNameLong('Widget Click ' . $widget_type)
                 ->setObject($widget)
                 ->setModuleName('Widget')
                 ->setLocation($retailer)
                 ->setNotes($activityNotes)
                 ->responseOK()
                 ->save();
+
+            //save to table widget click
+            $newWidget = new WidgetClick();
+            $newWidget->widget_id = $widget_id;
+            $newWidget->user_id = $user->user_id;
+            $newWidget->location_id = $retailer->merchant_id;
+            $newWidget->activity_id = $activity->activity_id;
+
+            $widgetGroupNames = WidgetGroupName::get();
+
+            foreach ($widgetGroupNames as $group_name) {
+                if ($widget_type === $group_name->widget_group_name) {
+                    $newWidget->widget_group_name_id = $group_name->widget_group_name_id;
+                }
+            }
+
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
