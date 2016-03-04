@@ -3,8 +3,6 @@
 use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
-use Carbon\Carbon as Carbon;
-
 
 class CampaignSetToExpired extends Command {
 
@@ -39,24 +37,6 @@ class CampaignSetToExpired extends Command {
      */
     public function fire()
     {
-        $mallId = $this->option('merchant_id');
-        $campaign = strtolower($this->option('campaign'));
-        $campaigns = ['news', 'promotions', 'coupons', 'lucky_draws'];
-
-        $mall = Mall::with('timezone')
-                      ->where('status', '!=', 'deleted')
-                      ->where('merchant_id', '=', $mallId)
-                      ->first();
-
-        if (empty($mall)) {
-            $this->error('Merchant or mall is not found.');
-        }
-
-        if (! in_array($campaign, $campaigns)) {
-            $this->error('Campaign is not found.');
-        }
-
-        $mallTime = Carbon::now($mall->timezone->timezone_name);
         $prefix = DB::getTablePrefix();
 
         $newsQuery = "UPDATE {$prefix}news as old
@@ -66,7 +46,10 @@ class CampaignSetToExpired extends Command {
                                     THEN old.campaign_status_id
                                 ELSE
                                     (CASE
-                                        WHEN {$this->quote($mallTime)} > end_date
+                                        WHEN (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
+                                                FROM orb_merchants om
+                                                    LEFT JOIN orb_timezones ot on ot.timezone_id = om.timezone_id
+                                                WHERE om.merchant_id = old.mall_id) > end_date
                                             THEN
                                                 (SELECT campaign_status_id FROM {$prefix}campaign_status where campaign_status_name = 'expired')
                                         ELSE old.campaign_status_id
@@ -74,7 +57,10 @@ class CampaignSetToExpired extends Command {
                             END,
                         old.status =
                             CASE
-                                WHEN {$this->quote($mallTime)} > end_date THEN 'inactive'
+                                WHEN (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
+                                                FROM orb_merchants om
+                                                    LEFT JOIN orb_timezones ot on ot.timezone_id = om.timezone_id
+                                                WHERE om.merchant_id = old.mall_id) > end_date THEN 'inactive'
                                 ELSE old.status
                             END
                         ";
@@ -86,7 +72,10 @@ class CampaignSetToExpired extends Command {
                                     THEN old.campaign_status_id
                                 ELSE
                                     (CASE
-                                        WHEN {$this->quote($mallTime)} > end_date
+                                        WHEN (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
+                                                FROM orb_merchants om
+                                                    LEFT JOIN orb_timezones ot on ot.timezone_id = om.timezone_id
+                                                WHERE om.merchant_id = old.merchant_id) > end_date
                                             THEN
                                                 (SELECT campaign_status_id FROM {$prefix}campaign_status where campaign_status_name = 'expired')
                                         ELSE old.campaign_status_id
@@ -94,7 +83,10 @@ class CampaignSetToExpired extends Command {
                             END,
                         old.status =
                             CASE
-                                WHEN {$this->quote($mallTime)} > end_date THEN 'inactive'
+                                WHEN (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
+                                                FROM orb_merchants om
+                                                    LEFT JOIN orb_timezones ot on ot.timezone_id = om.timezone_id
+                                                WHERE om.merchant_id = old.merchant_id) > end_date THEN 'inactive'
                                 ELSE old.status
                             END
                         ";
@@ -106,7 +98,10 @@ class CampaignSetToExpired extends Command {
                                         THEN old.campaign_status_id
                                     ELSE
                                         (CASE
-                                            WHEN {$this->quote($mallTime)} > end_date
+                                            WHEN (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
+                                                FROM orb_merchants om
+                                                    LEFT JOIN orb_timezones ot on ot.timezone_id = om.timezone_id
+                                                WHERE om.merchant_id = old.mall_id) > end_date
                                                 THEN
                                                     (SELECT campaign_status_id FROM {$prefix}campaign_status where campaign_status_name = 'expired')
                                             ELSE old.campaign_status_id
@@ -114,24 +109,24 @@ class CampaignSetToExpired extends Command {
                                 END,
                             old.status =
                                 CASE
-                                    WHEN {$this->quote($mallTime)} > end_date THEN 'inactive'
+                                    WHEN (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
+                                                FROM orb_merchants om
+                                                    LEFT JOIN orb_timezones ot on ot.timezone_id = om.timezone_id
+                                                WHERE om.merchant_id = old.mall_id) > end_date THEN 'inactive'
                                     ELSE old.status
                                 END
                             ";
 
-        if ($campaign === 'news' || $campaign ==='promotions') {
-            DB::statement($newsQuery);
-            $campaign = ucfirst($campaign);
-            $this->info("Success, Data {$campaign} Updated!");
-        }
-        if ($campaign === 'coupons') {
-            DB::statement($couponQuery);
-            $this->info("Success, Data Coupons Updated!");
-        }
-        if ($campaign === 'lucky_draws') {
-            DB::statement($luckyDrawQuery);
-            $this->info("Success, Data Lucky Draws Updated!");
-        }
+        DB::statement($newsQuery);
+        $this->info("Success, Data News Updated!");
+        $this->info("Success, Data Promotions Updated!");
+
+        DB::statement($couponQuery);
+        $this->info("Success, Data Coupons Updated!");
+
+        DB::statement($luckyDrawQuery);
+        $this->info("Success, Data Lucky Draws Updated!");
+
     }
 
     /**
@@ -151,15 +146,7 @@ class CampaignSetToExpired extends Command {
      */
     protected function getOptions()
     {
-        return array(
-            array('merchant_id', null, InputOption::VALUE_REQUIRED, 'Mall or Merchant ID.'),
-            array('campaign', null, InputOption::VALUE_REQUIRED, 'Type of campaign ( news, coupons, promotions, lucky_draws )'),
-        );
-    }
-
-    protected function quote($arg)
-    {
-        return DB::connection()->getPdo()->quote($arg);
+        return array();
     }
 
 }
