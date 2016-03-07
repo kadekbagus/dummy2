@@ -1309,81 +1309,779 @@ class UserReportAPIController extends ControllerAPI
     {
         switch ($timeDimensionType) {
             case 'report_date':
-                $columns = [
+                $firstColumn = [
                     'date' => [
                         'title' => 'Date',
                         'sort_key' => 'date',
                     ],
-                    'sign_up' => [
-                        'title' => 'Sign Up',
-                        'sort_key' => 'sign_up',
-                        'total_title' => 'Sign Up',
-                        'total' => 0,
+                ];
+
+                break;
+
+            case 'day_of_week':
+                $firstColumn = [
+                    'day_of_week' => [
+                        'title' => 'Day of Week',
+                        'sort_key' => 'day_of_week',
                     ],
-                    'sign_up_by_type' => [
-                        'title' => 'Sign Up by Type',
-                        'sub_columns' => [
-                            'sign_up_by_type_facebook' => [
-                                'title' => 'Facebook',
-                                'sort_key' => 'sign_up_by_type_facebook',
-                                'total_title' => 'Sign Up via Facebook',
-                                'total' => 0,
-                            ],
-                            'sign_up_by_type_google' => [
-                                'title' => 'Google+',
-                                'sort_key' => 'sign_up_by_type_google',
-                                'total_title' => 'Sign Up via Google+',
-                                'total' => 0,
-                            ],
-                            'sign_up_by_type_form' => [
-                                'title' => 'Form',
-                                'sort_key' => 'sign_up_by_type_form',
-                                'total_title' => 'Sign Up via Form',
-                                'total' => 0,
-                            ],
-                        ],
+                ];
+
+                break;
+                
+            case 'hour_of_day':
+                $firstColumn = [
+                    'hour_of_day' => [
+                        'title' => 'Hour of Day',
+                        'sort_key' => 'hour_of_day',
                     ],
-                    'sign_in' => [
-                        'title' => 'Sign In',
-                        'sort_key' => 'sign_in',
-                        'total_title' => 'Sign In',
-                        'total' => 0,
-                    ],
-                    'unique_sign_in' => [
-                        'title' => 'Unique Sign In',
-                        'sort_key' => 'unique_sign_in',
-                        'total_title' => 'Unique Sign In',
-                        'total' => 0,
-                    ],
-                    'returning' => [
-                        'title' => 'Returning',
-                        'sort_key' => 'returning',
-                        'total_title' => 'Returning',
-                        'total' => 0,
-                    ],
-                    'status' => [
-                        'title' => 'Status',
-                        'sub_columns' => [
-                            'status_active' => [
-                                'title' => 'Active',
-                                'sort_key' => 'status_active',
-                                'total_title' => 'Active Status',
-                                'total' => 0,
-                            ],
-                            'status_pending' => [
-                                'title' => 'Pending',
-                                'sort_key' => 'status_pending',
-                                'total_title' => 'Pending Status',
-                                'total' => 0,
-                            ],
-                        ],
+                ];
+
+                break;
+                
+            case 'report_month':
+                $firstColumn = [
+                    'month' => [
+                        'title' => 'Month',
+                        'sort_key' => 'month',
                     ],
                 ];
 
                 break;
         }
 
-        return $columns;
+        $columnArray = [
+            'sign_up' => [
+                'title' => 'Sign Up',
+                'sort_key' => 'sign_up',
+                'total_title' => 'Sign Up',
+                'total' => 0,
+            ],
+            'sign_up_by_gender' => [
+                'title' => 'Sign Up by Gender',
+                'sub_columns' => [
+                    'sign_up_gender_male' => [
+                        'title' => 'Facebook',
+                        'sort_key' => 'sign_up_gender_male',
+                        'total_title' => 'Sign Up via Facebook',
+                        'total' => 0,
+                    ],
+                    'sign_up_gender_female' => [
+                        'title' => 'Google+',
+                        'sort_key' => 'sign_up_gender_female',
+                        'total_title' => 'Sign Up via Google+',
+                        'total' => 0,
+                    ],
+                    'sign_up_gender_unknown' => [
+                        'title' => 'Form',
+                        'sort_key' => 'sign_up_gender_unknown',
+                        'total_title' => 'Sign Up via Form',
+                        'total' => 0,
+                    ],
+                ],
+            ],
+            'sign_up_by_gender_percentage' => [
+                'title' => 'Sign Up by Gender Percentage',
+                'sub_columns' => [
+                    'sign_up_gender_male_percentage' => [
+                        'title' => 'Facebook',
+                        'sort_key' => 'sign_up_gender_male_percentage',
+                        'total_title' => 'Sign Up via Facebook',
+                        'total' => 0,
+                    ],
+                    'sign_up_gender_female_percentage' => [
+                        'title' => 'Google+',
+                        'sort_key' => 'sign_up_gender_female_percentage',
+                        'total_title' => 'Sign Up via Google+',
+                        'total' => 0,
+                    ],
+                    'sign_up_gender_unknown_percentage' => [
+                        'title' => 'Form',
+                        'sort_key' => 'sign_up_gender_unknown_percentage',
+                        'total_title' => 'Sign Up via Form',
+                        'total' => 0,
+                    ],
+                ],
+            ],
+            'sign_up_by_age_range' => [
+                'title' => 'Sign Up by Age Range',
+                'sub_columns' => [
+                    'sign_up_age_0_to_14' => [
+                        'title' => 'Facebook',
+                        'sort_key' => 'sign_up_age_0_to_14',
+                        'total_title' => 'Sign Up via Facebook',
+                        'total' => 0,
+                    ],
+                    'sign_up_age_15_to_24' => [
+                        'title' => 'Google+',
+                        'sort_key' => 'sign_up_age_15_to_24',
+                        'total_title' => 'Sign Up via Google+',
+                        'total' => 0,
+                    ],
+                    'sign_up_age_25_to_34' => [
+                        'title' => 'Form',
+                        'sort_key' => 'sign_up_age_25_to_34',
+                        'total_title' => 'Sign Up via Form',
+                        'total' => 0,
+                    ],
+                    'sign_up_age_35_to_44' => [
+                        'title' => 'Form',
+                        'sort_key' => 'sign_up_age_35_to_44',
+                        'total_title' => 'Sign Up via Form',
+                        'total' => 0,
+                    ],
+                    'sign_up_age_45_to_54' => [
+                        'title' => 'Form',
+                        'sort_key' => 'sign_up_age_45_to_54',
+                        'total_title' => 'Sign Up via Form',
+                        'total' => 0,
+                    ],
+                    'sign_up_age_55_to_64' => [
+                        'title' => 'Form',
+                        'sort_key' => 'sign_up_age_55_to_64',
+                        'total_title' => 'Sign Up via Form',
+                        'total' => 0,
+                    ],
+                    'sign_up_age_65_plus' => [
+                        'title' => 'Form',
+                        'sort_key' => 'sign_up_age_65_plus',
+                        'total_title' => 'Sign Up via Form',
+                        'total' => 0,
+                    ],
+                    'sign_up_age_unknown' => [
+                        'title' => 'Form',
+                        'sort_key' => 'sign_up_age_unknown',
+                        'total_title' => 'Sign Up via Form',
+                        'total' => 0,
+                    ],
+                ],
+            ],
+            'sign_up_by_age_range_percentage' => [
+                'title' => 'Sign Up by Age Range Percentage',
+                'sub_columns' => [
+                    'sign_up_age_0_to_14_percentage' => [
+                        'title' => 'Facebook',
+                        'sort_key' => 'sign_up_age_0_to_14_percentage',
+                        'total_title' => 'Sign Up via Facebook',
+                        'total' => 0,
+                    ],
+                    'sign_up_age_15_to_24_percentage' => [
+                        'title' => 'Google+',
+                        'sort_key' => 'sign_up_age_15_to_24_percentage',
+                        'total_title' => 'Sign Up via Google+',
+                        'total' => 0,
+                    ],
+                    'sign_up_age_25_to_34_percentage' => [
+                        'title' => 'Form',
+                        'sort_key' => 'sign_up_age_25_to_34_percentage',
+                        'total_title' => 'Sign Up via Form',
+                        'total' => 0,
+                    ],
+                    'sign_up_age_35_to_44_percentage' => [
+                        'title' => 'Form',
+                        'sort_key' => 'sign_up_age_35_to_44_percentage',
+                        'total_title' => 'Sign Up via Form',
+                        'total' => 0,
+                    ],
+                    'sign_up_age_45_to_54_percentage' => [
+                        'title' => 'Form',
+                        'sort_key' => 'sign_up_age_45_to_54_percentage',
+                        'total_title' => 'Sign Up via Form',
+                        'total' => 0,
+                    ],
+                    'sign_up_age_55_to_64_percentage' => [
+                        'title' => 'Form',
+                        'sort_key' => 'sign_up_age_55_to_64_percentage',
+                        'total_title' => 'Sign Up via Form',
+                        'total' => 0,
+                    ],
+                    'sign_up_age_65_plus_percentage' => [
+                        'title' => 'Form',
+                        'sort_key' => 'sign_up_age_65_plus_percentage',
+                        'total_title' => 'Sign Up via Form',
+                        'total' => 0,
+                    ],
+                    'sign_up_age_unknown_percentage' => [
+                        'title' => 'Form',
+                        'sort_key' => 'sign_up_age_unknown_percentage',
+                        'total_title' => 'Sign Up via Form',
+                        'total' => 0,
+                    ],
+                ],
+            ],
+            'sign_up_by_type' => [
+                'title' => 'Sign Up by Type',
+                'sub_columns' => [
+                    'sign_up_type_facebook' => [
+                        'title' => 'Facebook',
+                        'sort_key' => 'sign_up_type_facebook',
+                        'total_title' => 'Sign Up via Facebook',
+                        'total' => 0,
+                    ],
+                    'sign_up_type_google' => [
+                        'title' => 'Google+',
+                        'sort_key' => 'sign_up_type_google',
+                        'total_title' => 'Sign Up via Google+',
+                        'total' => 0,
+                    ],
+
+                    //
+                    'sign_up_type_form' => [
+                        'title' => 'Form',
+                        'sort_key' => 'sign_up_type_form',
+                        'total_title' => 'Sign Up via Form',
+                        'total' => 0,
+                    ],
+                    'sign_up_type_unknown' => [
+                        'title' => 'Unknown',
+                        'sort_key' => 'sign_up_type_unknown',
+                        'total_title' => 'Sign Up Unknown',
+                        'total' => 0,
+                    ],
+                ],
+            ],
+            'sign_up_by_type_percentage' => [
+                'title' => 'Sign Up by Type Percentage',
+                'sub_columns' => [
+                    'sign_up_type_facebook_percentage' => [
+                        'title' => 'Facebook',
+                        'sort_key' => 'sign_up_type_facebook_percentage',
+                        'total_title' => 'Sign Up via Facebook',
+                        'total' => 0,
+                    ],
+                    'sign_up_type_google_percentage' => [
+                        'title' => 'Google+',
+                        'sort_key' => 'sign_up_type_google_percentage',
+                        'total_title' => 'Sign Up via Google+',
+                        'total' => 0,
+                    ],
+
+                    //
+                    'sign_up_type_form_percentage' => [
+                        'title' => 'Form',
+                        'sort_key' => 'sign_up_type_form_percentage',
+                        'total_title' => 'Sign Up via Form',
+                        'total' => 0,
+                    ],
+                    'sign_up_type_unknown_percentage' => [
+                        'title' => 'Unknown',
+                        'sort_key' => 'sign_up_type_unknown_percentage',
+                        'total_title' => 'Sign Up Unknown',
+                        'total' => 0,
+                    ],
+                ],
+            ],
+
+
+            'sign_in' => [
+                'title' => 'Sign In',
+                'sort_key' => 'sign_in',
+                'total_title' => 'Sign In',
+                'total' => 0,
+            ],
+
+
+            'sign_in_by_gender' => [
+                'title' => 'Sign Up by Gender',
+                'sub_columns' => [
+                    'sign_in_gender_male' => [
+                        'title' => 'Facebook',
+                        'sort_key' => 'sign_in_gender_male',
+                        'total_title' => 'Sign Up via Facebook',
+                        'total' => 0,
+                    ],
+                    'sign_in_gender_female' => [
+                        'title' => 'Google+',
+                        'sort_key' => 'sign_in_gender_female',
+                        'total_title' => 'Sign Up via Google+',
+                        'total' => 0,
+                    ],
+                    'sign_in_gender_unknown' => [
+                        'title' => 'Form',
+                        'sort_key' => 'sign_in_gender_unknown',
+                        'total_title' => 'Sign Up via Form',
+                        'total' => 0,
+                    ],
+                ],
+            ],
+            'sign_in_by_gender_percentage' => [
+                'title' => 'Sign Up by Gender Percentage',
+                'sub_columns' => [
+                    'sign_in_gender_male_percentage' => [
+                        'title' => 'Facebook',
+                        'sort_key' => 'sign_in_gender_male_percentage',
+                        'total_title' => 'Sign Up via Facebook',
+                        'total' => 0,
+                    ],
+                    'sign_in_gender_female_percentage' => [
+                        'title' => 'Google+',
+                        'sort_key' => 'sign_in_gender_female_percentage',
+                        'total_title' => 'Sign Up via Google+',
+                        'total' => 0,
+                    ],
+                    'sign_in_gender_unknown_percentage' => [
+                        'title' => 'Form',
+                        'sort_key' => 'sign_in_gender_unknown_percentage',
+                        'total_title' => 'Sign Up via Form',
+                        'total' => 0,
+                    ],
+                ],
+            ],
+            'sign_in_by_age_range' => [
+                'title' => 'Sign Up by Age Range',
+                'sub_columns' => [
+                    'sign_in_age_0_to_14' => [
+                        'title' => 'Facebook',
+                        'sort_key' => 'sign_in_age_0_to_14',
+                        'total_title' => 'Sign Up via Facebook',
+                        'total' => 0,
+                    ],
+                    'sign_in_age_15_to_24' => [
+                        'title' => 'Google+',
+                        'sort_key' => 'sign_in_age_15_to_24',
+                        'total_title' => 'Sign Up via Google+',
+                        'total' => 0,
+                    ],
+                    'sign_in_age_25_to_34' => [
+                        'title' => 'Form',
+                        'sort_key' => 'sign_in_age_25_to_34',
+                        'total_title' => 'Sign Up via Form',
+                        'total' => 0,
+                    ],
+                    'sign_in_age_35_to_44' => [
+                        'title' => 'Form',
+                        'sort_key' => 'sign_in_age_35_to_44',
+                        'total_title' => 'Sign Up via Form',
+                        'total' => 0,
+                    ],
+                    'sign_in_age_45_to_54' => [
+                        'title' => 'Form',
+                        'sort_key' => 'sign_in_age_45_to_54',
+                        'total_title' => 'Sign Up via Form',
+                        'total' => 0,
+                    ],
+                    'sign_in_age_55_to_64' => [
+                        'title' => 'Form',
+                        'sort_key' => 'sign_in_age_55_to_64',
+                        'total_title' => 'Sign Up via Form',
+                        'total' => 0,
+                    ],
+                    'sign_in_age_65_plus' => [
+                        'title' => 'Form',
+                        'sort_key' => 'sign_in_age_65_plus',
+                        'total_title' => 'Sign Up via Form',
+                        'total' => 0,
+                    ],
+                    'sign_in_age_unknown' => [
+                        'title' => 'Form',
+                        'sort_key' => 'sign_in_age_unknown',
+                        'total_title' => 'Sign Up via Form',
+                        'total' => 0,
+                    ],
+                ],
+            ],
+            'sign_in_by_age_range_percentage' => [
+                'title' => 'Sign Up by Age Range Percentage',
+                'sub_columns' => [
+                    'sign_in_age_0_to_14_percentage' => [
+                        'title' => 'Facebook',
+                        'sort_key' => 'sign_in_age_0_to_14_percentage',
+                        'total_title' => 'Sign Up via Facebook',
+                        'total' => 0,
+                    ],
+                    'sign_in_age_15_to_24_percentage' => [
+                        'title' => 'Google+',
+                        'sort_key' => 'sign_in_age_15_to_24_percentage',
+                        'total_title' => 'Sign Up via Google+',
+                        'total' => 0,
+                    ],
+                    'sign_in_age_25_to_34_percentage' => [
+                        'title' => 'Form',
+                        'sort_key' => 'sign_in_age_25_to_34_percentage',
+                        'total_title' => 'Sign Up via Form',
+                        'total' => 0,
+                    ],
+                    'sign_in_age_35_to_44_percentage' => [
+                        'title' => 'Form',
+                        'sort_key' => 'sign_in_age_35_to_44_percentage',
+                        'total_title' => 'Sign Up via Form',
+                        'total' => 0,
+                    ],
+                    'sign_in_age_45_to_54_percentage' => [
+                        'title' => 'Form',
+                        'sort_key' => 'sign_in_age_45_to_54_percentage',
+                        'total_title' => 'Sign Up via Form',
+                        'total' => 0,
+                    ],
+                    'sign_in_age_55_to_64_percentage' => [
+                        'title' => 'Form',
+                        'sort_key' => 'sign_in_age_55_to_64_percentage',
+                        'total_title' => 'Sign Up via Form',
+                        'total' => 0,
+                    ],
+                    'sign_in_age_65_plus_percentage' => [
+                        'title' => 'Form',
+                        'sort_key' => 'sign_in_age_65_plus_percentage',
+                        'total_title' => 'Sign Up via Form',
+                        'total' => 0,
+                    ],
+                    'sign_in_age_unknown_percentage' => [
+                        'title' => 'Form',
+                        'sort_key' => 'sign_in_age_unknown_percentage',
+                        'total_title' => 'Sign Up via Form',
+                        'total' => 0,
+                    ],
+                ],
+            ],
+            'sign_in_by_type' => [
+                'title' => 'Sign Up by Type',
+                'sub_columns' => [
+                    'sign_in_type_facebook' => [
+                        'title' => 'Facebook',
+                        'sort_key' => 'sign_in_type_facebook',
+                        'total_title' => 'Sign Up via Facebook',
+                        'total' => 0,
+                    ],
+                    'sign_in_type_google' => [
+                        'title' => 'Google+',
+                        'sort_key' => 'sign_in_type_google',
+                        'total_title' => 'Sign Up via Google+',
+                        'total' => 0,
+                    ],
+
+                    //
+                    'sign_in_type_form' => [
+                        'title' => 'Form',
+                        'sort_key' => 'sign_in_type_form',
+                        'total_title' => 'Sign Up via Form',
+                        'total' => 0,
+                    ],
+                    'sign_in_type_unknown' => [
+                        'title' => 'Unknown',
+                        'sort_key' => 'sign_in_type_unknown',
+                        'total_title' => 'Sign Up Unknown',
+                        'total' => 0,
+                    ],
+                ],
+            ],
+            'sign_in_by_type_percentage' => [
+                'title' => 'Sign Up by Type Percentage',
+                'sub_columns' => [
+                    'sign_in_type_facebook_percentage' => [
+                        'title' => 'Facebook',
+                        'sort_key' => 'sign_in_type_facebook_percentage',
+                        'total_title' => 'Sign Up via Facebook',
+                        'total' => 0,
+                    ],
+                    'sign_in_type_google_percentage' => [
+                        'title' => 'Google+',
+                        'sort_key' => 'sign_in_type_google_percentage',
+                        'total_title' => 'Sign Up via Google+',
+                        'total' => 0,
+                    ],
+
+                    //
+                    'sign_in_type_form_percentage' => [
+                        'title' => 'Form',
+                        'sort_key' => 'sign_in_type_form_percentage',
+                        'total_title' => 'Sign Up via Form',
+                        'total' => 0,
+                    ],
+                    'sign_in_type_unknown_percentage' => [
+                        'title' => 'Unknown',
+                        'sort_key' => 'sign_in_type_unknown_percentage',
+                        'total_title' => 'Sign Up Unknown',
+                        'total' => 0,
+                    ],
+                ],
+            ],
+
+
+            'unique_sign_in' => [
+                'title' => 'Unique Sign In',
+                'sort_key' => 'unique_sign_in',
+                'total_title' => 'Unique Sign In',
+                'total' => 0,
+            ],
+
+
+            'unique_sign_in_by_gender' => [
+                'title' => 'Sign Up by Gender',
+                'sub_columns' => [
+                    'unique_sign_in_gender_male' => [
+                        'title' => 'Facebook',
+                        'sort_key' => 'unique_sign_in_gender_male',
+                        'total_title' => 'Sign Up via Facebook',
+                        'total' => 0,
+                    ],
+                    'unique_sign_in_gender_female' => [
+                        'title' => 'Google+',
+                        'sort_key' => 'unique_sign_in_gender_female',
+                        'total_title' => 'Sign Up via Google+',
+                        'total' => 0,
+                    ],
+                    'unique_sign_in_gender_unknown' => [
+                        'title' => 'Form',
+                        'sort_key' => 'unique_sign_in_gender_unknown',
+                        'total_title' => 'Sign Up via Form',
+                        'total' => 0,
+                    ],
+                ],
+            ],
+            'unique_sign_in_by_gender_percentage' => [
+                'title' => 'Sign Up by Gender Percentage',
+                'sub_columns' => [
+                    'unique_sign_in_gender_male_percentage' => [
+                        'title' => 'Facebook',
+                        'sort_key' => 'unique_sign_in_gender_male_percentage',
+                        'total_title' => 'Sign Up via Facebook',
+                        'total' => 0,
+                    ],
+                    'unique_sign_in_gender_female_percentage' => [
+                        'title' => 'Google+',
+                        'sort_key' => 'unique_sign_in_gender_female_percentage',
+                        'total_title' => 'Sign Up via Google+',
+                        'total' => 0,
+                    ],
+                    'unique_sign_in_gender_unknown_percentage' => [
+                        'title' => 'Form',
+                        'sort_key' => 'unique_sign_in_gender_unknown_percentage',
+                        'total_title' => 'Sign Up via Form',
+                        'total' => 0,
+                    ],
+                ],
+            ],
+            'unique_sign_in_by_age_range' => [
+                'title' => 'Sign Up by Age Range',
+                'sub_columns' => [
+                    'unique_sign_in_age_0_to_14' => [
+                        'title' => 'Facebook',
+                        'sort_key' => 'unique_sign_in_age_0_to_14',
+                        'total_title' => 'Sign Up via Facebook',
+                        'total' => 0,
+                    ],
+                    'unique_sign_in_age_15_to_24' => [
+                        'title' => 'Google+',
+                        'sort_key' => 'unique_sign_in_age_15_to_24',
+                        'total_title' => 'Sign Up via Google+',
+                        'total' => 0,
+                    ],
+                    'unique_sign_in_age_25_to_34' => [
+                        'title' => 'Form',
+                        'sort_key' => 'unique_sign_in_age_25_to_34',
+                        'total_title' => 'Sign Up via Form',
+                        'total' => 0,
+                    ],
+                    'unique_sign_in_age_35_to_44' => [
+                        'title' => 'Form',
+                        'sort_key' => 'unique_sign_in_age_35_to_44',
+                        'total_title' => 'Sign Up via Form',
+                        'total' => 0,
+                    ],
+                    'unique_sign_in_age_45_to_54' => [
+                        'title' => 'Form',
+                        'sort_key' => 'unique_sign_in_age_45_to_54',
+                        'total_title' => 'Sign Up via Form',
+                        'total' => 0,
+                    ],
+                    'unique_sign_in_age_55_to_64' => [
+                        'title' => 'Form',
+                        'sort_key' => 'unique_sign_in_age_55_to_64',
+                        'total_title' => 'Sign Up via Form',
+                        'total' => 0,
+                    ],
+                    'unique_sign_in_age_65_plus' => [
+                        'title' => 'Form',
+                        'sort_key' => 'unique_sign_in_age_65_plus',
+                        'total_title' => 'Sign Up via Form',
+                        'total' => 0,
+                    ],
+                    'unique_sign_in_age_unknown' => [
+                        'title' => 'Form',
+                        'sort_key' => 'unique_sign_in_age_unknown',
+                        'total_title' => 'Sign Up via Form',
+                        'total' => 0,
+                    ],
+                ],
+            ],
+            'unique_sign_in_by_age_range_percentage' => [
+                'title' => 'Sign Up by Age Range Percentage',
+                'sub_columns' => [
+                    'unique_sign_in_age_0_to_14_percentage' => [
+                        'title' => 'Facebook',
+                        'sort_key' => 'unique_sign_in_age_0_to_14_percentage',
+                        'total_title' => 'Sign Up via Facebook',
+                        'total' => 0,
+                    ],
+                    'unique_sign_in_age_15_to_24_percentage' => [
+                        'title' => 'Google+',
+                        'sort_key' => 'unique_sign_in_age_15_to_24_percentage',
+                        'total_title' => 'Sign Up via Google+',
+                        'total' => 0,
+                    ],
+                    'unique_sign_in_age_25_to_34_percentage' => [
+                        'title' => 'Form',
+                        'sort_key' => 'unique_sign_in_age_25_to_34_percentage',
+                        'total_title' => 'Sign Up via Form',
+                        'total' => 0,
+                    ],
+                    'unique_sign_in_age_35_to_44_percentage' => [
+                        'title' => 'Form',
+                        'sort_key' => 'unique_sign_in_age_35_to_44_percentage',
+                        'total_title' => 'Sign Up via Form',
+                        'total' => 0,
+                    ],
+                    'unique_sign_in_age_45_to_54_percentage' => [
+                        'title' => 'Form',
+                        'sort_key' => 'unique_sign_in_age_45_to_54_percentage',
+                        'total_title' => 'Sign Up via Form',
+                        'total' => 0,
+                    ],
+                    'unique_sign_in_age_55_to_64_percentage' => [
+                        'title' => 'Form',
+                        'sort_key' => 'unique_sign_in_age_55_to_64_percentage',
+                        'total_title' => 'Sign Up via Form',
+                        'total' => 0,
+                    ],
+                    'unique_sign_in_age_65_plus_percentage' => [
+                        'title' => 'Form',
+                        'sort_key' => 'unique_sign_in_age_65_plus_percentage',
+                        'total_title' => 'Sign Up via Form',
+                        'total' => 0,
+                    ],
+                    'unique_sign_in_age_unknown_percentage' => [
+                        'title' => 'Form',
+                        'sort_key' => 'unique_sign_in_age_unknown_percentage',
+                        'total_title' => 'Sign Up via Form',
+                        'total' => 0,
+                    ],
+                ],
+            ],
+            'unique_sign_in_by_type' => [
+                'title' => 'Sign Up by Type',
+                'sub_columns' => [
+                    'unique_sign_in_type_facebook' => [
+                        'title' => 'Facebook',
+                        'sort_key' => 'unique_sign_in_type_facebook',
+                        'total_title' => 'Sign Up via Facebook',
+                        'total' => 0,
+                    ],
+                    'unique_sign_in_type_google' => [
+                        'title' => 'Google+',
+                        'sort_key' => 'unique_sign_in_type_google',
+                        'total_title' => 'Sign Up via Google+',
+                        'total' => 0,
+                    ],
+
+                    //
+                    'unique_sign_in_type_form' => [
+                        'title' => 'Form',
+                        'sort_key' => 'unique_sign_in_type_form',
+                        'total_title' => 'Sign Up via Form',
+                        'total' => 0,
+                    ],
+                    'unique_sign_in_type_unknown' => [
+                        'title' => 'Unknown',
+                        'sort_key' => 'unique_sign_in_type_unknown',
+                        'total_title' => 'Sign Up Unknown',
+                        'total' => 0,
+                    ],
+                ],
+            ],
+            'unique_sign_in_by_type_percentage' => [
+                'title' => 'Sign Up by Type Percentage',
+                'sub_columns' => [
+                    'unique_sign_in_type_facebook_percentage' => [
+                        'title' => 'Facebook',
+                        'sort_key' => 'unique_sign_in_type_facebook_percentage',
+                        'total_title' => 'Sign Up via Facebook',
+                        'total' => 0,
+                    ],
+                    'unique_sign_in_type_google_percentage' => [
+                        'title' => 'Google+',
+                        'sort_key' => 'unique_sign_in_type_google_percentage',
+                        'total_title' => 'Sign Up via Google+',
+                        'total' => 0,
+                    ],
+
+                    //
+                    'unique_sign_in_type_form_percentage' => [
+                        'title' => 'Form',
+                        'sort_key' => 'unique_sign_in_type_form_percentage',
+                        'total_title' => 'Sign Up via Form',
+                        'total' => 0,
+                    ],
+                    'unique_sign_in_type_unknown_percentage' => [
+                        'title' => 'Unknown',
+                        'sort_key' => 'unique_sign_in_type_unknown_percentage',
+                        'total_title' => 'Sign Up Unknown',
+                        'total' => 0,
+                    ],
+                ],
+            ],
+
+            'returning' => [
+                'title' => 'Returning',
+                'sort_key' => 'returning',
+                'total_title' => 'Returning',
+                'total' => 0,
+            ],
+            'returning_percentage' => [
+                'title' => 'Returning',
+                'sort_key' => 'returning_percentage',
+                'total_title' => 'Returning Percentage',
+                'total' => 0,
+            ],
+
+            'status' => [
+                'title' => 'Status',
+                'sub_columns' => [
+                    'unique_sign_in_status_active' => [
+                        'title' => 'Active',
+                        'sort_key' => 'unique_sign_in_status_active',
+                        'total_title' => 'Active Status',
+                        'total' => 0,
+                    ],
+                    'unique_sign_in_status_pending' => [
+                        'title' => 'Pending',
+                        'sort_key' => 'unique_sign_in_status_pending',
+                        'total_title' => 'Pending Status',
+                        'total' => 0,
+                    ],
+                    'unique_sign_in_status_unknown' => [
+                        'title' => 'Unknown',
+                        'sort_key' => 'unique_sign_in_status_unknown',
+                        'total_title' => 'Unknown',
+                        'total' => 0,
+                    ],
+                ],
+            ],
+
+            'status_percentage' => [
+                'title' => 'Status %',
+                'sub_columns' => [
+                    'unique_sign_in_status_active_percentage' => [
+                        'title' => 'Active',
+                        'sort_key' => 'unique_sign_in_status_active_percentage',
+                        'total_title' => 'Active Status',
+                        'total' => 0,
+                    ],
+                    'unique_sign_in_status_pending_percentage' => [
+                        'title' => 'Pending',
+                        'sort_key' => 'unique_sign_in_status_pending_percentage',
+                        'total_title' => 'Pending Status',
+                        'total' => 0,
+                    ],
+                    'unique_sign_in_status_unknown_percentage' => [
+                        'title' => 'Unknown',
+                        'sort_key' => 'unique_sign_in_status_unknown_percentage',
+                        'total_title' => 'Unknown',
+                        'total' => 0,
+                    ],
+                ],
+            ],
+        ];
+
+        return array_merge($firstColumn, $columnArray);
     }
 
     public function setReturnBuilder($bool)
