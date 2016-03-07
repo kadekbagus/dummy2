@@ -37,61 +37,30 @@ class CampaignSetToExpired extends Command {
      */
     public function fire()
     {
+
+        DB::statement($this->getExpiredCampaignQuery('news'));
+        $this->info("Success, Data News Updated!");
+        $this->info("Success, Data Promotions Updated!");
+
+        DB::statement($this->getExpiredCampaignQuery('coupons'));
+        $this->info("Success, Data Coupons Updated!");
+
+        DB::statement($this->getExpiredCampaignQuery('lucky_draws'));
+        $this->info("Success, Data Lucky Draws Updated!");
+
+    }
+
+    /**
+     * Get update campaign expired query.
+     *
+     * @return array
+     */
+    public function getExpiredCampaignQuery($campaign){
         $prefix = DB::getTablePrefix();
+        $query = '';
 
-        $newsQuery = "UPDATE {$prefix}news as old
-                        SET old.campaign_status_id =
-                            CASE
-                                WHEN old.campaign_status_id = (SELECT campaign_status_id FROM {$prefix}campaign_status where campaign_status_name = 'expired')
-                                    THEN old.campaign_status_id
-                                ELSE
-                                    (CASE
-                                        WHEN (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
-                                                FROM orb_merchants om
-                                                    LEFT JOIN orb_timezones ot on ot.timezone_id = om.timezone_id
-                                                WHERE om.merchant_id = old.mall_id) > end_date
-                                            THEN
-                                                (SELECT campaign_status_id FROM {$prefix}campaign_status where campaign_status_name = 'expired')
-                                        ELSE old.campaign_status_id
-                                    END)
-                            END,
-                        old.status =
-                            CASE
-                                WHEN (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
-                                                FROM orb_merchants om
-                                                    LEFT JOIN orb_timezones ot on ot.timezone_id = om.timezone_id
-                                                WHERE om.merchant_id = old.mall_id) > end_date THEN 'inactive'
-                                ELSE old.status
-                            END
-                        ";
-
-        $couponQuery = "UPDATE {$prefix}promotions as old
-                        SET old.campaign_status_id =
-                            CASE
-                                WHEN old.campaign_status_id = (SELECT campaign_status_id FROM {$prefix}campaign_status where campaign_status_name = 'expired')
-                                    THEN old.campaign_status_id
-                                ELSE
-                                    (CASE
-                                        WHEN (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
-                                                FROM orb_merchants om
-                                                    LEFT JOIN orb_timezones ot on ot.timezone_id = om.timezone_id
-                                                WHERE om.merchant_id = old.merchant_id) > end_date
-                                            THEN
-                                                (SELECT campaign_status_id FROM {$prefix}campaign_status where campaign_status_name = 'expired')
-                                        ELSE old.campaign_status_id
-                                    END)
-                            END,
-                        old.status =
-                            CASE
-                                WHEN (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
-                                                FROM orb_merchants om
-                                                    LEFT JOIN orb_timezones ot on ot.timezone_id = om.timezone_id
-                                                WHERE om.merchant_id = old.merchant_id) > end_date THEN 'inactive'
-                                ELSE old.status
-                            END
-                        ";
-
-        $luckyDrawQuery = "UPDATE {$prefix}lucky_draws as old
+        if ($campaign === 'news' || $campaign === 'promotions') {
+            $query = "UPDATE {$prefix}news as old
                             SET old.campaign_status_id =
                                 CASE
                                     WHEN old.campaign_status_id = (SELECT campaign_status_id FROM {$prefix}campaign_status where campaign_status_name = 'expired')
@@ -99,9 +68,9 @@ class CampaignSetToExpired extends Command {
                                     ELSE
                                         (CASE
                                             WHEN (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
-                                                FROM orb_merchants om
-                                                    LEFT JOIN orb_timezones ot on ot.timezone_id = om.timezone_id
-                                                WHERE om.merchant_id = old.mall_id) > end_date
+                                                    FROM orb_merchants om
+                                                        LEFT JOIN orb_timezones ot on ot.timezone_id = om.timezone_id
+                                                    WHERE om.merchant_id = old.mall_id) > end_date
                                                 THEN
                                                     (SELECT campaign_status_id FROM {$prefix}campaign_status where campaign_status_name = 'expired')
                                             ELSE old.campaign_status_id
@@ -110,23 +79,71 @@ class CampaignSetToExpired extends Command {
                             old.status =
                                 CASE
                                     WHEN (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
-                                                FROM orb_merchants om
-                                                    LEFT JOIN orb_timezones ot on ot.timezone_id = om.timezone_id
-                                                WHERE om.merchant_id = old.mall_id) > end_date THEN 'inactive'
+                                                    FROM orb_merchants om
+                                                        LEFT JOIN orb_timezones ot on ot.timezone_id = om.timezone_id
+                                                    WHERE om.merchant_id = old.mall_id) > end_date THEN 'inactive'
                                     ELSE old.status
                                 END
                             ";
+        }
 
-        DB::statement($newsQuery);
-        $this->info("Success, Data News Updated!");
-        $this->info("Success, Data Promotions Updated!");
+        if ($campaign === 'coupons') {
+            $query = "UPDATE {$prefix}promotions as old
+                            SET old.campaign_status_id =
+                                CASE
+                                    WHEN old.campaign_status_id = (SELECT campaign_status_id FROM {$prefix}campaign_status where campaign_status_name = 'expired')
+                                        THEN old.campaign_status_id
+                                    ELSE
+                                        (CASE
+                                            WHEN (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
+                                                    FROM orb_merchants om
+                                                        LEFT JOIN orb_timezones ot on ot.timezone_id = om.timezone_id
+                                                    WHERE om.merchant_id = old.merchant_id) > end_date
+                                                THEN
+                                                    (SELECT campaign_status_id FROM {$prefix}campaign_status where campaign_status_name = 'expired')
+                                            ELSE old.campaign_status_id
+                                        END)
+                                END,
+                            old.status =
+                                CASE
+                                    WHEN (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
+                                                    FROM orb_merchants om
+                                                        LEFT JOIN orb_timezones ot on ot.timezone_id = om.timezone_id
+                                                    WHERE om.merchant_id = old.merchant_id) > end_date THEN 'inactive'
+                                    ELSE old.status
+                                END
+                            ";
+        }
 
-        DB::statement($couponQuery);
-        $this->info("Success, Data Coupons Updated!");
+        if ($campaign === 'lucky_draws') {
+            $query = "UPDATE {$prefix}lucky_draws as old
+                                SET old.campaign_status_id =
+                                    CASE
+                                        WHEN old.campaign_status_id = (SELECT campaign_status_id FROM {$prefix}campaign_status where campaign_status_name = 'expired')
+                                            THEN old.campaign_status_id
+                                        ELSE
+                                            (CASE
+                                                WHEN (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
+                                                    FROM orb_merchants om
+                                                        LEFT JOIN orb_timezones ot on ot.timezone_id = om.timezone_id
+                                                    WHERE om.merchant_id = old.mall_id) > end_date
+                                                    THEN
+                                                        (SELECT campaign_status_id FROM {$prefix}campaign_status where campaign_status_name = 'expired')
+                                                ELSE old.campaign_status_id
+                                            END)
+                                    END,
+                                old.status =
+                                    CASE
+                                        WHEN (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
+                                                    FROM orb_merchants om
+                                                        LEFT JOIN orb_timezones ot on ot.timezone_id = om.timezone_id
+                                                    WHERE om.merchant_id = old.mall_id) > end_date THEN 'inactive'
+                                        ELSE old.status
+                                    END
+                                ";
+        }
 
-        DB::statement($luckyDrawQuery);
-        $this->info("Success, Data Lucky Draws Updated!");
-
+        return $query;
     }
 
     /**

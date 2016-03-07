@@ -1513,7 +1513,7 @@ class CouponReportAPIController extends ControllerAPI
                             ->where('issued_coupons.status', 'redeemed');
             } elseif ($redeemedBy === 'all') {
                 $coupons = IssuedCoupon::select('issued_coupons.*', 'promotions.begin_date', 'promotions.end_date',
-                                            DB::raw("CASE WHEN {$prefix}user_details.gender = 'f' THEN 'female' WHEN 'm' THEN 'male' ELSE 'unknown' END AS gender"),
+                                            DB::raw("CASE WHEN {$prefix}user_details.gender = 'f' THEN 'female' WHEN {$prefix}user_details.gender = 'm' THEN 'male' ELSE 'unknown' END AS gender"),
                                             DB::raw("IFNULL(timestampdiff(year, {$prefix}user_details.birthdate, curdate()), 'unknown') AS age"),
                                             DB::raw("CASE WHEN {$prefix}issued_coupons.redeem_user_id IS NOT NULL THEN CONCAT({$prefix}users.user_firstname, ' ', {$prefix}users.user_lastname) ELSE {$prefix}merchants.name END AS redemption_place"))
                                        ->join('promotions', 'promotions.promotion_id', '=', 'issued_coupons.promotion_id')
@@ -1625,7 +1625,7 @@ class CouponReportAPIController extends ControllerAPI
 
             // Filter by gender
             OrbitInput::get('customer_gender', function($gender) use ($coupons, $prefix) {
-                $coupons->whereIn(DB::raw("CASE WHEN {$prefix}user_details.gender = 'f' THEN 'female' WHEN 'm' THEN 'male' ELSE 'unknown' END"), $gender);
+                $coupons->whereIn(DB::raw("CASE WHEN {$prefix}user_details.gender = 'f' THEN 'female' WHEN {$prefix}user_details.gender = 'm' THEN 'male' ELSE 'unknown' END"), $gender);
             });
 
             // Filter by status
