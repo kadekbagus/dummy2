@@ -12,6 +12,13 @@ use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Helper\EloquentRecordCounter as RecordCounter;
 
+
+/**
+ * User Report API Controller
+ * 
+ * @author Qosdil A. <qosdil@dominopos.com>
+ * @author Tian <tian@dominopos.com>
+ */
 class UserReportAPIController extends ControllerAPI
 {
     protected $viewRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee', 'mall customer service'];
@@ -22,16 +29,6 @@ class UserReportAPIController extends ControllerAPI
      * @var Builder
      */
     protected $returnBuilder = FALSE;
-
-    private function generateCountRandom()
-    {
-        return rand(201, 999);
-    }
-
-    private function generateTotalRandom()
-    {
-        return rand(10001, 99999);
-    }
     
     private function getData($mallId, $startDate, $endDate, $timeDimensionType)
     {
@@ -418,131 +415,6 @@ class UserReportAPIController extends ControllerAPI
         }
 
         return $records->get();
-    }
-
-    private function getTitle($code)
-    {
-        switch ($code) {
-            case 'report_date':
-                $title = 'Date';
-                break;
-            case 'sign_up':
-                $title = 'Sign Up';
-                break;
-        }
-
-        return $title;
-    }
-
-    private function getTotalTitle($code)
-    {
-        switch ($code) {
-            case 'sign_up':
-                $title = 'Sign Up';
-                break;
-        }
-
-        return $title;
-    }
-
-    /**
-     * A temporary method to output dummy data with the accepted structure
-     * so that frontend guys can work on their part
-     * without waiting for the real data.
-     *
-     * @author Qosdil A. <qosdil@dominopos.com>
-     */
-    public function getDummyUserReport()
-    {
-        $data = new stdClass();
-        $data->columns = [
-            'date' => [
-                'title' => 'Date',
-                'sort_key' => 'date',
-            ],
-            'sign_up' => [
-                'title' => 'Sign Up',
-                'sort_key' => 'sign_up',
-                'total_title' => 'Sign Up',
-                'total' => $this->generateTotalRandom(),
-            ],
-            'sign_up_by_type' => [
-                'title' => 'Sign Up by Type',
-                'sub_columns' => [
-                    'sign_up_by_type_facebook' => [
-                        'title' => 'Facebook',
-                        'sort_key' => 'sign_up_by_type_facebook',
-                        'total_title' => 'Sign Up via Facebook',
-                        'total' => $this->generateTotalRandom(),
-                    ],
-                    'sign_up_by_type_google' => [
-                        'title' => 'Google+',
-                        'sort_key' => 'sign_up_by_type_google',
-                        'total_title' => 'Sign Up via Google+',
-                        'total' => $this->generateTotalRandom(),
-                    ],
-                    'sign_up_by_type_form' => [
-                        'title' => 'Form',
-                        'sort_key' => 'sign_up_by_type_form',
-                        'total_title' => 'Sign Up via Form',
-                        'total' => $this->generateTotalRandom(),
-                    ],
-                ],
-            ],
-            'sign_in' => [
-                'title' => 'Sign In',
-                'sort_key' => 'sign_in',
-                'total_title' => 'Sign In',
-                'total' => $this->generateTotalRandom(),
-            ],
-            'unique_sign_in' => [
-                'title' => 'Unique Sign In',
-                'sort_key' => 'unique_sign_in',
-                'total_title' => 'Unique Sign In',
-                'total' => $this->generateTotalRandom(),
-            ],
-            'returning' => [
-                'title' => 'Returning',
-                'sort_key' => 'returning',
-                'total_title' => 'Returning',
-                'total' => $this->generateTotalRandom(),
-            ],
-            'status' => [
-                'title' => 'Status',
-                'sub_columns' => [
-                    'status_active' => [
-                        'title' => 'Active',
-                        'sort_key' => 'status_active',
-                        'total_title' => 'Active Status',
-                        'total' => $this->generateTotalRandom(),
-                    ],
-                    'status_pending' => [
-                        'title' => 'Pending',
-                        'sort_key' => 'status_pending',
-                        'total_title' => 'Pending Status',
-                        'total' => $this->generateTotalRandom(),
-                    ],
-                ],
-            ],
-        ];
-
-        for ($date = 22; $date > 15; $date--) {
-            $data->records[] = [
-                'date' => $date.' Feb 2016',
-                'sign_up' => $this->generateCountRandom(),
-                'sign_up_by_type_facebook' => $this->generateCountRandom(),
-                'sign_up_by_type_google' => $this->generateCountRandom(),
-                'sign_up_by_type_form' => $this->generateCountRandom(),
-                'sign_in' => $this->generateCountRandom(),
-                'unique_sign_in' => $this->generateCountRandom(),
-                'returning' => $this->generateCountRandom(),
-                'status_active' => $this->generateCountRandom(),
-                'status_pending' => $this->generateCountRandom(),
-            ];
-        }
-
-        $this->response->data = $data;
-        return $this->render(200);
     }
 
     /**
@@ -1259,12 +1131,6 @@ class UserReportAPIController extends ControllerAPI
         return $output;
     }
 
-    /**
-     * Get User Report
-     * 
-     * @author Tian <tian@dominopos.com>
-     * @author Qosdil A. <qosdil@dominopos.com>
-     */
     public function getUserReport()
     {
         $mallId = OrbitInput::get('current_mall');
