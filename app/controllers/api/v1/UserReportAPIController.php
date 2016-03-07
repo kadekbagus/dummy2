@@ -1072,9 +1072,9 @@ class UserReportAPIController extends ControllerAPI
             $records[] = [
                 'date' => Carbon::createFromFormat('Y-m-d', $row->report_date)->format('j M Y'),
                 'sign_up' => $row->sign_up,
-                'sign_up_by_type_facebook' => $row->sign_up_type_facebook,
-                'sign_up_by_type_google' => $row->sign_up_type_google,
-                'sign_up_by_type_form' => $row->sign_up_type_form,
+                'sign_up_by_type_facebook' => (int) $row->sign_up_type_facebook,
+                'sign_up_by_type_google' => (int) $row->sign_up_type_google,
+                'sign_up_by_type_form' => (int) $row->sign_up_type_form,
                 'sign_in' => 0,
                 'unique_sign_in' => 0,
                 'returning' => 0,
