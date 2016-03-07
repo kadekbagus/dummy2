@@ -288,8 +288,8 @@ class DashboardAPIController extends ControllerAPI
 
                 // show news
                 case 'news':
-                    $query = News::select(DB::raw("COUNT({$tablePrefix}campaign_page_views.campaign_page_view_id) as score, 
-                        CASE WHEN {$tablePrefix}news_translations.news_name IS NOT NULL THEN {$tablePrefix}news_translations.news_name ELSE {$tablePrefix}news.news_name END as name,            
+                    $query = News::select(DB::raw("COUNT({$tablePrefix}campaign_page_views.campaign_page_view_id) as score,
+                        CASE WHEN {$tablePrefix}news_translations.news_name IS NOT NULL THEN {$tablePrefix}news_translations.news_name ELSE {$tablePrefix}news.news_name END as name,
                                 {$tablePrefix}news.news_id as object_id,
                           count({$tablePrefix}campaign_page_views.campaign_page_view_id) / (select count(cp.campaign_page_view_id)
                                 from {$tablePrefix}news ne
@@ -344,8 +344,8 @@ class DashboardAPIController extends ControllerAPI
 
                 // show promotions
                 case 'promotions':
-                    $query = News::select(DB::raw("COUNT({$tablePrefix}campaign_page_views.campaign_page_view_id) as score, 
-                                CASE WHEN {$tablePrefix}news_translations.news_name IS NOT NULL THEN {$tablePrefix}news_translations.news_name ELSE {$tablePrefix}news.news_name END as name, 
+                    $query = News::select(DB::raw("COUNT({$tablePrefix}campaign_page_views.campaign_page_view_id) as score,
+                                CASE WHEN {$tablePrefix}news_translations.news_name IS NOT NULL THEN {$tablePrefix}news_translations.news_name ELSE {$tablePrefix}news.news_name END as name,
                                 {$tablePrefix}news.news_id as object_id,
                           count({$tablePrefix}campaign_page_views.campaign_page_view_id) / (select count(cp.campaign_page_view_id)
                                 from {$tablePrefix}news ne
@@ -373,7 +373,7 @@ class DashboardAPIController extends ControllerAPI
                 // show luckydraws
                 case 'lucky_draws':
                     $query = LuckyDraw::select(DB::raw("COUNT({$tablePrefix}campaign_page_views.campaign_page_view_id) as score,
-                                    CASE WHEN {$tablePrefix}lucky_draw_translations.lucky_draw_name IS NOT NULL THEN {$tablePrefix}lucky_draw_translations.lucky_draw_name ELSE {$tablePrefix}lucky_draws.lucky_draw_name END as name, 
+                                    CASE WHEN {$tablePrefix}lucky_draw_translations.lucky_draw_name IS NOT NULL THEN {$tablePrefix}lucky_draw_translations.lucky_draw_name ELSE {$tablePrefix}lucky_draws.lucky_draw_name END as name,
                                     {$tablePrefix}lucky_draws.lucky_draw_id as object_id,
                                 count({$tablePrefix}campaign_page_views.campaign_page_view_id) / (select count(cp.campaign_page_view_id)
                                 from {$tablePrefix}lucky_draws ld
@@ -401,7 +401,7 @@ class DashboardAPIController extends ControllerAPI
                 // show coupon
                 case 'coupons':
                     $query = Coupon::select(DB::raw("COUNT({$tablePrefix}campaign_page_views.campaign_page_view_id) as score,
-                                    CASE WHEN {$tablePrefix}promotion_translations.promotion_name IS NOT NULL THEN {$tablePrefix}promotion_translations.promotion_name ELSE {$tablePrefix}promotions.promotion_name END as name, 
+                                    CASE WHEN {$tablePrefix}promotion_translations.promotion_name IS NOT NULL THEN {$tablePrefix}promotion_translations.promotion_name ELSE {$tablePrefix}promotions.promotion_name END as name,
                                     {$tablePrefix}promotions.promotion_id as object_id,
                                 count({$tablePrefix}campaign_page_views.campaign_page_view_id) / (select count(cp.campaign_page_view_id)
                                 from {$tablePrefix}promotions pr
@@ -943,47 +943,41 @@ class DashboardAPIController extends ControllerAPI
 
             // get merchant_language_id for english
             // the QA (karin) want the campaign name always show in english (OM-1754)
-            $merchant_language = MerchantLanguage::select('merchant_language_id')
-                        ->join('languages', 'languages.language_id', '=', 'merchant_languages.language_id')
-                        ->where('merchant_languages.merchant_id', '=', $current_mall)
-                        ->where('languages.name', '=', DB::raw($this->quote('en')) )
-                        ->where('languages.name_long', '=', DB::raw($this->quote('English')) )
-                        ->first();
 
             $tablePrefix = DB::getTablePrefix();
 
             $newsAndPromotions = DB::table('news')
-                ->selectRaw("{$tablePrefix}news.news_id campaign_id, 
-                    CASE WHEN {$tablePrefix}news_translations.news_name IS NOT NULL THEN {$tablePrefix}news_translations.news_name ELSE {$tablePrefix}news.news_name END as campaign_name,
+                ->selectRaw("{$tablePrefix}news.news_id campaign_id,
+                    CASE WHEN {$tablePrefix}news_translations.news_name !='' THEN {$tablePrefix}news_translations.news_name ELSE {$tablePrefix}news.news_name END as campaign_name,
                     DATEDIFF(end_date, {$this->quote($now_date)}) expire_days, object_type type,
                     CASE WHEN {$tablePrefix}news.end_date < {$this->quote($now_date)} THEN 'expired' ELSE {$tablePrefix}campaign_status.campaign_status_name END  AS campaign_status")
                 ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
-                ->leftJoin('news_translations', function($q) use ($merchant_language) {
-                        $q->on('news_translations.news_id', '=', 'news.news_id');
-                        $q->where('news_translations.merchant_language_id', '=', $merchant_language->merchant_language_id);
-                })
+                // Join translation for get english name
+                ->leftJoin('news_translations', 'news_translations.news_id', '=', 'news.news_id')
+                ->leftJoin('merchant_languages', 'merchant_languages.merchant_language_id', '=', 'news_translations.merchant_language_id')
+                ->leftJoin('languages', 'languages.language_id', '=', 'merchant_languages.language_id')
+                ->where('languages.name', '=', 'en')
                 ->where('end_date', '>', $now_date)
                 ->where('mall_id', $current_mall)
                 ->orderBy('expire_days','asc');
 
             $coupons = DB::table('promotions')
                 ->selectRaw("{$tablePrefix}promotions.promotion_id campaign_id,
-                    CASE WHEN {$tablePrefix}promotion_translations.promotion_name IS NOT NULL THEN {$tablePrefix}promotion_translations.promotion_name ELSE {$tablePrefix}promotions.promotion_name END as name,  
+                    CASE WHEN {$tablePrefix}coupon_translations.promotion_name IS NOT NULL THEN {$tablePrefix}coupon_translations.promotion_name ELSE {$tablePrefix}promotions.promotion_name END as campaign_name,
                     DATEDIFF(end_date, {$this->quote($now_date)}) expire_days, IF(is_coupon = 'Y','coupon', '') type,
                     CASE WHEN {$tablePrefix}promotions.end_date < {$this->quote($now_date)} THEN 'expired' ELSE {$tablePrefix}campaign_status.campaign_status_name END AS campaign_status")
                 ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
-                ->leftJoin('promotion_translations', function($q) use ($merchant_language) {
-                        $q->on('promotion_translations.promotion_id', '=', 'promotions.promotion_id');
-                        $q->where('promotions.is_coupon', '=', 'Y');
-                        $q->where('promotion_translations.merchant_language_id', '=', $merchant_language->merchant_language_id);
-                })
+                // Join translation for get english name
+                ->leftJoin('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
+                ->leftJoin('merchant_languages', 'merchant_languages.merchant_language_id', '=', 'coupon_translations.merchant_language_id')
+                ->leftJoin('languages', 'languages.language_id', '=', 'merchant_languages.language_id')
+                ->where('languages.name', '=', 'en')
                 ->where('is_coupon', '=', 'Y')
                 ->where('end_date', '>', $now_date)
-                ->where('merchant_id', $current_mall)
+                ->where('promotions.merchant_id', $current_mall)
                 ->orderBy('expire_days','asc');
 
-            $expiringCampaign = $newsAndPromotions->unionAll($coupons)
-                                ->orderBy('expire_days','asc');
+            $expiringCampaign = $newsAndPromotions->unionAll($coupons);
 
             $sql = $expiringCampaign->toSql();
             foreach($expiringCampaign->getBindings() as $binding)
