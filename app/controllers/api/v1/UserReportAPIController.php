@@ -46,9 +46,11 @@ class UserReportAPIController extends ControllerAPI
         $data->columns = [
             'date' => [
                 'title' => 'Date',
+                'sort_key' => 'date',
             ],
             'sign_up' => [
                 'title' => 'Sign Up',
+                'sort_key' => 'sign_up',
                 'total_title' => 'Sign Up',
                 'total' => $this->generateTotalRandom(),
             ],
@@ -57,16 +59,19 @@ class UserReportAPIController extends ControllerAPI
                 'sub_columns' => [
                     'sign_up_by_type_facebook' => [
                         'title' => 'Facebook',
+                        'sort_key' => 'sign_up_by_type_facebook',
                         'total_title' => 'Sign Up via Facebook',
                         'total' => $this->generateTotalRandom(),
                     ],
                     'sign_up_by_type_google' => [
                         'title' => 'Google+',
+                        'sort_key' => 'sign_up_by_type_google',
                         'total_title' => 'Sign Up via Google+',
                         'total' => $this->generateTotalRandom(),
                     ],
                     'sign_up_by_type_form' => [
                         'title' => 'Form',
+                        'sort_key' => 'sign_up_by_type_form',
                         'total_title' => 'Sign Up via Form',
                         'total' => $this->generateTotalRandom(),
                     ],
@@ -74,16 +79,19 @@ class UserReportAPIController extends ControllerAPI
             ],
             'sign_in' => [
                 'title' => 'Sign In',
+                'sort_key' => 'sign_in',
                 'total_title' => 'Sign In',
                 'total' => $this->generateTotalRandom(),
             ],
             'unique_sign_in' => [
                 'title' => 'Unique Sign In',
+                'sort_key' => 'unique_sign_in',
                 'total_title' => 'Unique Sign In',
                 'total' => $this->generateTotalRandom(),
             ],
             'returning' => [
                 'title' => 'Returning',
+                'sort_key' => 'returning',
                 'total_title' => 'Returning',
                 'total' => $this->generateTotalRandom(),
             ],
@@ -92,11 +100,13 @@ class UserReportAPIController extends ControllerAPI
                 'sub_columns' => [
                     'status_active' => [
                         'title' => 'Active',
+                        'sort_key' => 'status_active',
                         'total_title' => 'Active Status',
                         'total' => $this->generateTotalRandom(),
                     ],
                     'status_pending' => [
                         'title' => 'Pending',
+                        'sort_key' => 'status_pending',
                         'total_title' => 'Pending Status',
                         'total' => $this->generateTotalRandom(),
                     ],
