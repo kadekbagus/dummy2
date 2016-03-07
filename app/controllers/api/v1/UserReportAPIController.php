@@ -32,8 +32,8 @@ class UserReportAPIController extends ControllerAPI
     {
         return rand(10001, 99999);
     }
-
-    private function getData($mallId, $startDate, $endDate)
+    
+    private function getData($mallId, $startDate, $endDate, $timeDimensionType = 'report_date')
     {
         $tablePrefix = DB::getTablePrefix();
 
@@ -44,9 +44,6 @@ class UserReportAPIController extends ControllerAPI
         $mallEndDate = Carbon::createFromFormat('Y-m-d H:i:s', $endDate)->timezone($mallTimezone);
 
         $numberDays = $mallStartDate->diffInDays($mallEndDate) + 1;
-
-        // 'day_of_week', 'hour_of_day', 'report_month', 'report_date'
-        $timeDimensionType = 'report_date';
 
         $dayOfWeek = "
             (
