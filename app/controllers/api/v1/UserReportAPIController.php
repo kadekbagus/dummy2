@@ -1357,24 +1357,24 @@ class UserReportAPIController extends ControllerAPI
                 'total' => 0,
             ],
             'sign_up_by_gender' => [
-                'title' => 'Sign Up by Gender',
+                'title' => 'Sign Up By Gender',
                 'sub_columns' => [
                     'sign_up_gender_male' => [
-                        'title' => 'Facebook',
+                        'title' => 'Male',
                         'sort_key' => 'sign_up_gender_male',
-                        'total_title' => 'Sign Up via Facebook',
+                        'total_title' => 'Sign Up by Male',
                         'total' => 0,
                     ],
                     'sign_up_gender_female' => [
-                        'title' => 'Google+',
+                        'title' => 'Female',
                         'sort_key' => 'sign_up_gender_female',
-                        'total_title' => 'Sign Up via Google+',
+                        'total_title' => 'Sign Up by Female',
                         'total' => 0,
                     ],
                     'sign_up_gender_unknown' => [
-                        'title' => 'Form',
+                        'title' => 'Unknown',
                         'sort_key' => 'sign_up_gender_unknown',
-                        'total_title' => 'Sign Up via Form',
+                        'total_title' => 'Sign Up by Unknown Gender',
                         'total' => 0,
                     ],
                 ],
