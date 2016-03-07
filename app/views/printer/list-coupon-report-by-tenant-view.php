@@ -98,7 +98,7 @@
             <td><strong><?php echo number_format($totalAcquiringCustomers, 0, '.', '.'); ?></strong></td>
         </tr>
         <tr>
-            <td>Total Active Days</td>
+            <td>Total Active Campaign Days</td>
             <td>:</td>
             <td><strong><?php echo number_format($totalActiveDays, 0, '.', '.'); ?></strong></td>
         </tr>
@@ -206,8 +206,8 @@
                 <td><?php echo $row->issued_coupon_code; ?></td>
                 <td><?php echo $row->age; ?></td>
                 <td><?php echo $row->gender; ?></td>
-                <td><?php echo date('d M Y H:i', strtotime($row->issued_date)); ?></td>
-                <td><?php if (! empty($row->redeemed_date)) { echo date('d M Y H:i', strtotime($row->redeemed_date)); } else { echo '--'; } ?></td>
+                <td><?php echo $this->printDateTime($row->issued_date, $timezoneCurrentMall, 'd M Y H:i'); ?></td>
+                <td><?php if (! empty($row->redeemed_date)) { echo $this->printDateTime($row->redeemed_date, $timezoneCurrentMall, 'd M Y H:i'); } else { echo '--'; } ?></td>
                 <td><?php if (! empty($row->redemption_place)) { echo htmlentities($row->redemption_place); } else { echo '--'; } ?></td>
                 <td><?php if ($row->status != 'active') { echo $row->status; } else { echo 'issued'; } ?></td>
             </tr>
