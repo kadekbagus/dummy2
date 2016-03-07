@@ -154,8 +154,8 @@
 
         <?php 
             if ($issuedDateGte != '' && $issuedDateLte != ''){
-                $startDate = date('d M Y', strtotime($issuedDateGte));
-                $endDate = date('d M Y', strtotime($issuedDateLte));
+                $startDate = $this->printDateTime($issuedDateGte, $timezoneCurrentMall, 'd M Y');
+                $endDate = $this->printDateTime($issuedDateLte, $timezoneCurrentMall, 'd M Y');
                 $dateRange = $startDate . ' - ' . $endDate;
                 if ($startDate === $endDate) {
                     $dateRange = $startDate;
@@ -172,8 +172,8 @@
 
         <?php 
             if ($redeemedDateGte != '' && $redeemedDateLte != ''){
-                $startDate = date('d M Y', strtotime($redeemedDateGte));
-                $endDate = date('d M Y', strtotime($redeemedDateLte));
+                $startDate = $this->printDateTime($redeemedDateGte, $timezoneCurrentMall, 'd M Y');
+                $endDate = $this->printDateTime($redeemedDateLte, $timezoneCurrentMall, 'd M Y');
                 $dateRange = $startDate . ' - ' . $endDate;
                 if ($startDate === $endDate) {
                     $dateRange = $startDate;
