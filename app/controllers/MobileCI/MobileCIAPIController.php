@@ -286,7 +286,7 @@ class MobileCIAPIController extends BaseCIController
                         ->where('parent_id', $retailer->merchant_id)
                         ->whereNotIn('merchants.merchant_id', function($q) use ($user, $retailer) {
                             $q->select('item_id')
-                                ->from('view_item_user')
+                                ->from('viewed_item_user')
                                 ->where('user_id', '=', $user->user_id)
                                 ->where('mall_id', '=', $retailer->merchant_id)
                                 ->where('item_type', '=', 'tenant')
@@ -366,7 +366,7 @@ class MobileCIAPIController extends BaseCIController
                                     ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
                                     ->whereNotIn('news.news_id', function($q) use ($user, $retailer) {
                                         $q->select('item_id')
-                                            ->from('view_item_user')
+                                            ->from('viewed_item_user')
                                             ->where('user_id', '=', $user->user_id)
                                             ->where('mall_id', '=', $retailer->merchant_id)
                                             ->where('item_type', '=', 'promotion')
@@ -467,7 +467,7 @@ class MobileCIAPIController extends BaseCIController
                                     ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
                                     ->whereNotIn('news.news_id', function($q) use ($user, $retailer) {
                                         $q->select('item_id')
-                                            ->from('view_item_user')
+                                            ->from('viewed_item_user')
                                             ->where('user_id', '=', $user->user_id)
                                             ->where('mall_id', '=', $retailer->merchant_id)
                                             ->where('item_type', '=', 'news')
@@ -538,7 +538,7 @@ class MobileCIAPIController extends BaseCIController
                         inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id AND p.is_coupon = "Y" AND p.status = "active"
                         inner join ' . DB::getTablePrefix() . 'issued_coupons ic on p.promotion_id = ic.promotion_id AND ic.status = "active"
                         WHERE p.promotion_id NOT IN (
-                            SELECT item_id FROM ' . DB::getTablePrefix() . 'view_item_user
+                            SELECT item_id FROM ' . DB::getTablePrefix() . 'viewed_item_user
                             WHERE user_id = :useridone
                             AND mall_id = :merchantidone
                             AND item_type = "coupon"
@@ -589,7 +589,7 @@ class MobileCIAPIController extends BaseCIController
                         ->whereRaw("? between start_date and grace_period_date", [$now])
                         ->whereNotIn('lucky_draws.lucky_draw_id', function($q) use ($user, $retailer) {
                             $q->select('item_id')
-                                ->from('view_item_user')
+                                ->from('viewed_item_user')
                                 ->where('user_id', '=', $user->user_id)
                                 ->where('mall_id', '=', $retailer->merchant_id)
                                 ->where('item_type', '=', 'lucky_draw')
@@ -1294,7 +1294,7 @@ class MobileCIAPIController extends BaseCIController
                                 ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
                                 ->whereNotIn('news.news_id', function($q) use ($user) {
                                     $q->select('item_id')
-                                        ->from('view_item_user')
+                                        ->from('viewed_item_user')
                                         ->where('user_id', '=', $user->user_id)
                                         ->where('item_type', '=', 'promotion')
                                         ->get();
@@ -1355,7 +1355,7 @@ class MobileCIAPIController extends BaseCIController
                                 ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
                                 ->whereNotIn('news.news_id', function($q) use ($user) {
                                     $q->select('item_id')
-                                        ->from('view_item_user')
+                                        ->from('viewed_item_user')
                                         ->where('user_id', '=', $user->user_id)
                                         ->where('item_type', '=', 'news')
                                         ->get();
@@ -1403,7 +1403,7 @@ class MobileCIAPIController extends BaseCIController
                     inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id AND p.is_coupon = "Y" AND p.status = "active"
                     inner join ' . DB::getTablePrefix() . 'issued_coupons ic on p.promotion_id = ic.promotion_id AND ic.status = "active"
                     WHERE p.promotion_id NOT IN (
-                        SELECT item_id FROM ' . DB::getTablePrefix() . 'view_item_user
+                        SELECT item_id FROM ' . DB::getTablePrefix() . 'viewed_item_user
                         WHERE user_id = :useridone
                         AND mall_id = :merchantidone
                         AND item_type = "coupon"
