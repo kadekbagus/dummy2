@@ -403,7 +403,7 @@ class CouponReportPrinterController extends DataPrinterController
                     if (empty($row->redeemed_date)) {
                         $dateRedeem = '--';
                     } else {
-                        $dateRedeem = date('d M Y H:i', strtotime($row->redeemed_date));
+                        $dateRedeem = $this->printDateTime($row->redeemed_date, $timezoneCurrentMall, 'd M Y H:i');
                     }
 
                     if (empty($row->redemption_place)) {
@@ -417,7 +417,7 @@ class CouponReportPrinterController extends DataPrinterController
                             $row->issued_coupon_code,
                             $row->age,
                             $row->gender,
-                            date('d M Y H:i', strtotime($row->issued_date)),
+                            $this->printDateTime($row->issued_date, $timezoneCurrentMall, 'd M Y H:i'),
                             $dateRedeem,
                             $place,
                             $stat
