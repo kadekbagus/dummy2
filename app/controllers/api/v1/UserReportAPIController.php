@@ -33,7 +33,7 @@ class UserReportAPIController extends ControllerAPI
         return rand(10001, 99999);
     }
     
-    private function getData($mallId, $startDate, $endDate, $timeDimensionType = 'report_date')
+    private function getData($mallId, $startDate, $endDate, $timeDimensionType)
     {
         $tablePrefix = DB::getTablePrefix();
 
@@ -1066,9 +1066,10 @@ class UserReportAPIController extends ControllerAPI
         $mallId = OrbitInput::get('current_mall');
         $startDate = OrbitInput::get('start_date');
         $endDate = OrbitInput::get('end_date');
+        $timeDimensionType = OrbitInput::get('time_dimension_type');
 
         $data = new stdClass();
-        foreach ($this->getData($mallId, $startDate, $endDate) as $row) {
+        foreach ($this->getData($mallId, $startDate, $endDate, $timeDimensionType) as $row) {
             $records[] = [
                 'date' => Carbon::createFromFormat('Y-m-d', $row->report_date)->format('j M Y'),
                 'sign_up' => $row->sign_up,
