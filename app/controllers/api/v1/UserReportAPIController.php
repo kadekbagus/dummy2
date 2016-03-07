@@ -1069,96 +1069,113 @@ class UserReportAPIController extends ControllerAPI
         $timeDimensionType = OrbitInput::get('time_dimension_type');
 
         $data = new stdClass();
-        foreach ($this->getData($mallId, $startDate, $endDate, $timeDimensionType) as $row) {
-            $records[] = [
-                'date' => Carbon::createFromFormat('Y-m-d', $row->report_date)->format('j M Y'),
-                'sign_up' => $row->sign_up,
-                'sign_up_by_type_facebook' => (int) $row->sign_up_type_facebook,
-                'sign_up_by_type_google' => (int) $row->sign_up_type_google,
-                'sign_up_by_type_form' => (int) $row->sign_up_type_form,
-                'sign_in' => 0,
-                'unique_sign_in' => 0,
-                'returning' => 0,
-                'status_active' => 0,
-                'status_pending' => 0,
-            ];
+        $rows = $this->getData($mallId, $startDate, $endDate, $timeDimensionType);
+
+        switch ($timeDimensionType) {
+            case 'report_date':
+                foreach ($rows as $row) {
+                    $records[] = [
+                        'date' => Carbon::createFromFormat('Y-m-d', $row->report_date)->format('j M Y'),
+                        'sign_up' => $row->sign_up,
+                        'sign_up_by_type_facebook' => (int) $row->sign_up_type_facebook,
+                        'sign_up_by_type_google' => (int) $row->sign_up_type_google,
+                        'sign_up_by_type_form' => (int) $row->sign_up_type_form, 
+                        'sign_in' => 0, 
+                        'unique_sign_in' => 0, 
+                        'returning' => 0, 
+                        'status_active' => 0, 
+                        'status_pending' => 0, 
+                    ];
+                }
+                break;
         }
 
-        $data->columns = [
-            'date' => [
-                'title' => 'Date',
-                'sort_key' => 'date',
-            ],
-            'sign_up' => [
-                'title' => 'Sign Up',
-                'sort_key' => 'sign_up',
-                'total_title' => 'Sign Up',
-                'total' => 0,
-            ],
-            'sign_up_by_type' => [
-                'title' => 'Sign Up by Type',
-                'sub_columns' => [
-                    'sign_up_by_type_facebook' => [
-                        'title' => 'Facebook',
-                        'sort_key' => 'sign_up_by_type_facebook',
-                        'total_title' => 'Sign Up via Facebook',
-                        'total' => 0,
-                    ],
-                    'sign_up_by_type_google' => [
-                        'title' => 'Google+',
-                        'sort_key' => 'sign_up_by_type_google',
-                        'total_title' => 'Sign Up via Google+',
-                        'total' => 0,
-                    ],
-                    'sign_up_by_type_form' => [
-                        'title' => 'Form',
-                        'sort_key' => 'sign_up_by_type_form',
-                        'total_title' => 'Sign Up via Form',
-                        'total' => 0,
-                    ],
-                ],
-            ],
-            'sign_in' => [
-                'title' => 'Sign In',
-                'sort_key' => 'sign_in',
-                'total_title' => 'Sign In',
-                'total' => 0,
-            ],
-            'unique_sign_in' => [
-                'title' => 'Unique Sign In',
-                'sort_key' => 'unique_sign_in',
-                'total_title' => 'Unique Sign In',
-                'total' => 0,
-            ],
-            'returning' => [
-                'title' => 'Returning',
-                'sort_key' => 'returning',
-                'total_title' => 'Returning',
-                'total' => 0,
-            ],
-            'status' => [
-                'title' => 'Status',
-                'sub_columns' => [
-                    'status_active' => [
-                        'title' => 'Active',
-                        'sort_key' => 'status_active',
-                        'total_title' => 'Active Status',
-                        'total' => 0,
-                    ],
-                    'status_pending' => [
-                        'title' => 'Pending',
-                        'sort_key' => 'status_pending',
-                        'total_title' => 'Pending Status',
-                        'total' => 0,
-                    ],
-                ],
-            ],
-        ];
-
+        $data->columns = $this->getOutputColumns($timeDimensionType);
         $data->records = $records;
 
         $this->response->data = $data;
         return $this->render(200);
+    }
+
+    private function getOutputColumns($timeDimensionType)
+    {
+        switch ($timeDimensionType) {
+            case 'report_date':
+                $columns = [
+                    'date' => [
+                        'title' => 'Date',
+                        'sort_key' => 'date',
+                    ],
+                    'sign_up' => [
+                        'title' => 'Sign Up',
+                        'sort_key' => 'sign_up',
+                        'total_title' => 'Sign Up',
+                        'total' => 0,
+                    ],
+                    'sign_up_by_type' => [
+                        'title' => 'Sign Up by Type',
+                        'sub_columns' => [
+                            'sign_up_by_type_facebook' => [
+                                'title' => 'Facebook',
+                                'sort_key' => 'sign_up_by_type_facebook',
+                                'total_title' => 'Sign Up via Facebook',
+                                'total' => 0,
+                            ],
+                            'sign_up_by_type_google' => [
+                                'title' => 'Google+',
+                                'sort_key' => 'sign_up_by_type_google',
+                                'total_title' => 'Sign Up via Google+',
+                                'total' => 0,
+                            ],
+                            'sign_up_by_type_form' => [
+                                'title' => 'Form',
+                                'sort_key' => 'sign_up_by_type_form',
+                                'total_title' => 'Sign Up via Form',
+                                'total' => 0,
+                            ],
+                        ],
+                    ],
+                    'sign_in' => [
+                        'title' => 'Sign In',
+                        'sort_key' => 'sign_in',
+                        'total_title' => 'Sign In',
+                        'total' => 0,
+                    ],
+                    'unique_sign_in' => [
+                        'title' => 'Unique Sign In',
+                        'sort_key' => 'unique_sign_in',
+                        'total_title' => 'Unique Sign In',
+                        'total' => 0,
+                    ],
+                    'returning' => [
+                        'title' => 'Returning',
+                        'sort_key' => 'returning',
+                        'total_title' => 'Returning',
+                        'total' => 0,
+                    ],
+                    'status' => [
+                        'title' => 'Status',
+                        'sub_columns' => [
+                            'status_active' => [
+                                'title' => 'Active',
+                                'sort_key' => 'status_active',
+                                'total_title' => 'Active Status',
+                                'total' => 0,
+                            ],
+                            'status_pending' => [
+                                'title' => 'Pending',
+                                'sort_key' => 'status_pending',
+                                'total_title' => 'Pending Status',
+                                'total' => 0,
+                            ],
+                        ],
+                    ],
+                ];
+
+                break;
+        }
+
+        return $columns;
     }
 
     public function setReturnBuilder($bool)
