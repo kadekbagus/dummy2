@@ -257,7 +257,7 @@ class IntermediateLoginController extends IntermediateBaseController
         $mac = OrbitInput::get('mac', '');
         $timestamp = (int)OrbitInput::get('timestamp', 0);
 
-        if (!CloudMAC::validateDataFromBox($mac, $timestamp, [
+        if ($from !== 'cs' && !CloudMAC::validateDataFromBox($mac, $timestamp, [
             'email' => $email,
             'retailer_id' => $retailer_id,
             'callback_url' => $callback_url,
@@ -548,6 +548,8 @@ class IntermediateLoginController extends IntermediateBaseController
         $auto_login = OrbitInput::get('auto_login', 'no');
         $from_captive = OrbitInput::get('from_captive', 'no');
 
+        $socmed_redirect_to = OrbitInput::get('socmed_redirect_to', '');
+
         $status = OrbitInput::post('status', 'failed');
         if ($status !== 'success') {
             $message = OrbitInput::post('message');
@@ -575,7 +577,8 @@ class IntermediateLoginController extends IntermediateBaseController
             'user' => $user,
             'user_detail' => $user_detail,
             'auto_login' => $auto_login,
-            'from_captive' => $from_captive
+            'from_captive' => $from_captive,
+            'socmed_redirect_to' => $socmed_redirect_to
         ])) {
             return $this->displayValidationError(true);
         }
