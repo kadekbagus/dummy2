@@ -166,12 +166,15 @@ class CampaignReportAPIController extends ControllerAPI
             }
 
             // Get data all campaign (news, promotions, coupons), and then use union to join all campaign
-            $news = DB::table('news')->selectraw(DB::raw("{$tablePrefix}news.news_id AS campaign_id, news_name AS campaign_name, {$tablePrefix}news.object_type AS campaign_type,
+            $news = DB::table('news')->selectraw(DB::raw("{$tablePrefix}news.news_id AS campaign_id, 
+                CASE WHEN {$tablePrefix}news_translations.news_name !='' THEN {$tablePrefix}news_translations.news_name ELSE {$tablePrefix}news.news_name END as campaign_name,
+                {$tablePrefix}news.object_type AS campaign_type,
                 IFNULL(total_tenant, 0) AS total_tenant, tenant_name,
                 merchants2.name AS mall_name, {$tablePrefix}news.begin_date, {$tablePrefix}news.end_date, {$tablePrefix}news.updated_at, {$tablePrefix}campaign_price.base_price,
                 total_tenant * {$tablePrefix}campaign_price.base_price AS daily,
                 total_tenant * {$tablePrefix}campaign_price.base_price * (DATEDIFF( {$tablePrefix}news.end_date, {$tablePrefix}news.begin_date) + 1) AS estimated_total,
                 (
+
                     SELECT IFNULL(fnc_campaign_cost(campaign_id, 'news', {$tablePrefix}news.begin_date, {$this->quote($now)}, {$this->quote($timezoneOffset)}), 0.00) AS campaign_total_cost
                 ) as spending,
                 (
@@ -270,16 +273,22 @@ class CampaignReportAPIController extends ControllerAPI
                         DB::raw('tenant.t_campaign_id'), '=', 'news.news_id')
 
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
-
+                        ->leftJoin('news_translations', 'news_translations.news_id', '=', 'news.news_id')
+                        ->leftJoin('merchant_languages', 'merchant_languages.merchant_language_id', '=', 'news_translations.merchant_language_id')
+                        ->leftJoin('languages', 'languages.language_id', '=', 'merchant_languages.language_id')
+                        ->where('languages.name', '=', 'en')
                         ->where('news.mall_id', '=', $current_mall)
                         ->where('news.object_type', '=', 'news');
 
-            $promotions = DB::table('news')->selectraw(DB::raw("{$tablePrefix}news.news_id AS campaign_id, news_name AS campaign_name, {$tablePrefix}news.object_type AS campaign_type,
+            $promotions = DB::table('news')->selectraw(DB::raw("{$tablePrefix}news.news_id AS campaign_id, 
+                CASE WHEN {$tablePrefix}news_translations.news_name !='' THEN {$tablePrefix}news_translations.news_name ELSE {$tablePrefix}news.news_name END as campaign_name, 
+                {$tablePrefix}news.object_type AS campaign_type,
                 IFNULL(total_tenant, 0) AS total_tenant, tenant_name,
                 merchants2.name AS mall_name, {$tablePrefix}news.begin_date, {$tablePrefix}news.end_date, {$tablePrefix}news.updated_at, {$tablePrefix}campaign_price.base_price,
                 total_tenant * {$tablePrefix}campaign_price.base_price AS daily,
                 total_tenant * {$tablePrefix}campaign_price.base_price * (DATEDIFF({$tablePrefix}news.end_date, {$tablePrefix}news.begin_date) + 1) AS estimated_total,
                 (
+
                     SELECT IFNULL(fnc_campaign_cost(campaign_id, 'promotion', {$tablePrefix}news.begin_date, {$this->quote($now)}, {$this->quote($timezoneOffset)}), 0.00) AS campaign_total_cost
                 ) as spending,
                 (
@@ -377,17 +386,23 @@ class CampaignReportAPIController extends ControllerAPI
                         DB::raw('tenant.t_campaign_id'), '=', 'news.news_id')
 
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
-
+                        ->leftJoin('news_translations', 'news_translations.news_id', '=', 'news.news_id')
+                        ->leftJoin('merchant_languages', 'merchant_languages.merchant_language_id', '=', 'news_translations.merchant_language_id')
+                        ->leftJoin('languages', 'languages.language_id', '=', 'merchant_languages.language_id')
+                        ->where('languages.name', '=', 'en')
                         ->where('news.mall_id', '=', $current_mall)
                         ->where('news.object_type', '=', 'promotion');
 
 
-            $coupons = DB::table('promotions')->selectraw(DB::raw("{$tablePrefix}promotions.promotion_id AS campaign_id, promotion_name AS campaign_name, IF(1=1,'coupon', '') AS campaign_type,
+            $coupons = DB::table('promotions')->selectraw(DB::raw("{$tablePrefix}promotions.promotion_id AS campaign_id, 
+                CASE WHEN {$tablePrefix}promotion_translations.promotion_name !='' THEN {$tablePrefix}promotion_translations.promotion_name ELSE {$tablePrefix}promotions.promotion_name END as campaign_name, 
+                IF(1=1,'coupon', '') AS campaign_type,
                 IFNULL(total_tenant, 0) AS total_tenant, tenant_name,
                 merchants2.name AS mall_name, {$tablePrefix}promotions.begin_date, {$tablePrefix}promotions.end_date, {$tablePrefix}promotions.updated_at, {$tablePrefix}campaign_price.base_price,
                 total_tenant * {$tablePrefix}campaign_price.base_price AS daily,
                 total_tenant * {$tablePrefix}campaign_price.base_price * (DATEDIFF({$tablePrefix}promotions.end_date, {$tablePrefix}promotions.begin_date) + 1) AS estimated_total,
                 (
+
                     SELECT IFNULL(fnc_campaign_cost(campaign_id, 'coupon', {$tablePrefix}promotions.begin_date, {$this->quote($now)}, {$this->quote($timezoneOffset)}), 0.00) AS campaign_total_cost
                 ) as spending,
                 (
@@ -485,7 +500,10 @@ class CampaignReportAPIController extends ControllerAPI
                         DB::raw('tenant.t_campaign_id'), '=', 'promotions.promotion_id')
 
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
-
+                        ->leftJoin('promotion_translations', 'promotion_translations.promotion_id', '=', 'promotions.promotion_id')
+                        ->leftJoin('merchant_languages', 'merchant_languages.merchant_language_id', '=', 'promotion_translations.merchant_language_id')
+                        ->leftJoin('languages', 'languages.language_id', '=', 'merchant_languages.language_id')
+                        ->where('languages.name', '=', 'en')
                         ->where('promotions.merchant_id', '=', $current_mall);
 
             $campaign = $news->unionAll($promotions)->unionAll($coupons);
