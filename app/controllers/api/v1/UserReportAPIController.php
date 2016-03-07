@@ -1152,7 +1152,7 @@ class UserReportAPIController extends ControllerAPI
                     unset($row->report_hour_of_day, $row->report_hour_of_day_name);
                     break;
                 case 'report_date':
-                    $firstColumnArray['date'] = $row->date = Carbon::createFromFormat('Y-m-d', $row->report_date)->format('j M Y');
+                    $firstColumnArray['date'] = Carbon::createFromFormat('Y-m-d', $row->report_date)->format('j M Y');
                     unset($row->report_date);
                     break;
                 case 'report_month':
