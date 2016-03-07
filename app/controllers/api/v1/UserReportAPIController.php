@@ -1842,12 +1842,6 @@ class UserReportAPIController extends ControllerAPI
                         'total_title' => 'Sign Up via Form',
                         'total' => 0,
                     ],
-                    'unique_sign_in_type_unknown_percentage' => [
-                        'title' => 'Unknown',
-                        'sort_key' => 'unique_sign_in_type_unknown_percentage',
-                        'total_title' => 'Sign Up Unknown',
-                        'total' => 0,
-                    ],
                 ],
             ],
 
