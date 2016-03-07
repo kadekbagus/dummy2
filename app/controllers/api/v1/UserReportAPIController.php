@@ -1275,23 +1275,27 @@ class UserReportAPIController extends ControllerAPI
         $data = new stdClass();
         $rows = $this->getData($mallId, $startDate, $endDate, $timeDimensionType);
 
-        switch ($timeDimensionType) {
-            case 'report_date':
-                foreach ($rows as $row) {
-                    $records[] = [
-                        'date' => Carbon::createFromFormat('Y-m-d', $row->report_date)->format('j M Y'),
-                        'sign_up' => $row->sign_up,
-                        'sign_up_by_type_facebook' => (int) $row->sign_up_type_facebook,
-                        'sign_up_by_type_google' => (int) $row->sign_up_type_google,
-                        'sign_up_by_type_form' => (int) $row->sign_up_type_form, 
-                        'sign_in' => 0, 
-                        'unique_sign_in' => 0, 
-                        'returning' => 0, 
-                        'status_active' => 0, 
-                        'status_pending' => 0, 
-                    ];
-                }
-                break;
+        foreach ($rows as $row) {
+            switch ($timeDimensionType) {
+                case 'report_date':
+                    $firstColumnArray['date'] = $row->date = Carbon::createFromFormat('Y-m-d', $row->report_date)->format('j M Y');
+                    unset($row->report_date);
+                    break;
+                case 'day_of_week':
+                    $firstColumnArray['day_of_week'] = $row->report_day_of_week_name;
+                    unset($row->report_day_of_week, $row->report_day_of_week_name);
+                    break;
+                case 'hour_of_day':
+                    $firstColumnArray['hour_of_day'] = $row->report_hour_of_day_name;
+                    unset($row->report_hour_of_day, $row->report_hour_of_day_name);
+                    break;
+                case 'report_month':
+                    $firstColumnArray['month'] = $row->report_month_name;
+                    unset($row->report_month, $row->report_month_name);
+                    break;
+            }
+
+            $records[] = array_merge($firstColumnArray, (array) $row);
         }
 
         $data->columns = $this->getOutputColumns($timeDimensionType);
