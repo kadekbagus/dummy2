@@ -167,14 +167,14 @@ class CampaignReportAPIController extends ControllerAPI
 
             // Get data all campaign (news, promotions, coupons), and then use union to join all campaign
             $news = DB::table('news')->selectraw(DB::raw("{$tablePrefix}news.news_id AS campaign_id, 
-                CASE WHEN {$tablePrefix}news_translations.news_name !='' THEN {$tablePrefix}news_translations.news_name ELSE {$tablePrefix}news.news_name END as campaign_name,
+                {$tablePrefix}news_translations.news_name as campaign_name,
                 {$tablePrefix}news.object_type AS campaign_type,
                 IFNULL(total_tenant, 0) AS total_tenant, tenant_name,
                 merchants2.name AS mall_name, {$tablePrefix}news.begin_date, {$tablePrefix}news.end_date, {$tablePrefix}news.updated_at, {$tablePrefix}campaign_price.base_price,
                 total_tenant * {$tablePrefix}campaign_price.base_price AS daily,
                 total_tenant * {$tablePrefix}campaign_price.base_price * (DATEDIFF( {$tablePrefix}news.end_date, {$tablePrefix}news.begin_date) + 1) AS estimated_total,
                 (
-
+                    
                     SELECT IFNULL(fnc_campaign_cost(campaign_id, 'news', {$tablePrefix}news.begin_date, {$this->quote($now)}, {$this->quote($timezoneOffset)}), 0.00) AS campaign_total_cost
                 ) as spending,
                 (
@@ -281,14 +281,14 @@ class CampaignReportAPIController extends ControllerAPI
                         ->where('news.object_type', '=', 'news');
 
             $promotions = DB::table('news')->selectraw(DB::raw("{$tablePrefix}news.news_id AS campaign_id, 
-                CASE WHEN {$tablePrefix}news_translations.news_name !='' THEN {$tablePrefix}news_translations.news_name ELSE {$tablePrefix}news.news_name END as campaign_name, 
+                {$tablePrefix}news_translations.news_name as campaign_name, 
                 {$tablePrefix}news.object_type AS campaign_type,
                 IFNULL(total_tenant, 0) AS total_tenant, tenant_name,
                 merchants2.name AS mall_name, {$tablePrefix}news.begin_date, {$tablePrefix}news.end_date, {$tablePrefix}news.updated_at, {$tablePrefix}campaign_price.base_price,
                 total_tenant * {$tablePrefix}campaign_price.base_price AS daily,
                 total_tenant * {$tablePrefix}campaign_price.base_price * (DATEDIFF({$tablePrefix}news.end_date, {$tablePrefix}news.begin_date) + 1) AS estimated_total,
                 (
-
+                    
                     SELECT IFNULL(fnc_campaign_cost(campaign_id, 'promotion', {$tablePrefix}news.begin_date, {$this->quote($now)}, {$this->quote($timezoneOffset)}), 0.00) AS campaign_total_cost
                 ) as spending,
                 (
@@ -395,7 +395,7 @@ class CampaignReportAPIController extends ControllerAPI
 
 
             $coupons = DB::table('promotions')->selectraw(DB::raw("{$tablePrefix}promotions.promotion_id AS campaign_id, 
-                CASE WHEN {$tablePrefix}coupon_translations.promotion_name !='' THEN {$tablePrefix}coupon_translations.promotion_name ELSE {$tablePrefix}promotions.promotion_name END as campaign_name, 
+                {$tablePrefix}coupon_translations.promotion_name as campaign_name, 
                 IF(1=1,'coupon', '') AS campaign_type,
                 IFNULL(total_tenant, 0) AS total_tenant, tenant_name,
                 merchants2.name AS mall_name, {$tablePrefix}promotions.begin_date, {$tablePrefix}promotions.end_date, {$tablePrefix}promotions.updated_at, {$tablePrefix}campaign_price.base_price,
