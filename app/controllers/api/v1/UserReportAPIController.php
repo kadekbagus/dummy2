@@ -33,6 +33,217 @@ class UserReportAPIController extends ControllerAPI
         return rand(10001, 99999);
     }
 
+    private function getData($mallId, $startDate, $endDate)
+    {
+        $tablePrefix = DB::getTablePrefix();
+
+        $mallTimezone = 'Asia/Jakarta';
+        $timezoneOffset = $this->quote('+07:00');
+
+        $mallStartDate = Carbon::createFromFormat('Y-m-d H:i:s', $startDate)->timezone($mallTimezone);
+        $mallEndDate = Carbon::createFromFormat('Y-m-d H:i:s', $endDate)->timezone($mallTimezone);
+
+        $numberDays = $mallStartDate->diffInDays($mallEndDate) + 1;
+
+        // 'day_of_week', 'hour_of_day', 'report_month', 'report_date'
+        $timeDimensionType = 'report_date';
+
+        $dayOfWeek = "
+            (
+                select sequence_number,
+                    case when sequence_number = 0 then 'Sunday'
+                    when sequence_number = 1 then 'Monday'
+                    when sequence_number = 2 then 'Tuesday'
+                    when sequence_number = 3 then 'Wednesday'
+                    when sequence_number = 4 then 'Thursday'
+                    when sequence_number = 5 then 'Friday'
+                    when sequence_number = 6 then 'Saturday'
+                    else null end as day_of_week_name
+                from
+                (select 0 as sequence_number union
+                select * from {$tablePrefix}sequence where sequence_number <= 6
+                ) a
+            ) day_of_week
+        ";
+
+        $hourOfDay = "
+            (
+                select 0 as sequence_number union
+                select * from {$tablePrefix}sequence where sequence_number <= 23
+            ) hour_of_day
+        ";
+
+        $reportMonth = "
+            (
+                select * from {$tablePrefix}sequence where sequence_number <= 12
+            ) report_month
+        ";
+
+        $reportDate = "
+            (
+                select date_format('{$startDate}' + interval sequence_number - 1 day, '%Y-%m-%d') as sequence_date
+                from {$tablePrefix}sequence s
+                where s.sequence_number <= {$numberDays}
+            ) report_date
+        ";
+
+        switch ($timeDimensionType) {
+            case 'day_of_week':
+                $sequenceTable = $dayOfWeek;
+                $selectTimeDimensionColumns = 'day_of_week.sequence_number as report_day_of_week, day_of_week.day_of_week_name as report_day_of_week_name';
+                $signUpGroupBy = 'sign_up_day_of_week';
+                break;
+
+            case 'hour_of_day':
+                $sequenceTable = $hourOfDay;
+                $selectTimeDimensionColumns = "hour_of_day.sequence_number as report_hour_of_day, concat(date_format(curdate() + interval hour_of_day.sequence_number hour, '%H'), ':00 - ', date_format(curdate() + interval hour_of_day.sequence_number + 1 hour, '%H'), ':00') as report_hour_of_day_name";
+                $signUpGroupBy = 'sign_up_hour_of_day';
+                break;
+
+            case 'report_month':
+                $sequenceTable = $reportMonth;
+                $selectTimeDimensionColumns = "report_month.sequence_number as report_month, monthname(str_to_date(report_month.sequence_number, '%m')) as report_month_name";
+                $signUpGroupBy = 'sign_up_month';
+                break;
+
+            case 'report_date':
+            default:
+                $sequenceTable = $reportDate;
+                $selectTimeDimensionColumns = 'report_date.sequence_date as report_date';
+                $signUpGroupBy = 'sign_up_date';
+        };
+
+        $signUpReport = "
+            (
+            select
+
+            date_format(convert_tz(ua2.created_at, '+00:00', {$timezoneOffset}), '%Y-%m-%d') as sign_up_date,
+            cast(date_format(convert_tz(ua2.created_at, '+00:00', {$timezoneOffset}), '%k') as signed) as sign_up_hour_of_day,
+            cast(date_format(convert_tz(ua2.created_at, '+00:00', {$timezoneOffset}), '%w') as signed) as sign_up_day_of_week,
+            cast(date_format(convert_tz(ua2.created_at, '+00:00', {$timezoneOffset}), '%c') as signed) as sign_up_month,
+
+            count(ua2.user_acquisition_id) as sign_up,
+
+            sum(ua2.signup_via = 'facebook') as sign_up_type_facebook,
+            sum(ua2.signup_via = 'google') as sign_up_type_google,
+            sum(ua2.signup_via = 'form') as sign_up_type_form,
+            sum(ua2.signup_via not in ('facebook', 'google', 'form')) as sign_up_type_unknown,
+
+            sum(if(ua2.gender = 'm', 1, 0)) as sign_up_gender_male,
+            sum(if(ua2.gender = 'f', 1, 0)) as sign_up_gender_female,
+            sum(if(ua2.gender not in ('m', 'f') || ua2.gender is null, 1, 0)) as sign_up_gender_unknown,
+
+            sum(if(ua2.age >= 0 and ua2.age <= 14, 1, 0)) as sign_up_age_0_to_14,
+            sum(if(ua2.age >= 15 and ua2.age <= 24, 1, 0)) as sign_up_age_15_to_24,
+            sum(if(ua2.age >= 25 and ua2.age <= 34, 1, 0)) as sign_up_age_25_to_34,
+            sum(if(ua2.age >= 35 and ua2.age <= 44, 1, 0)) as sign_up_age_35_to_44,
+            sum(if(ua2.age >= 45 and ua2.age <= 54, 1, 0)) as sign_up_age_45_to_54,
+            sum(if(ua2.age >= 55 and ua2.age <= 64, 1, 0)) as sign_up_age_55_to_64,
+            sum(if(ua2.age >= 65, 1, 0)) as sign_up_age_65_plus,
+            sum(if(ua2.age is null, 1, 0)) as sign_up_age_unknown
+
+            from
+                (
+                select ua.user_acquisition_id, ua.acquirer_id, ua.signup_via, ua.created_at, ud.gender, timestampdiff(year, ud.birthdate, date_format(convert_tz(utc_timestamp(), '+00:00', {$timezoneOffset}), '%Y-%m-%d')) as age
+                from {$tablePrefix}user_acquisitions ua
+                inner join {$tablePrefix}users u on ua.user_id = u.user_id
+                inner join {$tablePrefix}user_details ud on u.user_id = ud.user_id
+                where u.status != 'deleted'
+                and ua.acquirer_id in ('{$mallId}')
+                and ua.created_at between '{$startDate}' and '{$endDate}'
+                ) ua2
+            group by {$signUpGroupBy}
+            ) as report_sign_up
+        ";
+
+        $selectSignUpColumns = "
+            if(sign_up is null, 0, sign_up) as sign_up,
+
+            if(sign_up_age_0_to_14 is null, 0, sign_up_age_0_to_14) as sign_up_age_0_to_14,
+            if(sign_up_age_15_to_24 is null, 0, sign_up_age_15_to_24) as sign_up_age_15_to_24,
+            if(sign_up_age_25_to_34 is null, 0, sign_up_age_25_to_34) as sign_up_age_25_to_34,
+            if(sign_up_age_35_to_44 is null, 0, sign_up_age_35_to_44) as sign_up_age_35_to_44,
+            if(sign_up_age_45_to_54 is null, 0, sign_up_age_45_to_54) as sign_up_age_45_to_54,
+            if(sign_up_age_55_to_64 is null, 0, sign_up_age_55_to_64) as sign_up_age_55_to_64,
+            if(sign_up_age_65_plus is null, 0, sign_up_age_65_plus) as sign_up_age_65_plus,
+            if(sign_up_age_unknown is null, 0, sign_up_age_unknown) as sign_up_age_unknown,
+            if(sign_up_age_0_to_14 = 0 || sign_up_age_0_to_14 is null, 0, trim(round((sign_up_age_0_to_14 / sign_up) * 100, 2))+0) as sign_up_age_0_to_14_percentage,
+            if(sign_up_age_15_to_24 = 0 || sign_up_age_15_to_24 is null, 0, trim(round((sign_up_age_15_to_24 / sign_up) * 100, 2))+0) as sign_up_age_15_to_24_percentage,
+            if(sign_up_age_25_to_34 = 0 || sign_up_age_25_to_34 is null, 0, trim(round((sign_up_age_25_to_34 / sign_up) * 100, 2))+0) as sign_up_age_25_to_34_percentage,
+            if(sign_up_age_35_to_44 = 0 || sign_up_age_35_to_44 is null, 0, trim(round((sign_up_age_35_to_44 / sign_up) * 100, 2))+0) as sign_up_age_35_to_44_percentage,
+            if(sign_up_age_45_to_54 = 0 || sign_up_age_45_to_54 is null, 0, trim(round((sign_up_age_45_to_54 / sign_up) * 100, 2))+0) as sign_up_age_45_to_54_percentage,
+            if(sign_up_age_55_to_64 = 0 || sign_up_age_55_to_64 is null, 0, trim(round((sign_up_age_55_to_64 / sign_up) * 100, 2))+0) as sign_up_age_55_to_64_percentage,
+            if(sign_up_age_65_plus = 0 || sign_up_age_65_plus is null, 0, trim(round((sign_up_age_65_plus / sign_up) * 100, 2))+0) as sign_up_age_65_plus_percentage,
+            if(sign_up_age_unknown = 0 || sign_up_age_unknown is null, 0, trim(round((sign_up_age_unknown / sign_up) * 100, 2))+0) as sign_up_age_unknown_percentage,
+
+            if(sign_up_type_facebook is null, 0, sign_up_type_facebook) as sign_up_type_facebook,
+            if(sign_up_type_google is null, 0, sign_up_type_google) as sign_up_type_google,
+            if(sign_up_type_form is null, 0, sign_up_type_form) as sign_up_type_form,
+            if(sign_up_type_unknown is null, 0, sign_up_type_unknown) as sign_up_type_unknown,
+            if(sign_up_type_facebook = 0 || sign_up_type_facebook is null, 0, trim(round((sign_up_type_facebook / sign_up) * 100, 2))+0) as sign_up_type_facebook_percentage,
+            if(sign_up_type_google = 0 || sign_up_type_google is null, 0, trim(round((sign_up_type_google / sign_up) * 100, 2))+0) as sign_up_type_google_percentage,
+            if(sign_up_type_form = 0 || sign_up_type_form is null, 0, trim(round((sign_up_type_form / sign_up) * 100, 2))+0) as sign_up_type_form_percentage,
+            if(sign_up_type_unknown = 0 || sign_up_type_unknown is null, 0, trim(round((sign_up_type_unknown / sign_up) * 100, 2))+0) as sign_up_type_unknown_percentage,
+
+            if(sign_up_gender_male is null, 0, sign_up_gender_male) as sign_up_gender_male,
+            if(sign_up_gender_female is null, 0, sign_up_gender_female) as sign_up_gender_female,
+            if(sign_up_gender_unknown is null, 0, sign_up_gender_unknown) as sign_up_gender_unknown,
+            if(sign_up_gender_male = 0 || sign_up_gender_male is null, 0, trim(round((sign_up_gender_male / sign_up) * 100, 2))+0) as sign_up_gender_male_percentage,
+            if(sign_up_gender_female = 0 || sign_up_gender_female is null, 0, trim(round((sign_up_gender_female / sign_up) * 100, 2))+0) as sign_up_gender_female_percentage,
+            if(sign_up_gender_unknown = 0 || sign_up_gender_unknown is null, 0, trim(round((sign_up_gender_unknown / sign_up) * 100, 2))+0) as sign_up_gender_unknown_percentage
+        ";
+
+        $selectSignInColumns = "1";
+
+        $records = DB::table(DB::raw($sequenceTable))
+            ->selectRaw($selectTimeDimensionColumns . "," . $selectSignUpColumns . "," . $selectSignInColumns);
+
+        switch ($timeDimensionType) {
+            case 'day_of_week':
+                $records->leftJoin(DB::raw($signUpReport), DB::raw('report_sign_up.sign_up_day_of_week'), '=', DB::raw('day_of_week.sequence_number'));
+                break;
+
+            case 'hour_of_day':
+                $records->leftJoin(DB::raw($signUpReport), DB::raw('report_sign_up.sign_up_hour_of_day'), '=', DB::raw('hour_of_day.sequence_number'));
+                break;
+
+            case 'report_month':
+                $records->leftJoin(DB::raw($signUpReport), DB::raw('report_sign_up.sign_up_month'), '=', DB::raw('report_month.sequence_number'));
+                break;
+
+            case 'report_date':
+            default:
+                $records->leftJoin(DB::raw($signUpReport), DB::raw('report_sign_up.sign_up_date'), '=', DB::raw('report_date.sequence_date'));
+        }
+
+        return $records->get();
+    }
+
+    private function getTitle($code)
+    {
+        switch ($code) {
+            case 'report_date':
+                $title = 'Date';
+                break;
+            case 'sign_up':
+                $title = 'Sign Up';
+                break;
+        }
+
+        return $title;
+    }
+
+    private function getTotalTitle($code)
+    {
+        switch ($code) {
+            case 'sign_up':
+                $title = 'Sign Up';
+                break;
+        }
+
+        return $title;
+    }
+
     /**
      * A temporary method to output dummy data with the accepted structure
      * so that frontend guys can work on their part
@@ -147,7 +358,7 @@ class UserReportAPIController extends ControllerAPI
      *
      * @return Illuminate\Support\Facades\Response
      */
-    public function getUserReport()
+    public function getUserReportX()
     {
         return $this->getDummyUserReport();
 
@@ -845,6 +1056,111 @@ class UserReportAPIController extends ControllerAPI
         Event::fire('orbit.userreport.getuserreport.before.render', array($this, &$output));
 
         return $output;
+    }
+
+    /**
+     * Get User Report
+     * 
+     * @author Tian <tian@dominopos.com>
+     * @author Qosdil A. <qosdil@dominopos.com>
+     */
+    public function getUserReport()
+    {
+        $mallId = OrbitInput::get('current_mall');
+        $startDate = OrbitInput::get('start_date');
+        $endDate = OrbitInput::get('end_date');
+
+        $data = new stdClass();
+        foreach ($this->getData($mallId, $startDate, $endDate) as $row) {
+            $records[] = [
+                'date' => Carbon::createFromFormat('Y-m-d', $row->report_date)->format('j M Y'),
+                'sign_up' => $row->sign_up,
+                'sign_up_by_type_facebook' => $row->sign_up_type_facebook,
+                'sign_up_by_type_google' => $row->sign_up_type_google,
+                'sign_up_by_type_form' => $row->sign_up_type_form,
+                'sign_in' => 0,
+                'unique_sign_in' => 0,
+                'returning' => 0,
+                'status_active' => 0,
+                'status_pending' => 0,
+            ];
+        }
+
+        $data->columns = [
+            'date' => [
+                'title' => 'Date',
+                'sort_key' => 'date',
+            ],
+            'sign_up' => [
+                'title' => 'Sign Up',
+                'sort_key' => 'sign_up',
+                'total_title' => 'Sign Up',
+                'total' => 0,
+            ],
+            'sign_up_by_type' => [
+                'title' => 'Sign Up by Type',
+                'sub_columns' => [
+                    'sign_up_by_type_facebook' => [
+                        'title' => 'Facebook',
+                        'sort_key' => 'sign_up_by_type_facebook',
+                        'total_title' => 'Sign Up via Facebook',
+                        'total' => 0,
+                    ],
+                    'sign_up_by_type_google' => [
+                        'title' => 'Google+',
+                        'sort_key' => 'sign_up_by_type_google',
+                        'total_title' => 'Sign Up via Google+',
+                        'total' => 0,
+                    ],
+                    'sign_up_by_type_form' => [
+                        'title' => 'Form',
+                        'sort_key' => 'sign_up_by_type_form',
+                        'total_title' => 'Sign Up via Form',
+                        'total' => 0,
+                    ],
+                ],
+            ],
+            'sign_in' => [
+                'title' => 'Sign In',
+                'sort_key' => 'sign_in',
+                'total_title' => 'Sign In',
+                'total' => 0,
+            ],
+            'unique_sign_in' => [
+                'title' => 'Unique Sign In',
+                'sort_key' => 'unique_sign_in',
+                'total_title' => 'Unique Sign In',
+                'total' => 0,
+            ],
+            'returning' => [
+                'title' => 'Returning',
+                'sort_key' => 'returning',
+                'total_title' => 'Returning',
+                'total' => 0,
+            ],
+            'status' => [
+                'title' => 'Status',
+                'sub_columns' => [
+                    'status_active' => [
+                        'title' => 'Active',
+                        'sort_key' => 'status_active',
+                        'total_title' => 'Active Status',
+                        'total' => 0,
+                    ],
+                    'status_pending' => [
+                        'title' => 'Pending',
+                        'sort_key' => 'status_pending',
+                        'total_title' => 'Pending Status',
+                        'total' => 0,
+                    ],
+                ],
+            ],
+        ];
+
+        $data->records = $records;
+
+        $this->response->data = $data;
+        return $this->render(200);
     }
 
     public function setReturnBuilder($bool)
