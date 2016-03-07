@@ -1174,16 +1174,6 @@ class UserReportAPIController extends ControllerAPI
     private function getOutputColumns($timeDimensionType)
     {
         switch ($timeDimensionType) {
-            case 'report_date':
-                $firstColumn = [
-                    'date' => [
-                        'title' => 'Date',
-                        'sort_key' => 'date',
-                    ],
-                ];
-
-                break;
-
             case 'day_of_week':
                 $firstColumn = [
                     'day_of_week' => [
@@ -1191,7 +1181,6 @@ class UserReportAPIController extends ControllerAPI
                         'sort_key' => 'day_of_week',
                     ],
                 ];
-
                 break;
                 
             case 'hour_of_day':
@@ -1201,7 +1190,15 @@ class UserReportAPIController extends ControllerAPI
                         'sort_key' => 'hour_of_day',
                     ],
                 ];
+                break;
 
+            case 'report_date':
+                $firstColumn = [
+                    'date' => [
+                        'title' => 'Date',
+                        'sort_key' => 'date',
+                    ],
+                ];
                 break;
                 
             case 'report_month':
@@ -1211,7 +1208,6 @@ class UserReportAPIController extends ControllerAPI
                         'sort_key' => 'month',
                     ],
                 ];
-
                 break;
         }
 
