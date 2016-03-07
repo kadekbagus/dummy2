@@ -1174,16 +1174,6 @@ class UserReportAPIController extends ControllerAPI
     private function getOutputColumns($timeDimensionType)
     {
         switch ($timeDimensionType) {
-            case 'report_date':
-                $firstColumn = [
-                    'date' => [
-                        'title' => 'Date',
-                        'sort_key' => 'date',
-                    ],
-                ];
-
-                break;
-
             case 'day_of_week':
                 $firstColumn = [
                     'day_of_week' => [
@@ -1191,7 +1181,6 @@ class UserReportAPIController extends ControllerAPI
                         'sort_key' => 'day_of_week',
                     ],
                 ];
-
                 break;
                 
             case 'hour_of_day':
@@ -1201,7 +1190,15 @@ class UserReportAPIController extends ControllerAPI
                         'sort_key' => 'hour_of_day',
                     ],
                 ];
+                break;
 
+            case 'report_date':
+                $firstColumn = [
+                    'date' => [
+                        'title' => 'Date',
+                        'sort_key' => 'date',
+                    ],
+                ];
                 break;
                 
             case 'report_month':
@@ -1211,7 +1208,6 @@ class UserReportAPIController extends ControllerAPI
                         'sort_key' => 'month',
                     ],
                 ];
-
                 break;
         }
 
@@ -1397,12 +1393,6 @@ class UserReportAPIController extends ControllerAPI
                         'total_title' => 'Sign Up via Form',
                         'total' => 0,
                     ],
-                    'sign_up_type_unknown' => [
-                        'title' => 'Unknown',
-                        'sort_key' => 'sign_up_type_unknown',
-                        'total_title' => 'Sign Up Unknown',
-                        'total' => 0,
-                    ],
                 ],
             ],
             'sign_up_by_type_percentage' => [
@@ -1426,12 +1416,6 @@ class UserReportAPIController extends ControllerAPI
                         'title' => 'Form',
                         'sort_key' => 'sign_up_type_form_percentage',
                         'total_title' => 'Sign Up via Form',
-                        'total' => 0,
-                    ],
-                    'sign_up_type_unknown_percentage' => [
-                        'title' => 'Unknown',
-                        'sort_key' => 'sign_up_type_unknown_percentage',
-                        'total_title' => 'Sign Up Unknown',
                         'total' => 0,
                     ],
                 ],
@@ -1621,12 +1605,6 @@ class UserReportAPIController extends ControllerAPI
                         'total_title' => 'Sign Up via Form',
                         'total' => 0,
                     ],
-                    'sign_in_type_unknown' => [
-                        'title' => 'Unknown',
-                        'sort_key' => 'sign_in_type_unknown',
-                        'total_title' => 'Sign Up Unknown',
-                        'total' => 0,
-                    ],
                 ],
             ],
             'sign_in_by_type_percentage' => [
@@ -1650,12 +1628,6 @@ class UserReportAPIController extends ControllerAPI
                         'title' => 'Form',
                         'sort_key' => 'sign_in_type_form_percentage',
                         'total_title' => 'Sign Up via Form',
-                        'total' => 0,
-                    ],
-                    'sign_in_type_unknown_percentage' => [
-                        'title' => 'Unknown',
-                        'sort_key' => 'sign_in_type_unknown_percentage',
-                        'total_title' => 'Sign Up Unknown',
                         'total' => 0,
                     ],
                 ],
@@ -1845,12 +1817,6 @@ class UserReportAPIController extends ControllerAPI
                         'total_title' => 'Sign Up via Form',
                         'total' => 0,
                     ],
-                    'unique_sign_in_type_unknown' => [
-                        'title' => 'Unknown',
-                        'sort_key' => 'unique_sign_in_type_unknown',
-                        'total_title' => 'Sign Up Unknown',
-                        'total' => 0,
-                    ],
                 ],
             ],
             'unique_sign_in_by_type_percentage' => [
@@ -1874,12 +1840,6 @@ class UserReportAPIController extends ControllerAPI
                         'title' => 'Form',
                         'sort_key' => 'unique_sign_in_type_form_percentage',
                         'total_title' => 'Sign Up via Form',
-                        'total' => 0,
-                    ],
-                    'unique_sign_in_type_unknown_percentage' => [
-                        'title' => 'Unknown',
-                        'sort_key' => 'unique_sign_in_type_unknown_percentage',
-                        'total_title' => 'Sign Up Unknown',
                         'total' => 0,
                     ],
                 ],
