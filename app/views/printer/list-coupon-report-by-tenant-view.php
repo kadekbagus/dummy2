@@ -98,7 +98,7 @@
             <td><strong><?php echo number_format($totalAcquiringCustomers, 0, '.', '.'); ?></strong></td>
         </tr>
         <tr>
-            <td>Total Active Days</td>
+            <td>Total Active Campaign Days</td>
             <td>:</td>
             <td><strong><?php echo number_format($totalActiveDays, 0, '.', '.'); ?></strong></td>
         </tr>
