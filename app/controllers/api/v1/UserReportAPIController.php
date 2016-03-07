@@ -89,18 +89,24 @@ class UserReportAPIController extends ControllerAPI
                 $sequenceTable = $dayOfWeek;
                 $selectTimeDimensionColumns = 'day_of_week.sequence_number as report_day_of_week, day_of_week.day_of_week_name as report_day_of_week_name';
                 $signUpGroupBy = 'sign_up_day_of_week';
+                $signInGroupBy = 'sign_in_day_of_week';
+                $uniqueSignInGroupBy = 'unique_sign_in_day_of_week';
                 break;
 
             case 'hour_of_day':
                 $sequenceTable = $hourOfDay;
                 $selectTimeDimensionColumns = "hour_of_day.sequence_number as report_hour_of_day, concat(date_format(curdate() + interval hour_of_day.sequence_number hour, '%H'), ':00 - ', date_format(curdate() + interval hour_of_day.sequence_number + 1 hour, '%H'), ':00') as report_hour_of_day_name";
                 $signUpGroupBy = 'sign_up_hour_of_day';
+                $signInGroupBy = 'sign_in_hour_of_day';
+                $uniqueSignInGroupBy = 'unique_sign_in_hour_of_day';
                 break;
 
             case 'report_month':
                 $sequenceTable = $reportMonth;
                 $selectTimeDimensionColumns = "report_month.sequence_number as report_month, monthname(str_to_date(report_month.sequence_number, '%m')) as report_month_name";
                 $signUpGroupBy = 'sign_up_month';
+                $signInGroupBy = 'sign_in_month';
+                $uniqueSignInGroupBy = 'unique_sign_in_month';
                 break;
 
             case 'report_date':
@@ -108,6 +114,8 @@ class UserReportAPIController extends ControllerAPI
                 $sequenceTable = $reportDate;
                 $selectTimeDimensionColumns = 'report_date.sequence_date as report_date';
                 $signUpGroupBy = 'sign_up_date';
+                $signInGroupBy = 'sign_in_date';
+                $uniqueSignInGroupBy = 'unique_sign_in_date';
         };
 
         $signUpReport = "
