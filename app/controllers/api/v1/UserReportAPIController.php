@@ -1143,10 +1143,6 @@ class UserReportAPIController extends ControllerAPI
 
         foreach ($rows as $row) {
             switch ($timeDimensionType) {
-                case 'report_date':
-                    $firstColumnArray['date'] = $row->date = Carbon::createFromFormat('Y-m-d', $row->report_date)->format('j M Y');
-                    unset($row->report_date);
-                    break;
                 case 'day_of_week':
                     $firstColumnArray['day_of_week'] = $row->report_day_of_week_name;
                     unset($row->report_day_of_week, $row->report_day_of_week_name);
@@ -1154,6 +1150,10 @@ class UserReportAPIController extends ControllerAPI
                 case 'hour_of_day':
                     $firstColumnArray['hour_of_day'] = $row->report_hour_of_day_name;
                     unset($row->report_hour_of_day, $row->report_hour_of_day_name);
+                    break;
+                case 'report_date':
+                    $firstColumnArray['date'] = $row->date = Carbon::createFromFormat('Y-m-d', $row->report_date)->format('j M Y');
+                    unset($row->report_date);
                     break;
                 case 'report_month':
                     $firstColumnArray['month'] = $row->report_month_name;
