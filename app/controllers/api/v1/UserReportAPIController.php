@@ -1170,6 +1170,15 @@ class UserReportAPIController extends ControllerAPI
         $data->columns = $this->getOutputColumns($timeDimensionType);
         $data->records = $records;
 
+        foreach (Config::get('orbit_user_report_total_columns') as $key => $title) {
+            $totals[] = [$key => [
+                'title' => $title,
+                'total' => 0,
+            ]];
+        }
+
+        $data->totals = $totals;
+
         $this->response->data = $data;
         return $this->render(200);
     }
