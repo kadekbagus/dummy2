@@ -120,7 +120,7 @@ return [
                 'sort_key' => 'sign_up_type_facebook',
             ],
             'sign_up_type_google' => [
-                'title' => 'Google+',
+                'title' => 'Google',
                 'sort_key' => 'sign_up_type_google',
             ],
 
@@ -139,7 +139,7 @@ return [
                 'sort_key' => 'sign_up_type_facebook_percentage',
             ],
             'sign_up_type_google_percentage' => [
-                'title' => 'Google+',
+                'title' => 'Google',
                 'sort_key' => 'sign_up_type_google_percentage',
             ],
 
@@ -274,7 +274,7 @@ return [
                 'sort_key' => 'sign_in_type_facebook',
             ],
             'sign_in_type_google' => [
-                'title' => 'Google+',
+                'title' => 'Google',
                 'sort_key' => 'sign_in_type_google',
             ],
 
@@ -293,7 +293,7 @@ return [
                 'sort_key' => 'sign_in_type_facebook_percentage',
             ],
             'sign_in_type_google_percentage' => [
-                'title' => 'Google+',
+                'title' => 'Google',
                 'sort_key' => 'sign_in_type_google_percentage',
             ],
 
@@ -428,7 +428,7 @@ return [
                 'sort_key' => 'unique_sign_in_type_facebook',
             ],
             'unique_sign_in_type_google' => [
-                'title' => 'Google+',
+                'title' => 'Google',
                 'sort_key' => 'unique_sign_in_type_google',
             ],
 
@@ -447,7 +447,7 @@ return [
                 'sort_key' => 'unique_sign_in_type_facebook_percentage',
             ],
             'unique_sign_in_type_google_percentage' => [
-                'title' => 'Google+',
+                'title' => 'Google',
                 'sort_key' => 'unique_sign_in_type_google_percentage',
             ],
 
