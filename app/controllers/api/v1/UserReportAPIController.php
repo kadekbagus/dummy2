@@ -19,7 +19,6 @@ use Helper\EloquentRecordCounter as RecordCounter;
  * @author Qosdil A. <qosdil@dominopos.com>
  * @author Tian <tian@dominopos.com>
  * @todo Validations
- * @todo Fix timezone
  */
 class UserReportAPIController extends ControllerAPI
 {
@@ -31,13 +30,29 @@ class UserReportAPIController extends ControllerAPI
      * @var Builder
      */
     protected $returnBuilder = FALSE;
+
+    /**
+     * There should be a Carbon method for this.
+     *
+     * @param string $timezone The timezone name, e.g. 'Asia/Jakarta'.
+     * @return string The hours diff, e.g. '+07:00'.
+     * @author Qosdil A. <qosdil@gmail.com>
+     */
+    private function getTimezoneHoursDiff($timezone)
+    {
+        $mallDateTime = Carbon::createFromFormat('Y-m-d H:i:s', '2016-01-01 00:00:00', $timezone);
+        $utcDateTime = Carbon::createFromFormat('Y-m-d H:i:s', '2016-01-01 00:00:00');
+        $diff = $mallDateTime->diff($utcDateTime);
+        $sign = ($diff->invert) ? '-' : '+';
+        $hour = ($diff->h < 10) ? '0'.$diff->h : $diff->h;
+        return $sign.$hour.':00';
+    }
     
-    private function prepareData($mallId, $startDate, $endDate, $timeDimensionType, $sortKey, $sortType)
+    private function prepareData($mallId, $mallTimezone, $startDate, $endDate, $timeDimensionType, $sortKey, $sortType)
     {
         $tablePrefix = DB::getTablePrefix();
 
-        $mallTimezone = 'Asia/Jakarta';
-        $timezoneOffset = $this->quote('+07:00');
+        $timezoneOffset = $this->quote($this->getTimezoneHoursDiff($mallTimezone));
 
         $mallStartDate = Carbon::createFromFormat('Y-m-d H:i:s', $startDate)->timezone($mallTimezone);
         $mallEndDate = Carbon::createFromFormat('Y-m-d H:i:s', $endDate)->timezone($mallTimezone);
@@ -1136,6 +1151,7 @@ class UserReportAPIController extends ControllerAPI
     public function getUserReport()
     {
         $mallId = OrbitInput::get('current_mall');
+        $mallTimezone = OrbitInput::get('timezone');
         $startDate = OrbitInput::get('start_date');
         $endDate = OrbitInput::get('end_date');
         $timeDimensionType = OrbitInput::get('time_dimension_type');
@@ -1168,7 +1184,7 @@ class UserReportAPIController extends ControllerAPI
 
         $data = new stdClass();
 
-        $this->prepareData($mallId, $startDate, $endDate, $timeDimensionType, $sortKey, $sortType);
+        $this->prepareData($mallId, $mallTimezone, $startDate, $endDate, $timeDimensionType, $sortKey, $sortType);
         $totalCount = $this->rows->count();
         $rows = $this->rows->take($take)->skip($skip)->get();
         
