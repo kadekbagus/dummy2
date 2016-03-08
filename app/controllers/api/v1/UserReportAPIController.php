@@ -32,7 +32,7 @@ class UserReportAPIController extends ControllerAPI
      */
     protected $returnBuilder = FALSE;
     
-    private function getData($mallId, $startDate, $endDate, $timeDimensionType, $sortKey, $sortType)
+    private function getData($mallId, $startDate, $endDate, $timeDimensionType, $sortKey, $sortType, $take, $skip, $count = false)
     {
         $tablePrefix = DB::getTablePrefix();
 
@@ -416,7 +416,9 @@ class UserReportAPIController extends ControllerAPI
                 $records->leftJoin(DB::raw($uniqueSignInReport), DB::raw('report_unique_sign_in.unique_sign_in_date'), '=', DB::raw('report_date.sequence_date'));
         }
 
-        return $records->orderBy($sortKey, $sortType)->get();
+        return ($count === true)
+            ? $records->count()
+            : $records->orderBy($sortKey, $sortType)->take($take)->skip($skip)->get();
     }
 
     /**
@@ -1150,8 +1152,11 @@ class UserReportAPIController extends ControllerAPI
         $sortKey = Input::get('sortby', 'sign_up');
         $sortType = Input::get('sortmode', 'asc');
 
+        $take = Input::get('take');
+        $skip = Input::get('skip');
+
         $data = new stdClass();
-        $rows = $this->getData($mallId, $startDate, $endDate, $timeDimensionType, $sortKey, $sortType);
+        $rows = $this->getData($mallId, $startDate, $endDate, $timeDimensionType, $sortKey, $sortType, $take, $skip);
 
         foreach ($rows as $row) {
             switch ($timeDimensionType) {
@@ -1187,6 +1192,9 @@ class UserReportAPIController extends ControllerAPI
         }
 
         $data->totals = $totals;
+
+        $data->returned_records = count($records);
+        $data->total_records = $this->getData($mallId, $startDate, $endDate, $timeDimensionType, null, null, null, null, $count = true);
 
         $this->response->data = $data;
         return $this->render(200);
