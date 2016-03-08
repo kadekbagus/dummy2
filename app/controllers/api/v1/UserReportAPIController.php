@@ -1151,10 +1151,12 @@ class UserReportAPIController extends ControllerAPI
         switch ($sortKey) {
             case 'day_of_week':
             case 'hour_of_day':
+            case 'report_month';
             case 'month':
                 $sortKey = 'sequence_number';
                 break;
             case 'date':
+            case 'report_date':
                 $sortKey = 'sequence_date';
                 break;
         }
