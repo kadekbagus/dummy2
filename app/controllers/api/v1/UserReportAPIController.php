@@ -1180,10 +1180,10 @@ class UserReportAPIController extends ControllerAPI
         $data->records = $records;
 
         foreach (Config::get('orbit_user_report_total_columns') as $key => $title) {
-            $totals[] = [$key => [
+            $totals[$key] = [
                 'title' => $title,
                 'total' => 0,
-            ]];
+            ];
         }
 
         $data->totals = $totals;
