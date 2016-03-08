@@ -32,7 +32,7 @@ class UserReportAPIController extends ControllerAPI
      */
     protected $returnBuilder = FALSE;
     
-    private function getData($mallId, $startDate, $endDate, $timeDimensionType)
+    private function getData($mallId, $startDate, $endDate, $timeDimensionType, $sortKey, $sortType)
     {
         $tablePrefix = DB::getTablePrefix();
 
@@ -416,7 +416,7 @@ class UserReportAPIController extends ControllerAPI
                 $records->leftJoin(DB::raw($uniqueSignInReport), DB::raw('report_unique_sign_in.unique_sign_in_date'), '=', DB::raw('report_date.sequence_date'));
         }
 
-        return $records->get();
+        return $records->orderBy($sortKey, $sortType)->get();
     }
 
     /**
@@ -1140,8 +1140,12 @@ class UserReportAPIController extends ControllerAPI
         $endDate = OrbitInput::get('end_date');
         $timeDimensionType = OrbitInput::get('time_dimension_type');
 
+        // Query result ordering
+        $sortKey = Input::get('sortby', 'sign_up');
+        $sortType = Input::get('sortmode', 'asc');
+
         $data = new stdClass();
-        $rows = $this->getData($mallId, $startDate, $endDate, $timeDimensionType);
+        $rows = $this->getData($mallId, $startDate, $endDate, $timeDimensionType, $sortKey, $sortType);
 
         foreach ($rows as $row) {
             switch ($timeDimensionType) {
