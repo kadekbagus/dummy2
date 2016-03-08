@@ -388,7 +388,7 @@ class CouponReportPrinterController extends DataPrinterController
                 }
 
                 printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Coupon Code', 'Customer Age', 'Customer Gender', 'Issued Date', 'Redeemed Date', 'Redemption Place', 'Coupon Status');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Coupon Code', 'Customer Age', 'Customer Gender', 'Issued Date & Time', 'Redeemed Date & Time', 'Redemption Place', 'Coupon Status');
                 printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '');
 
                 $count = 1;
