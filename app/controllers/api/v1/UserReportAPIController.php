@@ -20,7 +20,6 @@ use Helper\EloquentRecordCounter as RecordCounter;
  * @author Tian <tian@dominopos.com>
  * @todo Validations
  * @todo Fix timezone
- * @todo Move columns a config
  */
 class UserReportAPIController extends ControllerAPI
 {
