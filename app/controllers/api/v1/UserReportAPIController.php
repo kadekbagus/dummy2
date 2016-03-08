@@ -32,7 +32,7 @@ class UserReportAPIController extends ControllerAPI
      */
     protected $returnBuilder = FALSE;
     
-    private function getData($mallId, $startDate, $endDate, $timeDimensionType, $sortKey, $sortType, $take, $skip, $count = false)
+    private function prepareData($mallId, $startDate, $endDate, $timeDimensionType, $sortKey, $sortType)
     {
         $tablePrefix = DB::getTablePrefix();
 
@@ -416,9 +416,7 @@ class UserReportAPIController extends ControllerAPI
                 $records->leftJoin(DB::raw($uniqueSignInReport), DB::raw('report_unique_sign_in.unique_sign_in_date'), '=', DB::raw('report_date.sequence_date'));
         }
 
-        return ($count === true)
-            ? $records->count()
-            : $records->orderBy($sortKey, $sortType)->take($take)->skip($skip)->get();
+        $this->rows = $records->orderBy($sortKey, $sortType);
     }
 
     /**
@@ -1150,14 +1148,30 @@ class UserReportAPIController extends ControllerAPI
             report_month --> sequence_number
         **/
         $sortKey = Input::get('sortby', 'sign_up');
+        switch ($sortKey) {
+            case 'day_of_week':
+            case 'hour_of_day':
+            case 'report_month';
+            case 'month':
+                $sortKey = 'sequence_number';
+                break;
+            case 'date':
+            case 'report_date':
+                $sortKey = 'sequence_date';
+                break;
+        }
+
         $sortType = Input::get('sortmode', 'asc');
 
         $take = Input::get('take');
         $skip = Input::get('skip');
 
         $data = new stdClass();
-        $rows = $this->getData($mallId, $startDate, $endDate, $timeDimensionType, $sortKey, $sortType, $take, $skip);
 
+        $this->prepareData($mallId, $startDate, $endDate, $timeDimensionType, $sortKey, $sortType);
+        $totalCount = $this->rows->count();
+        $rows = $this->rows->take($take)->skip($skip)->get();
+        
         foreach ($rows as $row) {
             switch ($timeDimensionType) {
                 case 'day_of_week':
@@ -1194,7 +1208,7 @@ class UserReportAPIController extends ControllerAPI
         $data->totals = $totals;
 
         $data->returned_records = count($records);
-        $data->total_records = $this->getData($mallId, $startDate, $endDate, $timeDimensionType, null, null, null, null, $count = true);
+        $data->total_records = $totalCount;
 
         $this->response->data = $data;
         return $this->render(200);
