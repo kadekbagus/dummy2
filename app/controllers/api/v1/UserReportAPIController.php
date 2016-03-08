@@ -1140,7 +1140,13 @@ class UserReportAPIController extends ControllerAPI
         $endDate = OrbitInput::get('end_date');
         $timeDimensionType = OrbitInput::get('time_dimension_type');
 
-        // Query result ordering
+        /**        
+        Special sort keys:
+            day_of_week  --> sequence_number
+            hour_of_day  --> sequence_number
+            report_date  --> sequence_date
+            report_month --> sequence_number
+        **/
         $sortKey = Input::get('sortby', 'sign_up');
         $sortType = Input::get('sortmode', 'asc');
 
