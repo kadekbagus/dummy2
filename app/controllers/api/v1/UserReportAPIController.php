@@ -1148,6 +1148,17 @@ class UserReportAPIController extends ControllerAPI
             report_month --> sequence_number
         **/
         $sortKey = Input::get('sortby', 'sign_up');
+        switch ($sortKey) {
+            case 'day_of_week':
+            case 'hour_of_day':
+            case 'month':
+                $sortKey = 'sequence_number';
+                break;
+            case 'date':
+                $sortKey = 'sequence_date';
+                break;
+        }
+
         $sortType = Input::get('sortmode', 'asc');
 
         $take = Input::get('take');
