@@ -336,7 +336,7 @@ class CouponReportPrinterController extends DataPrinterController
                 printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '');
                 printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Coupons', $totalCoupons, '', '', '', '', '');
                 printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Acquiring Customers', $totalAcquiringCustomers, '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Active Days', $totalActiveDays, '', '', '', '', '');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Active Campaign Days', $totalActiveDays, '', '', '', '', '');
                 printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Redemption Places', $totalRedemptionPlace, '', '', '', '', '');
 
                 // Filtering
@@ -368,8 +368,8 @@ class CouponReportPrinterController extends DataPrinterController
                 }
 
                 if ($issuedDateGte != '' && $issuedDateLte != ''){
-                    $startDate = date('d M Y', strtotime($issuedDateGte));
-                    $endDate = date('d M Y', strtotime($issuedDateLte));
+                    $startDate = $this->printDateTime($issuedDateGte, $timezoneCurrentMall, 'd M Y');
+                    $endDate = $this->printDateTime($issuedDateLte, $timezoneCurrentMall, 'd M Y');
                     $dateRange = $startDate . ' - ' . $endDate;
                     if ($startDate === $endDate) {
                         $dateRange = $startDate;
@@ -378,8 +378,8 @@ class CouponReportPrinterController extends DataPrinterController
                 }
 
                 if ($redeemedDateGte != '' && $redeemedDateLte != ''){
-                    $startDate = date('d M Y', strtotime($redeemedDateGte));
-                    $endDate = date('d M Y', strtotime($redeemedDateLte));
+                    $startDate = $this->printDateTime($redeemedDateGte, $timezoneCurrentMall, 'd M Y');
+                    $endDate = $this->printDateTime($redeemedDateLte, $timezoneCurrentMall, 'd M Y');
                     $dateRange = $startDate . ' - ' . $endDate;
                     if ($startDate === $endDate) {
                         $dateRange = $startDate;
@@ -388,7 +388,7 @@ class CouponReportPrinterController extends DataPrinterController
                 }
 
                 printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Coupon Code', 'Customer Age', 'Customer Gender', 'Issued Date', 'Redeemed Date', 'Redemption Place', 'Coupon Status');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Coupon Code', 'Customer Age', 'Customer Gender', 'Issued Date & Time', 'Redeemed Date & Time', 'Redemption Place', 'Coupon Status');
                 printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '');
 
                 $count = 1;
@@ -403,7 +403,7 @@ class CouponReportPrinterController extends DataPrinterController
                     if (empty($row->redeemed_date)) {
                         $dateRedeem = '--';
                     } else {
-                        $dateRedeem = date('d M Y', strtotime($row->redeemed_date));
+                        $dateRedeem = $this->printDateTime($row->redeemed_date, $timezoneCurrentMall, 'd M Y H:i');
                     }
 
                     if (empty($row->redemption_place)) {
@@ -417,7 +417,7 @@ class CouponReportPrinterController extends DataPrinterController
                             $row->issued_coupon_code,
                             $row->age,
                             $row->gender,
-                            date('d M Y H:i', strtotime($row->issued_date)),
+                            $this->printDateTime($row->issued_date, $timezoneCurrentMall, 'd M Y H:i'),
                             $dateRedeem,
                             $place,
                             $stat
