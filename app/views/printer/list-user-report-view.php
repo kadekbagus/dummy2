@@ -52,6 +52,11 @@
             padding-bottom: 2px;
             border-bottom: 1px solid #ccc;
         }
+
+        table.user-report {
+            width:150%;
+            table-layout: fixed;
+        }
     </style>
     <style type="text/css" media="print">
         #payment-date, #printernote { display:none; }
@@ -108,41 +113,51 @@
     <h2 style="margin-bottom:0.5em;"><?php echo $pageTitle; ?></h2>
     <table style="width:100%; margin-bottom:1em;" class="noborder">
         <tr>
-            <td style="width:150px"></td>
+            <td style="width:250px"></td>
             <td style="width:10px;"></td>
             <td><strong></strong></td>
         </tr>
-        <tr>
-            <td>Total Malls</td>
-            <td>:</td>
-            <td><strong><?php echo number_format($totalRec, 0, '.', '.'); ?></strong></td>
+        
+            <?php
+                foreach ($userReportHeader as $value) {
+                    echo '<tr>';
+                    echo '<td> Total ' . $value['title'] . '</td>';
+                    echo '<td>:</td>';
+                    echo '<td><strong>' . $value['total'] . '</strong></td>';
+                    echo '</tr>';
+                }   
+            ?>
+
         </tr>
     </table>
-
-    <table style="width:100%">
+    <br/>
+    <table class="user-report">
         <thead>
-           <!--  <th style="text-align:left;">No.</th> -->
-            <th style="text-align:left;">Mall Name</th>
-            <th style="text-align:left;">Location</th>
-            <th style="text-align:left;">Start Date</th>
-            <th style="text-align:left;">End Date</th>
-            <th style="text-align:left;">Mall Group</th>
-            <th style="text-align:left;">Status</th>
+            <tr width='100%'>
+                <th style="width: 100px;" rowspan="2"><?php echo $timeDimensionTitle; ?></th>
+            <?php 
+                foreach ($userReportHeader as $value) {
+                    echo "<th>" . $value['title'] . "</th>";
+                }
+            ?>
+            </tr>
         </thead>
         <tbody>
-        <?php foreach ($userReport as $key => $value) {//$count = 1; while ($row = $statement->fetch(PDO::FETCH_OBJ)) : ?>
-            <tr class="">
-                <!-- <td><?php //echo ($count); ?></td> -->
-                <td><?php echo $userReport[$key]; ?></td>
-                <td><?php //echo $me->printLocation($row); ?></td>
-                <td><?php //echo $me->printDateTime($row->start_date_activity, 'UTC', 'd F Y'); ?></td>
-                <td><?php //echo $me->printDateTime($row->end_date_activity, 'UTC', 'd F Y'); ?></td>
-                <td><?php //echo $me->printUtf8($row->mall_group_name); ?></td>
-                <td><?php //echo ($row->status); ?></td>
-            </tr>
-        <?php }//$count++; endwhile; ?>
+        <?php 
+        foreach ($userReportData as $key => $value) {
+            echo "<tr>";
+            echo "<td>" . $value[$timeDimension]  . "</td>";
+            foreach ($userReportHeader as $header_value) {
+                $x = $header_value['key'];
+              echo "<td>" . $value[$x]  . "</td>";
+            }
+            echo "</tr>";
+        }
+        ?>
         </tbody>
     </table>
+
+    <br/>
 </div>
 
 <script type="text/javascript">

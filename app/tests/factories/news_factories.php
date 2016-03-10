@@ -26,5 +26,6 @@ $factory('News', [
     'status'      => 'active',
     'begin_date'  => $faker->dateTimeBetween('-2 months'),
     'end_date'    => $faker->dateTimeBetween('+2 days', "+1 months"),
-    'link_object_type'    => $faker->randomElement(['tenant', 'tenant_category'])
+    'link_object_type'    => $faker->randomElement(['tenant', 'tenant_category']),
+    'campaign_status_id' => 'factory:CampaignStatus',
 ]);

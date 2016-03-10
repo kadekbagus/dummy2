@@ -93,6 +93,7 @@ $factory('Mall', [
     'contact_person_firstname' => $faker->firstName,
     'contact_person_lastname'  => $faker->lastName,
     'contact_person_phone'     => $faker->phoneNumber,
+    'timezone_id'     => 'factory:Timezone',
 ]);
 
 $factory('Tenant', [

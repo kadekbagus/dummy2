@@ -29,6 +29,7 @@ $factory('Coupon', [
     'status'         => 'active',
     'begin_date'     => $faker->dateTimeBetween('-2 months', '-2 weeks'),
     'end_date'       => $faker->dateTimeBetween('-2 days'),
-    'coupon_notification' => 'Y'
+    'coupon_notification' => 'Y',
+    'campaign_status_id' => 'factory:CampaignStatus',
 ]);
 
