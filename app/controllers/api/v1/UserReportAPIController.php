@@ -48,7 +48,7 @@ class UserReportAPIController extends ControllerAPI
         return $sign.$hour.':00';
     }
     
-    private function prepareData($mallId, $mallTimezone, $startDate, $endDate, $timeDimensionType, $sortKey, $sortType)
+    private function prepareData($mallId, $mallTimezone, $startDate, $endDate, $timeDimensionType)
     {
         $tablePrefix = DB::getTablePrefix();
 
@@ -431,7 +431,7 @@ class UserReportAPIController extends ControllerAPI
                 $records->leftJoin(DB::raw($uniqueSignInReport), DB::raw('report_unique_sign_in.unique_sign_in_date'), '=', DB::raw('report_date.sequence_date'));
         }
 
-        $this->rows = $records->orderBy($sortKey, $sortType);
+        $this->rows = $records;
     }
 
     /**
@@ -1184,9 +1184,9 @@ class UserReportAPIController extends ControllerAPI
 
         $data = new stdClass();
 
-        $this->prepareData($mallId, $mallTimezone, $startDate, $endDate, $timeDimensionType, $sortKey, $sortType);
+        $this->prepareData($mallId, $mallTimezone, $startDate, $endDate, $timeDimensionType);
         $totalCount = $this->rows->count();
-        $rows = $this->rows->take($take)->skip($skip)->get();
+        $rows = $this->rows->take($take)->skip($skip)->orderBy($sortKey, $sortType)->get();
         
         foreach ($rows as $row) {
             switch ($timeDimensionType) {
