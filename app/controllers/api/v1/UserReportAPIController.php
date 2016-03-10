@@ -761,8 +761,11 @@ class UserReportAPIController extends ControllerAPI
 
         $this->prepareData($mallId, $mallTimezone, $startDate, $endDate, $timeDimensionType);
         $totalCount = $this->rows->count();
-        $rows = $this->rows->take($take)->skip($skip)->orderBy($sortKey, $sortType)->get();
+        if (!$this->returnBuilder) {
+            $this->rows->take($take)->skip($skip);
+        }
         
+        $rows = $this->rows->orderBy($sortKey, $sortType)->get();
         foreach ($rows as $row) {
             switch ($timeDimensionType) {
                 case 'day_of_week':
