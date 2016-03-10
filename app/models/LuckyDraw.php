@@ -51,6 +51,11 @@ class LuckyDraw extends Eloquent
                     });
     }
 
+    public function campaign_status()
+    {
+        return $this->belongsTo('CampaignStatus', 'campaign_status_id', 'campaign_status_id');
+    }
+
     /**
      * Simple authorization check for whom this object can be accessed.
      *

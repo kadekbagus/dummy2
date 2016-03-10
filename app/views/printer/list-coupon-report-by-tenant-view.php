@@ -98,7 +98,7 @@
             <td><strong><?php echo number_format($totalAcquiringCustomers, 0, '.', '.'); ?></strong></td>
         </tr>
         <tr>
-            <td>Total Active Days</td>
+            <td>Total Active Campaign Days</td>
             <td>:</td>
             <td><strong><?php echo number_format($totalActiveDays, 0, '.', '.'); ?></strong></td>
         </tr>
@@ -154,8 +154,8 @@
 
         <?php 
             if ($issuedDateGte != '' && $issuedDateLte != ''){
-                $startDate = date('d M Y', strtotime($issuedDateGte));
-                $endDate = date('d M Y', strtotime($issuedDateLte));
+                $startDate = $this->printDateTime($issuedDateGte, $timezoneCurrentMall, 'd M Y');
+                $endDate = $this->printDateTime($issuedDateLte, $timezoneCurrentMall, 'd M Y');
                 $dateRange = $startDate . ' - ' . $endDate;
                 if ($startDate === $endDate) {
                     $dateRange = $startDate;
@@ -172,8 +172,8 @@
 
         <?php 
             if ($redeemedDateGte != '' && $redeemedDateLte != ''){
-                $startDate = date('d M Y', strtotime($redeemedDateGte));
-                $endDate = date('d M Y', strtotime($redeemedDateLte));
+                $startDate = $this->printDateTime($redeemedDateGte, $timezoneCurrentMall, 'd M Y');
+                $endDate = $this->printDateTime($redeemedDateLte, $timezoneCurrentMall, 'd M Y');
                 $dateRange = $startDate . ' - ' . $endDate;
                 if ($startDate === $endDate) {
                     $dateRange = $startDate;
@@ -194,10 +194,10 @@
             <th style="text-align:left;">Coupon Code</th>
             <th style="text-align:left;">Customer Age</th>
             <th style="text-align:left;">Customer Gender</th>
-            <th style="text-align:left;">Issued Date</th>
-            <th style="text-align:left;">Redeemed Date</th>
+            <th style="text-align:left;">Issued Date & Time</th>
+            <th style="text-align:left;">Redeemed Date & Time</th>
             <th style="text-align:left;">Redemption Place</th>
-            <th style="text-align:left;">Status</th>
+            <th style="text-align:left;">Coupon Status</th>
         </thead>
         <tbody>
         <?php while ($row = $statement->fetch(PDO::FETCH_OBJ)) : ?>

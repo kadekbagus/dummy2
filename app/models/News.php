@@ -79,6 +79,11 @@ class News extends Eloquent
                     ->join('keywords', 'keywords.keyword_id', '=', 'keyword_object.keyword_id');
     }
 
+    public function campaign_status()
+    {
+        return $this->belongsTo('CampaignStatus', 'campaign_status_id', 'campaign_status_id');
+    }
+
     public function scopeIsNews($query)
     {
         return $query->where('object_type', 'news');
