@@ -1494,6 +1494,13 @@ class UserReportAPIController extends ControllerAPI
                     break;
             }
 
+            // Add "%" sign on each of percentage column
+            foreach ($row as $rowKey => $rowValue) {
+                if (substr($rowKey, -11) == '_percentage') {
+                    $row->{$rowKey} = $row->{$rowKey}.'%';
+                }
+            }
+
             $records[] = array_merge($firstColumnArray, (array) $row);
         }
 
