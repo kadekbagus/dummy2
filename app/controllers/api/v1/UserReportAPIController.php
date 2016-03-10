@@ -1437,6 +1437,10 @@ class UserReportAPIController extends ControllerAPI
         $endDate = OrbitInput::get('end_date');
         $timeDimensionType = OrbitInput::get('time_dimension_type');
 
+        $mallTimezone = Mall::leftJoin('timezones', 'timezones.timezone_id', '=', 'merchants.timezone_id')
+            ->where('merchants.merchant_id', '=', $mallId)
+            ->first()->timezone_name;
+
         /**        
         Special sort keys:
             day_of_week  --> sequence_number
@@ -1503,6 +1507,11 @@ class UserReportAPIController extends ControllerAPI
                 'title' => $title,
                 'total' => $totalRow->{$key},
             ];
+        }
+
+        // Return the instance of Query Builder
+        if ($this->returnBuilder) {
+            return ['builder' => $records, 'totals' => $totals];
         }
 
         $data->totals = $totals;
