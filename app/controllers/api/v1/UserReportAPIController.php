@@ -47,6 +47,9 @@ class UserReportAPIController extends ControllerAPI
         return $sign.$hour.':00';
     }
 
+    /**
+     * @todo Remove this since no longer used by the main method.
+     */
     private function getTotals($mallId, $mallTimezone, $startDate, $endDate)
     {
         $tablePrefix = DB::getTablePrefix();
@@ -760,6 +763,10 @@ class UserReportAPIController extends ControllerAPI
         $data = new stdClass();
 
         $this->prepareData($mallId, $mallTimezone, $startDate, $endDate, $timeDimensionType);
+
+        // For Totals counting
+        $allRows = clone $this->rows;
+        
         $totalCount = $this->rows->count();
         if (!$this->returnBuilder) {
             $this->rows->take($take)->skip($skip);
@@ -800,7 +807,12 @@ class UserReportAPIController extends ControllerAPI
         $data->records = $records;
 
         // Get the row of Totals
-        $totalRow = $this->getTotals($mallId, $mallTimezone, $startDate, $endDate);
+        $totalRow = new stdClass();
+        foreach ($allRows->get() as $row) {
+            foreach ($row as $rowKey => $rowValue) {
+                @$totalRow->{$rowKey} += $rowValue;
+            }
+        }
 
         foreach (Config::get('orbit_user_report_total_columns') as $key => $title) {
             $totals[$key] = [
