@@ -3,6 +3,7 @@ return [
     'sign_up' => [
         'title' => 'Sign Up',
         'sort_key' => 'sign_up',
+        'tooltip' => 'The recorded total number of sign up type from mobile CI',
     ],
     'sign_up_by_gender' => [
         'title' => 'Sign Up by Gender',
@@ -155,6 +156,7 @@ return [
     'sign_in' => [
         'title' => 'Sign In',
         'sort_key' => 'sign_in',
+        'tooltip' => 'The recorded total number of sign up and sign in from mobile CI and it\'s not unique',
     ],
 
 
@@ -309,11 +311,12 @@ return [
     'unique_sign_in' => [
         'title' => 'Unique Sign In',
         'sort_key' => 'unique_sign_in',
+        'tooltip' => 'The recorded total number of unique sign in from mobile CI',
     ],
 
 
     'unique_sign_in_by_gender' => [
-        'title' => 'Sign In by Gender',
+        'title' => 'Unique Sign In by Gender',
         'sub_columns' => [
             'unique_sign_in_gender_male' => [
                 'title' => 'Male',
@@ -330,7 +333,7 @@ return [
         ],
     ],
     'unique_sign_in_by_gender_percentage' => [
-        'title' => 'Sign In by Gender (%)',
+        'title' => 'Unique  Sign In by Gender (%)',
         'sub_columns' => [
             'unique_sign_in_gender_male_percentage' => [
                 'title' => 'Male',
@@ -347,7 +350,7 @@ return [
         ],
     ],
     'unique_sign_in_by_age_range' => [
-        'title' => 'Sign In by Age Range',
+        'title' => 'Unique Sign In by Age Range',
         'sub_columns' => [
             'unique_sign_in_age_0_to_14' => [
                 'title' => '0-14',
@@ -384,7 +387,7 @@ return [
         ],
     ],
     'unique_sign_in_by_age_range_percentage' => [
-        'title' => 'Sign In by Age Range (%)',
+        'title' => 'Unique Sign In by Age Range (%)',
         'sub_columns' => [
             'unique_sign_in_age_0_to_14_percentage' => [
                 'title' => '0-14',
@@ -421,7 +424,7 @@ return [
         ],
     ],
     'unique_sign_in_by_type' => [
-        'title' => 'Sign In by Type',
+        'title' => 'Unique Sign In by Type',
         'sub_columns' => [
             'unique_sign_in_type_facebook' => [
                 'title' => 'Facebook',
@@ -440,7 +443,7 @@ return [
         ],
     ],
     'unique_sign_in_by_type_percentage' => [
-        'title' => 'Sign In by Type (%)',
+        'title' => 'Unique Sign In by Type (%)',
         'sub_columns' => [
             'unique_sign_in_type_facebook_percentage' => [
                 'title' => 'Facebook',
@@ -462,6 +465,7 @@ return [
     'returning' => [
         'title' => 'Returning',
         'sort_key' => 'returning',
+        'tooltip' => 'The recorded total number of calculated from unique sign in-sign up of mobile CI',
     ],
     'returning_percentage' => [
         'title' => 'Returning (%)',

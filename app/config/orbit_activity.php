@@ -47,10 +47,10 @@ return [
         ],
         'Notifications' => [
             'Read Activation Notification',
-            'Customer Activation',
             'Read Coupon Issuance Notification',
             'Read Lucky Draw Number Issuance Notification',
             'Read Winner Announcement Notification',
+            'View Notification List',
         ],
         'Pop Ups' => [
             'View Promotion Pop Up',
