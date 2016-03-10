@@ -18,7 +18,7 @@ class CampaignSpendingCalculation extends Command {
 	 *
 	 * @var string
 	 */
-	protected $description = 'Counting campaign spending and save to {prefix}_campaign_spending.';
+	protected $description = 'Counting campaign spending and save to {prefix}_campaign_spendings.';
 
 	/**
 	 * Create a new command instance.
@@ -58,7 +58,7 @@ class CampaignSpendingCalculation extends Command {
             // if ($val->tz === '00:00') {
                 // Get all campaign news from mall
             	$news = DB::statement("
-            							UPDATE {$prefix}campaign_spending as old
+            							UPDATE {$prefix}campaign_spendings as old
 										SET spending = (SELECT IFNULL(fnc_campaign_cost(old.campaign_id, 'news', old.begin_date, {$this->quote($now)}, {$this->quote($timezoneOffset)}), 0.00))
 										WHERE old.mall_id = {$this->quote($val->merchant_id)}
 										AND campaign_type = 'news'
@@ -68,7 +68,7 @@ class CampaignSpendingCalculation extends Command {
             	}
 
             	$promotion = DB::statement("
-            							UPDATE {$prefix}campaign_spending as old
+            							UPDATE {$prefix}campaign_spendings as old
 										SET spending = (SELECT IFNULL(fnc_campaign_cost(old.campaign_id, 'promotion', old.begin_date, {$this->quote($now)}, {$this->quote($timezoneOffset)}), 0.00))
 										WHERE old.mall_id = {$this->quote($val->merchant_id)}
 										AND campaign_type = 'promotion'
@@ -79,7 +79,7 @@ class CampaignSpendingCalculation extends Command {
             	}
 
             	$coupon = DB::statement("
-            							UPDATE {$prefix}campaign_spending as old
+            							UPDATE {$prefix}campaign_spendings as old
 										SET spending = (SELECT IFNULL(fnc_campaign_cost(old.campaign_id, 'coupon', old.begin_date, {$this->quote($now)}, {$this->quote($timezoneOffset)}), 0.00))
 										WHERE old.mall_id = {$this->quote($val->merchant_id)}
 										AND campaign_type = 'coupon'
