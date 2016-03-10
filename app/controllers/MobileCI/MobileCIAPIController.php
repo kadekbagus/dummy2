@@ -7909,8 +7909,7 @@ class MobileCIAPIController extends BaseCIController
                 OrbitShopAPI::throwInvalidArgument('Retailer not found');
             }
             $email = OrbitInput::get('email');
-            $from = OrbitInput::get('from');
-            $socmed_redirect_to = OrbitInput::get('socmed_redirect_to', 'xxx');
+            $from = OrbitInput::get('from', 'form');
 
             $socialid = null;
 
@@ -7959,7 +7958,7 @@ class MobileCIAPIController extends BaseCIController
                 // The data is in url encoded
                 parse_str($payload, $data);
 
-                $from = isset($data['login_from']) ? $data['login_from'] : '';
+                $from = isset($data['login_from']) ? $data['login_from'] : 'form';
                 $socialid = isset($data['social_id']) ? $data['social_id'] : null;
             }
 
@@ -7995,6 +7994,8 @@ class MobileCIAPIController extends BaseCIController
                 ->lockForUpdate()->first();
 
             if ($acq === null && $forceInsert) {
+                $from = empty($from) ? 'form' : $from;
+
                 $acq = new \UserAcquisition();
                 $acq->user_id = $user->user_id;
                 $acq->acquirer_id = $retailer->merchant_id;

@@ -30,6 +30,8 @@ class UserReportPrinterController extends DataPrinterController
                                             ->setReturnBuilder(TRUE)
                                             ->getUserReport();
 
+        $timezone = $this->getTimezoneMall($current_mall);
+
         if (! is_array($response)) {
             return Response::make($response->message);
         }
