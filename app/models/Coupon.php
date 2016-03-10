@@ -86,6 +86,11 @@ class Coupon extends Eloquent
                     ->join('keywords', 'keywords.keyword_id', '=', 'keyword_object.keyword_id');
     }
 
+    public function campaign_status()
+    {
+        return $this->belongsTo('CampaignStatus', 'campaign_status_id', 'campaign_status_id');
+    }
+
     /**
      * Coupon strings can be translated to many languages.
      */

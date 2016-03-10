@@ -68,8 +68,8 @@ class CampaignSetToExpired extends Command {
                                     ELSE
                                         (CASE
                                             WHEN (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
-                                                    FROM orb_merchants om
-                                                        LEFT JOIN orb_timezones ot on ot.timezone_id = om.timezone_id
+                                                    FROM {$prefix}merchants om
+                                                        LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
                                                     WHERE om.merchant_id = old.mall_id) > end_date
                                                 THEN
                                                     (SELECT campaign_status_id FROM {$prefix}campaign_status where campaign_status_name = 'expired')
@@ -79,8 +79,8 @@ class CampaignSetToExpired extends Command {
                             old.status =
                                 CASE
                                     WHEN (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
-                                                    FROM orb_merchants om
-                                                        LEFT JOIN orb_timezones ot on ot.timezone_id = om.timezone_id
+                                                    FROM {$prefix}merchants om
+                                                        LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
                                                     WHERE om.merchant_id = old.mall_id) > end_date THEN 'inactive'
                                     ELSE old.status
                                 END
@@ -96,8 +96,8 @@ class CampaignSetToExpired extends Command {
                                     ELSE
                                         (CASE
                                             WHEN (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
-                                                    FROM orb_merchants om
-                                                        LEFT JOIN orb_timezones ot on ot.timezone_id = om.timezone_id
+                                                    FROM {$prefix}merchants om
+                                                        LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
                                                     WHERE om.merchant_id = old.merchant_id) > end_date
                                                 THEN
                                                     (SELECT campaign_status_id FROM {$prefix}campaign_status where campaign_status_name = 'expired')
@@ -107,8 +107,8 @@ class CampaignSetToExpired extends Command {
                             old.status =
                                 CASE
                                     WHEN (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
-                                                    FROM orb_merchants om
-                                                        LEFT JOIN orb_timezones ot on ot.timezone_id = om.timezone_id
+                                                    FROM {$prefix}merchants om
+                                                        LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
                                                     WHERE om.merchant_id = old.merchant_id) > end_date THEN 'inactive'
                                     ELSE old.status
                                 END
@@ -124,8 +124,8 @@ class CampaignSetToExpired extends Command {
                                         ELSE
                                             (CASE
                                                 WHEN (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
-                                                    FROM orb_merchants om
-                                                        LEFT JOIN orb_timezones ot on ot.timezone_id = om.timezone_id
+                                                    FROM {$prefix}merchants om
+                                                        LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
                                                     WHERE om.merchant_id = old.mall_id) > end_date
                                                     THEN
                                                         (SELECT campaign_status_id FROM {$prefix}campaign_status where campaign_status_name = 'expired')
@@ -135,8 +135,8 @@ class CampaignSetToExpired extends Command {
                                 old.status =
                                     CASE
                                         WHEN (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
-                                                    FROM orb_merchants om
-                                                        LEFT JOIN orb_timezones ot on ot.timezone_id = om.timezone_id
+                                                    FROM {$prefix}merchants om
+                                                        LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
                                                     WHERE om.merchant_id = old.mall_id) > end_date THEN 'inactive'
                                         ELSE old.status
                                     END

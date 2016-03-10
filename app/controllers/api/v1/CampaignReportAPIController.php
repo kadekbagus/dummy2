@@ -174,7 +174,7 @@ class CampaignReportAPIController extends ControllerAPI
                 total_tenant * {$tablePrefix}campaign_price.base_price AS daily,
                 total_tenant * {$tablePrefix}campaign_price.base_price * (DATEDIFF( {$tablePrefix}news.end_date, {$tablePrefix}news.begin_date) + 1) AS estimated_total,
                 (
-
+                    
                     SELECT IFNULL(fnc_campaign_cost(campaign_id, 'news', {$tablePrefix}news.begin_date, {$this->quote($now)}, {$this->quote($timezoneOffset)}), 0.00) AS campaign_total_cost
                 ) as spending,
                 (
@@ -288,7 +288,7 @@ class CampaignReportAPIController extends ControllerAPI
                 total_tenant * {$tablePrefix}campaign_price.base_price AS daily,
                 total_tenant * {$tablePrefix}campaign_price.base_price * (DATEDIFF({$tablePrefix}news.end_date, {$tablePrefix}news.begin_date) + 1) AS estimated_total,
                 (
-
+                    
                     SELECT IFNULL(fnc_campaign_cost(campaign_id, 'promotion', {$tablePrefix}news.begin_date, {$this->quote($now)}, {$this->quote($timezoneOffset)}), 0.00) AS campaign_total_cost
                 ) as spending,
                 (
