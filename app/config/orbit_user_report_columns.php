@@ -3,6 +3,7 @@ return [
     'sign_up' => [
         'title' => 'Sign Up',
         'sort_key' => 'sign_up',
+        'tooltip' => 'The recorded total number of sign up type from mobile CI',
     ],
     'sign_up_by_gender' => [
         'title' => 'Sign Up by Gender',
@@ -155,6 +156,7 @@ return [
     'sign_in' => [
         'title' => 'Sign In',
         'sort_key' => 'sign_in',
+        'tooltip' => 'The recorded total number of sign up and sign in from mobile CI and it\'s not unique',
     ],
 
 
@@ -309,6 +311,7 @@ return [
     'unique_sign_in' => [
         'title' => 'Unique Sign In',
         'sort_key' => 'unique_sign_in',
+        'tooltip' => 'The recorded total number of unique sign in from mobile CI',
     ],
 
 
@@ -462,6 +465,7 @@ return [
     'returning' => [
         'title' => 'Returning',
         'sort_key' => 'returning',
+        'tooltip' => 'The recorded total number of calculated from unique sign in-sign up of mobile CI',
     ],
     'returning_percentage' => [
         'title' => 'Returning (%)',
