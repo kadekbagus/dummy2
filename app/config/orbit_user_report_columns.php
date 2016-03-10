@@ -5,7 +5,7 @@ return [
         'sort_key' => 'sign_up',
     ],
     'sign_up_by_gender' => [
-        'title' => 'Sign Up By Gender',
+        'title' => 'Sign Up by Gender',
         'sub_columns' => [
             'sign_up_gender_male' => [
                 'title' => 'Male',
@@ -22,7 +22,7 @@ return [
         ],
     ],
     'sign_up_by_gender_percentage' => [
-        'title' => 'Sign Up by Gender Percentage',
+        'title' => 'Sign Up by Gender (%)',
         'sub_columns' => [
             'sign_up_gender_male_percentage' => [
                 'title' => 'Male',
@@ -76,7 +76,7 @@ return [
         ],
     ],
     'sign_up_by_age_range_percentage' => [
-        'title' => 'Sign Up by Age Range Percentage',
+        'title' => 'Sign Up by Age Range (%)',
         'sub_columns' => [
             'sign_up_age_0_to_14_percentage' => [
                 'title' => '0-14',
@@ -120,7 +120,7 @@ return [
                 'sort_key' => 'sign_up_type_facebook',
             ],
             'sign_up_type_google' => [
-                'title' => 'Google+',
+                'title' => 'Google',
                 'sort_key' => 'sign_up_type_google',
             ],
 
@@ -132,14 +132,14 @@ return [
         ],
     ],
     'sign_up_by_type_percentage' => [
-        'title' => 'Sign Up by Type Percentage',
+        'title' => 'Sign Up by Type (%)',
         'sub_columns' => [
             'sign_up_type_facebook_percentage' => [
                 'title' => 'Facebook',
                 'sort_key' => 'sign_up_type_facebook_percentage',
             ],
             'sign_up_type_google_percentage' => [
-                'title' => 'Google+',
+                'title' => 'Google',
                 'sort_key' => 'sign_up_type_google_percentage',
             ],
 
@@ -159,7 +159,7 @@ return [
 
 
     'sign_in_by_gender' => [
-        'title' => 'Sign Up by Gender',
+        'title' => 'Sign In by Gender',
         'sub_columns' => [
             'sign_in_gender_male' => [
                 'title' => 'Male',
@@ -176,7 +176,7 @@ return [
         ],
     ],
     'sign_in_by_gender_percentage' => [
-        'title' => 'Sign Up by Gender Percentage',
+        'title' => 'Sign In by Gender (%)',
         'sub_columns' => [
             'sign_in_gender_male_percentage' => [
                 'title' => 'Male',
@@ -193,7 +193,7 @@ return [
         ],
     ],
     'sign_in_by_age_range' => [
-        'title' => 'Sign Up by Age Range',
+        'title' => 'Sign In by Age Range',
         'sub_columns' => [
             'sign_in_age_0_to_14' => [
                 'title' => '0-14',
@@ -230,7 +230,7 @@ return [
         ],
     ],
     'sign_in_by_age_range_percentage' => [
-        'title' => 'Sign Up by Age Range Percentage',
+        'title' => 'Sign In by Age Range (%)',
         'sub_columns' => [
             'sign_in_age_0_to_14_percentage' => [
                 'title' => '0-14',
@@ -267,14 +267,14 @@ return [
         ],
     ],
     'sign_in_by_type' => [
-        'title' => 'Sign Up by Type',
+        'title' => 'Sign In by Type',
         'sub_columns' => [
             'sign_in_type_facebook' => [
                 'title' => 'Facebook',
                 'sort_key' => 'sign_in_type_facebook',
             ],
             'sign_in_type_google' => [
-                'title' => 'Google+',
+                'title' => 'Google',
                 'sort_key' => 'sign_in_type_google',
             ],
 
@@ -286,14 +286,14 @@ return [
         ],
     ],
     'sign_in_by_type_percentage' => [
-        'title' => 'Sign Up by Type Percentage',
+        'title' => 'Sign In by Type (%)',
         'sub_columns' => [
             'sign_in_type_facebook_percentage' => [
                 'title' => 'Facebook',
                 'sort_key' => 'sign_in_type_facebook_percentage',
             ],
             'sign_in_type_google_percentage' => [
-                'title' => 'Google+',
+                'title' => 'Google',
                 'sort_key' => 'sign_in_type_google_percentage',
             ],
 
@@ -313,7 +313,7 @@ return [
 
 
     'unique_sign_in_by_gender' => [
-        'title' => 'Sign Up by Gender',
+        'title' => 'Sign In by Gender',
         'sub_columns' => [
             'unique_sign_in_gender_male' => [
                 'title' => 'Male',
@@ -330,7 +330,7 @@ return [
         ],
     ],
     'unique_sign_in_by_gender_percentage' => [
-        'title' => 'Sign Up by Gender Percentage',
+        'title' => 'Sign In by Gender (%)',
         'sub_columns' => [
             'unique_sign_in_gender_male_percentage' => [
                 'title' => 'Male',
@@ -347,7 +347,7 @@ return [
         ],
     ],
     'unique_sign_in_by_age_range' => [
-        'title' => 'Sign Up by Age Range',
+        'title' => 'Sign In by Age Range',
         'sub_columns' => [
             'unique_sign_in_age_0_to_14' => [
                 'title' => '0-14',
@@ -384,7 +384,7 @@ return [
         ],
     ],
     'unique_sign_in_by_age_range_percentage' => [
-        'title' => 'Sign Up by Age Range Percentage',
+        'title' => 'Sign In by Age Range (%)',
         'sub_columns' => [
             'unique_sign_in_age_0_to_14_percentage' => [
                 'title' => '0-14',
@@ -421,14 +421,14 @@ return [
         ],
     ],
     'unique_sign_in_by_type' => [
-        'title' => 'Sign Up by Type',
+        'title' => 'Sign In by Type',
         'sub_columns' => [
             'unique_sign_in_type_facebook' => [
                 'title' => 'Facebook',
                 'sort_key' => 'unique_sign_in_type_facebook',
             ],
             'unique_sign_in_type_google' => [
-                'title' => 'Google+',
+                'title' => 'Google',
                 'sort_key' => 'unique_sign_in_type_google',
             ],
 
@@ -440,14 +440,14 @@ return [
         ],
     ],
     'unique_sign_in_by_type_percentage' => [
-        'title' => 'Sign Up by Type Percentage',
+        'title' => 'Sign In by Type (%)',
         'sub_columns' => [
             'unique_sign_in_type_facebook_percentage' => [
                 'title' => 'Facebook',
                 'sort_key' => 'unique_sign_in_type_facebook_percentage',
             ],
             'unique_sign_in_type_google_percentage' => [
-                'title' => 'Google+',
+                'title' => 'Google',
                 'sort_key' => 'unique_sign_in_type_google_percentage',
             ],
 
@@ -464,7 +464,7 @@ return [
         'sort_key' => 'returning',
     ],
     'returning_percentage' => [
-        'title' => 'Returning',
+        'title' => 'Returning (%)',
         'sort_key' => 'returning_percentage',
     ],
 
@@ -480,15 +480,11 @@ return [
                 'title' => 'Pending',
                 'sort_key' => 'unique_sign_in_status_pending',
             ],
-            'unique_sign_in_status_unknown' => [
-                'title' => 'Unknown',
-                'sort_key' => 'unique_sign_in_status_unknown',
-            ],
         ],
     ],
 
     'status_percentage' => [
-        'title' => 'Status %',
+        'title' => 'Status (%)',
         'sub_columns' => [
             'unique_sign_in_status_active_percentage' => [
                 'title' => 'Active',
@@ -497,10 +493,6 @@ return [
             'unique_sign_in_status_pending_percentage' => [
                 'title' => 'Pending',
                 'sort_key' => 'unique_sign_in_status_pending_percentage',
-            ],
-            'unique_sign_in_status_unknown_percentage' => [
-                'title' => 'Unknown',
-                'sort_key' => 'unique_sign_in_status_unknown_percentage',
             ],
         ],
     ],

@@ -194,10 +194,10 @@
             <th style="text-align:left;">Coupon Code</th>
             <th style="text-align:left;">Customer Age</th>
             <th style="text-align:left;">Customer Gender</th>
-            <th style="text-align:left;">Issued Date</th>
-            <th style="text-align:left;">Redeemed Date</th>
+            <th style="text-align:left;">Issued Date & Time</th>
+            <th style="text-align:left;">Redeemed Date & Time</th>
             <th style="text-align:left;">Redemption Place</th>
-            <th style="text-align:left;">Status</th>
+            <th style="text-align:left;">Coupon Status</th>
         </thead>
         <tbody>
         <?php while ($row = $statement->fetch(PDO::FETCH_OBJ)) : ?>
