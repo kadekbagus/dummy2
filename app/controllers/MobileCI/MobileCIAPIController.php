@@ -7910,7 +7910,6 @@ class MobileCIAPIController extends BaseCIController
             }
             $email = OrbitInput::get('email');
             $from = OrbitInput::get('from');
-            $socmed_redirect_to = OrbitInput::get('socmed_redirect_to', 'xxx');
 
             $socialid = null;
 
