@@ -1431,6 +1431,11 @@ class UserReportAPIController extends ControllerAPI
 
     public function getUserReport()
     {
+        // Do validation
+        if (!$this->validate()) {
+            return $this->render($this->errorCode);
+        }        
+
         $mallId = OrbitInput::get('current_mall');
         $mallTimezone = OrbitInput::get('timezone');
         $startDate = OrbitInput::get('start_date');
@@ -1592,6 +1597,47 @@ class UserReportAPIController extends ControllerAPI
     protected function quote($arg)
     {
         return DB::connection()->getPdo()->quote($arg);
+    }
+
+    protected function validate()
+    {
+        $validator = Validator::make([
+            'current_mall'         => Input::get('current_mall'),
+            'start_date'           => Input::get('start_date'),
+            'end_date'             => Input::get('end_date'),
+            'time_dimension_type'  => Input::get('time_dimension_type'),
+            'sortby'               => Input::get('sortby'),
+            'sortmode'             => Input::get('sortmode'),
+            'take'                 => Input::get('take'),
+            'skip'                 => Input::get('skip'),
+        ],
+        [
+            'current_mall'         => 'required',
+            'start_date'           => 'required|date_format:Y-m-d H:i:s',
+            'end_date'             => 'required|date_format:Y-m-d H:i:s|after:start_date',
+            'time_dimension_type'  => 'required|in:day_of_week,hour_of_day,report_date,report_month',
+            'sortby'               => 'required',
+            'sortmode'             => 'in:asc,desc',
+            'take'                 => 'required|integer',
+            'skip'                 => 'required|integer',
+        ]);
+
+        try {
+            if ($validator->fails()) {
+                OrbitShopAPI::throwInvalidArgument($validator->messages()->first());
+            }
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.userreport.getuserreport.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+
+            $this->errorCode = 400;
+            return false;
+        }
+
+        return true;
     }
 
 }
