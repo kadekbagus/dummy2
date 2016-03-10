@@ -642,6 +642,17 @@ class CouponAPIController extends ControllerAPI
                 }
             }
 
+
+            // Save campaign spending with default spending 0
+            $campaignSpending = new CampaignSpendingCount();
+            $campaignSpending->campaign_id = $newcoupon->promotion_id;
+            $campaignSpending->campaign_type = 'coupon';
+            $campaignSpending->spending = 0;
+            $campaignSpending->mall_id = $merchant_id;
+            $campaignSpending->begin_date = $begin_date;
+            $campaignSpending->end_date = $end_date;
+            $campaignSpending->save();
+
             OrbitInput::post('translations', function($translation_json_string) use ($newcoupon) {
                 $this->validateAndSaveTranslations($newcoupon, $translation_json_string, 'create');
             });
@@ -1112,7 +1123,7 @@ class CouponAPIController extends ControllerAPI
                         }
                     }
                 }
-            } 
+            }
 
             $updatedcoupon_default_language = CouponTranslation::excludeDeleted()->where('promotion_id', $promotion_id)->where('merchant_language_id', $id_language_default)->first();
 
@@ -1644,6 +1655,22 @@ class CouponAPIController extends ControllerAPI
 
             $this->response->data = $updatedcoupon;
             $this->response->data->translation_default = $updatedcoupon_default_language;
+
+            // Update campaign spending
+            $mall = App::make('orbit.empty.merchant');
+            $now = Carbon::now($mall->timezone->timezone_name);
+            $timezone = $this->getTimezone($mall->merchant_id);
+            $timezoneOffset = $this->getTimezoneOffset($timezone);
+
+            $sqlSpending = "(SELECT IFNULL(fnc_campaign_cost({$this->quote($promotion_id)}, 'news', {$this->quote($begin_date)}, {$this->quote($now)}, {$this->quote($timezoneOffset)}), 0.00) AS spending) AS B";
+            $spending = DB::table(DB::raw($sqlSpending))->get();
+
+            $campaignspending = $spending[0]->spending;
+
+            $updatedcamapign = CampaignSpendingCount::where('campaign_id',$promotion_id)->first();
+            $updatedcamapign->end_date =$end_date;
+            $updatedcamapign->spending = $campaignspending;
+            $updatedcamapign->save();
 
             // Commit the changes
             $this->commit();
@@ -2491,7 +2518,7 @@ class CouponAPIController extends ControllerAPI
 
             $coupons->orderBy($sortBy, $sortMode);
 
-            //with name 
+            //with name
             if ($sortBy !== 'coupon_translations.promotion_name') {
                 $coupons->orderBy('coupon_translations.promotion_name', 'asc');
             }
@@ -3810,8 +3837,25 @@ class CouponAPIController extends ControllerAPI
         }
     }
 
+    protected function getTimezone($current_mall)
+    {
+        $timezone = Mall::leftJoin('timezones','timezones.timezone_id','=','merchants.timezone_id')
+            ->where('merchants.merchant_id','=', $current_mall)
+            ->first();
+
+        return $timezone->timezone_name;
+    }
+
+    protected function getTimezoneOffset($timezone)
+    {
+        $dt = new DateTime('now', new DateTimeZone($timezone));
+
+        return $dt->format('P');
+    }
+
     protected function quote($arg)
     {
         return DB::connection()->getPdo()->quote($arg);
     }
+
 }
