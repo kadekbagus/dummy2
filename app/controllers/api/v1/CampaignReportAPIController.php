@@ -166,17 +166,14 @@ class CampaignReportAPIController extends ControllerAPI
             }
 
             // Get data all campaign (news, promotions, coupons), and then use union to join all campaign
-            $news = DB::table('news')->selectraw(DB::raw("{$tablePrefix}news.news_id AS campaign_id, 
+            $news = DB::table('news')->selectraw(DB::raw("{$tablePrefix}news.news_id AS campaign_id,
                 CASE WHEN {$tablePrefix}news_translations.news_name !='' THEN {$tablePrefix}news_translations.news_name ELSE {$tablePrefix}news.news_name END as campaign_name,
                 {$tablePrefix}news.object_type AS campaign_type,
                 IFNULL(total_tenant, 0) AS total_tenant, tenant_name,
                 merchants2.name AS mall_name, {$tablePrefix}news.begin_date, {$tablePrefix}news.end_date, {$tablePrefix}news.updated_at, {$tablePrefix}campaign_price.base_price,
                 total_tenant * {$tablePrefix}campaign_price.base_price AS daily,
                 total_tenant * {$tablePrefix}campaign_price.base_price * (DATEDIFF( {$tablePrefix}news.end_date, {$tablePrefix}news.begin_date) + 1) AS estimated_total,
-                (
-                    
-                    SELECT IFNULL(fnc_campaign_cost(campaign_id, 'news', {$tablePrefix}news.begin_date, {$this->quote($now)}, {$this->quote($timezoneOffset)}), 0.00) AS campaign_total_cost
-                ) as spending,
+                {$tablePrefix}campaign_spendings.spending,
                 (
                     select count(campaign_page_view_id) as value
                     from {$tablePrefix}campaign_page_views
@@ -196,6 +193,7 @@ class CampaignReportAPIController extends ControllerAPI
                     and location_id = {$this->quote($current_mall)}
                 ) as popup_clicks,
                 {$tablePrefix}news.status, CASE WHEN {$tablePrefix}campaign_status.campaign_status_name = 'expired' THEN {$tablePrefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$tablePrefix}news.end_date < {$this->quote($now)} THEN 'expired' ELSE {$tablePrefix}campaign_status.campaign_status_name END) END  AS campaign_status, {$tablePrefix}campaign_status.order"))
+                        ->leftJoin('campaign_spendings', 'campaign_spendings.campaign_id', '=', 'news.news_id')
                         ->leftJoin('campaign_price', 'campaign_price.campaign_id', '=', 'news.news_id')
                         // Join for get mall name
                         ->leftJoin('merchants as merchants2', 'news.mall_id', '=', DB::raw('merchants2.merchant_id'))
@@ -280,17 +278,14 @@ class CampaignReportAPIController extends ControllerAPI
                         ->where('news.mall_id', '=', $current_mall)
                         ->where('news.object_type', '=', 'news');
 
-            $promotions = DB::table('news')->selectraw(DB::raw("{$tablePrefix}news.news_id AS campaign_id, 
-                CASE WHEN {$tablePrefix}news_translations.news_name !='' THEN {$tablePrefix}news_translations.news_name ELSE {$tablePrefix}news.news_name END as campaign_name, 
+            $promotions = DB::table('news')->selectraw(DB::raw("{$tablePrefix}news.news_id AS campaign_id,
+                CASE WHEN {$tablePrefix}news_translations.news_name !='' THEN {$tablePrefix}news_translations.news_name ELSE {$tablePrefix}news.news_name END as campaign_name,
                 {$tablePrefix}news.object_type AS campaign_type,
                 IFNULL(total_tenant, 0) AS total_tenant, tenant_name,
                 merchants2.name AS mall_name, {$tablePrefix}news.begin_date, {$tablePrefix}news.end_date, {$tablePrefix}news.updated_at, {$tablePrefix}campaign_price.base_price,
                 total_tenant * {$tablePrefix}campaign_price.base_price AS daily,
                 total_tenant * {$tablePrefix}campaign_price.base_price * (DATEDIFF({$tablePrefix}news.end_date, {$tablePrefix}news.begin_date) + 1) AS estimated_total,
-                (
-                    
-                    SELECT IFNULL(fnc_campaign_cost(campaign_id, 'promotion', {$tablePrefix}news.begin_date, {$this->quote($now)}, {$this->quote($timezoneOffset)}), 0.00) AS campaign_total_cost
-                ) as spending,
+                {$tablePrefix}campaign_spendings.spending,
                 (
                     select count(campaign_page_view_id) as value
                     from {$tablePrefix}campaign_page_views
@@ -310,6 +305,7 @@ class CampaignReportAPIController extends ControllerAPI
                     and location_id = {$this->quote($current_mall)}
                 ) as popup_clicks,
                 {$tablePrefix}news.status, CASE WHEN {$tablePrefix}campaign_status.campaign_status_name = 'expired' THEN {$tablePrefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$tablePrefix}news.end_date < {$this->quote($now)} THEN 'expired' ELSE {$tablePrefix}campaign_status.campaign_status_name END) END  AS campaign_status, {$tablePrefix}campaign_status.order"))
+                        ->leftJoin('campaign_spendings', 'campaign_spendings.campaign_id', '=', 'news.news_id')
                         ->leftJoin('campaign_price', 'campaign_price.campaign_id', '=', 'news.news_id')
                         ->leftJoin('merchants as merchants2', 'news.mall_id', '=', DB::raw('merchants2.merchant_id'))
                         // Joint for get total tenant percampaign
@@ -394,17 +390,14 @@ class CampaignReportAPIController extends ControllerAPI
                         ->where('news.object_type', '=', 'promotion');
 
 
-            $coupons = DB::table('promotions')->selectraw(DB::raw("{$tablePrefix}promotions.promotion_id AS campaign_id, 
-                CASE WHEN {$tablePrefix}coupon_translations.promotion_name !='' THEN {$tablePrefix}coupon_translations.promotion_name ELSE {$tablePrefix}promotions.promotion_name END as campaign_name, 
+            $coupons = DB::table('promotions')->selectraw(DB::raw("{$tablePrefix}promotions.promotion_id AS campaign_id,
+                CASE WHEN {$tablePrefix}coupon_translations.promotion_name !='' THEN {$tablePrefix}coupon_translations.promotion_name ELSE {$tablePrefix}promotions.promotion_name END as campaign_name,
                 IF(1=1,'coupon', '') AS campaign_type,
                 IFNULL(total_tenant, 0) AS total_tenant, tenant_name,
                 merchants2.name AS mall_name, {$tablePrefix}promotions.begin_date, {$tablePrefix}promotions.end_date, {$tablePrefix}promotions.updated_at, {$tablePrefix}campaign_price.base_price,
                 total_tenant * {$tablePrefix}campaign_price.base_price AS daily,
                 total_tenant * {$tablePrefix}campaign_price.base_price * (DATEDIFF({$tablePrefix}promotions.end_date, {$tablePrefix}promotions.begin_date) + 1) AS estimated_total,
-                (
-
-                    SELECT IFNULL(fnc_campaign_cost(campaign_id, 'coupon', {$tablePrefix}promotions.begin_date, {$this->quote($now)}, {$this->quote($timezoneOffset)}), 0.00) AS campaign_total_cost
-                ) as spending,
+                {$tablePrefix}campaign_spendings.spending,
                 (
                     select count(campaign_page_view_id) as value
                     from {$tablePrefix}campaign_page_views
@@ -424,6 +417,7 @@ class CampaignReportAPIController extends ControllerAPI
                     and location_id = {$this->quote($current_mall)}
                 ) as popup_clicks,
                 {$tablePrefix}promotions.status, CASE WHEN {$tablePrefix}campaign_status.campaign_status_name = 'expired' THEN {$tablePrefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$tablePrefix}promotions.end_date < {$this->quote($now)} THEN 'expired' ELSE {$tablePrefix}campaign_status.campaign_status_name END) END AS campaign_status, {$tablePrefix}campaign_status.order"))
+                        ->leftJoin('campaign_spendings', 'campaign_spendings.campaign_id', '=', 'promotions.promotion_id')
                         ->leftJoin('campaign_price', 'campaign_price.campaign_id', '=', 'promotions.promotion_id')
                         ->leftJoin('merchants as merchants2', 'promotions.merchant_id', '=', DB::raw('merchants2.merchant_id'))
                         // Joint for get total tenant percampaign
