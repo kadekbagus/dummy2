@@ -22,6 +22,8 @@ class UserReportPrinterController extends DataPrinterController
 
         $mode = OrbitInput::get('export', 'print');
         $current_mall = OrbitInput::get('current_mall');
+        $startDate = OrbitInput::get('start_date');
+        $endDate = OrbitInput::get('end_date');
 
         $user = $this->loggedUser;
 
@@ -38,6 +40,23 @@ class UserReportPrinterController extends DataPrinterController
 
         $userReportData = $response['builder'];
         $userReportTotal = $response['totals'];
+
+        // remove unwanted data
+        foreach ($userReportTotal as $key => $value) {
+            unset($userReportTotal['sign_in_type_facebook']);
+            unset($userReportTotal['sign_in_type_google']);
+            unset($userReportTotal['sign_in_type_form']);
+            unset($userReportTotal['sign_in_type_facebook_percentage']);
+            unset($userReportTotal['sign_in_type_google_percentage']);
+            unset($userReportTotal['sign_in_type_form_percentage']);
+
+            unset($userReportTotal['unique_sign_in_type_facebook']);
+            unset($userReportTotal['unique_sign_in_type_google']);
+            unset($userReportTotal['unique_sign_in_type_form']);
+            unset($userReportTotal['unique_sign_in_type_facebook_percentage']);
+            unset($userReportTotal['unique_sign_in_type_google_percentage']);
+            unset($userReportTotal['unique_sign_in_type_form_percentage']);
+        }
 
         // include percentage
         $userReportHeader = [];  
