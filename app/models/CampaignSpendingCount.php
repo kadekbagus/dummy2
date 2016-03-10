@@ -8,7 +8,7 @@ class CampaignSpendingCount extends Eloquent
      * @author Firmansyah <firmansyah@dominopos.com>
      */
 
-    protected $table = 'campaign_spending';
+    protected $table = 'campaign_spendings';
     protected $primaryKey = 'campaign_spending_id';
 
 }
