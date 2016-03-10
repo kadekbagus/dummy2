@@ -54,7 +54,7 @@
         }
 
         table.user-report {
-            width:150%;
+            width:300%;
             table-layout: fixed;
         }
     </style>
@@ -119,7 +119,7 @@
         </tr>
         
             <?php
-                foreach ($userReportHeader as $value) {
+                foreach ($userReportHeaderExcludePercent as $value) {
                     echo '<tr>';
                     echo '<td> Total ' . $value['title'] . '</td>';
                     echo '<td>:</td>';

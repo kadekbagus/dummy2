@@ -39,10 +39,22 @@ class UserReportPrinterController extends DataPrinterController
         $userReportData = $response['builder'];
         $userReportTotal = $response['totals'];
 
-        $userReportHeader = [];
+        // include percentage
+        $userReportHeader = [];  
+        foreach ($userReportTotal as $key => $value) {
+                $userReportHeader[] = array(
+                                'key' => $key,
+                                'title' => $value['title'],
+                                'total' => $value['total']
+                            );
+                      
+        }
+
+        // exclude percentage
+        $userReportHeaderExcludePercent = [];  
         foreach ($userReportTotal as $key => $value) {
             if( !strpos($value['title'], '(%)') ) {
-                $userReportHeader[] = array(
+                $userReportHeaderExcludePercent[] = array(
                                 'key' => $key,
                                 'title' => $value['title'],
                                 'total' => $value['total']
@@ -88,7 +100,7 @@ class UserReportPrinterController extends DataPrinterController
                 printf("%s,%s,%s,%s,%s,%s,%s\n", 'User Report', '', '', '', '', '', '');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
 
-                foreach ($userReportHeader as $value) {
+                foreach ($userReportHeaderExcludePercent as $value) {
                     printf('%s,%s', 'Total '.$value['title'], $value['total']);
                     printf("\n");
                 }
