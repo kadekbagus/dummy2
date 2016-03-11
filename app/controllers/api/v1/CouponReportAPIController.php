@@ -1697,19 +1697,20 @@ class CouponReportAPIController extends ControllerAPI
                                             @endDate := p2.end_date
                                             ) AS campaign_end_date
                                     FROM
-                                        (SELECT 
-                                                DATE_FORMAT(DATE_ADD(st.i_start, INTERVAL sequence_number HOUR), '%Y-%m-%d') AS comp_date
+                                        (
+                                            SELECT 
+                                                DATE_FORMAT(DATE_ADD(st.i_start, INTERVAL sequence_number DAY), '%Y-%m-%d') AS comp_date
                                             FROM
-                                                orb_sequence os,
+                                                (SELECT 0 AS sequence_number UNION ALL SELECT * from orb_sequence) os,
                                                 (SELECT 
-                                                        DATE_SUB(MIN(CONVERT_TZ(och.created_at, '+00:00', {$this->quote($timezone)})), INTERVAL 1 HOUR) AS i_start
+                                                        DATE_FORMAT(MIN(CONVERT_TZ(och.created_at, '+00:00', {$this->quote($timezone)})), '%Y-%m-%d') AS i_start
                                                     FROM
                                                         orb_campaign_histories och
                                                     WHERE
                                                         och.campaign_id = {$this->quote($promoId)}
                                                         AND och.campaign_type = 'coupon') st
                                             WHERE
-                                                os.sequence_number <= ((DATEDIFF(DATE_FORMAT({$this->quote($now)}, '%Y-%m-%d'), DATE_FORMAT(st.i_start, '%Y-%m-%d'))) * 24)
+                                                os.sequence_number <= (DATEDIFF(DATE_FORMAT({$this->quote($now)}, '%Y-%m-%d'), DATE_FORMAT(st.i_start, '%Y-%m-%d')))
                                             GROUP BY comp_date
                                         ) AS p1
                                     LEFT JOIN
