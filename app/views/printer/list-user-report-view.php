@@ -54,7 +54,7 @@
         }
 
         table.user-report {
-            width:300%;
+            width:400%;
             table-layout: fixed;
         }
     </style>
@@ -133,17 +133,8 @@
                 <td>Date Period</td>
                 <td>:</td>
                 <td>
-                    <?php
-                        if ($startDate != '' && $endDate != ''){
-                            $startDateRangeMallTime = $this->printDateTime($startDate, $timezone, 'd M Y');
-                            $endDateRangeMallTime = $this->printDateTime($endDate, $timezone, 'd M Y');
-                            $dateRange = $startDateRangeMallTime . ' - ' . $endDateRangeMallTime;
-                            if ($startDateRangeMallTime === $endDateRangeMallTime) {
-                                $dateRange = $startDateRangeMallTime;
-                            }
-                        }
-                    ?>
-                    <strong><?php echo $dateRange; ?></strong>
+
+                    <strong><?php echo $me->printDatePeriod($startDate, $endDate); ?></strong>
                 </td>
         <?php } ?>
 
