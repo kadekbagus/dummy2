@@ -399,6 +399,16 @@ class NewsAPIController extends ControllerAPI
                 }
             }
 
+            // Save campaign spending with default spending 0
+            $campaignSpending = new CampaignSpendingCount();
+            $campaignSpending->campaign_id = $newnews->news_id;
+            $campaignSpending->campaign_type = $object_type;
+            $campaignSpending->spending = 0;
+            $campaignSpending->mall_id = $mall_id;
+            $campaignSpending->begin_date = $begin_date;
+            $campaignSpending->end_date = $end_date;
+            $campaignSpending->save();
+
             // translation for mallnews
             OrbitInput::post('translations', function($translation_json_string) use ($newnews) {
                 $this->validateAndSaveTranslations($newnews, $translation_json_string, 'create');
@@ -581,6 +591,7 @@ class NewsAPIController extends ControllerAPI
             $campaignStatus = OrbitInput::post('campaign_status');
             $link_object_type = OrbitInput::post('link_object_type');
             $end_date = OrbitInput::post('end_date');
+            $begin_date = OrbitInput::post('begin_date');
             $id_language_default = OrbitInput::post('id_language_default');
             $is_all_gender = OrbitInput::post('is_all_gender');
             $is_all_age = OrbitInput::post('is_all_age');
@@ -653,7 +664,6 @@ class NewsAPIController extends ControllerAPI
             }
 
             $updatednews_default_language = NewsTranslation::excludeDeleted()->where('news_id', $news_id)->where('merchant_id', $mall_id)->where('merchant_language_id', $id_language_default)->first();
-
 
             // save News
             OrbitInput::post('mall_id', function($mall_id) use ($updatednews) {
@@ -1020,7 +1030,7 @@ class NewsAPIController extends ControllerAPI
                         $campaignhistory->modified_by = $this->api->user->user_id;
                         $campaignhistory->save();
                     }
-                } 
+                }
             }
 
             //check for add/remove tenant
@@ -1049,7 +1059,7 @@ class NewsAPIController extends ControllerAPI
                         }
                     }
                 }
-            } 
+            }
             if (! empty($addtenant)) {
                 $actionhistory = 'add';
                 $addtenantid = CampaignHistoryAction::getIdFromAction('add_tenant');
@@ -1074,11 +1084,26 @@ class NewsAPIController extends ControllerAPI
                     }
                 }
             }
-            
+
+            // Update campaign spending
+            $mall = App::make('orbit.empty.mall');
+            $now = Carbon::now($mall->timezone->timezone_name);
+            $timezone = $this->getTimezone($mall->merchant_id);
+            $timezoneOffset = $this->getTimezoneOffset($timezone);
+
+            $sqlSpending = "(SELECT IFNULL(fnc_campaign_cost({$this->quote($news_id)}, {$this->quote($object_type)}, {$this->quote($begin_date)}, {$this->quote($now)}, {$this->quote($timezoneOffset)}), 0.00) AS spending) AS B";
+            $spending = DB::table(DB::raw($sqlSpending))->get();
+
+            $campaignspending = $spending[0]->spending;
+
+            $updatedcamapign = CampaignSpendingCount::where('campaign_id',$news_id)->first();
+            $updatedcamapign->end_date =$end_date;
+            $updatedcamapign->spending = $campaignspending;
+            $updatedcamapign->save();
+
             Event::fire('orbit.news.postupdatenews.after.save', array($this, $updatednews));
             $this->response->data = $updatednews;
             $this->response->data->translation_default = $updatednews_default_language;
-
 
             // Commit the changes
             $this->commit();
@@ -1526,8 +1551,8 @@ class NewsAPIController extends ControllerAPI
 
             // Builder object
             $prefix = DB::getTablePrefix();
-            $news = News::select('news.*', 'campaign_status.order', 'campaign_price.campaign_price_id', 
-                            DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$prefix}news.end_date < {$this->quote($now)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END  AS campaign_status"), 
+            $news = News::select('news.*', 'campaign_status.order', 'campaign_price.campaign_price_id',
+                            DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$prefix}news.end_date < {$this->quote($now)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END  AS campaign_status"),
                             DB::raw("CASE WHEN {$prefix}campaign_price.base_price is null THEN 0 ELSE {$prefix}campaign_price.base_price END AS base_price, ((CASE WHEN {$prefix}campaign_price.base_price is null THEN 0 ELSE {$prefix}campaign_price.base_price END) * (DATEDIFF({$prefix}news.end_date, {$prefix}news.begin_date) + 1) * (COUNT({$prefix}news_merchant.news_merchant_id))) AS estimated"))
                         ->leftJoin('campaign_price', function ($join) use ($object_type) {
                                 $join->on('news.news_id', '=', 'campaign_price.campaign_id')
@@ -1549,13 +1574,13 @@ class NewsAPIController extends ControllerAPI
             });
 
             // Filter news by mall Ids
-            OrbitInput::get('mall_id', function ($mallIds) use ($news) 
+            OrbitInput::get('mall_id', function ($mallIds) use ($news)
             {
                 $news->whereIn('news.mall_id', (array)$mallIds);
             });
 
             // Filter news by mall Ids / dupes, same as above
-            OrbitInput::get('merchant_id', function ($mallIds) use ($news) 
+            OrbitInput::get('merchant_id', function ($mallIds) use ($news)
             {
                 $news->whereIn('news.mall_id', (array)$mallIds);
             });
@@ -1721,7 +1746,7 @@ class NewsAPIController extends ControllerAPI
             });
             $news->orderBy($sortBy, $sortMode);
 
-            //with name 
+            //with name
             if ($sortBy !== 'news_translations.news_name') {
                 $news->orderBy('news_translations.news_name', 'asc');
             }
@@ -2473,6 +2498,22 @@ class NewsAPIController extends ControllerAPI
             }
         }
 
+    }
+
+    protected function getTimezone($current_mall)
+    {
+        $timezone = Mall::leftJoin('timezones','timezones.timezone_id','=','merchants.timezone_id')
+            ->where('merchants.merchant_id','=', $current_mall)
+            ->first();
+
+        return $timezone->timezone_name;
+    }
+
+    protected function getTimezoneOffset($timezone)
+    {
+        $dt = new DateTime('now', new DateTimeZone($timezone));
+
+        return $dt->format('P');
     }
 
     protected function quote($arg)
