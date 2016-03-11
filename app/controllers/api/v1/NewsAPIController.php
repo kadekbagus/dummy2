@@ -1091,7 +1091,7 @@ class NewsAPIController extends ControllerAPI
             $timezone = $this->getTimezone($mall->merchant_id);
             $timezoneOffset = $this->getTimezoneOffset($timezone);
 
-            $sqlSpending = "(SELECT IFNULL(fnc_campaign_cost({$this->quote($news_id)}, 'news', {$this->quote($begin_date)}, {$this->quote($now)}, {$this->quote($timezoneOffset)}), 0.00) AS spending) AS B";
+            $sqlSpending = "(SELECT IFNULL(fnc_campaign_cost({$this->quote($news_id)}, {$this->quote($object_type)}, {$this->quote($begin_date)}, {$this->quote($now)}, {$this->quote($timezoneOffset)}), 0.00) AS spending) AS B";
             $spending = DB::table(DB::raw($sqlSpending))->get();
 
             $campaignspending = $spending[0]->spending;
