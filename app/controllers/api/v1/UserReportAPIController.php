@@ -602,13 +602,6 @@ class UserReportAPIController extends ControllerAPI
         });
     }
 
-    protected function getTimezoneOffset($timezone)
-    {
-        $dt = new DateTime('now', new DateTimeZone($timezone));
-
-        return $dt->format('P');
-    }
-
     protected function quote($arg)
     {
         return DB::connection()->getPdo()->quote($arg);
