@@ -31,29 +31,12 @@ class UserReportAPIController extends ControllerAPI
     protected $returnBuilder = FALSE;
 
     /**
-     * There should be a Carbon method for this.
-     *
-     * @param string $timezone The timezone name, e.g. 'Asia/Jakarta'.
-     * @return string The hours diff, e.g. '+07:00'.
-     * @author Qosdil A. <qosdil@gmail.com>
-     */
-    private function getTimezoneHoursDiff($timezone)
-    {
-        $mallDateTime = Carbon::createFromFormat('Y-m-d H:i:s', '2016-01-01 00:00:00', $timezone);
-        $utcDateTime = Carbon::createFromFormat('Y-m-d H:i:s', '2016-01-01 00:00:00');
-        $diff = $mallDateTime->diff($utcDateTime);
-        $sign = ($diff->invert) ? '-' : '+';
-        $hour = ($diff->h < 10) ? '0'.$diff->h : $diff->h;
-        return $sign.$hour.':00';
-    }
-
-    /**
      * @todo Remove this since no longer used by the main method.
      */
     private function getTotals($mallId, $mallTimezone, $startDate, $endDate)
     {
         $tablePrefix = DB::getTablePrefix();
-        $timezoneOffset = $this->quote($this->getTimezoneHoursDiff($mallTimezone));
+        $timezoneOffset = $this->quote(OrbitCarbon::getTimezoneHoursDiff($mallTimezone));
 
         $mallStartDate = Carbon::createFromFormat('Y-m-d H:i:s', $startDate)->timezone($mallTimezone);
         $mallEndDate = Carbon::createFromFormat('Y-m-d H:i:s', $endDate)->timezone($mallTimezone);
@@ -335,7 +318,7 @@ class UserReportAPIController extends ControllerAPI
     {
         $tablePrefix = DB::getTablePrefix();
 
-        $timezoneOffset = $this->quote($this->getTimezoneHoursDiff($mallTimezone));
+        $timezoneOffset = $this->quote(OrbitCarbon::getTimezoneHoursDiff($mallTimezone));
 
         $mallStartDate = Carbon::createFromFormat('Y-m-d H:i:s', $startDate)->timezone($mallTimezone);
         $mallEndDate = Carbon::createFromFormat('Y-m-d H:i:s', $endDate)->timezone($mallTimezone);
