@@ -34,7 +34,7 @@ class UserReportAPIController extends ControllerAPI
     {
         $tablePrefix = DB::getTablePrefix();
 
-        $timezoneOffset = $this->quote(OrbitCarbon::getTimezoneHoursDiff($mallTimezone));
+        $timezoneOffset = $this->quote(OrbitDateTime::getTimezoneOffset($mallTimezone));
 
         $mallStartDate = Carbon::createFromFormat('Y-m-d H:i:s', $startDate)->timezone($mallTimezone);
         $mallEndDate = Carbon::createFromFormat('Y-m-d H:i:s', $endDate)->timezone($mallTimezone);

@@ -2058,7 +2058,7 @@ class CampaignReportAPIController extends ControllerAPI
         // End date in mall's timezone
         $requestEndDate = Carbon::createFromFormat('Y-m-d H:i:s', $requestEndDateTime)->setTimezone($mallTimezone)->toDateString();
 
-        $hoursDiff = OrbitCarbon::getTimezoneHoursDiff($mallTimezone);
+        $hoursDiff = OrbitDateTime::getTimezoneOffset($mallTimezone);
 
         $procCallStatement = 'CALL prc_campaign_detailed_cost(?, ?, ?, ?, ?)';
 
