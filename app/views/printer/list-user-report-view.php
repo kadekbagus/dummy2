@@ -54,7 +54,7 @@
         }
 
         table.user-report {
-            width:150%;
+            width:400%;
             table-layout: fixed;
         }
     </style>
@@ -119,7 +119,7 @@
         </tr>
         
             <?php
-                foreach ($userReportHeader as $value) {
+                foreach ($userReportHeaderExcludePercent as $value) {
                     echo '<tr>';
                     echo '<td> Total ' . $value['title'] . '</td>';
                     echo '<td>:</td>';
@@ -127,6 +127,16 @@
                     echo '</tr>';
                 }   
             ?>
+
+                    <!-- Filtering -->
+        <?php if ($startDate != '' && $endDate != ''){ ?>
+                <td>Date Period</td>
+                <td>:</td>
+                <td>
+
+                    <strong><?php echo $me->printDatePeriod($startDate, $endDate); ?></strong>
+                </td>
+        <?php } ?>
 
         </tr>
     </table>
