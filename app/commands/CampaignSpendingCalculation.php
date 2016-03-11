@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * This artisan command for calculate total campaign spending (news, promotion, coupon) for all mall
+ * This command will be implement with cronjob / scheduler every hour
+ *
+ *
+ * @author Firmansyah <firmansyah@myorbit.com>
+ */
+
 use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
@@ -40,7 +48,7 @@ class CampaignSpendingCalculation extends Command {
         $prefix = DB::getTablePrefix();
 
         // Get mall which have timezone
-        $getMall = Mall::select('merchant_id','name','timezone_name',DB::raw(" DATE_FORMAT(CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', timezone_name), '%H:%i') AS tz "))
+        $getMall = Mall::select('merchant_id','name','timezone_name',DB::raw(" DATE_FORMAT(CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', timezone_name), '%H') AS tz "))
                 ->leftJoin('timezones', 'timezones.timezone_id', '=', 'merchants.timezone_id')
                 ->where('object_type','mall')
                 ->where('status', '!=', 'deleted')
@@ -55,8 +63,9 @@ class CampaignSpendingCalculation extends Command {
             $now = $dt->format('Y-m-d');
             $timezoneOffset = $dt->format('P');
 
-            // if ($val->tz === '00:00') {
-                // Get all campaign news from mall
+            // Check mall time is 00 hours
+            if ($val->tz === '00') {
+
             	$news = DB::statement("
             							UPDATE {$prefix}campaign_spendings as old
 										SET spending = (SELECT IFNULL(fnc_campaign_cost(old.campaign_id, 'news', old.begin_date, {$this->quote($now)}, {$this->quote($timezoneOffset)}), 0.00))
@@ -88,7 +97,7 @@ class CampaignSpendingCalculation extends Command {
             	if ($coupon) {
             		$this->info("Success, coupon campaign spending in mall_id " . $val->merchant_id . " updated !");
             	}
-            // }
+            }
 
         }
 	}
@@ -113,7 +122,6 @@ class CampaignSpendingCalculation extends Command {
 	protected function getOptions()
 	{
 		return array(
-            // array('migrate', null,  InputOption::VALUE_REQUIRED, 'Y for first setup / N for cronjob'),
 			// array('example', null, InputOption::VALUE_OPTIONAL, 'An example option.', null),
 		);
 	}

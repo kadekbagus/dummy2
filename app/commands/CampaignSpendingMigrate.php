@@ -1,5 +1,11 @@
 <?php
 
+/**
+ * This artisan command for migrate old campaign spending calculation and saved the calculation to campaign_spending table
+ *
+ * @author Firmansyah <firmansyah@myorbit.com>
+ */
+
 use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
@@ -37,6 +43,8 @@ class CampaignSpendingMigrate extends Command {
 	 */
 	public function fire()
 	{
+		// Migrate old campaign
+		// Truncate first before inserted data
         $deletedTable = CampaignSpendingCount::truncate();
 
         if ($deletedTable) {
@@ -44,6 +52,7 @@ class CampaignSpendingMigrate extends Command {
             $this->info("Success, truncated table campaign_spending !");
 
         	// Get all news data
+        	// @todo check uuid duplicate
         	$idKey = 0;
         	$newsAndPromotions = News::excludeDeleted()->get();
         	if (count($newsAndPromotions) > 0) {
@@ -80,8 +89,62 @@ class CampaignSpendingMigrate extends Command {
 					$idKeyCoupon++;
         		}
         	}
-            $this->info("Success, coupon data inserted !");
+            $this->info("Success, coupons data inserted !");
         }
+
+        // Calculate
+        $prefix = DB::getTablePrefix();
+
+        // Get mall which have timezone
+        $getMall = Mall::select('merchant_id','name','timezone_name',DB::raw(" DATE_FORMAT(CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', timezone_name), '%H') AS tz "))
+                ->leftJoin('timezones', 'timezones.timezone_id', '=', 'merchants.timezone_id')
+                ->where('object_type','mall')
+                ->where('status', '!=', 'deleted')
+                ->where('merchants.timezone_id','!=', '')
+                ->get();
+
+        // Get all mall
+        foreach ($getMall as $key => $val) {
+
+            // get offset timezone
+            $dt = new DateTime('now', new DateTimeZone($val->timezone_name));
+            $now = $dt->format('Y-m-d');
+            $timezoneOffset = $dt->format('P');
+
+        	$news = DB::statement("
+        							UPDATE {$prefix}campaign_spendings as old
+									SET spending = (SELECT IFNULL(fnc_campaign_cost(old.campaign_id, 'news', old.begin_date, {$this->quote($now)}, {$this->quote($timezoneOffset)}), 0.00))
+									WHERE old.mall_id = {$this->quote($val->merchant_id)}
+									AND campaign_type = 'news'
+								");
+        	if ($news) {
+        		$this->info("Success, news campaign spending in mall_id " . $val->merchant_id . " updated !");
+        	}
+
+        	$promotion = DB::statement("
+        							UPDATE {$prefix}campaign_spendings as old
+									SET spending = (SELECT IFNULL(fnc_campaign_cost(old.campaign_id, 'promotion', old.begin_date, {$this->quote($now)}, {$this->quote($timezoneOffset)}), 0.00))
+									WHERE old.mall_id = {$this->quote($val->merchant_id)}
+									AND campaign_type = 'promotion'
+								");
+
+        	if ($promotion) {
+        		$this->info("Success, promotion campaign spending in mall_id " . $val->merchant_id . " updated !");
+        	}
+
+        	$coupon = DB::statement("
+        							UPDATE {$prefix}campaign_spendings as old
+									SET spending = (SELECT IFNULL(fnc_campaign_cost(old.campaign_id, 'coupon', old.begin_date, {$this->quote($now)}, {$this->quote($timezoneOffset)}), 0.00))
+									WHERE old.mall_id = {$this->quote($val->merchant_id)}
+									AND campaign_type = 'coupon'
+								");
+
+        	if ($coupon) {
+        		$this->info("Success, coupon campaign spending in mall_id " . $val->merchant_id . " updated !");
+        	}
+
+        }
+
 	}
 
 	/**
@@ -92,7 +155,6 @@ class CampaignSpendingMigrate extends Command {
 	protected function getArguments()
 	{
 		return array(
-			// array('example', InputArgument::REQUIRED, 'An example argument.'),
 		);
 	}
 
@@ -104,8 +166,12 @@ class CampaignSpendingMigrate extends Command {
 	protected function getOptions()
 	{
 		return array(
-			// array('example', null, InputOption::VALUE_OPTIONAL, 'An example option.', null),
 		);
 	}
+
+    protected function quote($arg)
+    {
+        return DB::connection()->getPdo()->quote($arg);
+    }
 
 }
