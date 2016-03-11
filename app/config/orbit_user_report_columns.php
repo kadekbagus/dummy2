@@ -3,7 +3,7 @@ return [
     'sign_up' => [
         'title' => 'Sign Up',
         'sort_key' => 'sign_up',
-        'tooltip' => 'The recorded total number of sign up type from mobile CI',
+        'tooltip' => 'The recorded total number of sign up from mobile CI',
     ],
     'sign_up_by_gender' => [
         'title' => 'Sign Up by Gender',
@@ -465,11 +465,12 @@ return [
     'returning' => [
         'title' => 'Returning',
         'sort_key' => 'returning',
-        'tooltip' => 'The recorded total number of calculated from unique sign in-sign up of mobile CI',
+        'tooltip' => 'The difference between number of unique sign in and sign up from mobile CI',
     ],
     'returning_percentage' => [
         'title' => 'Returning (%)',
         'sort_key' => 'returning_percentage',
+        'tooltip' => 'The difference between number of unique sign in and sign up from mobile CI displayed in percentage of unique sign in',
     ],
 
     // Status
