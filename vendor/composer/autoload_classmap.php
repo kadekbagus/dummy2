@@ -174,6 +174,7 @@ return array(
     'CreateTableSequence' => $baseDir . '/app/database/migrations/2016_01_25_094200_create_table_sequence.php',
     'CreateTableSocialMedia' => $baseDir . '/app/database/migrations/2016_02_26_020103_create_table_social_media.php',
     'CreateTableTimezones' => $baseDir . '/app/database/migrations/2015_10_18_085530_create_table_timezones.php',
+    'CreateTableUserCampaign' => $baseDir . '/app/database/migrations/2016_03_16_084422_create_table_user_campaign.php',
     'CreateTableUserMerchant' => $baseDir . '/app/database/migrations/2016_03_16_083656_create_table_user_merchant.php',
     'CreateTableUserSignin' => $baseDir . '/app/database/migrations/2015_12_21_044542_create_table_user_signin.php',
     'CreateTableViewedItemUser' => $baseDir . '/app/database/migrations/2016_03_07_061300_create_table_viewed_item_user.php',
