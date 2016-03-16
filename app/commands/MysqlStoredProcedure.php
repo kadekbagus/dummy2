@@ -135,8 +135,8 @@ class MysqlStoredProcedure extends Command {
 											@preAction := p2.action_name
 										) AS campaign_status,
 										IF( p4.number_tenant IS NULL,
-											@nbTenant := @nbTenant,
-											@nbTenant := p4.number_tenant
+											@nbTenants := @nbTenants,
+											@nbTenants := p4.number_tenant
 										) AS campaign_number_tenant,            
 										IF( p2.begin_date IS NULL,
 											@beginDate := @beginDate,
@@ -150,7 +150,7 @@ class MysqlStoredProcedure extends Command {
 										(SELECT 
 											@preCampaign := NULL, 
 											@preAction := NULL,
-											@nbTenant :=  0,
+											@nbTenants :=  0,
 											@beginDate := NULL,
 											@endDate := NULL
 										) AS p3,
@@ -277,8 +277,8 @@ class MysqlStoredProcedure extends Command {
 											@preAction := p2.action_name
 										) AS campaign_status,
 										IF( p4.number_tenant IS NULL,
-											@nbTenant := @nbTenant,
-											@nbTenant := p4.number_tenant
+											@nbTenants := @nbTenants,
+											@nbTenants := p4.number_tenant
 										) AS campaign_number_tenant,            
 										IF( p2.begin_date IS NULL,
 											@beginDate := @beginDate,
@@ -292,7 +292,7 @@ class MysqlStoredProcedure extends Command {
 										(SELECT 
 											@preCampaign := NULL, 
 											@preAction := NULL,
-											@nbTenant :=  0,
+											@nbTenants :=  0,
 											@beginDate := NULL,
 											@endDate := NULL
 										) AS p3,

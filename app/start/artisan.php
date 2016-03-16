@@ -44,6 +44,12 @@ Artisan::add(new MerchantLogoCommand);
 // Set campaign status to expired when past the date and time
 Artisan::add(new CampaignSetToExpired);
 
+// Campaign spending counting
+Artisan::add(new CampaignSpendingCalculation);
+
+// Campaign spending migrate
+Artisan::add(new CampaignSpendingMigrate);
+
 // Insert or update data on settings table
 // @Todo investigate why its error
 // Artisan::add(new MerchantSetting);

@@ -22,13 +22,17 @@ class UserReportPrinterController extends DataPrinterController
 
         $mode = OrbitInput::get('export', 'print');
         $current_mall = OrbitInput::get('current_mall');
+        $startDate = OrbitInput::get('start_date');
+        $endDate = OrbitInput::get('end_date');
 
         $user = $this->loggedUser;
 
-        // Instantiate the CouponReportAPIController to get the query builder of Coupons
+        // Instantiate the UserReportAPIController to get the data
         $response = UserReportAPIController::create('raw')
                                             ->setReturnBuilder(TRUE)
                                             ->getUserReport();
+
+        $timezone = $this->getTimezoneMall($current_mall);
 
         if (! is_array($response)) {
             return Response::make($response->message);
@@ -37,10 +41,39 @@ class UserReportPrinterController extends DataPrinterController
         $userReportData = $response['builder'];
         $userReportTotal = $response['totals'];
 
-        $userReportHeader = [];
+        // remove unwanted data
+        foreach ($userReportTotal as $key => $value) {
+            unset($userReportTotal['sign_in_type_facebook']);
+            unset($userReportTotal['sign_in_type_google']);
+            unset($userReportTotal['sign_in_type_form']);
+            unset($userReportTotal['sign_in_type_facebook_percentage']);
+            unset($userReportTotal['sign_in_type_google_percentage']);
+            unset($userReportTotal['sign_in_type_form_percentage']);
+
+            unset($userReportTotal['unique_sign_in_type_facebook']);
+            unset($userReportTotal['unique_sign_in_type_google']);
+            unset($userReportTotal['unique_sign_in_type_form']);
+            unset($userReportTotal['unique_sign_in_type_facebook_percentage']);
+            unset($userReportTotal['unique_sign_in_type_google_percentage']);
+            unset($userReportTotal['unique_sign_in_type_form_percentage']);
+        }
+
+        // include percentage
+        $userReportHeader = [];  
+        foreach ($userReportTotal as $key => $value) {
+                $userReportHeader[] = array(
+                                'key' => $key,
+                                'title' => $value['title'],
+                                'total' => $value['total']
+                            );
+                      
+        }
+
+        // exclude percentage
+        $userReportHeaderExcludePercent = [];  
         foreach ($userReportTotal as $key => $value) {
             if( !strpos($value['title'], '(%)') ) {
-                $userReportHeader[] = array(
+                $userReportHeaderExcludePercent[] = array(
                                 'key' => $key,
                                 'title' => $value['title'],
                                 'total' => $value['total']
@@ -86,10 +119,14 @@ class UserReportPrinterController extends DataPrinterController
                 printf("%s,%s,%s,%s,%s,%s,%s\n", 'User Report', '', '', '', '', '', '');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
 
-                foreach ($userReportHeader as $value) {
+                $datePeriod = $this->printDatePeriod($startDate, $endDate);
+
+                foreach ($userReportHeaderExcludePercent as $value) {
                     printf('%s,%s', 'Total '.$value['title'], $value['total']);
                     printf("\n");
                 }
+
+                printf('%s,%s', 'Date Period', $datePeriod);
 
                 printf("\n");
                 printf("\n");
@@ -199,15 +236,16 @@ class UserReportPrinterController extends DataPrinterController
      * @return string
      */
 
-    public function getTimezoneMall($current_mall){
+    public function getTimezoneMall($current_mall) 
+    {
         // get timezone based on current_mall
-        if (!empty($current_mall)) {
+        if (! empty($current_mall) ) {
             $timezone = Mall::leftJoin('timezones','timezones.timezone_id','=','merchants.timezone_id')
                           ->where('merchants.merchant_id','=', $current_mall)
                           ->first();
 
             // if timezone not found
-            if (count($timezone)==0) {
+            if ( count($timezone) == 0 ) {
                 $timezone = null;
             } else {
                 $timezone = $timezone->timezone_name; // if timezone found
@@ -217,6 +255,23 @@ class UserReportPrinterController extends DataPrinterController
         }
 
         return $timezone;
+    }
+
+
+    public function printDatePeriod($startDate = null, $endDate = null, $format='d M Y') 
+    {
+        $datePeriod = null;
+        if (! empty($startDate) ) {
+            $time = strtotime($startDate);
+            $datePeriod = date($format, $time);
+        }
+
+        if(! empty($endDate) ) {
+            $time = strtotime($endDate);
+            $datePeriod = $datePeriod. ' - ' . date($format, $time);
+        }
+
+        return $datePeriod;
     }
 
 }
