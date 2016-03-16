@@ -9,13 +9,13 @@
             <div class="modal-body">
                 <div class="row ">
                     <div class="col-xs-12">
-                        <h4 style="color:#d9534f">|#|hello|#| {{ $fullName }},</h4>
+                        <h4 style="color:#d9534f">|#|hello|#| {{{ $fullName }}},</h4>
                         <p>|#|congratulations_you_get|#| {{ $numberOfCoupon }} @if ($numberOfCoupon > 1) |#|here_are_your_coupons|#| @else |#|here_is_your_coupon|#| @endif:
                         </p>
                         <div class="row">
                             <ol style="padding-left:16px">
                             @foreach ($coupons as $couponName=>$couponNumbers)
-                                <li><strong>{{ $couponName }}</strong></li>
+                                <li><strong>{{{ $couponName }}}</strong></li>
                             @endforeach
                             </ol>
                         </div>
@@ -24,7 +24,7 @@
                         </p>
                         <p>
                             |#|happy_shopping|#|</br></br>
-                            <strong>{{ $mallName }}</strong>
+                            <strong>{{{ $mallName }}}</strong>
                         </p>
                     </div>
                 </div>

@@ -9,9 +9,9 @@
             <div class="modal-body">
                 <div class="row ">
                     <div class="col-xs-12 vertically-spaced">
-                        <h4 style="color:#d9534f">|#|hello|#| {{ $fullName }},</h4>
-                        <p>|#|ld_congratulations_you_get|#| {{ $numberOfLuckyDraw }} |#|no_lucky_draw|#| <strong>{{ $luckyDrawCampaign }}</strong>.
-                        |#|lucky_draw_info_1|#| {{ $dateIssued }}.
+                        <h4 style="color:#d9534f">|#|hello|#| {{{ $fullName }}},</h4>
+                        <p>|#|ld_congratulations_you_get|#| {{ $numberOfLuckyDraw }} |#|no_lucky_draw|#| <strong>{{{ $luckyDrawCampaign }}}</strong>.
+                        |#|lucky_draw_info_1|#| {{{ $dateIssued }}}.
                         </p>
 
                         <ol>
@@ -33,7 +33,7 @@
 
                         <p style="margin-top:1em">
                             |#|goodluck|#|!</br>
-                            <strong>{{ $mallName }}</strong>
+                            <strong>{{{ $mallName }}}</strong>
                         </p>
                     </div>
                 </div>
