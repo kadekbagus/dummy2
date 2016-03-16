@@ -12,7 +12,7 @@
                             <a class="list-item-link" href="{{ url('customer/mallpromotion?id='.$promo->news_id) }}">
                                 <div class="list-item-info">
                                     <header class="list-item-title">
-                                        <div><strong>{{ $promo->news_name }}</strong></div>
+                                        <div><strong>{{{ $promo->news_name }}}</strong></div>
                                     </header>
                                     <header class="list-item-subtitle">
                                         <div>

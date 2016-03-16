@@ -12,8 +12,8 @@
                 <div class="list-vignette"></div>
                 <div class="profile-img-title">
                     <div class="col-xs-12 pad-left text-left">
-                        <h4><strong>{{$user_full_name}}</strong></h4>
-                        <p>{{$user->user_email}}</p>
+                        <h4><strong>{{{$user_full_name}}}</strong></h4>
+                        <p>{{{$user->user_email}}}</p>
                     </div>
                 </div>
             </div>

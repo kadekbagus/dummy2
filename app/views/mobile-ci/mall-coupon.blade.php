@@ -50,10 +50,10 @@
     <div class="col-xs-12">
         <div class="row">
             <div class="col-xs-12">
-                <p>{{ nl2br($coupon->description) }}</p>
+                <p>{{{ nl2br($coupon->description) }}}</p>
             </div>
             <div class="col-xs-12">
-                <p>{{ nl2br($coupon->long_description) }}</p>
+                <p>{{{ nl2br($coupon->long_description) }}}</p>
             </div>
             <div class="col-xs-12">
                 <h4><strong>{{{ Lang::get('mobileci.coupon_detail.validity_label') }}}</strong></h4>
@@ -61,7 +61,7 @@
             </div>
             @if(! empty($coupon->facebook_share_url))
             <div class="col-xs-12">
-                <div class="fb-share-button" data-href="{{$coupon->facebook_share_url}}" data-layout="button_count"></div>
+                <div class="fb-share-button" data-href="{{{$coupon->facebook_share_url}}}" data-layout="button_count"></div>
             </div>
             @endif
         </div>
