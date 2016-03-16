@@ -53,7 +53,7 @@
                         <a class="list-item-link" href="{{ url('customer/mallpromotion?id='.$promotab->news_id) }}">
                             <div class="list-item-info">
                                 <header class="list-item-title">
-                                    <div><strong>{{ $promotab->news_name }}</strong></div>
+                                    <div><strong>{{{ $promotab->news_name }}}</strong></div>
                                 </header>
                                 <header class="list-item-subtitle">
                                     <div>
@@ -115,7 +115,7 @@
                         <a class="list-item-link" href="{{ url('customer/mallnewsdetail?id='.$newstab->news_id) }}">
                             <div class="list-item-info">
                                 <header class="list-item-title">
-                                    <div><strong>{{ $newstab->news_name }}</strong></div>
+                                    <div><strong>{{{ $newstab->news_name }}}</strong></div>
                                 </header>
                                 <header class="list-item-subtitle">
                                     <div>
@@ -177,7 +177,7 @@
                         <a class="list-item-link" href="{{ url('customer/mallcouponcampaign?id='.$coupontab->promotion_id) }}">
                             <div class="list-item-info">
                                 <header class="list-item-title">
-                                    <div><strong>{{ $coupontab->promotion_name }}</strong></div>
+                                    <div><strong>{{{ $coupontab->promotion_name }}}</strong></div>
                                 </header>
                                 <header class="list-item-subtitle">
                                     <div>
@@ -264,7 +264,7 @@
 </div>
 <div class="row padded">
     <div class="col-xs-12 font-1-3">
-        <p>{{ nl2br($tenant->description) }}</p>
+        <p>{{{ nl2br($tenant->description) }}}</p>
         <ul class="where-list">
             <li><i class="fa fa-map-marker fa-lg" style="padding-left: 11px;"></i>  {{{ !empty($tenant->floor) ? $tenant->floor : '' }}}{{{ !empty($tenant->unit) ? ' - ' . $tenant->unit : '' }}}</li>
             <li><i class="fa fa-globe fa-lg"></i>  {{{ (($tenant->url) != '') ? 'http://'.$tenant->url : '-' }}}</li>
@@ -277,7 +277,7 @@
         <div class="fb-like" data-href="{{{$tenant->facebook_like_url}}}" data-layout="button_count" data-action="like" data-show-faces="false" data-share="false" style="margin-right:25px;"></div>
         @endif
         @if(! empty($tenant->facebook_share_url))
-        <div class="fb-share-button" data-href="{{$tenant->facebook_share_url}}" data-layout="button_count"></div>
+        <div class="fb-share-button" data-href="{{{$tenant->facebook_share_url}}}" data-layout="button_count"></div>
         @endif
     </div>
 </div>

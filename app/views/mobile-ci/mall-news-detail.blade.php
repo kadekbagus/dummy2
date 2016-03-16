@@ -32,7 +32,7 @@
 </div>
 <div class="row product-info padded">
     <div class="col-xs-12">
-        <p>{{ nl2br($news->description) }}</p>
+        <p>{{{ nl2br($news->description) }}}</p>
     </div>
     <div class="col-xs-12">
         <h4><strong>{{{ Lang::get('mobileci.promotion.validity') }}}</strong></h4>
@@ -40,7 +40,7 @@
     </div>
     @if(! empty($news->facebook_share_url))
     <div class="col-xs-12">
-        <div class="fb-share-button" data-href="{{$news->facebook_share_url}}" data-layout="button_count"></div>
+        <div class="fb-share-button" data-href="{{{$news->facebook_share_url}}}" data-layout="button_count"></div>
     </div>
     @endif
 </div>

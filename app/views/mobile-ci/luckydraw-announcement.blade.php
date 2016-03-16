@@ -32,7 +32,7 @@
         <div class="col-xs-12 text-center">
             <h4>
                 @if(isset($luckydraw->announcements[0]))
-                {{ $luckydraw->announcements[0]->title }}
+                {{{ $luckydraw->announcements[0]->title }}}
                 @endif
             </h4>
         </div>
@@ -42,7 +42,7 @@
         <div class="col-xs-12 text-left">
             @if(isset($luckydraw->announcements[0]))
                 <p>
-                    {{ $luckydraw->announcements[0]->description }}
+                    {{{ $luckydraw->announcements[0]->description }}}
                 </p>
             @endif
         </div>
@@ -57,7 +57,7 @@
             <table class="table">
                 @foreach($luckydraw->prizes as $prize)
                 <tr>
-                    <th>{{ $prize->winner_number . ' ' . $prize->prize_name}}</th>
+                    <th>{{{ $prize->winner_number . ' ' . $prize->prize_name }}}</th>
                 </tr>
                 @endforeach
             </table>
@@ -81,19 +81,19 @@
             <table class="table">
                 @foreach($luckydraw->prizes as $prize)
                 <tr>
-                    <th colspan="2">{{ $prize->prize_name }}</th>
+                    <th colspan="2">{{{ $prize->prize_name }}}</th>
                 </tr>
                 @if(! empty($prize->winners))
                     @foreach($prize->winners as $winner)
                         @if (isset($winner->number->user))
                             @if ($winner->number->user->user_id === $user->user_id)
                                 <tr>
-                                    <td><span style="color:#337AB7">{{ $winner->number->user->getFullName() }}</span></td>
+                                    <td><span style="color:#337AB7">{{{ $winner->number->user->getFullName() }}}</span></td>
                                     <td><span style="color:#337AB7">{{ $winner->lucky_draw_winner_code }}</span></td>
                                 </tr>
                             @else
                                 <tr>
-                                    <td>{{ $winner->number->user->getFullName() }}</td>
+                                    <td>{{{ $winner->number->user->getFullName() }}}</td>
                                     <td>{{ $winner->lucky_draw_winner_code }}</td>
                                 </tr>
                             @endif
@@ -143,11 +143,11 @@
             <div class="modal-body">
                 <div class="row">
                     <div class="col-xs-12">
-                        <b>{{ $luckydraw->lucky_draw_name }}</b>
+                        <b>{{{ $luckydraw->lucky_draw_name }}}</b>
                         <br>
                         <img src="{{ asset($luckydraw->image) }}" class="img-responsive">
-                        <p>{{ nl2br($luckydraw->description) }}</p>
-                        <p>{{ Lang::get('mobileci.coupon_detail.validity_label') }} : {{ date('d M Y H:m', strtotime($luckydraw->end_date)) }}</p>
+                        <p>{{{ nl2br($luckydraw->description) }}}</p>
+                        <p>{{ Lang::get('mobileci.coupon_detail.validity_label') }} : {{{ date('d M Y H:m', strtotime($luckydraw->end_date)) }}}</p>
                     </div>
                 </div>
             </div>

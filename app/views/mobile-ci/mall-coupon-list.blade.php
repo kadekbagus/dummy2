@@ -15,7 +15,7 @@
                                 </div>
                                 <div class="list-item-info">
                                     <header class="list-item-title">
-                                        <div><strong>{{ $coupon->promotion_name }}</strong></div>
+                                        <div><strong>{{{ $coupon->promotion_name }}}</strong></div>
                                     </header>
                                     <header class="list-item-subtitle">
                                         <div>

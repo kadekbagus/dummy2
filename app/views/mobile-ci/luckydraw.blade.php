@@ -33,24 +33,24 @@
 <div class="row product-info padded">
     <div class="col-xs-12 text-left">
         <p>
-            {{ nl2br($luckydraw->description) }}
+            {{{ nl2br($luckydraw->description) }}}
         </p>
     </div>
     <div class="col-xs-12 text-left">
         <h4><strong>{{ Lang::get('mobileci.lucky_draw.period') }}</strong></h4>
         <p>
-            {{ date('d M Y', strtotime($luckydraw->start_date)) }} - {{ date('d M Y', strtotime($luckydraw->end_date)) }}
+            {{{ date('d M Y', strtotime($luckydraw->start_date)) }}} - {{{ date('d M Y', strtotime($luckydraw->end_date)) }}}
         </p>
     </div>
     <div class="col-xs-12 text-left">
         <h4><strong>{{ Lang::get('mobileci.lucky_draw.draw_date') }}</strong></h4>
         <p>
-            {{ date('d M Y', strtotime($luckydraw->draw_date)) }}
+            {{{ date('d M Y', strtotime($luckydraw->draw_date)) }}}
         </p>
     </div>
     @if(! empty($luckydraw->facebook_share_url))
     <div class="col-xs-12">
-        <div class="fb-share-button" data-href="{{$luckydraw->facebook_share_url}}" data-layout="button_count"></div>
+        <div class="fb-share-button" data-href="{{{$luckydraw->facebook_share_url}}}" data-layout="button_count"></div>
     </div>
     @endif
 </div>
@@ -227,7 +227,7 @@
             $('#clock').countdown({
                 start:$.countdown.UTCDate({{ \Carbon\Carbon::now($retailer->timezone->timezone_name)->offsetHours }}, new Date('{{$servertime}}')),
                 @if(!empty($luckydraw))
-                until:$.countdown.UTCDate({{ \Carbon\Carbon::now($retailer->timezone->timezone_name)->offsetHours }}, new Date('{{ date('Y/m/d H:i:s', strtotime($luckydraw->end_date)) }}')),
+                until:$.countdown.UTCDate({{ \Carbon\Carbon::now($retailer->timezone->timezone_name)->offsetHours }}, new Date('{{{ date('Y/m/d H:i:s', strtotime($luckydraw->end_date)) }}}')),
                 layout: '<span class="countdown-row countdown-show4"><span class="countdown-section"><span class="countdown-amount">{dn}</span><span class="countdown-period">{dl}</span></span><span class="countdown-section"><span class="countdown-amount">{hn}</span><span class="countdown-period">{hl}</span></span><span class="countdown-section"><span class="countdown-amount">{mn}</span><span class="countdown-period">{ml}</span></span><span class="countdown-section"><span class="countdown-amount">{sn}</span><span class="countdown-period">{sl}</span></span></span>'
                 @else
                 layout: '<span class="countdown-row countdown-show4"><span class="countdown-section"><span class="countdown-amount">0</span><span class="countdown-period">{dl}</span></span><span class="countdown-section"><span class="countdown-amount">0</span><span class="countdown-period">{hl}</span></span><span class="countdown-section"><span class="countdown-amount">0</span><span class="countdown-period">{ml}</span></span><span class="countdown-section"><span class="countdown-amount">0</span><span class="countdown-period">{sl}</span></span></span>'
