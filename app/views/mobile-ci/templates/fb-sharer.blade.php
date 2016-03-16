@@ -1,11 +1,11 @@
 <!doctype html>
 <html>
     <head>
-    	<title>{{$data->mall->name}} - {{$data->title}}</title>
-    	<meta property="og:url"           content="{{$data->url}}" />
+    	<title>{{{$data->mall->name}}} - {{{$data->title}}}</title>
+    	<meta property="og:url"           content="{{{$data->url}}}" />
 		<meta property="og:type"          content="website" />
-		<meta property="og:title"         content="{{$data->title}}" />
-		<meta property="og:description"   content="{{$data->description}}" />
+		<meta property="og:title"         content="{{{$data->title}}}" />
+		<meta property="og:description"   content="{{{$data->description}}}" />
 		@if(! empty($data->image_url))
 		<meta property="og:image"         content="{{asset($data->image_url)}}" />
 		@endif
