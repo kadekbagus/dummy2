@@ -62,7 +62,7 @@ class CampaignReportPrinterController extends DataPrinterController
         $mallName = OrbitInput::get('mall_name');
         $startDate = OrbitInput::get('start_date');
         $endDate = OrbitInput::get('end_date');
-        $status = OrbitInput::get('status');
+        $status = OrbitInput::get('campaign_status');
 
         $pageTitle = 'Campaign Summary Report';
 
@@ -145,7 +145,7 @@ class CampaignReportPrinterController extends DataPrinterController
                             number_format($row->daily, 0),
                             number_format($row->estimated_total, 0),
                             number_format($row->spending, 0),
-                            $row->status
+                            $row->campaign_status
                     );
                     $count++;
                 }

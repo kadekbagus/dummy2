@@ -940,7 +940,6 @@ class LuckyDrawAPIController extends ControllerAPI
 
             $sort_by = OrbitInput::get('sortby');
             $details_view = OrbitInput::get('details');
-            $current_mall = OrbitInput::get('current_mall');
 
             $validator = Validator::make(
                 array(
@@ -982,20 +981,23 @@ class LuckyDrawAPIController extends ControllerAPI
                 }
             }
 
-            $timezone = Mall::leftJoin('timezones','timezones.timezone_id','=','merchants.timezone_id')
-                ->where('merchants.merchant_id','=', $current_mall)
-                ->first();
-
-            $now = Carbon::now($timezone->timezone_name);
-
             // Builder object
             $prefix = DB::getTablePrefix();
             $luckydraws = LuckyDraw::excludeDeleted('lucky_draws')
                                     ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'lucky_draws.campaign_status_id')
-                                    ->select('lucky_draws.*', 'campaign_status.order', DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$prefix}lucky_draws.end_date < {$this->quote($now)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END AS campaign_status"));
-
+                                    ->select('lucky_draws.*', 'campaign_status.order', DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$prefix}lucky_draws.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
+                                                                        FROM {$prefix}merchants om
+                                                                        LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
+                                                                        WHERE om.merchant_id = {$prefix}lucky_draws.mall_id) THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END AS campaign_status"))
+                                    ->leftJoin('lucky_draw_translations', 'lucky_draw_translations.lucky_draw_id', '=', 'lucky_draws.lucky_draw_id')
+                                    ->leftJoin('merchant_languages', 'merchant_languages.merchant_language_id', '=', 'lucky_draw_translations.merchant_language_id')
+                                    ->leftJoin('languages', 'languages.language_id', '=', 'merchant_languages.language_id')
+                                    ->where('languages.name', '=', 'en');
             if ($details_view === 'yes') {
-                $luckydraws->select('lucky_draws.*', 'campaign_status.order', DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$prefix}lucky_draws.end_date < {$this->quote($now)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END  AS campaign_status"), 'merchants.name',
+                $luckydraws->select('lucky_draws.*', 'campaign_status.order', DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$prefix}lucky_draws.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
+                    FROM {$prefix}merchants om
+                    LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
+                    WHERE om.merchant_id = {$prefix}lucky_draws.mall_id) THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END  AS campaign_status"), 'merchants.name',
                                     DB::raw("count({$prefix}lucky_draw_numbers.lucky_draw_number_id) as total_issued_lucky_draw_number"))
                                     ->joinLuckyDrawNumbers()
                                     ->joinMerchant()
@@ -1033,13 +1035,13 @@ class LuckyDrawAPIController extends ControllerAPI
             // Filter lucky draw by name
             OrbitInput::get('lucky_draw_name', function($name) use ($luckydraws)
             {
-                $luckydraws->whereIn('lucky_draws.lucky_draw_name', $name);
+                $luckydraws->whereIn('lucky_draw_translations.lucky_draw_name', $name);
             });
 
             // Filter lucky draw by matching name pattern
             OrbitInput::get('lucky_draw_name_like', function($name) use ($luckydraws)
             {
-                $luckydraws->where('lucky_draws.lucky_draw_name', 'like', "%$name%");
+                $luckydraws->where('lucky_draw_translations.lucky_draw_name', 'like', "%$name%");
             });
 
             // Filter lucky draw by description
@@ -1073,8 +1075,11 @@ class LuckyDrawAPIController extends ControllerAPI
             });
 
             // Filter news by status
-            OrbitInput::get('campaign_status', function ($statuses) use ($luckydraws, $prefix, $now) {
-                $luckydraws->whereIn(DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$prefix}lucky_draws.end_date < {$this->quote($now)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END"), $statuses);
+            OrbitInput::get('campaign_status', function ($statuses) use ($luckydraws, $prefix) {
+                $luckydraws->whereIn(DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$prefix}lucky_draws.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
+                    FROM {$prefix}merchants om
+                    LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
+                    WHERE om.merchant_id = {$prefix}lucky_draws.mall_id) THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END"), $statuses);
             });
 
             // Filter by start date
@@ -1219,7 +1224,7 @@ class LuckyDrawAPIController extends ControllerAPI
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
                     'registered_date'                => 'lucky_draws.created_at',
-                    'lucky_draw_name'                => 'lucky_draws.lucky_draw_name',
+                    'lucky_draw_name'                => 'lucky_draw_translations.lucky_draw_name',
                     'description'                    => 'lucky_draws.description',
                     'start_date'                     => 'lucky_draws.start_date',
                     'end_date'                       => 'lucky_draws.end_date',
@@ -1248,8 +1253,8 @@ class LuckyDrawAPIController extends ControllerAPI
             $luckydraws->orderBy($sortBy, $sortMode);
 
             //with name
-            if ($sortBy !== 'lucky_draws.lucky_draw_name') {
-                $luckydraws->orderBy('lucky_draws.lucky_draw_name', 'asc');
+            if ($sortBy !== 'lucky_draw_translations.lucky_draw_name') {
+                $luckydraws->orderBy('lucky_draw_translations.lucky_draw_name', 'asc');
             }
 
             $totalLuckyDraws = RecordCounter::create($_luckydraws)->count();

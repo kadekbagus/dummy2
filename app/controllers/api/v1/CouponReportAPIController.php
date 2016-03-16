@@ -414,7 +414,6 @@ class CouponReportAPIController extends ControllerAPI
                     $take = $maxRecord;
                 }
             });
-            $coupons->take($take);
 
             // skip, and order by
             $skip = 0;
@@ -877,11 +876,6 @@ class CouponReportAPIController extends ControllerAPI
                 $sortBy = $sortByMapping[$_sortBy];
             });
 
-            // sort by status first
-            if ($sortBy !== 'promotion_name') {
-                $coupons->orderBy('promotion_name', 'asc');
-            }
-
             OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
             {
                 if (strtolower($_sortMode) !== 'asc') {
@@ -890,6 +884,11 @@ class CouponReportAPIController extends ControllerAPI
             });
 
             $coupons->orderBy($sortBy, $sortMode);
+
+            // sort by status first
+            if ($sortBy !== 'promotion_name') {
+                $coupons->orderBy('promotion_name', 'asc');
+            }
 
             // Return the instance of Query Builder
             if ($this->returnBuilder) {
@@ -1416,7 +1415,7 @@ class CouponReportAPIController extends ControllerAPI
                 ),
                 array(
                     'current_mall' => 'required|orbit.empty.mall',
-                    'sort_by' => 'in:promotion_id,promotion_name,begin_date,end_date,user_email,issued_coupon_code,redeemed_date,issued_date,redeem_verification_code,total_issued,total_redeemed, gender, age, redemtion_place, status',
+                    'sort_by' => 'in:promotion_id,promotion_name,begin_date,end_date,user_email,issued_coupon_code,redeemed_date,issued_date,redeem_verification_code,total_issued,total_redeemed,gender,age,redemption_place,status',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.couponreportbytenant_sortby'),
@@ -1514,12 +1513,9 @@ class CouponReportAPIController extends ControllerAPI
                             ->where('issued_coupons.status', 'redeemed');
             } elseif ($redeemedBy === 'all') {
                 $coupons = IssuedCoupon::select('issued_coupons.*', 'promotions.begin_date', 'promotions.end_date',
-                                            DB::raw("CASE WHEN {$prefix}user_details.gender = 'f' THEN 'female' WHEN 'm' THEN 'male' ELSE 'unknown' END AS gender"),
-                                            DB::raw("CASE WHEN ({$prefix}user_details.birthdate IS NOT NULL AND {$prefix}user_details.birthdate != '')
-                                                    THEN DATE_FORMAT(NOW(), '%Y') - DATE_FORMAT({$prefix}user_details.birthdate, '%Y') - (DATE_FORMAT(NOW(), '00-%m-%d') < DATE_FORMAT({$prefix}user_details.birthdate, '00-%m-%d'))
-                                                    ELSE 'unknown'
-                                                END AS age"),
-                                            DB::raw("CASE WHEN {$prefix}issued_coupons.redeem_user_id IS NOT NULL THEN CONCAT({$prefix}users.user_firstname, ' ', {$prefix}users.user_lastname) ELSE {$prefix}merchants.name END AS redemtion_place"))
+                                            DB::raw("CASE WHEN {$prefix}user_details.gender = 'f' THEN 'female' WHEN {$prefix}user_details.gender = 'm' THEN 'male' ELSE 'unknown' END AS gender"),
+                                            DB::raw("IFNULL(timestampdiff(year, {$prefix}user_details.birthdate, curdate()), 'unknown') AS age"),
+                                            DB::raw("CASE WHEN {$prefix}issued_coupons.redeem_user_id IS NOT NULL THEN CONCAT({$prefix}users.user_firstname, ' ', {$prefix}users.user_lastname) ELSE {$prefix}merchants.name END AS redemption_place"))
                                        ->join('promotions', 'promotions.promotion_id', '=', 'issued_coupons.promotion_id')
                                        ->leftJoin('user_details', 'user_details.user_id', '=', 'issued_coupons.user_id')
                                        ->leftJoin('merchants', 'merchants.merchant_id', '=', 'issued_coupons.redeem_retailer_id')
@@ -1589,22 +1585,30 @@ class CouponReportAPIController extends ControllerAPI
 
             // Filter by Redeemed date
             // Greater Than Equals
-            OrbitInput::get('issued_date_gte', function($date) use ($coupons) {
-                $coupons->where('issued_coupons.issued_date', '>=', $date);
+            OrbitInput::get('issued_date_gte', function($date) use ($coupons, $timezone) {
+                $convert = Carbon::createFromFormat('Y-m-d H:i:s', $date, 'UTC');
+                $convert->setTimezone($timezone);
+                $coupons->where('issued_coupons.issued_date', '>=', $convert);
             });
             // Less Than Equals
-            OrbitInput::get('issued_date_lte', function($date) use ($coupons) {
-                $coupons->where('issued_coupons.issued_date', '<=', $date);
+            OrbitInput::get('issued_date_lte', function($date) use ($coupons, $timezone) {
+                $convert = Carbon::createFromFormat('Y-m-d H:i:s', $date, 'UTC');
+                $convert->setTimezone($timezone);
+                $coupons->where('issued_coupons.issued_date', '<=', $convert);
             });
 
             // Filter by Redeemed date
             // Greater Than Equals
-            OrbitInput::get('redeemed_date_gte', function($date) use ($coupons) {
-                $coupons->where('issued_coupons.redeemed_date', '>=', $date);
+            OrbitInput::get('redeemed_date_gte', function($date) use ($coupons, $timezone) {
+                $convert = Carbon::createFromFormat('Y-m-d H:i:s', $date, 'UTC');
+                $convert->setTimezone($timezone);
+                $coupons->where('issued_coupons.redeemed_date', '>=', $convert);
             });
             // Less Than Equals
-            OrbitInput::get('redeemed_date_lte', function($date) use ($coupons) {
-                $coupons->where('issued_coupons.redeemed_date', '<=', $date);
+            OrbitInput::get('redeemed_date_lte', function($date) use ($coupons, $timezone) {
+                $convert = Carbon::createFromFormat('Y-m-d H:i:s', $date, 'UTC');
+                $convert->setTimezone($timezone);
+                $coupons->where('issued_coupons.redeemed_date', '<=', $convert);
             });
 
             // Filter by total_issued
@@ -1619,10 +1623,7 @@ class CouponReportAPIController extends ControllerAPI
 
             // Filter by age
             OrbitInput::get('customer_age', function($age) use ($coupons, $prefix) {
-                $coupons->where(DB::raw("CASE WHEN ({$prefix}user_details.birthdate IS NOT NULL AND {$prefix}user_details.birthdate != '')
-                        THEN DATE_FORMAT(NOW(), '%Y') - DATE_FORMAT({$prefix}user_details.birthdate, '%Y') - (DATE_FORMAT(NOW(), '00-%m-%d') < DATE_FORMAT({$prefix}user_details.birthdate, '00-%m-%d'))
-                        ELSE 'unknown'
-                    END"), $age);
+                $coupons->where(DB::raw("IFNULL(timestampdiff(year, {$prefix}user_details.birthdate, curdate()), 'unknown')"), $age);
             });
 
             // Filter by redemption place
@@ -1632,7 +1633,12 @@ class CouponReportAPIController extends ControllerAPI
 
             // Filter by gender
             OrbitInput::get('customer_gender', function($gender) use ($coupons, $prefix) {
-                $coupons->whereIn(DB::raw("CASE WHEN {$prefix}user_details.gender = 'f' THEN 'female' WHEN 'm' THEN 'male' ELSE 'unknown' END"), $gender);
+                $coupons->whereIn(DB::raw("CASE WHEN {$prefix}user_details.gender = 'f' THEN 'female' WHEN {$prefix}user_details.gender = 'm' THEN 'male' ELSE 'unknown' END"), $gender);
+            });
+
+            // Filter by status
+            OrbitInput::get('status', function($data) use ($coupons) {
+                $coupons->where('issued_coupons.status', $data);
             });
 
             // Clone the query builder which still does not include the take,
@@ -1652,11 +1658,107 @@ class CouponReportAPIController extends ControllerAPI
 
             $_coupons = DB::table(DB::raw('(' . $_coupons_sql . ') as b'));
 
+            //GET active days from campaign histories
+            $couponId = OrbitInput::get('promotion_id');
+            $promoId = $couponId[0];
+
+            $activeDaysSql = "
+                        SELECT
+                            mquery.comp_date,
+                            mquery.campaign_id,
+                            mquery.campaign_status,
+                            mquery.campaign_start_date,
+                            mquery.campaign_end_date
+                        FROM
+                        (    
+                            SELECT 
+                                DATE_FORMAT(ppp.comp_date, '%Y-%m-%d') AS comp_date,
+                                ppp.campaign_id,
+                                ppp.campaign_status,
+                                ppp.campaign_start_date,
+                                ppp.campaign_end_date    
+                            FROM
+                                (        
+                                    SELECT 
+                                        p1.comp_date,
+                                        IF( p2.campaign_id IS NULL,
+                                            @preCampaign := @preCampaign,
+                                            @preCampaign := p2.campaign_id) AS campaign_id,     
+                                        IF( p2.action_name IS NULL,
+                                            @preAction := @preAction,
+                                            @preAction := p2.action_name
+                                        ) AS campaign_status,
+                                        IF( p2.begin_date IS NULL,
+                                            @beginDate := @beginDate,
+                                            @beginDate := p2.begin_date
+                                            ) AS campaign_start_date,
+                                        IF( p2.end_date IS NULL,
+                                            @endDate := @endDate,
+                                            @endDate := p2.end_date
+                                            ) AS campaign_end_date
+                                    FROM
+                                        (
+                                            SELECT 
+                                                DATE_FORMAT(DATE_ADD(st.i_start, INTERVAL sequence_number DAY), '%Y-%m-%d') AS comp_date
+                                            FROM
+                                                (SELECT 0 AS sequence_number UNION ALL SELECT * from orb_sequence) os,
+                                                (SELECT 
+                                                        DATE_FORMAT(MIN(CONVERT_TZ(och.created_at, '+00:00', {$this->quote($timezone)})), '%Y-%m-%d') AS i_start
+                                                    FROM
+                                                        orb_campaign_histories och
+                                                    WHERE
+                                                        och.campaign_id = {$this->quote($promoId)}
+                                                        AND och.campaign_type = 'coupon') st
+                                            WHERE
+                                                os.sequence_number <= (DATEDIFF(DATE_FORMAT({$this->quote($now)}, '%Y-%m-%d'), DATE_FORMAT(st.i_start, '%Y-%m-%d')))
+                                            GROUP BY comp_date
+                                        ) AS p1
+                                    LEFT JOIN
+                                        (
+                                            SELECT 
+                                                och.campaign_id,
+                                                och.campaign_history_action_id,
+                                                ocha.action_name,
+                                                och.campaign_external_value,
+                                                DATE_FORMAT(CONVERT_TZ(och.created_at, '+00:00', {$this->quote($timezone)}), '%Y-%m-%d') AS history_created_date,
+                                                orn.begin_date,
+                                                orn.end_date
+                                            FROM 
+                                                orb_campaign_histories och
+                                            LEFT JOIN
+                                                orb_campaign_history_actions ocha
+                                            ON och.campaign_history_action_id = ocha.campaign_history_action_id
+                                            LEFT JOIN
+                                                orb_promotions orn 
+                                            ON och.campaign_id = orn.promotion_id 
+                                            WHERE 
+                                                och.campaign_history_action_id IN   (   SELECT campaign_history_action_id 
+                                                                                        FROM orb_campaign_history_actions 
+                                                                                        WHERE action_name IN ('activate', 'deactivate')
+                                                                                    )
+                                                AND och.campaign_type = 'coupon'
+                                                AND och.campaign_id =  {$this->quote($promoId)}
+                                            ORDER BY DATE_FORMAT(history_created_date, '%Y-%m-%d'), action_name
+                                        ) AS p2
+                                    ON p1.comp_date = p2.history_created_date
+                                    HAVING
+                                        campaign_id IS NOT NULL
+                                    ORDER BY DATE_FORMAT(p1.comp_date, '%Y-%m-%d'), campaign_status 
+                                ) AS ppp
+                            WHERE DATE_FORMAT(campaign_start_date, '%Y-%m-%d') <= comp_date
+                                AND DATE_FORMAT(campaign_end_date, '%Y-%m-%d') >= comp_date
+                                AND campaign_status = 'activate'
+                            GROUP BY DATE_FORMAT(comp_date, '%Y-%m-%d')
+                        ) AS mquery";
+
+            $activeDays = DB::table(DB::raw('(' . $activeDaysSql . ') as s'))
+                            ->whereRaw("s.comp_date <= (CASE WHEN {$this->quote($now)} < DATE_FORMAT(campaign_end_date, '%Y-%m-%d') THEN {$this->quote($now)} ELSE DATE_FORMAT(campaign_end_date, '%Y-%m-%d') END)")
+                            ->count();
+
             $query_sum = array(
                 "COUNT(issued_coupon_id) AS total_record",
                 "COUNT(DISTINCT(user_id)) AS total_acquiring_customers",
-                "DATEDIFF((CASE WHEN {$this->quote($now)} < DATE_FORMAT(end_date, '%Y-%m-%d') THEN {$this->quote($now)} ELSE DATE_FORMAT(end_date, '%Y-%m-%d') END), DATE_FORMAT(begin_date, '%Y-%m-%d'))+1 AS total_active_days",
-                "COUNT(DISTINCT(redemtion_place)) AS total_redemtion_place"
+                "COUNT(DISTINCT(redemption_place)) AS total_redemption_place"
             );
 
             $total = $_coupons->selectRaw(implode(',', $query_sum))->get();
@@ -1666,9 +1768,9 @@ class CouponReportAPIController extends ControllerAPI
             // Get total acquiring customers
             $totalAcquiringCustomers = isset($total[0]->total_acquiring_customers)?$total[0]->total_acquiring_customers:0;
             // Get total active days
-            $totalActiveDays = isset($total[0]->total_active_days)?$total[0]->total_active_days:0;
+            $totalActiveDays = isset($activeDays)?$activeDays:0;
             // Get total redemption place
-            $totalRedemtionPlace = isset($total[0]->total_redemtion_place)?$total[0]->total_redemtion_place:0;
+            $totalRedemptionPlace = isset($total[0]->total_redemption_place)?$total[0]->total_redemption_place:0;
 
             // if not printing / exporting data then do pagination.
             if (! $this->returnBuilder) {
@@ -1720,7 +1822,7 @@ class CouponReportAPIController extends ControllerAPI
                     'total_redeemed'            => 'total_redeemed',
                     'gender'                    => 'gender',
                     'age'                       => 'age',
-                    'redemtion_place'           => 'redemtion_place',
+                    'redemption_place'          => 'redemption_place',
                     'status'                    => 'issued_coupons.status',
                 );
 
@@ -1734,7 +1836,11 @@ class CouponReportAPIController extends ControllerAPI
                 }
             });
 
-            $coupons->orderBy($sortBy, $sortMode);
+            if ($sortBy === 'age') {
+                $coupons->orderByRaw('CAST(age AS UNSIGNED) ' . $sortMode);
+            } else {
+                $coupons->orderBy($sortBy, $sortMode);
+            }
 
             // include sorting coupon code
             if ($sortBy !== 'issued_coupons.issued_coupon_code') {
@@ -1749,7 +1855,7 @@ class CouponReportAPIController extends ControllerAPI
                             'total_coupons' => $totalRecord,
                             'total_acquiring_customers' => $totalAcquiringCustomers,
                             'total_active_days' => $totalActiveDays,
-                            'total_redemtion_place' => $totalRedemtionPlace,
+                            'total_redemption_place' => $totalRedemptionPlace,
                         ];
             }
 
@@ -1761,7 +1867,7 @@ class CouponReportAPIController extends ControllerAPI
             $data->total_coupons = $totalRecord;
             $data->total_acquiring_customers = $totalAcquiringCustomers;
             $data->total_active_days = $totalActiveDays;
-            $data->total_redemtion_place = $totalRedemtionPlace;
+            $data->total_redemption_place = $totalRedemptionPlace;
             $data->records = $listOfCoupons;
 
             if ($totalRecord === 0) {

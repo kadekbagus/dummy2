@@ -279,7 +279,9 @@ class DashboardAPIController extends ControllerAPI
 
                 // show news
                 case 'news':
-                    $query = News::select(DB::raw("COUNT({$tablePrefix}campaign_page_views.campaign_page_view_id) as score, {$tablePrefix}news.news_name as name, {$tablePrefix}news.news_id as object_id,
+                    $query = News::select(DB::raw("COUNT({$tablePrefix}campaign_page_views.campaign_page_view_id) as score,
+                            CASE WHEN {$tablePrefix}news_translations.news_name !='' THEN {$tablePrefix}news_translations.news_name ELSE {$tablePrefix}news.news_name END as name,
+                                {$tablePrefix}news.news_id as object_id,
                           count({$tablePrefix}campaign_page_views.campaign_page_view_id) / (select count(cp.campaign_page_view_id)
                                 from {$tablePrefix}news ne
                                 left join {$tablePrefix}campaign_page_views cp on cp.campaign_id = ne.news_id and ne.object_type = 'News'
@@ -290,6 +292,10 @@ class DashboardAPIController extends ControllerAPI
                                     $q->on('campaign_page_views.campaign_id', '=', 'news.news_id');
                                     $q->on('news.object_type', '=', DB::raw("'News'"));
                             })
+                            ->leftJoin('news_translations', 'news_translations.news_id', '=', 'news.news_id')
+                            ->leftJoin('merchant_languages', 'merchant_languages.merchant_language_id', '=', 'news_translations.merchant_language_id')
+                            ->leftJoin('languages', 'languages.language_id', '=', 'merchant_languages.language_id')
+                            ->where('languages.name', '=', 'en')
                             ->whereBetween('campaign_page_views.created_at', [$start_date, $end_date])
                             ->where('location_id', $merchant_id)
                             ->groupBy('news.news_id')
@@ -301,7 +307,8 @@ class DashboardAPIController extends ControllerAPI
                 // show events
                 case 'events':
                     $query = EventModel::select(DB::raw("COUNT({$tablePrefix}campaign_popup_views.campaign_popup_view_id) as score,
-                                        {$tablePrefix}events.event_name as name, {$tablePrefix}events.event_id as object_id,
+                                        CASE WHEN {$tablePrefix}event_translations.event_name !='' THEN {$tablePrefix}event_translations.event_name ELSE {$tablePrefix}events.event_name END as name,
+                                            {$tablePrefix}events.event_id as object_id,
                                         COUNT({$tablePrefix}campaign_popup_views.campaign_popup_view_id) / (select count(cpv.campaign_popup_view_id)
                                         from {$tablePrefix}events ev
                                         left join {$tablePrefix}campaign_popup_views cpv on cpv.campaign_id = ev.event_id
@@ -313,6 +320,10 @@ class DashboardAPIController extends ControllerAPI
                                     $q->on('campaign_group_names.campaign_group_name_id', '=', 'campaign_popup_views.campaign_group_name_id');
                                     $q->on('campaign_group_names.campaign_group_name', '=', DB::raw($quote('Event')));
                             })
+                            ->leftJoin('event_translations', 'event_translations.event_id', '=', 'events.event_id')
+                            ->leftJoin('merchant_languages', 'merchant_languages.merchant_language_id', '=', 'event_translations.merchant_language_id')
+                            ->leftJoin('languages', 'languages.language_id', '=', 'merchant_languages.language_id')
+                            ->where('languages.name', '=', 'en')
                             ->whereBetween('campaign_popup_views.created_at', [$start_date, $end_date])
                             ->where('events.merchant_id', $merchant_id)
                             ->groupBy('events.event_id')
@@ -323,7 +334,9 @@ class DashboardAPIController extends ControllerAPI
 
                 // show promotions
                 case 'promotions':
-                    $query = News::select(DB::raw("COUNT({$tablePrefix}campaign_page_views.campaign_page_view_id) as score, {$tablePrefix}news.news_name as name, {$tablePrefix}news.news_id as object_id,
+                    $query = News::select(DB::raw("COUNT({$tablePrefix}campaign_page_views.campaign_page_view_id) as score,
+                                CASE WHEN {$tablePrefix}news_translations.news_name !='' THEN {$tablePrefix}news_translations.news_name ELSE {$tablePrefix}news.news_name END as name,
+                                {$tablePrefix}news.news_id as object_id,
                           count({$tablePrefix}campaign_page_views.campaign_page_view_id) / (select count(cp.campaign_page_view_id)
                                 from {$tablePrefix}news ne
                                 left join {$tablePrefix}campaign_page_views cp on cp.campaign_id = ne.news_id and ne.object_type = 'Promotion'
@@ -334,6 +347,10 @@ class DashboardAPIController extends ControllerAPI
                                     $q->on('campaign_page_views.campaign_id', '=', 'news.news_id');
                                     $q->on('news.object_type', '=', DB::raw("'Promotion'"));
                             })
+                            ->leftJoin('news_translations', 'news_translations.news_id', '=', 'news.news_id')
+                            ->leftJoin('merchant_languages', 'merchant_languages.merchant_language_id', '=', 'news_translations.merchant_language_id')
+                            ->leftJoin('languages', 'languages.language_id', '=', 'merchant_languages.language_id')
+                            ->where('languages.name', '=', 'en')
                             ->whereBetween('campaign_page_views.created_at', [$start_date, $end_date])
                             ->where('location_id', $merchant_id)
                             ->groupBy('news.news_id')
@@ -345,7 +362,8 @@ class DashboardAPIController extends ControllerAPI
                 // show luckydraws
                 case 'lucky_draws':
                     $query = LuckyDraw::select(DB::raw("COUNT({$tablePrefix}campaign_page_views.campaign_page_view_id) as score,
-                                {$tablePrefix}lucky_draws.lucky_draw_name as name, {$tablePrefix}lucky_draws.lucky_draw_id as object_id,
+                                    CASE WHEN {$tablePrefix}lucky_draw_translations.lucky_draw_name !='' THEN {$tablePrefix}lucky_draw_translations.lucky_draw_name ELSE {$tablePrefix}lucky_draws.lucky_draw_name END as name,
+                                    {$tablePrefix}lucky_draws.lucky_draw_id as object_id,
                                 count({$tablePrefix}campaign_page_views.campaign_page_view_id) / (select count(cp.campaign_page_view_id)
                                 from {$tablePrefix}lucky_draws ld
                                 left join {$tablePrefix}campaign_page_views cp on cp.campaign_id = ld.lucky_draw_id
@@ -357,6 +375,10 @@ class DashboardAPIController extends ControllerAPI
                                     $q->on('campaign_group_names.campaign_group_name_id', '=', 'campaign_page_views.campaign_group_name_id');
                                     $q->on('campaign_group_names.campaign_group_name', '=', DB::raw($quote('Lucky Draw')));
                             })
+                            ->leftJoin('lucky_draw_translations', 'lucky_draw_translations.lucky_draw_id', '=', 'lucky_draws.lucky_draw_id')
+                            ->leftJoin('merchant_languages', 'merchant_languages.merchant_language_id', '=', 'lucky_draw_translations.merchant_language_id')
+                            ->leftJoin('languages', 'languages.language_id', '=', 'merchant_languages.language_id')
+                            ->where('languages.name', '=', 'en')
                             ->whereBetween('campaign_page_views.created_at', [$start_date, $end_date])
                             ->where('lucky_draws.mall_id', $merchant_id)
                             ->groupBy('lucky_draws.lucky_draw_id')
@@ -368,7 +390,8 @@ class DashboardAPIController extends ControllerAPI
                 // show coupon
                 case 'coupons':
                     $query = Coupon::select(DB::raw("COUNT({$tablePrefix}campaign_page_views.campaign_page_view_id) as score,
-                                {$tablePrefix}promotions.promotion_name as name, {$tablePrefix}promotions.promotion_id as object_id,
+                                    CASE WHEN {$tablePrefix}coupon_translations.promotion_name !='' THEN {$tablePrefix}coupon_translations.promotion_name ELSE {$tablePrefix}promotions.promotion_name END as name,
+                                    {$tablePrefix}promotions.promotion_id as object_id,
                                 count({$tablePrefix}campaign_page_views.campaign_page_view_id) / (select count(cp.campaign_page_view_id)
                                 from {$tablePrefix}promotions pr
                                 left join {$tablePrefix}campaign_page_views cp on cp.campaign_id = pr.promotion_id and pr.is_coupon = 'Y'
@@ -380,6 +403,10 @@ class DashboardAPIController extends ControllerAPI
                                     $q->on('campaign_group_names.campaign_group_name_id', '=', 'campaign_page_views.campaign_group_name_id');
                                     $q->on('campaign_group_names.campaign_group_name', '=', DB::raw($quote('Coupon')));
                             })
+                            ->leftJoin('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
+                            ->leftJoin('merchant_languages', 'merchant_languages.merchant_language_id', '=', 'coupon_translations.merchant_language_id')
+                            ->leftJoin('languages', 'languages.language_id', '=', 'merchant_languages.language_id')
+                            ->where('languages.name', '=', 'en')
                             ->whereBetween('campaign_page_views.created_at', [$start_date, $end_date])
                             ->where('promotions.merchant_id', $merchant_id)
                             ->groupBy('promotions.promotion_id')
@@ -905,24 +932,37 @@ class DashboardAPIController extends ControllerAPI
             $tablePrefix = DB::getTablePrefix();
 
             $newsAndPromotions = DB::table('news')
-                ->selectRaw("news_id campaign_id, news_name campaign_name, DATEDIFF(end_date, {$this->quote($now_date)}) expire_days, object_type type,
+                ->selectRaw("{$tablePrefix}news.news_id campaign_id,
+                    CASE WHEN {$tablePrefix}news_translations.news_name !='' THEN {$tablePrefix}news_translations.news_name ELSE {$tablePrefix}news.news_name END as campaign_name,
+                    DATEDIFF(end_date, {$this->quote($now_date)}) expire_days, object_type type,
                     CASE WHEN {$tablePrefix}news.end_date < {$this->quote($now_date)} THEN 'expired' ELSE {$tablePrefix}campaign_status.campaign_status_name END  AS campaign_status")
                 ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
+                // Join translation for get english name
+                ->leftJoin('news_translations', 'news_translations.news_id', '=', 'news.news_id')
+                ->leftJoin('merchant_languages', 'merchant_languages.merchant_language_id', '=', 'news_translations.merchant_language_id')
+                ->leftJoin('languages', 'languages.language_id', '=', 'merchant_languages.language_id')
+                ->where('languages.name', '=', 'en')
                 ->where('end_date', '>', $now_date)
                 ->where('mall_id', $current_mall)
                 ->orderBy('expire_days','asc');
 
             $coupons = DB::table('promotions')
-                ->selectRaw("promotion_id campaign_id, promotion_name campaign_name, DATEDIFF(end_date, {$this->quote($now_date)}) expire_days, IF(is_coupon = 'Y','coupon', '') type,
+                ->selectRaw("{$tablePrefix}promotions.promotion_id campaign_id,
+                    CASE WHEN {$tablePrefix}coupon_translations.promotion_name !='' THEN {$tablePrefix}coupon_translations.promotion_name ELSE {$tablePrefix}promotions.promotion_name END as campaign_name,
+                    DATEDIFF(end_date, {$this->quote($now_date)}) expire_days, IF(is_coupon = 'Y','coupon', '') type,
                     CASE WHEN {$tablePrefix}promotions.end_date < {$this->quote($now_date)} THEN 'expired' ELSE {$tablePrefix}campaign_status.campaign_status_name END AS campaign_status")
                 ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
+                // Join translation for get english name
+                ->leftJoin('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
+                ->leftJoin('merchant_languages', 'merchant_languages.merchant_language_id', '=', 'coupon_translations.merchant_language_id')
+                ->leftJoin('languages', 'languages.language_id', '=', 'merchant_languages.language_id')
+                ->where('languages.name', '=', 'en')
                 ->where('is_coupon', '=', 'Y')
                 ->where('end_date', '>', $now_date)
-                ->where('merchant_id', $current_mall)
+                ->where('promotions.merchant_id', $current_mall)
                 ->orderBy('expire_days','asc');
 
-            $expiringCampaign = $newsAndPromotions->unionAll($coupons)
-                                ->orderBy('expire_days','asc');
+            $expiringCampaign = $newsAndPromotions->unionAll($coupons);
 
             $sql = $expiringCampaign->toSql();
             foreach($expiringCampaign->getBindings() as $binding)

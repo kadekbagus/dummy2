@@ -2958,6 +2958,7 @@ class ActivityAPIController extends ControllerAPI
      * @param date    `start_date`    (required) - start date
      * @param date    `end_date`      (required) - end date
      * @return Illuminate\Support\Facades\Response
+     * @todo Change $activityGroupSearch to something else
      */
     public function getCRMSummaryReport()
     {
@@ -3068,25 +3069,32 @@ class ActivityAPIController extends ControllerAPI
 
             // Filter with activity names (activity_name_long)
             $longActivityNameWhere = '';
-            $activityValues = [];
+            $activityKeys = [];
             if ($activityGroups) {
                 foreach ($activityGroups as $activityGroup) {
                     foreach (Config::get('orbit_activity.groups.'.$activityGroup) as $key) {
-                        $activityValues[] = Config::get('orbit.activity_columns.'.$key);
+                        $activityKeys[] = $key;
                     }
                 }
             }
 
-            if ($activityGroupSearch) {
-                $column = Config::get('orbit.activity_columns.'.ucwords($activityGroupSearch));
+            $columns = [];
 
-                if ($column) {
-                    $activityValues[] = $column;
+            // e.g. 'Email sign up'
+            // It's case insensitive
+            if ($activityGroupSearch) {
+                $lowerActivityGroupSearch = strtolower($activityGroupSearch);
+                $lowerActivityColumns = array_map('strtolower', Config::get('orbit.activity_columns'));
+
+                $activityKey = array_search($lowerActivityGroupSearch, $lowerActivityColumns);
+                if ($activityKey) {
+                    $columns = array_merge($columns, [$activityKey => Config::get('orbit.activity_columns.'.$activityKey)]);
+                    $activityKeys[] = $activityKey;
                 }
             }
 
-            if ($activityValues) {
-                $longActivityNameWhere = "AND activity_name_long IN ('".implode("','", $activityValues)."')";
+            if ($activityKeys) {
+                $longActivityNameWhere = "AND activity_name_long IN ('".implode("','", $activityKeys)."')";
             }
             
             $sql = str_replace('{{where:longActivityName}}', $longActivityNameWhere, $sql);
@@ -3094,7 +3102,6 @@ class ActivityAPIController extends ControllerAPI
 
             $responses = [];
             $records = [];
-            $columns = [];
 
             // sel = selected
             $selActivityGroups = $activityGroups;
@@ -3115,25 +3122,6 @@ class ActivityAPIController extends ControllerAPI
                 }
             }
 
-            // e.g. 'Email sign up'
-            if ($activityGroupSearch) {
-                $activityColumns = Config::get('orbit.activity_columns');
-                
-                $activityColumnsKeys = array_keys($activityColumns);
-
-                $lowerActivityColumns = array_change_key_case($activityColumns, CASE_LOWER);
-                $lowerActivityGroupSearch = strtolower($activityGroupSearch);
-                
-                // Compare them after being lowered
-                $columnKey = array_search($lowerActivityGroupSearch, array_keys($lowerActivityColumns));
-
-                // Column found
-                if ($columnKey !== false) {
-                    $key = $activityColumnsKeys[$columnKey];
-                    $columns = array_merge($columns, [$key => $activityColumns[$key]]);
-                }
-            }
-
             if (!($selActivityGroups || $activityGroupSearch)) {
                 // get column name from config
                 $columns = Config::get('orbit.activity_columns');
@@ -3147,7 +3135,7 @@ class ActivityAPIController extends ControllerAPI
                     if ( $y->activity_date === $value ) {
 
                         $date = [];
-                        $date['name'] = $y->activity_name_long;
+                        $date['name'] = isset($columns[$y->activity_name_long]) ? $columns[$y->activity_name_long] : $y->activity_name_long;
                         $date['count'] = ($this->returnBuilder) ? $y->count : number_format($y->count, 0,'.','.');
 
                         $responses[$value][] = $date;

@@ -114,7 +114,7 @@
 
         <?php if ($tenant_name != '') { ?>
             <tr>
-                <td>Filter by Coupon Name</td>
+                <td>Filter by Tenant Name</td>
                 <td>:</td>
                 <td><strong><?php echo htmlentities($tenant_name); ?></strong></td>
             </tr>
@@ -136,13 +136,13 @@
 
                 $rule_type = $val_rule_type;
                 if ($rule_type === 'auto_issue_on_first_signin') {
-                    $rule_type = 'Coupon blast upon first sign in';
+                    $rule_type = 'coupon blast upon first sign in';
                 } elseif ($rule_type === 'auto_issue_on_signup') {
-                    $rule_type = 'Coupon blast upon sign up';
+                    $rule_type = 'coupon blast upon sign up';
                 } elseif ($rule_type === 'auto_issue_on_every_signin') {
-                    $rule_type = 'Coupon blast upon every sign in';
+                    $rule_type = 'coupon blast upon every sign in';
                 } elseif ($rule_type === 'manual') {
-                    $rule_type = 'Manual issued';
+                    $rule_type = 'manual issued';
                 }
 
                 $rule_type_string .= $rule_type . ', ';

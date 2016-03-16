@@ -92,6 +92,21 @@
             <td>:</td>
             <td><strong><?php echo number_format($totalCoupons, 0, '.', '.'); ?></strong></td>
         </tr>
+        <tr>
+            <td>Total Acquiring Customers</td>
+            <td>:</td>
+            <td><strong><?php echo number_format($totalAcquiringCustomers, 0, '.', '.'); ?></strong></td>
+        </tr>
+        <tr>
+            <td>Total Active Campaign Days</td>
+            <td>:</td>
+            <td><strong><?php echo number_format($totalActiveDays, 0, '.', '.'); ?></strong></td>
+        </tr>
+        <tr>
+            <td>Total Redemption Places</td>
+            <td>:</td>
+            <td><strong><?php echo number_format($totalRedemptionPlace, 0, '.', '.'); ?></strong></td>
+        </tr>
 
         <!-- Filtering -->
         <?php if ($couponCode != '') { ?>
@@ -106,30 +121,41 @@
             <tr>
                 <td>Filter by Customer Age</td>
                 <td>:</td>
-                <td><strong><?php echo htmlentities($customerAge); ?></strong></td>
+                <td><strong><?php echo $customerAge; ?></strong></td>
             </tr>
         <?php } ?>
 
-        <?php if ($customerGender != '') { ?>
+        <?php if ($customerGender != '') { 
+            $gender_string = '';
+            $count = 1;
+            foreach ($customerGender as $key => $valgender){
+                if ($count == 1) {
+                    $gender_string .= $valgender ;
+                } else {
+                    $gender_string .= ', ' .$valgender;
+                }
+                $count++;
+            }
+        ?>
             <tr>
                 <td>Filter by Customer Gender</td>
                 <td>:</td>
-                <td><strong><?php echo htmlentities($customerGender); ?></strong></td>
+                <td><strong><?php echo $gender_string; ?></strong></td>
             </tr>
         <?php } ?>
 
-        <?php if ($redemtionPlace != '') { ?>
+        <?php if ($redemptionPlace != '') { ?>
             <tr>
-                <td>Filter by Redemtion Place</td>
+                <td>Filter by Redemption Place</td>
                 <td>:</td>
-                <td><strong><?php echo htmlentities($redemtionPlace); ?></strong></td>
+                <td><strong><?php echo $redemptionPlace; ?></strong></td>
             </tr>
         <?php } ?>
 
         <?php 
             if ($issuedDateGte != '' && $issuedDateLte != ''){
-                $startDate = date('d M Y', strtotime($issuedDateGte));
-                $endDate = date('d M Y', strtotime($issuedDateLte));
+                $startDate = $this->printDateTime($issuedDateGte, $timezoneCurrentMall, 'd M Y');
+                $endDate = $this->printDateTime($issuedDateLte, $timezoneCurrentMall, 'd M Y');
                 $dateRange = $startDate . ' - ' . $endDate;
                 if ($startDate === $endDate) {
                     $dateRange = $startDate;
@@ -146,8 +172,8 @@
 
         <?php 
             if ($redeemedDateGte != '' && $redeemedDateLte != ''){
-                $startDate = date('d M Y', strtotime($redeemedDateGte);
-                $endDate = date('d M Y', strtotime($redeemedDateLte);
+                $startDate = $this->printDateTime($redeemedDateGte, $timezoneCurrentMall, 'd M Y');
+                $endDate = $this->printDateTime($redeemedDateLte, $timezoneCurrentMall, 'd M Y');
                 $dateRange = $startDate . ' - ' . $endDate;
                 if ($startDate === $endDate) {
                     $dateRange = $startDate;
@@ -168,22 +194,22 @@
             <th style="text-align:left;">Coupon Code</th>
             <th style="text-align:left;">Customer Age</th>
             <th style="text-align:left;">Customer Gender</th>
-            <th style="text-align:left;">Issued Date</th>
-            <th style="text-align:left;">Redeemed Date</th>
-            <th style="text-align:left;">Redemtion Place</th>
-            <th style="text-align:left;">Status</th>
+            <th style="text-align:left;">Issued Date & Time</th>
+            <th style="text-align:left;">Redeemed Date & Time</th>
+            <th style="text-align:left;">Redemption Place</th>
+            <th style="text-align:left;">Coupon Status</th>
         </thead>
         <tbody>
         <?php while ($row = $statement->fetch(PDO::FETCH_OBJ)) : ?>
             <tr class="{{ $rowCounter % 2 === 0 ? 'zebra' : '' }}">
                 <td><?php echo (++$rowCounter); ?></td>
-                <td><?php echo htmlentities(($row->issued_coupon_code)); ?></td>
-                <td><?php echo htmlentities(($row->age)); ?></td>
-                <td><?php echo htmlentities(($row->gender)); ?></td>
-                <td><?php echo htmlentities(($row->issued_date)); ?></td>
-                <td><?php echo htmlentities(($row->redeemed_date)); ?></td>
-                <td><?php echo htmlentities(($row->redemtion_place)); ?></td>
-                <td><?php echo htmlentities(($row->status)); ?></td>
+                <td><?php echo $row->issued_coupon_code; ?></td>
+                <td><?php echo $row->age; ?></td>
+                <td><?php echo $row->gender; ?></td>
+                <td><?php echo $this->printDateTime($row->issued_date, $timezoneCurrentMall, 'd M Y H:i'); ?></td>
+                <td><?php if (! empty($row->redeemed_date)) { echo $this->printDateTime($row->redeemed_date, $timezoneCurrentMall, 'd M Y H:i'); } else { echo '--'; } ?></td>
+                <td><?php if (! empty($row->redemption_place)) { echo htmlentities($row->redemption_place); } else { echo '--'; } ?></td>
+                <td><?php if ($row->status != 'active') { echo $row->status; } else { echo 'issued'; } ?></td>
             </tr>
         <?php endwhile; ?>
         </tbody>

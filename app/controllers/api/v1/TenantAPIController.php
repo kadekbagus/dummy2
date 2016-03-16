@@ -483,6 +483,7 @@ class TenantAPIController extends ControllerAPI
                     'orbit.empty.tenant_unit' => Lang::get('validation.orbit.empty.tenant_unit'),
                     'alpha_num' => 'The verification number must letter and number.',
                     'regex' => 'Wrong phone number format',
+                    'orbit.formaterror.url.web' => 'Tenant URL is not valid',
                )
             );
 
@@ -915,6 +916,7 @@ class TenantAPIController extends ControllerAPI
                     'orbit_unique_verification_number' => 'The verification number already used by other',
                     'alpha_num' => 'The verification number must letter and number.',
                     'regex' => 'Wrong phone number format',
+                    'orbit.formaterror.url.web' => 'Tenant URL is not valid',
                 //ACL::throwAccessForbidden($message);
                )
             );

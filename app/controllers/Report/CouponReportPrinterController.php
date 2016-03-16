@@ -93,13 +93,14 @@ class CouponReportPrinterController extends DataPrinterController
             case 'csv':
                 @header('Content-Description: File Transfer');
                 @header('Content-Type: text/csv');
-                @header('Content-Disposition: attachment; filename=' . OrbitText::exportFilename($pageTitle, '.csv', $timezoneCurrentMall));
+                @header('Content-Disposition: attachment; filename=' . OrbitText::exportFilename($pageTitle, '.csv', $timezone));
 
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Coupon Summary Report', '', '', '', '', '');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
+
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Coupon Campaigns', $totalCoupons, '', '', '', '','','','');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','');
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Issued Coupons', $totalIssued, '', '', '', '','','','');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','');
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Redeemed Coupons', $totalRedeemed, '', '', '', '','','','');
 
                 // Filtering
@@ -121,13 +122,13 @@ class CouponReportPrinterController extends DataPrinterController
 
                         $rule_type = $val_rule_type;
                         if ($rule_type === 'auto_issue_on_first_signin') {
-                            $rule_type = 'Coupon blast upon first sign in';
+                            $rule_type = 'coupon blast upon first sign in';
                         } elseif ($rule_type === 'auto_issue_on_signup') {
-                            $rule_type = 'Coupon blast upon sign up';
+                            $rule_type = 'coupon blast upon sign up';
                         } elseif ($rule_type === 'auto_issue_on_every_signin') {
-                            $rule_type = 'Coupon blast upon every sign in';
+                            $rule_type = 'coupon blast upon every sign in';
                         } elseif ($rule_type === 'manual') {
-                            $rule_type = 'Manual issued';
+                            $rule_type = 'manual issued';
                         }
 
                         $rule_type_string .= $rule_type . ', ';
@@ -286,7 +287,7 @@ class CouponReportPrinterController extends DataPrinterController
         //Filter
         $couponCode = OrbitInput::get('issued_coupon_code');
         $customerAge = OrbitInput::get('customer_age');
-        $redemtionPlace = OrbitInput::get('redemption_place');
+        $redemptionPlace = OrbitInput::get('redemption_place');
         $customerGender = OrbitInput::get('customer_gender');
         $issuedDateGte = OrbitInput::get('issued_date_gte');
         $issuedDateLte = OrbitInput::get('issued_date_lte');
@@ -308,10 +309,10 @@ class CouponReportPrinterController extends DataPrinterController
 
         $coupons = $response['builder'];
         $totalCoupons = $response['count'];
-        $totalRecord = $response['totalRecord'];
+        $totalRecord = $response['total_coupons'];
         $totalAcquiringCustomers = $response['total_acquiring_customers'];
         $totalActiveDays = $response['total_active_days'];
-        $totalRedemtionPlace = $response['total_redemtion_place'];
+        $totalRedemptionPlace = $response['total_redemption_place'];
 
         $this->prepareUnbufferedQuery();
 
@@ -334,68 +335,92 @@ class CouponReportPrinterController extends DataPrinterController
 
                 printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '');
                 printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Coupons', $totalCoupons, '', '', '', '', '');
-
-                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','');
                 printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Acquiring Customers', $totalAcquiringCustomers, '', '', '', '', '');
-
-                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Active Days', $totalActiveDays, '', '', '', '', '');
-
-                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Redemtion Place', $totalRedemtionPlace, '', '', '', '', '');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Active Campaign Days', $totalActiveDays, '', '', '', '', '');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Redemption Places', $totalRedemptionPlace, '', '', '', '', '');
 
                 // Filtering
                 if ($couponCode != '') {
-                    printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Coupon Code', htmlentities($couponCode), '', '', '', '', '');
+                    printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Coupon Code', $couponCode, '', '', '', '', '');
                 }
 
                 if ($customerAge != '') {
-                    printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Customer Age', htmlentities($customerAge), '', '', '', '', '');
+                    printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Customer Age', $customerAge, '', '', '', '', '');
                 }
 
                 if ($customerGender != '') {
-                    printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Customer Gender', htmlentities($customerGender), '', '', '', '', '');
+                    $gender_string = '';
+                    $count = 1;
+                    foreach ($customerGender as $key => $valgender){
+                        if ($count == 1) {
+                            $gender_string .= $valgender ;
+                        } else {
+                            $gender_string .= ', ' .$valgender;
+                        }
+                        
+                        $count++;
+                    }
+                    printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Customer Gender', $gender_string, '', '', '', '', '');
                 }
 
-                if ($redemtionPlace != '') {
-                    printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Redemtion Place', htmlentities($redemtionPlace), '', '', '', '', '');
+                if ($redemptionPlace != '') {
+                    printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Redemption Place', $redemptionPlace, '', '', '', '', '');
                 }
 
                 if ($issuedDateGte != '' && $issuedDateLte != ''){
-                    $startDate = date('d M Y', strtotime($issuedDateGte));
-                    $endDate = date('d M Y', strtotime($issuedDateLte));
+                    $startDate = $this->printDateTime($issuedDateGte, $timezoneCurrentMall, 'd M Y');
+                    $endDate = $this->printDateTime($issuedDateLte, $timezoneCurrentMall, 'd M Y');
                     $dateRange = $startDate . ' - ' . $endDate;
                     if ($startDate === $endDate) {
                         $dateRange = $startDate;
                     }
-                    printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Issued Date', $dateRange, '', '', '', '','','','');
+                    printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Issued Date', $dateRange, '', '', '', '','');
                 }
 
                 if ($redeemedDateGte != '' && $redeemedDateLte != ''){
-                    $startDate = date('d M Y', strtotime($redeemedDateG)Y');
-                    $endDate = date('d M Y', strtotime($redeemedDateL)Y');
+                    $startDate = $this->printDateTime($redeemedDateGte, $timezoneCurrentMall, 'd M Y');
+                    $endDate = $this->printDateTime($redeemedDateLte, $timezoneCurrentMall, 'd M Y');
                     $dateRange = $startDate . ' - ' . $endDate;
                     if ($startDate === $endDate) {
                         $dateRange = $startDate;
                     }
-                    printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Redeemed Date', $dateRange, '', '', '', '','','','');
+                    printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Redeemed Date', $dateRange, '', '', '', '', '');
                 }
 
-                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Coupon Code', 'Customer Age', 'Customer Gender', 'Issued Date', 'Redeemed Date', 'Redemtion Place', 'Coupon Status');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Coupon Code', 'Customer Age', 'Customer Gender', 'Issued Date & Time', 'Redeemed Date & Time', 'Redemption Place', 'Coupon Status');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '');
 
                 $count = 1;
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
-                    printf("\"%s\",\"%s\",\"%s\",\"=\"\"%s\"\"\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
+
+                    if ($row->status === 'active') {
+                        $stat = 'issued';
+                    } else {
+                        $stat = $row->status;
+                    }
+
+                    if (empty($row->redeemed_date)) {
+                        $dateRedeem = '--';
+                    } else {
+                        $dateRedeem = $this->printDateTime($row->redeemed_date, $timezoneCurrentMall, 'd M Y H:i');
+                    }
+
+                    if (empty($row->redemption_place)) {
+                        $place = '--';
+                    } else {
+                        $place = $row->redemption_place;
+                    }
+
+                    printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
                             $count,
                             $row->issued_coupon_code,
                             $row->age,
                             $row->gender,
-                            $row->issued_date,
-                            $row->redeemed_date,
-                            $row->redemtion_place,
-                            $row->status
+                            $this->printDateTime($row->issued_date, $timezoneCurrentMall, 'd M Y H:i'),
+                            $dateRedeem,
+                            $place,
+                            $stat
                     );
                     $count++;
                 }

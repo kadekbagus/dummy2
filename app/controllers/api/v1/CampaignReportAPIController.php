@@ -24,23 +24,6 @@ class CampaignReportAPIController extends ControllerAPI
     protected $returnBuilder = FALSE;
 
     /**
-     * There should be a Carbon method for this.
-     *
-     * @param string $timezone The timezone name, e.g. 'Asia/Jakarta'.
-     * @return string The hours diff, e.g. '+07:00'.
-     * @author Qosdil A. <qosdil@gmail.com>
-     */
-    private function getTimezoneHoursDiff($timezone)
-    {
-        $mallDateTime = Carbon::createFromFormat('Y-m-d H:i:s', '2016-01-01 00:00:00', $timezone);
-        $utcDateTime = Carbon::createFromFormat('Y-m-d H:i:s', '2016-01-01 00:00:00');
-        $diff = $mallDateTime->diff($utcDateTime);
-        $sign = ($diff->invert) ? '-' : '+';
-        $hour = ($diff->h < 10) ? '0'.$diff->h : $diff->h;
-        return $sign.$hour.':00';
-    }
-
-    /**
      * GET - Campaign Report Summary List
      *
      * @author Firmansyah <firmansyah@dominopos.com>
@@ -166,14 +149,14 @@ class CampaignReportAPIController extends ControllerAPI
             }
 
             // Get data all campaign (news, promotions, coupons), and then use union to join all campaign
-            $news = DB::table('news')->selectraw(DB::raw("{$tablePrefix}news.news_id AS campaign_id, news_name AS campaign_name, {$tablePrefix}news.object_type AS campaign_type,
+            $news = DB::table('news')->selectraw(DB::raw("{$tablePrefix}news.news_id AS campaign_id,
+                CASE WHEN {$tablePrefix}news_translations.news_name !='' THEN {$tablePrefix}news_translations.news_name ELSE {$tablePrefix}news.news_name END as campaign_name,
+                {$tablePrefix}news.object_type AS campaign_type,
                 IFNULL(total_tenant, 0) AS total_tenant, tenant_name,
                 merchants2.name AS mall_name, {$tablePrefix}news.begin_date, {$tablePrefix}news.end_date, {$tablePrefix}news.updated_at, {$tablePrefix}campaign_price.base_price,
                 total_tenant * {$tablePrefix}campaign_price.base_price AS daily,
                 total_tenant * {$tablePrefix}campaign_price.base_price * (DATEDIFF( {$tablePrefix}news.end_date, {$tablePrefix}news.begin_date) + 1) AS estimated_total,
-                (
-                    SELECT IFNULL(fnc_campaign_cost(campaign_id, 'news', {$tablePrefix}news.begin_date, {$this->quote($now)}, {$this->quote($timezoneOffset)}), 0.00) AS campaign_total_cost
-                ) as spending,
+                {$tablePrefix}campaign_spendings.spending,
                 (
                     select count(campaign_page_view_id) as value
                     from {$tablePrefix}campaign_page_views
@@ -193,6 +176,7 @@ class CampaignReportAPIController extends ControllerAPI
                     and location_id = {$this->quote($current_mall)}
                 ) as popup_clicks,
                 {$tablePrefix}news.status, CASE WHEN {$tablePrefix}campaign_status.campaign_status_name = 'expired' THEN {$tablePrefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$tablePrefix}news.end_date < {$this->quote($now)} THEN 'expired' ELSE {$tablePrefix}campaign_status.campaign_status_name END) END  AS campaign_status, {$tablePrefix}campaign_status.order"))
+                        ->leftJoin('campaign_spendings', 'campaign_spendings.campaign_id', '=', 'news.news_id')
                         ->leftJoin('campaign_price', 'campaign_price.campaign_id', '=', 'news.news_id')
                         // Join for get mall name
                         ->leftJoin('merchants as merchants2', 'news.mall_id', '=', DB::raw('merchants2.merchant_id'))
@@ -270,18 +254,21 @@ class CampaignReportAPIController extends ControllerAPI
                         DB::raw('tenant.t_campaign_id'), '=', 'news.news_id')
 
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
-
+                        ->leftJoin('news_translations', 'news_translations.news_id', '=', 'news.news_id')
+                        ->leftJoin('merchant_languages', 'merchant_languages.merchant_language_id', '=', 'news_translations.merchant_language_id')
+                        ->leftJoin('languages', 'languages.language_id', '=', 'merchant_languages.language_id')
+                        ->where('languages.name', '=', 'en')
                         ->where('news.mall_id', '=', $current_mall)
                         ->where('news.object_type', '=', 'news');
 
-            $promotions = DB::table('news')->selectraw(DB::raw("{$tablePrefix}news.news_id AS campaign_id, news_name AS campaign_name, {$tablePrefix}news.object_type AS campaign_type,
+            $promotions = DB::table('news')->selectraw(DB::raw("{$tablePrefix}news.news_id AS campaign_id,
+                CASE WHEN {$tablePrefix}news_translations.news_name !='' THEN {$tablePrefix}news_translations.news_name ELSE {$tablePrefix}news.news_name END as campaign_name,
+                {$tablePrefix}news.object_type AS campaign_type,
                 IFNULL(total_tenant, 0) AS total_tenant, tenant_name,
                 merchants2.name AS mall_name, {$tablePrefix}news.begin_date, {$tablePrefix}news.end_date, {$tablePrefix}news.updated_at, {$tablePrefix}campaign_price.base_price,
                 total_tenant * {$tablePrefix}campaign_price.base_price AS daily,
                 total_tenant * {$tablePrefix}campaign_price.base_price * (DATEDIFF({$tablePrefix}news.end_date, {$tablePrefix}news.begin_date) + 1) AS estimated_total,
-                (
-                    SELECT IFNULL(fnc_campaign_cost(campaign_id, 'promotion', {$tablePrefix}news.begin_date, {$this->quote($now)}, {$this->quote($timezoneOffset)}), 0.00) AS campaign_total_cost
-                ) as spending,
+                {$tablePrefix}campaign_spendings.spending,
                 (
                     select count(campaign_page_view_id) as value
                     from {$tablePrefix}campaign_page_views
@@ -301,6 +288,7 @@ class CampaignReportAPIController extends ControllerAPI
                     and location_id = {$this->quote($current_mall)}
                 ) as popup_clicks,
                 {$tablePrefix}news.status, CASE WHEN {$tablePrefix}campaign_status.campaign_status_name = 'expired' THEN {$tablePrefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$tablePrefix}news.end_date < {$this->quote($now)} THEN 'expired' ELSE {$tablePrefix}campaign_status.campaign_status_name END) END  AS campaign_status, {$tablePrefix}campaign_status.order"))
+                        ->leftJoin('campaign_spendings', 'campaign_spendings.campaign_id', '=', 'news.news_id')
                         ->leftJoin('campaign_price', 'campaign_price.campaign_id', '=', 'news.news_id')
                         ->leftJoin('merchants as merchants2', 'news.mall_id', '=', DB::raw('merchants2.merchant_id'))
                         // Joint for get total tenant percampaign
@@ -377,19 +365,22 @@ class CampaignReportAPIController extends ControllerAPI
                         DB::raw('tenant.t_campaign_id'), '=', 'news.news_id')
 
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
-
+                        ->leftJoin('news_translations', 'news_translations.news_id', '=', 'news.news_id')
+                        ->leftJoin('merchant_languages', 'merchant_languages.merchant_language_id', '=', 'news_translations.merchant_language_id')
+                        ->leftJoin('languages', 'languages.language_id', '=', 'merchant_languages.language_id')
+                        ->where('languages.name', '=', 'en')
                         ->where('news.mall_id', '=', $current_mall)
                         ->where('news.object_type', '=', 'promotion');
 
 
-            $coupons = DB::table('promotions')->selectraw(DB::raw("{$tablePrefix}promotions.promotion_id AS campaign_id, promotion_name AS campaign_name, IF(1=1,'coupon', '') AS campaign_type,
+            $coupons = DB::table('promotions')->selectraw(DB::raw("{$tablePrefix}promotions.promotion_id AS campaign_id,
+                CASE WHEN {$tablePrefix}coupon_translations.promotion_name !='' THEN {$tablePrefix}coupon_translations.promotion_name ELSE {$tablePrefix}promotions.promotion_name END as campaign_name,
+                IF(1=1,'coupon', '') AS campaign_type,
                 IFNULL(total_tenant, 0) AS total_tenant, tenant_name,
                 merchants2.name AS mall_name, {$tablePrefix}promotions.begin_date, {$tablePrefix}promotions.end_date, {$tablePrefix}promotions.updated_at, {$tablePrefix}campaign_price.base_price,
                 total_tenant * {$tablePrefix}campaign_price.base_price AS daily,
                 total_tenant * {$tablePrefix}campaign_price.base_price * (DATEDIFF({$tablePrefix}promotions.end_date, {$tablePrefix}promotions.begin_date) + 1) AS estimated_total,
-                (
-                    SELECT IFNULL(fnc_campaign_cost(campaign_id, 'coupon', {$tablePrefix}promotions.begin_date, {$this->quote($now)}, {$this->quote($timezoneOffset)}), 0.00) AS campaign_total_cost
-                ) as spending,
+                {$tablePrefix}campaign_spendings.spending,
                 (
                     select count(campaign_page_view_id) as value
                     from {$tablePrefix}campaign_page_views
@@ -409,6 +400,7 @@ class CampaignReportAPIController extends ControllerAPI
                     and location_id = {$this->quote($current_mall)}
                 ) as popup_clicks,
                 {$tablePrefix}promotions.status, CASE WHEN {$tablePrefix}campaign_status.campaign_status_name = 'expired' THEN {$tablePrefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$tablePrefix}promotions.end_date < {$this->quote($now)} THEN 'expired' ELSE {$tablePrefix}campaign_status.campaign_status_name END) END AS campaign_status, {$tablePrefix}campaign_status.order"))
+                        ->leftJoin('campaign_spendings', 'campaign_spendings.campaign_id', '=', 'promotions.promotion_id')
                         ->leftJoin('campaign_price', 'campaign_price.campaign_id', '=', 'promotions.promotion_id')
                         ->leftJoin('merchants as merchants2', 'promotions.merchant_id', '=', DB::raw('merchants2.merchant_id'))
                         // Joint for get total tenant percampaign
@@ -485,7 +477,10 @@ class CampaignReportAPIController extends ControllerAPI
                         DB::raw('tenant.t_campaign_id'), '=', 'promotions.promotion_id')
 
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
-
+                        ->leftJoin('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
+                        ->leftJoin('merchant_languages', 'merchant_languages.merchant_language_id', '=', 'coupon_translations.merchant_language_id')
+                        ->leftJoin('languages', 'languages.language_id', '=', 'merchant_languages.language_id')
+                        ->where('languages.name', '=', 'en')
                         ->where('promotions.merchant_id', '=', $current_mall);
 
             $campaign = $news->unionAll($promotions)->unionAll($coupons);
@@ -1856,214 +1851,17 @@ class CampaignReportAPIController extends ControllerAPI
         $mallId = OrbitInput::get('current_mall');
         $timezone = Mall::find($mallId)->timezone->timezone_name;
 
-        $method = \Input::get('m', 2);
-        return $this->{'getSpending'.$method}($id, $type, $timezone);
-    }
-
-    /**
-     * Get the campaign spending
-     *
-     * Request datetimes: UTC
-     * Campaign begin and end datetimes: Mall's timezone
-     *
-     * @author Qosdil A. <qosdil@dominopos.com>
-     * @todo Validations
-     */
-    private function getSpending1($id, $type, $mallTimezone)
-    {
-        $timezone = $mallTimezone;
-
-        // Date intervals
-        $requestBeginDateTime = OrbitInput::get('start_date');
-        $requestBeginTime = substr($requestBeginDateTime, 11, 8);
-
-        $requestEndDateTime = OrbitInput::get('end_date');
-
-        // Init Carbon
-        $carbonLoop = Carbon::createFromFormat('Y-m-d H:i:s', $requestBeginDateTime);
-        $carbonLoopNextDay = Carbon::createFromFormat('Y-m-d H:i:s', $requestBeginDateTime)->addDay();
-
-        // Get the campaign from database
-        switch ($type) {
-            case 'news':
-                $campaign = News::isNews();
-                break;
-            case 'promotion':
-                $campaign = News::isPromotion();
-                break;
-            case 'coupon':
-                $campaign = new Coupon;
-                break;
-        }
-
-        $campaign = $campaign->find($id);
-
-        $campaignBeginDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $campaign->begin_date, $timezone)->setTimezone('UTC')->toDateTimeString();
-
-        // This assumes request begin time is always 00:00 of mall timezone
-        $campaignBeginDateTimeMidnight = substr($campaign->begin_date, 0, 10).' 00:00:00';
-        $campaignBeginDateTimeMidnight = Carbon::createFromFormat('Y-m-d H:i:s', $campaignBeginDateTimeMidnight, $timezone)->setTimeZone('UTC')->toDateTimeString();
-
-        $campaignEndDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $campaign->end_date, $timezone)->setTimezone('UTC')->toDateTimeString();
-        $campaignEndDateTime2 = Carbon::createFromFormat('Y-m-d H:i:s', $campaign->end_date, $timezone)->setTimezone('UTC')->addMinute()->toDateTimeString();
-
-        // Get the base cost
-        $baseCost = CampaignPrice::whereCampaignType($type)->whereCampaignId($id)->first()->base_price;
-
-        // Set the default initial cost
-        $previousDayCost = 0;
-
-        // In case the creation date is earlier than the first active date
-        $campaignLog = CampaignHistory::ofCampaignTypeAndId($type, $id)
-            ->where('created_at', '<', $campaignBeginDateTime)
-            ->orderBy('campaign_history_id', 'desc')->first();
-
-        $activationActionId = CampaignHistoryAction::whereActionName('activate')->first()->campaign_history_action_id;
-        $deactivationActionId = CampaignHistoryAction::whereActionName('deactivate')->first()->campaign_history_action_id;
-
-        if ($campaignLog) {
-
-            $activationRowId = null;
-            $deactivationRowId = null;
-
-            // Null when not found
-            $activationRow = CampaignHistory::ofCampaignTypeAndId($type, $id)
-                ->whereCampaignHistoryActionId($activationActionId)
-                ->orderBy('campaign_history_id', 'desc')->first();
-
-            if ($activationRow) {
-                $activationRowId = $activationRow->campaign_history_id;
-            }
-
-            // Null when not found
-            $deactivationRow = CampaignHistory::ofCampaignTypeAndId($type, $id)
-                ->whereCampaignHistoryActionId($deactivationActionId)
-                ->orderBy('campaign_history_id', 'desc')->first();
-
-            if ($deactivationRow) {
-                $deactivationRowId = $deactivationRow->campaign_history_id;
-            }
-
-            if ($activationRowId > $deactivationRowId || ($activationRowId === null && $deactivationRowId === null)) {
-
-                // Get max tenant count
-                $row = CampaignHistory::ofCampaignTypeAndId($type, $id)
-                    ->where('created_at', '<', $campaignBeginDateTime)
-                    ->orderBy('number_active_tenants', 'desc')->first();
-
-                $previousDayCost = $baseCost * $row->number_active_tenants;
-            }
-        }
-
-        // Loop
-        while ($carbonLoop->toDateTimeString() <= $requestEndDateTime) {
-            $loopBeginDateTime = $carbonLoop->toDateTimeString();
-            $loopEndDateTime = $carbonLoopNextDay->toDateTimeString();
-
-            // Let's retrieve it from DB
-            $campaignLog = CampaignHistory::ofCampaignTypeAndId($type, $id)->ofTimestampRange($loopBeginDateTime, $loopEndDateTime)
-                ->orderBy('campaign_history_id', 'desc')->first();
-
-            // Data found
-            if ($campaignLog) {
-
-                $activationRowId = '';
-                $deactivationRowId = '';
-
-                // Null when not found
-                $activationRow = CampaignHistory::ofCampaignTypeAndId($type, $id)->ofTimestampRange($loopBeginDateTime, $loopEndDateTime)
-                    ->whereCampaignHistoryActionId($activationActionId)
-                    ->orderBy('campaign_history_id', 'desc')->first();
-
-                if ($activationRow) {
-
-                    // Get max tenant count
-                    $row = CampaignHistory::ofCampaignTypeAndId($type, $id)->ofTimestampRange($loopBeginDateTime, $loopEndDateTime)
-                        ->orderBy('number_active_tenants', 'desc')->first();
-
-                    // If there is an activation today, any deactivation won't be affected
-                    $cost = $previousDayCost = $baseCost * $row->number_active_tenants;
-
-                    // Cancel
-                    if ($campaignLog->created_at->toDateTimeString() < $campaignBeginDateTimeMidnight) {
-                        $cost = 0;
-                    }
-
-                    $activationRowId = $activationRow->campaign_history_id;
-                }
-
-                // Null when not found
-                $deactivationRow = CampaignHistory::ofCampaignTypeAndId($type, $id)->ofTimestampRange($loopBeginDateTime, $loopEndDateTime)
-                    ->whereCampaignHistoryActionId($deactivationActionId)
-                    ->orderBy('campaign_history_id', 'desc')->first();
-
-                if ($deactivationRow) {
-                    $deactivationRowId = $deactivationRow->campaign_history_id;
-
-                    // Set cost as 0 when there's only the deactivation today
-                    if (!$activationRow) {
-                        $cost = 0;
-                    }
-                }
-
-                // If there is a deactivation at last row, it will be affected tomorrow
-                if ($deactivationRowId > $activationRowId) {
-                    $previousDayCost = 0;
-                }
-
-                // When the change is only the tenant count change
-                if (!($activationRow && $deactivationRow)) {
-                    $cost = $previousDayCost = 0;
-                }
-
-            // Data not found, but the date is in the interval
-            } elseif ($loopBeginDateTime >= $campaignBeginDateTime && $loopEndDateTime <= $campaignEndDateTime2) {
-                $cost = $previousDayCost;
-
-            // Data not found
-            } else {
-                $cost = 0;
-            }
-
-            // Add to output array
-            $outputs[] = [
-                'date' => $carbonLoop->setTimezone($timezone)->toDateString(),
-                'cost' => (int) $cost, // Format cost as integer
-            ];
-
-            // Set it back to UTC
-            $carbonLoop->setTimezone('UTC');
-
-            // Increment day by 1
-            $carbonLoop->addDay();
-            $carbonLoopNextDay->addDay();
-        }
-
-        $this->response->data = $outputs;
-
-        return $this->render(200);
-    }
-
-    /**
-     * getSpending2
-     *
-     * Implements Thomas' proc.
-     *
-     * @author Qosdil A. <qosdil@dominopos.com>
-     */
-    private function getSpending2($id, $type, $mallTimezone)
-    {
         $requestBeginDateTime = OrbitInput::get('start_date');
 
         // Begin date in mall's timezone
-        $requestBeginDate = Carbon::createFromFormat('Y-m-d H:i:s', $requestBeginDateTime)->setTimezone($mallTimezone)->toDateString();
+        $requestBeginDate = Carbon::createFromFormat('Y-m-d H:i:s', $requestBeginDateTime)->setTimezone($timezone)->toDateString();
 
         $requestEndDateTime = OrbitInput::get('end_date');
 
         // End date in mall's timezone
-        $requestEndDate = Carbon::createFromFormat('Y-m-d H:i:s', $requestEndDateTime)->setTimezone($mallTimezone)->toDateString();
+        $requestEndDate = Carbon::createFromFormat('Y-m-d H:i:s', $requestEndDateTime)->setTimezone($timezone)->toDateString();
 
-        $hoursDiff = $this->getTimezoneHoursDiff($mallTimezone);
+        $hoursDiff = OrbitDateTime::getTimezoneOffset($timezone);
 
         $procCallStatement = 'CALL prc_campaign_detailed_cost(?, ?, ?, ?, ?)';
 
