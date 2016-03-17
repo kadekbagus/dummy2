@@ -708,7 +708,7 @@ class MobileCIAPIController extends BaseCIController
         if ($mac !== '') {
             $mac_model = \MacAddress::excludeDeleted()->with('user')->where('mac_address', $mac)->orderBy('mac_addresses.created_at', 'desc')->first();
             if (! empty($mac_model)) {
-                $loginFrom = UserSignin::where('user_id', $mac_model->user->user_id)->orderBy('created_at', 'desc')->first();  
+                $loginFrom = UserSignin::where('user_id', $mac_model->user->user_id)->orderBy('created_at', 'desc')->first();
             }
         }
 
@@ -2535,7 +2535,7 @@ class MobileCIAPIController extends BaseCIController
             if ($user->userDetail->gender !== '' && $user->userDetail->gender !== null) {
                 $userGender =  $user->userDetail->gender;
             }
-            
+
             $mallTime = Carbon::now($retailer->timezone->timezone_name);
 
             $tenant = Tenant::with( // translated
@@ -3339,7 +3339,7 @@ class MobileCIAPIController extends BaseCIController
             }
 
             return Response::json($data);
-        } 
+        }
     }
 
     /**
@@ -4337,7 +4337,7 @@ class MobileCIAPIController extends BaseCIController
                 ->where('issued_coupons.expired_date', '>=', Carbon::now($retailer->timezone->timezone_name))
                 ->where('promotions.merchant_id', $retailer->merchant_id)
                 ->where('issued_coupons.user_id', $user->user_id);
-            
+
             OrbitInput::get(
                 'keyword',
                 function ($keyword) use ($coupons, $retailer, $alternateLanguage) {
@@ -5524,7 +5524,7 @@ class MobileCIAPIController extends BaseCIController
                         });
                 }
             );
-            
+
             $this->viewItemUserUpdate('news', $user, $retailer);
 
             $news->groupBy('news.news_id');
@@ -6262,7 +6262,7 @@ class MobileCIAPIController extends BaseCIController
     }
 
     /**
-     * GET - Get campaign pop up 
+     * GET - Get campaign pop up
      *
      * @return Illuminate\Support\Facades\Response
      *
@@ -6377,7 +6377,7 @@ class MobileCIAPIController extends BaseCIController
 
             shuffle($results);
 
-            // slice shuffled results to 2 parts and shuffle again 
+            // slice shuffled results to 2 parts and shuffle again
             $resultsize = count($results);
 
             $firsthalf = array_slice($results, 0, ($resultsize / 2));
@@ -6821,7 +6821,7 @@ class MobileCIAPIController extends BaseCIController
                     $near_end_result->object_url = URL::to('customer/luckydraw?id=' . $near_end_result->object_id);
                     $near_end_result->object_image = URL::asset('mobile-ci/images/default_lucky_number.png');
                 }
-                
+
                 if (!empty($alternateLanguage)) {
                     if ($near_end_result->object_type === 'promotion' || $near_end_result->object_type === 'news') {
                         $objectTranslation = \NewsTranslation::excludeDeleted()
@@ -6840,10 +6840,10 @@ class MobileCIAPIController extends BaseCIController
                             ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
                             ->where('lucky_draw_id', $near_end_result->object_id)->first();
                     }
-                    
+
                     if (!empty($objectTranslation)) {
                         if ($near_end_result->object_type === 'promotion' || $near_end_result->object_type === 'news') {
-                            
+
                             //if field translation empty or null, value of field back to english (default)
                             if (isset($objectTranslation->news_name) && $objectTranslation->news_name !== '') {
                                 $near_end_result->object_name = $objectTranslation->news_name;
@@ -6851,11 +6851,11 @@ class MobileCIAPIController extends BaseCIController
                             if (isset($objectTranslation->description) && $objectTranslation->description !== '') {
                                 $near_end_result->object_description = $objectTranslation->description;
                             }
-                            
+
                             $media = $objectTranslation->find($objectTranslation->news_translation_id)
                                 ->media_orig()
                                 ->first();
-                            
+
                             if (is_object($media)) {
                                 $near_end_result->object_image = URL::asset($media->path);
                             } else {
@@ -6866,12 +6866,12 @@ class MobileCIAPIController extends BaseCIController
                                     $contentDefaultLanguage = \NewsTranslation::excludeDeleted()
                                         ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
                                         ->where('news_id', $near_end_result->object_id)->first();
-                                    
+
                                     // get default image
                                     $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->news_translation_id)
                                         ->media_orig()
                                         ->first();
-                                    
+
                                     if (is_object($mediaDefaultLanguage)) {
                                         $near_end_result->object_image = URL::asset($mediaDefaultLanguage->path);
                                     }
@@ -6885,11 +6885,11 @@ class MobileCIAPIController extends BaseCIController
                             if (isset($objectTranslation->description) && $objectTranslation->description !== '') {
                                 $near_end_result->object_description = $objectTranslation->description;
                             }
-                            
+
                             $media = $objectTranslation->find($objectTranslation->coupon_translation_id)
                                 ->media_orig()
                                 ->first();
-                            
+
                             if (is_object($media)) {
                                 $near_end_result->object_image = URL::asset($media->path);
                             } else {
@@ -6900,12 +6900,12 @@ class MobileCIAPIController extends BaseCIController
                                     $contentDefaultLanguage = \CouponTranslation::excludeDeleted()
                                         ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
                                         ->where('promotion_id', $near_end_result->object_id)->first();
-                                    
+
                                     // get default image
                                     $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->coupon_translation_id)
                                         ->media_orig()
                                         ->first();
-                                    
+
                                     if (is_object($mediaDefaultLanguage)) {
                                         $near_end_result->object_image = URL::asset($mediaDefaultLanguage->path);
                                     }
@@ -6929,11 +6929,11 @@ class MobileCIAPIController extends BaseCIController
                             if (isset($objectTranslation->description) && $objectTranslation->description !== '') {
                                 $near_end_result->object_description = $objectTranslation->description;
                             }
-                            
+
                             $media = $objectTranslation->find($objectTranslation->lucky_draw_translation_id)
                                 ->media_orig()
                                 ->first();
-                            
+
                             if (is_object($media)) {
                                 $near_end_result->object_image = URL::asset($media->path);
                             } else {
@@ -6944,12 +6944,12 @@ class MobileCIAPIController extends BaseCIController
                                     $contentDefaultLanguage = \LuckyDrawTranslation::excludeDeleted()
                                         ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
                                         ->where('lucky_draw_id', $near_end_result->object_id)->first();
-                                    
+
                                     // get default image
                                     $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->lucky_draw_translation_id)
                                         ->media_orig()
                                         ->first();
-                                    
+
                                     if (is_object($mediaDefaultLanguage)) {
                                         $near_end_result->object_image = URL::asset($mediaDefaultLanguage->path);
                                     }
@@ -7718,7 +7718,7 @@ class MobileCIAPIController extends BaseCIController
                                 }
                             }
 
-                        } 
+                        }
                         elseif ($ruleBeginDateUTC < $couponBeginDateUTC) {
 
                             if ($mallTime >= $ruleBeginDateUTC && $mallTime <= $ruleEndDateUTC) {
@@ -7991,9 +7991,10 @@ class MobileCIAPIController extends BaseCIController
 
             $acq = \UserAcquisition::where('user_id', $user->user_id)
                 ->where('acquirer_id', $retailer->merchant_id)
+                ->orderBy('created_at', 'desc')
                 ->lockForUpdate()->first();
 
-            if ($acq === null && $forceInsert) {
+            if (($acq === null || $acq->signup_via === 'cs') && $forceInsert) {
                 $from = empty($from) ? 'form' : $from;
 
                 $acq = new \UserAcquisition();

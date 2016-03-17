@@ -13,6 +13,7 @@ class News extends Eloquent
      */
     use ModelStatusTrait;
     use CampaignStatusTrait;
+    use CampaignAccessTrait;
 
     protected $table = 'news';
 
