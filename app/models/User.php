@@ -20,6 +20,20 @@ class User extends Eloquent implements UserInterface
         return $this->belongsTo('Role', 'user_role_id', 'role_id');
     }
 
+    /**
+     * Get the "PMP Account" users only.
+     *
+     * @author Qosdil A. <qosdil@dominopos.com>
+     */
+    public function scopePmpAccounts($query)
+    {
+        $userTenantArray = UserMerchant::whereObjectType('tenant')->lists('user_id');
+        
+        return $userTenantArray
+            ? $query->whereIn('user_id', $userTenantArray)
+            : $query->whereUserId('');
+    }
+
     public function permissions()
     {
         return $this->belongsToMany('Permission', 'custom_permission', 'user_id', 'permission_id')->withPivot('allowed');
@@ -53,6 +67,12 @@ class User extends Eloquent implements UserInterface
     public function getFullName()
     {
         return $this->user_firstname . ' ' . $this->user_lastname;
+    }
+
+    /** This enables $user->full_name. */
+    public function getFullNameAttribute()
+    {
+        return $this->user_firstname.' '.$this->user_lastname;
     }
 
     public function merchants()
@@ -262,8 +282,10 @@ class User extends Eloquent implements UserInterface
     public function isPMPAdmin() {
         $role = Role::where('role_name', 'campaign admin')->first();
 
-        if ($this->user_role_id === $role->role_id) {
-            return true;
+        if (! empty($role)) {
+            if ($this->user_role_id === $role->role_id) {
+                return true;
+            }
         }
 
         return false;
