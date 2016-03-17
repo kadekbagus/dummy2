@@ -23,10 +23,6 @@ class AccountAPIController extends ControllerAPI
             'title' => 'Location',
             'sort_key' => 'location',
         ],
-        'number_of_tenant' => [
-            'title' => 'Number of Tenant(s)',
-            'sort_key' => 'number_of_tenant',
-        ],
         'tenants' => [
             'title' => 'Tenant(s)',
             'sort_key' => 'tenants',
@@ -56,7 +52,6 @@ class AccountAPIController extends ControllerAPI
                 'name' => $row->full_name,
                 'company_name' => $row->userDetail->company_name,
                 'location' => $row->userDetail->location,
-                'number_of_tenant' => 0,
                 'tenants' => [],
                 'creation_date' => $row->created_at->format('d F Y H:i:s'),
                 'status' => $row->status,
