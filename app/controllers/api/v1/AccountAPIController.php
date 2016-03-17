@@ -2,9 +2,15 @@
 
 use OrbitShop\API\v1\ControllerAPI;
 
+/**
+ * The PMP Account controller
+ *
+ * @author Qosdil A. <qosdil@dominopos.com>
+ */
 class AccountAPIController extends ControllerAPI
 {
-    protected $columns = [
+    /** @var array The list columns. */
+    protected $listColumns = [
         'name' => [
             'title' => 'Account Name',
             'sort_key' => 'name',
@@ -35,6 +41,11 @@ class AccountAPIController extends ControllerAPI
         ],
     ];
 
+    /**
+     * The main method
+     *
+     * @author Qosdil A. <qosdil@dominopos.com>
+     */
     public function getAccount()
     {
         $records = [
@@ -50,7 +61,7 @@ class AccountAPIController extends ControllerAPI
         ];
 
         $data = new stdClass();
-        $data->columns = $this->columns;
+        $data->columns = $this->listColumns;
         $data->records = $records;
 
         return [
