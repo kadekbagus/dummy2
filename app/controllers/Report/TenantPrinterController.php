@@ -22,6 +22,11 @@ class TenantPrinterController extends DataPrinterController
         $user = $this->loggedUser;
 
         $current_mall = OrbitInput::get('current_mall');
+        $filter_name = OrbitInput::get('name_like');
+        $filter_category = OrbitInput::get('categories_like');
+        $filter_floor = OrbitInput::get('floor_like');
+        $filter_unit = OrbitInput::get('unit_like');
+        $filter_status = OrbitInput::get('status');
 
         $timezone = $this->getTimeZone($current_mall);
 
@@ -47,69 +52,62 @@ class TenantPrinterController extends DataPrinterController
 
         $pageTitle = 'Tenant List';
 
-          // while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
-          //   dd($row);
-          // }
-
         switch ($mode) {
             case 'csv':
                 @header('Content-Description: File Transfer');
                 @header('Content-Type: text/csv');
-                @header('Content-Disposition: attachment; filename=' . $filename );
+                @header('Content-Disposition: attachment; filename=' . OrbitText::exportFilename($pageTitle, '.csv', $timezone));
 
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','','');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Mall List', '', '', '', '', '','','','','');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Malls', $totalRec, '', '', '', '','','','','');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", 'Tenant List', '', '', '', '', '', '','','','','');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','','');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", 'Total Tenants', $totalRec, '', '', '', '', '','','','','');
+
+                if ($filter_name != '') {
+                    printf("%s,%s,\n", 'Filter by Tenant Name', $filter_name);
+                }
+
+                if ($filter_category != '') {
+                    printf("%s,%s,\n", 'Filter by Tenant Name', $filter_category);
+                }
+
+                if ($filter_floor != '') {
+                    printf("%s,%s,\n", 'Filter by Tenant Name', $filter_floor);
+                }
+
+                if ($filter_unit != '') {
+                    printf("%s,%s,\n", 'Filter by Tenant Name', $filter_unit);
+                }
+
+                if ($filter_status != '') {
+                    printf("%s,%s,\n", 'Filter by Tenant Name', implode(' ', $filter_status));
+                }
+
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','','','');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','','','');
+
+                printf("%s,%s,%s,%s,%s,%s,%s\n", 'Tenant Name', 'Categories', 'Location', 'Status', 'Last Update', '', '');
 
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','','','');
 
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Mall Name', 'Location', 'Start Date', 'End Date', 'Mall Group', 'Status');
+                while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
 
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','','','');
+                    printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
+                            $this->printUtf8($row->name), 
+                            $this->printUtf8($row->tenant_categories), 
+                            $this->printUtf8($row->location),
+                            $row->status,
+                            $this->printDateTime($row->updated_at, $timezone, 'd F Y  H:i:s')
+                       );
 
-                // while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
+                }
 
-                //     printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
-                //         '', $this->printUtf8($row->name), 
-                //             $this->printLocation($row), 
-                //             $this->printDateTime($row->start_date_activity, $timezone, 'd F Y'),
-                //             $this->printDateTime($row->end_date_activity, $timezone, 'd F Y'),
-                //             $this->printUtf8($row->mall_group_name),
-                //             $row->status
-                //        );
-
-                // }
                 break;
 
             case 'print':
             default:
                 $me = $this;
                 require app_path() . '/views/printer/list-tenant-view.php';
-        }
-    }
-
-    public function getRetailerInfo()
-    {
-        try {
-            $retailer_id = Config::get('orbit.shop.id');
-            $retailer = \Mall::with('parent')->where('merchant_id', $retailer_id)->first();
-
-            return $retailer;
-        } catch (ACLForbiddenException $e) {
-            $this->response->code = $e->getCode();
-            $this->response->status = 'error';
-            $this->response->message = $e->getMessage();
-            $this->response->data = null;
-        } catch (InvalidArgsException $e) {
-            $this->response->code = $e->getCode();
-            $this->response->status = 'error';
-            $this->response->message = $e->getMessage();
-            $this->response->data = null;
-        } catch (Exception $e) {
-            $this->response->code = $e->getCode();
-            $this->response->status = 'error';
-            $this->response->message = $e->getMessage();
-            $this->response->data = null;
         }
     }
 

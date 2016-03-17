@@ -262,8 +262,10 @@ class User extends Eloquent implements UserInterface
     public function isPMPAdmin() {
         $role = Role::where('role_name', 'campaign admin')->first();
 
-        if ($this->user_role_id === $role->role_id) {
-            return true;
+        if (! empty($role)) {
+            if ($this->user_role_id === $role->role_id) {
+                return true;
+            }
         }
 
         return false;

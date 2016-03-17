@@ -41,17 +41,14 @@
             padding: 1px;
         }
         table.noborder tr td, table.noborder tr th {
-            border: 0;
+            border: 1;
             padding: 1px;
         }
         #loadingbar {
             position: relative;
             left: 1em;
         }
-        h2 {
-            padding-bottom: 2px;
-            border-bottom: 1px solid #ccc;
-        }
+
     </style>
     <style type="text/css" media="print">
         #payment-date, #printernote { display:none; }
@@ -117,6 +114,47 @@
             <td>:</td>
             <td><strong><?php echo number_format($totalRec, 0, '.', '.'); ?></strong></td>
         </tr>
+
+        <?php if ($filter_name != '') { ?>
+            <tr>
+                <td>Filter by Tenant Name</td>
+                <td>:</td>
+                <td><strong><?php echo htmlentities($filter_name); ?></strong></td>
+            </tr>
+        <?php } ?>
+
+        <?php if ($filter_category != '') { ?>
+            <tr>
+                <td>Filter by Category</td>
+                <td>:</td>
+                <td><strong><?php echo htmlentities($filter_category); ?></strong></td>
+            </tr>
+        <?php } ?>
+
+        <?php if ($filter_floor != '') { ?>
+            <tr>
+                <td>Filter by Floor</td>
+                <td>:</td>
+                <td><strong><?php echo htmlentities($filter_floor); ?></strong></td>
+            </tr>
+        <?php } ?>
+
+        <?php if ($filter_unit != '') { ?>
+            <tr>
+                <td>Filter by Unit</td>
+                <td>:</td>
+                <td><strong><?php echo htmlentities($filter_unit); ?></strong></td>
+            </tr>
+        <?php } ?>
+
+        <?php if ($filter_status != '') { ?>
+            <tr>
+                <td>Filter by Status</td>
+                <td>:</td>
+                <td><strong><?php echo htmlentities(implode(' ',$filter_status)); ?></strong></td>
+            </tr>
+        <?php } ?>
+
     </table>
 
     <table style="width:100%">
@@ -131,12 +169,11 @@
         <tbody>
         <?php $count = 1; while ($row = $statement->fetch(PDO::FETCH_OBJ)) : ?>
             <tr class="{{ $rowCounter % 2 === 0 ? 'zebra' : '' }}">
-                <!-- <td><?php //echo ($count); ?></td> -->
                  <td><?php echo $me->printUtf8($row->name); ?></td>
-                 <td><?php //echo $row->categories; ?></td>
-                 <td><?php echo $row->location; ?></td>
+                 <td><?php echo $me->printUtf8($row->tenant_categories); ?></td>
+                 <td><?php echo $me->printUtf8($row->location); ?></td>
                  <td><?php echo $row->status; ?></td>
-                 <td><?php  ?></td>
+                 <td><?php echo $me->printDateTime($row->updated_at, $timezone, 'd F Y  H:i:s'); ?></td>
             </tr>
         <?php  $count++; endwhile; ?>
         </tbody>
