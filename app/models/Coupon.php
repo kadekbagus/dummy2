@@ -13,6 +13,7 @@ class Coupon extends Eloquent
      */
     use ModelStatusTrait;
     use CampaignStatusTrait;
+    use CampaignAccessTrait;
 
     /**
      * Use Trait PromotionTypeTrait so we only displaying records with value
