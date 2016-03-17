@@ -18,6 +18,13 @@ class TenantAPIController extends ControllerAPI
     protected $tenantModifiyRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee'];
 
     /**
+     * Flag to return the query builder.
+     *
+     * @var Builder
+     */
+    protected $returnBuilder = FALSE;
+
+    /**
      * Default language name used if none are sent
      */
     const DEFAULT_LANG = 'en';
@@ -1958,6 +1965,11 @@ class TenantAPIController extends ControllerAPI
             });
             $tenants->orderBy($sortBy, $sortMode);
 
+            // Return the instance of Query Builder
+            if ($this->returnBuilder) {
+                return ['builder' => $tenants, 'count' => RecordCounter::create($_tenants)->count()];
+            }
+
             $totalTenants = RecordCounter::create($_tenants)->count();
             $listOfTenants = $tenants->get();
 
@@ -2628,5 +2640,12 @@ class TenantAPIController extends ControllerAPI
             $retailertenant->save();
         }
         $tenant->setRelation('link_to_tenant', $retailertenant);
+    }
+
+    public function setReturnBuilder($bool)
+    {
+        $this->returnBuilder = $bool;
+
+        return $this;
     }
 }
