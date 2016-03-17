@@ -259,4 +259,13 @@ class User extends Eloquent implements UserInterface
         return $membershipNumbers->get();
     }
 
+    public function isPMPAdmin() {
+        $role = Role::where('role_name', 'campaign admin')->first();
+
+        if ($this->user_role_id === $role->role_id) {
+            return true;
+        }
+
+        return false;
+    }
 }
