@@ -78,7 +78,7 @@ class NewsPrinterController extends DataPrinterController
 
 
                 if ($etcFrom != '' && $etcTo != ''){
-                    printf("%s,%s - %s,%s,%s,%s,%s\n", '', 'Estimated Total Cost', $etcFrom, $etcFrom, '', '', '','');
+                    printf("%s,%s,%s - %s,%s,%s,%s\n", '', 'Estimated Total Cost', $etcFrom, $etcTo, '', '', '','');
                 }
 
                 if ( is_array($status) && count($status) > 0) {
@@ -105,13 +105,13 @@ class NewsPrinterController extends DataPrinterController
 
                 $count = 1;
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
-                        printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s - %s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
+                        printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
                             $count,
                             $row->news_name,
                             date('d M Y H:i:s', strtotime($row->begin_date)),
                             date('d M Y H:i:s', strtotime($row->end_date)),
                             $row->campaign_status,
-                            date('d M Y', strtotime($row->update_at))
+                            date('d M Y', strtotime($row->updated_at))
                     );
                     $count++;
                 }
