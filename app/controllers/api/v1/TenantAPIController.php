@@ -1498,6 +1498,15 @@ class TenantAPIController extends ControllerAPI
                                  ->excludeDeleted('merchants');
             }
 
+            $prefix = DB::getTablePrefix();
+
+            if ($this->returnBuilder) {
+                $tenants->addSelect(DB::raw("GROUP_CONCAT(`{$prefix}categories`.`category_name` SEPARATOR ', ') as tenant_categories"))
+                        ->leftJoin('category_merchant','category_merchant.merchant_id','=','merchants.merchant_id')
+                        ->leftJoin('categories','categories.category_id','=','category_merchant.category_id')
+                        ->groupBy('merchants.merchant_id');
+            }
+
             // Filter tenant by parent_id / mall id
             $tenants->whereIn('merchants.parent_id', $listOfMallIds);
 
