@@ -64,11 +64,7 @@ class AccountAPIController extends ControllerAPI
         $data->columns = $this->listColumns;
         $data->records = $records;
 
-        return [
-            'code' => 0,
-            'status' => 'success',
-            'message' => 'Request OK',
-            'data' => $data,
-        ];
+        $this->response->data = $data;
+        return $this->render(200);
     }
 }
