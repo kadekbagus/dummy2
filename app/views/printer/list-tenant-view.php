@@ -113,7 +113,7 @@
             <td><strong></strong></td>
         </tr>
         <tr>
-            <td>Total Malls</td>
+            <td>Total Tenants</td>
             <td>:</td>
             <td><strong><?php echo number_format($totalRec, 0, '.', '.'); ?></strong></td>
         </tr>
@@ -122,23 +122,21 @@
     <table style="width:100%">
         <thead>
            <!--  <th style="text-align:left;">No.</th> -->
-            <th style="text-align:left;">Mall Name</th>
+            <th style="text-align:left;">Tenant Name</th>
+            <th style="text-align:left;">Categories</th>
             <th style="text-align:left;">Location</th>
-            <th style="text-align:left;">Start Date</th>
-            <th style="text-align:left;">End Date</th>
-            <th style="text-align:left;">Mall Group</th>
             <th style="text-align:left;">Status</th>
+            <th style="text-align:left;">Last Update</th>
         </thead>
         <tbody>
         <?php $count = 1; while ($row = $statement->fetch(PDO::FETCH_OBJ)) : ?>
             <tr class="{{ $rowCounter % 2 === 0 ? 'zebra' : '' }}">
                 <!-- <td><?php //echo ($count); ?></td> -->
                  <td><?php echo $me->printUtf8($row->name); ?></td>
-                 <td><?php echo $me->printLocation($row); ?></td>
-                 <td><?php echo $me->printDateTime($row->start_date_activity, 'UTC', 'd F Y'); ?></td>
-                 <td><?php echo $me->printDateTime($row->end_date_activity, 'UTC', 'd F Y'); ?></td>
-                 <td><?php echo $me->printUtf8($row->mall_group_name); ?></td>
-                 <td><?php echo ($row->status); ?></td>
+                 <td><?php //echo $row->categories; ?></td>
+                 <td><?php echo $row->location; ?></td>
+                 <td><?php echo $row->status; ?></td>
+                 <td><?php  ?></td>
             </tr>
         <?php  $count++; endwhile; ?>
         </tbody>
