@@ -70,8 +70,6 @@ class NewsPrinterController extends DataPrinterController
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
 
                 // Filtering
-
-
                 if ($newsName != '') {
                     printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Campaign Name', htmlentities($newsName), '', '', '','');
                 }
