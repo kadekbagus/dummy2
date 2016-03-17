@@ -110,40 +110,32 @@
             <td><strong></strong></td>
         </tr>
         <tr>
-            <td>Total Tenants</td>
+            <td>Total Lucky Draw</td>
             <td>:</td>
             <td><strong><?php echo number_format($totalRec, 0, '.', '.'); ?></strong></td>
         </tr>
 
         <?php if ($filterName != '') { ?>
             <tr>
-                <td>Filter by Tenant Name</td>
+                <td>Filter by Lucky Draw Name</td>
                 <td>:</td>
                 <td><strong><?php echo htmlentities($filterName); ?></strong></td>
             </tr>
         <?php } ?>
 
-        <?php if ($filterCategory != '') { ?>
+        <?php if ($filterMinimumAmountFrom != '') { ?>
             <tr>
-                <td>Filter by Category</td>
+                <td>Filter by Minimum Amount From</td>
                 <td>:</td>
-                <td><strong><?php echo htmlentities($filterCategory); ?></strong></td>
+                <td><strong><?php echo htmlentities($filterMinimumAmountFrom); ?></strong></td>
             </tr>
         <?php } ?>
 
-        <?php if ($filterFloor != '') { ?>
+        <?php if ($filterMinimumAmountTo != '') { ?>
             <tr>
-                <td>Filter by Floor</td>
+                <td>Filter by Minimum Amount To</td>
                 <td>:</td>
-                <td><strong><?php echo htmlentities($filterFloor); ?></strong></td>
-            </tr>
-        <?php } ?>
-
-        <?php if ($filterUnit != '') { ?>
-            <tr>
-                <td>Filter by Unit</td>
-                <td>:</td>
-                <td><strong><?php echo htmlentities($filterUnit); ?></strong></td>
+                <td><strong><?php echo htmlentities($filterMinimumAmountTo); ?></strong></td>
             </tr>
         <?php } ?>
 
@@ -151,7 +143,7 @@
             <tr>
                 <td>Filter by Status</td>
                 <td>:</td>
-                <td><strong><?php echo htmlentities(implode(' ',$filterStatus)); ?></strong></td>
+                <td><strong><?php echo htmlentities(implode(' ', $filterStatus)); ?></strong></td>
             </tr>
         <?php } ?>
 
@@ -160,20 +152,24 @@
     <table style="width:100%">
         <thead>
            <!--  <th style="text-align:left;">No.</th> -->
-            <th style="text-align:left;">Tenant Name</th>
-            <th style="text-align:left;">Categories</th>
-            <th style="text-align:left;">Location</th>
+            <th style="text-align:left;">Lucky Draw Name</th>
+            <th style="text-align:left;">Start Date & Time</th>
+            <th style="text-align:left;">End Date & Time</th>
+            <th style="text-align:left;">Amount to Obtain</th>
+            <th style="text-align:left;">Total Issued Numbers</th>
             <th style="text-align:left;">Status</th>
             <th style="text-align:left;">Last Update</th>
         </thead>
         <tbody>
         <?php $count = 1; while ($row = $statement->fetch(PDO::FETCH_OBJ)) : ?>
             <tr class="{{ $rowCounter % 2 === 0 ? 'zebra' : '' }}">
-                 <td><?php echo $me->printUtf8($row->name); ?></td>
-                 <td><?php echo $me->printUtf8($row->tenant_categories); ?></td>
-                 <td><?php echo $me->printUtf8($row->location); ?></td>
-                 <td><?php echo $row->status; ?></td>
-                 <td><?php echo $me->printDateTime($row->updated_at, $timezone, 'd F Y  H:i:s'); ?></td>
+                 <td><?php echo $me->printUtf8($row->lucky_draw_name); ?></td>
+                 <td><?php echo $me->printDateTime($row->start_date, 'UTC', 'd F Y  H:i'); ?></td>
+                 <td><?php echo $me->printDateTime($row->end_date, 'UTC', 'd F Y  H:i'); ?></td>
+                 <td><?php echo number_format($row->minimum_amount); ?></td>
+                 <td><?php echo $row->total_issued_lucky_draw_number; ?></td>
+                 <td><?php echo $row->campaign_status; ?></td>
+                 <td><?php echo $me->printDateTime($row->updated_at, $timezone, 'd F Y  H:i'); ?></td>
             </tr>
         <?php  $count++; endwhile; ?>
         </tbody>

@@ -6,15 +6,15 @@ use DB;
 use PDO;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use Orbit\Text as OrbitText;
+use Mall;
 use Carbon\Carbon as Carbon;
-use TenantAPIController;
+use EmployeeAPIController;
 use Setting;
 use Response;
-use Mall;
 
-class TenantPrinterController extends DataPrinterController
+class EmployeePrinterController extends DataPrinterController
 {
-    public function getTenantPrintView()
+    public function getEmployeePrintView()
     {
         $this->preparePDO();
 
@@ -22,35 +22,37 @@ class TenantPrinterController extends DataPrinterController
         $user = $this->loggedUser;
 
         $current_mall = OrbitInput::get('current_mall');
-        $filterName = OrbitInput::get('name_like');
-        $filterCategory = OrbitInput::get('categories_like');
-        $filterFloor = OrbitInput::get('floor_like');
-        $filterUnit = OrbitInput::get('unit_like');
-        $filterStatus = OrbitInput::get('status');
 
         $timezone = $this->getTimeZone($current_mall);
 
-        // Instantiate the TenantAPIController to get the query builder of Malls
-        $response = TenantAPIController::create('raw')
-            ->setReturnBuilder(true)
-            ->getSearchTenant();
+        // Filter
+        $full_name_like = OrbitInput::get('full_name_like');
+        $user_email_like = OrbitInput::get('user_email_like');
+        $role_names = OrbitInput::get('role_names');
+        $employee_id_char_like = OrbitInput::get('employee_id_char_like');
+        $status = OrbitInput::get('status');
+
+        // Instantiate the MallAPIController to get the query builder of Malls
+        $response = EmployeeAPIController::create('raw')
+                                         ->setReturnBuilder(true)
+                                         ->getSearchMallEmployee();
 
         if (! is_array($response)) {
             return Response::make($response->message);
         }
 
-        $tenants = $response['builder'];
+        $malls = $response['builder'];
         $totalRec = $response['count'];
 
         $this->prepareUnbufferedQuery();
 
-        $sql = $tenants->toSql();
-        $binds = $tenants->getBindings();
+        $sql = $malls->toSql();
+        $binds = $malls->getBindings();
 
         $statement = $this->pdo->prepare($sql);
         $statement->execute($binds);
 
-        $pageTitle = 'Tenant List';
+        $pageTitle = 'Employee List';
 
         switch ($mode) {
             case 'csv':
@@ -59,58 +61,64 @@ class TenantPrinterController extends DataPrinterController
                 @header('Content-Disposition: attachment; filename=' . OrbitText::exportFilename($pageTitle, '.csv', $timezone));
 
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','','');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", 'Tenant List', '', '', '', '', '', '','','','','');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','','');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", 'Total Tenants', $totalRec, '', '', '', '', '','','','','');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Employee List', '', '', '', '', '','','','','');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Employees', $totalRec, '', '', '', '','','','','');
 
-                if ($filterName != '') {
-                    printf("%s,%s,\n", 'Filter by Tenant Name', $filterName);
+                if ($full_name_like != '') {
+                    printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Employee Name', htmlentities($full_name_like), '', '', '', '','','','');
                 }
 
-                if ($filterCategory != '') {
-                    printf("%s,%s,\n", 'Filter by Tenant Name', $filterCategory);
+                if ($user_email_like != '') {
+                    printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Email Address', htmlentities($user_email_like), '', '', '', '','','','');
                 }
 
-                if ($filterFloor != '') {
-                    printf("%s,%s,\n", 'Filter by Tenant Name', $filterFloor);
+                if ( is_array($role_names) && count($role_names) > 0) {
+                    $role_names_string = '';
+                    foreach ($role_names as $key => $val){
+                        $role_names_string .= $val . ', ';
+                    }
+                    printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Role', htmlentities(rtrim($role_names_string, ', ')), '', '', '', '','','','');
                 }
 
-                if ($filterUnit != '') {
-                    printf("%s,%s,\n", 'Filter by Tenant Name', $filterUnit);
+
+                if ($employee_id_char_like != '') {
+                    printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Employee ID', htmlentities($employee_id_char_like), '', '', '', '','','','');
                 }
 
-                if ($filterStatus != '') {
-                    printf("%s,%s,\n", 'Filter by Tenant Name', implode(' ', $filterStatus));
+                if ( is_array($status) && count($status) > 0) {
+                    $status_string = '';
+                    foreach ($status as $key => $valstatus){
+                        $status_string .= $valstatus . ', ';
+                    }
+                    printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Status', htmlentities(rtrim($status_string, ', ')), '', '', '', '','','','');
                 }
 
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','','','');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','','','');
 
-                printf("%s,%s,%s,%s,%s,%s,%s\n", 'Tenant Name', 'Categories', 'Location', 'Status', 'Last Update', '', '');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Name', 'Email', 'Role', 'Employee ID', 'Status', 'Last Update');
 
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','','','');
 
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
 
-                    printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
-                            $this->printUtf8($row->name), 
-                            $this->printUtf8($row->tenant_categories), 
-                            $this->printUtf8($row->location),
-                            $row->status,
+                    printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
+                        '', $this->printUtf8($row->user_firstname . ' ' . $row->user_lastname),
+                            $this->printUtf8($row->user_email),
+                            $this->printUtf8($row->role_name),
+                            $this->printUtf8($row->employee_id_char),
+                            $this->printUtf8($row->status),
                             $this->printDateTime($row->updated_at, $timezone, 'd F Y  H:i:s')
                        );
 
                 }
-
                 break;
 
             case 'print':
             default:
                 $me = $this;
-                require app_path() . '/views/printer/list-tenant-view.php';
+                require app_path() . '/views/printer/list-employee-view.php';
         }
     }
-
 
     /**
      * Print date and time friendly name.
@@ -184,26 +192,6 @@ class TenantPrinterController extends DataPrinterController
         }
 
         return $timezone;
-    }
-
-    /**
-     * output location.
-     *
-     * @param string $input
-     * @return string
-     */
-    public function printLocation($row)
-    {
-        return utf8_encode($row->floor." - ".$row->unit);
-    }
-
-
-    public function getFilename($pageTitle, $ext = ".csv", $current_date_and_time=null)
-    {
-        if (empty($current_date_and_time)) {
-            $current_date_and_time = Carbon::now();
-        }
-        return 'orbit-export-' . $pageTitle . '-' . Carbon::createFromFormat('Y-m-d H:i:s', $current_date_and_time)->format('D_d_M_Y_Hi') . $ext;
     }
 
 }
