@@ -48,17 +48,20 @@ class AccountAPIController extends ControllerAPI
      */
     public function getAccount()
     {
-        $records = [
-            [
-                'name' => 'Starbucks Jakarta',
-                'company_name' => 'Visionet',
-                'location' => 'Jakarta, Indonesia',
-                'number_of_tenant' => '2',
-                'tenants' => ['Starbucks@Lippo Mall Puri', 'Starbucks@Lippo Mall Kemang'],
-                'creation_date' => '26 January 2016 14:51:35',
-                'status' => 'active',
-            ],
-        ];
+        $pmpAccounts = User::pmpAccounts()->get();
+
+        $records = [];
+        foreach ($pmpAccounts as $row) {
+            $records[] = [
+                'name' => $row->full_name,
+                'company_name' => $row->userDetail->company_name,
+                'location' => $row->userDetail->location,
+                'number_of_tenant' => 0,
+                'tenants' => [],
+                'creation_date' => $row->created_at->format('d F Y H:i:s'),
+                'status' => $row->status,
+            ];
+        }
 
         $data = new stdClass();
         $data->columns = $this->listColumns;
