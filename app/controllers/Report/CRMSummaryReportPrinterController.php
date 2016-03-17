@@ -9,6 +9,7 @@ use DateTime;
 use DateTimeZone;
 use DateInterval;
 use DatePeriod;
+use ActivityAPIController;
 
 
 class CRMSummaryReportPrinterController extends DataPrinterController
@@ -26,8 +27,6 @@ class CRMSummaryReportPrinterController extends DataPrinterController
         $current_mall = OrbitInput::get('current_mall');
         $start_date = OrbitInput::get('start_date');
         $end_date = OrbitInput::get('end_date');
-
-        $builder = \ActivityAPIController::create('raw')->setReturnBuilder(true)->getCRMSummaryReport();
 
         // check if the days is more than 7 or not
         $_startDate = strtotime($start_date);
@@ -57,8 +56,6 @@ class CRMSummaryReportPrinterController extends DataPrinterController
 
         $dateRange = [];
         $responses = [];
-        $records = [];
-        $columns = [];
 
         foreach ($_dateRange as $date) {
             $dateRange[] = $date->format("Y-m-d");
@@ -66,54 +63,7 @@ class CRMSummaryReportPrinterController extends DataPrinterController
 
 
         if (!$flag_7days) {
-            $responses = $builder['responses'];
-        }
-
-        $activity_columns = $builder['columns'];
-
-        if (count($activity_columns) > 0) {
-            $columns = [];
-
-            $i = 0;
-            foreach ($activity_columns as $key => $value) {
-                $colTemp = [];
-                $colTemp['order'] = $i;
-                $colTemp['value'] = $value;
-                $colTemp['label'] = $value;
-                array_push($columns, $colTemp);
-                $i++;
-            }
-        }
-        else {
-            $flag_7days = true;
-            $flag_noconfig = true;
-        }
-
-
-
-        if (!$flag_7days) {
-
-            $dates = [];
-            $data = [];
-            $i = 0;
-            foreach ($responses as $key => $value) {
-                $dateTemp = [];
-                $dateTemp['order'] = $i;
-                $dateTemp['label'] = $key;
-                array_push($dates, $dateTemp);
-
-                foreach ($columns as $keyA => $valueA) {
-                    $index = $this->in_array_r($value, 'name', $valueA['value']);
-                    $data[$i][$valueA['order']] = $index > -1 ? $value[$index]['count'] : 0;
-                }
-
-                $i++;
-            }
-
-            usort($dates, function ($b, $a) {
-                return strtotime($a['label']) - strtotime($b['label']);
-            });
-
+            $builder = ActivityAPIController::create('raw')->setReturnQuery(TRUE)->getCRMSummaryReport();      
         }
 
         $pageTitle = 'CRM Summary Report';
@@ -129,34 +79,29 @@ class CRMSummaryReportPrinterController extends DataPrinterController
 
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '', '', '');
 
-                if (!$flag_noconfig) {
-                    printf("Date,");
-                    foreach ($columns as $x => $y) {
-                        if ($x > 0) {
+                foreach ($builder['responses'] as $key => $value) {
+                    foreach ($value as $key2 => $value2) {
+                        if ($key2 != 'date') {
                             printf(",");
                         }
-                        printf("\"%s\"", $y['label']);
-                        if (count($columns) - 1 === $x) {
-                            printf("\n");
-                        }
+                        printf("\"%s\"", ucwords(str_replace('_', ' ', $key2)));
                     }
+                    break;
+                    printf("\n");
                 }
 
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '', '', '');
 
-                if (!$flag_7days) {
-                    foreach ($dates as $x => $y) {
-                        printf("%s,", $this->printDateTime($y['label'], 'd/m/Y'));
-                        foreach ($columns as $i => $j) {
-                            if ($i > 0) {
-                                printf(",");
-                            }
-                            printf("%s", $data[$y['order']][$j['order']]);
-                            if (count($columns) - 1 === $i ) {
-                                printf("\n");
-                            }
+                foreach ($builder['responses'] as $key => $value) {
+                    foreach ($value as $key2 => $value2) {
+                        if ($key2 === 'date') {
+                            printf("%s,", $this->printDateTime($value2, 'd/m/Y'));
+                        } else {
+                            printf("\"%s\"", $this->printFormatNumber((int)$value2));
+                            printf(",");
                         }
                     }
+                    printf("\n");
                 }
 
                 break;
