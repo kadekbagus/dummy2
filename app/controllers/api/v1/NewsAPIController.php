@@ -18,6 +18,13 @@ class NewsAPIController extends ControllerAPI
     protected $newsModifiyRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee'];
 
     /**
+     * Flag to return the query builder.
+     *
+     * @var Builder
+     */
+    protected $returnBuilder = FALSE;
+
+    /**
      * POST - Create New News
      *
      * @author Tian <tian@dominopos.com>
@@ -1751,6 +1758,13 @@ class NewsAPIController extends ControllerAPI
                 $news->orderBy('news_translations.news_name', 'asc');
             }
 
+            // Return the instance of Query Builder
+            if ($this->returnBuilder) {
+                return [
+                    'builder' => $news
+                ];
+            }
+
             $totalNews = RecordCounter::create($_news)->count();
             $listOfNews = $news->get();
 
@@ -2519,6 +2533,13 @@ class NewsAPIController extends ControllerAPI
     protected function quote($arg)
     {
         return DB::connection()->getPdo()->quote($arg);
+    }
+
+    public function setReturnBuilder($bool)
+    {
+        $this->returnBuilder = $bool;
+
+        return $this;
     }
 
 }

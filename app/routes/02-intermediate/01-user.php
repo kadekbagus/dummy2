@@ -3,6 +3,9 @@
  * Routes file for Intermediate User API
  */
 
+// PMP Account List
+Route::get('/app/v1/account/list', 'IntermediateAuthController@Account_getAccount');
+
 /**
  * Create new user
  */

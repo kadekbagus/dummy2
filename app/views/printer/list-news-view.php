@@ -41,14 +41,21 @@
             padding: 1px;
         }
         table.noborder tr td, table.noborder tr th {
-            border: 1;
+            border: 0;
             padding: 1px;
         }
         #loadingbar {
             position: relative;
             left: 1em;
         }
+        h2 {
+            padding-bottom: 2px;
+            border-bottom: 1px solid #ccc;
+        }
 
+        /*th, td {*/
+            /*display: inline-block;*/
+        /*}*/
     </style>
     <style type="text/css" media="print">
         #payment-date, #printernote { display:none; }
@@ -102,80 +109,92 @@
 </div>
 
 <div id="main">
-    <h2 style="margin-bottom:0.5em;"><?php echo $pageTitle; ?></h2>
+    <h2 style="margin-bottom:0.5em;">News</h2>
     <table style="width:100%; margin-bottom:1em;" class="noborder">
         <tr>
             <td style="width:150px"></td>
             <td style="width:10px;"></td>
             <td><strong></strong></td>
         </tr>
-        <tr>
-            <td>Total Tenants</td>
-            <td>:</td>
-            <td><strong><?php echo number_format($totalRec, 0, '.', '.'); ?></strong></td>
-        </tr>
 
-        <?php if ($filter_name != '') { ?>
+        <!-- Filtering -->
+        <?php if ($newsName != '') { ?>
             <tr>
-                <td>Filter by Tenant Name</td>
+                <td>Filter by News Name</td>
                 <td>:</td>
-                <td><strong><?php echo htmlentities($filter_name); ?></strong></td>
+                <td><strong><?php echo htmlentities($newsName); ?></strong></td>
             </tr>
         <?php } ?>
 
-        <?php if ($filter_category != '') { ?>
+        <?php if ($etcFrom != '' && $etcTo != ''){ ?>
             <tr>
-                <td>Filter by Category</td>
+                <td>Estimated Total Cost</td>
                 <td>:</td>
-                <td><strong><?php echo htmlentities($filter_category); ?></strong></td>
+                <td> <strong><?php echo $etcFrom . ' - ' . $etcTo; ?></strong></td>
             </tr>
         <?php } ?>
 
-        <?php if ($filter_floor != '') { ?>
-            <tr>
-                <td>Filter by Floor</td>
-                <td>:</td>
-                <td><strong><?php echo htmlentities($filter_floor); ?></strong></td>
-            </tr>
-        <?php } ?>
-
-        <?php if ($filter_unit != '') { ?>
-            <tr>
-                <td>Filter by Unit</td>
-                <td>:</td>
-                <td><strong><?php echo htmlentities($filter_unit); ?></strong></td>
-            </tr>
-        <?php } ?>
-
-        <?php if ($filter_status != '') { ?>
+        <?php if ($status != '') { ?>
             <tr>
                 <td>Filter by Status</td>
                 <td>:</td>
-                <td><strong><?php echo htmlentities(implode(' ',$filter_status)); ?></strong></td>
+                <td>
+                    <strong>
+                        <?php
+                            $statusString = '';
+                            foreach ($status as $key => $valstatus){
+                                $statusString .= $valstatus . ', ';
+                            }
+                            echo htmlentities(rtrim($statusString, ', '));
+                        ?>
+                    </strong>
+                </td>
+            </tr>
+        <?php } ?>
+
+        <?php if ($beginDate != '' && $endDate != ''){ ?>
+            <tr>
+                <td>Campaign Date</td>
+                <td>:</td>
+                <td>
+                    <?php
+                        if ($beginDate != '' && $endDate != ''){
+                            $beginDateRangeMallTime = $this->printDateTime($beginDate, $timezone, 'd M Y');
+                            $endDateRangeMallTime = $this->printDateTime($endDate, $timezone, 'd M Y');
+                            $dateRange = $beginDateRangeMallTime . ' - ' . $endDateRangeMallTime;
+                            if ($beginDateRangeMallTime === $endDateRangeMallTime) {
+                                $dateRange = $beginDateRangeMallTime;
+                            }
+                        }
+                    ?>
+                    <strong><?php echo $dateRange; ?></strong>
+                </td>
             </tr>
         <?php } ?>
 
     </table>
 
+
     <table style="width:100%">
         <thead>
-           <!--  <th style="text-align:left;">No.</th> -->
-            <th style="text-align:left;">Tenant Name</th>
-            <th style="text-align:left;">Categories</th>
-            <th style="text-align:left;">Location</th>
+            <th style="text-align:left;">No</th>
+            <th style="text-align:left;">News Name</th>
+            <th style="text-align:left;">Start Date & Time</th>
+            <th style="text-align:left;">End Date & Time</th>
             <th style="text-align:left;">Status</th>
             <th style="text-align:left;">Last Update</th>
         </thead>
         <tbody>
-        <?php $count = 1; while ($row = $statement->fetch(PDO::FETCH_OBJ)) : ?>
-            <tr class="{{ $rowCounter % 2 === 0 ? 'zebra' : '' }}">
-                 <td><?php echo $me->printUtf8($row->name); ?></td>
-                 <td><?php echo $me->printUtf8($row->tenant_categories); ?></td>
-                 <td><?php echo $me->printUtf8($row->location); ?></td>
-                 <td><?php echo $row->status; ?></td>
-                 <td><?php echo $me->printDateTime($row->updated_at, $timezone, 'd F Y  H:i:s'); ?></td>
-            </tr>
-        <?php  $count++; endwhile; ?>
+            <?php $count = 1; while ($row = $statement->fetch(PDO::FETCH_OBJ)) : ?>
+                <tr class="{{ $rowCounter % 2 === 0 ? 'zebra' : '' }}">
+                    <td><?php echo $count++; ?></td>
+                    <td><?php echo htmlentities($row->news_name); ?></td>
+                    <td><?php echo date('d M Y H:i:s', strtotime($row->begin_date)); ?></td>
+                    <td><?php echo date('d M Y H:i:s', strtotime($row->end_date)); ?></td>
+                    <td><?php echo $row->campaign_status; ?></td>
+                    <td><?php echo date('d M Y', strtotime($row->updated_at)); ?></td>
+                </tr>
+            <?php endwhile ; ?>
         </tbody>
     </table>
 </div>
