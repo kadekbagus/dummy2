@@ -16,6 +16,14 @@ class EmployeeAPIController extends ControllerAPI
 {
     protected $employeeViewRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee'];
     protected $employeeModifiyRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee'];
+
+    /**
+     * Flag to return the query builder.
+     *
+     * @var Builder
+     */
+    protected $returnBuilder = FALSE;
+
     /**
      * POST - Create New Employee
      *
@@ -2283,29 +2291,32 @@ class EmployeeAPIController extends ControllerAPI
             // skip, and order by
             $_users = clone $users;
 
-            // Get the take args
-            $take = $perPage;
-            OrbitInput::get('take', function ($_take) use (&$take, $maxRecord) {
-                if ($_take > $maxRecord) {
-                    $_take = $maxRecord;
-                }
-                $take = $_take;
+            // if not printing / exporting data then do pagination.
+            if (! $this->returnBuilder) {
+                // Get the take args
+                $take = $perPage;
+                OrbitInput::get('take', function ($_take) use (&$take, $maxRecord) {
+                    if ($_take > $maxRecord) {
+                        $_take = $maxRecord;
+                    }
+                    $take = $_take;
 
-                if ((int)$take <= 0) {
-                    $take = $maxRecord;
-                }
-            });
-            $users->take($take);
+                    if ((int)$take <= 0) {
+                        $take = $maxRecord;
+                    }
+                });
+                $users->take($take);
 
-            $skip = 0;
-            OrbitInput::get('skip', function ($_skip) use (&$skip, $users) {
-                if ($_skip < 0) {
-                    $_skip = 0;
-                }
+                $skip = 0;
+                OrbitInput::get('skip', function ($_skip) use (&$skip, $users) {
+                    if ($_skip < 0) {
+                        $_skip = 0;
+                    }
 
-                $skip = $_skip;
-            });
-            $users->skip($skip);
+                    $skip = $_skip;
+                });
+                $users->skip($skip);
+            }
 
             // Default sort by
             $sortBy = 'users.user_firstname';
@@ -2357,6 +2368,11 @@ class EmployeeAPIController extends ControllerAPI
             // If it's "Name" sorting, also sort users' last name
             if ($sortBy === 'users.user_firstname') {
                 $users->orderBy('users.user_lastname', $sortMode);
+            }
+
+            // Return the instance of Query Builder
+            if ($this->returnBuilder) {
+                return ['builder' => $users, 'count' => RecordCounter::create($_users)->count()];
             }
 
             $totalUsers = RecordCounter::create($_users)->count();
@@ -2746,5 +2762,10 @@ class EmployeeAPIController extends ControllerAPI
         });
     }
 
+    public function setReturnBuilder($bool)
+    {
+        $this->returnBuilder = $bool;
 
+        return $this;
+    }
 }

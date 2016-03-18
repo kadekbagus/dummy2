@@ -7,50 +7,49 @@ use PDO;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use Orbit\Text as OrbitText;
 use Carbon\Carbon as Carbon;
-use TenantAPIController;
+use LuckyDrawAPIController;
 use Setting;
 use Response;
 use Mall;
 
-class TenantPrinterController extends DataPrinterController
+class LuckyDrawPrinterController extends DataPrinterController
 {
-    public function getTenantPrintView()
+    public function getLuckyDrawPrintView()
     {
         $this->preparePDO();
 
         $mode = OrbitInput::get('export', 'print');
         $user = $this->loggedUser;
 
-        $current_mall = OrbitInput::get('current_mall');
-        $filterName = OrbitInput::get('name_like');
-        $filterCategory = OrbitInput::get('categories_like');
-        $filterFloor = OrbitInput::get('floor_like');
-        $filterUnit = OrbitInput::get('unit_like');
-        $filterStatus = OrbitInput::get('status');
+        $currentMall = OrbitInput::get('current_mall');
+        $filterName = OrbitInput::get('lucky_draw_name_like');
+        $filterMinimumAmountFrom = OrbitInput::get('from_minimum_amount');
+        $filterMinimumAmountTo = OrbitInput::get('to_minimum_amount');
+        $filterStatus = OrbitInput::get('campaign_status');
 
-        $timezone = $this->getTimeZone($current_mall);
+        $timezone = $this->getTimeZone($currentMall);
 
-        // Instantiate the TenantAPIController to get the query builder of Malls
-        $response = TenantAPIController::create('raw')
+        // Instantiate the LuckyDrawAPIController to get the query builder of Malls
+        $response = LuckyDrawAPIController::create('raw')
             ->setReturnBuilder(true)
-            ->getSearchTenant();
+            ->getSearchLuckyDraw();
 
         if (! is_array($response)) {
             return Response::make($response->message);
         }
 
-        $tenants = $response['builder'];
+        $luckyDraws = $response['builder'];
         $totalRec = $response['count'];
 
         $this->prepareUnbufferedQuery();
 
-        $sql = $tenants->toSql();
-        $binds = $tenants->getBindings();
+        $sql = $luckyDraws->toSql();
+        $binds = $luckyDraws->getBindings();
 
         $statement = $this->pdo->prepare($sql);
         $statement->execute($binds);
 
-        $pageTitle = 'Tenant List';
+        $pageTitle = 'Lucky Draw List';
 
         switch ($mode) {
             case 'csv':
@@ -59,44 +58,43 @@ class TenantPrinterController extends DataPrinterController
                 @header('Content-Disposition: attachment; filename=' . OrbitText::exportFilename($pageTitle, '.csv', $timezone));
 
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','','');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", 'Tenant List', '', '', '', '', '', '','','','','');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", 'Lucky Draw List', '', '', '', '', '', '','','','','');
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','','');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", 'Total Tenants', $totalRec, '', '', '', '', '','','','','');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", 'Total Lucky Draws', $totalRec, '', '', '', '', '','','','','');
 
                 if ($filterName != '') {
-                    printf("%s,%s,\n", 'Filter by Tenant Name', $filterName);
+                    printf("%s,%s,\n", 'Filter by Lucky Draw Name', $filterName);
                 }
 
-                if ($filterCategory != '') {
-                    printf("%s,%s,\n", 'Filter by Tenant Name', $filterCategory);
+                if ($filterMinimumAmountFrom != '') {
+                    printf("%s,%s,\n", 'Filter by Minimum Amount From', $filterMinimumAmountFrom);
                 }
 
-                if ($filterFloor != '') {
-                    printf("%s,%s,\n", 'Filter by Tenant Name', $filterFloor);
-                }
-
-                if ($filterUnit != '') {
-                    printf("%s,%s,\n", 'Filter by Tenant Name', $filterUnit);
+                if ($filterMinimumAmountTo != '') {
+                    printf("%s,%s,\n", 'Filter by Minimum Amount To', $filterMinimumAmountTo);
                 }
 
                 if ($filterStatus != '') {
-                    printf("%s,%s,\n", 'Filter by Tenant Name', implode(' ', $filterStatus));
+                    printf("%s,%s,\n", 'Filter by Status', $filterStatus);
                 }
 
+
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','','','');
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','','','');
 
-                printf("%s,%s,%s,%s,%s,%s,%s\n", 'Tenant Name', 'Categories', 'Location', 'Status', 'Last Update', '', '');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", 'Lucky Draw Name', 'Start Date & Time', 'End Date & Time', 'Amount to Obtain', 'Total Issued Numbers', 'Status', 'Last Update');
 
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','','','');
 
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
 
-                    printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
-                            $this->printUtf8($row->name), 
-                            $this->printUtf8($row->tenant_categories), 
-                            $this->printUtf8($row->location),
-                            $row->status,
+                    printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
+                            $this->printUtf8($row->lucky_draw_name), 
+                            $this->printDateTime($row->start_date, 'UTC', 'd F Y  H:i'), 
+                            $this->printDateTime($row->end_date, 'UTC', 'd F Y  H:i'),
+                            $row->minimum_amount,
+                            $row->total_issued_lucky_draw_number,
+                            $row->campaign_status,
                             $this->printDateTime($row->updated_at, $timezone, 'd F Y  H:i:s')
                        );
 
@@ -107,7 +105,7 @@ class TenantPrinterController extends DataPrinterController
             case 'print':
             default:
                 $me = $this;
-                require app_path() . '/views/printer/list-tenant-view.php';
+                require app_path() . '/views/printer/list-lucky-draw-view.php';
         }
     }
 
@@ -186,24 +184,5 @@ class TenantPrinterController extends DataPrinterController
         return $timezone;
     }
 
-    /**
-     * output location.
-     *
-     * @param string $input
-     * @return string
-     */
-    public function printLocation($row)
-    {
-        return utf8_encode($row->floor." - ".$row->unit);
-    }
-
-
-    public function getFilename($pageTitle, $ext = ".csv", $current_date_and_time=null)
-    {
-        if (empty($current_date_and_time)) {
-            $current_date_and_time = Carbon::now();
-        }
-        return 'orbit-export-' . $pageTitle . '-' . Carbon::createFromFormat('Y-m-d H:i:s', $current_date_and_time)->format('D_d_M_Y_Hi') . $ext;
-    }
 
 }
