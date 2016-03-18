@@ -54,6 +54,16 @@ class AccountAPIController extends ControllerAPI
             $pmpAccounts->whereStatus(Input::get('status'));
         }
 
+        // Filter by Creation Date
+        if (Input::get('creation_date_from') && Input::get('creation_date_to')) {
+
+            // Let's make the datetime
+            $creationDateTimeFrom = Input::get('creation_date_from').' 00:00:00';
+            $creationDateTimeTo = Input::get('creation_date_to').' 23:59:59';
+
+            $pmpAccounts->where('created_at', '>=', $creationDateTimeFrom)->where('created_at', '<=', $creationDateTimeTo);
+        }
+
         // Get total row count
         $allRows = clone $pmpAccounts;
         $data->total_records = $allRows->count();
