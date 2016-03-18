@@ -1699,30 +1699,33 @@ class NewsAPIController extends ControllerAPI
             // skip, and order by
             $_news = clone $news;
 
-            // Get the take args
-            $take = $perPage;
-            OrbitInput::get('take', function ($_take) use (&$take, $maxRecord) {
-                if ($_take > $maxRecord) {
-                    $_take = $maxRecord;
-                }
-                $take = $_take;
+            if (! $this->returnBuilder) {
+                // Get the take args
+                $take = $perPage;
+                OrbitInput::get('take', function ($_take) use (&$take, $maxRecord) {
+                    if ($_take > $maxRecord) {
+                        $_take = $maxRecord;
+                    }
+                    $take = $_take;
 
-                if ((int)$take <= 0) {
-                    $take = $maxRecord;
-                }
-            });
-            $news->take($take);
+                    if ((int)$take <= 0) {
+                        $take = $maxRecord;
+                    }
+                });
+                $news->take($take);
 
-            $skip = 0;
-            OrbitInput::get('skip', function($_skip) use (&$skip, $news)
-            {
-                if ($_skip < 0) {
-                    $_skip = 0;
-                }
+                $skip = 0;
+                OrbitInput::get('skip', function($_skip) use (&$skip, $news)
+                {
+                    if ($_skip < 0) {
+                        $_skip = 0;
+                    }
 
-                $skip = $_skip;
-            });
-            $news->skip($skip);
+                    $skip = $_skip;
+                });
+                $news->skip($skip);
+            }
+
 
             // Default sort by
             $sortBy = 'campaign_status';
