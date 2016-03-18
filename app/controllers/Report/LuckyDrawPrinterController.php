@@ -26,6 +26,8 @@ class LuckyDrawPrinterController extends DataPrinterController
         $filterMinimumAmountFrom = OrbitInput::get('from_minimum_amount');
         $filterMinimumAmountTo = OrbitInput::get('to_minimum_amount');
         $filterStatus = OrbitInput::get('campaign_status');
+        $filterBeginDate = OrbitInput::get('begin_date');
+        $filterEndDate = OrbitInput::get('end_date');
 
         $timezone = $this->getTimeZone($currentMall);
 
@@ -61,6 +63,10 @@ class LuckyDrawPrinterController extends DataPrinterController
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", 'Lucky Draw List', '', '', '', '', '', '','','','','');
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','','');
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", 'Total Lucky Draws', $totalRec, '', '', '', '', '','','','','');
+
+                if ($filterBeginDate != '') {
+                    printf("%s,%s,\n", 'Campaign Date', $this->printCampaignDate($filterBeginDate, $filterEndDate));
+                }
 
                 if ($filterName != '') {
                     printf("%s,%s,\n", 'Filter by Lucky Draw Name', $filterName);
@@ -184,5 +190,17 @@ class LuckyDrawPrinterController extends DataPrinterController
         return $timezone;
     }
 
+    public function printCampaignDate($filterBeginDate, $filterEndDate) 
+    {
+        if (!empty($filterBeginDate) && !empty($filterEndDate)) 
+        {
+            return $this->printDateTime($filterBeginDate, 'UTC').' - '.$this->printDateTime($filterEndDate, 'UTC');
+        }
+        else if (! empty($filterBeginDate)) 
+        {
+            return $this->printDateTime($filterBeginDate, 'UTC');
+        }    
+
+    }
 
 }

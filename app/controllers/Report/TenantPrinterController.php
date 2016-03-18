@@ -68,19 +68,19 @@ class TenantPrinterController extends DataPrinterController
                 }
 
                 if ($filterCategory != '') {
-                    printf("%s,%s,\n", 'Filter by Tenant Name', $filterCategory);
+                    printf("%s,%s,\n", 'Filter by Tenant Category', $filterCategory);
                 }
 
                 if ($filterFloor != '') {
-                    printf("%s,%s,\n", 'Filter by Tenant Name', $filterFloor);
+                    printf("%s,%s,\n", 'Filter by Tenant Floor', $filterFloor);
                 }
 
                 if ($filterUnit != '') {
-                    printf("%s,%s,\n", 'Filter by Tenant Name', $filterUnit);
+                    printf("%s,%s,\n", 'Filter by Tenant Unit', $filterUnit);
                 }
 
                 if ($filterStatus != '') {
-                    printf("%s,%s,\n", 'Filter by Tenant Name', implode(' ', $filterStatus));
+                    printf("%s,%s,\n", 'Filter by Tenant Status', implode(' ', $filterStatus));
                 }
 
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','','','');
