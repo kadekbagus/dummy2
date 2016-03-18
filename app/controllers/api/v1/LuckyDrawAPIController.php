@@ -986,9 +986,10 @@ class LuckyDrawAPIController extends ControllerAPI
             $luckydraws = LuckyDraw::excludeDeleted('lucky_draws')
                                     ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'lucky_draws.campaign_status_id')
                                     ->select('lucky_draws.*', 'campaign_status.order', DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$prefix}lucky_draws.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
-                                                                        FROM {$prefix}merchants om
-                                                                        LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
-                                                                        WHERE om.merchant_id = {$prefix}lucky_draws.mall_id) THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END AS campaign_status"))
+                                                                FROM {$prefix}merchants om
+                                                                LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
+                                                                WHERE om.merchant_id = {$prefix}lucky_draws.mall_id)
+                                        THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END AS campaign_status"))
                                     ->leftJoin('lucky_draw_translations', 'lucky_draw_translations.lucky_draw_id', '=', 'lucky_draws.lucky_draw_id')
                                     ->leftJoin('merchant_languages', 'merchant_languages.merchant_language_id', '=', 'lucky_draw_translations.merchant_language_id')
                                     ->leftJoin('languages', 'languages.language_id', '=', 'merchant_languages.language_id')

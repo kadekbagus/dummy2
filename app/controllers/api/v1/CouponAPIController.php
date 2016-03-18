@@ -2117,18 +2117,16 @@ class CouponAPIController extends ControllerAPI
 
             $table_prefix = DB::getTablePrefix();
 
-            $timezone = Mall::leftJoin('timezones','timezones.timezone_id','=','merchants.timezone_id')
-                ->where('merchants.merchant_id','=', $currentmall)
-                ->first();
-
-            $now = Carbon::now($timezone->timezone_name);
-
             // Builder object
             // Addition select case and join for sorting by discount_value.
             $coupons = Coupon::with('couponRule')
                 ->allowedForPMPUser($user, 'coupon')
                 ->select(DB::raw("{$table_prefix}promotions.*, {$table_prefix}campaign_price.campaign_price_id,
-                    CASE WHEN {$table_prefix}campaign_status.campaign_status_name = 'expired' THEN {$table_prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$table_prefix}promotions.end_date < {$this->quote($now)} THEN 'expired' ELSE {$table_prefix}campaign_status.campaign_status_name END) END AS campaign_status,
+                    CASE WHEN {$table_prefix}campaign_status.campaign_status_name = 'expired' THEN {$table_prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$table_prefix}promotions.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
+                                                                                FROM {$table_prefix}merchants om
+                                                                                LEFT JOIN {$table_prefix}timezones ot on ot.timezone_id = om.timezone_id
+                                                                                WHERE om.merchant_id = {$table_prefix}promotions.merchant_id)
+                    THEN 'expired' ELSE {$table_prefix}campaign_status.campaign_status_name END) END AS campaign_status,
                     {$table_prefix}campaign_status.order,
                     CASE rule_type
                         WHEN 'cart_discount_by_percentage' THEN 'percentage'
@@ -2149,7 +2147,11 @@ class CouponAPIController extends ControllerAPI
                         CASE WHEN
                             DATE_FORMAT({$table_prefix}promotions.end_date, '%Y-%m-%d %H:%i:%s') = '0000-00-00 00:00:00' THEN {$table_prefix}promotions.status
                         WHEN
-                            {$table_prefix}promotions.end_date < '{$now}' THEN 'expired'
+                            {$table_prefix}promotions.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
+                                                                    FROM {$table_prefix}merchants om
+                                                                    LEFT JOIN {$table_prefix}timezones ot on ot.timezone_id = om.timezone_id
+                                                                    WHERE om.merchant_id = {$table_prefix}promotions.merchant_id)
+                        THEN 'expired'
                         ELSE
                             {$table_prefix}promotions.status
                         END
@@ -2269,8 +2271,11 @@ class CouponAPIController extends ControllerAPI
             });
 
             // Filter coupons by status
-            OrbitInput::get('campaign_status', function ($statuses) use ($coupons, $table_prefix, $now) {
-                $coupons->whereIn(DB::raw("CASE WHEN {$table_prefix}campaign_status.campaign_status_name = 'expired' THEN {$table_prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$table_prefix}promotions.end_date < {$this->quote($now)} THEN 'expired' ELSE {$table_prefix}campaign_status.campaign_status_name END) END"), $statuses);
+            OrbitInput::get('campaign_status', function ($statuses) use ($coupons, $table_prefix) {
+                $coupons->whereIn(DB::raw("CASE WHEN {$table_prefix}campaign_status.campaign_status_name = 'expired' THEN {$table_prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$table_prefix}promotions.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name) FROM {$table_prefix}merchants om
+                                                                LEFT JOIN {$table_prefix}timezones ot on ot.timezone_id = om.timezone_id
+                                                                WHERE om.merchant_id = {$table_prefix}promotions.merchant_id)
+                    THEN 'expired' ELSE {$table_prefix}campaign_status.campaign_status_name END) END"), $statuses);
             });
 
             // Filter coupon rule by rule type
