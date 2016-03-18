@@ -115,6 +115,14 @@
             <td><strong><?php echo number_format($totalRec, 0, '.', '.'); ?></strong></td>
         </tr>
 
+        <?php if ($filterBeginDate != '') { ?>
+            <tr>
+                <td>Campaign Date</td>
+                <td>:</td>
+                <td><strong><?php echo $me->printCampaignDate($filterBeginDate, $filterEndDate); ?></strong></td>
+            </tr>
+        <?php } ?>
+
         <?php if ($filterName != '') { ?>
             <tr>
                 <td>Filter by Lucky Draw Name</td>
