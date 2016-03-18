@@ -1195,31 +1195,35 @@ class LuckyDrawAPIController extends ControllerAPI
             // skip, and order by
             $_luckydraws = clone $luckydraws;
 
-            // Get the take args
-            $take = $perPage;
-            OrbitInput::get('take', function ($_take) use (&$take, $maxRecord) {
-                if ($_take > $maxRecord) {
-                    $_take = $maxRecord;
-                }
-                $take = $_take;
-
-                if ((int)$take <= 0) {
-                    $take = $maxRecord;
-                }
-            });
-            $luckydraws->take($take);
-
-            $skip = 0;
-            OrbitInput::get('skip', function($_skip) use (&$skip, $luckydraws)
+            // if not printing / exporting data then do pagination.
+            if (! $this->returnBuilder) 
             {
-                if ($_skip < 0) {
-                    $_skip = 0;
-                }
+                // Get the take args
+                $take = $perPage;
+                OrbitInput::get('take', function ($_take) use (&$take, $maxRecord) {
+                    if ($_take > $maxRecord) {
+                        $_take = $maxRecord;
+                    }
+                    $take = $_take;
 
-                $skip = $_skip;
-            });
-            if (($take > 0) && ($skip > 0)) {
-                $luckydraws->skip($skip);
+                    if ((int)$take <= 0) {
+                        $take = $maxRecord;
+                    }
+                });
+                $luckydraws->take($take);
+
+                $skip = 0;
+                OrbitInput::get('skip', function($_skip) use (&$skip, $luckydraws)
+                {
+                    if ($_skip < 0) {
+                        $_skip = 0;
+                    }
+
+                    $skip = $_skip;
+                });
+                if (($take > 0) && ($skip > 0)) {
+                    $luckydraws->skip($skip);
+                }
             }
 
             // Default sort by
