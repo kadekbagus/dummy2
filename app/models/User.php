@@ -34,6 +34,11 @@ class User extends Eloquent implements UserInterface
             : $query->whereUserId('');
     }
 
+    public function userTenants()
+    {
+        return $this->hasMany('UserMerchant')->whereObjectType('tenant');
+    }
+
     public function permissions()
     {
         return $this->belongsToMany('Permission', 'custom_permission', 'user_id', 'permission_id')->withPivot('allowed');

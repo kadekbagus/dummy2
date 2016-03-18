@@ -41,10 +41,34 @@ class AccountAPIController extends ControllerAPI
      * The main method
      *
      * @author Qosdil A. <qosdil@dominopos.com>
+     * @todo Validation.
      */
     public function getAccount()
     {
-        $pmpAccounts = User::pmpAccounts()->get();
+        $data = new stdClass();
+
+        $pmpAccounts = User::pmpAccounts();
+
+        // Filter by Status
+        if (Input::get('status')) {
+            $pmpAccounts->whereStatus(Input::get('status'));
+        }
+
+        // Filter by Creation Date
+        if (Input::get('creation_date_from') && Input::get('creation_date_to')) {
+
+            // Let's make the datetime
+            $creationDateTimeFrom = Input::get('creation_date_from').' 00:00:00';
+            $creationDateTimeTo = Input::get('creation_date_to').' 23:59:59';
+
+            $pmpAccounts->where('created_at', '>=', $creationDateTimeFrom)->where('created_at', '<=', $creationDateTimeTo);
+        }
+
+        // Get total row count
+        $allRows = clone $pmpAccounts;
+        $data->total_records = $allRows->count();
+
+        $pmpAccounts = $pmpAccounts->take(Input::get('take'))->skip(Input::get('skip'))->get();
 
         $records = [];
         foreach ($pmpAccounts as $row) {
@@ -52,17 +76,28 @@ class AccountAPIController extends ControllerAPI
                 'name' => $row->full_name,
                 'company_name' => $row->userDetail->company_name,
                 'location' => $row->userDetail->location,
-                'tenants' => [],
+                'tenants' => $this->getTenantAtMallArray($row->userTenants()->lists('merchant_id')),
                 'creation_date' => $row->created_at->format('d F Y H:i:s'),
                 'status' => $row->status,
             ];
         }
 
-        $data = new stdClass();
         $data->columns = $this->listColumns;
         $data->records = $records;
 
+        $data->returned_records = count($records);
+
         $this->response->data = $data;
         return $this->render(200);
+    }
+
+    protected function getTenantAtMallArray($tenantIds)
+    {
+        $tenantArray = [];
+        foreach (Tenant::whereIn('merchant_id', $tenantIds)->get() as $row) {
+            $tenantArray[] = $row->tenant_at_mall;
+        }
+
+        return $tenantArray;
     }
 }
