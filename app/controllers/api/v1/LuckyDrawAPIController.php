@@ -53,6 +53,13 @@ class LuckyDrawAPIController extends ControllerAPI
     }
 
     /**
+     * Flag to return the query builder.
+     *
+     * @var Builder
+     */
+    protected $returnBuilder = FALSE;
+
+    /**
      * POST - Create New Lucky Draw
      *
      * List of API Parameters
@@ -986,14 +993,15 @@ class LuckyDrawAPIController extends ControllerAPI
             $luckydraws = LuckyDraw::excludeDeleted('lucky_draws')
                                     ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'lucky_draws.campaign_status_id')
                                     ->select('lucky_draws.*', 'campaign_status.order', DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$prefix}lucky_draws.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
-                                                                        FROM {$prefix}merchants om
-                                                                        LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
-                                                                        WHERE om.merchant_id = {$prefix}lucky_draws.mall_id) THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END AS campaign_status"))
+                                                                FROM {$prefix}merchants om
+                                                                LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
+                                                                WHERE om.merchant_id = {$prefix}lucky_draws.mall_id)
+                                        THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END AS campaign_status"))
                                     ->leftJoin('lucky_draw_translations', 'lucky_draw_translations.lucky_draw_id', '=', 'lucky_draws.lucky_draw_id')
                                     ->leftJoin('merchant_languages', 'merchant_languages.merchant_language_id', '=', 'lucky_draw_translations.merchant_language_id')
                                     ->leftJoin('languages', 'languages.language_id', '=', 'merchant_languages.language_id')
                                     ->where('languages.name', '=', 'en');
-            if ($details_view === 'yes') {
+            if ($details_view === 'yes' || $this->returnBuilder) {
                 $luckydraws->select('lucky_draws.*', 'campaign_status.order', DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$prefix}lucky_draws.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
                     FROM {$prefix}merchants om
                     LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
@@ -1187,31 +1195,35 @@ class LuckyDrawAPIController extends ControllerAPI
             // skip, and order by
             $_luckydraws = clone $luckydraws;
 
-            // Get the take args
-            $take = $perPage;
-            OrbitInput::get('take', function ($_take) use (&$take, $maxRecord) {
-                if ($_take > $maxRecord) {
-                    $_take = $maxRecord;
-                }
-                $take = $_take;
-
-                if ((int)$take <= 0) {
-                    $take = $maxRecord;
-                }
-            });
-            $luckydraws->take($take);
-
-            $skip = 0;
-            OrbitInput::get('skip', function($_skip) use (&$skip, $luckydraws)
+            // if not printing / exporting data then do pagination.
+            if (! $this->returnBuilder) 
             {
-                if ($_skip < 0) {
-                    $_skip = 0;
-                }
+                // Get the take args
+                $take = $perPage;
+                OrbitInput::get('take', function ($_take) use (&$take, $maxRecord) {
+                    if ($_take > $maxRecord) {
+                        $_take = $maxRecord;
+                    }
+                    $take = $_take;
 
-                $skip = $_skip;
-            });
-            if (($take > 0) && ($skip > 0)) {
-                $luckydraws->skip($skip);
+                    if ((int)$take <= 0) {
+                        $take = $maxRecord;
+                    }
+                });
+                $luckydraws->take($take);
+
+                $skip = 0;
+                OrbitInput::get('skip', function($_skip) use (&$skip, $luckydraws)
+                {
+                    if ($_skip < 0) {
+                        $_skip = 0;
+                    }
+
+                    $skip = $_skip;
+                });
+                if (($take > 0) && ($skip > 0)) {
+                    $luckydraws->skip($skip);
+                }
             }
 
             // Default sort by
@@ -1255,6 +1267,11 @@ class LuckyDrawAPIController extends ControllerAPI
             //with name
             if ($sortBy !== 'lucky_draw_translations.lucky_draw_name') {
                 $luckydraws->orderBy('lucky_draw_translations.lucky_draw_name', 'asc');
+            }
+
+            // Return the instance of Query Builder
+            if ($this->returnBuilder) {
+                return ['builder' => $luckydraws, 'count' => RecordCounter::create($_luckydraws)->count()];
             }
 
             $totalLuckyDraws = RecordCounter::create($_luckydraws)->count();
@@ -4434,5 +4451,12 @@ class LuckyDrawAPIController extends ControllerAPI
                 'unit' => 'bytes',
                 'newsize' => 1
               );
+    }
+
+    public function setReturnBuilder($bool)
+    {
+        $this->returnBuilder = $bool;
+
+        return $this;
     }
 }
