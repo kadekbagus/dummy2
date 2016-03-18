@@ -176,7 +176,7 @@ return array(
     'CreateTableMerchantSocialMedia' => $baseDir . '/app/database/migrations/2016_02_26_020059_create_table_merchant_social_media.php',
     'CreateTableSequence' => $baseDir . '/app/database/migrations/2016_01_25_094200_create_table_sequence.php',
     'CreateTableSocialMedia' => $baseDir . '/app/database/migrations/2016_02_26_020103_create_table_social_media.php',
-    'CreateTableSpendingRoles' => $baseDir . '/app/database/migrations/2016_03_18_035746_create_table_spending_roles.php',
+    'CreateTableSpendingRules' => $baseDir . '/app/database/migrations/2016_03_18_063443_create_table_spending_rules.php',
     'CreateTableTimezones' => $baseDir . '/app/database/migrations/2015_10_18_085530_create_table_timezones.php',
     'CreateTableUserCampaign' => $baseDir . '/app/database/migrations/2016_03_16_084422_create_table_user_campaign.php',
     'CreateTableUserMerchant' => $baseDir . '/app/database/migrations/2016_03_16_083656_create_table_user_merchant.php',
