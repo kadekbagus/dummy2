@@ -49,6 +49,14 @@ class AccountAPIController extends ControllerAPI
 
         $pmpAccounts = User::pmpAccounts();
 
+        if (Input::get('mall_name')) {
+            $mall = Mall::whereName(Input::get('mall_name'))->first();
+
+            $pmpAccounts = ($mall)
+                ? User::ofSpecificMallPmpAccounts($mall->merchant_id)
+                : $pmpAccounts->whereUserId('');
+        }
+
         // Filter by Status
         if (Input::get('status')) {
             $pmpAccounts->whereStatus(Input::get('status'));
