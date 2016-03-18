@@ -35,7 +35,7 @@ class User extends Eloquent implements UserInterface
     }
 
     /**
-     * Get the "PMP Account" users only attached to a specific mall.
+     * Get the "PMP Account" users attached to a specific mall.
      *
      * @author Qosdil A. <qosdil@dominopos.com>
      */
