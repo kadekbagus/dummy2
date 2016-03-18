@@ -52,7 +52,7 @@ class AccountAPIController extends ControllerAPI
                 'name' => $row->full_name,
                 'company_name' => $row->userDetail->company_name,
                 'location' => $row->userDetail->location,
-                'tenants' => [],
+                'tenants' => $this->getTenantAtMallArray($row->userTenants()->lists('merchant_id')),
                 'creation_date' => $row->created_at->format('d F Y H:i:s'),
                 'status' => $row->status,
             ];
@@ -64,5 +64,15 @@ class AccountAPIController extends ControllerAPI
 
         $this->response->data = $data;
         return $this->render(200);
+    }
+
+    protected function getTenantAtMallArray($tenantIds)
+    {
+        $tenantArray = [];
+        foreach (Tenant::whereIn('merchant_id', $tenantIds)->get() as $row) {
+            $tenantArray[] = $row->tenant_at_mall;
+        }
+
+        return $tenantArray;
     }
 }
