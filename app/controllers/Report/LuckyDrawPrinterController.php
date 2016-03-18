@@ -89,7 +89,7 @@ class LuckyDrawPrinterController extends DataPrinterController
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
 
                     printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
-                            $this->printUtf8($row->lucky_draw_name), 
+                            $this->printUtf8($row->lucky_draw_name_english), 
                             $this->printDateTime($row->start_date, 'UTC', 'd F Y  H:i'), 
                             $this->printDateTime($row->end_date, 'UTC', 'd F Y  H:i'),
                             $row->minimum_amount,
