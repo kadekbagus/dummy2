@@ -41,10 +41,14 @@ class AccountAPIController extends ControllerAPI
      * The main method
      *
      * @author Qosdil A. <qosdil@dominopos.com>
+     * @todo Validation.
      */
     public function getAccount()
     {
-        $pmpAccounts = User::pmpAccounts()->get();
+        $data = new stdClass();
+        $data->total_records = User::pmpAccounts()->count();
+        
+        $pmpAccounts = User::pmpAccounts()->take(Input::get('take'))->skip(Input::get('skip'))->get();
 
         $records = [];
         foreach ($pmpAccounts as $row) {
@@ -58,9 +62,10 @@ class AccountAPIController extends ControllerAPI
             ];
         }
 
-        $data = new stdClass();
         $data->columns = $this->listColumns;
         $data->records = $records;
+
+        $data->returned_records = count($records);
 
         $this->response->data = $data;
         return $this->render(200);
