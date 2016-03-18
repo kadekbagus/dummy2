@@ -1,0 +1,155 @@
+<?php namespace Report;
+
+use Report\DataPrinterController;
+use Config;
+use DB;
+use PDO;
+use OrbitShop\API\v1\Helper\Input as OrbitInput;
+use Orbit\Text as OrbitText;
+use Mall;
+use Carbon\Carbon as Carbon;
+use MallAPIController;
+use Setting;
+use Response;
+use NewsAPIController;
+
+class PromotionPrinterController extends DataPrinterController
+{
+	public function getPromotionPrintView()
+    {
+        $this->preparePDO();
+
+        $mode = OrbitInput::get('export', 'print');
+        $user = $this->loggedUser;
+
+        $current_mall = OrbitInput::get('current_mall');
+        $timezone = $this->getTimeZone($current_mall);
+
+        // Instantiate the UserAPIController to get the query builder of Users
+        $response = NewsAPIController::create('raw')
+            ->setReturnBuilder(true)
+            ->getSearchNews();
+// dd($response);
+        if (! is_array($response)) {
+            return Response::make($response->message);
+        }
+
+        $promotions = $response['builder'];
+        $totalRec = $response['count'];
+
+        $this->prepareUnbufferedQuery();
+
+        $sql = $promotions->toSql();
+        $binds = $promotions->getBindings();
+
+        $statement = $this->pdo->prepare($sql);
+        $statement->execute($binds);
+
+        $pageTitle = 'Customer';
+        switch ($mode) {
+            case 'csv':
+                @header('Content-Description: File Transfer');
+                @header('Content-Type: text/csv');
+                @header('Content-Disposition: attachment; filename=' . OrbitText::exportFilename($pageTitle, '.csv', $timezone));
+
+                printf("%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '');
+                printf("%s,%s,%s,%s,%s,%s\n", '', 'Promotion List', '', '', '', '');
+                printf("%s,%s,%s,%s,%s,%s\n", '', 'Total Promotions', $totalRec, '', '', '');
+
+                printf("%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '');
+                printf("%s,%s,%s,%s,%s,%s\n", '', 'Promotion Name', 'Start Date & Time', 'End Date & Time', 'Status', 'Last Update');
+                
+                printf("%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '');
+
+                while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
+
+                    $startDateTime = $this->printDateTime($row->begin_date, $timezone, 'no');
+                    $endDateTime = $this->printDateTime($row->end_date, $timezone, 'no');
+                    $lastUpdateDate = $this->printDateTime($row->updated_at, $timezone, 'no');
+
+                    printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
+                        '', $row->news_name, $startDateTime, $endDateTime, $this->printUtf8($row->status), $lastUpdateDate);
+
+                }
+                break;
+
+            case 'print':
+            default:
+                $me = $this;
+                require app_path() . '/views/printer/list-promotion-view.php';
+        }
+    }
+
+    /**
+     * output utf8.
+     *
+     * @param string $input
+     * @return string
+     */
+    public function printUtf8($input)
+    {
+        return utf8_encode($input);
+    }
+
+    /**
+     * output timezone name.
+     *
+     * @param string
+     * @return string
+     */
+    public function getTimeZone($currentMall) {
+        // get timezone based on current_mall
+        if (!empty($currentMall)) {
+            $timezone = Mall::leftJoin('timezones','timezones.timezone_id','=','merchants.timezone_id')
+                ->where('merchants.merchant_id','=', $currentMall)
+                ->first();
+
+            // if timezone not found
+            if (count($timezone)==0) {
+                $timezone = null;
+            }
+            else {
+                $timezone = $timezone->timezone_name; // if timezone found
+            }
+        }
+        else {
+            $timezone = null;
+        }
+
+        return $timezone;
+    }
+
+    /**
+     * Print date and time friendly name.
+     *
+     * @param string $datetime
+     * @param string $format
+     * @return string
+     */
+    public function printDateTime($datetime, $timezone, $format='d M Y')
+    {
+        if (empty($datetime) || $datetime === '0000-00-00 00:00:00') {
+            return '';
+        } else {
+
+            // change to correct timezone
+            if (!empty($timezone) || $timezone != null) {
+                $date = Carbon::createFromFormat('Y-m-d H:i:s', $datetime, 'UTC');
+                $date->setTimezone($timezone);
+                $datetime = $date;
+            } else {
+                $datetime = $datetime;
+            }
+        }
+
+        // format the datetime if needed
+        if ($format == 'no') {
+            $result = $datetime;
+        } else {
+            $time = strtotime($datetime);
+            $result = date($format, $time);
+        }
+
+        return $result;
+    }
+}

@@ -1876,33 +1876,36 @@ class TenantAPIController extends ControllerAPI
 
             // if limit is true show all records
             // TODO : replace this with something else in the future
-            if (!$limit) {
-
-                // Get the take args
-                $take = $perPage;
-                OrbitInput::get('take', function ($_take) use (&$take, $maxRecord) {
-                    if ($_take > $maxRecord) {
-                        $_take = $maxRecord;
-                    }
-                    $take = $_take;
-
-                    if ((int)$take <= 0) {
-                        $take = $maxRecord;
-                    }
-                });
-                $tenants->take($take);
-
-                $skip = 0;
-                OrbitInput::get('skip', function($_skip) use (&$skip, $tenants)
+            if (!$limit) 
+            {
+                // if not printing / exporting data then do pagination.
+                if (! $this->returnBuilder) 
                 {
-                    if ($_skip < 0) {
-                        $_skip = 0;
-                    }
+                    // Get the take args
+                    $take = $perPage;
+                    OrbitInput::get('take', function ($_take) use (&$take, $maxRecord) {
+                        if ($_take > $maxRecord) {
+                            $_take = $maxRecord;
+                        }
+                        $take = $_take;
 
-                    $skip = $_skip;
-                });
-                $tenants->skip($skip);
+                        if ((int)$take <= 0) {
+                            $take = $maxRecord;
+                        }
+                    });
+                    $tenants->take($take);
 
+                    $skip = 0;
+                    OrbitInput::get('skip', function($_skip) use (&$skip, $tenants)
+                    {
+                        if ($_skip < 0) {
+                            $_skip = 0;
+                        }
+
+                        $skip = $_skip;
+                    });
+                    $tenants->skip($skip);
+                }
             }
 
             // Default sort by
