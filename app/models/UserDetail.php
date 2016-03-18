@@ -11,6 +11,20 @@ class UserDetail extends Eloquent
      */
     protected $primaryKey = 'user_detail_id';
 
+    /** This enables $user_detail->location. */
+    public function getLocationAttribute()
+    {
+        $location = $this->city;
+
+        if ($location && $this->country) {
+            $location .= ', '.$this->country;
+        } elseif ( ! $location) {
+            $location = $this->country;
+        }
+
+        return $location;
+    }
+
     public function user()
     {
         return $this->belongsTo('User', 'user_id', 'user_id')->where('users.status', '=', 'active');
