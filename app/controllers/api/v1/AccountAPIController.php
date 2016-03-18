@@ -46,9 +46,19 @@ class AccountAPIController extends ControllerAPI
     public function getAccount()
     {
         $data = new stdClass();
-        $data->total_records = User::pmpAccounts()->count();
-        
-        $pmpAccounts = User::pmpAccounts()->take(Input::get('take'))->skip(Input::get('skip'))->get();
+
+        $pmpAccounts = User::pmpAccounts();
+
+        // Filter by Status
+        if (Input::get('status')) {
+            $pmpAccounts->whereStatus(Input::get('status'));
+        }
+
+        // Get total row count
+        $allRows = clone $pmpAccounts;
+        $data->total_records = $allRows->count();
+
+        $pmpAccounts = $pmpAccounts->take(Input::get('take'))->skip(Input::get('skip'))->get();
 
         $records = [];
         foreach ($pmpAccounts as $row) {
