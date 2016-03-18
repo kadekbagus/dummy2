@@ -14,15 +14,15 @@ use Carbon\Carbon as Carbon;
 
 class NewsAPIController extends ControllerAPI
 {
-    protected $newsViewRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee'];
-    protected $newsModifiyRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee'];
-
     /**
      * Flag to return the query builder.
      *
      * @var Builder
      */
     protected $returnBuilder = FALSE;
+
+    protected $newsViewRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee'];
+    protected $newsModifiyRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee'];
 
     /**
      * POST - Create New News
@@ -1698,30 +1698,32 @@ class NewsAPIController extends ControllerAPI
             // skip, and order by
             $_news = clone $news;
 
-            // Get the take args
-            $take = $perPage;
-            OrbitInput::get('take', function ($_take) use (&$take, $maxRecord) {
-                if ($_take > $maxRecord) {
-                    $_take = $maxRecord;
-                }
-                $take = $_take;
+            if (! $this->returnBuilder) {
+                // Get the take args
+                $take = $perPage;
+                OrbitInput::get('take', function ($_take) use (&$take, $maxRecord) {
+                    if ($_take > $maxRecord) {
+                        $_take = $maxRecord;
+                    }
+                    $take = $_take;
 
-                if ((int)$take <= 0) {
-                    $take = $maxRecord;
-                }
-            });
-            $news->take($take);
+                    if ((int)$take <= 0) {
+                        $take = $maxRecord;
+                    }
+                });
+                $news->take($take);
 
-            $skip = 0;
-            OrbitInput::get('skip', function($_skip) use (&$skip, $news)
-            {
-                if ($_skip < 0) {
-                    $_skip = 0;
-                }
+                $skip = 0;
+                OrbitInput::get('skip', function($_skip) use (&$skip, $news)
+                {
+                    if ($_skip < 0) {
+                        $_skip = 0;
+                    }
 
-                $skip = $_skip;
-            });
-            $news->skip($skip);
+                    $skip = $_skip;
+                });
+                $news->skip($skip);
+            }
 
             // Default sort by
             $sortBy = 'campaign_status';
@@ -1760,9 +1762,7 @@ class NewsAPIController extends ControllerAPI
 
             // Return the instance of Query Builder
             if ($this->returnBuilder) {
-                return [
-                    'builder' => $news
-                ];
+                return ['builder' => $news, 'count' => RecordCounter::create($_news)->count()];
             }
 
             $totalNews = RecordCounter::create($_news)->count();
@@ -2541,5 +2541,4 @@ class NewsAPIController extends ControllerAPI
 
         return $this;
     }
-
 }
