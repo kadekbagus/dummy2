@@ -2300,6 +2300,22 @@ class CouponAPIController extends ControllerAPI
                 }
             });
 
+            // Filter coupon merchants by retailer(tenant) name
+            OrbitInput::get('tenant_name_like', function ($tenant_name_like) use ($coupons) {
+                $coupons->whereHas('tenants', function($q) use ($tenant_name_like) {
+                    $q->where('merchants.name', 'like', "%$tenant_name_like%");
+                });
+            });
+
+            // Filter coupon merchants by mall name
+            OrbitInput::get('mall_name_like', function ($mall_name_like) use ($coupons) {
+                $coupons->whereHas('tenants', function($q) use ($mall_name_like) {
+                    $q->whereHas('mall', function($r) use ($mall_name_like) {
+                        $r->where('merchants.name', 'like', "%$mall_name_like%");
+                    });
+                });
+            });
+
              // Filter coupon rule by rule object type
             OrbitInput::get('rule_object_type', function ($ruleObjectTypes) use ($coupons) {
                 $coupons->whereHas('couponrule', function($q) use ($ruleObjectTypes) {
