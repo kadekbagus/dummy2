@@ -8,14 +8,14 @@ use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use Helper\EloquentRecordCounter as RecordCounter;
 use Orbit\Text as OrbitText;
 use Activity;
-use NewsAPIController;
+use CouponAPIController;
 use Response;
 use Mall;
 use Carbon\Carbon as Carbon;
 
-class NewsPrinterController extends DataPrinterController
+class CouponPrinterController extends DataPrinterController
 {
-    public function getNewsPrintView()
+    public function getCouponPrintView()
     {
         $this->preparePDO();
         $prefix = DB::getTablePrefix();
@@ -27,40 +27,41 @@ class NewsPrinterController extends DataPrinterController
 
         $user = $this->loggedUser;
 
-        // Instantiate the NewsAPIController to get the query builder of Coupons
-        $response = NewsAPIController::create('raw')
+        // Instantiate the CouponAPIController to get the query builder of Coupons
+        $response = CouponAPIController::create('raw')
                                             ->setReturnBuilder(TRUE)
-                                            ->getSearchNews();
+                                            ->getSearchCoupon();
 
         if (! is_array($response)) {
             return Response::make($response->message);
         }
 
         // get total data
-        $news = $response['builder'];
+        $coupon = $response['builder'];
         $totalRec = $response['count'];
 
         $pdo = DB::Connection()->getPdo();
 
         $prepareUnbufferedQuery = $pdo->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, FALSE);
 
-        $sql = $news->toSql();
-        $binds = $news->getBindings();
+        $sql = $coupon->toSql();
+        $binds = $coupon->getBindings();
 
         $statement = $pdo->prepare($sql);
         $statement->execute($binds);
 
         // Filter mode
-        $newsName = OrbitInput::get('news_name_like');
-        $tenantName = OrbitInput::get('tenant_name_like');
-        $mallName = OrbitInput::get('mall_name_like');
+        $couponName = OrbitInput::get('promotion_name_like');
         $etcFrom = OrbitInput::get('etc_from');
         $etcTo = OrbitInput::get('etc_to');
         $status = OrbitInput::get('campaign_status');
         $beginDate = OrbitInput::get('begin_date');
         $endDate = OrbitInput::get('end_date');
+        $ruleType = OrbitInput::get('rule_type');
+        $tenantName = OrbitInput::get('tenant_name_like');
+        $mallName = OrbitInput::get('mall_name_like');
 
-        $pageTitle = 'News List';
+        $pageTitle = 'Coupon';
 
         switch ($mode) {
             case 'csv':
@@ -69,12 +70,20 @@ class NewsPrinterController extends DataPrinterController
                 @header('Content-Disposition: attachment; filename=' . OrbitText::exportFilename($pageTitle, '.csv', $timezone));
 
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'News List', '', '', '', '','');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total News', $totalRec, '', '', '','');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Coupon List', '', '', '', '','');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Coupon', $totalRec, '', '', '','');
 
                 // Filtering
-                if ($newsName != '') {
-                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Campaign Name', htmlentities($newsName), '', '', '','');
+                if ($couponName != '') {
+                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Coupon Name', htmlentities($couponName), '', '', '','');
+                }
+
+                if ( is_array($ruleType) && count($ruleType) > 0) {
+                    $ruleString = '';
+                    foreach ($ruleType as $key => $valrule){
+                        $ruleString .= str_replace("_", " ", $valrule) . ', ';
+                    }
+                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Coupon Rule', htmlentities(rtrim($ruleString, ', ')), '', '', '','');
                 }
 
                 if ($tenantName != '') {
@@ -99,7 +108,7 @@ class NewsPrinterController extends DataPrinterController
                 if ( is_array($status) && count($status) > 0) {
                     $statusString = '';
                     foreach ($status as $key => $valstatus){
-                        $statusString .= $valstatus . ', ';
+                        $statusString .= ucwords($valstatus) . ', ';
                     }
                     printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Status', htmlentities(rtrim($statusString, ', ')), '', '', '','');
                 }
@@ -115,7 +124,7 @@ class NewsPrinterController extends DataPrinterController
                 }
 
                 printf("%s,%s,%s,%s,%s,%s,\n", '', '', '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s,\n", 'No', 'News Name', 'Start Date & Time', 'End Date & Time', 'Status', 'Last Update');
+                printf("%s,%s,%s,%s,%s,%s,\n", 'No', 'Coupon Name', 'Start Date & Time', 'End Date & Time', 'Status', 'Last Update');
                 printf("%s,%s,%s,%s,%s,%s,\n", '', '', '', '', '', '', '');
 
                 $count = 1;
@@ -136,7 +145,7 @@ class NewsPrinterController extends DataPrinterController
             default:
                 $me = $this;
                 $rowCounter = 0;
-                require app_path() . '/views/printer/list-news-view.php';
+                require app_path() . '/views/printer/list-coupon-view.php';
         }
     }
 
