@@ -61,6 +61,11 @@ class AccountAPIController extends ControllerAPI
         // Join with 'user_details' (one to one)
         $pmpAccounts->join('user_details', 'users.user_id', '=', 'user_details.user_id');
 
+        // Filter by Location
+        if (Input::get('location')) {
+            $pmpAccounts->whereCity(Input::get('location'))->orWhere('country', Input::get('location'));
+        }
+
         // Filter by Status
         if (Input::get('status')) {
             $pmpAccounts->whereStatus(Input::get('status'));
