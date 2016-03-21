@@ -89,7 +89,7 @@ class AccountAPIController extends ControllerAPI
             $records[] = [
                 'user_firstname' => $row->full_name,
                 'company_name' => $row->company_name,
-                'city' => $row->location,
+                'city' => $row->userDetail->location,
                 'tenants' => $this->getTenantAtMallArray($row->userTenants()->lists('merchant_id')),
                 'created_at' => $row->created_at->format('d F Y H:i:s'),
                 'status' => $row->status,
