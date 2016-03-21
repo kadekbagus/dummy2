@@ -26,8 +26,8 @@ class LuckyDrawPrinterController extends DataPrinterController
         $filterMinimumAmountFrom = OrbitInput::get('from_minimum_amount');
         $filterMinimumAmountTo = OrbitInput::get('to_minimum_amount');
         $filterStatus = OrbitInput::get('campaign_status');
-        $filterBeginDate = OrbitInput::get('begin_date');
-        $filterEndDate = OrbitInput::get('end_date');
+        $filterBeginDate = OrbitInput::get('beginDate');
+        $filterEndDate = OrbitInput::get('endDate');
 
         $timezone = $this->getTimeZone($currentMall);
 
@@ -64,10 +64,6 @@ class LuckyDrawPrinterController extends DataPrinterController
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','','');
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", 'Total Lucky Draws', $totalRec, '', '', '', '', '','','','','');
 
-                if ($filterBeginDate != '') {
-                    printf("%s,%s,\n", 'Campaign Date', $this->printCampaignDate($filterBeginDate, $filterEndDate));
-                }
-
                 if ($filterName != '') {
                     printf("%s,%s,\n", 'Filter by Lucky Draw Name', $filterName);
                 }
@@ -80,10 +76,23 @@ class LuckyDrawPrinterController extends DataPrinterController
                     printf("%s,%s,\n", 'Filter by Minimum Amount To', $filterMinimumAmountTo);
                 }
 
-                if ($filterStatus != '') {
-                    printf("%s,%s,\n", 'Filter by Status', $filterStatus);
+                if ( is_array($filterStatus) && count($filterStatus) > 0) {
+                    $statusString = '';
+                    foreach ($filterStatus as $key => $valstatus){
+                        $statusString .= $valstatus . ', ';
+                    }
+                    printf("%s,%s\n", 'Filter by Status', htmlentities(rtrim($statusString, ', ')));
                 }
 
+                if ($filterBeginDate != '' && $filterEndDate != ''){
+                    $beginDateRangeMallTime = date('d F Y', strtotime($filterBeginDate));
+                    $endDateRangeMallTime = date('d F Y', strtotime($filterEndDate));
+                    $dateRange = $beginDateRangeMallTime . ' - ' . $endDateRangeMallTime;
+                    if ($beginDateRangeMallTime === $endDateRangeMallTime) {
+                        $dateRange = $beginDateRangeMallTime;
+                    }
+                    printf("%s,%s\n", 'Campaign Date', $dateRange);
+                }
 
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','','','');
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','','','');
@@ -95,13 +104,13 @@ class LuckyDrawPrinterController extends DataPrinterController
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
 
                     printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
-                            $this->printUtf8($row->lucky_draw_name_english), 
-                            $this->printDateTime($row->start_date, 'UTC', 'd F Y  H:i'), 
-                            $this->printDateTime($row->end_date, 'UTC', 'd F Y  H:i'),
+                            $this->printUtf8($row->lucky_draw_name_english),
+                            $this->printDateTime($row->start_date, 'UTC', 'd F Y H:i'),
+                            $this->printDateTime($row->end_date, 'UTC', 'd F Y H:i'),
                             $row->minimum_amount,
                             $row->total_issued_lucky_draw_number,
                             $row->campaign_status,
-                            $this->printDateTime($row->updated_at, $timezone, 'd F Y  H:i:s')
+                            $this->printDateTime($row->updated_at, $timezone, 'd F Y H:i:s')
                        );
 
                 }
@@ -190,16 +199,16 @@ class LuckyDrawPrinterController extends DataPrinterController
         return $timezone;
     }
 
-    public function printCampaignDate($filterBeginDate, $filterEndDate) 
+    public function printCampaignDate($filterBeginDate, $filterEndDate)
     {
-        if (!empty($filterBeginDate) && !empty($filterEndDate)) 
+        if (!empty($filterBeginDate) && !empty($filterEndDate))
         {
             return $this->printDateTime($filterBeginDate, 'UTC').' - '.$this->printDateTime($filterEndDate, 'UTC');
         }
-        else if (! empty($filterBeginDate)) 
+        else if (! empty($filterBeginDate))
         {
             return $this->printDateTime($filterBeginDate, 'UTC');
-        }    
+        }
 
     }
 
