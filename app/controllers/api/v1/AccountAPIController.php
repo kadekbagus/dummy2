@@ -112,7 +112,7 @@ class AccountAPIController extends ControllerAPI
     protected function getTenantAtMallArray($tenantIds)
     {
         $tenantArray = [];
-        foreach (Tenant::whereIn('merchant_id', $tenantIds)->get() as $row) {
+        foreach (Tenant::whereIn('merchant_id', $tenantIds)->orderBy('name')->get() as $row) {
             $tenantArray[] = $row->tenant_at_mall;
         }
 
