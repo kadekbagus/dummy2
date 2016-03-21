@@ -25,7 +25,6 @@ class AccountAPIController extends ControllerAPI
         ],
         'tenants' => [
             'title' => 'Tenant(s)',
-            'sort_key' => 'tenants',
         ],
         'created_at' => [
             'title' => 'Creation Date',
