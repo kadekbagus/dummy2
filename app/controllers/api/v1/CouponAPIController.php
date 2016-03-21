@@ -2309,6 +2309,12 @@ class CouponAPIController extends ControllerAPI
 
             // Filter coupon merchants by mall name
             OrbitInput::get('mall_name_like', function ($mall_name_like) use ($coupons, $table_prefix) {
+                $quote = function($arg)
+                {
+                    return DB::connection()->getPdo()->quote($arg);
+                };
+                $mall_name_like = "%" . $mall_name_like . "%";
+                $mall_name_like = $quote($mall_name_like);
                 $coupons->whereRaw(DB::raw("
                     (SELECT count(*) 
                     FROM {$table_prefix}merchants mtenant
@@ -2319,7 +2325,7 @@ class CouponAPIController extends ControllerAPI
                             SELECT count(*) FROM {$table_prefix}merchants mmall
                             WHERE mmall.object_type = 'mall' and
                             mtenant.parent_id = mmall.merchant_id and
-                            mmall.name like '%{$mall_name_like}%' and
+                            mmall.name like {$mall_name_like} and
                             mmall.object_type = 'mall'
                         ) >= 1 
                         and mtenant.object_type = 'tenant' 
