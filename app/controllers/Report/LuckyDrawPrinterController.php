@@ -26,8 +26,8 @@ class LuckyDrawPrinterController extends DataPrinterController
         $filterMinimumAmountFrom = OrbitInput::get('from_minimum_amount');
         $filterMinimumAmountTo = OrbitInput::get('to_minimum_amount');
         $filterStatus = OrbitInput::get('campaign_status');
-        $filterBeginDate = OrbitInput::get('begin_date');
-        $filterEndDate = OrbitInput::get('end_date');
+        $filterBeginDate = OrbitInput::get('beginDate');
+        $filterEndDate = OrbitInput::get('endDate');
 
         $timezone = $this->getTimeZone($currentMall);
 
@@ -64,10 +64,6 @@ class LuckyDrawPrinterController extends DataPrinterController
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','','');
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", 'Total Lucky Draws', $totalRec, '', '', '', '', '','','','','');
 
-                if ($filterBeginDate != '') {
-                    printf("%s,%s,\n", 'Campaign Date', $this->printCampaignDate($filterBeginDate, $filterEndDate));
-                }
-
                 if ($filterName != '') {
                     printf("%s,%s,\n", 'Filter by Lucky Draw Name', $filterName);
                 }
@@ -80,10 +76,23 @@ class LuckyDrawPrinterController extends DataPrinterController
                     printf("%s,%s,\n", 'Filter by Minimum Amount To', $filterMinimumAmountTo);
                 }
 
-                if ($filterStatus != '') {
-                    printf("%s,%s,\n", 'Filter by Status', $filterStatus);
+                if ( is_array($filterStatus) && count($filterStatus) > 0) {
+                    $statusString = '';
+                    foreach ($filterStatus as $key => $valstatus){
+                        $statusString .= $valstatus . ', ';
+                    }
+                    printf("%s,%s\n", 'Filter by Status', htmlentities(rtrim($statusString, ', ')));
                 }
 
+                if ($filterBeginDate != '' && $filterEndDate != ''){
+                    $beginDateRangeMallTime = date('d F Y', strtotime($filterBeginDate));
+                    $endDateRangeMallTime = date('d F Y', strtotime($filterEndDate));
+                    $dateRange = $beginDateRangeMallTime . ' - ' . $endDateRangeMallTime;
+                    if ($beginDateRangeMallTime === $endDateRangeMallTime) {
+                        $dateRange = $beginDateRangeMallTime;
+                    }
+                    printf("%s,%s\n", 'Campaign Date', $dateRange);
+                }
 
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','','','');
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','','','');

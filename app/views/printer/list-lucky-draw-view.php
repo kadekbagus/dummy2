@@ -115,13 +115,6 @@
             <td><strong><?php echo number_format($totalRec, 0, '.', '.'); ?></strong></td>
         </tr>
 
-        <?php if ($filterBeginDate != '') { ?>
-            <tr>
-                <td>Campaign Date</td>
-                <td>:</td>
-                <td><strong><?php echo $me->printCampaignDate($filterBeginDate, $filterEndDate); ?></strong></td>
-            </tr>
-        <?php } ?>
 
         <?php if ($filterName != '') { ?>
             <tr>
@@ -151,9 +144,40 @@
             <tr>
                 <td>Filter by Status</td>
                 <td>:</td>
-                <td><strong><?php echo htmlentities(implode(' ', $filterStatus)); ?></strong></td>
+                <td>
+                    <strong>
+                        <?php
+                            $statusString = '';
+                            foreach ($filterStatus as $key => $valstatus){
+                                $statusString .= $valstatus . ', ';
+                            }
+                            echo htmlentities(rtrim($statusString, ', '));
+                        ?>
+                    </strong>
+                </td>
             </tr>
         <?php } ?>
+
+        <?php if ($filterBeginDate != '' && $filterEndDate != ''){ ?>
+            <tr>
+                <td>Campaign Date</td>
+                <td>:</td>
+                <td>
+                    <?php
+                        if ($filterBeginDate != '' && $filterEndDate != ''){
+                            $beginDateRangeMallTime = date('d F Y', strtotime($filterBeginDate));
+                            $endDateRangeMallTime = date('d F Y', strtotime($filterEndDate));
+                            $dateRange = $beginDateRangeMallTime . ' - ' . $endDateRangeMallTime;
+                            if ($beginDateRangeMallTime === $endDateRangeMallTime) {
+                                $dateRange = $beginDateRangeMallTime;
+                            }
+                        }
+                    ?>
+                    <strong><?php echo $dateRange; ?></strong>
+                </td>
+            </tr>
+        <?php } ?>
+
 
     </table>
 
