@@ -19,9 +19,9 @@ class AccountAPIController extends ControllerAPI
             'title' => 'Company Name',
             'sort_key' => 'company_name',
         ],
-        'location' => [
+        'city' => [
             'title' => 'Location',
-            'sort_key' => 'location',
+            'sort_key' => 'city',
         ],
         'tenants' => [
             'title' => 'Tenant(s)',
@@ -49,6 +49,7 @@ class AccountAPIController extends ControllerAPI
 
         $pmpAccounts = User::pmpAccounts();
 
+        // Filter by mall name
         if (Input::get('mall_name')) {
             $mall = Mall::whereName(Input::get('mall_name'))->first();
 
@@ -56,6 +57,9 @@ class AccountAPIController extends ControllerAPI
                 ? User::ofSpecificMallPmpAccounts($mall->merchant_id)
                 : $pmpAccounts->whereUserId('');
         }
+
+        // Join with 'user_details' (one to one)
+        $pmpAccounts->join('user_details', 'users.user_id', '=', 'user_details.user_id');
 
         // Filter by Status
         if (Input::get('status')) {
@@ -69,7 +73,7 @@ class AccountAPIController extends ControllerAPI
             $creationDateTimeFrom = Input::get('creation_date_from').' 00:00:00';
             $creationDateTimeTo = Input::get('creation_date_to').' 23:59:59';
 
-            $pmpAccounts->where('created_at', '>=', $creationDateTimeFrom)->where('created_at', '<=', $creationDateTimeTo);
+            $pmpAccounts->where('users.created_at', '>=', $creationDateTimeFrom)->where('users.created_at', '<=', $creationDateTimeTo);
         }
 
         // Get total row count
@@ -84,8 +88,8 @@ class AccountAPIController extends ControllerAPI
         foreach ($pmpAccounts as $row) {
             $records[] = [
                 'user_firstname' => $row->full_name,
-                'company_name' => $row->userDetail->company_name,
-                'location' => $row->userDetail->location,
+                'company_name' => $row->company_name,
+                'city' => $row->location,
                 'tenants' => $this->getTenantAtMallArray($row->userTenants()->lists('merchant_id')),
                 'created_at' => $row->created_at->format('d F Y H:i:s'),
                 'status' => $row->status,

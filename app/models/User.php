@@ -30,7 +30,7 @@ class User extends Eloquent implements UserInterface
         $userTenantArray = UserMerchant::whereObjectType('tenant')->lists('user_id');
         
         return $userTenantArray
-            ? $query->whereIn('user_id', $userTenantArray)
+            ? $query->whereIn('users.user_id', $userTenantArray)
             : $query->whereUserId('');
     }
 
@@ -46,7 +46,7 @@ class User extends Eloquent implements UserInterface
         $userTenantArray = UserMerchant::whereObjectType('tenant')->whereIn('merchant_id', $merchantIds)->lists('user_id');
         
         return $userTenantArray
-            ? $query->whereIn('user_id', $userTenantArray)
+            ? $query->whereIn('users.user_id', $userTenantArray)
             : $query->whereUserId('');
     }
 

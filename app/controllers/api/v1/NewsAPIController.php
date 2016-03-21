@@ -14,15 +14,15 @@ use Carbon\Carbon as Carbon;
 
 class NewsAPIController extends ControllerAPI
 {
-    protected $newsViewRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee'];
-    protected $newsModifiyRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee'];
-
     /**
      * Flag to return the query builder.
      *
      * @var Builder
      */
     protected $returnBuilder = FALSE;
+
+    protected $newsViewRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee'];
+    protected $newsModifiyRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee'];
 
     /**
      * POST - Create New News
@@ -1649,10 +1649,26 @@ class NewsAPIController extends ControllerAPI
                 $news->whereIn('news.link_object_type', $linkObjectTypes);
             });
 
-            // Filter news merchants by retailer id
+            // Filter news merchants by retailer(tenant) id
             OrbitInput::get('retailer_id', function ($retailerIds) use ($news) {
                 $news->whereHas('tenants', function($q) use ($retailerIds) {
                     $q->whereIn('merchant_id', $retailerIds);
+                });
+            });
+
+            // Filter news merchants by retailer(tenant) name
+            OrbitInput::get('tenant_name_like', function ($tenant_name_like) use ($news) {
+                $news->whereHas('tenants', function($q) use ($tenant_name_like) {
+                    $q->where('merchants.name', 'like', "%$tenant_name_like%");
+                });
+            });
+
+            // Filter news merchants by mall name
+            OrbitInput::get('mall_name_like', function ($mall_name_like) use ($news) {
+                $news->whereHas('tenants', function($q) use ($mall_name_like) {
+                    $q->whereHas('mall', function($q) use ($mall_name_like) {
+                        $q->where('merchants.name', 'like', "%$mall_name_like%");
+                    });
                 });
             });
 
@@ -1680,6 +1696,8 @@ class NewsAPIController extends ControllerAPI
                 foreach ($with as $relation) {
                     if ($relation === 'tenants') {
                         $news->with('tenants');
+                    } elseif ($relation === 'tenants.mall') {
+                        $news->with('tenants.mall');
                     } elseif ($relation === 'translations') {
                         $news->with('translations');
                     } elseif ($relation === 'translations.media') {
@@ -2541,5 +2559,4 @@ class NewsAPIController extends ControllerAPI
 
         return $this;
     }
-
 }
