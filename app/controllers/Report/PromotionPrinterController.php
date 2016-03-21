@@ -98,8 +98,8 @@ class PromotionPrinterController extends DataPrinterController
                 }
 
                 if ($beginDate != '' && $endDate != ''){
-                    $beginDateRangeMallTime = $this->printDateTime($beginDate, $timezone, 'd M Y');
-                    $endDateRangeMallTime = $this->printDateTime($endDate, $timezone, 'd M Y');
+                    $beginDateRangeMallTime = date('d F Y', strtotime($beginDate));
+                    $endDateRangeMallTime = date('d F Y', strtotime($endDate));
                     $dateRange = $beginDateRangeMallTime . ' - ' . $endDateRangeMallTime;
                     if ($beginDateRangeMallTime === $endDateRangeMallTime) {
                         $dateRange = $beginDateRangeMallTime;
@@ -109,7 +109,7 @@ class PromotionPrinterController extends DataPrinterController
 
                 printf("%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '');
                 printf("%s,%s,%s,%s,%s,%s\n", '', 'Promotion Name', 'Start Date & Time', 'End Date & Time', 'Status', 'Last Update');
-                
+
                 printf("%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '');
 
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
