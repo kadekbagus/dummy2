@@ -83,11 +83,11 @@ class AccountAPIController extends ControllerAPI
         $records = [];
         foreach ($pmpAccounts as $row) {
             $records[] = [
-                'name' => $row->full_name,
+                'user_firstname' => $row->full_name,
                 'company_name' => $row->userDetail->company_name,
                 'location' => $row->userDetail->location,
                 'tenants' => $this->getTenantAtMallArray($row->userTenants()->lists('merchant_id')),
-                'creation_date' => $row->created_at->format('d F Y H:i:s'),
+                'created_at' => $row->created_at->format('d F Y H:i:s'),
                 'status' => $row->status,
             ];
         }
