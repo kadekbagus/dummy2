@@ -78,15 +78,15 @@ class PromotionPrinterController extends DataPrinterController
                 }
 
                 if ($etcFrom != '' && $etcTo != ''){
-                    printf("%s,%s,%s - %s,%s,%s,%s\n", '', 'Estimated Total Cost', $etcFrom, $etcTo, '', '', '','');
+                    printf("%s,%s,%s - %s,%s,%s,%s\n", '', 'Filter by Estimated Total Cost', $etcFrom, $etcTo, '', '', '','');
                 }
 
                 if ($etcFrom != '' && $etcTo == ''){
-                    printf("%s,%s,%s,%s,%s,%s\n", '', 'Estimated Total Cost (From)', $etcFrom, '', '', '','');
+                    printf("%s,%s,%s,%s,%s,%s\n", '', 'Filter by Estimated Total Cost (From)', $etcFrom, '', '', '','');
                 }
 
                 if ($etcFrom == '' && $etcTo != ''){
-                    printf("%s,%s,%s,%s,%s,%s\n", '', 'Estimated Total Cost (To)', $etcTo, '', '', '','');
+                    printf("%s,%s,%s,%s,%s,%s\n", '', 'Filter by Estimated Total Cost (To)', $etcTo, '', '', '','');
                 }
 
                 if ( is_array($status) && count($status) > 0) {

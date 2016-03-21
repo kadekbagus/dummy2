@@ -145,7 +145,7 @@
 
         <?php if ($etcFrom != '' && $etcTo != ''){ ?>
             <tr>
-                <td>Estimated Total Cost</td>
+                <td>Filter by Estimated Total Cost</td>
                 <td>:</td>
                 <td> <strong><?php echo $etcFrom . ' - ' . $etcTo; ?></strong></td>
             </tr>
@@ -153,7 +153,7 @@
 
         <?php if ($etcFrom != '' && $etcTo == ''){ ?>
             <tr>
-                <td>Estimated Total Cost (From)</td>
+                <td>Filter by Estimated Total Cost (From)</td>
                 <td>:</td>
                 <td> <strong><?php echo $etcFrom; ?></strong></td>
             </tr>
@@ -161,7 +161,7 @@
 
         <?php if ($etcFrom == '' && $etcTo != ''){ ?>
             <tr>
-                <td>Estimated Total Cost (To)</td>
+                <td>Filter by Estimated Total Cost (To)</td>
                 <td>:</td>
                 <td> <strong><?php echo $etcTo; ?></strong></td>
             </tr>
