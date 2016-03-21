@@ -49,6 +49,7 @@ class AccountAPIController extends ControllerAPI
 
         $pmpAccounts = User::pmpAccounts();
 
+        // Filter by mall name
         if (Input::get('mall_name')) {
             $mall = Mall::whereName(Input::get('mall_name'))->first();
 
