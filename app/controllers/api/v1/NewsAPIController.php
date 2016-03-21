@@ -1659,15 +1659,16 @@ class NewsAPIController extends ControllerAPI
             // Filter news merchants by retailer(tenant) name
             OrbitInput::get('tenant_name_like', function ($tenant_name_like) use ($news) {
                 $news->whereHas('tenants', function($q) use ($tenant_name_like) {
-                    $q->where('merchants.name', 'like', "%$tenant_name_like%");
+                    $q->whereHas('mall', function($q) use ($tenant_name_like) {
+                        $q->where('merchants.name', 'like', "%$tenant_name_like%");
+                    })
                 });
             });
 
             // Filter news merchants by mall name
             // There is laravel bug regarding nested whereHas on the same table like in this case
             // news->tenant->mall : whereHas('tenant', function($q) { $q->whereHas('mall' ...)}) this is not gonna work
-            OrbitInput::get('mall_name_like', function ($mall_name_like) use ($news) {
-                $prefix = DB::getTablePrefix();
+            OrbitInput::get('mall_name_like', function ($mall_name_like) use ($news, $prefix) {
                 $news->whereRaw(DB::raw("
                     (select count(*) from {$prefix}merchants mtenant
                     inner join {$prefix}news_merchant onm on mtenant.merchant_id = onm.merchant_id
