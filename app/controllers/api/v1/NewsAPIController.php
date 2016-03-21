@@ -1552,11 +1552,13 @@ class NewsAPIController extends ControllerAPI
             $prefix = DB::getTablePrefix();
             $news = News::allowedForPMPUser($user, $object_type[0])
                         ->select('news.*', 'campaign_status.order', 'campaign_price.campaign_price_id',
-                            DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$prefix}news.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name) FROM {$prefix}merchants om
-                                                LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
-                                                WHERE om.merchant_id = {$prefix}news.mall_id)
-                                THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END  AS campaign_status"),
-                            DB::raw("CASE WHEN {$prefix}campaign_price.base_price is null THEN 0 ELSE {$prefix}campaign_price.base_price END AS base_price, ((CASE WHEN {$prefix}campaign_price.base_price is null THEN 0 ELSE {$prefix}campaign_price.base_price END) * (DATEDIFF({$prefix}news.end_date, {$prefix}news.begin_date) + 1) * (COUNT({$prefix}news_merchant.news_merchant_id))) AS estimated"))
+                                DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$prefix}news.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name) FROM {$prefix}merchants om
+                                                    LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
+                                                    WHERE om.merchant_id = {$prefix}news.mall_id)
+                                    THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END  AS campaign_status"),
+                                DB::raw("CASE WHEN {$prefix}campaign_price.base_price is null THEN 0 ELSE {$prefix}campaign_price.base_price END AS base_price, ((CASE WHEN {$prefix}campaign_price.base_price is null THEN 0 ELSE {$prefix}campaign_price.base_price END) * (DATEDIFF({$prefix}news.end_date, {$prefix}news.begin_date) + 1) * (COUNT({$prefix}news_merchant.news_merchant_id))) AS estimated"
+                            )
+                        )
                         ->leftJoin('campaign_price', function ($join) use ($object_type) {
                                 $join->on('news.news_id', '=', 'campaign_price.campaign_id')
                                      ->where('campaign_price.campaign_type', '=', $object_type);
@@ -1649,10 +1651,26 @@ class NewsAPIController extends ControllerAPI
                 $news->whereIn('news.link_object_type', $linkObjectTypes);
             });
 
-            // Filter news merchants by retailer id
+            // Filter news merchants by retailer(tenant) id
             OrbitInput::get('retailer_id', function ($retailerIds) use ($news) {
                 $news->whereHas('tenants', function($q) use ($retailerIds) {
                     $q->whereIn('merchant_id', $retailerIds);
+                });
+            });
+
+            // Filter news merchants by retailer(tenant) name
+            OrbitInput::get('tenant_name_like', function ($tenant_name_like) use ($news) {
+                $news->whereHas('tenants', function($q) use ($tenant_name_like) {
+                    $q->where('merchants.name', 'like', "%$tenant_name_like%");
+                });
+            });
+
+            // Filter news merchants by mall name
+            OrbitInput::get('mall_name_like', function ($mall_name_like) use ($news) {
+                $news->whereHas('tenants', function($q) use ($mall_name_like) {
+                    $q->whereHas('mall', function($q) use ($mall_name_like) {
+                        $q->where('merchants.name', 'like', "%$mall_name_like%");
+                    });
                 });
             });
 
@@ -1680,6 +1698,8 @@ class NewsAPIController extends ControllerAPI
                 foreach ($with as $relation) {
                     if ($relation === 'tenants') {
                         $news->with('tenants');
+                    } elseif ($relation === 'tenants.mall') {
+                        $news->with('tenants.mall');
                     } elseif ($relation === 'translations') {
                         $news->with('translations');
                     } elseif ($relation === 'translations.media') {
