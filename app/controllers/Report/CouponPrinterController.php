@@ -58,6 +58,8 @@ class CouponPrinterController extends DataPrinterController
         $beginDate = OrbitInput::get('begin_date');
         $endDate = OrbitInput::get('end_date');
         $ruleType = OrbitInput::get('rule_type');
+        $tenantName = OrbitInput::get('tenant_name_like');
+        $mallName = OrbitInput::get('mall_name_like');
 
         $pageTitle = 'Coupon';
 
@@ -70,7 +72,6 @@ class CouponPrinterController extends DataPrinterController
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Coupon List', '', '', '', '','');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Coupon', $totalRec, '', '', '','');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
 
                 // Filtering
                 if ($couponName != '') {
@@ -85,18 +86,23 @@ class CouponPrinterController extends DataPrinterController
                     printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Coupon Rule', htmlentities(rtrim($ruleString, ', ')), '', '', '','');
                 }
 
-                if ($etcFrom != '' || $etcTo != ''){
+                if ($tenantName != '') {
+                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Tenant Name', htmlentities($tenantName), '', '', '','');
+                }
+                if ($mallName != '') {
+                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Mall Name', htmlentities($mallName), '', '', '','');
+                }
 
-                    $estimatedText = '';
-                    if ($etcFrom != '' && $etcTo == '') {
-                        $estimatedText = '>= ' . $etcFrom;
-                    } else if ($etcFrom == '' && $etcTo != '') {
-                        $estimatedText = '0 - ' . $etcTo;
-                    } else if ($etcFrom != '' && $etcTo != '') {
-                        $estimatedText = $etcFrom . ' - ' . $etcTo;
-                    }
+                if ($etcFrom != '' && $etcTo != ''){
+                    printf("%s,%s,%s - %s,%s,%s,%s\n", '', 'Filter by Estimated Total Cost', str_replace(',', '', $etcFrom),  str_replace(',', '', $etcTo), '', '', '','');
+                }
 
-                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Estimated Total Cost', $estimatedText, '', '', '', '','');
+                if ($etcFrom != '' && $etcTo == ''){
+                    printf("%s,%s,%s,%s,%s,%s\n", '', 'Filter by Estimated Total Cost (From)', str_replace(',', '', $etcFrom), '', '', '','');
+                }
+
+                if ($etcFrom == '' && $etcTo != ''){
+                    printf("%s,%s,%s,%s,%s,%s\n", '', 'Filter by Estimated Total Cost (To)',  str_replace(',', '', $etcTo), '', '', '','');
                 }
 
                 if ( is_array($status) && count($status) > 0) {
