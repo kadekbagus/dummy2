@@ -1551,7 +1551,7 @@ class NewsAPIController extends ControllerAPI
             // Builder object
             $prefix = DB::getTablePrefix();
             $news = News::allowedForPMPUser($user, $object_type[0])
-                        ->select('news.*', 'campaign_status.order', 'campaign_price.campaign_price_id',
+                        ->select('news.*', 'campaign_status.order', 'campaign_price.campaign_price_id', 'news_translations.news_name as name_english',
                             DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$prefix}news.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name) FROM {$prefix}merchants om
                                                 LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
                                                 WHERE om.merchant_id = {$prefix}news.mall_id)
