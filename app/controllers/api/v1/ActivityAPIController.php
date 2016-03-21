@@ -19,7 +19,6 @@ class ActivityAPIController extends ControllerAPI
 
     protected $newsViewRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee'];
     protected $newsModifiyRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee'];
-    protected $returnBuilder = false;
 
     /**
      * GET - List of Activities history
@@ -2753,52 +2752,53 @@ class ActivityAPIController extends ControllerAPI
                 return DB::connection()->getPdo()->quote($arg);
             };
 
-            if (Carbon::parse($end_date)->isToday() && $date_diff_minute <= 24) {
+            if (Carbon::parse($end_date)->isToday()) {
                 $end_date = Carbon::now()->format('Y-m-d H:i:s');
-                $date_diff_minute = round(abs(strtotime($end_date) - strtotime($start_date)) / (60 * 60));
             }
+
+            $date_diff_minute = round(abs(strtotime($end_date) - strtotime($start_date)) / (60 * 60));
 
             // Thomas's number of connected users hourly with aggregates v2
             $activities = DB::select(DB::raw("
-                SELECT
+                SELECT 
                     q_hours.comp_hours AS start_time,
                     DATE_FORMAT(DATE_ADD(q_hours.comp_hours, INTERVAL 1 HOUR),'%H:00') AS end_time,
                     IFNULL(ppp2.score, 0) AS score
                 FROM
                     (
-                        SELECT
-                            DATE_FORMAT(DATE_ADD('1971-01-01 23:00:00', INTERVAL osn.sequence_number HOUR),'%H:00') AS comp_hours
-                        FROM
+                        SELECT 
+                            DATE_FORMAT(DATE_ADD('1971-01-01 23:00:00', INTERVAL osn.sequence_number HOUR),'%H:00') AS comp_hours 
+                        FROM 
                             {$tablePrefix}sequence osn
                         WHERE
-                            osn.sequence_number <= 24
+                            osn.sequence_number < 24
                     ) AS q_hours
                     LEFT JOIN
                     (
                         SELECT
-                            DATE_FORMAT(ppp1.comp_date,'%H:00') AS start_time,
+                            DATE_FORMAT(ppp1.comp_date,'%H:00') AS start_time, 
                             SUM(ppp1.connected_hourly) AS score
                         FROM
                             (
-                                SELECT
+                                SELECT 
                                     pp1.comp_date,
-                                    pp2.login_count,
+                                    pp2.login_count, 
                                     pp1.delayed_logout_count,
-                                    @conn_hour,
+                                    @conn_hour,  
                                     (@conn_hour := (@conn_hour + pp2.login_count) - pp1.delayed_logout_count) AS connected_hourly,
-                                    pp1.logout_count
+                                    pp1.logout_count 
                                 FROM
                                     (SELECT @conn_hour := 0) AS init_var_main,
                                     (
-                                        SELECT
+                                        SELECT 
                                             s2.comp_date,
                                             IFNULL(p2.logout_count, 0) AS logout_count,
                                             @delayed_lo_count AS delayed_logout_count,
-                                            (@delayed_lo_count := IFNULL(p2.logout_count, 0))
+                                            (@delayed_lo_count := IFNULL(p2.logout_count, 0)) 
                                         FROM
                                             (SELECT @delayed_lo_count := 0) AS init_var_sp2,
                                             (
-                                                SELECT
+                                                SELECT 
                                                     DATE_FORMAT(DATE_ADD('{$start_date_minus_one_hour}', INTERVAL sequence_number HOUR), '%Y-%m-%d %H:00:00') AS comp_date
                                                 FROM
                                                     {$tablePrefix}sequence ts
@@ -2807,17 +2807,17 @@ class ActivityAPIController extends ControllerAPI
                                             ) AS s2
                                         LEFT JOIN
                                             (
-                                                SELECT
+                                                SELECT 
                                                     DATE_FORMAT(s_lo.logout_at, '%Y-%m-%d %H:00:00') AS logout_datehour,
                                                     COUNT(DATE_FORMAT(s_lo.logout_at, '%Y-%m-%d %H:00:00')) AS logout_count
                                                 FROM
                                                     (
-                                                        (   SELECT
+                                                        (   SELECT 
                                                                 oct.connection_time_id,
                                                                 oct.session_id,
                                                                 oct.user_id,
                                                                 oct.location_id,
-                                                                oct.login_at,
+                                                                oct.login_at,  
                                                                 oct.logout_at
                                                             FROM
                                                                 {$tablePrefix}connection_times oct
@@ -2833,18 +2833,18 @@ class ActivityAPIController extends ControllerAPI
                                                                 oct.session_id,
                                                                 oct.user_id,
                                                                 oct.location_id,
-                                                                oct.login_at,
+                                                                oct.login_at,  
                                                                 IF( TIMEDIFF('{$mallTime}', oct.login_at) > '{$expiry_time}',
                                                                     DATE_ADD(oct.login_at, INTERVAL {$expiry} SECOND),
                                                                     NULL
                                                                   ) AS logout_at
-                                                            FROM
+                                                            FROM 
                                                                 {$tablePrefix}connection_times oct
-                                                            WHERE
+                                                            WHERE 
                                                                 oct.location_id = {$quote($current_mall)} AND
                                                                 oct.logout_at IS NULL
                                                                 AND oct.login_at BETWEEN {$quote($start_date)} AND {$quote($end_date)}
-                                                        )
+                                                        ) 
                                                     )AS s_lo
                                                 GROUP BY logout_datehour
                                                 ORDER BY logout_datehour
@@ -2853,12 +2853,12 @@ class ActivityAPIController extends ControllerAPI
                                     ) AS pp1
                                 LEFT JOIN
                                     (
-                                        SELECT
+                                        SELECT 
                                             s1.comp_date,
                                             IFNULL(p1.login_count, 0) AS login_count
                                         FROM
                                             (
-                                                SELECT
+                                                SELECT 
                                                     DATE_FORMAT(DATE_ADD('{$start_date_minus_one_hour}', INTERVAL sequence_number HOUR), '%Y-%m-%d %H:00:00') AS comp_date
                                                 FROM
                                                     {$tablePrefix}sequence ts
@@ -2867,7 +2867,7 @@ class ActivityAPIController extends ControllerAPI
                                             ) AS s1
                                         LEFT JOIN
                                             (
-                                                SELECT
+                                                SELECT 
                                                     DATE_FORMAT(oct.login_at, '%Y-%m-%d %H:00:00') AS login_datehour,
                                                     COUNT(DATE_FORMAT(oct.login_at, '%Y-%m-%d %H:00:00')) AS login_count
                                                 FROM
@@ -3046,6 +3046,9 @@ class ActivityAPIController extends ControllerAPI
             $begin->setTimezone(new DateTimeZone($timezone));
             $endtime->setTimezone(new DateTimeZone($timezone));
 
+            $mallbegindate = $begin->format('Y-m-d');
+            $mallenddate = $endtime->format('Y-m-d');
+
             // get periode per 1 day
             $interval = DateInterval::createFromDateString('1 day');
             $_dateRange = new DatePeriod($begin, $interval, $endtime);
@@ -3058,24 +3061,112 @@ class ActivityAPIController extends ControllerAPI
 
             $tablePrefix = DB::getTablePrefix();
 
-            $sql = "select date_format(convert_tz(created_at, '+00:00', ?), '%Y-%m-%d') activity_date, activity_name_long, count(activity_id) as `count`
-                    from {$tablePrefix}activities
-                    -- filter by date
-                    where (`group` = 'mobile-ci'
-                        or (`group` = 'portal' and activity_type in ('activation','create'))
-                        or (`group` = 'cs-portal' and activity_type in ('registration')))
-                        {{where:longActivityName}}
-                        and response_status = 'OK' and location_id = ?
-                        and created_at between ? and ?
-                    group by 1, 2;";
+            $quote = function($arg)
+            {
+                return DB::connection()->getPdo()->quote($arg);
+            };
 
+            $sql = "select dt.comp_date as date,
+                        IFNULL(MAX(CASE WHEN dt.label = 'Network Check In' THEN dt.count END), 0) AS 'network_check_in', 
+                        IFNULL(MAX(CASE WHEN dt.label = 'Network Check Out' THEN dt.count END), 0) AS 'network_check_out', 
+                        IFNULL(MAX(CASE WHEN dt.label = 'Email Sign Up' THEN dt.count END), 0) AS 'email_sign_up', 
+                        IFNULL(MAX(CASE WHEN dt.label = 'Facebook Sign Up' THEN dt.count END), 0) AS 'facebook_sign_up', 
+                        IFNULL(MAX(CASE WHEN dt.label = 'Google Sign Up' THEN dt.count END), 0) AS 'google_sign_up',
+                        IFNULL(MAX(CASE WHEN dt.label = 'Sign Up via Customer Service' THEN dt.count END), 0) AS 'sign_up_via_cs',  
+                        IFNULL(MAX(CASE WHEN dt.label = 'Sign In' THEN dt.count END), 0) AS 'sign_in', 
+                        IFNULL(MAX(CASE WHEN dt.label = 'Read Activation Notification' THEN dt.count END), 0) AS 'read_activation_notification', 
+                        IFNULL(MAX(CASE WHEN dt.label = 'Customer Activation' THEN dt.count END), 0) AS 'customer_activation',
+                        IFNULL(MAX(CASE WHEN dt.label = 'Sign Out' THEN dt.count END), 0) AS 'sign_out', 
+                        IFNULL(MAX(CASE WHEN dt.label = 'View (Home Page)' THEN dt.count END), 0) AS 'view_home_page',
+                        IFNULL(MAX(CASE WHEN dt.label = 'Widget Click Tenant' THEN dt.count END), 0) AS 'widget_click_tenant',
+                        IFNULL(MAX(CASE WHEN dt.label = 'View Tenant List' THEN dt.count END), 0) AS 'view_tenant_list',
+                        IFNULL(MAX(CASE WHEN dt.label = 'View Tenant Detail' THEN dt.count END), 0) AS 'view_tenant_detail',
+                        IFNULL(MAX(CASE WHEN dt.label = 'Widget Click Promotion' THEN dt.count END), 0) AS 'widget_click_promotion',
+                        IFNULL(MAX(CASE WHEN dt.label = 'View Promotion Pop Up' THEN dt.count END), 0) AS 'view_promotion_pop_up',
+                        IFNULL(MAX(CASE WHEN dt.label = 'Click Promotion Pop Up' THEN dt.count END), 0) AS 'click_promotion_pop_up',
+                        IFNULL(MAX(CASE WHEN dt.label = 'View Promotion List' THEN dt.count END), 0) AS 'view_promotion_list',
+                        IFNULL(MAX(CASE WHEN dt.label = 'View Promotion Tenant List' THEN dt.count END), 0) AS 'view_promotion_tenant_list',
+                        IFNULL(MAX(CASE WHEN dt.label = 'View Promotion Detail' THEN dt.count END), 0) AS 'view_promotion_detail',
+                        IFNULL(MAX(CASE WHEN dt.label = 'Widget Click News' THEN dt.count END), 0) AS 'widget_click_news',
+                        IFNULL(MAX(CASE WHEN dt.label = 'View News Pop Up' THEN dt.count END), 0) AS 'view_news_pop_up',
+                        IFNULL(MAX(CASE WHEN dt.label = 'Click News Pop Up' THEN dt.count END), 0) AS 'click_news_pop_up',
+                        IFNULL(MAX(CASE WHEN dt.label = 'View News List' THEN dt.count END), 0) AS 'view_news_list',
+                        IFNULL(MAX(CASE WHEN dt.label = 'View News Tenant List' THEN dt.count END), 0) AS 'view_news_tenant_list',
+                        IFNULL(MAX(CASE WHEN dt.label = 'View News Detail' THEN dt.count END), 0) AS 'view_news_detail',
+                        IFNULL(MAX(CASE WHEN dt.label = 'Widget Click Coupon' THEN dt.count END), 0) AS 'widget_click_coupon',
+                        IFNULL(MAX(CASE WHEN dt.label = 'View Coupon Pop Up' THEN dt.count END), 0) AS 'view_coupon_pop_up',
+                        IFNULL(MAX(CASE WHEN dt.label = 'Click Coupon Pop Up' THEN dt.count END), 0) AS 'click_coupon_pop_up',
+                        IFNULL(MAX(CASE WHEN dt.label = 'View Coupon List' THEN dt.count END), 0) AS 'view_coupon_list',
+                        IFNULL(MAX(CASE WHEN dt.label = 'View Coupon Tenant List' THEN dt.count END), 0) AS 'view_coupon_tenant_list',
+                        IFNULL(MAX(CASE WHEN dt.label = 'View Coupon Detail' THEN dt.count END), 0) AS 'view_coupon_detail',
+                        IFNULL(MAX(CASE WHEN dt.label = 'View Coupon Campaign Detail' THEN dt.count END), 0) AS 'view_coupon_campaign_detail',
+                        IFNULL(MAX(CASE WHEN dt.label = 'View Coupon Redemption Places' THEN dt.count END), 0) AS 'view_coupon_redemption_places',
+                        IFNULL(MAX(CASE WHEN dt.label = 'Coupon Issuance' THEN dt.count END), 0) AS 'coupon_issued',
+                        IFNULL(MAX(CASE WHEN dt.label = 'Read Coupon Issuance Notification' THEN dt.count END), 0) AS 'read_coupon_issuance_notification',
+                        IFNULL(MAX(CASE WHEN dt.label = 'Coupon Redemption (Successful)' THEN dt.count END), 0) AS 'coupon_redeemed',
+                        IFNULL(MAX(CASE WHEN dt.label = 'Widget Click Lucky Draw' THEN dt.count END), 0) AS 'widget_click_lucky_draw',
+                        IFNULL(MAX(CASE WHEN dt.label = 'View Lucky Draw List' THEN dt.count END), 0) AS 'view_lucky_draw_list',
+                        IFNULL(MAX(CASE WHEN dt.label = 'View Lucky Draw Detail' THEN dt.count END), 0) AS 'view_lucky_draw_detail',
+                        IFNULL(MAX(CASE WHEN dt.label = 'Lucky Draw Number Issuance' THEN dt.count END), 0) AS 'lucky_draw_number_issued',
+                        IFNULL(MAX(CASE WHEN dt.label = 'Read Lucky Draw Number Issuance Notification' THEN dt.count END), 0) AS 'read_lucky_draw_number_issuance_notification',
+                        IFNULL(MAX(CASE WHEN dt.label = 'View Winning Numbers & Prizes' THEN dt.count END), 0) AS 'view_prizes_&_winning_numbers', 
+                        IFNULL(MAX(CASE WHEN dt.label = 'Read Winner Announcement Notification' THEN dt.count END), 0) AS 'read_winner_announcement_notification', 
+                        IFNULL(MAX(CASE WHEN dt.label = 'Search' THEN dt.count END), 0) AS 'search', 
+                        IFNULL(MAX(CASE WHEN dt.label = 'View My Account' THEN dt.count END), 0) AS 'view_my_account', 
+                        IFNULL(MAX(CASE WHEN dt.label = 'View Notification List' THEN dt.count END), 0) AS 'view_notification_list'
+                    FROM
+                        (
+                            SELECT mydate.comp_date,
+                                CASE WHEN 
+                                    (oa.activity_name_long = 'Sign In via Automatic MAC Recognition (Captive)') or 
+                                    (oa.activity_name_long = 'Sign In via Automatic Email Recognition (Captive)') or
+                                    (oa.activity_name_long = 'Sign In via Facebook') or
+                                    (oa.activity_name_long = 'Sign In via Google') or
+                                    (oa.activity_name_long = 'Sign In via Email (Captive)') or
+                                    (oa.activity_name_long = 'Sign in') 
+                                THEN 'Sign In'
+                                WHEN 
+                                    (oa.activity_name_long = 'Sign Up') or
+                                    (oa.activity_name_long = 'Sign Up via Mobile (Email Address)') or
+                                    (oa.activity_name_long = 'Sign Up with email address') 
+                                THEN 'Email Sign Up'
+                                WHEN 
+                                    (oa.activity_name_long = 'Sign Up via Mobile (Facebook)') or
+                                    (oa.activity_name_long = 'Facebook Sign Up') 
+                                THEN 'Facebook Sign Up'
+                                WHEN 
+                                    (oa.activity_name_long = 'Sign Up via Mobile (Google+)') 
+                                THEN 'Google Sign Up'
+                                ELSE oa.activity_name_long
+                                END AS label,
+                                count(oa.activity_id) as `count`
+                            FROM 
+                                (SELECT 
+                                    DATE_FORMAT(DATE_ADD({$quote($mallbegindate)}, INTERVAL sequence_number DAY), '%Y-%m-%d') AS comp_date
+                                FROM
+                                    (SELECT 0 AS sequence_number UNION ALL SELECT * from {$tablePrefix}sequence) os
+                                WHERE
+                                    os.sequence_number <= ((DATEDIFF(DATE_FORMAT({$quote($mallenddate)}, '%Y-%m-%d'), DATE_FORMAT({$quote($mallbegindate)}, '%Y-%m-%d'))))
+                                    ) AS mydate
+                                LEFT JOIN 
+                                    (select activity_id, activity_name_long, date_format(convert_tz(created_at, '+00:00', {$quote($timezoneOffset)}), '%Y-%m-%d') as createdat from {$tablePrefix}activities
+                                    where (`group` = 'mobile-ci'
+                                            or (`group` = 'portal' and activity_type in ('activation','create'))
+                                            or (`group` = 'cs-portal' and activity_type in ('registration')))
+                                            and response_status = 'OK' and location_id = {$quote($current_mall)}
+                                            and created_at between {$quote($start_date)} and {$quote($end_date)}) as oa 
+                                ON mydate.comp_date = oa.createdat
+                            GROUP BY comp_date, 2
+                        ) dt
+                    GROUP BY dt.comp_date";
+            
             // Filter with activity names (activity_name_long)
             $longActivityNameWhere = '';
             $activityKeys = [];
             if ($activityGroups) {
                 foreach ($activityGroups as $activityGroup) {
                     foreach (Config::get('orbit_activity.groups.'.$activityGroup) as $key) {
-                        $activityKeys[] = $key;
+                        $activityKeys[] = strtolower(str_replace(' ', '_', $key));
                     }
                 }
             }
@@ -3087,87 +3178,31 @@ class ActivityAPIController extends ControllerAPI
             if ($activityGroupSearch) {
                 $lowerActivityGroupSearch = strtolower($activityGroupSearch);
                 $lowerActivityColumns = array_map('strtolower', Config::get('orbit.activity_columns'));
-
                 $activityKey = array_search($lowerActivityGroupSearch, $lowerActivityColumns);
                 if ($activityKey) {
                     $columns = array_merge($columns, [$activityKey => Config::get('orbit.activity_columns.'.$activityKey)]);
-                    $activityKeys[] = $activityKey;
+                    $activityKeys[] = strtolower(str_replace(' ', '_', $activityKey));
                 }
             }
+
+            $activities = DB::table(DB::raw('(' . $sql . ') as a'));
 
             if ($activityKeys) {
-                $longActivityNameWhere = "AND activity_name_long IN ('".implode("','", $activityKeys)."')";
+                $keys = 'date, ' . implode(", ", $activityKeys);
+                $activities->selectRaw($keys);
             }
 
-            $sql = str_replace('{{where:longActivityName}}', $longActivityNameWhere, $sql);
-            $activities = DB::select($sql, array($timezoneOffset, $current_mall, $start_date, $end_date));
-
-            $responses = [];
+            $result = $activities->get();
+            
             $records = [];
 
-            // sel = selected
-            $selActivityGroups = $activityGroups;
-            if ($selActivityGroups) {
-                foreach ($selActivityGroups as $selActivityGroup) {
-
-                    // Retrieve from config
-                    $selActivityGroupArray = Config::get('orbit_activity.groups.'.$selActivityGroup);
-
-                    // Not found in config
-                    if (!$selActivityGroupArray) {
-                        continue;
-                    }
-
-                    foreach ($selActivityGroupArray as $key) {
-                        $columns = array_merge($columns, [$key => Config::get('orbit.activity_columns.'.$key)]);
-                    }
-                }
+            if ($this->returnQuery) {
+                return [
+                    'responses' => $result
+                ];
             }
 
-            if (!($selActivityGroups || $activityGroupSearch)) {
-                // get column name from config
-                $columns = Config::get('orbit.activity_columns');
-            }
-
-            $records['columns'] = $columns;
-
-            foreach ( $dateRange as $key => $value ) {
-
-                foreach ( $activities as $x => $y ) {
-                    if ( $y->activity_date === $value ) {
-
-                        $date = [];
-                        $date['name'] = isset($columns[$y->activity_name_long]) ? $columns[$y->activity_name_long] : $y->activity_name_long;
-                        $date['count'] = ($this->returnBuilder) ? $y->count : number_format($y->count, 0,'.','.');
-
-                        $responses[$value][] = $date;
-                    }
-                }
-            }
-
-            // if there is date that have no data
-            $dateRange2 = $dateRange;
-
-            foreach ($responses as $a => $b) {
-                $length = count($dateRange);
-                for ($i = 0; $i < $length; $i++) {
-                    if ($a === $dateRange[$i]) {
-                        unset($dateRange2[$i]);
-                    }
-                }
-            }
-
-            foreach ($dateRange2 as $x => $y) {
-                $responses[$dateRange2[$x]] = array();
-            }
-
-            if ($this->returnBuilder) {
-                return compact('columns', 'responses');
-            }
-
-            krsort($responses);
-
-            $records['records'] = $responses;
+            $records['records'] = $result;
 
             $this->response->data = $records;
 
@@ -3322,15 +3357,9 @@ class ActivityAPIController extends ControllerAPI
         return $age;
     }
 
-    public function setReturnBuilder($bool)
-    {
-        $this->returnBuilder = $bool;
-
-        return $this;
-    }
-
     public function setReturnQuery($bool) {
         $this->returnQuery = $bool;
+        return $this;
     }
 
     public function getTimezone($current_mall)

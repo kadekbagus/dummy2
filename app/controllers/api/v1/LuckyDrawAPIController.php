@@ -1023,6 +1023,11 @@ class LuckyDrawAPIController extends ControllerAPI
                 }
             }
 
+            if ( $this->returnBuilder )
+            {
+                $luckydraws->addSelect('lucky_draw_translations.lucky_draw_name as lucky_draw_name_english');
+            }
+
             // Filter lucky draw by ids
             OrbitInput::get('lucky_draw_id', function($id) use ($luckydraws)
             {

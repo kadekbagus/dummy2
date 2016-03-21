@@ -11,9 +11,9 @@ class AccountAPIController extends ControllerAPI
 {
     /** @var array The list columns. */
     protected $listColumns = [
-        'name' => [
+        'user_firstname' => [
             'title' => 'Account Name',
-            'sort_key' => 'name',
+            'sort_key' => 'user_firstname',
         ],
         'company_name' => [
             'title' => 'Company Name',
@@ -27,9 +27,9 @@ class AccountAPIController extends ControllerAPI
             'title' => 'Tenant(s)',
             'sort_key' => 'tenants',
         ],
-        'creation_date' => [
+        'created_at' => [
             'title' => 'Creation Date',
-            'sort_key' => 'creation_date',
+            'sort_key' => 'created_at',
         ],
         'status' => [
             'title' => 'Status',
@@ -41,26 +41,61 @@ class AccountAPIController extends ControllerAPI
      * The main method
      *
      * @author Qosdil A. <qosdil@dominopos.com>
+     * @todo Validation.
      */
     public function getAccount()
     {
-        $pmpAccounts = User::pmpAccounts()->get();
+        $data = new stdClass();
+
+        $pmpAccounts = User::pmpAccounts();
+
+        if (Input::get('mall_name')) {
+            $mall = Mall::whereName(Input::get('mall_name'))->first();
+
+            $pmpAccounts = ($mall)
+                ? User::ofSpecificMallPmpAccounts($mall->merchant_id)
+                : $pmpAccounts->whereUserId('');
+        }
+
+        // Filter by Status
+        if (Input::get('status')) {
+            $pmpAccounts->whereStatus(Input::get('status'));
+        }
+
+        // Filter by Creation Date
+        if (Input::get('creation_date_from') && Input::get('creation_date_to')) {
+
+            // Let's make the datetime
+            $creationDateTimeFrom = Input::get('creation_date_from').' 00:00:00';
+            $creationDateTimeTo = Input::get('creation_date_to').' 23:59:59';
+
+            $pmpAccounts->where('created_at', '>=', $creationDateTimeFrom)->where('created_at', '<=', $creationDateTimeTo);
+        }
+
+        // Get total row count
+        $allRows = clone $pmpAccounts;
+        $data->total_records = $allRows->count();
+
+        $pmpAccounts = $pmpAccounts->take(Input::get('take'))->skip(Input::get('skip'))
+            ->orderBy(Input::get('sortby', 'user_firstname'), Input::get('sortmode', 'asc'))
+            ->get();
 
         $records = [];
         foreach ($pmpAccounts as $row) {
             $records[] = [
-                'name' => $row->full_name,
+                'user_firstname' => $row->full_name,
                 'company_name' => $row->userDetail->company_name,
                 'location' => $row->userDetail->location,
                 'tenants' => $this->getTenantAtMallArray($row->userTenants()->lists('merchant_id')),
-                'creation_date' => $row->created_at->format('d F Y H:i:s'),
+                'created_at' => $row->created_at->format('d F Y H:i:s'),
                 'status' => $row->status,
             ];
         }
 
-        $data = new stdClass();
         $data->columns = $this->listColumns;
         $data->records = $records;
+
+        $data->returned_records = count($records);
 
         $this->response->data = $data;
         return $this->render(200);

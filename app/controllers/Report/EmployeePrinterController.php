@@ -21,7 +21,7 @@ class EmployeePrinterController extends DataPrinterController
         $mode = OrbitInput::get('export', 'print');
         $user = $this->loggedUser;
 
-        $current_mall = OrbitInput::get('current_mall');
+        $current_mall = OrbitInput::get('merchant_id');
 
         $timezone = $this->getTimeZone($current_mall);
 
