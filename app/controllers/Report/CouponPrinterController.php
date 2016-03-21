@@ -61,7 +61,7 @@ class CouponPrinterController extends DataPrinterController
         $tenantName = OrbitInput::get('tenant_name_like');
         $mallName = OrbitInput::get('mall_name_like');
 
-        $pageTitle = 'Coupon';
+        $pageTitle = 'Coupon List';
 
         switch ($mode) {
             case 'csv':
@@ -71,7 +71,7 @@ class CouponPrinterController extends DataPrinterController
 
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Coupon List', '', '', '', '','');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Coupon', $totalRec, '', '', '','');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Coupons', $totalRec, '', '', '','');
 
                 // Filtering
                 if ($couponName != '') {
@@ -79,11 +79,22 @@ class CouponPrinterController extends DataPrinterController
                 }
 
                 if ( is_array($ruleType) && count($ruleType) > 0) {
-                    $ruleString = '';
+                    $rule_type_string = '';
                     foreach ($ruleType as $key => $valrule){
-                        $ruleString .= str_replace("_", " ", $valrule) . ', ';
+                        $rule_type = $valrule;
+                        if ($rule_type === 'auto_issue_on_first_signin') {
+                            $rule_type = 'coupon blast upon first sign in';
+                        } elseif ($rule_type === 'auto_issue_on_signup') {
+                            $rule_type = 'coupon blast upon sign up';
+                        } elseif ($rule_type === 'auto_issue_on_every_signin') {
+                            $rule_type = 'coupon blast upon every sign in';
+                        } elseif ($rule_type === 'manual') {
+                            $rule_type = 'manual issued';
+                        }
+
+                        $rule_type_string .= $rule_type . ', ';
                     }
-                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Coupon Rule', htmlentities(rtrim($ruleString, ', ')), '', '', '','');
+                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Coupon Rule', htmlentities(rtrim($rule_type_string, ', ')), '', '', '','');
                 }
 
                 if ($tenantName != '') {
@@ -135,7 +146,7 @@ class CouponPrinterController extends DataPrinterController
                             date('d F Y H:i', strtotime($row->begin_date)),
                             date('d F Y H:i', strtotime($row->end_date)),
                             $row->campaign_status,
-                            date('d F Y H:i:s', strtotime($row->updated_at))
+                            $this->printDateTime($row->updated_at, $timezone, 'd F Y H:i:s')
                     );
                     $count++;
                 }

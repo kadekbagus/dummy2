@@ -78,15 +78,18 @@ class PromotionPrinterController extends DataPrinterController
                 }
 
                 if ($etcFrom != '' && $etcTo != ''){
-                    printf("%s,%s,%s - %s,%s,%s,%s\n", '', 'Filter by Estimated Total Cost', $etcFrom, $etcTo, '', '', '','');
+                    $data_template = '%s,%s,%s - %s,%s,%s,%s' . "\n";
+                    printf($data_template, '', 'Filter by Estimated Total Cost', str_replace(',', '', $etcFrom), str_replace(',', '', $etcTo), '', '', '','');
                 }
 
                 if ($etcFrom != '' && $etcTo == ''){
-                    printf("%s,%s,%s,%s,%s,%s\n", '', 'Filter by Estimated Total Cost (From)', $etcFrom, '', '', '','');
+                    $data_template = '%s,%s,%s,%s,%s,%s' . "\n";
+                    printf($data_template, '', 'Filter by Estimated Total Cost (From)', str_replace(',', '', $etcFrom), '', '', '','');
                 }
 
                 if ($etcFrom == '' && $etcTo != ''){
-                    printf("%s,%s,%s,%s,%s,%s\n", '', 'Filter by Estimated Total Cost (To)', $etcTo, '', '', '','');
+                    $data_template = '%s,%s,%s,%s,%s,%s' . "\n";
+                    printf($data_template, '', 'Filter by Estimated Total Cost (To)', str_replace(',', '', $etcTo), '', '', '','');
                 }
 
                 if ( is_array($status) && count($status) > 0) {
