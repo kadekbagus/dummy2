@@ -60,7 +60,7 @@ class NewsPrinterController extends DataPrinterController
         $beginDate = OrbitInput::get('begin_date');
         $endDate = OrbitInput::get('end_date');
 
-        $pageTitle = 'News';
+        $pageTitle = 'News List';
 
         switch ($mode) {
             case 'csv':
