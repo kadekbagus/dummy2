@@ -26,8 +26,8 @@ class LuckyDrawPrinterController extends DataPrinterController
         $filterMinimumAmountFrom = OrbitInput::get('from_minimum_amount');
         $filterMinimumAmountTo = OrbitInput::get('to_minimum_amount');
         $filterStatus = OrbitInput::get('campaign_status');
-        $filterBeginDate = OrbitInput::get('beginDate');
-        $filterEndDate = OrbitInput::get('endDate');
+        $filterBeginDate = OrbitInput::get('begin_date');
+        $filterEndDate = OrbitInput::get('end_date');
 
         $timezone = $this->getTimeZone($currentMall);
 
