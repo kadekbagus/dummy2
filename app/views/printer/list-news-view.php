@@ -109,12 +109,17 @@
 </div>
 
 <div id="main">
-    <h2 style="margin-bottom:0.5em;">News</h2>
+    <h2 style="margin-bottom:0.5em;">News List</h2>
     <table style="width:100%; margin-bottom:1em;" class="noborder">
         <tr>
             <td style="width:150px"></td>
             <td style="width:10px;"></td>
             <td><strong></strong></td>
+        </tr>
+        <tr>
+            <td>Total News</td>
+            <td>:</td>
+            <td><strong><?php echo number_format($totalRec, 0, '.', '.'); ?></strong></td>
         </tr>
 
         <!-- Filtering -->
@@ -126,11 +131,23 @@
             </tr>
         <?php } ?>
 
-        <?php if ($etcFrom != '' && $etcTo != ''){ ?>
+        <?php if ($etcFrom != '' || $etcTo != ''){ ?>
             <tr>
                 <td>Estimated Total Cost</td>
                 <td>:</td>
-                <td> <strong><?php echo $etcFrom . ' - ' . $etcTo; ?></strong></td>
+                <td>
+                    <?php
+                        $estimatedText = '';
+                        if ($etcFrom != '' && $etcTo == '') {
+                            $estimatedText = '>= ' . $etcFrom;
+                        } else if ($etcFrom == '' && $etcTo != '') {
+                            $estimatedText = '0 - ' . $etcTo;
+                        } else if ($etcFrom != '' && $etcTo != '') {
+                            $estimatedText = $etcFrom . ' - ' . $etcTo;
+                        }
+                    ?>
+                   <strong><?php echo $estimatedText; ?></strong>
+                </td>
             </tr>
         <?php } ?>
 
@@ -159,8 +176,8 @@
                 <td>
                     <?php
                         if ($beginDate != '' && $endDate != ''){
-                            $beginDateRangeMallTime = $this->printDateTime($beginDate, $timezone, 'd M Y');
-                            $endDateRangeMallTime = $this->printDateTime($endDate, $timezone, 'd M Y');
+                            $beginDateRangeMallTime = $this->printDateTime($beginDate, $timezone, 'd F Y');
+                            $endDateRangeMallTime = $this->printDateTime($endDate, $timezone, 'd F Y');
                             $dateRange = $beginDateRangeMallTime . ' - ' . $endDateRangeMallTime;
                             if ($beginDateRangeMallTime === $endDateRangeMallTime) {
                                 $dateRange = $beginDateRangeMallTime;
@@ -188,11 +205,11 @@
             <?php $count = 1; while ($row = $statement->fetch(PDO::FETCH_OBJ)) : ?>
                 <tr class="{{ $rowCounter % 2 === 0 ? 'zebra' : '' }}">
                     <td><?php echo $count++; ?></td>
-                    <td><?php echo htmlentities($row->news_name); ?></td>
-                    <td><?php echo date('d M Y H:i:s', strtotime($row->begin_date)); ?></td>
-                    <td><?php echo date('d M Y H:i:s', strtotime($row->end_date)); ?></td>
+                    <td><?php echo htmlentities($row->name_english); ?></td>
+                    <td><?php echo date('d F Y H:i', strtotime($row->begin_date)); ?></td>
+                    <td><?php echo date('d F Y H:i', strtotime($row->end_date)); ?></td>
                     <td><?php echo $row->campaign_status; ?></td>
-                    <td><?php echo date('d M Y', strtotime($row->updated_at)); ?></td>
+                    <td><?php echo date('d F Y H:i:s', strtotime($row->updated_at)); ?></td>
                 </tr>
             <?php endwhile ; ?>
         </tbody>

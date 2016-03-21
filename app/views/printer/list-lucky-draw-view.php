@@ -115,6 +115,14 @@
             <td><strong><?php echo number_format($totalRec, 0, '.', '.'); ?></strong></td>
         </tr>
 
+        <?php if ($filterBeginDate != '') { ?>
+            <tr>
+                <td>Campaign Date</td>
+                <td>:</td>
+                <td><strong><?php echo $me->printCampaignDate($filterBeginDate, $filterEndDate); ?></strong></td>
+            </tr>
+        <?php } ?>
+
         <?php if ($filterName != '') { ?>
             <tr>
                 <td>Filter by Lucky Draw Name</td>
@@ -163,7 +171,7 @@
         <tbody>
         <?php $count = 1; while ($row = $statement->fetch(PDO::FETCH_OBJ)) : ?>
             <tr class="{{ $rowCounter % 2 === 0 ? 'zebra' : '' }}">
-                 <td><?php echo $me->printUtf8($row->lucky_draw_name); ?></td>
+                 <td><?php echo $me->printUtf8($row->lucky_draw_name_english); ?></td>
                  <td><?php echo $me->printDateTime($row->start_date, 'UTC', 'd F Y  H:i'); ?></td>
                  <td><?php echo $me->printDateTime($row->end_date, 'UTC', 'd F Y  H:i'); ?></td>
                  <td><?php echo number_format($row->minimum_amount); ?></td>

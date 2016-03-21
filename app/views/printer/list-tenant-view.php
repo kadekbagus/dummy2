@@ -151,7 +151,7 @@
             <tr>
                 <td>Filter by Status</td>
                 <td>:</td>
-                <td><strong><?php echo htmlentities(implode(' ',$filterStatus)); ?></strong></td>
+                <td><strong><?php echo htmlentities(implode(' , ',$filterStatus)); ?></strong></td>
             </tr>
         <?php } ?>
 

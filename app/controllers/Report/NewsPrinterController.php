@@ -38,6 +38,7 @@ class NewsPrinterController extends DataPrinterController
 
         // get total data
         $news = $response['builder'];
+        $totalRec = $response['count'];
 
         $pdo = DB::Connection()->getPdo();
 
@@ -66,7 +67,8 @@ class NewsPrinterController extends DataPrinterController
                 @header('Content-Disposition: attachment; filename=' . OrbitText::exportFilename($pageTitle, '.csv', $timezone));
 
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'News', '', '', '', '', '');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'News List', '', '', '', '','');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total News', $totalRec, '', '', '','');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
 
                 // Filtering
@@ -74,9 +76,18 @@ class NewsPrinterController extends DataPrinterController
                     printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Campaign Name', htmlentities($newsName), '', '', '','');
                 }
 
+                if ($etcFrom != '' || $etcTo != ''){
 
-                if ($etcFrom != '' && $etcTo != ''){
-                    printf("%s,%s,%s - %s,%s,%s,%s\n", '', 'Estimated Total Cost', $etcFrom, $etcTo, '', '', '','');
+                    $estimatedText = '';
+                    if ($etcFrom != '' && $etcTo == '') {
+                        $estimatedText = '>= ' . $etcFrom;
+                    } else if ($etcFrom == '' && $etcTo != '') {
+                        $estimatedText = '0 - ' . $etcTo;
+                    } else if ($etcFrom != '' && $etcTo != '') {
+                        $estimatedText = $etcFrom . ' - ' . $etcTo;
+                    }
+
+                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Estimated Total Cost', $estimatedText, '', '', '', '','');
                 }
 
                 if ( is_array($status) && count($status) > 0) {
@@ -88,8 +99,8 @@ class NewsPrinterController extends DataPrinterController
                 }
 
                 if ($beginDate != '' && $endDate != ''){
-                    $beginDateRangeMallTime = $this->printDateTime($beginDate, $timezone, 'd M Y');
-                    $endDateRangeMallTime = $this->printDateTime($endDate, $timezone, 'd M Y');
+                    $beginDateRangeMallTime = $this->printDateTime($beginDate, $timezone, 'd F Y');
+                    $endDateRangeMallTime = $this->printDateTime($endDate, $timezone, 'd F Y');
                     $dateRange = $beginDateRangeMallTime . ' - ' . $endDateRangeMallTime;
                     if ($beginDateRangeMallTime === $endDateRangeMallTime) {
                         $dateRange = $beginDateRangeMallTime;
@@ -105,11 +116,11 @@ class NewsPrinterController extends DataPrinterController
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
                         printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
                             $count,
-                            $row->news_name,
-                            date('d M Y H:i:s', strtotime($row->begin_date)),
-                            date('d M Y H:i:s', strtotime($row->end_date)),
+                            $row->name_english,
+                            date('d F Y H:i', strtotime($row->begin_date)),
+                            date('d F Y H:i', strtotime($row->end_date)),
                             $row->campaign_status,
-                            date('d M Y', strtotime($row->updated_at))
+                            date('d F Y H:i:s', strtotime($row->updated_at))
                     );
                     $count++;
                 }

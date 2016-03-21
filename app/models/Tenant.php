@@ -144,6 +144,18 @@ class Tenant extends Eloquent
         return $this->mallNumber ? $this->mallNumber->count : 0;
     }
 
+    /** This enables $merchant->tenant_at_mall. */
+    public function getTenantAtMallAttribute()
+    {
+        if ( ! $this->parent_id) {
+            return null;
+        }
+        
+        $mallName = Mall::find($this->parent_id)->name;
+
+        return $this->name.' at '.$mallName;
+    }
+
     public function userNumber()
     {
         return $this->belongsTo('User', 'user_id', 'user_id')
