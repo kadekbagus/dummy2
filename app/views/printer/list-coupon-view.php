@@ -117,7 +117,7 @@
             <td><strong></strong></td>
         </tr>
         <tr>
-            <td>Total Coupon</td>
+            <td>Total Coupons</td>
             <td>:</td>
             <td><strong><?php echo number_format($totalRec, 0, '.', '.'); ?></strong></td>
         </tr>
@@ -138,11 +138,22 @@
                 <td>
                     <strong>
                         <?php
-                            $ruleString = '';
+                            $rule_type_string = '';
                             foreach ($ruleType as $key => $valrule){
-                                $ruleString .= str_replace("_", " ", $valrule) . ', ';
+                                $rule_type = $valrule;
+                                if ($rule_type === 'auto_issue_on_first_signin') {
+                                    $rule_type = 'coupon blast upon first sign in';
+                                } elseif ($rule_type === 'auto_issue_on_signup') {
+                                    $rule_type = 'coupon blast upon sign up';
+                                } elseif ($rule_type === 'auto_issue_on_every_signin') {
+                                    $rule_type = 'coupon blast upon every sign in';
+                                } elseif ($rule_type === 'manual') {
+                                    $rule_type = 'manual issued';
+                                }
+
+                                $rule_type_string .= $rule_type . ', ';
                             }
-                            echo htmlentities(rtrim($ruleString, ', '));
+                            echo htmlentities(rtrim($rule_type_string, ', '));
                         ?>
                     </strong>
                 </td>
@@ -247,7 +258,7 @@
                     <td><?php echo date('d F Y H:i', strtotime($row->begin_date)); ?></td>
                     <td><?php echo date('d F Y H:i', strtotime($row->end_date)); ?></td>
                     <td><?php echo $row->campaign_status; ?></td>
-                    <td><?php echo date('d F Y H:i:s', strtotime($row->updated_at)); ?></td>
+                    <td><?php echo $this->printDateTime($row->updated_at, $timezone, 'd F Y H:i:s'); ?></td>
                 </tr>
             <?php endwhile ; ?>
         </tbody>
