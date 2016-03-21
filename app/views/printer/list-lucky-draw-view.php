@@ -124,19 +124,27 @@
             </tr>
         <?php } ?>
 
-        <?php if ($filterMinimumAmountFrom != '') { ?>
+        <?php if ($filterMinimumAmountFrom != '' && $filterMinimumAmountTo != ''){ ?>
             <tr>
-                <td>Filter by Minimum Amount From</td>
+                <td>Filter by Amount to Obtain</td>
                 <td>:</td>
-                <td><strong><?php echo htmlentities($filterMinimumAmountFrom); ?></strong></td>
+                <td> <strong><?php echo $filterMinimumAmountFrom . ' - ' . $filterMinimumAmountTo; ?></strong></td>
             </tr>
         <?php } ?>
 
-        <?php if ($filterMinimumAmountTo != '') { ?>
+        <?php if ($filterMinimumAmountFrom != '' && $filterMinimumAmountTo == ''){ ?>
             <tr>
-                <td>Filter by Minimum Amount To</td>
+                <td>Filter by Minimum Amount (From)</td>
                 <td>:</td>
-                <td><strong><?php echo htmlentities($filterMinimumAmountTo); ?></strong></td>
+                <td> <strong><?php echo $filterMinimumAmountFrom; ?></strong></td>
+            </tr>
+        <?php } ?>
+
+        <?php if ($filterMinimumAmountFrom == '' && $filterMinimumAmountTo != ''){ ?>
+            <tr>
+                <td>Filter by Minimum Amount (To)</td>
+                <td>:</td>
+                <td> <strong><?php echo $filterMinimumAmountTo; ?></strong></td>
             </tr>
         <?php } ?>
 
