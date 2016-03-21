@@ -3066,102 +3066,107 @@ class ActivityAPIController extends ControllerAPI
                 return DB::connection()->getPdo()->quote($arg);
             };
 
-            $activities = DB::select(DB::raw("select dt.comp_date as date,
-                                    IFNULL(MAX(CASE WHEN dt.label = 'Email Sign Up' THEN dt.count END), 0) AS 'email_sign_up', 
-                                    IFNULL(MAX(CASE WHEN dt.label = 'Facebook Sign Up' THEN dt.count END), 0) AS 'facebook_sign_up', 
-                                    IFNULL(MAX(CASE WHEN dt.label = 'Google Sign Up' THEN dt.count END), 0) AS 'google_sign_up', 
-                                    IFNULL(MAX(CASE WHEN dt.label = 'Sign In' THEN dt.count END), 0) AS 'sign_in', 
-                                    IFNULL(MAX(CASE WHEN dt.label = 'Sign Up via Customer Service' THEN dt.count END), 0) AS 'sign_up_via_cs', 
-                                    IFNULL(MAX(CASE WHEN dt.label = 'Customer Activation' THEN dt.count END), 0) AS 'customer_activation', 
-                                    IFNULL(MAX(CASE WHEN dt.label = 'Network Check In' THEN dt.count END), 0) AS 'network_check_in', 
-                                    IFNULL(MAX(CASE WHEN dt.label = 'Network Check Out' THEN dt.count END), 0) AS 'network_check_out', 
-                                    IFNULL(MAX(CASE WHEN dt.label = 'Sign Out' THEN dt.count END), 0) AS 'sign_out', 
-                                    IFNULL(MAX(CASE WHEN dt.label = 'View (Home Page)' THEN dt.count END), 0) AS 'view_(home_page)', 
-                                    IFNULL(MAX(CASE WHEN dt.label = 'View Coupon List' THEN dt.count END), 0) AS 'view_coupon_list', 
-                                    IFNULL(MAX(CASE WHEN dt.label = 'View Coupon Detail' THEN dt.count END), 0) AS 'view_coupon_detail', 
-                                    IFNULL(MAX(CASE WHEN dt.label = 'Coupon Redemption (Successful)' THEN dt.count END), 0) AS 'coupon_redemption_successful', 
-                                    IFNULL(MAX(CASE WHEN dt.label = 'Coupon Issuance' THEN dt.count END), 0) AS 'coupon_issuance', 
-                                    IFNULL(MAX(CASE WHEN dt.label = 'View News List' THEN dt.count END), 0) AS 'view_news_list', 
-                                    IFNULL(MAX(CASE WHEN dt.label = 'View News Detail' THEN dt.count END), 0) AS 'view_news_detail', 
-                                    IFNULL(MAX(CASE WHEN dt.label = 'View News Tenant List' THEN dt.count END), 0) AS 'view_news_tenant_list', 
-                                    IFNULL(MAX(CASE WHEN dt.label = 'View Promotion List' THEN dt.count END), 0) AS 'view_promotion_list', 
-                                    IFNULL(MAX(CASE WHEN dt.label = 'View Promotion Detail' THEN dt.count END), 0) AS 'view_promotion_detail', 
-                                    IFNULL(MAX(CASE WHEN dt.label = 'View Promotion Tenant List' THEN dt.count END), 0) AS 'view_promotion_tenant_list', 
-                                    IFNULL(MAX(CASE WHEN dt.label = 'View Tenant List' THEN dt.count END), 0) AS 'view_tenant_list', 
-                                    IFNULL(MAX(CASE WHEN dt.label = 'View Tenant Detail' THEN dt.count END), 0) AS 'view_tenant_detail', 
-                                    IFNULL(MAX(CASE WHEN dt.label = 'Widget Click Tenant' THEN dt.count END), 0) AS 'widget_click_tenant', 
-                                    IFNULL(MAX(CASE WHEN dt.label = 'Widget Click News' THEN dt.count END), 0) AS 'widget_click_news', 
-                                    IFNULL(MAX(CASE WHEN dt.label = 'Widget Click Promotion' THEN dt.count END), 0) AS 'widget_click_promotion', 
-                                    IFNULL(MAX(CASE WHEN dt.label = 'Widget Click Coupon' THEN dt.count END), 0) AS 'widget_click_coupon', 
-                                    IFNULL(MAX(CASE WHEN dt.label = 'Widget Click Lucky Draw' THEN dt.count END), 0) AS 'widget_click_lucky_draw', 
-                                    IFNULL(MAX(CASE WHEN dt.label = 'View Lucky Draw List' THEN dt.count END), 0) AS 'view_lucky_draw_list', 
-                                    IFNULL(MAX(CASE WHEN dt.label = 'View Lucky Draw Detail' THEN dt.count END), 0) AS 'view_lucky_draw_detail', 
-                                    IFNULL(MAX(CASE WHEN dt.label = 'View Winning Numbers & Prizes' THEN dt.count END), 0) AS 'view_prizes_&_winning_numbers', 
-                                    IFNULL(MAX(CASE WHEN dt.label = 'Lucky Draw Number Issuance' THEN dt.count END), 0) AS 'lucky_draw_number_issuance', 
-                                    IFNULL(MAX(CASE WHEN dt.label = 'Read Lucky Draw Number Issuance Notification' THEN dt.count END), 0) AS 'read_lucky_draw_number_issuance_notification',
-                                    IFNULL(MAX(CASE WHEN dt.label = 'Read Winner Announcement Notification' THEN dt.count END), 0) AS 'read_winner_announcement_notification',
-                                    IFNULL(MAX(CASE WHEN dt.label = 'Read Coupon Issuance Notification' THEN dt.count END), 0) AS 'read_coupon_issuance_notification',
-                                    IFNULL(MAX(CASE WHEN dt.label = 'Read Activation Notification' THEN dt.count END), 0) AS 'read_activation_notification',
-                                    IFNULL(MAX(CASE WHEN dt.label = 'View Coupon Pop Up' THEN dt.count END), 0) AS 'view_coupon_pop_up',
-                                    IFNULL(MAX(CASE WHEN dt.label = 'Click Coupon Pop Up'THEN dt.count END), 0) AS 'click_coupon_pop_up',
-                                    IFNULL(MAX(CASE WHEN dt.label = 'View Promotion Pop Up' THEN dt.count END), 0) AS 'view_promotion_pop_up',
-                                    IFNULL(MAX(CASE WHEN dt.label = 'Click Promotion Pop Up' THEN dt.count END), 0) AS 'click_promotion_pop_up',
-                                    IFNULL(MAX(CASE WHEN dt.label = 'View News Pop Up' THEN dt.count END), 0) AS 'view_news_pop_up',
-                                    IFNULL(MAX(CASE WHEN dt.label = 'Click News Pop Up' THEN dt.count END), 0) AS 'click_news_pop_up',
-                                    IFNULL(MAX(CASE WHEN dt.label = 'Search' THEN dt.count END), 0) AS 'search'
+            $sql = "select dt.comp_date as date,
+                        IFNULL(MAX(CASE WHEN dt.label = 'Network Check In' THEN dt.count END), 0) AS 'network_check_in', 
+                        IFNULL(MAX(CASE WHEN dt.label = 'Network Check Out' THEN dt.count END), 0) AS 'network_check_out', 
+                        IFNULL(MAX(CASE WHEN dt.label = 'Email Sign Up' THEN dt.count END), 0) AS 'email_sign_up', 
+                        IFNULL(MAX(CASE WHEN dt.label = 'Facebook Sign Up' THEN dt.count END), 0) AS 'facebook_sign_up', 
+                        IFNULL(MAX(CASE WHEN dt.label = 'Google Sign Up' THEN dt.count END), 0) AS 'google_sign_up',
+                        IFNULL(MAX(CASE WHEN dt.label = 'Sign Up via Customer Service' THEN dt.count END), 0) AS 'sign_up_via_cs',  
+                        IFNULL(MAX(CASE WHEN dt.label = 'Sign In' THEN dt.count END), 0) AS 'sign_in', 
+                        IFNULL(MAX(CASE WHEN dt.label = 'Read Activation Notification' THEN dt.count END), 0) AS 'read_activation_notification', 
+                        IFNULL(MAX(CASE WHEN dt.label = 'Customer Activation' THEN dt.count END), 0) AS 'customer_activation',
+                        IFNULL(MAX(CASE WHEN dt.label = 'Sign Out' THEN dt.count END), 0) AS 'sign_out', 
+                        IFNULL(MAX(CASE WHEN dt.label = 'View (Home Page)' THEN dt.count END), 0) AS 'view_home_page',
+                        IFNULL(MAX(CASE WHEN dt.label = 'Widget Click Tenant' THEN dt.count END), 0) AS 'widget_click_tenant',
+                        IFNULL(MAX(CASE WHEN dt.label = 'View Tenant List' THEN dt.count END), 0) AS 'view_tenant_list',
+                        IFNULL(MAX(CASE WHEN dt.label = 'View Tenant Detail' THEN dt.count END), 0) AS 'view_tenant_detail',
+                        IFNULL(MAX(CASE WHEN dt.label = 'Widget Click Promotion' THEN dt.count END), 0) AS 'widget_click_promotion',
+                        IFNULL(MAX(CASE WHEN dt.label = 'View Promotion Pop Up' THEN dt.count END), 0) AS 'view_promotion_pop_up',
+                        IFNULL(MAX(CASE WHEN dt.label = 'Click Promotion Pop Up' THEN dt.count END), 0) AS 'click_promotion_pop_up',
+                        IFNULL(MAX(CASE WHEN dt.label = 'View Promotion List' THEN dt.count END), 0) AS 'view_promotion_list',
+                        IFNULL(MAX(CASE WHEN dt.label = 'View Promotion Tenant List' THEN dt.count END), 0) AS 'view_promotion_tenant_list',
+                        IFNULL(MAX(CASE WHEN dt.label = 'View Promotion Detail' THEN dt.count END), 0) AS 'view_promotion_detail',
+                        IFNULL(MAX(CASE WHEN dt.label = 'Widget Click News' THEN dt.count END), 0) AS 'widget_click_news',
+                        IFNULL(MAX(CASE WHEN dt.label = 'View News Pop Up' THEN dt.count END), 0) AS 'view_news_pop_up',
+                        IFNULL(MAX(CASE WHEN dt.label = 'Click News Pop Up' THEN dt.count END), 0) AS 'click_news_pop_up',
+                        IFNULL(MAX(CASE WHEN dt.label = 'View News List' THEN dt.count END), 0) AS 'view_news_list',
+                        IFNULL(MAX(CASE WHEN dt.label = 'View News Tenant List' THEN dt.count END), 0) AS 'view_news_tenant_list',
+                        IFNULL(MAX(CASE WHEN dt.label = 'View News Detail' THEN dt.count END), 0) AS 'view_news_detail',
+                        IFNULL(MAX(CASE WHEN dt.label = 'Widget Click Coupon' THEN dt.count END), 0) AS 'widget_click_coupon',
+                        IFNULL(MAX(CASE WHEN dt.label = 'View Coupon Pop Up' THEN dt.count END), 0) AS 'view_coupon_pop_up',
+                        IFNULL(MAX(CASE WHEN dt.label = 'Click Coupon Pop Up' THEN dt.count END), 0) AS 'click_coupon_pop_up',
+                        IFNULL(MAX(CASE WHEN dt.label = 'View Coupon List' THEN dt.count END), 0) AS 'view_coupon_list',
+                        IFNULL(MAX(CASE WHEN dt.label = 'View Coupon Tenant List' THEN dt.count END), 0) AS 'view_coupon_tenant_list',
+                        IFNULL(MAX(CASE WHEN dt.label = 'View Coupon Detail' THEN dt.count END), 0) AS 'view_coupon_detail',
+                        IFNULL(MAX(CASE WHEN dt.label = 'View Coupon Campaign Detail' THEN dt.count END), 0) AS 'view_coupon_campaign_detail',
+                        IFNULL(MAX(CASE WHEN dt.label = 'View Coupon Redemption Places' THEN dt.count END), 0) AS 'view_coupon_redemption_places',
+                        IFNULL(MAX(CASE WHEN dt.label = 'Coupon Issuance' THEN dt.count END), 0) AS 'coupon_issued',
+                        IFNULL(MAX(CASE WHEN dt.label = 'Read Coupon Issuance Notification' THEN dt.count END), 0) AS 'read_coupon_issuance_notification',
+                        IFNULL(MAX(CASE WHEN dt.label = 'Coupon Redemption (Successful)' THEN dt.count END), 0) AS 'coupon_redeemed',
+                        IFNULL(MAX(CASE WHEN dt.label = 'Widget Click Lucky Draw' THEN dt.count END), 0) AS 'widget_click_lucky_draw',
+                        IFNULL(MAX(CASE WHEN dt.label = 'View Lucky Draw List' THEN dt.count END), 0) AS 'view_lucky_draw_list',
+                        IFNULL(MAX(CASE WHEN dt.label = 'View Lucky Draw Detail' THEN dt.count END), 0) AS 'view_lucky_draw_detail',
+                        IFNULL(MAX(CASE WHEN dt.label = 'Lucky Draw Number Issuance' THEN dt.count END), 0) AS 'lucky_draw_number_issued',
+                        IFNULL(MAX(CASE WHEN dt.label = 'Read Lucky Draw Number Issuance Notification' THEN dt.count END), 0) AS 'read_lucky_draw_number_issuance_notification',
+                        IFNULL(MAX(CASE WHEN dt.label = 'View Winning Numbers & Prizes' THEN dt.count END), 0) AS 'view_prizes_&_winning_numbers', 
+                        IFNULL(MAX(CASE WHEN dt.label = 'Read Winner Announcement Notification' THEN dt.count END), 0) AS 'read_winner_announcement_notification', 
+                        IFNULL(MAX(CASE WHEN dt.label = 'Search' THEN dt.count END), 0) AS 'search', 
+                        IFNULL(MAX(CASE WHEN dt.label = 'View My Account' THEN dt.count END), 0) AS 'view_my_account', 
+                        IFNULL(MAX(CASE WHEN dt.label = 'View Notification List' THEN dt.count END), 0) AS 'view_notification_list'
+                    FROM
+                        (
+                            SELECT mydate.comp_date,
+                                CASE WHEN 
+                                    (oa.activity_name_long = 'Sign In via Automatic MAC Recognition (Captive)') or 
+                                    (oa.activity_name_long = 'Sign In via Automatic Email Recognition (Captive)') or
+                                    (oa.activity_name_long = 'Sign In via Facebook') or
+                                    (oa.activity_name_long = 'Sign In via Google') or
+                                    (oa.activity_name_long = 'Sign In via Email (Captive)') or
+                                    (oa.activity_name_long = 'Sign in') 
+                                THEN 'Sign In'
+                                WHEN 
+                                    (oa.activity_name_long = 'Sign Up') or
+                                    (oa.activity_name_long = 'Sign Up via Mobile (Email Address)') or
+                                    (oa.activity_name_long = 'Sign Up with email address') 
+                                THEN 'Email Sign Up'
+                                WHEN 
+                                    (oa.activity_name_long = 'Sign Up via Mobile (Facebook)') or
+                                    (oa.activity_name_long = 'Facebook Sign Up') 
+                                THEN 'Facebook Sign Up'
+                                WHEN 
+                                    (oa.activity_name_long = 'Sign Up via Mobile (Google+)') 
+                                THEN 'Google Sign Up'
+                                ELSE oa.activity_name_long
+                                END AS label,
+                                count(oa.activity_id) as `count`
+                            FROM 
+                                (SELECT 
+                                    DATE_FORMAT(DATE_ADD({$quote($mallbegindate)}, INTERVAL sequence_number DAY), '%Y-%m-%d') AS comp_date
                                 FROM
-                                    (
-                                        SELECT mydate.comp_date,
-                                            CASE WHEN 
-                                                (oa.activity_name_long = 'Sign In via Automatic MAC Recognition (Captive)') or 
-                                                (oa.activity_name_long = 'Sign In via Automatic Email Recognition (Captive)') or
-                                                (oa.activity_name_long = 'Sign In via Facebook') or
-                                                (oa.activity_name_long = 'Sign In via Google') or
-                                                (oa.activity_name_long = 'Sign In via Email (Captive)') or
-                                                (oa.activity_name_long = 'Sign in') 
-                                            THEN 'Sign In'
-                                            WHEN 
-                                                (oa.activity_name_long = 'Sign Up') or
-                                                (oa.activity_name_long = 'Sign Up via Mobile (Email Address)') or
-                                                (oa.activity_name_long = 'Sign Up with email address') 
-                                            THEN 'Email Sign Up'
-                                            WHEN 
-                                                (oa.activity_name_long = 'Sign Up via Mobile (Facebook)') or
-                                                (oa.activity_name_long = 'Facebook Sign Up') 
-                                            THEN 'Facebook Sign Up'
-                                            WHEN 
-                                                (oa.activity_name_long = 'Sign Up via Mobile (Google+)') 
-                                            THEN 'Google Sign Up'
-                                            ELSE oa.activity_name_long
-                                            END AS label,
-                                            count(oa.activity_id) as `count`
-                                        FROM 
-                                            (SELECT 
-                                                DATE_FORMAT(DATE_ADD({$quote($mallbegindate)}, INTERVAL sequence_number DAY), '%Y-%m-%d') AS comp_date
-                                            FROM
-                                                (SELECT 0 AS sequence_number UNION ALL SELECT * from {$tablePrefix}sequence) os
-                                            WHERE
-                                                os.sequence_number <= ((DATEDIFF(DATE_FORMAT({$quote($mallenddate)}, '%Y-%m-%d'), DATE_FORMAT({$quote($mallbegindate)}, '%Y-%m-%d'))))
-                                                ) AS mydate
-                                            LEFT JOIN 
-                                                (select activity_id, activity_name_long, date_format(convert_tz(created_at, '+00:00', {$quote($timezoneOffset)}), '%Y-%m-%d') as createdat from {$tablePrefix}activities
-                                                where (`group` = 'mobile-ci'
-                                                        or (`group` = 'portal' and activity_type in ('activation','create'))
-                                                        or (`group` = 'cs-portal' and activity_type in ('registration')))
-                                                        and response_status = 'OK' and location_id = {$quote($current_mall)}
-                                                        and created_at between {$quote($start_date)} and {$quote($end_date)}) as oa 
-                                            ON mydate.comp_date = oa.createdat
-                                        GROUP BY comp_date, 2
-                                    ) dt
-                                GROUP BY dt.comp_date"));
+                                    (SELECT 0 AS sequence_number UNION ALL SELECT * from {$tablePrefix}sequence) os
+                                WHERE
+                                    os.sequence_number <= ((DATEDIFF(DATE_FORMAT({$quote($mallenddate)}, '%Y-%m-%d'), DATE_FORMAT({$quote($mallbegindate)}, '%Y-%m-%d'))))
+                                    ) AS mydate
+                                LEFT JOIN 
+                                    (select activity_id, activity_name_long, date_format(convert_tz(created_at, '+00:00', {$quote($timezoneOffset)}), '%Y-%m-%d') as createdat from {$tablePrefix}activities
+                                    where (`group` = 'mobile-ci'
+                                            or (`group` = 'portal' and activity_type in ('activation','create'))
+                                            or (`group` = 'cs-portal' and activity_type in ('registration')))
+                                            and response_status = 'OK' and location_id = {$quote($current_mall)}
+                                            and created_at between {$quote($start_date)} and {$quote($end_date)}) as oa 
+                                ON mydate.comp_date = oa.createdat
+                            GROUP BY comp_date, 2
+                        ) dt
+                    GROUP BY dt.comp_date";
             
-			// Filter with activity names (activity_name_long)
+            // Filter with activity names (activity_name_long)
             $longActivityNameWhere = '';
             $activityKeys = [];
             if ($activityGroups) {
                 foreach ($activityGroups as $activityGroup) {
                     foreach (Config::get('orbit_activity.groups.'.$activityGroup) as $key) {
-                        $activityKeys[] = $key;
+                        $activityKeys[] = strtolower(str_replace(' ', '_', $key));
                     }
                 }
             }
@@ -3173,31 +3178,31 @@ class ActivityAPIController extends ControllerAPI
             if ($activityGroupSearch) {
                 $lowerActivityGroupSearch = strtolower($activityGroupSearch);
                 $lowerActivityColumns = array_map('strtolower', Config::get('orbit.activity_columns'));
-
                 $activityKey = array_search($lowerActivityGroupSearch, $lowerActivityColumns);
                 if ($activityKey) {
                     $columns = array_merge($columns, [$activityKey => Config::get('orbit.activity_columns.'.$activityKey)]);
-                    $activityKeys[] = $activityKey;
+                    $activityKeys[] = strtolower(str_replace(' ', '_', $activityKey));
                 }
             }
 
+            $activities = DB::table(DB::raw('(' . $sql . ') as a'));
+
             if ($activityKeys) {
-                $longActivityNameWhere = "AND activity_name_long IN ('".implode("','", $activityKeys)."')";
+                $keys = 'date, ' . implode(", ", $activityKeys);
+                $activities->selectRaw($keys);
             }
 
-            $sql = str_replace('{{where:longActivityName}}', $longActivityNameWhere, $sql);
-            $activities = DB::select($sql, array($timezoneOffset, $current_mall, $start_date, $end_date));
-			
+            $result = $activities->get();
             
-			$records = [];
+            $records = [];
 
             if ($this->returnQuery) {
                 return [
-                    'responses' => $activities
+                    'responses' => $result
                 ];
             }
 
-            $records['records'] = $activities;
+            $records['records'] = $result;
 
             $this->response->data = $records;
 
