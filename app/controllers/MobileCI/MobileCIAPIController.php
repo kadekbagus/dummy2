@@ -4534,12 +4534,13 @@ class MobileCIAPIController extends BaseCIController
             ->where('merchant_id', $retailer->merchant_id)
             ->where('promotions.status', 'active')
             ->where('promotions.promotion_id', $promotion_id)
-            ->whereHas('issuedCoupons', function($q) use($issued_coupon_id, $user, $retailer) {
-                // $q->where('issued_coupons.issued_coupon_id', $issued_coupon_id);
-                $q->where('issued_coupons.user_id', $user->user_id);
-                $q->where('issued_coupons.expired_date', '>=', Carbon::now($retailer->timezone->timezone_name));
-                $q->where('issued_coupons.status', 'active');
-            })->first();
+            // ->whereHas('issuedCoupons', function($q) use($issued_coupon_id, $user, $retailer) {
+            //     // $q->where('issued_coupons.issued_coupon_id', $issued_coupon_id);
+            //     $q->where('issued_coupons.user_id', $user->user_id);
+            //     $q->where('issued_coupons.expired_date', '>=', Carbon::now($retailer->timezone->timezone_name));
+            //     $q->where('issued_coupons.status', 'active');
+            // })
+            ->first();
 
             if (empty($coupons)) {
                 // throw new Exception('Product id ' . $issued_coupon_id . ' not found');
@@ -4641,6 +4642,12 @@ class MobileCIAPIController extends BaseCIController
                 // -- END of hack
             }
 
+            $link_to_tenants = \CouponRetailer::with('tenant', 'tenant.categories')
+                ->wherehas('tenant', function($q){
+                    $q->where('merchants.status', 'active');
+                })
+                ->where('promotion_id', $coupon_id)->get();
+
             if (empty($coupons->image)) {
                 $coupons->image = 'mobile-ci/images/default_coupon.png';
             }
@@ -4691,6 +4698,7 @@ class MobileCIAPIController extends BaseCIController
                 'retailer' => $retailer,
                 'coupon' => $coupons,
                 'tenants' => $tenants,
+                'link_to_tenants' => $link_to_tenants,
                 'languages' => $languages,
                 'cso_exists' => $cso_exists,
                 'cs_reedem' => $cs_reedem,
