@@ -217,7 +217,6 @@
         </thead>
         <tbody>
         <?php $count = 1; while ($row = $statement->fetch(PDO::FETCH_OBJ)) : ?>
-            <?php dd($row);?>
             <tr class="{{ $rowCounter % 2 === 0 ? 'zebra' : '' }}">
                 <!-- <td><?php //echo ($count); ?></td> -->
                  <td><?php echo $me->printUtf8($row->news_name); ?></td>
