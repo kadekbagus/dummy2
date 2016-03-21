@@ -126,7 +126,7 @@ class NewsPrinterController extends DataPrinterController
                             date('d F Y H:i', strtotime($row->begin_date)),
                             date('d F Y H:i', strtotime($row->end_date)),
                             $row->campaign_status,
-                            date('d F Y H:i:s', strtotime($row->updated_at))
+                            $this->printDateTime($row->updated_at, $timezone, 'd F Y H:i:s')
                     );
                     $count++;
                 }
@@ -147,7 +147,7 @@ class NewsPrinterController extends DataPrinterController
      * @param string $format
      * @return string
      */
-    public function printDateTime($datetime, $timezone, $format='d M Y')
+    public function printDateTime($datetime, $timezone, $format='d M Y H:i:s')
     {
         if (empty($datetime) || $datetime === '0000-00-00 00:00:00') {
             return '';

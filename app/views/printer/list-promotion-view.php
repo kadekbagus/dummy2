@@ -108,7 +108,7 @@
     <h2 style="margin-bottom:0.5em;"><?php echo $pageTitle; ?></h2>
     <table style="width:100%; margin-bottom:1em;" class="noborder">
         <tr>
-            <td style="width:150px"></td>
+            <td style="width:200px"></td>
             <td style="width:10px;"></td>
             <td><strong></strong></td>
         </tr>
