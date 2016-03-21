@@ -26,6 +26,8 @@ class LuckyDrawPrinterController extends DataPrinterController
         $filterMinimumAmountFrom = OrbitInput::get('from_minimum_amount');
         $filterMinimumAmountTo = OrbitInput::get('to_minimum_amount');
         $filterStatus = OrbitInput::get('campaign_status');
+        $filterBeginDate = OrbitInput::get('begin_date');
+        $filterEndDate = OrbitInput::get('end_date');
 
         $timezone = $this->getTimeZone($currentMall);
 
@@ -62,6 +64,10 @@ class LuckyDrawPrinterController extends DataPrinterController
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','','');
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", 'Total Lucky Draws', $totalRec, '', '', '', '', '','','','','');
 
+                if ($filterBeginDate != '') {
+                    printf("%s,%s,\n", 'Campaign Date', $this->printCampaignDate($filterBeginDate, $filterEndDate));
+                }
+
                 if ($filterName != '') {
                     printf("%s,%s,\n", 'Filter by Lucky Draw Name', $filterName);
                 }
@@ -89,7 +95,7 @@ class LuckyDrawPrinterController extends DataPrinterController
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
 
                     printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
-                            $this->printUtf8($row->lucky_draw_name), 
+                            $this->printUtf8($row->lucky_draw_name_english), 
                             $this->printDateTime($row->start_date, 'UTC', 'd F Y  H:i'), 
                             $this->printDateTime($row->end_date, 'UTC', 'd F Y  H:i'),
                             $row->minimum_amount,
@@ -184,5 +190,17 @@ class LuckyDrawPrinterController extends DataPrinterController
         return $timezone;
     }
 
+    public function printCampaignDate($filterBeginDate, $filterEndDate) 
+    {
+        if (!empty($filterBeginDate) && !empty($filterEndDate)) 
+        {
+            return $this->printDateTime($filterBeginDate, 'UTC').' - '.$this->printDateTime($filterEndDate, 'UTC');
+        }
+        else if (! empty($filterBeginDate)) 
+        {
+            return $this->printDateTime($filterBeginDate, 'UTC');
+        }    
+
+    }
 
 }

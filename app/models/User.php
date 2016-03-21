@@ -34,6 +34,27 @@ class User extends Eloquent implements UserInterface
             : $query->whereUserId('');
     }
 
+    /**
+     * Get the "PMP Account" users attached to a specific mall.
+     *
+     * @author Qosdil A. <qosdil@dominopos.com>
+     */
+    public function scopeOfSpecificMallPmpAccounts($query, $mallId)
+    {
+        $merchantIds = Tenant::whereParentId($mallId)->lists('merchant_id');
+
+        $userTenantArray = UserMerchant::whereObjectType('tenant')->whereIn('merchant_id', $merchantIds)->lists('user_id');
+        
+        return $userTenantArray
+            ? $query->whereIn('user_id', $userTenantArray)
+            : $query->whereUserId('');
+    }
+
+    public function userTenants()
+    {
+        return $this->hasMany('UserMerchant')->whereObjectType('tenant');
+    }
+
     public function permissions()
     {
         return $this->belongsToMany('Permission', 'custom_permission', 'user_id', 'permission_id')->withPivot('allowed');
