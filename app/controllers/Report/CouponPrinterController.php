@@ -114,8 +114,8 @@ class CouponPrinterController extends DataPrinterController
                 }
 
                 if ($beginDate != '' && $endDate != ''){
-                    $beginDateRangeMallTime = $this->printDateTime($beginDate, $timezone, 'd F Y');
-                    $endDateRangeMallTime = $this->printDateTime($endDate, $timezone, 'd F Y');
+                    $beginDateRangeMallTime = date('d F Y', strtotime($beginDate));
+                    $endDateRangeMallTime = date('d F Y', strtotime($endDate));
                     $dateRange = $beginDateRangeMallTime . ' - ' . $endDateRangeMallTime;
                     if ($beginDateRangeMallTime === $endDateRangeMallTime) {
                         $dateRange = $beginDateRangeMallTime;
