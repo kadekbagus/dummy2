@@ -1659,9 +1659,7 @@ class NewsAPIController extends ControllerAPI
             // Filter news merchants by retailer(tenant) name
             OrbitInput::get('tenant_name_like', function ($tenant_name_like) use ($news) {
                 $news->whereHas('tenants', function($q) use ($tenant_name_like) {
-                    $q->whereHas('mall', function($q) use ($tenant_name_like) {
-                        $q->where('merchants.name', 'like', "%$tenant_name_like%");
-                    })
+                    $q->where('merchants.name', 'like', "%$tenant_name_like%");
                 });
             });
 
@@ -1669,6 +1667,12 @@ class NewsAPIController extends ControllerAPI
             // There is laravel bug regarding nested whereHas on the same table like in this case
             // news->tenant->mall : whereHas('tenant', function($q) { $q->whereHas('mall' ...)}) this is not gonna work
             OrbitInput::get('mall_name_like', function ($mall_name_like) use ($news, $prefix) {
+                $quote = function($arg)
+                {
+                    return DB::connection()->getPdo()->quote($arg);
+                };
+                $mall_name_like = "%" . $mall_name_like . "%";
+                $mall_name_like = $quote($mall_name_like);
                 $news->whereRaw(DB::raw("
                     (select count(*) from {$prefix}merchants mtenant
                     inner join {$prefix}news_merchant onm on mtenant.merchant_id = onm.merchant_id
@@ -1676,7 +1680,7 @@ class NewsAPIController extends ControllerAPI
                         select count(*) from {$prefix}merchants mmall
                         where mmall.object_type = 'mall' and
                         mtenant.parent_id = mmall.merchant_id and
-                        mmall.name like '%{$mall_name_like}%' and
+                        mmall.name like {$mall_name_like} and
                         mmall.object_type = 'mall'
                     ) >= 1 and
                     mtenant.object_type = 'tenant' and
