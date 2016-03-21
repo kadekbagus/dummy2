@@ -193,7 +193,7 @@
                  <td><?php echo $me->printUtf8($row->role_name); ?></td>
                  <td><?php echo $me->printUtf8($row->employee_id_char); ?></td>
                  <td><?php echo $me->printUtf8($row->status); ?></td>
-                 <td><?php echo $me->printDateTime($row->updated_at, $timezone, 'd F Y  H:i:s'); ?></td>
+                 <td><?php echo $me->printDateTime($row->updated_at, $timezone, 'd F Y H:i:s'); ?></td>
             </tr>
         <?php  $count++; endwhile; ?>
         </tbody>

@@ -117,6 +117,93 @@
             <td>:</td>
             <td><strong><?php echo number_format($totalRec, 0, '.', '.'); ?></strong></td>
         </tr>
+
+        <!-- Filtering -->
+        <?php if ($promotionName != '') { ?>
+            <tr>
+                <td>Filter by Promotion Name</td>
+                <td>:</td>
+                <td><strong><?php echo htmlentities($promotionName); ?></strong></td>
+            </tr>
+        <?php } ?>
+
+        <?php if ($tenantName != '') { ?>
+            <tr>
+                <td>Filter by Tenant Name</td>
+                <td>:</td>
+                <td><strong><?php echo htmlentities($tenantName); ?></strong></td>
+            </tr>
+        <?php } ?>
+
+        <?php if ($mallName != '') { ?>
+            <tr>
+                <td>Filter by Mall Name</td>
+                <td>:</td>
+                <td><strong><?php echo htmlentities($mallName); ?></strong></td>
+            </tr>
+        <?php } ?>
+
+        <?php if ($etcFrom != '' && $etcTo != ''){ ?>
+            <tr>
+                <td>Filter by Estimated Total Cost</td>
+                <td>:</td>
+                <td> <strong><?php echo $etcFrom . ' - ' . $etcTo; ?></strong></td>
+            </tr>
+        <?php } ?>
+
+        <?php if ($etcFrom != '' && $etcTo == ''){ ?>
+            <tr>
+                <td>Filter by Estimated Total Cost (From)</td>
+                <td>:</td>
+                <td> <strong><?php echo $etcFrom; ?></strong></td>
+            </tr>
+        <?php } ?>
+
+        <?php if ($etcFrom == '' && $etcTo != ''){ ?>
+            <tr>
+                <td>Filter by Estimated Total Cost (To)</td>
+                <td>:</td>
+                <td> <strong><?php echo $etcTo; ?></strong></td>
+            </tr>
+        <?php } ?>
+
+        <?php if ($status != '') { ?>
+            <tr>
+                <td>Filter by Status</td>
+                <td>:</td>
+                <td>
+                    <strong>
+                        <?php
+                            $statusString = '';
+                            foreach ($status as $key => $valstatus){
+                                $statusString .= $valstatus . ', ';
+                            }
+                            echo htmlentities(rtrim($statusString, ', '));
+                        ?>
+                    </strong>
+                </td>
+            </tr>
+        <?php } ?>
+
+        <?php if ($beginDate != '' && $endDate != ''){ ?>
+            <tr>
+                <td>Campaign Date</td>
+                <td>:</td>
+                <td>
+                    <?php
+                        if ($beginDate != '' && $endDate != ''){
+                            $beginDateRangeMallTime = $this->printDateTime($beginDate, $timezone, 'd M Y');
+                            $endDateRangeMallTime = $this->printDateTime($endDate, $timezone, 'd M Y');
+                            $dateRange = $beginDateRangeMallTime . ' - ' . $endDateRangeMallTime;
+                            if ($beginDateRangeMallTime === $endDateRangeMallTime) {
+                                $dateRange = $beginDateRangeMallTime;
+                            }
+                        }
+                    ?>
+                    <strong><?php echo $dateRange; ?></strong>
+                </td>
+            </tr>
+        <?php } ?>
     </table>
 
     <table style="width:100%">
@@ -135,7 +222,7 @@
                  <td><?php echo $me->printUtf8($row->news_name); ?></td>
                  <td><?php echo $me->printDateTime($row->begin_date, 'UTC', 'd F Y'); ?></td>
                  <td><?php echo $me->printDateTime($row->end_date, 'UTC', 'd F Y'); ?></td>
-                 <td><?php echo ($row->status); ?></td>
+                 <td><?php echo ($row->campaign_status); ?></td>
                  <td><?php echo $me->printDateTime($row->updated_at, 'UTC', 'd F Y'); ?></td>
             </tr>
         <?php  $count++; endwhile; ?>
