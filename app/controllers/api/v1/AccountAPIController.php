@@ -11,9 +11,9 @@ class AccountAPIController extends ControllerAPI
 {
     /** @var array The list columns. */
     protected $listColumns = [
-        'name' => [
+        'user_firstname' => [
             'title' => 'Account Name',
-            'sort_key' => 'name',
+            'sort_key' => 'user_firstname',
         ],
         'company_name' => [
             'title' => 'Company Name',
@@ -27,9 +27,9 @@ class AccountAPIController extends ControllerAPI
             'title' => 'Tenant(s)',
             'sort_key' => 'tenants',
         ],
-        'creation_date' => [
+        'created_at' => [
             'title' => 'Creation Date',
-            'sort_key' => 'creation_date',
+            'sort_key' => 'created_at',
         ],
         'status' => [
             'title' => 'Status',
@@ -76,16 +76,18 @@ class AccountAPIController extends ControllerAPI
         $allRows = clone $pmpAccounts;
         $data->total_records = $allRows->count();
 
-        $pmpAccounts = $pmpAccounts->take(Input::get('take'))->skip(Input::get('skip'))->get();
+        $pmpAccounts = $pmpAccounts->take(Input::get('take'))->skip(Input::get('skip'))
+            ->orderBy(Input::get('sortby', 'user_firstname'), Input::get('sortmode', 'asc'))
+            ->get();
 
         $records = [];
         foreach ($pmpAccounts as $row) {
             $records[] = [
-                'name' => $row->full_name,
+                'user_firstname' => $row->full_name,
                 'company_name' => $row->userDetail->company_name,
                 'location' => $row->userDetail->location,
                 'tenants' => $this->getTenantAtMallArray($row->userTenants()->lists('merchant_id')),
-                'creation_date' => $row->created_at->format('d F Y H:i:s'),
+                'created_at' => $row->created_at->format('d F Y H:i:s'),
                 'status' => $row->status,
             ];
         }
