@@ -36,13 +36,7 @@ class AccountAPIController extends ControllerAPI
         ],
     ];
 
-    /**
-     * The main method
-     *
-     * @author Qosdil A. <qosdil@dominopos.com>
-     * @todo Validation.
-     */
-    public function getAccount()
+    protected function prepareData()
     {
         $data = new stdClass();
 
@@ -103,9 +97,22 @@ class AccountAPIController extends ControllerAPI
         $data->columns = $this->listColumns;
         $data->records = $records;
 
-        $data->returned_records = count($records);
+        $this->data = $data;
+    }
 
-        $this->response->data = $data;
+    /**
+     * The main method
+     *
+     * @author Qosdil A. <qosdil@dominopos.com>
+     * @todo Validation.
+     */
+    public function getAccount()
+    {
+        $this->prepareData();
+
+        $this->data->returned_records = count($this->data->records);
+
+        $this->response->data = $this->data;
         return $this->render(200);
     }
 
