@@ -52,6 +52,10 @@
             padding-bottom: 2px;
             border-bottom: 1px solid #ccc;
         }
+
+        /*th, td {*/
+            /*display: inline-block;*/
+        /*}*/
     </style>
     <style type="text/css" media="print">
         #payment-date, #printernote { display:none; }
@@ -105,25 +109,43 @@
 </div>
 
 <div id="main">
-    <h2 style="margin-bottom:0.5em;"><?php echo $pageTitle; ?></h2>
+    <h2 style="margin-bottom:0.5em;">Coupon List</h2>
     <table style="width:100%; margin-bottom:1em;" class="noborder">
         <tr>
-            <td style="width:200px"></td>
+            <td style="width:150px"></td>
             <td style="width:10px;"></td>
             <td><strong></strong></td>
         </tr>
         <tr>
-            <td>Total Promotions</td>
+            <td>Total Coupon</td>
             <td>:</td>
             <td><strong><?php echo number_format($totalRec, 0, '.', '.'); ?></strong></td>
         </tr>
 
         <!-- Filtering -->
-        <?php if ($promotionName != '') { ?>
+        <?php if ($couponName != '') { ?>
             <tr>
-                <td>Filter by Promotion Name</td>
+                <td>Filter by Coupon Name</td>
                 <td>:</td>
-                <td><strong><?php echo htmlentities($promotionName); ?></strong></td>
+                <td><strong><?php echo htmlentities($couponName); ?></strong></td>
+            </tr>
+        <?php } ?>
+
+        <?php if ($ruleType != '') { ?>
+            <tr>
+                <td>Filter by Coupon Rule</td>
+                <td>:</td>
+                <td>
+                    <strong>
+                        <?php
+                            $ruleString = '';
+                            foreach ($ruleType as $key => $valrule){
+                                $ruleString .= str_replace("_", " ", $valrule) . ', ';
+                            }
+                            echo htmlentities(rtrim($ruleString, ', '));
+                        ?>
+                    </strong>
+                </td>
             </tr>
         <?php } ?>
 
@@ -192,8 +214,8 @@
                 <td>
                     <?php
                         if ($beginDate != '' && $endDate != ''){
-                            $beginDateRangeMallTime = $this->printDateTime($beginDate, $timezone, 'd M Y');
-                            $endDateRangeMallTime = $this->printDateTime($endDate, $timezone, 'd M Y');
+                            $beginDateRangeMallTime = $this->printDateTime($beginDate, $timezone, 'd F Y');
+                            $endDateRangeMallTime = $this->printDateTime($endDate, $timezone, 'd F Y');
                             $dateRange = $beginDateRangeMallTime . ' - ' . $endDateRangeMallTime;
                             if ($beginDateRangeMallTime === $endDateRangeMallTime) {
                                 $dateRange = $beginDateRangeMallTime;
@@ -204,28 +226,30 @@
                 </td>
             </tr>
         <?php } ?>
+
     </table>
+
 
     <table style="width:100%">
         <thead>
-           <!--  <th style="text-align:left;">No.</th> -->
-            <th style="text-align:left;">Promotion Name</th>
-            <th style="text-align:left;">Start Date &amp; Time</th>
-            <th style="text-align:left;">End Date &amp; Time</th>
+            <th style="text-align:left;">No</th>
+            <th style="text-align:left;">Coupon Name</th>
+            <th style="text-align:left;">Start Date & Time</th>
+            <th style="text-align:left;">End Date & Time</th>
             <th style="text-align:left;">Status</th>
             <th style="text-align:left;">Last Update</th>
         </thead>
         <tbody>
-        <?php $count = 1; while ($row = $statement->fetch(PDO::FETCH_OBJ)) : ?>
-            <tr class="{{ $rowCounter % 2 === 0 ? 'zebra' : '' }}">
-                <!-- <td><?php //echo ($count); ?></td> -->
-                 <td><?php echo $me->printUtf8($row->news_name); ?></td>
-                 <td><?php echo $me->printDateTime($row->begin_date, 'UTC', 'd F Y'); ?></td>
-                 <td><?php echo $me->printDateTime($row->end_date, 'UTC', 'd F Y'); ?></td>
-                 <td><?php echo ($row->campaign_status); ?></td>
-                 <td><?php echo $me->printDateTime($row->updated_at, 'UTC', 'd F Y'); ?></td>
-            </tr>
-        <?php  $count++; endwhile; ?>
+            <?php $count = 1; while ($row = $statement->fetch(PDO::FETCH_OBJ)) : ?>
+                <tr class="{{ $rowCounter % 2 === 0 ? 'zebra' : '' }}">
+                    <td><?php echo $count++; ?></td>
+                    <td><?php echo htmlentities($row->name_english); ?></td>
+                    <td><?php echo date('d F Y H:i', strtotime($row->begin_date)); ?></td>
+                    <td><?php echo date('d F Y H:i', strtotime($row->end_date)); ?></td>
+                    <td><?php echo $row->campaign_status; ?></td>
+                    <td><?php echo date('d F Y H:i:s', strtotime($row->updated_at)); ?></td>
+                </tr>
+            <?php endwhile ; ?>
         </tbody>
     </table>
 </div>
