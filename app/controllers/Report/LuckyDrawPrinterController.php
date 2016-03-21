@@ -73,11 +73,11 @@ class LuckyDrawPrinterController extends DataPrinterController
                 }
 
                 if ($filterMinimumAmountFrom != '' && $filterMinimumAmountTo == ''){
-                    printf("%s,%s,%s,%s,%s,%s\n", 'Filter by Minimum Amount (From)', str_replace(',', '', $filterMinimumAmountFrom), '', '', '','');
+                    printf("%s,%s,%s,%s,%s,%s\n", 'Filter by Amount to Obtain (From)', str_replace(',', '', $filterMinimumAmountFrom), '', '', '','');
                 }
 
                 if ($filterMinimumAmountFrom == '' && $filterMinimumAmountTo != ''){
-                    printf("%s,%s,%s,%s,%s,%s\n", 'Filter by Minimum Amount (To)',  str_replace(',', '', $filterMinimumAmountTo), '', '', '','');
+                    printf("%s,%s,%s,%s,%s,%s\n", 'Filter by Amount to Obtain (To)',  str_replace(',', '', $filterMinimumAmountTo), '', '', '','');
                 }
 
                 if ( is_array($filterStatus) && count($filterStatus) > 0) {

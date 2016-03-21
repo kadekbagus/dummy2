@@ -134,7 +134,7 @@
 
         <?php if ($filterMinimumAmountFrom != '' && $filterMinimumAmountTo == ''){ ?>
             <tr>
-                <td>Filter by Minimum Amount (From)</td>
+                <td>Filter by Amount to Obtain (From)</td>
                 <td>:</td>
                 <td> <strong><?php echo $filterMinimumAmountFrom; ?></strong></td>
             </tr>
@@ -142,7 +142,7 @@
 
         <?php if ($filterMinimumAmountFrom == '' && $filterMinimumAmountTo != ''){ ?>
             <tr>
-                <td>Filter by Minimum Amount (To)</td>
+                <td>Filter by Amount to Obtain (To)</td>
                 <td>:</td>
                 <td> <strong><?php echo $filterMinimumAmountTo; ?></strong></td>
             </tr>
