@@ -110,7 +110,7 @@
             <td><strong></strong></td>
         </tr>
         <tr>
-            <td>Total Lucky Draw</td>
+            <td>Total Lucky Draws</td>
             <td>:</td>
             <td><strong><?php echo number_format($totalRec, 0, '.', '.'); ?></strong></td>
         </tr>
@@ -172,12 +172,12 @@
         <?php $count = 1; while ($row = $statement->fetch(PDO::FETCH_OBJ)) : ?>
             <tr class="{{ $rowCounter % 2 === 0 ? 'zebra' : '' }}">
                  <td><?php echo $me->printUtf8($row->lucky_draw_name_english); ?></td>
-                 <td><?php echo $me->printDateTime($row->start_date, 'UTC', 'd F Y  H:i'); ?></td>
-                 <td><?php echo $me->printDateTime($row->end_date, 'UTC', 'd F Y  H:i'); ?></td>
+                 <td><?php echo $me->printDateTime($row->start_date, 'UTC', 'd F Y H:i'); ?></td>
+                 <td><?php echo $me->printDateTime($row->end_date, 'UTC', 'd F Y H:i'); ?></td>
                  <td><?php echo number_format($row->minimum_amount); ?></td>
                  <td><?php echo $row->total_issued_lucky_draw_number; ?></td>
                  <td><?php echo $row->campaign_status; ?></td>
-                 <td><?php echo $me->printDateTime($row->updated_at, $timezone, 'd F Y  H:i'); ?></td>
+                 <td><?php echo $me->printDateTime($row->updated_at, $timezone, 'd F Y H:i:s'); ?></td>
             </tr>
         <?php  $count++; endwhile; ?>
         </tbody>

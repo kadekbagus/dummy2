@@ -95,13 +95,13 @@ class LuckyDrawPrinterController extends DataPrinterController
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
 
                     printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
-                            $this->printUtf8($row->lucky_draw_name_english), 
-                            $this->printDateTime($row->start_date, 'UTC', 'd F Y  H:i'), 
-                            $this->printDateTime($row->end_date, 'UTC', 'd F Y  H:i'),
+                            $this->printUtf8($row->lucky_draw_name_english),
+                            $this->printDateTime($row->start_date, 'UTC', 'd F Y H:i'),
+                            $this->printDateTime($row->end_date, 'UTC', 'd F Y H:i'),
                             $row->minimum_amount,
                             $row->total_issued_lucky_draw_number,
                             $row->campaign_status,
-                            $this->printDateTime($row->updated_at, $timezone, 'd F Y  H:i:s')
+                            $this->printDateTime($row->updated_at, $timezone, 'd F Y H:i:s')
                        );
 
                 }
@@ -190,16 +190,16 @@ class LuckyDrawPrinterController extends DataPrinterController
         return $timezone;
     }
 
-    public function printCampaignDate($filterBeginDate, $filterEndDate) 
+    public function printCampaignDate($filterBeginDate, $filterEndDate)
     {
-        if (!empty($filterBeginDate) && !empty($filterEndDate)) 
+        if (!empty($filterBeginDate) && !empty($filterEndDate))
         {
             return $this->printDateTime($filterBeginDate, 'UTC').' - '.$this->printDateTime($filterEndDate, 'UTC');
         }
-        else if (! empty($filterBeginDate)) 
+        else if (! empty($filterBeginDate))
         {
             return $this->printDateTime($filterBeginDate, 'UTC');
-        }    
+        }
 
     }
 
