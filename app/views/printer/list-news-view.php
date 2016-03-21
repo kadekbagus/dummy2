@@ -229,7 +229,7 @@
                     <td><?php echo date('d F Y H:i', strtotime($row->begin_date)); ?></td>
                     <td><?php echo date('d F Y H:i', strtotime($row->end_date)); ?></td>
                     <td><?php echo $row->campaign_status; ?></td>
-                    <td><?php echo date('d F Y H:i:s', strtotime($row->updated_at)); ?></td>
+                    <td><?php echo $this->printDateTime($row->updated_at, $timezone, 'd F Y H:i:s'); ?></td>
                 </tr>
             <?php endwhile ; ?>
         </tbody>
