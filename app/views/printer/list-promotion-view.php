@@ -192,8 +192,8 @@
                 <td>
                     <?php
                         if ($beginDate != '' && $endDate != ''){
-                            $beginDateRangeMallTime = $this->printDateTime($beginDate, $timezone, 'd M Y');
-                            $endDateRangeMallTime = $this->printDateTime($endDate, $timezone, 'd M Y');
+                            $beginDateRangeMallTime = date('d F Y', strtotime($beginDate));
+                            $endDateRangeMallTime = date('d F Y', strtotime($endDate));
                             $dateRange = $beginDateRangeMallTime . ' - ' . $endDateRangeMallTime;
                             if ($beginDateRangeMallTime === $endDateRangeMallTime) {
                                 $dateRange = $beginDateRangeMallTime;
