@@ -11,9 +11,9 @@ class AccountAPIController extends ControllerAPI
 {
     /** @var array The list columns. */
     protected $listColumns = [
-        'name' => [
+        'user_firstname' => [
             'title' => 'Account Name',
-            'sort_key' => 'name',
+            'sort_key' => 'user_firstname',
         ],
         'company_name' => [
             'title' => 'Company Name',
@@ -76,7 +76,9 @@ class AccountAPIController extends ControllerAPI
         $allRows = clone $pmpAccounts;
         $data->total_records = $allRows->count();
 
-        $pmpAccounts = $pmpAccounts->take(Input::get('take'))->skip(Input::get('skip'))->get();
+        $pmpAccounts = $pmpAccounts->take(Input::get('take'))->skip(Input::get('skip'))
+            ->orderBy(Input::get('sortby', 'user_firstname'), Input::get('sortmode', 'asc'))
+            ->get();
 
         $records = [];
         foreach ($pmpAccounts as $row) {
