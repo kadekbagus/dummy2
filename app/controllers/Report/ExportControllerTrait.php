@@ -38,17 +38,7 @@ trait ExportControllerTrait
 
         foreach ($this->data->records as $row) {
             foreach (array_keys($this->data->columns) as $fieldName) {
-                if ( ! is_array($row[$fieldName])) {
-
-                    // Replace comma with dash
-                    $csv .= str_replace(',', ' -', $row[$fieldName]);
-
-                } else {
-
-                    // Show array values as string with a semicolon separator
-                    $csv .= implode('; ', $row[$fieldName]);
-                }
-
+                $csv .= $this->handleRowValue($row, $fieldName);
                 $csv .= ',';
             }
 
@@ -62,5 +52,22 @@ trait ExportControllerTrait
         $response->header('Content-Disposition', 'inline; filename="'.$fileName.'"');
 
         return $response;
+    }
+
+    public function handleRowValue($row, $fieldName)
+    {
+        $csv = '';
+        if ( ! is_array($row[$fieldName])) {
+
+            // Replace comma with dash
+            $csv .= str_replace(',', ' -', $row[$fieldName]);
+
+        } else {
+
+            // Show array values as string with a semicolon separator
+            $csv .= implode('; ', $row[$fieldName]);
+        }
+
+        return $csv;
     }
 }
