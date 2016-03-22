@@ -11,6 +11,12 @@ trait ExportControllerTrait
 {
     public function getList()
     {
+        // Call a parent controller method to prepare the data
+        $this->prepareData();
+
+        // You must set $pageTitle in your controller
+        $this->data->pageTitle = $this->pageTitle;
+
         if (\Input::get('export') == 'csv') {
             return $this->getCsv();
         };
