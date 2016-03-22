@@ -4,11 +4,12 @@ namespace Report;
 
 class AccountExportController extends \AccountAPIController {
 
-    protected $pageTitle = 'PMP Accounts';
-
     public function __construct()
     {
         $this->prepareData();
+
+        // Set the page title
+        $this->data->pageTitle = 'PMP Accounts';
     }
 
     public function getList()
@@ -17,20 +18,14 @@ class AccountExportController extends \AccountAPIController {
             return $this->getCsv();
         };
 
-        // Page title
-        $data['pageTitle'] = $this->pageTitle;
-
-        $data['columns'] = $this->data->columns;
-        $data['rows'] = $this->data->records;
-
-        return \View::make('report.print_friendly', $data);
+        return \View::make('report.print_friendly', (array) $this->data);
     }
 
     public function getCsv()
     {
         $csv = ',,,,,,';
         $csv .= "\r\n";
-        $csv .= $this->pageTitle;
+        $csv .= $this->data->pageTitle;
         $csv .= ',,,,,,';
         $csv .= "\r\n";
         $csv .= ',,,,,,';
@@ -66,7 +61,7 @@ class AccountExportController extends \AccountAPIController {
         $response = \Response::make($csv, 200);
         $response->header('Content-Type', 'text/csv');
 
-        $fileName = 'orbit-export-'.str_replace(' ', '-', $this->pageTitle.'-'.date('D_d_M_Y_').rand(10000, 99999)).'.csv';
+        $fileName = 'orbit-export-'.str_replace(' ', '-', $this->data->pageTitle.'-'.date('D_d_M_Y_').rand(10000, 99999)).'.csv';
         $response->header('Content-Disposition', 'inline; filename="'.$fileName.'"');
 
         return $response;
