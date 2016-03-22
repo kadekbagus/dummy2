@@ -47,7 +47,10 @@ class AccountExportController extends \AccountAPIController {
         foreach ($this->data->records as $row) {
             foreach (array_keys($this->data->columns) as $fieldName) {
                 if ( ! is_array($row[$fieldName])) {
-                    $csv .= $row[$fieldName];
+
+                    // Replace comma with dash
+                    $csv .= str_replace(',', ' -', $row[$fieldName]);
+
                 } else {
 
                     // Show array values as string with a semicolon separator
