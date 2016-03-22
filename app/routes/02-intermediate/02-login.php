@@ -24,6 +24,9 @@ Route::post('/app/v1/logout/mallcs', 'IntermediateLoginController@getLogout');
 Route::post('/app/v1/login/customer', 'IntermediateLoginController@postLoginCustomer');
 Route::post('/app/v1/logout/customer', 'IntermediateLoginController@getLogout');
 
+Route::post('/app/v1/login/pmp', 'IntermediateLoginController@postLoginPMP');
+Route::post('/app/v1/logout/pmp', 'IntermediateLoginController@getLogout');
+
 Route::group(['before' => 'orbit-settings'], function() {
     Route::post('/app/v1/customer/login', 'IntermediateLoginController@postLoginMobileCI');
 });
