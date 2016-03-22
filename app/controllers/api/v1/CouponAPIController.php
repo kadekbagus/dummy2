@@ -14,6 +14,12 @@ use Carbon\Carbon as Carbon;
 
 class CouponAPIController extends ControllerAPI
 {
+     /**
+     * Flag to return the query builder.
+     *
+     * @var Builder
+     */
+    protected $returnBuilder = FALSE;
 
     /**
      * POST - Create New Coupon
@@ -2121,7 +2127,7 @@ class CouponAPIController extends ControllerAPI
             // Addition select case and join for sorting by discount_value.
             $coupons = Coupon::with('couponRule')
                 ->allowedForPMPUser($user, 'coupon')
-                ->select(DB::raw("{$table_prefix}promotions.*, {$table_prefix}campaign_price.campaign_price_id,
+                ->select(DB::raw("{$table_prefix}promotions.*, {$table_prefix}campaign_price.campaign_price_id, {$table_prefix}coupon_translations.promotion_name AS name_english,
                     CASE WHEN {$table_prefix}campaign_status.campaign_status_name = 'expired' THEN {$table_prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$table_prefix}promotions.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
                                                                                 FROM {$table_prefix}merchants om
                                                                                 LEFT JOIN {$table_prefix}timezones ot on ot.timezone_id = om.timezone_id
@@ -2294,6 +2300,39 @@ class CouponAPIController extends ControllerAPI
                 }
             });
 
+            // Filter coupon merchants by retailer(tenant) name
+            OrbitInput::get('tenant_name_like', function ($tenant_name_like) use ($coupons) {
+                $coupons->whereHas('tenants', function($q) use ($tenant_name_like) {
+                    $q->where('merchants.name', 'like', "%$tenant_name_like%");
+                });
+            });
+
+            // Filter coupon merchants by mall name
+            OrbitInput::get('mall_name_like', function ($mall_name_like) use ($coupons, $table_prefix) {
+                $quote = function($arg)
+                {
+                    return DB::connection()->getPdo()->quote($arg);
+                };
+                $mall_name_like = "%" . $mall_name_like . "%";
+                $mall_name_like = $quote($mall_name_like);
+                $coupons->whereRaw(DB::raw("
+                    (SELECT count(*) 
+                    FROM {$table_prefix}merchants mtenant
+                        inner join {$table_prefix}promotion_retailer_redeem onm on mtenant.merchant_id = onm.retailer_id
+                    WHERE mtenant.object_type = 'tenant' 
+                        and onm.promotion_id = {$table_prefix}promotions.promotion_id 
+                        and (
+                            SELECT count(*) FROM {$table_prefix}merchants mmall
+                            WHERE mmall.object_type = 'mall' and
+                            mtenant.parent_id = mmall.merchant_id and
+                            mmall.name like {$mall_name_like} and
+                            mmall.object_type = 'mall'
+                        ) >= 1 
+                        and mtenant.object_type = 'tenant' 
+                        and mtenant.is_mall = 'no') >= 1
+                "));
+            });
+
              // Filter coupon rule by rule object type
             OrbitInput::get('rule_object_type', function ($ruleObjectTypes) use ($coupons) {
                 $coupons->whereHas('couponrule', function($q) use ($ruleObjectTypes) {
@@ -2440,6 +2479,15 @@ class CouponAPIController extends ControllerAPI
                         } else {
                             $coupons->with('tenants');
                         }
+                    } elseif ($relation === 'tenants.mall') {
+                        if ($from_cs === 'yes') {
+                            $coupons->with(array('tenants' => function($q) {
+                                $q->where('merchants.status', 'active');
+                                $q->with('mall');
+                            }));
+                        } else {
+                            $coupons->with('tenants.mall');
+                        }
                     } elseif ($relation === 'translations') {
                         $coupons->with('translations');
                     } elseif ($relation === 'translations.media') {
@@ -2448,6 +2496,15 @@ class CouponAPIController extends ControllerAPI
                         $coupons->with('employee');
                     } elseif ($relation === 'link_to_tenants') {
                         $coupons->with('linkToTenants');
+                    } elseif ($relation === 'link_to_tenants.mall') {
+                        if ($from_cs === 'yes') {
+                            $coupons->with(array('linkToTenants' => function($q) {
+                                $q->where('merchants.status', 'active');
+                                $q->with('mall');
+                            }));
+                        } else {
+                            $coupons->with('linkToTenants.mall');
+                        }
                     } elseif ($relation === 'genders') {
                         $coupons->with('genders');
                     } elseif ($relation === 'ages') {
@@ -2462,30 +2519,32 @@ class CouponAPIController extends ControllerAPI
             // skip, and order by
             $_coupons = clone $coupons;
 
-            // Get the take args
-            $take = $perPage;
-            OrbitInput::get('take', function ($_take) use (&$take, $maxRecord) {
-                if ($_take > $maxRecord) {
-                    $_take = $maxRecord;
-                }
-                $take = $_take;
+            if (! $this->returnBuilder) {
+                // Get the take args
+                $take = $perPage;
+                OrbitInput::get('take', function ($_take) use (&$take, $maxRecord) {
+                    if ($_take > $maxRecord) {
+                        $_take = $maxRecord;
+                    }
+                    $take = $_take;
 
-                if ((int)$take <= 0) {
-                    $take = $maxRecord;
-                }
-            });
-            $coupons->take($take);
+                    if ((int)$take <= 0) {
+                        $take = $maxRecord;
+                    }
+                });
+                $coupons->take($take);
 
-            $skip = 0;
-            OrbitInput::get('skip', function($_skip) use (&$skip, $coupons)
-            {
-                if ($_skip < 0) {
-                    $_skip = 0;
-                }
+                $skip = 0;
+                OrbitInput::get('skip', function($_skip) use (&$skip, $coupons)
+                {
+                    if ($_skip < 0) {
+                        $_skip = 0;
+                    }
 
-                $skip = $_skip;
-            });
-            $coupons->skip($skip);
+                    $skip = $_skip;
+                });
+                $coupons->skip($skip);
+            }
 
             // Default sort by
             $sortBy = 'coupon_translations.promotion_name';
@@ -2531,6 +2590,11 @@ class CouponAPIController extends ControllerAPI
 
             $totalCoupons = RecordCounter::create($_coupons)->count();
             $listOfCoupons = $coupons->get();
+
+            // Return the instance of Query Builder
+            if ($this->returnBuilder) {
+                return ['builder' => $coupons, 'count' => $totalCoupons];
+            }
 
             $data = new stdclass();
             $data->total_records = $totalCoupons;
@@ -3862,6 +3926,13 @@ class CouponAPIController extends ControllerAPI
     protected function quote($arg)
     {
         return DB::connection()->getPdo()->quote($arg);
+    }
+
+    public function setReturnBuilder($bool)
+    {
+        $this->returnBuilder = $bool;
+
+        return $this;
     }
 
 }

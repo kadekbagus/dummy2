@@ -1,7 +1,7 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns:v="urn:schemas-microsoft-com:vml" xmlns="http://www.w3.org/1999/xhtml">
 <head>
-    <title><?php echo $pageTitle; ?></title>
+    <title>{{ $pageTitle }}</title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <meta name="generator" content="Orbit" />
     <style media="all">
@@ -51,6 +51,10 @@
         h2 {
             padding-bottom: 2px;
             border-bottom: 1px solid #ccc;
+        }
+
+        table.user-report {
+            table-layout: fixed;
         }
     </style>
     <style type="text/css" media="print">
@@ -105,99 +109,47 @@
 </div>
 
 <div id="main">
-    <h2 style="margin-bottom:0.5em;"><?php echo $pageTitle; ?></h2>
-    <table style="width:100%; margin-bottom:1em;" class="noborder">
-        <tr>
-            <td style="width:150px"></td>
-            <td style="width:10px;"></td>
-            <td><strong></strong></td>
-        </tr>
-        <tr>
-            <td>Total Employees</td>
-            <td>:</td>
-            <td><strong><?php echo number_format($totalRec, 0, '.', '.'); ?></strong></td>
-        </tr>
+    <h2 style="margin-bottom:0.5em;">{{ $pageTitle }}</h2>
 
-        <!-- Filtering -->
+    @if (isset($summary))
+        <table style="width:100%; margin-bottom:1em;" class="noborder">
+            @foreach ($summary as $field => $value)
+                <tr>
+                    <td style="width: 150px">{{ $field }}</td>
+                    <td style="width: 10px;">:</td>
+                    <td><strong>{{ $value }}</strong></td>
+                </tr>
+            @endforeach
+        </table>
+        <br/>
+    @endif
 
-        <?php if ($full_name_like != '') { ?>
-            <tr>
-                <td>Filter by Employee Name</td>
-                <td>:</td>
-                <td><strong><?php echo htmlentities($full_name_like); ?></strong></td>
-            </tr>
-        <?php } ?>
-
-        <?php if ($user_email_like != '') { ?>
-            <tr>
-                <td>Filter by Email Address</td>
-                <td>:</td>
-                <td><strong><?php echo htmlentities($user_email_like); ?></strong></td>
-            </tr>
-        <?php } ?>
-
-        <?php
-        if ( is_array($role_names) && count($role_names) > 0) {
-            $role_names_string = '';
-            foreach ($role_names as $key => $val){
-                $role_names_string .= $val . ', ';
-            }
-        ?>
-            <tr>
-                <td>Filter by Role</td>
-                <td>:</td>
-                <td><strong><?php echo htmlentities(rtrim($role_names_string, ', ')); ?></strong></td>
-            </tr>
-        <?php } ?>
-
-        <?php if ($employee_id_char_like != '') { ?>
-            <tr>
-                <td>Filter by Employee ID</td>
-                <td>:</td>
-                <td><strong><?php echo htmlentities($employee_id_char_like); ?></strong></td>
-            </tr>
-        <?php } ?>
-
-        <?php
-        if (is_array($status) && count($status) > 0) {
-            $status_string = '';
-            foreach ($status as $key => $valstatus){
-                $status_string .= $valstatus . ', ';
-            }
-        ?>
-            <tr>
-                <td>Filter by Status</td>
-                <td>:</td>
-                <td><strong><?php echo htmlentities(rtrim($status_string, ', ')); ?></strong></td>
-            </tr>
-        <?php } ?>
-
-    </table>
-
-    <table style="width:100%">
+    <table class="user-report">
         <thead>
-           <!--  <th style="text-align:left;">No.</th> -->
-            <th style="text-align:left;">Name</th>
-            <th style="text-align:left;">Email</th>
-            <th style="text-align:left;">Role</th>
-            <th style="text-align:left;">Employee ID</th>
-            <th style="text-align:left;">Status</th>
-            <th style="text-align:left;">Last Update</th>
+            <tr>
+                @foreach ($columns as $column)
+                    <th style="padding-right: 70px">{{ $column['title'] }}</th>
+                @endforeach
+            </tr>
         </thead>
         <tbody>
-        <?php $count = 1; while ($row = $statement->fetch(PDO::FETCH_OBJ)) : ?>
-            <tr class="{{ $rowCounter % 2 === 0 ? 'zebra' : '' }}">
-                <!-- <td><?php //echo ($count); ?></td> -->
-                 <td><?php echo $me->printUtf8($row->user_firstname . ' ' . $row->user_lastname); ?></td>
-                 <td><?php echo $me->printUtf8($row->user_email); ?></td>
-                 <td><?php echo $me->printUtf8($row->role_name); ?></td>
-                 <td><?php echo $me->printUtf8($row->employee_id_char); ?></td>
-                 <td><?php echo $me->printUtf8($row->status); ?></td>
-                 <td><?php echo $me->printDateTime($row->updated_at, $timezone, 'd F Y H:i:s'); ?></td>
-            </tr>
-        <?php  $count++; endwhile; ?>
+            @foreach ($records as $row)
+                <tr>
+                    @foreach (array_keys($columns) as $fieldName)
+                        <td>
+                            @if ( ! is_array($row[$fieldName]))
+                                {{ $row[$fieldName] }}
+                            @else
+                                {{ implode('<br/>', $row[$fieldName]) }}
+                            @endif
+                        </td>
+                    @endforeach
+                </tr>
+            @endforeach
         </tbody>
     </table>
+
+    <br/>
 </div>
 
 <script type="text/javascript">

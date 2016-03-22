@@ -131,23 +131,43 @@
             </tr>
         <?php } ?>
 
-        <?php if ($etcFrom != '' || $etcTo != ''){ ?>
+        <?php if ($tenantName != '') { ?>
             <tr>
-                <td>Estimated Total Cost</td>
+                <td>Filter by Tenant Name</td>
                 <td>:</td>
-                <td>
-                    <?php
-                        $estimatedText = '';
-                        if ($etcFrom != '' && $etcTo == '') {
-                            $estimatedText = '>= ' . $etcFrom;
-                        } else if ($etcFrom == '' && $etcTo != '') {
-                            $estimatedText = '0 - ' . $etcTo;
-                        } else if ($etcFrom != '' && $etcTo != '') {
-                            $estimatedText = $etcFrom . ' - ' . $etcTo;
-                        }
-                    ?>
-                   <strong><?php echo $estimatedText; ?></strong>
-                </td>
+                <td><strong><?php echo htmlentities($tenantName); ?></strong></td>
+            </tr>
+        <?php } ?>
+
+        <?php if ($mallName != '') { ?>
+            <tr>
+                <td>Filter by Mall Name</td>
+                <td>:</td>
+                <td><strong><?php echo htmlentities($mallName); ?></strong></td>
+            </tr>
+        <?php } ?>
+
+        <?php if ($etcFrom != '' && $etcTo != ''){ ?>
+            <tr>
+                <td>Filter by Estimated Total Cost</td>
+                <td>:</td>
+                <td> <strong><?php echo $etcFrom . ' - ' . $etcTo; ?></strong></td>
+            </tr>
+        <?php } ?>
+
+        <?php if ($etcFrom != '' && $etcTo == ''){ ?>
+            <tr>
+                <td>Filter by Estimated Total Cost (From)</td>
+                <td>:</td>
+                <td> <strong><?php echo $etcFrom; ?></strong></td>
+            </tr>
+        <?php } ?>
+
+        <?php if ($etcFrom == '' && $etcTo != ''){ ?>
+            <tr>
+                <td>Filter by Estimated Total Cost (To)</td>
+                <td>:</td>
+                <td> <strong><?php echo $etcTo; ?></strong></td>
             </tr>
         <?php } ?>
 
@@ -176,8 +196,8 @@
                 <td>
                     <?php
                         if ($beginDate != '' && $endDate != ''){
-                            $beginDateRangeMallTime = $this->printDateTime($beginDate, $timezone, 'd F Y');
-                            $endDateRangeMallTime = $this->printDateTime($endDate, $timezone, 'd F Y');
+                            $beginDateRangeMallTime = date('d F Y', strtotime($beginDate));
+                            $endDateRangeMallTime = date('d F Y', strtotime($endDate));
                             $dateRange = $beginDateRangeMallTime . ' - ' . $endDateRangeMallTime;
                             if ($beginDateRangeMallTime === $endDateRangeMallTime) {
                                 $dateRange = $beginDateRangeMallTime;
@@ -209,7 +229,7 @@
                     <td><?php echo date('d F Y H:i', strtotime($row->begin_date)); ?></td>
                     <td><?php echo date('d F Y H:i', strtotime($row->end_date)); ?></td>
                     <td><?php echo $row->campaign_status; ?></td>
-                    <td><?php echo date('d F Y H:i:s', strtotime($row->updated_at)); ?></td>
+                    <td><?php echo $this->printDateTime($row->updated_at, $timezone, 'd F Y H:i:s'); ?></td>
                 </tr>
             <?php endwhile ; ?>
         </tbody>

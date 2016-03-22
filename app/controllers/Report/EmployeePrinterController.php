@@ -107,7 +107,7 @@ class EmployeePrinterController extends DataPrinterController
                             $this->printUtf8($row->role_name),
                             $this->printUtf8($row->employee_id_char),
                             $this->printUtf8($row->status),
-                            $this->printDateTime($row->updated_at, $timezone, 'd F Y  H:i:s')
+                            $this->printDateTime($row->updated_at, $timezone, 'd F Y H:i:s')
                        );
 
                 }

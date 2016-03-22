@@ -493,11 +493,11 @@ Route::group(
         );
 
         Route::get(
-            '/customer/mallcoupon',
+            '/customer/mallcoupon', ['as' => 'ci-mall-coupon',
             function () {
 
                 return MobileCI\MobileCIAPIController::create()->getMallCouponDetailView();
-            }
+            }]
         );
 
         Route::get(
