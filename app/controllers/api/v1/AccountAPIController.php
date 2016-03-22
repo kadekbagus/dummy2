@@ -78,8 +78,15 @@ class AccountAPIController extends ControllerAPI
         $allRows = clone $pmpAccounts;
         $data->total_records = $allRows->count();
 
+        $sortKey = Input::get('sortby', 'user_firstname');
+
+        // Prevent ambiguous error
+        if ($sortKey == 'created_at') {
+            $sortKey = 'users.created_at';
+        }
+
         $pmpAccounts = $pmpAccounts->take(Input::get('take'))->skip(Input::get('skip'))
-            ->orderBy(Input::get('sortby', 'user_firstname'), Input::get('sortmode', 'asc'))
+            ->orderBy($sortKey, Input::get('sortmode', 'asc'))
             ->get();
 
         $records = [];
