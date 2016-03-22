@@ -6406,7 +6406,7 @@ class MobileCIAPIController extends BaseCIController
                     $near_end_result->campaign_url = URL::to('customer/mallnewsdetail?id=' . $near_end_result->campaign_id);
                     $near_end_result->campaign_image = URL::asset('mobile-ci/images/default_news.png');
                 } elseif ($near_end_result->campaign_type === 'coupon') {
-                    $near_end_result->campaign_url = URL::to('customer/mallcouponcampaign?id=' . $near_end_result->campaign_id);
+                    $near_end_result->campaign_url = URL::to('customer/mallcoupon?id=' . $near_end_result->campaign_id);
                     $near_end_result->campaign_image = URL::asset('mobile-ci/images/default_coupon.png');
                 }
 
