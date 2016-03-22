@@ -26,8 +26,8 @@ class LuckyDrawPrinterController extends DataPrinterController
         $filterMinimumAmountFrom = OrbitInput::get('from_minimum_amount');
         $filterMinimumAmountTo = OrbitInput::get('to_minimum_amount');
         $filterStatus = OrbitInput::get('campaign_status');
-        $filterBeginDate = OrbitInput::get('beginDate');
-        $filterEndDate = OrbitInput::get('endDate');
+        $filterBeginDate = OrbitInput::get('begin_date');
+        $filterEndDate = OrbitInput::get('end_date');
 
         $timezone = $this->getTimeZone($currentMall);
 
@@ -68,12 +68,16 @@ class LuckyDrawPrinterController extends DataPrinterController
                     printf("%s,%s,\n", 'Filter by Lucky Draw Name', $filterName);
                 }
 
-                if ($filterMinimumAmountFrom != '') {
-                    printf("%s,%s,\n", 'Filter by Minimum Amount From', $filterMinimumAmountFrom);
+                if ($filterMinimumAmountFrom != '' && $filterMinimumAmountTo != ''){
+                    printf("%s,%s - %s,%s,%s,%s,%s\n", 'Filter by Amount to Obtain', str_replace(',', '', $filterMinimumAmountFrom),  str_replace(',', '', $filterMinimumAmountTo), '', '', '','');
                 }
 
-                if ($filterMinimumAmountTo != '') {
-                    printf("%s,%s,\n", 'Filter by Minimum Amount To', $filterMinimumAmountTo);
+                if ($filterMinimumAmountFrom != '' && $filterMinimumAmountTo == ''){
+                    printf("%s,%s,%s,%s,%s,%s\n", 'Filter by Amount to Obtain (From)', str_replace(',', '', $filterMinimumAmountFrom), '', '', '','');
+                }
+
+                if ($filterMinimumAmountFrom == '' && $filterMinimumAmountTo != ''){
+                    printf("%s,%s,%s,%s,%s,%s\n", 'Filter by Amount to Obtain (To)',  str_replace(',', '', $filterMinimumAmountTo), '', '', '','');
                 }
 
                 if ( is_array($filterStatus) && count($filterStatus) > 0) {

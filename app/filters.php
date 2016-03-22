@@ -110,7 +110,7 @@ Route::filter('fb-bot', function() {
                 $redirect_to = URL::route('ci-mall-news-detail', array('id' => Input::get('id')));
                 break;
             case 'share-coupon':
-                $redirect_to = URL::route('ci-mall-coupon-campaign', array('id' => Input::get('id')));
+                $redirect_to = URL::route('ci-mall-coupon', array('id' => Input::get('id')));
                 break;
             case 'share-lucky-draw':
                 $redirect_to = URL::route('ci-luckydraw', array('id' => Input::get('id')));
