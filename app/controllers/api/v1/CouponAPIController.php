@@ -2479,6 +2479,15 @@ class CouponAPIController extends ControllerAPI
                         } else {
                             $coupons->with('tenants');
                         }
+                    } elseif ($relation === 'tenants.mall') {
+                        if ($from_cs === 'yes') {
+                            $coupons->with(array('tenants' => function($q) {
+                                $q->where('merchants.status', 'active');
+                                $q->with('mall');
+                            }));
+                        } else {
+                            $coupons->with('tenants.mall');
+                        }
                     } elseif ($relation === 'translations') {
                         $coupons->with('translations');
                     } elseif ($relation === 'translations.media') {
@@ -2487,6 +2496,15 @@ class CouponAPIController extends ControllerAPI
                         $coupons->with('employee');
                     } elseif ($relation === 'link_to_tenants') {
                         $coupons->with('linkToTenants');
+                    } elseif ($relation === 'link_to_tenants.mall') {
+                        if ($from_cs === 'yes') {
+                            $coupons->with(array('linkToTenants' => function($q) {
+                                $q->where('merchants.status', 'active');
+                                $q->with('mall');
+                            }));
+                        } else {
+                            $coupons->with('linkToTenants.mall');
+                        }
                     } elseif ($relation === 'genders') {
                         $coupons->with('genders');
                     } elseif ($relation === 'ages') {
