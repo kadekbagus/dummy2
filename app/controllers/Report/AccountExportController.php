@@ -28,8 +28,13 @@ class AccountExportController extends \AccountAPIController {
 
     public function getCsv()
     {
-        $csv = ',,,,,,'.$this->pageTitle.',,,,,,';
-
+        $csv = ',,,,,,';
+        $csv .= "\r\n";
+        $csv .= $this->pageTitle;
+        $csv .= ',,,,,,';
+        $csv .= "\r\n";
+        $csv .= ',,,,,,';
+        
         $csv .= "\r\n";
         $csv .= "\r\n";
 
