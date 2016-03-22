@@ -14,15 +14,15 @@ use Carbon\Carbon as Carbon;
 
 class NewsAPIController extends ControllerAPI
 {
-    protected $newsViewRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee'];
-    protected $newsModifiyRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee'];
-
     /**
      * Flag to return the query builder.
      *
      * @var Builder
      */
     protected $returnBuilder = FALSE;
+
+    protected $newsViewRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee'];
+    protected $newsModifiyRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee'];
 
     /**
      * POST - Create New News
@@ -1649,11 +1649,44 @@ class NewsAPIController extends ControllerAPI
                 $news->whereIn('news.link_object_type', $linkObjectTypes);
             });
 
-            // Filter news merchants by retailer id
+            // Filter news merchants by retailer(tenant) id
             OrbitInput::get('retailer_id', function ($retailerIds) use ($news) {
                 $news->whereHas('tenants', function($q) use ($retailerIds) {
                     $q->whereIn('merchant_id', $retailerIds);
                 });
+            });
+
+            // Filter news merchants by retailer(tenant) name
+            OrbitInput::get('tenant_name_like', function ($tenant_name_like) use ($news) {
+                $news->whereHas('tenants', function($q) use ($tenant_name_like) {
+                    $q->where('merchants.name', 'like', "%$tenant_name_like%");
+                });
+            });
+
+            // Filter news merchants by mall name
+            // There is laravel bug regarding nested whereHas on the same table like in this case
+            // news->tenant->mall : whereHas('tenant', function($q) { $q->whereHas('mall' ...)}) this is not gonna work
+            OrbitInput::get('mall_name_like', function ($mall_name_like) use ($news, $prefix) {
+                $quote = function($arg)
+                {
+                    return DB::connection()->getPdo()->quote($arg);
+                };
+                $mall_name_like = "%" . $mall_name_like . "%";
+                $mall_name_like = $quote($mall_name_like);
+                $news->whereRaw(DB::raw("
+                    (select count(*) from {$prefix}merchants mtenant
+                    inner join {$prefix}news_merchant onm on mtenant.merchant_id = onm.merchant_id
+                    where mtenant.object_type = 'tenant' and onm.news_id = {$prefix}news.news_id and (
+                        select count(*) from {$prefix}merchants mmall
+                        where mmall.object_type = 'mall' and
+                        mtenant.parent_id = mmall.merchant_id and
+                        mmall.name like {$mall_name_like} and
+                        mmall.object_type = 'mall'
+                    ) >= 1 and
+                    mtenant.object_type = 'tenant' and
+                    mtenant.is_mall = 'no' and
+                    onm.object_type = 'retailer') >= 1
+                "));
             });
 
             // Filter news by estimated total cost
@@ -1680,6 +1713,8 @@ class NewsAPIController extends ControllerAPI
                 foreach ($with as $relation) {
                     if ($relation === 'tenants') {
                         $news->with('tenants');
+                    } elseif ($relation === 'tenants.mall') {
+                        $news->with('tenants.mall');
                     } elseif ($relation === 'translations') {
                         $news->with('translations');
                     } elseif ($relation === 'translations.media') {
@@ -2541,5 +2576,4 @@ class NewsAPIController extends ControllerAPI
 
         return $this;
     }
-
 }

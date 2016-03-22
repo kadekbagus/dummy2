@@ -1701,11 +1701,11 @@ class CouponReportAPIController extends ControllerAPI
                                             SELECT 
                                                 DATE_FORMAT(DATE_ADD(st.i_start, INTERVAL sequence_number DAY), '%Y-%m-%d') AS comp_date
                                             FROM
-                                                (SELECT 0 AS sequence_number UNION ALL SELECT * from orb_sequence) os,
+                                                (SELECT 0 AS sequence_number UNION ALL SELECT * from {$prefix}sequence) os,
                                                 (SELECT 
                                                         DATE_FORMAT(MIN(CONVERT_TZ(och.created_at, '+00:00', {$this->quote($timezone)})), '%Y-%m-%d') AS i_start
                                                     FROM
-                                                        orb_campaign_histories och
+                                                        {$prefix}campaign_histories och
                                                     WHERE
                                                         och.campaign_id = {$this->quote($promoId)}
                                                         AND och.campaign_type = 'coupon') st
@@ -1724,16 +1724,16 @@ class CouponReportAPIController extends ControllerAPI
                                                 orn.begin_date,
                                                 orn.end_date
                                             FROM 
-                                                orb_campaign_histories och
+                                                {$prefix}campaign_histories och
                                             LEFT JOIN
-                                                orb_campaign_history_actions ocha
+                                                {$prefix}campaign_history_actions ocha
                                             ON och.campaign_history_action_id = ocha.campaign_history_action_id
                                             LEFT JOIN
-                                                orb_promotions orn 
+                                                {$prefix}promotions orn 
                                             ON och.campaign_id = orn.promotion_id 
                                             WHERE 
                                                 och.campaign_history_action_id IN   (   SELECT campaign_history_action_id 
-                                                                                        FROM orb_campaign_history_actions 
+                                                                                        FROM {$prefix}campaign_history_actions 
                                                                                         WHERE action_name IN ('activate', 'deactivate')
                                                                                     )
                                                 AND och.campaign_type = 'coupon'

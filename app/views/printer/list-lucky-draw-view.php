@@ -110,18 +110,11 @@
             <td><strong></strong></td>
         </tr>
         <tr>
-            <td>Total Lucky Draw</td>
+            <td>Total Lucky Draws</td>
             <td>:</td>
             <td><strong><?php echo number_format($totalRec, 0, '.', '.'); ?></strong></td>
         </tr>
 
-        <?php if ($filterBeginDate != '') { ?>
-            <tr>
-                <td>Campaign Date</td>
-                <td>:</td>
-                <td><strong><?php echo $me->printCampaignDate($filterBeginDate, $filterEndDate); ?></strong></td>
-            </tr>
-        <?php } ?>
 
         <?php if ($filterName != '') { ?>
             <tr>
@@ -131,19 +124,27 @@
             </tr>
         <?php } ?>
 
-        <?php if ($filterMinimumAmountFrom != '') { ?>
+        <?php if ($filterMinimumAmountFrom != '' && $filterMinimumAmountTo != ''){ ?>
             <tr>
-                <td>Filter by Minimum Amount From</td>
+                <td>Filter by Amount to Obtain</td>
                 <td>:</td>
-                <td><strong><?php echo htmlentities($filterMinimumAmountFrom); ?></strong></td>
+                <td> <strong><?php echo $filterMinimumAmountFrom . ' - ' . $filterMinimumAmountTo; ?></strong></td>
             </tr>
         <?php } ?>
 
-        <?php if ($filterMinimumAmountTo != '') { ?>
+        <?php if ($filterMinimumAmountFrom != '' && $filterMinimumAmountTo == ''){ ?>
             <tr>
-                <td>Filter by Minimum Amount To</td>
+                <td>Filter by Amount to Obtain (From)</td>
                 <td>:</td>
-                <td><strong><?php echo htmlentities($filterMinimumAmountTo); ?></strong></td>
+                <td> <strong><?php echo $filterMinimumAmountFrom; ?></strong></td>
+            </tr>
+        <?php } ?>
+
+        <?php if ($filterMinimumAmountFrom == '' && $filterMinimumAmountTo != ''){ ?>
+            <tr>
+                <td>Filter by Amount to Obtain (To)</td>
+                <td>:</td>
+                <td> <strong><?php echo $filterMinimumAmountTo; ?></strong></td>
             </tr>
         <?php } ?>
 
@@ -151,9 +152,40 @@
             <tr>
                 <td>Filter by Status</td>
                 <td>:</td>
-                <td><strong><?php echo htmlentities(implode(' ', $filterStatus)); ?></strong></td>
+                <td>
+                    <strong>
+                        <?php
+                            $statusString = '';
+                            foreach ($filterStatus as $key => $valstatus){
+                                $statusString .= $valstatus . ', ';
+                            }
+                            echo htmlentities(rtrim($statusString, ', '));
+                        ?>
+                    </strong>
+                </td>
             </tr>
         <?php } ?>
+
+        <?php if ($filterBeginDate != '' && $filterEndDate != ''){ ?>
+            <tr>
+                <td>Campaign Date</td>
+                <td>:</td>
+                <td>
+                    <?php
+                        if ($filterBeginDate != '' && $filterEndDate != ''){
+                            $beginDateRangeMallTime = date('d F Y', strtotime($filterBeginDate));
+                            $endDateRangeMallTime = date('d F Y', strtotime($filterEndDate));
+                            $dateRange = $beginDateRangeMallTime . ' - ' . $endDateRangeMallTime;
+                            if ($beginDateRangeMallTime === $endDateRangeMallTime) {
+                                $dateRange = $beginDateRangeMallTime;
+                            }
+                        }
+                    ?>
+                    <strong><?php echo $dateRange; ?></strong>
+                </td>
+            </tr>
+        <?php } ?>
+
 
     </table>
 
@@ -172,12 +204,12 @@
         <?php $count = 1; while ($row = $statement->fetch(PDO::FETCH_OBJ)) : ?>
             <tr class="{{ $rowCounter % 2 === 0 ? 'zebra' : '' }}">
                  <td><?php echo $me->printUtf8($row->lucky_draw_name_english); ?></td>
-                 <td><?php echo $me->printDateTime($row->start_date, 'UTC', 'd F Y  H:i'); ?></td>
-                 <td><?php echo $me->printDateTime($row->end_date, 'UTC', 'd F Y  H:i'); ?></td>
+                 <td><?php echo $me->printDateTime($row->start_date, 'UTC', 'd F Y H:i'); ?></td>
+                 <td><?php echo $me->printDateTime($row->end_date, 'UTC', 'd F Y H:i'); ?></td>
                  <td><?php echo number_format($row->minimum_amount); ?></td>
                  <td><?php echo $row->total_issued_lucky_draw_number; ?></td>
                  <td><?php echo $row->campaign_status; ?></td>
-                 <td><?php echo $me->printDateTime($row->updated_at, $timezone, 'd F Y  H:i'); ?></td>
+                 <td><?php echo $me->printDateTime($row->updated_at, $timezone, 'd F Y H:i:s'); ?></td>
             </tr>
         <?php  $count++; endwhile; ?>
         </tbody>

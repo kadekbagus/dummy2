@@ -29,7 +29,7 @@ class PromotionPrinterController extends DataPrinterController
         $response = NewsAPIController::create('raw')
             ->setReturnBuilder(true)
             ->getSearchNews();
-// dd($response);
+
         if (! is_array($response)) {
             return Response::make($response->message);
         }
@@ -45,7 +45,17 @@ class PromotionPrinterController extends DataPrinterController
         $statement = $this->pdo->prepare($sql);
         $statement->execute($binds);
 
-        $pageTitle = 'Customer';
+        // Filter mode
+        $promotionName = OrbitInput::get('news_name_like');
+        $tenantName = OrbitInput::get('tenant_name_like');
+        $mallName = OrbitInput::get('mall_name_like');
+        $etcFrom = OrbitInput::get('etc_from');
+        $etcTo = OrbitInput::get('etc_to');
+        $status = OrbitInput::get('campaign_status');
+        $beginDate = OrbitInput::get('begin_date');
+        $endDate = OrbitInput::get('end_date');
+
+        $pageTitle = 'Promotions';
         switch ($mode) {
             case 'csv':
                 @header('Content-Description: File Transfer');
@@ -53,12 +63,56 @@ class PromotionPrinterController extends DataPrinterController
                 @header('Content-Disposition: attachment; filename=' . OrbitText::exportFilename($pageTitle, '.csv', $timezone));
 
                 printf("%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s\n", '', 'Promotion List', '', '', '', '');
+                printf("%s,%s,%s,%s,%s,%s\n", '', $pageTitle, '', '', '', '');
                 printf("%s,%s,%s,%s,%s,%s\n", '', 'Total Promotions', $totalRec, '', '', '');
+
+                // Filtering
+                if ($promotionName != '') {
+                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Campaign Name', htmlentities($promotionName), '', '', '','');
+                }
+                if ($tenantName != '') {
+                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Tenant Name', htmlentities($tenantName), '', '', '','');
+                }
+                if ($mallName != '') {
+                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Mall Name', htmlentities($mallName), '', '', '','');
+                }
+
+                if ($etcFrom != '' && $etcTo != ''){
+                    $data_template = '%s,%s,%s - %s,%s,%s,%s' . "\n";
+                    printf($data_template, '', 'Filter by Estimated Total Cost', str_replace(',', '', $etcFrom), str_replace(',', '', $etcTo), '', '', '','');
+                }
+
+                if ($etcFrom != '' && $etcTo == ''){
+                    $data_template = '%s,%s,%s,%s,%s,%s' . "\n";
+                    printf($data_template, '', 'Filter by Estimated Total Cost (From)', str_replace(',', '', $etcFrom), '', '', '','');
+                }
+
+                if ($etcFrom == '' && $etcTo != ''){
+                    $data_template = '%s,%s,%s,%s,%s,%s' . "\n";
+                    printf($data_template, '', 'Filter by Estimated Total Cost (To)', str_replace(',', '', $etcTo), '', '', '','');
+                }
+
+                if ( is_array($status) && count($status) > 0) {
+                    $statusString = '';
+                    foreach ($status as $key => $valstatus){
+                        $statusString .= $valstatus . ', ';
+                    }
+                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Status', htmlentities(rtrim($statusString, ', ')), '', '', '','');
+                }
+
+                if ($beginDate != '' && $endDate != ''){
+                    $beginDateRangeMallTime = date('d F Y', strtotime($beginDate));
+                    $endDateRangeMallTime = date('d F Y', strtotime($endDate));
+                    $dateRange = $beginDateRangeMallTime . ' - ' . $endDateRangeMallTime;
+                    if ($beginDateRangeMallTime === $endDateRangeMallTime) {
+                        $dateRange = $beginDateRangeMallTime;
+                    }
+                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Campaign Date', $dateRange, '', '', '','');
+                }
 
                 printf("%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '');
                 printf("%s,%s,%s,%s,%s,%s\n", '', 'Promotion Name', 'Start Date & Time', 'End Date & Time', 'Status', 'Last Update');
-                
+
                 printf("%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '');
 
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
@@ -68,7 +122,7 @@ class PromotionPrinterController extends DataPrinterController
                     $lastUpdateDate = $this->printDateTime($row->updated_at, $timezone, 'no');
 
                     printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
-                        '', $row->news_name, $startDateTime, $endDateTime, $this->printUtf8($row->status), $lastUpdateDate);
+                        '', $row->news_name, $startDateTime, $endDateTime, $this->printUtf8($row->campaign_status), $lastUpdateDate);
 
                 }
                 break;

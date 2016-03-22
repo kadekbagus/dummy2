@@ -25,7 +25,6 @@ class AccountAPIController extends ControllerAPI
         ],
         'tenants' => [
             'title' => 'Tenant(s)',
-            'sort_key' => 'tenants',
         ],
         'created_at' => [
             'title' => 'Creation Date',
@@ -45,6 +44,26 @@ class AccountAPIController extends ControllerAPI
      */
     public function getAccount()
     {
+        $this->prepareData();
+
+        $this->data->returned_records = count($this->data->records);
+
+        $this->response->data = $this->data;
+        return $this->render(200);
+    }
+
+    protected function getTenantAtMallArray($tenantIds)
+    {
+        $tenantArray = [];
+        foreach (Tenant::whereIn('merchant_id', $tenantIds)->orderBy('name')->get() as $row) {
+            $tenantArray[] = $row->tenant_at_mall;
+        }
+
+        return $tenantArray;
+    }
+
+    protected function prepareData()
+    {
         $data = new stdClass();
 
         $pmpAccounts = User::pmpAccounts();
@@ -60,6 +79,11 @@ class AccountAPIController extends ControllerAPI
 
         // Join with 'user_details' (one to one)
         $pmpAccounts->join('user_details', 'users.user_id', '=', 'user_details.user_id');
+
+        // Filter by Location
+        if (Input::get('location')) {
+            $pmpAccounts->whereCity(Input::get('location'))->orWhere('country', Input::get('location'));
+        }
 
         // Filter by Status
         if (Input::get('status')) {
@@ -80,8 +104,15 @@ class AccountAPIController extends ControllerAPI
         $allRows = clone $pmpAccounts;
         $data->total_records = $allRows->count();
 
+        $sortKey = Input::get('sortby', 'user_firstname');
+
+        // Prevent ambiguous error
+        if ($sortKey == 'created_at') {
+            $sortKey = 'users.created_at';
+        }
+
         $pmpAccounts = $pmpAccounts->take(Input::get('take'))->skip(Input::get('skip'))
-            ->orderBy(Input::get('sortby', 'user_firstname'), Input::get('sortmode', 'asc'))
+            ->orderBy($sortKey, Input::get('sortmode', 'asc'))
             ->get();
 
         $records = [];
@@ -89,7 +120,7 @@ class AccountAPIController extends ControllerAPI
             $records[] = [
                 'user_firstname' => $row->full_name,
                 'company_name' => $row->company_name,
-                'city' => $row->location,
+                'city' => $row->userDetail->location,
                 'tenants' => $this->getTenantAtMallArray($row->userTenants()->lists('merchant_id')),
                 'created_at' => $row->created_at->format('d F Y H:i:s'),
                 'status' => $row->status,
@@ -99,19 +130,6 @@ class AccountAPIController extends ControllerAPI
         $data->columns = $this->listColumns;
         $data->records = $records;
 
-        $data->returned_records = count($records);
-
-        $this->response->data = $data;
-        return $this->render(200);
-    }
-
-    protected function getTenantAtMallArray($tenantIds)
-    {
-        $tenantArray = [];
-        foreach (Tenant::whereIn('merchant_id', $tenantIds)->get() as $row) {
-            $tenantArray[] = $row->tenant_at_mall;
-        }
-
-        return $tenantArray;
+        $this->data = $data;
     }
 }
