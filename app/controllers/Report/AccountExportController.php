@@ -55,7 +55,9 @@ class AccountExportController extends \AccountAPIController {
 
         $response = \Response::make($csv, 200);
         $response->header('Content-Type', 'text/csv');
-        $response->header('Content-Disposition', 'inline; filename="myfile.csv"');
+
+        $fileName = 'orbit-export-'.str_replace(' ', '-', $this->pageTitle.'-'.date('D_d_M_Y_').rand(10000, 99999)).'.csv';
+        $response->header('Content-Disposition', 'inline; filename="'.$fileName.'"');
 
         return $response;
     }
