@@ -139,7 +139,7 @@ class LoginAPIController extends ControllerAPI
     public function postLoginMall()
     {
         $_GET['from_portal'] = 'mall';
-        return $this->postLoginRole(['Super Admin', 'Mall Owner', 'Mall Admin', 'Campaign Owner', 'Campaign Employee']);
+        return $this->postLoginRole(['Super Admin', 'Mall Owner', 'Mall Admin']);
     }
 
     /**
@@ -171,7 +171,7 @@ class LoginAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $roles = ['Campaign Owner','Campaign Employee','Campaign Admin'];
+            $roles = ['Campaign Owner', 'Campaign Employee', 'Campaign Admin'];
 
             $user = User::with('role')
                         ->active()
@@ -1158,10 +1158,6 @@ class LoginAPIController extends ControllerAPI
                     } else {
                         $mall = Mall::with('timezone')->excludeDeleted()->where('user_id', $user->user_id)->first();
                     }
-                    if ((strtolower($user->role->role_name) === 'campaign owner') || (strtolower($user->role->role_name) === 'campaign employee')) {
-                        $mall = $user->employee->retailers[0]->load('timezone');
-                        $menus = Config::get('orbit.menus.pmp');
-                    }
                 } elseif ($from === 'cs-portal') {
                     $mall = $user->employee->retailers[0]->load('timezone');
                 }
@@ -1185,8 +1181,7 @@ class LoginAPIController extends ControllerAPI
                                            ->where('object_type', 'merchant')
                                            ->first();
 
-                if (empty($agreement_accepted) || $agreement_accepted->setting_value !== 'true') {
-
+                if (empty($agreement_accepted)) {
                     // Token expiration, fallback to 30 days
                     $expireInDays = Config::get('orbit.registration.mobile.activation_expire', 30);
 
@@ -1206,9 +1201,9 @@ class LoginAPIController extends ControllerAPI
                     $this->response->message = Lang::get('validation.orbit.access.agreement');
                     $this->response->data = sprintf(Config::get('orbit.agreement.url'), $token->token_value);
                 }
+            } else {
+                $this->response->data->menus = $menus;
             }
-
-            $this->response->data->menus = $menus;
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
