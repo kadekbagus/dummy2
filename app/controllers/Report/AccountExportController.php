@@ -2,7 +2,7 @@
 
 namespace Report;
 
-class AccountReportController extends \AccountAPIController {
+class AccountExportController extends \AccountAPIController {
 
     protected $pageTitle = 'PMP Accounts';
 
@@ -11,7 +11,7 @@ class AccountReportController extends \AccountAPIController {
         $this->prepareData();
     }
 
-    public function getPrintAccount()
+    public function getList()
     {
         if (\Input::get('export') == 'csv') {
             return $this->getCsv();
