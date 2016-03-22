@@ -49,7 +49,9 @@ class AccountExportController extends \AccountAPIController {
                 if ( ! is_array($row[$fieldName])) {
                     $csv .= $row[$fieldName];
                 } else {
-                    $csv .= implode('<br/>', $row[$fieldName]);
+
+                    // Show array values as string with a semicolon separator
+                    $csv .= implode('; ', $row[$fieldName]);
                 }
 
                 $csv .= ',';
