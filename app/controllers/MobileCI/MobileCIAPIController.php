@@ -4669,7 +4669,8 @@ class MobileCIAPIController extends BaseCIController
 
             if (empty($coupons)) {
                 // throw new Exception('Product id ' . $issued_coupon_id . ' not found');
-                return View::make('mobile-ci.404', array('page_title'=>Lang::get('mobileci.page_title.not_found'), 'retailer'=>$retailer, 'languages' => $languages));
+                // return View::make('mobile-ci.404', array('page_title'=>Lang::get('mobileci.page_title.not_found'), 'retailer'=>$retailer, 'languages' => $languages));
+                return Redirect::route('ci-tenants', array('coupon_id' => $promotion_id));
             }
 
             // set facebook share url
