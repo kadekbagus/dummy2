@@ -120,7 +120,7 @@ class AccountAPIController extends ControllerAPI
             $userMerchant->save();
         }
         
-        $this->response->data = $user;
+        $this->response->data = Input::all();
 
         return $this->render(200);
     }
