@@ -208,24 +208,33 @@
 
     <table style="width:100%">
         <thead>
-           <!--  <th style="text-align:left;">No.</th> -->
+            <th style="text-align:left;">No.</th>
             <th style="text-align:left;">Promotion Name</th>
             <th style="text-align:left;">Start Date &amp; Time</th>
             <th style="text-align:left;">End Date &amp; Time</th>
+            <th style="text-align:left;">Locations</th>
             <th style="text-align:left;">Status</th>
             <th style="text-align:left;">Last Update</th>
         </thead>
         <tbody>
-        <?php $count = 1; while ($row = $statement->fetch(PDO::FETCH_OBJ)) : ?>
-            <tr class="{{ $rowCounter % 2 === 0 ? 'zebra' : '' }}">
-                <!-- <td><?php //echo ($count); ?></td> -->
-                 <td><?php echo $me->printUtf8($row->news_name); ?></td>
-                 <td><?php echo $me->printDateTime($row->begin_date, 'UTC', 'd F Y'); ?></td>
-                 <td><?php echo $me->printDateTime($row->end_date, 'UTC', 'd F Y'); ?></td>
-                 <td><?php echo ($row->campaign_status); ?></td>
-                 <td><?php echo $me->printDateTime($row->updated_at, 'UTC', 'd F Y'); ?></td>
-            </tr>
-        <?php  $count++; endwhile; ?>
+            <?php $count = 1; while ($row = $statement->fetch(PDO::FETCH_OBJ)) : ?>
+                <tr class="{{ $rowCounter % 2 === 0 ? 'zebra' : '' }}">
+                    <td><?php echo $count++; ?></td>
+                    <td><?php echo $me->printUtf8($row->news_name); ?></td>
+                    <td><?php echo $me->printDateTime($row->begin_date, 'UTC', 'd F Y'); ?></td>
+                    <td><?php echo $me->printDateTime($row->end_date, 'UTC', 'd F Y'); ?></td>
+                    <td>
+                        <?php
+                            $locations = explode(', ', $row->campaign_location_names);
+                            for($x = 0; $x < count($locations); $x++) {
+                                echo $locations[$x] . '<br>';
+                            }
+                        ?>
+                    </td>
+                    <td><?php echo ($row->campaign_status); ?></td>
+                    <td><?php echo $me->printDateTime($row->updated_at, 'UTC', 'd F Y'); ?></td>
+                </tr>
+            <?php  $count++; endwhile; ?>
         </tbody>
     </table>
 </div>
