@@ -2146,6 +2146,10 @@ class CouponAPIController extends ControllerAPI
                         ELSE discount_value
                     END AS 'display_discount_value'
                     "),
+                    DB::raw("(select GROUP_CONCAT(IF({$table_prefix}merchants.object_type = 'tenant', CONCAT({$table_prefix}merchants.name,' at ', pm.name), {$table_prefix}merchants.name) separator ', ') from {$table_prefix}promotion_retailer 
+                                    inner join {$table_prefix}merchants on {$table_prefix}merchants.merchant_id = {$table_prefix}promotion_retailer.retailer_id
+                                    inner join {$table_prefix}merchants pm on {$table_prefix}merchants.parent_id = pm.merchant_id
+                                    where {$table_prefix}promotion_retailer.promotion_id = {$table_prefix}promotions.promotion_id) as campaign_location_names"),
                     DB::raw("CASE WHEN {$table_prefix}campaign_price.base_price is null THEN 0 ELSE {$table_prefix}campaign_price.base_price END AS base_price"),
                     DB::raw("CASE {$table_prefix}promotion_rules.rule_type WHEN 'auto_issue_on_signup' THEN 'Y' ELSE 'N' END as 'is_auto_issue_on_signup'"),
                     DB::raw("CASE WHEN {$table_prefix}promotions.end_date IS NOT NULL THEN
@@ -3327,8 +3331,11 @@ class CouponAPIController extends ControllerAPI
             $issuedCoupon = IssuedCoupon::whereNotIn('issued_coupons.status', ['deleted', 'redeemed'])
                         ->where('issued_coupons.issued_coupon_id', $value)
                         ->where('issued_coupons.user_id', $user->user_id)
-                        ->whereRaw("({$prefix}issued_coupons.expired_date >= ? or {$prefix}issued_coupons.expired_date is null)", [$now])
+                        // ->whereRaw("({$prefix}issued_coupons.expired_date >= ? or {$prefix}issued_coupons.expired_date is null)", [$now])
                         ->with('coupon')
+                        ->whereHas('coupon', function($q) use($now) {
+                            $q->where('promotions.coupon_validity_in_date', '>=', $now);
+                        })
                         ->first();
 
             if (empty($issuedCoupon)) {
@@ -3349,7 +3356,10 @@ class CouponAPIController extends ControllerAPI
                             ->join('merchants', 'merchants.merchant_id', '=', 'promotion_retailer_redeem.retailer_id')
                             ->where('issued_coupons.issued_coupon_id', $value)
                             ->where('issued_coupons.user_id', $user->user_id)
-                            ->whereRaw("({$prefix}issued_coupons.expired_date >= ? or {$prefix}issued_coupons.expired_date is null)", [$now])
+                            // ->whereRaw("({$prefix}issued_coupons.expired_date >= ? or {$prefix}issued_coupons.expired_date is null)", [$now])
+                            ->whereHas('coupon', function($q) use($now) {
+                                $q->where('promotions.coupon_validity_in_date', '>=', $now);
+                            })
                             ->where('merchants.masterbox_number', $number)
                             ->first();
             }
@@ -3370,7 +3380,10 @@ class CouponAPIController extends ControllerAPI
                                 ->join('user_verification_numbers', 'user_verification_numbers.user_id', '=', 'promotion_employee.user_id')
                                 ->where('issued_coupons.issued_coupon_id', $value)
                                 ->where('issued_coupons.user_id', $user->user_id)
-                                ->whereRaw("({$prefix}issued_coupons.expired_date >= ? or {$prefix}issued_coupons.expired_date is null)", [$now])
+                                // ->whereRaw("({$prefix}issued_coupons.expired_date >= ? or {$prefix}issued_coupons.expired_date is null)", [$now])
+                                ->whereHas('coupon', function($q) use($now) {
+                                    $q->where('promotions.coupon_validity_in_date', '>=', $now);
+                                })
                                 ->where('user_verification_numbers.verification_number', $number)
                                 ->first();
                 }

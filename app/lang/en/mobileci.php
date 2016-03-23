@@ -39,6 +39,7 @@ return array(
         'lucky_draws'       => 'LUCKY DRAWS',
         'my_messages'       => 'MY MESSAGES',
         'my_message'        => 'MY MESSAGE',
+        'redemption_places' => 'REDEMPTION PLACE',
     ),
 
     'widgets' => array(
@@ -140,8 +141,8 @@ return array(
         'check_our_latest_news' => 'Check out our latest news coming soon',
         'news'                  => 'News',
         'promotions'            => 'Promotions',
-        'see_tenants'           => 'See Stores',
-        'redemption_places'     => 'Redemption Place(s)',
+        'see_tenants'           => 'See Store',
+        'redemption_places'     => 'Redemption Place',
         'where'                 => 'WHERE',
         'phone'                 => 'Phone',
         'website'               => 'Website',

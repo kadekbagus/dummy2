@@ -90,17 +90,17 @@
         <tr>
             <td>Total Coupon Campaigns</td>
             <td>:</td>
-            <td><strong><?php echo number_format($totalCoupons, 0, '.', '.'); ?></strong></td>
+            <td><strong><?php echo number_format($totalCoupons, 0, '', ','); ?></strong></td>
         </tr>
         <tr>
             <td>Total Issued Coupons</td>
             <td>:</td>
-            <td><strong><?php echo number_format($totalIssued, 0, '.', '.'); ?></strong></td>
+            <td><strong><?php echo number_format($totalIssued, 0, '', ','); ?></strong></td>
         </tr>
         <tr>
             <td>Total Redeemed Coupons</td>
             <td>:</td>
-            <td><strong><?php echo number_format($totalRedeemed, 0, '.', '.'); ?></strong></td>
+            <td><strong><?php echo number_format($totalRedeemed, 0, '', ','); ?></strong></td>
         </tr>
 
         <!-- Filtering -->
@@ -223,8 +223,15 @@
                         echo $rule_type;
                     ?>
                 </td>
-                <td><?php echo $row->total_issued . ' / ' . $row->available; ?></td>
-                <td><?php echo $row->total_redeemed . ' / ' .$row->total_issued; ?></td>
+
+                <?php
+                    $total_issued = $row->total_issued != 'Unlimited' ? number_format($row->total_issued, 0, '', ',') : 'Unlimited' ;
+                    $available = $row->available != 'Unlimited' ? number_format($row->available, 0, '', ',') : 'Unlimited' ;
+                    $total_redeemed = $row->total_redeemed != 'Unlimited' ? number_format($row->total_redeemed, 0, '', ',') : 'Unlimited' ;
+                ?>
+                <td><?php echo $total_issued . ' / ' . $available; ?></td>
+                <td><?php echo $total_redeemed . ' / ' .$total_issued; ?></td>
+
                 <td><?php echo $row->campaign_status; ?></td>
             </tr>
         <?php endwhile; ?>

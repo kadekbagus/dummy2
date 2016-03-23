@@ -99,9 +99,9 @@ class CouponReportPrinterController extends DataPrinterController
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Coupon Summary Report', '', '', '', '', '');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
 
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Coupon Campaigns', $totalCoupons, '', '', '', '','','','');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Issued Coupons', $totalIssued, '', '', '', '','','','');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Redeemed Coupons', $totalRedeemed, '', '', '', '','','','');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Coupon Campaigns', number_format($totalCoupons, 0, '', ''), '', '', '', '','','','');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Issued Coupons', number_format($totalIssued, 0, '', ''), '', '', '', '','','','');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Redeemed Coupons', number_format($totalRedeemed, 0, '', ''), '', '', '', '','','','');
 
                 // Filtering
                 if ($promotion_name != '') {
@@ -173,19 +173,19 @@ class CouponReportPrinterController extends DataPrinterController
                     }
 
                     printf("\"%s\",\"%s\",\"%s - %s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s / %s\",\"%s / %s\",\"%s\"\n",
-                            $count,
-                            $row->promotion_name,
-                            date('d M Y', strtotime($row->begin_date)),
-                            date('d M Y', strtotime($row->end_date)),
-                            date('d M Y', strtotime($row->coupon_validity_in_date)),
-                            $row->total_tenant,
-                            $row->mall_name,
-                            $rule_type,
-                            $row->total_issued,
-                            $row->available,
-                            $row->total_redeemed,
-                            $row->total_issued,
-                            $row->campaign_status
+                        $count,
+                        $row->promotion_name,
+                        date('d M Y', strtotime($row->begin_date)),
+                        date('d M Y', strtotime($row->end_date)),
+                        date('d M Y', strtotime($row->coupon_validity_in_date)),
+                        $row->total_tenant,
+                        $row->mall_name,
+                        $rule_type,
+                        $row->total_issued != 'Unlimited' ? number_format($row->total_issued, 0, '', '') : 'Unlimited',
+                        $row->available != 'Unlimited' ? number_format($row->available, 0, '', '') : 'Unlimited',
+                        $row->total_redeemed != 'Unlimited' ? number_format($row->total_redeemed, 0, '', '') : 'Unlimited',
+                        $row->total_issued != 'Unlimited' ? number_format($row->total_issued, 0, '', '') : 'Unlimited',
+                        $row->campaign_status
                     );
                     $count++;
                 }
@@ -357,7 +357,7 @@ class CouponReportPrinterController extends DataPrinterController
                         } else {
                             $gender_string .= ', ' .$valgender;
                         }
-                        
+
                         $count++;
                     }
                     printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Customer Gender', $gender_string, '', '', '', '', '');

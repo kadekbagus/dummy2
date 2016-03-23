@@ -3066,7 +3066,7 @@ class ActivityAPIController extends ControllerAPI
                 return DB::connection()->getPdo()->quote($arg);
             };
 
-            $sql = "select dt.comp_date as date,
+            $sql = "select DATE_FORMAT(dt.comp_date, '%d/%m/%Y') as date,
                         IFNULL(MAX(CASE WHEN dt.label = 'Network Check In' THEN dt.count END), 0) AS 'network_check_in', 
                         IFNULL(MAX(CASE WHEN dt.label = 'Network Check Out' THEN dt.count END), 0) AS 'network_check_out', 
                         IFNULL(MAX(CASE WHEN dt.label = 'Email Sign Up' THEN dt.count END), 0) AS 'email_sign_up', 
@@ -3191,6 +3191,8 @@ class ActivityAPIController extends ControllerAPI
                 $keys = 'date, ' . implode(", ", $activityKeys);
                 $activities->selectRaw($keys);
             }
+
+            $activities->orderBy('date', 'dsc');
 
             $result = $activities->get();
             

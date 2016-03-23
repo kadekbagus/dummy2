@@ -95,7 +95,7 @@ class CRMSummaryReportPrinterController extends DataPrinterController
                 foreach ($builder['responses'] as $key => $value) {
                     foreach ($value as $key2 => $value2) {
                         if ($key2 === 'date') {
-                            printf("%s,", $this->printDateTime($value2, 'd/m/Y'));
+                            printf("%s,", $value2);
                         } else {
                             printf("\"%s\"", $this->printFormatNumber((int)$value2));
                             printf(",");
