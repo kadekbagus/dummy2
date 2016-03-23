@@ -1,6 +1,7 @@
 <?php
 
 use OrbitShop\API\v1\ControllerAPI;
+use OrbitShop\API\v1\Exception\InvalidArgsException;
 use OrbitShop\API\v1\OrbitShopAPI;
 
 /**
