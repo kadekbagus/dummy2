@@ -62,6 +62,14 @@ class AccountAPIController extends ControllerAPI
         return $tenantArray;
     }
 
+    public function postNewAccount()
+    {
+        $data = ['foo' => 'bar'];
+        $this->response->data = $data;
+
+        return $this->render(200);
+    }
+
     protected function prepareData()
     {
         $data = new stdClass();
