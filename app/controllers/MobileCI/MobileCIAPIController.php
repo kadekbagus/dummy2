@@ -2295,9 +2295,15 @@ class MobileCIAPIController extends BaseCIController
             $coupon_flag = Tenant::select('merchants.name','promotions.promotion_name')->excludeDeleted('merchants')
                         ->leftJoin('promotion_retailer', 'promotion_retailer.retailer_id', '=', 'merchants.merchant_id')
                         ->leftJoin('promotions', 'promotions.promotion_id', '=', 'promotion_retailer.promotion_id')
-                            ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'promotions.promotion_id')
-                            ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'promotions.promotion_id')
-                            ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id');
+                        ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'promotions.promotion_id')
+                        ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'promotions.promotion_id')
+                        ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
+                        ->join('issued_coupons', function ($join) {
+                            $join->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
+                            $join->where('issued_coupons.status', '=', 'active');
+                        })
+                        ->where('promotions.coupon_validity_in_date', '>=', Carbon::now($retailer->timezone->timezone_name))
+                        ->where('issued_coupons.user_id', $user->user_id);
 
             // filter by age and gender
             if ($userGender !== null) {
@@ -2580,7 +2586,14 @@ class MobileCIAPIController extends BaseCIController
                         }
                         $q->whereRaw("? between begin_date and end_date", [$mallTime]);
                     },
-                    'couponsProfiling' => function($q) use ($userGender, $userAge, $mallTime) {
+                    'couponsProfiling' => function($q) use ($userGender, $userAge, $mallTime, $user) {
+                        $q->join('issued_coupons', function ($join) {
+                            $join->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
+                            $join->where('issued_coupons.status', '=', 'active');
+                        })
+                        ->where('promotions.coupon_validity_in_date', '>=', $mallTime)
+                        ->where('issued_coupons.user_id', $user->user_id);
+
                         if ($userGender !== null) {
                             $q->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
                         }
@@ -3204,9 +3217,15 @@ class MobileCIAPIController extends BaseCIController
             $coupon_flag = Tenant::select('merchants.name','promotions.promotion_name')->excludeDeleted('merchants')
                         ->leftJoin('promotion_retailer', 'promotion_retailer.retailer_id', '=', 'merchants.merchant_id')
                         ->leftJoin('promotions', 'promotions.promotion_id', '=', 'promotion_retailer.promotion_id')
-                            ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'promotions.promotion_id')
-                            ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'promotions.promotion_id')
-                            ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id');
+                        ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'promotions.promotion_id')
+                        ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'promotions.promotion_id')
+                        ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
+                        ->join('issued_coupons', function ($join) {
+                            $join->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
+                            $join->where('issued_coupons.status', '=', 'active');
+                        })
+                        ->where('promotions.coupon_validity_in_date', '>=', Carbon::now($retailer->timezone->timezone_name))
+                        ->where('issued_coupons.user_id', $user->user_id);
 
             // filter by age and gender
             if ($userGender !== null) {
@@ -4148,7 +4167,7 @@ class MobileCIAPIController extends BaseCIController
                     $join->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
                     $join->where('issued_coupons.status', '=', 'active');
                 })
-                ->where('issued_coupons.expired_date', '>=', Carbon::now($retailer->timezone->timezone_name))
+                ->where('promotions.coupon_validity_in_date', '>=', Carbon::now($retailer->timezone->timezone_name))
                 ->where('promotions.merchant_id', $retailer->merchant_id)
                 ->where('issued_coupons.user_id', $user->user_id);
 
@@ -4334,7 +4353,7 @@ class MobileCIAPIController extends BaseCIController
                     $join->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
                     $join->where('issued_coupons.status', '=', 'active');
                 })
-                ->where('issued_coupons.expired_date', '>=', Carbon::now($retailer->timezone->timezone_name))
+                ->where('promotions.coupon_validity_in_date', '>=', Carbon::now($retailer->timezone->timezone_name))
                 ->where('promotions.merchant_id', $retailer->merchant_id)
                 ->where('issued_coupons.user_id', $user->user_id);
 
@@ -4523,23 +4542,16 @@ class MobileCIAPIController extends BaseCIController
 
             $coupons = Coupon::with(array(
                 'couponRule',
-                'issuedCoupons' => function($q) use ($issued_coupon_id, $user, $retailer) {
-                    // $q->where('issued_coupons.issued_coupon_id', $issued_coupon_id);
+                'issuedCoupons' => function($q) use ($user) {
                     $q->where('issued_coupons.user_id', $user->user_id);
-                    $q->where('issued_coupons.expired_date', '>=', Carbon::now($retailer->timezone->timezone_name));
                     $q->where('issued_coupons.status', 'active');
                     $q->orderBy('issued_coupons.expired_date', 'DESC');
                 })
             )
             ->where('merchant_id', $retailer->merchant_id)
             ->where('promotions.status', 'active')
+            ->where('promotions.coupon_validity_in_date', '>=', Carbon::now($retailer->timezone->timezone_name))
             ->where('promotions.promotion_id', $promotion_id)
-            // ->whereHas('issuedCoupons', function($q) use($issued_coupon_id, $user, $retailer) {
-            //     // $q->where('issued_coupons.issued_coupon_id', $issued_coupon_id);
-            //     $q->where('issued_coupons.user_id', $user->user_id);
-            //     $q->where('issued_coupons.expired_date', '>=', Carbon::now($retailer->timezone->timezone_name));
-            //     $q->where('issued_coupons.status', 'active');
-            // })
             ->first();
 
             if (empty($coupons)) {
