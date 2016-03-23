@@ -39,6 +39,7 @@ return array(
         'lucky_draws'        => '幸运大抽奖',
         'my_messages'        => '我的消息',
         'my_message'         => '我的消息',
+        'redemption_places'  => '赎回位置',
     ),
 
     'widgets' => array(
