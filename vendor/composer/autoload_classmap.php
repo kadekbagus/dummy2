@@ -17,6 +17,7 @@ return array(
     'AlterSessionsAddApplicationId' => $baseDir . '/app/database/migrations/2015_10_30_112636_alter_sessions_add_application_id.php',
     'AlterSessionsAddIndexExpireAt' => $baseDir . '/app/database/migrations/2015_10_27_094038_alter_sessions_add_index_expire_at.php',
     'AlterTableActivitiesAddObjectDisplayNameColumn' => $baseDir . '/app/database/migrations/2015_12_11_062518_alter_table_activities_add_object_display_name_column.php',
+    'AlterTableCampaignAccountAddFieldAccountName' => $baseDir . '/app/database/migrations/2016_03_23_032853_alter_table_campaign_account_add_field_account_name.php',
     'AlterTableCampaignHistoriesAddField' => $baseDir . '/app/database/migrations/2016_01_18_081524_alter_table_campaign_histories_add_field.php',
     'AlterTableCampaignHistoriesRemoveAndAddField' => $baseDir . '/app/database/migrations/2016_01_18_020344_alter_table_campaign_histories_remove_and_add_field.php',
     'AlterTableInboxesAddColumnMerchantId' => $baseDir . '/app/database/migrations/2015_10_30_062500_alter_table_inboxes_add_column_merchant_id.php',
