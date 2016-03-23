@@ -9,4 +9,14 @@ class UserMerchant extends Eloquent
     {
         return $this->belongsTo('Merchant');
     }
+
+    public function mall()
+    {
+        return $this->hasMany('Mall', 'merchant_id', 'merchant_id');
+    }
+
+    public function tenant()
+    {
+        return $this->belongsTo('Tenant', 'merchant_id', 'merchant_id');
+    }
 }
