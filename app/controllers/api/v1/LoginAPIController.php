@@ -1185,7 +1185,7 @@ class LoginAPIController extends ControllerAPI
                                            ->where('object_type', 'merchant')
                                            ->first();
 
-                if (empty($agreement_accepted) || $agreement_accepted->setting_value !== 'true') {
+                if (empty($agreement_accepted)) {
 
                     // Token expiration, fallback to 30 days
                     $expireInDays = Config::get('orbit.registration.mobile.activation_expire', 30);
