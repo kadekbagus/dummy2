@@ -71,13 +71,13 @@ class AccountAPIController extends ControllerAPI
      */
     public function postCreateUpdate()
     {
-        // users.user_id
-        $this->id = Input::get('id');
-
         // Do validation
         if (!$this->validate()) {
             return $this->render($this->errorCode);
         }
+
+        // users.user_id
+        $this->id = Input::get('id');
 
         // Save to users table
         $user = ($this->id) ? User::find($this->id) : new User;
@@ -273,7 +273,7 @@ class AccountAPIController extends ControllerAPI
 
     protected function validate()
     {
-        $validator = Validator::make([
+        $fields = [
             'user_firstname' => Input::get('user_firstname'),
             'user_lastname'  => Input::get('user_lastname'),
             'user_email'     => Input::get('user_email'),
@@ -285,8 +285,9 @@ class AccountAPIController extends ControllerAPI
             'city'           => Input::get('city'),
             'country'        => Input::get('country'),
             'merchant_ids'   => Input::get('merchant_ids'),
-        ],
-        [
+        ];
+
+        $rules = [
             'user_firstname' => 'required',
             'user_lastname'  => 'required',
             'user_email'     => 'required|email',
@@ -298,7 +299,9 @@ class AccountAPIController extends ControllerAPI
             'city'           => 'required',
             'country'        => 'required',
             'merchant_ids'   => 'required|array',
-        ]);
+        ];
+
+        $validator = Validator::make($fields, $rules);
 
         try {
             if ($validator->fails()) {
