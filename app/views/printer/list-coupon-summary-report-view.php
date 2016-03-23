@@ -225,9 +225,9 @@
                 </td>
 
                 <?php
-                    $total_issued = $row->total_issued != 'Unlimited' ? number_format($row->total_issued, 0, '', ',') : 'Unlimeted' ;
-                    $available = $row->available != 'Unlimited' ? number_format($row->available, 0, '', ',') : 'Unlimeted' ;
-                    $total_redeemed = $row->total_redeemed != 'Unlimited' ? number_format($row->total_redeemed, 0, '', ',') : 'Unlimeted' ;
+                    $total_issued = $row->total_issued != 'Unlimited' ? number_format($row->total_issued, 0, '', ',') : 'Unlimited' ;
+                    $available = $row->available != 'Unlimited' ? number_format($row->available, 0, '', ',') : 'Unlimited' ;
+                    $total_redeemed = $row->total_redeemed != 'Unlimited' ? number_format($row->total_redeemed, 0, '', ',') : 'Unlimited' ;
                 ?>
                 <td><?php echo $total_issued . ' / ' . $available; ?></td>
                 <td><?php echo $total_redeemed . ' / ' .$total_issued; ?></td>
