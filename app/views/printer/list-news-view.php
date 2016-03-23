@@ -218,6 +218,7 @@
             <th style="text-align:left;">News Name</th>
             <th style="text-align:left;">Start Date & Time</th>
             <th style="text-align:left;">End Date & Time</th>
+            <th style="text-align:left;">Locations</th>
             <th style="text-align:left;">Status</th>
             <th style="text-align:left;">Last Update</th>
         </thead>
@@ -228,6 +229,14 @@
                     <td><?php echo htmlentities($row->name_english); ?></td>
                     <td><?php echo date('d F Y H:i', strtotime($row->begin_date)); ?></td>
                     <td><?php echo date('d F Y H:i', strtotime($row->end_date)); ?></td>
+                    <td>
+                        <?php
+                            $locations = explode(', ', $row->campaign_location_names);
+                            for($x = 0; $x < count($locations); $x++) {
+                                echo $locations[$x] . '<br>';
+                            }
+                        ?>
+                    </td>
                     <td><?php echo $row->campaign_status; ?></td>
                     <td><?php echo $this->printDateTime($row->updated_at, $timezone, 'd F Y H:i:s'); ?></td>
                 </tr>

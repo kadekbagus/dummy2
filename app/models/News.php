@@ -52,6 +52,12 @@ class News extends Eloquent
             ->where('news_merchant.object_type', 'retailer');
     }
 
+    public function campaignLocations()
+    {
+        return $this->belongsToMany('CampaignLocation', 'news_merchant', 'news_id', 'merchant_id')
+            ->withPivot('object_type');
+    }
+
     /**
      * News has many uploaded media.
      *
