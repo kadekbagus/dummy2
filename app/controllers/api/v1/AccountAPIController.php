@@ -141,65 +141,6 @@ class AccountAPIController extends ControllerAPI
         return $this->render(200);
     }
 
-    /**
-     * Post New Account
-     *
-     * @author Qosdil A. <qosdil@dominopos.com>
-     */
-    public function postNewAccount()
-    {
-        // Do validation
-        if (!$this->validate()) {
-            return $this->render($this->errorCode);
-        }
-
-        // Save to users table
-        $user = new User;
-        $user->user_firstname = Input::get('user_firstname');
-        $user->user_lastname = Input::get('user_lastname');
-        $user->user_email = Input::get('user_email');
-        $user->username = Input::get('user_email');
-        $user->user_password = Hash::make(Input::get('user_password'));
-        $user->status = 'active';
-        $user->save();
-
-        // Save to user_details table (1 to 1)
-        $userDetail = new UserDetail;
-        $userDetail->user_id = $user->user_id;
-        $userDetail->company_name = Input::get('company_name');
-        $userDetail->address_line1 = Input::get('address_line1');
-        $userDetail->city = Input::get('city');
-        $userDetail->province = Input::get('province');
-        $userDetail->postal_code = Input::get('postal_code');
-        $userDetail->country = Input::get('country');
-        $userDetail->save();
-
-        // Save to employees table (1 to 1)
-        $employee = new Employee;
-        $employee->user_id = $user->user_id;
-        $employee->position = Input::get('position');
-        $employee->status = 'active';
-        $employee->save();
-
-        // Save to campaign_account table (1 to 1)
-        $campaignAccount = new CampaignAccount;
-        $campaignAccount->user_id = $user->user_id;
-        $campaignAccount->account_name = Input::get('account_name');
-        $campaignAccount->status = Input::get('status');
-        $campaignAccount->save();
-
-        // Save to user_merchant (1 to M)
-        foreach (Input::get('merchant_ids') as $merchantId) {
-            $userMerchant = new UserMerchant;
-            $userMerchant->user_id = $user->user_id;
-            $userMerchant->merchant_id = $merchantId;
-            $userMerchant->object_type = 'tenant';
-            $userMerchant->save();
-        }
-
-        return $this->render(200);
-    }
-
     protected function prepareData()
     {
         $data = new stdClass();
