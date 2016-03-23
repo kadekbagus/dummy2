@@ -2587,13 +2587,21 @@ class MobileCIAPIController extends BaseCIController
                         $q->whereRaw("? between begin_date and end_date", [$mallTime]);
                     },
                     'couponsProfiling' => function($q) use ($userGender, $userAge, $mallTime, $user) {
+                        $prefix = DB::getTablePrefix();
                         $q->select("*", DB::raw('count(' . DB::getTablePrefix() . 'promotions.promotion_id) as quantity'))
                             ->join('issued_coupons', function ($join) {
                                 $join->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
                                 $join->where('issued_coupons.status', '=', 'active');
                             })
                             ->where('promotions.coupon_validity_in_date', '>=', $mallTime)
-                            ->where('issued_coupons.user_id', $user->user_id);
+                            ->where('issued_coupons.user_id', $user->user_id)
+                            // also check coupon availability
+                            ->whereRaw("
+                                (({$prefix}promotions.maximum_issued_coupon > (SELECT COUNT(ics.issued_coupon_id) FROM {$prefix}issued_coupons ics
+                                WHERE ics.promotion_id = {$prefix}promotions.promotion_id) AND {$prefix}promotions.maximum_issued_coupon <> 0)
+                                OR
+                                ({$prefix}promotions.maximum_issued_coupon = 0))"
+                            );
 
                         if ($userGender !== null) {
                             $q->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
