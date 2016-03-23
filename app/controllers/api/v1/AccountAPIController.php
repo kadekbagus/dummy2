@@ -119,8 +119,6 @@ class AccountAPIController extends ControllerAPI
             $userMerchant->object_type = 'tenant';
             $userMerchant->save();
         }
-        
-        $this->response->data = Input::all();
 
         return $this->render(200);
     }
