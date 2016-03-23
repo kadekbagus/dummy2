@@ -142,7 +142,7 @@
                 foreach ($value as $key2 => $value2) {
                     if ($key2 === 'date'){
         ?>
-                        <td width='4%'><?php echo $me->printDateTime($value2, 'd/m/Y'); ?></td>
+                        <td width='4%'><?php echo $value2; ?></td>
         <?php
                     } else {
         ?>
