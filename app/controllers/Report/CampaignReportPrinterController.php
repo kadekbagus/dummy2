@@ -79,8 +79,8 @@ class CampaignReportPrinterController extends DataPrinterController
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Number of Campaigns', $totalRecord, '', '', '','');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Page Views', $totalPageViews, '', '', '','');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Pop Up Views', $totalPopUpViews, '', '', '','');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Estimated Total Cost (IDR)', $totalEstimatedCost, '', '', '','');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Spending (IDR)', $totalSpending, '', '', '','');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Estimated Total Cost (IDR)',  number_format($totalEstimatedCost, 0, '', ''), '', '', '','');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Spending (IDR)',  number_format($totalSpending, 0, '', ''), '', '', '','');
 
                 // Filtering
                 if ($startDate != '' && $endDate != ''){
@@ -142,9 +142,9 @@ class CampaignReportPrinterController extends DataPrinterController
                             $row->page_views,
                             $row->popup_views,
                             $row->popup_clicks,
-                            number_format($row->daily, 0),
-                            number_format($row->estimated_total, 0),
-                            number_format($row->spending, 0),
+                            number_format($row->daily, 0, '', ''),
+                            number_format($row->estimated_total, 0, '', ''),
+                            number_format($row->spending, 0, '', ''),
                             $row->campaign_status
                     );
                     $count++;
