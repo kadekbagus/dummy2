@@ -262,6 +262,7 @@ class AccountAPIController extends ControllerAPI
                 'tenants' => $this->getTenantAtMallArray($row->userTenants()->lists('merchant_id')),
                 'created_at' => $row->created_at->format('d F Y H:i:s'),
                 'status' => $row->status,
+                'id' => $row->user_id,
             ];
         }
 
