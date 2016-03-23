@@ -65,29 +65,39 @@ class AccountAPIController extends ControllerAPI
     }
 
     /**
-     * Post New Account
+     * Handle creation and update
      *
      * @author Qosdil A. <qosdil@dominopos.com>
      */
-    public function postNewAccount()
+    public function postCreateUpdate()
     {
         // Do validation
         if (!$this->validate()) {
             return $this->render($this->errorCode);
         }
 
+        // users.user_id
+        $this->id = Input::get('id');
+
         // Save to users table
-        $user = new User;
+        $user = ($this->id) ? User::find($this->id) : new User;
         $user->user_firstname = Input::get('user_firstname');
         $user->user_lastname = Input::get('user_lastname');
         $user->user_email = Input::get('user_email');
         $user->username = Input::get('user_email');
-        $user->user_password = Hash::make(Input::get('user_password'));
-        $user->status = 'active';
+
+        if (Input::get('user_password')) {
+            $user->user_password = Hash::make(Input::get('user_password'));
+        }
+
+        if ( ! $this->id) {
+            $user->status = 'active';
+        }
+
         $user->save();
 
         // Save to user_details table (1 to 1)
-        $userDetail = new UserDetail;
+        $userDetail = ($this->id) ? UserDetail::whereUserId($user->user_id)->first() : new UserDetail;
         $userDetail->user_id = $user->user_id;
         $userDetail->company_name = Input::get('company_name');
         $userDetail->address_line1 = Input::get('address_line1');
@@ -98,18 +108,26 @@ class AccountAPIController extends ControllerAPI
         $userDetail->save();
 
         // Save to employees table (1 to 1)
-        $employee = new Employee;
+        $employee = ($this->id) ? Employee::whereUserId($user->user_id)->first() : new Employee;
         $employee->user_id = $user->user_id;
         $employee->position = Input::get('position');
-        $employee->status = 'active';
+
+        if ( ! $this->id) {
+            $employee->status = 'active';
+        }
+
         $employee->save();
 
         // Save to campaign_account table (1 to 1)
-        $campaignAccount = new CampaignAccount;
+        $campaignAccount = ($this->id) ? CampaignAccount::whereUserId($user->user_id)->first() : new CampaignAccount;
         $campaignAccount->user_id = $user->user_id;
         $campaignAccount->account_name = Input::get('account_name');
         $campaignAccount->status = Input::get('status');
         $campaignAccount->save();
+
+        // Clean up user_merchant first
+        UserMerchant::whereIn('merchant_id', Input::get('merchant_ids'))->delete();
+        UserMerchant::whereUserId($user->user_id)->delete();
 
         // Save to user_merchant (1 to M)
         foreach (Input::get('merchant_ids') as $merchantId) {
@@ -179,12 +197,13 @@ class AccountAPIController extends ControllerAPI
         $records = [];
         foreach ($pmpAccounts as $row) {
             $records[] = [
-                'user_firstname' => $row->full_name,
+                'user_firstname' => $row->campaignAccount->account_name,
                 'company_name' => $row->company_name,
                 'city' => $row->userDetail->location,
                 'tenants' => $this->getTenantAtMallArray($row->userTenants()->lists('merchant_id')),
                 'created_at' => $row->created_at->format('d F Y H:i:s'),
-                'status' => $row->status,
+                'status' => $row->campaignAccount->status,
+                'id' => $row->user_id,
             ];
         }
 
@@ -196,7 +215,7 @@ class AccountAPIController extends ControllerAPI
 
     protected function validate()
     {
-        $validator = Validator::make([
+        $fields = [
             'user_firstname' => Input::get('user_firstname'),
             'user_lastname'  => Input::get('user_lastname'),
             'user_email'     => Input::get('user_email'),
@@ -208,8 +227,13 @@ class AccountAPIController extends ControllerAPI
             'city'           => Input::get('city'),
             'country'        => Input::get('country'),
             'merchant_ids'   => Input::get('merchant_ids'),
-        ],
-        [
+        ];
+
+        if (Input::get('id')) {
+            $fields['id'] = Input::get('id');
+        }
+
+        $rules = [
             'user_firstname' => 'required',
             'user_lastname'  => 'required',
             'user_email'     => 'required|email',
@@ -221,7 +245,13 @@ class AccountAPIController extends ControllerAPI
             'city'           => 'required',
             'country'        => 'required',
             'merchant_ids'   => 'required|array',
-        ]);
+        ];
+
+        if (Input::get('id')) {
+            $rules['id'] = 'exists:users,user_id';
+        }
+
+        $validator = Validator::make($fields, $rules);
 
         try {
             if ($validator->fails()) {

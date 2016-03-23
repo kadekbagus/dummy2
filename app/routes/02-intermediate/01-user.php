@@ -9,8 +9,11 @@ Route::get('/app/v1/account/list', 'IntermediateAuthController@Account_getAccoun
 // Create new PMP Account
 Route::post('/app/v1/account/new', function()
 {
-    return AccountAPIController::create()->postNewAccount();
+    return AccountAPIController::create()->postCreateUpdate();
 });
+
+// Update a PMP Account
+Route::post('/app/v1/account/update', 'IntermediateAuthController@Account_postCreateUpdate');
 
 /**
  * Create new user

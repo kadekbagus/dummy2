@@ -181,10 +181,10 @@ class CouponReportPrinterController extends DataPrinterController
                         $row->total_tenant,
                         $row->mall_name,
                         $rule_type,
-                        $row->total_issued != 'Unlimited' ? number_format($row->total_issued, 0, '', '') : 'Unlimeted',
-                        $row->available != 'Unlimited' ? number_format($row->available, 0, '', '') : 'Unlimeted',
-                        $row->total_redeemed != 'Unlimited' ? number_format($row->total_redeemed, 0, '', '') : 'Unlimeted',
-                        $row->total_issued != 'Unlimited' ? number_format($row->total_issued, 0, '', '') : 'Unlimeted',
+                        $row->total_issued != 'Unlimited' ? number_format($row->total_issued, 0, '', '') : 'Unlimited',
+                        $row->available != 'Unlimited' ? number_format($row->available, 0, '', '') : 'Unlimited',
+                        $row->total_redeemed != 'Unlimited' ? number_format($row->total_redeemed, 0, '', '') : 'Unlimited',
+                        $row->total_issued != 'Unlimited' ? number_format($row->total_issued, 0, '', '') : 'Unlimited',
                         $row->campaign_status
                     );
                     $count++;
