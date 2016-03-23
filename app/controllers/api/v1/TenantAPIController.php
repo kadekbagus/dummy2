@@ -16,6 +16,7 @@ class TenantAPIController extends ControllerAPI
 
     protected $tenantViewRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee', 'mall customer service'];
     protected $tenantModifiyRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee'];
+    protected $campaignRole = ['campaign owner', 'campaign employee'];
 
     /**
      * Flag to return the query builder.
@@ -1981,6 +1982,235 @@ class TenantAPIController extends ControllerAPI
             if ($this->returnBuilder) {
                 return ['builder' => $tenants, 'count' => RecordCounter::create($_tenants)->count()];
             }
+
+            $totalTenants = RecordCounter::create($_tenants)->count();
+            $listOfTenants = $tenants->get();
+
+            $data = new stdclass();
+            $data->total_records = $totalTenants;
+            $data->returned_records = count($listOfTenants);
+            $data->records = $listOfTenants;
+
+            if ($totalTenants === 0) {
+                $data->records = NULL;
+                $this->response->message = Lang::get('statuses.orbit.nodata.tenant');
+            }
+
+            $this->response->data = $data;
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.tenant.getsearchtenant.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.tenant.getsearchtenant.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $result['total_records'] = 0;
+            $result['returned_records'] = 0;
+            $result['records'] = null;
+
+            $this->response->data = $result;
+            $httpCode = 403;
+        } catch (QueryException $e) {
+            Event::fire('orbit.tenant.getsearchtenant.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+        } catch (Exception $e) {
+            Event::fire('orbit.tenant.getsearchtenant.general.exception', array($this, $e));
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.tenant.getsearchtenant.before.render', array($this, &$output));
+
+        return $output;
+    }
+
+    /**
+     * GET - Campaign Location
+     *
+     * @author shelgi <shelgi@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param string            `sort_by`                       (optional) - column order by
+     * @param string            `sort_mode`                     (optional) - asc or desc
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function getCampaignLocation()
+    {
+        // flag for limit the query result
+        // TODO : should be change in the future
+        $limit = FALSE;
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.tenant.getsearchtenant.before.auth', array($this));
+
+            // Require authentication
+            $this->checkAuth();
+
+            Event::fire('orbit.tenant.getsearchtenant.after.auth', array($this));
+
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user = $this->api->user;
+            Event::fire('orbit.tenant.getsearchtenant.before.authz', array($this, $user));
+/*
+            if (! ACL::create($user)->isAllowed('view_tenant')) {
+                Event::fire('orbit.tenant.getsearchtenant.authz.notallowed', array($this, $user));
+                $viewTenantLang = Lang::get('validation.orbit.actionlist.view_tenant');
+                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $viewTenantLang));
+                ACL::throwAccessForbidden($message);
+            }
+*/
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = $this->tenantViewRoles;
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            Event::fire('orbit.tenant.getsearchtenant.after.authz', array($this, $user));
+
+            $this->registerCustomValidation();
+
+            $sort_by = OrbitInput::get('sortby');
+
+            $validator = Validator::make(
+                array(
+                    'sortby' => $sort_by,
+                ),
+                array(
+                    'sortby' => 'in:registered_date,retailer_name,retailer_email,retailer_userid,retailer_description,retailerid,retailer_address1,retailer_address2,retailer_address3,retailer_cityid,retailer_city,retailer_countryid,retailer_country,retailer_phone,retailer_fax,retailer_status,retailer_currency,contact_person_firstname,merchant_name,retailer_floor,retailer_unit,retailer_external_object_id,retailer_created_at,retailer_updated_at',
+                ),
+                array(
+                    'sortby.in' => Lang::get('validation.orbit.empty.retailer_sortby'),
+                )
+            );
+
+            Event::fire('orbit.tenant.getsearchtenant.before.validation', array($this, $validator));
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.tenant.getsearchtenant.after.validation', array($this, $validator));
+
+            $prefix = DB::getTablePrefix();
+
+            $tenants = CampaignLocation::select('merchants.merchant_id', 'merchants.name',
+                                            DB::raw("IF({$prefix}merchants.object_type = 'tenant', pm.merchant_id, {$prefix}merchants.merchant_id) as mall_id"),
+                                            DB::raw("IF({$prefix}merchants.object_type = 'tenant', pm.name, {$prefix}merchants.name) as mall_name"),
+                                            DB::raw("IF({$prefix}merchants.object_type = 'tenant', CONCAT({$prefix}merchants.name,' at ', pm.name), CONCAT('Mall at ', {$prefix}merchants.name)) as display_name"), 
+                                            'merchants.object_type',
+                                            'merchants.status'
+                                        )
+                                       ->leftjoin('merchants as pm', DB::raw("pm.merchant_id"), '=', 'merchants.parent_id');
+
+            if (in_array(strtolower($user->role->role_name), $this->campaignRole)) {
+                $tenants->join('user_merchant', function($q) use ($user)
+                {
+                    $q->on('user_merchant.merchant_id', '=', 'merchants.merchant_id')
+                         ->where('user_merchant.user_id', '=', $user->user_id);
+                });
+            }
+
+            // Clone the query builder which still does not include the take,
+            // skip, and order by
+            $_tenants = clone $tenants;
+
+            // Default sort by
+            $sortBy = 'display_name';
+            // Default sort mode
+            $sortMode = 'asc';
+
+            OrbitInput::get('sortby', function($_sortBy) use (&$sortBy)
+            {
+                // Map the sortby request to the real column name
+                $sortByMapping = array(
+                    'registered_date' => 'merchants.created_at',
+                    'retailer_name' => 'merchants.name',
+                    'retailer_email' => 'merchants.email',
+                    'retailer_userid' => 'merchants.user_id',
+                    'retailerid' => 'merchants.merchant_id',
+                    'retailer_cityid' => 'merchants.city_id',
+                    'retailer_city' => 'merchants.city',
+                    'retailer_countryid' => 'merchants.country_id',
+                    'retailer_country' => 'merchants.country',
+                    'retailer_phone' => 'merchants.phone',
+                    'retailer_fax' => 'merchants.fax',
+                    'retailer_status' => 'merchants.status',
+                    'retailer_floor' => 'merchants.floor',
+                    'retailer_unit' => 'merchants.unit',
+                    'retailer_external_object_id' => 'merchants.external_object_id',
+                    'retailer_created_at' => 'merchants.created_at',
+                    'retailer_updated_at' => 'merchants.updated_at',
+
+                    // Synonyms
+                    'tenant_name' => 'merchants.name',
+                    'tenant_email' => 'merchants.email',
+                    'tenant_userid' => 'merchants.user_id',
+                    'tenantid' => 'merchants.merchant_id',
+                    'tenant_cityid' => 'merchants.city_id',
+                    'tenant_city' => 'merchants.city',
+                    'tenant_countryid' => 'merchants.country_id',
+                    'tenant_country' => 'merchants.country',
+                    'tenant_phone' => 'merchants.phone',
+                    'tenant_fax' => 'merchants.fax',
+                    'tenant_status' => 'merchants.status',
+                    'tenant_floor' => 'merchants.floor',
+                    'tenant_unit' => 'merchants.unit',
+                    'tenant_external_object_id' => 'merchants.external_object_id',
+                    'tenant_created_at' => 'merchants.created_at',
+                    'tenant_updated_at' => 'merchants.updated_at',
+                );
+
+                if (array_key_exists($_sortBy, $sortByMapping)) {
+                    $sortBy = $sortByMapping[$_sortBy];
+                }
+            });
+
+            // this parameter is intended for tenant listing for tenant dropdown list so it will
+            // ignore the sort by status that will broke alphabetical order.
+            $true_sort = OrbitInput::get('true_sort');
+
+            if ($sortBy !== 'merchants.status') {
+                if(empty($true_sort)) {
+                    $tenants->orderBy('merchants.status', 'asc');
+                }
+            }
+
+            OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
+            {
+                if (strtolower($_sortMode) !== 'asc') {
+                    $sortMode = 'desc';
+                }
+            });
+            $tenants->orderBy($sortBy, $sortMode);
 
             $totalTenants = RecordCounter::create($_tenants)->count();
             $listOfTenants = $tenants->get();
