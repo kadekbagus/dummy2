@@ -1185,7 +1185,7 @@ class LoginAPIController extends ControllerAPI
                                            ->where('object_type', 'merchant')
                                            ->first();
 
-                if (empty($agreement_accepted) || $agreement_accepted->setting_value !== 'true') {
+                if (empty($agreement_accepted)) {
 
                     // Token expiration, fallback to 30 days
                     $expireInDays = Config::get('orbit.registration.mobile.activation_expire', 30);
@@ -1205,10 +1205,11 @@ class LoginAPIController extends ControllerAPI
                     $this->response->status = 'redirect';
                     $this->response->message = Lang::get('validation.orbit.access.agreement');
                     $this->response->data = sprintf(Config::get('orbit.agreement.url'), $token->token_value);
+                } else {
+                    $this->response->data->menus = $menus;
                 }
             }
 
-            $this->response->data->menus = $menus;
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
