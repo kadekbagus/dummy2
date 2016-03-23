@@ -110,20 +110,21 @@ class PromotionPrinterController extends DataPrinterController
                     printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Campaign Date', $dateRange, '', '', '','');
                 }
 
-                printf("%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s\n", '', 'Promotion Name', 'Start Date & Time', 'End Date & Time', 'Status', 'Last Update');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Promotion Name', 'Start Date & Time', 'End Date & Time', 'Locations', 'Status', 'Last Update');
 
-                printf("%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
 
+                $count = 1;
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
 
                     $startDateTime = $this->printDateTime($row->begin_date, $timezone, 'no');
                     $endDateTime = $this->printDateTime($row->end_date, $timezone, 'no');
                     $lastUpdateDate = $this->printDateTime($row->updated_at, $timezone, 'no');
 
-                    printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
-                        '', $row->news_name, $startDateTime, $endDateTime, $this->printUtf8($row->campaign_status), $lastUpdateDate);
-
+                    printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
+                        $count, $row->news_name, $startDateTime, $endDateTime, str_replace(', ', "\n", $row->campaign_location_names), $this->printUtf8($row->campaign_status), $lastUpdateDate);
+                    $count++;
                 }
                 break;
 
