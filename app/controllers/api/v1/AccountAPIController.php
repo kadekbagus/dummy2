@@ -287,6 +287,10 @@ class AccountAPIController extends ControllerAPI
             'merchant_ids'   => Input::get('merchant_ids'),
         ];
 
+        if (Input::get('id')) {
+            $fields['id'] = Input::get('id');
+        }
+
         $rules = [
             'user_firstname' => 'required',
             'user_lastname'  => 'required',
@@ -300,6 +304,10 @@ class AccountAPIController extends ControllerAPI
             'country'        => 'required',
             'merchant_ids'   => 'required|array',
         ];
+
+        if (Input::get('id')) {
+            $rules['id'] = 'exists:users,user_id';
+        }
 
         $validator = Validator::make($fields, $rules);
 
