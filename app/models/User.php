@@ -143,6 +143,16 @@ class User extends Eloquent implements UserInterface
         return $this->media()->where('media_name_id', 'user_profile_picture');
     }
 
+    public function campaignAccount()
+    {
+        return $this->belongsTo('CampaignAccount', 'user_id', 'user_id');
+    }
+
+    public function settings()
+    {
+        return $this->hasMany('Setting', 'object_id', 'user_id')->where('object_type', 'user');
+    }
+
     /**
      * A user could be also mapped to an employee
      */
