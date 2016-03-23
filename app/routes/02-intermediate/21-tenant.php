@@ -29,6 +29,11 @@ Route::get('/app/v1/tenant/{search}', 'IntermediateAuthController@Tenant_getSear
  */
 Route::get('/app/v1/tenant/city', 'IntermediateAuthController@Tenant_getCityList');
 
+/**
+ * List of tenant for campaign
+ */
+Route::get('/app/v1/tenant/campaignlocation', 'IntermediateAuthController@Tenant_getCampaignLocation');
+
 
 /**
  * Upload Merchant Logo
