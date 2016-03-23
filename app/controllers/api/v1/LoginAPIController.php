@@ -139,7 +139,7 @@ class LoginAPIController extends ControllerAPI
     public function postLoginMall()
     {
         $_GET['from_portal'] = 'mall';
-        return $this->postLoginRole(['Super Admin', 'Mall Owner', 'Mall Admin']);
+        return $this->postLoginRole(['Super Admin', 'Mall Owner', 'Mall Admin', 'Campaign Owner', 'Campaign Employee']);
     }
 
     /**
@@ -1157,6 +1157,10 @@ class LoginAPIController extends ControllerAPI
                         $mall = $user->employee->retailers[0]->load('timezone');
                     } else {
                         $mall = Mall::with('timezone')->excludeDeleted()->where('user_id', $user->user_id)->first();
+                    }
+                    if ((strtolower($user->role->role_name) === 'campaign owner') || (strtolower($user->role->role_name) === 'campaign employee')) {
+                        $mall = $user->employee->retailers[0]->load('timezone');
+                        $menus = Config::get('orbit.menus.pmp');
                     }
                 } elseif ($from === 'cs-portal') {
                     $mall = $user->employee->retailers[0]->load('timezone');
