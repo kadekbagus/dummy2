@@ -133,7 +133,7 @@
             </tr>
         </thead>
         <tbody>
-            @foreach ($rows as $row)
+            @foreach ($records as $row)
                 <tr>
                     @foreach (array_keys($columns) as $fieldName)
                         <td>

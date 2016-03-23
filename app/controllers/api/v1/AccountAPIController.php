@@ -36,6 +36,40 @@ class AccountAPIController extends ControllerAPI
         ],
     ];
 
+    /**
+     * The main method
+     *
+     * @author Qosdil A. <qosdil@dominopos.com>
+     * @todo Validation.
+     */
+    public function getAccount()
+    {
+        $this->prepareData();
+
+        $this->data->returned_records = count($this->data->records);
+
+        $this->response->data = $this->data;
+        return $this->render(200);
+    }
+
+    protected function getTenantAtMallArray($tenantIds)
+    {
+        $tenantArray = [];
+        foreach (Tenant::whereIn('merchant_id', $tenantIds)->orderBy('name')->get() as $row) {
+            $tenantArray[] = $row->tenant_at_mall;
+        }
+
+        return $tenantArray;
+    }
+
+    public function postNewAccount()
+    {
+        $data = ['foo' => 'bar'];
+        $this->response->data = $data;
+
+        return $this->render(200);
+    }
+
     protected function prepareData()
     {
         $data = new stdClass();
@@ -78,8 +112,15 @@ class AccountAPIController extends ControllerAPI
         $allRows = clone $pmpAccounts;
         $data->total_records = $allRows->count();
 
+        $sortKey = Input::get('sortby', 'user_firstname');
+
+        // Prevent ambiguous error
+        if ($sortKey == 'created_at') {
+            $sortKey = 'users.created_at';
+        }
+
         $pmpAccounts = $pmpAccounts->take(Input::get('take'))->skip(Input::get('skip'))
-            ->orderBy(Input::get('sortby', 'user_firstname'), Input::get('sortmode', 'asc'))
+            ->orderBy($sortKey, Input::get('sortmode', 'asc'))
             ->get();
 
         $records = [];
@@ -98,31 +139,5 @@ class AccountAPIController extends ControllerAPI
         $data->records = $records;
 
         $this->data = $data;
-    }
-
-    /**
-     * The main method
-     *
-     * @author Qosdil A. <qosdil@dominopos.com>
-     * @todo Validation.
-     */
-    public function getAccount()
-    {
-        $this->prepareData();
-
-        $this->data->returned_records = count($this->data->records);
-
-        $this->response->data = $this->data;
-        return $this->render(200);
-    }
-
-    protected function getTenantAtMallArray($tenantIds)
-    {
-        $tenantArray = [];
-        foreach (Tenant::whereIn('merchant_id', $tenantIds)->orderBy('name')->get() as $row) {
-            $tenantArray[] = $row->tenant_at_mall;
-        }
-
-        return $tenantArray;
     }
 }

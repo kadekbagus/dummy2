@@ -162,7 +162,7 @@ class CRMSummaryReportPrinterController extends DataPrinterController
 
     public function printFormatNumber($number)
     {
-        return number_format($number, 0,'.','.');
+        return number_format($number, 0);
     }
 
 }
