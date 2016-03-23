@@ -1,6 +1,7 @@
 <?php
 
 use OrbitShop\API\v1\ControllerAPI;
+use OrbitShop\API\v1\OrbitShopAPI;
 
 /**
  * The PMP Account controller
@@ -66,10 +67,14 @@ class AccountAPIController extends ControllerAPI
      * Post New Account
      *
      * @author Qosdil A. <qosdil@dominopos.com>
-     * @todo Validation.
      */
     public function postNewAccount()
     {
+        // Do validation
+        if (!$this->validate()) {
+            return $this->render($this->errorCode);
+        }
+
         // Save to users table
         $user = new User;
         $user->user_firstname = Input::get('user_firstname');
@@ -188,5 +193,50 @@ class AccountAPIController extends ControllerAPI
         $data->records = $records;
 
         $this->data = $data;
+    }
+
+    protected function validate()
+    {
+        $validator = Validator::make([
+            'user_firstname' => Input::get('user_firstname'),
+            'user_lastname'  => Input::get('user_lastname'),
+            'user_email'     => Input::get('user_email'),
+            'user_password'  => Input::get('user_password'),
+            'account_name'   => Input::get('account_name'),
+            'status'         => Input::get('status'),
+            'company_name'   => Input::get('company_name'),
+            'address_line1'  => Input::get('address_line1'),
+            'city'           => Input::get('city'),
+            'country'        => Input::get('country'),
+            'merchant_ids'   => Input::get('merchant_ids'),
+        ],
+        [
+            'user_firstname' => 'required',
+            'user_lastname'  => 'required',
+            'user_email'     => 'required|email',
+            'user_password'  => 'required',
+            'account_name'   => 'required',
+            'status'         => 'in:active,inactive',
+            'company_name'   => 'required',
+            'address_line1'  => 'required',
+            'city'           => 'required',
+            'country'        => 'required',
+            'merchant_ids'   => 'required|array',
+        ]);
+
+        try {
+            if ($validator->fails()) {
+                OrbitShopAPI::throwInvalidArgument($validator->messages()->first());
+            }
+        } catch (InvalidArgsException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+
+            $this->errorCode = 400;
+            return false;
+        }
+
+        return true;
     }
 }
