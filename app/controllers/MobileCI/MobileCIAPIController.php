@@ -2420,9 +2420,9 @@ class MobileCIAPIController extends BaseCIController
             }
 
             if (! empty(OrbitInput::get('coupon_redeem_id'))) {
-                $pagetitle = Lang::get('mobileci.page_title.coupons_tenants');
+                $pagetitle = Lang::get('mobileci.page_title.redemption_places');
 
-                $activityPageNotes = sprintf('Page viewed: Coupon Tenants List Page, promotion ID: %s', OrbitInput::get('promotion_id'));
+                $activityPageNotes = sprintf('Page viewed: Coupon Redemption Tenants List Page, promotion ID: %s', OrbitInput::get('promotion_id'));
                 $activityPage->setUser($user)
                     ->setActivityName('view_retailer')
                     ->setActivityNameLong('View Coupon Redemption Places')
@@ -2587,18 +2587,19 @@ class MobileCIAPIController extends BaseCIController
                         $q->whereRaw("? between begin_date and end_date", [$mallTime]);
                     },
                     'couponsProfiling' => function($q) use ($userGender, $userAge, $mallTime, $user) {
-                        $q->join('issued_coupons', function ($join) {
-                            $join->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
-                            $join->where('issued_coupons.status', '=', 'active');
-                        })
-                        ->where('promotions.coupon_validity_in_date', '>=', $mallTime)
-                        ->where('issued_coupons.user_id', $user->user_id);
+                        $q->select("*", DB::raw('count(' . DB::getTablePrefix() . 'promotions.promotion_id) as quantity'))
+                            ->join('issued_coupons', function ($join) {
+                                $join->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
+                                $join->where('issued_coupons.status', '=', 'active');
+                            })
+                            ->where('promotions.coupon_validity_in_date', '>=', $mallTime)
+                            ->where('issued_coupons.user_id', $user->user_id);
 
                         if ($userGender !== null) {
                             $q->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
                         }
                         if ($userAge !== null) {
-                            if ($userAge === 0){
+                            if ($userAge === 0) {
                                 $q->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
                             } else {
                                 if ($userAge >= 55) {
@@ -2608,12 +2609,14 @@ class MobileCIAPIController extends BaseCIController
                                 }
                             }
                         }
-                        $q->whereRaw("? between begin_date and end_date", [$mallTime]);
+                        $q->whereRaw("? between begin_date and end_date", [$mallTime])
+                            ->groupBy('promotions.promotion_id');
                     }
                 ))
                 ->active('merchants')
                 ->where('parent_id', $retailer->merchant_id)
                 ->where('merchants.merchant_id', $product_id);
+
             $tenant->select('merchants.*');
             // $this->maybeJoinWithTranslationsTable($tenant, $alternateLanguage);
             $tenant = $tenant->first();
@@ -4158,7 +4161,20 @@ class MobileCIAPIController extends BaseCIController
                 $maxRecord = 300;
             }
 
+            $userAge = 0;
+            if ($user->userDetail->birthdate !== '0000-00-00' && $user->userDetail->birthdate !== null) {
+                $userAge =  $this->calculateAge($user->userDetail->birthdate); // 27
+            }
+
+            $userGender = 'U'; // default is Unknown
+            if ($user->userDetail->gender !== '' && $user->userDetail->gender !== null) {
+                $userGender =  $user->userDetail->gender;
+            }
+
             $coupons = Coupon::selectRaw('*, ' . DB::getTablePrefix() . 'promotions.image AS promo_image, count(' . DB::getTablePrefix() . 'promotions.promotion_id) as quantity')
+                ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'promotions.promotion_id')
+                ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'promotions.promotion_id')
+                ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
                 ->join('promotion_rules', function ($join) {
                     $join->on('promotion_rules.promotion_id', '=', 'promotions.promotion_id');
                     $join->where('promotions.status', '=', 'active');
@@ -4170,6 +4186,23 @@ class MobileCIAPIController extends BaseCIController
                 ->where('promotions.coupon_validity_in_date', '>=', Carbon::now($retailer->timezone->timezone_name))
                 ->where('promotions.merchant_id', $retailer->merchant_id)
                 ->where('issued_coupons.user_id', $user->user_id);
+
+            // filter by age and gender
+            if ($userGender !== null) {
+                $coupons = $coupons->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
+            }
+
+            if ($userAge !== null) {
+                if ($userAge === 0){
+                    $coupons = $coupons->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                } else {
+                    if ($userAge >= 55) {
+                        $coupons = $coupons->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
+                    } else {
+                        $coupons = $coupons->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                    }
+                }
+            }
 
             OrbitInput::get(
                 'keyword',
@@ -4344,7 +4377,20 @@ class MobileCIAPIController extends BaseCIController
 
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
 
+            $userAge = 0;
+            if ($user->userDetail->birthdate !== '0000-00-00' && $user->userDetail->birthdate !== null) {
+                $userAge =  $this->calculateAge($user->userDetail->birthdate); // 27
+            }
+
+            $userGender = 'U'; // default is Unknown
+            if ($user->userDetail->gender !== '' && $user->userDetail->gender !== null) {
+                $userGender =  $user->userDetail->gender;
+            }
+
             $coupons = Coupon::selectRaw('*, ' . DB::getTablePrefix() . 'promotions.image AS promo_image, count(' . DB::getTablePrefix() . 'promotions.promotion_id) as quantity')
+                ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'promotions.promotion_id')
+                ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'promotions.promotion_id')
+                ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
                 ->join('promotion_rules', function ($join) {
                     $join->on('promotion_rules.promotion_id', '=', 'promotions.promotion_id');
                     $join->where('promotions.status', '=', 'active');
@@ -4356,6 +4402,23 @@ class MobileCIAPIController extends BaseCIController
                 ->where('promotions.coupon_validity_in_date', '>=', Carbon::now($retailer->timezone->timezone_name))
                 ->where('promotions.merchant_id', $retailer->merchant_id)
                 ->where('issued_coupons.user_id', $user->user_id);
+
+            // filter by age and gender
+            if ($userGender !== null) {
+                $coupons = $coupons->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
+            }
+
+            if ($userAge !== null) {
+                if ($userAge === 0){
+                    $coupons = $coupons->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                } else {
+                    if ($userAge >= 55) {
+                        $coupons = $coupons->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
+                    } else {
+                        $coupons = $coupons->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                    }
+                }
+            }
 
             OrbitInput::get(
                 'keyword',
@@ -4531,7 +4594,7 @@ class MobileCIAPIController extends BaseCIController
     public function getMallCouponDetailView()
     {
         $user = null;
-        $issued_coupon_id = 0;
+        $promotion_id = 0;
         $activityPage = Activity::mobileci()
                                    ->setActivityType('view');
         try {
@@ -4540,19 +4603,61 @@ class MobileCIAPIController extends BaseCIController
             $retailer = $this->getRetailerInfo();
             $promotion_id = trim(OrbitInput::get('id'));
 
+            $issued_coupons = IssuedCoupon::where('user_id', $user->user_id)
+                                ->where('promotion_id', $promotion_id)
+                                ->active()
+                                ->first();
+
+            if (empty($issued_coupons)) {
+                return Redirect::route('ci-tenants', array('coupon_id' => $promotion_id));
+            }
+
+            $userAge = 0;
+            if ($user->userDetail->birthdate !== '0000-00-00' && $user->userDetail->birthdate !== null) {
+                $userAge =  $this->calculateAge($user->userDetail->birthdate); // 27
+            }
+
+            $userGender = 'U'; // default is Unknown
+            if ($user->userDetail->gender !== '' && $user->userDetail->gender !== null) {
+                $userGender =  $user->userDetail->gender;
+            }                            
+
             $coupons = Coupon::with(array(
-                'couponRule',
-                'issuedCoupons' => function($q) use ($user) {
-                    $q->where('issued_coupons.user_id', $user->user_id);
-                    $q->where('issued_coupons.status', 'active');
-                    $q->orderBy('issued_coupons.expired_date', 'DESC');
-                })
-            )
-            ->where('merchant_id', $retailer->merchant_id)
-            ->where('promotions.status', 'active')
-            ->where('promotions.coupon_validity_in_date', '>=', Carbon::now($retailer->timezone->timezone_name))
-            ->where('promotions.promotion_id', $promotion_id)
-            ->first();
+                    'couponRule',
+                    'issuedCoupons' => function($q) use ($user) {
+                        $q->where('issued_coupons.user_id', $user->user_id);
+                        $q->where('issued_coupons.status', 'active');
+                        $q->orderBy('issued_coupons.expired_date', 'DESC');
+                    })
+                )
+                ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'promotions.promotion_id')
+                ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'promotions.promotion_id')
+                ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id');
+
+            // filter by age and gender
+            if ($userGender !== null) {
+                $coupons = $coupons->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
+            }
+
+            if ($userAge !== null) {
+                if ($userAge === 0){
+                    $coupons = $coupons->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                } else {
+                    if ($userAge >= 55) {
+                        $coupons = $coupons->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
+                    } else {
+                        $coupons = $coupons->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                    }
+                }
+            }
+
+            $languages = $this->getListLanguages($retailer);
+
+            $coupons = $coupons->where('promotions.merchant_id', $retailer->merchant_id)
+                ->where('promotions.status', 'active')
+                ->where('promotions.coupon_validity_in_date', '>=', Carbon::now($retailer->timezone->timezone_name))
+                ->where('promotions.promotion_id', $promotion_id)
+                ->first();
 
             if (empty($coupons)) {
                 // throw new Exception('Product id ' . $issued_coupon_id . ' not found');
@@ -4664,8 +4769,6 @@ class MobileCIAPIController extends BaseCIController
                 $coupons->image = 'mobile-ci/images/default_coupon.png';
             }
 
-            $languages = $this->getListLanguages($retailer);
-
             // Check coupon have condition cs reedem
             $cs_reedem = false;
 
@@ -4693,7 +4796,7 @@ class MobileCIAPIController extends BaseCIController
                 }
             }
 
-            $activityPageNotes = sprintf('Page viewed: Coupon Detail, Issued Coupon Id: %s', $issued_coupon_id);
+            $activityPageNotes = sprintf('Page viewed: Coupon Detail, Coupon Id: %s', $promotion_id);
             $activityPage->setUser($user)
                 ->setActivityName('view_coupon')
                 ->setActivityNameLong('View Coupon Detail')
@@ -4719,15 +4822,15 @@ class MobileCIAPIController extends BaseCIController
             ));
 
         } catch (Exception $e) {
-            $activityPageNotes = sprintf('Failed to view Page: Coupon Detail, Issued Coupon Id: %s', $issued_coupon_id);
-            $activityPage->setUser($user)
-                ->setActivityName('view_coupon')
-                ->setActivityNameLong('View Coupon Detail Failed')
-                ->setObject(null)
-                ->setModuleName('Coupon')
-                ->setNotes($activityPageNotes)
-                ->responseFailed()
-                ->save();
+            $activityPageNotes = sprintf('Failed to view Page: Coupon Detail, Coupon Id: %s', $promotion_id);
+            // $activityPage->setUser($user)
+            //     ->setActivityName('view_coupon')
+            //     ->setActivityNameLong('View Coupon Detail Failed')
+            //     ->setObject(null)
+            //     ->setModuleName('Coupon')
+            //     ->setNotes($activityPageNotes)
+            //     ->responseFailed()
+            //     ->save();
 
             return $this->redirectIfNotLoggedIn($e);
         }
