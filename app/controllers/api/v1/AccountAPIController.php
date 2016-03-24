@@ -210,6 +210,11 @@ class AccountAPIController extends ControllerAPI
             $sortKey = 'users.created_at';
         }
 
+        // Prevent ambiguous error
+        if ($sortKey == 'status') {
+            $sortKey = 'campaign_account.status';
+        }
+
         $pmpAccounts = $pmpAccounts->take(Input::get('take'))->skip(Input::get('skip'))
             ->orderBy($sortKey, Input::get('sortmode', 'asc'))
             ->get();
