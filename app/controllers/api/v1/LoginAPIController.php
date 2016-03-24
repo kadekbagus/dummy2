@@ -239,6 +239,10 @@ class LoginAPIController extends ControllerAPI
                         $parent_id = $tenant->parent_id;
                     }
                 }
+            } elseif ($user->role->role_name === 'Campaign Admin') {
+                $mall = Mall::excludeDeleted()
+                            ->with('timezone')
+                            ->get();
             }
             $user->mall = $mall;
             unset($user->campaignAccount);
