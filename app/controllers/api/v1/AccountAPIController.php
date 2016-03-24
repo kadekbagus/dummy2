@@ -130,7 +130,6 @@ class AccountAPIController extends ControllerAPI
         $campaignAccount->save();
 
         // Clean up user_merchant first
-        UserMerchant::whereIn('merchant_id', Input::get('merchant_ids'))->delete();
         UserMerchant::whereUserId($user->user_id)->delete();
 
         // Save to user_merchant (1 to M)
