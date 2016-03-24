@@ -241,6 +241,7 @@ class LoginAPIController extends ControllerAPI
                 }
             }
             $user->mall = $mall;
+            unset($user->campaignAccount);
 
             // Successfull login
             $activity->setUser($user)
