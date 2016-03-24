@@ -140,7 +140,11 @@ class AccountAPIController extends ControllerAPI
             $userMerchant->object_type = 'tenant';
             $userMerchant->save();
         }
+        
+        $data = new stdClass();
+        $data->id = $user->user_id;
 
+        $this->response->data = $data;
         return $this->render(200);
     }
 
