@@ -121,26 +121,15 @@ class AccountAPIController extends ControllerAPI
         $userDetail->country = Input::get('country');
         $userDetail->save();
 
-        // Save to employees table (1 to 1)
-        $employee = ($this->id) ? Employee::whereUserId($user->user_id)->first() : new Employee;
-        $employee->user_id = $user->user_id;
-        $employee->position = Input::get('position');
-
-        if ( ! $this->id) {
-            $employee->status = 'active';
-        }
-
-        $employee->save();
-
         // Save to campaign_account table (1 to 1)
         $campaignAccount = ($this->id) ? CampaignAccount::whereUserId($user->user_id)->first() : new CampaignAccount;
         $campaignAccount->user_id = $user->user_id;
         $campaignAccount->account_name = Input::get('account_name');
+        $campaignAccount->position = Input::get('position');
         $campaignAccount->status = Input::get('status');
         $campaignAccount->save();
 
         // Clean up user_merchant first
-        UserMerchant::whereIn('merchant_id', Input::get('merchant_ids'))->delete();
         UserMerchant::whereUserId($user->user_id)->delete();
 
         // Save to user_merchant (1 to M)

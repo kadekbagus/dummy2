@@ -92,6 +92,11 @@ class Coupon extends Eloquent
         return $this->belongsTo('CampaignStatus', 'campaign_status_id', 'campaign_status_id');
     }
 
+    public function campaignLocations()
+    {
+        return $this->belongsToMany('CampaignLocation', 'promotion_retailer', 'promotion_id', 'retailer_id');
+    }
+
     /**
      * Coupon strings can be translated to many languages.
      */
