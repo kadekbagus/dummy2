@@ -81,6 +81,15 @@ class CRMSummaryReportPrinterController extends DataPrinterController
 
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '', '', '');
 
+                if ($summary) {
+                    foreach ($summary as $field => $value) {
+                        echo $field.',';
+                        echo $value."\r\n";
+                    }
+                }
+
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '', '', '');
+
                 foreach ($builder['responses'] as $key => $value) {
                     foreach ($value as $key2 => $value2) {
                         if ($key2 != 'date') {
