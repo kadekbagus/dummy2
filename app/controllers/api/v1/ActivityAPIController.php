@@ -3187,6 +3187,8 @@ class ActivityAPIController extends ControllerAPI
                     $columns = array_merge($columns, [$activityKey => Config::get('orbit.activity_columns.'.$activityKey)]);
                     $activityKeys[] = strtolower(str_replace(' ', '_', $activityKey));
                 }
+
+                $summary['Filter by Others'] = $activityGroupSearch;
             }
 
             $activities = DB::table(DB::raw('(' . $sql . ') as a'));
