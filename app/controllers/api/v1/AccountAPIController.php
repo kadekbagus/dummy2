@@ -13,9 +13,9 @@ class AccountAPIController extends ControllerAPI
 {
     /** @var array The list columns. */
     protected $listColumns = [
-        'user_firstname' => [
+        'account_name' => [
             'title' => 'Account Name',
-            'sort_key' => 'user_firstname',
+            'sort_key' => 'account_name',
         ],
         'company_name' => [
             'title' => 'Company Name',
@@ -72,7 +72,7 @@ class AccountAPIController extends ControllerAPI
     {
         $tenantArray = [];
         foreach (Tenant::whereIn('merchant_id', $tenantIds)->orderBy('name')->get() as $row) {
-            $tenantArray[] = $row->tenant_at_mall;
+            $tenantArray[$row->merchant_id] = $row->tenant_at_mall;
         }
 
         return $tenantArray;
@@ -166,6 +166,19 @@ class AccountAPIController extends ControllerAPI
         // Join with 'user_details' (one to one)
         $pmpAccounts->join('user_details', 'users.user_id', '=', 'user_details.user_id');
 
+        // Join with 'campaign_account' (1 to 1)
+        $pmpAccounts->join('campaign_account', 'users.user_id', '=', 'campaign_account.user_id');
+
+        // Filter by Account Name
+        if (Input::get('account_name')) {
+            $pmpAccounts->where('account_name', 'LIKE', '%'.Input::get('account_name').'%');
+        }
+
+        // Filter by Company Name
+        if (Input::get('company_name')) {
+            $pmpAccounts->where('company_name', 'LIKE', '%'.Input::get('company_name').'%');
+        }
+
         // Filter by Location
         if (Input::get('location')) {
             $pmpAccounts->whereCity(Input::get('location'))->orWhere('country', Input::get('location'));
@@ -173,7 +186,7 @@ class AccountAPIController extends ControllerAPI
 
         // Filter by Status
         if (Input::get('status')) {
-            $pmpAccounts->whereStatus(Input::get('status'));
+            $pmpAccounts->where('campaign_account.status', Input::get('status'));
         }
 
         // Filter by Creation Date
@@ -190,11 +203,16 @@ class AccountAPIController extends ControllerAPI
         $allRows = clone $pmpAccounts;
         $data->total_records = $allRows->count();
 
-        $sortKey = Input::get('sortby', 'user_firstname');
+        $sortKey = Input::get('sortby', 'account_name');
 
         // Prevent ambiguous error
         if ($sortKey == 'created_at') {
             $sortKey = 'users.created_at';
+        }
+
+        // Prevent ambiguous error
+        if ($sortKey == 'status') {
+            $sortKey = 'campaign_account.status';
         }
 
         $pmpAccounts = $pmpAccounts->take(Input::get('take'))->skip(Input::get('skip'))
@@ -204,13 +222,20 @@ class AccountAPIController extends ControllerAPI
         $records = [];
         foreach ($pmpAccounts as $row) {
             $records[] = [
-                'user_firstname' => $row->campaignAccount->account_name,
+                'account_name' => $row->campaignAccount->account_name,
                 'company_name' => $row->company_name,
-                'city' => $row->userDetail->location,
+                'city' => $row->userDetail->city,
                 'tenants' => $this->getTenantAtMallArray($row->userTenants()->lists('merchant_id')),
                 'created_at' => $row->created_at->format('d F Y H:i:s'),
                 'status' => $row->campaignAccount->status,
                 'id' => $row->user_id,
+
+                // Needed by frontend for the edit page
+                'user_firstname' => $row->user_firstname,
+                'user_lastname ' => $row->user_lastname,
+                'user_email'     => $row->user_email,
+                'address_line1'  => $row->userDetail->address_line1,
+                'country'        => $row->userDetail->country,
             ];
         }
 
