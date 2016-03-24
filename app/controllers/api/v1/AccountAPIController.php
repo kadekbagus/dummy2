@@ -166,6 +166,9 @@ class AccountAPIController extends ControllerAPI
         // Join with 'user_details' (one to one)
         $pmpAccounts->join('user_details', 'users.user_id', '=', 'user_details.user_id');
 
+        // Join with 'campaign_account' (1 to 1)
+        $pmpAccounts->join('campaign_account', 'users.user_id', '=', 'campaign_account.user_id');
+
         // Filter by Location
         if (Input::get('location')) {
             $pmpAccounts->whereCity(Input::get('location'))->orWhere('country', Input::get('location'));
@@ -173,7 +176,7 @@ class AccountAPIController extends ControllerAPI
 
         // Filter by Status
         if (Input::get('status')) {
-            $pmpAccounts->whereStatus(Input::get('status'));
+            $pmpAccounts->where('campaign_account.status', Input::get('status'));
         }
 
         // Filter by Creation Date
