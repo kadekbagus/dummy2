@@ -229,6 +229,13 @@ class AccountAPIController extends ControllerAPI
                 'created_at' => $row->created_at->format('d F Y H:i:s'),
                 'status' => $row->campaignAccount->status,
                 'id' => $row->user_id,
+
+                // Needed by frontend for the edit page
+                'user_firstname' => $row->user_firstname,
+                'user_lastname ' => $row->user_lastname,
+                'user_email'     => $row->user_email,
+                'address_line1'  => $row->userDetail->address_line1,
+                'country'        => $row->userDetail->country,
             ];
         }
 
