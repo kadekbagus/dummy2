@@ -2587,6 +2587,7 @@ class MobileCIAPIController extends BaseCIController
                         $q->whereRaw("? between begin_date and end_date", [$mallTime]);
                     },
                     'couponsProfiling' => function($q) use ($userGender, $userAge, $mallTime, $user) {
+                        $prefix = DB::getTablePrefix();
                         $q->select("*", DB::raw('count(' . DB::getTablePrefix() . 'promotions.promotion_id) as quantity'))
                             ->join('issued_coupons', function ($join) {
                                 $join->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
@@ -4661,7 +4662,8 @@ class MobileCIAPIController extends BaseCIController
 
             if (empty($coupons)) {
                 // throw new Exception('Product id ' . $issued_coupon_id . ' not found');
-                return View::make('mobile-ci.404', array('page_title'=>Lang::get('mobileci.page_title.not_found'), 'retailer'=>$retailer, 'languages' => $languages));
+                // return View::make('mobile-ci.404', array('page_title'=>Lang::get('mobileci.page_title.not_found'), 'retailer'=>$retailer, 'languages' => $languages));
+                return Redirect::route('ci-tenants', array('coupon_id' => $promotion_id));
             }
 
             // set facebook share url

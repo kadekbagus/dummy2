@@ -200,6 +200,53 @@ class LoginAPIController extends ControllerAPI
 
             $menus = Config::get('orbit.menus.pmp');
 
+            $mall[] = null;
+            if ($user->role->role_name === 'Campaign Owner') {
+                $user_merchants = $user->campaignAccount->userMerchant;
+
+                $parent_id = '';
+                foreach ($user_merchants as $key => $user_merchant) {
+                    if ($user_merchant->object_type === 'mall') {
+                        $tmp_mall = $user_merchant->mall->load('timezone');
+                        if ($tmp_mall[0]->merchant_id !== $parent_id) {
+                            $mall[$key] = $tmp_mall;
+                        }
+                        $parent_id = $tmp_mall[0]->merchant_id;
+                    } elseif ($user_merchant->object_type === 'tenant') {
+                        $tenant = $user_merchant->tenant;
+                        if ($tenant->parent_id !== $parent_id) {
+                            $mall[$key] = $user_merchant->tenant->parent->load('timezone');
+                        }
+                        $parent_id = $tenant->parent_id;
+                    }
+                }
+            } elseif ($user->role->role_name === 'Campaign Employee') {
+                $user_merchants = $user->campaignAccount->parentCampaignAccount->userMerchant;
+
+                $parent_id = null;
+                foreach ($user_merchants as $key => $user_merchant) {
+                    if ($user_merchant->object_type === 'mall') {
+                        $tmp_mall = $user_merchant->mall->load('timezone');
+                        if ($tmp_mall[0]->merchant_id !== $parent_id) {
+                            $mall[$key] = $tmp_mall;
+                        }
+                        $parent_id = $tmp_mall[0]->merchant_id;
+                    } elseif ($user_merchant->object_type === 'tenant') {
+                        $tenant = $user_merchant->tenant;
+                        if ($tenant->parent_id !== $parent_id) {
+                            $mall[$key] = $user_merchant->tenant->parent->load('timezone');
+                        }
+                        $parent_id = $tenant->parent_id;
+                    }
+                }
+            } elseif ($user->role->role_name === 'Campaign Admin') {
+                $mall = Mall::excludeDeleted()
+                            ->with('timezone')
+                            ->get();
+            }
+            $user->mall = $mall;
+            unset($user->campaignAccount);
+
             // Successfull login
             $activity->setUser($user)
                      ->setActivityName('login_ok')

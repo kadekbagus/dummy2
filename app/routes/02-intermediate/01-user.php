@@ -15,6 +15,9 @@ Route::post('/app/v1/account/new', function()
 // Update a PMP Account
 Route::post('/app/v1/account/update', 'IntermediateAuthController@Account_postCreateUpdate');
 
+// ...
+Route::get('/app/v1/account/tenants/available', 'IntermediateAuthController@Account_getAvailableTenantsSelection');
+
 /**
  * Create new user
  */

@@ -2508,6 +2508,10 @@ class CouponAPIController extends ControllerAPI
                         } else {
                             $coupons->with('linkToTenants.mall');
                         }
+                    } elseif ($relation === 'campaignLocations') {
+                        $coupons->with('campaignLocations');
+                    } elseif ($relation === 'campaignLocations.mall') {
+                        $coupons->with('campaignLocations.mall');
                     } elseif ($relation === 'genders') {
                         $coupons->with('genders');
                     } elseif ($relation === 'ages') {

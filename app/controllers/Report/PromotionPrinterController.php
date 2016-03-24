@@ -55,7 +55,7 @@ class PromotionPrinterController extends DataPrinterController
         $beginDate = OrbitInput::get('begin_date');
         $endDate = OrbitInput::get('end_date');
 
-        $pageTitle = 'Promotions';
+        $pageTitle = 'Promotion List';
         switch ($mode) {
             case 'csv':
                 @header('Content-Description: File Transfer');
@@ -118,9 +118,9 @@ class PromotionPrinterController extends DataPrinterController
                 $count = 1;
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
 
-                    $startDateTime = $this->printDateTime($row->begin_date, $timezone, 'no');
-                    $endDateTime = $this->printDateTime($row->end_date, $timezone, 'no');
-                    $lastUpdateDate = $this->printDateTime($row->updated_at, $timezone, 'no');
+                    $startDateTime = date('d F Y H:i', strtotime($row->begin_date));
+                    $endDateTime = date('d F Y H:i', strtotime($row->end_date));
+                    $lastUpdateDate = $this->printDateTime($row->updated_at, $timezone, 'd F Y H:i:s');
 
                     printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
                         $count, $row->news_name, $startDateTime, $endDateTime, str_replace(', ', "\n", $row->campaign_location_names), $this->printUtf8($row->campaign_status), $lastUpdateDate);

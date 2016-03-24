@@ -66,6 +66,8 @@ class CRMSummaryReportPrinterController extends DataPrinterController
             $builder = ActivityAPIController::create('raw')->setReturnQuery(TRUE)->getCRMSummaryReport();      
         }
 
+        $summary = $builder['summary'];
+
         $pageTitle = 'CRM Summary Report';
         switch ($mode) {
             case 'csv':
@@ -76,6 +78,15 @@ class CRMSummaryReportPrinterController extends DataPrinterController
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '', '');
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", 'CRM Summary', '', '', '', '', '', '', '', '', '');
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '', '');
+
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '', '', '');
+
+                if ($summary) {
+                    foreach ($summary as $field => $value) {
+                        echo $field.',';
+                        echo $value."\r\n";
+                    }
+                }
 
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '', '', '');
 
