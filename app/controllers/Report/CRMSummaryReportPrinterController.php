@@ -66,6 +66,8 @@ class CRMSummaryReportPrinterController extends DataPrinterController
             $builder = ActivityAPIController::create('raw')->setReturnQuery(TRUE)->getCRMSummaryReport();      
         }
 
+        $summary = $builder['summary'];
+
         $pageTitle = 'CRM Summary Report';
         switch ($mode) {
             case 'csv':

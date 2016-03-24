@@ -3159,6 +3159,8 @@ class ActivityAPIController extends ControllerAPI
                             GROUP BY comp_date, 2
                         ) dt
                     GROUP BY dt.comp_date";
+
+            $summary = [];
             
             // Filter with activity names (activity_name_long)
             $longActivityNameWhere = '';
@@ -3169,6 +3171,8 @@ class ActivityAPIController extends ControllerAPI
                         $activityKeys[] = strtolower(str_replace(' ', '_', $key));
                     }
                 }
+
+                $summary['Filter by Activity'] = implode(', ', $activityGroups);
             }
 
             $columns = [];
@@ -3200,7 +3204,8 @@ class ActivityAPIController extends ControllerAPI
 
             if ($this->returnQuery) {
                 return [
-                    'responses' => $result
+                    'responses' => $result,
+                    'summary'   => $summary,
                 ];
             }
 
