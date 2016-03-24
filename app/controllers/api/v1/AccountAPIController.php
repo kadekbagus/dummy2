@@ -171,12 +171,12 @@ class AccountAPIController extends ControllerAPI
 
         // Filter by Account Name
         if (Input::get('account_name')) {
-            $pmpAccounts->whereAccountName(Input::get('account_name'));
+            $pmpAccounts->where('account_name', 'LIKE', '%'.Input::get('account_name').'%');
         }
 
         // Filter by Company Name
         if (Input::get('company_name')) {
-            $pmpAccounts->whereCompanyName(Input::get('company_name'));
+            $pmpAccounts->where('company_name', 'LIKE', '%'.Input::get('company_name').'%');
         }
 
         // Filter by Location
