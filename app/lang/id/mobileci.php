@@ -39,6 +39,7 @@ return array(
         'lucky_draws'       => 'UNDIAN BERHADIAH',
         'my_messages'       => 'PESAN SAYA',
         'my_message'        => 'PESAN SAYA',
+        'redemption_places' => 'TEMPAT PENUKARAN',
     ),
 
     'widgets'   => array(

@@ -36,6 +36,14 @@ Route::get('/api/v1/tenant/{search}', function()
 })->where('search', '(list|search)');
 
 /**
+ * List of tenant for campaign
+ */
+Route::get('/api/v1/tenant/campaignlocation', function()
+{
+    return TenantAPIController::create()->getCampaignLocation();
+});
+
+/**
  * Tenant city list
  */
 Route::get('/api/v1/tenant/city', function()
