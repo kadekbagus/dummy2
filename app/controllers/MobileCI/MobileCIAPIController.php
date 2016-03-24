@@ -2594,7 +2594,7 @@ class MobileCIAPIController extends BaseCIController
                                 $join->where('issued_coupons.status', '=', 'active');
                             })
                             ->where('promotions.coupon_validity_in_date', '>=', $mallTime)
-                            ->where('issued_coupons.user_id', $user->user_id)
+                            ->where('issued_coupons.user_id', $user->user_id);
 
                         if ($userGender !== null) {
                             $q->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
