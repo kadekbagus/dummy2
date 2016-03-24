@@ -21,6 +21,11 @@ Route::post('/api/v1/account/update', function()
     return AccountAPIController::create()->postCreateUpdate();
 });
 
+Route::get('/api/v1/account/tenants/available', function()
+{
+    return AccountAPIController::create()->getAvailableTenantsSelection();
+});
+
 /**
  * Create new user
  */

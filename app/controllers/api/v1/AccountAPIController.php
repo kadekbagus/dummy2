@@ -54,6 +54,20 @@ class AccountAPIController extends ControllerAPI
         return $this->render(200);
     }
 
+    public function getAvailableTenantsSelection()
+    {
+        $takenMerchantIds = UserMerchant::whereObjectType('tenant')->lists('merchant_id');
+        $tenants = Tenant::whereNotIn('merchant_id', $takenMerchantIds)->get();
+        
+        $selection = [];
+        foreach ($tenants as $tenant) {
+            $selection[$tenant->merchant_id] = $tenant->tenant_at_mall;
+        }
+
+        $this->response->data = ['available_tenants' => (object) $selection];
+        return $this->render(200);
+    }
+
     protected function getTenantAtMallArray($tenantIds)
     {
         $tenantArray = [];
