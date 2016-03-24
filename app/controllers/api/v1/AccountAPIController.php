@@ -54,6 +54,20 @@ class AccountAPIController extends ControllerAPI
         return $this->render(200);
     }
 
+    public function getAvailableTenantsSelection()
+    {
+        $takenMerchantIds = UserMerchant::whereObjectType('tenant')->lists('merchant_id');
+        $tenants = Tenant::whereNotIn('merchant_id', $takenMerchantIds)->get();
+        
+        $selection = [];
+        foreach ($tenants as $tenant) {
+            $selection[$tenant->merchant_id] = $tenant->tenant_at_mall;
+        }
+
+        $this->response->data = ['available_tenants' => (object) $selection];
+        return $this->render(200);
+    }
+
     protected function getTenantAtMallArray($tenantIds)
     {
         $tenantArray = [];
@@ -107,21 +121,11 @@ class AccountAPIController extends ControllerAPI
         $userDetail->country = Input::get('country');
         $userDetail->save();
 
-        // Save to employees table (1 to 1)
-        $employee = ($this->id) ? Employee::whereUserId($user->user_id)->first() : new Employee;
-        $employee->user_id = $user->user_id;
-        $employee->position = Input::get('position');
-
-        if ( ! $this->id) {
-            $employee->status = 'active';
-        }
-
-        $employee->save();
-
         // Save to campaign_account table (1 to 1)
         $campaignAccount = ($this->id) ? CampaignAccount::whereUserId($user->user_id)->first() : new CampaignAccount;
         $campaignAccount->user_id = $user->user_id;
         $campaignAccount->account_name = Input::get('account_name');
+        $campaignAccount->position = Input::get('position');
         $campaignAccount->status = Input::get('status');
         $campaignAccount->save();
 
