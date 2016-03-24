@@ -224,7 +224,7 @@ class AccountAPIController extends ControllerAPI
             $records[] = [
                 'account_name' => $row->campaignAccount->account_name,
                 'company_name' => $row->company_name,
-                'city' => $row->userDetail->location,
+                'city' => $row->userDetail->city,
                 'tenants' => $this->getTenantAtMallArray($row->userTenants()->lists('merchant_id')),
                 'created_at' => $row->created_at->format('d F Y H:i:s'),
                 'status' => $row->campaignAccount->status,
