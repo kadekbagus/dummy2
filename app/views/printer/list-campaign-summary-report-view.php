@@ -151,8 +151,8 @@
                 <td>
                     <?php
                         if ($startDate != '' && $endDate != ''){
-                            $startDateRangeMallTime = $this->printDateTime($startDate, $timezone, 'd M Y');
-                            $endDateRangeMallTime = $this->printDateTime($endDate, $timezone, 'd M Y');
+                            $startDateRangeMallTime = $this->printDateTime($startDate, $timezone, 'd F Y');
+                            $endDateRangeMallTime = $this->printDateTime($endDate, $timezone, 'd F Y');
                             $dateRange = $startDateRangeMallTime . ' - ' . $endDateRangeMallTime;
                             if ($startDateRangeMallTime === $endDateRangeMallTime) {
                                 $dateRange = $startDateRangeMallTime;
