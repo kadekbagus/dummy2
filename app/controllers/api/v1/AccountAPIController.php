@@ -13,9 +13,9 @@ class AccountAPIController extends ControllerAPI
 {
     /** @var array The list columns. */
     protected $listColumns = [
-        'user_firstname' => [
+        'account_name' => [
             'title' => 'Account Name',
-            'sort_key' => 'user_firstname',
+            'sort_key' => 'account_name',
         ],
         'company_name' => [
             'title' => 'Company Name',
@@ -203,7 +203,7 @@ class AccountAPIController extends ControllerAPI
         $allRows = clone $pmpAccounts;
         $data->total_records = $allRows->count();
 
-        $sortKey = Input::get('sortby', 'user_firstname');
+        $sortKey = Input::get('sortby', 'account_name');
 
         // Prevent ambiguous error
         if ($sortKey == 'created_at') {
@@ -222,7 +222,7 @@ class AccountAPIController extends ControllerAPI
         $records = [];
         foreach ($pmpAccounts as $row) {
             $records[] = [
-                'user_firstname' => $row->campaignAccount->account_name,
+                'account_name' => $row->campaignAccount->account_name,
                 'company_name' => $row->company_name,
                 'city' => $row->userDetail->location,
                 'tenants' => $this->getTenantAtMallArray($row->userTenants()->lists('merchant_id')),
