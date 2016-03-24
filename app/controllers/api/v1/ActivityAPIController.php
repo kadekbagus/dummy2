@@ -3159,6 +3159,8 @@ class ActivityAPIController extends ControllerAPI
                             GROUP BY comp_date, 2
                         ) dt
                     GROUP BY dt.comp_date";
+
+            $summary = [];
             
             // Filter with activity names (activity_name_long)
             $longActivityNameWhere = '';
@@ -3169,6 +3171,8 @@ class ActivityAPIController extends ControllerAPI
                         $activityKeys[] = strtolower(str_replace(' ', '_', $key));
                     }
                 }
+
+                $summary['Filter by Activity'] = implode(', ', $activityGroups);
             }
 
             $columns = [];
@@ -3183,6 +3187,8 @@ class ActivityAPIController extends ControllerAPI
                     $columns = array_merge($columns, [$activityKey => Config::get('orbit.activity_columns.'.$activityKey)]);
                     $activityKeys[] = strtolower(str_replace(' ', '_', $activityKey));
                 }
+
+                $summary['Filter by Others'] = $activityGroupSearch;
             }
 
             $activities = DB::table(DB::raw('(' . $sql . ') as a'));
@@ -3198,9 +3204,12 @@ class ActivityAPIController extends ControllerAPI
             
             $records = [];
 
+            $summary['Date range'] = $mallbegindate.' - '.$mallenddate;
+
             if ($this->returnQuery) {
                 return [
-                    'responses' => $result
+                    'responses' => $result,
+                    'summary'   => $summary,
                 ];
             }
 

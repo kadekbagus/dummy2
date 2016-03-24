@@ -9,6 +9,8 @@ namespace Report;
  */
 trait ExportControllerTrait
 {
+    protected $summary;
+
     public function getList()
     {
         // Call a parent controller method to prepare the data
@@ -16,6 +18,9 @@ trait ExportControllerTrait
 
         // You must set $pageTitle in your controller
         $this->data->pageTitle = $this->pageTitle;
+
+        // Make the summary data (top-left)
+        $this->data->summary = $this->makeSummary();
 
         if (\Input::get('export') == 'csv') {
             return $this->getCsv();
@@ -75,5 +80,10 @@ trait ExportControllerTrait
         }
 
         return $csv;
+    }
+
+    protected function makeSummary()
+    {
+        return [];
     }
 }
