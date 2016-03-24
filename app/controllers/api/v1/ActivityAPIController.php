@@ -3204,6 +3204,8 @@ class ActivityAPIController extends ControllerAPI
             
             $records = [];
 
+            $summary['Date range'] = $mallbegindate.' - '.$mallenddate;
+
             if ($this->returnQuery) {
                 return [
                     'responses' => $result,
