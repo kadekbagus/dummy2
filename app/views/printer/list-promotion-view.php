@@ -219,7 +219,7 @@
         <tbody>
             <?php $count = 1; while ($row = $statement->fetch(PDO::FETCH_OBJ)) : ?>
                 <tr class="{{ $rowCounter % 2 === 0 ? 'zebra' : '' }}">
-                    <td><?php echo $count++; ?></td>
+                    <td><?php echo $count; ?></td>
                     <td><?php echo $me->printUtf8($row->news_name); ?></td>
                     <td><?php echo $me->printDateTime($row->begin_date, 'UTC', 'd F Y'); ?></td>
                     <td><?php echo $me->printDateTime($row->end_date, 'UTC', 'd F Y'); ?></td>
@@ -234,7 +234,7 @@
                     <td><?php echo ($row->campaign_status); ?></td>
                     <td><?php echo $me->printDateTime($row->updated_at, 'UTC', 'd F Y'); ?></td>
                 </tr>
-            <?php  $count++; endwhile; ?>
+            <?php $count++; endwhile; ?>
         </tbody>
     </table>
 </div>
