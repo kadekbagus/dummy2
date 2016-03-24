@@ -124,8 +124,8 @@ class NewsPrinterController extends DataPrinterController
                         printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
                             $count,
                             $row->name_english,
-                            $this->printDateTime($row->begin_date, $timezone, 'd F Y H:i')
-                            $this->printDateTime($row->end_date, $timezone, 'd F Y H:i')
+                            $this->printDateTime($row->begin_date, $timezone, 'd F Y H:i'),
+                            $this->printDateTime($row->end_date, $timezone, 'd F Y H:i'),
                             str_replace(', ', "\n", $row->campaign_location_names),
                             $row->campaign_status,
                             $this->printDateTime($row->updated_at, $timezone, 'd F Y H:i:s')
