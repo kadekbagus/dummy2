@@ -169,6 +169,16 @@ class AccountAPIController extends ControllerAPI
         // Join with 'campaign_account' (1 to 1)
         $pmpAccounts->join('campaign_account', 'users.user_id', '=', 'campaign_account.user_id');
 
+        // Filter by Account Name
+        if (Input::get('account_name')) {
+            $pmpAccounts->whereAccountName(Input::get('account_name'));
+        }
+
+        // Filter by Company Name
+        if (Input::get('company_name')) {
+            $pmpAccounts->whereCompanyName(Input::get('company_name'));
+        }
+
         // Filter by Location
         if (Input::get('location')) {
             $pmpAccounts->whereCity(Input::get('location'))->orWhere('country', Input::get('location'));
