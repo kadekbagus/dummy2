@@ -118,8 +118,8 @@ class PromotionPrinterController extends DataPrinterController
                 $count = 1;
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
 
-                    $startDateTime = $this->printDateTime($row->begin_date, $timezone, 'd F Y H:i');
-                    $endDateTime = $this->printDateTime($row->end_date, $timezone, 'd F Y H:i');
+                    $startDateTime = date('d F Y H:i', strtotime($row->begin_date));
+                    $endDateTime = date('d F Y H:i', strtotime($row->end_date));
                     $lastUpdateDate = $this->printDateTime($row->updated_at, $timezone, 'd F Y H:i:s');
 
                     printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
