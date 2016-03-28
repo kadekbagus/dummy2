@@ -3173,7 +3173,7 @@ class ActivityAPIController extends ControllerAPI
                     }
                 }
 
-                $summary['Filter by Activity'] = implode(', ', $activityGroups);
+                $summary['Filter by Activities'] = implode(', ', $activityGroups);
             }
 
             $columns = [];
