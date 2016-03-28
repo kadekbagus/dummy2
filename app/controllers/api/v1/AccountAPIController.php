@@ -74,6 +74,10 @@ class AccountAPIController extends ControllerAPI
 
     protected function getTenantAtMallArray($tenantIds)
     {
+        if ( ! $tenantIds) {
+            return [];
+        }
+
         $tenantArray = [];
         foreach (Tenant::whereIn('merchant_id', $tenantIds)->orderBy('name')->get() as $row) {
             $tenantArray[] = ['id' => $row->merchant_id, 'name' => $row->tenant_at_mall];
@@ -110,6 +114,11 @@ class AccountAPIController extends ControllerAPI
 
         if ( ! $this->id) {
             $user->status = 'active';
+
+            // Get role ID of "Campaign Owner"
+            $roleId = Role::whereRoleName('Campaign Owner')->first()->role_id;
+
+            $user->user_role_id = $roleId;
         }
 
         $user->save();
