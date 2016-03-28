@@ -153,6 +153,16 @@ class AccountAPIController extends ControllerAPI
             $userMerchant->object_type = 'tenant';
             $userMerchant->save();
         }
+
+        if ( ! $this->id) {
+            // Save to "settings" table
+            $setting = new Setting;
+            $setting->setting_name = 'agreement_accepted_pmp_account';
+            $setting->setting_value = 'false';
+            $setting->object_id = $user->user_id;
+            $setting->object_type = 'user';
+            $setting->save();
+        }
         
         $data = new stdClass();
         $data->id = $user->user_id;
