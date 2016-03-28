@@ -278,7 +278,7 @@ class AccountAPIController extends ControllerAPI
             'company_name'   => 'required',
             'address_line1'  => 'required',
             'city'           => 'required',
-            'country'        => 'required',
+            'country_id'     => 'required',
             'merchant_ids'   => 'required|array',
         ];
 
