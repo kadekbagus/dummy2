@@ -3217,7 +3217,9 @@ class ActivityAPIController extends ControllerAPI
             
             $records = [];
 
-            $summary['Date Range'] = date('d F Y', strtotime($mallbegindate)).' - '.date('d F Y', strtotime($mallenddate));
+            $summary['Activity Date'] = ($mallbegindate == $mallenddate)
+                ? date('d F Y', strtotime($mallbegindate))
+                : date('d F Y', strtotime($mallbegindate)).' - '.date('d F Y', strtotime($mallenddate));
 
             if ($this->returnQuery) {
                 return [
