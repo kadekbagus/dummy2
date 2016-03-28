@@ -74,9 +74,13 @@ class AccountAPIController extends ControllerAPI
 
     protected function getTenantAtMallArray($tenantIds)
     {
+        if ( ! $tenantIds) {
+            return [];
+        }
+
         $tenantArray = [];
         foreach (Tenant::whereIn('merchant_id', $tenantIds)->orderBy('name')->get() as $row) {
-            $tenantArray[] = ['id' => $row->merchant_id, 'name' => $row->tenant_at_mall];
+            $tenantArray[] = ['id' => $row->merchant_id, 'name' => $row->tenant_at_mall, 'status' => $row->status];
         }
 
         return $tenantArray;
@@ -110,6 +114,11 @@ class AccountAPIController extends ControllerAPI
 
         if ( ! $this->id) {
             $user->status = 'active';
+
+            // Get role ID of "Campaign Owner"
+            $roleId = Role::whereRoleName('Campaign Owner')->first()->role_id;
+
+            $user->user_role_id = $roleId;
         }
 
         $user->save();
@@ -143,6 +152,16 @@ class AccountAPIController extends ControllerAPI
             $userMerchant->merchant_id = $merchantId;
             $userMerchant->object_type = 'tenant';
             $userMerchant->save();
+        }
+
+        if ( ! $this->id) {
+            // Save to "settings" table
+            $setting = new Setting;
+            $setting->setting_name = 'agreement_accepted_pmp_account';
+            $setting->setting_value = 'false';
+            $setting->object_id = $user->user_id;
+            $setting->object_type = 'user';
+            $setting->save();
         }
         
         $data = new stdClass();
@@ -212,6 +231,10 @@ class AccountAPIController extends ControllerAPI
         $allRows = clone $pmpAccounts;
         $data->total_records = $allRows->count();
 
+        if ( ! Input::get('export')) {
+            $pmpAccounts->take(Input::get('take'))->skip(Input::get('skip'));
+        }
+
         $sortKey = Input::get('sortby', 'account_name');
 
         // Prevent ambiguous error
@@ -224,9 +247,7 @@ class AccountAPIController extends ControllerAPI
             $sortKey = 'campaign_account.status';
         }
 
-        $pmpAccounts = $pmpAccounts->take(Input::get('take'))->skip(Input::get('skip'))
-            ->orderBy($sortKey, Input::get('sortmode', 'asc'))
-            ->get();
+        $pmpAccounts = $pmpAccounts->orderBy($sortKey, Input::get('sortmode', 'asc'))->get();
 
         $records = [];
         foreach ($pmpAccounts as $row) {

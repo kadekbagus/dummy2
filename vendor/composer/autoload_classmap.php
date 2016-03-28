@@ -37,6 +37,8 @@ return array(
     'AlterTableObjectsAddColumnObjectOrder' => $baseDir . '/app/database/migrations/2015_10_20_100000_alter_table_objects_add_column_object_order.php',
     'AlterTableOrbsPromotionsAddColumnIsAllEmployee' => $baseDir . '/app/database/migrations/2015_12_04_080452_alter_table_orbs_promotions_add_column_is_all_employee.php',
     'AlterTablePromotionAddColumnIsReedemedAtCs' => $baseDir . '/app/database/migrations/2015_11_24_055009_alter_table_promotion_add_column_is_reedemed_at_cs.php',
+    'AlterTablePromotionRetailerAddFieldObjectType' => $baseDir . '/app/database/migrations/2016_03_28_071112_alter_table_promotion_retailer_add_field_object_type.php',
+    'AlterTablePromotionRetailerRedeemAddFieldObjectType' => $baseDir . '/app/database/migrations/2016_03_28_073016_alter_table_promotion_retailer_redeem_add_field_object_type.php',
     'AlterTablePromotionRulesAddFieldRuleBeginDateRuleEndDate' => $baseDir . '/app/database/migrations/2015_12_29_042352_alter_table_promotion_rules_add_field_rule_begin_date_rule_end_date.php',
     'AlterTablePromotionsAddFieldCampaignStatusId' => $baseDir . '/app/database/migrations/2016_02_25_060121_alter_table_promotions_add_field_campaign_status_id.php',
     'AlterTablePromotionsAddFieldIsAllGenderIsAllAgeIsPopup' => $baseDir . '/app/database/migrations/2015_12_29_042351_alter_table_promotions_add_field_is_all_gender_is_all_age_is_popup.php',
