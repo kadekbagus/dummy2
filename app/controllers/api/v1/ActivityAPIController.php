@@ -2953,6 +2953,7 @@ class ActivityAPIController extends ControllerAPI
      *
      * @author kadek <kadek@dominopos.com>
      * @author Qosdil A. <qosdil@dominopos.com>
+     * @author Shelgi <shelgi@dominopos.com>
      *
      * List Of Parameters
      * ------------------
@@ -3172,7 +3173,7 @@ class ActivityAPIController extends ControllerAPI
                     }
                 }
 
-                $summary['Filter by Activity'] = implode(', ', $activityGroups);
+                $summary['Filter by Activities'] = implode(', ', $activityGroups);
             }
 
             $columns = [];
@@ -3183,19 +3184,22 @@ class ActivityAPIController extends ControllerAPI
                 $lowerActivityGroupSearch = strtolower($activityGroupSearch);
                 $lowerActivityColumns = array_map('strtolower', Config::get('orbit.activity_columns'));
                 $activityKey = array_search($lowerActivityGroupSearch, $lowerActivityColumns);
+                
                 if ($activityKey) {
                     $columns = array_merge($columns, [$activityKey => Config::get('orbit.activity_columns.'.$activityKey)]);
                     $activityKeys[] = strtolower(str_replace(' ', '_', $activityKey));
                 }
-
+                
                 $summary['Filter by Others'] = $activityGroupSearch;
             }
 
-            $activities = DB::table(DB::raw('(' . $sql . ') as a'));
-
             if ($activityKeys) {
-                $keys = 'date, ' . implode(", ", $activityKeys);
-                $activities->selectRaw($keys);
+                //can't filter by "&" column, so it's must be replace to "and"
+                $keys = 'date, ' . str_replace("view_prizes_and_winning_numbers", "view_prizes_and_winning_numbers AS 'view_prizes_&_winning_numbers'", implode(", ", $activityKeys));
+                $sql = str_replace('view_prizes_&_winning_numbers', 'view_prizes_and_winning_numbers', $sql);
+                $activities = DB::table(DB::raw('(' . $sql . ') as a'))->selectRaw($keys);
+            } else {
+                $activities = DB::table(DB::raw('(' . $sql . ') as a'));
             }
 
             $activities->orderBy('date', 'dsc');
@@ -3204,7 +3208,7 @@ class ActivityAPIController extends ControllerAPI
             
             $records = [];
 
-            $summary['Date range'] = $mallbegindate.' - '.$mallenddate;
+            $summary['Date Range'] = date('d F Y', strtotime($mallbegindate)).' - '.date('d F Y', strtotime($mallenddate));
 
             if ($this->returnQuery) {
                 return [
