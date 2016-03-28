@@ -2953,6 +2953,7 @@ class ActivityAPIController extends ControllerAPI
      *
      * @author kadek <kadek@dominopos.com>
      * @author Qosdil A. <qosdil@dominopos.com>
+     * @author Shelgi <shelgi@dominopos.com>
      *
      * List Of Parameters
      * ------------------
@@ -3180,22 +3181,17 @@ class ActivityAPIController extends ControllerAPI
             // e.g. 'Email sign up'
             // It's case insensitive
             if ($activityGroupSearch) {
-                $lowerActivityGroupSearch = strtolower($activityGroupSearch);
-                $lowerActivityColumns = array_map('strtolower', Config::get('orbit.activity_columns'));
-                $activityKey = array_search($lowerActivityGroupSearch, $lowerActivityColumns);
-                if ($activityKey) {
-                    $columns = array_merge($columns, [$activityKey => Config::get('orbit.activity_columns.'.$activityKey)]);
-                    $activityKeys[] = strtolower(str_replace(' ', '_', $activityKey));
-                }
-
+                $activityKeys[] = strtolower(str_replace(' ', '_', $activityGroupSearch));
                 $summary['Filter by Others'] = $activityGroupSearch;
             }
-
-            $activities = DB::table(DB::raw('(' . $sql . ') as a'));
-
+            
             if ($activityKeys) {
-                $keys = 'date, ' . implode(", ", $activityKeys);
-                $activities->selectRaw($keys);
+                //can't filter by "&" column, so it's must be replace to "and"
+                $keys = 'date, ' . str_replace("view_prizes_and_winning_numbers", "view_prizes_and_winning_numbers AS 'view_prizes_&_winning_numbers'", implode(", ", $activityKeys));
+                $sql = str_replace('view_prizes_&_winning_numbers', 'view_prizes_and_winning_numbers', $sql);
+                $activities = DB::table(DB::raw('(' . $sql . ') as a'))->selectRaw($keys);    
+            } else {
+                $activities = DB::table(DB::raw('(' . $sql . ') as a'));
             }
 
             $activities->orderBy('date', 'dsc');
@@ -3236,17 +3232,22 @@ class ActivityAPIController extends ControllerAPI
         } catch (QueryException $e) {
             Event::fire('orbit.dashboard.getcrmsummaryreport.query.error', array($this, $e));
 
-            $this->response->code = $e->getCode();
-            $this->response->status = 'error';
-
-            // Only shows full query error when we are in debug mode
-            if (Config::get('app.debug')) {
-                $this->response->message = $e->getMessage();
+            if ($e->getCode() === '42S22') {
+                $result = null;
             } else {
-                $this->response->message = Lang::get('validation.orbit.queryerror');
+                $this->response->code = $e->getCode();
+                $this->response->status = 'error';
+
+                // Only shows full query error when we are in debug mode
+                if (Config::get('app.debug')) {
+                    $this->response->message = $e->getMessage();
+                } else {
+                    $this->response->message = Lang::get('validation.orbit.queryerror');
+                }
+                $this->response->data = null;
+                $httpCode = 500;
             }
-            $this->response->data = null;
-            $httpCode = 500;
+            
         } catch (Exception $e) {
             $httpCode = 500;
             Event::fire('orbit.dashboard.getcrmsummaryreport.general.exception', array($this, $e));
