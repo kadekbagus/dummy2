@@ -3181,15 +3181,23 @@ class ActivityAPIController extends ControllerAPI
             // e.g. 'Email sign up'
             // It's case insensitive
             if ($activityGroupSearch) {
-                $activityKeys[] = strtolower(str_replace(' ', '_', $activityGroupSearch));
+                $lowerActivityGroupSearch = strtolower($activityGroupSearch);
+                $lowerActivityColumns = array_map('strtolower', Config::get('orbit.activity_columns'));
+                $activityKey = array_search($lowerActivityGroupSearch, $lowerActivityColumns);
+                
+                if ($activityKey) {
+                    $columns = array_merge($columns, [$activityKey => Config::get('orbit.activity_columns.'.$activityKey)]);
+                    $activityKeys[] = strtolower(str_replace(' ', '_', $activityKey));
+                }
+                
                 $summary['Filter by Others'] = $activityGroupSearch;
             }
-            
+
             if ($activityKeys) {
                 //can't filter by "&" column, so it's must be replace to "and"
                 $keys = 'date, ' . str_replace("view_prizes_and_winning_numbers", "view_prizes_and_winning_numbers AS 'view_prizes_&_winning_numbers'", implode(", ", $activityKeys));
                 $sql = str_replace('view_prizes_&_winning_numbers', 'view_prizes_and_winning_numbers', $sql);
-                $activities = DB::table(DB::raw('(' . $sql . ') as a'))->selectRaw($keys);    
+                $activities = DB::table(DB::raw('(' . $sql . ') as a'))->selectRaw($keys);
             } else {
                 $activities = DB::table(DB::raw('(' . $sql . ') as a'));
             }
@@ -3232,22 +3240,17 @@ class ActivityAPIController extends ControllerAPI
         } catch (QueryException $e) {
             Event::fire('orbit.dashboard.getcrmsummaryreport.query.error', array($this, $e));
 
-            if ($e->getCode() === '42S22') {
-                $result = null;
-            } else {
-                $this->response->code = $e->getCode();
-                $this->response->status = 'error';
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
 
-                // Only shows full query error when we are in debug mode
-                if (Config::get('app.debug')) {
-                    $this->response->message = $e->getMessage();
-                } else {
-                    $this->response->message = Lang::get('validation.orbit.queryerror');
-                }
-                $this->response->data = null;
-                $httpCode = 500;
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
             }
-            
+            $this->response->data = null;
+            $httpCode = 500;
         } catch (Exception $e) {
             $httpCode = 500;
             Event::fire('orbit.dashboard.getcrmsummaryreport.general.exception', array($this, $e));
