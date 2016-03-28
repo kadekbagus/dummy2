@@ -64,7 +64,7 @@ class PromotionPrinterController extends DataPrinterController
 
                 printf("%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '');
                 printf("%s,%s,%s,%s,%s,%s\n", '', $pageTitle, '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s\n", '', 'Total Promotions', $totalRec, '', '', '');
+                printf("%s,%s,%s,%s,%s,%s\n", '', 'Total Promotions', round($totalRec), '', '', '');
 
                 // Filtering
                 if ($promotionName != '') {

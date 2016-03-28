@@ -137,10 +137,15 @@
                 <tr>
                     @foreach (array_keys($columns) as $fieldName)
                         <td>
-                            @if ( ! is_array($row[$fieldName]))
-                                {{ $row[$fieldName] }}
+                            @if ($fieldName == 'tenants')
+                                @foreach ($row['tenants'] as $tenant)
+                                    {{ $tenant['name'] }}<br/>
+                                @endforeach
+                            @elseif ($fieldName == 'city')
+                                <?php $countryName = ($row['country']->name) ? ', '.$row['country']->name : '' ?>
+                                {{ $row['city'].$countryName }}
                             @else
-                                {{ implode('<br/>', $row[$fieldName]) }}
+                                {{ $row[$fieldName] }}
                             @endif
                         </td>
                     @endforeach

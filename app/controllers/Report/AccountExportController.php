@@ -8,6 +8,24 @@ class AccountExportController extends \AccountAPIController
 
     protected $pageTitle = 'PMP Accounts';
 
+    protected function handleRowValue($row, $fieldName)
+    {
+        $csv = '';
+
+        if ($fieldName == 'tenants') {
+            foreach ($row['tenants'] as $tenant) {
+                $csv .= $tenant['name'].' -- ';
+            }
+        } elseif ($fieldName == 'city') {
+            $countryName = ($row['country']->name) ? ', '.$row['country']->name : '';
+            $csv .= $row['city'].$countryName;  
+        } else {
+            $csv .= $row[$fieldName];
+        }
+
+        return $csv;
+    }
+
     protected function makeSummary()
     {
         $summary = ['Total records' => count($this->data->records)];

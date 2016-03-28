@@ -61,10 +61,14 @@ class AccountAPIController extends ControllerAPI
         
         $selection = [];
         foreach ($tenants as $tenant) {
-            $selection[$tenant->merchant_id] = $tenant->tenant_at_mall;
+            $selection[] = [
+                'id'     => $tenant->merchant_id,
+                'name'   => $tenant->tenant_at_mall,
+                'status' => $tenant->status,
+            ];
         }
 
-        $this->response->data = ['available_tenants' => (object) $selection];
+        $this->response->data = ['available_tenants' => $selection];
         return $this->render(200);
     }
 
@@ -169,6 +173,11 @@ class AccountAPIController extends ControllerAPI
         // Join with 'campaign_account' (1 to 1)
         $pmpAccounts->join('campaign_account', 'users.user_id', '=', 'campaign_account.user_id');
 
+        // Join with 'countries' (1 to 1)
+        if (Input::get('location')) {
+            $pmpAccounts->leftJoin('countries', 'user_details.country_id', '=', 'countries.country_id');
+        }
+
         // Filter by Account Name
         if (Input::get('account_name')) {
             $pmpAccounts->where('account_name', 'LIKE', '%'.Input::get('account_name').'%');
@@ -181,7 +190,7 @@ class AccountAPIController extends ControllerAPI
 
         // Filter by Location
         if (Input::get('location')) {
-            $pmpAccounts->whereCity(Input::get('location'))->orWhere('country', Input::get('location'));
+            $pmpAccounts->whereCity(Input::get('location'))->orWhere('countries.name', '=', Input::get('location'));
         }
 
         // Filter by Status
@@ -238,7 +247,7 @@ class AccountAPIController extends ControllerAPI
                 'address_line1'  => $row->userDetail->address_line1,
                 'province'       => $row->userDetail->province,
                 'postal_code'    => $row->userDetail->postal_code,
-                'country'        => (object) ['id' => $row->userDetail->country_id, 'name' => $row->userDetail->country],
+                'country'        => (object) ['id' => $row->userDetail->country_id, 'name' => @$row->userDetail->userCountry->name],
             ];
         }
 
@@ -254,7 +263,6 @@ class AccountAPIController extends ControllerAPI
             'user_firstname' => Input::get('user_firstname'),
             'user_lastname'  => Input::get('user_lastname'),
             'user_email'     => Input::get('user_email'),
-            'user_password'  => Input::get('user_password'),
             'account_name'   => Input::get('account_name'),
             'status'         => Input::get('status'),
             'company_name'   => Input::get('company_name'),
@@ -266,13 +274,14 @@ class AccountAPIController extends ControllerAPI
 
         if (Input::get('id')) {
             $fields['id'] = Input::get('id');
+        } else {
+            $fields['user_password'] = Input::get('user_password');
         }
 
         $rules = [
             'user_firstname' => 'required',
             'user_lastname'  => 'required',
             'user_email'     => 'required|email',
-            'user_password'  => 'required',
             'account_name'   => 'required',
             'status'         => 'in:active,inactive',
             'company_name'   => 'required',
@@ -284,6 +293,8 @@ class AccountAPIController extends ControllerAPI
 
         if (Input::get('id')) {
             $rules['id'] = 'exists:users,user_id';
+        } else {
+            $rules['user_password'] = 'required';
         }
 
         $validator = Validator::make($fields, $rules);

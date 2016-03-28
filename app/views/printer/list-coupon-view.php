@@ -119,7 +119,7 @@
         <tr>
             <td>Total Coupons</td>
             <td>:</td>
-            <td><strong><?php echo number_format($totalRec, 0, '.', '.'); ?></strong></td>
+            <td><strong><?php echo number_format($totalRec); ?></strong></td>
         </tr>
 
         <!-- Filtering -->
