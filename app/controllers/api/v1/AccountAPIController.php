@@ -243,7 +243,7 @@ class AccountAPIController extends ControllerAPI
                 'address_line1'  => $row->userDetail->address_line1,
                 'province'       => $row->userDetail->province,
                 'postal_code'    => $row->userDetail->postal_code,
-                'country'        => (object) ['id' => $row->userDetail->country_id, 'name' => $row->userDetail->userCountry->name],
+                'country'        => (object) ['id' => $row->userDetail->country_id, 'name' => @$row->userDetail->userCountry->name],
             ];
         }
 
