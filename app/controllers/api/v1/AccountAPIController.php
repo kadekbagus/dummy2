@@ -118,7 +118,7 @@ class AccountAPIController extends ControllerAPI
         $userDetail->city = Input::get('city');
         $userDetail->province = Input::get('province');
         $userDetail->postal_code = Input::get('postal_code');
-        $userDetail->country = Input::get('country');
+        $userDetail->country_id = Input::get('country_id');
         $userDetail->save();
 
         // Save to campaign_account table (1 to 1)
@@ -238,7 +238,7 @@ class AccountAPIController extends ControllerAPI
                 'address_line1'  => $row->userDetail->address_line1,
                 'province'       => $row->userDetail->province,
                 'postal_code'    => $row->userDetail->postal_code,
-                'country'        => $row->userDetail->country,
+                'country'        => (object) ['id' => $row->userDetail->country_id, 'name' => $row->userDetail->country],
             ];
         }
 
@@ -260,7 +260,7 @@ class AccountAPIController extends ControllerAPI
             'company_name'   => Input::get('company_name'),
             'address_line1'  => Input::get('address_line1'),
             'city'           => Input::get('city'),
-            'country'        => Input::get('country'),
+            'country_id'     => Input::get('country_id'),
             'merchant_ids'   => Input::get('merchant_ids'),
         ];
 
