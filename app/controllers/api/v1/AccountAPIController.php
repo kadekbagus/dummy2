@@ -72,7 +72,7 @@ class AccountAPIController extends ControllerAPI
     {
         $tenantArray = [];
         foreach (Tenant::whereIn('merchant_id', $tenantIds)->orderBy('name')->get() as $row) {
-            $tenantArray[$row->merchant_id] = $row->tenant_at_mall;
+            $tenantArray[] = ['id' => $row->merchant_id, 'name' => $row->tenant_at_mall];
         }
 
         return $tenantArray;
@@ -118,7 +118,7 @@ class AccountAPIController extends ControllerAPI
         $userDetail->city = Input::get('city');
         $userDetail->province = Input::get('province');
         $userDetail->postal_code = Input::get('postal_code');
-        $userDetail->country = Input::get('country');
+        $userDetail->country_id = Input::get('country_id');
         $userDetail->save();
 
         // Save to campaign_account table (1 to 1)
@@ -233,10 +233,12 @@ class AccountAPIController extends ControllerAPI
                 // Needed by frontend for the edit page
                 'user_firstname' => $row->user_firstname,
                 'user_lastname'  => $row->user_lastname,
+                'position'       => $row->campaignAccount->position,
                 'user_email'     => $row->user_email,
                 'address_line1'  => $row->userDetail->address_line1,
                 'province'       => $row->userDetail->province,
-                'country'        => $row->userDetail->country,
+                'postal_code'    => $row->userDetail->postal_code,
+                'country'        => (object) ['id' => $row->userDetail->country_id, 'name' => $row->userDetail->country],
             ];
         }
 
@@ -258,7 +260,7 @@ class AccountAPIController extends ControllerAPI
             'company_name'   => Input::get('company_name'),
             'address_line1'  => Input::get('address_line1'),
             'city'           => Input::get('city'),
-            'country'        => Input::get('country'),
+            'country_id'     => Input::get('country_id'),
             'merchant_ids'   => Input::get('merchant_ids'),
         ];
 
@@ -276,7 +278,7 @@ class AccountAPIController extends ControllerAPI
             'company_name'   => 'required',
             'address_line1'  => 'required',
             'city'           => 'required',
-            'country'        => 'required',
+            'country_id'     => 'required',
             'merchant_ids'   => 'required|array',
         ];
 
