@@ -80,7 +80,7 @@ class AccountAPIController extends ControllerAPI
 
         $tenantArray = [];
         foreach (Tenant::whereIn('merchant_id', $tenantIds)->orderBy('name')->get() as $row) {
-            $tenantArray[] = ['id' => $row->merchant_id, 'name' => $row->tenant_at_mall];
+            $tenantArray[] = ['id' => $row->merchant_id, 'name' => $row->tenant_at_mall, 'status' => $row->status];
         }
 
         return $tenantArray;
