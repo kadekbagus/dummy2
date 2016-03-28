@@ -232,9 +232,10 @@ class AccountAPIController extends ControllerAPI
 
                 // Needed by frontend for the edit page
                 'user_firstname' => $row->user_firstname,
-                'user_lastname ' => $row->user_lastname,
+                'user_lastname'  => $row->user_lastname,
                 'user_email'     => $row->user_email,
                 'address_line1'  => $row->userDetail->address_line1,
+                'province'       => $row->userDetail->province,
                 'country'        => $row->userDetail->country,
             ];
         }

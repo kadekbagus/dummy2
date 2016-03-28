@@ -109,7 +109,7 @@
 </div>
 
 <div id="main">
-    <h2 style="margin-bottom:0.5em;">CRM Summary</h2>
+    <h2 style="margin-bottom:0.5em;"><?= $pageTitle ?></h2>
     <?php if ($summary): ?>
         <table style="width:100%; margin-bottom:1em;" class="noborder">
             <?php foreach ($summary as $field => $value): ?>
