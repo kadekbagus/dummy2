@@ -70,7 +70,7 @@ class NewsPrinterController extends DataPrinterController
 
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'News List', '', '', '', '','');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total News', $totalRec, '', '', '','');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total News', round($totalRec), '', '', '','');
 
                 // Filtering
                 if ($newsName != '') {

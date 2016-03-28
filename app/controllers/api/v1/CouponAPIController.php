@@ -2125,7 +2125,10 @@ class CouponAPIController extends ControllerAPI
 
             // Builder object
             // Addition select case and join for sorting by discount_value.
-            $coupons = Coupon::with('couponRule')
+            $coupons = Coupon::
+                // Waiting insert update proses
+                // allowedForPMPUser($user, 'coupon')->
+                with('couponRule')
                 ->select(DB::raw("{$table_prefix}promotions.*, {$table_prefix}campaign_price.campaign_price_id, {$table_prefix}coupon_translations.promotion_name AS name_english,
                     CASE WHEN {$table_prefix}campaign_status.campaign_status_name = 'expired' THEN {$table_prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$table_prefix}promotions.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
                                                                                 FROM {$table_prefix}merchants om
@@ -2146,7 +2149,7 @@ class CouponAPIController extends ControllerAPI
                         ELSE discount_value
                     END AS 'display_discount_value'
                     "),
-                    DB::raw("(select GROUP_CONCAT(IF({$table_prefix}merchants.object_type = 'tenant', CONCAT({$table_prefix}merchants.name,' at ', pm.name), {$table_prefix}merchants.name) separator ', ') from {$table_prefix}promotion_retailer 
+                    DB::raw("(select GROUP_CONCAT(IF({$table_prefix}merchants.object_type = 'tenant', CONCAT({$table_prefix}merchants.name,' at ', pm.name), {$table_prefix}merchants.name) separator ', ') from {$table_prefix}promotion_retailer
                                     inner join {$table_prefix}merchants on {$table_prefix}merchants.merchant_id = {$table_prefix}promotion_retailer.retailer_id
                                     inner join {$table_prefix}merchants pm on {$table_prefix}merchants.parent_id = pm.merchant_id
                                     where {$table_prefix}promotion_retailer.promotion_id = {$table_prefix}promotions.promotion_id) as campaign_location_names"),
@@ -2319,19 +2322,19 @@ class CouponAPIController extends ControllerAPI
                 $mall_name_like = "%" . $mall_name_like . "%";
                 $mall_name_like = $quote($mall_name_like);
                 $coupons->whereRaw(DB::raw("
-                    (SELECT count(*) 
+                    (SELECT count(*)
                     FROM {$table_prefix}merchants mtenant
                         inner join {$table_prefix}promotion_retailer_redeem onm on mtenant.merchant_id = onm.retailer_id
-                    WHERE mtenant.object_type = 'tenant' 
-                        and onm.promotion_id = {$table_prefix}promotions.promotion_id 
+                    WHERE mtenant.object_type = 'tenant'
+                        and onm.promotion_id = {$table_prefix}promotions.promotion_id
                         and (
                             SELECT count(*) FROM {$table_prefix}merchants mmall
                             WHERE mmall.object_type = 'mall' and
                             mtenant.parent_id = mmall.merchant_id and
                             mmall.name like {$mall_name_like} and
                             mmall.object_type = 'mall'
-                        ) >= 1 
-                        and mtenant.object_type = 'tenant' 
+                        ) >= 1
+                        and mtenant.object_type = 'tenant'
                         and mtenant.is_mall = 'no') >= 1
                 "));
             });
@@ -3338,6 +3341,7 @@ class CouponAPIController extends ControllerAPI
                         // ->whereRaw("({$prefix}issued_coupons.expired_date >= ? or {$prefix}issued_coupons.expired_date is null)", [$now])
                         ->with('coupon')
                         ->whereHas('coupon', function($q) use($now) {
+                            $q->where('promotions.status', 'active');
                             $q->where('promotions.coupon_validity_in_date', '>=', $now);
                         })
                         ->first();
@@ -3362,6 +3366,7 @@ class CouponAPIController extends ControllerAPI
                             ->where('issued_coupons.user_id', $user->user_id)
                             // ->whereRaw("({$prefix}issued_coupons.expired_date >= ? or {$prefix}issued_coupons.expired_date is null)", [$now])
                             ->whereHas('coupon', function($q) use($now) {
+                                $q->where('promotions.status', 'active');
                                 $q->where('promotions.coupon_validity_in_date', '>=', $now);
                             })
                             ->where('merchants.masterbox_number', $number)
@@ -3386,6 +3391,7 @@ class CouponAPIController extends ControllerAPI
                                 ->where('issued_coupons.user_id', $user->user_id)
                                 // ->whereRaw("({$prefix}issued_coupons.expired_date >= ? or {$prefix}issued_coupons.expired_date is null)", [$now])
                                 ->whereHas('coupon', function($q) use($now) {
+                                    $q->where('promotions.status', 'active');
                                     $q->where('promotions.coupon_validity_in_date', '>=', $now);
                                 })
                                 ->where('user_verification_numbers.verification_number', $number)

@@ -2953,6 +2953,7 @@ class ActivityAPIController extends ControllerAPI
      *
      * @author kadek <kadek@dominopos.com>
      * @author Qosdil A. <qosdil@dominopos.com>
+     * @author Shelgi <shelgi@dominopos.com>
      *
      * List Of Parameters
      * ------------------
@@ -3159,6 +3160,8 @@ class ActivityAPIController extends ControllerAPI
                             GROUP BY comp_date, 2
                         ) dt
                     GROUP BY dt.comp_date";
+
+            $summary = [];
             
             // Filter with activity names (activity_name_long)
             $longActivityNameWhere = '';
@@ -3169,38 +3172,57 @@ class ActivityAPIController extends ControllerAPI
                         $activityKeys[] = strtolower(str_replace(' ', '_', $key));
                     }
                 }
+
+                $summary['Filter by Activities'] = implode(', ', $activityGroups);
             }
 
             $columns = [];
 
             // e.g. 'Email sign up'
             // It's case insensitive
+            $searchNotAvailable = false;
             if ($activityGroupSearch) {
                 $lowerActivityGroupSearch = strtolower($activityGroupSearch);
                 $lowerActivityColumns = array_map('strtolower', Config::get('orbit.activity_columns'));
                 $activityKey = array_search($lowerActivityGroupSearch, $lowerActivityColumns);
+                
                 if ($activityKey) {
                     $columns = array_merge($columns, [$activityKey => Config::get('orbit.activity_columns.'.$activityKey)]);
                     $activityKeys[] = strtolower(str_replace(' ', '_', $activityKey));
+                } else {
+                    if(empty($activityKeys)) {
+                        $searchNotAvailable = true;
+                    }
                 }
+                
+                $summary['Filter by Others'] = $activityGroupSearch;
             }
 
-            $activities = DB::table(DB::raw('(' . $sql . ') as a'));
-
             if ($activityKeys) {
-                $keys = 'date, ' . implode(", ", $activityKeys);
-                $activities->selectRaw($keys);
+                //can't filter by "&" column, so it's must be replace to "and"
+                $keys = 'date, ' . str_replace("view_prizes_and_winning_numbers", "view_prizes_and_winning_numbers AS 'view_prizes_&_winning_numbers'", implode(", ", $activityKeys));
+                $sql = str_replace('view_prizes_&_winning_numbers', 'view_prizes_and_winning_numbers', $sql);
+                $activities = DB::table(DB::raw('(' . $sql . ') as a'))->selectRaw($keys);
+            } else {
+                $activities = DB::table(DB::raw('(' . $sql . ') as a'));
             }
 
             $activities->orderBy('date', 'dsc');
 
-            $result = $activities->get();
+            if ($searchNotAvailable) {
+                $result = null;
+            } else {
+                $result = $activities->get();
+            }
             
             $records = [];
 
+            $summary['Date Range'] = date('d F Y', strtotime($mallbegindate)).' - '.date('d F Y', strtotime($mallenddate));
+
             if ($this->returnQuery) {
                 return [
-                    'responses' => $result
+                    'responses' => $result,
+                    'summary'   => $summary,
                 ];
             }
 

@@ -45,11 +45,11 @@ trait CampaignAccessTrait
         }
 
         // This should be for other PMP roles, the additional query
-        // should be wrappred inde the parenthis () to make 
+        // should be wrappred inde the parenthis () to make
         // the original query unaffected
         $builder->leftJoin('user_campaign', 'user_campaign.campaign_id', '=', "{$table_name}.{$field_name}")
         ->where(function($q) use ($user) {
-            $q->where('user_id', $user->user_id);
+            $q->where('user_campaign.user_id', $user->user_id);
         });
 
         return $builder;

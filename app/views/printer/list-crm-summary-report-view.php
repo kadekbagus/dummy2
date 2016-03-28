@@ -109,18 +109,24 @@
 </div>
 
 <div id="main">
-    <h2 style="margin-bottom:0.5em;">CRM Summary</h2>
-    <table style="width:100%; margin-bottom:1em;" class="noborder">
-        <tr>
-            <td style="width:150px"></td>
-            <td style="width:10px;"></td>
-            <td><strong></strong></td>
-        </tr>
-    </table>
+    <h2 style="margin-bottom:0.5em;"><?= $pageTitle ?></h2>
+    <?php if ($summary): ?>
+        <table style="width:100%; margin-bottom:1em;" class="noborder">
+            <?php foreach ($summary as $field => $value): ?>
+                <tr>
+                    <td style="width: 150px"><?= $field ?></td>
+                    <td style="width: 10px;">:</td>
+                    <td><strong><?= $value ?></strong></td>
+                </tr>
+            <?php endforeach ?>
+        </table>
+        <br/>
+    <?php endif ?>
 
     <table style="width:100%">
         <thead>
         <?php
+            if (! empty($builder['responses'])) {
             foreach ($builder['responses'] as $key => $value) {
                 foreach ($value as $key2 => $value2) {
         ?>
@@ -154,6 +160,7 @@
                 </tr>  
         <?php
             }
+        }
         ?>
         </tbody>
     </table>

@@ -65,7 +65,7 @@ trait ExportControllerTrait
         return $response;
     }
 
-    public function handleRowValue($row, $fieldName)
+    protected function handleRowValue($row, $fieldName)
     {
         $csv = '';
         if ( ! is_array($row[$fieldName])) {

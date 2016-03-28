@@ -65,6 +65,8 @@ class CRMSummaryReportPrinterController extends DataPrinterController
         if (!$flag_7days) {
             $builder = ActivityAPIController::create('raw')->setReturnQuery(TRUE)->getCRMSummaryReport();      
         }
+       
+        $summary = $builder['summary'];
 
         $pageTitle = 'CRM Summary Report';
         switch ($mode) {
@@ -74,34 +76,45 @@ class CRMSummaryReportPrinterController extends DataPrinterController
                 @header('Content-Disposition: attachment; filename=' . OrbitText::exportFilename($pageTitle, '.csv', $timezone));
 
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", 'CRM Summary', '', '', '', '', '', '', '', '', '');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", $pageTitle, '', '', '', '', '', '', '', '', '');
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '', '');
 
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '', '', '');
 
-                foreach ($builder['responses'] as $key => $value) {
-                    foreach ($value as $key2 => $value2) {
-                        if ($key2 != 'date') {
-                            printf(",");
-                        }
-                        printf("\"%s\"", ucwords(str_replace('_', ' ', $key2)));
+                if ($summary) {
+                    foreach ($summary as $field => $value) {
+                        echo $field.',';
+                        echo $value."\r\n";
                     }
-                    break;
-                    printf("\n");
                 }
 
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '', '', '');
+                if (! empty($builder['responses'])) {
+                    printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '', '', '');
 
-                foreach ($builder['responses'] as $key => $value) {
-                    foreach ($value as $key2 => $value2) {
-                        if ($key2 === 'date') {
-                            printf("%s,", $value2);
-                        } else {
-                            printf("\"%s\"", $this->printFormatNumber((int)$value2));
-                            printf(",");
+                    foreach ($builder['responses'] as $key => $value) {
+                        foreach ($value as $key2 => $value2) {
+                            if ($key2 != 'date') {
+                                printf(",");
+                            }
+                            printf("\"%s\"", ucwords(str_replace('_', ' ', $key2)));
                         }
+                        break;
+                        printf("\n");
                     }
-                    printf("\n");
+
+                    printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '', '', '');
+
+                    foreach ($builder['responses'] as $key => $value) {
+                        foreach ($value as $key2 => $value2) {
+                            if ($key2 === 'date') {
+                                printf("%s,", $value2);
+                            } else {
+                                printf("\"%s\"", $this->printFormatNumber((int)$value2));
+                                printf(",");
+                            }
+                        }
+                        printf("\n");
+                    }
                 }
 
                 break;
