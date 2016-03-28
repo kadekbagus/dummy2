@@ -519,42 +519,93 @@ class MobileCIAPIController extends BaseCIController
                     $widget->url = 'mallnews';
                 }
                 if ($widget->widget_type == 'coupon') {
-                    $coupons = DB::select(
-                        DB::raw(
-                            'SELECT *, p.image AS promo_image FROM ' . DB::getTablePrefix() . 'promotions p
-                        inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id AND p.is_coupon = "Y" AND p.status = "active"
-                        inner join ' . DB::getTablePrefix() . 'issued_coupons ic on p.promotion_id = ic.promotion_id AND ic.status = "active"
-                        WHERE ic.expired_date >= "' . Carbon::now($retailer->timezone->timezone_name). '"
-                            AND p.merchant_id = :merchantid
-                            AND ic.user_id = :userid'
-                        ),
-                        array('merchantid' => $retailer->merchant_id, 'userid' => $user->user_id)
-                    );
-                    $couponsCount = count($coupons);
+                    $userAge = 0;
+                    if ($user->userDetail->birthdate !== '0000-00-00' && $user->userDetail->birthdate !== null) {
+                        $userAge =  $this->calculateAge($user->userDetail->birthdate); // 27
+                    }
 
-                    $newCoupons = DB::select(
-                        DB::raw(
-                            'SELECT *, p.image AS promo_image FROM ' . DB::getTablePrefix() . 'promotions p
-                        inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id AND p.is_coupon = "Y" AND p.status = "active"
-                        inner join ' . DB::getTablePrefix() . 'issued_coupons ic on p.promotion_id = ic.promotion_id AND ic.status = "active"
-                        WHERE p.promotion_id NOT IN (
-                            SELECT item_id FROM ' . DB::getTablePrefix() . 'viewed_item_user
-                            WHERE user_id = :useridone
-                            AND mall_id = :merchantidone
-                            AND item_type = "coupon"
-                        )
-                        AND ic.expired_date >= "' . Carbon::now($retailer->timezone->timezone_name) . '"
-                        AND p.merchant_id = :merchantid
-                        AND ic.user_id = :userid'
-                        ),
-                        array(
-                            'useridone' => $user->user_id,
-                            'merchantidone' => $retailer->merchant_id,
-                            'merchantid' => $retailer->merchant_id,
-                            'userid' => $user->user_id,
-                        )
-                    );
-                    $newCouponsCount = count($newCoupons);
+                    $userGender = 'U'; // default is Unknown
+                    if ($user->userDetail->gender !== '' && $user->userDetail->gender !== null) {
+                        $userGender =  $user->userDetail->gender;
+                    }
+
+                    $couponsCount = Coupon::leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'promotions.promotion_id')
+                                    ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'promotions.promotion_id')
+                                    ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id');
+
+                    if ($userGender !== null) {
+                        $couponsCount = $couponsCount->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
+                    }
+
+                    if ($userAge !== null) {
+                        if ($userAge === 0){
+                            $couponsCount = $couponsCount->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                        } else {
+                            if ($userAge >= 55) {
+                                $couponsCount = $couponsCount->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
+                            } else {
+                                $couponsCount = $couponsCount->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                            }
+                        }
+                    }
+
+                    $couponsCount = $couponsCount->join('promotion_rules', function($join) {
+                            $join->on('promotions.promotion_id', '=', 'promotion_rules.promotion_id')
+                                ->where('promotions.is_coupon', '=', 'Y');
+                        })->join('issued_coupons', function($join) {
+                            $join->on('promotions.promotion_id', '=', 'issued_coupons.promotion_id')
+                                ->where('issued_coupons.status', '=', 'active');
+                        })
+                        ->where('promotions.status', '=', 'active')
+                        ->where('promotions.coupon_validity_in_date', '>=', $now)
+                        ->where('promotions.merchant_id', $retailer->merchant_id)
+                        ->where('issued_coupons.user_id', $user->user_id)
+                        ->count();
+
+                    $newCouponsCount = Coupon::leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'promotions.promotion_id')
+                                    ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'promotions.promotion_id')
+                                    ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id');
+
+                    if ($userGender !== null) {
+                        $newCouponsCount = $newCouponsCount->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
+                    }
+
+                    if ($userAge !== null) {
+                        if ($userAge === 0){
+                            $newCouponsCount = $newCouponsCount->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                        } else {
+                            if ($userAge >= 55) {
+                                $newCouponsCount = $newCouponsCount->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
+                            } else {
+                                $newCouponsCount = $newCouponsCount->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                            }
+                        }
+                    }
+                    $prefix = DB::getTablePrefix();
+                    $merchant_id = $retailer->merchant_id;
+                    $user_id = $user->user_id;
+                    $quote = function ($arg) {
+                        return DB::connection()->getPdo()->quote($arg);
+                    };
+                    $newCouponsCount = $newCouponsCount->join('promotion_rules', function($join) {
+                            $join->on('promotions.promotion_id', '=', 'promotion_rules.promotion_id')
+                                ->where('promotions.is_coupon', '=', 'Y');
+                        })->join('issued_coupons', function($join) {
+                            $join->on('promotions.promotion_id', '=', 'issued_coupons.promotion_id')
+                                ->where('issued_coupons.status', '=', 'active');
+                        })
+                        ->whereRaw("
+                            {$prefix}promotions.promotion_id NOT IN (
+                            SELECT item_id FROM {$prefix}viewed_item_user
+                            WHERE user_id = {$quote($user_id)}
+                            AND mall_id = {$quote($merchant_id)}
+                            AND item_type = 'coupon'
+                        )")
+                        ->where('promotions.status', '=', 'active')
+                        ->where('promotions.coupon_validity_in_date', '>=', $now)
+                        ->where('promotions.merchant_id', $retailer->merchant_id)
+                        ->where('issued_coupons.user_id', $user->user_id)
+                        ->count();
 
                     $widget->image = 'mobile-ci/images/default_coupon.png';
 
