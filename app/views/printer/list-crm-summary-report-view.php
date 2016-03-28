@@ -110,33 +110,56 @@
 
 <div id="main">
     <h2 style="margin-bottom:0.5em;">CRM Summary</h2>
-    <table style="width:100%; margin-bottom:1em;" class="noborder">
-        <tr>
-            <td style="width:150px"></td>
-            <td style="width:10px;"></td>
-            <td><strong></strong></td>
-        </tr>
-    </table>
+    <?php if ($summary): ?>
+        <table style="width:100%; margin-bottom:1em;" class="noborder">
+            <?php foreach ($summary as $field => $value): ?>
+                <tr>
+                    <td style="width: 150px"><?= $field ?></td>
+                    <td style="width: 10px;">:</td>
+                    <td><strong><?= $value ?></strong></td>
+                </tr>
+            <?php endforeach ?>
+        </table>
+        <br/>
+    <?php endif ?>
 
     <table style="width:100%">
         <thead>
-        <?php if(!$flag_noconfig) {?>
-        <th style="text-align:left;">Date </th>
-        <?php  foreach($columns as $i => $j) { ?>
-        <th style="text-align: left;"><?php echo $j['label'] ?></th>
-        <?php } } ?>
+        <?php
+            foreach ($builder['responses'] as $key => $value) {
+                foreach ($value as $key2 => $value2) {
+        ?>
+                    <th style="text-align: left;"><?php echo ucwords(str_replace('_', ' ', $key2)); ?></th>
+        <?php
+                }
+                break;
+            }
+        ?>
+
         </thead>
         <tbody>
+        <?php
+            foreach ($builder['responses'] as $key => $value) {
+        ?>
+                <tr class=" ">
+        <?php
 
-        <?php if(!$flag_7days) { foreach ($dates as $x => $y) { ?>
-            <tr class=" ">
-                <td width='4%'><?php echo $me->printDateTime($y['label'], 'd/m/Y'); ?></td>
-                <?php foreach($columns as $i => $j) { ?>
-                    <td><?php echo $me->printFormatNumber($data[$y['order']][$j['order']]); ?></td>
-
-                <?php } ?>
-            </tr>
-        <?php } } ?>
+                foreach ($value as $key2 => $value2) {
+                    if ($key2 === 'date'){
+        ?>
+                        <td width='4%'><?php echo $value2; ?></td>
+        <?php
+                    } else {
+        ?>
+                        <td style="text-align: left;"><?php echo $me->printFormatNumber((int)$value2); ?></td>
+        <?php
+                    }
+                }
+        ?>
+                </tr>  
+        <?php
+            }
+        ?>
         </tbody>
     </table>
 </div>

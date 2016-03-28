@@ -70,6 +70,14 @@
 
 <div class="row vertically-spaced">
     <div class="col-xs-12 padded">
+        @if(count($link_to_tenants) > 0)
+        <div class="row vertically-spaced">
+            <div class="col-xs-12 text-center">
+                <a href="{{{ url('customer/tenants?coupon_id='.$coupon->promotion_id) }}}" class="btn btn-info btn-block">{{{ Lang::get('mobileci.tenant.see_tenants') }}}</a>
+            </div>
+        </div>
+        @endif
+        @if(count($coupon->issuedCoupons) > 0)
         @if(count($tenants) > 0)
         <div class="row vertically-spaced">
             <div class="col-xs-12 text-center">
@@ -77,6 +85,7 @@
             </div>
         </div>
         @endif
+
         <div class="row">
             @if(count($tenants) <=0)
                 @if($cs_reedem)
@@ -90,6 +99,7 @@
             </div>
             @endif
         </div>
+        @endif
     </div>
 </div>
 <!-- end of product -->
@@ -196,6 +206,7 @@
             $('#useBtn').click(function(){
                 $('#hasCouponModal').modal();
             });
+            @if(count($coupon->issuedCoupons) > 0)
             $('#applyCoupon').click(function(){
                 $('#hasCouponModal .modal-content').css('display', 'none');
                 $('#hasCouponModal .modal-spinner').css('display', 'block');
@@ -243,6 +254,7 @@
                     $('#hasCouponModal').modal('hide');
                 });
             });
+            @endif
         });
     </script>
 @stop

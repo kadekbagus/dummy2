@@ -52,6 +52,10 @@
             padding-bottom: 2px;
             border-bottom: 1px solid #ccc;
         }
+
+        /*th, td {*/
+            /*display: inline-block;*/
+        /*}*/
     </style>
     <style type="text/css" media="print">
         #payment-date, #printernote { display:none; }
@@ -105,7 +109,7 @@
 </div>
 
 <div id="main">
-    <h2 style="margin-bottom:0.5em;"><?php echo $pageTitle; ?></h2>
+    <h2 style="margin-bottom:0.5em;">Coupon List</h2>
     <table style="width:100%; margin-bottom:1em;" class="noborder">
         <tr>
             <td style="width:150px"></td>
@@ -113,89 +117,159 @@
             <td><strong></strong></td>
         </tr>
         <tr>
-            <td>Total Employees</td>
+            <td>Total Coupons</td>
             <td>:</td>
             <td><strong><?php echo number_format($totalRec, 0, '.', '.'); ?></strong></td>
         </tr>
 
         <!-- Filtering -->
-
-        <?php if ($full_name_like != '') { ?>
+        <?php if ($couponName != '') { ?>
             <tr>
-                <td>Filter by Employee Name</td>
+                <td>Filter by Coupon Name</td>
                 <td>:</td>
-                <td><strong><?php echo htmlentities($full_name_like); ?></strong></td>
+                <td><strong><?php echo htmlentities($couponName); ?></strong></td>
             </tr>
         <?php } ?>
 
-        <?php if ($user_email_like != '') { ?>
+        <?php if ($ruleType != '') { ?>
             <tr>
-                <td>Filter by Email Address</td>
+                <td>Filter by Coupon Rule</td>
                 <td>:</td>
-                <td><strong><?php echo htmlentities($user_email_like); ?></strong></td>
+                <td>
+                    <strong>
+                        <?php
+                            $rule_type_string = '';
+                            foreach ($ruleType as $key => $valrule){
+                                $rule_type = $valrule;
+                                if ($rule_type === 'auto_issue_on_first_signin') {
+                                    $rule_type = 'coupon blast upon first sign in';
+                                } elseif ($rule_type === 'auto_issue_on_signup') {
+                                    $rule_type = 'coupon blast upon sign up';
+                                } elseif ($rule_type === 'auto_issue_on_every_signin') {
+                                    $rule_type = 'coupon blast upon every sign in';
+                                } elseif ($rule_type === 'manual') {
+                                    $rule_type = 'manual issued';
+                                }
+
+                                $rule_type_string .= $rule_type . ', ';
+                            }
+                            echo htmlentities(rtrim($rule_type_string, ', '));
+                        ?>
+                    </strong>
+                </td>
             </tr>
         <?php } ?>
 
-        <?php
-        if ( is_array($role_names) && count($role_names) > 0) {
-            $role_names_string = '';
-            foreach ($role_names as $key => $val){
-                $role_names_string .= $val . ', ';
-            }
-        ?>
+        <?php if ($tenantName != '') { ?>
             <tr>
-                <td>Filter by Role</td>
+                <td>Filter by Tenant Name</td>
                 <td>:</td>
-                <td><strong><?php echo htmlentities(rtrim($role_names_string, ', ')); ?></strong></td>
+                <td><strong><?php echo htmlentities($tenantName); ?></strong></td>
             </tr>
         <?php } ?>
 
-        <?php if ($employee_id_char_like != '') { ?>
+        <?php if ($mallName != '') { ?>
             <tr>
-                <td>Filter by Employee ID</td>
+                <td>Filter by Mall Name</td>
                 <td>:</td>
-                <td><strong><?php echo htmlentities($employee_id_char_like); ?></strong></td>
+                <td><strong><?php echo htmlentities($mallName); ?></strong></td>
             </tr>
         <?php } ?>
 
-        <?php
-        if (is_array($status) && count($status) > 0) {
-            $status_string = '';
-            foreach ($status as $key => $valstatus){
-                $status_string .= $valstatus . ', ';
-            }
-        ?>
+        <?php if ($etcFrom != '' && $etcTo != ''){ ?>
+            <tr>
+                <td>Filter by Estimated Total Cost</td>
+                <td>:</td>
+                <td> <strong><?php echo $etcFrom . ' - ' . $etcTo; ?></strong></td>
+            </tr>
+        <?php } ?>
+
+        <?php if ($etcFrom != '' && $etcTo == ''){ ?>
+            <tr>
+                <td>Filter by Estimated Total Cost (From)</td>
+                <td>:</td>
+                <td> <strong><?php echo $etcFrom; ?></strong></td>
+            </tr>
+        <?php } ?>
+
+        <?php if ($etcFrom == '' && $etcTo != ''){ ?>
+            <tr>
+                <td>Filter by Estimated Total Cost (To)</td>
+                <td>:</td>
+                <td> <strong><?php echo $etcTo; ?></strong></td>
+            </tr>
+        <?php } ?>
+
+        <?php if ($status != '') { ?>
             <tr>
                 <td>Filter by Status</td>
                 <td>:</td>
-                <td><strong><?php echo htmlentities(rtrim($status_string, ', ')); ?></strong></td>
+                <td>
+                    <strong>
+                        <?php
+                            $statusString = '';
+                            foreach ($status as $key => $valstatus){
+                                $statusString .= $valstatus . ', ';
+                            }
+                            echo htmlentities(rtrim($statusString, ', '));
+                        ?>
+                    </strong>
+                </td>
+            </tr>
+        <?php } ?>
+
+        <?php if ($beginDate != '' && $endDate != ''){ ?>
+            <tr>
+                <td>Campaign Date</td>
+                <td>:</td>
+                <td>
+                    <?php
+                        if ($beginDate != '' && $endDate != ''){
+                            $beginDateRangeMallTime = date('d F Y', strtotime($beginDate));
+                            $endDateRangeMallTime = date('d F Y', strtotime($endDate));
+                            $dateRange = $beginDateRangeMallTime . ' - ' . $endDateRangeMallTime;
+                            if ($beginDateRangeMallTime === $endDateRangeMallTime) {
+                                $dateRange = $beginDateRangeMallTime;
+                            }
+                        }
+                    ?>
+                    <strong><?php echo $dateRange; ?></strong>
+                </td>
             </tr>
         <?php } ?>
 
     </table>
 
+
     <table style="width:100%">
         <thead>
-           <!--  <th style="text-align:left;">No.</th> -->
-            <th style="text-align:left;">Name</th>
-            <th style="text-align:left;">Email</th>
-            <th style="text-align:left;">Role</th>
-            <th style="text-align:left;">Employee ID</th>
+            <th style="text-align:left;">No</th>
+            <th style="text-align:left;">Coupon Name</th>
+            <th style="text-align:left;">Start Date & Time</th>
+            <th style="text-align:left;">End Date & Time</th>
+            <th style="text-align:left;">Locations</th>
             <th style="text-align:left;">Status</th>
             <th style="text-align:left;">Last Update</th>
         </thead>
         <tbody>
-        <?php $count = 1; while ($row = $statement->fetch(PDO::FETCH_OBJ)) : ?>
-            <tr class="{{ $rowCounter % 2 === 0 ? 'zebra' : '' }}">
-                <!-- <td><?php //echo ($count); ?></td> -->
-                 <td><?php echo $me->printUtf8($row->user_firstname . ' ' . $row->user_lastname); ?></td>
-                 <td><?php echo $me->printUtf8($row->user_email); ?></td>
-                 <td><?php echo $me->printUtf8($row->role_name); ?></td>
-                 <td><?php echo $me->printUtf8($row->employee_id_char); ?></td>
-                 <td><?php echo $me->printUtf8($row->status); ?></td>
-                 <td><?php echo $me->printDateTime($row->updated_at, $timezone, 'd F Y H:i:s'); ?></td>
-            </tr>
-        <?php  $count++; endwhile; ?>
+            <?php $count = 1; while ($row = $statement->fetch(PDO::FETCH_OBJ)) : ?>
+                <tr class="{{ $rowCounter % 2 === 0 ? 'zebra' : '' }}">
+                    <td><?php echo $count++; ?></td>
+                    <td><?php echo htmlentities($row->name_english); ?></td>
+                    <td><?php echo date('d F Y H:i', strtotime($row->begin_date)); ?></td>
+                    <td><?php echo date('d F Y H:i', strtotime($row->end_date)); ?></td>
+                    <td>
+                        <?php
+                            $locations = explode(', ', $row->campaign_location_names);
+                            for($x = 0; $x < count($locations); $x++) {
+                                echo $locations[$x] . '<br>';
+                            }
+                        ?>
+                    </td>
+                    <td><?php echo $row->campaign_status; ?></td>
+                    <td><?php echo $this->printDateTime($row->updated_at, $timezone, 'd F Y H:i:s'); ?></td>
+                </tr>
+            <?php endwhile ; ?>
         </tbody>
     </table>
 </div>

@@ -109,12 +109,17 @@
 </div>
 
 <div id="main">
-    <h2 style="margin-bottom:0.5em;">News</h2>
+    <h2 style="margin-bottom:0.5em;">News List</h2>
     <table style="width:100%; margin-bottom:1em;" class="noborder">
         <tr>
             <td style="width:150px"></td>
             <td style="width:10px;"></td>
             <td><strong></strong></td>
+        </tr>
+        <tr>
+            <td>Total News</td>
+            <td>:</td>
+            <td><strong><?php echo number_format($totalRec, 0, '.', '.'); ?></strong></td>
         </tr>
 
         <!-- Filtering -->
@@ -126,11 +131,43 @@
             </tr>
         <?php } ?>
 
+        <?php if ($tenantName != '') { ?>
+            <tr>
+                <td>Filter by Tenant Name</td>
+                <td>:</td>
+                <td><strong><?php echo htmlentities($tenantName); ?></strong></td>
+            </tr>
+        <?php } ?>
+
+        <?php if ($mallName != '') { ?>
+            <tr>
+                <td>Filter by Mall Name</td>
+                <td>:</td>
+                <td><strong><?php echo htmlentities($mallName); ?></strong></td>
+            </tr>
+        <?php } ?>
+
         <?php if ($etcFrom != '' && $etcTo != ''){ ?>
             <tr>
-                <td>Estimated Total Cost</td>
+                <td>Filter by Estimated Total Cost</td>
                 <td>:</td>
                 <td> <strong><?php echo $etcFrom . ' - ' . $etcTo; ?></strong></td>
+            </tr>
+        <?php } ?>
+
+        <?php if ($etcFrom != '' && $etcTo == ''){ ?>
+            <tr>
+                <td>Filter by Estimated Total Cost (From)</td>
+                <td>:</td>
+                <td> <strong><?php echo $etcFrom; ?></strong></td>
+            </tr>
+        <?php } ?>
+
+        <?php if ($etcFrom == '' && $etcTo != ''){ ?>
+            <tr>
+                <td>Filter by Estimated Total Cost (To)</td>
+                <td>:</td>
+                <td> <strong><?php echo $etcTo; ?></strong></td>
             </tr>
         <?php } ?>
 
@@ -159,8 +196,8 @@
                 <td>
                     <?php
                         if ($beginDate != '' && $endDate != ''){
-                            $beginDateRangeMallTime = $this->printDateTime($beginDate, $timezone, 'd M Y');
-                            $endDateRangeMallTime = $this->printDateTime($endDate, $timezone, 'd M Y');
+                            $beginDateRangeMallTime = date('d F Y', strtotime($beginDate));
+                            $endDateRangeMallTime = date('d F Y', strtotime($endDate));
                             $dateRange = $beginDateRangeMallTime . ' - ' . $endDateRangeMallTime;
                             if ($beginDateRangeMallTime === $endDateRangeMallTime) {
                                 $dateRange = $beginDateRangeMallTime;
@@ -181,6 +218,7 @@
             <th style="text-align:left;">News Name</th>
             <th style="text-align:left;">Start Date & Time</th>
             <th style="text-align:left;">End Date & Time</th>
+            <th style="text-align:left;">Locations</th>
             <th style="text-align:left;">Status</th>
             <th style="text-align:left;">Last Update</th>
         </thead>
@@ -188,11 +226,19 @@
             <?php $count = 1; while ($row = $statement->fetch(PDO::FETCH_OBJ)) : ?>
                 <tr class="{{ $rowCounter % 2 === 0 ? 'zebra' : '' }}">
                     <td><?php echo $count++; ?></td>
-                    <td><?php echo htmlentities($row->news_name); ?></td>
-                    <td><?php echo date('d M Y H:i:s', strtotime($row->begin_date)); ?></td>
-                    <td><?php echo date('d M Y H:i:s', strtotime($row->end_date)); ?></td>
+                    <td><?php echo htmlentities($row->name_english); ?></td>
+                    <td><?php echo date('d F Y H:i', strtotime($row->begin_date)); ?></td>
+                    <td><?php echo date('d F Y H:i', strtotime($row->end_date)); ?></td>
+                    <td>
+                        <?php
+                            $locations = explode(', ', $row->campaign_location_names);
+                            for($x = 0; $x < count($locations); $x++) {
+                                echo $locations[$x] . '<br>';
+                            }
+                        ?>
+                    </td>
                     <td><?php echo $row->campaign_status; ?></td>
-                    <td><?php echo date('d M Y', strtotime($row->updated_at)); ?></td>
+                    <td><?php echo $this->printDateTime($row->updated_at, $timezone, 'd F Y H:i:s'); ?></td>
                 </tr>
             <?php endwhile ; ?>
         </tbody>

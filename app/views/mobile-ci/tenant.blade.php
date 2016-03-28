@@ -174,7 +174,10 @@
             @foreach($tenant->couponsProfiling as $coupontab)
                 <div class="col-xs-12 col-sm-12">
                     <section class="list-item-single-tenant">
-                        <a class="list-item-link" href="{{ url('customer/mallcouponcampaign?id='.$coupontab->promotion_id) }}">
+                        <a class="list-item-link" href="{{ url('customer/mallcoupon?id='.$coupontab->promotion_id) }}">
+                            <div class="coupon-new-badge">
+                                <div class="new-number">{{$coupontab->quantity}}</div>
+                            </div>
                             <div class="list-item-info">
                                 <header class="list-item-title">
                                     <div><strong>{{{ $coupontab->promotion_name }}}</strong></div>

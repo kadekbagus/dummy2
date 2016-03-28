@@ -30,7 +30,7 @@ class User extends Eloquent implements UserInterface
         $userTenantArray = UserMerchant::whereObjectType('tenant')->lists('user_id');
         
         return $userTenantArray
-            ? $query->whereIn('user_id', $userTenantArray)
+            ? $query->whereIn('users.user_id', $userTenantArray)
             : $query->whereUserId('');
     }
 
@@ -46,7 +46,7 @@ class User extends Eloquent implements UserInterface
         $userTenantArray = UserMerchant::whereObjectType('tenant')->whereIn('merchant_id', $merchantIds)->lists('user_id');
         
         return $userTenantArray
-            ? $query->whereIn('user_id', $userTenantArray)
+            ? $query->whereIn('users.user_id', $userTenantArray)
             : $query->whereUserId('');
     }
 
@@ -141,6 +141,31 @@ class User extends Eloquent implements UserInterface
     public function profilePicture()
     {
         return $this->media()->where('media_name_id', 'user_profile_picture');
+    }
+
+    public function campaignAccount()
+    {
+        return $this->belongsTo('CampaignAccount', 'user_id', 'user_id');
+    }
+
+    public function userMerchant()
+    {
+        return $this->hasMany('UserMerchant', 'user_id', 'user_id');
+    }
+
+    public function userMall()
+    {
+        return $this->userMerchant()->where('object_type', '=', 'mall');
+    }
+
+    public function userTenant()
+    {
+        return $this->userMerchant()->where('object_type', '=', 'tenant');
+    }
+
+    public function settings()
+    {
+        return $this->hasMany('Setting', 'object_id', 'user_id')->where('object_type', 'user');
     }
 
     /**
