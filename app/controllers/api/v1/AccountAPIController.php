@@ -72,7 +72,7 @@ class AccountAPIController extends ControllerAPI
     {
         $tenantArray = [];
         foreach (Tenant::whereIn('merchant_id', $tenantIds)->orderBy('name')->get() as $row) {
-            $tenantArray[$row->merchant_id] = $row->tenant_at_mall;
+            $tenantArray[] = ['id' => $row->merchant_id, 'name' => $row->tenant_at_mall];
         }
 
         return $tenantArray;
@@ -118,7 +118,7 @@ class AccountAPIController extends ControllerAPI
         $userDetail->city = Input::get('city');
         $userDetail->province = Input::get('province');
         $userDetail->postal_code = Input::get('postal_code');
-        $userDetail->country = Input::get('country');
+        $userDetail->country_id = Input::get('country_id');
         $userDetail->save();
 
         // Save to campaign_account table (1 to 1)
@@ -169,6 +169,11 @@ class AccountAPIController extends ControllerAPI
         // Join with 'campaign_account' (1 to 1)
         $pmpAccounts->join('campaign_account', 'users.user_id', '=', 'campaign_account.user_id');
 
+        // Join with 'countries' (1 to 1)
+        if (Input::get('location')) {
+            $pmpAccounts->leftJoin('countries', 'user_details.country_id', '=', 'countries.country_id');
+        }
+
         // Filter by Account Name
         if (Input::get('account_name')) {
             $pmpAccounts->where('account_name', 'LIKE', '%'.Input::get('account_name').'%');
@@ -181,7 +186,7 @@ class AccountAPIController extends ControllerAPI
 
         // Filter by Location
         if (Input::get('location')) {
-            $pmpAccounts->whereCity(Input::get('location'))->orWhere('country', Input::get('location'));
+            $pmpAccounts->whereCity(Input::get('location'))->orWhere('countries.name', '=', Input::get('location'));
         }
 
         // Filter by Status
@@ -238,7 +243,7 @@ class AccountAPIController extends ControllerAPI
                 'address_line1'  => $row->userDetail->address_line1,
                 'province'       => $row->userDetail->province,
                 'postal_code'    => $row->userDetail->postal_code,
-                'country'        => $row->userDetail->country,
+                'country'        => (object) ['id' => $row->userDetail->country_id, 'name' => $row->userDetail->country],
             ];
         }
 
@@ -254,36 +259,38 @@ class AccountAPIController extends ControllerAPI
             'user_firstname' => Input::get('user_firstname'),
             'user_lastname'  => Input::get('user_lastname'),
             'user_email'     => Input::get('user_email'),
-            'user_password'  => Input::get('user_password'),
             'account_name'   => Input::get('account_name'),
             'status'         => Input::get('status'),
             'company_name'   => Input::get('company_name'),
             'address_line1'  => Input::get('address_line1'),
             'city'           => Input::get('city'),
-            'country'        => Input::get('country'),
+            'country_id'     => Input::get('country_id'),
             'merchant_ids'   => Input::get('merchant_ids'),
         ];
 
         if (Input::get('id')) {
             $fields['id'] = Input::get('id');
+        } else {
+            $fields['user_password'] = Input::get('user_password');
         }
 
         $rules = [
             'user_firstname' => 'required',
             'user_lastname'  => 'required',
             'user_email'     => 'required|email',
-            'user_password'  => 'required',
             'account_name'   => 'required',
             'status'         => 'in:active,inactive',
             'company_name'   => 'required',
             'address_line1'  => 'required',
             'city'           => 'required',
-            'country'        => 'required',
+            'country_id'     => 'required',
             'merchant_ids'   => 'required|array',
         ];
 
         if (Input::get('id')) {
             $rules['id'] = 'exists:users,user_id';
+        } else {
+            $rules['user_password'] = 'required';
         }
 
         $validator = Validator::make($fields, $rules);
