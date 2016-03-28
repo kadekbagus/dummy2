@@ -233,9 +233,11 @@ class AccountAPIController extends ControllerAPI
                 // Needed by frontend for the edit page
                 'user_firstname' => $row->user_firstname,
                 'user_lastname'  => $row->user_lastname,
+                'position'       => $row->campaignAccount->position,
                 'user_email'     => $row->user_email,
                 'address_line1'  => $row->userDetail->address_line1,
                 'province'       => $row->userDetail->province,
+                'postal_code'    => $row->userDetail->postal_code,
                 'country'        => $row->userDetail->country,
             ];
         }
