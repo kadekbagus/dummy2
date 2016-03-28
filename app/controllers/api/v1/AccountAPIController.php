@@ -259,7 +259,6 @@ class AccountAPIController extends ControllerAPI
             'user_firstname' => Input::get('user_firstname'),
             'user_lastname'  => Input::get('user_lastname'),
             'user_email'     => Input::get('user_email'),
-            'user_password'  => Input::get('user_password'),
             'account_name'   => Input::get('account_name'),
             'status'         => Input::get('status'),
             'company_name'   => Input::get('company_name'),
@@ -271,13 +270,14 @@ class AccountAPIController extends ControllerAPI
 
         if (Input::get('id')) {
             $fields['id'] = Input::get('id');
+        } else {
+            $fields['user_password'] = Input::get('user_password');
         }
 
         $rules = [
             'user_firstname' => 'required',
             'user_lastname'  => 'required',
             'user_email'     => 'required|email',
-            'user_password'  => 'required',
             'account_name'   => 'required',
             'status'         => 'in:active,inactive',
             'company_name'   => 'required',
@@ -289,6 +289,8 @@ class AccountAPIController extends ControllerAPI
 
         if (Input::get('id')) {
             $rules['id'] = 'exists:users,user_id';
+        } else {
+            $rules['user_password'] = 'required';
         }
 
         $validator = Validator::make($fields, $rules);
