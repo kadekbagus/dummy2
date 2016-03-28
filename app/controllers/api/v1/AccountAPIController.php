@@ -61,10 +61,14 @@ class AccountAPIController extends ControllerAPI
         
         $selection = [];
         foreach ($tenants as $tenant) {
-            $selection[$tenant->merchant_id] = $tenant->tenant_at_mall;
+            $selection[] = [
+                'id'     => $tenant->merchant_id,
+                'name'   => $tenant->tenant_at_mall,
+                'status' => $tenant->status,
+            ];
         }
 
-        $this->response->data = ['available_tenants' => (object) $selection];
+        $this->response->data = ['available_tenants' => $selection];
         return $this->render(200);
     }
 
