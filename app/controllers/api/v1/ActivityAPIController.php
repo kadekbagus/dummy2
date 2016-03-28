@@ -3173,7 +3173,7 @@ class ActivityAPIController extends ControllerAPI
                     }
                 }
 
-                $summary['Filter by Activity'] = implode(', ', $activityGroups);
+                $summary['Filter by Activities'] = implode(', ', $activityGroups);
             }
 
             $columns = [];
@@ -3208,7 +3208,7 @@ class ActivityAPIController extends ControllerAPI
             
             $records = [];
 
-            $summary['Date range'] = $mallbegindate.' - '.$mallenddate;
+            $summary['Date Range'] = date('d F Y', strtotime($mallbegindate)).' - '.date('d F Y', strtotime($mallenddate));
 
             if ($this->returnQuery) {
                 return [
