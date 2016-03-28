@@ -334,10 +334,10 @@ class CouponReportPrinterController extends DataPrinterController
                 printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Coupon Detail Report for ' . $couponName, '', '', '', '', '', '');
 
                 printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Coupons', $totalCoupons, '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Acquiring Customers', $totalAcquiringCustomers, '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Active Campaign Days', $totalActiveDays, '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Redemption Places', $totalRedemptionPlace, '', '', '', '', '');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Coupons', round($totalCoupons), '', '', '', '', '');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Acquiring Customers', round($totalAcquiringCustomers), '', '', '', '', '');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Active Campaign Days', round($totalActiveDays), '', '', '', '', '');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Redemption Places', round($totalRedemptionPlace), '', '', '', '', '');
 
                 // Filtering
                 if ($couponCode != '') {
