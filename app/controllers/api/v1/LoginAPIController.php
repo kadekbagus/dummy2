@@ -256,6 +256,15 @@ class LoginAPIController extends ControllerAPI
             $this->response->data = $user;
 
             $pmp_parent = $user->campaignAccount()->where('user_id', '=', $user->user_id)->first();
+
+            // Get total tenant and mall per user
+            $um = $pmp_parent->userMerchant()->count();
+            $ut = $pmp_parent->userTenant()->count();
+
+            $user->total_mall = $um;
+            $user->total_tenant = $ut;
+
+
             $user_id = $user->user_id;
 
             if (! empty($pmp_parent->parent_user_id)) {
@@ -1389,7 +1398,7 @@ class LoginAPIController extends ControllerAPI
 
         $new_user->setRelation('apikey', $apikey);
         $new_user->apikey = $apikey;
-        
+
         return [$new_user, $user_detail, $apikey];
     }
 }
