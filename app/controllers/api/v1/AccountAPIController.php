@@ -231,6 +231,10 @@ class AccountAPIController extends ControllerAPI
         $allRows = clone $pmpAccounts;
         $data->total_records = $allRows->count();
 
+        if ( ! Input::get('export')) {
+            $pmpAccounts->take(Input::get('take'))->skip(Input::get('skip'));
+        }
+
         $sortKey = Input::get('sortby', 'account_name');
 
         // Prevent ambiguous error
@@ -243,9 +247,7 @@ class AccountAPIController extends ControllerAPI
             $sortKey = 'campaign_account.status';
         }
 
-        $pmpAccounts = $pmpAccounts->take(Input::get('take'))->skip(Input::get('skip'))
-            ->orderBy($sortKey, Input::get('sortmode', 'asc'))
-            ->get();
+        $pmpAccounts = $pmpAccounts->orderBy($sortKey, Input::get('sortmode', 'asc'))->get();
 
         $records = [];
         foreach ($pmpAccounts as $row) {
