@@ -88,31 +88,33 @@ class CRMSummaryReportPrinterController extends DataPrinterController
                     }
                 }
 
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '', '', '');
+                if (empty($builder)) {
+                    printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '', '', '');
 
-                foreach ($builder['responses'] as $key => $value) {
-                    foreach ($value as $key2 => $value2) {
-                        if ($key2 != 'date') {
-                            printf(",");
+                    foreach ($builder['responses'] as $key => $value) {
+                        foreach ($value as $key2 => $value2) {
+                            if ($key2 != 'date') {
+                                printf(",");
+                            }
+                            printf("\"%s\"", ucwords(str_replace('_', ' ', $key2)));
                         }
-                        printf("\"%s\"", ucwords(str_replace('_', ' ', $key2)));
+                        break;
+                        printf("\n");
                     }
-                    break;
-                    printf("\n");
-                }
 
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '', '', '');
+                    printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '', '', '');
 
-                foreach ($builder['responses'] as $key => $value) {
-                    foreach ($value as $key2 => $value2) {
-                        if ($key2 === 'date') {
-                            printf("%s,", $value2);
-                        } else {
-                            printf("\"%s\"", $this->printFormatNumber((int)$value2));
-                            printf(",");
+                    foreach ($builder['responses'] as $key => $value) {
+                        foreach ($value as $key2 => $value2) {
+                            if ($key2 === 'date') {
+                                printf("%s,", $value2);
+                            } else {
+                                printf("\"%s\"", $this->printFormatNumber((int)$value2));
+                                printf(",");
+                            }
                         }
+                        printf("\n");
                     }
-                    printf("\n");
                 }
 
                 break;
