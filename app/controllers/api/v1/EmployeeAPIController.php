@@ -2132,6 +2132,10 @@ class EmployeeAPIController extends ControllerAPI
             // Builder object
             $joined = FALSE;
 
+            // check if the user is a campaign owner or campaign employee
+            $flagCampaignAcc = CampaignAccount::select('user_id')->where('user_id', '=', $user->user_id)->first();
+
+
             $users = Employee::excludeDeleted('employees')->joinUserRole()
                              ->select('employees.*', 'users.username',
                                      'users.username as login_id', 'users.user_email',
@@ -2139,6 +2143,15 @@ class EmployeeAPIController extends ControllerAPI
                                      'users.user_firstname', 'users.user_lastname',
                                      'roles.role_name')
                              ->groupBy('employees.user_id');
+
+
+
+            if ( ! empty($flagCampaignAcc) ) 
+            {
+                $users->leftJoin('campaign_account', 'campaign_account.user_id', '=', 'employees.user_id')
+                 ->where('campaign_account.user_id', '=', $user->user_id)
+                 ->orWhere('campaign_account.parent_user_id', '=', $user->user_id);
+            }
 
             // Include Relationship
             $defaultWith = array();

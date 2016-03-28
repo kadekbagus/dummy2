@@ -61,18 +61,26 @@ class AccountAPIController extends ControllerAPI
         
         $selection = [];
         foreach ($tenants as $tenant) {
-            $selection[$tenant->merchant_id] = $tenant->tenant_at_mall;
+            $selection[] = [
+                'id'     => $tenant->merchant_id,
+                'name'   => $tenant->tenant_at_mall,
+                'status' => $tenant->status,
+            ];
         }
 
-        $this->response->data = ['available_tenants' => (object) $selection];
+        $this->response->data = ['available_tenants' => $selection];
         return $this->render(200);
     }
 
     protected function getTenantAtMallArray($tenantIds)
     {
+        if ( ! $tenantIds) {
+            return [];
+        }
+
         $tenantArray = [];
         foreach (Tenant::whereIn('merchant_id', $tenantIds)->orderBy('name')->get() as $row) {
-            $tenantArray[] = ['id' => $row->merchant_id, 'name' => $row->tenant_at_mall];
+            $tenantArray[] = ['id' => $row->merchant_id, 'name' => $row->tenant_at_mall, 'status' => $row->status];
         }
 
         return $tenantArray;
@@ -106,6 +114,11 @@ class AccountAPIController extends ControllerAPI
 
         if ( ! $this->id) {
             $user->status = 'active';
+
+            // Get role ID of "Campaign Owner"
+            $roleId = Role::whereRoleName('Campaign Owner')->first()->role_id;
+
+            $user->user_role_id = $roleId;
         }
 
         $user->save();
@@ -139,6 +152,16 @@ class AccountAPIController extends ControllerAPI
             $userMerchant->merchant_id = $merchantId;
             $userMerchant->object_type = 'tenant';
             $userMerchant->save();
+        }
+
+        if ( ! $this->id) {
+            // Save to "settings" table
+            $setting = new Setting;
+            $setting->setting_name = 'agreement_accepted_pmp_account';
+            $setting->setting_value = 'false';
+            $setting->object_id = $user->user_id;
+            $setting->object_type = 'user';
+            $setting->save();
         }
         
         $data = new stdClass();
@@ -208,6 +231,10 @@ class AccountAPIController extends ControllerAPI
         $allRows = clone $pmpAccounts;
         $data->total_records = $allRows->count();
 
+        if ( ! Input::get('export')) {
+            $pmpAccounts->take(Input::get('take'))->skip(Input::get('skip'));
+        }
+
         $sortKey = Input::get('sortby', 'account_name');
 
         // Prevent ambiguous error
@@ -220,9 +247,7 @@ class AccountAPIController extends ControllerAPI
             $sortKey = 'campaign_account.status';
         }
 
-        $pmpAccounts = $pmpAccounts->take(Input::get('take'))->skip(Input::get('skip'))
-            ->orderBy($sortKey, Input::get('sortmode', 'asc'))
-            ->get();
+        $pmpAccounts = $pmpAccounts->orderBy($sortKey, Input::get('sortmode', 'asc'))->get();
 
         $records = [];
         foreach ($pmpAccounts as $row) {
@@ -243,7 +268,7 @@ class AccountAPIController extends ControllerAPI
                 'address_line1'  => $row->userDetail->address_line1,
                 'province'       => $row->userDetail->province,
                 'postal_code'    => $row->userDetail->postal_code,
-                'country'        => (object) ['id' => $row->userDetail->country_id, 'name' => $row->userDetail->country],
+                'country'        => (object) ['id' => $row->userDetail->country_id, 'name' => @$row->userDetail->userCountry->name],
             ];
         }
 

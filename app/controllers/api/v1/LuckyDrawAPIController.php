@@ -37,7 +37,7 @@ class LuckyDrawAPIController extends ControllerAPI
 
     /**
      * New & Update handler for Status related items
-     * 
+     *
      * @author Qosdil A. <qosdil@dominopos.com>
      * @return array
      */
@@ -1201,7 +1201,7 @@ class LuckyDrawAPIController extends ControllerAPI
             $_luckydraws = clone $luckydraws;
 
             // if not printing / exporting data then do pagination.
-            if (! $this->returnBuilder) 
+            if (! $this->returnBuilder)
             {
                 // Get the take args
                 $take = $perPage;
