@@ -55,7 +55,18 @@ class UserDetail extends Eloquent
         return $this->belongsTo('Mall', 'retailer_id', 'merchant_id');
     }
 
+    /**
+     * @todo Remove this or remove the same field name in the table.
+     */
     public function country()
+    {
+        return $this->belongsTo('Country', 'country_id', 'country_id');
+    }
+
+    /**
+     * 'country' will not work since there is a field with the same name.
+     */
+    public function userCountry()
     {
         return $this->belongsTo('Country', 'country_id', 'country_id');
     }

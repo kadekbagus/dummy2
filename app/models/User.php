@@ -27,10 +27,10 @@ class User extends Eloquent implements UserInterface
      */
     public function scopePmpAccounts($query)
     {
-        $userTenantArray = UserMerchant::whereObjectType('tenant')->lists('user_id');
-        
-        return $userTenantArray
-            ? $query->whereIn('users.user_id', $userTenantArray)
+        $ids = CampaignAccount::lists('user_id');
+
+        return $ids
+            ? $query->whereIn('users.user_id', $ids)
             : $query->whereUserId('');
     }
 
