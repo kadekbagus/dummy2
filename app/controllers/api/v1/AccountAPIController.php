@@ -114,6 +114,11 @@ class AccountAPIController extends ControllerAPI
 
         if ( ! $this->id) {
             $user->status = 'active';
+
+            // Get role ID of "Campaign Owner"
+            $roleId = Role::whereRoleName('Campaign Owner')->first()->role_id;
+
+            $user->user_role_id = $roleId;
         }
 
         $user->save();
