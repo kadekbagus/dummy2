@@ -3341,6 +3341,7 @@ class CouponAPIController extends ControllerAPI
                         // ->whereRaw("({$prefix}issued_coupons.expired_date >= ? or {$prefix}issued_coupons.expired_date is null)", [$now])
                         ->with('coupon')
                         ->whereHas('coupon', function($q) use($now) {
+                            $q->where('promotions.status', 'active');
                             $q->where('promotions.coupon_validity_in_date', '>=', $now);
                         })
                         ->first();
@@ -3365,6 +3366,7 @@ class CouponAPIController extends ControllerAPI
                             ->where('issued_coupons.user_id', $user->user_id)
                             // ->whereRaw("({$prefix}issued_coupons.expired_date >= ? or {$prefix}issued_coupons.expired_date is null)", [$now])
                             ->whereHas('coupon', function($q) use($now) {
+                                $q->where('promotions.status', 'active');
                                 $q->where('promotions.coupon_validity_in_date', '>=', $now);
                             })
                             ->where('merchants.masterbox_number', $number)
@@ -3389,6 +3391,7 @@ class CouponAPIController extends ControllerAPI
                                 ->where('issued_coupons.user_id', $user->user_id)
                                 // ->whereRaw("({$prefix}issued_coupons.expired_date >= ? or {$prefix}issued_coupons.expired_date is null)", [$now])
                                 ->whereHas('coupon', function($q) use($now) {
+                                    $q->where('promotions.status', 'active');
                                     $q->where('promotions.coupon_validity_in_date', '>=', $now);
                                 })
                                 ->where('user_verification_numbers.verification_number', $number)
