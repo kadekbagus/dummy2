@@ -316,6 +316,7 @@ class AccountAPIController extends ControllerAPI
             $rules['id'] = 'exists:users,user_id';
         } else {
             $rules['user_password'] = 'required';
+            $rules['account_name'] .= '|unique:campaign_account,account_name';
         }
 
         $validator = Validator::make($fields, $rules);
