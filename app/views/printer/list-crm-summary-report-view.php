@@ -126,7 +126,7 @@
     <table style="width:100%">
         <thead>
         <?php
-            if (empty($builder)) {
+            if (! empty($builder['responses'])) {
             foreach ($builder['responses'] as $key => $value) {
                 foreach ($value as $key2 => $value2) {
         ?>

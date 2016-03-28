@@ -65,7 +65,7 @@ class CRMSummaryReportPrinterController extends DataPrinterController
         if (!$flag_7days) {
             $builder = ActivityAPIController::create('raw')->setReturnQuery(TRUE)->getCRMSummaryReport();      
         }
-
+       
         $summary = $builder['summary'];
 
         $pageTitle = 'CRM Summary Report';
@@ -88,7 +88,7 @@ class CRMSummaryReportPrinterController extends DataPrinterController
                     }
                 }
 
-                if (empty($builder)) {
+                if (! empty($builder['responses'])) {
                     printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '', '', '');
 
                     foreach ($builder['responses'] as $key => $value) {
