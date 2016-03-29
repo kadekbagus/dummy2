@@ -80,7 +80,7 @@ class AccountAPIController extends ControllerAPI
 
         $tenantArray = [];
         foreach (Tenant::whereIn('merchant_id', $tenantIds)->orderBy('name')->get() as $row) {
-            $tenantArray[] = ['id' => $row->merchant_id, 'name' => $row->tenant_at_mall];
+            $tenantArray[] = ['id' => $row->merchant_id, 'name' => $row->tenant_at_mall, 'status' => $row->status];
         }
 
         return $tenantArray;
@@ -153,6 +153,16 @@ class AccountAPIController extends ControllerAPI
             $userMerchant->object_type = 'tenant';
             $userMerchant->save();
         }
+
+        if ( ! $this->id) {
+            // Save to "settings" table
+            $setting = new Setting;
+            $setting->setting_name = 'agreement_accepted_pmp_account';
+            $setting->setting_value = 'false';
+            $setting->object_id = $user->user_id;
+            $setting->object_type = 'user';
+            $setting->save();
+        }
         
         $data = new stdClass();
         $data->id = $user->user_id;
@@ -221,6 +231,10 @@ class AccountAPIController extends ControllerAPI
         $allRows = clone $pmpAccounts;
         $data->total_records = $allRows->count();
 
+        if ( ! Input::get('export')) {
+            $pmpAccounts->take(Input::get('take'))->skip(Input::get('skip'));
+        }
+
         $sortKey = Input::get('sortby', 'account_name');
 
         // Prevent ambiguous error
@@ -233,9 +247,7 @@ class AccountAPIController extends ControllerAPI
             $sortKey = 'campaign_account.status';
         }
 
-        $pmpAccounts = $pmpAccounts->take(Input::get('take'))->skip(Input::get('skip'))
-            ->orderBy($sortKey, Input::get('sortmode', 'asc'))
-            ->get();
+        $pmpAccounts = $pmpAccounts->orderBy($sortKey, Input::get('sortmode', 'asc'))->get();
 
         $records = [];
         foreach ($pmpAccounts as $row) {
@@ -304,6 +316,7 @@ class AccountAPIController extends ControllerAPI
             $rules['id'] = 'exists:users,user_id';
         } else {
             $rules['user_password'] = 'required';
+            $rules['account_name'] .= '|unique:campaign_account,account_name';
         }
 
         $validator = Validator::make($fields, $rules);
