@@ -109,13 +109,13 @@ class AccountAPIController extends ControllerAPI
         $user->user_lastname = Input::get('user_lastname');
         $user->user_email = Input::get('user_email');
         $user->username = Input::get('user_email');
+        $user->status = Input::get('status');
 
         if (Input::get('user_password')) {
             $user->user_password = Hash::make(Input::get('user_password'));
         }
 
         if ( ! $this->id) {
-            $user->status = 'active';
 
             // Get role ID of "Campaign Owner"
             $roleId = Role::whereRoleName('Campaign Owner')->first()->role_id;
