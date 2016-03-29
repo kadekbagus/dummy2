@@ -52,7 +52,7 @@ class User extends Eloquent implements UserInterface
 
     public function userTenants()
     {
-        return $this->hasMany('UserMerchant')->whereObjectType('tenant');
+        return $this->hasMany('UserMerchant')->whereIn('object_type', ['mall', 'tenant']);
     }
 
     public function permissions()
