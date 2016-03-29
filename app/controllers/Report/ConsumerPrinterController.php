@@ -49,8 +49,8 @@ class ConsumerPrinterController extends DataPrinterController
         $users = $response['builder'];
         $totalRec = $response['count'];
 
-        $firstVisitBeginDate = date('d M Y', strtotime(\Input::get('first_visit_begin_date')));
-        $firstVisitEndDate = date('d M Y', strtotime(\Input::get('first_visit_end_date')));
+        $firstVisitBeginDate = Carbon::createFromFormat('Y-m-d H:i:s', \Input::get('first_visit_begin_date'), 'UTC')->setTimezone($timezone)->format('d M Y');
+        $firstVisitEndDate = Carbon::createFromFormat('Y-m-d H:i:s', \Input::get('first_visit_end_date'), 'UTC')->setTimezone($timezone)->format('d M Y');
 
         $firstVisitDates = $firstVisitBeginDate;
 
