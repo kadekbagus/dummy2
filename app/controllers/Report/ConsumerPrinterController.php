@@ -49,6 +49,15 @@ class ConsumerPrinterController extends DataPrinterController
         $users = $response['builder'];
         $totalRec = $response['count'];
 
+        $firstVisitBeginDate = Carbon::createFromFormat('Y-m-d H:i:s', \Input::get('first_visit_begin_date'), 'UTC')->setTimezone($timezone)->format('d M Y');
+        $firstVisitEndDate = Carbon::createFromFormat('Y-m-d H:i:s', \Input::get('first_visit_end_date'), 'UTC')->setTimezone($timezone)->format('d M Y');
+
+        $firstVisitDates = $firstVisitBeginDate;
+
+        if ($firstVisitEndDate !== $firstVisitBeginDate) {
+            $firstVisitDates .= ' - '.$firstVisitEndDate;
+        }
+
         $this->prepareUnbufferedQuery();
 
         $sql = $users->toSql();
@@ -67,6 +76,7 @@ class ConsumerPrinterController extends DataPrinterController
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','','');
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Customer List', '', '', '', '', '','','','','');
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Customers', $totalRec, '', '', '', '','','','','');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'First Visit Date', $firstVisitDates, '', '', '', '','','','','');
 
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','','','');
                 if ($flagMembershipEnable) {
