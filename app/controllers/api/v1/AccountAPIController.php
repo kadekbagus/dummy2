@@ -56,8 +56,10 @@ class AccountAPIController extends ControllerAPI
 
     public function getAvailableTenantsSelection()
     {
-        $takenMerchantIds = UserMerchant::whereObjectType('tenant')->lists('merchant_id');
-        $tenants = Tenant::whereNotIn('merchant_id', $takenMerchantIds)->get();
+        $availableMerchantIds = UserMerchant::whereIn('object_type', ['mall', 'tenant'])->whereNull('user_id')->lists('merchant_id');
+
+        // Retrieve from "merchants" table
+        $tenants = CampaignLocation::whereIn('merchant_id', $availableMerchantIds)->orderBy('name')->get();
         
         $selection = [];
         foreach ($tenants as $tenant) {
@@ -68,7 +70,7 @@ class AccountAPIController extends ControllerAPI
             ];
         }
 
-        $this->response->data = ['available_tenants' => $selection];
+        $this->response->data = ['row_count' => count($selection), 'available_tenants' => $selection];
         return $this->render(200);
     }
 

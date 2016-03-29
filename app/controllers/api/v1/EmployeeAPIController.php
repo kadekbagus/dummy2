@@ -486,6 +486,13 @@ class EmployeeAPIController extends ControllerAPI
             $newEmployee->status = $newUser->status;
             $newEmployee = $newUser->employee()->save($newEmployee);
 
+            // save to campaign account
+            $newCampaignAccount = new CampaignAccount();
+            $newCampaignAccount->user_id = $newUser->user_id;
+            $newCampaignAccount->parent_user_id = $user->user_id;
+            $newCampaignAccount->status = $newUser->status;
+            $newCampaignAccount->save(); 
+
             $newUser->setRelation('employee', $newEmployee);
 
             // User verification numbers
@@ -1001,7 +1008,7 @@ class EmployeeAPIController extends ControllerAPI
                 ),
                 array(
                     'current_mall'            => 'required|orbit.empty.mall',
-                    'user_id'                 => 'required|orbit.empty.user',
+                    'user_id'                 => 'required|orbit.empty.user|orbit.allowed.update',
                     'date_of_birth'           => 'date_format:Y-m-d',
                     'password'                => 'min:6|confirmed',
                     'employee_role'           => 'orbit.empty.employee.role',
@@ -1016,6 +1023,7 @@ class EmployeeAPIController extends ControllerAPI
                     'orbit.exists.employeeid_but_me'          => $errorMessage['orbit.exists.employeeid_but_me'],
                     'orbit.exist.verification.numbers_but_me' => 'The verification number already used by other',
                     'alpha_num' => 'The verification number must letter and number.',
+                    'orbit.allowed.update' => 'You are not allowed to update this user.',
                 )
             );
 
@@ -2770,6 +2778,23 @@ class EmployeeAPIController extends ControllerAPI
             }
 
             App::instance('orbit.exist.verification.numbers', $csVerificationNumber);
+
+            return TRUE;
+        });
+
+        // Check the if the user is allowed to be update
+        Validator::extend('orbit.allowed.update', function ($attribute, $value, $parameters) {
+            $user = $this->api->user;
+            $user = CampaignAccount::select('user_id')
+                                    ->where('user_id', '=', $value)
+                                    ->where('parent_user_id', '=', $user->user_id)
+                                    ->first();
+
+            if ( empty($user) ) {
+                return FALSE;
+            }
+
+            App::instance('orbit.allowed.update', $user);
 
             return TRUE;
         });

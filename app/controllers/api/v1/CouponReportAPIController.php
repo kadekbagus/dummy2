@@ -194,10 +194,7 @@ class CouponReportAPIController extends ControllerAPI
                 }
             }
 
-            $coupons = Coupon::
-                        // Waiting insert update proses
-                        //allowedForPMPUser($user, 'coupon')->
-                                select(
+            $coupons = Coupon::allowedForPMPUser($user, 'coupon')->select(
                                         'promotions.promotion_id',
                                         'promotions.promotion_name',
                                         'promotions.begin_date',
