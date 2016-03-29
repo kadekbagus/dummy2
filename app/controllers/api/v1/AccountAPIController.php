@@ -56,8 +56,10 @@ class AccountAPIController extends ControllerAPI
 
     public function getAvailableTenantsSelection()
     {
-        $availableMerchantIds = UserMerchant::whereObjectType('tenant')->whereNull('user_id')->lists('merchant_id');
-        $tenants = Tenant::whereIn('merchant_id', $availableMerchantIds)->get();
+        $availableMerchantIds = UserMerchant::whereIn('object_type', ['mall', 'tenant'])->whereNull('user_id')->lists('merchant_id');
+
+        // Retrieve from "merchants" table
+        $tenants = CampaignLocation::whereIn('merchant_id', $availableMerchantIds)->orderBy('name')->get();
         
         $selection = [];
         foreach ($tenants as $tenant) {
@@ -68,7 +70,7 @@ class AccountAPIController extends ControllerAPI
             ];
         }
 
-        $this->response->data = ['available_tenants' => $selection];
+        $this->response->data = ['row_count' => count($selection), 'available_tenants' => $selection];
         return $this->render(200);
     }
 
@@ -79,7 +81,7 @@ class AccountAPIController extends ControllerAPI
         }
 
         $tenantArray = [];
-        foreach (Tenant::whereIn('merchant_id', $tenantIds)->orderBy('name')->get() as $row) {
+        foreach (CampaignLocation::whereIn('merchant_id', $tenantIds)->orderBy('name')->get() as $row) {
             $tenantArray[] = ['id' => $row->merchant_id, 'name' => $row->tenant_at_mall, 'status' => $row->status];
         }
 
@@ -107,13 +109,13 @@ class AccountAPIController extends ControllerAPI
         $user->user_lastname = Input::get('user_lastname');
         $user->user_email = Input::get('user_email');
         $user->username = Input::get('user_email');
+        $user->status = Input::get('status');
 
         if (Input::get('user_password')) {
             $user->user_password = Hash::make(Input::get('user_password'));
         }
 
         if ( ! $this->id) {
-            $user->status = 'active';
 
             // Get role ID of "Campaign Owner"
             $roleId = Role::whereRoleName('Campaign Owner')->first()->role_id;

@@ -14,6 +14,23 @@ class CampaignLocation extends Eloquent
 
     protected $table = 'merchants';
 
+    /**
+     * This enables $merchant->tenant_at_mall.
+     *
+     * @author Qosdil A. <qosdil@dominopos.com>
+     * @return string
+     */
+    public function getTenantAtMallAttribute()
+    {
+        if ($this->object_type == 'mall') {
+            return $this->name.' at '.$this->name;
+        }
+
+        $mall = CampaignLocation::find($this->parent_id);
+
+        return $this->name.' at '.$mall->name;
+    }
+
     public function news()
     {
         return $this->belongsToMany('News', 'news_merchant', 'merchant_id', 'news_id')->where('news.object_type', 'news')->active();
