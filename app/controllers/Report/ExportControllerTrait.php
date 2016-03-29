@@ -68,7 +68,7 @@ trait ExportControllerTrait
         $response = \Response::make($csv, 200);
         $response->header('Content-Type', 'text/csv');
 
-        $fileName = 'orbit-export-'.str_replace(' ', '-', $this->data->pageTitle.'-'.date('D_d_M_Y_').rand(10000, 99999)).'.csv';
+        $fileName = 'orbit-export-'.str_replace(' ', '-', $this->data->pageTitle.'-'.date('D_d_M_Y_Hi')).'.csv';
         $response->header('Content-Disposition', 'inline; filename="'.$fileName.'"');
 
         return $response;

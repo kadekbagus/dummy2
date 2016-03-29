@@ -51,4 +51,3 @@ Route::post('/api/v1/mallgroup-logo/delete', function()
     return UploadAPIController::create()->postDeleteMallGroupLogo();
 });
 
-?>
