@@ -59,7 +59,7 @@ class AccountAPIController extends ControllerAPI
         $availableMerchantIds = UserMerchant::whereIn('object_type', ['mall', 'tenant'])->whereNull('user_id')->lists('merchant_id');
 
         // Retrieve from "merchants" table
-        $tenants = CampaignLocation::whereIn('merchant_id', $availableMerchantIds)->get();
+        $tenants = CampaignLocation::whereIn('merchant_id', $availableMerchantIds)->orderBy('name')->get();
         
         $selection = [];
         foreach ($tenants as $tenant) {
