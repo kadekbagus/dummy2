@@ -194,15 +194,12 @@ class CouponReportAPIController extends ControllerAPI
                 }
             }
 
-            $coupons = Coupon::select(
+            $coupons = Coupon::allowedForPMPUser($user, 'coupon')->select(
                                         'promotions.promotion_id',
                                         'promotions.promotion_name',
                                         'promotions.begin_date',
                                         'promotions.end_date',
                                         'promotions.coupon_validity_in_date',
-                                        DB::raw("IFNULL(total_tenant, 0) AS total_tenant"),
-                                        'tenant_name',
-                                        DB::raw("merchants2.name AS mall_name"),
                                         'promotion_rules.rule_type',
                                         DB::raw("IFNULL(issued.total_issued, 0) AS total_issued"),
                                         DB::raw("IFNULL(redeemed.total_redeemed, 0) AS total_redeemed"),
@@ -213,13 +210,19 @@ class CouponReportAPIController extends ControllerAPI
                                                     IFNULL({$prefix}promotions.maximum_issued_coupon - total_issued, {$prefix}promotions.maximum_issued_coupon)
                                                 END as available"),
                                         'promotions.updated_at',
+
+                                        DB::raw("(select GROUP_CONCAT(IF({$prefix}merchants.object_type = 'tenant', CONCAT({$prefix}merchants.name,' at ', pm.name), {$prefix}merchants.name) separator ', ') from {$prefix}promotion_retailer
+                                        inner join {$prefix}merchants on {$prefix}merchants.merchant_id = {$prefix}promotion_retailer.retailer_id
+                                        inner join {$prefix}merchants pm on {$prefix}merchants.parent_id = pm.merchant_id
+                                        where {$prefix}promotion_retailer.promotion_id = {$prefix}promotions.promotion_id) as campaign_location_names"),
+
                                         DB::raw("CASE WHEN {$prefix}promotions.end_date < {$this->quote($now)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END AS campaign_status"),
                                         'campaign_status.order'
                                         )
                                         // Join rules
                                         ->join('promotion_rules', 'promotion_rules.promotion_id', '=', 'promotions.promotion_id')
-                                        // Left Join merchant for get mall name
-                                        ->leftJoin('merchants AS merchants2', 'promotions.merchant_id', '=', DB::raw('merchants2.merchant_id'))
+                                        // Left Join for get campaign_status
+                                        ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                                         // Left Join for get campaign_status
                                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
                                         // Left Join for get total issued
@@ -238,73 +241,6 @@ class CouponReportAPIController extends ControllerAPI
                                                         ) redeemed"),
                                             // On
                                             DB::raw('redeemed.promotion_id'), '=', 'promotions.promotion_id')
-                                        // Joint for get total tenant percampaign
-                                        ->leftJoin(DB::raw("(
-                                                    SELECT campaign_id as v_campaign_id, count(campaign_id) as total_tenant FROM
-                                                        (SELECT * FROM
-                                                            (
-                                                                SELECT
-                                                                    och.campaign_id,
-                                                                    och.campaign_history_action_id,
-                                                                    och.campaign_external_value,
-                                                                    om.name,
-                                                                    DATE_FORMAT(j_on.end_date, '%Y-%m-%d') AS end_date,
-                                                                    DATE_FORMAT(och.created_at, '%Y-%m-%d %H:00:00') AS history_created_date
-                                                                FROM {$prefix}campaign_histories och
-                                                                LEFT JOIN {$prefix}merchants om
-                                                                ON om.merchant_id = och.campaign_external_value
-                                                                LEFT JOIN {$prefix}promotions j_on
-                                                                ON j_on.promotion_id = och.campaign_id
-                                                                WHERE
-                                                                    och.campaign_history_action_id IN ({$this->quote($idAddTenant)}, {$this->quote($idDeleteTenant)})
-                                                                    AND och.campaign_type = 'coupon'
-                                                                    AND DATE_FORMAT(CONVERT_TZ(och.created_at, '+00:00', {$this->quote($timezoneOffset)}), '%Y-%m-%d') <= IF( DATE_FORMAT({$this->quote($now)}, '%Y-%m-%d') < end_date, DATE_FORMAT({$this->quote($now)}, '%Y-%m-%d'), end_date )
-                                                                ORDER BY och.created_at DESC
-                                                            ) as A
-                                                        group by campaign_id, campaign_external_value) as B
-                                                    WHERE (
-                                                        case when campaign_history_action_id = {$this->quote($idDeleteTenant)}
-                                                        and DATE_FORMAT(CONVERT_TZ(history_created_date, '+00:00', {$this->quote($timezoneOffset)}), '%Y-%m-%d') < IF( DATE_FORMAT({$this->quote($now)}, '%Y-%m-%d') < end_date, DATE_FORMAT({$this->quote($now)}, '%Y-%m-%d'), end_date )
-                                                        then campaign_history_action_id != {$this->quote($idDeleteTenant)} else true end
-                                                    )
-                                                    group by campaign_id
-                                                ) AS lf_total_tenant"),
-                                        // On
-                                        DB::raw('lf_total_tenant.v_campaign_id'), '=', 'promotions.promotion_id')
-                                        // Join for get tenant percampaign
-                                        ->leftJoin(DB::raw("(
-                                                    SELECT campaign_id as t_campaign_id, tenant_name
-                                                    FROM
-                                                        (
-                                                            SELECT * FROM
-                                                            (
-                                                                SELECT
-                                                                    och.campaign_id,
-                                                                    och.campaign_history_action_id,
-                                                                    och.campaign_external_value,
-                                                                    om.name as tenant_name,
-                                                                    DATE_FORMAT(j_on.end_date, '%Y-%m-%d') AS end_date,
-                                                                    DATE_FORMAT(och.created_at, '%Y-%m-%d %H:00:00') AS history_created_date
-                                                                FROM {$prefix}campaign_histories och
-                                                                LEFT JOIN {$prefix}merchants om
-                                                                ON om.merchant_id = och.campaign_external_value
-                                                                LEFT JOIN {$prefix}promotions j_on
-                                                                ON j_on.promotion_id = och.campaign_id
-                                                                WHERE
-                                                                    och.campaign_history_action_id IN ({$this->quote($idAddTenant)}, {$this->quote($idDeleteTenant)})
-                                                                    AND och.campaign_type = 'coupon'
-                                                                    AND DATE_FORMAT(CONVERT_TZ(och.created_at, '+00:00', {$this->quote($timezoneOffset)}), '%Y-%m-%d') <= IF( DATE_FORMAT(NOW(), '%Y-%m-%d') < end_date, DATE_FORMAT(NOW(), '%Y-%m-%d'), end_date )
-                                                                ORDER BY och.created_at DESC
-                                                            ) as A
-                                                            group by campaign_id, campaign_external_value) as B
-                                                            WHERE (
-                                                                case when campaign_history_action_id = {$this->quote($idDeleteTenant)}
-                                                                and DATE_FORMAT(CONVERT_TZ(history_created_date, '+00:00', {$this->quote($timezoneOffset)}), '%Y-%m-%d') < IF( DATE_FORMAT(NOW(), '%Y-%m-%d') < end_date, DATE_FORMAT(NOW(), '%Y-%m-%d'), end_date )
-                                                                then campaign_history_action_id != {$this->quote($idDeleteTenant)} else true end
-                                                        )
-                                                ) as tenant"),
-                                        // On
-                                        DB::raw('tenant.t_campaign_id'), '=', 'promotions.promotion_id')
                                         ->where('promotions.merchant_id', '=', $current_mall);
 
             // Filter by Promotion Name
@@ -314,13 +250,40 @@ class CouponReportAPIController extends ControllerAPI
 
             // Filter by Tenant Name
             OrbitInput::get('tenant_name', function($tenant_name) use ($coupons) {
-                $coupons->where('tenant_name', 'like', "%$tenant_name%");
+                $coupons->whereHas('tenants', function($q) use ($tenant_name) {
+                    $q->where('merchants.name', 'like', "%$tenant_name%");
+                });
             });
 
-            // Filter by Mall Name
-            OrbitInput::get('mall_name', function($mall_name) use ($coupons) {
-                $coupons->whereRaw("merchants2.name like '%{$mall_name}%' ");
+            // Filter news merchants by mall name
+            // There is laravel bug regarding nested whereHas on the same table like in this case
+            // news->tenant->mall : whereHas('tenant', function($q) { $q->whereHas('mall' ...)}) this is not gonna work
+            // Filter coupon merchants by mall name
+            OrbitInput::get('mall_name', function ($mall_name) use ($coupons, $prefix) {
+                $quote = function($arg)
+                {
+                    return DB::connection()->getPdo()->quote($arg);
+                };
+                $mall_name = "%" . $mall_name . "%";
+                $mall_name = $quote($mall_name);
+                $coupons->whereRaw(DB::raw("
+                    (SELECT count(*)
+                    FROM {$prefix}merchants mtenant
+                        inner join {$prefix}promotion_retailer_redeem onm on mtenant.merchant_id = onm.retailer_id
+                    WHERE mtenant.object_type = 'tenant'
+                        and onm.promotion_id = {$prefix}promotions.promotion_id
+                        and (
+                            SELECT count(*) FROM {$prefix}merchants mmall
+                            WHERE mmall.object_type = 'mall' and
+                            mtenant.parent_id = mmall.merchant_id and
+                            mmall.name like {$mall_name} and
+                            mmall.object_type = 'mall'
+                        ) >= 1
+                        and mtenant.object_type = 'tenant'
+                        and mtenant.is_mall = 'no') >= 1
+                "));
             });
+
 
             //Filter With Checkbox
             //Filter by Campaign Status
@@ -368,6 +331,24 @@ class CouponReportAPIController extends ControllerAPI
 
             // Grouping after filter
             $coupons->groupBy('promotions.promotion_id');
+
+
+            OrbitInput::get('with', function ($with) use ($coupons) {
+                $with = (array) $with;
+
+                foreach ($with as $relation) {
+                    if ($relation === 'tenants') {
+                        $coupons->with('tenants');
+                    } elseif ($relation === 'tenants.mall') {
+                        $coupons->with('tenants.mall');
+                    } elseif ($relation === 'campaignLocations') {
+                        $coupons->with('campaignLocations');
+                    } elseif ($relation === 'campaignLocations.mall') {
+                        $coupons->with('campaignLocations.mall');
+                    }
+                }
+            });
+
 
             // Clone the query builder which still does not include the take,
             $_coupons = clone $coupons;
@@ -1670,20 +1651,20 @@ class CouponReportAPIController extends ControllerAPI
                             mquery.campaign_start_date,
                             mquery.campaign_end_date
                         FROM
-                        (    
-                            SELECT 
+                        (
+                            SELECT
                                 DATE_FORMAT(ppp.comp_date, '%Y-%m-%d') AS comp_date,
                                 ppp.campaign_id,
                                 ppp.campaign_status,
                                 ppp.campaign_start_date,
-                                ppp.campaign_end_date    
+                                ppp.campaign_end_date
                             FROM
-                                (        
-                                    SELECT 
+                                (
+                                    SELECT
                                         p1.comp_date,
                                         IF( p2.campaign_id IS NULL,
                                             @preCampaign := @preCampaign,
-                                            @preCampaign := p2.campaign_id) AS campaign_id,     
+                                            @preCampaign := p2.campaign_id) AS campaign_id,
                                         IF( p2.action_name IS NULL,
                                             @preAction := @preAction,
                                             @preAction := p2.action_name
@@ -1698,11 +1679,11 @@ class CouponReportAPIController extends ControllerAPI
                                             ) AS campaign_end_date
                                     FROM
                                         (
-                                            SELECT 
+                                            SELECT
                                                 DATE_FORMAT(DATE_ADD(st.i_start, INTERVAL sequence_number DAY), '%Y-%m-%d') AS comp_date
                                             FROM
                                                 (SELECT 0 AS sequence_number UNION ALL SELECT * from {$prefix}sequence) os,
-                                                (SELECT 
+                                                (SELECT
                                                         DATE_FORMAT(MIN(CONVERT_TZ(och.created_at, '+00:00', {$this->quote($timezone)})), '%Y-%m-%d') AS i_start
                                                     FROM
                                                         {$prefix}campaign_histories och
@@ -1715,7 +1696,7 @@ class CouponReportAPIController extends ControllerAPI
                                         ) AS p1
                                     LEFT JOIN
                                         (
-                                            SELECT 
+                                            SELECT
                                                 och.campaign_id,
                                                 och.campaign_history_action_id,
                                                 ocha.action_name,
@@ -1723,17 +1704,17 @@ class CouponReportAPIController extends ControllerAPI
                                                 DATE_FORMAT(CONVERT_TZ(och.created_at, '+00:00', {$this->quote($timezone)}), '%Y-%m-%d') AS history_created_date,
                                                 orn.begin_date,
                                                 orn.end_date
-                                            FROM 
+                                            FROM
                                                 {$prefix}campaign_histories och
                                             LEFT JOIN
                                                 {$prefix}campaign_history_actions ocha
                                             ON och.campaign_history_action_id = ocha.campaign_history_action_id
                                             LEFT JOIN
-                                                {$prefix}promotions orn 
-                                            ON och.campaign_id = orn.promotion_id 
-                                            WHERE 
-                                                och.campaign_history_action_id IN   (   SELECT campaign_history_action_id 
-                                                                                        FROM {$prefix}campaign_history_actions 
+                                                {$prefix}promotions orn
+                                            ON och.campaign_id = orn.promotion_id
+                                            WHERE
+                                                och.campaign_history_action_id IN   (   SELECT campaign_history_action_id
+                                                                                        FROM {$prefix}campaign_history_actions
                                                                                         WHERE action_name IN ('activate', 'deactivate')
                                                                                     )
                                                 AND och.campaign_type = 'coupon'
@@ -1743,7 +1724,7 @@ class CouponReportAPIController extends ControllerAPI
                                     ON p1.comp_date = p2.history_created_date
                                     HAVING
                                         campaign_id IS NOT NULL
-                                    ORDER BY DATE_FORMAT(p1.comp_date, '%Y-%m-%d'), campaign_status 
+                                    ORDER BY DATE_FORMAT(p1.comp_date, '%Y-%m-%d'), campaign_status
                                 ) AS ppp
                             WHERE DATE_FORMAT(campaign_start_date, '%Y-%m-%d') <= comp_date
                                 AND DATE_FORMAT(campaign_end_date, '%Y-%m-%d') >= comp_date

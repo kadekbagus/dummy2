@@ -6,6 +6,7 @@ namespace Report;
  * Export Controller Trait
  *
  * @author Qosdil A. <qosdil@dominopos.com>
+ * @todo Fix custom value handling.
  */
 trait ExportControllerTrait
 {
@@ -39,7 +40,15 @@ trait ExportControllerTrait
         $csv .= ',,,,,,';
         
         $csv .= "\r\n";
-        $csv .= "\r\n";
+
+        if ($this->data->summary) {
+            foreach ($this->data->summary as $field => $value) {
+                $csv .= $field.','.$value;
+                $csv .= "\r\n";
+            }
+
+            $csv .= "\r\n";            
+        }
 
         foreach ($this->data->columns as $column) {
             $csv .= $column['title'].',';

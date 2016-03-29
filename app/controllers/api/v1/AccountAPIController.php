@@ -56,8 +56,8 @@ class AccountAPIController extends ControllerAPI
 
     public function getAvailableTenantsSelection()
     {
-        $takenMerchantIds = UserMerchant::whereObjectType('tenant')->lists('merchant_id');
-        $tenants = Tenant::whereNotIn('merchant_id', $takenMerchantIds)->get();
+        $availableMerchantIds = UserMerchant::whereObjectType('tenant')->whereNull('user_id')->lists('merchant_id');
+        $tenants = Tenant::whereIn('merchant_id', $availableMerchantIds)->get();
         
         $selection = [];
         foreach ($tenants as $tenant) {
@@ -316,6 +316,7 @@ class AccountAPIController extends ControllerAPI
             $rules['id'] = 'exists:users,user_id';
         } else {
             $rules['user_password'] = 'required';
+            $rules['account_name'] .= '|unique:campaign_account,account_name';
         }
 
         $validator = Validator::make($fields, $rules);
