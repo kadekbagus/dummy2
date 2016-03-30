@@ -3,6 +3,29 @@
  * Routes file for user related API
  */
 
+// PMP Account List
+Route::get('/api/v1/account/list', function()
+{
+    return AccountAPIController::create()->getAccount();
+});
+
+// Create new PMP Account
+Route::post('/api/v1/account/new', function()
+{
+    return AccountAPIController::create()->postCreateUpdate();
+});
+
+// Update a PMP Account
+Route::post('/api/v1/account/update', function()
+{
+    return AccountAPIController::create()->postCreateUpdate();
+});
+
+Route::get('/api/v1/account/tenants/available', function()
+{
+    return AccountAPIController::create()->getAvailableTenantsSelection();
+});
+
 /**
  * Create new user
  */

@@ -20,6 +20,41 @@ class User extends Eloquent implements UserInterface
         return $this->belongsTo('Role', 'user_role_id', 'role_id');
     }
 
+    /**
+     * Get the "PMP Account" users only.
+     *
+     * @author Qosdil A. <qosdil@dominopos.com>
+     */
+    public function scopePmpAccounts($query)
+    {
+        $ids = CampaignAccount::lists('user_id');
+
+        return $ids
+            ? $query->whereIn('users.user_id', $ids)
+            : $query->whereUserId('');
+    }
+
+    /**
+     * Get the "PMP Account" users attached to a specific mall.
+     *
+     * @author Qosdil A. <qosdil@dominopos.com>
+     */
+    public function scopeOfSpecificMallPmpAccounts($query, $mallId)
+    {
+        $merchantIds = Tenant::whereParentId($mallId)->lists('merchant_id');
+
+        $userTenantArray = UserMerchant::whereObjectType('tenant')->whereIn('merchant_id', $merchantIds)->lists('user_id');
+        
+        return $userTenantArray
+            ? $query->whereIn('users.user_id', $userTenantArray)
+            : $query->whereUserId('');
+    }
+
+    public function userTenants()
+    {
+        return $this->hasMany('UserMerchant')->whereObjectType('tenant');
+    }
+
     public function permissions()
     {
         return $this->belongsToMany('Permission', 'custom_permission', 'user_id', 'permission_id')->withPivot('allowed');
@@ -53,6 +88,12 @@ class User extends Eloquent implements UserInterface
     public function getFullName()
     {
         return $this->user_firstname . ' ' . $this->user_lastname;
+    }
+
+    /** This enables $user->full_name. */
+    public function getFullNameAttribute()
+    {
+        return $this->user_firstname.' '.$this->user_lastname;
     }
 
     public function merchants()
@@ -100,6 +141,31 @@ class User extends Eloquent implements UserInterface
     public function profilePicture()
     {
         return $this->media()->where('media_name_id', 'user_profile_picture');
+    }
+
+    public function campaignAccount()
+    {
+        return $this->belongsTo('CampaignAccount', 'user_id', 'user_id');
+    }
+
+    public function userMerchant()
+    {
+        return $this->hasMany('UserMerchant', 'user_id', 'user_id');
+    }
+
+    public function userMall()
+    {
+        return $this->userMerchant()->where('object_type', '=', 'mall');
+    }
+
+    public function userTenant()
+    {
+        return $this->userMerchant()->where('object_type', '=', 'tenant');
+    }
+
+    public function settings()
+    {
+        return $this->hasMany('Setting', 'object_id', 'user_id')->where('object_type', 'user');
     }
 
     /**
@@ -259,4 +325,15 @@ class User extends Eloquent implements UserInterface
         return $membershipNumbers->get();
     }
 
+    public function isPMPAdmin() {
+        $role = Role::where('role_name', 'campaign admin')->first();
+
+        if (! empty($role)) {
+            if ($this->user_role_id === $role->role_id) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }

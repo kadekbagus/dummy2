@@ -130,17 +130,17 @@
             <th style="text-align:left;">Status</th>
         </thead>
         <tbody>
-        <?php foreach ($userReport as $key => $value) {//$count = 1; while ($row = $statement->fetch(PDO::FETCH_OBJ)) : ?>
-            <tr class="">
+        <?php $count = 1; while ($row = $statement->fetch(PDO::FETCH_OBJ)) : ?>
+            <tr class="{{ $rowCounter % 2 === 0 ? 'zebra' : '' }}">
                 <!-- <td><?php //echo ($count); ?></td> -->
-                <td><?php echo $userReport[$key]; ?></td>
-                <td><?php //echo $me->printLocation($row); ?></td>
-                <td><?php //echo $me->printDateTime($row->start_date_activity, 'UTC', 'd F Y'); ?></td>
-                <td><?php //echo $me->printDateTime($row->end_date_activity, 'UTC', 'd F Y'); ?></td>
-                <td><?php //echo $me->printUtf8($row->mall_group_name); ?></td>
-                <td><?php //echo ($row->status); ?></td>
+                 <td><?php echo $me->printUtf8($row->name); ?></td>
+                 <td><?php echo $me->printLocation($row); ?></td>
+                 <td><?php echo $me->printDateTime($row->start_date_activity, 'UTC', 'd F Y'); ?></td>
+                 <td><?php echo $me->printDateTime($row->end_date_activity, 'UTC', 'd F Y'); ?></td>
+                 <td><?php echo $me->printUtf8($row->mall_group_name); ?></td>
+                 <td><?php echo ($row->status); ?></td>
             </tr>
-        <?php }//$count++; endwhile; ?>
+        <?php  $count++; endwhile; ?>
         </tbody>
     </table>
 </div>

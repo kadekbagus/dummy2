@@ -13,6 +13,7 @@ class News extends Eloquent
      */
     use ModelStatusTrait;
     use CampaignStatusTrait;
+    use CampaignAccessTrait;
 
     protected $table = 'news';
 
@@ -49,6 +50,12 @@ class News extends Eloquent
             ->withPivot('object_type')
             ->where('merchants.is_mall', 'no')
             ->where('news_merchant.object_type', 'retailer');
+    }
+
+    public function campaignLocations()
+    {
+        return $this->belongsToMany('CampaignLocation', 'news_merchant', 'news_id', 'merchant_id')
+            ->withPivot('object_type');
     }
 
     /**

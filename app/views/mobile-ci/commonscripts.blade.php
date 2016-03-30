@@ -41,13 +41,13 @@
                         <h2>
                             <span class="membership-number">
                                 <strong>
-                                    {{ (mb_strlen($user->user_firstname . ' ' . $user->user_lastname) >= 20) ? substr($user->user_firstname . ' ' . $user->user_lastname, 0, 20) : $user->user_firstname . ' ' . $user->user_lastname }}
+                                    {{{ (mb_strlen($user->user_firstname . ' ' . $user->user_lastname) >= 20) ? substr($user->user_firstname . ' ' . $user->user_lastname, 0, 20) : $user->user_firstname . ' ' . $user->user_lastname }}}
                                 </strong>
                                 <span class='spacery'></span>
                                 <br>
                                 <span class='spacery'></span>
                                 <strong>
-                                    {{ $user->membership_number }}
+                                    {{{ $user->membership_number }}}
                                 </strong>
                             </span>
                         </h2>

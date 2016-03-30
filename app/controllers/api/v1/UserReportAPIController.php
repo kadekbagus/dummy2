@@ -15,7 +15,7 @@ use Helper\EloquentRecordCounter as RecordCounter;
 
 /**
  * User Report API Controller
- * 
+ *
  * @author Qosdil A. <qosdil@dominopos.com>
  * @author Tian <tian@dominopos.com>
  */
@@ -29,7 +29,7 @@ class UserReportAPIController extends ControllerAPI
      * @var Builder
      */
     protected $returnBuilder = FALSE;
-    
+
     private function prepareData($mallId, $mallTimezone, $startDate, $endDate, $timeDimensionType)
     {
         $tablePrefix = DB::getTablePrefix();
@@ -150,6 +150,7 @@ class UserReportAPIController extends ControllerAPI
                 inner join {$tablePrefix}users u on ua.user_id = u.user_id
                 inner join {$tablePrefix}user_details ud on u.user_id = ud.user_id
                 where u.status != 'deleted'
+                and signup_via != 'cs'
                 and ua.acquirer_id in ('{$mallId}')
                 and ua.created_at between '{$startDate}' and '{$endDate}'
                 ) ua2
@@ -421,7 +422,7 @@ class UserReportAPIController extends ControllerAPI
         // Do validation
         if (!$this->validate()) {
             return $this->render($this->errorCode);
-        }        
+        }
 
         $mallId = OrbitInput::get('current_mall');
         $mallTimezone = OrbitInput::get('timezone');
@@ -433,7 +434,7 @@ class UserReportAPIController extends ControllerAPI
             ->where('merchants.merchant_id', '=', $mallId)
             ->first()->timezone_name;
 
-        /**        
+        /**
         Special sort keys:
             day_of_week  --> sequence_number
             hour_of_day  --> sequence_number
@@ -465,12 +466,12 @@ class UserReportAPIController extends ControllerAPI
 
         // For Totals counting
         $allRows = clone $this->rows;
-        
+
         $totalCount = $this->rows->count();
         if (!$this->returnBuilder) {
             $this->rows->take($take)->skip($skip);
         }
-        
+
         $rows = $this->rows->orderBy($sortKey, $sortType)->get();
         foreach ($rows as $row) {
             switch ($timeDimensionType) {
@@ -545,7 +546,7 @@ class UserReportAPIController extends ControllerAPI
                     ],
                 ];
                 break;
-                
+
             case 'hour_of_day':
                 $firstColumn = [
                     'hour_of_day' => [
@@ -563,7 +564,7 @@ class UserReportAPIController extends ControllerAPI
                     ],
                 ];
                 break;
-                
+
             case 'report_month':
                 $firstColumn = [
                     'month' => [

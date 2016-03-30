@@ -3,6 +3,21 @@
  * Routes file for Intermediate User API
  */
 
+// PMP Account List
+Route::get('/app/v1/account/list', 'IntermediateAuthController@Account_getAccount');
+
+// Create new PMP Account
+Route::post('/app/v1/account/new', function()
+{
+    return AccountAPIController::create()->postCreateUpdate();
+});
+
+// Update a PMP Account
+Route::post('/app/v1/account/update', 'IntermediateAuthController@Account_postCreateUpdate');
+
+// ...
+Route::get('/app/v1/account/tenants/available', 'IntermediateAuthController@Account_getAvailableTenantsSelection');
+
 /**
  * Create new user
  */

@@ -14,6 +14,13 @@ use Carbon\Carbon as Carbon;
 
 class NewsAPIController extends ControllerAPI
 {
+    /**
+     * Flag to return the query builder.
+     *
+     * @var Builder
+     */
+    protected $returnBuilder = FALSE;
+
     protected $newsViewRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee'];
     protected $newsModifiyRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee'];
 
@@ -1541,18 +1548,18 @@ class NewsAPIController extends ControllerAPI
 
             $object_type = OrbitInput::get('object_type');
 
-            $current_mall = OrbitInput::get('current_mall');
-
-            $timezone = Mall::leftJoin('timezones','timezones.timezone_id','=','merchants.timezone_id')
-                ->where('merchants.merchant_id','=', $current_mall)
-                ->first();
-
-            $now = Carbon::now($timezone->timezone_name);
-
             // Builder object
             $prefix = DB::getTablePrefix();
-            $news = News::select('news.*', 'campaign_status.order', 'campaign_price.campaign_price_id',
-                            DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$prefix}news.end_date < {$this->quote($now)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END  AS campaign_status"),
+            $news = News::allowedForPMPUser($user, $object_type[0])
+                        ->select('news.*', 'campaign_status.order', 'campaign_price.campaign_price_id', 'news_translations.news_name as name_english',
+                            DB::raw("(select GROUP_CONCAT(IF({$prefix}merchants.object_type = 'tenant', CONCAT({$prefix}merchants.name,' at ', pm.name), {$prefix}merchants.name) separator ', ') from {$prefix}news_merchant 
+                                    inner join {$prefix}merchants on {$prefix}merchants.merchant_id = {$prefix}news_merchant.merchant_id
+                                    inner join {$prefix}merchants pm on {$prefix}merchants.parent_id = pm.merchant_id
+                                    where {$prefix}news_merchant.news_id = {$prefix}news.news_id) as campaign_location_names"),
+                            DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$prefix}news.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name) FROM {$prefix}merchants om
+                                    LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
+                                    WHERE om.merchant_id = {$prefix}news.mall_id)
+                                THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END  AS campaign_status"),
                             DB::raw("CASE WHEN {$prefix}campaign_price.base_price is null THEN 0 ELSE {$prefix}campaign_price.base_price END AS base_price, ((CASE WHEN {$prefix}campaign_price.base_price is null THEN 0 ELSE {$prefix}campaign_price.base_price END) * (DATEDIFF({$prefix}news.end_date, {$prefix}news.begin_date) + 1) * (COUNT({$prefix}news_merchant.news_merchant_id))) AS estimated"))
                         ->leftJoin('campaign_price', function ($join) use ($object_type) {
                                 $join->on('news.news_id', '=', 'campaign_price.campaign_id')
@@ -1633,8 +1640,12 @@ class NewsAPIController extends ControllerAPI
             });
 
             // Filter news by status
-            OrbitInput::get('campaign_status', function ($statuses) use ($news, $prefix, $now) {
-                $news->whereIn(DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$prefix}news.end_date < {$this->quote($now)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END"), $statuses);
+            OrbitInput::get('campaign_status', function ($statuses) use ($news, $prefix) {
+                $news->whereIn(DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$prefix}news.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
+                                                                                    FROM {$prefix}merchants om
+                                                                                    LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
+                                                                                    WHERE om.merchant_id = {$prefix}news.mall_id)
+                    THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END"), $statuses);
             });
 
             // Filter news by link object type
@@ -1642,11 +1653,44 @@ class NewsAPIController extends ControllerAPI
                 $news->whereIn('news.link_object_type', $linkObjectTypes);
             });
 
-            // Filter news merchants by retailer id
+            // Filter news merchants by retailer(tenant) id
             OrbitInput::get('retailer_id', function ($retailerIds) use ($news) {
                 $news->whereHas('tenants', function($q) use ($retailerIds) {
                     $q->whereIn('merchant_id', $retailerIds);
                 });
+            });
+
+            // Filter news merchants by retailer(tenant) name
+            OrbitInput::get('tenant_name_like', function ($tenant_name_like) use ($news) {
+                $news->whereHas('tenants', function($q) use ($tenant_name_like) {
+                    $q->where('merchants.name', 'like', "%$tenant_name_like%");
+                });
+            });
+
+            // Filter news merchants by mall name
+            // There is laravel bug regarding nested whereHas on the same table like in this case
+            // news->tenant->mall : whereHas('tenant', function($q) { $q->whereHas('mall' ...)}) this is not gonna work
+            OrbitInput::get('mall_name_like', function ($mall_name_like) use ($news, $prefix) {
+                $quote = function($arg)
+                {
+                    return DB::connection()->getPdo()->quote($arg);
+                };
+                $mall_name_like = "%" . $mall_name_like . "%";
+                $mall_name_like = $quote($mall_name_like);
+                $news->whereRaw(DB::raw("
+                    (select count(*) from {$prefix}merchants mtenant
+                    inner join {$prefix}news_merchant onm on mtenant.merchant_id = onm.merchant_id
+                    where mtenant.object_type = 'tenant' and onm.news_id = {$prefix}news.news_id and (
+                        select count(*) from {$prefix}merchants mmall
+                        where mmall.object_type = 'mall' and
+                        mtenant.parent_id = mmall.merchant_id and
+                        mmall.name like {$mall_name_like} and
+                        mmall.object_type = 'mall'
+                    ) >= 1 and
+                    mtenant.object_type = 'tenant' and
+                    mtenant.is_mall = 'no' and
+                    onm.object_type = 'retailer') >= 1
+                "));
             });
 
             // Filter news by estimated total cost
@@ -1673,6 +1717,12 @@ class NewsAPIController extends ControllerAPI
                 foreach ($with as $relation) {
                     if ($relation === 'tenants') {
                         $news->with('tenants');
+                    } elseif ($relation === 'tenants.mall') {
+                        $news->with('tenants.mall');
+                    } elseif ($relation === 'campaignLocations') {
+                        $news->with('campaignLocations');
+                    } elseif ($relation === 'campaignLocations.mall') {
+                        $news->with('campaignLocations.mall');
                     } elseif ($relation === 'translations') {
                         $news->with('translations');
                     } elseif ($relation === 'translations.media') {
@@ -1691,30 +1741,32 @@ class NewsAPIController extends ControllerAPI
             // skip, and order by
             $_news = clone $news;
 
-            // Get the take args
-            $take = $perPage;
-            OrbitInput::get('take', function ($_take) use (&$take, $maxRecord) {
-                if ($_take > $maxRecord) {
-                    $_take = $maxRecord;
-                }
-                $take = $_take;
+            if (! $this->returnBuilder) {
+                // Get the take args
+                $take = $perPage;
+                OrbitInput::get('take', function ($_take) use (&$take, $maxRecord) {
+                    if ($_take > $maxRecord) {
+                        $_take = $maxRecord;
+                    }
+                    $take = $_take;
 
-                if ((int)$take <= 0) {
-                    $take = $maxRecord;
-                }
-            });
-            $news->take($take);
+                    if ((int)$take <= 0) {
+                        $take = $maxRecord;
+                    }
+                });
+                $news->take($take);
 
-            $skip = 0;
-            OrbitInput::get('skip', function($_skip) use (&$skip, $news)
-            {
-                if ($_skip < 0) {
-                    $_skip = 0;
-                }
+                $skip = 0;
+                OrbitInput::get('skip', function($_skip) use (&$skip, $news)
+                {
+                    if ($_skip < 0) {
+                        $_skip = 0;
+                    }
 
-                $skip = $_skip;
-            });
-            $news->skip($skip);
+                    $skip = $_skip;
+                });
+                $news->skip($skip);
+            }
 
             // Default sort by
             $sortBy = 'campaign_status';
@@ -1749,6 +1801,11 @@ class NewsAPIController extends ControllerAPI
             //with name
             if ($sortBy !== 'news_translations.news_name') {
                 $news->orderBy('news_translations.news_name', 'asc');
+            }
+
+            // Return the instance of Query Builder
+            if ($this->returnBuilder) {
+                return ['builder' => $news, 'count' => RecordCounter::create($_news)->count()];
             }
 
             $totalNews = RecordCounter::create($_news)->count();
@@ -2521,4 +2578,10 @@ class NewsAPIController extends ControllerAPI
         return DB::connection()->getPdo()->quote($arg);
     }
 
+    public function setReturnBuilder($bool)
+    {
+        $this->returnBuilder = $bool;
+
+        return $this;
+    }
 }

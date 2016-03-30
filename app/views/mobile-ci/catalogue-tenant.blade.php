@@ -31,9 +31,9 @@
                                     @endif
                                     @foreach($categories as $category)
                                     @if($category->category_id == Input::get('cid'))
-                                    <option value="{{ $category->category_id }}" selected="selected">{{ $category->category_name }}</option>
+                                    <option value="{{ $category->category_id }}" selected="selected">{{{ $category->category_name }}}</option>
                                     @else
-                                    <option value="{{ $category->category_id }}">{{ $category->category_name }}</option>
+                                    <option value="{{ $category->category_id }}">{{{ $category->category_name }}}</option>
                                     @endif
                                     @endforeach
                                 </select>
@@ -51,9 +51,9 @@
                                     @endif
                                     @foreach($floorList as $floor)
                                     @if($floor->object_name == Input::get('fid'))
-                                    <option value="{{ $floor->object_name }}" selected="selected">{{ $floor->object_name }}</option>
+                                    <option value="{{{ $floor->object_name }}}" selected="selected">{{{ $floor->object_name }}}</option>
                                     @else
-                                    <option value="{{ $floor->object_name }}">{{ $floor->object_name }}</option>
+                                    <option value="{{{ $floor->object_name }}}">{{{ $floor->object_name }}}</option>
                                     @endif
                                     @endforeach
                                 </select>
@@ -93,7 +93,7 @@
                                     <a class="list-item-link" href="{{ url('customer/tenant?id='.$tenant->merchant_id) }}">
                                         <div class="list-item-info">
                                             <header class="list-item-title">
-                                                <div><strong>{{ $tenant->name }}</strong></div>
+                                                <div><strong>{{{ $tenant->name }}}</strong></div>
                                             </header>
                                             <header class="list-item-subtitle">
                                                 <div>
@@ -106,7 +106,7 @@
                                                         @if(empty($tenant->category_string))
                                                             <span>-</span>
                                                         @else
-                                                            <span>{{ mb_strlen($tenant->category_string) > 30 ? mb_substr($tenant->category_string, 0, 30, 'UTF-8') . '...' : $tenant->category_string }}</span>
+                                                            <span>{{{ mb_strlen($tenant->category_string) > 30 ? mb_substr($tenant->category_string, 0, 30, 'UTF-8') . '...' : $tenant->category_string }}}</span>
                                                         @endif
                                                     </div>
                                                 </div>
@@ -166,9 +166,9 @@
                                     @endif
                                     @foreach($categories as $category)
                                     @if($category->category_id == Input::get('cid'))
-                                    <option value="{{ $category->category_id }}" selected="selected">{{ $category->category_name }}</option>
+                                    <option value="{{ $category->category_id }}" selected="selected">{{{ $category->category_name }}}</option>
                                     @else
-                                    <option value="{{ $category->category_id }}">{{ $category->category_name }}</option>
+                                    <option value="{{ $category->category_id }}">{{{ $category->category_name }}}</option>
                                     @endif
                                     @endforeach
                                 </select>
@@ -186,9 +186,9 @@
                                     @endif
                                     @foreach($floorList as $floor)
                                     @if($floor->object_name == Input::get('fid'))
-                                    <option value="{{ $floor->object_name }}" selected="selected">{{ $floor->object_name }}</option>
+                                    <option value="{{{ $floor->object_name }}}" selected="selected">{{{ $floor->object_name }}}</option>
                                     @else
-                                    <option value="{{ $floor->object_name }}">{{ $floor->object_name }}</option>
+                                    <option value="{{{ $floor->object_name }}}">{{{ $floor->object_name }}}</option>
                                     @endif
                                     @endforeach
                                 </select>
@@ -254,9 +254,9 @@
 
         var promo = '';
         @if(!empty(Input::get('promotion_id')))
-            promo = '&promotion_id='+'{{Input::get('promotion_id')}}';
+            promo = '&promotion_id='+'{{{Input::get('promotion_id')}}}';
         @endif
-        var path = '{{ url('/customer/tenants?keyword='.Input::get('keyword').'&sort_by=name&sort_mode=asc&cid='.Input::get('cid').'&fid='.Input::get('fid')) }}'+promo;
+        var path = '{{ url('/customer/tenants?keyword='. htmlspecialchars(Input::get('keyword')) .'&sort_by=name&sort_mode=asc&cid='. htmlspecialchars(Input::get('cid')) .'&fid='. htmlspecialchars(Input::get('fid'))) }}'+promo;
         $('#dLabel').dropdown();
         $('#dLabel2').dropdown();
 

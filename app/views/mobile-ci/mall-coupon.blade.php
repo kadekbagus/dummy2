@@ -50,10 +50,10 @@
     <div class="col-xs-12">
         <div class="row">
             <div class="col-xs-12">
-                <p>{{ nl2br($coupon->description) }}</p>
+                <p>{{{ nl2br($coupon->description) }}}</p>
             </div>
             <div class="col-xs-12">
-                <p>{{ nl2br($coupon->long_description) }}</p>
+                <p>{{{ nl2br($coupon->long_description) }}}</p>
             </div>
             <div class="col-xs-12">
                 <h4><strong>{{{ Lang::get('mobileci.coupon_detail.validity_label') }}}</strong></h4>
@@ -61,7 +61,7 @@
             </div>
             @if(! empty($coupon->facebook_share_url))
             <div class="col-xs-12">
-                <div class="fb-share-button" data-href="{{$coupon->facebook_share_url}}" data-layout="button_count"></div>
+                <div class="fb-share-button" data-href="{{{$coupon->facebook_share_url}}}" data-layout="button_count"></div>
             </div>
             @endif
         </div>
@@ -70,6 +70,14 @@
 
 <div class="row vertically-spaced">
     <div class="col-xs-12 padded">
+        @if(count($link_to_tenants) > 0)
+        <div class="row vertically-spaced">
+            <div class="col-xs-12 text-center">
+                <a href="{{{ url('customer/tenants?coupon_id='.$coupon->promotion_id) }}}" class="btn btn-info btn-block">{{{ Lang::get('mobileci.tenant.see_tenants') }}}</a>
+            </div>
+        </div>
+        @endif
+        @if(count($coupon->issuedCoupons) > 0)
         @if(count($tenants) > 0)
         <div class="row vertically-spaced">
             <div class="col-xs-12 text-center">
@@ -77,6 +85,7 @@
             </div>
         </div>
         @endif
+
         <div class="row">
             @if(count($tenants) <=0)
                 @if($cs_reedem)
@@ -90,6 +99,7 @@
             </div>
             @endif
         </div>
+        @endif
     </div>
 </div>
 <!-- end of product -->
@@ -196,6 +206,7 @@
             $('#useBtn').click(function(){
                 $('#hasCouponModal').modal();
             });
+            @if(count($coupon->issuedCoupons) > 0)
             $('#applyCoupon').click(function(){
                 $('#hasCouponModal .modal-content').css('display', 'none');
                 $('#hasCouponModal .modal-spinner').css('display', 'block');
@@ -243,6 +254,7 @@
                     $('#hasCouponModal').modal('hide');
                 });
             });
+            @endif
         });
     </script>
 @stop

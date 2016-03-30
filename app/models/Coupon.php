@@ -13,6 +13,7 @@ class Coupon extends Eloquent
      */
     use ModelStatusTrait;
     use CampaignStatusTrait;
+    use CampaignAccessTrait;
 
     /**
      * Use Trait PromotionTypeTrait so we only displaying records with value
@@ -89,6 +90,11 @@ class Coupon extends Eloquent
     public function campaign_status()
     {
         return $this->belongsTo('CampaignStatus', 'campaign_status_id', 'campaign_status_id');
+    }
+
+    public function campaignLocations()
+    {
+        return $this->belongsToMany('CampaignLocation', 'promotion_retailer', 'promotion_id', 'retailer_id');
     }
 
     /**

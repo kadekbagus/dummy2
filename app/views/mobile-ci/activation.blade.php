@@ -28,7 +28,7 @@
             </div>
         </header>
         <form name="loginForm" id="loginForm">
-            <input type="hidden" name="token" id="token" value="{{ Input::get('token') }}">
+            <input type="hidden" name="token" id="token" value="{{{ Input::get('token') }}}">
             <div class="form-group">
                 <input type="password" class="form-control" name="password" id="password" placeholder="{{ Lang::get('mobileci.activation.new_password') }}" pattern=".{5,}" required title="Harap isi password (5-20 karakter)"/>
             </div>

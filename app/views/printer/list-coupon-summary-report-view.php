@@ -90,17 +90,17 @@
         <tr>
             <td>Total Coupon Campaigns</td>
             <td>:</td>
-            <td><strong><?php echo number_format($totalCoupons, 0, '.', '.'); ?></strong></td>
+            <td><strong><?php echo number_format($totalCoupons, 0, '', ','); ?></strong></td>
         </tr>
         <tr>
             <td>Total Issued Coupons</td>
             <td>:</td>
-            <td><strong><?php echo number_format($totalIssued, 0, '.', '.'); ?></strong></td>
+            <td><strong><?php echo number_format($totalIssued, 0, '', ','); ?></strong></td>
         </tr>
         <tr>
             <td>Total Redeemed Coupons</td>
             <td>:</td>
-            <td><strong><?php echo number_format($totalRedeemed, 0, '.', '.'); ?></strong></td>
+            <td><strong><?php echo number_format($totalRedeemed, 0, '', ','); ?></strong></td>
         </tr>
 
         <!-- Filtering -->
@@ -122,7 +122,7 @@
 
         <?php if ($mall_name != '') { ?>
             <tr>
-                <td>Filter by Mall</td>
+                <td>Filter by Location</td>
                 <td>:</td>
                 <td><strong><?php echo htmlentities($mall_name); ?></strong></td>
             </tr>
@@ -191,8 +191,7 @@
             <th style="text-align:left;">Coupon Name</th>
             <th style="text-align:left;">Campaign Dates</th>
             <th style="text-align:left;">Validity Date</th>
-            <th style="text-align:left;">Tenants</th>
-            <th style="text-align:left;">Mall</th>
+            <th style="text-align:left;">Location</th>
             <th style="text-align:left;">Coupon Rule</th>
             <th style="text-align:left;">Issued (Issued/Available)</th>
             <th style="text-align:left;">Redeemed (Redeemed/Issued)</th>
@@ -205,8 +204,14 @@
                 <td><?php echo $row->promotion_name; ?></td>
                 <td><?php echo date('d M Y', strtotime($row->begin_date)) . ' - ' . date('d M Y', strtotime($row->end_date)); ?></td>
                 <td><?php echo date('d M Y', strtotime($row->coupon_validity_in_date)); ?></td>
-                <td><?php echo $row->total_tenant; ?></td>
-                <td><?php echo $row->mall_name; ?></td>
+                <td>
+                    <?php
+                        $locations = explode(', ', $row->campaign_location_names);
+                        for($x = 0; $x < count($locations); $x++) {
+                            echo $locations[$x] . '<br>';
+                        }
+                    ?>
+                </td>
                 <td>
                     <?php
                         $rule_type = $row->rule_type;
@@ -223,8 +228,15 @@
                         echo $rule_type;
                     ?>
                 </td>
-                <td><?php echo $row->total_issued . ' / ' . $row->available; ?></td>
-                <td><?php echo $row->total_redeemed . ' / ' .$row->total_issued; ?></td>
+
+                <?php
+                    $total_issued = $row->total_issued != 'Unlimited' ? number_format($row->total_issued, 0, '', ',') : 'Unlimited' ;
+                    $available = $row->available != 'Unlimited' ? number_format($row->available, 0, '', ',') : 'Unlimited' ;
+                    $total_redeemed = $row->total_redeemed != 'Unlimited' ? number_format($row->total_redeemed, 0, '', ',') : 'Unlimited' ;
+                ?>
+                <td><?php echo $total_issued . ' / ' . $available; ?></td>
+                <td><?php echo $total_redeemed . ' / ' .$total_issued; ?></td>
+
                 <td><?php echo $row->campaign_status; ?></td>
             </tr>
         <?php endwhile; ?>
