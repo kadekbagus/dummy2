@@ -3886,64 +3886,78 @@ class MobileCIAPIController extends BaseCIController
                 }
             }
 
-            // Pass information to the API
-            $_GET['user_id'] = $user->user_id;
-            $_GET['apikey'] = $user->apikey->api_key;
-            $_GET['apitimestamp'] = time();
-            $_GET['lucky_draw_id'] = (array) $luckydraw->lucky_draw_id;
+            if (! $urlblock->isGuest($user)) {
+                // Pass information to the API
+                $_GET['user_id'] = $user->user_id;
+                $_GET['apikey'] = $user->apikey->api_key;
+                $_GET['apitimestamp'] = time();
+                $_GET['lucky_draw_id'] = (array) $luckydraw->lucky_draw_id;
 
-            $currentPage = (int)OrbitInput::get('page', 1);
-            $take = 10;
-            $start = ($currentPage - 1)  * $take;
+                $currentPage = (int)OrbitInput::get('page', 1);
+                $take = 10;
+                $start = ($currentPage - 1)  * $take;
 
-            $_GET['take'] = (int)OrbitInput::get('take', $take);
-            $_GET['skip'] = (int)OrbitInput::get('skip', $start);
-            $_GET['sortby'] = OrbitInput::get('sortby', 'lucky_draw_number');
-            $_GET['sortmode'] = OrbitInput::get('sortmode', 'desc');
+                $_GET['take'] = (int)OrbitInput::get('take', $take);
+                $_GET['skip'] = (int)OrbitInput::get('skip', $start);
+                $_GET['sortby'] = OrbitInput::get('sortby', 'lucky_draw_number');
+                $_GET['sortmode'] = OrbitInput::get('sortmode', 'desc');
 
-            $prevUrl = '';
-            $nextUrl = '';
+                $prevUrl = '';
+                $nextUrl = '';
 
-            $secretKey = $user->apikey->api_secret_key;
-            $_SERVER['REQUEST_METHOD'] = 'GET';
-            $_SERVER['REQUEST_URI'] = '/api/v1/lucky-draw-number/list';
-            $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
+                $secretKey = $user->apikey->api_secret_key;
+                $_SERVER['REQUEST_METHOD'] = 'GET';
+                $_SERVER['REQUEST_URI'] = '/api/v1/lucky-draw-number/list';
+                $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
 
-            $apiResponse = LuckyDrawAPIController::create('raw')->getSearchLuckyDrawNumber();
-            if ($apiResponse->code !== 0) {
-                throw new Exception ($apiResponse->message, $apiResponse->code);
-            }
-
-            $totalPages = ceil($apiResponse->data->total_records / $take);
-            $paginationPage = array();
-            if ($totalPages > 1) {
-                // $prevUrl = URL::route('ci-luckydraw') . '?id='. $luckydraw->lucky_draw_id . '&page=' . ($currentPage - 1);
-                // $nextUrl = URL::route('ci-luckydraw') . '?id='. $luckydraw->lucky_draw_id . '&page=' . ($currentPage + 1);
-
-                if ($currentPage >= $totalPages) {
-                    $nextUrl = '#1';
+                $apiResponse = LuckyDrawAPIController::create('raw')->getSearchLuckyDrawNumber();
+                if ($apiResponse->code !== 0) {
+                    throw new Exception ($apiResponse->message, $apiResponse->code);
                 }
 
-                if ($currentPage === 1) {
-                    $prevUrl = '#1';
-                }
+                $totalPages = ceil($apiResponse->data->total_records / $take);
+                $paginationPage = array();
+                if ($totalPages > 1) {
+                    // $prevUrl = URL::route('ci-luckydraw') . '?id='. $luckydraw->lucky_draw_id . '&page=' . ($currentPage - 1);
+                    // $nextUrl = URL::route('ci-luckydraw') . '?id='. $luckydraw->lucky_draw_id . '&page=' . ($currentPage + 1);
 
-                $pageNumber = 4;
-                if ($totalPages > $pageNumber) {
-                    if ($currentPage >= $totalPages - $pageNumber + 1) {
-                        for ($x = $totalPages - $pageNumber + 1; $x <= $totalPages; $x++) {
-                            $paginationPage[] = $x;
+                    if ($currentPage >= $totalPages) {
+                        $nextUrl = '#1';
+                    }
+
+                    if ($currentPage === 1) {
+                        $prevUrl = '#1';
+                    }
+
+                    $pageNumber = 4;
+                    if ($totalPages > $pageNumber) {
+                        if ($currentPage >= $totalPages - $pageNumber + 1) {
+                            for ($x = $totalPages - $pageNumber + 1; $x <= $totalPages; $x++) {
+                                $paginationPage[] = $x;
+                            }
+                        } else {
+                            for ($x = $currentPage; $x <= $currentPage + $pageNumber - 1; $x++) {
+                                $paginationPage[] = $x;
+                            }
                         }
                     } else {
-                        for ($x = $currentPage; $x <= $currentPage + $pageNumber - 1; $x++) {
+                        for ($x = 1; $x <= $totalPages; $x++) {
                             $paginationPage[] = $x;
                         }
                     }
-                } else {
-                    for ($x = 1; $x <= $totalPages; $x++) {
-                        $paginationPage[] = $x;
-                    }
                 }
+
+                $numbers = empty($apiResponse->data->records) ? array() : $apiResponse->data->records;
+                $total_number = $apiResponse->data->total_records;
+            } else {
+                $numbers = [];
+                $total_number = 0;
+                $prevUrl = '';
+                $nextUrl = '';
+                $totalPages = 0;
+                $currentPage = 1;
+                $take = 10;
+                $paginationPage = [];
             }
 
             $activityProductNotes = sprintf('Page viewed: Lucky Draw Page');
@@ -3956,8 +3970,6 @@ class MobileCIAPIController extends BaseCIController
                 ->responseOK()
                 ->save();
 
-            $numbers = empty($apiResponse->data->records) ? array() : $apiResponse->data->records;
-
             $servertime = Carbon::now($retailer->timezone->timezone_name);
 
             return View::make('mobile-ci.luckydraw', [
@@ -3966,7 +3978,7 @@ class MobileCIAPIController extends BaseCIController
                                 'retailer'      => $retailer,
                                 'luckydraw'     => $luckydraw,
                                 'numbers'       => $numbers,
-                                'total_number'  => $apiResponse->data->total_records,
+                                'total_number'  => $total_number,
                                 'prev_url'      => $prevUrl,
                                 'next_url'      => $nextUrl,
                                 'total_pages'   => $totalPages,
