@@ -49,9 +49,9 @@ trait CampaignAccessTrait
         // the original query unaffected
         $builder->leftJoin('user_campaign', 'user_campaign.campaign_id', '=', "{$table_name}.{$field_name}")
                 ->join('campaign_account', 'campaign_account.user_id', '=', 'user_campaign.user_id')
-        ->where(function($q) use ($user_id) {
-            $q->where('campaign_account.user_id', $user_id)
-              ->orWhere('campaign_account.parent_user_id', $user_id);
+        ->where(function($q) use ($user) {
+            $q->where('campaign_account.user_id', $user->user_id)
+              ->orWhere('campaign_account.parent_user_id', $user->user_id);
         });
 
         return $builder;
