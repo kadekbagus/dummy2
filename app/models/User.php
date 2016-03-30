@@ -30,10 +30,10 @@ class User extends Eloquent implements UserInterface
         $ids = CampaignAccount::lists('user_id');
 
         // "Campaign Owner" & "Campaign Employee" only
-        $roleIds = Role::whereIn('role_name', ['Campaign Owner', 'Campaign Employee'])->lists('role_id');
+        $query->join('roles', 'users.user_role_id', '=', 'roles.role_id')->whereIn('role_name', ['Campaign Owner', 'Campaign Employee']);
 
         return $ids
-            ? $query->whereIn('users.user_id', $ids)->whereIn('users.user_role_id', $roleIds)
+            ? $query->whereIn('users.user_id', $ids)
             : $query->whereUserId('');
     }
 
