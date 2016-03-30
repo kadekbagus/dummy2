@@ -120,17 +120,17 @@
         <tr>
             <td>Total Numbers</td>
             <td>:</td>
-            <td><strong><?php echo number_format($totalLuckyDrawNumber, 0, '.', '.'); ?></strong></td>
+            <td><strong><?php echo number_format($totalLuckyDrawNumber); ?></strong></td>
         </tr>
         <tr>
             <td>Total Issued Numbers</td>
             <td>:</td>
-            <td><strong><?php echo number_format($totalIssuedLuckyDrawNumber, 0, '.', '.'); ?></strong></td>
+            <td><strong><?php echo number_format($totalIssuedLuckyDrawNumber); ?></strong></td>
         </tr>
         <tr>
             <td>Total Unissued Numbers</td>
             <td>:</td>
-            <td><strong><?php echo number_format($totalLuckyDrawNumber - $totalIssuedLuckyDrawNumber, 0, '.', '.'); ?></strong></td>
+            <td><strong><?php echo number_format($totalLuckyDrawNumber - $totalIssuedLuckyDrawNumber); ?></strong></td>
         </tr>
     </table>
 

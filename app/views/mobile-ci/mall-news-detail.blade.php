@@ -48,7 +48,7 @@
     @if(!$all_tenant_inactive)
         @if(count($news->tenants) > 0)
         <div class="col-xs-12 text-center padded">
-            <a href="{{{ url('customer/tenants?news_id='.$news->news_id) }}}" class="btn btn-info btn-block">{{{ Lang::get('mobileci.tenant.see_tenants') }}}</a>
+            <a href="{{{ $urlblock->blockedRoute('ci-tenants', ['news_id' => $news->news_id]) }}}" class="btn btn-info btn-block">{{{ Lang::get('mobileci.tenant.see_tenants') }}}</a>
         </div>
         @endif
     @endif
