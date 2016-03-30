@@ -49,7 +49,7 @@ class AccountExportController extends \AccountAPIController
         }
 
         if (\Input::get('creation_date_from') && \Input::get('creation_date_to')) {
-            $summary['Filtered by creation date'] = \Input::get('creation_date_from').' - '.\Input::get('creation_date_to');
+            $summary['Filtered by Creation Date'] = date('d F Y H:i:s', strtotime(\Input::get('creation_date_from'))).' - '.date('d F Y H:i:s', strtotime(\Input::get('creation_date_to')));
         }
 
         if (\Input::get('sortby') && \Input::get('sortmode')) {
