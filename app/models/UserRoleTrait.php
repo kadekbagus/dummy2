@@ -332,13 +332,25 @@ trait UserRoleTrait
     }
 
     /**
-     * Campaign Admin check.
+     * Campaign Employee check.
      *
      * @return boolean
      */
     public function isCampaignEmployee()
     {
         $role = 'campaign employee';
+
+        return strtolower($this->role->role_name) === $role;
+    }
+
+    /**
+     * Campaign Admin check.
+     *
+     * @return boolean
+     */
+    public function isPMPAdmin()
+    {
+        $role = 'campaign admin';
 
         return strtolower($this->role->role_name) === $role;
     }
