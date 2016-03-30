@@ -219,7 +219,24 @@ class AccountAPIController extends ControllerAPI
 
         // Filter by Location
         if (Input::get('location')) {
-            $pmpAccounts->whereCity(Input::get('location'))->orWhere('countries.name', '=', Input::get('location'));
+
+            // The following keyword forms handled by the preg_split()
+            // "bali"
+            // "indonesia"
+            // "bali,indonesia"
+            // "bali, indonesia"
+            // "bali indonesia"
+            $keywords = preg_split("/[\s,]+/", Input::get('location'));
+
+            $pmpAccounts->whereCity($keywords[0]);
+            switch (count($keywords)) {
+                case 2:
+                    $pmpAccounts->where('countries.name', $keywords[1]);
+                    break;
+                default:
+                    $pmpAccounts->orWhere('countries.name', $keywords[0]);
+                    break;
+            }
         }
 
         // Filter by Status
