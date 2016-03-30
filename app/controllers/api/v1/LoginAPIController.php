@@ -294,7 +294,7 @@ class LoginAPIController extends ControllerAPI
                     $token->user_id = $user->user_id;
                     $token->save();
 
-                    $data = sprintf(Config::get('orbit.agreement.url'), $token->token_value);
+                    $data = sprintf(Config::get('orbit.agreement.pmp'), $token->token_value);
                 }
 
                 $this->response->code = 302;
@@ -873,7 +873,162 @@ class LoginAPIController extends ControllerAPI
     }
 
     /**
-     * POST - Activate Accountf
+     * Post - Update Service Agreement PMP
+     *
+     * @author Irianto Pratama <irianto@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param string    `token`          (required) - Token to be check
+     * @param string    `first_name`     (required) - value of first name
+     * @param string    `last_name`      (required) - value of last name
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postUpdateServiceAgreementPMP()
+    {
+        $activity = Activity::portal()
+                            ->setActivityType('activation');
+        try {
+            $this->registerCustomValidation();
+
+            $tokenValue = trim(OrbitInput::post('token'));
+            $first_name = OrbitInput::post('first_name');
+            $last_name = OrbitInput::post('last_name');
+
+            $validator = Validator::make(
+                array(
+                    'token_value'   => $tokenValue,
+                    'first_name'    => $first_name,
+                    'last_name'     => $last_name
+                ),
+                array(
+                    'token_value'   => 'required|orbit.empty.token',
+                    'first_name'    => 'required|min:1',
+                    'last_name'     => 'required|min:1',
+                )
+            );
+
+            // Begin database transaction
+            $this->beginTransaction();
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $token = App::make('orbit.empty.token');
+            $user  = User::excludeDeleted()
+                        ->where('user_id', $token->user_id)
+                        ->first();
+            $campaign_account = CampaignAccount::where('user_id', $token->user_id)->first();
+
+            if (! is_object($token) || ! is_object($user) || ! is_object($campaign_account)) {
+                $message = Lang::get('validation.orbit.access.loginfailed');
+                ACL::throwAccessForbidden($message);
+            }
+
+            // update the token status so it cannot be use again
+            $token->status = 'deleted';
+            $token->save();
+
+            $setting_items = array('agreement_accepted_pmp_account'=>'true');
+
+            foreach ($setting_items as $setting_name => $setting_value) {
+                $settings = Setting::excludeDeleted()
+                                   ->where('object_id',$campaign_account->user_id)
+                                   ->where('object_type','user')
+                                   ->where('setting_name', $setting_name)
+                                   ->first();
+
+                if (empty($settings)) {
+                    // do insert
+                    $settings = new Setting();
+                    $settings->setting_name = $setting_name;
+                    $settings->setting_value = $setting_value;
+                    $settings->object_id = $campaign_account->user_id;
+                    $settings->object_type = 'user';
+                    $settings->status = 'active';
+                    $settings->modified_by = $user->user_id;
+
+                    $settings->save();
+                } else {
+                    $settings->setting_value = $setting_value;
+
+                    $settings->save();
+                }
+            }
+            $campaign_account->load('settings');
+
+            $this->response->message = Lang::get('statuses.orbit.updated.serviceagreement');
+            $this->response->data = $campaign_account;
+
+            // Commit the changes
+            $this->commit();
+
+            // Successfull activation
+            $activity->setUser($user)
+                     ->setActivityName('service_agreement')
+                     ->setActivityNameLong('Update Service Agreement PMP Successfull')
+                     ->setModuleName('Application')
+                     ->responseOK();
+        } catch (ACLForbiddenException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Failed Activation
+            $activity->setUser('user')
+                     ->setActivityName('service_agreement_failed')
+                     ->setActivityNameLong('Update Service Agreement PMP Failed')
+                     ->setModuleName('Application')
+                     ->responseFailed();
+        } catch (InvalidArgsException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Failed Activation
+            $activity->setUser('user')
+                     ->setActivityName('service_agreement_failed')
+                     ->setActivityNameLong('Update Service Agreement PMP Failed')
+                     ->setModuleName('Application')
+                     ->setNotes($e->getMessage())
+                     ->responseFailed();
+        } catch (Exception $e) {
+            $this->response->code = Status::UNKNOWN_ERROR;
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Failed Activation
+            $activity->setUser('user')
+                     ->setActivityName('service_agreement_failed')
+                     ->setActivityNameLong('Update Service Agreement PMP Failed')
+                     ->setModuleName('Application')
+                     ->setNotes($e->getMessage())
+                     ->responseFailed();
+        }
+
+        // Save the activity
+        $activity->save();
+
+        return $this->render();
+    }
+
+    /**
+     * POST - Activate Account
      *
      * @author Irianto Pratama <irianto@dominopos.com>
      *
@@ -1260,7 +1415,7 @@ class LoginAPIController extends ControllerAPI
                     $this->response->code = 302;
                     $this->response->status = 'redirect';
                     $this->response->message = Lang::get('validation.orbit.access.agreement');
-                    $this->response->data = sprintf(Config::get('orbit.agreement.url'), $token->token_value);
+                    $this->response->data = sprintf(Config::get('orbit.agreement.mall'), $token->token_value);
                 } else {
                     $this->response->data->menus = $menus;
                 }

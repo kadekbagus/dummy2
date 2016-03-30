@@ -35,7 +35,7 @@ class EmployeePrinterController extends DataPrinterController
         // Instantiate the MallAPIController to get the query builder of Malls
         $response = EmployeeAPIController::create('raw')
                                          ->setReturnBuilder(true)
-                                         ->getSearchMallEmployee();
+                                         ->getSearchPMPEmployee();
 
         if (! is_array($response)) {
             return Response::make($response->message);

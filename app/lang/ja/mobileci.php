@@ -130,6 +130,8 @@ return array(
         'and'                    => 'アンド',
 
         'message_user_activation' => 'メールは &quot;%s&quot; に送信されました。あなたのアカウントを有効にするための指示に従ってください。何かの理由で、2時間以内我々からのメールが見ない場合は、スパムや迷惑メールフォルダーをチェックしてください。',
+        'not_now'      => '今ではない',
+        'sign_in'      => 'サインイン',
     ),
 
     //tenant catalogue
@@ -170,6 +172,8 @@ return array(
         'connecting_to_facebook'    => 'Facebookへの接続...',
         'connecting_to_google'    => 'Googleへの接続...',
         'connecting_with' => 'とつながります',
+        'sign_up_sign_in_with' => 'Sign up or Sign in with:',
+        'to_access_this_content' => 'to access this content',
         'sign_in' => 'サインイン',
         'sign_up' => 'サインアップ',
         'doesnt_have_account' => 'アカウントを持っていません',

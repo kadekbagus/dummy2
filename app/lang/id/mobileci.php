@@ -130,6 +130,8 @@ return array(
         'and'                    => 'DAN',
 
         'message_user_activation' => 'Email konfirmasi telah dikirimkan ke &quot;%s&quot;. Silahkan ikuti instruksi untuk mengaktifkan akun anda. Jika dalam beberapa saat ke depan email konfirmasi tidak ada pada folder Kotak Masuk, silakan cek folder Spam atau Junk pada email Anda.',
+        'not_now'      => 'Lain kali',
+        'sign_in'      => 'Masuk',
     ),
 
     //tenant catalogue
@@ -170,6 +172,8 @@ return array(
         'connecting_to_facebook' => 'Menghubungi Facebook...',
         'connecting_to_google' => 'Menghubungi Google...',
         'connecting_with' => 'Terhubung dengan',
+        'sign_up_sign_in_with' => 'Daftar atau Masuk dengan:',
+        'to_access_this_content' => 'untuk mengakses konten ini',
         'sign_in' => 'Masuk',
         'sign_up' => 'Daftar',
         'doesnt_have_account' => 'Tidak punya akun',

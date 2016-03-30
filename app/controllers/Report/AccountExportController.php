@@ -8,22 +8,24 @@ class AccountExportController extends \AccountAPIController
 
     protected $pageTitle = 'PMP Accounts List';
 
-    protected function handleRowValue($row, $fieldName)
+    protected function handleCsvRowValue($row, $fieldName)
     {
-        $csv = '';
-
+        $csv = '"';
+        
         if ($fieldName == 'tenants') {
+            $tenantNames = [];
             foreach ($row['tenants'] as $tenant) {
-                $csv .= $tenant['name'].' -- ';
+                $tenantNames[] = $tenant['name'];
             }
+
+            $csv .= implode(', ', $tenantNames);
         } elseif ($fieldName == 'city') {
-            $countryName = ($row['country']->name) ? ', '.$row['country']->name : '';
-            $csv .= $row['city'].$countryName;  
+            $csv .= $row['city'].', '.$row['country_name'];
         } else {
             $csv .= $row[$fieldName];
         }
 
-        return $csv;
+        return $csv.'"';
     }
 
     protected function makeSummary()
@@ -51,7 +53,7 @@ class AccountExportController extends \AccountAPIController
         }
 
         if (\Input::get('sortby') && \Input::get('sortmode')) {
-            $summary['Sorted by'] = \Input::get('sortby').' ('.\Input::get('sortmode').')';
+            $summary['Sorted by'] = $this->listColumns[\Input::get('sortby')]['title'].' ('.\Input::get('sortmode').')';
         }
 
         return $summary;

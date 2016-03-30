@@ -60,7 +60,7 @@ trait ExportControllerTrait
 
         foreach ($this->data->records as $row) {
             foreach (array_keys($this->data->columns) as $fieldName) {
-                $csv .= $this->handleRowValue($row, $fieldName);
+                $csv .= $this->handleCsvRowValue($row, $fieldName);
                 $csv .= ',';
             }
 
@@ -77,21 +77,9 @@ trait ExportControllerTrait
         return $response;
     }
 
-    protected function handleRowValue($row, $fieldName)
+    protected function handleCsvRowValue($row, $fieldName)
     {
-        $csv = '';
-        if ( ! is_array($row[$fieldName])) {
-
-            // Replace comma with dash
-            $csv .= str_replace(',', ' -', $row[$fieldName]);
-
-        } else {
-
-            // Show array values as string with a semicolon separator
-            $csv .= implode('; ', $row[$fieldName]);
-        }
-
-        return $csv;
+        return '"'.$row[$fieldName].'"';
     }
 
     protected function makeSummary()

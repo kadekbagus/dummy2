@@ -911,6 +911,9 @@ class Activity extends Eloquent
      */
     protected function saveToCampaignPageViews()
     {
+        if (empty($this->object_id)) {
+            return;
+        }
         // Save also the activity to particular `campaign_xyz` table
         switch ($this->activity_name) {
             case 'view_promotion':

@@ -130,6 +130,8 @@ return array(
         'and'                    => '与',
 
         'message_user_activation' => '一封电子邮件已经发送给 &quot;%s&quot; 。请按照激活您的帐户。如果由于某种原因你没有看到的电子邮件，我们在几个小时内，请检查您的垃圾邮件或垃圾邮件文件夹。',
+        'not_now'      => '以后',
+        'sign_in'      => '登入',
     ),
 
     //tenant catalogue
@@ -170,6 +172,8 @@ return array(
         'connecting_to_facebook'        => '连接到 Facebook...',
         'connecting_to_google'        => '连接到 Google...',
         'connecting_with' => '与连接',
+        'sign_up_sign_in_with' => 'Sign up or Sign in with:',
+        'to_access_this_content' => 'to access this content',
         'sign_in' => '登入',
         'sign_up' => '报名',
         'doesnt_have_account' => '没有帐户',

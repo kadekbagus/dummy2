@@ -1,5 +1,6 @@
 <?php
 
+use Carbon\Carbon;
 use OrbitShop\API\v1\ControllerAPI;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
 use OrbitShop\API\v1\OrbitShopAPI;
@@ -28,6 +29,10 @@ class AccountAPIController extends ControllerAPI
         'role_name' => [
             'title' => 'Role',
             'sort_key' => 'role_name',
+        ],
+        'tenant_count' => [
+            'title' => 'Number of Tenant(s)',
+            'sort_key' => 'tenant_count',
         ],
         'tenants' => [
             'title' => 'Tenant(s)',
@@ -215,7 +220,24 @@ class AccountAPIController extends ControllerAPI
 
         // Filter by Location
         if (Input::get('location')) {
-            $pmpAccounts->whereCity(Input::get('location'))->orWhere('countries.name', '=', Input::get('location'));
+
+            // The following keyword forms handled by the preg_split()
+            // "bali"
+            // "indonesia"
+            // "bali,indonesia"
+            // "bali, indonesia"
+            // "bali indonesia"
+            $keywords = preg_split("/[\s,]+/", Input::get('location'));
+
+            $pmpAccounts->whereCity($keywords[0]);
+            switch (count($keywords)) {
+                case 2:
+                    $pmpAccounts->where('countries.name', $keywords[1]);
+                    break;
+                default:
+                    $pmpAccounts->orWhere('countries.name', $keywords[0]);
+                    break;
+            }
         }
 
         // Filter by Status
@@ -224,13 +246,22 @@ class AccountAPIController extends ControllerAPI
         }
 
         // Filter by Creation Date
-        if (Input::get('creation_date_from') && Input::get('creation_date_to')) {
+        if (Input::get('creation_date_from')) {
 
-            // Let's make the datetime
-            $creationDateTimeFrom = Input::get('creation_date_from').' 00:00:00';
-            $creationDateTimeTo = Input::get('creation_date_to').' 23:59:59';
+            // From
+            $creationDateTimeFrom = Carbon::createFromFormat('Y-m-d H:i:s', Input::get('creation_date_from'))
+                ->setTimezone('Asia/Singapore')->format('Y-m-d H:i:s');
 
-            $pmpAccounts->where('users.created_at', '>=', $creationDateTimeFrom)->where('users.created_at', '<=', $creationDateTimeTo);
+            $pmpAccounts->where('users.created_at', '>=', $creationDateTimeFrom);
+
+            if (Input::get('creation_date_to')) {
+
+                // To
+                $creationDateTimeTo = Carbon::createFromFormat('Y-m-d H:i:s', Input::get('creation_date_to'))
+                    ->setTimezone('Asia/Singapore')->format('Y-m-d H:i:s');
+
+                $pmpAccounts->where('users.created_at', '<=', $creationDateTimeTo);
+            }
         }
 
         // Get total row count
@@ -257,12 +288,14 @@ class AccountAPIController extends ControllerAPI
 
         $records = [];
         foreach ($pmpAccounts as $row) {
+            $tenantAtMallArray = $this->getTenantAtMallArray($row->userTenants()->lists('merchant_id'));
             $records[] = [
                 'account_name' => $row->campaignAccount->account_name,
                 'company_name' => $row->company_name,
                 'city'         => $row->userDetail->city,
-                'user_role'    => $row->role_name,
-                'tenants'      => $this->getTenantAtMallArray($row->userTenants()->lists('merchant_id')),
+                'role_name'    => $row->role_name,
+                'tenant_count' => count($tenantAtMallArray),
+                'tenants'      => $tenantAtMallArray,
                 'created_at'   => $row->created_at->setTimezone('Asia/Singapore')->format('d F Y H:i:s'),
                 'status'       => $row->campaignAccount->status,
                 'id'           => $row->user_id,
@@ -276,6 +309,7 @@ class AccountAPIController extends ControllerAPI
                 'province'       => $row->userDetail->province,
                 'postal_code'    => $row->userDetail->postal_code,
                 'country'        => (object) ['id' => $row->userDetail->country_id, 'name' => @$row->userDetail->userCountry->name],
+                'country_name'   => @$row->userDetail->userCountry->name,
             ];
         }
 
