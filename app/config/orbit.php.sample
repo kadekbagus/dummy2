@@ -68,6 +68,12 @@ return array(
         'url'  => 'http://mall-portal.url/#/service-agreement?token=%s'
     ),
 
+    // pmp agreement configuration
+    'pmp-agreement' => array(
+        // This should be frontend URL not backend
+        'url'  => 'http://pmp.portal.url/#/service-agreement?token=%s'
+    ),
+
     'shop' => array(
         // Id of the retailer
         'id'    => NULL,
