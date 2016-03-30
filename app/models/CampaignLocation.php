@@ -23,7 +23,7 @@ class CampaignLocation extends Eloquent
     public function getTenantAtMallAttribute()
     {
         if ($this->object_type == 'mall') {
-            return $this->name.' at '.$this->name;
+            return 'Mall at '.$this->name;
         }
 
         $mall = CampaignLocation::find($this->parent_id);
