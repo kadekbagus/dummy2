@@ -143,7 +143,7 @@
 </div>
 <div class="row back-drop sign-in-back-drop"></div>
 
-<div class="modal fade" id="formModal" tabindex="-1" role="dialog" aria-labelledby="formModalLabel" style="z-index: 1004;">
+<div class="modal fade" id="formModal" tabindex="-1" role="dialog" aria-labelledby="formModalLabel" style="z-index: 1005;">
     <div class="modal-dialog">
         <div class="modal-content" id="signin-form-wrapper">
             <form  name="signinForm" id="signinForm" method="post">
