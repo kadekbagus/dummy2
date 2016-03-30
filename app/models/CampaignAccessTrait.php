@@ -38,13 +38,6 @@ trait CampaignAccessTrait
                 throw new Exception("Wrong campaign type supplied", 1);
         }
 
-        $user_id = $user->user_id;
-        if ($user->role->role_name === 'Campaign Employee') {
-            $campaign_account = CampaignAccount::where('user_id', '=', $user->user_id)
-                                                ->first();
-            $user_id = $campaign_account->parent_user_id;
-        }
-
         if ($user->isPMPAdmin())
         {
             // Return the query builder as it is
@@ -55,8 +48,10 @@ trait CampaignAccessTrait
         // should be wrappred inde the parenthis () to make
         // the original query unaffected
         $builder->leftJoin('user_campaign', 'user_campaign.campaign_id', '=', "{$table_name}.{$field_name}")
+                ->join('campaign_account', 'campaign_account.user_id', '=', 'user_campaign.user_id')
         ->where(function($q) use ($user_id) {
-            $q->where('user_campaign.user_id', $user_id);
+            $q->where('campaign_account.user_id', $user_id)
+              ->orWhere('campaign_account.parent_user_id', $user_id);
         });
 
         return $builder;
