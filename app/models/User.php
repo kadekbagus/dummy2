@@ -29,6 +29,9 @@ class User extends Eloquent implements UserInterface
     {
         $ids = CampaignAccount::lists('user_id');
 
+        // "Campaign Owner" & "Campaign Employee" only
+        $query->join('roles', 'users.user_role_id', '=', 'roles.role_id')->whereIn('role_name', ['Campaign Owner', 'Campaign Employee']);
+
         return $ids
             ? $query->whereIn('users.user_id', $ids)
             : $query->whereUserId('');
@@ -52,7 +55,7 @@ class User extends Eloquent implements UserInterface
 
     public function userTenants()
     {
-        return $this->hasMany('UserMerchant')->whereObjectType('tenant');
+        return $this->hasMany('UserMerchant')->whereIn('object_type', ['mall', 'tenant']);
     }
 
     public function permissions()

@@ -29,6 +29,7 @@ class NewsAPIController extends ControllerAPI
      *
      * @author Tian <tian@dominopos.com>
      * @author Firmansyah <firmansyah@dominopos.com>
+     * @author Shelgi <shelgi@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -166,26 +167,7 @@ class NewsAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            foreach ($retailer_ids as $retailer_id_check) {
-                $validator = Validator::make(
-                    array(
-                        'retailer_id'   => $retailer_id_check,
-                    ),
-                    array(
-                        'retailer_id'   => 'orbit.empty.tenant',
-                    )
-                );
-
-                Event::fire('orbit.news.postnewnews.before.retailervalidation', array($this, $validator));
-
-                // Run the validation
-                if ($validator->fails()) {
-                    $errorMessage = $validator->messages()->first();
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-                }
-
-                Event::fire('orbit.news.postnewnews.after.retailervalidation', array($this, $validator));
-            }
+            //to do : add validation for tenant
 
             foreach ($gender_ids as $gender_id_check) {
                 $validator = Validator::make(
@@ -273,15 +255,37 @@ class NewsAPIController extends ControllerAPI
 
             // save NewsMerchant.
             $newsretailers = array();
+            $isMall = 'retailer';
+            $mallid = array();
             foreach ($retailer_ids as $retailer_id) {
+                $data = @json_decode($retailer_id);
+                $tenant_id = $data->tenant_id;
+                $mall_id = $data->mall_id;
+                //print_r($data);
+                //die();
+                if(! in_array($mall_id, $mallid)) {
+                    $mallid[] = $mall_id;
+                }
+
+                if ($tenant_id === $mall_id) {
+                    $isMall = 'mall';
+                }
+
                 $newsretailer = new NewsMerchant();
-                $newsretailer->merchant_id = $retailer_id;
+                $newsretailer->merchant_id = $tenant_id;
                 $newsretailer->news_id = $newnews->news_id;
-                $newsretailer->object_type = 'retailer';
+                $newsretailer->object_type = $isMall;
                 $newsretailer->save();
                 $newsretailers[] = $newsretailer;
             }
             $newnews->tenants = $newsretailers;
+
+            //save to user campaign
+            $usercampaign = new UserCampaign();
+            $usercampaign->user_id = $user->user_id;
+            $usercampaign->campaign_id = $newnews->news_id;
+            $usercampaign->campaign_type = 'news';
+            $usercampaign->save();
 
             // save CampaignAge
             $newsAges = array();
@@ -384,29 +388,69 @@ class NewsAPIController extends ControllerAPI
             $campaignhistory->save();
 
             //save campaign histories (tenant)
+            $withSpending = 'Y';
             foreach ($retailer_ids as $retailer_id) {
+                $data = @json_decode($retailer_id);
+                $tenant_id = $data->tenant_id;
+                $mall_id = $data->mall_id;
                 // insert tenant/merchant to campaign history
-                $tenantstatus = Tenant::getStatus($retailer_id);
-                if ($tenantstatus === 'active') {
-                    $rowcost = CampaignHistory::getRowCost($newnews->news_id, $status, 'add', $now, FALSE)->first();
+                $tenantstatus = CampaignLocation::select('status')->where('merchant_id', $tenant_id)->first();
+                $spendingrule = SpendingRule::select('with_spending')->where('object_id', $tenant_id)->first();
+
+                if ($spendingrule) {
+                    $withSpending = 'Y';
+                } else {
+                    $withSpending = 'N';
+                }
+
+                if (($tenantstatus->status === 'active') && ($withSpending === 'Y')) {
                     $addtenant = new CampaignHistory();
                     $addtenant->campaign_type = $object_type;
                     $addtenant->campaign_id = $newnews->news_id;
-                    $addtenant->campaign_external_value = $retailer_id;
+                    $addtenant->campaign_external_value = $tenant_id;
                     $addtenant->campaign_history_action_id = $addtenantid;
-                    $addtenant->number_active_tenants = $rowcost->tenants;
+                    $addtenant->number_active_tenants = 0;
                     $addtenant->created_by = $this->api->user->user_id;
                     $addtenant->modified_by = $this->api->user->user_id;
-                    if ($status === 'inactive') {
-                        $addtenant->campaign_cost = 0;
-                    } else {
-                        $addtenant->campaign_cost = $rowcost->cost;
-                    }
+                    $addtenant->campaign_cost = 0;
                     $addtenant->save();
+                }
+            }
+            
+            //calculate spending
+            foreach ($mallid as $mall) {
+
+                $campaign_id = $newnews->news_id;
+                $campaign_type = $object_type;
+                $procResults = DB::statement("CALL prc_campaign_detailed_cost({$this->quote($campaign_id)}, {$this->quote($campaign_type)}, NULL, NULL, {$this->quote($mall)})");
+
+                if ($procResults === false) {
+                    // Do Nothing
+                }
+
+                $getspending = DB::table(DB::raw('tmp_campaign_cost_detail'))->first();
+                
+                $mallTimezone = $this->getTimezone($mall);
+                $nowMall = Carbon::now($mallTimezone);
+                $dateNowMall = $nowMall->toDateString();
+
+                // if campaign begin date is same with date now
+                if ($dateNowMall === date('Y-m-d', strtotime($begin_date))) {
+                    $dailySpending = new CampaignDailySpending();
+                    $dailySpending->date = $getspending->date_in_utc;
+                    $dailySpending->campaign_type = $campaign_type;
+                    $dailySpending->campaign_id = $campaign_id;
+                    $dailySpending->mall_id = $mall;
+                    $dailySpending->number_active_tenants = $getspending->campaign_number_tenant;
+                    $dailySpending->base_price = $getspending->base_price;
+                    $dailySpending->campaign_status = $getspending->campaign_status;
+                    $dailySpending->total_spending = 0;
+                    $dailySpending->save();
                 }
             }
 
             // Save campaign spending with default spending 0
+            // remove after migration new table, campaign daily spending
             $campaignSpending = new CampaignSpendingCount();
             $campaignSpending->campaign_id = $newnews->news_id;
             $campaignSpending->campaign_type = $object_type;
@@ -503,7 +547,7 @@ class NewsAPIController extends ControllerAPI
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = null;
+            $this->response->data = $e->getLine();
 
             // Rollback the changes
             $this->rollBack();
@@ -527,6 +571,7 @@ class NewsAPIController extends ControllerAPI
      *
      * @author Tian <tian@dominopos.com>
      * @author Firmansyah <firmansyah@dominopos.com>
+     * @author Shelgi <shelgi@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -602,8 +647,8 @@ class NewsAPIController extends ControllerAPI
             $id_language_default = OrbitInput::post('id_language_default');
             $is_all_gender = OrbitInput::post('is_all_gender');
             $is_all_age = OrbitInput::post('is_all_age');
-            $retailernew = OrbitInput::post('retailer_ids');
-            $retailernew = (array) $retailernew;
+            $retailer_ids = OrbitInput::post('retailer_ids');
+            $retailer_ids = (array) $retailer_ids;
 
             $idStatus = CampaignStatus::select('campaign_status_id')->where('campaign_status_name', $campaignStatus)->first();
             $status = 'inactive';
@@ -658,6 +703,20 @@ class NewsAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.news.postupdatenews.after.validation', array($this, $validator));
+
+            $retailernew = array();
+            $mallid = array();
+            foreach ($retailer_ids as $retailer_id) {
+                $data = @json_decode($retailer_id);
+                $tenant_id = $data->tenant_id;
+                $mall_id = $data->mall_id;
+
+                if(! in_array($mall_id, $mallid)) {
+                    $mallid[] = $mall_id;
+                }
+
+                $retailernew[] = $tenant_id;
+            }
 
             $updatednews = News::with('tenants')->excludeDeleted()->where('news_id', $news_id)->first();
 
@@ -788,36 +847,38 @@ class NewsAPIController extends ControllerAPI
                 }
             });
 
-            OrbitInput::post('retailer_ids', function($retailer_ids) use ($updatednews) {
+            OrbitInput::post('retailer_ids', function($retailer_ids) use ($updatednews, $news_id, $mallid) {
                 // validate retailer_ids
-                $retailer_ids = (array) $retailer_ids;
-                foreach ($retailer_ids as $retailer_id_check) {
-                    $validator = Validator::make(
-                        array(
-                            'merchant_id'   => $retailer_id_check,
-                        ),
-                        array(
-                            'merchant_id'   => 'orbit.empty.tenant',
-                        )
-                    );
+                
+                // to do : add validation for tenant
+                
+                // Delete old data
+                $delete_retailer = NewsMerchant::where('news_id', '=', $news_id);
+                $delete_retailer->delete();
 
-                    Event::fire('orbit.news.postupdatenews.before.retailervalidation', array($this, $validator));
-
-                    // Run the validation
-                    if ($validator->fails()) {
-                        $errorMessage = $validator->messages()->first();
-                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                // Insert new data
+                $isMall = 'retailer';
+                foreach ($retailer_ids as $retailer_id) {
+                    $data = @json_decode($retailer_id);
+                    $tenant_id = $data->tenant_id;
+                    $mall_id = $data->mall_id;
+                    
+                    if(! in_array($mall_id, $mallid)) {
+                        $mallid[] = $mall_id;
                     }
 
-                    Event::fire('orbit.news.postupdatenews.after.retailervalidation', array($this, $validator));
-                }
-                // sync new set of retailer ids
-                $pivotData = array_fill(0, count($retailer_ids), ['object_type' => 'retailer']);
-                $syncData = array_combine($retailer_ids, $pivotData);
-                $updatednews->tenants()->sync($syncData);
+                    if ($tenant_id === $mall_id) {
+                        $isMall = 'mall';
+                    } else {
+                        $isMall = 'retailer';
+                    }
 
-                // reload tenants relation
-                $updatednews->load('tenants');
+                    $newsretailer = new NewsMerchant();
+                    $newsretailer->merchant_id = $tenant_id;
+                    $newsretailer->news_id = $news_id;
+                    $newsretailer->object_type = $isMall;
+                    $newsretailer->save();
+                }
             });
 
             OrbitInput::post('gender_ids', function($gender_ids) use ($updatednews, $news_id, $object_type) {
@@ -961,39 +1022,32 @@ class NewsAPIController extends ControllerAPI
                 $utcenddatedb = Carbon::createFromFormat('Y-m-d H:i:s', $deactivate, $mall->timezone->timezone_name);
                 $utcenddatedb->setTimezone('UTC');
                 $activeid = CampaignHistoryAction::getIdFromAction($actionstatus);
-                $rowcost = CampaignHistory::getRowCost($news_id, $status, $actionhistory, $now, FALSE)->first();
-                // campaign history status
-                if (! empty($rowcost)) {
-                    $campaignhistory = new CampaignHistory();
-                    $campaignhistory->campaign_type = $object_type;
-                    $campaignhistory->campaign_id = $news_id;
-                    $campaignhistory->campaign_history_action_id = $activeid;
-                    $campaignhistory->number_active_tenants = $rowcost->tenants;
-                    $campaignhistory->campaign_cost = $rowcost->cost;
-                    $campaignhistory->created_by = $this->api->user->user_id;
-                    $campaignhistory->modified_by = $this->api->user->user_id;
-                    $campaignhistory->created_at = $utcenddatedb;
-                    $campaignhistory->save();
-                }
+                $campaignhistory = new CampaignHistory();
+                $campaignhistory->campaign_type = $object_type;
+                $campaignhistory->campaign_id = $news_id;
+                $campaignhistory->campaign_history_action_id = $activeid;
+                $campaignhistory->number_active_tenants = 0;
+                $campaignhistory->campaign_cost = 0;
+                $campaignhistory->created_by = $this->api->user->user_id;
+                $campaignhistory->modified_by = $this->api->user->user_id;
+                $campaignhistory->created_at = $utcenddatedb;
+                $campaignhistory->save();
 
                 $actionstatus = 'activate';
                 if ($status === 'inactive') {
                     $actionstatus = 'deactivate';
                 }
                 $activeid = CampaignHistoryAction::getIdFromAction($actionstatus);
-                $rowcost = CampaignHistory::getRowCost($news_id, $status, $actionhistory, $now, FALSE)->first();
-                // campaign history status
-                if (! empty($rowcost)) {
-                    $campaignhistory = new CampaignHistory();
-                    $campaignhistory->campaign_type = $object_type;
-                    $campaignhistory->campaign_id = $news_id;
-                    $campaignhistory->campaign_history_action_id = $activeid;
-                    $campaignhistory->number_active_tenants = $rowcost->tenants;
-                    $campaignhistory->campaign_cost = $rowcost->cost;
-                    $campaignhistory->created_by = $this->api->user->user_id;
-                    $campaignhistory->modified_by = $this->api->user->user_id;
-                    $campaignhistory->save();
-                }
+                $campaignhistory = new CampaignHistory();
+                $campaignhistory->campaign_type = $object_type;
+                $campaignhistory->campaign_id = $news_id;
+                $campaignhistory->campaign_history_action_id = $activeid;
+                $campaignhistory->number_active_tenants = 0;
+                $campaignhistory->campaign_cost = 0;
+                $campaignhistory->created_by = $this->api->user->user_id;
+                $campaignhistory->modified_by = $this->api->user->user_id;
+                $campaignhistory->save();
+                
             } elseif ($statusdb != $status) {
                 // get action id for campaign history
                 $actionstatus = 'activate';
@@ -1001,19 +1055,17 @@ class NewsAPIController extends ControllerAPI
                     $actionstatus = 'deactivate';
                 }
                 $activeid = CampaignHistoryAction::getIdFromAction($actionstatus);
-                $rowcost = CampaignHistory::getRowCost($news_id, $status, $actionhistory, $now, FALSE)->first();
-                // campaign history status
-                if (! empty($rowcost)) {
-                    $campaignhistory = new CampaignHistory();
-                    $campaignhistory->campaign_type = $object_type;
-                    $campaignhistory->campaign_id = $news_id;
-                    $campaignhistory->campaign_history_action_id = $activeid;
-                    $campaignhistory->number_active_tenants = $rowcost->tenants;
-                    $campaignhistory->campaign_cost = $rowcost->cost;
-                    $campaignhistory->created_by = $this->api->user->user_id;
-                    $campaignhistory->modified_by = $this->api->user->user_id;
-                    $campaignhistory->save();
-                }
+
+                $campaignhistory = new CampaignHistory();
+                $campaignhistory->campaign_type = $object_type;
+                $campaignhistory->campaign_id = $news_id;
+                $campaignhistory->campaign_history_action_id = $activeid;
+                $campaignhistory->number_active_tenants = 0;
+                $campaignhistory->campaign_cost = 0;
+                $campaignhistory->created_by = $this->api->user->user_id;
+                $campaignhistory->modified_by = $this->api->user->user_id;
+                $campaignhistory->save();
+                
             } else {
                 //check for first time insert for that day
                 $utcNow = Carbon::now();
@@ -1024,46 +1076,50 @@ class NewsAPIController extends ControllerAPI
                         $actionstatus = 'deactivate';
                     }
                     $activeid = CampaignHistoryAction::getIdFromAction($actionstatus);
-                    $rowcost = CampaignHistory::getRowCost($news_id, $status, $actionhistory, $now, FALSE)->first();
-                    // campaign history status
-                    if (! empty($rowcost)) {
-                        $campaignhistory = new CampaignHistory();
-                        $campaignhistory->campaign_type = $object_type;
-                        $campaignhistory->campaign_id = $news_id;
-                        $campaignhistory->campaign_history_action_id = $activeid;
-                        $campaignhistory->number_active_tenants = $rowcost->tenants;
-                        $campaignhistory->campaign_cost = $rowcost->cost;
-                        $campaignhistory->created_by = $this->api->user->user_id;
-                        $campaignhistory->modified_by = $this->api->user->user_id;
-                        $campaignhistory->save();
-                    }
+                    $campaignhistory = new CampaignHistory();
+                    $campaignhistory->campaign_type = $object_type;
+                    $campaignhistory->campaign_id = $news_id;
+                    $campaignhistory->campaign_history_action_id = $activeid;
+                    $campaignhistory->number_active_tenants = 0;
+                    $campaignhistory->campaign_cost = 0;
+                    $campaignhistory->created_by = $this->api->user->user_id;
+                    $campaignhistory->modified_by = $this->api->user->user_id;
+                    $campaignhistory->save();
+                    
                 }
             }
 
             //check for add/remove tenant
             $removetenant = array_diff($merchantdb, $retailernew);
             $addtenant = array_diff($retailernew, $merchantdb);
+            $withSpending = 'Y';
             if (! empty($removetenant)) {
                 $actionhistory = 'delete';
                 $addtenantid = CampaignHistoryAction::getIdFromAction('delete_tenant');
                 //save campaign histories (tenant)
                 foreach ($removetenant as $retailer_id) {
                     // insert tenant/merchant to campaign history
-                    $tenantstatus = Tenant::getStatus($retailer_id);
-                    if ($tenantstatus === 'active') {
-                        $rowcost = CampaignHistory::getRowCost($news_id, $status, $actionhistory, $now, FALSE)->first();
-                        if (! empty($rowcost)) {
-                            $tenanthistory = new CampaignHistory();
-                            $tenanthistory->campaign_type = $object_type;
-                            $tenanthistory->campaign_id = $news_id;
-                            $tenanthistory->campaign_external_value = $retailer_id;
-                            $tenanthistory->campaign_history_action_id = $addtenantid;
-                            $tenanthistory->number_active_tenants = $rowcost->tenants;
-                            $tenanthistory->campaign_cost = $rowcost->cost;
-                            $tenanthistory->created_by = $this->api->user->user_id;
-                            $tenanthistory->modified_by = $this->api->user->user_id;
-                            $tenanthistory->save();
-                        }
+                    $tenantstatus = CampaignLocation::select('status')->where('merchant_id', $retailer_id)->first();
+                    $spendingrule = SpendingRule::select('with_spending')->where('object_id', $retailer_id)->first();
+
+                    if ($spendingrule) {
+                        $withSpending = 'Y';
+                    } else {
+                        $withSpending = 'N';
+                    }
+
+                    if (($tenantstatus->status === 'active') && ($withSpending === 'Y')) {
+                        $tenanthistory = new CampaignHistory();
+                        $tenanthistory->campaign_type = $object_type;
+                        $tenanthistory->campaign_id = $news_id;
+                        $tenanthistory->campaign_external_value = $retailer_id;
+                        $tenanthistory->campaign_history_action_id = $addtenantid;
+                        $tenanthistory->number_active_tenants = 0;
+                        $tenanthistory->campaign_cost = 0;
+                        $tenanthistory->created_by = $this->api->user->user_id;
+                        $tenanthistory->modified_by = $this->api->user->user_id;
+                        $tenanthistory->save();
+                        
                     }
                 }
             }
@@ -1073,40 +1129,63 @@ class NewsAPIController extends ControllerAPI
                 //save campaign histories (tenant)
                 foreach ($addtenant as $retailer_id) {
                     // insert tenant/merchant to campaign history
-                    $tenantstatus = Tenant::getStatus($retailer_id);
-                    if ($tenantstatus === 'active') {
-                        $rowcost = CampaignHistory::getRowCost($news_id, $status, $actionhistory, $now, FALSE)->first();
-                        if (! empty($rowcost)) {
-                            $tenanthistory = new CampaignHistory();
-                            $tenanthistory->campaign_type = $object_type;
-                            $tenanthistory->campaign_id = $news_id;
-                            $tenanthistory->campaign_external_value = $retailer_id;
-                            $tenanthistory->campaign_history_action_id = $addtenantid;
-                            $tenanthistory->number_active_tenants = $rowcost->tenants;
-                            $tenanthistory->campaign_cost = $rowcost->cost;
-                            $tenanthistory->created_by = $this->api->user->user_id;
-                            $tenanthistory->modified_by = $this->api->user->user_id;
-                            $tenanthistory->save();
-                        }
+                    $tenantstatus = CampaignLocation::select('status')->where('merchant_id', $retailer_id)->first();
+                    $spendingrule = SpendingRule::select('with_spending')->where('object_id', $retailer_id)->first();
+
+                    if ($spendingrule) {
+                        $withSpending = 'Y';
+                    } else {
+                        $withSpending = 'N';
+                    }
+
+                    if (($tenantstatus->status === 'active') && ($withSpending === 'Y')) {
+                        $tenanthistory = new CampaignHistory();
+                        $tenanthistory->campaign_type = $object_type;
+                        $tenanthistory->campaign_id = $news_id;
+                        $tenanthistory->campaign_external_value = $retailer_id;
+                        $tenanthistory->campaign_history_action_id = $addtenantid;
+                        $tenanthistory->number_active_tenants = 0;
+                        $tenanthistory->campaign_cost = 0;
+                        $tenanthistory->created_by = $this->api->user->user_id;
+                        $tenanthistory->modified_by = $this->api->user->user_id;
+                        $tenanthistory->save();
                     }
                 }
             }
 
-            // Update campaign spending
-            $mall = App::make('orbit.empty.mall');
-            $now = Carbon::now($mall->timezone->timezone_name);
-            $timezone = $this->getTimezone($mall->merchant_id);
-            $timezoneOffset = $this->getTimezoneOffset($timezone);
+            //calculate spending
+            foreach ($mallid as $mall) {
 
-            $sqlSpending = "(SELECT IFNULL(fnc_campaign_cost({$this->quote($news_id)}, {$this->quote($object_type)}, {$this->quote($begin_date)}, {$this->quote($now)}, {$this->quote($timezoneOffset)}), 0.00) AS spending) AS B";
-            $spending = DB::table(DB::raw($sqlSpending))->get();
+                $campaign_id = $news_id;
+                $campaign_type = $object_type;
+                $procResults = DB::statement("CALL prc_campaign_detailed_cost({$this->quote($campaign_id)}, {$this->quote($campaign_type)}, NULL, NULL, {$this->quote($mall)})");
 
-            $campaignspending = $spending[0]->spending;
+                if ($procResults === false) {
+                    // Do Nothing
+                }
 
-            $updatedcamapign = CampaignSpendingCount::where('campaign_id',$news_id)->first();
-            $updatedcamapign->end_date =$end_date;
-            $updatedcamapign->spending = $campaignspending;
-            $updatedcamapign->save();
+                $getspending = DB::table(DB::raw('tmp_campaign_cost_detail'))->first();
+
+                $mallTimezone = $this->getTimezone($mall);
+                $nowMall = Carbon::now($mallTimezone);
+                $dateNowMall = $nowMall->toDateString();
+                $beginMall = date('Y-m-d', strtotime($begin_date));
+                $endMall = date('Y-m-d', strtotime($end_date));
+
+                // only calculate spending when update date between start and date of campaign
+                if ($dateNowMall >= $beginMall && $dateNowMall <= $endMall) {
+                    $dailySpending = CampaignDailySpending::firstOrCreate(array('date' => $getspending->date_in_utc, 'campaign_id' => $campaign_id, 'mall_id' => $mall));
+                    $dailySpending->date = $getspending->date_in_utc;
+                    $dailySpending->campaign_type = $campaign_type;
+                    $dailySpending->campaign_id = $campaign_id;
+                    $dailySpending->mall_id = $mall;
+                    $dailySpending->number_active_tenants = $getspending->campaign_number_tenant;
+                    $dailySpending->base_price = $getspending->base_price;
+                    $dailySpending->campaign_status = $getspending->campaign_status;
+                    $dailySpending->total_spending = $getspending->daily_cost;
+                    $dailySpending->save();
+                }
+            }
 
             Event::fire('orbit.news.postupdatenews.after.save', array($this, $updatednews));
             $this->response->data = $updatednews;
@@ -1194,7 +1273,7 @@ class NewsAPIController extends ControllerAPI
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = null;
+            $this->response->data = $e->getLine();
 
             // Rollback the changes
             $this->rollBack();

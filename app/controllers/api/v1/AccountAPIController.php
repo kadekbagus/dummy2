@@ -25,6 +25,10 @@ class AccountAPIController extends ControllerAPI
             'title' => 'Location',
             'sort_key' => 'city',
         ],
+        'role_name' => [
+            'title' => 'Role',
+            'sort_key' => 'role_name',
+        ],
         'tenants' => [
             'title' => 'Tenant(s)',
         ],
@@ -56,8 +60,10 @@ class AccountAPIController extends ControllerAPI
 
     public function getAvailableTenantsSelection()
     {
-        $takenMerchantIds = UserMerchant::whereObjectType('tenant')->lists('merchant_id');
-        $tenants = Tenant::whereNotIn('merchant_id', $takenMerchantIds)->get();
+        $availableMerchantIds = UserMerchant::whereIn('object_type', ['mall', 'tenant'])->whereNull('user_id')->lists('merchant_id');
+
+        // Retrieve from "merchants" table
+        $tenants = CampaignLocation::whereIn('merchant_id', $availableMerchantIds)->orderBy('name')->get();
         
         $selection = [];
         foreach ($tenants as $tenant) {
@@ -68,7 +74,7 @@ class AccountAPIController extends ControllerAPI
             ];
         }
 
-        $this->response->data = ['available_tenants' => $selection];
+        $this->response->data = ['row_count' => count($selection), 'available_tenants' => $selection];
         return $this->render(200);
     }
 
@@ -79,7 +85,7 @@ class AccountAPIController extends ControllerAPI
         }
 
         $tenantArray = [];
-        foreach (Tenant::whereIn('merchant_id', $tenantIds)->orderBy('name')->get() as $row) {
+        foreach (CampaignLocation::whereIn('merchant_id', $tenantIds)->orderBy('name')->get() as $row) {
             $tenantArray[] = ['id' => $row->merchant_id, 'name' => $row->tenant_at_mall, 'status' => $row->status];
         }
 
@@ -107,13 +113,13 @@ class AccountAPIController extends ControllerAPI
         $user->user_lastname = Input::get('user_lastname');
         $user->user_email = Input::get('user_email');
         $user->username = Input::get('user_email');
+        $user->status = Input::get('status');
 
         if (Input::get('user_password')) {
             $user->user_password = Hash::make(Input::get('user_password'));
         }
 
         if ( ! $this->id) {
-            $user->status = 'active';
 
             // Get role ID of "Campaign Owner"
             $roleId = Role::whereRoleName('Campaign Owner')->first()->role_id;
@@ -254,11 +260,12 @@ class AccountAPIController extends ControllerAPI
             $records[] = [
                 'account_name' => $row->campaignAccount->account_name,
                 'company_name' => $row->company_name,
-                'city' => $row->userDetail->city,
-                'tenants' => $this->getTenantAtMallArray($row->userTenants()->lists('merchant_id')),
-                'created_at' => $row->created_at->format('d F Y H:i:s'),
-                'status' => $row->campaignAccount->status,
-                'id' => $row->user_id,
+                'city'         => $row->userDetail->city,
+                'user_role'    => $row->role_name,
+                'tenants'      => $this->getTenantAtMallArray($row->userTenants()->lists('merchant_id')),
+                'created_at'   => $row->created_at->setTimezone('Asia/Singapore')->format('d F Y H:i:s'),
+                'status'       => $row->campaignAccount->status,
+                'id'           => $row->user_id,
 
                 // Needed by frontend for the edit page
                 'user_firstname' => $row->user_firstname,

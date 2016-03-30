@@ -252,12 +252,12 @@
                     <td><?php echo $count++; ?></td>
                     <td><?php echo htmlentities($row->campaign_name); ?></td>
                     <td><?php echo htmlentities($row->campaign_type); ?></td>
-                    <td><?php echo $row->total_tenant; ?></td>
+                    <td><?php echo number_format($row->total_tenant); ?></td>
                     <td><?php echo htmlentities($row->mall_name); ?></td>
                     <td><?php echo date('d M Y', strtotime($row->begin_date)) . ' - ' . date('d M Y', strtotime($row->end_date)); ?></td>
-                    <td><?php echo $row->page_views; ?></td>
-                    <td><?php echo $row->popup_views; ?></td>
-                    <td><?php echo $row->popup_clicks; ?></td>
+                    <td><?php echo number_format($row->page_views); ?></td>
+                    <td><?php echo number_format($row->popup_views); ?></td>
+                    <td><?php echo number_format($row->popup_clicks); ?></td>
                     <td><?php echo number_format($row->daily, 0); ?></td>
                     <td><?php echo number_format($row->estimated_total, 0); ?></td>
                     <td><?php echo number_format($row->spending, 0); ?></td>
