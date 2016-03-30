@@ -61,6 +61,11 @@ Route::post('/app/v1/activate-account', 'IntermediateLoginController@Login_postA
 Route::post('/app/v1/service-agreement/update', 'IntermediateLoginController@Login_postUpdateServiceAgreement');
 
 /**
+ * Update Service Agreement PMP Account
+ */
+Route::post('/app/v1/service-agreement-pmp/update', 'IntermediateLoginController@Login_postUpdateServiceAgreementPMP');
+
+/**
  * Check Email Sign Up
  */
 Route::group(['before' => 'orbit-settings'], function() {
