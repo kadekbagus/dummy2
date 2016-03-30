@@ -63,9 +63,9 @@ class CRMSummaryReportPrinterController extends DataPrinterController
 
 
         if (!$flag_7days) {
-            $builder = ActivityAPIController::create('raw')->setReturnQuery(TRUE)->getCRMSummaryReport();      
+            $builder = ActivityAPIController::create('raw')->setReturnQuery(TRUE)->getCRMSummaryReport();
         }
-       
+
         $summary = $builder['summary'];
 
         $pageTitle = 'CRM Summary Report';
@@ -109,7 +109,7 @@ class CRMSummaryReportPrinterController extends DataPrinterController
                             if ($key2 === 'date') {
                                 printf("%s,", $value2);
                             } else {
-                                printf("\"%s\"", $this->printFormatNumber((int)$value2));
+                                printf("\"%s\"", round($value2));
                                 printf(",");
                             }
                         }

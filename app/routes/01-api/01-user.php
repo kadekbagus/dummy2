@@ -137,3 +137,27 @@ Route::get('/api/v1/user-report/list', function()
 {
     return UserReportAPIController::create()->getUserReport();
 });
+
+/**
+ * Create New PMP Employee
+ */
+Route::post('/api/v1/pmp-employee/new', function()
+{
+    return EmployeeAPIController::create()->postNewPMPEmployee();
+});
+
+/**
+ * Update PMP Employee
+ */
+Route::post('/api/v1/pmp-employee/update', function()
+{
+    return EmployeeAPIController::create()->postUpdatePMPEmployee();
+});
+
+/**
+ * Search PMP Employees
+ */
+Route::get('/api/v1/pmp-employee/list', function()
+{
+    return EmployeeAPIController::create()->getSearchPMPEmployee();
+});
