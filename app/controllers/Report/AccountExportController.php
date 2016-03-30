@@ -6,11 +6,29 @@ class AccountExportController extends \AccountAPIController
 {
     use ExportControllerTrait;
 
-    protected $pageTitle = 'PMP Accounts';
+    protected $pageTitle = 'PMP Accounts List';
+
+    protected function handleCsvRowValue($row, $fieldName)
+    {
+        $csv = '"';
+        
+        if ($fieldName == 'tenants') {
+            $tenantNames = [];
+            foreach ($row['tenants'] as $tenant) {
+                $tenantNames[] = $tenant['name'];
+            }
+
+            $csv .= implode(', ', $tenantNames);
+        } else {
+            $csv .= $row[$fieldName];
+        }
+
+        return $csv.'"';
+    }
 
     protected function makeSummary()
     {
-        $summary = ['Total records' => count($this->data->records)];
+        $summary = ['Total Accounts' => count($this->data->records)];
 
         if (\Input::get('account_name')) {
             $summary['Filtered by account name'] = \Input::get('account_name');

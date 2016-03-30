@@ -60,4 +60,3 @@ Route::post('/api/v1/mall-logo/delete', function()
     return UploadAPIController::create()->postDeleteMallLogo();
 });
 
-?>

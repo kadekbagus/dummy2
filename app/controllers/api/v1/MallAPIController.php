@@ -307,6 +307,12 @@ class MallAPIController extends ControllerAPI
             Event::fire('orbit.mall.postnewmall.before.save', array($this, $newmall));
 
             $newmall->save();
+
+            $newUserMerchant = new UserMerchant();
+            $newUserMerchant->merchant_id = $newmall->merchant_id;
+            $newUserMerchant->object_type = $newmall->object_type;
+            $newUserMerchant->save();
+
             if (OrbitInput::post('facebook_uri')) {
                 $this->saveSocmedUri('facebook', $newmall->merchant_id, OrbitInput::post('facebook_uri'));
 

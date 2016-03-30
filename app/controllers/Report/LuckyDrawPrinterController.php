@@ -111,7 +111,7 @@ class LuckyDrawPrinterController extends DataPrinterController
                             $this->printUtf8($row->lucky_draw_name_english),
                             $this->printDateTime($row->start_date, 'UTC', 'd F Y H:i'),
                             $this->printDateTime($row->end_date, 'UTC', 'd F Y H:i'),
-                            $row->minimum_amount,
+                            number_format($row->minimum_amount, 0, '', ''),
                             $row->total_issued_lucky_draw_number,
                             $row->campaign_status,
                             $this->printDateTime($row->updated_at, $timezone, 'd F Y H:i:s')

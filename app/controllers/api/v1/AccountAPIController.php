@@ -25,6 +25,10 @@ class AccountAPIController extends ControllerAPI
             'title' => 'Location',
             'sort_key' => 'city',
         ],
+        'role_name' => [
+            'title' => 'Role',
+            'sort_key' => 'role_name',
+        ],
         'tenants' => [
             'title' => 'Tenant(s)',
         ],
@@ -56,23 +60,33 @@ class AccountAPIController extends ControllerAPI
 
     public function getAvailableTenantsSelection()
     {
-        $takenMerchantIds = UserMerchant::whereObjectType('tenant')->lists('merchant_id');
-        $tenants = Tenant::whereNotIn('merchant_id', $takenMerchantIds)->get();
+        $availableMerchantIds = UserMerchant::whereIn('object_type', ['mall', 'tenant'])->whereNull('user_id')->lists('merchant_id');
+
+        // Retrieve from "merchants" table
+        $tenants = CampaignLocation::whereIn('merchant_id', $availableMerchantIds)->orderBy('name')->get();
         
         $selection = [];
         foreach ($tenants as $tenant) {
-            $selection[$tenant->merchant_id] = $tenant->tenant_at_mall;
+            $selection[] = [
+                'id'     => $tenant->merchant_id,
+                'name'   => $tenant->tenant_at_mall,
+                'status' => $tenant->status,
+            ];
         }
 
-        $this->response->data = ['available_tenants' => (object) $selection];
+        $this->response->data = ['row_count' => count($selection), 'available_tenants' => $selection];
         return $this->render(200);
     }
 
     protected function getTenantAtMallArray($tenantIds)
     {
+        if ( ! $tenantIds) {
+            return [];
+        }
+
         $tenantArray = [];
-        foreach (Tenant::whereIn('merchant_id', $tenantIds)->orderBy('name')->get() as $row) {
-            $tenantArray[] = ['id' => $row->merchant_id, 'name' => $row->tenant_at_mall];
+        foreach (CampaignLocation::whereIn('merchant_id', $tenantIds)->orderBy('name')->get() as $row) {
+            $tenantArray[] = ['id' => $row->merchant_id, 'name' => $row->tenant_at_mall, 'status' => $row->status];
         }
 
         return $tenantArray;
@@ -99,13 +113,18 @@ class AccountAPIController extends ControllerAPI
         $user->user_lastname = Input::get('user_lastname');
         $user->user_email = Input::get('user_email');
         $user->username = Input::get('user_email');
+        $user->status = Input::get('status');
 
         if (Input::get('user_password')) {
             $user->user_password = Hash::make(Input::get('user_password'));
         }
 
         if ( ! $this->id) {
-            $user->status = 'active';
+
+            // Get role ID of "Campaign Owner"
+            $roleId = Role::whereRoleName('Campaign Owner')->first()->role_id;
+
+            $user->user_role_id = $roleId;
         }
 
         $user->save();
@@ -139,6 +158,16 @@ class AccountAPIController extends ControllerAPI
             $userMerchant->merchant_id = $merchantId;
             $userMerchant->object_type = 'tenant';
             $userMerchant->save();
+        }
+
+        if ( ! $this->id) {
+            // Save to "settings" table
+            $setting = new Setting;
+            $setting->setting_name = 'agreement_accepted_pmp_account';
+            $setting->setting_value = 'false';
+            $setting->object_id = $user->user_id;
+            $setting->object_type = 'user';
+            $setting->save();
         }
         
         $data = new stdClass();
@@ -208,6 +237,10 @@ class AccountAPIController extends ControllerAPI
         $allRows = clone $pmpAccounts;
         $data->total_records = $allRows->count();
 
+        if ( ! Input::get('export')) {
+            $pmpAccounts->take(Input::get('take'))->skip(Input::get('skip'));
+        }
+
         $sortKey = Input::get('sortby', 'account_name');
 
         // Prevent ambiguous error
@@ -220,20 +253,19 @@ class AccountAPIController extends ControllerAPI
             $sortKey = 'campaign_account.status';
         }
 
-        $pmpAccounts = $pmpAccounts->take(Input::get('take'))->skip(Input::get('skip'))
-            ->orderBy($sortKey, Input::get('sortmode', 'asc'))
-            ->get();
+        $pmpAccounts = $pmpAccounts->orderBy($sortKey, Input::get('sortmode', 'asc'))->get();
 
         $records = [];
         foreach ($pmpAccounts as $row) {
             $records[] = [
                 'account_name' => $row->campaignAccount->account_name,
                 'company_name' => $row->company_name,
-                'city' => $row->userDetail->city,
-                'tenants' => $this->getTenantAtMallArray($row->userTenants()->lists('merchant_id')),
-                'created_at' => $row->created_at->format('d F Y H:i:s'),
-                'status' => $row->campaignAccount->status,
-                'id' => $row->user_id,
+                'city'         => $row->userDetail->city,
+                'role_name'    => $row->role_name,
+                'tenants'      => $this->getTenantAtMallArray($row->userTenants()->lists('merchant_id')),
+                'created_at'   => $row->created_at->setTimezone('Asia/Singapore')->format('d F Y H:i:s'),
+                'status'       => $row->campaignAccount->status,
+                'id'           => $row->user_id,
 
                 // Needed by frontend for the edit page
                 'user_firstname' => $row->user_firstname,
@@ -243,7 +275,7 @@ class AccountAPIController extends ControllerAPI
                 'address_line1'  => $row->userDetail->address_line1,
                 'province'       => $row->userDetail->province,
                 'postal_code'    => $row->userDetail->postal_code,
-                'country'        => (object) ['id' => $row->userDetail->country_id, 'name' => $row->userDetail->country],
+                'country'        => (object) ['id' => $row->userDetail->country_id, 'name' => @$row->userDetail->userCountry->name],
             ];
         }
 
@@ -259,7 +291,6 @@ class AccountAPIController extends ControllerAPI
             'user_firstname' => Input::get('user_firstname'),
             'user_lastname'  => Input::get('user_lastname'),
             'user_email'     => Input::get('user_email'),
-            'user_password'  => Input::get('user_password'),
             'account_name'   => Input::get('account_name'),
             'status'         => Input::get('status'),
             'company_name'   => Input::get('company_name'),
@@ -271,13 +302,14 @@ class AccountAPIController extends ControllerAPI
 
         if (Input::get('id')) {
             $fields['id'] = Input::get('id');
+        } else {
+            $fields['user_password'] = Input::get('user_password');
         }
 
         $rules = [
             'user_firstname' => 'required',
             'user_lastname'  => 'required',
             'user_email'     => 'required|email',
-            'user_password'  => 'required',
             'account_name'   => 'required',
             'status'         => 'in:active,inactive',
             'company_name'   => 'required',
@@ -289,6 +321,9 @@ class AccountAPIController extends ControllerAPI
 
         if (Input::get('id')) {
             $rules['id'] = 'exists:users,user_id';
+        } else {
+            $rules['user_password'] = 'required';
+            $rules['account_name'] .= '|unique:campaign_account,account_name';
         }
 
         $validator = Validator::make($fields, $rules);

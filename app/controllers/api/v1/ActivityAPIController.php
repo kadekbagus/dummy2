@@ -3180,6 +3180,7 @@ class ActivityAPIController extends ControllerAPI
 
             // e.g. 'Email sign up'
             // It's case insensitive
+            $searchNotAvailable = false;
             if ($activityGroupSearch) {
                 $lowerActivityGroupSearch = strtolower($activityGroupSearch);
                 $lowerActivityColumns = array_map('strtolower', Config::get('orbit.activity_columns'));
@@ -3188,6 +3189,10 @@ class ActivityAPIController extends ControllerAPI
                 if ($activityKey) {
                     $columns = array_merge($columns, [$activityKey => Config::get('orbit.activity_columns.'.$activityKey)]);
                     $activityKeys[] = strtolower(str_replace(' ', '_', $activityKey));
+                } else {
+                    if(empty($activityKeys)) {
+                        $searchNotAvailable = true;
+                    }
                 }
                 
                 $summary['Filter by Others'] = $activityGroupSearch;
@@ -3204,11 +3209,18 @@ class ActivityAPIController extends ControllerAPI
 
             $activities->orderBy('date', 'dsc');
 
-            $result = $activities->get();
+            if ($searchNotAvailable) {
+                $result = null;
+            } else {
+                $result = $activities->get();
+            }
             
             $records = [];
 
-            $summary['Date Range'] = date('d F Y', strtotime($mallbegindate)).' - '.date('d F Y', strtotime($mallenddate));
+            $summary['Activity Date'] = date('d F Y', strtotime($mallbegindate));
+            if ($mallbegindate !== $mallenddate) {
+                $summary['Activity Date'] .= ' - '.date('d F Y', strtotime($mallenddate));
+            }
 
             if ($this->returnQuery) {
                 return [

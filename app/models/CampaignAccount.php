@@ -28,4 +28,9 @@ class CampaignAccount extends Eloquent
     {
         return $this->userMerchant()->where('object_type', '=', 'tenant');
     }
+
+    public function settings()
+    {
+        return $this->hasMany('Setting', 'object_id', 'user_id')->where('object_type', 'user');
+    }
 }

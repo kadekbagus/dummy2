@@ -68,7 +68,8 @@ return array(
     // agreement configuration
     'agreement' => array(
         // This should be frontend URL not backend
-        'url'  => 'http://mall-portal.url/#/service-agreement?token=%s'
+        'mall'  => 'http://portal.orbit-mall.here/#/service-agreement?token=%s',
+        'pmp'   => 'http://pmp.orbit-mall.here/#/service-agreement?token=%s'
     ),
 
     'shop' => array(

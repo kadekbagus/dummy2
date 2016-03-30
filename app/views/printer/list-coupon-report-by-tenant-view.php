@@ -90,22 +90,22 @@
         <tr>
             <td>Total Coupons</td>
             <td>:</td>
-            <td><strong><?php echo number_format($totalCoupons, 0, '.', '.'); ?></strong></td>
+            <td><strong><?php echo number_format($totalCoupons); ?></strong></td>
         </tr>
         <tr>
             <td>Total Acquiring Customers</td>
             <td>:</td>
-            <td><strong><?php echo number_format($totalAcquiringCustomers, 0, '.', '.'); ?></strong></td>
+            <td><strong><?php echo number_format($totalAcquiringCustomers); ?></strong></td>
         </tr>
         <tr>
             <td>Total Active Campaign Days</td>
             <td>:</td>
-            <td><strong><?php echo number_format($totalActiveDays, 0, '.', '.'); ?></strong></td>
+            <td><strong><?php echo number_format($totalActiveDays); ?></strong></td>
         </tr>
         <tr>
             <td>Total Redemption Places</td>
             <td>:</td>
-            <td><strong><?php echo number_format($totalRedemptionPlace, 0, '.', '.'); ?></strong></td>
+            <td><strong><?php echo number_format($totalRedemptionPlace); ?></strong></td>
         </tr>
 
         <!-- Filtering -->
@@ -125,7 +125,7 @@
             </tr>
         <?php } ?>
 
-        <?php if ($customerGender != '') { 
+        <?php if ($customerGender != '') {
             $gender_string = '';
             $count = 1;
             foreach ($customerGender as $key => $valgender){
@@ -152,7 +152,7 @@
             </tr>
         <?php } ?>
 
-        <?php 
+        <?php
             if ($issuedDateGte != '' && $issuedDateLte != ''){
                 $startDate = $this->printDateTime($issuedDateGte, $timezoneCurrentMall, 'd M Y');
                 $endDate = $this->printDateTime($issuedDateLte, $timezoneCurrentMall, 'd M Y');
@@ -170,7 +170,7 @@
             }
         ?>
 
-        <?php 
+        <?php
             if ($redeemedDateGte != '' && $redeemedDateLte != ''){
                 $startDate = $this->printDateTime($redeemedDateGte, $timezoneCurrentMall, 'd M Y');
                 $endDate = $this->printDateTime($redeemedDateLte, $timezoneCurrentMall, 'd M Y');

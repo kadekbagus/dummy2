@@ -71,7 +71,7 @@ class CouponPrinterController extends DataPrinterController
 
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Coupon List', '', '', '', '','');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Coupons', $totalRec, '', '', '','');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Coupons', round($totalRec), '', '', '','');
 
                 // Filtering
                 if ($couponName != '') {

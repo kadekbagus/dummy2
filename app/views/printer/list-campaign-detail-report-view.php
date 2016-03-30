@@ -203,14 +203,14 @@
                 <tr class="{{ $rowCounter % 2 === 0 ? 'zebra' : '' }}">
                     <td><?php echo $count++; ?></td>
                     <td><?php echo $this->printDateTime($row->campaign_date . '00:00:00', $timezone, 'd M Y'); ?></td>
-                    <td><?php echo $row->total_tenant; ?></td>
+                    <td><?php echo number_format($row->total_tenant); ?></td>
                     <td><?php echo htmlentities($row->mall_name); ?></td>
-                    <td><?php echo $row->unique_users; ?></td>
-                    <td><?php echo $row->campaign_pages_views; ?></td>
+                    <td><?php echo number_format($row->unique_users); ?></td>
+                    <td><?php echo number_format($row->campaign_pages_views); ?></td>
                     <td><?php echo round($row->campaign_pages_view_rate, 2); ?></td>
-                    <td><?php echo $row->popup_views; ?></td>
+                    <td><?php echo number_format($row->popup_views); ?></td>
                     <td><?php echo round($row->popup_view_rate, 2); ?></td>
-                    <td><?php echo $row->popup_clicks; ?></td>
+                    <td><?php echo number_format($row->popup_clicks); ?></td>
                     <td><?php echo round($row->popup_click_rate, 2); ?></td>
                     <td><?php echo number_format($row->spending, 0); ?></td>
                 </tr>

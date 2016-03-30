@@ -112,7 +112,7 @@
         <tr>
             <td>Total Lucky Draws</td>
             <td>:</td>
-            <td><strong><?php echo number_format($totalRec, 0, '.', '.'); ?></strong></td>
+            <td><strong><?php echo number_format($totalRec); ?></strong></td>
         </tr>
 
 
@@ -207,7 +207,7 @@
                  <td><?php echo $me->printDateTime($row->start_date, 'UTC', 'd F Y H:i'); ?></td>
                  <td><?php echo $me->printDateTime($row->end_date, 'UTC', 'd F Y H:i'); ?></td>
                  <td><?php echo number_format($row->minimum_amount); ?></td>
-                 <td><?php echo $row->total_issued_lucky_draw_number; ?></td>
+                 <td><?php echo number_format($row->total_issued_lucky_draw_number); ?></td>
                  <td><?php echo $row->campaign_status; ?></td>
                  <td><?php echo $me->printDateTime($row->updated_at, $timezone, 'd F Y H:i:s'); ?></td>
             </tr>
