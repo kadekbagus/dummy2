@@ -1,26 +1,3 @@
-<!-- Search Product Modal -->
-<div class="modal fade" id="SearchProducts" tabindex="-1" role="dialog" aria-labelledby="SearchProduct" aria-hidden="true">
-    <div class="modal-dialog orbit-modal">
-        <div class="modal-content">
-            <div class="modal-header orbit-modal-header">
-                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{{ Lang::get('mobileci.modals.close') }}</span></button>
-                <h4 class="modal-title" id="SearchProduct">{{ Lang::get('mobileci.modals.search_title') }}</h4>
-            </div>
-            <div class="modal-body">
-                <form method="GET" name="searchForm" id="searchForm" action="{{ url('/customer/tenants') }}">
-                    <div class="form-group">
-                        <label for="keyword">{{ Lang::get('mobileci.modals.search_label') }}</label>
-                        <input type="text" class="form-control" name="keyword" id="keyword" placeholder="{{ Lang::get('mobileci.modals.search_placeholder') }}">
-                        {{ \Orbit\UrlGenerator::hiddenSessionIdField() }}
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-info" id="searchProductBtn">{{ Lang::get('mobileci.modals.search_button') }}</button>
-            </div>
-        </div>
-    </div>
-</div>
 @if(Config::get('orbit.shop.membership'))
 <div class="modal fade bs-example-modal-sm" id="membership-card-popup" tabindex="-1" role="dialog" aria-labelledby="membership-card" aria-hidden="true">
     <div class="modal-dialog modal-sm orbit-modal" style="width:320px; margin: 30px auto;">
@@ -108,6 +85,165 @@
 </div>
 <div class="row back-drop campaign-cards-back-drop"></div>
 
+@if (! $urlblock->isLoggedIn())
+<div class="sign-in-popup" style="display:none;">
+    <div class="row sign-in-popup-wrapper">
+        <div class="col-xs-12 text-center content-signin content-signin-popup">
+            <div class="col-xs-12 text-right">
+                <button class="close-mark" id="signin-popup-close-btn">&times;</button>
+            </div>
+            <div class="social-media-container">
+                <div class="row vertically-spaced">
+                    <div class="col-xs-12 text-center">
+                        <b>{{ Lang::get('mobileci.signin.sign_up_sign_in_with') }}</b><br>
+                        {{ Lang::get('mobileci.signin.to_access_this_content') }}
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-xs-4 text-center">
+                        <form name="fbLoginForm" id="fbLoginForm" action="{{ URL::route('mobile-ci.social_login') }}" method="post">
+                            <div class="form-group">
+                                <input type="hidden" class="form-control" name="time" value="{{{ time() }}}"/>
+                                <input type="hidden" class="form-control" name="from_captive" value="{{{ Input::get('from_captive', '') }}}"/>
+                                <input type="hidden" class="form-control" name="mac_address"
+                                       value="{{{ Input::get('mac_address', '') }}}"/>
+                                <input type="hidden" class="form-control" name="{{{ 'orbit_origin' }}}"
+                                       value="{{{ 'redirect_to_facebook' }}}"/>
+                            </div>
+                            <div class="form-group">
+                                <button id="fbLoginButton" type="submit" class="btn btn-primary icon-button facebook text-center">
+                                        <i class="fa fa-facebook fa-4x"></i>
+                                </button>
+                            </div>
+                            <input class="agree_to_terms" type="hidden" name="agree_to_terms" value="yes"/>
+                        </form>
+                    </div>
+                    <div class="col-xs-4 text-center">
+                        <form name="googleLoginForm" id="googleLoginForm" action="{{ URL::route('mobile-ci.social_google_callback') }}" method="get">
+                            <div class="form-group">
+                                <input type="hidden" class="form-control" name="time" value="{{{ time() }}}"/>
+                                <input type="hidden" class="form-control" name="from_captive" value="{{{ Input::get('from_captive', '') }}}"/>
+                                <input type="hidden" class="form-control" name="mac_address" value="{{{ Input::get('mac_address', '') }}}"/>
+                            </div>
+                            <div class="form-group">
+                                <button id="googleLoginButton" type="submit" class="btn btn-danger icon-button google text-center">
+                                    <i class="fa fa-google fa-4x"></i>
+                                </button>
+                            </div>
+                            <input class="agree_to_terms" type="hidden" name="agree_to_terms" value="no"/>
+                        </form>
+                    </div>
+                    <div class="col-xs-4 text-center">
+                        <button type="button" class="btn btn-info icon-button form text-center" data-toggle="modal" data-target="#formModal"><i class="fa fa-pencil fa-3x"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row back-drop sign-in-back-drop"></div>
+
+<div class="modal fade" id="formModal" tabindex="-1" role="dialog" aria-labelledby="formModalLabel" style="z-index: 1004;">
+    <div class="modal-dialog">
+        <div class="modal-content" id="signin-form-wrapper">
+            <form  name="signinForm" id="signinForm" method="post">
+                <div class="modal-body">
+                    <button type="button" class="close close-form" data-dismiss="modal" aria-label="Close">
+                        <i class="fa fa-times"></i>
+                    </button>
+
+                    <div class="form-group">
+                        <input type="email" value="{{{ $user_email }}}" class="form-control" name="email" id="email" placeholder="{{ Lang::get('mobileci.signin.email_placeholder') }}">
+                    </div>
+                </div>
+                <div class="modal-footer footer-form-modal">
+                    <div class="row">
+                        <div class="col-xs-8 text-left">
+                            <span>{{ Lang::get('mobileci.signin.doesnt_have_account') }}? <a href="#1" id="sign-up-link">{{ Lang::get('mobileci.signin.sign_up') }}</a></span>
+                        </div>
+                        <div class="col-xs-4 text-right">
+                            <input type="submit" name="submit" id="btn-signin-form" class="btn btn-info icon-button form text-center" disabled value="{{ Lang::get('mobileci.signin.sign_in') }}">
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-content hide" id="signup-form-wrapper">
+            <form  name="signupForm" id="signupForm" method="post">
+                <div class="modal-body">
+                    <button type="button" class="close close-form" data-dismiss="modal" aria-label="Close">
+                        <i class="fa fa-times"></i>
+                    </button>
+
+                    <span class="mandatory-label" style="display:none;">{{ Lang::get('mobileci.signup.fields_are_mandatory') }}</span>
+                    <div class="form-group">
+                        <input type="email" value="{{{ $user_email }}}" class="form-control orbit-auto-login" name="email" id="email" placeholder="{{ Lang::get('mobileci.signup.email_placeholder') }}">
+                    </div>
+                    <div class="form-group">
+                        <input type="text" class="form-control userName" value="" placeholder="{{ Lang::get('mobileci.signup.first_name') }}" name="firstname" id="firstName">
+                    </div>
+                    <div class="form-group">
+                        <input type="text" class="form-control" placeholder="{{ Lang::get('mobileci.signup.last_name') }}" name="lastname" id="lastName">
+                    </div>
+                    <div class="form-group">
+                        <select class="form-control" name="gender" id="gender">
+                            <option value="">{{ Lang::get('mobileci.signup.gender') }}</option>
+                            <option value="m">{{ Lang::get('mobileci.signup.male') }}</option>
+                            <option value="f">{{ Lang::get('mobileci.signup.female') }}</option>
+                        </select>
+                    </div>
+                    <div class="form-group date-of-birth">
+                        <div class="row">
+                            <div class="col-xs-12">
+                                <b>{{ Lang::get('mobileci.signup.date_of_birth') }}</b>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-xs-4">
+                                <select class="form-control" name="day">
+                                    <option value="">{{ Lang::get('mobileci.signup.day') }}</option>
+                                @for ($i = 1; $i <= 31; $i++)
+                                    <option value="{{$i}}">{{$i}}</option>
+                                @endfor
+                                </select>
+                            </div>
+                            <div class="col-xs-4">
+                                <select class="form-control" name="month">
+                                    <option value="">{{ Lang::get('mobileci.signup.month') }}</option>
+                                @for ($i = 1; $i <= 12; $i++)
+                                    <option value="{{$i}}">{{$i}}</option>
+                                @endfor
+                                </select>
+                            </div>
+                            <div class="col-xs-4">
+                                <select class="form-control" name="year">
+                                    <option value="">{{ Lang::get('mobileci.signup.year') }}</option>
+                                @for ($i = date('Y'); $i >= date('Y') - 150; $i--)
+                                    <option value="{{$i}}">{{$i}}</option>
+                                @endfor
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        {{ sprintf(Lang::get('mobileci.signup.policy_terms_message'), Config::get('orbit.contact_information.privacy_policy_url'), Config::get('orbit.contact_information.terms_of_service_url')) }}
+                    </div>
+                </div>
+                <div class="modal-footer footer-form-modal">
+                    <div class="row">
+                        <div class="col-xs-8 text-left orbit-auto-login">
+                            <span>{{{ Lang::get('mobileci.signup.already_have_an_account') }}}? <a href="#1" id="sign-in-link">{{{ Lang::get('mobileci.signin.sign_in') }}}</a></span>
+                        </div>
+                        <div class="col-xs-4 text-right orbit-auto-login">
+                            <input type="submit" name="submit" id="btn-signup-form" class="btn btn-info icon-button form text-center orbit-auto-login" value="{{ Lang::get('mobileci.signin.sign_up') }}">
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endif
 <div class="search-container">
     <div class="row search-wrapper">
         <div class="search-top">
@@ -227,6 +363,11 @@
     var notInMessagesPage = true; {{-- this var is used to enable/disable pop up notification --}}
     var tabOpen = false; {{-- this var is for tabs on tenant detail views --}}
     $(document).ready(function(){
+        if($(window).width() > $(window).height()) {
+            $('.sign-in-popup-wrapper img').css('max-width', '20%');
+        } else {
+            $('.sign-in-popup-wrapper img').css('max-width', '50%');
+        }
         var menuOpen = false;
         navigator.getBrowser= (function(){
             var ua = navigator.userAgent, tem,
@@ -699,6 +840,11 @@
             }
             resetImage();
             $('.slide-menu-middle-container').css('height', ($(window).height() - $('.header-buttons-container').height()) + 'px');
+            if($(window).width() > $(window).height()) {
+                $('.sign-in-popup-wrapper img').css('max-width', '20%');
+            } else {
+                $('.sign-in-popup-wrapper img').css('max-width', '50%');
+            }
         });
 
         $(document).on('click', '.featherlight-close', function(){
@@ -746,5 +892,503 @@
                 $('#slide-trigger').removeClass('active');
             }
         });
+
+        $('body').on('click', 'a[href=#]', function(e) {
+            e.preventDefault();
+            $('.sign-in-back-drop').fadeIn('fast');
+            $('.sign-in-popup').toggle('slide', {direction: 'down'}, 'fast');
+        });
+        $('body').on('click', '#signin-popup-close-btn', function(){
+            $('.sign-in-back-drop').fadeOut('fast');
+            $('.sign-in-popup').toggle('slide', {direction: 'down'}, 'fast');
+        });
+        // $('#sign-in-popup-sign-in').click(function(){
+        //     window.location.replace('/customer');            
+        // });
+        $('#formModal').on('show.bs.modal', function () {
+            $('#slogan-container, #social-media-wraper').addClass('hide');
+        });
+
+        $('#formModal').on('shown.bs.modal', function () {
+            $('#signinForm #email').focus();
+            $('#signupForm #firstName').focus();
+        });
+
+        $('#formModal').on('hide.bs.modal', function () {
+            $('#slogan-container, #social-media-wraper').removeClass('hide');
+        });
+
+        function isValidEmailAddress(emailAddress) {
+            var pattern = new RegExp(/^((([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+(\.([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+)*)|((\x22)((((\x20|\x09)*(\x0d\x0a))?(\x20|\x09)+)?(([\x01-\x08\x0b\x0c\x0e-\x1f\x7f]|\x21|[\x23-\x5b]|[\x5d-\x7e]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(\\([\x01-\x09\x0b\x0c\x0d-\x7f]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF]))))*(((\x20|\x09)*(\x0d\x0a))?(\x20|\x09)+)?(\x22)))@((([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.)+(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.?$/i);
+
+            return pattern.test(emailAddress);
+        };
+
+        var orbitSignUpForm = {
+            'userActive': false,
+            'dataCompleted': false,
+            'activeForm': 'signin',
+            'formElementsInput': [
+                '#firstName',
+                '#lastName'
+            ],
+            'formElementsSelect': [
+                '#gender',
+                '#signupForm [name=day]',
+                '#signupForm [name=month]',
+                '#signupForm [name=year]'
+            ]
+        };
+
+        /**
+         * Log in the user.
+         *
+         * @author Rio Astamal <rio@dominopos.com>
+         * @return void
+         */
+        orbitSignUpForm.doLogin = function() {
+            var custEmail = $('#signinForm #email').val().trim();
+
+            // Flag the processing
+            if (orbitSignUpForm.isProcessing) {
+                return;
+            }
+            orbitSignUpForm.isProcessing = true;
+            orbitSignUpForm.disableEnableAllButton();
+
+            // Check if this email already registered or not
+            // We suppose to not let user login when they are not registered yet
+            // which is different from the old Orbit behavior
+            var userIdentified = function() {
+                $.ajax({
+                    method: 'post',
+                    url: apiPath + 'customer/login',
+                    data: {
+                        email: custEmail,
+                        payload: "{{{ Input::get('payload', '') }}}",
+                        mac_address: {{ json_encode(Input::get('mac_address', '')) }},
+                        auto_login: "{{{ Input::get('auto_login', 'no') }}}",
+                        from_captive: "{{{ Input::get('from_captive', 'no') }}}",
+                        socmed_redirect_to: "{{{ Input::get('socmed_redirect_to', '') }}}"
+                    }
+                }).done(function (response, status, xhr) {
+                    if (response.code !== 0 && response.code !== 302) {
+                        toastr.error(response.message);
+                        return;
+                    }
+                    var shiftHostName = window.location.hostname.split('.');
+                        shiftHostName.shift();
+                    var baseDomain = shiftHostName.join('.');
+                    $.cookie('login_from', 'Form', {
+                        path: '/',
+                        expires: 3650,
+                        domain: baseDomain
+                    });
+                    // Cloud redirection?
+                    if (response.data.redirect_to) {
+                        document.location = response.data.redirect_to;
+                        return;
+                    }
+
+                    // Todo check the login from captive
+                    // the '?from_captive=yes'
+
+                    // @Todo: Replace the hardcoded name
+                    session_id = xhr.getResponseHeader('Set-X-Orbit-Session');
+                    {{-- var landing_url = '{{ $landing_url }}'; --}}
+                    var landing_url = '{{ $urlblock->blockedRoute('ci-customer-home') }}';
+
+                    if (session_id) {
+                        if (landing_url.indexOf('orbit_session=') < 0) {
+                            // orbit_session= is not exists, append manually
+                            landing_url += '&orbit_session=' + session_id;
+                        } else {
+                            landing_url = landing_url.replace(/orbit_session=(.*)$/, 'orbit_session=' + session_id);
+                        }
+                    }
+
+                    window.location.replace(landing_url);
+                }).fail(function (data) {
+                    orbitSignUpForm.isProcessing = false;
+
+                    // Something bad happens
+                    // @todo isplay this the error
+                    orbitSignUpForm.disableEnableAllButton();
+                });
+            };
+
+            orbitSignUpForm.checkCustomerEmail(custEmail,
+                // Send back to sign up form for unknown email
+                function() {
+                    $('#signupForm #email').val(custEmail);
+                    orbitSignUpForm.isProcessing = false;
+                    orbitSignUpForm.disableEnableAllButton();
+
+                    orbitSignUpForm.switchForm('signup');
+                },
+                // Proceed the login for identified user
+                userIdentified
+            );
+        }
+
+       /**
+         * Register new user.
+         *
+         * @author Rio Astamal <rio@dominopos.com>
+         * @return void
+         */
+        orbitSignUpForm.doRegister = function()
+        {
+            var custEmail = $('#signupForm #email').val().trim();
+
+            // Flag the processing
+            if (orbitSignUpForm.isProcessing) {
+                return;
+            }
+            orbitSignUpForm.isProcessing = true;
+            orbitSignUpForm.disableEnableAllButton();
+
+            // Check if this email already registered or not
+            // We suppose to not let user login when they are not registered yet
+            // which is different from the old Orbit behavior
+            var saveUser = function() {
+                var birthdate = {
+                    'day': $('#signupForm [name=day]').val(),
+                    'month': $('#signupForm [name=month]').val(),
+                    'year': $('#signupForm [name=year]').val()
+                };
+
+                $.ajax({
+                    method: 'post',
+                    url: apiPath + 'customer/login',
+                    data: {
+                        email: custEmail,
+                        payload: "{{{ Input::get('payload', '') }}}",
+                        mac_address: {{ json_encode(Input::get('mac_address', '')) }},
+                        mode: 'registration',
+                        first_name: $('#firstName').val(),
+                        last_name: $('#lastName').val(),
+                        gender: $('#gender').val(),
+                        birth_date: birthdate.day + '-' + birthdate.month + '-' + birthdate.year,
+                        socmed_redirect_to: "{{{ Input::get('socmed_redirect_to', '') }}}"
+                    }
+                }).done(function (resp, status, xhr) {
+                    if (resp.status === 'error') {
+                        // do something
+                        return;
+                    }
+
+                    // Cloud redirection?
+                    if (resp.data.redirect_to) {
+                        document.location = resp.data.redirect_to;
+                        return;
+                    }
+
+                    // Todo check the login from captive
+                    // the '?from_captive=yes'
+
+                    // @Todo: Replace the hardcoded name
+                    session_id = xhr.getResponseHeader('Set-X-Orbit-Session');
+                    {{-- var landing_url = '{{ $landing_url }}'; --}}
+                    var landing_url = '{{ $urlblock->blockedRoute('ci-customer-home') }}';
+
+                    if (session_id) {
+                        if (landing_url.indexOf('orbit_session=') < 0) {
+                            // orbit_session= is not exists, append manually
+                            landing_url += '&orbit_session=' + session_id;
+                        } else {
+                            landing_url = landing_url.replace(/orbit_session=(.*)$/, 'orbit_session=' + session_id);
+                        }
+                    }
+
+                    window.location.replace(landing_url);
+                }).fail(function (data) {
+                    orbitSignUpForm.isProcessing = false;
+
+                    // Something bad happens
+                    // @todo isplay this the error
+                    orbitSignUpForm.disableEnableAllButton();
+                });
+            }
+
+            orbitSignUpForm.checkCustomerEmail(custEmail,
+                saveUser,
+
+                // Send back to sign in form if it is known user
+                function() {
+                    $('#signinForm #email').val(custEmail);
+                    orbitSignUpForm.isProcessing = false;
+                    orbitSignUpForm.disableEnableAllButton();
+
+                    orbitSignUpForm.switchForm('signin');
+                }
+            );
+        }
+
+       /**
+         * Disable or enable the sign up and sign in button.
+         *
+         * @author Rio Astamal <rio@dominopos.com>
+         * @return void
+         */
+        orbitSignUpForm.disableEnableAllButton = function () {
+            if (!orbitSignUpForm.isProcessing) {
+                $('#spinner-backdrop').addClass('hide');
+                return;
+            }
+
+            $('#spinner-backdrop').removeClass('hide');
+        }
+
+        /**
+         * Switch the form between sign up and sign in or toggle in between.
+         *
+         * @author Rio Astamal <rio@dominopos.com>
+         * @param string formName
+         * @return void
+         */
+        orbitSignUpForm.switchForm = function(formName) {
+            theForm = formName || 'signin';
+
+            if (theForm === 'signin') {
+                $('#signin-form-wrapper').removeClass('hide');
+                $('#signup-form-wrapper').addClass('hide');
+                $('#signinForm #email').focus();
+            } else {
+                $('#signin-form-wrapper').addClass('hide');
+                $('#signup-form-wrapper').removeClass('hide');
+                $('#signupForm #email').focus();
+            }
+        };
+
+        /**
+         * Get the basic data to determine the way we show the form to the user.
+         *
+         * @author Rio Astamal <rio@dominopos.com>
+         * @param string custEmail - Customer email
+         * @param callback emptyCallback - Calback called when empty data returned
+         * @param callback dataCallback - Callback called when user data is found
+         * @return void|object
+         */
+        orbitSignUpForm.checkCustomerEmail = function(custEmail, emptyCallback, dataCallback) {
+            $.ajax({
+                method: 'POST',
+                url: apiPath + 'customer/basic-data',
+                data: { email: custEmail }
+            }).done(function (data, status, xhr) {
+                if (data.length === 0) {
+
+                    return emptyCallback();
+                }
+
+                return dataCallback(data[0]);
+            });
+        };
+
+        /**
+         * Show the sign up form since the user is either not active or the profile is not complete.
+         *
+         * @author Rio Astamal <rio@dominopos.com>
+         * @param callback callback - Callback to run after the method finish
+         * @param string cssClass - Valid value: 'hide' or 'show'
+         * @return void
+         */
+        orbitSignUpForm.showFullForm = function(callback, cssClass) {
+            theClass = cssClass || 'hide';
+
+            if (cssClass !== 'hide') {
+                // default value
+                theClass = 'show';
+            }
+
+            for (var i=0; i<orbitSignUpForm.formElements.length; i++) {
+                $(orbitSignUpForm.formElements[i]).removeClass(theClass);
+            }
+
+            // run the callback
+            callback();
+        }
+
+        /**
+         * Enable or disable the Sign up button depend on the completeness of the form.
+         *
+         * @author Rio Astamal <rio@dominopos.com>
+         * @return void
+         */
+        orbitSignUpForm.enableDisableSignup = function() {
+            $('#signupForm #email, #firstName, #lastName, #gender, #signupForm [name=day], #signupForm [name=month], #signupForm [name=year]').css('border-color', '#ccc');
+            $('.mandatory-label').hide();
+            orbitSignUpForm.dataCompleted = $('#signupForm #email').val() &&
+                isValidEmailAddress($('#signupForm #email').val()) &&
+                $('#firstName').val() &&
+                $('#lastName').val() &&
+                $('#gender').val() &&
+                $('#signupForm [name=day]').val() &&
+                $('#signupForm [name=month]').val() &&
+                $('#signupForm [name=year]').val();
+
+            if (orbitSignUpForm.dataCompleted) {
+                // $('#btn-signup-form').removeAttr('disabled');
+                return true;
+            } else {
+                $('.mandatory-label').css('color', 'red').show();
+                if (! isValidEmailAddress($('#signupForm #email').val()))    {
+                    $('#signupForm #email').css('border-color', 'red');
+                }
+                if (! $('#signupForm #email').val()) {
+                    $('#signupForm #email').css('border-color', 'red');
+                }
+                if (! $('#firstName').val()) {
+                    $('#firstName').css('border-color', 'red');
+                }
+                if (! $('#lastName').val()) {
+                    $('#lastName').css('border-color', 'red');
+                }
+                if (! $('#gender').val()) {
+                    $('#gender').css('border-color', 'red');
+                }
+                if (! $('#signupForm [name=day]').val()) {
+                    $('#signupForm [name=day]').css('border-color', 'red');
+                }
+                if (! $('#signupForm [name=month]').val()) {
+                    $('#signupForm [name=month]').css('border-color', 'red');
+                }
+                if (! $('#signupForm [name=year]').val()) {
+                    $('#signupForm [name=year]').css('border-color', 'red');
+                }
+                // $('#btn-signup-form').attr('disabled', 'disabled');
+                return false;
+            }
+        }
+
+        var errorValidationFn = function () {
+            var errorMessage = '{{isset($error) ? $error : 'No Error'}}';
+            if (errorMessage !== 'No Error') {
+                toastr(errorMessage);
+                $('#spinner-backdrop').addClass('hide');
+            }
+        },
+        inProgressFn = function () {
+            var progressStatus = {{isset($isInProgress) ? $isInProgress : 'false'}};
+            if (progressStatus === true) {
+                $('#spinner-backdrop').removeClass('hide');
+                return;
+            }
+            $('#spinner-backdrop').addClass('hide');
+        },
+        isSignedInFn = function () {
+            var displayName = '{{isset($display_name) ? $display_name : ''}}',
+                userEmail = '{{isset($user_email) ? $user_email : ''}}';
+
+            if (displayName === '' && userEmail === '') {
+                $('.logged-in-user').addClass('hide');
+                $('.logged-in-container').addClass('hide');
+
+                $('.social-media-container').removeClass('hide');
+                return;
+            }
+
+            $('.logged-in-user').removeClass('hide');
+            $('.logged-in-container').removeClass('hide');
+
+            $('.social-media-container').addClass('hide');
+        },
+        isFromCaptiveFn = function () {
+            if ('{{{ Input::get('from_captive', 'no') }}}' === 'yes') {
+                $('#social-media-wraper').addClass('hide');
+            }
+        };
+
+        orbitSignUpForm.boot = function() {
+            // isSignedInFn();
+            inProgressFn();
+            isFromCaptiveFn();
+            errorValidationFn();
+
+            for (var i=0; i<orbitSignUpForm.formElementsInput.length; i++) {
+                $(orbitSignUpForm.formElementsInput[i]).keyup(function(e) {
+                    // orbitSignUpForm.enableDisableSignup();
+                });
+            }
+
+            for (var i=0; i<orbitSignUpForm.formElementsSelect.length; i++) {
+                $(orbitSignUpForm.formElementsSelect[i]).change(function(e) {
+                    // orbitSignUpForm.enableDisableSignup();
+                });
+            }
+
+            $('#signupForm #email').keyup(function(e) {
+                var value = $(this).val();
+
+                if (isValidEmailAddress(value)) {
+
+                }
+            });
+
+            $('#signinForm #email').on('input', function(e) {
+                var value = $(this).val();
+
+                if (isValidEmailAddress(value)) {
+                    $('#btn-signin-form').removeAttr('disabled');
+                } else {
+                    $('#btn-signin-form').attr('disabled', 'disabled');
+                }
+            });
+
+            $('#logged-in-signin-button').click(function() {
+                var loginFrom = '{{isset($_COOKIE['login_from']) ? $_COOKIE['login_from'] : 'Form'}}';
+
+                switch (loginFrom) {
+                    case 'Form':
+                        orbitSignUpForm.doLogin();
+                        break;
+                    case 'Facebook':
+                        $('#fbLoginButton').click();
+                        break;
+                    case 'Google':
+                        $('#googleLoginButton').click();
+                        break;
+                }
+            });
+
+            $('#not-me').click(function () {
+                var currentDomain = orbitGetDomainName();
+                $.removeCookie('orbit_email', {path: '/', domain: currentDomain});
+                $.removeCookie('orbit_firstname', {path: '/', domain: currentDomain});
+                window.location.replace('/customer/logout?not_me=true');
+            });
+
+            $('#btn-signin-form').click(function(e) {
+                orbitSignUpForm.doLogin();
+                return false;
+            });
+
+            $('#btn-signup-form').click(function(e) {
+                console.log('ooo');
+                if(orbitSignUpForm.enableDisableSignup()) {
+                    console.log('ppp');
+                    orbitSignUpForm.doRegister();
+                }
+                return false;
+            });
+
+            $('#signinForm, #signupForm').submit(function(e) {
+                e.preventDefault();
+            });
+
+            $('#sign-up-link').click(function(e) {
+                orbitSignUpForm.switchForm('signup');
+            });
+
+            $('#sign-in-link').click(function(e) {
+                orbitSignUpForm.switchForm('signin');
+            });
+
+            if (isValidEmailAddress( $('#signinForm #email').val() )) {
+                $('#btn-signin-form').removeAttr('disabled');
+            }
+        }
+
+        orbitSignUpForm.boot();
     });
 </script>

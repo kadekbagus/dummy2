@@ -13,9 +13,14 @@ class AccountExportController extends \AccountAPIController
         $csv = '"';
         
         if ($fieldName == 'tenants') {
+            $tenantNames = [];
             foreach ($row['tenants'] as $tenant) {
-                $csv .= $tenant['name']."\n";
+                $tenantNames[] = $tenant['name'];
             }
+
+            $csv .= implode(', ', $tenantNames);
+        } elseif ($fieldName == 'city') {
+            $csv .= $row['city'].', '.$row['country_name'];
         } else {
             $csv .= $row[$fieldName];
         }

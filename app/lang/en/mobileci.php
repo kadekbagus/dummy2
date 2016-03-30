@@ -130,6 +130,8 @@ return array(
         'and'                    => 'AND',
 
         'message_user_activation' => 'An email has been sent to &quot;%s&quot;. Please follow the instructions to activate your account. If for some reason you don\'t see an e-mail from us in a couple of hours, please check your Spam or Junk folder',
+        'not_now'      => 'Not now',
+        'sign_in'      => 'Sign In',
     ),
 
     //tenant catalogue
@@ -170,6 +172,8 @@ return array(
         'connecting_to_facebook' => 'Connecting to Facebook...',
         'connecting_to_google' => 'Connecting to Google...',
         'connecting_with' => 'Connect with',
+        'sign_up_sign_in_with' => 'Sign up or Sign in with:',
+        'to_access_this_content' => 'to access this content',
         'sign_in' => 'Sign In',
         'sign_up' => 'Sign Up',
         'doesnt_have_account' => 'Does not have account',
