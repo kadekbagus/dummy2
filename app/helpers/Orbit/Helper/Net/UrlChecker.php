@@ -61,6 +61,21 @@ class UrlChecker
     }
 
     /**
+     * Check user if guest or not
+     *
+     * @param $user User
+     * @return boolean
+     */
+    public function isGuest($user = NULL)
+    {
+    	if (is_null($user) || strtolower($user->role()->first()->role_name) !== 'guest') {
+    		return FALSE;
+    	}
+
+        return TRUE;
+    }
+
+    /**
      * Check route, is it blocked by the config or not
      * If blocked return session error if the user not signed in
      * If not blocked return the $user object (signed in user / guest user)
