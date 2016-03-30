@@ -73,7 +73,7 @@
         @if(count($link_to_tenants) > 0)
         <div class="row vertically-spaced">
             <div class="col-xs-12 text-center">
-                <a href="{{{ url('customer/tenants?coupon_id='.$coupon->promotion_id) }}}" class="btn btn-info btn-block">{{{ Lang::get('mobileci.tenant.see_tenants') }}}</a>
+                <a href="{{{ $urlblock->blockedRoute('ci-tenants', ['coupon_id' => $coupon->promotion_id]) }}}" class="btn btn-info btn-block">{{{ Lang::get('mobileci.tenant.see_tenants') }}}</a>
             </div>
         </div>
         @endif
@@ -81,7 +81,7 @@
         @if(count($tenants) > 0)
         <div class="row vertically-spaced">
             <div class="col-xs-12 text-center">
-                <a href="{{{ url('customer/tenants?coupon_redeem_id='.$coupon->promotion_id) }}}" class="btn btn-info btn-block">{{{ Lang::get('mobileci.tenant.redemption_places') }}}</a>
+                <a href="{{{ $urlblock->blockedRoute('ci-tenants', ['coupon_redeem_id' => $coupon->promotion_id]) }}}" class="btn btn-info btn-block">{{{ Lang::get('mobileci.tenant.redemption_places') }}}</a>
             </div>
         </div>
         @endif
@@ -238,7 +238,7 @@
                             }, 1000);
                         });
                         $('#successCouponModal').on('hide.bs.modal', function($event){
-                            window.location.replace({{ json_encode(url('customer/mallcoupons')) }});
+                            window.location.replace({{ $urlblock->blockedRoute('ci-mall-coupons') }});
                         });
                     }else{
                         $('#wrongCouponModal').modal();
