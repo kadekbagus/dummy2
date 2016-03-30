@@ -128,7 +128,7 @@
         <thead>
             <tr>
                 @foreach ($columns as $column)
-                    <th style="padding-right: 70px">{{ $column['title'] }}</th>
+                    <th style="padding-right: 70px; text-align: left">{{ $column['title'] }}</th>
                 @endforeach
             </tr>
         </thead>

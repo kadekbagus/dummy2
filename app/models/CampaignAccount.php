@@ -29,6 +29,7 @@ class CampaignAccount extends Eloquent
         return $this->userMerchant()->where('object_type', '=', 'tenant');
     }
 
+
     public function user()
     {
         return $this->belongsTo('User', 'user_id', 'user_id');
@@ -37,6 +38,12 @@ class CampaignAccount extends Eloquent
     public function userdetail()
     {
         return $this->hasOne('UserDetail', 'user_id', 'user_id');
+    }
+
+
+    public function settings()
+    {
+        return $this->hasMany('Setting', 'object_id', 'user_id')->where('object_type', 'user');
     }
 
 }

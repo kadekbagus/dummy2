@@ -258,7 +258,7 @@ class CampaignReportPrinterController extends DataPrinterController
                             round($row->popup_view_rate, 2),
                             $row->popup_clicks,
                             round($row->popup_click_rate, 2),
-                            number_format($row->spending, 0)
+                            round($row->spending, 2)
                     );
                     $count++;
                 }
