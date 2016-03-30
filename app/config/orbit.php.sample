@@ -2864,4 +2864,9 @@ return array(
         '0 - 14',
     ),
 
+    'geo_location' => array(
+        // distance of range
+        'distance' => 10,
+    ),
+
 );
