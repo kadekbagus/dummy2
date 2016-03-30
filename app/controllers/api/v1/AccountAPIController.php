@@ -249,16 +249,16 @@ class AccountAPIController extends ControllerAPI
         if (Input::get('creation_date_from')) {
 
             // From
-            $creationDateTimeFrom = Carbon::createFromFormat('Y-m-d H:i:s', Input::get('creation_date_from'))
-                ->setTimezone('Asia/Singapore')->format('Y-m-d H:i:s');
+            $creationDateTimeFrom = Carbon::createFromFormat('Y-m-d H:i:s', Input::get('creation_date_from'), 'Asia/Singapore')
+                ->format('Y-m-d H:i:s');
 
             $pmpAccounts->where('users.created_at', '>=', $creationDateTimeFrom);
 
             if (Input::get('creation_date_to')) {
 
                 // To
-                $creationDateTimeTo = Carbon::createFromFormat('Y-m-d H:i:s', Input::get('creation_date_to'))
-                    ->setTimezone('Asia/Singapore')->format('Y-m-d H:i:s');
+                $creationDateTimeTo = Carbon::createFromFormat('Y-m-d H:i:s', Input::get('creation_date_to'), 'Asia/Singapore')
+                    ->format('Y-m-d H:i:s');
 
                 $pmpAccounts->where('users.created_at', '<=', $creationDateTimeTo);
             }
