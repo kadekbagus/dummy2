@@ -1,5 +1,6 @@
 <?php
 
+use Carbon\Carbon;
 use OrbitShop\API\v1\ControllerAPI;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
 use OrbitShop\API\v1\OrbitShopAPI;
@@ -245,13 +246,22 @@ class AccountAPIController extends ControllerAPI
         }
 
         // Filter by Creation Date
-        if (Input::get('creation_date_from') && Input::get('creation_date_to')) {
+        if (Input::get('creation_date_from')) {
 
-            // Let's make the datetime
-            $creationDateTimeFrom = Input::get('creation_date_from').' 00:00:00';
-            $creationDateTimeTo = Input::get('creation_date_to').' 23:59:59';
+            // From
+            $creationDateTimeFrom = Carbon::createFromFormat('Y-m-d H:i:s', Input::get('creation_date_from'))
+                ->setTimezone('Asia/Singapore')->format('Y-m-d H:i:s');
 
-            $pmpAccounts->where('users.created_at', '>=', $creationDateTimeFrom)->where('users.created_at', '<=', $creationDateTimeTo);
+            $pmpAccounts->where('users.created_at', '>=', $creationDateTimeFrom);
+
+            if (Input::get('creation_date_to')) {
+
+                // To
+                $creationDateTimeTo = Carbon::createFromFormat('Y-m-d H:i:s', Input::get('creation_date_to'))
+                    ->setTimezone('Asia/Singapore')->format('Y-m-d H:i:s');
+
+                $pmpAccounts->where('users.created_at', '<=', $creationDateTimeTo);
+            }
         }
 
         // Get total row count
