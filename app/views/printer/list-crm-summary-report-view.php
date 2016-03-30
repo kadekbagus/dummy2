@@ -152,12 +152,12 @@
         <?php
                     } else {
         ?>
-                        <td style="text-align: left;"><?php echo $me->printFormatNumber((int)$value2); ?></td>
+                        <td style="text-align: left;"><?php echo $me->printFormatNumber(round($value2)); ?></td>
         <?php
                     }
                 }
         ?>
-                </tr>  
+                </tr>
         <?php
             }
         }
