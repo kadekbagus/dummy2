@@ -8,7 +8,7 @@
 
         <div class="col-xs-2">
             <ul class="buttons-list">
-                <li id="orbit-tour-home"><a href="{{ url('/customer/home') }}"><span><i class="glyphicon glyphicon-home"></i></span></a></li>
+                <li id="orbit-tour-home"><a href="{{ (new \Orbit\Helper\Net\UrlChecker)->blockedRoute('ci-customer-home') }}"><span><i class="glyphicon glyphicon-home"></i></span></a></li>
             </ul>
         </div>
         <div class="col-xs-8 text-center">
@@ -67,9 +67,9 @@
                 @else
                     <li class="" id="dropdown-disable" style="color:#999999;"><span style="padding: .3em"><span class="glyphicon glyphicon-credit-card fa-relative"></span> {{ ucwords(strtolower(Lang::get('mobileci.page_title.membership'))) }}</span></li>
                 @endif
-                <li class="fa-pad-left"><a href="{{ url('/customer/my-account') }}"><span><span class="fa fa-user fa-relative"></span> {{ ucwords(strtolower(Lang::get('mobileci.page_title.my_account'))) }}</span></a></li>
+                <li class="fa-pad-left"><a href="{{ $urlblock->blockedRoute('ci-my-account') }}"><span><span class="fa fa-user fa-relative"></span> {{ ucwords(strtolower(Lang::get('mobileci.page_title.my_account'))) }}</span></a></li>
                 <li class="fa-pad-left">
-                    <a href="{{ url('/customer/messages') }}">
+                    <a href="{{ $urlblock->blockedRoute('ci-notification-list') }}">
                         <span>
                             <i class="fa fa-inbox fa-relative"></i>
                             {{ ucwords(strtolower(Lang::get('mobileci.page_title.my_messages'))) }}
@@ -78,9 +78,10 @@
                     </a>
                 </li>
                 <li id="orbit-tour-search"><a id="searchBtn"><span><i class="glyphicon glyphicon-search fa-relative"></i></span> {{ ucwords(strtolower(Lang::get('mobileci.modals.search_button'))) }}</a></li>
-                {{--<li class=""><a href="{{ url('/customer/home?show_tour=yes') }}" id="orbit-tour-setting"><span><span class="glyphicon glyphicon-info-sign fa-relative"></span> {{ ucwords(strtolower(Lang::get('mobileci.page_title.orbit_tour'))) }}</span></a></li>--}}
                 <li class=""><a id="multi-language"><span><span class="glyphicon glyphicon-globe fa-relative"></span> {{ ucwords(strtolower(Lang::get('mobileci.page_title.language'))) }}</span></a></li>
+                @if($urlblock->isLoggedIn())
                 <li class=""><a href="{{ url('/customer/logout') }}"><span><span class="glyphicon glyphicon-off fa-relative"></span> {{ ucwords(strtolower(Lang::get('mobileci.page_title.logout'))) }}</span></a></li>
+                @endif
             </ul>
         </div>
     </div>

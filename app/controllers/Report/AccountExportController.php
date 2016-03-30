@@ -13,9 +13,14 @@ class AccountExportController extends \AccountAPIController
         $csv = '"';
         
         if ($fieldName == 'tenants') {
+            $tenantNames = [];
             foreach ($row['tenants'] as $tenant) {
-                $csv .= $tenant['name']."\n";
+                $tenantNames[] = $tenant['name'];
             }
+
+            $csv .= implode(', ', $tenantNames);
+        } elseif ($fieldName == 'city') {
+            $csv .= $row['city'].', '.$row['country_name'];
         } else {
             $csv .= $row[$fieldName];
         }
@@ -48,7 +53,7 @@ class AccountExportController extends \AccountAPIController
         }
 
         if (\Input::get('sortby') && \Input::get('sortmode')) {
-            $summary['Sorted by'] = \Input::get('sortby').' ('.\Input::get('sortmode').')';
+            $summary['Sorted by'] = $this->listColumns[\Input::get('sortby')]['title'].' ('.\Input::get('sortmode').')';
         }
 
         return $summary;

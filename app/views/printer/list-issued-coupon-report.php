@@ -91,7 +91,7 @@
         <tr>
             <td>Total Issued Coupons</td>
             <td>:</td>
-            <td><strong><?php echo number_format($totalCoupons, 0, '.', '.'); ?></strong></td>
+            <td><strong><?php echo number_format($totalCoupons); ?></strong></td>
         </tr>
     </table>
 
