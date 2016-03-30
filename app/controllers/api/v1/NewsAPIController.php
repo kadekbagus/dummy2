@@ -1130,7 +1130,14 @@ class NewsAPIController extends ControllerAPI
 
                 // only calculate spending when update date between start and date of campaign
                 if ($dateNowMall >= $beginMall && $dateNowMall <= $endMall) {
-                    $dailySpending = CampaignDailySpending::firstOrCreate(array('date' => $getspending->date_in_utc, 'campaign_id' => $campaign_id, 'mall_id' => $mall));
+                    $daily = CampaignDailySpending::where('date', '=', $getspending->date_in_utc)->where('campaign_id', '=', $campaign_id)->where('mall_id', '=', $mall)->first();
+                
+                    if ($daily['campaign_daily_spending_id']) {
+                        $dailySpending = CampaignDailySpending::find($daily['campaign_daily_spending_id']);
+                    } else {
+                        $dailySpending = new CampaignDailySpending;
+                    }
+
                     $dailySpending->date = $getspending->date_in_utc;
                     $dailySpending->campaign_type = $campaign_type;
                     $dailySpending->campaign_id = $campaign_id;
@@ -1229,7 +1236,7 @@ class NewsAPIController extends ControllerAPI
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = $e->getLine();
+            $this->response->data = null;
 
             // Rollback the changes
             $this->rollBack();
