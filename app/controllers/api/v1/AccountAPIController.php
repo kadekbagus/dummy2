@@ -260,12 +260,12 @@ class AccountAPIController extends ControllerAPI
             $records[] = [
                 'account_name' => $row->campaignAccount->account_name,
                 'company_name' => $row->company_name,
-                'city' => $row->userDetail->city,
-                'user_role' => $row->role_name,
-                'tenants' => $this->getTenantAtMallArray($row->userTenants()->lists('merchant_id')),
-                'created_at' => $row->created_at->setTimezone('Asia/Singapore')->format('d F Y H:i:s'),
-                'status' => $row->campaignAccount->status,
-                'id' => $row->user_id,
+                'city'         => $row->userDetail->city,
+                'user_role'    => $row->role_name,
+                'tenants'      => $this->getTenantAtMallArray($row->userTenants()->lists('merchant_id')),
+                'created_at'   => $row->created_at->setTimezone('Asia/Singapore')->format('d F Y H:i:s'),
+                'status'       => $row->campaignAccount->status,
+                'id'           => $row->user_id,
 
                 // Needed by frontend for the edit page
                 'user_firstname' => $row->user_firstname,
