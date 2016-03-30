@@ -53,7 +53,7 @@ class AccountExportController extends \AccountAPIController
         }
 
         if (\Input::get('sortby') && \Input::get('sortmode')) {
-            $summary['Sorted by'] = \Input::get('sortby').' ('.\Input::get('sortmode').')';
+            $summary['Sorted by'] = $this->listColumns[\Input::get('sortby')]['title'].' ('.\Input::get('sortmode').')';
         }
 
         return $summary;
