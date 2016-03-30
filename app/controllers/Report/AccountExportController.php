@@ -19,6 +19,8 @@ class AccountExportController extends \AccountAPIController
             }
 
             $csv .= implode(', ', $tenantNames);
+        } elseif ($fieldName == 'city') {
+            $csv .= $row['city'].', '.$row['country_name'];
         } else {
             $csv .= $row[$fieldName];
         }
