@@ -99,6 +99,11 @@ class User extends Eloquent implements UserInterface
         return $this->user_firstname.' '.$this->user_lastname;
     }
 
+    public function getUserCreatedAtAttribute()
+    {
+        return self::find($this->user_id)->created_at;
+    }
+
     public function merchants()
     {
         return $this->hasMany('Merchant', 'user_id', 'user_id');
