@@ -6,7 +6,7 @@ class AccountExportController extends \AccountAPIController
 {
     use ExportControllerTrait;
 
-    protected $pageTitle = 'PMP Accounts';
+    protected $pageTitle = 'PMP Accounts List';
 
     protected function handleRowValue($row, $fieldName)
     {
@@ -28,7 +28,7 @@ class AccountExportController extends \AccountAPIController
 
     protected function makeSummary()
     {
-        $summary = ['Total records' => count($this->data->records)];
+        $summary = ['Total Accounts' => count($this->data->records)];
 
         if (\Input::get('account_name')) {
             $summary['Filtered by account name'] = \Input::get('account_name');
