@@ -216,6 +216,31 @@ class User extends Eloquent implements UserInterface
         return $apikey;
     }
 
+    public function generateGuestUser() {
+        $guest_identifier = '';
+        $guest_ip = $_SERVER['REMOTE_ADDR'];
+        $guest_time = time();
+        $guest_browser = $_SERVER['HTTP_USER_AGENT'];
+        $guest_identifier = sha1($guest_time . $guest_ip . $guest_browser);
+        $guest_email_string = 'guest_' . $guest_identifier . '@myorbit.com';
+
+        $user_role_id = Role::where('role_name', 'Guest')->first()->role_id;
+
+        $guest_user = new User;
+        $guest_user->user_email = $guest_email_string;
+        $guest_user->user_password = '';
+        $guest_user->username = 'guest_' . $guest_identifier;
+        $guest_user->user_role_id = $user_role_id;
+        $guest_user->user_ip = $guest_ip;
+        $guest_user->save();
+
+        $user_detail = new UserDetail;
+        $user_detail->user_id = $guest_user->user_id;
+        $user_detail->save();
+
+        return $guest_user;
+    }
+
     /**
      * Get user mall ids.
      *
@@ -336,4 +361,6 @@ class User extends Eloquent implements UserInterface
 
         return false;
     }
+
+
 }
