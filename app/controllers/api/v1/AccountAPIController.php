@@ -296,7 +296,10 @@ class AccountAPIController extends ControllerAPI
                 'role_name'    => $row->role_name,
                 'tenant_count' => count($tenantAtMallArray),
                 'tenants'      => $tenantAtMallArray,
-                'created_at'   => $row->created_at->setTimezone('Asia/Singapore')->format('d F Y H:i:s'),
+
+                // Taken from getUserCreatedAtAttribute() in the model
+                'created_at'   => $row->user_created_at->setTimezone('Asia/Singapore')->format('d F Y H:i:s'),
+                
                 'status'       => $row->campaignAccount->status,
                 'id'           => $row->user_id,
 
