@@ -115,7 +115,7 @@
         <tr>
             <td>Total Employees</td>
             <td>:</td>
-            <td><strong><?php echo number_format($totalRec, 0, '.', '.'); ?></strong></td>
+            <td><strong><?php echo number_format($totalRec); ?></strong></td>
         </tr>
 
         <!-- Filtering -->

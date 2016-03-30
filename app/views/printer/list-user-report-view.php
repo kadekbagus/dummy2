@@ -117,15 +117,15 @@
             <td style="width:10px;"></td>
             <td><strong></strong></td>
         </tr>
-        
+
             <?php
                 foreach ($userReportHeaderExcludePercent as $value) {
                     echo '<tr>';
                     echo '<td> Total ' . $value['title'] . '</td>';
                     echo '<td>:</td>';
-                    echo '<td><strong>' . $value['total'] . '</strong></td>';
+                    echo '<td><strong>' . number_format($value['total']) . '</strong></td>';
                     echo '</tr>';
-                }   
+                }
             ?>
 
                     <!-- Filtering -->
@@ -145,7 +145,7 @@
         <thead>
             <tr width='100%'>
                 <th style="width: 100px;" rowspan="2"><?php echo $timeDimensionTitle; ?></th>
-            <?php 
+            <?php
                 foreach ($userReportHeader as $value) {
                     echo "<th>" . $value['title'] . "</th>";
                 }
@@ -153,13 +153,17 @@
             </tr>
         </thead>
         <tbody>
-        <?php 
+        <?php
         foreach ($userReportData as $key => $value) {
             echo "<tr>";
             echo "<td>" . $value[$timeDimension]  . "</td>";
             foreach ($userReportHeader as $header_value) {
                 $x = $header_value['key'];
-              echo "<td>" . $value[$x]  . "</td>";
+                if( !strpos($header_value['title'], '(%)') ) {
+                    echo "<td>" . number_format($value[$x]) . "</td>";
+                } else {
+                    echo "<td>" . $value[$x] . "</td>";
+                }
             }
             echo "</tr>";
         }

@@ -74,6 +74,11 @@ class Mall extends Eloquent
         return $this->hasMany('Setting', 'object_id', 'merchant_id')->where('object_type', 'merchant');
     }
 
+    public function geofence()
+    {
+        return $this->hasOne('MerchantGeofence', 'merchant_id', 'merchant_id');
+    }
+
     /**
      * Merchant belongs to and has many category.
      */

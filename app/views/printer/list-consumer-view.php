@@ -116,7 +116,7 @@
         <tr>
             <td>Total Customers</td>
             <td>:</td>
-            <td><strong><?php echo number_format($totalRec, 0, '.', '.'); ?></strong></td>
+            <td><strong><?php echo number_format($totalRec); ?></strong></td>
         </tr>
         <tr>
             <td>First Visit Date</td>
@@ -154,9 +154,9 @@
                     <td><?php echo $me->printDateTime($row->join_date, $timezone, 'd F Y'); ?></td>
                     <td><?php echo ($row->membership_number); ?></td>
                 <?php } ?>
-                <td><?php echo ($row->total_usable_coupon); ?></td>
-                <td><?php echo ($row->total_redeemed_coupon); ?></td>
-                <td><?php echo ($row->total_lucky_draw_number); ?></td>
+                <td><?php echo number_format($row->total_usable_coupon); ?></td>
+                <td><?php echo number_format($row->total_redeemed_coupon); ?></td>
+                <td><?php echo number_format($row->total_lucky_draw_number); ?></td>
                 <td><?php echo ($row->status); ?></td>
                 <td><?php echo $me->printDateTime($row->updated_at, $timezone, 'd F Y  H:i:s'); ?></td>
             </tr>

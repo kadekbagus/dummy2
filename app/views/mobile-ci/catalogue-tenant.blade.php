@@ -61,7 +61,7 @@
                         </div>
                     </div>
                     <div class="col-xs-2 search-tool-col text-right">
-                        <a href="{{{ url('/customer/tenants?keyword='.Input::get('keyword')) }}}" class="btn btn-info btn-block reset-btn">
+                        <a href="{{{ $urlblock->blockedRoute('ci-tenants', ['keyword' => Input::get('keyword')]) }}}" class="btn btn-info btn-block reset-btn">
                             <span class="fa-stack fa-lg">
                                 <i class="fa fa-filter fa-stack-2x"></i>
                                 <i class="fa fa-times fa-stack-1x"></i>
@@ -90,7 +90,7 @@
                         @foreach($data->records as $tenant)
                             <div class="col-xs-12 col-sm-12" id="item-{{$tenant->merchant_id}}">
                                 <section class="list-item-single-tenant">
-                                    <a class="list-item-link" href="{{ url('customer/tenant?id='.$tenant->merchant_id) }}">
+                                    <a class="list-item-link" href="{{ $urlblock->blockedRoute('ci-tenant', ['id' => $tenant->merchant_id]) }}">
                                         <div class="list-item-info">
                                             <header class="list-item-title">
                                                 <div><strong>{{{ $tenant->name }}}</strong></div>
@@ -196,7 +196,7 @@
                         </div>
                     </div>
                     <div class="col-xs-2 search-tool-col text-right">
-                        <a href="{{{ url('/customer/tenants?keyword='.Input::get('keyword')) }}}" class="btn btn-info btn-block reset-btn">
+                        <a href="{{{ $urlblock->blockedRoute('ci-tenants', ['keyword' => Input::get('keyword')]) }}}" class="btn btn-info btn-block reset-btn">
                             <span class="fa-stack fa-lg">
                                 <i class="fa fa-filter fa-stack-2x"></i>
                                 <i class="fa fa-times fa-stack-1x"></i>
@@ -256,7 +256,7 @@
         @if(!empty(Input::get('promotion_id')))
             promo = '&promotion_id='+'{{{Input::get('promotion_id')}}}';
         @endif
-        var path = '{{ url('/customer/tenants?keyword='. htmlspecialchars(Input::get('keyword')) .'&sort_by=name&sort_mode=asc&cid='. htmlspecialchars(Input::get('cid')) .'&fid='. htmlspecialchars(Input::get('fid'))) }}'+promo;
+        var path = '{{$urlblock->blockedRoute('ci-tenants', ['keyword' => htmlspecialchars(Input::get('keyword')), 'sort_by' => 'name', 'sort_mode' => 'asc', 'cid' => htmlspecialchars(Input::get('cid')), 'fid' => htmlspecialchars(Input::get('fid'))])}}'+promo;
         $('#dLabel').dropdown();
         $('#dLabel2').dropdown();
 

@@ -18,7 +18,8 @@
 
 .btn-info {
     background: @theme-main-complimentary;
-    border: 0px;
+    //border: 0px;
+    border-color: @theme-main-complimentary;
     &:hover {
         background: @theme-main;
     }
@@ -117,6 +118,9 @@ html {
 
 .content-signin {
     min-height: 390px;
+    &.content-signin-popup{
+        min-height: 0;
+    }
     .slogan-container {
         position: absolute;
         top: -64px;
@@ -275,4 +279,14 @@ html {
     .col-xs-12.sign-in-button{
         padding: 0px 20px;
     }
+}
+.close-mark{
+    float: right;
+    font-size: 38px;
+    line-height: 0.8;
+    color: #333;
+    text-shadow: 0 1px 0 #fff;
+    background: none;
+    border: none;
+    margin-top: -20px;
 }

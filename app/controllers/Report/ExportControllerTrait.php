@@ -2,6 +2,8 @@
 
 namespace Report;
 
+use Carbon\Carbon;
+
 /**
  * Export Controller Trait
  *
@@ -58,7 +60,7 @@ trait ExportControllerTrait
 
         foreach ($this->data->records as $row) {
             foreach (array_keys($this->data->columns) as $fieldName) {
-                $csv .= $this->handleRowValue($row, $fieldName);
+                $csv .= $this->handleCsvRowValue($row, $fieldName);
                 $csv .= ',';
             }
 
@@ -68,27 +70,16 @@ trait ExportControllerTrait
         $response = \Response::make($csv, 200);
         $response->header('Content-Type', 'text/csv');
 
-        $fileName = 'orbit-export-'.str_replace(' ', '-', $this->data->pageTitle.'-'.date('D_d_M_Y_').rand(10000, 99999)).'.csv';
+        $date = Carbon::now()->setTimezone('Asia/Singapore')->format('D_d_M_Y_Hi');
+        $fileName = 'orbit-export-'.str_replace(' ', '-', $this->data->pageTitle.'-'.$date).'.csv';
         $response->header('Content-Disposition', 'inline; filename="'.$fileName.'"');
 
         return $response;
     }
 
-    protected function handleRowValue($row, $fieldName)
+    protected function handleCsvRowValue($row, $fieldName)
     {
-        $csv = '';
-        if ( ! is_array($row[$fieldName])) {
-
-            // Replace comma with dash
-            $csv .= str_replace(',', ' -', $row[$fieldName]);
-
-        } else {
-
-            // Show array values as string with a semicolon separator
-            $csv .= implode('; ', $row[$fieldName]);
-        }
-
-        return $csv;
+        return '"'.$row[$fieldName].'"';
     }
 
     protected function makeSummary()
