@@ -26,6 +26,7 @@ ClassLoader::addDirectories(array(
 	app_path().'/models',
 	app_path().'/database/seeds',
 	app_path().'/controllers/api/v1',
+	app_path().'/controllers/api/v1/public',
 	app_path().'/controllers/intermediate/v1',
 	app_path().'/../vendor/eventviva/php-image-resize/src',
 	app_path().'/libraries',
