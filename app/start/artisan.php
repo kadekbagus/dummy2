@@ -50,6 +50,9 @@ Artisan::add(new CampaignSpendingCalculation);
 // Campaign spending migrate
 Artisan::add(new CampaignSpendingMigrate);
 
+// Merchant geolocation
+Artisan::add(new MerchantGeolocation);
+
 // Insert or update data on settings table
 // @Todo investigate why its error
 // Artisan::add(new MerchantSetting);
