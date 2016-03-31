@@ -139,7 +139,7 @@ class LoginAPIController extends ControllerAPI
     public function postLoginMall()
     {
         $_GET['from_portal'] = 'mall';
-        return $this->postLoginRole(['Super Admin', 'Mall Owner', 'Mall Admin', 'Campaign Owner', 'Campaign Employee']);
+        return $this->postLoginRole(['Super Admin', 'Mall Owner', 'Mall Admin']);
     }
 
     /**
