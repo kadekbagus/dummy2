@@ -282,7 +282,7 @@ class LoginAPIController extends ControllerAPI
                 $expireInDays = Config::get('orbit.registration.mobile.activation_expire', 30);
 
                 $data = null;
-                if ($user->role->role_name !== 'Campaign Employee') {
+                if (! $user->isCampaignEmployee()) {
                     // Token Settings
                     $token = new Token();
                     $token->token_name = 'service_agreement';
