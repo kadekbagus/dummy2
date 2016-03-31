@@ -47,9 +47,7 @@ class ConsumerPrinterController extends DataPrinterController
         }
 
         $users = $response['builder'];
-
-        $summary = [];
-        $summary['Total Customers'] = $response['count'];
+        $summary = $response['summary'];
 
         if (\Input::get('first_visit_begin_date') && \Input::get('first_visit_end_date')) {
             $firstVisitBeginDate = Carbon::createFromFormat('Y-m-d H:i:s', \Input::get('first_visit_begin_date'), 'UTC')->setTimezone($timezone)->format('d M Y');
