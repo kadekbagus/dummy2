@@ -224,7 +224,8 @@ class MobileCIAPIController extends BaseCIController
         } catch (Exception $e) {
         }
 
-        return \Redirect::to('/customer');
+        $after_logout_url = Config::get('orbit.shop.after_logout_url', '/customer');
+        return \Redirect::to($after_logout_url);
     }
 
     /**
