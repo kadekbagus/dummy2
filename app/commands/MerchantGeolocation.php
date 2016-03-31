@@ -4,7 +4,8 @@ use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
 
-class MerchantGeolocation extends Command {
+class MerchantGeolocation extends Command 
+{
 
     /**
      * The console command name.
@@ -38,20 +39,31 @@ class MerchantGeolocation extends Command {
     public function fire()
     {
         $merchantId = $this->option('merchant_id');
-        $merchantGeoFence = MerchantGeofence::where('merchant_id', '=', $merchantId)->first();
+        $fence = MerchantGeofence::where('merchant_id', '=', $merchantId)->find(1);
 
-        if (empty($merchantGeoFence)) {
+        if (empty($fence)) {
+
             $this->error('Merchant or mall is not found.');
+
+        } else {
+
+            $latitude = (double)$this->option('latitude');
+            $longitude = (double)$this->option('longitude');
+            $area = preg_replace('/[^0-9\s,\-\.]/', '',  $this->option('area'));
+
+            $prefix = DB::getTablePrefix();
+
+            $fence->position = DB::raw("POINT($latitude, $longitude)");
+            $fence->area = DB::raw("geomfromtext(\"POLYGON(({$area}))\")");
+
+            if (! $fence->save()) {
+                $this->error('Update Failed!');
+            }
+
+            $this->info("Success, Data Updated!"); 
+
         }
-
-        $latitude = $this->option('latitude');
-        $longitude = $this->option('longitude');
-        $area =  $this->option('area');
-
-        $prefix = DB::getTablePrefix();
-
-        DB::statement('UPDATE '.$prefix.'merchant_geofences SET position=point('.$latitude.', '.$longitude.'), area=geomfromtext("POLYGON('.$area.'))") where merchant_id="'.$merchantId.'" limit 1;');
-        $this->info("Success, Data Updated!");        
+       
     }
 
     /**
