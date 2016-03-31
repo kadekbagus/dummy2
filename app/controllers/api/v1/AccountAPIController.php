@@ -368,6 +368,7 @@ class AccountAPIController extends ControllerAPI
             $rules['id'] = 'exists:users,user_id';
         } else {
             $rules['user_password'] = 'required';
+            $rules['user_email'] .= '|unique:users,user_email';
             $rules['account_name'] .= '|unique:campaign_account,account_name';
         }
 
