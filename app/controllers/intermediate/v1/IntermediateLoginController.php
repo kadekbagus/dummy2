@@ -1118,8 +1118,9 @@ class IntermediateLoginController extends IntermediateBaseController
         } catch (Exception $e) {
         }
 
+        $after_logout_url = Config::get('orbit.shop.after_logout_url', '/customer');
         // Redirect back to /customer
-        return Redirect::to('/customer')->withCookie($cookie);
+        return Redirect::to($after_logout_url)->withCookie($cookie);
     }
 
     /**
