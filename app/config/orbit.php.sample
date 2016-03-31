@@ -104,6 +104,9 @@ return array(
 
         // number of seconds to delay the display of campaign pop up
         'event_delay' => 2.5, //in second(s)
+
+        // after logout url (will be /customer if empty)
+        'after_logout_url' => '',
     ),
 
     // General contact data
