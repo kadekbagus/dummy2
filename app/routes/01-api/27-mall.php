@@ -60,3 +60,22 @@ Route::post('/api/v1/mall-logo/delete', function()
     return UploadAPIController::create()->postDeleteMallLogo();
 });
 
+/**
+ * Get Mall geofence
+ */
+Route::get(
+    '/{search}/v1/pub/mall-fence', ['as' => 'mall-fence', function()
+    {
+        return MallGeolocAPIController::create()->getMallFence();
+    }]
+)->where('search', '(api|app)');
+
+/**
+ * Get Mall nearby 
+ */
+Route::get(
+    '/{search}/v1/pub/mall-nearby', ['as' => 'mall-nearby', function()
+    {
+        return MallGeolocAPIController::create()->getSearchMallNearby();
+    }]
+)->where('search', '(api|app)');

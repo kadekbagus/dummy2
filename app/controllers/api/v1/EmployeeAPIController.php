@@ -789,6 +789,19 @@ class EmployeeAPIController extends ControllerAPI
             $newCampaignAccount->status = $newUser->status;
             $newCampaignAccount->save(); 
 
+            // insert into user merchant
+            $userMerchant = UserMerchant::select('user_id', 'merchant_id', 'object_type')->where('user_id', '=', $user->user_id)->get();
+
+            if (! empty($userMerchant) ) {
+                foreach($userMerchant as $key => $value) {
+                    $newUserMerchant = new UserMerchant();
+                    $newUserMerchant->user_id = $newUser->user_id;
+                    $newUserMerchant->merchant_id = $value->merchant_id;
+                    $newUserMerchant->object_type = $value->object_type;
+                    $newUserMerchant->save();
+                }
+            }
+
             Event::fire('orbit.employee.postnewpmpemployee.after.save', array($this, $newUser));
             $this->response->data = $newUser;
 
@@ -3771,7 +3784,7 @@ class EmployeeAPIController extends ControllerAPI
             $parentId = CampaignAccount::select('parent_user_id')
                                         ->where('user_id', '=', $user->user_id)
                                         ->first();
-                                                                 
+
             if ( sizeof($parentId) > 0) {
                 $parentUserId = $user->user_id;
             } else {
