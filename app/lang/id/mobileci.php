@@ -195,6 +195,8 @@ return array(
         'already_have_an_account' => 'Sudah punya akun',
         'fields_are_mandatory' => 'Semua kolom wajib diisi',
         'date_of_birth' => 'Tanggal Lahir',
+        'password_placeholder' => 'Password',
+        'password_confirm_placeholder' => 'Konfirmasi Password',
     ),
 
     'catalogue'         => array(

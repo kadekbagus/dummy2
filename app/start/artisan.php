@@ -50,6 +50,12 @@ Artisan::add(new CampaignSpendingCalculation);
 // Campaign spending migrate
 Artisan::add(new CampaignSpendingMigrate);
 
+// Campaign spending counting
+Artisan::add(new CampaignDailySpendingCalculation);
+
+// Campaign daily spending mmigration
+Artisan::add(new CampaignDailySpendingMigration);
+
 // Merchant geolocation
 Artisan::add(new MerchantGeolocation);
 

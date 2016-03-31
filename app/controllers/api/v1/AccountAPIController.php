@@ -12,6 +12,38 @@ use OrbitShop\API\v1\OrbitShopAPI;
  */
 class AccountAPIController extends ControllerAPI
 {
+    protected function createUpdateUserMerchant($user)
+    {
+        // Campaign Employees cannot change their tenants` ownership
+        if ($user->role->role_name == 'Campaign Employee') {
+            return;
+        }        
+
+        // First, set user_id as null
+        $currentUserMerchants = UserMerchant::whereUserId($user->user_id)->get();
+        foreach ($currentUserMerchants as $currentUserMerchant) {
+            $currentUserMerchant->user_id = null;
+            $currentUserMerchant->save();
+        }
+ 
+        // Then update the user_id with the submitted ones 
+        foreach (Input::get('merchant_ids') as $merchantId) { 
+
+            $userMerchant = UserMerchant::whereMerchantId($merchantId)->whereUserId($user->user_id)->first();
+            if ( ! $userMerchant) {
+                $userMerchant = new UserMerchant;
+            }
+
+            $userMerchant->user_id = $user->user_id; 
+            $userMerchant->merchant_id = $merchantId; 
+ 
+            // Get "object_type" from "merchants" table 
+            $userMerchant->object_type = CampaignLocation::find($merchantId)->object_type; 
+             
+            $userMerchant->save(); 
+        } 
+    }
+
     /**
      * The main method
      *
@@ -118,20 +150,8 @@ class AccountAPIController extends ControllerAPI
         $campaignAccount->status = Input::get('status');
         $campaignAccount->save();
 
-        // Clean up user_merchant first
-        UserMerchant::whereUserId($user->user_id)->delete();
-
         // Save to user_merchant (1 to M)
-        foreach (Input::get('merchant_ids') as $merchantId) {
-            $userMerchant = new UserMerchant;
-            $userMerchant->user_id = $user->user_id;
-            $userMerchant->merchant_id = $merchantId;
-
-            // Get "object_type" from "merchants" table
-            $userMerchant->object_type = CampaignLocation::find($merchantId)->object_type;
-            
-            $userMerchant->save();
-        }
+        $this->createUpdateUserMerchant($user);
 
         if ( ! $this->id) {
             // Save to "settings" table

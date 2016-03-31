@@ -176,7 +176,7 @@ return array(
         'to_access_this_content' => 'to access this content',
         'sign_in' => 'Sign In',
         'sign_up' => 'Sign Up',
-        'doesnt_have_account' => 'Does not have account',
+        'doesnt_have_account' => 'Not have an account?',
     ),
 
     'signup' => array(
@@ -195,6 +195,8 @@ return array(
         'already_have_an_account' => 'Already have an account',
         'fields_are_mandatory' => 'All fields are mandatory',
         'date_of_birth' => 'Date of Birth',
+        'password_placeholder' => 'Password',
+        'password_confirm_placeholder' => 'Confirm Password',
     ),
 
     'catalogue' => array(
