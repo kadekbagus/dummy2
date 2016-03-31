@@ -155,6 +155,10 @@
                     <div class="form-group">
                         <input type="email" value="{{{ $user_email }}}" class="form-control" name="email" id="email" placeholder="{{ Lang::get('mobileci.signin.email_placeholder') }}">
                     </div>
+
+                    <div class="form-group">
+                        <input type="password" value="" class="form-control" name="password" id="password" placeholder="{{ Lang::get('mobileci.signup.password_placeholder') }}">
+                    </div>
                 </div>
                 <div class="modal-footer footer-form-modal">
                     <div class="row">
@@ -178,6 +182,12 @@
                     <span class="mandatory-label" style="display:none;">{{ Lang::get('mobileci.signup.fields_are_mandatory') }}</span>
                     <div class="form-group">
                         <input type="email" value="{{{ $user_email }}}" class="form-control orbit-auto-login" name="email" id="email" placeholder="{{ Lang::get('mobileci.signup.email_placeholder') }}">
+                    </div>
+                    <div class="form-group">
+                        <input type="password" value="" class="form-control" name="password" id="password" placeholder="{{ Lang::get('mobileci.signup.password_placeholder') }}">
+                    </div>
+                    <div class="form-group">
+                        <input type="password" value="" class="form-control" name="password_confirmation" id="password_confirmation" placeholder="{{ Lang::get('mobileci.signup.password_confirm_placeholder') }}">
                     </div>
                     <div class="form-group">
                         <input type="text" class="form-control userName" value="" placeholder="{{ Lang::get('mobileci.signup.first_name') }}" name="firstname" id="firstName">
@@ -948,6 +958,7 @@
          */
         orbitSignUpForm.doLogin = function() {
             var custEmail = $('#signinForm #email').val().trim();
+            var custPassword = $('#signinForm #password').val();
 
             // Flag the processing
             if (orbitSignUpForm.isProcessing) {
@@ -965,6 +976,8 @@
                     url: apiPath + 'customer/login',
                     data: {
                         email: custEmail,
+                        password: custPassword,
+                        mode: 'login',
                         payload: "{{{ Input::get('payload', '') }}}",
                         mac_address: {{ json_encode(Input::get('mac_address', '')) }},
                         auto_login: "{{{ Input::get('auto_login', 'no') }}}",
@@ -974,6 +987,8 @@
                 }).done(function (response, status, xhr) {
                     if (response.code !== 0 && response.code !== 302) {
                         toastr.error(response.message);
+                        orbitSignUpForm.isProcessing = false;
+                        orbitSignUpForm.disableEnableAllButton();
                         return;
                     }
                     var shiftHostName = window.location.hostname.split('.');
@@ -1001,7 +1016,11 @@
                     if (session_id) {
                         if (landing_url.indexOf('orbit_session=') < 0) {
                             // orbit_session= is not exists, append manually
-                            landing_url += '&orbit_session=' + session_id;
+                            if(landing_url.indexOf('?') < 0) {
+                                landing_url += '?orbit_session=' + session_id;
+                            } else {
+                                landing_url += '&orbit_session=' + session_id;
+                            }
                         } else {
                             landing_url = landing_url.replace(/orbit_session=(.*)$/, 'orbit_session=' + session_id);
                         }
@@ -1040,6 +1059,8 @@
         orbitSignUpForm.doRegister = function()
         {
             var custEmail = $('#signupForm #email').val().trim();
+            var custPassword = $('#signupForm #password').val();
+            var custPasswordConfirmation = $('#signupForm #password_confirmation').val();
 
             // Flag the processing
             if (orbitSignUpForm.isProcessing) {
@@ -1068,13 +1089,17 @@
                         mode: 'registration',
                         first_name: $('#firstName').val(),
                         last_name: $('#lastName').val(),
+                        password: custPassword,
+                        password_confirmation: custPasswordConfirmation,
                         gender: $('#gender').val(),
                         birth_date: birthdate.day + '-' + birthdate.month + '-' + birthdate.year,
                         socmed_redirect_to: "{{{ Input::get('socmed_redirect_to', '') }}}"
                     }
                 }).done(function (resp, status, xhr) {
                     if (resp.status === 'error') {
-                        // do something
+                        toastr.error(resp.message);
+                        orbitSignUpForm.isProcessing = false;
+                        orbitSignUpForm.disableEnableAllButton();
                         return;
                     }
 
@@ -1095,7 +1120,11 @@
                     if (session_id) {
                         if (landing_url.indexOf('orbit_session=') < 0) {
                             // orbit_session= is not exists, append manually
-                            landing_url += '&orbit_session=' + session_id;
+                            if(landing_url.indexOf('?') < 0) {
+                                landing_url += '?orbit_session=' + session_id;
+                            } else {
+                                landing_url += '&orbit_session=' + session_id;
+                            }
                         } else {
                             landing_url = landing_url.replace(/orbit_session=(.*)$/, 'orbit_session=' + session_id);
                         }
@@ -1364,9 +1393,7 @@
             });
 
             $('#btn-signup-form').click(function(e) {
-                console.log('ooo');
                 if(orbitSignUpForm.enableDisableSignup()) {
-                    console.log('ppp');
                     orbitSignUpForm.doRegister();
                 }
                 return false;

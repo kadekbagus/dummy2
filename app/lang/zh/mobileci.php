@@ -172,8 +172,8 @@ return array(
         'connecting_to_facebook'        => '连接到 Facebook...',
         'connecting_to_google'        => '连接到 Google...',
         'connecting_with' => '与连接',
-        'sign_up_sign_in_with' => 'Sign up or Sign in with:',
-        'to_access_this_content' => 'to access this content',
+        'sign_up_sign_in_with' => '报名参加或签到与:',
+        'to_access_this_content' => '访问这个内容',
         'sign_in' => '登入',
         'sign_up' => '报名',
         'doesnt_have_account' => '没有帐户',
@@ -195,6 +195,8 @@ return array(
         'already_have_an_account' => '已经有一个帐户',
         'fields_are_mandatory' => '所有字段是强制性的',
         'date_of_birth' => '出生日期',
+        'password_placeholder' => '密码',
+        'password_confirm_placeholder' => '确认密码',
     ),
 
     'catalogue' => array(
