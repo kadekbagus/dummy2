@@ -6,7 +6,6 @@ use Symfony\Component\Console\Input\InputArgument;
 
 class MerchantGeolocation extends Command 
 {
-
     /**
      * The console command name.
      *
@@ -42,16 +41,11 @@ class MerchantGeolocation extends Command
         $fence = MerchantGeofence::where('merchant_id', '=', $merchantId)->first();
 
         if (empty($fence)) {
-
             $this->error('Merchant or mall is not found.');
-
         } else {
-
             $latitude = (double)$this->option('latitude');
             $longitude = (double)$this->option('longitude');
             $area = preg_replace('/[^0-9\s,\-\.]/', '',  $this->option('area'));
-
-            $prefix = DB::getTablePrefix();
 
             $fence->position = DB::raw("POINT($latitude, $longitude)");
             $fence->area = DB::raw("geomfromtext(\"POLYGON(({$area}))\")");
@@ -61,9 +55,7 @@ class MerchantGeolocation extends Command
             }
 
             $this->info("Success, Data Updated!"); 
-
         }
-       
     }
 
     /**
@@ -89,7 +81,5 @@ class MerchantGeolocation extends Command
             array('longitude', null, InputOption::VALUE_REQUIRED, 'Longitude.'),
             array('area', null, InputOption::VALUE_REQUIRED, 'Longitude.'),
         );
-
     }
-
 }
