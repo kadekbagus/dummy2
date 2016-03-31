@@ -179,7 +179,6 @@ class CouponAPIController extends ControllerAPI
 
             $validator = Validator::make(
                 array(
-                    'current_mall'            => $merchant_id,
                     'promotion_name'          => $promotion_name,
                     'promotion_type'          => $promotion_type,
                     'begin_date'              => $begin_date,
@@ -199,7 +198,6 @@ class CouponAPIController extends ControllerAPI
                     'is_popup'            => $is_popup,
                 ),
                 array(
-                    'current_mall'            => 'required|orbit.empty.merchant',
                     'promotion_name'          => 'required|max:255|orbit.exists.coupon_name',
                     'promotion_type'          => 'required|orbit.empty.coupon_type',
                     'begin_date'              => 'required|date_format:Y-m-d H:i:s',
@@ -626,9 +624,6 @@ class CouponAPIController extends ControllerAPI
             $campaignprice->save();
 
             // get action id for campaign history
-            $mall = App::make('orbit.empty.merchant');
-            $now = Carbon::now($mall->timezone->timezone_name);
-
             $actionstatus = 'activate';
             if ($status === 'inactive') {
                 $actionstatus = 'deactivate';
@@ -961,7 +956,6 @@ class CouponAPIController extends ControllerAPI
 
             $data = array(
                 'promotion_id'            => $promotion_id,
-                'current_mall'            => $merchant_id,
                 'promotion_type'          => $promotion_type,
                 'status'                  => $status,
                 'begin_date'              => $begin_date,
@@ -989,7 +983,6 @@ class CouponAPIController extends ControllerAPI
                 $data,
                 array(
                     'promotion_id'            => 'required|orbit.empty.coupon',
-                    'current_mall'            => 'orbit.empty.merchant',
                     'promotion_name'          => 'sometimes|required|min:5|max:255|coupon_name_exists_but_me',
                     'promotion_type'          => 'orbit.empty.coupon_type',
                     'status'                  => 'orbit.empty.coupon_status',
@@ -1058,45 +1051,9 @@ class CouponAPIController extends ControllerAPI
                 $retailerdb[] = $promoretailerid['retailer_id'];
             }
 
-            //save campaign histories
-            $mall = App::make('orbit.empty.merchant');
-            $now = Carbon::now($mall->timezone->timezone_name);
-
-            $action = '';
-            if ($enddatedb < $now) {
-                $actionstatus = 'deactivate';
-                $deactivate = substr($enddatedb, 0, 10) . " " . '23:59:59';
-                $utcenddatedb = Carbon::createFromFormat('Y-m-d H:i:s', $deactivate, $mall->timezone->timezone_name);
-                $utcenddatedb->setTimezone('UTC');
-                $activeid = CampaignHistoryAction::getIdFromAction($actionstatus);
-
-                $campaignhistory = new CampaignHistory();
-                $campaignhistory->campaign_type = 'coupon';
-                $campaignhistory->campaign_id = $promotion_id;
-                $campaignhistory->campaign_history_action_id = $activeid;
-                $campaignhistory->number_active_tenants = 0;
-                $campaignhistory->campaign_cost = 0;
-                $campaignhistory->created_by = $this->api->user->user_id;
-                $campaignhistory->modified_by = $this->api->user->user_id;
-                $campaignhistory->created_at = $utcenddatedb;
-                $campaignhistory->save();
-
-                $actionstatus = 'activate';
-                if ($status === 'inactive') {
-                    $actionstatus = 'deactivate';
-                }
-                $activeid = CampaignHistoryAction::getIdFromAction($actionstatus);
-                $campaignhistory = new CampaignHistory();
-                $campaignhistory->campaign_type = 'coupon';
-                $campaignhistory->campaign_id = $promotion_id;
-                $campaignhistory->campaign_history_action_id = $activeid;
-                $campaignhistory->number_active_tenants = 0;
-                $campaignhistory->campaign_cost = 0;
-                $campaignhistory->created_by = $this->api->user->user_id;
-                $campaignhistory->modified_by = $this->api->user->user_id;
-                $campaignhistory->save();
-
-            } elseif ($statusdb != $status) {
+            //save campaign histories (status)
+            $actionstatus = '';
+            if ($statusdb != $status) {
                 // get action id for campaign history
                 $actionstatus = 'activate';
                 if ($status === 'inactive') {
@@ -1791,7 +1748,16 @@ class CouponAPIController extends ControllerAPI
                 $beginMall = date('Y-m-d', strtotime($begin_date));
                 $endMall = date('Y-m-d', strtotime($end_date));
 
+                // only calculate spending when update date between start and date of campaign
                 if ($dateNowMall >= $beginMall && $dateNowMall <= $endMall) {
+                    $daily = CampaignDailySpending::where('date', '=', $getspending->date_in_utc)->where('campaign_id', '=', $campaign_id)->where('mall_id', '=', $mall)->first();
+
+                    if ($daily['campaign_daily_spending_id']) {
+                        $dailySpending = CampaignDailySpending::find($daily['campaign_daily_spending_id']);
+                    } else {
+                        $dailySpending = new CampaignDailySpending;
+                    }
+
                     $dailySpending = CampaignDailySpending::firstOrCreate(array('date' => $getspending->date_in_utc, 'campaign_id' => $campaign_id, 'mall_id' => $mall));
                     $dailySpending->date = $getspending->date_in_utc;
                     $dailySpending->campaign_type = $campaign_type;
