@@ -118,11 +118,13 @@
             <td>:</td>
             <td><strong><?php echo number_format($totalRec); ?></strong></td>
         </tr>
-        <tr>
-            <td>First Visit Date</td>
-            <td>:</td>
-            <td><strong><?= $firstVisitDates ?></strong></td>
-        </tr>
+        <?php if (isset($firstVisitDates)): ?>
+            <tr>
+                <td>First Visit Date</td>
+                <td>:</td>
+                <td><strong><?= $firstVisitDates ?></strong></td>
+            </tr>
+        <?php endif ?>
     </table>
 
     <table style="width:100%">
