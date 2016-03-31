@@ -63,4 +63,20 @@ trait MerchantGeolocTrait
 
         return $builder;
     }
+
+    /**
+     * Scope to add latitude and longitude column to the query builder.
+     *
+     * @author Rio Astamal <rio@dominopos.com>
+     * @param \Illuminate\Database\Eloquent\Builder  $builder
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeIncludeLatLong($builder)
+    {
+        $prefix = DB::getTablePrefix();
+        return $builder->addSelect(DB::raw(
+            "X({$prefix}merchant_geofences.position) as latitude,
+             Y({$prefix}merchant_geofences.position) as longitude"
+        ));
+    }
 }
