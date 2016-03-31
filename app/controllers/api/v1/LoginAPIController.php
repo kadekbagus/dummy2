@@ -411,6 +411,8 @@ class LoginAPIController extends ControllerAPI
             $activity = null;
 
             $email = OrbitInput::post('email');
+            $password = OrbitInput::post('password');
+
             $from = OrbitInput::post('from');
             $mall_id = $this->getRetailerId();
 
@@ -438,7 +440,7 @@ class LoginAPIController extends ControllerAPI
 
             $mall = Mall::where('merchant_id', $mall_id)->first();
 
-            list($newuser, $userdetail, $apikey) = $this->createCustomerUser($email);
+            list($newuser, $userdetail, $apikey) = $this->createCustomerUser($email, $password);
 
             $this->response->data = $newuser;
 
@@ -1500,7 +1502,7 @@ class LoginAPIController extends ControllerAPI
      * @return array [User, UserDetail, ApiKey]
      * @throws Exception
      */
-    public function createCustomerUser($email, $userId = null, $userDetailId = null, $apiKeyId = null, $userStatus = null)
+    public function createCustomerUser($email, $password, $userId = null, $userDetailId = null, $apiKeyId = null, $userStatus = null)
     {
         // The retailer (shop) which this registration taken
         $retailerId = $this->getRetailerId();
@@ -1525,6 +1527,7 @@ class LoginAPIController extends ControllerAPI
         }
         $new_user->username = strtolower($email);
         $new_user->user_email = strtolower($email);
+        $new_user->user_password = Hash::make($password);
         $new_user->status = isset($userStatus) ? $userStatus : 'pending';
         $new_user->user_role_id = $customerRole->role_id;
         $new_user->user_ip = $_SERVER['REMOTE_ADDR'];
