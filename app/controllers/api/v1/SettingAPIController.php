@@ -14,8 +14,8 @@ use Helper\EloquentRecordCounter as RecordCounter;
 class SettingAPIController extends ControllerAPI
 {
 
-    protected $settingViewRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee', 'mall customer service'];
-    protected $settingModifiyRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee'];
+    protected $settingViewRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee', 'campaign admin', 'mall customer service'];
+    protected $settingModifiyRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee', 'campaign admin'];
 
     /**
      * POST - Update Setting

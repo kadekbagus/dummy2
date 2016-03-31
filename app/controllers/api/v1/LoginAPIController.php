@@ -139,7 +139,7 @@ class LoginAPIController extends ControllerAPI
     public function postLoginMall()
     {
         $_GET['from_portal'] = 'mall';
-        return $this->postLoginRole(['Super Admin', 'Mall Owner', 'Mall Admin', 'Campaign Owner', 'Campaign Employee']);
+        return $this->postLoginRole(['Super Admin', 'Mall Owner', 'Mall Admin']);
     }
 
     /**
@@ -201,7 +201,7 @@ class LoginAPIController extends ControllerAPI
             $menus = Config::get('orbit.menus.pmp');
 
             $mall[] = null;
-            if ($user->role->role_name === 'Campaign Owner') {
+            if ($user->isCampaignOwner()) {
                 $user_merchants = $user->campaignAccount->userMerchant;
 
                 $parent_id = '';
@@ -220,7 +220,7 @@ class LoginAPIController extends ControllerAPI
                         $parent_id = $tenant->parent_id;
                     }
                 }
-            } elseif ($user->role->role_name === 'Campaign Employee') {
+            } elseif ($user->isCampaignEmployee()) {
                 $user_merchants = $user->campaignAccount->parentCampaignAccount->userMerchant;
 
                 $parent_id = null;
@@ -239,7 +239,7 @@ class LoginAPIController extends ControllerAPI
                         $parent_id = $tenant->parent_id;
                     }
                 }
-            } elseif ($user->role->role_name === 'Campaign Admin') {
+            } elseif ($user->isCampaignAdmin()) {
                 $mall = Mall::excludeDeleted()
                             ->with('timezone')
                             ->get();
@@ -282,7 +282,7 @@ class LoginAPIController extends ControllerAPI
                 $expireInDays = Config::get('orbit.registration.mobile.activation_expire', 30);
 
                 $data = null;
-                if ($user->role->role_name !== 'Campaign Employee') {
+                if (! $user->isCampaignEmployee()) {
                     // Token Settings
                     $token = new Token();
                     $token->token_name = 'service_agreement';
@@ -932,7 +932,9 @@ class LoginAPIController extends ControllerAPI
             $token->status = 'deleted';
             $token->save();
 
-            $setting_items = array('agreement_accepted_pmp_account'=>'true');
+            $setting_items = array('agreement_accepted_pmp_account' => 'true',
+                                     'agreement_acceptor_pmp_first_name' => $first_name,
+                                     'agreement_acceptor_pmp_last_name' => $last_name);
 
             foreach ($setting_items as $setting_name => $setting_value) {
                 $settings = Setting::excludeDeleted()
@@ -1368,10 +1370,6 @@ class LoginAPIController extends ControllerAPI
                         $mall = $user->employee->retailers[0]->load('timezone');
                     } else {
                         $mall = Mall::with('timezone')->excludeDeleted()->where('user_id', $user->user_id)->first();
-                    }
-                    if ((strtolower($user->role->role_name) === 'campaign owner') || (strtolower($user->role->role_name) === 'campaign employee')) {
-                        $mall = $user->employee->retailers[0]->load('timezone');
-                        $menus = Config::get('orbit.menus.pmp');
                     }
                 } elseif ($from === 'cs-portal') {
                     $mall = $user->employee->retailers[0]->load('timezone');

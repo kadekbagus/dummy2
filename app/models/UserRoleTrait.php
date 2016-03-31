@@ -348,7 +348,7 @@ trait UserRoleTrait
      *
      * @return boolean
      */
-    public function isPMPAdmin()
+    public function isCampaignAdmin()
     {
         $role = 'campaign admin';
 
