@@ -101,6 +101,33 @@ class MallGeolocAPIController extends ControllerAPI
             });
             $malls->skip($skip);
 
+            // Default sort by
+            $sortBy = 'distance';
+            // Default sort mode
+            $sortMode = 'asc';
+
+            OrbitInput::get('sortby', function($_sortBy) use (&$sortBy)
+            {
+                // Map the sortby request to the real column name
+                $sortByMapping = array(
+                    'mall_name'         => 'merchants.name',
+                    'city'              => 'merchants.city',
+                    'created_at'        => 'merchants.created_at',
+                    'updated_at'        => 'merchants.updated_at',
+                    'distance'          => 'distance'
+                );
+
+                $sortBy = $sortByMapping[$_sortBy];
+            });
+
+            OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
+            {
+                if (strtolower($_sortMode) !== 'asc') {
+                    $sortMode = 'desc';
+                }
+            });
+            $malls->orderBy($sortBy, $sortMode);
+            
             $_malls = clone $malls;
 
             $listmalls = $malls->get();
