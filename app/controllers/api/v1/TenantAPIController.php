@@ -289,6 +289,7 @@ class TenantAPIController extends ControllerAPI
      *
      * @author Tian <tian@dominopos.com>
      * @author Irianto Pratama <irianto@dominopos.com>
+     * @author kadek <kadek@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -587,6 +588,13 @@ class TenantAPIController extends ControllerAPI
             $newUserMerchant->merchant_id = $newtenant->merchant_id;
             $newUserMerchant->object_type = $newtenant->object_type;
             $newUserMerchant->save();
+
+            // save to spending rule, the default is Y
+            // @author kadek <kadek@dominopos.com>
+            $newSpendingRules = new SpendingRule();
+            $newSpendingRules->object_id = $newtenant->merchant_id;
+            $newSpendingRules->with_spending = 'Y';
+            $newSpendingRules->save();
 
             if (OrbitInput::post('facebook_uri')) {
                 $this->saveSocmedUri('facebook', $newtenant->merchant_id, OrbitInput::post('facebook_uri'));
