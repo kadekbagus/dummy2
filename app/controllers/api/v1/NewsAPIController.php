@@ -126,7 +126,6 @@ class NewsAPIController extends ControllerAPI
 
             $validator = Validator::make(
                 array(
-                    'current_mall'        => $mall_id,
                     'news_name'           => $news_name,
                     'object_type'         => $object_type,
                     'status'              => $status,
@@ -139,7 +138,6 @@ class NewsAPIController extends ControllerAPI
                     'is_popup'            => $is_popup,
                 ),
                 array(
-                    'current_mall'        => 'required|orbit.empty.mall',
                     'news_name'           => 'required|max:255|orbit.exists.news_name',
                     'object_type'         => 'required|orbit.empty.news_object_type',
                     'status'              => 'required|orbit.empty.news_status',
@@ -261,8 +259,7 @@ class NewsAPIController extends ControllerAPI
                 $data = @json_decode($retailer_id);
                 $tenant_id = $data->tenant_id;
                 $mall_id = $data->mall_id;
-                //print_r($data);
-                //die();
+
                 if(! in_array($mall_id, $mallid)) {
                     $mallid[] = $mall_id;
                 }
@@ -364,9 +361,6 @@ class NewsAPIController extends ControllerAPI
             $campaignprice->campaign_type = $object_type;
             $campaignprice->campaign_id = $newnews->news_id;
             $campaignprice->save();
-
-            $mall = App::make('orbit.empty.mall');
-            $now = Carbon::now($mall->timezone->timezone_name);
 
             // get action id for campaign history
             $actionstatus = 'activate';
@@ -677,7 +671,6 @@ class NewsAPIController extends ControllerAPI
                 $data,
                 array(
                     'news_id'             => 'required|orbit.empty.news',
-                    'current_mall'        => 'orbit.empty.mall',
                     'news_name'           => 'sometimes|required|min:5|max:255|news_name_exists_but_me',
                     'object_type'         => 'required|orbit.empty.news_object_type',
                     'status'              => 'orbit.empty.news_status',
@@ -729,8 +722,7 @@ class NewsAPIController extends ControllerAPI
                 $merchantdb[] = $merchantdbid['merchant_id'];
             }
 
-            $updatednews_default_language = NewsTranslation::excludeDeleted()->where('news_id', $news_id)->where('merchant_id', $mall_id)->where('merchant_language_id', $id_language_default)->first();
-
+            $updatednews_default_language = NewsTranslation::excludeDeleted()->where('news_id', $news_id)->where('merchant_language_id', $id_language_default)->first();
             // save News
             OrbitInput::post('mall_id', function($mall_id) use ($updatednews) {
                 $updatednews->mall_id = $mall_id;
@@ -1012,43 +1004,7 @@ class NewsAPIController extends ControllerAPI
 
             //save campaign histories (status)
             $actionhistory = '';
-            $mall = App::make('orbit.empty.mall');
-            $now = Carbon::now($mall->timezone->timezone_name);
-
-            if ($enddatedb < $now) {
-                // handle user extend date when campaing was expired
-                $actionstatus = 'deactivate';
-                $deactivate = substr($enddatedb, 0, 10) . " " . '23:59:59';
-                $utcenddatedb = Carbon::createFromFormat('Y-m-d H:i:s', $deactivate, $mall->timezone->timezone_name);
-                $utcenddatedb->setTimezone('UTC');
-                $activeid = CampaignHistoryAction::getIdFromAction($actionstatus);
-                $campaignhistory = new CampaignHistory();
-                $campaignhistory->campaign_type = $object_type;
-                $campaignhistory->campaign_id = $news_id;
-                $campaignhistory->campaign_history_action_id = $activeid;
-                $campaignhistory->number_active_tenants = 0;
-                $campaignhistory->campaign_cost = 0;
-                $campaignhistory->created_by = $this->api->user->user_id;
-                $campaignhistory->modified_by = $this->api->user->user_id;
-                $campaignhistory->created_at = $utcenddatedb;
-                $campaignhistory->save();
-
-                $actionstatus = 'activate';
-                if ($status === 'inactive') {
-                    $actionstatus = 'deactivate';
-                }
-                $activeid = CampaignHistoryAction::getIdFromAction($actionstatus);
-                $campaignhistory = new CampaignHistory();
-                $campaignhistory->campaign_type = $object_type;
-                $campaignhistory->campaign_id = $news_id;
-                $campaignhistory->campaign_history_action_id = $activeid;
-                $campaignhistory->number_active_tenants = 0;
-                $campaignhistory->campaign_cost = 0;
-                $campaignhistory->created_by = $this->api->user->user_id;
-                $campaignhistory->modified_by = $this->api->user->user_id;
-                $campaignhistory->save();
-                
-            } elseif ($statusdb != $status) {
+            if ($statusdb != $status) {
                 // get action id for campaign history
                 $actionstatus = 'activate';
                 if ($status === 'inactive') {
@@ -1174,7 +1130,14 @@ class NewsAPIController extends ControllerAPI
 
                 // only calculate spending when update date between start and date of campaign
                 if ($dateNowMall >= $beginMall && $dateNowMall <= $endMall) {
-                    $dailySpending = CampaignDailySpending::firstOrCreate(array('date' => $getspending->date_in_utc, 'campaign_id' => $campaign_id, 'mall_id' => $mall));
+                    $daily = CampaignDailySpending::where('date', '=', $getspending->date_in_utc)->where('campaign_id', '=', $campaign_id)->where('mall_id', '=', $mall)->first();
+                
+                    if ($daily['campaign_daily_spending_id']) {
+                        $dailySpending = CampaignDailySpending::find($daily['campaign_daily_spending_id']);
+                    } else {
+                        $dailySpending = new CampaignDailySpending;
+                    }
+
                     $dailySpending->date = $getspending->date_in_utc;
                     $dailySpending->campaign_type = $campaign_type;
                     $dailySpending->campaign_id = $campaign_id;
@@ -1273,7 +1236,7 @@ class NewsAPIController extends ControllerAPI
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = $e->getLine();
+            $this->response->data = null;
 
             // Rollback the changes
             $this->rollBack();

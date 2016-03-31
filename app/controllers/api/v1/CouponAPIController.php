@@ -179,7 +179,6 @@ class CouponAPIController extends ControllerAPI
 
             $validator = Validator::make(
                 array(
-                    'current_mall'            => $merchant_id,
                     'promotion_name'          => $promotion_name,
                     'promotion_type'          => $promotion_type,
                     'begin_date'              => $begin_date,
@@ -199,7 +198,6 @@ class CouponAPIController extends ControllerAPI
                     'is_popup'            => $is_popup,
                 ),
                 array(
-                    'current_mall'            => 'required|orbit.empty.merchant',
                     'promotion_name'          => 'required|max:255|orbit.exists.coupon_name',
                     'promotion_type'          => 'required|orbit.empty.coupon_type',
                     'begin_date'              => 'required|date_format:Y-m-d H:i:s',
@@ -249,10 +247,14 @@ class CouponAPIController extends ControllerAPI
             }
 
             // validating retailer_ids.
-            foreach ($retailer_ids as $retailer_id_check) {
+            foreach ($retailer_ids as $retailer_json) {
+                $data = @json_decode($retailer_json);
+                $tenant_id = $data->tenant_id;
+                $mall_id = $data->mall_id;
+
                 $validator = Validator::make(
                     array(
-                        'retailer_id'   => $retailer_id_check,
+                        'retailer_id'   => $tenant_id,
 
                     ),
                     array(
@@ -280,29 +282,6 @@ class CouponAPIController extends ControllerAPI
                     ),
                     array(
                         'employee_user_id'   => 'orbit.empty.employee',
-                    )
-                );
-
-                Event::fire('orbit.coupon.postnewcoupon.before.retailervalidation', array($this, $validator));
-
-                // Run the validation
-                if ($validator->fails()) {
-                    $errorMessage = $validator->messages()->first();
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-                }
-
-                Event::fire('orbit.coupon.postnewcoupon.after.retailervalidation', array($this, $validator));
-            }
-
-            // validating linkToTenantIds.
-            foreach ($linkToTenantIds as $retailer_id_check) {
-                $validator = Validator::make(
-                    array(
-                        'retailer_id'   => $retailer_id_check,
-
-                    ),
-                    array(
-                        'retailer_id'   => 'orbit.empty.tenant',
                     )
                 );
 
@@ -495,13 +474,29 @@ class CouponAPIController extends ControllerAPI
 
             // save CouponRetailerRedeem
             $retailers = array();
+            $isMall = 'tenant';
+            $mallid = array();
             foreach ($retailer_ids as $retailer_id) {
+                $data = @json_decode($retailer_id);
+                $tenant_id = $data->tenant_id;
+                $mall_id = $data->mall_id;
+
+                if(! in_array($mall_id, $mallid)) {
+                    $mallid[] = $mall_id;
+                }
+
+                if ($tenant_id === $mall_id) {
+                    $isMall = 'mall';
+                }
+
                 $retailer = new CouponRetailerRedeem();
-                $retailer->retailer_id = $retailer_id;
                 $retailer->promotion_id = $newcoupon->promotion_id;
+                $retailer->retailer_id = $tenant_id;
+                $retailer->object_type = $isMall;
                 $retailer->save();
                 $retailers[] = $retailer;
             }
+
             $newcoupon->tenants = $retailers;
 
             $employees = array();
@@ -517,14 +512,38 @@ class CouponAPIController extends ControllerAPI
 
             // save CouponRetailer
             $retailers = array();
+            $isMall = 'tenant';
+            $mallid = array();
+
             foreach ($linkToTenantIds as $retailer_id) {
-                $retailer = new CouponRetailer();
-                $retailer->retailer_id = $retailer_id;
-                $retailer->promotion_id = $newcoupon->promotion_id;
-                $retailer->save();
-                $retailers[] = $retailer;
+                $data = @json_decode($retailer_id);
+                $tenant_id = $data->tenant_id;
+                $mall_id = $data->mall_id;
+
+                if(! in_array($mall_id, $mallid)) {
+                    $mallid[] = $mall_id;
+                }
+
+                if ($tenant_id === $mall_id) {
+                    $isMall = 'mall';
+                }
+
+                $couponretailer = new CouponRetailer();
+                $couponretailer->retailer_id = $tenant_id;
+                $couponretailer->promotion_id = $newcoupon->promotion_id;
+                $couponretailer->object_type = $isMall;
+                $couponretailer->save();
+                $couponretailers[] = $couponretailer;
             }
-            $newcoupon->link_to_tenants = $retailers;
+
+            $newcoupon->link_to_tenants = $couponretailers;
+
+            //save to user campaign
+            $usercampaign = new UserCampaign();
+            $usercampaign->user_id = $user->user_id;
+            $usercampaign->campaign_id = $newcoupon->promotion_id;
+            $usercampaign->campaign_type = 'coupon';
+            $usercampaign->save();
 
             // save CampaignAge
             $couponAges = array();
@@ -605,8 +624,6 @@ class CouponAPIController extends ControllerAPI
             $campaignprice->save();
 
             // get action id for campaign history
-            $mall = App::make('orbit.empty.merchant');
-            $now = Carbon::now($mall->timezone->timezone_name);
             $actionstatus = 'activate';
             if ($status === 'inactive') {
                 $actionstatus = 'deactivate';
@@ -626,38 +643,67 @@ class CouponAPIController extends ControllerAPI
             $campaignhistory->save();
 
             // save campaign history tenant
+            $withSpending = 'Y';
             foreach ($linkToTenantIds as $retailer_id) {
+                $data = @json_decode($retailer_id);
+                $tenant_id = $data->tenant_id;
+                $mall_id = $data->mall_id;
+
                 // insert tenant/merchant to campaign history
-                $tenantstatus = Tenant::getStatus($retailer_id);
-                if ($tenantstatus === 'active') {
-                    $rowcost = CampaignHistory::getRowCost($newcoupon->promotion_id, $status, 'add', $now, TRUE)->first();
+                $tenantstatus = CampaignLocation::select('status')->where('merchant_id', $tenant_id)->first();
+                $spendingrule = SpendingRule::select('with_spending')->where('object_id', $tenant_id)->first();
+
+                if ($spendingrule) {
+                    $withSpending = 'Y';
+                } else {
+                    $withSpending = 'N';
+                }
+
+                if (($tenantstatus->status === 'active') && ($withSpending === 'Y')) {
                     $addtenant = new CampaignHistory();
                     $addtenant->campaign_type = 'coupon';
                     $addtenant->campaign_id = $newcoupon->promotion_id;
-                    $addtenant->campaign_external_value = $retailer_id;
+                    $addtenant->campaign_external_value = $tenant_id;
                     $addtenant->campaign_history_action_id = $addtenantid;
-                    $addtenant->number_active_tenants = $rowcost->tenants;
+                    $addtenant->number_active_tenants = 0;
                     $addtenant->created_by = $this->api->user->user_id;
                     $addtenant->modified_by = $this->api->user->user_id;
-                    if ($status === 'inactive') {
-                        $addtenant->campaign_cost = 0;
-                    } else {
-                        $addtenant->campaign_cost = $rowcost->cost;
-                    }
+                    $addtenant->campaign_cost = 0;
                     $addtenant->save();
                 }
             }
 
+            //calculate spending
+            foreach ($mallid as $mall) {
 
-            // Save campaign spending with default spending 0
-            $campaignSpending = new CampaignSpendingCount();
-            $campaignSpending->campaign_id = $newcoupon->promotion_id;
-            $campaignSpending->campaign_type = 'coupon';
-            $campaignSpending->spending = 0;
-            $campaignSpending->mall_id = $merchant_id;
-            $campaignSpending->begin_date = $begin_date;
-            $campaignSpending->end_date = $end_date;
-            $campaignSpending->save();
+                $campaign_id = $newcoupon->promotion_id;
+                $campaign_type = 'coupon';
+                $procResults = DB::statement("CALL prc_campaign_detailed_cost({$this->quote($campaign_id)}, {$this->quote($campaign_type)}, NULL, NULL, {$this->quote($mall)})");
+
+                if ($procResults === false) {
+                    // Do Nothing
+                }
+
+                $getspending = DB::table(DB::raw('tmp_campaign_cost_detail'))->first();
+
+                $mallTimezone = $this->getTimezone($mall);
+                $nowMall = Carbon::now($mallTimezone);
+                $dateNowMall = $nowMall->toDateString();
+
+                // if campaign begin date is same with date now
+                if ($dateNowMall === date('Y-m-d', strtotime($begin_date))) {
+                    $dailySpending = new CampaignDailySpending();
+                    $dailySpending->date = $getspending->date_in_utc;
+                    $dailySpending->campaign_type = $campaign_type;
+                    $dailySpending->campaign_id = $campaign_id;
+                    $dailySpending->mall_id = $mall;
+                    $dailySpending->number_active_tenants = 0;
+                    $dailySpending->base_price = $getspending->base_price;
+                    $dailySpending->campaign_status = $getspending->campaign_status;
+                    $dailySpending->total_spending = 0;
+                    $dailySpending->save();
+                }
+            }
 
             OrbitInput::post('translations', function($translation_json_string) use ($newcoupon) {
                 $this->validateAndSaveTranslations($newcoupon, $translation_json_string, 'create');
@@ -897,8 +943,10 @@ class CouponAPIController extends ControllerAPI
             $is_all_gender = OrbitInput::post('is_all_gender');
             $is_all_age = OrbitInput::post('is_all_age');
 
-            $retailernew = OrbitInput::post('link_to_tenant_ids');
-            $retailernew = (array) $retailernew;
+            $retailer_ids = OrbitInput::post('retailer_ids');
+            $retailer_ids = (array) $retailer_ids;
+            $linkToTenantIds = OrbitInput::post('link_to_tenant_ids');
+            $linkToTenantIds = (array) $linkToTenantIds;
 
             $idStatus = CampaignStatus::select('campaign_status_id')->where('campaign_status_name', $campaignStatus)->first();
             $status = 'inactive';
@@ -908,7 +956,6 @@ class CouponAPIController extends ControllerAPI
 
             $data = array(
                 'promotion_id'            => $promotion_id,
-                'current_mall'            => $merchant_id,
                 'promotion_type'          => $promotion_type,
                 'status'                  => $status,
                 'begin_date'              => $begin_date,
@@ -936,7 +983,6 @@ class CouponAPIController extends ControllerAPI
                 $data,
                 array(
                     'promotion_id'            => 'required|orbit.empty.coupon',
-                    'current_mall'            => 'orbit.empty.merchant',
                     'promotion_name'          => 'sometimes|required|min:5|max:255|coupon_name_exists_but_me',
                     'promotion_type'          => 'orbit.empty.coupon_type',
                     'status'                  => 'orbit.empty.coupon_status',
@@ -978,6 +1024,21 @@ class CouponAPIController extends ControllerAPI
             }
             Event::fire('orbit.coupon.postupdatecoupon.after.validation', array($this, $validator));
 
+            // Redeem to tenant
+            $linktotenantnew = array();
+            $mallid = array();
+            foreach ($linkToTenantIds as $linktotenant) {
+                $data = @json_decode($linktotenant);
+                $tenant_id = $data->tenant_id;
+                $mall_id = $data->mall_id;
+
+                if(! in_array($mall_id, $mallid)) {
+                    $mallid[] = $mall_id;
+                }
+
+                $linktotenantnew[] = $tenant_id;
+            }
+
             $updatedcoupon = Coupon::where('promotion_id', $promotion_id)->first();
 
             $statusdb = $updatedcoupon->status;
@@ -990,70 +1051,25 @@ class CouponAPIController extends ControllerAPI
                 $retailerdb[] = $promoretailerid['retailer_id'];
             }
 
-            //save campaign histories
-            $mall = App::make('orbit.empty.merchant');
-            $now = Carbon::now($mall->timezone->timezone_name);
-
-            $action = '';
-            if ($enddatedb < $now) {
-                $actionstatus = 'deactivate';
-                $deactivate = substr($enddatedb, 0, 10) . " " . '23:59:59';
-                $utcenddatedb = Carbon::createFromFormat('Y-m-d H:i:s', $deactivate, $mall->timezone->timezone_name);
-                $utcenddatedb->setTimezone('UTC');
-                $activeid = CampaignHistoryAction::getIdFromAction($actionstatus);
-                $rowcost = CampaignHistory::getRowCost($promotion_id, $status, $action, $now, TRUE)->first();
-                // campaign history status
-                if (! empty($rowcost)) {
-                    $campaignhistory = new CampaignHistory();
-                    $campaignhistory->campaign_type = 'coupon';
-                    $campaignhistory->campaign_id = $promotion_id;
-                    $campaignhistory->campaign_history_action_id = $activeid;
-                    $campaignhistory->number_active_tenants = $rowcost->tenants;
-                    $campaignhistory->campaign_cost = $rowcost->cost;
-                    $campaignhistory->created_by = $this->api->user->user_id;
-                    $campaignhistory->modified_by = $this->api->user->user_id;
-                    $campaignhistory->created_at = $utcenddatedb;
-                    $campaignhistory->save();
-                }
-
-                $actionstatus = 'activate';
-                if ($status === 'inactive') {
-                    $actionstatus = 'deactivate';
-                }
-                $activeid = CampaignHistoryAction::getIdFromAction($actionstatus);
-                $rowcost = CampaignHistory::getRowCost($promotion_id, $status, $action, $now, TRUE)->first();
-                // campaign history status
-                if (! empty($rowcost)) {
-                    $campaignhistory = new CampaignHistory();
-                    $campaignhistory->campaign_type = 'coupon';
-                    $campaignhistory->campaign_id = $promotion_id;
-                    $campaignhistory->campaign_history_action_id = $activeid;
-                    $campaignhistory->number_active_tenants = $rowcost->tenants;
-                    $campaignhistory->campaign_cost = $rowcost->cost;
-                    $campaignhistory->created_by = $this->api->user->user_id;
-                    $campaignhistory->modified_by = $this->api->user->user_id;
-                    $campaignhistory->save();
-                }
-            } elseif ($statusdb != $status) {
+            //save campaign histories (status)
+            $actionstatus = '';
+            if ($statusdb != $status) {
                 // get action id for campaign history
                 $actionstatus = 'activate';
                 if ($status === 'inactive') {
                     $actionstatus = 'deactivate';
                 }
                 $activeid = CampaignHistoryAction::getIdFromAction($actionstatus);
-                $rowcost = CampaignHistory::getRowCost($promotion_id, $status, $action, $now, TRUE)->first();
-                // campaign history status
-                if (! empty($rowcost)) {
-                    $campaignhistory = new CampaignHistory();
-                    $campaignhistory->campaign_type = 'coupon';
-                    $campaignhistory->campaign_id = $promotion_id;
-                    $campaignhistory->campaign_history_action_id = $activeid;
-                    $campaignhistory->number_active_tenants = $rowcost->tenants;
-                    $campaignhistory->campaign_cost = $rowcost->cost;
-                    $campaignhistory->created_by = $this->api->user->user_id;
-                    $campaignhistory->modified_by = $this->api->user->user_id;
-                    $campaignhistory->save();
-                }
+                $campaignhistory = new CampaignHistory();
+                $campaignhistory->campaign_type = 'coupon';
+                $campaignhistory->campaign_id = $promotion_id;
+                $campaignhistory->campaign_history_action_id = $activeid;
+                $campaignhistory->number_active_tenants = 0;
+                $campaignhistory->campaign_cost = 0;
+                $campaignhistory->created_by = $this->api->user->user_id;
+                $campaignhistory->modified_by = $this->api->user->user_id;
+                $campaignhistory->save();
+
             } else {
                 $utcNow = Carbon::now();
                 $checkFirst = CampaignHistory::where('campaign_id', '=', $promotion_id)->where('created_at', 'like', $utcNow->toDateString().'%')->count();
@@ -1063,70 +1079,79 @@ class CouponAPIController extends ControllerAPI
                         $actionstatus = 'deactivate';
                     }
                     $activeid = CampaignHistoryAction::getIdFromAction($actionstatus);
-                    $rowcost = CampaignHistory::getRowCost($promotion_id, $status, $action, $now, TRUE)->first();
-                    // campaign history status
-                    if (! empty($rowcost)) {
-                        $campaignhistory = new CampaignHistory();
-                        $campaignhistory->campaign_type = 'coupon';
-                        $campaignhistory->campaign_id = $promotion_id;
-                        $campaignhistory->campaign_history_action_id = $activeid;
-                        $campaignhistory->number_active_tenants = $rowcost->tenants;
-                        $campaignhistory->campaign_cost = $rowcost->cost;
-                        $campaignhistory->created_by = $this->api->user->user_id;
-                        $campaignhistory->modified_by = $this->api->user->user_id;
-                        $campaignhistory->save();
-                    }
+                    $campaignhistory = new CampaignHistory();
+                    $campaignhistory->campaign_type = 'coupon';
+                    $campaignhistory->campaign_id = $promotion_id;
+                    $campaignhistory->campaign_history_action_id = $activeid;
+                    $campaignhistory->number_active_tenants = 0;
+                    $campaignhistory->campaign_cost = 0;
+                    $campaignhistory->created_by = $this->api->user->user_id;
+                    $campaignhistory->modified_by = $this->api->user->user_id;
+                    $campaignhistory->save();
                 }
             }
 
             //check for add/remove tenant
-            $removetenant = array_diff($retailerdb, $retailernew);
-            $addtenant = array_diff($retailernew, $retailerdb);
+            $removetenant = array_diff($retailerdb, $linktotenantnew);
+            $addtenant = array_diff($linktotenantnew, $retailerdb);
+            $withSpending = 'Y';
+
             if (! empty($removetenant)) {
                 $actionhistory = 'delete';
                 $addtenantid = CampaignHistoryAction::getIdFromAction('delete_tenant');
                 //save histories
                 foreach ($removetenant as $retailer_id) {
                     // insert tenant/merchant to campaign history
-                    $tenantstatus = Tenant::getStatus($retailer_id);
-                    if ($tenantstatus === 'active') {
-                        $rowcost = CampaignHistory::getRowCost($promotion_id, $status, $actionhistory, $now, TRUE)->first();
-                        if (! empty($rowcost)) {
-                            $tenanthistory = new CampaignHistory();
-                            $tenanthistory->campaign_type = 'coupon';
-                            $tenanthistory->campaign_id = $promotion_id;
-                            $tenanthistory->campaign_external_value = $retailer_id;
-                            $tenanthistory->campaign_history_action_id = $addtenantid;
-                            $tenanthistory->number_active_tenants = $rowcost->tenants;
-                            $tenanthistory->campaign_cost = $rowcost->cost;
-                            $tenanthistory->created_by = $this->api->user->user_id;
-                            $tenanthistory->modified_by = $this->api->user->user_id;
-                            $tenanthistory->save();
-                        }
+                    $tenantstatus = CampaignLocation::select('status')->where('merchant_id', $retailer_id)->first();
+                    $spendingrule = SpendingRule::select('with_spending')->where('object_id', $retailer_id)->first();
+
+                    if ($spendingrule) {
+                        $withSpending = 'Y';
+                    } else {
+                        $withSpending = 'N';
+                    }
+
+                    if (($tenantstatus->status === 'active') && ($withSpending === 'Y')) {
+                        $tenanthistory = new CampaignHistory();
+                        $tenanthistory->campaign_type = 'coupon';
+                        $tenanthistory->campaign_id = $promotion_id;
+                        $tenanthistory->campaign_external_value = $retailer_id;
+                        $tenanthistory->campaign_history_action_id = $addtenantid;
+                        $tenanthistory->number_active_tenants = 0;
+                        $tenanthistory->campaign_cost = 0;
+                        $tenanthistory->created_by = $this->api->user->user_id;
+                        $tenanthistory->modified_by = $this->api->user->user_id;
+                        $tenanthistory->save();
                     }
                 }
             }
             if (! empty($addtenant)) {
                 $actionhistory = 'add';
                 $addtenantid = CampaignHistoryAction::getIdFromAction('add_tenant');
+
                 //save histories
                 foreach ($addtenant as $retailer_id) {
                     // insert tenant/merchant to campaign history
-                    $tenantstatus = Tenant::getStatus($retailer_id);
-                    if ($tenantstatus === 'active') {
-                        $rowcost = CampaignHistory::getRowCost($promotion_id, $status, $actionhistory, $now, TRUE)->first();
-                        if (! empty($rowcost)) {
-                            $tenanthistory = new CampaignHistory();
-                            $tenanthistory->campaign_type = 'coupon';
-                            $tenanthistory->campaign_id = $promotion_id;
-                            $tenanthistory->campaign_external_value = $retailer_id;
-                            $tenanthistory->campaign_history_action_id = $addtenantid;
-                            $tenanthistory->number_active_tenants = $rowcost->tenants;
-                            $tenanthistory->campaign_cost = $rowcost->cost;
-                            $tenanthistory->created_by = $this->api->user->user_id;
-                            $tenanthistory->modified_by = $this->api->user->user_id;
-                            $tenanthistory->save();
-                        }
+                    $tenantstatus = CampaignLocation::select('status')->where('merchant_id', $retailer_id)->first();
+                    $spendingrule = SpendingRule::select('with_spending')->where('object_id', $retailer_id)->first();
+
+                    if ($spendingrule) {
+                        $withSpending = 'Y';
+                    } else {
+                        $withSpending = 'N';
+                    }
+
+                    if (($tenantstatus->status === 'active') && ($withSpending === 'Y')) {
+                        $tenanthistory = new CampaignHistory();
+                        $tenanthistory->campaign_type = 'coupon';
+                        $tenanthistory->campaign_id = $promotion_id;
+                        $tenanthistory->campaign_external_value = $retailer_id;
+                        $tenanthistory->campaign_history_action_id = $addtenantid;
+                        $tenanthistory->number_active_tenants = 0;
+                        $tenanthistory->campaign_cost = 0;
+                        $tenanthistory->created_by = $this->api->user->user_id;
+                        $tenanthistory->modified_by = $this->api->user->user_id;
+                        $tenanthistory->save();
                     }
                 }
             }
@@ -1230,8 +1255,6 @@ class CouponAPIController extends ControllerAPI
             });
 
             $updatedcoupon->modified_by = $this->api->user->user_id;
-
-
 
             //  save coupon default language
             OrbitInput::post('promotion_name', function($promotion_name) use ($updatedcoupon_default_language) {
@@ -1424,22 +1447,17 @@ class CouponAPIController extends ControllerAPI
                 }
             });
 
-            OrbitInput::post('is_all_age', function($is_all_age) use ($updatedcoupon, $promotion_id) {
-                $updatedcoupon->is_all_age = $is_all_age;
-                if ($is_all_age == 'Y') {
-                    $deleted_campaign_ages = CampaignAge::where('campaign_id', '=', $promotion_id)
-                                                            ->where('campaign_type', '=', 'coupon');
-                    $deleted_campaign_ages->delete();
-                }
-            });
+            OrbitInput::post('link_to_tenant_ids', function($link_to_tenant_ids) use ($promotion_id) {
+                // validating link_to_tenant_ids.
+                foreach ($link_to_tenant_ids as $link_to_tenant_json) {
+                    $data = @json_decode($link_to_tenant_json);
+                    $tenant_id = $data->tenant_id;
+                    $mall_id = $data->mall_id;
 
-            OrbitInput::post('retailer_ids', function($retailer_ids) use ($updatedcoupon) {
-                // validate retailer_ids
-                $retailer_ids = (array) $retailer_ids;
-                foreach ($retailer_ids as $retailer_id_check) {
                     $validator = Validator::make(
                         array(
-                            'retailer_id'   => $retailer_id_check,
+                            'retailer_id'   => $tenant_id,
+
                         ),
                         array(
                             'retailer_id'   => 'orbit.empty.tenant',
@@ -1457,12 +1475,101 @@ class CouponAPIController extends ControllerAPI
                     Event::fire('orbit.coupon.postupdatecoupon.after.retailervalidation', array($this, $validator));
                 }
 
-                // sync new set of retailer ids
-                $updatedcoupon->tenants()->sync($retailer_ids);
+                // Delete old data
+                $delete_retailer = CouponRetailer::where('promotion_id', '=', $promotion_id);
+                $delete_retailer->delete();
 
-                // reload tenants relation
-                $updatedcoupon->load('tenants');
+                // Insert new data
+                $retailers = array();
+                $isMall = 'tenant';
+                $mallid = array();
+                foreach ($link_to_tenant_ids as $retailer_id) {
+                    $data = @json_decode($retailer_id);
+                    $tenant_id = $data->tenant_id;
+                    $mall_id = $data->mall_id;
+
+                    if(! in_array($mall_id, $mallid)) {
+                        $mallid[] = $mall_id;
+                    }
+
+                    if ($tenant_id === $mall_id) {
+                        $isMall = 'mall';
+                    }
+
+                    $retailer = new CouponRetailer();
+                    $retailer->promotion_id = $promotion_id;
+                    $retailer->retailer_id = $tenant_id;
+                    $retailer->object_type = $isMall;
+                    $retailer->save();
+                }
             });
+
+            OrbitInput::post('retailer_ids', function($retailer_ids) use ($promotion_id) {
+                // validating retailer_ids.
+                foreach ($retailer_ids as $retailer_id_json) {
+                    $data = @json_decode($retailer_id_json);
+                    $tenant_id = $data->tenant_id;
+                    $mall_id = $data->mall_id;
+
+                    $validator = Validator::make(
+                        array(
+                            'retailer_id'   => $tenant_id,
+
+                        ),
+                        array(
+                            'retailer_id'   => 'orbit.empty.tenant',
+                        )
+                    );
+
+                    Event::fire('orbit.coupon.postupdatecoupon.before.retailervalidation', array($this, $validator));
+
+                    // Run the validation
+                    if ($validator->fails()) {
+                        $errorMessage = $validator->messages()->first();
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
+
+                    Event::fire('orbit.coupon.postupdatecoupon.after.retailervalidation', array($this, $validator));
+                }
+
+                // Delete old data
+                $delete_retailer = CouponRetailerRedeem::where('promotion_id', '=', $promotion_id);
+                $delete_retailer->delete();
+
+                // Insert new data
+                $retailers = array();
+                $isMall = 'tenant';
+                $mallid = array();
+                foreach ($retailer_ids as $retailer_id) {
+                    $data = @json_decode($retailer_id);
+                    $tenant_id = $data->tenant_id;
+                    $mall_id = $data->mall_id;
+
+                    if(! in_array($mall_id, $mallid)) {
+                        $mallid[] = $mall_id;
+                    }
+
+                    if ($tenant_id === $mall_id) {
+                        $isMall = 'mall';
+                    }
+
+                    $retailer = new CouponRetailerRedeem();
+                    $retailer->promotion_id = $promotion_id;
+                    $retailer->retailer_id = $tenant_id;
+                    $retailer->object_type = $isMall;
+                    $retailer->save();
+                }
+            });
+
+            OrbitInput::post('is_all_age', function($is_all_age) use ($updatedcoupon, $promotion_id) {
+                $updatedcoupon->is_all_age = $is_all_age;
+                if ($is_all_age == 'Y') {
+                    $deleted_campaign_ages = CampaignAge::where('campaign_id', '=', $promotion_id)
+                                                            ->where('campaign_type', '=', 'coupon');
+                    $deleted_campaign_ages->delete();
+                }
+            });
+
 
             OrbitInput::post('employee_user_ids', function($employee_user_ids) use ($updatedcoupon) {
                 // validate employee_user_ids
@@ -1492,36 +1599,6 @@ class CouponAPIController extends ControllerAPI
 
                 // reload tenants relation
                 $updatedcoupon->load('employee');
-            });
-
-            OrbitInput::post('link_to_tenant_ids', function($retailer_ids) use ($updatedcoupon) {
-                // validate retailer_ids
-                $retailer_ids = (array) $retailer_ids;
-                foreach ($retailer_ids as $retailer_id_check) {
-                    $validator = Validator::make(
-                        array(
-                            'retailer_id'   => $retailer_id_check,
-                        ),
-                        array(
-                            'retailer_id'   => 'orbit.empty.tenant',
-                        )
-                    );
-
-                    Event::fire('orbit.coupon.postupdatecoupon.before.retailervalidation', array($this, $validator));
-
-                    // Run the validation
-                    if ($validator->fails()) {
-                        $errorMessage = $validator->messages()->first();
-                        OrbitShopAPI::throwInvalidArgument($errorMessage);
-                    }
-
-                    Event::fire('orbit.coupon.postupdatecoupon.after.retailervalidation', array($this, $validator));
-                }
-                // sync new set of retailer ids
-                $updatedcoupon->linkToTenants()->sync($retailer_ids);
-
-                // reload tenants relation
-                $updatedcoupon->load('linkToTenants');
             });
 
             OrbitInput::post('gender_ids', function($gender_ids) use ($updatedcoupon, $promotion_id) {
@@ -1653,6 +1730,47 @@ class CouponAPIController extends ControllerAPI
                 $updatedcoupon->keywords = $couponKeywords;
             });
 
+            //calculate spending
+            foreach ($mallid as $mall) {
+                $campaign_id = $promotion_id;
+                $campaign_type = 'coupon';
+                $procResults = DB::statement("CALL prc_campaign_detailed_cost({$this->quote($campaign_id)}, {$this->quote($campaign_type)}, NULL, NULL, {$this->quote($mall)})");
+
+                if ($procResults === false) {
+                    // Do Nothing
+                }
+
+                $getspending = DB::table(DB::raw('tmp_campaign_cost_detail'))->first();
+
+                $mallTimezone = $this->getTimezone($mall);
+                $nowMall = Carbon::now($mallTimezone);
+                $dateNowMall = $nowMall->toDateString();
+                $beginMall = date('Y-m-d', strtotime($begin_date));
+                $endMall = date('Y-m-d', strtotime($end_date));
+
+                // only calculate spending when update date between start and date of campaign
+                if ($dateNowMall >= $beginMall && $dateNowMall <= $endMall) {
+                    $daily = CampaignDailySpending::where('date', '=', $getspending->date_in_utc)->where('campaign_id', '=', $campaign_id)->where('mall_id', '=', $mall)->first();
+
+                    if ($daily['campaign_daily_spending_id']) {
+                        $dailySpending = CampaignDailySpending::find($daily['campaign_daily_spending_id']);
+                    } else {
+                        $dailySpending = new CampaignDailySpending;
+                    }
+
+                    $dailySpending = CampaignDailySpending::firstOrCreate(array('date' => $getspending->date_in_utc, 'campaign_id' => $campaign_id, 'mall_id' => $mall));
+                    $dailySpending->date = $getspending->date_in_utc;
+                    $dailySpending->campaign_type = $campaign_type;
+                    $dailySpending->campaign_id = $campaign_id;
+                    $dailySpending->mall_id = $mall;
+                    $dailySpending->number_active_tenants = $getspending->campaign_number_tenant;
+                    $dailySpending->base_price = $getspending->base_price;
+                    $dailySpending->campaign_status = $getspending->campaign_status;
+                    $dailySpending->total_spending = $getspending->daily_cost;
+                    $dailySpending->save();
+                }
+            }
+
             Event::fire('orbit.coupon.postupdatecoupon.after.save', array($this, $updatedcoupon));
 
             OrbitInput::post('translations', function($translation_json_string) use ($updatedcoupon) {
@@ -1661,22 +1779,6 @@ class CouponAPIController extends ControllerAPI
 
             $this->response->data = $updatedcoupon;
             $this->response->data->translation_default = $updatedcoupon_default_language;
-
-            // Update campaign spending
-            $mall = App::make('orbit.empty.merchant');
-            $now = Carbon::now($mall->timezone->timezone_name);
-            $timezone = $this->getTimezone($mall->merchant_id);
-            $timezoneOffset = $this->getTimezoneOffset($timezone);
-
-            $sqlSpending = "(SELECT IFNULL(fnc_campaign_cost({$this->quote($promotion_id)}, 'coupon', {$this->quote($begin_date)}, {$this->quote($now)}, {$this->quote($timezoneOffset)}), 0.00) AS spending) AS B";
-            $spending = DB::table(DB::raw($sqlSpending))->get();
-
-            $campaignspending = $spending[0]->spending;
-
-            $updatedcamapign = CampaignSpendingCount::where('campaign_id',$promotion_id)->first();
-            $updatedcamapign->end_date =$end_date;
-            $updatedcamapign->spending = $campaignspending;
-            $updatedcamapign->save();
 
             // Commit the changes
             $this->commit();

@@ -24,6 +24,11 @@ class Mall extends Eloquent
     use MallTypeTrait;
 
     /**
+     * Trait related with Geolocation
+     */
+    use MerchantGeolocTrait;
+
+    /**
      * Column name which determine the type of Mall or Tenant.
      */
     const OBJECT_TYPE = 'object_type';
@@ -484,4 +489,3 @@ class Mall extends Eloquent
         return $this->hasMany('MerchantSocialMedia', 'merchant_id', 'merchant_id');
     }
 }
-?>

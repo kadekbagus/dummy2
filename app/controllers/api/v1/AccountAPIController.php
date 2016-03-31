@@ -1,5 +1,6 @@
 <?php
 
+use Carbon\Carbon;
 use OrbitShop\API\v1\ControllerAPI;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
 use OrbitShop\API\v1\OrbitShopAPI;
@@ -245,13 +246,27 @@ class AccountAPIController extends ControllerAPI
         }
 
         // Filter by Creation Date
-        if (Input::get('creation_date_from') && Input::get('creation_date_to')) {
+        if (Input::get('creation_date_from')) {
 
-            // Let's make the datetime
-            $creationDateTimeFrom = Input::get('creation_date_from').' 00:00:00';
-            $creationDateTimeTo = Input::get('creation_date_to').' 23:59:59';
+            // From
+            $creationDateTimeFrom = Carbon::createFromFormat('Y-m-d H:i:s', Input::get('creation_date_from'), 'Asia/Singapore')
+                ->format('Y-m-d H:i:s');
 
-            $pmpAccounts->where('users.created_at', '>=', $creationDateTimeFrom)->where('users.created_at', '<=', $creationDateTimeTo);
+            $pmpAccounts->where('users.created_at', '>=', $creationDateTimeFrom);
+
+            if (Input::get('creation_date_to')) {
+
+                // To
+                $creationDateTimeTo = Carbon::createFromFormat('Y-m-d H:i:s', Input::get('creation_date_to'), 'Asia/Singapore')
+                    ->format('Y-m-d H:i:s');
+
+                $pmpAccounts->where('users.created_at', '<=', $creationDateTimeTo);
+            }
+        }
+
+        // Filter by Role Name
+        if (Input::get('role_name')) {
+            $pmpAccounts->whereRoleName(Input::get('role_name'));
         }
 
         // Get total row count
@@ -286,7 +301,10 @@ class AccountAPIController extends ControllerAPI
                 'role_name'    => $row->role_name,
                 'tenant_count' => count($tenantAtMallArray),
                 'tenants'      => $tenantAtMallArray,
-                'created_at'   => $row->created_at->setTimezone('Asia/Singapore')->format('d F Y H:i:s'),
+
+                // Taken from getUserCreatedAtAttribute() in the model
+                'created_at'   => $row->user_created_at->setTimezone('Asia/Singapore')->format('d F Y H:i:s'),
+                
                 'status'       => $row->campaignAccount->status,
                 'id'           => $row->user_id,
 

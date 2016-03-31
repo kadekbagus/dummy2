@@ -18,6 +18,7 @@ class EmployeeAPIController extends ControllerAPI
     protected $employeeModifiyRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee'];
     protected $pmpEmployeeViewRoles = ['campaign owner', 'campaign employee'];
     protected $pmpEmployeeModifiyRoles = ['campaign owner', 'campaign employee'];
+    protected $pmpEmployeeCreateRoles = ['campaign owner'];
 
     /**
      * Flag to return the query builder.
@@ -634,8 +635,6 @@ class EmployeeAPIController extends ControllerAPI
      * @param string    `password`                (required) - Password for the account
      * @param string    `password_confirmation`   (required) - Confirmation password
      * @param string    `employee_role`           (required) - Role of the employee, i.e: 'cashier', 'manager', 'supervisor'
-     * @param array     `retailer_ids`            (optional) - List of Retailer IDs
-     * @param string    `cs_verification_numbers` (optional) - Unique verification number
      * @param array     `status`                  (optional) - 'active' or 'inactive'
      * @return Illuminate\Support\Facades\Response
      */
@@ -663,7 +662,7 @@ class EmployeeAPIController extends ControllerAPI
 
             // @Todo: Use ACL authentication instead
             $role = $user->role;
-            $validRoles = $this->pmpEmployeeModifiyRoles;
+            $validRoles = $this->pmpEmployeeCreateRoles;
             if (! in_array( strtolower($role->role_name), $validRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
@@ -710,7 +709,7 @@ class EmployeeAPIController extends ControllerAPI
                     'firstname'               => 'required',
                     'lastname'                => 'required',
                     'date_of_birth'           => 'date_format:Y-m-d',
-                    'employee_id_char'        => 'orbit.exists.employeeid:' . $myRetailerIds,
+                    'employee_id_char'        => 'orbit.exists.pmpemployeeid',
                     'username'                => 'required|orbit.exists.username.mall',
                     'password'                => 'required|min:6|confirmed',
                     'employee_role'           => 'required|orbit.empty.employee.role',
@@ -721,6 +720,7 @@ class EmployeeAPIController extends ControllerAPI
                     'orbit.empty.employee.role'        => $errorMessage['orbit.empty.employee.role'],
                     'orbit.exist.verification.numbers' => 'The verification number already used by other',
                     'alpha_num' => 'The verification number must letter and number.',
+                    'orbit.exists.pmpemployeeid' => 'Employee id not available',
                 )
             );
 
@@ -788,6 +788,19 @@ class EmployeeAPIController extends ControllerAPI
             $newCampaignAccount->parent_user_id = $user->user_id;
             $newCampaignAccount->status = $newUser->status;
             $newCampaignAccount->save(); 
+
+            // insert into user merchant
+            $userMerchant = UserMerchant::select('user_id', 'merchant_id', 'object_type')->where('user_id', '=', $user->user_id)->get();
+
+            if (! empty($userMerchant) ) {
+                foreach($userMerchant as $key => $value) {
+                    $newUserMerchant = new UserMerchant();
+                    $newUserMerchant->user_id = $newUser->user_id;
+                    $newUserMerchant->merchant_id = $value->merchant_id;
+                    $newUserMerchant->object_type = $value->object_type;
+                    $newUserMerchant->save();
+                }
+            }
 
             Event::fire('orbit.employee.postnewpmpemployee.after.save', array($this, $newUser));
             $this->response->data = $newUser;
@@ -3731,13 +3744,7 @@ class EmployeeAPIController extends ControllerAPI
         Validator::extend('orbit.exists.pmpemployeeid_but_me', function ($attribute, $value, $parameters) {
             $user = $this->api->user;
 
-            $updateItSelf = FALSE;
-
             $userId = $parameters[0];
-
-            if ( $user->user_id === $userId) {
-                $updateItSelf = TRUE;
-            }
 
             $parentId = CampaignAccount::select('parent_user_id')
                                         ->where('user_id', '=', $user->user_id)
@@ -3746,7 +3753,7 @@ class EmployeeAPIController extends ControllerAPI
             if ( empty($parentId) ) {
                 $parentUserId = $user->user_id;
             } else {
-                $parentUserId = $parentId;
+                $parentUserId = $parentId->parent_user_id;
             }
 
             $employee = CampaignAccount::select('campaign_account.user_id')
@@ -3760,7 +3767,7 @@ class EmployeeAPIController extends ControllerAPI
 
             if (! empty($employee) ) {
 
-                if (! $updateItSelf) {
+                if ($employee->user_id != $user->user_id) {
                     App::instance('orbit.exists.pmpemployeeid', $employee);
                     return FALSE;
                 }
@@ -3768,6 +3775,39 @@ class EmployeeAPIController extends ControllerAPI
 
             return TRUE;
         });
+
+
+
+        Validator::extend('orbit.exists.pmpemployeeid', function ($attribute, $value, $parameters) {
+            $user = $this->api->user;
+
+            $parentId = CampaignAccount::select('parent_user_id')
+                                        ->where('user_id', '=', $user->user_id)
+                                        ->first();
+
+            if ( sizeof($parentId) > 0) {
+                $parentUserId = $user->user_id;
+            } else {
+                $parentUserId = $parentId->parent_user_id;
+            }
+
+            $employee = CampaignAccount::select('campaign_account.user_id')
+                                        ->leftJoin('employees', 'employees.user_id', '=', 'campaign_account.user_id')
+                                        ->where(function ($query) use ($user, $parentUserId) {
+                                            $query->where('campaign_account.user_id', '=', $parentUserId)
+                                                ->orWhere('campaign_account.parent_user_id', '=', $parentUserId);
+                                            })
+                                        ->where('employees.employee_id_char', '=', $value)
+                                        ->first();
+
+            if (! empty($employee)) {
+                App::instance('orbit.exists.pmpemployeeid', $employee);
+                return FALSE;
+            }
+
+            return TRUE;
+        });
+
     }
 
     public function setReturnBuilder($bool)
