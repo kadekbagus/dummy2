@@ -12,41 +12,6 @@ use OrbitShop\API\v1\OrbitShopAPI;
  */
 class AccountAPIController extends ControllerAPI
 {
-    /** @var array The list columns. */
-    protected $listColumns = [
-        'account_name' => [
-            'title' => 'Account Name',
-            'sort_key' => 'account_name',
-        ],
-        'company_name' => [
-            'title' => 'Company Name',
-            'sort_key' => 'company_name',
-        ],
-        'city' => [
-            'title' => 'Location',
-            'sort_key' => 'city',
-        ],
-        'role_name' => [
-            'title' => 'Role',
-            'sort_key' => 'role_name',
-        ],
-        'tenant_count' => [
-            'title' => 'Number of Tenant(s)',
-            'sort_key' => 'tenant_count',
-        ],
-        'tenants' => [
-            'title' => 'Tenant(s)',
-        ],
-        'created_at' => [
-            'title' => 'Creation Date',
-            'sort_key' => 'created_at',
-        ],
-        'status' => [
-            'title' => 'Status',
-            'sort_key' => 'status',
-        ],
-    ];
-
     /**
      * The main method
      *
@@ -324,7 +289,7 @@ class AccountAPIController extends ControllerAPI
             ];
         }
 
-        $data->columns = $this->listColumns;
+        $data->columns = Config::get('account.listColumns');
         $data->records = $records;
 
         $this->data = $data;
