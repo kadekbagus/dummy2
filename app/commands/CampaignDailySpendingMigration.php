@@ -39,7 +39,7 @@ class CampaignDailySpendingMigration extends Command {
 	public function fire()
 	{
         // Start time for log
-        $timeStart = microtime(true);
+        $started_time = microtime(true);
 
         // ========================================================================
 
@@ -55,6 +55,7 @@ class CampaignDailySpendingMigration extends Command {
 
         // =================== Migration for news and promotions ===================
         $idKeyNewsPromotions = 1;
+        $totalCampaign = 0;
         $newsAndPromotions = News::excludeDeleted()
         // ->where('news_id', 'Ki2WQzxo8OpvWTF1')
         ->get();
@@ -115,6 +116,7 @@ class CampaignDailySpendingMigration extends Command {
                     }
                 }
 
+                $totalCampaign++;
             }
         }
         $this->info('Success, Inserted campaign daily spending for news !');
@@ -181,18 +183,14 @@ class CampaignDailySpendingMigration extends Command {
                     }
                 }
 
-
+                $totalCampaign++;
             }
         }
         $this->info('Success, Inserted campaign daily spending for coupon !');
 
         // =================== Check time ===================
+        $this->info('Migration successfully, Loaded time  = ' . (microtime(true) - $started_time) . ' ms, total campaign data = ' . $totalCampaign . ', total inserted data = ' . $idKeyCoupon );
 
-        $diff = microtime(true) - $timeStart;
-        $sec = intval($diff);
-        $micro = ($diff - $sec);
-
-        $this->info('Success, This migration. Loaded time = ' . $micro . ' ms');
 	}
 
 	/**
