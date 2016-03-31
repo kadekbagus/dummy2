@@ -69,7 +69,7 @@ return array(
     'agreement' => array(
         // This should be frontend URL not backend
         'mall'  => 'http://portal.orbit-mall.here/#/service-agreement?token=%s',
-        'pmp'   => 'http://pmp.orbit-mall.here/#/service-agreement?token=%s'
+        'pmp'   => 'http://pmp-portal.orbit-mall.here/?mode=pmp/#/service-agreement?token=%s'
     ),
 
     'shop' => array(

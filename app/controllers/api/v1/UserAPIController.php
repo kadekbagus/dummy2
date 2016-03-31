@@ -1861,9 +1861,43 @@ class UserAPIController extends ControllerAPI
 
             $users->orderBy($sortBy, $sortMode);
 
+            $summary = [];
+            $summary['Total Customers'] = RecordCounter::create($_users)->count();
+            if (Input::get('name_like')) {
+                $summary['Filter by Customer Name'] = Input::get('name_like');
+            }
+
+            if (Input::get('email_like')) {
+                $summary['Filter by Email'] = Input::get('email_like');
+            }
+
+            if (Input::get('gender') && is_array(Input::get('gender'))) {
+                foreach (Input::get('gender') as $code) {
+                    if ($code == 'm') $genders[] = 'Male';
+                    if ($code == 'f') $genders[] = 'Female';
+                }
+
+                $summary['Filter by Gender'] = implode(', ', $genders);
+            }
+
+            if (Input::get('membership_number_like')) {
+                $summary['Filter by Membership Number'] = Input::get('membership_number_like');
+            }
+
+            if (Input::get('status') && is_array(Input::get('status'))) {
+                foreach (Input::get('status') as $status) {
+                    $statuses[] = ucfirst($status);
+                }
+
+                $summary['Filter by Status'] = implode(', ', $statuses);
+            }
+
             // Return the instance of Query Builder
             if ($this->returnBuilder) {
-                return ['builder' => $users, 'count' => RecordCounter::create($_users)->count()];
+                return [
+                    'builder' => $users,
+                    'summary' => $summary,
+                ];
             }
 
             $totalUsers = RecordCounter::create($_users)->count();

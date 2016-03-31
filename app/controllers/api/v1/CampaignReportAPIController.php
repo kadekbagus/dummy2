@@ -14,7 +14,7 @@ use Helper\EloquentRecordCounter as RecordCounter;
 
 class CampaignReportAPIController extends ControllerAPI
 {
-    protected $viewRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee', 'mall customer service'];
+    protected $viewRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee', 'mall customer service', 'campaign admin'];
 
     /**
      * Flag to return the query builder.

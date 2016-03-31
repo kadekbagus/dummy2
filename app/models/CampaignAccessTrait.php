@@ -38,7 +38,7 @@ trait CampaignAccessTrait
                 throw new Exception("Wrong campaign type supplied", 1);
         }
 
-        if ($user->isPMPAdmin())
+        if ($user->isCampaignAdmin())
         {
             // Return the query builder as it is
             return $builder;
