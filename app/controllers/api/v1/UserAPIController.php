@@ -3310,6 +3310,7 @@ class UserAPIController extends ControllerAPI
 
             $url = Config::get('orbit.registration.mobile.cloud_login_url');
             $email = OrbitInput::get('email');
+            $password = OrbitInput::get('password');
             $retailer_id = OrbitInput::get('current_mall');
             $from = OrbitInput::get('from');
             $check_only = OrbitInput::get('check_only', 'no') === 'yes';
@@ -3340,6 +3341,7 @@ class UserAPIController extends ControllerAPI
 
             $values = [
                 'email' => $email,
+                'password' => $password,
                 'retailer_id' => $retailer_id,
                 'callback_url' => URL::route('customer-login-callback-show-id'),
                 'payload' => '',
