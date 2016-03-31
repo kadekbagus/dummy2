@@ -324,6 +324,12 @@ return array(
             'per_page'      => 15,
             'max_record'    => 100,
         ),
+
+        // Mall list by geolocation
+        'geo_location' => array(
+            'per_page'      => 20,
+            'max_record'    => 100,
+        ),
     ),
 
     'registration' => array(

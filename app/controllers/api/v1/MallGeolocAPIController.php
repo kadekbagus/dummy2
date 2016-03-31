@@ -31,7 +31,6 @@ class MallGeolocAPIController extends ControllerAPI
     {
         $httpCode = 200;
         try {
-
             $lat = OrbitInput::get('latitude', null);
             $long = OrbitInput::get('longitude', null);
             $distance = OrbitInput::get('distance');
@@ -39,12 +38,68 @@ class MallGeolocAPIController extends ControllerAPI
             if (empty($distance)) {
                 $distance = Config::get('orbit.geo_location.distance', 10);
             }
-            $malls = Mall::excludeDeleted()->select('merchants.*')->nearBy($lat, $long, $distance);
 
-            // Filter mall by name
-            OrbitInput::get('mall_name_like', function ($mallname) use ($malls) {
-                $malls->where('merchants.name', 'like', "%$mallname%");
+            $malls = Mall::excludeDeleted()->select('merchants.*')->includeLatLong()->nearBy($lat, $long, $distance);
+
+            // Filter
+            OrbitInput::get('keyword_search', function ($keyword) use ($malls) {
+                $mainKeyword = explode(" ", $keyword);
+
+                $malls->where(function($q) use ($mainKeyword) {
+                    foreach ($mainKeyword as $key => $value) {
+                        $q->orWhere(function($r) use ($value) {
+                            $r->where('merchants.name', 'like', "%$value%")
+                                ->orWhere('merchants.description', 'like', "%$value%")
+                                ->orWhere('merchants.city', 'like', "%$value%");
+                        });
+                    }
+                });
+
             });
+
+            // Get the maximum record
+            $maxRecord = (int) Config::get('orbit.pagination.geo_location.max_record');
+            if ($maxRecord <= 0) {
+                // Fallback
+                $maxRecord = (int) Config::get('orbit.pagination.max_record');
+                if ($maxRecord <= 0) {
+                    $maxRecord = 20;
+                }
+            }
+            // Get default per page (take)
+            $perPage = (int) Config::get('orbit.pagination.geo_location.per_page');
+            if ($perPage <= 0) {
+                // Fallback
+                $perPage = (int) Config::get('orbit.pagination.per_page');
+                if ($perPage <= 0) {
+                    $perPage = 20;
+                }
+            }
+
+            // Get the take args
+            $take = $perPage;
+            OrbitInput::get('take', function ($_take) use (&$take, $maxRecord) {
+                if ($_take > $maxRecord) {
+                    $_take = $maxRecord;
+                }
+                $take = $_take;
+
+                if ((int)$take <= 0) {
+                    $take = $maxRecord;
+                }
+            });
+            $malls->take($take);
+
+            $skip = 0;
+            OrbitInput::get('skip', function($_skip) use (&$skip, $malls)
+            {
+                if ($_skip < 0) {
+                    $_skip = 0;
+                }
+
+                $skip = $_skip;
+            });
+            $malls->skip($skip);
 
             $_malls = clone $malls;
 
@@ -120,7 +175,52 @@ class MallGeolocAPIController extends ControllerAPI
             $lat = OrbitInput::get('latitude', null);
             $long = OrbitInput::get('longitude', null);
 
-            $malls = Mall::excludeDeleted()->select('merchants.*')->InsideArea($lat, $long);
+            $malls = Mall::excludeDeleted()->IncludeLatLong()->select('merchants.*')->includeLatLong()->InsideArea($lat, $long);
+
+            // Get the maximum record
+            $maxRecord = (int) Config::get('orbit.pagination.geo_location.max_record');
+            if ($maxRecord <= 0) {
+                // Fallback
+                $maxRecord = (int) Config::get('orbit.pagination.max_record');
+                if ($maxRecord <= 0) {
+                    $maxRecord = 20;
+                }
+            }
+
+            // Get default per page (take)
+            $perPage = (int) Config::get('orbit.pagination.geo_location.per_page');
+            if ($perPage <= 0) {
+                // Fallback
+                $perPage = (int) Config::get('orbit.pagination.per_page');
+                if ($perPage <= 0) {
+                    $perPage = 20;
+                }
+            }
+
+            // Get the take args
+            $take = $perPage;
+            OrbitInput::get('take', function ($_take) use (&$take, $maxRecord) {
+                if ($_take > $maxRecord) {
+                    $_take = $maxRecord;
+                }
+                $take = $_take;
+
+                if ((int)$take <= 0) {
+                    $take = $maxRecord;
+                }
+            });
+            $malls->take($take);
+
+            $skip = 0;
+            OrbitInput::get('skip', function($_skip) use (&$skip, $malls)
+            {
+                if ($_skip < 0) {
+                    $_skip = 0;
+                }
+
+                $skip = $_skip;
+            });
+            $malls->skip($skip);
 
             $_malls = clone $malls;
 
