@@ -81,7 +81,7 @@ class ConsumerPrinterController extends DataPrinterController
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Customer List', '', '', '', '', '','','','','');
                 
                 foreach ($summary as $field => $value) {
-                    printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', $field, $value, '', '', '', '','','','','');
+                    printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '"'.$field.'"', '"'.$value.'"', '', '', '', '','','','','');
                 }
 
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','','','');
