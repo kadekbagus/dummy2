@@ -69,7 +69,7 @@ return array(
     'agreement' => array(
         // This should be frontend URL not backend
         'mall'  => 'http://portal.orbit-mall.here/#/service-agreement?token=%s',
-        'pmp'   => 'http://pmp.orbit-mall.here/#/service-agreement?token=%s'
+        'pmp'   => 'http://pmp-portal.orbit-mall.here/?mode=pmp/#/service-agreement?token=%s'
     ),
 
     'shop' => array(
@@ -104,6 +104,9 @@ return array(
 
         // number of seconds to delay the display of campaign pop up
         'event_delay' => 2.5, //in second(s)
+
+        // after logout url (will be /customer if empty)
+        'after_logout_url' => '',
     ),
 
     // General contact data
@@ -322,6 +325,12 @@ return array(
         // User Report
         'user_report' => array(
             'per_page'      => 15,
+            'max_record'    => 100,
+        ),
+
+        // Mall list by geolocation
+        'geo_location' => array(
+            'per_page'      => 20,
             'max_record'    => 100,
         ),
     ),

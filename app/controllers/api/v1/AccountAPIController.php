@@ -12,40 +12,37 @@ use OrbitShop\API\v1\OrbitShopAPI;
  */
 class AccountAPIController extends ControllerAPI
 {
-    /** @var array The list columns. */
-    protected $listColumns = [
-        'account_name' => [
-            'title' => 'Account Name',
-            'sort_key' => 'account_name',
-        ],
-        'company_name' => [
-            'title' => 'Company Name',
-            'sort_key' => 'company_name',
-        ],
-        'city' => [
-            'title' => 'Location',
-            'sort_key' => 'city',
-        ],
-        'role_name' => [
-            'title' => 'Role',
-            'sort_key' => 'role_name',
-        ],
-        'tenant_count' => [
-            'title' => 'Number of Tenant(s)',
-            'sort_key' => 'tenant_count',
-        ],
-        'tenants' => [
-            'title' => 'Tenant(s)',
-        ],
-        'created_at' => [
-            'title' => 'Creation Date',
-            'sort_key' => 'created_at',
-        ],
-        'status' => [
-            'title' => 'Status',
-            'sort_key' => 'status',
-        ],
-    ];
+    protected function createUpdateUserMerchant($user)
+    {
+        // Campaign Employees cannot change their tenants` ownership
+        if ($user->role->role_name == 'Campaign Employee') {
+            return;
+        }        
+
+        // First, set user_id as null
+        $currentUserMerchants = UserMerchant::whereUserId($user->user_id)->get();
+        foreach ($currentUserMerchants as $currentUserMerchant) {
+            $currentUserMerchant->user_id = null;
+            $currentUserMerchant->save();
+        }
+ 
+        // Then update the user_id with the submitted ones 
+        foreach (Input::get('merchant_ids') as $merchantId) { 
+
+            $userMerchant = UserMerchant::whereMerchantId($merchantId)->whereUserId($user->user_id)->first();
+            if ( ! $userMerchant) {
+                $userMerchant = new UserMerchant;
+            }
+
+            $userMerchant->user_id = $user->user_id; 
+            $userMerchant->merchant_id = $merchantId; 
+ 
+            // Get "object_type" from "merchants" table 
+            $userMerchant->object_type = CampaignLocation::find($merchantId)->object_type; 
+             
+            $userMerchant->save(); 
+        } 
+    }
 
     /**
      * The main method
@@ -153,17 +150,8 @@ class AccountAPIController extends ControllerAPI
         $campaignAccount->status = Input::get('status');
         $campaignAccount->save();
 
-        // Clean up user_merchant first
-        UserMerchant::whereUserId($user->user_id)->delete();
-
         // Save to user_merchant (1 to M)
-        foreach (Input::get('merchant_ids') as $merchantId) {
-            $userMerchant = new UserMerchant;
-            $userMerchant->user_id = $user->user_id;
-            $userMerchant->merchant_id = $merchantId;
-            $userMerchant->object_type = 'tenant';
-            $userMerchant->save();
-        }
+        $this->createUpdateUserMerchant($user);
 
         if ( ! $this->id) {
             // Save to "settings" table
@@ -264,6 +252,11 @@ class AccountAPIController extends ControllerAPI
             }
         }
 
+        // Filter by Role Name
+        if (Input::get('role_name')) {
+            $pmpAccounts->whereRoleName(Input::get('role_name'));
+        }
+
         // Get total row count
         $allRows = clone $pmpAccounts;
         $data->total_records = $allRows->count();
@@ -316,7 +309,7 @@ class AccountAPIController extends ControllerAPI
             ];
         }
 
-        $data->columns = $this->listColumns;
+        $data->columns = Config::get('account.listColumns');
         $data->records = $records;
 
         $this->data = $data;
@@ -353,13 +346,14 @@ class AccountAPIController extends ControllerAPI
             'address_line1'  => 'required',
             'city'           => 'required',
             'country_id'     => 'required',
-            'merchant_ids'   => 'required|array',
+            'merchant_ids'   => 'required|array|exists:merchants,merchant_id',
         ];
 
         if (Input::get('id')) {
             $rules['id'] = 'exists:users,user_id';
         } else {
             $rules['user_password'] = 'required';
+            $rules['user_email'] .= '|unique:users,user_email';
             $rules['account_name'] .= '|unique:campaign_account,account_name';
         }
 

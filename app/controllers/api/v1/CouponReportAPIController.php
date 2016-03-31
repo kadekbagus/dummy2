@@ -14,7 +14,7 @@ use Carbon\Carbon as Carbon;
 
 class CouponReportAPIController extends ControllerAPI
 {
-    protected $couponReportViewRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee', 'mall customer service'];
+    protected $couponReportViewRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee', 'mall customer service', 'campaign admin'];
     /**
      * Flag to return the query builder.
      *

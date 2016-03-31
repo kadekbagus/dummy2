@@ -74,6 +74,7 @@ use Artdarek\OAuth\Facade\OAuth;
 use UserSignin;
 use \WidgetClick;
 use \WidgetGroupName;
+use \Hash;
 
 class MobileCIAPIController extends BaseCIController
 {
@@ -94,7 +95,10 @@ class MobileCIAPIController extends BaseCIController
     {
         try {
             $email = trim(OrbitInput::post('email'));
+            $password = OrbitInput::post('password');
+            $password_confirmation = OrbitInput::post('password_confirmation');
             $payload = OrbitInput::post('payload');
+            $mode = OrbitInput::post('mode');
             $socmed_redirect_to = OrbitInput::post('socmed_redirect_to');
 
             if (Config::get('orbit.shop.guest_mode')) {
@@ -119,7 +123,7 @@ class MobileCIAPIController extends BaseCIController
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $payloadFromReg = $this->validateRegistrationData($email);
+            $payloadFromReg = $this->validateRegistrationData($email, $password, $password_confirmation);
 
             $retailer = $this->getRetailerInfo();
 
@@ -144,6 +148,14 @@ class MobileCIAPIController extends BaseCIController
             // for guests do not do this, guest users do not have UserAcquisition
             // and are synced to every box even if acquisition not present.
             if (is_object($user) && strtolower($user->role->role_name) != 'guest') {
+                // the login form should send the mode for login
+                // if login check the password
+                if($mode === 'login') {
+                    if (! Hash::check($password, $user->user_password)) {
+                        $message = Lang::get('validation.orbit.access.loginfailed');
+                        OrbitShopAPI::throwInvalidArgument($message);
+                    }
+                }
                 $acq = \UserAcquisition::where('user_id', $user->user_id)
                     ->where('acquirer_id', $retailer->merchant_id)
                     ->lockForUpdate()->first();
@@ -157,13 +169,15 @@ class MobileCIAPIController extends BaseCIController
             // if from cloud callback we do not redirect to cloud again
             // cloud callback sends apikey_id (and other ids) in GET
             $from_cloud_callback = OrbitInput::get('apikey_id', null) !== null;
-
             if (! is_object($user) || ($user->status === 'pending' && !$from_cloud_callback) ) {
+                if($mode === 'login') {
+                    return $this->loginStage2($user, $retailer);    
+                }
                 if (empty($payload)) {
                     $payload = $payloadFromReg;
                 }
 
-                return $this->redirectToCloud($email, $retailer, $payload, '', OrbitInput::post('mac_address', ''));
+                return $this->redirectToCloud($email, $password, $retailer, $payload, '', OrbitInput::post('mac_address', ''));
             } else {
                 return $this->loginStage2($user, $retailer);
             }
@@ -185,7 +199,7 @@ class MobileCIAPIController extends BaseCIController
             $this->response->code = $e->getCode();
             $this->response->status = $e->getLine();
             $this->response->message = $e->getMessage();
-            $this->response->data = $e->getFile();
+            $this->response->data = [$e->getMessage(), $e->getFile(), $e->getLine()];
 
             $this->rollback();
         }
@@ -210,7 +224,8 @@ class MobileCIAPIController extends BaseCIController
         } catch (Exception $e) {
         }
 
-        return \Redirect::to('/customer');
+        $after_logout_url = Config::get('orbit.shop.after_logout_url', '/customer');
+        return \Redirect::to($after_logout_url);
     }
 
     /**
@@ -7755,7 +7770,7 @@ class MobileCIAPIController extends BaseCIController
      * @param $retailer
      * @throws Exception
      */
-    protected function loginStage2($user, $retailer)
+    public function loginStage2($user, $retailer)
     {
         try {
             $notAllowedStatus = ['inactive'];
@@ -8093,7 +8108,7 @@ class MobileCIAPIController extends BaseCIController
      * @param Mall $retailer
      * @return \OrbitShop\API\v1\ResponseProvider|string
      */
-    private function redirectToCloud($email, $retailer, $payload = '', $from = '', $mac_address = '') {
+    private function redirectToCloud($email, $password, $retailer, $payload = '', $from = '', $mac_address = '') {
         $this->response->code = 302; // must not be 0
         $this->response->status = 'success';
         $this->response->message = 'Redirecting to cloud'; // stored in activity by IntermediateLoginController
@@ -8109,6 +8124,7 @@ class MobileCIAPIController extends BaseCIController
 
         $values = [
             'email' => $email,
+            'password' => $password,
             'retailer_id' => $retailer->merchant_id,
             'callback_url' => $callback_req->getUri(),
             'payload' => $payload,
@@ -8159,6 +8175,7 @@ class MobileCIAPIController extends BaseCIController
                 OrbitShopAPI::throwInvalidArgument('Retailer not found');
             }
             $email = OrbitInput::get('email');
+            $password = OrbitInput::get('password');
             $from = OrbitInput::get('from', 'form');
 
             $socialid = null;
@@ -8189,6 +8206,7 @@ class MobileCIAPIController extends BaseCIController
 
             if ($user === null) {
                 $_POST['email'] = $email;
+                $_POST['password'] = $password;
                 $_POST['from'] = $from;
                 $response = \LoginAPIController::create('raw')->setRetailerId(OrbitInput::get('retailer_id'))->setUseTransaction(false)->postRegisterUserInShop();
                 if ($response->code !== 0) {
@@ -8259,7 +8277,6 @@ class MobileCIAPIController extends BaseCIController
                 $dup_user = User::find($user->user_id);
                 $dup_user->touch();
             }
-
 
             $this->response->code = 0;
             $this->response->status = 'success';
@@ -8347,7 +8364,7 @@ class MobileCIAPIController extends BaseCIController
      * @return array|string
      * @throws Exception
      */
-    protected function validateRegistrationData($email)
+    protected function validateRegistrationData($email, $password, $password_confirmation)
     {
         // Only do the validation if there is 'mode=registration' on post body.
         $mode = OrbitInput::post('mode');
@@ -8373,12 +8390,16 @@ class MobileCIAPIController extends BaseCIController
                 'last_name'  => $lastname,
                 'gender'     => $gender,
                 'birth_date' => $birthdate,
+                'password_confirmation' => $password_confirmation,
+                'password' => $password,
             ),
             array(
                 'first_name' => 'required',
                 'last_name'  => 'required',
                 'gender'     => 'required|in:m,f',
                 'birth_date' => 'required|date_format:d-m-Y',
+                'password_confirmation' => 'required|min:5',
+                'password'  => 'min:5|confirmed',
             ),
             array(
                 'birth_date.date_format' => Lang::get('validation.orbit.formaterror.date.dmy_date')
