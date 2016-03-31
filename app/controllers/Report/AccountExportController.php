@@ -50,6 +50,10 @@ class AccountExportController extends \AccountAPIController
             $summary['Filtered by location'] = \Input::get('location');
         }
 
+        if (\Input::get('role_name')) {
+            $summary['Filtered by role'] = \Input::get('role_name');
+        }
+
         if (\Input::get('status')) {
             $summary['Filtered by status'] = \Input::get('status');     
         }
