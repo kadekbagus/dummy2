@@ -1,4 +1,4 @@
-<?php
+<?php namespace Orbit\Controller\API\v1\Pub;
 /**
  * An API controller for managing mall geo location.
  */
@@ -11,6 +11,9 @@ use DominoPOS\OrbitACL\ACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Text\Util\LineChecker;
 use Helper\EloquentRecordCounter as RecordCounter;
+use Config;
+use Mall;
+use stdClass;
 
 class MallGeolocAPIController extends ControllerAPI
 {
