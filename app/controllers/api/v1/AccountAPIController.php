@@ -161,7 +161,10 @@ class AccountAPIController extends ControllerAPI
             $userMerchant = new UserMerchant;
             $userMerchant->user_id = $user->user_id;
             $userMerchant->merchant_id = $merchantId;
-            $userMerchant->object_type = 'tenant';
+
+            // Get "object_type" from "merchants" table
+            $userMerchant->object_type = CampaignLocation::find($merchantId)->object_type;
+            
             $userMerchant->save();
         }
 
@@ -358,7 +361,7 @@ class AccountAPIController extends ControllerAPI
             'address_line1'  => 'required',
             'city'           => 'required',
             'country_id'     => 'required',
-            'merchant_ids'   => 'required|array',
+            'merchant_ids'   => 'required|array|exists:merchants,merchant_id',
         ];
 
         if (Input::get('id')) {
