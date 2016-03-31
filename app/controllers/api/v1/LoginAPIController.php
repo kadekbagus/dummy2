@@ -932,7 +932,9 @@ class LoginAPIController extends ControllerAPI
             $token->status = 'deleted';
             $token->save();
 
-            $setting_items = array('agreement_accepted_pmp_account'=>'true');
+            $setting_items = array('agreement_accepted_pmp_account' => 'true',
+                                     'agreement_acceptor_pmp_first_name' => $first_name,
+                                     'agreement_acceptor_pmp_last_name' => $last_name);
 
             foreach ($setting_items as $setting_name => $setting_value) {
                 $settings = Setting::excludeDeleted()
