@@ -107,25 +107,24 @@
 
 <div id="main">
     <h2 style="margin-bottom:0.5em;">Customer List</h2>
-    <table style="width:100%; margin-bottom:1em;" class="noborder">
-        <tr>
-            <td style="width:150px"></td>
-            <td style="width:10px;"></td>
-            <td><strong></strong></td>
-        </tr>
-        <tr>
-            <td>Total Customers</td>
-            <td>:</td>
-            <td><strong><?php echo number_format($totalRec); ?></strong></td>
-        </tr>
-        <?php if (isset($firstVisitDates)): ?>
+
+    <?php if ($summary): ?>
+        <table style="width:100%; margin-bottom:1em;" class="noborder">
             <tr>
-                <td>First Visit Date</td>
-                <td>:</td>
-                <td><strong><?= $firstVisitDates ?></strong></td>
+                <td style="width:150px"></td>
+                <td style="width:10px;"></td>
+                <td><strong></strong></td>
             </tr>
-        <?php endif ?>
-    </table>
+
+            <?php foreach($summary as $field => $value): ?>
+                <tr>
+                    <td><?= $field ?></td>
+                    <td>:</td>
+                    <td><strong><?= $value ?></strong></td>
+                </tr>
+            <?php endforeach ?>
+        </table>
+    <?php endif ?>
 
     <table style="width:100%">
         <thead>

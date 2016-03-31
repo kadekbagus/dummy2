@@ -47,11 +47,11 @@ class ConsumerPrinterController extends DataPrinterController
         }
 
         $users = $response['builder'];
-        $totalRec = $response['count'];
 
-        $firstVisitDatesFilter = (\Input::get('first_visit_begin_date') && \Input::get('first_visit_end_date')) ? true : false;
+        $summary = [];
+        $summary['Total Customers'] = $response['count'];
 
-        if ($firstVisitDatesFilter) {
+        if (\Input::get('first_visit_begin_date') && \Input::get('first_visit_end_date')) {
             $firstVisitBeginDate = Carbon::createFromFormat('Y-m-d H:i:s', \Input::get('first_visit_begin_date'), 'UTC')->setTimezone($timezone)->format('d M Y');
             $firstVisitEndDate = Carbon::createFromFormat('Y-m-d H:i:s', \Input::get('first_visit_end_date'), 'UTC')->setTimezone($timezone)->format('d M Y');
 
@@ -60,6 +60,8 @@ class ConsumerPrinterController extends DataPrinterController
             if ($firstVisitEndDate !== $firstVisitBeginDate) {
                 $firstVisitDates .= ' - '.$firstVisitEndDate;
             }
+
+            $summary['First Visit Date'] = $firstVisitDates;
         }
 
         $this->prepareUnbufferedQuery();
@@ -79,10 +81,9 @@ class ConsumerPrinterController extends DataPrinterController
 
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','','');
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Customer List', '', '', '', '', '','','','','');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Customers', $totalRec, '', '', '', '','','','','');
                 
-                if ($firstVisitDatesFilter) {
-                    printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'First Visit Date', $firstVisitDates, '', '', '', '','','','','');
+                foreach ($summary as $field => $value) {
+                    printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', $field, $value, '', '', '', '','','','','');
                 }
 
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','','','');
