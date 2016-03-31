@@ -13,6 +13,7 @@ use Carbon\Carbon;
 trait ExportControllerTrait
 {
     protected $summary;
+    protected $timezone = 'UTC';
 
     public function getList()
     {
@@ -70,7 +71,7 @@ trait ExportControllerTrait
         $response = \Response::make($csv, 200);
         $response->header('Content-Type', 'text/csv');
 
-        $date = Carbon::now()->setTimezone('Asia/Singapore')->format('D_d_M_Y_Hi');
+        $date = Carbon::now()->setTimezone($this->timezone)->format('D_d_M_Y_Hi');
         $fileName = 'orbit-export-'.str_replace(' ', '-', $this->data->pageTitle.'-'.$date).'.csv';
         $response->header('Content-Disposition', 'inline; filename="'.$fileName.'"');
 

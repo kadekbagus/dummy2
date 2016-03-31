@@ -8,6 +8,12 @@ class AccountExportController extends \AccountAPIController
 
     protected $pageTitle = 'PMP Accounts List';
 
+    public function __construct()
+    {
+        // Set timezone for the ExportControllerTrait
+        $this->timezone = 'Asia/Singapore';
+    }
+
     protected function handleCsvRowValue($row, $fieldName)
     {
         $csv = '"';
@@ -42,6 +48,10 @@ class AccountExportController extends \AccountAPIController
 
         if (\Input::get('location')) {
             $summary['Filtered by location'] = \Input::get('location');
+        }
+
+        if (\Input::get('role_name')) {
+            $summary['Filtered by role'] = \Input::get('role_name');
         }
 
         if (\Input::get('status')) {

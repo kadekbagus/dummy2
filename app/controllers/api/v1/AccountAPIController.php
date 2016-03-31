@@ -12,41 +12,6 @@ use OrbitShop\API\v1\OrbitShopAPI;
  */
 class AccountAPIController extends ControllerAPI
 {
-    /** @var array The list columns. */
-    protected $listColumns = [
-        'account_name' => [
-            'title' => 'Account Name',
-            'sort_key' => 'account_name',
-        ],
-        'company_name' => [
-            'title' => 'Company Name',
-            'sort_key' => 'company_name',
-        ],
-        'city' => [
-            'title' => 'Location',
-            'sort_key' => 'city',
-        ],
-        'role_name' => [
-            'title' => 'Role',
-            'sort_key' => 'role_name',
-        ],
-        'tenant_count' => [
-            'title' => 'Number of Tenant(s)',
-            'sort_key' => 'tenant_count',
-        ],
-        'tenants' => [
-            'title' => 'Tenant(s)',
-        ],
-        'created_at' => [
-            'title' => 'Creation Date',
-            'sort_key' => 'created_at',
-        ],
-        'status' => [
-            'title' => 'Status',
-            'sort_key' => 'status',
-        ],
-    ];
-
     /**
      * The main method
      *
@@ -161,7 +126,10 @@ class AccountAPIController extends ControllerAPI
             $userMerchant = new UserMerchant;
             $userMerchant->user_id = $user->user_id;
             $userMerchant->merchant_id = $merchantId;
-            $userMerchant->object_type = 'tenant';
+
+            // Get "object_type" from "merchants" table
+            $userMerchant->object_type = CampaignLocation::find($merchantId)->object_type;
+            
             $userMerchant->save();
         }
 
@@ -321,7 +289,7 @@ class AccountAPIController extends ControllerAPI
             ];
         }
 
-        $data->columns = $this->listColumns;
+        $data->columns = Config::get('account.listColumns');
         $data->records = $records;
 
         $this->data = $data;
@@ -358,13 +326,14 @@ class AccountAPIController extends ControllerAPI
             'address_line1'  => 'required',
             'city'           => 'required',
             'country_id'     => 'required',
-            'merchant_ids'   => 'required|array',
+            'merchant_ids'   => 'required|array|exists:merchants,merchant_id',
         ];
 
         if (Input::get('id')) {
             $rules['id'] = 'exists:users,user_id';
         } else {
             $rules['user_password'] = 'required';
+            $rules['user_email'] .= '|unique:users,user_email';
             $rules['account_name'] .= '|unique:campaign_account,account_name';
         }
 
