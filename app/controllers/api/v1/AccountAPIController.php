@@ -264,6 +264,11 @@ class AccountAPIController extends ControllerAPI
             }
         }
 
+        // Filter by Role Name
+        if (Input::get('role_name')) {
+            $pmpAccounts->whereRoleName(Input::get('role_name'));
+        }
+
         // Get total row count
         $allRows = clone $pmpAccounts;
         $data->total_records = $allRows->count();
