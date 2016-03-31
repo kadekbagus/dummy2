@@ -238,7 +238,7 @@
                             }, 1000);
                         });
                         $('#successCouponModal').on('hide.bs.modal', function($event){
-                            window.location.replace({{ $urlblock->blockedRoute('ci-mall-coupons') }});
+                            window.location.replace('{{ $urlblock->blockedRoute('ci-mall-coupons') }}');
                         });
                     }else{
                         $('#wrongCouponModal').modal();
