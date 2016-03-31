@@ -277,6 +277,7 @@ class IntermediateLoginController extends IntermediateBaseController
     {
         $callback_url = OrbitInput::get('callback_url', '');
         $email = OrbitInput::get('email', '');
+        $password = OrbitInput::get('password', '');
         $retailer_id = OrbitInput::get('retailer_id', '');
         $payload = OrbitInput::get('payload', '');
         $from = OrbitInput::get('from', '');
@@ -291,6 +292,7 @@ class IntermediateLoginController extends IntermediateBaseController
 
         if ($from !== 'cs' && !CloudMAC::validateDataFromBox($mac, $timestamp, [
             'email' => $email,
+            'password' => $password,
             'retailer_id' => $retailer_id,
             'callback_url' => $callback_url,
             'payload' => $payload,
@@ -527,8 +529,10 @@ class IntermediateLoginController extends IntermediateBaseController
         if ($callback_result[0] === false) {
             // error, returns [false, string_error]
             // we return the error as is
+
             return $callback_result[1];
         }
+
         // else ok return [true, user_id, user_email]
         $email = $callback_result[2];
         $socmed_redirect_to = $callback_result[3];
@@ -537,7 +541,6 @@ class IntermediateLoginController extends IntermediateBaseController
         $_POST['socmed_redirect_to'] = $socmed_redirect_to;
 
         $this->postLoginMobileCI(); // sets cookies & inserts activity - we ignore the JSON result
-
         $proceed = OrbitInput::get('from_captive', 'no') === 'yes' && OrbitInput::get('auto_login', 'yes');
         if ($proceed) {
             $sid = $this->session->getSessionId();
@@ -550,6 +553,11 @@ class IntermediateLoginController extends IntermediateBaseController
         $mobile_ci = MobileCIAPIController::create('raw');
 
         // hack: we get the landing URL from the sign in view's data so we don't duplicate logic.
+        $user = User::excludeDeleted()->where('user_email', $email)->first();
+        $retailer_id = Config::get('orbit.shop.id');
+        $retailer = Mall::with('settings', 'parent')->where('merchant_id', $retailer_id)->first();
+
+        $doLogin = $mobile_ci->loginStage2($user, $retailer);
         $view = $mobile_ci->getSignInView();
         $view_data = $view->getData();
 
@@ -1110,8 +1118,9 @@ class IntermediateLoginController extends IntermediateBaseController
         } catch (Exception $e) {
         }
 
+        $after_logout_url = Config::get('orbit.shop.after_logout_url', '/customer');
         // Redirect back to /customer
-        return Redirect::to('/customer')->withCookie($cookie);
+        return Redirect::to($after_logout_url)->withCookie($cookie);
     }
 
     /**

@@ -172,8 +172,8 @@ return array(
         'connecting_to_facebook'    => 'Facebookへの接続...',
         'connecting_to_google'    => 'Googleへの接続...',
         'connecting_with' => 'とつながります',
-        'sign_up_sign_in_with' => 'Sign up or Sign in with:',
-        'to_access_this_content' => 'to access this content',
+        'sign_up_sign_in_with' => 'と登録するか、または署名しなさい:',
+        'to_access_this_content' => 'この内容にアクセスするため',
         'sign_in' => 'サインイン',
         'sign_up' => 'サインアップ',
         'doesnt_have_account' => 'アカウントを持っていません',
@@ -195,6 +195,8 @@ return array(
         'already_have_an_account' => 'すでにアカウントをお持ちですか',
         'fields_are_mandatory' => 'すべてのフィールドが必須です',
         'date_of_birth' => '生年月日',
+        'password_placeholder' => '密码',
+        'password_confirm_placeholder' => 'パスワードを認証する',
     ),
 
     'catalogue' => array(
