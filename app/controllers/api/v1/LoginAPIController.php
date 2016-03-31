@@ -201,7 +201,7 @@ class LoginAPIController extends ControllerAPI
             $menus = Config::get('orbit.menus.pmp');
 
             $mall[] = null;
-            if ($user->role->role_name === 'Campaign Owner') {
+            if ($user->isCampaignOwner()) {
                 $user_merchants = $user->campaignAccount->userMerchant;
 
                 $parent_id = '';
@@ -220,7 +220,7 @@ class LoginAPIController extends ControllerAPI
                         $parent_id = $tenant->parent_id;
                     }
                 }
-            } elseif ($user->role->role_name === 'Campaign Employee') {
+            } elseif ($user->isCampaignEmployee()) {
                 $user_merchants = $user->campaignAccount->parentCampaignAccount->userMerchant;
 
                 $parent_id = null;
@@ -239,7 +239,7 @@ class LoginAPIController extends ControllerAPI
                         $parent_id = $tenant->parent_id;
                     }
                 }
-            } elseif ($user->role->role_name === 'Campaign Admin') {
+            } elseif ($user->isCampaignAdmin()) {
                 $mall = Mall::excludeDeleted()
                             ->with('timezone')
                             ->get();
