@@ -60,6 +60,8 @@ class MallGeolocAPIController extends ControllerAPI
 
             });
 
+            $_malls = clone $malls;
+
             // Get the maximum record
             $maxRecord = (int) Config::get('orbit.pagination.geo_location.max_record');
             if ($maxRecord <= 0) {
@@ -130,8 +132,6 @@ class MallGeolocAPIController extends ControllerAPI
                 }
             });
             $malls->orderBy($sortBy, $sortMode);
-            
-            $_malls = clone $malls;
 
             $listmalls = $malls->get();
             $count = RecordCounter::create($_malls)->count();
