@@ -137,11 +137,11 @@
                 <th style="text-align:left; width:10%">Membership Join Date</th>
                 <th style="text-align:left; width:10%">Membership Number</th>
             <?php } ?>
-            <th style="text-align:left; <?php if($flagMembershipEnable) { ?> width:5%; <?php } ?>">Issued Coupon</th>
-            <th style="text-align:left; <?php if($flagMembershipEnable) { ?> width:2%; <?php } ?>">Redeemed Coupon</th>
+            <th style="text-align:left; <?php if($flagMembershipEnable) { ?> width:5%; <?php } ?>">Issued Coupons</th>
+            <th style="text-align:left; <?php if($flagMembershipEnable) { ?> width:2%; <?php } ?>">Redeemed Coupons</th>
             <th style="text-align:left; <?php if($flagMembershipEnable) { ?> width:2%; <?php } ?>">Issued Lucky Draw Numbers</th>
             <th style="text-align:left; <?php if($flagMembershipEnable) { ?> width:2%; <?php } ?>">Status</th>
-            <th style="text-align:left; <?php if($flagMembershipEnable) { ?> width:10%; <?php } ?>">Last Update Date & Time</th>
+            <th style="text-align:left; <?php if($flagMembershipEnable) { ?> width:10%; <?php } ?>">Last Update</th>
         </thead>
         <tbody>
         <?php while ($row = $statement->fetch(PDO::FETCH_OBJ)) : ?>
