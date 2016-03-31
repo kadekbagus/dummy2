@@ -86,10 +86,10 @@ class ConsumerPrinterController extends DataPrinterController
 
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','','','');
                 if ($flagMembershipEnable) {
-                    printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Email', 'Name', 'Gender', 'Mobile Phone', 'First Visit Date & Time', 'Membership Join Date', 'Membership Number', 'Issued Coupon', 'Redeemed Coupon', 'Issued Lucky Draw Numbers', 'Status', 'Last Update Date & Time');
+                    printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Email', 'Name', 'Gender', 'Mobile Phone', 'First Visit Date & Time', 'Membership Join Date', 'Membership Number', 'Issued Coupons', 'Redeemed Coupons', 'Issued Lucky Draw Numbers', 'Status', 'Last Update');
                 }
                 else {
-                    printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Email', 'Name', 'Gender', 'Mobile Phone', 'First Visit Date & Time', 'Issued Coupon', 'Redeemed Coupon', 'Issued Lucky Draw Numbers', 'Status', 'Last Update Date & Time');
+                    printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Email', 'Name', 'Gender', 'Mobile Phone', 'First Visit Date & Time', 'Issued Coupons', 'Redeemed Coupons', 'Issued Lucky Draw Numbers', 'Status', 'Last Update');
                 }
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','','','');
 
