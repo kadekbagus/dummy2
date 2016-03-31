@@ -108,7 +108,7 @@ class MallGeolocAPIController extends ControllerAPI
 
             $this->response->data = new stdClass();
             $this->response->data->total_records = $count;
-            $this->response->data->returned_records = $count;
+            $this->response->data->returned_records = count($listmalls);
             $this->response->data->records = $listmalls;
         } catch (ACLForbiddenException $e) {
 
@@ -229,7 +229,7 @@ class MallGeolocAPIController extends ControllerAPI
 
             $this->response->data = new stdClass();
             $this->response->data->total_records = $count;
-            $this->response->data->returned_records = $count;
+            $this->response->data->returned_records = count($listmalls);
             $this->response->data->records = $listmalls;
         } catch (ACLForbiddenException $e) {
 
