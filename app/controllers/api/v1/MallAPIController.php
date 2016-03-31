@@ -313,6 +313,13 @@ class MallAPIController extends ControllerAPI
             $newUserMerchant->object_type = $newmall->object_type;
             $newUserMerchant->save();
 
+            // save to spending rule, the default is N
+            // @author kadek <kadek@dominopos.com>
+            $newSpendingRules = new SpendingRule();
+            $newSpendingRules->object_id = $newmall->merchant_id;
+            $newSpendingRules->with_spending = 'N';
+            $newSpendingRules->save();
+
             if (OrbitInput::post('facebook_uri')) {
                 $this->saveSocmedUri('facebook', $newmall->merchant_id, OrbitInput::post('facebook_uri'));
 
