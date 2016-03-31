@@ -39,7 +39,7 @@ class MerchantGeolocation extends Command
     public function fire()
     {
         $merchantId = $this->option('merchant_id');
-        $fence = MerchantGeofence::where('merchant_id', '=', $merchantId)->find(1);
+        $fence = MerchantGeofence::where('merchant_id', '=', $merchantId)->first();
 
         if (empty($fence)) {
 
