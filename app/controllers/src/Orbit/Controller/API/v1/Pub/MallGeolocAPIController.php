@@ -42,8 +42,12 @@ class MallGeolocAPIController extends ControllerAPI
                 $distance = Config::get('orbit.geo_location.distance', 10);
             }
 
-            $malls = Mall::excludeDeleted()->select('merchants.*')->includeLatLong()->nearBy($lat, $long, $distance);
+            $malls = Mall::excludeDeleted()->select('merchants.*')->includeLatLong()->join('merchant_geofences', 'merchant_geofences.merchant_id', '=', 'merchants.merchant_id');
 
+            if ((int) $distance !== -1) {
+                $malls->nearBy($lat, $long, $distance);
+            }
+                        
             // Filter
             OrbitInput::get('keyword_search', function ($keyword) use ($malls) {
                 $mainKeyword = explode(" ", $keyword);
@@ -107,9 +111,16 @@ class MallGeolocAPIController extends ControllerAPI
             $malls->skip($skip);
 
             // Default sort by
-            $sortBy = 'distance';
+            $sortBy = 'merchants.name';
             // Default sort mode
             $sortMode = 'asc';
+
+            if ((int) $distance !== -1) {
+                // Default sort by
+                $sortBy = 'distance';
+                // Default sort mode
+                $sortMode = 'asc';
+            }
 
             OrbitInput::get('sortby', function($_sortBy) use (&$sortBy)
             {
@@ -205,7 +216,9 @@ class MallGeolocAPIController extends ControllerAPI
             $lat = OrbitInput::get('latitude', null);
             $long = OrbitInput::get('longitude', null);
 
-            $malls = Mall::excludeDeleted()->IncludeLatLong()->select('merchants.*')->includeLatLong()->InsideArea($lat, $long);
+            $malls = Mall::excludeDeleted()->select('merchants.*')->includeLatLong()->InsideArea($lat, $long);
+
+            $_malls = clone $malls;
 
             // Get the maximum record
             $maxRecord = (int) Config::get('orbit.pagination.geo_location.max_record');
@@ -251,8 +264,6 @@ class MallGeolocAPIController extends ControllerAPI
                 $skip = $_skip;
             });
             $malls->skip($skip);
-
-            $_malls = clone $malls;
 
             $listmalls = $malls->get();
             $count = RecordCounter::create($_malls)->count();
