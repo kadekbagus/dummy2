@@ -5094,7 +5094,7 @@ class MobileCIAPIController extends BaseCIController
     public function postCheckUserLocation() {
 
         $lat = OrbitInput::post('latitude', null);
-        $long = OrbitInput::get('longitude', null);
+        $long = OrbitInput::post('longitude', null);
 
         $malls = Mall::excludeDeleted()->InsideArea($lat, $long)->first();
 
