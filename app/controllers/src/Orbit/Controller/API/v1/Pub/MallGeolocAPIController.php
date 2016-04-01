@@ -207,6 +207,8 @@ class MallGeolocAPIController extends ControllerAPI
 
             $malls = Mall::excludeDeleted()->IncludeLatLong()->select('merchants.*')->includeLatLong()->InsideArea($lat, $long);
 
+            $_malls = clone $malls;
+
             // Get the maximum record
             $maxRecord = (int) Config::get('orbit.pagination.geo_location.max_record');
             if ($maxRecord <= 0) {
@@ -251,8 +253,6 @@ class MallGeolocAPIController extends ControllerAPI
                 $skip = $_skip;
             });
             $malls->skip($skip);
-
-            $_malls = clone $malls;
 
             $listmalls = $malls->get();
             $count = RecordCounter::create($_malls)->count();
