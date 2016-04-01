@@ -57,7 +57,7 @@ class getSearchMallNearBy extends TestCase
     {
         // Create 2 malls in antartica
         $geofence = Factory::create('MerchantGeofence');
-        $geofence = Factory::create('MerchantGeofence_Antartica2');
+        $geofence2 = Factory::create('MerchantGeofence_Antartica2');
 
         $_GET['latitude'] = $this->myAntarticaLocation[0];
         $_GET['longitude'] = $this->myAntarticaLocation[1];
@@ -69,5 +69,94 @@ class getSearchMallNearBy extends TestCase
 
         $this->assertSame(Status::OK, (int)$response->code);
         $this->assertSame(2, (int)$response->data->total_records);
+    }
+
+    public function testOK_Found_Two_Mall_Take_One_Only()
+    {
+        // Create 2 malls in antartica
+        $geofence = Factory::create('MerchantGeofence');
+        $geofence2 = Factory::create('MerchantGeofence_Antartica2');
+
+        $antartica1 = $geofence->mall;
+        $antartica1->name = 'Antartica 1';
+        $antartica1->save();
+
+        $_GET['latitude'] = $this->myAntarticaLocation[0];
+        $_GET['longitude'] = $this->myAntarticaLocation[1];
+        // The distance to the antartica 2 is 610.xx
+        $_GET['distance'] = 611;
+        $_GET['take'] = 1;
+
+        $response = $this->call('GET', $this->baseUrl)->getContent();
+        $response = json_decode($response);
+
+        $this->assertSame(Status::OK, (int)$response->code);
+        $this->assertSame(2, (int)$response->data->total_records);
+        $this->assertSame(1, (int)$response->data->returned_records);
+
+        // The first mall should be Antartica 1, because by default
+        // sorted by the nearest
+        $this->assertSame('Antartica 1', $response->data->records[0]->name);
+    }
+
+    public function testOK_Found_One_Mall_Search_By_Antartica_Keyword()
+    {
+        // Create 2 malls in antartica
+        $geofence = Factory::create('MerchantGeofence');
+        $geofence2 = Factory::create('MerchantGeofence_Antartica2');
+
+        $antartica1 = $geofence->mall;
+        $antartica1->name = 'Antartica 1';
+        $antartica1->save();
+
+        $_GET['latitude'] = $this->myAntarticaLocation[0];
+        $_GET['longitude'] = $this->myAntarticaLocation[1];
+        // The distance to the antartica 2 is 610.xx
+        $_GET['distance'] = -1;
+        $_GET['keyword_search'] = 'antartica';
+
+        $response = $this->call('GET', $this->baseUrl)->getContent();
+        $response = json_decode($response);
+
+        $this->assertSame(Status::OK, (int)$response->code);
+        $this->assertSame(1, (int)$response->data->total_records);
+        $this->assertSame(1, (int)$response->data->returned_records);
+
+        // The first mall should be Antartica 1, because by default
+        // sorted by the nearest
+        $this->assertSame('Antartica 1', $response->data->records[0]->name);
+    }
+
+
+    public function testOK_Found_Two_Mall_Search_OrderBy_Name()
+    {
+        // Create 2 malls in antartica
+        $geofence = Factory::create('MerchantGeofence');
+        $geofence2 = Factory::create('MerchantGeofence_Antartica2');
+
+        $antartica1 = $geofence->mall;
+        $antartica1->name = 'Beruang Kutub';
+        $antartica1->save();
+
+        $antartica2 = $geofence2->mall;
+        $antartica2->name = 'Beruang Hutan';
+        $antartica2->save();
+
+        $_GET['latitude'] = $this->myAntarticaLocation[0];
+        $_GET['longitude'] = $this->myAntarticaLocation[1];
+        // The distance to the antartica 2 is 610.xx
+        $_GET['distance'] = -1;
+        $_GET['keyword_search'] = 'beruang';
+
+        $response = $this->call('GET', $this->baseUrl)->getContent();
+        $response = json_decode($response);
+
+        $this->assertSame(Status::OK, (int)$response->code);
+        $this->assertSame(2, (int)$response->data->total_records);
+        $this->assertSame(2, (int)$response->data->returned_records);
+
+        // The first mall should be Beruang Hutan, because by searching
+        // by keyword will trigger sorting by name
+        $this->assertSame('Beruang Hutan', $response->data->records[0]->name);
     }
 }
