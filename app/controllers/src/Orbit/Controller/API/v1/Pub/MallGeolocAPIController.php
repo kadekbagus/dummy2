@@ -111,9 +111,16 @@ class MallGeolocAPIController extends ControllerAPI
             $malls->skip($skip);
 
             // Default sort by
-            $sortBy = 'distance';
+            $sortBy = 'merchants.name';
             // Default sort mode
             $sortMode = 'asc';
+
+            if ((int) $distance !== -1) {
+                // Default sort by
+                $sortBy = 'distance';
+                // Default sort mode
+                $sortMode = 'asc';
+            }
 
             OrbitInput::get('sortby', function($_sortBy) use (&$sortBy)
             {
