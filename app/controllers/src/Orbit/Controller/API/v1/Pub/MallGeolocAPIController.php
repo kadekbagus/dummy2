@@ -42,8 +42,12 @@ class MallGeolocAPIController extends ControllerAPI
                 $distance = Config::get('orbit.geo_location.distance', 10);
             }
 
-            $malls = Mall::excludeDeleted()->select('merchants.*')->includeLatLong()->nearBy($lat, $long, $distance);
+            $malls = Mall::excludeDeleted()->select('merchants.*')->includeLatLong()->leftJoin('merchant_geofences', 'merchant_geofences.merchant_id', '=', 'merchants.merchant_id');
 
+            if ((int) $distance !== -1) {
+                $malls->nearBy($lat, $long, $distance);
+            }
+                        
             // Filter
             OrbitInput::get('keyword_search', function ($keyword) use ($malls) {
                 $mainKeyword = explode(" ", $keyword);
@@ -205,7 +209,7 @@ class MallGeolocAPIController extends ControllerAPI
             $lat = OrbitInput::get('latitude', null);
             $long = OrbitInput::get('longitude', null);
 
-            $malls = Mall::excludeDeleted()->IncludeLatLong()->select('merchants.*')->includeLatLong()->InsideArea($lat, $long);
+            $malls = Mall::excludeDeleted()->select('merchants.*')->includeLatLong()->InsideArea($lat, $long);
 
             $_malls = clone $malls;
 

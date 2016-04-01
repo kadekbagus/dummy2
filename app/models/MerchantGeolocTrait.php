@@ -58,7 +58,6 @@ trait MerchantGeolocTrait
         $builder->addSelect(
             DB::raw("{$R} * acos( cos( radians({$latitude}) ) * cos( radians( x({$prefix}merchant_geofences.position) ) ) * cos( radians( y({$prefix}merchant_geofences.position) ) - radians({$longitude}) ) + sin( radians({$latitude}) ) * sin( radians( x({$prefix}merchant_geofences.position) ) ) ) AS distance"
         ));
-        $builder->leftJoin('merchant_geofences', 'merchant_geofences.merchant_id', '=', 'merchants.merchant_id');
         $builder->having(DB::raw('distance'), '<=', $distance);
 
         return $builder;
