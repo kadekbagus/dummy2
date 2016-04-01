@@ -215,7 +215,7 @@ class NewsAPIController extends ControllerAPI
             $sticky_order = (string)$sticky_order === 'true' && (string)$sticky_order !== '0' ? 1 : 0;
 
             // save News.
-            $idStatus = CampaignStatus::select('campaign_status_id')->where('campaign_status_name', $campaignStatus)->first();
+            $idStatus = CampaignStatus::select('campaign_status_id','campaign_status_name')->where('campaign_status_name', $campaignStatus)->first();
 
             $newnews = new News();
             $newnews->mall_id = $mall_id;
@@ -236,6 +236,9 @@ class NewsAPIController extends ControllerAPI
             Event::fire('orbit.news.postnewnews.before.save', array($this, $newnews));
 
             $newnews->save();
+
+            // Return campaign status name
+            $newnews->campaign_status = $idStatus->campaign_status_name;
 
             // save default language translation
             $news_translation_default = new NewsTranslation();
@@ -410,7 +413,7 @@ class NewsAPIController extends ControllerAPI
                     $addtenant->save();
                 }
             }
-            
+
             //calculate spending
             foreach ($mallid as $mall) {
 
@@ -423,7 +426,7 @@ class NewsAPIController extends ControllerAPI
                 }
 
                 $getspending = DB::table(DB::raw('tmp_campaign_cost_detail'))->first();
-                
+
                 $mallTimezone = $this->getTimezone($mall);
                 $nowMall = Carbon::now($mallTimezone);
                 $dateNowMall = $nowMall->toDateString();
@@ -841,9 +844,9 @@ class NewsAPIController extends ControllerAPI
 
             OrbitInput::post('retailer_ids', function($retailer_ids) use ($updatednews, $news_id, $mallid) {
                 // validate retailer_ids
-                
+
                 // to do : add validation for tenant
-                
+
                 // Delete old data
                 $delete_retailer = NewsMerchant::where('news_id', '=', $news_id);
                 $delete_retailer->delete();
@@ -854,7 +857,7 @@ class NewsAPIController extends ControllerAPI
                     $data = @json_decode($retailer_id);
                     $tenant_id = $data->tenant_id;
                     $mall_id = $data->mall_id;
-                    
+
                     if(! in_array($mall_id, $mallid)) {
                         $mallid[] = $mall_id;
                     }
@@ -1021,7 +1024,7 @@ class NewsAPIController extends ControllerAPI
                 $campaignhistory->created_by = $this->api->user->user_id;
                 $campaignhistory->modified_by = $this->api->user->user_id;
                 $campaignhistory->save();
-                
+
             } else {
                 //check for first time insert for that day
                 $utcNow = Carbon::now();
@@ -1041,7 +1044,7 @@ class NewsAPIController extends ControllerAPI
                     $campaignhistory->created_by = $this->api->user->user_id;
                     $campaignhistory->modified_by = $this->api->user->user_id;
                     $campaignhistory->save();
-                    
+
                 }
             }
 
@@ -1075,7 +1078,7 @@ class NewsAPIController extends ControllerAPI
                         $tenanthistory->created_by = $this->api->user->user_id;
                         $tenanthistory->modified_by = $this->api->user->user_id;
                         $tenanthistory->save();
-                        
+
                     }
                 }
             }
@@ -1131,7 +1134,7 @@ class NewsAPIController extends ControllerAPI
                 // only calculate spending when update date between start and date of campaign
                 if ($dateNowMall >= $beginMall && $dateNowMall <= $endMall) {
                     $daily = CampaignDailySpending::where('date', '=', $getspending->date_in_utc)->where('campaign_id', '=', $campaign_id)->where('mall_id', '=', $mall)->first();
-                
+
                     if ($daily['campaign_daily_spending_id']) {
                         $dailySpending = CampaignDailySpending::find($daily['campaign_daily_spending_id']);
                     } else {
@@ -1594,7 +1597,7 @@ class NewsAPIController extends ControllerAPI
             $prefix = DB::getTablePrefix();
             $news = News::allowedForPMPUser($user, $object_type[0])
                         ->select('news.*', 'campaign_status.order', 'campaign_price.campaign_price_id', 'news_translations.news_name as name_english',
-                            DB::raw("(select GROUP_CONCAT(IF({$prefix}merchants.object_type = 'tenant', CONCAT({$prefix}merchants.name,' at ', pm.name), {$prefix}merchants.name) separator ', ') from {$prefix}news_merchant 
+                            DB::raw("(select GROUP_CONCAT(IF({$prefix}merchants.object_type = 'tenant', CONCAT({$prefix}merchants.name,' at ', pm.name), {$prefix}merchants.name) separator ', ') from {$prefix}news_merchant
                                     inner join {$prefix}merchants on {$prefix}merchants.merchant_id = {$prefix}news_merchant.merchant_id
                                     inner join {$prefix}merchants pm on {$prefix}merchants.parent_id = pm.merchant_id
                                     where {$prefix}news_merchant.news_id = {$prefix}news.news_id) as campaign_location_names"),
