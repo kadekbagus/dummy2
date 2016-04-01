@@ -346,7 +346,7 @@ class CouponAPIController extends ControllerAPI
             Event::fire('orbit.coupon.postnewcoupon.after.validation', array($this, $validator));
 
             // save Coupon.
-            $idStatus = CampaignStatus::select('campaign_status_id')->where('campaign_status_name', $campaignStatus)->first();
+            $idStatus = CampaignStatus::select('campaign_status_id','campaign_status_name')->where('campaign_status_name', $campaignStatus)->first();
 
             $newcoupon = new Coupon();
             $newcoupon->merchant_id = $merchant_id;
@@ -374,6 +374,9 @@ class CouponAPIController extends ControllerAPI
             Event::fire('orbit.coupon.postnewcoupon.before.save', array($this, $newcoupon));
 
             $newcoupon->save();
+
+            // Return campaign_status_name
+            $newcoupon->campaign_status = $idStatus->campaign_status_name;
 
             // save default language translation
             $coupon_translation_default = new CouponTranslation();
