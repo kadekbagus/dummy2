@@ -212,15 +212,14 @@
                         console.log(startPos);
                         // do ajax call
                         $.ajax({
-                            url: '{{route('ci-check-user-location')}}',
-                            method: 'POST',
+                            url: '{{'/app/v1/pub/mall-fence'}}',
+                            method: 'GET',
                             data: {
                                 latitude: startPos.coords.latitude,
                                 longitude: startPos.coords.longitude
                             }
                         }).done(function(response) {
-                            console.log(response);
-                            if (response === 'true') {
+                            if (response.data.total_records > 0) {
                                 $('#useBtn').removeAttr('disabled');
                             }
                         })
