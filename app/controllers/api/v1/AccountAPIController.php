@@ -19,13 +19,21 @@ class AccountAPIController extends ControllerAPI
             return;
         }        
 
-        // Clean up user_merchant first 
-        UserMerchant::whereUserId($user->user_id)->delete(); 
+        // First, set user_id as null
+        $currentUserMerchants = UserMerchant::whereUserId($user->user_id)->get();
+        foreach ($currentUserMerchants as $currentUserMerchant) {
+            $currentUserMerchant->user_id = null;
+            $currentUserMerchant->save();
+        }
  
-        // Save to user_merchant (1 to M) 
+        // Then update the user_id with the submitted ones 
         foreach (Input::get('merchant_ids') as $merchantId) { 
 
-            $userMerchant = new UserMerchant; 
+            $userMerchant = UserMerchant::whereMerchantId($merchantId)->whereUserId($user->user_id)->first();
+            if ( ! $userMerchant) {
+                $userMerchant = new UserMerchant;
+            }
+
             $userMerchant->user_id = $user->user_id; 
             $userMerchant->merchant_id = $merchantId; 
  
@@ -54,10 +62,10 @@ class AccountAPIController extends ControllerAPI
 
     public function getAvailableTenantsSelection()
     {
-        $availableMerchantIds = UserMerchant::whereIn('object_type', ['mall', 'tenant'])->whereNull('user_id')->lists('merchant_id');
+        $availableMerchantIds = UserMerchant::whereIn('object_type', ['mall', 'tenant'])->lists('merchant_id');
 
         // Retrieve from "merchants" table
-        $tenants = CampaignLocation::whereIn('merchant_id', $availableMerchantIds)->orderBy('name')->get();
+        $tenants = CampaignLocation::whereNotIn('merchant_id', $availableMerchantIds)->orderBy('name')->get();
         
         $selection = [];
         foreach ($tenants as $tenant) {

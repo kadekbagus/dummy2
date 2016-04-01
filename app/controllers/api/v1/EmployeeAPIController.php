@@ -18,7 +18,7 @@ class EmployeeAPIController extends ControllerAPI
     protected $employeeModifiyRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee', 'campaign admin'];
     protected $pmpEmployeeViewRoles = ['campaign owner', 'campaign employee', 'campaign admin'];
     protected $pmpEmployeeModifiyRoles = ['campaign owner', 'campaign employee', 'campaign admin'];
-    protected $pmpEmployeeCreateRoles = ['campaign owner', 'campaign admin'];
+    protected $pmpEmployeeCreateRoles = ['campaign owner', 'campaign employee', 'campaign admin'];
 
     /**
      * Flag to return the query builder.
@@ -666,6 +666,12 @@ class EmployeeAPIController extends ControllerAPI
             if (! in_array( strtolower($role->role_name), $validRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
+            }
+
+            // only campaign owner can create new employee
+            if (! $this->isCampaignOwner($user) ) {
+                $message = 'Your role are not allowed to access this resource.';
+                OrbitShopAPI::throwInvalidArgument($message);
             }
 
             Event::fire('orbit.employee.postnewpmpemployee.after.authz', array($this, $user));
@@ -3818,5 +3824,16 @@ class EmployeeAPIController extends ControllerAPI
         $this->returnBuilder = $bool;
 
         return $this;
+    }
+
+    public function isCampaignOwner($user)
+    {
+        $campaignAcc = CampaignAccount::where('user_id', '=', $user->user_id)->first();
+
+        if(empty($campaignAcc->parent_user_id) && $user->role->role_name === 'Campaign Owner'){
+            return TRUE;
+        } 
+        
+        return FALSE;
     }
 }

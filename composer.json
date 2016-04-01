@@ -28,7 +28,8 @@
                     "DominoPOS\\OrbitUploader\\": "vendor/dominopos/orbit-uploader/",
                     "DominoPOS\\OrbitSession\\": "vendor/dominopos/orbit-session/",
                     "Orbit\\Database\\": "vendor/dominopos/orbit-database/",
-                    "Orbit\\Queue\\": "app/queue/"
+                    "Orbit\\Queue\\": "app/queue/",
+                    "Orbit\\Controller\\": "app/controllers/src"
                 },
         "classmap": [
             "app/commands",
