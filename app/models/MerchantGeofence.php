@@ -14,7 +14,6 @@ class MerchantGeofence extends Eloquent
 
 	public function mall()
     {
-        return $this->hasOne('Mall', 'merchant_id', 'merchant_id');
-    }    
-
+        return $this->belongsTo('Mall', 'merchant_id', 'merchant_id');
+    }
 }
