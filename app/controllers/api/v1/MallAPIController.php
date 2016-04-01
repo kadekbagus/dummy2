@@ -145,27 +145,28 @@ class MallAPIController extends ControllerAPI
             $end_date_activity = OrbitInput::post('end_date_activity');
             $status = OrbitInput::post('status');
             // $logo = OrbitInput::post('logo');
-            $currency = OrbitInput::post('currency');
-            $currency_symbol = OrbitInput::post('currency_symbol');
+            $currency = OrbitInput::post('currency', 'IDR');
+            $currency_symbol = OrbitInput::post('currency_symbol', 'Rp');
             $tax_code1 = OrbitInput::post('tax_code1');
             $tax_code2 = OrbitInput::post('tax_code2');
             $tax_code3 = OrbitInput::post('tax_code3');
             $slogan = OrbitInput::post('slogan');
-            $vat_included = OrbitInput::post('vat_included');
+            $vat_included = OrbitInput::post('vat_included', 'no');
             $contact_person_firstname = OrbitInput::post('contact_person_firstname');
             $contact_person_lastname = OrbitInput::post('contact_person_lastname');
             $contact_person_position = OrbitInput::post('contact_person_position');
             $contact_person_phone = OrbitInput::post('contact_person_phone');
             $contact_person_phone2 = OrbitInput::post('contact_person_phone2');
             $contact_person_email = OrbitInput::post('contact_person_email');
-            $sector_of_activity = OrbitInput::post('sector_of_activity');
+            $sector_of_activity = OrbitInput::post('sector_of_activity', 'Mall');
             $object_type = OrbitInput::post('object_type');
             $parent_id = OrbitInput::post('parent_id');
             $url = OrbitInput::post('url');
             $masterbox_number = OrbitInput::post('masterbox_number');
             $slavebox_number = OrbitInput::post('slavebox_number');
-            $mobile_default_language = OrbitInput::post('mobile_default_language');
+            $mobile_default_language = OrbitInput::post('mobile_default_language', 'en');
             $pos_language = OrbitInput::post('pos_language');
+            $timezoneName = OrbitInput::post('timezone', 'Asia/Singapore');
 
             $validator = Validator::make(
                 array(
@@ -185,6 +186,12 @@ class MallAPIController extends ControllerAPI
                     'parent_id'                => $parent_id,
                     'start_date_activity'      => $start_date_activity,
                     'end_date_activity'        => $end_date_activity,
+                    'timezone'                 => $timezoneName,
+                    'mobile_default_language'  => $mobile_default_language,
+                    'currency'                 => $currency,
+                    'currency_symbol'          => $currency_symbol,
+                    'vat_included'             => $vat_included,
+                    'sector_of_activity'       => $sector_of_activity,
                 ),
                 array(
                     'name'                     => 'required|orbit.exists.mall_name',
@@ -202,7 +209,13 @@ class MallAPIController extends ControllerAPI
                     'status'                   => 'required|orbit.empty.mall_status',
                     'parent_id'                => 'orbit.empty.mallgroup',
                     'start_date_activity'      => 'date_format:Y-m-d H:i:s',
-                    'end_date_activity'        => 'date_format:Y-m-d H:i:s'
+                    'end_date_activity'        => 'date_format:Y-m-d H:i:s',
+                    'timezone'                 => 'required|timezone|valid_db_timezone_name',
+                    'mobile_default_language'  => 'required|size:2|valid_language',
+                    'currency'                 => 'required|size:3',
+                    'currency_symbol'          => 'required',
+                    'vat_included'             => 'required|in:yes,no',
+                    'sector_of_activity'       => 'required',
                 ),
                 array(
                     'name.required'                     => 'Mall name is required',
@@ -215,6 +228,8 @@ class MallAPIController extends ControllerAPI
                     'contact_person_phone.required'     => 'The phone number 1 is required',
                     'contact_person_email.required'     => 'The email address is required',
                     'orbit.empty.mall_status'           => 'Mall status you specified is not found',
+                    'valid_db_timezone_name'            => 'The :attribute must be an existing timezone',
+                    'valid_language'                    => 'The :attribute must be a valid language code'
                 )
             );
 
@@ -256,8 +271,11 @@ class MallAPIController extends ControllerAPI
                 $countryName = $countryObject->name;
             }
 
+            $timezone = App::make('valid_db_timezone_name');
+
             $newmall = new Mall();
             $newmall->user_id = $newuser->user_id;
+            $newmall->timezone_id = $timezone->timezone_id;
             // $newmall->omid = '';
             $newmall->email = $email;
             $newmall->name = $name;
@@ -297,6 +315,7 @@ class MallAPIController extends ControllerAPI
             } else {
                 $newmall->parent_id = $parent_id;
             }
+            $newmall->is_mall = 'yes';
             $newmall->url = $url;
             $newmall->masterbox_number = $masterbox_number;
             $newmall->slavebox_number = $slavebox_number;
@@ -2149,6 +2168,30 @@ class MallAPIController extends ControllerAPI
                 }
 
                 App::instance('orbit.exists.merchant_retailers_is_box_current_retailer', $currentRetailer);
+            }
+
+            return TRUE;
+        });
+
+        Validator::extend('valid_db_timezone_name', function($attribute, $value, $parameters) {
+            $timezone = Timezone::where('timezone_name', $value)
+                ->first();
+
+            if (empty($timezone)) {
+                return FALSE;
+            }
+
+            App::instance('valid_db_timezone_name', $timezone);
+
+            return TRUE;
+        });
+
+        Validator::extend('valid_language', function($attribute, $value, $parameters)
+        {
+            $lang = Language::where('name', '=', $value)->where('status', '=', 'active')->first();
+
+            if (empty($lang)) {
+                return FALSE;
             }
 
             return TRUE;
