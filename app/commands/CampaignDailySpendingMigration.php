@@ -7,37 +7,37 @@ use Carbon\Carbon as Carbon;
 
 class CampaignDailySpendingMigration extends Command {
 
-	/**
-	 * The console command name.
-	 *
-	 * @var string
-	 */
-	protected $name = 'campaign:spending-daily-migrate';
+    /**
+     * The console command name.
+     *
+     * @var string
+     */
+    protected $name = 'campaign:spending-daily-migrate';
 
-	/**
-	 * The console command description.
-	 *
-	 * @var string
-	 */
-	protected $description = 'Insert campaign spending calculation per campaign type, per mall and per day.';
+    /**
+     * The console command description.
+     *
+     * @var string
+     */
+    protected $description = 'Insert campaign spending calculation per campaign type, per mall and per day.';
 
-	/**
-	 * Create a new command instance.
-	 *
-	 * @return void
-	 */
-	public function __construct()
-	{
-		parent::__construct();
-	}
+    /**
+     * Create a new command instance.
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+        parent::__construct();
+    }
 
-	/**
-	 * Execute the console command.
-	 *
-	 * @return mixed
-	 */
-	public function fire()
-	{
+    /**
+     * Execute the console command.
+     *
+     * @return mixed
+     */
+    public function fire()
+    {
         // Start time for log
         $started_time = microtime(true);
 
@@ -54,11 +54,9 @@ class CampaignDailySpendingMigration extends Command {
         $this->info("Success, truncated table campaign_spending !");
 
         // =================== Migration for news and promotions ===================
-        $idKeyNewsPromotions = 1;
+        $idKey = 1;
         $totalCampaign = 0;
-        $newsAndPromotions = News::excludeDeleted()
-        // ->where('news_id', 'Ki2WQzxo8OpvWTF1')
-        ->get();
+        $newsAndPromotions = News::excludeDeleted()->get();
 
         if (count($newsAndPromotions) > 0) {
             foreach ($newsAndPromotions as $key => $valNewsPromotions) {
@@ -79,52 +77,58 @@ class CampaignDailySpendingMigration extends Command {
                 foreach ($campaignHistory as $mall) {
                     // Check end date campaign more than today
                     $mallId = $mall->mall_id;
-                    $mallTimezone = $this->getTimezone($mallId);
-                    $nowMall = Carbon::now($mallTimezone);
-                    $dateNowMall = $nowMall->toDateString();
 
-                    if ($endDate < $dateNowMall ) {
-                        $endDate = $dateNowMall;
-                    }
+                    if ($mallId != '') {
+                        $mallTimezone = $this->getTimezone($mallId);
+                        $nowMall = Carbon::now($mallTimezone);
+                        $dateNowMall = $nowMall->toDateString();
 
-                    $procResults = DB::statement("CALL prc_campaign_detailed_cost( {$this->quote($campaignId)}, {$this->quote($campaignType)}, {$this->quote($startDate)}, {$this->quote($endDate)}, {$this->quote($mallId)})");
+                        if ($endDate < $dateNowMall ) {
+                            $endDate = $dateNowMall;
+                        }
 
+                        $procResults = DB::statement("CALL prc_campaign_detailed_cost( {$this->quote($campaignId)}, {$this->quote($campaignType)}, {$this->quote($startDate)}, {$this->quote($endDate)}, {$this->quote($mallId)})");
 
-                    if ($procResults === false) {
-                        // Do Nothing
-                    }
+                        if ($procResults === false) {
+                            // Do Nothing
+                        }
 
-                    $getSpending = DB::table(DB::raw('tmp_campaign_cost_detail'))
-                        ->groupBy('date_in_utc')
-                        ->get();
+                        $getSpending = DB::table(DB::raw('tmp_campaign_cost_detail'))
+                            ->groupBy('date_in_utc')
+                            ->get();
 
-                    if (count($getSpending)) {
-                        foreach ($getSpending as $key => $valTmp) {
-                            $dailySpending = new CampaignDailySpending();
-                            $dailySpending->campaign_daily_spending_id = $idKeyNewsPromotions;
-                            $dailySpending->date = $valTmp->date_in_utc;
-                            $dailySpending->campaign_type = $campaignType;
-                            $dailySpending->campaign_id = $campaignId;
-                            $dailySpending->mall_id = $mallId;
-                            $dailySpending->number_active_tenants = $valTmp->campaign_number_tenant;
-                            $dailySpending->base_price = $valTmp->base_price;
-                            $dailySpending->campaign_status = $valTmp->campaign_status;
-                            $dailySpending->total_spending = $valTmp->daily_cost;
-                            $dailySpending->save();
-                            $idKeyNewsPromotions++;
+                        if (count($getSpending) > 0) {
+                            foreach ($getSpending as $key => $valTmp) {
+                                $dailySpending = new CampaignDailySpending();
+                                $dailySpending->campaign_daily_spending_id = $idKey;
+                                $dailySpending->date = $valTmp->date_in_utc;
+                                $dailySpending->campaign_type = $campaignType;
+                                $dailySpending->campaign_id = $campaignId;
+                                $dailySpending->mall_id = $mallId;
+                                $dailySpending->number_active_tenants = $valTmp->campaign_number_tenant;
+                                $dailySpending->base_price = $valTmp->base_price;
+                                $dailySpending->campaign_status = $valTmp->campaign_status;
+                                $dailySpending->total_spending = $valTmp->daily_cost;
+                                $dailySpending->save();
+                                $idKey++;
+                            }
                         }
                     }
-                }
 
+                }
                 $totalCampaign++;
+                $this->info($totalCampaign . '. campaign_id = ' . $campaignId . ', campaign_type = '.$campaignType );
+
             }
+
+
         }
         $this->info('Success, Inserted campaign daily spending for news !');
         $this->info('Success, Inserted campaign daily spending for promotions !');
 
 
         // =================== Migration for coupons ===================
-        $idKeyCoupon = $idKeyNewsPromotions + 1;
+        $idKey = $idKey + 1;
         $coupons = Coupon::excludeDeleted()->get();
 
         if (count($coupons) > 0) {
@@ -144,78 +148,86 @@ class CampaignDailySpendingMigration extends Command {
                     ->get();
 
                 foreach ($campaignHistory as $mall) {
+
                     // Check end date campaign more than today
                     $mallId = $mall->mall_id;
-                    $mallTimezone = $this->getTimezone($mallId);
-                    $nowMall = Carbon::now($mallTimezone);
-                    $dateNowMall = $nowMall->toDateString();
 
-                    if ($endDate < $dateNowMall ) {
-                        $endDate = $dateNowMall;
-                    }
+                    if ($mallId != '') {
+                        $mallTimezone = $this->getTimezone($mallId);
+                        $nowMall = Carbon::now($mallTimezone);
+                        $dateNowMall = $nowMall->toDateString();
 
-                    $procResults = DB::statement("CALL prc_campaign_detailed_cost( {$this->quote($campaignId)}, {$this->quote($campaignType)}, {$this->quote($startDate)}, {$this->quote($endDate)}, {$this->quote($mallId)})");
+                        if ($endDate < $dateNowMall ) {
+                            $endDate = $dateNowMall;
+                        }
+
+                        $procResults = DB::statement("CALL prc_campaign_detailed_cost( {$this->quote($campaignId)}, {$this->quote($campaignType)}, {$this->quote($startDate)}, {$this->quote($endDate)}, {$this->quote($mallId)})");
 
 
-                    if ($procResults === false) {
-                        // Do Nothing
-                    }
+                        if ($procResults === false) {
+                            // Do Nothing
+                        }
 
-                    $getSpending = DB::table(DB::raw('tmp_campaign_cost_detail'))
-                        ->groupBy('date_in_utc')
-                        ->get();
+                        $getSpending = DB::table(DB::raw('tmp_campaign_cost_detail'))
+                            ->groupBy('date_in_utc')
+                            ->get();
 
-                    if (count($getSpending)) {
-                        foreach ($getSpending as $key => $valTmp) {
-                            $dailySpending = new CampaignDailySpending();
-                            $dailySpending->campaign_daily_spending_id = $idKeyCoupon;
-                            $dailySpending->date = $valTmp->date_in_utc;
-                            $dailySpending->campaign_type = $campaignType;
-                            $dailySpending->campaign_id = $campaignId;
-                            $dailySpending->mall_id = $mallId;
-                            $dailySpending->number_active_tenants = $valTmp->campaign_number_tenant;
-                            $dailySpending->base_price = $valTmp->base_price;
-                            $dailySpending->campaign_status = $valTmp->campaign_status;
-                            $dailySpending->total_spending = $valTmp->daily_cost;
-                            $dailySpending->save();
-                            $idKeyCoupon++;
+                        if (count($getSpending) > 0) {
+                            foreach ($getSpending as $key => $valTmp) {
+                                $dailySpending = new CampaignDailySpending();
+                                $dailySpending->campaign_daily_spending_id = $idKey;
+                                $dailySpending->date = $valTmp->date_in_utc;
+                                $dailySpending->campaign_type = $campaignType;
+                                $dailySpending->campaign_id = $campaignId;
+                                $dailySpending->mall_id = $mallId;
+                                $dailySpending->number_active_tenants = $valTmp->campaign_number_tenant;
+                                $dailySpending->base_price = $valTmp->base_price;
+                                $dailySpending->campaign_status = $valTmp->campaign_status;
+                                $dailySpending->total_spending = $valTmp->daily_cost;
+                                $dailySpending->save();
+                                $idKey++;
+                            }
                         }
                     }
+
                 }
 
                 $totalCampaign++;
+                $this->info($totalCampaign . '. campaign_id = ' . $campaignId . ', campaign_type = '.$campaignType );
+
             }
         }
         $this->info('Success, Inserted campaign daily spending for coupon !');
 
         // =================== Check time ===================
-        $this->info('Migration successfully, Loaded time  = ' . (microtime(true) - $started_time) . ' ms, total campaign data = ' . $totalCampaign . ', total inserted data = ' . $idKeyCoupon );
+        $totalInsertedSpending = $idKey - 1;
+        $this->info('Migration successfully, Loaded time  = ' . (microtime(true) - $started_time) . ' ms, total campaign data = ' . $totalCampaign . ', total inserted row to daily spending = ' . $totalInsertedSpending );
 
-	}
+    }
 
-	/**
-	 * Get the console command arguments.
-	 *
-	 * @return array
-	 */
-	protected function getArguments()
-	{
-		return array(
-			// array('example', InputArgument::REQUIRED, 'An example argument.'),
-		);
-	}
+    /**
+     * Get the console command arguments.
+     *
+     * @return array
+     */
+    protected function getArguments()
+    {
+        return array(
+            // array('example', InputArgument::REQUIRED, 'An example argument.'),
+        );
+    }
 
-	/**
-	 * Get the console command options.
-	 *
-	 * @return array
-	 */
-	protected function getOptions()
-	{
-		return array(
-			// array('example', null, InputOption::VALUE_OPTIONAL, 'An example option.', null),
-		);
-	}
+    /**
+     * Get the console command options.
+     *
+     * @return array
+     */
+    protected function getOptions()
+    {
+        return array(
+            // array('example', null, InputOption::VALUE_OPTIONAL, 'An example option.', null),
+        );
+    }
 
     protected function getTimezone($current_mall)
     {
