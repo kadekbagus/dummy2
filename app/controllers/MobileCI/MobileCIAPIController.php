@@ -5091,6 +5091,20 @@ class MobileCIAPIController extends BaseCIController
         }
     }
 
+    public function postCheckUserLocation() {
+
+        $lat = OrbitInput::post('latitude', null);
+        $long = OrbitInput::get('longitude', null);
+
+        $malls = Mall::excludeDeleted()->InsideArea($lat, $long)->first();
+
+        if (! is_object($malls)) {
+            return 'false';
+        }
+
+        return 'true';
+    }
+
     /**
      * GET - Get promotion list in mall
      *

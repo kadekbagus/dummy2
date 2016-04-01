@@ -90,12 +90,12 @@
             @if(count($tenants) <=0)
                 @if($cs_reedem)
                     <div class="col-xs-12 text-center">
-                        <button class="btn btn-info btn-block" id="useBtn">{{{ Lang::get('mobileci.coupon.use_coupon') }}}</button>
+                        <button class="btn btn-info btn-block" id="useBtn" disabled="disabled">{{{ Lang::get('mobileci.coupon.use_coupon') }}}</button>
                     </div>
                     @endif
             @else
             <div class="col-xs-12 text-center">
-                <button class="btn btn-info btn-block" id="useBtn">{{{ Lang::get('mobileci.coupon.use_coupon') }}}</button>
+                <button class="btn btn-info btn-block" id="useBtn" disabled="disabled">{{{ Lang::get('mobileci.coupon.use_coupon') }}}</button>
             </div>
             @endif
         </div>
@@ -199,6 +199,48 @@
     {{-- End of Script fallback --}}
     <script type="text/javascript">
         $(document).ready(function(){
+            // check for Geolocation support
+            if (navigator.geolocation) {
+                window.onload = function() {
+                    var startPos;
+                    var geoOptions = {
+                       timeout: 10 * 1000
+                    }
+
+                    var geoSuccess = function(position) {
+                        startPos = position;
+                        console.log(startPos);
+                        // do ajax call
+                        $.ajax({
+                            url: '{{route('ci-check-user-location')}}',
+                            method: 'POST',
+                            data: {
+                                latitude: startPos.coords.latitude,
+                                longitude: startPos.coords.longitude
+                            }
+                        }).done(function(response) {
+                            console.log(response);
+                            if (response === 'true') {
+                                $('#useBtn').removeAttr('disabled');
+                            }
+                        })
+
+                        // document.getElementById('startLat').innerHTML = startPos.coords.latitude;
+                        // document.getElementById('startLon').innerHTML = startPos.coords.longitude;
+                    };
+                    var geoError = function(error) {
+                        console.log('Error occurred. Error code: ' + error.code);
+                        // error.code can be:
+                        //   0: unknown error
+                        //   1: permission denied
+                        //   2: position unavailable (error response from location provider)
+                        //   3: timed out
+                    };
+
+                    navigator.geolocation.getCurrentPosition(geoSuccess, geoError, geoOptions);
+                };
+            }
+
             $(window).scroll(function(){
                 s = $(window).scrollTop();
                 $('.product-detail img').css('-webkit-transform', 'translateY('+(s/3)+'px)');
