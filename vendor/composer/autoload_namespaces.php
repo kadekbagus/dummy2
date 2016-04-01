@@ -31,6 +31,7 @@ return array(
     'PHPParser' => array($vendorDir . '/nikic/php-parser/lib'),
     'Orbit\\Queue\\' => array($baseDir . '/app/queue'),
     'Orbit\\Database\\' => array($vendorDir . '/dominopos/orbit-database'),
+    'Orbit\\Controller\\' => array($baseDir . '/app/controllers/src'),
     'OrbitShop\\API\\' => array($vendorDir . '/dominopos/orbit-shop-api'),
     'OAuth\\Unit' => array($vendorDir . '/lusitanian/oauth/tests'),
     'OAuth' => array($vendorDir . '/lusitanian/oauth/src'),

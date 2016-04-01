@@ -66,7 +66,7 @@ Route::post('/api/v1/mall-logo/delete', function()
 Route::get(
     '/{search}/v1/pub/mall-fence', ['as' => 'mall-fence', function()
     {
-        return MallGeolocAPIController::create()->getMallFence();
+        return Orbit\Controller\API\v1\Pub\MallGeolocAPIController::create()->getMallFence();
     }]
 )->where('search', '(api|app)');
 
@@ -76,6 +76,6 @@ Route::get(
 Route::get(
     '/{search}/v1/pub/mall-nearby', ['as' => 'mall-nearby', function()
     {
-        return MallGeolocAPIController::create()->getSearchMallNearby();
+        return Orbit\Controller\API\v1\Pub\MallGeolocAPIController::create()->getSearchMallNearby();
     }]
 )->where('search', '(api|app)');
