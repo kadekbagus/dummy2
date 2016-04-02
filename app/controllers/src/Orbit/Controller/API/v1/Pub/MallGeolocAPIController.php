@@ -14,6 +14,7 @@ use Helper\EloquentRecordCounter as RecordCounter;
 use Config;
 use Mall;
 use stdClass;
+use Orbit\Helper\Util\PaginationNumber;
 
 class MallGeolocAPIController extends ControllerAPI
 {
@@ -47,7 +48,7 @@ class MallGeolocAPIController extends ControllerAPI
             if ((int) $distance !== -1) {
                 $malls->nearBy($lat, $long, $distance);
             }
-                        
+
             // Filter
             OrbitInput::get('keyword_search', function ($keyword) use ($malls) {
                 $mainKeyword = explode(" ", $keyword);
@@ -67,35 +68,10 @@ class MallGeolocAPIController extends ControllerAPI
             $_malls = clone $malls;
 
             // Get the maximum record
-            $maxRecord = (int) Config::get('orbit.pagination.geo_location.max_record');
-            if ($maxRecord <= 0) {
-                // Fallback
-                $maxRecord = (int) Config::get('orbit.pagination.max_record');
-                if ($maxRecord <= 0) {
-                    $maxRecord = 20;
-                }
-            }
-            // Get default per page (take)
-            $perPage = (int) Config::get('orbit.pagination.geo_location.per_page');
-            if ($perPage <= 0) {
-                // Fallback
-                $perPage = (int) Config::get('orbit.pagination.per_page');
-                if ($perPage <= 0) {
-                    $perPage = 20;
-                }
-            }
-
-            // Get the take args
-            $take = $perPage;
-            OrbitInput::get('take', function ($_take) use (&$take, $maxRecord) {
-                if ($_take > $maxRecord) {
-                    $_take = $maxRecord;
-                }
-                $take = $_take;
-
-                if ((int)$take <= 0) {
-                    $take = $maxRecord;
-                }
+            $pgnumber = PaginationNumber::create('geo_location');
+            $take = $pgnumber->perPage;
+            OrbitInput::get('take', function ($_take) use (&$take, $pgnumber) {
+                $take = $pgnumber->setPerPage($_take)->perPage;
             });
             $malls->take($take);
 
