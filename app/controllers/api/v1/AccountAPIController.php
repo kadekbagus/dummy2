@@ -161,6 +161,14 @@ class AccountAPIController extends ControllerAPI
         $campaignAccount->status = Input::get('status');
         $campaignAccount->save();
 
+        // save to employees table (1 to 1)
+        $employee_pmp = ($this->id) ? Employee::whereUserId($user->user_id)->first() : new Employee;
+        $employee_pmp->user_id = $user->user_id;
+        // $employee_pmp->employee_id_char = '';
+        $employee_pmp->position = Input::get('position');
+        $employee_pmp->status = Input::get('status');
+        $employee_pmp->save();
+
         // Save to user_merchant (1 to M)
         $this->createUpdateUserMerchant($user);
 
