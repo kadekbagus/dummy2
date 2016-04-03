@@ -326,9 +326,9 @@ class MallAPIController extends ControllerAPI
             $timezoneName = OrbitInput::post('timezone', $this->default['timezone']);
 
             // for a while this declaration with default value
-            $widgets = OrbitInput::post('widgets', $this->default['widgets']);
             $languages = OrbitInput::post('languages', $this->default['languages']);
             $categories = OrbitInput::post('categories', $this->default['categories']);
+            $widgets = OrbitInput::post('widgets', $this->default['widgets']);
             $floors = OrbitInput::post('floors', $this->default['floors']);
             $age_ranges = OrbitInput::post('age_ranges', $this->default['age_ranges']);
             $campaign_base_prices = OrbitInput::post('campaign_base_price', $this->default['campaign_base_price']);
@@ -501,14 +501,40 @@ class MallAPIController extends ControllerAPI
                 $merchant_language->save();
             }
 
-            // widgets
-            // @author irianto <irianto@dominopos.com>
             $languages_by_name = [];
             foreach ($newmall->languages as $language) {
                 $name_lang = $language->language->name;
                 $languages_by_name[$name_lang] = $language;
             }
 
+            // categories
+            // @author irianto <irianto@dominopos.com>
+            foreach ($categories as $index => $category) {
+                $default_translation = trim($category['default']);
+
+                $new_category = new Category();
+                $new_category->merchant_id       = $newmall->merchant_id;
+                $new_category->category_name     = $default_translation;
+                $new_category->category_level    = 1;
+                $new_category->category_order    = 0;
+                $new_category->status            = 'active';
+                $new_category->created_by        = NULL;
+                $new_category->modified_by       = NULL;
+                $new_category->save();
+
+                foreach ($languages as $data_lang) {
+                    $new_category_translation = new CategoryTranslation();
+                    $new_category_translation->category_id          = $new_category->category_id;
+                    $new_category_translation->merchant_language_id = $languages_by_name[$data_lang]->merchant_language_id;
+                    $new_category_translation->category_name        = trim($category[$data_lang]);
+                    $new_category_translation->status               = 'active';
+                    $new_category_translation->created_by           = NULL;
+                    $new_category_translation->modified_by          = NULL;
+                }
+            }
+
+            // widgets
+            // @author irianto <irianto@dominopos.com>
             foreach ($widgets as $data_widget) {
                 $widget = new Widget();
                 $widget->widget_type = $data_widget['type'];
