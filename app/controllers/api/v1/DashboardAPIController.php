@@ -4436,7 +4436,8 @@ class DashboardAPIController extends ControllerAPI
         // Try to check access control list, does this user allowed to
         // perform this action
         $user = $this->api->user;
-        $mall_id = OrbitInput::get('current_mall');
+
+        // $mall_id = OrbitInput::get('current_mall');
         $campaign_statuses = CampaignStatus::get();
         $promotionCount = [];
         $newsCount = [];
@@ -4445,7 +4446,11 @@ class DashboardAPIController extends ControllerAPI
         foreach ($campaign_statuses as $status) {
             // Promotions
             $promotionCount[$status->campaign_status_name] = News::allowedForPMPUser($user, 'promotion')
-                ->whereHas('campaignLocations', function($q) use($mall_id) {
+                    ->campaignStatus($status->campaign_status_name);
+            // Filter coupons by mall_id
+            OrbitInput::get('current_mall', function ($mall_id) use ($promotionCount, $status)
+            {
+                $promotionCount[$status->campaign_status_name]->whereHas('campaignLocations', function($q) use($mall_id) {
                             $q->where(function($q2) {
                                 $q2->where('merchants.object_type', 'tenant');
                                 $q2->orWhere('merchants.object_type', 'mall');
@@ -4456,12 +4461,17 @@ class DashboardAPIController extends ControllerAPI
                                 // avaliable cause merchant_id never same with parent_id
                                 $q3->orWhere('merchants.parent_id', $mall_id);
                             });
-                        })
-                ->campaignStatus($status->campaign_status_name)->count();
+                        });
+            });
+            $promotionCount[$status->campaign_status_name] = $promotionCount[$status->campaign_status_name]->count();
 
             // News
             $newsCount[$status->campaign_status_name] = News::allowedForPMPUser($user, 'news')
-                ->whereHas('campaignLocations', function($q) use($mall_id) {
+                    ->campaignStatus($status->campaign_status_name);
+            // Filter coupons by mall_id
+            OrbitInput::get('current_mall', function ($mall_id) use ($newsCount, $status)
+            {
+                $newsCount[$status->campaign_status_name]->whereHas('campaignLocations', function($q) use($mall_id) {
                             $q->where(function($q2) {
                                 $q2->where('merchants.object_type', 'tenant');
                                 $q2->orWhere('merchants.object_type', 'mall');
@@ -4472,12 +4482,17 @@ class DashboardAPIController extends ControllerAPI
                                 // avaliable cause merchant_id never same with parent_id
                                 $q3->orWhere('merchants.parent_id', $mall_id);
                             });
-                        })
-                ->campaignStatus($status->campaign_status_name)->count();
+                        });
+            });
+            $newsCount[$status->campaign_status_name] = $newsCount[$status->campaign_status_name]->count();
 
             // Coupons
             $couponCount[$status->campaign_status_name] = Coupon::allowedForPMPUser($user, 'coupon')
-                ->whereHas('campaignLocations', function($q) use($mall_id) {
+                    ->campaignStatus($status->campaign_status_name);
+            // Filter coupons by mall_id
+            OrbitInput::get('current_mall', function ($mall_id) use ($couponCount, $status)
+            {
+                $couponCount[$status->campaign_status_name]->whereHas('campaignLocations', function($q) use($mall_id) {
                             $q->where(function($q2) {
                                 $q2->where('merchants.object_type', 'tenant');
                                 $q2->orWhere('merchants.object_type', 'mall');
@@ -4488,8 +4503,9 @@ class DashboardAPIController extends ControllerAPI
                                 // avaliable cause merchant_id never same with parent_id
                                 $q3->orWhere('merchants.parent_id', $mall_id);
                             });
-                        })
-                ->campaignStatus($status->campaign_status_name)->count();
+                        });
+            });
+            $couponCount[$status->campaign_status_name] = $couponCount[$status->campaign_status_name]->count();
         }
 
         $this->response->data = [
