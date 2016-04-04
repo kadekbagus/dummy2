@@ -2107,7 +2107,7 @@ class TenantAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $sort_by = OrbitInput::get('sortby');
-            $limit = OrbitInput::get('limit', 'no');
+            $filtermode = OrbitInput::get('filtermode');
 
             $validator = Validator::make(
                 array(
@@ -2150,7 +2150,7 @@ class TenantAPIController extends ControllerAPI
                 });
             }
 
-            if ($limit === 'yes') {
+            if ($filtermode === 'available') {
                 $availableMerchantIds = UserMerchant::whereIn('object_type', ['mall', 'tenant'])->lists('merchant_id');
                 $tenants->whereNotIn('merchants.merchant_id', $availableMerchantIds);
             } 
