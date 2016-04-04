@@ -16,7 +16,7 @@ use Mall;
 use stdClass;
 use Orbit\Helper\Util\PaginationNumber;
 
-class MallGeolocAPIController extends ControllerAPI
+class MallNearbyAPIController extends ControllerAPI
 {
     /**
      * GET - Search mall by location
@@ -67,23 +67,10 @@ class MallGeolocAPIController extends ControllerAPI
 
             $_malls = clone $malls;
 
-            // Get the maximum record
-            $pgnumber = PaginationNumber::create('geo_location');
-            $take = $pgnumber->perPage;
-            OrbitInput::get('take', function ($_take) use (&$take, $pgnumber) {
-                $take = $pgnumber->setPerPage($_take)->perPage;
-            });
+            $take = PaginationNumber::parseTakeFromGet('geo_location');
             $malls->take($take);
 
-            $skip = 0;
-            OrbitInput::get('skip', function($_skip) use (&$skip, $malls)
-            {
-                if ($_skip < 0) {
-                    $_skip = 0;
-                }
-
-                $skip = $_skip;
-            });
+            $skip = PaginationNumber::parseSkipFromGet('geo_location');
             $malls->skip($skip);
 
             // Default sort by
