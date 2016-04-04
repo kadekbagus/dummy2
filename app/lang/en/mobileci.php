@@ -40,6 +40,7 @@ return array(
         'my_messages'       => 'MY MESSAGES',
         'my_message'        => 'MY MESSAGE',
         'redemption_places' => 'REDEMPTION PLACE',
+        'back_to_map'       => 'BACK TO MAP',
     ),
 
     'widgets' => array(

@@ -4428,52 +4428,55 @@ class DashboardAPIController extends ControllerAPI
      */
     public function getCampaignStatus()
     {
-        // $date = OrbitInput::get('date');
-        $mallId = OrbitInput::get('current_mall');
+        $httpCode = 200;
 
-        $mall = Mall::excludeDeleted()->where('merchant_id', $mallId)->first();
-        $mallTime = Carbon::now($mall->timezone->timezone_name);
+        // Require authentication
+        $this->checkAuth();
+
+        // Try to check access control list, does this user allowed to
+        // perform this action
+        $user = $this->api->user;
 
         // Promotions
-        $notStartedPromotionCount = News::ofMallId($mallId)->isPromotion()->campaignStatus('not started', $mallTime)->count();
-        $ongoingPromotionCount = News::ofMallId($mallId)->isPromotion()->campaignStatus('ongoing', $mallTime)->count();
-        $pausedPromotionCount = News::ofMallId($mallId)->isPromotion()->campaignStatus('paused', $mallTime)->count();
-        $stoppedPromotionCount = News::ofMallId($mallId)->isPromotion()->campaignStatus('stopped', $mallTime)->count();
-        $expiredPromotionCount = News::ofMallId($mallId)->isPromotion()->campaignStatus('expired', $mallTime)->count();
+        $notStartedPromotionCount = News::allowedForPMPUser($user, 'promotion')->campaignStatus('not started')->count();
+        $ongoingPromotionCount = News::allowedForPMPUser($user, 'promotion')->campaignStatus('ongoing')->count();
+        $pausedPromotionCount = News::allowedForPMPUser($user, 'promotion')->campaignStatus('paused')->count();
+        $stoppedPromotionCount = News::allowedForPMPUser($user, 'promotion')->campaignStatus('stopped')->count();
+        $expiredPromotionCount = News::allowedForPMPUser($user, 'promotion')->campaignStatus('expired')->count();
 
         // News
-        $notStartedNewsCount = News::ofMallId($mallId)->isNews()->campaignStatus('not started', $mallTime)->count();
-        $ongoingNewsCount = News::ofMallId($mallId)->isNews()->campaignStatus('ongoing', $mallTime)->count();
-        $pausedNewsCount = News::ofMallId($mallId)->isNews()->campaignStatus('paused', $mallTime)->count();
-        $stoppedNewsCount = News::ofMallId($mallId)->isNews()->campaignStatus('stopped', $mallTime)->count();
-        $expiredNewsCount = News::ofMallId($mallId)->isNews()->campaignStatus('expired', $mallTime)->count();
+        $notStartedNewsCount = News::allowedForPMPUser($user, 'news')->campaignStatus('not started')->count();
+        $ongoingNewsCount = News::allowedForPMPUser($user, 'news')->campaignStatus('ongoing')->count();
+        $pausedNewsCount = News::allowedForPMPUser($user, 'news')->campaignStatus('paused')->count();
+        $stoppedNewsCount = News::allowedForPMPUser($user, 'news')->campaignStatus('stopped')->count();
+        $expiredNewsCount = News::allowedForPMPUser($user, 'news')->campaignStatus('expired')->count();
 
         // Coupons
-        $notStartedCouponCount = Coupon::ofMerchantId($mallId)->campaignStatus('not started', $mallTime)->count();
-        $ongoingCouponCount = Coupon::ofMerchantId($mallId)->campaignStatus('ongoing', $mallTime)->count();
-        $pausedCouponCount = Coupon::ofMerchantId($mallId)->campaignStatus('paused', $mallTime)->count();
-        $stoppedCouponCount = Coupon::ofMerchantId($mallId)->campaignStatus('stopped', $mallTime)->count();
-        $expiredCouponCount = Coupon::ofMerchantId($mallId)->campaignStatus('expired', $mallTime)->count();
+        $notStartedCouponCount = Coupon::allowedForPMPUser($user, 'coupon')->campaignStatus('not started')->count();
+        $ongoingCouponCount = Coupon::allowedForPMPUser($user, 'coupon')->campaignStatus('ongoing')->count();
+        $pausedCouponCount = Coupon::allowedForPMPUser($user, 'coupon')->campaignStatus('paused')->count();
+        $stoppedCouponCount = Coupon::allowedForPMPUser($user, 'coupon')->campaignStatus('stopped')->count();
+        $expiredCouponCount = Coupon::allowedForPMPUser($user, 'coupon')->campaignStatus('expired')->count();
 
         $this->response->data = [
-            'promotions_not_started'    => $notStartedPromotionCount,
-            'promotions_ongoing'  => $ongoingPromotionCount,
-            'promotions_paused'  => $pausedPromotionCount,
-            'promotions_stopped'  => $stoppedPromotionCount,
-            'promotions_expired'  => $expiredPromotionCount,
-            'news_not_started'          => $notStartedNewsCount,
-            'news_ongoing'          => $ongoingNewsCount,
-            'news_paused'          => $pausedNewsCount,
-            'news_stopped'          => $stoppedNewsCount,
-            'news_expired'        => $expiredNewsCount,
-            'coupons_not_started'       => $notStartedCouponCount,
-            'coupons_ongoing'       => $ongoingCouponCount,
-            'coupons_paused'       => $pausedCouponCount,
-            'coupons_stopped'       => $stoppedCouponCount,
-            'coupons_expired'     => $expiredCouponCount,
+            'promotions_not_started' => $notStartedPromotionCount,
+            'promotions_ongoing'     => $ongoingPromotionCount,
+            'promotions_paused'      => $pausedPromotionCount,
+            'promotions_stopped'     => $stoppedPromotionCount,
+            'promotions_expired'     => $expiredPromotionCount,
+            'news_not_started'       => $notStartedNewsCount,
+            'news_ongoing'           => $ongoingNewsCount,
+            'news_paused'            => $pausedNewsCount,
+            'news_stopped'           => $stoppedNewsCount,
+            'news_expired'           => $expiredNewsCount,
+            'coupons_not_started'    => $notStartedCouponCount,
+            'coupons_ongoing'        => $ongoingCouponCount,
+            'coupons_paused'         => $pausedCouponCount,
+            'coupons_stopped'        => $stoppedCouponCount,
+            'coupons_expired'        => $expiredCouponCount,
         ];
 
-        return $this->render(200);
+        return $this->render($httpCode);
     }
 
 
