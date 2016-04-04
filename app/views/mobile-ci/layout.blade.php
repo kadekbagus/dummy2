@@ -17,15 +17,15 @@
             }
         </style>
         @endif
-        @if (! empty(Config::get('orbit.cdn.fonts.font_awesome.4_2_0')))
+        @if (! empty(Config::get('orbit.cdn.fonts.font_awesome.4_5_0')))
         <style type="text/css">
             @font-face {
               font-family: 'FontAwesome';
-              src: url('{{Config::get('orbit.cdn.fonts.font_awesome.4_2_0')}}.eot?v=4.2.0');
-              src: url('{{Config::get('orbit.cdn.fonts.font_awesome.4_2_0')}}.eot?#iefix&v=4.2.0') format('embedded-opentype'),
-              url('{{Config::get('orbit.cdn.fonts.font_awesome.4_2_0')}}.woff?v=4.2.0') format('woff'),
-              url('{{Config::get('orbit.cdn.fonts.font_awesome.4_2_0')}}.ttf?v=4.2.0') format('truetype'),
-              url('{{Config::get('orbit.cdn.fonts.font_awesome.4_2_0')}}.svg?v=4.2.0#fontawesomeregular') format('svg');
+              src: url('{{Config::get('orbit.cdn.fonts.font_awesome.4_5_0')}}.eot?v=4.5.0');
+              src: url('{{Config::get('orbit.cdn.fonts.font_awesome.4_5_0')}}.eot?#iefix&v=4.5.0') format('embedded-opentype'),
+              url('{{Config::get('orbit.cdn.fonts.font_awesome.4_5_0')}}.woff?v=4.5.0') format('woff'),
+              url('{{Config::get('orbit.cdn.fonts.font_awesome.4_5_0')}}.ttf?v=4.5.0') format('truetype'),
+              url('{{Config::get('orbit.cdn.fonts.font_awesome.4_5_0')}}.svg?v=4.5.0#fontawesomeregular') format('svg');
               font-weight: normal;
               font-style: normal;
             }
@@ -34,11 +34,11 @@
         <style type="text/css">
             @font-face {
               font-family: 'FontAwesome';
-              src: url('{{asset('mobile-ci/fonts/font-awesome/fontawesome-webfont.eot?v=4.2.0')}}');
-              src: url('{{asset('mobile-ci/fonts/font-awesome/fontawesome-webfont.eot?#iefix&v=4.2.0')}}') format('embedded-opentype'),
-              url('{{asset('mobile-ci/fonts/font-awesome/fontawesome-webfont.woff?v=4.2.0')}}') format('woff'),
-              url('{{asset('mobile-ci/fonts/font-awesome/fontawesome-webfont.ttf?v=4.2.0')}}') format('truetype'),
-              url('{{asset('mobile-ci/fonts/font-awesome/fontawesome-webfont.svg?v=4.2.0#fontawesomeregular')}}') format('svg');
+              src: url('{{asset('mobile-ci/fonts/font-awesome/fontawesome-webfont.eot?v=4.5.0')}}');
+              src: url('{{asset('mobile-ci/fonts/font-awesome/fontawesome-webfont.eot?#iefix&v=4.5.0')}}') format('embedded-opentype'),
+              url('{{asset('mobile-ci/fonts/font-awesome/fontawesome-webfont.woff?v=4.5.0')}}') format('woff'),
+              url('{{asset('mobile-ci/fonts/font-awesome/fontawesome-webfont.ttf?v=4.5.0')}}') format('truetype'),
+              url('{{asset('mobile-ci/fonts/font-awesome/fontawesome-webfont.svg?v=4.5.0#fontawesomeregular')}}') format('svg');
               font-weight: normal;
               font-style: normal;
             }

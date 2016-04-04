@@ -40,6 +40,7 @@ return array(
         'my_messages'       => 'PESAN SAYA',
         'my_message'        => 'PESAN SAYA',
         'redemption_places' => 'TEMPAT PENUKARAN',
+        'back_to_map'       => 'KEMBALI KE PETA',
     ),
 
     'widgets'   => array(
