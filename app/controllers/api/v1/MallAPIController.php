@@ -21,6 +21,163 @@ class MallAPIController extends ControllerAPI
      */
     protected $returnBuilder = FALSE;
 
+    protected $default = [
+        'currency'                => 'IDR',
+        'currency_symbol'         => 'Rp',
+        'vat_included'            => 'no',
+        'mobile_default_language' => 'en',
+        'sector_of_activity'      => 'Mall',
+        'timezone'                => 'Asia/Singapore',
+        'widgets'                 => [
+            [
+                'type'      => 'tenant',
+                'object_id' => 0,
+                'order'     => 1,
+                'animation' => 'none',
+                'status'    => 'active',
+                'slogan'    => [
+                    'default' => 'View All Stores',
+                    'en'      => 'View All Stores'
+                ]
+            ],
+            [
+                'type'      => 'promotion',
+                'object_id' => 0,
+                'order'     => 2,
+                'animation' => 'none',
+                'status'    => 'active',
+                'slogan'    => [
+                    'default' => 'Latest Promotions',
+                    'en'      => 'Latest Promotions'
+              ]
+            ],
+            [
+                'type'      => 'news',
+                'object_id' => 0,
+                'order'     => 3,
+                'animation' => 'none',
+                'status'    => 'active',
+                'slogan'    => [
+                    'default' => 'Get the Latest News',
+                    'en'      => 'Get the Latest News'
+              ]
+            ],
+            [
+                'type'      => 'coupon',
+                'object_id' => 0,
+                'order'     => 4,
+                'animation' => 'none',
+                'status'    => 'active',
+                'slogan'    => [
+                    'default' => 'Your Available Coupons',
+                    'en'      => 'Your Available Coupons'
+              ]
+            ],
+            [
+                'type'      => 'lucky_draw',
+                'object_id' => 0,
+                'order'     => 5,
+                'animation' => 'none',
+                'status'    => 'active',
+                'slogan'    => [
+                    'default' => 'Your Lucky Draw Number',
+                    'en'      => 'Your Lucky Draw Number'
+              ]
+            ]
+        ],
+        'languages' => [
+            'en',
+            'ja',
+            'zh'
+        ],
+        'categories' => [
+            [
+                'default' => 'ATM',
+                'en'      => 'ATM',
+                'zh'      => 'ATM',
+                'ja'      => '自動支払機'
+            ],
+            [
+                'default' => 'Restaurants',
+                'en'      => 'Restaurants',
+                'zh'      => '餐馆',
+                'ja'      => 'レストラン'
+            ]
+        ],
+        'floors' => [
+            [
+                'name'  => 'B1',
+                'order' => 1
+            ],
+            [
+                'name'  => 'Level 1',
+                'order' => 2
+            ]
+        ],
+        'age_ranges' => [
+            [
+                'range_name' => '0-14',
+                'min_value'  => '0',
+                'max_value'  => '14',
+                'status'     => 'active'
+            ],
+            [
+                'range_name' => '15-24',
+                'min_value'  => '15',
+                'max_value'  => '24',
+                'status'     => 'active'
+            ],
+            [
+                'range_name' => '25-34',
+                'min_value'  => '25',
+                'max_value'  => '34',
+                'status'     => 'active'
+            ],
+            [
+                'range_name' => '35-44',
+                'min_value'  => '35',
+                'max_value'  => '44',
+                'status'     => 'active'
+            ],
+            [
+                'range_name' => '45-54',
+                'min_value'  => '45',
+                'max_value'  => '54',
+                'status'     => 'active'
+            ],
+            [
+                'range_name' => '55 +',
+                'min_value'  => '55',
+                'max_value'  => '0',
+                'status'     => 'active'
+            ],
+            [
+                'range_name' => 'Unknown',
+                'min_value'  => '0',
+                'max_value'  => '0',
+                'status'     => 'active'
+            ]
+        ],
+        'campaign_base_price' => [
+            [
+                'price'         => '10',
+                'campaign_type' => 'promotion'
+            ],
+            [
+                'price'         => '20',
+                'campaign_type' => 'news'
+            ],
+            [
+                'price'         => '30',
+                'campaign_type' => 'coupon'
+            ],
+            [
+                'price'         => '40',
+                'campaign_type' => 'lucky_draw'
+            ]
+        ]
+      ];
+
     /**
      * saveSocmedUri()
      *
@@ -128,7 +285,7 @@ class MallAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $email = OrbitInput::post('email');
-            $name = trim(OrbitInput::post('name'));
+            $mall_name = trim(OrbitInput::post('name'));
             $password = OrbitInput::post('password');
             $description = OrbitInput::post('description');
             $address_line1 = OrbitInput::post('address_line1');
@@ -145,32 +302,40 @@ class MallAPIController extends ControllerAPI
             $end_date_activity = OrbitInput::post('end_date_activity');
             $status = OrbitInput::post('status');
             // $logo = OrbitInput::post('logo');
-            $currency = OrbitInput::post('currency', 'IDR');
-            $currency_symbol = OrbitInput::post('currency_symbol', 'Rp');
+            $currency = OrbitInput::post('currency', $this->default['currency']);
+            $currency_symbol = OrbitInput::post('currency_symbol', $this->default['currency_symbol']);
             $tax_code1 = OrbitInput::post('tax_code1');
             $tax_code2 = OrbitInput::post('tax_code2');
             $tax_code3 = OrbitInput::post('tax_code3');
             $slogan = OrbitInput::post('slogan');
-            $vat_included = OrbitInput::post('vat_included', 'no');
+            $vat_included = OrbitInput::post('vat_included', $this->default['vat_included']);
             $contact_person_firstname = OrbitInput::post('contact_person_firstname');
             $contact_person_lastname = OrbitInput::post('contact_person_lastname');
             $contact_person_position = OrbitInput::post('contact_person_position');
             $contact_person_phone = OrbitInput::post('contact_person_phone');
             $contact_person_phone2 = OrbitInput::post('contact_person_phone2');
             $contact_person_email = OrbitInput::post('contact_person_email');
-            $sector_of_activity = OrbitInput::post('sector_of_activity', 'Mall');
+            $sector_of_activity = OrbitInput::post('sector_of_activity', $this->default['sector_of_activity']);
             $object_type = OrbitInput::post('object_type');
             $parent_id = OrbitInput::post('parent_id');
             $url = OrbitInput::post('url');
             $masterbox_number = OrbitInput::post('masterbox_number');
             $slavebox_number = OrbitInput::post('slavebox_number');
-            $mobile_default_language = OrbitInput::post('mobile_default_language', 'en');
+            $mobile_default_language = OrbitInput::post('mobile_default_language', $this->default['mobile_default_language']);
             $pos_language = OrbitInput::post('pos_language');
-            $timezoneName = OrbitInput::post('timezone', 'Asia/Singapore');
+            $timezoneName = OrbitInput::post('timezone', $this->default['timezone']);
+
+            // for a while this declaration with default value
+            $languages = OrbitInput::post('languages', $this->default['languages']);
+            $categories = OrbitInput::post('categories', $this->default['categories']);
+            $widgets = OrbitInput::post('widgets', $this->default['widgets']);
+            $floors = OrbitInput::post('floors', $this->default['floors']);
+            $age_ranges = OrbitInput::post('age_ranges', $this->default['age_ranges']);
+            $campaign_base_prices = OrbitInput::post('campaign_base_price', $this->default['campaign_base_price']);
 
             $validator = Validator::make(
                 array(
-                    'name'                     => $name,
+                    'name'                     => $mall_name,
                     'email'                    => $email,
                     'password'                 => $password,
                     'address_line1'            => $address_line1,
@@ -278,7 +443,7 @@ class MallAPIController extends ControllerAPI
             $newmall->timezone_id = $timezone->timezone_id;
             // $newmall->omid = '';
             $newmall->email = $email;
-            $newmall->name = $name;
+            $newmall->name = $mall_name;
             $newmall->description = $description;
             $newmall->address_line1 = $address_line1;
             $newmall->address_line2 = $address_line2;
@@ -327,10 +492,147 @@ class MallAPIController extends ControllerAPI
 
             $newmall->save();
 
-            $newUserMerchant = new UserMerchant();
-            $newUserMerchant->merchant_id = $newmall->merchant_id;
-            $newUserMerchant->object_type = $newmall->object_type;
-            $newUserMerchant->save();
+            // languages
+            // @author irianto <irianto@dominopos.com>
+            foreach ($languages as $language_name) {
+                $merchant_language = new MerchantLanguage();
+                $merchant_language->merchant_id = $newmall->merchant_id;
+                $merchant_language->language_id = Language::where('name', '=', $language_name)->first()->language_id;
+                $merchant_language->save();
+            }
+
+            $languages_by_name = [];
+            foreach ($newmall->languages as $language) {
+                $name_lang = $language->language->name;
+                $languages_by_name[$name_lang] = $language;
+            }
+
+            // categories
+            // @author irianto <irianto@dominopos.com>
+            foreach ($categories as $index => $category) {
+                $default_translation = trim($category['default']);
+
+                $new_category = new Category();
+                $new_category->merchant_id       = $newmall->merchant_id;
+                $new_category->category_name     = $default_translation;
+                $new_category->category_level    = 1;
+                $new_category->category_order    = 0;
+                $new_category->status            = 'active';
+                $new_category->created_by        = NULL;
+                $new_category->modified_by       = NULL;
+                $new_category->save();
+
+                foreach ($languages as $data_lang) {
+                    $new_category_translation = new CategoryTranslation();
+                    $new_category_translation->category_id          = $new_category->category_id;
+                    $new_category_translation->merchant_language_id = $languages_by_name[$data_lang]->merchant_language_id;
+                    $new_category_translation->category_name        = trim($category[$data_lang]);
+                    $new_category_translation->status               = 'active';
+                    $new_category_translation->created_by           = NULL;
+                    $new_category_translation->modified_by          = NULL;
+                }
+            }
+
+            // widgets
+            // @author irianto <irianto@dominopos.com>
+            foreach ($widgets as $data_widget) {
+                $widget = new Widget();
+                $widget->widget_type = $data_widget['type'];
+                $widget->widget_object_id = $data_widget['object_id'];
+                $widget->widget_slogan = $data_widget['slogan']['default'];
+                $widget->widget_order = $data_widget['order'];
+                $widget->merchant_id = $newmall->merchant_id;
+                $widget->animation = $data_widget['animation'];
+                $widget->status = $data_widget['status'];
+                $widget->save();
+
+                // Sync also to the widget_retailer table
+                $widget->retailers()->sync( [$newmall->merchant_id] );
+
+                // Insert the translation for the slogan
+                $slogan = $data_widget['slogan'];
+                foreach ($languages as $lang) {
+                    if (isset($slogan[$lang])) {
+                        // Get the Language ID
+                        // The content for this particular language is available
+                        $widgetTrans = new WidgetTranslation();
+                        $widgetTrans->widget_id = $widget->widget_id;
+                        $widgetTrans->merchant_language_id = $languages_by_name[$lang]->merchant_language_id;
+                        $widgetTrans->widget_slogan = $slogan[$lang];
+                        $widgetTrans->status = 'active';
+                        $widgetTrans->save();
+                    }
+                }
+            }
+
+            // floor
+            // @author irianto <irianto@dominopos.com>
+            if (count($floors) > 0) {
+                foreach ($floors as $floor_data) {
+                    $floor = new Object();
+                    $floor->merchant_id = $newmall->merchant_id;
+                    $floor->object_name = $floor_data['name'];
+                    $floor->object_type = 'floor';
+                    $floor->object_order = $floor_data['order'];
+                    $floor->status = 'active';
+                    $floor->save();
+                };
+            }
+
+            // settings
+            // @author irianto <irianto@dominopos.com>
+            $domain = OrbitInput::post('domain', strtolower(trim($mall_name)) . '.myorbit.com');
+            $setting_items = [
+                'enable_coupon'                 => 'true',
+                'enable_coupon_widget'          => 'true',
+                'enable_lucky_draw'             => 'false',
+                'enable_lucky_draw_widget'      => 'false',
+                'enable_membership_card'        => 'false',
+                'landing_page'                  => 'widget',
+                'agreement_accepted'            => 'false',
+                'agreement_acceptor_first_name' => '',
+                'agreement_acceptor_last_name'  => '',
+                'dom:' . $domain                => $newmall->merchant_id
+            ];
+
+            foreach ($setting_items as $setting_name => $setting_value) {
+                $settings = new Setting();
+                $settings->setting_name = $setting_name;
+                $settings->setting_value = $setting_value;
+                $settings->object_id = $newmall->merchant_id;
+                $settings->object_type = 'merchant';
+                if (strpos($setting_name, 'dom') !== false) {
+                    $settings->object_id = NULL;
+                    $settings->object_type = NULL;
+                }
+                $settings->status = 'active';
+                $settings->modified_by = $user->user_id;
+
+                $settings->save();
+            }
+
+            // age ranges
+            // @author irianto <irianto@dominopos.com>
+            foreach ($age_ranges as $age_range) {
+                $age = new AgeRange();
+                $age->merchant_id = $newmall->merchant_id;
+                $age->range_name = $age_range['range_name'];
+                $age->min_value = $age_range['min_value'];
+                $age->max_value = $age_range['max_value'];
+                $age->status = $age_range['status'];
+                $age->save();
+            }
+
+            // campaign base prices
+            // @author irianto <irianto@dominopos.com>
+            foreach ($campaign_base_prices as $campaign_base_price) {
+                $price = new CampaignBasePrice();
+                $price->merchant_id = $newmall->merchant_id;
+                $price->price = $campaign_base_price['price'];
+                $price->campaign_type = $campaign_base_price['campaign_type'];
+                $price->status = 'active';
+                $price->save();
+            }
 
             // save to spending rule, the default is N
             // @author kadek <kadek@dominopos.com>
