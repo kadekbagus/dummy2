@@ -4437,43 +4437,93 @@ class DashboardAPIController extends ControllerAPI
         // perform this action
         $user = $this->api->user;
 
-        // Promotions
-        $notStartedPromotionCount = News::allowedForPMPUser($user, 'promotion')->campaignStatus('not started')->count();
-        $ongoingPromotionCount = News::allowedForPMPUser($user, 'promotion')->campaignStatus('ongoing')->count();
-        $pausedPromotionCount = News::allowedForPMPUser($user, 'promotion')->campaignStatus('paused')->count();
-        $stoppedPromotionCount = News::allowedForPMPUser($user, 'promotion')->campaignStatus('stopped')->count();
-        $expiredPromotionCount = News::allowedForPMPUser($user, 'promotion')->campaignStatus('expired')->count();
+        // $mall_id = OrbitInput::get('current_mall');
+        $campaign_statuses = CampaignStatus::get();
+        $promotionCount = [];
+        $newsCount = [];
+        $couponCount = [];
 
-        // News
-        $notStartedNewsCount = News::allowedForPMPUser($user, 'news')->campaignStatus('not started')->count();
-        $ongoingNewsCount = News::allowedForPMPUser($user, 'news')->campaignStatus('ongoing')->count();
-        $pausedNewsCount = News::allowedForPMPUser($user, 'news')->campaignStatus('paused')->count();
-        $stoppedNewsCount = News::allowedForPMPUser($user, 'news')->campaignStatus('stopped')->count();
-        $expiredNewsCount = News::allowedForPMPUser($user, 'news')->campaignStatus('expired')->count();
+        foreach ($campaign_statuses as $status) {
+            // Promotions
+            $promotionCount[$status->campaign_status_name] = News::allowedForPMPUser($user, 'promotion')
+                    ->campaignStatus($status->campaign_status_name);
+            // Filter coupons by mall_id
+            OrbitInput::get('current_mall', function ($mall_id) use ($promotionCount, $status)
+            {
+                $promotionCount[$status->campaign_status_name]->whereHas('campaignLocations', function($q) use($mall_id) {
+                            $q->where(function($q2) {
+                                $q2->where('merchants.object_type', 'tenant');
+                                $q2->orWhere('merchants.object_type', 'mall');
+                            });
+                            $q->where(function($q3) use($mall_id) {
+                                $prefix = DB::getTablePrefix();
+                                $q3->where('merchants.merchant_id', $mall_id);
+                                // avaliable cause merchant_id never same with parent_id
+                                $q3->orWhere('merchants.parent_id', $mall_id);
+                            });
+                        });
+            });
+            $promotionCount[$status->campaign_status_name] = $promotionCount[$status->campaign_status_name]->count();
 
-        // Coupons
-        $notStartedCouponCount = Coupon::allowedForPMPUser($user, 'coupon')->campaignStatus('not started')->count();
-        $ongoingCouponCount = Coupon::allowedForPMPUser($user, 'coupon')->campaignStatus('ongoing')->count();
-        $pausedCouponCount = Coupon::allowedForPMPUser($user, 'coupon')->campaignStatus('paused')->count();
-        $stoppedCouponCount = Coupon::allowedForPMPUser($user, 'coupon')->campaignStatus('stopped')->count();
-        $expiredCouponCount = Coupon::allowedForPMPUser($user, 'coupon')->campaignStatus('expired')->count();
+            // News
+            $newsCount[$status->campaign_status_name] = News::allowedForPMPUser($user, 'news')
+                    ->campaignStatus($status->campaign_status_name);
+            // Filter coupons by mall_id
+            OrbitInput::get('current_mall', function ($mall_id) use ($newsCount, $status)
+            {
+                $newsCount[$status->campaign_status_name]->whereHas('campaignLocations', function($q) use($mall_id) {
+                            $q->where(function($q2) {
+                                $q2->where('merchants.object_type', 'tenant');
+                                $q2->orWhere('merchants.object_type', 'mall');
+                            });
+                            $q->where(function($q3) use($mall_id) {
+                                $prefix = DB::getTablePrefix();
+                                $q3->where('merchants.merchant_id', $mall_id);
+                                // avaliable cause merchant_id never same with parent_id
+                                $q3->orWhere('merchants.parent_id', $mall_id);
+                            });
+                        });
+            });
+            $newsCount[$status->campaign_status_name] = $newsCount[$status->campaign_status_name]->count();
+
+            // Coupons
+            $couponCount[$status->campaign_status_name] = Coupon::allowedForPMPUser($user, 'coupon')
+                    ->campaignStatus($status->campaign_status_name);
+            // Filter coupons by mall_id
+            OrbitInput::get('current_mall', function ($mall_id) use ($couponCount, $status)
+            {
+                $couponCount[$status->campaign_status_name]->whereHas('campaignLocations', function($q) use($mall_id) {
+                            $q->where(function($q2) {
+                                $q2->where('merchants.object_type', 'tenant');
+                                $q2->orWhere('merchants.object_type', 'mall');
+                            });
+                            $q->where(function($q3) use($mall_id) {
+                                $prefix = DB::getTablePrefix();
+                                $q3->where('merchants.merchant_id', $mall_id);
+                                // avaliable cause merchant_id never same with parent_id
+                                $q3->orWhere('merchants.parent_id', $mall_id);
+                            });
+                        });
+            });
+            $couponCount[$status->campaign_status_name] = $couponCount[$status->campaign_status_name]->count();
+        }
 
         $this->response->data = [
-            'promotions_not_started' => $notStartedPromotionCount,
-            'promotions_ongoing'     => $ongoingPromotionCount,
-            'promotions_paused'      => $pausedPromotionCount,
-            'promotions_stopped'     => $stoppedPromotionCount,
-            'promotions_expired'     => $expiredPromotionCount,
-            'news_not_started'       => $notStartedNewsCount,
-            'news_ongoing'           => $ongoingNewsCount,
-            'news_paused'            => $pausedNewsCount,
-            'news_stopped'           => $stoppedNewsCount,
-            'news_expired'           => $expiredNewsCount,
-            'coupons_not_started'    => $notStartedCouponCount,
-            'coupons_ongoing'        => $ongoingCouponCount,
-            'coupons_paused'         => $pausedCouponCount,
-            'coupons_stopped'        => $stoppedCouponCount,
-            'coupons_expired'        => $expiredCouponCount,
+            'promotions_not_started' => $promotionCount['not started'],
+            'promotions_ongoing'     => $promotionCount['ongoing'],
+            'promotions_paused'      => $promotionCount['paused'],
+            'promotions_stopped'     => $promotionCount['stopped'],
+            'promotions_expired'     => $promotionCount['expired'],
+            'news_not_started'       => $newsCount['not started'],
+            'news_ongoing'           => $newsCount['ongoing'],
+            'news_paused'            => $newsCount['paused'],
+            'news_stopped'           => $newsCount['stopped'],
+            'news_expired'           => $newsCount['expired'],
+            'coupons_not_started'    => $couponCount['not started'],
+            'coupons_ongoing'        => $couponCount['ongoing'],
+            'coupons_paused'         => $couponCount['paused'],
+            'coupons_stopped'        => $couponCount['stopped'],
+            'coupons_expired'        => $couponCount['expired'],
         ];
 
         return $this->render($httpCode);
