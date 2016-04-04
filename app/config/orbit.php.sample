@@ -341,7 +341,7 @@ return array(
         // link to tenant pagination
         'link_to_tenant' => array(
             'per_page'      => 50,
-            'max_record'    => 100,
+            'max_record'    => 1000,
         ),
     ),
 
