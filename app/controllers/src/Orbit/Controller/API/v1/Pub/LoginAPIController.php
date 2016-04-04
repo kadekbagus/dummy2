@@ -1,6 +1,6 @@
 <?php namespace Orbit\Controller\API\v1\Pub;
 /**
- * An API controller for managing mall geo location.
+ * An API controller for managing user sign in.
  */
 use \IntermediateBaseController;
 use OrbitShop\API\v1\ResponseProvider;
@@ -28,147 +28,143 @@ use Validator;
 use DB;
 use Artdarek\OAuth\Facade\OAuth;
 use Redirect;
+use URL;
 
 class LoginAPIController extends IntermediateBaseController
 {
-	protected $response = NULL;
+    /**
+     * POST - Login customer from gotomalls.com
+     *
+     * @author Ahmad ahmad@dominopos.com
+     * @param email
+     * @param password
+     * @param from_mall (yes/no)
+     */
+    public function postLoginCustomer()
+    {
+        $this->response = new ResponseProvider();
+        $roles=['Consumer'];
+        // $modes=['login', 'registration'];
+        $activity = Activity::portal()
+                            ->setActivityType('login');
+        try {
+            $email = trim(OrbitInput::post('email'));
+            $password = trim(OrbitInput::post('password'));
+            $from_mall = OrbitInput::post('from_mall', 'no');
+            // $mode = OrbitInput::post('mode', 'login');
 
-	protected $session = NULL;
+            if (trim($email) === '') {
+                $errorMessage = Lang::get('validation.required', array('attribute' => 'email'));
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
 
-	public function __construct() {
-		$this->response = new ResponseProvider();
-		// Instantiate the OrbitSession object
-        $sessConfig = new SessionConfig(Config::get('orbit.session'));
-		$this->session = new OrbitSession($sessConfig);
-	}
+            if (trim($password) === '') {
+                $errorMessage = Lang::get('validation.required', array('attribute' => 'password'));
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
 
-	/**
-	 * POST - Login customer from gotomalls.com
-	 *
-	 * @author Ahmad ahmad@dominopos.com
-	 * @param email
-	 * @param password
-	 * @param from_mall (yes/no)
-	 * @param mode (login/registration)
-	 */
-	public function postLoginCustomer() {
-		$roles=['Consumer'];
-		$modes=['login', 'registration'];
-		$activity = Activity::portal()
-	                        ->setActivityType('login');
-	    try {
-	        $email = trim(OrbitInput::post('email'));
-	        $password = trim(OrbitInput::post('password'));
-	        $from_mall = OrbitInput::post('from_mall', 'no');
-	        $mode = OrbitInput::post('mode', 'login');
+            // if (! in_array($mode, $modes)) {
+            //     $mode = 'login';
+            // }
+            
+            // Return the current mall object if this login process coming from the mobileci
+            // todo: check later for login from mall
+            $from_mall = $from_mall === 'yes' ? TRUE : FALSE;
+            $mall_id = NULL;
+            $mall = NULL;
+            
+            $user = User::with('role')
+                        ->excludeDeleted()
+                        ->where('user_email', $email);
 
-	        if (trim($email) === '') {
-	            $errorMessage = Lang::get('validation.required', array('attribute' => 'email'));
-	            OrbitShopAPI::throwInvalidArgument($errorMessage);
-	        }
+            $user = $user->first();
 
-	        if (trim($password) === '') {
-	            $errorMessage = Lang::get('validation.required', array('attribute' => 'password'));
-	            OrbitShopAPI::throwInvalidArgument($errorMessage);
-	        }
+            if (! is_object($user)) {
+                $message = Lang::get('validation.orbit.access.inactiveuser');
+                OrbitShopAPI::throwInvalidArgument($message);
+            }
 
-	        if (! in_array($mode, $modes)) {
-	        	$mode = 'login';
-	        }
-	        
-	        // Return the current mall object if this login process coming from the mobileci
-	        // todo: check later for login from mall
-	        $from_mall = $from_mall === 'yes' ? TRUE : FALSE;
-	        $mall_id = NULL;
-	        $mall = NULL;
-	        
-	        $user = User::with('role')
-	                    ->excludeDeleted()
-	                    ->where('user_email', $email);
+            if (! Hash::check($password, $user->user_password)) {
+                $message = Lang::get('validation.orbit.access.loginfailed');
+                OrbitShopAPI::throwInvalidArgument($message);
+            }
 
-	        $user = $user->first();
-	        
-	        if (! is_object($user) && $mode === 'registration') {
-	        	$firstname = OrbitInput::post('first_name');
-	        	$lastname = OrbitInput::post('last_name');
-	        	$gender = OrbitInput::post('gender');
-	        	$birthdate = OrbitInput::post('birthdate');
-	        	$password_confirmation = trim(OrbitInput::post('password_confirmation'));
-                list($newuser, $userdetail, $apikey) = $this->createCustomerUser($email, $password, $password_confirmation, $firstname, $lastname, $gender, $birthdate);
-                $user = $newuser;
-	        }
+            $roleIds = Role::roleIdsByName($roles);
+            if (! in_array($user->user_role_id, $roleIds)) {
+                $message = Lang::get('validation.orbit.access.forbidden', [
+                    'action' => 'Login (Role Denied)'
+                ]);
+                OrbitShopAPI::throwInvalidArgument($message);
+            }
 
-	        if (! is_object($user)) {
-	            $message = Lang::get('validation.orbit.access.inactiveuser');
-	            OrbitShopAPI::throwInvalidArgument($message);
-	        }
+            // Start the orbit session
+            $data = array(
+                'logged_in' => TRUE,
+                'user_id'   => $user->user_id,
+                'email'     => $user->user_email,
+                'role'      => $user->role->role_name,
+                'fullname'  => $user->getFullName(),
+            );
+            $this->session->enableForceNew()->start($data);
 
-	        if (! Hash::check($password, $user->user_password)) {
-	            $message = Lang::get('validation.orbit.access.loginfailed');
-	            OrbitShopAPI::throwInvalidArgument($message);
-	        }
+            // Send the session id via HTTP header
+            $sessionHeader = $this->session->getSessionConfig()->getConfig('session_origin.header.name');
+            $sessionHeader = 'Set-' . $sessionHeader;
+            $this->customHeaders[$sessionHeader] = $this->session->getSessionId();
 
-	        $roleIds = Role::roleIdsByName($roles);
-	        if (! in_array($user->user_role_id, $roleIds)) {
-	            $message = Lang::get('validation.orbit.access.forbidden', [
-	                'action' => 'Login (Role Denied)'
-	            ]);
-	            OrbitShopAPI::throwInvalidArgument($message);
-	        }
+            // Successfull login
+            $activity->setUser($user)
+                     ->setActivityName('login_ok')
+                     ->setActivityNameLong('Sign in')
+                     ->responseOK();
 
-	        // Successfull login
-	        $activity->setUser($user)
-	                 ->setActivityName('login_ok')
-	                 ->setActivityNameLong('Sign in')
-	                 ->responseOK();
-
-	        $this->response->data = $user;
-	        $this->response->code = 0;
+            $this->response->data = $user;
+            $this->response->code = 0;
             $this->response->status = 'success';
             $this->response->message = 'Login Success';
 
-	    } catch (ACLForbiddenException $e) {
-	        $this->response->code = $e->getCode();
-	        $this->response->status = 'error';
-	        $this->response->message = $e->getMessage();
-	        $this->response->data = null;
+        } catch (ACLForbiddenException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
 
-	        $activity->setUser('guest')
-	                 ->setActivityName('login_failed')
-	                 ->setActivityNameLong('Login Failed')
-	                 ->setNotes($e->getMessage())
-	                 ->responseFailed();
-	    } catch (InvalidArgsException $e) {
-	        $this->response->code = $e->getCode();
-	        $this->response->status = 'error';
-	        $this->response->message = $e->getMessage();
-	        $this->response->data = null;
+            $activity->setUser('guest')
+                     ->setActivityName('login_failed')
+                     ->setActivityNameLong('Login Failed')
+                     ->setNotes($e->getMessage())
+                     ->responseFailed();
+        } catch (InvalidArgsException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
 
-	        $activity->setUser('guest')
-	                 ->setActivityName('login_failed')
-	                 ->setActivityNameLong('Login Failed')
-	                 ->setNotes($e->getMessage())
-	                 ->responseFailed();
-	    } catch (Exception $e) {
-	        $this->response->code = Status::UNKNOWN_ERROR;
-	        $this->response->status = 'error';
-	        $this->response->message = $e->getMessage();
-	        $this->response->data = null;
+            $activity->setUser('guest')
+                     ->setActivityName('login_failed')
+                     ->setActivityNameLong('Login Failed')
+                     ->setNotes($e->getMessage())
+                     ->responseFailed();
+        } catch (Exception $e) {
+            $this->response->code = Status::UNKNOWN_ERROR;
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
 
-	        $activity->setUser('guest')
-	                 ->setActivityName('login_failed')
-	                 ->setActivityNameLong('Login Failed')
-	                 ->setNotes($e->getMessage())
-	                 ->responseFailed();
-	    }
+            $activity->setUser('guest')
+                     ->setActivityName('login_failed')
+                     ->setActivityNameLong('Login Failed')
+                     ->setNotes($e->getMessage())
+                     ->responseFailed();
+        }
 
-	    // Save the activity
-	    $activity->setModuleName('Application')->save();
+        // Save the activity
+        $activity->setModuleName('Application')->save();
 
-	    return $this->render($this->response);
-	}
+        return $this->render($this->response);
+    }
 
-	/**
+    /**
      * Check email exist in sign in
      *
      * @author Firmansyah <firmansyah@dominopos.com>
@@ -178,8 +174,9 @@ class LoginAPIController extends IntermediateBaseController
      * @param string        `email`             (optional)
      * @return Illuminate\Support\Facades\Response
      */
-	public function checkEmailSignUp() {
-		$email = OrbitInput::post('email');
+    public function checkEmailSignUp()
+    {
+        $email = OrbitInput::post('email');
         $validator = Validator::make(
             array(
                 'email' => $email,
@@ -195,142 +192,11 @@ class LoginAPIController extends IntermediateBaseController
                 ->get();
 
         return $users;
-	}
-
-	/**
-     * Validate the registration data.
-     *
-     * @author Rio Astamal <rio@dominopos.com>
-     * @param string $email Consumer's email
-     * @return array|string
-     * @throws Exception
-     */
-    protected function validateRegistrationData($firstname, $lastname, $gender, $birthdate, $password, $password_confirmation)
-    {
-        // Only do the validation if there is 'mode=registration' on post body.
-        $mode = OrbitInput::post('mode');
-        if ($mode !== 'registration') {
-            return '';
-        }
-
-        $input = array(
-            'first_name' => $firstname,
-            'last_name'  => $lastname,
-            'gender'     => $gender,
-            'birth_date' => $birthdate,
-        );
-
-        $validator = Validator::make(
-            array(
-                'first_name' => $firstname,
-                'last_name'  => $lastname,
-                'gender'     => $gender,
-                'birth_date' => $birthdate,
-                'password_confirmation' => $password_confirmation,
-                'password' => $password,
-            ),
-            array(
-                'first_name' => 'required',
-                'last_name'  => 'required',
-                'gender'     => 'required|in:m,f',
-                'birth_date' => 'required|date_format:d-m-Y',
-                'password_confirmation' => 'required|min:5',
-                'password'  => 'min:5|confirmed',
-            ),
-            array(
-                'birth_date.date_format' => Lang::get('validation.orbit.formaterror.date.dmy_date')
-            )
-        );
-
-        if ($validator->fails()) {
-            $errorMessage = $validator->messages()->first();
-            OrbitShopAPI::throwInvalidArgument($errorMessage);
-        }
-
-        return TRUE;
     }
 
-	/**
-     * Creates a customer user and the associated user detail and API key objects.
-     *
-     * May throw exception if cannot find retailer or cannot find consumer role.
-     *
-     * Uses retailer set using setRetailerId() or the one in config.
-     *
-     * @param string $email the user's email
-     * @param string|null $userId the unique ID (if provided) of the user to create - used in box to match data on cloud
-     * @param string|null $userDetailId .... of the user detail to create - used in box to match data on cloud
-     * @param string|null $apiKeyId .... of the API key to create - used in box to match data on cloud
-     * @param string|null $userStatus the user status on cloud
-     * @return array [User, UserDetail, ApiKey]
-     * @throws Exception
-     */
-    public function createCustomerUser($email, $password, $password_confirmation, $firstname, $lastname, $gender, $birthdate, $userId = null, $userDetailId = null, $apiKeyId = null, $userStatus = null)
+    public function getGoogleCallbackView()
     {
-    	$validation = $this->validateRegistrationData($firstname, $lastname, $gender, $birthdate, $password, $password_confirmation);
-    	if ($validation) {
-    		try {
-		        $customerRole = Role::where('role_name', 'Consumer')->first();
-		        if (empty($customerRole)) {
-		            $errorMessage = Lang::get('validation.orbit.empty.consumer_role');
-		            throw new Exception($errorMessage);
-		        }
-		        DB::beginTransaction();
-		        $new_user = new User();
-		        if (isset($userId)) {
-		            $new_user->user_id = $userId;
-		        }
-		        $new_user->username = strtolower($email);
-		        $new_user->user_email = strtolower($email);
-		        $new_user->user_password = Hash::make($password);
-		        $new_user->user_firstname = $firstname;
-		        $new_user->user_lastname = $lastname;
-		        $new_user->status = isset($userStatus) ? $userStatus : 'pending';
-		        $new_user->user_role_id = $customerRole->role_id;
-		        $new_user->user_ip = $_SERVER['REMOTE_ADDR'];
-		        $new_user->external_user_id = 0;
-
-		        $new_user->save();
-
-		        $user_detail = new UserDetail();
-
-		        if (isset($userDetailId)) {
-		            $user_detail->user_detail_id = $userDetailId;
-		        }
-		        $user_detail->gender = $gender === 'm' ? 'm' : $gender === 'f' ? 'f' : NULL;
-		        $user_detail->birthdate = date('Y-m-d', strtotime($birthdate));
-
-		        // Save the user details
-		        $user_detail = $new_user->userdetail()->save($user_detail);
-
-		        // Generate API key for this user (with given ID if specified)
-		        $apikey = $new_user->createApiKey($apiKeyId);
-
-		        $new_user->setRelation('userDetail', $user_detail);
-		        $new_user->user_detail = $user_detail;
-
-		        $new_user->setRelation('apikey', $apikey);
-		        $new_user->apikey = $apikey;
-
-		        DB::commit();
-
-		        return [$new_user, $user_detail, $apikey];
-		    } catch (Exception $e) {
-		    	DB::rollback();
-		    	$this->response->code = $e->getCode();
-		        $this->response->status = 'error';
-		        $this->response->message = $e->getMessage();
-		        $this->response->data = null;	
-
-		        return $this->render($this->response);
-		    }
-	    } else {
-	    	return $validation;
-	    }
-    }
-
-    public function getGoogleSignInView() {
-     	$oldRouteSessionConfigValue = Config::get('orbit.session.availability.query_string');
+        $oldRouteSessionConfigValue = Config::get('orbit.session.availability.query_string');
         Config::set('orbit.session.availability.query_string', false);
 
         $recognized = \Input::get('recognized', 'none');
@@ -366,33 +232,22 @@ class LoginAPIController extends IntermediateBaseController
                 ];
 
                 $orbit_origin = \Input::get('orbit_origin', 'google');
-                $this->prepareSession();
 
                 // There is a chance that user not 'grant' his email while approving our app
                 // so we double check it here
                 if (empty($userEmail)) {
-                    return Redirect::to(Congig::get('orbit.shop.after_social_sign_in') . '?error=no_email');
+                    return Redirect::to(Config::get('orbit.shop.after_social_sign_in') . '?error=no_email');
                 }
 
-                $key = $this->getPayloadEncryptionKey();
-                $payload = (new Encrypter($key))->encrypt(http_build_query($data));
-                $query = ['payload' => $payload, 'email' => $userEmail, 'auto_login' => 'yes', 'isInProgress' => 'true'];
-                if (\Input::get('from_captive') === 'yes') {
-                    $query['from_captive'] = 'yes';
-                }
-
-                $expireTime = Config::get('orbit.session.session_origin.cookie.expire');
-
-                setcookie('orbit_email', $userEmail, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
-                setcookie('orbit_firstname', $firstName, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
-                setcookie('login_from', 'Google', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+                //todo: handle session here
+                // $this->prepareSession();
 
                 // todo can we not do this directly
-                return Redirect::to(Congig::get('orbit.shop.after_social_sign_in') . $query);
+                return Redirect::to(Config::get('orbit.shop.after_social_sign_in') . '?success=true');
 
             } catch (Exception $e) {
                 $errorMessage = 'Error: ' . $e->getMessage();
-                return Redirect::to(Congig::get('orbit.shop.after_social_sign_in') . '?error=' . $errorMessage);
+                return Redirect::to(Config::get('orbit.shop.after_social_sign_in') . '?error=' . $errorMessage);
             }
 
         } else {
@@ -402,8 +257,146 @@ class LoginAPIController extends IntermediateBaseController
                 return Redirect::to( (string)$url );
             } catch (Exception $e) {
                 $errorMessage = 'Error: ' . $e->getMessage();
-                return Redirect::to(Congig::get('orbit.shop.after_social_sign_in') . '?error=' . $errorMessage);
+                return Redirect::to(Config::get('orbit.shop.after_social_sign_in') . '?error=' . $errorMessage);
             }
         }   
+    }
+
+    public function getSocialLoginCallbackView()
+    {
+        $recognized = \Input::get('recognized', 'none');
+        // error=access_denied&
+        // error_code=200&
+        // error_description=Permissions+error
+        // &error_reason=user_denied
+        // &state=28d0463ac4dc53131ae19826476bff74#_=_
+        $error = \Input::get('error', NULL);
+
+        $city = '';
+        $country = '';
+
+        if (! is_null($error)) {
+            return $this->getFacebookError();
+        }
+
+        $orbit_origin = \Input::get('orbit_origin', 'facebook');
+        $this->prepareSession();
+
+        $fb = new \Facebook\Facebook([
+            'persistent_data_handler' => new \Orbit\FacebookSessionAdapter($this->session),
+            'app_id' => Config::get('orbit.social_login.facebook.app_id'),
+            'app_secret' => Config::get('orbit.social_login.facebook.app_secret'),
+            'default_graph_version' => Config::get('orbit.social_login.facebook.version')
+        ]);
+
+        $helper = $fb->getRedirectLoginHelper();
+        $accessToken = $helper->getAccessToken();
+        $useExtended = Config::get('orbit.social.facebook.use_extended_perms');
+
+        $query = '/me?fields=id,email,name,first_name,last_name,gender';
+        if ($useExtended) {
+            $query .= ',location,relationship_status,photos,work,education';
+        }
+        $response = $fb->get($query, $accessToken->getValue());
+        $user = $response->getGraphUser();
+
+        $userEmail = isset($user['email']) ? $user['email'] : '';
+        $firstName = isset($user['first_name']) ? $user['first_name'] : '';
+        $lastName = isset($user['last_name']) ? $user['last_name'] : '';
+        $gender = isset($user['gender']) ? $user['gender'] : '';
+        $socialid = isset($user['id']) ? $user['id'] : '';
+
+        $data = [
+            'email' => $userEmail,
+            'fname' => $firstName,
+            'lname' => $lastName,
+            'gender' => $gender,
+            'login_from'  => 'facebook',
+            'social_id'  => $socialid,
+            'mac' => \Input::get('mac_address', ''),
+            'ip' => $_SERVER['REMOTE_ADDR'],
+            'is_captive' => 'yes',
+            'recognized' => $recognized,
+        ];
+        $extendedData = [];
+
+        if ($useExtended === TRUE) {
+            $relationship = isset($user['relationship_status']) ? $user['relationship_status'] : '';
+            $work = isset($user['work']) ? $user['work'][0]['employer']['name'] : '';
+            $education = isset($user['education']) ? $user['education'][0]['type'] : '';
+
+            if (isset($user['location']['name'])) {
+                $location = explode(',', $user['location']['name']);
+                $city = isset($location[0]) ? $location[0] : '';
+                $country = isset($location[1]) ? $location[1] : '';
+            }
+
+            $extendedData = [
+                'relationship'  => $relationship,
+                'work'  => $work,
+                'education'  => $education,
+                'city'  => $city,
+                'country'  => $country,
+            ];
+        }
+
+        // Merge the standard and extended permission (if any)
+        $data = $extendedData + $data;
+
+        // There is a chance that user not 'grant' his email while approving our app
+        // so we double check it here
+        if (empty($userEmail)) {
+            return Redirect::route('mobile-ci.signin', ['error' => 'Email is required.', 'isInProgress' => 'true']);
+        }
+
+        $key = $this->getPayloadEncryptionKey();
+        $payload = (new Encrypter($key))->encrypt(http_build_query($data));
+        $query = ['payload' => $payload, 'email' => $userEmail, 'auto_login' => 'yes', 'isInProgress' => 'true'];
+        if (\Input::get('from_captive') === 'yes') {
+            $query['from_captive'] = 'yes';
+        }
+
+        $expireTime = Config::get('orbit.session.session_origin.cookie.expire');
+
+        setcookie('orbit_email', $userEmail, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+        setcookie('orbit_firstname', $firstName, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+        setcookie('login_from', 'Facebook', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+
+        // todo can we not do this directly
+        return Redirect::route('mobile-ci.signin', $query);
+    }
+
+    /**
+     * Handles social login POST
+     */
+    public function postSocialLoginView()
+    {
+        // $agree_to_terms = \Input::get('agree_to_terms', 'no');
+        // if ($agree_to_terms !== 'yes') {
+        //     return Redirect::route('mobile-ci.signin', ['error' => Lang::get('captive-portal.signin.must_accept_terms')]);
+        // }
+
+        $this->prepareSession();
+
+        $fb = new \Facebook\Facebook([
+            'persistent_data_handler' => new \Orbit\FacebookSessionAdapter($this->session),
+            'app_id' => Config::get('orbit.social_login.facebook.app_id'),
+            'app_secret' => Config::get('orbit.social_login.facebook.app_secret'),
+            'default_graph_version' => Config::get('orbit.social_login.facebook.version')
+        ]);
+
+        $helper = $fb->getRedirectLoginHelper();
+        $permissions = Config::get('orbit.social.facebook.scope', ['email', 'public_profile']);
+        $facebookCallbackUrl = URL::route('pub.social_login_callback', ['orbit_origin' => 'facebook', 'from_captive' => OrbitInput::post('from_captive'), 'mac_address' => \Input::get('mac_address', '')]);
+
+        // This is to re-popup the permission on login in case some of the permissions revoked by user
+        $rerequest = '&auth_type=rerequest';
+
+        $url = $helper->getLoginUrl($facebookCallbackUrl, $permissions) . $rerequest;
+
+        // No need to grant temporary https access anymore, we are using dnsmasq --ipset features for walled garden
+        // $this->grantInternetAcces('social');
+
+        return Redirect::to($url);
     }
 }
