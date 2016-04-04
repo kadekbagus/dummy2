@@ -4459,21 +4459,21 @@ class DashboardAPIController extends ControllerAPI
         $expiredCouponCount = Coupon::allowedForPMPUser($user, 'coupon')->campaignStatus('expired')->count();
 
         $this->response->data = [
-            'promotions_not_started'    => $notStartedPromotionCount,
-            'promotions_ongoing'  => $ongoingPromotionCount,
-            'promotions_paused'  => $pausedPromotionCount,
-            'promotions_stopped'  => $stoppedPromotionCount,
-            'promotions_expired'  => $expiredPromotionCount,
-            'news_not_started'          => $notStartedNewsCount,
-            'news_ongoing'          => $ongoingNewsCount,
-            'news_paused'          => $pausedNewsCount,
-            'news_stopped'          => $stoppedNewsCount,
-            'news_expired'        => $expiredNewsCount,
-            'coupons_not_started'       => $notStartedCouponCount,
-            'coupons_ongoing'       => $ongoingCouponCount,
-            'coupons_paused'       => $pausedCouponCount,
-            'coupons_stopped'       => $stoppedCouponCount,
-            'coupons_expired'     => $expiredCouponCount,
+            'promotions_not_started' => $notStartedPromotionCount,
+            'promotions_ongoing'     => $ongoingPromotionCount,
+            'promotions_paused'      => $pausedPromotionCount,
+            'promotions_stopped'     => $stoppedPromotionCount,
+            'promotions_expired'     => $expiredPromotionCount,
+            'news_not_started'       => $notStartedNewsCount,
+            'news_ongoing'           => $ongoingNewsCount,
+            'news_paused'            => $pausedNewsCount,
+            'news_stopped'           => $stoppedNewsCount,
+            'news_expired'           => $expiredNewsCount,
+            'coupons_not_started'    => $notStartedCouponCount,
+            'coupons_ongoing'        => $ongoingCouponCount,
+            'coupons_paused'         => $pausedCouponCount,
+            'coupons_stopped'        => $stoppedCouponCount,
+            'coupons_expired'        => $expiredCouponCount,
         ];
 
         return $this->render($httpCode);
