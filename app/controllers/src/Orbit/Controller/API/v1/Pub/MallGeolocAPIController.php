@@ -14,6 +14,7 @@ use Helper\EloquentRecordCounter as RecordCounter;
 use Config;
 use Mall;
 use stdClass;
+use Orbit\Helper\Util\PaginationNumber;
 
 class MallGeolocAPIController extends ControllerAPI
 {
@@ -42,7 +43,11 @@ class MallGeolocAPIController extends ControllerAPI
                 $distance = Config::get('orbit.geo_location.distance', 10);
             }
 
-            $malls = Mall::excludeDeleted()->select('merchants.*')->includeLatLong()->nearBy($lat, $long, $distance);
+            $malls = Mall::excludeDeleted()->select('merchants.*')->includeLatLong()->join('merchant_geofences', 'merchant_geofences.merchant_id', '=', 'merchants.merchant_id');
+
+            if ((int) $distance !== -1) {
+                $malls->nearBy($lat, $long, $distance);
+            }
 
             // Filter
             OrbitInput::get('keyword_search', function ($keyword) use ($malls) {
@@ -60,36 +65,13 @@ class MallGeolocAPIController extends ControllerAPI
 
             });
 
+            $_malls = clone $malls;
+
             // Get the maximum record
-            $maxRecord = (int) Config::get('orbit.pagination.geo_location.max_record');
-            if ($maxRecord <= 0) {
-                // Fallback
-                $maxRecord = (int) Config::get('orbit.pagination.max_record');
-                if ($maxRecord <= 0) {
-                    $maxRecord = 20;
-                }
-            }
-            // Get default per page (take)
-            $perPage = (int) Config::get('orbit.pagination.geo_location.per_page');
-            if ($perPage <= 0) {
-                // Fallback
-                $perPage = (int) Config::get('orbit.pagination.per_page');
-                if ($perPage <= 0) {
-                    $perPage = 20;
-                }
-            }
-
-            // Get the take args
-            $take = $perPage;
-            OrbitInput::get('take', function ($_take) use (&$take, $maxRecord) {
-                if ($_take > $maxRecord) {
-                    $_take = $maxRecord;
-                }
-                $take = $_take;
-
-                if ((int)$take <= 0) {
-                    $take = $maxRecord;
-                }
+            $pgnumber = PaginationNumber::create('geo_location');
+            $take = $pgnumber->perPage;
+            OrbitInput::get('take', function ($_take) use (&$take, $pgnumber) {
+                $take = $pgnumber->setPerPage($_take)->perPage;
             });
             $malls->take($take);
 
@@ -105,9 +87,16 @@ class MallGeolocAPIController extends ControllerAPI
             $malls->skip($skip);
 
             // Default sort by
-            $sortBy = 'distance';
+            $sortBy = 'merchants.name';
             // Default sort mode
             $sortMode = 'asc';
+
+            if ((int) $distance !== -1) {
+                // Default sort by
+                $sortBy = 'distance';
+                // Default sort mode
+                $sortMode = 'asc';
+            }
 
             OrbitInput::get('sortby', function($_sortBy) use (&$sortBy)
             {
@@ -130,8 +119,6 @@ class MallGeolocAPIController extends ControllerAPI
                 }
             });
             $malls->orderBy($sortBy, $sortMode);
-            
-            $_malls = clone $malls;
 
             $listmalls = $malls->get();
             $count = RecordCounter::create($_malls)->count();
@@ -205,7 +192,9 @@ class MallGeolocAPIController extends ControllerAPI
             $lat = OrbitInput::get('latitude', null);
             $long = OrbitInput::get('longitude', null);
 
-            $malls = Mall::excludeDeleted()->IncludeLatLong()->select('merchants.*')->includeLatLong()->InsideArea($lat, $long);
+            $malls = Mall::excludeDeleted()->select('merchants.*')->includeLatLong()->InsideArea($lat, $long);
+
+            $_malls = clone $malls;
 
             // Get the maximum record
             $maxRecord = (int) Config::get('orbit.pagination.geo_location.max_record');
@@ -251,8 +240,6 @@ class MallGeolocAPIController extends ControllerAPI
                 $skip = $_skip;
             });
             $malls->skip($skip);
-
-            $_malls = clone $malls;
 
             $listmalls = $malls->get();
             $count = RecordCounter::create($_malls)->count();
