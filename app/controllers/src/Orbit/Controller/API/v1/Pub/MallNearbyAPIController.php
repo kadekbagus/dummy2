@@ -16,7 +16,7 @@ use Mall;
 use stdClass;
 use Orbit\Helper\Util\PaginationNumber;
 
-class MallGeolocAPIController extends ControllerAPI
+class MallNearbyAPIController extends ControllerAPI
 {
     /**
      * GET - Search mall by location
