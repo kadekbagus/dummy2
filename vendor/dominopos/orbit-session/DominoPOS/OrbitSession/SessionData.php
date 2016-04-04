@@ -87,6 +87,10 @@ class SessionData
         $source = $source . $this->userAgent;
         $source = $source . $this->ipAddress;
 
-        return sha1( $source );
+        // Take the first 14
+        $ipHash = substr(md5($this->ipAddress .  microtime(TRUE)), 0, 14);
+        $sessionHash = sha1($source);
+
+        return sprintf('%s%s', $ipHash, $sessionHash);
     }
 }
