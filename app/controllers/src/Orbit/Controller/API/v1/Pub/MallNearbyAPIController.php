@@ -70,7 +70,7 @@ class MallNearbyAPIController extends ControllerAPI
             $take = PaginationNumber::parseTakeFromGet('geo_location');
             $malls->take($take);
 
-            $skip = PaginationNumber::parseSkipFromGet('geo_location');
+            $skip = PaginationNumber::parseSkipFromGet();
             $malls->skip($skip);
 
             // Default sort by

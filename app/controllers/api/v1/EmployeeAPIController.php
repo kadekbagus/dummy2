@@ -1646,6 +1646,10 @@ class EmployeeAPIController extends ControllerAPI
             Event::fire('orbit.employee.postupdatpmpeemployee.after.validation', array($this, $validator));
 
             $updatedUser = App::make('orbit.empty.user');
+            // Get the relation
+            $employee = $updatedUser->employee;
+            $userDetail = $updatedUser->userDetail;
+            $campaignAccount = $updatedUser->campaignAccount;
 
             OrbitInput::post('password', function($password) use ($updatedUser) {
                 if (! empty(trim($password))) {
@@ -1653,8 +1657,10 @@ class EmployeeAPIController extends ControllerAPI
                 }
             });
 
-            OrbitInput::post('status', function($status) use ($updatedUser) {
+            OrbitInput::post('status', function($status) use ($updatedUser, $employee, $campaignAccount) {
                 $updatedUser->status = $status;
+                $employee->status = $status;
+                $campaignAccount->status = $status;
             });
 
             OrbitInput::post('employee_role', function($_role) use ($updatedUser) {
@@ -1669,10 +1675,6 @@ class EmployeeAPIController extends ControllerAPI
             $updatedUser->save();
             $updatedUser->apikey;
 
-            // Get the relation
-            $employee = $updatedUser->employee;
-            $userDetail = $updatedUser->userDetail;
-
             OrbitInput::post('position', function($_position) use ($employee) {
                 $employee->position = $_position;
             });
@@ -1681,9 +1683,9 @@ class EmployeeAPIController extends ControllerAPI
                 $employee->employee_id_char = $empId;
             });
 
-            $employee->status = $updatedUser->status;
             $employee->touch();
             $employee->save();
+            $campaignAccount->save();
 
             OrbitInput::post('birthdate', function($_birthdate) use ($userDetail) {
                 $userDetail->birthdate = $_birthdate;
