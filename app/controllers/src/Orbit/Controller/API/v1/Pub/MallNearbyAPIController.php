@@ -16,7 +16,7 @@ use Mall;
 use stdClass;
 use Orbit\Helper\Util\PaginationNumber;
 
-class MallGeolocAPIController extends ControllerAPI
+class MallNearbyAPIController extends ControllerAPI
 {
     /**
      * GET - Search mall by location
@@ -67,23 +67,10 @@ class MallGeolocAPIController extends ControllerAPI
 
             $_malls = clone $malls;
 
-            // Get the maximum record
-            $pgnumber = PaginationNumber::create('geo_location');
-            $take = $pgnumber->perPage;
-            OrbitInput::get('take', function ($_take) use (&$take, $pgnumber) {
-                $take = $pgnumber->setPerPage($_take)->perPage;
-            });
+            $take = PaginationNumber::parseTakeFromGet('geo_location');
             $malls->take($take);
 
-            $skip = 0;
-            OrbitInput::get('skip', function($_skip) use (&$skip, $malls)
-            {
-                if ($_skip < 0) {
-                    $_skip = 0;
-                }
-
-                $skip = $_skip;
-            });
+            $skip = PaginationNumber::parseSkipFromGet();
             $malls->skip($skip);
 
             // Default sort by
@@ -170,131 +157,5 @@ class MallGeolocAPIController extends ControllerAPI
         $output = $this->render($httpCode);
 
         return $output;
-    }
-
-    /**
-     * GET - check if user inside mall area
-     *
-     * @author Shelgi Prasetyo <shelgi@dominopos.com>
-     *
-     * List of API Parameters
-     * ----------------------
-     * @param string latitude
-     * @param string longitude
-     *
-     * @return Illuminate\Support\Facades\Response
-     */
-    public function getMallFence()
-    {
-        $httpCode = 200;
-        try {
-
-            $lat = OrbitInput::get('latitude', null);
-            $long = OrbitInput::get('longitude', null);
-
-            $malls = Mall::excludeDeleted()->select('merchants.*')->includeLatLong()->InsideArea($lat, $long);
-
-            $_malls = clone $malls;
-
-            // Get the maximum record
-            $maxRecord = (int) Config::get('orbit.pagination.geo_location.max_record');
-            if ($maxRecord <= 0) {
-                // Fallback
-                $maxRecord = (int) Config::get('orbit.pagination.max_record');
-                if ($maxRecord <= 0) {
-                    $maxRecord = 20;
-                }
-            }
-
-            // Get default per page (take)
-            $perPage = (int) Config::get('orbit.pagination.geo_location.per_page');
-            if ($perPage <= 0) {
-                // Fallback
-                $perPage = (int) Config::get('orbit.pagination.per_page');
-                if ($perPage <= 0) {
-                    $perPage = 20;
-                }
-            }
-
-            // Get the take args
-            $take = $perPage;
-            OrbitInput::get('take', function ($_take) use (&$take, $maxRecord) {
-                if ($_take > $maxRecord) {
-                    $_take = $maxRecord;
-                }
-                $take = $_take;
-
-                if ((int)$take <= 0) {
-                    $take = $maxRecord;
-                }
-            });
-            $malls->take($take);
-
-            $skip = 0;
-            OrbitInput::get('skip', function($_skip) use (&$skip, $malls)
-            {
-                if ($_skip < 0) {
-                    $_skip = 0;
-                }
-
-                $skip = $_skip;
-            });
-            $malls->skip($skip);
-
-            $listmalls = $malls->get();
-            $count = RecordCounter::create($_malls)->count();
-
-            $this->response->data = new stdClass();
-            $this->response->data->total_records = $count;
-            $this->response->data->returned_records = count($listmalls);
-            $this->response->data->records = $listmalls;
-        } catch (ACLForbiddenException $e) {
-
-            $this->response->code = $e->getCode();
-            $this->response->status = 'error';
-            $this->response->message = $e->getMessage();
-            $this->response->data = null;
-            $httpCode = 403;
-        } catch (InvalidArgsException $e) {
-
-            $this->response->code = $e->getCode();
-            $this->response->status = 'error';
-            $this->response->message = $e->getMessage();
-            $result['total_records'] = 0;
-            $result['returned_records'] = 0;
-            $result['records'] = null;
-
-            $this->response->data = $result;
-            $httpCode = 403;
-        } catch (QueryException $e) {
-
-            $this->response->code = $e->getCode();
-            $this->response->status = 'error';
-
-            // Only shows full query error when we are in debug mode
-            if (Config::get('app.debug')) {
-                $this->response->message = $e->getMessage();
-            } else {
-                $this->response->message = Lang::get('validation.orbit.queryerror');
-            }
-            $this->response->data = null;
-            $httpCode = 500;
-        } catch (Exception $e) {
-
-            $this->response->code = $this->getNonZeroCode($e->getCode());
-            $this->response->status = 'error';
-            $this->response->message = $e->getMessage();
-            $this->response->data = null;
-            $httpCode = 500;
-        }
-
-        $output = $this->render($httpCode);
-
-        return $output;
-    }
-
-    protected function quote($arg)
-    {
-        return DB::connection()->getPdo()->quote($arg);
     }
 }

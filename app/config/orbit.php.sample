@@ -37,7 +37,8 @@ return array(
         'fonts' => array(
             'ubuntu' => 'https://fonts.googleapis.com/css?family=Ubuntu:400',
             'font_awesome' => array(
-                '4_2_0' => 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.2.0/fonts/fontawesome-webfont' // this url without font extension
+                '4_2_0' => 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.2.0/fonts/fontawesome-webfont', // this url without font extension
+                '4_5_0' => 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.5.0/fonts/fontawesome-webfont' // this url without font extension
             ),
             'glyphicon' => 'https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/fonts/glyphicons-halflings-regular' // this url without font extension
         ),
@@ -107,6 +108,9 @@ return array(
 
         // after logout url (will be /customer if empty)
         'after_logout_url' => '',
+
+        // back to map url
+        'back_to_map_url' => 'http://gotomalls.cool',
     ),
 
     // General contact data
@@ -331,6 +335,12 @@ return array(
         // Mall list by geolocation
         'geo_location' => array(
             'per_page'      => 20,
+            'max_record'    => 100,
+        ),
+
+        // link to tenant pagination
+        'link_to_tenant' => array(
+            'per_page'      => 50,
             'max_record'    => 100,
         ),
     ),

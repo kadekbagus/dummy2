@@ -6,6 +6,7 @@
  * @author Rio Astamal <me@rioastamal.net>
  */
 use Config;
+use OrbitShop\API\v1\Helper\Input as OrbitInput;
 
 class PaginationNumber
 {
@@ -174,6 +175,47 @@ class PaginationNumber
         $this->defaultMaxRecordConfig = $name;
 
         return $this;
+    }
+
+    /**
+     * Simplify the input to get 'take' parameter.
+     *
+     * @author Rio Astamal <rio@dominopos.com>
+     * @param string $name The config name
+     * @param string $takeName The name of the take argument
+     * @return int
+     */
+    public static function parseTakeFromGet($name, $takeName='take')
+    {
+        $pg = new static($name);
+        $take = $pg->perPage;
+        OrbitInput::get($takeName, function ($_take) use (&$take, $pg) {
+            $take = $pg->setPerPage($_take)->perPage;
+        });
+
+        return $take;
+    }
+
+    /**
+     * Simplify the input to get 'skip' parameter.
+     *
+     * @author Rio Astamal <rio@dominopos.com>
+     * @param strint $skipName The name of the skip argument
+     * @return int
+     */
+    public static function parseSkipFromGet($skipName='skip')
+    {
+        $skip = 0;
+        OrbitInput::get($skipName, function($_skip) use (&$skip)
+        {
+            if ($_skip < 0) {
+                $_skip = 0;
+            }
+
+            $skip = $_skip;
+        });
+
+        return $skip;
     }
 
     /**
