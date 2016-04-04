@@ -345,6 +345,19 @@ return array(
         ),
     ),
 
+    'reset_password' => array(
+        'sender' => array(
+            'email' => 'no-reply@myorbit.com',
+            'name'  => 'Orbit'
+        ),
+        // URL for password reset (frontend URL)
+        'reset_base_url' => 'http://orbit-mall.here/reset-password/%s',
+        // Number of days before token in reset link expires
+        'reset_expire' => 7,
+        // Sign in URL
+        'signin_url' => 'http://orbit-mall.here',
+    ),
+
     'registration' => array(
         'mobile'    => array(
             // New role assigned to the user
