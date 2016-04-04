@@ -375,6 +375,15 @@ Route::group(
             return MobileCI\MobileCIAPIController::create()->getSearchLuckyDraw();
         });
 
+        /**
+         * Check user location
+         */
+        Route::post('/app/v1/customer/check-location', ['as' => 'ci-check-user-location', function()
+            {
+                return MobileCI\MobileCIAPIController::create()->postCheckUserLocation();
+            }]
+        );
+
         Route::get('/app/v1/customer/login-callback', ['as' => 'customer-login-callback', 'uses' => 'IntermediateLoginController@getCloudLoginCallback']);
         Route::get('/app/v1/customer/login-callback-show-id', ['as' => 'customer-login-callback-show-id', 'uses' => 'IntermediateLoginController@getCloudLoginCallbackShowId']);
     }
