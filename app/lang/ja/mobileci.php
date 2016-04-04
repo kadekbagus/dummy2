@@ -40,7 +40,8 @@ return array(
         'my_messages'        => '私のメッセージ',
         'my_message'         => '私のメッセージ',
         'redemption_places'  => '償還場所',
-        'back_to_map'        => '地図に戻る',
+        'back_to_map_upper'  => '地図に戻る',
+        'back_to_map_lower'  => '地図に戻る',
     ),
 
     'widgets' => array(

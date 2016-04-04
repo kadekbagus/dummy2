@@ -40,7 +40,8 @@ return array(
         'my_messages'        => '我的消息',
         'my_message'         => '我的消息',
         'redemption_places'  => '赎回位置',
-        'back_to_map'        => '回到地图',
+        'back_to_map_upper'  => '回到地图',
+        'back_to_map_lower'  => '回到地图',
     ),
 
     'widgets' => array(
