@@ -584,11 +584,6 @@ class TenantAPIController extends ControllerAPI
 
             $newtenant->save();
 
-            $newUserMerchant = new UserMerchant();
-            $newUserMerchant->merchant_id = $newtenant->merchant_id;
-            $newUserMerchant->object_type = $newtenant->object_type;
-            $newUserMerchant->save();
-
             // save to spending rule, the default is Y
             // @author kadek <kadek@dominopos.com>
             $newSpendingRules = new SpendingRule();
