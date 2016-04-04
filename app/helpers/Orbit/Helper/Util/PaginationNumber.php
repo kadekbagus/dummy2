@@ -200,11 +200,10 @@ class PaginationNumber
      * Simplify the input to get 'skip' parameter.
      *
      * @author Rio Astamal <rio@dominopos.com>
-     * @param string $name The config name
      * @param strint $skipName The name of the skip argument
      * @return int
      */
-    public static function parseSkipFromGet($name, $skipName='skip')
+    public static function parseSkipFromGet($skipName='skip')
     {
         $skip = 0;
         OrbitInput::get($skipName, function($_skip) use (&$skip)
