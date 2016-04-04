@@ -10,6 +10,7 @@ use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Helper\EloquentRecordCounter as RecordCounter;
+use Orbit\Helper\Util\PaginationNumber;
 
 class TenantAPIController extends ControllerAPI
 {
@@ -2106,6 +2107,7 @@ class TenantAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $sort_by = OrbitInput::get('sortby');
+            $filtermode = OrbitInput::get('filtermode');
 
             $validator = Validator::make(
                 array(
@@ -2130,15 +2132,13 @@ class TenantAPIController extends ControllerAPI
 
             $prefix = DB::getTablePrefix();
 
-            $tenants = CampaignLocation::select('merchants.merchant_id', 'merchants.name',
+            $tenants = CampaignLocation::select('merchants.merchant_id',
                                             DB::raw("IF({$prefix}merchants.object_type = 'tenant', pm.merchant_id, {$prefix}merchants.merchant_id) as mall_id"),
-                                            DB::raw("IF({$prefix}merchants.object_type = 'tenant', pm.name, {$prefix}merchants.name) as mall_name"),
                                             DB::raw("IF({$prefix}merchants.object_type = 'tenant', CONCAT({$prefix}merchants.name,' at ', pm.name), CONCAT('Mall at ', {$prefix}merchants.name)) as display_name"), 
-                                            'merchants.object_type',
                                             'merchants.status'
                                         )
                                        ->leftjoin('merchants as pm', DB::raw("pm.merchant_id"), '=', 'merchants.parent_id')
-                                       ->where('merchants.object_type', '!=', 'mall_group');
+                                       ->whereIn('merchants.object_type', ['mall', 'tenant']);
 
             if (in_array(strtolower($user->role->role_name), $this->campaignRole)) {
                 $tenants->join('user_merchant', function($q) use ($user)
@@ -2148,9 +2148,20 @@ class TenantAPIController extends ControllerAPI
                 });
             }
 
+            if ($filtermode === 'available') {
+                $availableMerchantIds = UserMerchant::whereIn('object_type', ['mall', 'tenant'])->lists('merchant_id');
+                $tenants->whereNotIn('merchants.merchant_id', $availableMerchantIds);
+            } 
+
             // Clone the query builder which still does not include the take,
             // skip, and order by
             $_tenants = clone $tenants;
+
+            $take = PaginationNumber::parseTakeFromGet('link_to_tenant');
+            $tenants->take($take);
+
+            $skip = PaginationNumber::parseSkipFromGet();
+            $tenants->skip($skip);
 
             // Default sort by
             $sortBy = 'display_name';
@@ -2196,6 +2207,8 @@ class TenantAPIController extends ControllerAPI
                     'tenant_external_object_id' => 'merchants.external_object_id',
                     'tenant_created_at' => 'merchants.created_at',
                     'tenant_updated_at' => 'merchants.updated_at',
+
+                    'display_name' => 'display_name',
                 );
 
                 if (array_key_exists($_sortBy, $sortByMapping)) {

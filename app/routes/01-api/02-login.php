@@ -114,3 +114,28 @@ Route::post('/api/v1/activate-account', function()
 {
     return LoginAPIController::create()->postActivateAccount();
 });
+
+/**
+ * Public customer login
+ */
+Route::post(
+    '/{app}/v1/pub/login/customer', ['as' => 'pub-customer-login', function()
+    {
+        return Orbit\Controller\API\v1\Pub\LoginAPIController::create()->postLoginCustomer();
+    }]
+)->where('app', '(api|app)');
+
+Route::post(
+    '/{app}/v1/pub/customer/basic-data', ['as' => 'pub-customer-check-email', function()
+    {
+        return Orbit\Controller\API\v1\Pub\LoginAPIController::create()->checkEmailSignUp();
+    }]
+)->where('app', '(api|app)');
+
+Route::get(
+    '/pub/social-google', ['as' => 'mobile-ci.social_google',
+        function () {
+            return Orbit\Controller\API\v1\Pub\LoginAPIController::create()->getGoogleSignInView();
+        },
+    ]
+);

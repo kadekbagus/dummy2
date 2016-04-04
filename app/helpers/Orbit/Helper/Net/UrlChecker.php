@@ -84,7 +84,7 @@ class UrlChecker
      */
     public function checkBlockedUrl()
     {
-        if (in_array(\Route::currentRouteName(), Config::get('orbit.blocked_routes'))) {
+        if (in_array(\Route::currentRouteName(), Config::get('orbit.blocked_routes', []))) {
             $user = $this->getLoggedInUser();
             if (! $user) {
                 throw new Exception('Session error: user not found.');
@@ -108,7 +108,7 @@ class UrlChecker
     {
     	$this->prepareSession();
 
-       	if (in_array($url, Config::get('orbit.blocked_routes'))) {
+       	if (in_array($url, Config::get('orbit.blocked_routes', []))) {
        		$userId = $this->session->read('user_id');
 	        if ($this->session->read('logged_in') !== true || ! $userId) {
 	            return '#';
