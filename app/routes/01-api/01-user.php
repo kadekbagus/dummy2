@@ -161,3 +161,23 @@ Route::get('/api/v1/pmp-employee/list', function()
 {
     return EmployeeAPIController::create()->getSearchPMPEmployee();
 });
+
+/**
+ * Route for sending the reset password link to user email
+ */
+Route::post(
+    '/{prefix}/v1/pub/user/reset-password-link', ['as' => 'pub-user-reset-password', function()
+    {
+        return Orbit\Controller\API\v1\Pub\ResetPasswordLinkAPIController::create()->postResetPasswordLink();
+    }]
+)->where('prefix', '(api|app)');
+
+/**
+ * Route for updating password which coming from reset password link request
+ */
+Route::post(
+    '/{prefix}/v1/pub/user/reset-password', ['as' => 'pub-user-reset-password', function()
+    {
+        return Orbit\Controller\API\v1\Pub\ResetPasswordAPIController::create()->postResetPassword();
+    }]
+)->where('prefix', '(api|app)');

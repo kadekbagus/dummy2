@@ -55,7 +55,7 @@ trait CampaignAccessTrait
         })
         ->Where(function ($q) use ($type) {
             if ($type !== 'coupon') {
-                $q->orWhere('news.object_type', $type);
+                $q->where('news.object_type', $type);
             }
         });
 

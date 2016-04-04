@@ -41,8 +41,6 @@ class CampaignDailySpendingMigration extends Command {
         // Start time for log
         $started_time = microtime(true);
 
-        // ========================================================================
-
         // Truncate first before inserted data
         $deletedTable = CampaignDailySpending::truncate();
 
@@ -67,15 +65,23 @@ class CampaignDailySpendingMigration extends Command {
                 $endDate = $valNewsPromotions->end_date;
 
                 // Get mall per campaign
-                $campaignHistory = CampaignHistory::select('merchants.parent_id as mall_id')
+                $campaignHistory = CampaignHistory::select('merchants.parent_id', 'merchant_id', 'merchants.is_mall',
+                    DB::raw("
+                        CASE
+                            WHEN is_mall = 'yes' and parent_id IS NULL THEN merchant_id
+                            WHEN is_mall = 'yes' and parent_id IS NOT NULL THEN merchant_id
+                            ELSE parent_id
+                        END AS 'mall_id'
+                    "))
                     ->leftJoin('merchants', 'merchants.merchant_id', '=', 'campaign_histories.campaign_external_value')
                     ->where('campaign_external_value', '!=', '')
+                    ->where('merchants.object_type', '!=', 'mall_group') // Mall group not included link to tenant
                     ->where('campaign_id', '=', $campaignId)
-                    ->groupBy('merchants.parent_id')
+                    ->groupBy('mall_id')
                     ->get();
 
                 foreach ($campaignHistory as $mall) {
-                    // Check end date campaign more than today
+
                     $mallId = $mall->mall_id;
 
                     if ($mallId != '') {
@@ -83,7 +89,8 @@ class CampaignDailySpendingMigration extends Command {
                         $nowMall = Carbon::now($mallTimezone);
                         $dateNowMall = $nowMall->toDateString();
 
-                        if ($endDate < $dateNowMall ) {
+                        // Check end date campaign more than today
+                        if ($endDate > $dateNowMall ) {
                             $endDate = $dateNowMall;
                         }
 
@@ -96,6 +103,7 @@ class CampaignDailySpendingMigration extends Command {
                         $getSpending = DB::table(DB::raw('tmp_campaign_cost_detail'))
                             ->groupBy('date_in_utc')
                             ->get();
+
 
                         if (count($getSpending) > 0) {
                             foreach ($getSpending as $key => $valTmp) {
@@ -128,7 +136,7 @@ class CampaignDailySpendingMigration extends Command {
 
 
         // =================== Migration for coupons ===================
-        $idKey = $idKey + 1;
+        $idKey = $idKey;
         $coupons = Coupon::excludeDeleted()->get();
 
         if (count($coupons) > 0) {
@@ -140,16 +148,23 @@ class CampaignDailySpendingMigration extends Command {
                 $endDate = $valCoupon->end_date;
 
                 // Get mall per campaign
-                $campaignHistory = CampaignHistory::select('merchants.parent_id as mall_id')
+                $campaignHistory = CampaignHistory::select('merchants.parent_id', 'merchant_id', 'merchants.is_mall',
+                    DB::raw("
+                        CASE
+                            WHEN is_mall = 'yes' and parent_id IS NULL THEN merchant_id
+                            WHEN is_mall = 'yes' and parent_id IS NOT NULL THEN merchant_id
+                            ELSE parent_id
+                        END as 'mall_id'
+                    "))
                     ->leftJoin('merchants', 'merchants.merchant_id', '=', 'campaign_histories.campaign_external_value')
                     ->where('campaign_external_value', '!=', '')
+                    ->where('merchants.object_type', '!=', 'mall_group') // Mall group not included link to tenant
                     ->where('campaign_id', '=', $campaignId)
-                    ->groupBy('merchants.parent_id')
+                    ->groupBy('mall_id')
                     ->get();
 
                 foreach ($campaignHistory as $mall) {
 
-                    // Check end date campaign more than today
                     $mallId = $mall->mall_id;
 
                     if ($mallId != '') {
@@ -157,12 +172,12 @@ class CampaignDailySpendingMigration extends Command {
                         $nowMall = Carbon::now($mallTimezone);
                         $dateNowMall = $nowMall->toDateString();
 
-                        if ($endDate < $dateNowMall ) {
+                        // Check end date campaign more than today
+                        if ($endDate > $dateNowMall ) {
                             $endDate = $dateNowMall;
                         }
 
                         $procResults = DB::statement("CALL prc_campaign_detailed_cost( {$this->quote($campaignId)}, {$this->quote($campaignType)}, {$this->quote($startDate)}, {$this->quote($endDate)}, {$this->quote($mallId)})");
-
 
                         if ($procResults === false) {
                             // Do Nothing
@@ -197,6 +212,7 @@ class CampaignDailySpendingMigration extends Command {
 
             }
         }
+
         $this->info('Success, Inserted campaign daily spending for coupon !');
 
         // =================== Check time ===================
