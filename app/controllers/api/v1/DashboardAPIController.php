@@ -4428,6 +4428,13 @@ class DashboardAPIController extends ControllerAPI
      */
     public function getCampaignStatus()
     {
+        $httpCode = 200;
+
+        // Require authentication
+        $this->checkAuth();
+
+        // Try to check access control list, does this user allowed to
+        // perform this action
         $user = $this->api->user;
 
         // Promotions
@@ -4469,7 +4476,7 @@ class DashboardAPIController extends ControllerAPI
             'coupons_expired'     => $expiredCouponCount,
         ];
 
-        return $this->render(200);
+        return $this->render($httpCode);
     }
 
 
