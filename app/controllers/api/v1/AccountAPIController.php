@@ -19,28 +19,35 @@ class AccountAPIController extends ControllerAPI
             return;
         }        
 
-        // First, set user_id as null
-        $currentUserMerchants = UserMerchant::whereUserId($user->user_id)->get();
-        foreach ($currentUserMerchants as $currentUserMerchant) {
-            $currentUserMerchant->user_id = null;
-            $currentUserMerchant->save();
+        // get campaign employee and delete merchant 
+        $employee = CampaignAccount::where('parent_user_id', '=', $user->user_id)->lists('user_id');
+        if (! empty($employee)) {
+            $merchantEmployee = UserMerchant::whereIn('user_id', $employee)->delete();
         }
+
+        $merchantOwner = UserMerchant::where('user_id', $user->user_id)->delete();
  
         // Then update the user_id with the submitted ones 
         foreach (Input::get('merchant_ids') as $merchantId) { 
-
-            $userMerchant = UserMerchant::whereMerchantId($merchantId)->whereUserId($user->user_id)->first();
-            if ( ! $userMerchant) {
-                $userMerchant = new UserMerchant;
-            }
-
-            $userMerchant->user_id = $user->user_id; 
-            $userMerchant->merchant_id = $merchantId; 
+            $merchant = new UserMerchant;
+            $merchant->user_id = $user->user_id; 
+            $merchant->merchant_id = $merchantId;
  
             // Get "object_type" from "merchants" table 
-            $userMerchant->object_type = CampaignLocation::find($merchantId)->object_type; 
+            $merchant->object_type = CampaignLocation::find($merchantId)->object_type; 
              
-            $userMerchant->save(); 
+            $merchant->save(); 
+            
+
+            if (! empty($employee)) {
+                foreach ($employee as $emp) {
+                    $employeeMerchant = new UserMerchant;
+                    $employeeMerchant->user_id = $emp; 
+                    $employeeMerchant->merchant_id = $merchantId;
+                    $employeeMerchant->object_type = CampaignLocation::find($merchantId)->object_type;
+                    $employeeMerchant->save(); 
+                }
+            }
         } 
     }
 
@@ -48,6 +55,7 @@ class AccountAPIController extends ControllerAPI
      * The main method
      *
      * @author Qosdil A. <qosdil@dominopos.com>
+     * @author Shelgi <shelgi@dominopos.com>
      * @todo Validation.
      */
     public function getAccount()
@@ -65,7 +73,10 @@ class AccountAPIController extends ControllerAPI
         $availableMerchantIds = UserMerchant::whereIn('object_type', ['mall', 'tenant'])->lists('merchant_id');
 
         // Retrieve from "merchants" table
-        $tenants = CampaignLocation::whereNotIn('merchant_id', $availableMerchantIds)->whereIn('object_type', ['mall', 'tenant'])->orderBy('name')->get();
+        $tenants = CampaignLocation::whereNotIn('merchant_id', $availableMerchantIds)
+                                ->whereIn('object_type', ['mall', 'tenant'])
+                                ->orderBy('name')
+                                ->get();
         
         $selection = [];
         foreach ($tenants as $tenant) {
@@ -149,6 +160,14 @@ class AccountAPIController extends ControllerAPI
         $campaignAccount->position = Input::get('position');
         $campaignAccount->status = Input::get('status');
         $campaignAccount->save();
+
+        // save to employees table (1 to 1)
+        $employee_pmp = ($this->id) ? Employee::whereUserId($user->user_id)->first() : new Employee;
+        $employee_pmp->user_id = $user->user_id;
+        // $employee_pmp->employee_id_char = '';
+        $employee_pmp->position = Input::get('position');
+        $employee_pmp->status = Input::get('status');
+        $employee_pmp->save();
 
         // Save to user_merchant (1 to M)
         $this->createUpdateUserMerchant($user);
