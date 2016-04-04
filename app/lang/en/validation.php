@@ -302,6 +302,9 @@ return array(
             'lucky_draw_announcement' => 'The lucky draw announcement you specified is not found',
             'country' => 'Country does not on list',
             'email' => 'Email you specified is not found',
+            'reset_password' => array(
+                     'token' => 'Token you specified is not found',
+                ),
         ),
         'queryerror' => 'Database query error, turn on debug mode to see the full query',
         'jsonerror'  => array(

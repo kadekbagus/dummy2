@@ -172,4 +172,12 @@ Route::post(
     }]
 )->where('prefix', '(api|app)');
 
-
+/**
+ * Route for updating password which coming from reset password link request
+ */
+Route::post(
+    '/{prefix}/v1/pub/user/reset-password', ['as' => 'pub-user-reset-password', function()
+    {
+        return Orbit\Controller\API\v1\Pub\ResetPasswordAPIController::create()->postResetPassword();
+    }]
+)->where('prefix', '(api|app)');
