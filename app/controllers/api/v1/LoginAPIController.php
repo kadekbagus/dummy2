@@ -258,7 +258,7 @@ class LoginAPIController extends ControllerAPI
             $pmp_parent = $user->campaignAccount()->where('user_id', '=', $user->user_id)->first();
 
             // Get total tenant and mall per user
-            $um = $pmp_parent->userMerchant()->count();
+            $um = $pmp_parent->userMall()->count();
             $ut = $pmp_parent->userTenant()->count();
 
             $user->total_mall = $um;
