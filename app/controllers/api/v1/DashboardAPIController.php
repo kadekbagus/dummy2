@@ -555,8 +555,13 @@ class DashboardAPIController extends ControllerAPI
                     $q->allowedForPMPUser($user, 'news');
                 })
                 ->where('created_at', '>=', $beginDate)
-                ->where('created_at', '<=', $endDate)
-                ->get();
+                ->where('created_at', '<=', $endDate);
+            // Filter news by mall_id
+            OrbitInput::get('current_mall', function ($mall_id) use ($news)
+            {
+                $news->where('location_id', '=', $mall_id);
+            });
+            $news = $news->get();
 
             $objectKeys['news'] = new stdClass();
             $objectKeys['news']->label = 'News';
@@ -570,7 +575,13 @@ class DashboardAPIController extends ControllerAPI
                 })
                 ->where('created_at', '>=', $beginDate)
                 ->where('created_at', '<=', $endDate)
-                ->get();
+                ->where('location_id', '=', $merchantId);
+            // Filter news by mall_id
+            OrbitInput::get('current_mall', function ($mall_id) use ($promotion)
+            {
+                $promotion->where('location_id', '=', $mall_id);
+            });
+            $promotion = $promotion->get();
 
             $objectKeys['promotions'] = new stdClass();
             $objectKeys['promotions']->label = 'Promotion';
@@ -585,7 +596,13 @@ class DashboardAPIController extends ControllerAPI
                 })
                 ->where('created_at', '>=', $beginDate)
                 ->where('created_at', '<=', $endDate)
-                ->get();
+                ->where('location_id', '=', $merchantId);
+            // Filter news by mall_id
+            OrbitInput::get('current_mall', function ($mall_id) use ($coupon)
+            {
+                $coupon->where('location_id', '=', $mall_id);
+            });
+            $coupon = $coupon->get();
 
             $objectKeys['coupons'] = new stdClass();
             $objectKeys['coupons']->label = 'Coupon';
