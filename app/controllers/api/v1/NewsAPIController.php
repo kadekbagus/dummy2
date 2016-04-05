@@ -2277,7 +2277,7 @@ class NewsAPIController extends ControllerAPI
             return true;
         });
 
-        // Check the existance of news id
+        // Check the existance of news id for update with permission check
         Validator::extend('orbit.update.news', function ($attribute, $value, $parameters) {
             $user = $this->api->user;
             $object_type = $parameters[0];
@@ -2290,7 +2290,7 @@ class NewsAPIController extends ControllerAPI
                 return false;
             }
 
-            App::instance('orbit.empty.news', $news);
+            App::instance('orbit.update.news', $news);
 
             return true;
         });
