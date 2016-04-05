@@ -2132,11 +2132,9 @@ class TenantAPIController extends ControllerAPI
 
             $prefix = DB::getTablePrefix();
 
-            $tenants = CampaignLocation::select('merchants.merchant_id', 'merchants.name',
+            $tenants = CampaignLocation::select('merchants.merchant_id',
                                             DB::raw("IF({$prefix}merchants.object_type = 'tenant', pm.merchant_id, {$prefix}merchants.merchant_id) as mall_id"),
-                                            DB::raw("IF({$prefix}merchants.object_type = 'tenant', pm.name, {$prefix}merchants.name) as mall_name"),
                                             DB::raw("IF({$prefix}merchants.object_type = 'tenant', CONCAT({$prefix}merchants.name,' at ', pm.name), CONCAT('Mall at ', {$prefix}merchants.name)) as display_name"), 
-                                            'merchants.object_type',
                                             'merchants.status'
                                         )
                                        ->leftjoin('merchants as pm', DB::raw("pm.merchant_id"), '=', 'merchants.parent_id')
@@ -2159,11 +2157,12 @@ class TenantAPIController extends ControllerAPI
             // skip, and order by
             $_tenants = clone $tenants;
 
-            $take = PaginationNumber::parseTakeFromGet('link_to_tenant');
+            // to do : enable take and skip
+            /*$take = PaginationNumber::parseTakeFromGet('link_to_tenant');
             $tenants->take($take);
 
             $skip = PaginationNumber::parseSkipFromGet();
-            $tenants->skip($skip);
+            $tenants->skip($skip);*/
 
             // Default sort by
             $sortBy = 'display_name';
