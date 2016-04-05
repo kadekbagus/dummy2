@@ -546,45 +546,54 @@ class DashboardAPIController extends ControllerAPI
             $defaultEndDate = date('Y-m-d 23:59:59', strtotime('tomorrow'));
             $endDate = OrbitInput::get('end_date', $defaultEndDate);
 
-            // This is for event popup views, because event has no page view
-            $event = CampaignGroupName::getPopupViewByLocation($merchantId, $beginDate, $endDate)
-                                        ->get()
-                                        ->keyBy('campaign_group_name')
-                                        ->get('Event');
-
-            // This is for another campaign
-            $campaigns = CampaignGroupName::getPageViewByLocation($merchantId, $beginDate, $endDate)->get();
-
-            $keys = [
-                'Coupon' => 'coupons',
-                'Event' => 'events',
-                'Lucky Draw' => 'lucky_draws',
-                'News' => 'news',
-                'Promotion' => 'promotions'
-            ];
-
             $objectKeys = [];
-            foreach ($campaigns as $campaign) {
-                if ($campaign->campaign_group_name === 'Event') {
-                    continue;
-                }
 
-                $tmp = new stdClass();
-                $tmp->label = $campaign->campaign_group_name;
-                $tmp->total = $campaign->count;
+            $news = CampaignPageView::whereHas('campaignGroupName', function ($q) {
+                    $q->where('campaign_group_name', 'News');
+                })
+                ->whereHas('news', function($q) use ($user) {
+                    $q->allowedForPMPUser($user, 'news');
+                })
+                ->where('created_at', '>=', $beginDate)
+                ->where('created_at', '<=', $endDate)
+                ->get();
 
-                $theKey = $keys[$tmp->label];
-                $objectKeys[$theKey] = $tmp;
-            }
-            $objectKeys['events'] = new stdClass();
-            $objectKeys['events']->label = 'Event';
-            $objectKeys['events']->total = $event->count;
+            $objectKeys['news'] = new stdClass();
+            $objectKeys['news']->label = 'News';
+            $objectKeys['news']->total = $news->count();
+
+            $promotion = CampaignPageView::whereHas('campaignGroupName', function ($q) {
+                    $q->where('campaign_group_name', 'Promotion');
+                })
+                ->whereHas('promotion', function($q) use ($user) {
+                    $q->allowedForPMPUser($user, 'promotion');
+                })
+                ->where('created_at', '>=', $beginDate)
+                ->where('created_at', '<=', $endDate)
+                ->get();
+
+            $objectKeys['promotions'] = new stdClass();
+            $objectKeys['promotions']->label = 'Promotion';
+            $objectKeys['promotions']->total = $promotion->count();
+
+
+            $coupon = CampaignPageView::whereHas('campaignGroupName', function ($q) {
+                    $q->where('campaign_group_name', 'Coupon');
+                })
+                ->whereHas('coupon', function($q) use ($user) {
+                    $q->allowedForPMPUser($user, 'coupon');
+                })
+                ->where('created_at', '>=', $beginDate)
+                ->where('created_at', '<=', $endDate)
+                ->get();
+
+            $objectKeys['coupons'] = new stdClass();
+            $objectKeys['coupons']->label = 'Coupon';
+            $objectKeys['coupons']->total = $coupon->count();
 
             $data = new stdclass();
             $data->news = $objectKeys['news'];
-            $data->events = $objectKeys['events'];
             $data->promotions = $objectKeys['promotions'];
-            $data->lucky_draws = $objectKeys['lucky_draws'];
             $data->coupons = $objectKeys['coupons'];
 
             $this->response->data = $data;
