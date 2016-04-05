@@ -36,6 +36,13 @@ class IntermediateBaseController extends Controller
     protected $session = NULL;
 
     /**
+     * Using transaction or not.
+     *
+     * @var boolean
+     */
+    protected $useTransaction = TRUE;
+
+    /**
      * Class constructor
      *
      * @author Rio Astamal <me@rioastamal.net>

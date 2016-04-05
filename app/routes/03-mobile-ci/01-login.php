@@ -12,6 +12,14 @@ Route::group(
         //     }]
         // );
 
+        Route::get(
+            '/customer', ['as' => 'mobile-ci.home',
+            function () {
+
+                return MobileCI\MobileCIAPIController::create()->getHomeView();
+            }]
+        );
+
         Route::post(
             '/customer/social-login', ['as' => 'mobile-ci.social_login',
                 function () {
@@ -53,7 +61,7 @@ Route::group(
         );
 
         Route::get(
-            '/customer', ['as' => 'ci-customer-home',
+            '/customer/home', ['as' => 'ci-customer-home',
             function () {
                 return MobileCI\MobileCIAPIController::create()->getHomeView();
             }]
