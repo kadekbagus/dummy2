@@ -279,7 +279,8 @@ class DashboardAPIController extends ControllerAPI
 
                 // show news
                 case 'news':
-                    $query = News::select(DB::raw("COUNT({$tablePrefix}campaign_page_views.campaign_page_view_id) as score,
+                    $query = News::allowedForPMPUser($user, 'news')
+                            ->select(DB::raw("COUNT({$tablePrefix}campaign_page_views.campaign_page_view_id) as score,
                             CASE WHEN {$tablePrefix}news_translations.news_name !='' THEN {$tablePrefix}news_translations.news_name ELSE {$tablePrefix}news.news_name END as name,
                                 {$tablePrefix}news.news_id as object_id,
                           count({$tablePrefix}campaign_page_views.campaign_page_view_id) / (select count(cp.campaign_page_view_id)
@@ -334,7 +335,8 @@ class DashboardAPIController extends ControllerAPI
 
                 // show promotions
                 case 'promotions':
-                    $query = News::select(DB::raw("COUNT({$tablePrefix}campaign_page_views.campaign_page_view_id) as score,
+                    $query = News::allowedForPMPUser($user, 'promotion')
+                            ->select(DB::raw("COUNT({$tablePrefix}campaign_page_views.campaign_page_view_id) as score,
                                 CASE WHEN {$tablePrefix}news_translations.news_name !='' THEN {$tablePrefix}news_translations.news_name ELSE {$tablePrefix}news.news_name END as name,
                                 {$tablePrefix}news.news_id as object_id,
                           count({$tablePrefix}campaign_page_views.campaign_page_view_id) / (select count(cp.campaign_page_view_id)
@@ -389,7 +391,8 @@ class DashboardAPIController extends ControllerAPI
 
                 // show coupon
                 case 'coupons':
-                    $query = Coupon::select(DB::raw("COUNT({$tablePrefix}campaign_page_views.campaign_page_view_id) as score,
+                    $query = Coupon::allowedForPMPUser($user, 'coupon')
+                            ->select(DB::raw("COUNT({$tablePrefix}campaign_page_views.campaign_page_view_id) as score,
                                     CASE WHEN {$tablePrefix}coupon_translations.promotion_name !='' THEN {$tablePrefix}coupon_translations.promotion_name ELSE {$tablePrefix}promotions.promotion_name END as name,
                                     {$tablePrefix}promotions.promotion_id as object_id,
                                 count({$tablePrefix}campaign_page_views.campaign_page_view_id) / (select count(cp.campaign_page_view_id)
@@ -612,6 +615,8 @@ class DashboardAPIController extends ControllerAPI
             $data->news = $objectKeys['news'];
             $data->promotions = $objectKeys['promotions'];
             $data->coupons = $objectKeys['coupons'];
+            // $data->lucky_draws = $objectKeys['lucky_draws'];
+            // $data->events = $objectKeys['events'];
 
             $this->response->data = $data;
 
