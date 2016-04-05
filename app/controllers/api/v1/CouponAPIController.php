@@ -1708,7 +1708,6 @@ class CouponAPIController extends ControllerAPI
                         $dailySpending = new CampaignDailySpending;
                     }
 
-                    $dailySpending = CampaignDailySpending::firstOrCreate(array('date' => $getspending->date_in_utc, 'campaign_id' => $campaign_id, 'mall_id' => $mall));
                     $dailySpending->date = $getspending->date_in_utc;
                     $dailySpending->campaign_type = $campaign_type;
                     $dailySpending->campaign_id = $campaign_id;
