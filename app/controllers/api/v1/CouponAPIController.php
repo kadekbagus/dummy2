@@ -2257,15 +2257,16 @@ class CouponAPIController extends ControllerAPI
                 $coupons->whereIn('promotions.promotion_id', $promotionIds);
             });
 
+            // to do : enable filter for mall id
             // Filter coupon by merchant Ids
-            OrbitInput::get('merchant_id', function ($merchantIds) use ($coupons) {
-                $coupons->whereIn('promotions.merchant_id', (array)$merchantIds);
-            });
+            // OrbitInput::get('merchant_id', function ($merchantIds) use ($coupons) {
+            //     $coupons->whereIn('promotions.merchant_id', (array)$merchantIds);
+            // });
 
             // Filter coupon by merchant Ids / dupes, same as above
-            OrbitInput::get('current_mall', function ($merchantIds) use ($coupons) {
-                $coupons->whereIn('promotions.merchant_id', (array)$merchantIds);
-            });
+            // OrbitInput::get('current_mall', function ($merchantIds) use ($coupons) {
+            //     $coupons->whereIn('promotions.merchant_id', (array)$merchantIds);
+            // });
 
             // Filter coupon by promotion name
             OrbitInput::get('promotion_name', function($promotionName) use ($coupons)
