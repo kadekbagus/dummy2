@@ -69,7 +69,6 @@ class ResetPasswordAPIController extends ControllerAPI
             $user = User::with('userdetail')
                 ->excludeDeleted()
                 ->where('user_id', $token->user_id)
-                ->where('status', 'active')
                 ->whereHas('role', function($query)
                 {
                     $query->where('role_name','Consumer');
