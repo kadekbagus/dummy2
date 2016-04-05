@@ -1454,63 +1454,6 @@ class CouponAPIController extends ControllerAPI
                 }
             });
 
-            OrbitInput::post('link_to_tenant_ids', function($link_to_tenant_ids) use ($promotion_id) {
-                // validating link_to_tenant_ids.
-                foreach ($link_to_tenant_ids as $link_to_tenant_json) {
-                    $data = @json_decode($link_to_tenant_json);
-                    $tenant_id = $data->tenant_id;
-                    $mall_id = $data->mall_id;
-
-                    $validator = Validator::make(
-                        array(
-                            'retailer_id'   => $tenant_id,
-
-                        ),
-                        array(
-                            'retailer_id'   => 'orbit.empty.tenant',
-                        )
-                    );
-
-                    Event::fire('orbit.coupon.postupdatecoupon.before.retailervalidation', array($this, $validator));
-
-                    // Run the validation
-                    if ($validator->fails()) {
-                        $errorMessage = $validator->messages()->first();
-                        OrbitShopAPI::throwInvalidArgument($errorMessage);
-                    }
-
-                    Event::fire('orbit.coupon.postupdatecoupon.after.retailervalidation', array($this, $validator));
-                }
-
-                // Delete old data
-                $delete_retailer = CouponRetailer::where('promotion_id', '=', $promotion_id);
-                $delete_retailer->delete();
-
-                // Insert new data
-                $retailers = array();
-                $isMall = 'tenant';
-                $mallid = array();
-                foreach ($link_to_tenant_ids as $retailer_id) {
-                    $data = @json_decode($retailer_id);
-                    $tenant_id = $data->tenant_id;
-                    $mall_id = $data->mall_id;
-
-                    if(! in_array($mall_id, $mallid)) {
-                        $mallid[] = $mall_id;
-                    }
-
-                    if ($tenant_id === $mall_id) {
-                        $isMall = 'mall';
-                    }
-
-                    $retailer = new CouponRetailer();
-                    $retailer->promotion_id = $promotion_id;
-                    $retailer->retailer_id = $tenant_id;
-                    $retailer->object_type = $isMall;
-                    $retailer->save();
-                }
-            });
-
             OrbitInput::post('retailer_ids', function($retailer_ids) use ($promotion_id) {
                 // validating retailer_ids.
                 foreach ($retailer_ids as $retailer_id_json) {
