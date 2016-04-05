@@ -24,9 +24,12 @@ use DB;
 use Artdarek\OAuth\Facade\OAuth;
 use Redirect;
 use URL;
+use Queue;
 
 class RegistrationAPIController extends IntermediateBaseController
 {
+    protected $tmpUserObject = NULL;
+
     public function postRegisterCustomer()
     {
         $this->response = new ResponseProvider();
@@ -41,7 +44,7 @@ class RegistrationAPIController extends IntermediateBaseController
             $gender = OrbitInput::post('gender');
             $birthdate = OrbitInput::post('birthdate');
             $password_confirmation = OrbitInput::post('password_confirmation');
-            
+
             $user = User::with('role')
                         ->excludeDeleted()
                         ->where('user_email', $email);
@@ -51,11 +54,11 @@ class RegistrationAPIController extends IntermediateBaseController
             if (is_object($user)) {
                 $message = Lang::get('validation.orbit.exists.email');
                 OrbitShopAPI::throwInvalidArgument($message);
-            }            
+            }
 
             DB::beginTransaction();
 
-            $user = $this->createCustomerUser($email, $password, $password_confirmation, $firstname, $lastname, $gender, $birthdate, TRUE);
+            $user = $this->createCustomerUser($email, $password, $password_confirmation, $firstname, $lastname, $gender, $birthdate, FALSE);
 
             // Start the orbit session
             $data = array(
@@ -82,6 +85,12 @@ class RegistrationAPIController extends IntermediateBaseController
             $this->response->code = 0;
             $this->response->status = 'success';
             $this->response->message = 'Sign Up Success';
+
+            // Send email process to the queue
+            Queue::push('Orbit\\Queue\\RegistrationMail', [
+                'user_id' => $user->user_id,
+                'mode' => 'gotomalls'
+            ]);
 
             DB::commit();
 
@@ -144,9 +153,9 @@ class RegistrationAPIController extends IntermediateBaseController
      * @return array [User, UserDetail, ApiKey]
      * @throws Exception
      */
-    public function createCustomerUser($email, $password, $password_confirmation, $firstname, $lastname, $gender, $birthdate, $useTransaction = FALSE, $userId = null, $userDetailId = null, $apiKeyId = null, $userStatus = null)
+    public function createCustomerUser($email, $password, $password_confirmation, $firstname, $lastname, $gender, $birthdate, $useTransaction = TRUE, $userId = null, $userDetailId = null, $apiKeyId = null, $userStatus = null)
     {
-        $validation = $this->validateRegistrationData($firstname, $lastname, $gender, $birthdate, $password, $password_confirmation);
+        $validation = $this->validateRegistrationData($email, $firstname, $lastname, $gender, $birthdate, $password, $password_confirmation);
         if ($validation) {
             try {
                 $customerRole = Role::where('role_name', 'Consumer')->first();
@@ -154,7 +163,7 @@ class RegistrationAPIController extends IntermediateBaseController
                     $errorMessage = Lang::get('validation.orbit.empty.consumer_role');
                     throw new Exception($errorMessage);
                 }
-                if (! $useTransaction) {
+                if ($useTransaction) {
                     DB::beginTransaction();
                 }
                 $new_user = new User();
@@ -193,7 +202,7 @@ class RegistrationAPIController extends IntermediateBaseController
                 $new_user->setRelation('apikey', $apikey);
                 $new_user->apikey = $apikey;
 
-                if (! $useTransaction) {
+                if ($useTransaction) {
                     DB::commit();
                 }
 
@@ -205,7 +214,7 @@ class RegistrationAPIController extends IntermediateBaseController
                 $this->response->code = $e->getCode();
                 $this->response->status = 'error';
                 $this->response->message = $e->getMessage();
-                $this->response->data = null;   
+                $this->response->data = null;
 
                 return $this->render($this->response);
             }
@@ -222,10 +231,24 @@ class RegistrationAPIController extends IntermediateBaseController
      * @return array|string
      * @throws Exception
      */
-    protected function validateRegistrationData($firstname, $lastname, $gender, $birthdate, $password, $password_confirmation)
+    protected function validateRegistrationData($email, $firstname, $lastname, $gender, $birthdate, $password, $password_confirmation)
     {
+        $me = $this;
+        Validator::extend('orbit_email_exists', function ($attribute, $value, $parameters) use ($me) {
+            $user = User::excludeDeleted()->where('user_email', $value)->first();
+
+            if (is_object($user)) {
+                return FALSE;
+            }
+
+            $me->tmpUserObject = $user;
+
+            return TRUE;
+        });
+
         $validator = Validator::make(
             array(
+                'email'      => $email,
                 'first_name' => $firstname,
                 'last_name'  => $lastname,
                 'gender'     => $gender,
@@ -234,6 +257,7 @@ class RegistrationAPIController extends IntermediateBaseController
                 'password' => $password,
             ),
             array(
+                'email'      => 'required|email|orbit_email_exists',
                 'first_name' => 'required',
                 'last_name'  => 'required',
                 'gender'     => 'required|in:m,f',
@@ -242,7 +266,8 @@ class RegistrationAPIController extends IntermediateBaseController
                 'password'  => 'min:5|confirmed',
             ),
             array(
-                'birth_date.date_format' => Lang::get('validation.orbit.formaterror.date.dmy_date')
+                'birth_date.date_format' => Lang::get('validation.orbit.formaterror.date.dmy_date'),
+                'orbit_email_exists' => Lang::get('validation.orbit.email.exists')
             )
         );
 
