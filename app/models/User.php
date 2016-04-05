@@ -246,6 +246,8 @@ class User extends Eloquent implements UserInterface
         $user_detail->user_id = $guest_user->user_id;
         $user_detail->save();
 
+        $guest_user->load('userdetail', 'role');
+
         return $guest_user;
     }
 
