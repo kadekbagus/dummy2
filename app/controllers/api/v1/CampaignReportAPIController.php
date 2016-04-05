@@ -928,7 +928,7 @@ class CampaignReportAPIController extends ControllerAPI
                             popup_clicks,
                             popup_click_rate,
                             base_price,
-                            sum(total_spending) AS spending,
+                            sum_total_spending AS spending,
                             campaign_status
                         FROM
                         (
@@ -971,7 +971,13 @@ class CampaignReportAPIController extends ControllerAPI
                             ) AS popup_click_rate
 
                             FROM
-                                ( SELECT date, number_active_tenants, campaign_status, tccd.mall_id, tccd.base_price, total_spending FROM {$tablePrefix}campaign_daily_spendings AS tccd where tccd.campaign_id = {$this->quote($campaign_id)}) AS x
+                                (
+                                    SELECT date, number_active_tenants, campaign_status, tccd.mall_id, tccd.base_price, total_spending, sum(total_spending) as sum_total_spending
+                                    FROM {$tablePrefix}campaign_daily_spendings AS tccd
+                                    WHERE tccd.campaign_id = {$this->quote($campaign_id)}
+                                    GROUP BY date
+                                ) AS x
+
                                 -- JOIN to get tenant list per date
                                 LEFT JOIN
                                 (

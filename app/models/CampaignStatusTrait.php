@@ -68,7 +68,7 @@ trait CampaignStatusTrait
     }
 
    /**
-     * Scope to filter records based on status field. Only return records which
+     * Scope to filter records based on campaign status field. Only return records which
      * had value 'paused'.
      *
      * @author Irianto <irianto@dominopos.com>
@@ -83,7 +83,7 @@ trait CampaignStatusTrait
     }
 
    /**
-     * Scope to filter records based on status field. Only return records which
+     * Scope to filter records based on campaign status field. Only return records which
      * had value 'stopped'.
      *
      * @author Irianto <irianto@dominopos.com>
@@ -98,7 +98,7 @@ trait CampaignStatusTrait
     }
 
    /**
-     * Scope to filter records based on status field. Only return records which
+     * Scope to filter records based on campaign status field. Only return records which
      * had value 'expired'.
      *
      * @author Irianto <irianto@dominopos.com>
@@ -110,6 +110,21 @@ trait CampaignStatusTrait
     {
         return $query->joinCampaignStatus($table)
                 ->where('campaign_status.campaign_status_name', 'expired');
+    }
+
+   /**
+     * Scope to filter records based on campaign status field. Only return records which
+     * doesm't had value 'stopped' or 'expired'.
+     *
+     * @author Irianto <irianto@dominopos.com>
+     * @param Illuminate\Database\Query\Builder $query
+     * @param string $table Table name
+     * @return Illuminate\Database\Query\Builder
+     */
+    public function scopeExcludeStoppedOrExpired($query, $table=NULL)
+    {
+        return $query->joinCampaignStatus($table)
+                        ->whereNotIn('campaign_status.campaign_status_name',['stopped', 'expired']);
     }
 
 }
