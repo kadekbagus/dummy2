@@ -577,8 +577,7 @@ class DashboardAPIController extends ControllerAPI
                     $q->allowedForPMPUser($user, 'promotion');
                 })
                 ->where('created_at', '>=', $beginDate)
-                ->where('created_at', '<=', $endDate)
-                ->where('location_id', '=', $merchantId);
+                ->where('created_at', '<=', $endDate);
             // Filter news by mall_id
             OrbitInput::get('current_mall', function ($mall_id) use ($promotion)
             {
@@ -598,8 +597,7 @@ class DashboardAPIController extends ControllerAPI
                     $q->allowedForPMPUser($user, 'coupon');
                 })
                 ->where('created_at', '>=', $beginDate)
-                ->where('created_at', '<=', $endDate)
-                ->where('location_id', '=', $merchantId);
+                ->where('created_at', '<=', $endDate);
             // Filter news by mall_id
             OrbitInput::get('current_mall', function ($mall_id) use ($coupon)
             {
@@ -4628,23 +4626,76 @@ class DashboardAPIController extends ControllerAPI
             }
             Event::fire('orbit.dashboard.gettotalpageview.after.validation', array($this, $validator));
 
-            $campaignList = ['Coupon', 'News', 'Promotion'];
-
-            $campaigns = CampaignGroupName::getPageViewByLocation($current_mall, $start_date, $end_date)->get();
-
             $total = 0;
 
-            foreach ($campaigns as $key => $value)
-            {
-                if( in_array($campaigns[$key]->campaign_group_name, $campaignList) )
-                {
-                    $total = $total+$campaigns[$key]->count;
-                }
-            }
+            $news = CampaignPageView::whereHas('campaignGroupName', function ($q) {
+                    $q->where('campaign_group_name', 'News');
+                })
+                ->whereHas('news', function($q) use ($user) {
+                    $q->allowedForPMPUser($user, 'news');
+                })
+                ->where('created_at', '>=', $start_date)
+                ->where('created_at', '<=', $end_date);
 
-            if (empty($campaigns)) {
+            // Filter news by mall_id
+            OrbitInput::get('current_mall', function ($mall_id) use ($news)
+            {
+                $news->where('location_id', '=', $mall_id);
+            });
+
+            $news = $news->get();
+
+            if (empty($news)) {
                 $this->response->message = Lang::get('statuses.orbit.nodata.object');
             }
+
+            $total = $total+$news->count();
+
+            $promotion = CampaignPageView::whereHas('campaignGroupName', function ($q) {
+                    $q->where('campaign_group_name', 'Promotion');
+                })
+                ->whereHas('promotion', function($q) use ($user) {
+                    $q->allowedForPMPUser($user, 'promotion');
+                })
+                ->where('created_at', '>=', $start_date)
+                ->where('created_at', '<=', $end_date);
+
+            // Filter news by mall_id
+            OrbitInput::get('current_mall', function ($mall_id) use ($promotion)
+            {
+                $promotion->where('location_id', '=', $mall_id);
+            });
+
+            $promotion = $promotion->get();
+
+            if (empty($promotion)) {
+                $this->response->message = Lang::get('statuses.orbit.nodata.object');
+            }
+
+            $total = $total+$promotion->count();
+
+            $coupon = CampaignPageView::whereHas('campaignGroupName', function ($q) {
+                    $q->where('campaign_group_name', 'Coupon');
+                })
+                ->whereHas('coupon', function($q) use ($user) {
+                    $q->allowedForPMPUser($user, 'coupon');
+                })
+                ->where('created_at', '>=', $start_date)
+                ->where('created_at', '<=', $end_date);
+
+            // Filter news by mall_id
+            OrbitInput::get('current_mall', function ($mall_id) use ($coupon)
+            {
+                $coupon->where('location_id', '=', $mall_id);
+            });
+
+            $coupon = $coupon->get();
+
+            if (empty($coupon)) {
+                $this->response->message = Lang::get('statuses.orbit.nodata.object');
+            }
+
+            $total = $total+$coupon->count();
 
             $data = new stdclass();
             $data->total_page_view = $total;
