@@ -673,7 +673,7 @@ class NewsAPIController extends ControllerAPI
             $validator = Validator::make(
                 $data,
                 array(
-                    'news_id'             => 'required|orbit.empty.news',
+                    'news_id'             => 'required|orbit.update.news:' . $object_type,
                     'news_name'           => 'sometimes|required|min:5|max:255|news_name_exists_but_me',
                     'object_type'         => 'required|orbit.empty.news_object_type',
                     'status'              => 'orbit.empty.news_status',
@@ -685,6 +685,7 @@ class NewsAPIController extends ControllerAPI
                 ),
                 array(
                    'news_name_exists_but_me' => Lang::get('validation.orbit.exists.news_name'),
+                   'orbit.update.news' => 'Cannot update campaign with status ' . $campaignStatus,
                 )
             );
 
@@ -2263,7 +2264,25 @@ class NewsAPIController extends ControllerAPI
 
         // Check the existance of news id
         Validator::extend('orbit.empty.news', function ($attribute, $value, $parameters) {
-            $news = News::excludeDeleted()
+            $news = News::excludeStoppedOrExpired($object_type)
+                        ->where('news_id', $value)
+                        ->first();
+
+            if (empty($news)) {
+                return false;
+            }
+
+            App::instance('orbit.empty.news', $news);
+
+            return true;
+        });
+
+        // Check the existance of news id
+        Validator::extend('orbit.update.news', function ($attribute, $value, $parameters) {
+            $user = $this->api->user;
+            $object_type = $parameters[0];
+
+            $news = News::allowedForPMPUser($user, $object_type)->excludeStoppedOrExpired($object_type)
                         ->where('news_id', $value)
                         ->first();
 
