@@ -258,7 +258,7 @@ class LoginAPIController extends ControllerAPI
             $pmp_parent = $user->campaignAccount()->where('user_id', '=', $user->user_id)->first();
 
             // Get total tenant and mall per user
-            $um = $pmp_parent->userMerchant()->count();
+            $um = $pmp_parent->userMall()->count();
             $ut = $pmp_parent->userTenant()->count();
 
             $user->total_mall = $um;
@@ -411,7 +411,8 @@ class LoginAPIController extends ControllerAPI
             $activity = null;
 
             $email = OrbitInput::post('email');
-            $password = OrbitInput::post('password');
+            $password = OrbitInput::post('password', '');
+            $status = OrbitInput::post('status', null);
 
             $from = OrbitInput::post('from');
             $mall_id = $this->getRetailerId();
@@ -440,7 +441,7 @@ class LoginAPIController extends ControllerAPI
 
             $mall = Mall::where('merchant_id', $mall_id)->first();
 
-            list($newuser, $userdetail, $apikey) = $this->createCustomerUser($email, $password);
+            list($newuser, $userdetail, $apikey) = $this->createCustomerUser($email, $password, null, null, null, $status);
 
             $this->response->data = $newuser;
 
@@ -1525,7 +1526,9 @@ class LoginAPIController extends ControllerAPI
         }
         $new_user->username = strtolower($email);
         $new_user->user_email = strtolower($email);
-        $new_user->user_password = Hash::make($password);
+        if (! empty($password)) {
+            $new_user->user_password = Hash::make($password);
+        }
         $new_user->status = isset($userStatus) ? $userStatus : 'pending';
         $new_user->user_role_id = $customerRole->role_id;
         $new_user->user_ip = $_SERVER['REMOTE_ADDR'];

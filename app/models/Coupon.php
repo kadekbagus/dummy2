@@ -65,6 +65,11 @@ class Coupon extends Eloquent
         return $this->belongsToMany('Tenant', 'promotion_retailer', 'promotion_id', 'retailer_id');
     }
 
+    public function linkToMalls()
+    {
+        return $this->belongsToMany('Mall', 'promotion_retailer', 'promotion_id', 'retailer_id');
+    }
+
     public function issuedCoupons()
     {
         return $this->hasMany('IssuedCoupon', 'promotion_id', 'promotion_id');
@@ -276,7 +281,7 @@ class Coupon extends Eloquent
 
     /**
      * Runnning Date dynamic scope
-     * 
+     *
      * @author Qosdil A. <qosdil@dominopos.com>
      * @todo Make a trait for such method
      */

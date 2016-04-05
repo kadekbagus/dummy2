@@ -1,12 +1,12 @@
 <!doctype html>
 <html>
 <head>
-<title>Orbit - A DominoPOS Product</title>
+<title>Goto - A DominoPOS Product</title>
 </head>
 <body style="padding:0;margin:0;background-color:#fff;width:100%;font-family:Arial,Verdana,Tahoma,Serif;line-height:22px;font-size:16px;">
 <div id="container;" style="padding:0; margin:0 auto;width:451px;border:1px solid #ccc">
     <div id="header" style="">
-        <img style="width:451px;height:63" src="{{ asset('emails/orbit-activate-account.png') }}" alt="Activate My Orbit Account">
+        <img style="width:451px;height:63" src="{{ asset('emails/orbit-activate-account.png') }}" alt="Activate My GotoMalls Account">
     </div>
 
     <div id="main" style="width:95%;margin: 0 auto;">
@@ -20,13 +20,13 @@
 
         <div id="regards" style="padding-top:1em;">
         <p style="line-height:1em;">Regards,
-        <img style="display:block;padding-top:0.7em" alt="Orbit Team" src="{{ asset('emails/orbit-team.png') }}">
+        <img style="display:block;padding-top:0.7em" alt="GotoMalls Team" src="{{ asset('emails/orbit-team.png') }}">
         </p>
     </div>
 
     <div id="contact" style="padding:0.5em 0 0.5em 0;margin-top:3em;border-top:1px dotted #ccc;line-height:18px;width:100%;">
         <p style="width:100%;margin:0 auto;text-align:center;">
-            <strong>Orbit Customer Service</strong>
+            <strong>GotoMalls Customer Service</strong>
             <span style="display:block;font-size:12px;">Email: {{ $cs_email }}</span>
         </p>
     <div>

@@ -8,10 +8,10 @@ follow this link below:
 
 
 Regards,
-Orbit Team
+GotoMalls Team
 
 -----------------------------------------------------------
-ORBIT CUSTOMER SERVICE
+GOTOMALLS CUSTOMER SERVICE
 
 Email: {{ $cs_email }}
 ------------------------------------------------------------

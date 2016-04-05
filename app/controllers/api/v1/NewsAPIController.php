@@ -2285,7 +2285,7 @@ class NewsAPIController extends ControllerAPI
             $user = $this->api->user;
             $object_type = $parameters[0];
 
-            $news = News::allowedForPMPUser($user, $object_type)->excludeStoppedOrExpired($object_type)
+            $news = News::allowedForPMPUser($user, $object_type)->excludeStoppedOrExpired('news')
                         ->where('news_id', $value)
                         ->first();
 

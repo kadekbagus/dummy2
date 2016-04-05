@@ -989,7 +989,7 @@ class CouponAPIController extends ControllerAPI
             $validator = Validator::make(
                 $data,
                 array(
-                    'promotion_id'            => 'required|orbit.empty.coupon',
+                    'promotion_id'            => 'required|orbit.update.coupon',
                     'promotion_name'          => 'sometimes|required|min:5|max:255|coupon_name_exists_but_me',
                     'promotion_type'          => 'orbit.empty.coupon_type',
                     'status'                  => 'orbit.empty.coupon_status',
@@ -1010,12 +1010,13 @@ class CouponAPIController extends ControllerAPI
                 ),
                 array(
                     'coupon_name_exists_but_me' => Lang::get('validation.orbit.exists.coupon_name'),
-                    'rule_value.required'     => 'The amount to obtain is required',
-                    'rule_value.numeric'      => 'The amount to obtain must be a number',
-                    'rule_value.min'          => 'The amount to obtain must be greater than zero',
-                    'discount_value.required' => 'The coupon value is required',
-                    'discount_value.numeric'  => 'The coupon value must be a number',
-                    'discount_value.min'      => 'The coupon value must be greater than zero',
+                    'rule_value.required'       => 'The amount to obtain is required',
+                    'rule_value.numeric'        => 'The amount to obtain must be a number',
+                    'rule_value.min'            => 'The amount to obtain must be greater than zero',
+                    'discount_value.required'   => 'The coupon value is required',
+                    'discount_value.numeric'    => 'The coupon value must be a number',
+                    'discount_value.min'        => 'The coupon value must be greater than zero',
+                    'orbit.update.coupon'       => 'Cannot update campaign with status ' . $campaignStatus,
                 )
             );
 
@@ -2358,35 +2359,16 @@ class CouponAPIController extends ControllerAPI
 
             // Filter coupon merchants by retailer(tenant) name
             OrbitInput::get('tenant_name_like', function ($tenant_name_like) use ($coupons) {
-                $coupons->whereHas('tenants', function($q) use ($tenant_name_like) {
+                $coupons->whereHas('linkToTenants', function($q) use ($tenant_name_like) {
                     $q->where('merchants.name', 'like', "%$tenant_name_like%");
                 });
             });
 
             // Filter coupon merchants by mall name
-            OrbitInput::get('mall_name_like', function ($mall_name_like) use ($coupons, $table_prefix) {
-                $quote = function($arg)
-                {
-                    return DB::connection()->getPdo()->quote($arg);
-                };
-                $mall_name_like = "%" . $mall_name_like . "%";
-                $mall_name_like = $quote($mall_name_like);
-                $coupons->whereRaw(DB::raw("
-                    (SELECT count(*)
-                    FROM {$table_prefix}merchants mtenant
-                        inner join {$table_prefix}promotion_retailer_redeem onm on mtenant.merchant_id = onm.retailer_id
-                    WHERE mtenant.object_type = 'tenant'
-                        and onm.promotion_id = {$table_prefix}promotions.promotion_id
-                        and (
-                            SELECT count(*) FROM {$table_prefix}merchants mmall
-                            WHERE mmall.object_type = 'mall' and
-                            mtenant.parent_id = mmall.merchant_id and
-                            mmall.name like {$mall_name_like} and
-                            mmall.object_type = 'mall'
-                        ) >= 1
-                        and mtenant.object_type = 'tenant'
-                        and mtenant.is_mall = 'no') >= 1
-                "));
+            OrbitInput::get('mall_name_like', function ($mall_name_like) use ($coupons) {
+                $coupons->whereHas('linkToMalls', function($q) use ($mall_name_like) {
+                    $q->where('merchants.name', 'like', "%$mall_name_like%");
+                });
             });
 
              // Filter coupon rule by rule object type
@@ -3363,7 +3345,7 @@ class CouponAPIController extends ControllerAPI
 
         // Check the existance of coupon id
         Validator::extend('orbit.empty.coupon', function ($attribute, $value, $parameters) {
-            $coupon = Coupon::excludeDeleted()
+            $coupon = Coupon::excludeStoppedOrExpired('promotions')
                         ->where('promotion_id', $value)
                         ->first();
 
@@ -3372,6 +3354,23 @@ class CouponAPIController extends ControllerAPI
             }
 
             App::instance('orbit.empty.coupon', $coupon);
+
+            return TRUE;
+        });
+
+        // Check the existance of coupon id for update with permission check
+        Validator::extend('orbit.update.coupon', function ($attribute, $value, $parameters) {
+            $user = $this->api->user;
+
+            $coupon = Coupon::allowedForPMPUser($user, 'coupon')->excludeStoppedOrExpired('promotions')
+                        ->where('promotion_id', $value)
+                        ->first();
+
+            if (empty($coupon)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.update.coupon', $coupon);
 
             return TRUE;
         });
