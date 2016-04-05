@@ -133,26 +133,33 @@ class AccountAPIController extends ControllerAPI
 
             // Save to user_merchant (1 to M)
             if (Input::get('merchant_ids')) {
-                //get data in news and promotion
-                $newsPromotionActive = News::select('news.news_id')
-                                            ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
-                                            ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
-                                            ->whereNotIn('campaign_status.campaign_status_name', ['stopped', 'expired'])
-                                            ->whereIn('news_merchant.merchant_id', Input::get('merchant_ids'))
-                                            ->count();
+                $merchants = UserMerchant::select('merchant_id')->where('user_id', $user->user_id)->get()->toArray();
+                $merchantdb = array();
+                foreach($merchants as $merchantdbid) {
+                    $merchantdb[] = $merchantdbid['merchant_id'];
+                }
+                $removetenant = array_diff($merchantdb, Input::get('merchant_ids'));
+                $newsPromotionActive = 0; 
+                $couponStatusActive = 0;
+                if ($removetenant) {
+                    //get data in news and promotion
+                    $newsPromotionActive = News::select('news.news_id')
+                                                ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
+                                                ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
+                                                ->whereNotIn('campaign_status.campaign_status_name', ['stopped', 'expired'])
+                                                ->whereIn('news_merchant.merchant_id', $removetenant)
+                                                ->count();
+                                                
+                    //get data in coupon
+                    $couponStatusActive = Coupon::select('campaign_status.campaign_status_name')
+                                                ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
+                                                ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
+                                                ->whereNotIn('campaign_status.campaign_status_name', ['stopped', 'expired'])
+                                                ->whereIn('promotion_retailer.retailer_id', $removetenant)
+                                                ->count();
+                }
+                $activeCampaign = (int) $newsPromotionActive + (int) $couponStatusActive;                   
 
-                //get data in coupon
-                $couponStatusActive = Coupon::select('campaign_status.campaign_status_name')
-                                            ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
-                                            ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
-                                            ->whereNotIn('campaign_status.campaign_status_name', ['stopped', 'expired'])
-                                            ->whereIn('promotion_retailer.retailer_id', Input::get('merchant_ids'))
-                                            ->count();
-
-                $activeCampaign = $newsPromotionActive + $couponStatusActive;                      
-
-                /*print_r($couponStatus);
-                die();*/
                 $validator = Validator::make(
                     array(
                         'role_name'    => $user->role->role_name,
