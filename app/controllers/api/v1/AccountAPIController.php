@@ -12,38 +12,6 @@ use OrbitShop\API\v1\OrbitShopAPI;
  */
 class AccountAPIController extends ControllerAPI
 {
-    protected function createUpdateUserMerchant($user)
-    {      
-
-        // get campaign employee and delete merchant 
-        $employee = CampaignAccount::where('parent_user_id', '=', $user->user_id)->lists('user_id');
-        if (! empty($employee)) {
-            $merchantEmployee = UserMerchant::whereIn('user_id', $employee)->delete();
-        }
-
-        $ownermerchant = UserMerchant::where('user_id', $user->user_id)->delete();
- 
-        // Then update the user_id with the submitted ones 
-        foreach (Input::get('merchant_ids') as $merchantId) { 
-            
-            $userMerchant = new UserMerchant;
-            $userMerchant->user_id = $user->user_id; 
-            $userMerchant->merchant_id = $merchantId; 
-            $userMerchant->object_type = CampaignLocation::find($merchantId)->object_type; 
-            $userMerchant->save();
-            
-            if (! empty($employee)) {
-                foreach ($employee as $emp) {
-                    $employeeMerchant = new UserMerchant;
-                    $employeeMerchant->user_id = $emp; 
-                    $employeeMerchant->merchant_id = $merchantId;
-                    $employeeMerchant->object_type = CampaignLocation::find($merchantId)->object_type;
-                    $employeeMerchant->save(); 
-                }
-            }
-        } 
-    }
-
     /**
      * The main method
      *
@@ -105,75 +73,200 @@ class AccountAPIController extends ControllerAPI
      */
     public function postCreateUpdate()
     {
-        // Do validation
-        if (!$this->validate()) {
-            return $this->render($this->errorCode);
+        try {
+            $httpCode=200;
+            // Do validation
+            if (!$this->validate()) {
+                return $this->render($this->errorCode);
+            }
+
+            // users.user_id
+            $this->id = Input::get('id');
+
+            // Save to users table
+            $user = ($this->id) ? User::find($this->id) : new User;
+            $user->user_firstname = Input::get('user_firstname');
+            $user->user_lastname = Input::get('user_lastname');
+            $user->user_email = Input::get('user_email');
+            $user->username = Input::get('user_email');
+            $user->status = Input::get('status');
+
+            if (Input::get('user_password')) {
+                $user->user_password = Hash::make(Input::get('user_password'));
+            }
+
+            if ( ! $this->id) {
+                // Get role ID of "Campaign Owner"
+                $roleId = Role::whereRoleName('Campaign Owner')->first()->role_id;
+
+                $user->user_role_id = $roleId;
+            }
+
+            $user->save();
+
+            // Save to user_details table (1 to 1)
+            $userDetail = ($this->id) ? UserDetail::whereUserId($user->user_id)->first() : new UserDetail;
+            $userDetail->user_id = $user->user_id;
+            $userDetail->company_name = Input::get('company_name');
+            $userDetail->address_line1 = Input::get('address_line1');
+            $userDetail->city = Input::get('city');
+            $userDetail->province = Input::get('province');
+            $userDetail->postal_code = Input::get('postal_code');
+            $userDetail->country_id = Input::get('country_id');
+            $userDetail->save();
+
+            // Save to campaign_account table (1 to 1)
+            $campaignAccount = ($this->id) ? CampaignAccount::whereUserId($user->user_id)->first() : new CampaignAccount;
+            $campaignAccount->user_id = $user->user_id;
+            $campaignAccount->account_name = Input::get('account_name');
+            $campaignAccount->position = Input::get('position');
+            $campaignAccount->status = Input::get('status');
+            $campaignAccount->save();
+
+            if (! $this->id) {
+                $newEmployee = new Employee();
+                $newEmployee->user_id = $user->user_id;
+                $newEmployee->position = Input::get('position');
+                $newEmployee->status = Input::get('status');
+                $newEmployee->save();
+            }
+
+            // Save to user_merchant (1 to M)
+            if (Input::get('merchant_ids')) {
+                //get data in news and promotion
+                $newsPromotionActive = News::select('news.news_id')
+                                            ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
+                                            ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
+                                            ->whereNotIn('campaign_status.campaign_status_name', ['stopped', 'expired'])
+                                            ->whereIn('news_merchant.merchant_id', Input::get('merchant_ids'))
+                                            ->count();
+
+                //get data in coupon
+                $couponStatusActive = Coupon::select('campaign_status.campaign_status_name')
+                                            ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
+                                            ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
+                                            ->whereNotIn('campaign_status.campaign_status_name', ['stopped', 'expired'])
+                                            ->whereIn('promotion_retailer.retailer_id', Input::get('merchant_ids'))
+                                            ->count();
+
+                $activeCampaign = $newsPromotionActive + $couponStatusActive;                      
+
+                /*print_r($couponStatus);
+                die();*/
+                $validator = Validator::make(
+                    array(
+                        'role_name'    => $user->role->role_name,
+                        'active_campaign'  => $activeCampaign,
+                    ),
+                    array(
+                        'role_name'    => 'in:Campaign Owner',
+                        'active_campaign'    => 'in: 0',
+                    ),
+                    array(
+                        'role_name.in' => 'Cannot update tenant',
+                        'active_campaign.in' => 'Cannot unlink the tenant with an active campaign',
+                    )
+                );
+
+                if ($validator->fails()) {
+                    OrbitShopAPI::throwInvalidArgument($validator->messages()->first());
+                }
+
+                // get campaign employee and delete merchant 
+                $employee = CampaignAccount::where('parent_user_id', '=', $user->user_id)->lists('user_id');
+                if (! empty($employee)) {
+                    $merchantEmployee = UserMerchant::whereIn('user_id', $employee)->delete();
+                }
+
+                $ownermerchant = UserMerchant::where('user_id', $user->user_id)->delete();
+         
+                // Then update the user_id with the submitted ones 
+                foreach (Input::get('merchant_ids') as $merchantId) { 
+
+                    $userMerchant = new UserMerchant;
+                    $userMerchant->user_id = $user->user_id; 
+                    $userMerchant->merchant_id = $merchantId; 
+                    $userMerchant->object_type = CampaignLocation::find($merchantId)->object_type; 
+                    $userMerchant->save(); 
+
+                    if (! empty($employee)) {
+                        foreach ($employee as $emp) {
+                            $employeeMerchant = new UserMerchant;
+                            $employeeMerchant->user_id = $emp; 
+                            $employeeMerchant->merchant_id = $merchantId;
+                            $employeeMerchant->object_type = CampaignLocation::find($merchantId)->object_type;
+                            $employeeMerchant->save(); 
+                        }
+                    }
+                }
+            }
+            
+            if ( ! $this->id) {
+                // Save to "settings" table
+                $setting = new Setting;
+                $setting->setting_name = 'agreement_accepted_pmp_account';
+                $setting->setting_value = 'false';
+                $setting->object_id = $user->user_id;
+                $setting->object_type = 'user';
+                $setting->save();
+            }
+            
+            $data = new stdClass();
+            $data->id = $user->user_id;
+
+            $this->response->data = $data;
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.news.postnewnews.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            $this->rollBack();
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.news.postnewnews.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            $this->rollBack();
+        } catch (QueryException $e) {
+            Event::fire('orbit.news.postnewnews.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            // Rollback the changes
+            $this->rollBack();
+        } catch (Exception $e) {
+            Event::fire('orbit.news.postnewnews.general.exception', array($this, $e));
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = $e->getLine();
+
+            // Rollback the changes
+            $this->rollBack();
         }
 
-        // users.user_id
-        $this->id = Input::get('id');
-
-        // Save to users table
-        $user = ($this->id) ? User::find($this->id) : new User;
-        $user->user_firstname = Input::get('user_firstname');
-        $user->user_lastname = Input::get('user_lastname');
-        $user->user_email = Input::get('user_email');
-        $user->username = Input::get('user_email');
-        $user->status = Input::get('status');
-
-        if (Input::get('user_password')) {
-            $user->user_password = Hash::make(Input::get('user_password'));
-        }
-
-        if ( ! $this->id) {
-
-            // Get role ID of "Campaign Owner"
-            $roleId = Role::whereRoleName('Campaign Owner')->first()->role_id;
-
-            $user->user_role_id = $roleId;
-        }
-
-        $user->save();
-
-        // Save to user_details table (1 to 1)
-        $userDetail = ($this->id) ? UserDetail::whereUserId($user->user_id)->first() : new UserDetail;
-        $userDetail->user_id = $user->user_id;
-        $userDetail->company_name = Input::get('company_name');
-        $userDetail->address_line1 = Input::get('address_line1');
-        $userDetail->city = Input::get('city');
-        $userDetail->province = Input::get('province');
-        $userDetail->postal_code = Input::get('postal_code');
-        $userDetail->country_id = Input::get('country_id');
-        $userDetail->save();
-
-        // Save to campaign_account table (1 to 1)
-        $campaignAccount = ($this->id) ? CampaignAccount::whereUserId($user->user_id)->first() : new CampaignAccount;
-        $campaignAccount->user_id = $user->user_id;
-        $campaignAccount->account_name = Input::get('account_name');
-        $campaignAccount->position = Input::get('position');
-        $campaignAccount->status = Input::get('status');
-        $campaignAccount->save();
-
-        // Save to user_merchant (1 to M)
-        if (Input::get('merchant_ids')) {
-            $this->createUpdateUserMerchant($user);
-        }
-        
-        if ( ! $this->id) {
-            // Save to "settings" table
-            $setting = new Setting;
-            $setting->setting_name = 'agreement_accepted_pmp_account';
-            $setting->setting_value = 'false';
-            $setting->object_id = $user->user_id;
-            $setting->object_type = 'user';
-            $setting->save();
-        }
-        
-        $data = new stdClass();
-        $data->id = $user->user_id;
-
-        $this->response->data = $data;
-        return $this->render(200);
+        return $this->render($httpCode);
     }
 
     protected function prepareData()
