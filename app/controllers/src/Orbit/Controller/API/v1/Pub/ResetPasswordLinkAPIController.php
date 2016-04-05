@@ -86,7 +86,7 @@ class ResetPasswordLinkAPIController extends ControllerAPI
 
             // URL Activation link
             $baseUrl = Config::get('orbit.reset_password.reset_base_url');
-            $tokenUrl = sprintf($baseUrl, $token->token_value);
+            $tokenUrl = sprintf($baseUrl, $token->token_value, $token->email);
             $contactInfo = Config::get('orbit.contact_information.customer_service');
 
             $data = array(
