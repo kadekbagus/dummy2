@@ -928,7 +928,7 @@ class CampaignReportAPIController extends ControllerAPI
                             popup_clicks,
                             popup_click_rate,
                             base_price,
-                            total_spending AS spending,
+                            sum_total_spending AS spending,
                             campaign_status
                         FROM
                         (
@@ -971,7 +971,13 @@ class CampaignReportAPIController extends ControllerAPI
                             ) AS popup_click_rate
 
                             FROM
-                                ( SELECT date, number_active_tenants, campaign_status, tccd.mall_id, tccd.base_price, total_spending  FROM {$tablePrefix}campaign_daily_spendings AS tccd where tccd.campaign_id = {$this->quote($campaign_id)}) AS x
+                                (
+                                    SELECT date, number_active_tenants, campaign_status, tccd.mall_id, tccd.base_price, total_spending, sum(total_spending) as sum_total_spending
+                                    FROM {$tablePrefix}campaign_daily_spendings AS tccd
+                                    WHERE tccd.campaign_id = {$this->quote($campaign_id)}
+                                    GROUP BY date
+                                ) AS x
+
                                 -- JOIN to get tenant list per date
                                 LEFT JOIN
                                 (
@@ -1870,26 +1876,21 @@ class CampaignReportAPIController extends ControllerAPI
 
         $hoursDiff = OrbitDateTime::getTimezoneOffset($timezone);
 
-        $procCallStatement = 'CALL prc_campaign_detailed_cost(?, ?, ?, ?, ?)';
-
         // DB::select below will need to use the same connection (write) as DB::statement
         // Otherwise, it won't get the temp table
         \DB::beginTransaction();
 
-        // It should return true
-        $procCall = \DB::statement($procCallStatement, [
-            $id, $type, $requestBeginDate, $requestEndDate, $hoursDiff
-        ]);
-
-        if ($procCall === false) {
-            // What to do here?
-        }
+        $tablePrefix = DB::getTablePrefix();
 
         // Now let's retrieve the data from the temporary table
-        $procResults = DB::select('select * from tmp_campaign_cost_detail');
+        $procResults = CampaignDailySpending::selectRaw('*, sum(total_spending) as sum_total_spending')
+            ->where('campaign_status', 'activate')
+            ->where('campaign_id', $id)
+            ->groupBy('date')
+            ->get();
 
-        foreach ($procResults as $row) {
-            $costs[$row->comp_date] = $row->daily_cost;
+        foreach ($procResults as $key => $row) {
+            $costs[$row->date] = $row->sum_total_spending;
         }
 
         $carbonLoop = Carbon::createFromFormat('Y-m-d', $requestBeginDate);
@@ -1905,12 +1906,6 @@ class CampaignReportAPIController extends ControllerAPI
 
             // Increment day by 1
             $carbonLoop->addDay();
-        }
-
-        // Debug the proc call
-        if (Config::get('app.debug')) {
-            $procCall = sprintf(str_replace('?', "'%s'", $procCallStatement), $id, $type, $requestBeginDate, $requestEndDate, $hoursDiff);
-            Log::info('Proc call: '.$procCall);
         }
 
         $this->response->data = $outputs;
