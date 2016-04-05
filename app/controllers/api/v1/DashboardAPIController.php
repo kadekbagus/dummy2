@@ -4447,7 +4447,7 @@ class DashboardAPIController extends ControllerAPI
             // Promotions
             $promotionCount[$status->campaign_status_name] = News::allowedForPMPUser($user, 'promotion')
                     ->campaignStatus($status->campaign_status_name);
-            // Filter coupons by mall_id
+            // Filter promotion by mall_id
             OrbitInput::get('current_mall', function ($mall_id) use ($promotionCount, $status)
             {
                 $promotionCount[$status->campaign_status_name]->whereHas('campaignLocations', function($q) use($mall_id) {
@@ -4463,12 +4463,12 @@ class DashboardAPIController extends ControllerAPI
                             });
                         });
             });
-            $promotionCount[$status->campaign_status_name] = $promotionCount[$status->campaign_status_name]->count();
+            $promotionCount[$status->campaign_status_name] = $promotionCount[$status->campaign_status_name]->get()->count();
 
             // News
             $newsCount[$status->campaign_status_name] = News::allowedForPMPUser($user, 'news')
                     ->campaignStatus($status->campaign_status_name);
-            // Filter coupons by mall_id
+            // Filter news by mall_id
             OrbitInput::get('current_mall', function ($mall_id) use ($newsCount, $status)
             {
                 $newsCount[$status->campaign_status_name]->whereHas('campaignLocations', function($q) use($mall_id) {
@@ -4484,7 +4484,7 @@ class DashboardAPIController extends ControllerAPI
                             });
                         });
             });
-            $newsCount[$status->campaign_status_name] = $newsCount[$status->campaign_status_name]->count();
+            $newsCount[$status->campaign_status_name] = $newsCount[$status->campaign_status_name]->get()->count();
 
             // Coupons
             $couponCount[$status->campaign_status_name] = Coupon::allowedForPMPUser($user, 'coupon')
@@ -4505,7 +4505,7 @@ class DashboardAPIController extends ControllerAPI
                             });
                         });
             });
-            $couponCount[$status->campaign_status_name] = $couponCount[$status->campaign_status_name]->count();
+            $couponCount[$status->campaign_status_name] = $couponCount[$status->campaign_status_name]->get()->count();
         }
 
         $this->response->data = [

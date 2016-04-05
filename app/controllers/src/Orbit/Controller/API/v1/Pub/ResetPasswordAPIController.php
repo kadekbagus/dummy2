@@ -8,6 +8,7 @@ use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
 use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\ACL\Exception\ACLForbiddenException;
+use DominoPOS\OrbitAPI\v10\StatusInterface as Status;
 use Illuminate\Database\QueryException;
 use Text\Util\LineChecker;
 use Helper\EloquentRecordCounter as RecordCounter;
@@ -68,7 +69,6 @@ class ResetPasswordAPIController extends ControllerAPI
             $user = User::with('userdetail')
                 ->excludeDeleted()
                 ->where('user_id', $token->user_id)
-                ->where('status', 'active')
                 ->whereHas('role', function($query)
                 {
                     $query->where('role_name','Consumer');
