@@ -125,6 +125,16 @@ Route::post(
     }]
 )->where('app', '(api|app)');
 
+/**
+ * Public customer signup
+ */
+Route::post(
+    '/{app}/v1/pub/signup/customer', ['as' => 'pub-customer-signup', function()
+    {
+        return Orbit\Controller\API\v1\Pub\RegistrationAPIController::create()->postRegisterCustomer();
+    }]
+)->where('app', '(api|app)');
+
 Route::post(
     '/{app}/v1/pub/customer/basic-data', ['as' => 'pub-customer-check-email', function()
     {
@@ -133,9 +143,25 @@ Route::post(
 )->where('app', '(api|app)');
 
 Route::get(
-    '/pub/social-google', ['as' => 'mobile-ci.social_google',
+    '/pub/social-google-callback', ['as' => 'pub.social_google_callback',
         function () {
-            return Orbit\Controller\API\v1\Pub\LoginAPIController::create()->getGoogleSignInView();
+            return Orbit\Controller\API\v1\Pub\LoginAPIController::create()->getGoogleCallbackView();
+        },
+    ]
+);
+
+Route::get(
+    '/pub/social-login-callback', ['as' => 'pub.social_login_callback',
+        function () {
+            return Orbit\Controller\API\v1\Pub\LoginAPIController::create()->getSocialLoginCallbackView();
+        },
+    ]
+);
+
+Route::post(
+    '/pub/social-login', ['as' => 'pub.social_login',
+        function () {
+            return Orbit\Controller\API\v1\Pub\LoginAPIController::create()->postSocialLoginView();
         },
     ]
 );
