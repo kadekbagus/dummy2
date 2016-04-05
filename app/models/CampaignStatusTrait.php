@@ -124,8 +124,7 @@ trait CampaignStatusTrait
     public function scopeExcludeStoppedOrExpired($query, $table=NULL)
     {
         return $query->joinCampaignStatus($table)
-                        ->where('campaign_status.campaign_status_name', '!=',  'stopped');
-                        ->where('campaign_status.campaign_status_name', '!=',  'expired');
+                        ->whereNotIn('campaign_status.campaign_status_name',['stopped', 'expired']);
     }
 
 }
