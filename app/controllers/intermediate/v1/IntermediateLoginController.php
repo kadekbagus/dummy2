@@ -976,7 +976,9 @@ class IntermediateLoginController extends IntermediateBaseController
             $data = array(
                 'logged_in' => TRUE,
                 'user_id'   => $user->user_id,
-                'location_id' => Config::get('orbit.shop.id')
+                'location_id' => Config::get('orbit.shop.id'),
+                'role'      => $user->role->role_name,
+                'fullname'  => $user->getFullName(),
             );
 
             /**
