@@ -42,19 +42,52 @@ class RegistrationMail
         $token->user_id = $userId;
         $token->save();
 
+        switch ($data['mode']) {
+            case 'customer_portal':
+                $mallName = '-Unknown-';
+                $retailer = Mall::find($data['merchant_id']);
+                if (is_object($retailer)) {
+                    $mallName = $retailer->name;
+                }
+                Config::get('orbit.registration.mobile.activation_base_url');
+                break;
+
+            case 'gotomalls':
+            default:
+                $mallName = 'GotoMalls.com';
+                $baseUrl = Config::get('orbit.registration.mobile.gotomalls_activation_base_url');
+        }
+
+        $this->sendActivationEmail($user, $token, $data, $mallName, $baseUrl);
+
+        // Don't care if the job success or not we will provide user
+        // another link to resend the activation
+        $job->delete();
+    }
+
+    /**
+     * Common routine for sending email.
+     *
+     * @param User $user The User object
+     * @param Token $token The Token object
+     * @param array $data
+     * @param string $storeName The name of the mall, could be gotomalls.
+     * @param string $baseUrl URL for activation email
+     * @return void
+     */
+    protected function sendActivationEmail($user, $token, $data, $mallName, $baseUrl)
+    {
         // URL Activation link
-        $baseUrl = Config::get('orbit.registration.mobile.activation_base_url');
         $tokenUrl = sprintf($baseUrl, $token->token_value);
         $contactInfo = Config::get('orbit.contact_information.customer_service');
 
-        $retailer = Mall::find($data['merchant_id']);
         $data = array(
             'token'             => $token->token_value,
             'email'             => $user->user_email,
             'first_name'        => $user->user_firstname,
             'last_name'         => $user->user_lastname,
             'token_url'         => $tokenUrl,
-            'shop_name'         => $retailer->name,
+            'shop_name'         => $mallName,
             'cs_phone'          => $contactInfo['phone'],
             'cs_email'          => $contactInfo['email'],
             'cs_office_hour'    => $contactInfo['office_hour']
@@ -69,12 +102,8 @@ class RegistrationMail
             $from = $emailconf['email'];
             $name = $emailconf['name'];
 
-            $message->from($from, $name)->subject('Activate My Orbit Account');
+            $message->from($from, $name)->subject('Activate Your GotoMalls Account');
             $message->to($user->user_email);
         });
-
-        // Don't care if the job success or not we will provide user
-        // another link to resend the activation
-        $job->delete();
     }
 }

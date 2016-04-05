@@ -15,7 +15,7 @@ class Token extends Eloquent
     use ModelStatusTrait;
 
     protected $table = 'tokens';
-    
+
     protected $primaryKey = 'token_id';
 
     public function user()
@@ -35,5 +35,15 @@ class Token extends Eloquent
     public function scopeNotExpire($query)
     {
         return $query->where('expire', '>=', DB::raw('NOW()'));
+    }
+
+    /**
+     * Scope for getting token which has name 'user_registration_mobile'
+     */
+    public function scopeRegistrationToken($builder)
+    {
+        return $builder->where(function($q) {
+            $q->where('token_name', 'user_registration_mobile');
+        });
     }
 }
