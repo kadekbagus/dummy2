@@ -1,0 +1,256 @@
+<?php namespace Orbit\Controller\API\v1\Pub;
+/**
+ * An API controller for managing user registration
+ */
+use \IntermediateBaseController;
+use OrbitShop\API\v1\ResponseProvider;
+use OrbitShop\API\v1\OrbitShopAPI;
+use OrbitShop\API\v1\Helper\Input as OrbitInput;
+use OrbitShop\API\v1\Exception\InvalidArgsException;
+use DominoPOS\OrbitACL\ACL;
+use DominoPOS\OrbitACL\ACL\Exception\ACLForbiddenException;
+use Illuminate\Database\QueryException;
+use Config;
+use Mall;
+use stdClass;
+use Activity;
+use User;
+use UserDetail;
+use Hash;
+use Role;
+use Lang;
+use Validator;
+use DB;
+use Artdarek\OAuth\Facade\OAuth;
+use Redirect;
+use URL;
+
+class RegistrationAPIController extends IntermediateBaseController
+{
+    public function postRegisterCustomer()
+    {
+        $this->response = new ResponseProvider();
+        $activity = Activity::portal()
+                            ->setActivityType('registration');
+        try {
+            $email = trim(OrbitInput::post('email'));
+            $password = OrbitInput::post('password');
+            $from_mall = OrbitInput::post('from_mall', 'no');
+            $firstname = OrbitInput::post('first_name');
+            $lastname = OrbitInput::post('last_name');
+            $gender = OrbitInput::post('gender');
+            $birthdate = OrbitInput::post('birthdate');
+            $password_confirmation = OrbitInput::post('password_confirmation');
+            
+            $user = User::with('role')
+                        ->excludeDeleted()
+                        ->where('user_email', $email);
+
+            $user = $user->first();
+
+            if (is_object($user)) {
+                $message = Lang::get('validation.orbit.exists.email');
+                OrbitShopAPI::throwInvalidArgument($message);
+            }            
+
+            DB::beginTransaction();
+
+            $user = $this->createCustomerUser($email, $password, $password_confirmation, $firstname, $lastname, $gender, $birthdate, TRUE);
+
+            // Start the orbit session
+            $data = array(
+                'logged_in' => TRUE,
+                'user_id'   => $user->user_id,
+                'email'     => $user->user_email,
+                'role'      => $user->role->role_name,
+                'fullname'  => $user->getFullName(),
+            );
+            $this->session->enableForceNew()->start($data);
+
+            // Send the session id via HTTP header
+            $sessionHeader = $this->session->getSessionConfig()->getConfig('session_origin.header.name');
+            $sessionHeader = 'Set-' . $sessionHeader;
+            $this->customHeaders[$sessionHeader] = $this->session->getSessionId();
+
+            // Successfull login
+            $activity->setUser($user)
+                     ->setActivityName('registration_ok')
+                     ->setActivityNameLong('Sign Up')
+                     ->responseOK();
+
+            $this->response->data = $user;
+            $this->response->code = 0;
+            $this->response->status = 'success';
+            $this->response->message = 'Sign Up Success';
+
+            DB::commit();
+
+        } catch (ACLForbiddenException $e) {
+            DB::rollback();
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            $activity->setUser('guest')
+                     ->setActivityName('login_failed')
+                     ->setActivityNameLong('Login Failed')
+                     ->setNotes($e->getMessage())
+                     ->responseFailed();
+        } catch (InvalidArgsException $e) {
+            DB::rollback();
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            $activity->setUser('guest')
+                     ->setActivityName('login_failed')
+                     ->setActivityNameLong('Login Failed')
+                     ->setNotes($e->getMessage())
+                     ->responseFailed();
+        } catch (Exception $e) {
+            DB::rollback();
+            $this->response->code = Status::UNKNOWN_ERROR;
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            $activity->setUser('guest')
+                     ->setActivityName('login_failed')
+                     ->setActivityNameLong('Login Failed')
+                     ->setNotes($e->getMessage())
+                     ->responseFailed();
+        }
+
+        // Save the activity
+        $activity->setModuleName('Application')->save();
+
+        return $this->render($this->response);
+    }
+
+    /**
+     * Creates a customer user and the associated user detail and API key objects.
+     *
+     * May throw exception if cannot find retailer or cannot find consumer role.
+     *
+     * Uses retailer set using setRetailerId() or the one in config.
+     *
+     * @param string $email the user's email
+     * @param string|null $userId the unique ID (if provided) of the user to create - used in box to match data on cloud
+     * @param string|null $userDetailId .... of the user detail to create - used in box to match data on cloud
+     * @param string|null $apiKeyId .... of the API key to create - used in box to match data on cloud
+     * @param string|null $userStatus the user status on cloud
+     * @return array [User, UserDetail, ApiKey]
+     * @throws Exception
+     */
+    public function createCustomerUser($email, $password, $password_confirmation, $firstname, $lastname, $gender, $birthdate, $useTransaction = FALSE, $userId = null, $userDetailId = null, $apiKeyId = null, $userStatus = null)
+    {
+        $validation = $this->validateRegistrationData($firstname, $lastname, $gender, $birthdate, $password, $password_confirmation);
+        if ($validation) {
+            try {
+                $customerRole = Role::where('role_name', 'Consumer')->first();
+                if (empty($customerRole)) {
+                    $errorMessage = Lang::get('validation.orbit.empty.consumer_role');
+                    throw new Exception($errorMessage);
+                }
+                if (! $useTransaction) {
+                    DB::beginTransaction();
+                }
+                $new_user = new User();
+                if (isset($userId)) {
+                    $new_user->user_id = $userId;
+                }
+                $new_user->username = strtolower($email);
+                $new_user->user_email = strtolower($email);
+                $new_user->user_password = Hash::make($password);
+                $new_user->user_firstname = $firstname;
+                $new_user->user_lastname = $lastname;
+                $new_user->status = isset($userStatus) ? $userStatus : 'pending';
+                $new_user->user_role_id = $customerRole->role_id;
+                $new_user->user_ip = $_SERVER['REMOTE_ADDR'];
+                $new_user->external_user_id = 0;
+
+                $new_user->save();
+
+                $user_detail = new UserDetail();
+
+                if (isset($userDetailId)) {
+                    $user_detail->user_detail_id = $userDetailId;
+                }
+                $user_detail->gender = $gender === 'm' ? 'm' : $gender === 'f' ? 'f' : NULL;
+                $user_detail->birthdate = date('Y-m-d', strtotime($birthdate));
+
+                // Save the user details
+                $user_detail = $new_user->userdetail()->save($user_detail);
+
+                // Generate API key for this user (with given ID if specified)
+                $apikey = $new_user->createApiKey($apiKeyId);
+
+                $new_user->setRelation('userDetail', $user_detail);
+                $new_user->user_detail = $user_detail;
+
+                $new_user->setRelation('apikey', $apikey);
+                $new_user->apikey = $apikey;
+
+                if (! $useTransaction) {
+                    DB::commit();
+                }
+
+                return $new_user;
+            } catch (Exception $e) {
+                if (! $useTransaction) {
+                    DB::rollback();
+                }
+                $this->response->code = $e->getCode();
+                $this->response->status = 'error';
+                $this->response->message = $e->getMessage();
+                $this->response->data = null;   
+
+                return $this->render($this->response);
+            }
+        } else {
+            return $validation;
+        }
+    }
+
+    /**
+     * Validate the registration data.
+     *
+     * @author Ahmad <ahmad@dominopos.com>
+     * @param string $email Consumer's email
+     * @return array|string
+     * @throws Exception
+     */
+    protected function validateRegistrationData($firstname, $lastname, $gender, $birthdate, $password, $password_confirmation)
+    {
+        $validator = Validator::make(
+            array(
+                'first_name' => $firstname,
+                'last_name'  => $lastname,
+                'gender'     => $gender,
+                'birth_date' => $birthdate,
+                'password_confirmation' => $password_confirmation,
+                'password' => $password,
+            ),
+            array(
+                'first_name' => 'required',
+                'last_name'  => 'required',
+                'gender'     => 'required|in:m,f',
+                'birth_date' => 'required|date_format:d-m-Y',
+                'password_confirmation' => 'required|min:5',
+                'password'  => 'min:5|confirmed',
+            ),
+            array(
+                'birth_date.date_format' => Lang::get('validation.orbit.formaterror.date.dmy_date')
+            )
+        );
+
+        if ($validator->fails()) {
+            $errorMessage = $validator->messages()->first();
+            OrbitShopAPI::throwInvalidArgument($errorMessage);
+        }
+
+        return TRUE;
+    }
+}
