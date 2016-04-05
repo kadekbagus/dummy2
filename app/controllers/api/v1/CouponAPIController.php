@@ -22,7 +22,7 @@ class CouponAPIController extends ControllerAPI
     protected $returnBuilder = FALSE;
 
     protected $couponViewRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee', 'campaign admin'];
-    protected $couponModifiyRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign admin'];
+    protected $couponModifiyRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign admin', 'campaign employee'];
     protected $couponModifiyRolesWithConsumer = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign admin', 'consumer'];
 
     /**
