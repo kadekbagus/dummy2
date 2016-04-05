@@ -923,6 +923,8 @@ class MobileCIAPIController extends BaseCIController
     public function postSocialLoginView()
     {
         $agree_to_terms = \Input::get('agree_to_terms', 'no');
+        $caller_url = OrbitInput::post('from_url');
+
         if ($agree_to_terms !== 'yes') {
             return Redirect::route('mobile-ci.signin', ['error' => Lang::get('captive-portal.signin.must_accept_terms')]);
         }
@@ -938,7 +940,7 @@ class MobileCIAPIController extends BaseCIController
 
         $helper = $fb->getRedirectLoginHelper();
         $permissions = Config::get('orbit.social.facebook.scope', ['email', 'public_profile']);
-        $facebookCallbackUrl = URL::route('mobile-ci.social_login_callback', ['orbit_origin' => 'facebook', 'from_captive' => OrbitInput::post('from_captive'), 'mac_address' => \Input::get('mac_address', '')]);
+        $facebookCallbackUrl = URL::route('mobile-ci.social_login_callback', ['caller_url' => $caller_url , 'orbit_origin' => 'facebook', 'from_captive' => OrbitInput::post('from_captive'), 'mac_address' => \Input::get('mac_address', '')]);
 
         // This is to re-popup the permission on login in case some of the permissions revoked by user
         $rerequest = '&auth_type=rerequest';
@@ -984,10 +986,11 @@ class MobileCIAPIController extends BaseCIController
 
         $recognized = \Input::get('recognized', 'none');
         $code = \Input::get('code', NULL);
-
+        $caller_url = \Input::get('from_url', 'ci-home');
 
         $googleService = OAuth::consumer( 'Google' );
 
+        // todo handle google error
         if ( !empty( $code ) ) {
             try {
 
@@ -1031,14 +1034,28 @@ class MobileCIAPIController extends BaseCIController
                     $query['from_captive'] = 'yes';
                 }
 
-                $expireTime = Config::get('orbit.session.session_origin.cookie.expire');
+                if($this->doAutoLogin($userEmail)) {
+                    $expireTime = Config::get('orbit.session.session_origin.cookie.expire');
 
-                setcookie('orbit_email', $userEmail, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
-                setcookie('orbit_firstname', $firstName, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
-                setcookie('login_from', 'Google', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+                    setcookie('orbit_email', $userEmail, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+                    setcookie('orbit_firstname', $firstName, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+                    setcookie('login_from', 'Google', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
 
-                // todo can we not do this directly
-                return Redirect::route('mobile-ci.signin', $query);
+                    // todo can we not do this directly
+                    return Redirect::route($caller_url, $query);
+                } else {
+                    // register user without password and birthdate
+                    $_POST['email'] = $userEmail;
+                    $_POST['status'] = 'active';
+                    $response = \LoginAPIController::create('raw')->setUseTransaction(false)->postRegisterUserInShop();
+                    if ($response->code !== 0) {
+                        throw new Exception($response->message, $response->code);
+                    }
+
+                    $user = $response->data;
+                    $this->doAutoLogin($user->user_email);
+                    return Redirect::route($caller_url, $query);
+                }
 
             } catch (Exception $e) {
                 $errorMessage = 'Error: ' . $e->getMessage();
@@ -1060,6 +1077,8 @@ class MobileCIAPIController extends BaseCIController
     public function getSocialLoginCallbackView()
     {
         $recognized = \Input::get('recognized', 'none');
+        $caller_url = \Input::get('caller_url', NULL);
+        $caller_url = ! is_null($caller_url) ? $caller_url : 'ci-home';
         // error=access_denied&
         // error_code=200&
         // error_description=Permissions+error
@@ -1141,7 +1160,7 @@ class MobileCIAPIController extends BaseCIController
         // There is a chance that user not 'grant' his email while approving our app
         // so we double check it here
         if (empty($userEmail)) {
-            return Redirect::route('mobile-ci.signin', ['error' => 'Email is required.', 'isInProgress' => 'true']);
+            return Redirect::route($caller_url, ['error' => 'Email is required.', 'isInProgress' => 'true']);
         }
 
         $key = $this->getPayloadEncryptionKey();
@@ -1151,14 +1170,28 @@ class MobileCIAPIController extends BaseCIController
             $query['from_captive'] = 'yes';
         }
 
-        $expireTime = Config::get('orbit.session.session_origin.cookie.expire');
 
-        setcookie('orbit_email', $userEmail, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
-        setcookie('orbit_firstname', $firstName, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
-        setcookie('login_from', 'Facebook', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+        if($this->doAutoLogin($userEmail)) {
+            $expireTime = Config::get('orbit.session.session_origin.cookie.expire');
 
-        // todo can we not do this directly
-        return Redirect::route('mobile-ci.signin', $query);
+            setcookie('orbit_email', $userEmail, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+            setcookie('orbit_firstname', $firstName, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+            setcookie('login_from', 'Facebook', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+            
+            return Redirect::route($caller_url, $query);
+        } else {
+            // register user without password and birthdate
+            $_POST['email'] = $userEmail;
+            $_POST['status'] = 'active';
+            $response = \LoginAPIController::create('raw')->setUseTransaction(false)->postRegisterUserInShop();
+            if ($response->code !== 0) {
+                throw new Exception($response->message, $response->code);
+            }
+
+            $user = $response->data;
+            $this->doAutoLogin($user->user_email);
+            return Redirect::route($caller_url, $query);
+        }
     }
 
     /**
@@ -8681,5 +8714,44 @@ class MobileCIAPIController extends BaseCIController
             $insertViewedItems->item_type = $item['item_type'];
             $insertViewedItems->save();
         }
+    }
+
+    /**
+     * The purpose of this function is to by pass the new sign in process that use password
+     * e.g: User came from Facebook / Google sign in
+     * 
+     * @author Ahmad <ahmad@dominopos.com>
+     * @param string $email User email
+     * @return boolean (TRUE: user exist; FALSE: user not exist)
+     */
+    public function doAutoLogin($email) {
+        $user = User::excludeDeleted()
+            ->with('role')
+            ->where('user_email', $email)
+            ->whereHas('role', function($q) {
+                $q->where('role_name', 'Consumer');
+            })
+            ->first();
+
+        if (is_object($user)) {
+            // Start the orbit session
+            $data = array(
+                'logged_in' => TRUE,
+                'user_id'   => $user->user_id,
+                'email'     => $user->user_email,
+                'role'      => $user->role->role_name,
+                'fullname'  => $user->getFullName(),
+            );
+            $this->session->enableForceNew()->start($data);
+
+            // Send the session id via HTTP header
+            $sessionHeader = $this->session->getSessionConfig()->getConfig('session_origin.header.name');
+            $sessionHeader = 'Set-' . $sessionHeader;
+            $this->customHeaders[$sessionHeader] = $this->session->getSessionId();
+
+            return TRUE;
+        }
+
+        return FALSE;
     }
 }

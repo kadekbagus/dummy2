@@ -181,3 +181,13 @@ Route::post(
         return Orbit\Controller\API\v1\Pub\ResetPasswordAPIController::create()->postResetPassword();
     }]
 )->where('prefix', '(api|app)');
+
+/**
+ * Route for user activitation
+ */
+Route::post(
+    '/{prefix}/v1/pub/user/activate-account', ['as' => 'pub-user-activate-account', function()
+    {
+        return Orbit\Controller\API\v1\Pub\ActivationAPIController::create()->postActivateAccount();
+    }]
+)->where('prefix', '(api|app)');

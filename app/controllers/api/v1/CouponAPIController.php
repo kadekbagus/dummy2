@@ -2258,15 +2258,16 @@ class CouponAPIController extends ControllerAPI
                 $coupons->whereIn('promotions.promotion_id', $promotionIds);
             });
 
+            // to do : enable filter for mall id
             // Filter coupon by merchant Ids
-            OrbitInput::get('merchant_id', function ($merchantIds) use ($coupons) {
-                $coupons->whereIn('promotions.merchant_id', (array)$merchantIds);
-            });
+            // OrbitInput::get('merchant_id', function ($merchantIds) use ($coupons) {
+            //     $coupons->whereIn('promotions.merchant_id', (array)$merchantIds);
+            // });
 
             // Filter coupon by merchant Ids / dupes, same as above
-            OrbitInput::get('current_mall', function ($merchantIds) use ($coupons) {
-                $coupons->whereIn('promotions.merchant_id', (array)$merchantIds);
-            });
+            // OrbitInput::get('current_mall', function ($merchantIds) use ($coupons) {
+            //     $coupons->whereIn('promotions.merchant_id', (array)$merchantIds);
+            // });
 
             // Filter coupon by promotion name
             OrbitInput::get('promotion_name', function($promotionName) use ($coupons)
@@ -2358,35 +2359,16 @@ class CouponAPIController extends ControllerAPI
 
             // Filter coupon merchants by retailer(tenant) name
             OrbitInput::get('tenant_name_like', function ($tenant_name_like) use ($coupons) {
-                $coupons->whereHas('tenants', function($q) use ($tenant_name_like) {
+                $coupons->whereHas('linkToTenants', function($q) use ($tenant_name_like) {
                     $q->where('merchants.name', 'like', "%$tenant_name_like%");
                 });
             });
 
             // Filter coupon merchants by mall name
-            OrbitInput::get('mall_name_like', function ($mall_name_like) use ($coupons, $table_prefix) {
-                $quote = function($arg)
-                {
-                    return DB::connection()->getPdo()->quote($arg);
-                };
-                $mall_name_like = "%" . $mall_name_like . "%";
-                $mall_name_like = $quote($mall_name_like);
-                $coupons->whereRaw(DB::raw("
-                    (SELECT count(*)
-                    FROM {$table_prefix}merchants mtenant
-                        inner join {$table_prefix}promotion_retailer_redeem onm on mtenant.merchant_id = onm.retailer_id
-                    WHERE mtenant.object_type = 'tenant'
-                        and onm.promotion_id = {$table_prefix}promotions.promotion_id
-                        and (
-                            SELECT count(*) FROM {$table_prefix}merchants mmall
-                            WHERE mmall.object_type = 'mall' and
-                            mtenant.parent_id = mmall.merchant_id and
-                            mmall.name like {$mall_name_like} and
-                            mmall.object_type = 'mall'
-                        ) >= 1
-                        and mtenant.object_type = 'tenant'
-                        and mtenant.is_mall = 'no') >= 1
-                "));
+            OrbitInput::get('mall_name_like', function ($mall_name_like) use ($coupons) {
+                $coupons->whereHas('linkToMalls', function($q) use ($mall_name_like) {
+                    $q->where('merchants.name', 'like', "%$mall_name_like%");
+                });
             });
 
              // Filter coupon rule by rule object type

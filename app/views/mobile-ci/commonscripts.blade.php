@@ -104,6 +104,7 @@
                         <form name="fbLoginForm" id="fbLoginForm" action="{{ URL::route('mobile-ci.social_login') }}" method="post">
                             <div class="form-group">
                                 <input type="hidden" class="form-control" name="time" value="{{{ time() }}}"/>
+                                <input type="hidden" class="form-control" name="from_url" value="{{{ \Route::currentRouteName() }}}"/>
                                 <input type="hidden" class="form-control" name="from_captive" value="{{{ Input::get('from_captive', '') }}}"/>
                                 <input type="hidden" class="form-control" name="mac_address"
                                        value="{{{ Input::get('mac_address', '') }}}"/>
@@ -124,6 +125,7 @@
                                 <input type="hidden" class="form-control" name="time" value="{{{ time() }}}"/>
                                 <input type="hidden" class="form-control" name="from_captive" value="{{{ Input::get('from_captive', '') }}}"/>
                                 <input type="hidden" class="form-control" name="mac_address" value="{{{ Input::get('mac_address', '') }}}"/>
+                                <input type="hidden" class="form-control" name="from_url" value="{{{ \Route::currentRouteName() }}}"/>
                             </div>
                             <div class="form-group">
                                 <button id="googleLoginButton" type="submit" class="btn btn-danger icon-button google text-center">
