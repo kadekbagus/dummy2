@@ -989,7 +989,7 @@ class CouponAPIController extends ControllerAPI
             $validator = Validator::make(
                 $data,
                 array(
-                    'promotion_id'            => 'required|orbit.empty.coupon',
+                    'promotion_id'            => 'required|orbit.update.coupon',
                     'promotion_name'          => 'sometimes|required|min:5|max:255|coupon_name_exists_but_me',
                     'promotion_type'          => 'orbit.empty.coupon_type',
                     'status'                  => 'orbit.empty.coupon_status',
@@ -1010,12 +1010,13 @@ class CouponAPIController extends ControllerAPI
                 ),
                 array(
                     'coupon_name_exists_but_me' => Lang::get('validation.orbit.exists.coupon_name'),
-                    'rule_value.required'     => 'The amount to obtain is required',
-                    'rule_value.numeric'      => 'The amount to obtain must be a number',
-                    'rule_value.min'          => 'The amount to obtain must be greater than zero',
-                    'discount_value.required' => 'The coupon value is required',
-                    'discount_value.numeric'  => 'The coupon value must be a number',
-                    'discount_value.min'      => 'The coupon value must be greater than zero',
+                    'rule_value.required'       => 'The amount to obtain is required',
+                    'rule_value.numeric'        => 'The amount to obtain must be a number',
+                    'rule_value.min'            => 'The amount to obtain must be greater than zero',
+                    'discount_value.required'   => 'The coupon value is required',
+                    'discount_value.numeric'    => 'The coupon value must be a number',
+                    'discount_value.min'        => 'The coupon value must be greater than zero',
+                    'orbit.update.coupon'       => 'Cannot update campaign with status ' . $campaignStatus,
                 )
             );
 
@@ -3362,7 +3363,7 @@ class CouponAPIController extends ControllerAPI
 
         // Check the existance of coupon id
         Validator::extend('orbit.empty.coupon', function ($attribute, $value, $parameters) {
-            $coupon = Coupon::excludeDeleted()
+            $coupon = Coupon::excludeStoppedOrExpired('promotions')
                         ->where('promotion_id', $value)
                         ->first();
 
@@ -3371,6 +3372,23 @@ class CouponAPIController extends ControllerAPI
             }
 
             App::instance('orbit.empty.coupon', $coupon);
+
+            return TRUE;
+        });
+
+        // Check the existance of coupon id for update with permission check
+        Validator::extend('orbit.update.coupon', function ($attribute, $value, $parameters) {
+            $user = $this->api->user;
+
+            $coupon = Coupon::allowedForPMPUser($user, 'coupon')->excludeStoppedOrExpired('promotions')
+                        ->where('promotion_id', $value)
+                        ->first();
+
+            if (empty($coupon)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.update.coupon', $coupon);
 
             return TRUE;
         });
