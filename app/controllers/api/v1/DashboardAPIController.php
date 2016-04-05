@@ -4463,7 +4463,7 @@ class DashboardAPIController extends ControllerAPI
                             });
                         });
             });
-            $promotionCount[$status->campaign_status_name] = $promotionCount[$status->campaign_status_name]->count();
+            $promotionCount[$status->campaign_status_name] = $promotionCount[$status->campaign_status_name]->get()->count();
 
             // News
             $newsCount[$status->campaign_status_name] = News::allowedForPMPUser($user, 'news')
@@ -4484,7 +4484,7 @@ class DashboardAPIController extends ControllerAPI
                             });
                         });
             });
-            $newsCount[$status->campaign_status_name] = $newsCount[$status->campaign_status_name]->count();
+            $newsCount[$status->campaign_status_name] = $newsCount[$status->campaign_status_name]->get()->count();
 
             // Coupons
             $couponCount[$status->campaign_status_name] = Coupon::allowedForPMPUser($user, 'coupon')
@@ -4505,7 +4505,7 @@ class DashboardAPIController extends ControllerAPI
                             });
                         });
             });
-            $couponCount[$status->campaign_status_name] = $couponCount[$status->campaign_status_name]->count();
+            $couponCount[$status->campaign_status_name] = $couponCount[$status->campaign_status_name]->get()->count();
         }
 
         $this->response->data = [
