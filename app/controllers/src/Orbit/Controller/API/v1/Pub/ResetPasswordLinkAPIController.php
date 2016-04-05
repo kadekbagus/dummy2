@@ -48,7 +48,6 @@ class ResetPasswordLinkAPIController extends ControllerAPI
             $user = User::with('apikey', 'userdetail', 'role')
                 ->excludeDeleted()
                 ->where('user_email', $email)
-                ->where('status', 'active')
                 ->whereHas('role', function($query)
                 {
                     $query->where('role_name','Consumer');
@@ -87,7 +86,7 @@ class ResetPasswordLinkAPIController extends ControllerAPI
 
             // URL Activation link
             $baseUrl = Config::get('orbit.reset_password.reset_base_url');
-            $tokenUrl = sprintf($baseUrl, $token->token_value);
+            $tokenUrl = sprintf($baseUrl, $token->token_value, $token->email);
             $contactInfo = Config::get('orbit.contact_information.customer_service');
 
             $data = array(

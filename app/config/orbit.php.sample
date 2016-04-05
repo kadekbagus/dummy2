@@ -347,12 +347,12 @@ return array(
 
     'reset_password' => array(
         'sender' => array(
-            'email' => 'no-reply@myorbit.com',
-            'name'  => 'Orbit'
+            'email' => 'no-reply@gotomalls.com',
+            'name'  => 'Gotomalls'
         ),
         
         // URL for password reset (frontend URL)
-        'reset_base_url' => 'http://gotomalls.com/password/reset/%s',
+        'reset_base_url' => 'http://gotomalls.com/#/password/reset/%s?email=%s',
 
         // Number of days before token in reset link expires
         'reset_expire' => 7,

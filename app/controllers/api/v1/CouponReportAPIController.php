@@ -250,7 +250,7 @@ class CouponReportAPIController extends ControllerAPI
 
             // Filter by Tenant Name
             OrbitInput::get('tenant_name', function($tenant_name) use ($coupons) {
-                $coupons->whereHas('tenants', function($q) use ($tenant_name) {
+                $coupons->whereHas('linkToTenants', function($q) use ($tenant_name) {
                     $q->where('merchants.name', 'like', "%$tenant_name%");
                 });
             });

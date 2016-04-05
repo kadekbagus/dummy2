@@ -296,7 +296,20 @@ class Coupon extends Eloquent
         $prefix = DB::getTablePrefix();
 
         return $query->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
-                     ->where(DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$prefix}promotions.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name) FROM {$prefix}merchants om LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id WHERE om.merchant_id = {$prefix}promotions.merchant_id) THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END"), $campaign_status);
+                     ->leftJoin('promotion_retailer as pr', DB::raw('pr.promotion_id'), '=', 'promotions.promotion_id')
+                     ->where(DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
+                                        THEN {$prefix}campaign_status.campaign_status_name
+                                            ELSE (CASE WHEN {$prefix}promotions.end_date < (
+                                                        SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
+                                                        FROM {$prefix}merchants om
+                                                        LEFT JOIN {$prefix}timezones ot
+                                                            ON ot.timezone_id = om.timezone_id
+                                                        WHERE (om.merchant_id = pr.retailer_id OR om.parent_id = pr.retailer_id)
+                                                        )
+                                                    THEN 'expired'
+                                                        ELSE {$prefix}campaign_status.campaign_status_name
+                                                    END)
+                                        END"), $campaign_status);
     }
 
     protected function quote($arg)
