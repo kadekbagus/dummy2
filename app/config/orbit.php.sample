@@ -352,7 +352,7 @@ return array(
         ),
         
         // URL for password reset (frontend URL)
-        'reset_base_url' => 'http://gotomalls.com/password/reset/%s',
+        'reset_base_url' => 'http://gotomalls.com/#/password/reset/%s',
 
         // Number of days before token in reset link expires
         'reset_expire' => 7,
