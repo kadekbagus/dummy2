@@ -9,10 +9,11 @@
 | and give it the Closure to execute when that URI is requested.
 |
 */
-Route::get('/', ['before' => 'orbit-settings', function()
+Route::get('/', ['as' => 'ci-home', 'before' => 'orbit-settings', function()
 {
     // Default to Mobile-CI login page
-    return MobileCI\MobileCIAPIController::create()->getSignInView();
+    // return MobileCI\MobileCIAPIController::create()->getSignInView();
+    return MobileCI\MobileCIAPIController::create()->getHomeView();
 }]);
 
 /*

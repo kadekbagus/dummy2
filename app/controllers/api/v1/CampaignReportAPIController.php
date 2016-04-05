@@ -896,13 +896,6 @@ class CampaignReportAPIController extends ControllerAPI
 
             \DB::beginTransaction();
 
-
-            $procResults = DB::statement("CALL prc_campaign_detailed_cost({$this->quote($campaign_id)}, {$this->quote($campaign_type)}, {$this->quote($beginDate)}, {$this->quote($now)}, {$this->quote($timezoneOffset)})");
-
-            if ($procResults === false) {
-                // Do Nothing
-            }
-
             // Get id add_tenant and delete_tenant for counting total tenant percampaign
             $campaignHistoryAction = DB::table('campaign_history_actions')
                             ->select('campaign_history_action_id','action_name')
@@ -922,9 +915,9 @@ class CampaignReportAPIController extends ControllerAPI
 
             $sql = "
                         (SELECT
-                            comp_date AS campaign_date,
+                            date AS campaign_date,
                             campaign_id,
-                            campaign_number_tenant AS total_tenant,
+                            number_active_tenants AS total_tenant,
                             tenant_name,
                             om_mall.name AS mall_name,
                             unique_users,
@@ -934,7 +927,8 @@ class CampaignReportAPIController extends ControllerAPI
                             popup_view_rate,
                             popup_clicks,
                             popup_click_rate,
-                            daily_cost AS spending,
+                            base_price,
+                            total_spending AS spending,
                             campaign_status
                         FROM
                         (
@@ -943,28 +937,28 @@ class CampaignReportAPIController extends ControllerAPI
                                 SELECT COUNT(DISTINCT user_id)
                                 FROM {$tablePrefix}user_signin
                                 WHERE location_id = {$this->quote($current_mall)}
-                                AND DATE(created_at) = comp_date
+                                AND DATE(created_at) = date
                             ) AS unique_users,
                             (
                                 SELECT COUNT(campaign_page_view_id) AS value
                                 FROM {$tablePrefix}campaign_page_views
                                 WHERE campaign_id = {$this->quote($campaign_id)}
                                 AND location_id = {$this->quote($current_mall)}
-                                AND DATE(created_at) = comp_date
+                                AND DATE(created_at) = date
                             ) AS campaign_pages_views,
                             (
                                 SELECT COUNT(campaign_popup_view_id) AS value
                                 FROM {$tablePrefix}campaign_popup_views
                                 WHERE campaign_id = {$this->quote($campaign_id)}
                                 AND location_id = {$this->quote($current_mall)}
-                                AND DATE(created_at) = comp_date
+                                AND DATE(created_at) = date
                             ) AS popup_views,
                             (
                                 SELECT COUNT(campaign_click_id) AS value
                                 FROM {$tablePrefix}campaign_clicks
                                 WHERE campaign_id = {$this->quote($campaign_id)}
                                 AND location_id = {$this->quote($current_mall)}
-                                AND DATE(created_at) = comp_date
+                                AND DATE(created_at) = date
                             ) AS popup_clicks,
                             (
                                 SELECT IFNULL(ROUND((campaign_pages_views / unique_users) * 100, 2), 0)
@@ -977,8 +971,7 @@ class CampaignReportAPIController extends ControllerAPI
                             ) AS popup_click_rate
 
                             FROM
-                                ( SELECT comp_date, campaign_number_tenant, daily_cost, campaign_status, mall_id  FROM tmp_campaign_cost_detail AS tccd ) AS x
-
+                                ( SELECT date, number_active_tenants, campaign_status, tccd.mall_id, tccd.base_price, total_spending  FROM {$tablePrefix}campaign_daily_spendings AS tccd where tccd.campaign_id = {$this->quote($campaign_id)}) AS x
                                 -- JOIN to get tenant list per date
                                 LEFT JOIN
                                 (
@@ -998,9 +991,9 @@ class CampaignReportAPIController extends ControllerAPI
                                         AND och.campaign_id = {$this->quote($campaign_id)}
                                     ORDER BY och.created_at DESC
                                 ) yy
-                                ON DATE_FORMAT(CONVERT_TZ(history_created_date, '+00:00', {$this->quote($timezoneOffset)}), '%Y-%m-%d') <= comp_date
+                                ON DATE_FORMAT(CONVERT_TZ(history_created_date, '+00:00', {$this->quote($timezoneOffset)}), '%Y-%m-%d') <= date
 
-                                group by comp_date, yy.campaign_id, campaign_external_value
+                                group by date, yy.campaign_id, campaign_external_value
                             ) as c
 
                             LEFT JOIN {$tablePrefix}merchants om_mall
@@ -1008,10 +1001,10 @@ class CampaignReportAPIController extends ControllerAPI
 
                             WHERE (
                                 case when campaign_history_action_id = {$this->quote($idDeleteTenant)}
-                                and DATE_FORMAT(CONVERT_TZ(history_created_date, '+00:00', {$this->quote($timezoneOffset)}), '%Y-%m-%d') < comp_date
+                                and DATE_FORMAT(CONVERT_TZ(history_created_date, '+00:00', {$this->quote($timezoneOffset)}), '%Y-%m-%d') < date
                                 then campaign_history_action_id != {$this->quote($idDeleteTenant)} else true end
                             )
-                            ORDER BY comp_date desc
+                            ORDER BY date desc
                         ) AS tbl
                     ";
 

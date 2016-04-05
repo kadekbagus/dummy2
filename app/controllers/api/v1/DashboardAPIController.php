@@ -4447,7 +4447,7 @@ class DashboardAPIController extends ControllerAPI
             // Promotions
             $promotionCount[$status->campaign_status_name] = News::allowedForPMPUser($user, 'promotion')
                     ->campaignStatus($status->campaign_status_name);
-            // Filter coupons by mall_id
+            // Filter promotion by mall_id
             OrbitInput::get('current_mall', function ($mall_id) use ($promotionCount, $status)
             {
                 $promotionCount[$status->campaign_status_name]->whereHas('campaignLocations', function($q) use($mall_id) {
@@ -4468,7 +4468,7 @@ class DashboardAPIController extends ControllerAPI
             // News
             $newsCount[$status->campaign_status_name] = News::allowedForPMPUser($user, 'news')
                     ->campaignStatus($status->campaign_status_name);
-            // Filter coupons by mall_id
+            // Filter news by mall_id
             OrbitInput::get('current_mall', function ($mall_id) use ($newsCount, $status)
             {
                 $newsCount[$status->campaign_status_name]->whereHas('campaignLocations', function($q) use($mall_id) {

@@ -4,13 +4,13 @@ Route::group(
     array('before' => 'orbit-settings'),
     function () {
 
-        Route::get(
-            '/customer', ['as' => 'mobile-ci.signin',
-            function () {
+        // Route::get(
+        //     '/customer', ['as' => 'mobile-ci.signin',
+        //     function () {
 
-                return MobileCI\MobileCIAPIController::create()->getSignInView();
-            }]
-        );
+        //         return MobileCI\MobileCIAPIController::create()->getSignInView();
+        //     }]
+        // );
 
         Route::post(
             '/customer/social-login', ['as' => 'mobile-ci.social_login',
@@ -53,7 +53,7 @@ Route::group(
         );
 
         Route::get(
-            '/customer/home', ['as' => 'ci-customer-home',
+            '/customer', ['as' => 'ci-customer-home',
             function () {
                 return MobileCI\MobileCIAPIController::create()->getHomeView();
             }]
