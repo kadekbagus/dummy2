@@ -21,7 +21,7 @@ class UrlChecker
 	const APPLICATION_ID = 1;
 	protected $session = null;
     protected $retailer = null;
-
+    protected $customHeaders = array();
 	/**
      * Prepare session.
      *
@@ -52,8 +52,9 @@ class UrlChecker
     public function isLoggedIn()
     {
     	$this->prepareSession();
-        $userId = $this->session->read('user_id');
-        if ($this->session->read('logged_in') !== true || ! $userId) {
+        $userRole = strtolower($this->session->read('role'));
+
+	    if ($this->session->read('logged_in') !== true || $userRole !== 'consumer') {
             return FALSE;
         }
 
@@ -86,6 +87,7 @@ class UrlChecker
     {
         if (in_array(\Route::currentRouteName(), Config::get('orbit.blocked_routes', []))) {
             $user = $this->getLoggedInUser();
+
             if (! $user) {
                 throw new Exception('Session error: user not found.');
             }
@@ -109,8 +111,9 @@ class UrlChecker
     	$this->prepareSession();
 
        	if (in_array($url, Config::get('orbit.blocked_routes', []))) {
-       		$userId = $this->session->read('user_id');
-	        if ($this->session->read('logged_in') !== true || ! $userId) {
+       		$userRole = strtolower($this->session->read('role'));
+
+	        if ($this->session->read('logged_in') !== true || $userRole !== 'consumer') {
 	            return '#';
 	        }
        	}
@@ -126,38 +129,32 @@ class UrlChecker
     public function generateGuestUser()
     {
         try{
-            DB::beginTransaction();
-            $guest_email = '';
-
-            //check for existing guest email on cookie
-            if (array_key_exists('orbit_guest_email', $_COOKIE)) {
-                $cookie_email = $_COOKIE['orbit_guest_email'];
-                if (empty($cookie_email)) {
-                    $user = (new User)->generateGuestUser();
-                    // dd($user);
-                } else {
-                    $guest_email = $cookie_email;
-                    $guest = User::excludeDeleted()->where('user_email', $guest_email)->first();
-                    if (empty ($guest)) { // directly inserted wrong email on cookie clear it
-                        unset($_COOKIE['orbit_guest_email']);
-                        setcookie('orbit_guest_email', null, -1, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
-
-                        return \Redirect::to(Request::url());
-                    }
-
-                    $user = $guest;
-                }
-            } else {
+            $guest_email = $this->session->read('email');
+            if (empty($guest_email)) {
+            	DB::beginTransaction();
                 $user = (new User)->generateGuestUser();
-                // dd($user);
+                DB::commit();
+            } else {
+                $guest = User::excludeDeleted()->where('user_email', $guest_email)->first();
+                $user = $guest;
             }
 
-            DB::commit();
+            // Start the orbit session
+            $data = array(
+                'logged_in' => TRUE,
+                'user_id'   => $user->user_id,
+                'email'     => $user->user_email,
+                'role'      => $user->role->role_name,
+                'fullname'  => $user->getFullName(),
+            );
+            $this->session->enableForceNew()->start($data);
 
-            $expireTime = Config::get('orbit.session.session_origin.cookie.expire');
-            setcookie('orbit_guest_email', $user->user_email, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+            // Send the session id via HTTP header
+            $sessionHeader = $this->session->getSessionConfig()->getConfig('session_origin.header.name');
+            $sessionHeader = 'Set-' . $sessionHeader;
+            $this->customHeaders[$sessionHeader] = $this->session->getSessionId();
 
-            return $user->load('userDetail');
+            return $user;
 
         } catch (Exception $e) {
             DB::rollback();
@@ -180,7 +177,6 @@ class UrlChecker
             // throw new Exception('Invalid session data.');
         }
 
-        // @todo: Why we query membership also? do we need it on every page?
         $user = User::with(['userDetail'])
             ->where('user_id', $userId)
             ->whereHas('role', function($q) {
