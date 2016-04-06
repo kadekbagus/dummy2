@@ -128,7 +128,7 @@ class NewsPrinterController extends DataPrinterController
                             date('d F Y H:i', strtotime($row->end_date)),
                             str_replace(', ', "\n", $row->campaign_location_names),
                             $row->campaign_status,
-                            $this->printDateTime($row->updated_at, $timezone, 'd F Y H:i:s')
+                            $this->printDateTime($row->updated_at, null, 'd F Y H:i:s')
                     );
                     $count++;
                 }
@@ -173,7 +173,7 @@ class NewsPrinterController extends DataPrinterController
             $result = date($format, $time);
         }
 
-        return $result;
+        return (is_null($timezone) ? $result . ' (UTC)' : $result);
     }
 
     /**
