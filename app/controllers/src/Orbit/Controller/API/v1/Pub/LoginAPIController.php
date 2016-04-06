@@ -29,6 +29,8 @@ use DB;
 use Artdarek\OAuth\Facade\OAuth;
 use Redirect;
 use URL;
+use Orbit\Controller\API\v1\Pub\RegistrationAPIController as Regs;
+use Orbit\Helper\Net\Domain;
 
 class LoginAPIController extends IntermediateBaseController
 {
@@ -111,6 +113,12 @@ class LoginAPIController extends IntermediateBaseController
             $sessionHeader = $this->session->getSessionConfig()->getConfig('session_origin.header.name');
             $sessionHeader = 'Set-' . $sessionHeader;
             $this->customHeaders[$sessionHeader] = $this->session->getSessionId();
+
+            $expireTime = Config::get('orbit.session.session_origin.cookie.expire');
+
+            setcookie('orbit_email', $user->user_email, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+            setcookie('orbit_firstname', $user->user_firstname, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+            setcookie('login_from', 'Form', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
 
             // Successfull login
             $activity->setUser($user)
@@ -239,15 +247,30 @@ class LoginAPIController extends IntermediateBaseController
                     return Redirect::to(Config::get('orbit.shop.after_social_sign_in') . '?error=no_email');
                 }
 
-                //todo: handle session here
-                // $this->prepareSession();
+                $loggedInUser = $this->doAutoLogin($userEmail);
+                if (! is_object($loggedInUser)) {
+                    // register user without password and birthdate
+                    $status = 'active';
+                    $response = (new Regs())->createCustomerUser($userEmail, NULL, NULL, $firstName, $lastName, $gender, NULL, TRUE, NULL, NULL, NULL, $status, 'Google');
+                    if ($response->code !== 0) {
+                        throw new Exception($response->message, $response->code);
+                    }
+
+                    $loggedInUser = $this->doAutoLogin($response->data->user_email);
+                }
+
+                $expireTime = Config::get('orbit.session.session_origin.cookie.expire');
+
+                setcookie('orbit_email', $userEmail, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+                setcookie('orbit_firstname', $firstName, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+                setcookie('login_from', 'Google', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
 
                 // todo can we not do this directly
-                return Redirect::to(Config::get('orbit.shop.after_social_sign_in') . '?success=true');
+                return Redirect::to(Config::get('orbit.shop.after_social_sign_in'));
 
             } catch (Exception $e) {
                 $errorMessage = 'Error: ' . $e->getMessage();
-                return Redirect::to(Config::get('orbit.shop.after_social_sign_in') . '?error=' . $errorMessage);
+                return Redirect::to(Config::get('orbit.shop.after_social_sign_in') . '/#/?error=' . $errorMessage);
             }
 
         } else {
@@ -257,7 +280,7 @@ class LoginAPIController extends IntermediateBaseController
                 return Redirect::to( (string)$url );
             } catch (Exception $e) {
                 $errorMessage = 'Error: ' . $e->getMessage();
-                return Redirect::to(Config::get('orbit.shop.after_social_sign_in') . '?error=' . $errorMessage);
+                return Redirect::to(Config::get('orbit.shop.after_social_sign_in') . '/#/?error=' . $errorMessage);
             }
         }   
     }
@@ -346,14 +369,19 @@ class LoginAPIController extends IntermediateBaseController
         // There is a chance that user not 'grant' his email while approving our app
         // so we double check it here
         if (empty($userEmail)) {
-            return Redirect::route('mobile-ci.signin', ['error' => 'Email is required.', 'isInProgress' => 'true']);
+            return Redirect::to(Config::get('orbit.shop.after_social_sign_in') . '/#/?error=no_email');
         }
 
-        $key = $this->getPayloadEncryptionKey();
-        $payload = (new Encrypter($key))->encrypt(http_build_query($data));
-        $query = ['payload' => $payload, 'email' => $userEmail, 'auto_login' => 'yes', 'isInProgress' => 'true'];
-        if (\Input::get('from_captive') === 'yes') {
-            $query['from_captive'] = 'yes';
+        $loggedInUser = $this->doAutoLogin($userEmail);
+        if (! is_object($loggedInUser)) {
+            // register user without password and birthdate
+            $status = 'active';
+            $response = (new Regs())->createCustomerUser($userEmail, NULL, NULL, $firstName, $lastName, $gender, NULL, TRUE, NULL, NULL, NULL, $status, 'Facebook');
+            if ($response->code !== 0) {
+                throw new Exception($response->message, $response->code);
+            }
+
+            $loggedInUser = $this->doAutoLogin($response->data->user_email);
         }
 
         $expireTime = Config::get('orbit.session.session_origin.cookie.expire');
@@ -363,7 +391,7 @@ class LoginAPIController extends IntermediateBaseController
         setcookie('login_from', 'Facebook', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
 
         // todo can we not do this directly
-        return Redirect::route('mobile-ci.signin', $query);
+        return Redirect::to(Config::get('orbit.shop.after_social_sign_in'));
     }
 
     /**
@@ -398,5 +426,45 @@ class LoginAPIController extends IntermediateBaseController
         // $this->grantInternetAcces('social');
 
         return Redirect::to($url);
+    }
+
+    /**
+     * The purpose of this function is to by pass the new sign in process that use password
+     * e.g: User came from Facebook / Google sign in
+     * 
+     * @author Ahmad <ahmad@dominopos.com>
+     * @param string $email User email
+     * @return User $user (IF user exist; FALSE: user not exist)
+     */
+    public function doAutoLogin($email)
+    {
+        $user = User::excludeDeleted()
+            ->with('role')
+            ->where('user_email', $email)
+            ->whereHas('role', function($q) {
+                $q->where('role_name', 'Consumer');
+            })
+            ->first();
+
+        if (is_object($user)) {
+            // Start the orbit session
+            $data = array(
+                'logged_in' => TRUE,
+                'user_id'   => $user->user_id,
+                'email'     => $user->user_email,
+                'role'      => $user->role->role_name,
+                'fullname'  => $user->getFullName(),
+            );
+            $this->session->enableForceNew()->start($data);
+
+            // Send the session id via HTTP header
+            $sessionHeader = $this->session->getSessionConfig()->getConfig('session_origin.header.name');
+            $sessionHeader = 'Set-' . $sessionHeader;
+            $this->customHeaders[$sessionHeader] = $this->session->getSessionId();
+
+            return $user;
+        }
+
+        return FALSE;
     }
 }

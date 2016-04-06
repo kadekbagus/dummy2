@@ -2602,7 +2602,6 @@ class MobileCIAPIController extends BaseCIController
                 'user' => $user,
                 'retailer' => $retailer,
                 'data' => $data,
-                'cartitems' => null,
                 'categories' => $categories,
                 'active_user' => ($user->status === 'active'),
                 'floorList' => $floorList,
@@ -7857,18 +7856,6 @@ class MobileCIAPIController extends BaseCIController
             $user_detail->last_visit_shop_id = $retailer->merchant_id;
             $user_detail->last_visit_any_shop = Carbon::now($retailer->timezone->timezone_name);
             $user_detail->save();
-
-            $cart = Cart::where('status', 'active')->where('customer_id', $user->user_id)->where('retailer_id', $retailer->merchant_id)->first();
-            if (is_null($cart)) {
-                $cart = new Cart();
-                $cart->customer_id = $user->user_id;
-                $cart->merchant_id = $retailer->parent_id;
-                $cart->retailer_id = $retailer->merchant_id;
-                $cart->status = 'active';
-                $cart->save();
-                $cart->cart_code = Cart::CART_INCREMENT + $cart->cart_id;
-                $cart->save();
-            }
 
             $user->setHidden(array('user_password', 'apikey'));
 
