@@ -1886,10 +1886,10 @@ class TenantAPIController extends ControllerAPI
 
             // if limit is true show all records
             // TODO : replace this with something else in the future
-            if (!$limit) 
+            if (!$limit)
             {
                 // if not printing / exporting data then do pagination.
-                if (! $this->returnBuilder) 
+                if (! $this->returnBuilder)
                 {
                     // Get the take args
                     $take = $perPage;
@@ -2134,7 +2134,7 @@ class TenantAPIController extends ControllerAPI
 
             $tenants = CampaignLocation::select('merchants.merchant_id',
                                             DB::raw("IF({$prefix}merchants.object_type = 'tenant', pm.merchant_id, {$prefix}merchants.merchant_id) as mall_id"),
-                                            DB::raw("IF({$prefix}merchants.object_type = 'tenant', CONCAT({$prefix}merchants.name,' at ', pm.name), CONCAT('Mall at ', {$prefix}merchants.name)) as display_name"), 
+                                            DB::raw("IF({$prefix}merchants.object_type = 'tenant', CONCAT({$prefix}merchants.name,' at ', pm.name), CONCAT('Mall at ', {$prefix}merchants.name)) as display_name"),
                                             'merchants.status'
                                         )
                                        ->leftjoin('merchants as pm', DB::raw("pm.merchant_id"), '=', 'merchants.parent_id')
@@ -2151,7 +2151,13 @@ class TenantAPIController extends ControllerAPI
             if ($filtermode === 'available') {
                 $availableMerchantIds = UserMerchant::whereIn('object_type', ['mall', 'tenant'])->lists('merchant_id');
                 $tenants->whereNotIn('merchants.merchant_id', $availableMerchantIds);
-            } 
+            }
+
+            // Only showing tenant only, provide for coupon redemption place.
+            if ($filtermode === 'tenant') {
+                $availableMerchantIds = UserMerchant::whereIn('object_type', ['mall'])->lists('merchant_id');
+                $tenants->whereNotIn('merchants.merchant_id', $availableMerchantIds);
+            }
 
             // Clone the query builder which still does not include the take,
             // skip, and order by
