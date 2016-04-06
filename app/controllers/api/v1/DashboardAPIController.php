@@ -930,18 +930,15 @@ class DashboardAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $current_mall = OrbitInput::get('current_mall');
-            $now_date = OrbitInput::get('now_date');
+            $current_mall = OrbitInput::get('merchant_id', OrbitInput::get('current_mall', 0));
             $take = OrbitInput::get('take');
 
             $validator = Validator::make(
                 array(
-                    'current_mall' => $current_mall,
-                    'now_date' => $now_date
+                    'current_mall' => $current_mall
                 ),
                 array(
-                    'current_mall' => 'required | orbit.empty.merchant',
-                    'now_date' => 'required | date_format:Y-m-d H:i:s'
+                    'current_mall' => 'required | orbit.empty.merchant'
                 )
             );
 
@@ -955,27 +952,16 @@ class DashboardAPIController extends ControllerAPI
 
             Event::fire('orbit.dashboard.getexpiringcampaign.after.validation', array($this, $validator));
 
+            $mall =  App::make('orbit.empty.merchant');
+            $mallTimezone = Carbon::now($mall->timezone->timezone_name);
+
             $tablePrefix = DB::getTablePrefix();
 
             $newsAndPromotions = News::allowedForPMPUser($user, 'news_promotion')
                 ->selectRaw("{$tablePrefix}news.news_id campaign_id,
                     CASE WHEN {$tablePrefix}news_translations.news_name !='' THEN {$tablePrefix}news_translations.news_name ELSE {$tablePrefix}news.news_name END as campaign_name,
-                    DATEDIFF(end_date, (
-                                            SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
-                                            FROM {$tablePrefix}merchants om
-                                            LEFT JOIN {$tablePrefix}timezones ot
-                                                ON ot.timezone_id = om.timezone_id
-                                            WHERE (om.merchant_id = nm.merchant_id OR om.parent_id = nm.merchant_id)
-                                        )
-                                    ) expire_days, {$tablePrefix}news.object_type type,
-                    CASE WHEN {$tablePrefix}news.end_date < (
-                                            SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
-                                            FROM {$tablePrefix}merchants om
-                                            LEFT JOIN {$tablePrefix}timezones ot
-                                                ON ot.timezone_id = om.timezone_id
-                                            WHERE (om.merchant_id = nm.merchant_id OR om.parent_id = nm.merchant_id
-                                        )
-                                    ) THEN 'expired' ELSE {$tablePrefix}campaign_status.campaign_status_name END  AS campaign_status")
+                    DATEDIFF(end_date, '{$mallTimezone}') expire_days, {$tablePrefix}news.object_type type,
+                    CASE WHEN {$tablePrefix}news.end_date < '{$mallTimezone}' THEN 'expired' ELSE {$tablePrefix}campaign_status.campaign_status_name END  AS campaign_status")
                 ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
                 ->leftJoin('news_merchant as nm', DB::raw('nm.news_id'), '=', 'news.news_id')
                 ->leftJoin('merchants as m', DB::raw('m.merchant_id'), '=', DB::raw('nm.merchant_id'))
@@ -984,23 +970,23 @@ class DashboardAPIController extends ControllerAPI
                 ->leftJoin('merchant_languages', 'merchant_languages.merchant_language_id', '=', 'news_translations.merchant_language_id')
                 ->leftJoin('languages', 'languages.language_id', '=', 'merchant_languages.language_id')
                 ->where('languages.name', '=', 'en')
-                ->where('end_date', '>', $now_date)
+                ->where('end_date', '>', $mallTimezone)
                 ->orderBy('expire_days','asc');
 
             // Filter news by mall_id
-            OrbitInput::get('current_mall', function ($current_mall) use ($newsAndPromotions)
+            OrbitInput::get('merchant_id', function ($mall_id) use ($newsAndPromotions)
             {
-                $newsAndPromotions->where(function ($q) use ($current_mall) {
-                    $q->where(DB::raw('m.merchant_id'), $current_mall)
-                        ->orWhere(DB::raw('m.parent_id'), $current_mall);
+                $newsAndPromotions->where(function ($q) use ($mall_id) {
+                    $q->where(DB::raw('m.merchant_id'), $mall_id)
+                        ->orWhere(DB::raw('m.parent_id'), $mall_id);
                 });
             });
 
             $coupons = DB::table('promotions')
                 ->selectRaw("{$tablePrefix}promotions.promotion_id campaign_id,
                     CASE WHEN {$tablePrefix}coupon_translations.promotion_name !='' THEN {$tablePrefix}coupon_translations.promotion_name ELSE {$tablePrefix}promotions.promotion_name END as campaign_name,
-                    DATEDIFF(end_date, {$this->quote($now_date)}) expire_days, IF(is_coupon = 'Y','coupon', '') type,
-                    CASE WHEN {$tablePrefix}promotions.end_date < {$this->quote($now_date)} THEN 'expired' ELSE {$tablePrefix}campaign_status.campaign_status_name END AS campaign_status")
+                    DATEDIFF(end_date, '{$mallTimezone}') expire_days, IF(is_coupon = 'Y','coupon', '') type,
+                    CASE WHEN {$tablePrefix}promotions.end_date < '{$mallTimezone}' THEN 'expired' ELSE {$tablePrefix}campaign_status.campaign_status_name END AS campaign_status")
                 ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
                 ->leftJoin('promotion_retailer as pr', DB::raw('pr.promotion_id'), '=', 'promotions.promotion_id')
                 ->leftJoin('merchants as m', DB::raw('m.merchant_id'), '=', DB::raw('pr.retailer_id'))
@@ -1013,7 +999,7 @@ class DashboardAPIController extends ControllerAPI
                 ->leftJoin('campaign_account as cas', DB::raw('cas.parent_user_id'), '=', DB::raw('ca.parent_user_id'))
                 ->where('languages.name', '=', 'en')
                 ->where('is_coupon', '=', 'Y')
-                ->where('end_date', '>', $now_date)
+                ->where('end_date', '>', $mallTimezone)
                 ->where(function ($q) use ($user, $tablePrefix) {
                     $q->WhereRaw("ca.user_id = (select parent_user_id from {$tablePrefix}campaign_account where user_id = '{$user->user_id}')
                                     or
@@ -1025,11 +1011,11 @@ class DashboardAPIController extends ControllerAPI
                 ->orderBy('expire_days','asc');
 
             // Filter news by mall_id
-            OrbitInput::get('current_mall', function ($current_mall) use ($coupons)
+            OrbitInput::get('merchant_id', function ($mall_id) use ($coupons)
             {
-                $coupons->where(function ($q) use ($current_mall) {
-                    $q->where(DB::raw('m.merchant_id'), $current_mall)
-                        ->orWhere(DB::raw('m.parent_id'), $current_mall);
+                $coupons->where(function ($q) use ($mall_id) {
+                    $q->where(DB::raw('m.merchant_id'), $mall_id)
+                        ->orWhere(DB::raw('m.parent_id'), $mall_id);
                 });
             });
 
@@ -4270,7 +4256,7 @@ class DashboardAPIController extends ControllerAPI
         });
 
         Validator::extend('orbit.empty.merchant', function ($attribute, $value, $parameters) {
-            $merchant = Mall::excludeDeleted()
+            $merchant = Mall::with('timezone')->excludeDeleted()
                         ->where('merchant_id', $value)
                         ->where('is_mall', 'yes')
                         ->first();
