@@ -2179,7 +2179,7 @@ class CouponAPIController extends ControllerAPI
             // Addition select case and join for sorting by discount_value.
             $coupons = Coupon::allowedForPMPUser($user, 'coupon')
                 ->with('couponRule')
-                ->select(DB::raw("{$table_prefix}promotions.*, {$table_prefix}campaign_price.campaign_price_id, {$table_prefix}coupon_translations.promotion_name AS name_english,
+                ->select(DB::raw("{$table_prefix}promotions.*, {$table_prefix}campaign_price.campaign_price_id, {$table_prefix}coupon_translations.promotion_name AS name_english, media.path as image_path, 
                     CASE WHEN {$table_prefix}campaign_status.campaign_status_name = 'expired' THEN {$table_prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$table_prefix}promotions.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
                                                                                 FROM {$table_prefix}merchants om
                                                                                 LEFT JOIN {$table_prefix}timezones ot on ot.timezone_id = om.timezone_id
@@ -2231,6 +2231,7 @@ class CouponAPIController extends ControllerAPI
                 ->leftJoin('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
                 ->leftJoin('merchant_languages', 'merchant_languages.merchant_language_id', '=', 'coupon_translations.merchant_language_id')
                 ->leftJoin('languages', 'languages.language_id', '=', 'merchant_languages.language_id')
+                ->leftJoin(DB::raw("( SELECT * FROM {$table_prefix}media WHERE media_name_long = 'coupon_translation_image_resized_default' ) as media"), DB::raw('media.object_id'), '=', 'coupon_translations.coupon_translation_id')
                 ->where('languages.name', '=', 'en')
                 ->joinPromotionRules()
                 ->groupBy('promotions.promotion_id');
@@ -2365,10 +2366,29 @@ class CouponAPIController extends ControllerAPI
             });
 
             // Filter coupon merchants by mall name
-            OrbitInput::get('mall_name_like', function ($mall_name_like) use ($coupons) {
-                $coupons->whereHas('linkToMalls', function($q) use ($mall_name_like) {
-                    $q->where('merchants.name', 'like', "%$mall_name_like%");
-                });
+            // There is laravel bug regarding nested whereHas on the same table like in this case
+            // news->tenant->mall : whereHas('tenant', function($q) { $q->whereHas('mall' ...)}) this is not gonna work
+            OrbitInput::get('mall_name_like', function ($mall_name_like) use ($coupons, $table_prefix) {
+                $quote = function($arg)
+                {
+                    return DB::connection()->getPdo()->quote($arg);
+                };
+                $mall_name_like = "%" . $mall_name_like . "%";
+                $mall_name_like = $quote($mall_name_like);
+                $coupons->whereRaw(DB::raw("
+                    (select count(*) from {$table_prefix}merchants mtenant
+                    inner join {$table_prefix}promotion_retailer opr on mtenant.merchant_id = opr.retailer_id
+                    where mtenant.object_type = 'tenant' and opr.promotion_id = {$table_prefix}promotions.promotion_id and (
+                        select count(*) from {$table_prefix}merchants mmall
+                        where mmall.object_type = 'mall' and
+                        mtenant.parent_id = mmall.merchant_id and
+                        mmall.name like {$mall_name_like} and
+                        mmall.object_type = 'mall'
+                    ) >= 1 and
+                    mtenant.object_type = 'tenant' and
+                    mtenant.is_mall = 'no' and
+                    opr.object_type = 'tenant') >= 1
+                "));
             });
 
              // Filter coupon rule by rule object type

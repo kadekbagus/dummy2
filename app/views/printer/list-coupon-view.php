@@ -267,7 +267,7 @@
                         ?>
                     </td>
                     <td><?php echo $row->campaign_status; ?></td>
-                    <td><?php echo $this->printDateTime($row->updated_at, $timezone, 'd F Y H:i:s'); ?></td>
+                    <td><?php echo $this->printDateTime($row->updated_at, null, 'd F Y H:i:s'); ?></td>
                 </tr>
             <?php endwhile ; ?>
         </tbody>

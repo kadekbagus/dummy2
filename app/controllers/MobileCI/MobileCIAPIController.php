@@ -2602,7 +2602,6 @@ class MobileCIAPIController extends BaseCIController
                 'user' => $user,
                 'retailer' => $retailer,
                 'data' => $data,
-                'cartitems' => null,
                 'categories' => $categories,
                 'active_user' => ($user->status === 'active'),
                 'floorList' => $floorList,
@@ -7858,18 +7857,6 @@ class MobileCIAPIController extends BaseCIController
             $user_detail->last_visit_any_shop = Carbon::now($retailer->timezone->timezone_name);
             $user_detail->save();
 
-            $cart = Cart::where('status', 'active')->where('customer_id', $user->user_id)->where('retailer_id', $retailer->merchant_id)->first();
-            if (is_null($cart)) {
-                $cart = new Cart();
-                $cart->customer_id = $user->user_id;
-                $cart->merchant_id = $retailer->parent_id;
-                $cart->retailer_id = $retailer->merchant_id;
-                $cart->status = 'active';
-                $cart->save();
-                $cart->cart_code = Cart::CART_INCREMENT + $cart->cart_id;
-                $cart->save();
-            }
-
             $user->setHidden(array('user_password', 'apikey'));
 
             $userAge = 0;
@@ -8309,7 +8296,8 @@ class MobileCIAPIController extends BaseCIController
                     // Send email process to the queue
                     \Queue::push('Orbit\\Queue\\RegistrationMail', [
                         'user_id' => $user->user_id,
-                        'merchant_id' => $retailer->merchant_id
+                        'merchant_id' => $retailer->merchant_id,
+                        'mode' => 'gotomalls',
                     ]);
                 }
             }
@@ -8425,6 +8413,7 @@ class MobileCIAPIController extends BaseCIController
     {
         // Only do the validation if there is 'mode=registration' on post body.
         $mode = OrbitInput::post('mode');
+
         if ($mode !== 'registration') {
             return '';
         }

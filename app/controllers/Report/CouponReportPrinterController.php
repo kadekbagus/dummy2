@@ -113,7 +113,7 @@ class CouponReportPrinterController extends DataPrinterController
                 }
 
                 if ($mall_name != '') {
-                    printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Location', htmlentities($mall_name), '', '', '', '','','','');
+                    printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Mall Name', htmlentities($mall_name), '', '', '', '','','','');
                 }
 
                 if ( is_array($rule_type) && count($rule_type) > 0) {

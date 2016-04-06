@@ -22,6 +22,10 @@ class UrlChecker
 	protected $session = null;
     protected $retailer = null;
     protected $customHeaders = array();
+
+    public function __construct() {
+        $this->prepareSession();
+    }
 	/**
      * Prepare session.
      *
