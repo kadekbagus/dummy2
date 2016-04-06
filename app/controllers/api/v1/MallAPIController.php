@@ -88,20 +88,23 @@ class MallAPIController extends ControllerAPI
         'languages' => [
             'en',
             'ja',
-            'zh'
+            'zh',
+            'id'
         ],
         'categories' => [
             [
                 'default' => 'ATM',
                 'en'      => 'ATM',
                 'zh'      => 'ATM',
-                'ja'      => '自動支払機'
+                'ja'      => '自動支払機',
+                'id'      => 'ATM'
             ],
             [
                 'default' => 'Restaurants',
                 'en'      => 'Restaurants',
                 'zh'      => '餐馆',
-                'ja'      => 'レストラン'
+                'ja'      => 'レストラン',
+                'id'      => 'Restauran'
             ]
         ],
         'floors' => [
@@ -585,8 +588,8 @@ class MallAPIController extends ControllerAPI
             $setting_items = [
                 'enable_coupon'                 => 'true',
                 'enable_coupon_widget'          => 'true',
-                'enable_lucky_draw'             => 'false',
-                'enable_lucky_draw_widget'      => 'false',
+                'enable_lucky_draw'             => 'true',
+                'enable_lucky_draw_widget'      => 'true',
                 'enable_membership_card'        => 'false',
                 'landing_page'                  => 'widget',
                 'agreement_accepted'            => 'false',
