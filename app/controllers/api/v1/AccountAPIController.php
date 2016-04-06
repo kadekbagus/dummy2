@@ -75,6 +75,9 @@ class AccountAPIController extends ControllerAPI
     {
         try {
             $httpCode=200;
+
+            $this->registerCustomValidation();
+
             // Do validation
             if (!$this->validate()) {
                 return $this->render($this->errorCode);
@@ -474,7 +477,7 @@ class AccountAPIController extends ControllerAPI
             $rules['id'] = 'exists:users,user_id';
         } else {
             $rules['user_password'] = 'required';
-            $rules['user_email'] .= '|unique:users,user_email';
+            $rules['user_email'] .= '|orbit.exists.username';
             $rules['account_name'] .= '|unique:campaign_account,account_name';
         }
 
@@ -494,5 +497,31 @@ class AccountAPIController extends ControllerAPI
         }
 
         return true;
+    }
+
+    protected function registerCustomValidation()
+    {
+        // Check username, it should not exists
+        Validator::extend('orbit.exists.username', function ($attribute, $value, $parameters) {
+            $user = User::excludeDeleted()
+                        ->where(function ($q) use ($value) {
+                            $q->where('user_email', '=', $value)
+                              ->orWhere('username', '=', $value);
+                          })
+                        ->whereIn('user_role_id', function ($q) {
+                                $q->select('role_id')
+                                  ->from('roles')
+                                  ->whereNotIn('role_name', ['Consumer','Guest']);
+                          })
+                        ->first();
+
+            if (! empty($user)) {
+                OrbitShopAPI::throwInvalidArgument('The email address has already been taken');
+            }
+
+            //App::instance('orbit.validation.mallemployee', $user);
+
+            return TRUE;
+        });
     }
 }
