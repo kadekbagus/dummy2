@@ -31,6 +31,7 @@ use Redirect;
 use URL;
 use Orbit\Controller\API\v1\Pub\RegistrationAPIController as Regs;
 use Orbit\Helper\Net\Domain;
+use \Exception;
 
 class LoginAPIController extends IntermediateBaseController
 {
