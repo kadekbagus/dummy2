@@ -43,7 +43,10 @@ class MallNearbyAPIController extends ControllerAPI
                 $distance = Config::get('orbit.geo_location.distance', 10);
             }
 
-            $malls = Mall::excludeDeleted()->select('merchants.*')->includeLatLong()->join('merchant_geofences', 'merchant_geofences.merchant_id', '=', 'merchants.merchant_id');
+            $malls = Mall::excludeDeleted()->select('merchants.*')
+                         ->includeLatLong()
+                         ->includeDummyOpeningHours()   // @Todo: Remove this in the future
+                         ->join('merchant_geofences', 'merchant_geofences.merchant_id', '=', 'merchants.merchant_id');
 
             if ((int) $distance !== -1) {
                 $malls->nearBy($lat, $long, $distance);

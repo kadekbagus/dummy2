@@ -8773,7 +8773,7 @@ class MobileCIAPIController extends BaseCIController
                 $config->setConfig('application_id', static::APPLICATION_ID);
 
                 $this->session = new Session($config);
-                $this->session->start();
+                $this->session->start(array(), 'no-session-creation');
             }
 
             $guest_id = $this->session->read('user_id');

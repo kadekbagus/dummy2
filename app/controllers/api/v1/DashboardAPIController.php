@@ -4964,50 +4964,59 @@ class DashboardAPIController extends ControllerAPI
             }
             Event::fire('orbit.activity.gettopten.after.validation', array($this, $validator));
 
-            // registrations from start to end grouped by date part and activity name long.
-            // activity name long should include source.
-
             $tablePrefix = DB::getTablePrefix();
-            $mall = App::make('orbit.empty.merchant');
-            $timezone = $this->getTimezone($merchant_id);
-            $timezoneOffset = $this->getTimezoneOffset($timezone);
 
-            $startConvert = Carbon::createFromFormat('Y-m-d H:i:s', $start_date, 'UTC');
-            $startConvert->setTimezone($timezone);
+            # news
+            $totalnews = CampaignDailySpending::whereHas('news', function ($q) use ($user) {
+                    $q->allowedForPMPUser($user, 'news')->excludeStoppedOrExpired('news');
+                })
+                ->whereRaw("{$tablePrefix}campaign_daily_spendings.date >= DATE_FORMAT({$this->quote($start_date)}, '%Y-%m-%d')
+                            and {$tablePrefix}campaign_daily_spendings.date <= DATE_FORMAT({$this->quote($end_date)}, '%Y-%m-%d')")
+                ->where('campaign_type', 'news');
 
-            $endConvert = Carbon::createFromFormat('Y-m-d H:i:s', $end_date, 'UTC');
-            $endConvert->setTimezone($timezone);
+            // Filter news by mall_id
+            OrbitInput::get('current_mall', function ($merchant_id) use ($totalnews)
+            {
+                $totalnews->where('mall_id', '=', $merchant_id);
+            });
 
-            $start_date = $startConvert->toDateString();
-            $end_date = $endConvert->toDateString();
+            $totalnews = $totalnews->get()->sum('total_spending');
 
-            $totalnews = DB::select( DB::raw("SELECT SUM(IFNULL(fnc_campaign_cost(news_id, 'news', {$this->quote($start_date)}, {$this->quote($end_date)}, {$this->quote($timezoneOffset)}), 0.00)) AS campaign_total_cost
-                                            FROM {$tablePrefix}news
-                                            WHERE DATE_FORMAT(begin_date,'%Y-%m-%d') <= {$this->quote($end_date)}
-                                                AND DATE_FORMAT(end_date,'%Y-%m-%d') >= {$this->quote($start_date)}
-                                                AND object_type = 'news'
-                                                AND mall_id = {$this->quote($merchant_id)}
-                                            "));
+            # promotions
+            $totalpromotion = CampaignDailySpending::whereHas('promotion', function ($q) use ($user) {
+                    $q->allowedForPMPUser($user, 'promotion')->excludeStoppedOrExpired('news');
+                })
+                ->whereRaw("{$tablePrefix}campaign_daily_spendings.date >= DATE_FORMAT({$this->quote($start_date)}, '%Y-%m-%d')
+                            and {$tablePrefix}campaign_daily_spendings.date <= DATE_FORMAT({$this->quote($end_date)}, '%Y-%m-%d')")
+                ->where('campaign_type', 'promotion');
 
-            $totalpromotion = DB::select( DB::raw("SELECT SUM(IFNULL(fnc_campaign_cost(news_id, 'promotion', {$this->quote($start_date)}, {$this->quote($end_date)}, {$this->quote($timezoneOffset)}), 0.00)) AS campaign_total_cost
-                                            FROM {$tablePrefix}news
-                                            WHERE DATE_FORMAT(begin_date,'%Y-%m-%d') <= {$this->quote($end_date)}
-                                                AND DATE_FORMAT(end_date,'%Y-%m-%d') >= {$this->quote($start_date)}
-                                                AND object_type = 'promotion'
-                                                AND mall_id = {$this->quote($merchant_id)}
-                                            "));
+            // Filter news by mall_id
+            OrbitInput::get('current_mall', function ($merchant_id) use ($totalpromotion)
+            {
+                $totalpromotion->where('mall_id', '=', $merchant_id);
+            });
 
-            $totalcoupon = DB::select( DB::raw("SELECT SUM(IFNULL(fnc_campaign_cost(promotion_id, 'coupon', {$this->quote($start_date)}, {$this->quote($end_date)}, {$this->quote($timezoneOffset)}), 0.00)) AS campaign_total_cost
-                                            FROM {$tablePrefix}promotions
-                                            WHERE DATE_FORMAT(begin_date,'%Y-%m-%d') <= {$this->quote($end_date)}
-                                                AND DATE_FORMAT(end_date,'%Y-%m-%d') >= {$this->quote($start_date)}
-                                                AND is_coupon = 'Y'
-                                                AND merchant_id = {$this->quote($merchant_id)}
-                                            "));
+            $totalpromotion = $totalpromotion->get()->sum('total_spending');
 
-            $news = floatval($totalnews[0]->campaign_total_cost);
-            $promotions = floatval($totalpromotion[0]->campaign_total_cost);
-            $coupon = floatval($totalcoupon[0]->campaign_total_cost);
+            # coupons
+            $totalcoupon = CampaignDailySpending::whereHas('coupon', function ($q) use ($user) {
+                    $q->allowedForPMPUser($user, 'coupon')->excludeStoppedOrExpired('promotions');
+                })
+                ->whereRaw("{$tablePrefix}campaign_daily_spendings.date >= DATE_FORMAT({$this->quote($start_date)}, '%Y-%m-%d')
+                            and {$tablePrefix}campaign_daily_spendings.date <= DATE_FORMAT({$this->quote($end_date)}, '%Y-%m-%d')")
+                ->where('campaign_type', 'coupon');
+
+            // Filter news by mall_id
+            OrbitInput::get('current_mall', function ($merchant_id) use ($totalcoupon)
+            {
+                $totalcoupon->where('mall_id', '=', $merchant_id);
+            });
+
+            $totalcoupon = $totalcoupon->get()->sum('total_spending');
+
+            $news = floatval($totalnews);
+            $promotions = floatval($totalpromotion);
+            $coupon = floatval($totalcoupon);
 
             $total = $news + $promotions + $coupon ;
 

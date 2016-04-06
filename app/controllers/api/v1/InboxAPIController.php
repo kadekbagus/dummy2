@@ -833,7 +833,7 @@ class InboxAPIController extends ControllerAPI
             $config->setConfig('session_origin.cookie.name', 'orbit_sessionx');
             $config->setConfig('application_id', InboxAPIController::APPLICATION_ID);
             $this->session = new Session($config);
-            $this->session->start();
+            $this->session->start(array(), 'no-session-creation');
         }
     }
 
