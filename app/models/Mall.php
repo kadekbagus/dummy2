@@ -485,7 +485,20 @@ class Mall extends Eloquent
                                      ->lists('merchant_id');
     }
 
-    public function merchantSocialMedia() {
+    public function merchantSocialMedia()
+    {
         return $this->hasMany('MerchantSocialMedia', 'merchant_id', 'merchant_id');
+    }
+
+    /**
+     * Dummy attribute for displaying Mall Opening Hours.
+     * @author Rio Astamal <rio@dominopos.com>
+     * @todo this attribute should be coming from table field.
+     * @param Builder $builder Query Builder
+     * @return Builder $builder Query Builder
+     */
+    public function scopeIncludeDummyOpeningHours($builder)
+    {
+        return $builder->addSelect(DB::raw( '"Sun - Mon 10.00 - 22.00" as operating_hours' ));
     }
 }

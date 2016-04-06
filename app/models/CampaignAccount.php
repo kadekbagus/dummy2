@@ -21,12 +21,12 @@ class CampaignAccount extends Eloquent
 
     public function userMall()
     {
-        return $this->userMerchant()->where('object_type', '=', 'mall');
+        return $this->userMerchant()->where('user_merchant.object_type', '=', 'mall');
     }
 
     public function userTenant()
     {
-        return $this->userMerchant()->where('object_type', '=', 'tenant');
+        return $this->userMerchant()->where('user_merchant.object_type', '=', 'tenant');
     }
 
 
