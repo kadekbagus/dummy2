@@ -255,35 +255,12 @@ class CouponReportAPIController extends ControllerAPI
                 });
             });
 
-            // Filter news merchants by mall name
-            // There is laravel bug regarding nested whereHas on the same table like in this case
-            // news->tenant->mall : whereHas('tenant', function($q) { $q->whereHas('mall' ...)}) this is not gonna work
             // Filter coupon merchants by mall name
-            OrbitInput::get('mall_name', function ($mall_name) use ($coupons, $prefix) {
-                $quote = function($arg)
-                {
-                    return DB::connection()->getPdo()->quote($arg);
-                };
-                $mall_name = "%" . $mall_name . "%";
-                $mall_name = $quote($mall_name);
-                $coupons->whereRaw(DB::raw("
-                    (SELECT count(*)
-                    FROM {$prefix}merchants mtenant
-                        inner join {$prefix}promotion_retailer_redeem onm on mtenant.merchant_id = onm.retailer_id
-                    WHERE mtenant.object_type = 'tenant'
-                        and onm.promotion_id = {$prefix}promotions.promotion_id
-                        and (
-                            SELECT count(*) FROM {$prefix}merchants mmall
-                            WHERE mmall.object_type = 'mall' and
-                            mtenant.parent_id = mmall.merchant_id and
-                            mmall.name like {$mall_name} and
-                            mmall.object_type = 'mall'
-                        ) >= 1
-                        and mtenant.object_type = 'tenant'
-                        and mtenant.is_mall = 'no') >= 1
-                "));
+            OrbitInput::get('mall_name', function ($mall_name) use ($coupons) {
+                $coupons->whereHas('linkToMalls', function($q) use ($mall_name) {
+                    $q->where('merchants.name', 'like', "%$mall_name%");
+                });
             });
-
 
             //Filter With Checkbox
             //Filter by Campaign Status
