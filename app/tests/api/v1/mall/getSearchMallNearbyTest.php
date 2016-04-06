@@ -70,7 +70,7 @@ class getSearchMallNearBy extends TestCase
         $this->assertSame(1, (int)$response->data->total_records);
 
         $expect = 'Sun - Mon 10.00 - 22.00';
-        $this->assertSame($expect, $response->data->records[0]->opening_hours);
+        $this->assertSame($expect, $response->data->records[0]->operating_hours);
     }
 
     public function testOK_Found_Two_Mall_Nearby()
