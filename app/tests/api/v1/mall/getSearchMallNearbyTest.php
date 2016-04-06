@@ -53,6 +53,26 @@ class getSearchMallNearBy extends TestCase
         $this->assertSame(1, (int)$response->data->total_records);
     }
 
+    public function testOK_Found_One_Mall_Nearby_Dummy_opening_hours_Attribute()
+    {
+        // Create mall in antartica
+        $geofence = Factory::create('MerchantGeofence');
+
+        $_GET['latitude'] = $this->myAntarticaLocation[0];
+        $_GET['longitude'] = $this->myAntarticaLocation[1];
+        // The distance is 99.xx
+        $_GET['distance'] = 100;
+
+        $response = $this->call('GET', $this->baseUrl)->getContent();
+        $response = json_decode($response);
+
+        $this->assertSame(Status::OK, (int)$response->code);
+        $this->assertSame(1, (int)$response->data->total_records);
+
+        $expect = 'Sun - Mon 10.00 - 22.00';
+        $this->assertSame($expect, $response->data->records[0]->opening_hours);
+    }
+
     public function testOK_Found_Two_Mall_Nearby()
     {
         // Create 2 malls in antartica
