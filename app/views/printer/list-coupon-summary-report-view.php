@@ -122,7 +122,7 @@
 
         <?php if ($mall_name != '') { ?>
             <tr>
-                <td>Filter by Location</td>
+                <td>Filter by Mall Name</td>
                 <td>:</td>
                 <td><strong><?php echo htmlentities($mall_name); ?></strong></td>
             </tr>
