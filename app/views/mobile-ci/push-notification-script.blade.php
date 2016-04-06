@@ -54,6 +54,7 @@
             });
         };
 
+        @if ($urlblock->isLoggedIn())
         // Callback function to get the notification
         var getNotif = function() {
             // No need to poll if one is viewing
@@ -91,6 +92,7 @@
         setInterval(function() {
             getNotif()
         }, pushNotificationDelay);
+        @endif
 
         if(notInMessagesPage){
             setInterval(function() {
