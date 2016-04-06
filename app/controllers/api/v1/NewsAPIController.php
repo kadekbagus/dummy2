@@ -2267,7 +2267,7 @@ class NewsAPIController extends ControllerAPI
 
         // Check the existance of news id
         Validator::extend('orbit.empty.news', function ($attribute, $value, $parameters) {
-            $news = News::excludeStoppedOrExpired($object_type)
+            $news = News::excludeStoppedOrExpired('news')
                         ->where('news_id', $value)
                         ->first();
 
