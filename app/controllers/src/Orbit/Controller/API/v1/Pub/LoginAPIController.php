@@ -35,6 +35,8 @@ use \Exception;
 
 class LoginAPIController extends IntermediateBaseController
 {
+    const APPLICATION_ID = 1;
+
     /**
      * POST - Login customer from gotomalls.com
      *
@@ -304,7 +306,15 @@ class LoginAPIController extends IntermediateBaseController
         }
 
         $orbit_origin = \Input::get('orbit_origin', 'facebook');
-        $this->prepareSession();
+        $config = new SessionConfig(Config::get('orbit.session'));
+        $config->setConfig('application_id', static::APPLICATION_ID);
+
+        try {
+            $this->session = new OrbitSession($config);
+            $this->session->start();
+        } catch (Exception $e) {
+            
+        }
 
         $fb = new \Facebook\Facebook([
             'persistent_data_handler' => new \Orbit\FacebookSessionAdapter($this->session),
@@ -400,12 +410,15 @@ class LoginAPIController extends IntermediateBaseController
      */
     public function postSocialLoginView()
     {
-        // $agree_to_terms = \Input::get('agree_to_terms', 'no');
-        // if ($agree_to_terms !== 'yes') {
-        //     return Redirect::route('mobile-ci.signin', ['error' => Lang::get('captive-portal.signin.must_accept_terms')]);
-        // }
+        $config = new SessionConfig(Config::get('orbit.session'));
+        $config->setConfig('application_id', static::APPLICATION_ID);
 
-        $this->prepareSession();
+        try {
+            $this->session = new OrbitSession($config);
+            $this->session->start();
+        } catch (Exception $e) {
+
+        }
 
         $fb = new \Facebook\Facebook([
             'persistent_data_handler' => new \Orbit\FacebookSessionAdapter($this->session),
