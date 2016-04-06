@@ -4637,7 +4637,7 @@ class DashboardAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $current_mall = OrbitInput::get('current_mall');
+            $current_mall = OrbitInput::get('merchant_id', OrbitInput::get('current_mall', 0));
             $start_date = OrbitInput::get('start_date');
             $end_date = OrbitInput::get('end_date');
 
@@ -4675,7 +4675,7 @@ class DashboardAPIController extends ControllerAPI
                 ->where('created_at', '<=', $end_date);
 
             // Filter news by mall_id
-            OrbitInput::get('current_mall', function ($mall_id) use ($news)
+            OrbitInput::get('merchant_id', function ($mall_id) use ($news)
             {
                 $news->where('location_id', '=', $mall_id);
             });
@@ -4698,7 +4698,7 @@ class DashboardAPIController extends ControllerAPI
                 ->where('created_at', '<=', $end_date);
 
             // Filter news by mall_id
-            OrbitInput::get('current_mall', function ($mall_id) use ($promotion)
+            OrbitInput::get('merchant_id', function ($mall_id) use ($promotion)
             {
                 $promotion->where('location_id', '=', $mall_id);
             });
@@ -4721,7 +4721,7 @@ class DashboardAPIController extends ControllerAPI
                 ->where('created_at', '<=', $end_date);
 
             // Filter news by mall_id
-            OrbitInput::get('current_mall', function ($mall_id) use ($coupon)
+            OrbitInput::get('merchant_id', function ($mall_id) use ($coupon)
             {
                 $coupon->where('location_id', '=', $mall_id);
             });
@@ -4994,7 +4994,7 @@ class DashboardAPIController extends ControllerAPI
 
             # news
             $totalnews = CampaignDailySpending::whereHas('news', function ($q) use ($user) {
-                    $q->allowedForPMPUser($user, 'news')->excludeStoppedOrExpired('news');
+                    $q->allowedForPMPUser($user, 'news');
                 })
                 ->whereRaw("{$tablePrefix}campaign_daily_spendings.date >= DATE_FORMAT({$this->quote($start_date)}, '%Y-%m-%d')
                             and {$tablePrefix}campaign_daily_spendings.date <= DATE_FORMAT({$this->quote($end_date)}, '%Y-%m-%d')")
@@ -5010,7 +5010,7 @@ class DashboardAPIController extends ControllerAPI
 
             # promotions
             $totalpromotion = CampaignDailySpending::whereHas('promotion', function ($q) use ($user) {
-                    $q->allowedForPMPUser($user, 'promotion')->excludeStoppedOrExpired('news');
+                    $q->allowedForPMPUser($user, 'promotion');
                 })
                 ->whereRaw("{$tablePrefix}campaign_daily_spendings.date >= DATE_FORMAT({$this->quote($start_date)}, '%Y-%m-%d')
                             and {$tablePrefix}campaign_daily_spendings.date <= DATE_FORMAT({$this->quote($end_date)}, '%Y-%m-%d')")
@@ -5026,7 +5026,7 @@ class DashboardAPIController extends ControllerAPI
 
             # coupons
             $totalcoupon = CampaignDailySpending::whereHas('coupon', function ($q) use ($user) {
-                    $q->allowedForPMPUser($user, 'coupon')->excludeStoppedOrExpired('promotions');
+                    $q->allowedForPMPUser($user, 'coupon');
                 })
                 ->whereRaw("{$tablePrefix}campaign_daily_spendings.date >= DATE_FORMAT({$this->quote($start_date)}, '%Y-%m-%d')
                             and {$tablePrefix}campaign_daily_spendings.date <= DATE_FORMAT({$this->quote($end_date)}, '%Y-%m-%d')")
