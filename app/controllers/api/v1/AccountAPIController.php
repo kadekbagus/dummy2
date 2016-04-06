@@ -123,13 +123,11 @@ class AccountAPIController extends ControllerAPI
             $campaignAccount->status = Input::get('status');
             $campaignAccount->save();
 
-            if (! $this->id) {
-                $newEmployee = new Employee();
-                $newEmployee->user_id = $user->user_id;
-                $newEmployee->position = Input::get('position');
-                $newEmployee->status = Input::get('status');
-                $newEmployee->save();
-            }
+            $newEmployee = ($this->id) ? Employee::whereUserId($user->user_id)->first() : new Employee;
+            $newEmployee->user_id = $user->user_id;
+            $newEmployee->position = Input::get('position');
+            $newEmployee->status = Input::get('status');
+            $newEmployee->save();
 
             // Save to user_merchant (1 to M)
             if (Input::get('merchant_ids')) {

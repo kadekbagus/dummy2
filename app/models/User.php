@@ -176,6 +176,10 @@ class User extends Eloquent implements UserInterface
         return $this->hasMany('Setting', 'object_id', 'user_id')->where('object_type', 'user');
     }
 
+    public function guest()
+    {
+        return $this->belongsToMany('Guest', 'user_guest', 'user_id', 'guest_id');
+    }
     /**
      * A user could be also mapped to an employee
      */
@@ -224,6 +228,12 @@ class User extends Eloquent implements UserInterface
         return $apikey;
     }
 
+    /**
+     * Generate guest user for mobile ci
+     *
+     * @author Ahmad <ahmad@dominopos.com>
+     *
+     */
     public function generateGuestUser() {
         $guest_identifier = '';
         $guest_ip = $_SERVER['REMOTE_ADDR'];

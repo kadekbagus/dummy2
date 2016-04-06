@@ -2,6 +2,7 @@
 /**
  * An API controller for managing mall geo location.
  */
+use OrbitShop\API\v1\ResponseProvider;
 use OrbitShop\API\v1\ControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
@@ -21,6 +22,7 @@ use Lang;
 use Hash;
 use Validator;
 use stdClass;
+use Activity;
 use Orbit\Helper\Util\PaginationNumber;
 
 class ResetPasswordAPIController extends ControllerAPI
@@ -40,6 +42,9 @@ class ResetPasswordAPIController extends ControllerAPI
      */
     public function postResetPassword()
     {
+        $this->response = new ResponseProvider();
+        $activity = Activity::portal()
+                            ->setActivityType('reset_password');
         try {
             $this->registerCustomValidation();
 
@@ -95,6 +100,12 @@ class ResetPasswordAPIController extends ControllerAPI
             $this->response->message = Lang::get('statuses.orbit.updated.your_password');
             $this->response->data = $user;
 
+            // Successfull reset password
+            $activity->setUser($user)
+                     ->setActivityName('reset_password_ok')
+                     ->setActivityNameLong('Reset Password')
+                     ->responseOK();
+
             // Commit the changes
             $this->commit();
 
@@ -106,6 +117,11 @@ class ResetPasswordAPIController extends ControllerAPI
 
             // Rollback the changes
             $this->rollBack();
+            $activity->setUser('guest')
+                     ->setActivityName('reset_password_failed')
+                     ->setActivityNameLong('Reset Password')
+                     ->setNotes($e->getMessage())
+                     ->responseFailed();
 
         } catch (InvalidArgsException $e) {
             $this->response->code = $e->getCode();
@@ -115,6 +131,11 @@ class ResetPasswordAPIController extends ControllerAPI
 
             // Rollback the changes
             $this->rollBack();
+            $activity->setUser('guest')
+                     ->setActivityName('reset_password_failed')
+                     ->setActivityNameLong('Reset Password')
+                     ->setNotes($e->getMessage())
+                     ->responseFailed();
 
         } catch (Exception $e) {
             $this->response->code = Status::UNKNOWN_ERROR;
@@ -124,8 +145,14 @@ class ResetPasswordAPIController extends ControllerAPI
 
             // Rollback the changes
             $this->rollBack();
-
+            $activity->setUser('guest')
+                     ->setActivityName('reset_password_failed')
+                     ->setActivityNameLong('Reset Password')
+                     ->setNotes($e->getMessage())
+                     ->responseFailed();
         }
+        // Save the activity
+        $activity->setModuleName('Application')->save();
 
         return $this->render();
     }

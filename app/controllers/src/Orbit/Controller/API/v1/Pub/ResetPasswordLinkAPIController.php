@@ -2,6 +2,7 @@
 /**
  * An API controller for managing mall geo location.
  */
+use OrbitShop\API\v1\ResponseProvider;
 use OrbitShop\API\v1\ControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
@@ -17,6 +18,7 @@ use User;
 use Token;
 use Mail;
 use stdClass;
+use Activity;
 use Orbit\Helper\Util\PaginationNumber;
 
 class ResetPasswordLinkAPIController extends ControllerAPI
@@ -35,6 +37,9 @@ class ResetPasswordLinkAPIController extends ControllerAPI
     public function postResetPasswordLink()
     {
         $httpCode = 200;
+        $this->response = new ResponseProvider();
+        $activity = Activity::portal()
+                            ->setActivityType('reset_password');
         try {
             $this->beginTransaction();
 
@@ -115,6 +120,12 @@ class ResetPasswordLinkAPIController extends ControllerAPI
                 $message->to($email);
             });
 
+            // Successfull send reset password email
+            $activity->setUser($user)
+                     ->setActivityName('reset_password_ok')
+                     ->setActivityNameLong('Reset Password Link')
+                     ->responseOK();
+
             $this->commit();
         } catch (InvalidArgsException $e) {
             $this->response->code = $e->getCode();
@@ -124,6 +135,11 @@ class ResetPasswordLinkAPIController extends ControllerAPI
             $httpCode = 403;
             // Rollback the changes
             $this->rollBack();
+            $activity->setUser('guest')
+                     ->setActivityName('reset_password_failed')
+                     ->setActivityNameLong('Reset Password Link')
+                     ->setNotes($e->getMessage())
+                     ->responseFailed();
 
         } catch (Exception $e) {
             $this->response->code = Status::UNKNOWN_ERROR;
@@ -133,9 +149,16 @@ class ResetPasswordLinkAPIController extends ControllerAPI
             $httpCode = 500;
             // Rollback the changes
             $this->rollBack();
+            $activity->setUser('guest')
+                     ->setActivityName('reset_password_failed')
+                     ->setActivityNameLong('Reset Password Link')
+                     ->setNotes($e->getMessage())
+                     ->responseFailed();
         }
 
         $output = $this->render($httpCode);
+        // Save the activity
+        $activity->setModuleName('Application')->save();
 
         return $output;
     }

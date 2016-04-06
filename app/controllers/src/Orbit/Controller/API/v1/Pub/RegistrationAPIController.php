@@ -153,9 +153,13 @@ class RegistrationAPIController extends IntermediateBaseController
      * @return array [User, UserDetail, ApiKey]
      * @throws Exception
      */
-    public function createCustomerUser($email, $password, $password_confirmation, $firstname, $lastname, $gender, $birthdate, $useTransaction = TRUE, $userId = null, $userDetailId = null, $apiKeyId = null, $userStatus = null)
+    public function createCustomerUser($email, $password, $password_confirmation, $firstname, $lastname, $gender, $birthdate, $useTransaction = TRUE, $userId = null, $userDetailId = null, $apiKeyId = null, $userStatus = null, $from = 'form')
     {
-        $validation = $this->validateRegistrationData($email, $firstname, $lastname, $gender, $birthdate, $password, $password_confirmation);
+        $validation = TRUE;
+        if ($from === 'form') {
+            // if coming from form then validate password and birthdate
+            $validation = $this->validateRegistrationData($email, $firstname, $lastname, $gender, $birthdate, $password, $password_confirmation);
+        }
         if ($validation) {
             try {
                 $customerRole = Role::where('role_name', 'Consumer')->first();
@@ -172,7 +176,9 @@ class RegistrationAPIController extends IntermediateBaseController
                 }
                 $new_user->username = strtolower($email);
                 $new_user->user_email = strtolower($email);
-                $new_user->user_password = Hash::make($password);
+                if (! empty($password)) {
+                    $new_user->user_password = Hash::make($password);
+                }
                 $new_user->user_firstname = $firstname;
                 $new_user->user_lastname = $lastname;
                 $new_user->status = isset($userStatus) ? $userStatus : 'pending';
@@ -188,7 +194,9 @@ class RegistrationAPIController extends IntermediateBaseController
                     $user_detail->user_detail_id = $userDetailId;
                 }
                 $user_detail->gender = $gender === 'm' ? 'm' : $gender === 'f' ? 'f' : NULL;
-                $user_detail->birthdate = date('Y-m-d', strtotime($birthdate));
+                if (! empty($birthdate)) {
+                    $user_detail->birthdate = date('Y-m-d', strtotime($birthdate));
+                }
 
                 // Save the user details
                 $user_detail = $new_user->userdetail()->save($user_detail);
