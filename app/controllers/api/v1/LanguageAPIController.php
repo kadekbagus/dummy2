@@ -7,6 +7,7 @@ use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
+use Helper\EloquentRecordCounter as RecordCounter;
 
 /**
  * Controller to handle listing master languages, merchant languages, and adding languages to merchants.
@@ -27,21 +28,22 @@ class LanguageAPIController extends ControllerAPI
             $this->checkAuth();
 
             $status = Input::get('status');
+            
+            $languages = Language::orderBy('name_long', 'ASC');
 
-            if($status != ""){
-                $all_languages = Language::where('status', '=', $status)
-                                         ->orderBy('name_long', 'ASC')
-                                         ->get();
-            } else{
-                $all_languages = Language::all();
-            }
+            OrbitInput::get('status', function($status) use ($languages) {
+                $languages->where('status', '=', $status);
+            });
 
-            $count = count($all_languages);
+            $_languages = clone $languages;
+
+            $listlanguages = $languages->get();
+            $count = RecordCounter::create($_languages)->count();
 
             $this->response->data = new stdClass();
             $this->response->data->total_records = $count;
-            $this->response->data->returned_records = $count;
-            $this->response->data->records = $all_languages;
+            $this->response->data->returned_records = count($listlanguages);
+            $this->response->data->records = $listlanguages;
         } catch (ACLForbiddenException $e) {
 
             $this->response->code = $e->getCode();
