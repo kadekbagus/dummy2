@@ -1,18 +1,12 @@
-Hi {{ $email }},
+Hi {{ $first_name or $email }},
 
-We hope you had a great shopping experience at "{{ $shop_name }}".
-To complete your registration, please complete your account information,
-follow this link below:
+We hope you had a great experience at "{{ $shop_name }}".
+
+To complete your registration please click "Activate My Account" button below:
 
 {{ $token_url }}
 
 
-Regards,
-GotoMalls Team
-
------------------------------------------------------------
-GOTOMALLS CUSTOMER SERVICE
-
-Email: {{ $cs_email }}
-------------------------------------------------------------
+Cheers,
+Orbit Team
 
