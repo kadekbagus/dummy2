@@ -960,7 +960,7 @@ class DashboardAPIController extends ControllerAPI
 
             $tablePrefix = DB::getTablePrefix();
 
-            $newsAndPromotions = DB::table('news')
+            $newsAndPromotions = News::allowedForPMPUser($user, 'news_promotion')
                 ->selectRaw("{$tablePrefix}news.news_id campaign_id,
                     CASE WHEN {$tablePrefix}news_translations.news_name !='' THEN {$tablePrefix}news_translations.news_name ELSE {$tablePrefix}news.news_name END as campaign_name,
                     DATEDIFF(end_date, {$this->quote($now_date)}) expire_days, object_type type,
@@ -985,10 +985,21 @@ class DashboardAPIController extends ControllerAPI
                 ->leftJoin('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
                 ->leftJoin('merchant_languages', 'merchant_languages.merchant_language_id', '=', 'coupon_translations.merchant_language_id')
                 ->leftJoin('languages', 'languages.language_id', '=', 'merchant_languages.language_id')
+                ->leftJoin('user_campaign as uc', DB::raw('uc.campaign_id'), '=', 'promotions.promotion_id')
+                ->leftJoin('campaign_account as ca', DB::raw('ca.user_id'), '=', DB::raw('uc.user_id'))
+                ->leftJoin('campaign_account as cas', DB::raw('cas.parent_user_id'), '=', DB::raw('ca.parent_user_id'))
                 ->where('languages.name', '=', 'en')
                 ->where('is_coupon', '=', 'Y')
                 ->where('end_date', '>', $now_date)
                 ->where('promotions.merchant_id', $current_mall)
+                ->where(function ($q) use ($user, $tablePrefix) {
+                    $q->WhereRaw("ca.user_id = (select parent_user_id from {$tablePrefix}campaign_account where user_id = '{$user->user_id}')
+                                    or
+                                  ca.parent_user_id = (select parent_user_id from {$tablePrefix}campaign_account where user_id = '{$user->user_id}')")
+                        ->orWhere(DB::raw('ca.user_id'), '=', $user->user_id)
+                        ->orWhere(DB::raw('ca.parent_user_id'), '=', $user->user_id);
+                })
+                ->groupBy('promotions.promotion_id')
                 ->orderBy('expire_days','asc');
 
             $expiringCampaign = $newsAndPromotions->unionAll($coupons);
