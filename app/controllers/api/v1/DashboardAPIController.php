@@ -540,9 +540,6 @@ class DashboardAPIController extends ControllerAPI
             Event::fire('orbit.dashboard.getgeneralcustomerview.after.validation', array($this, $validator));
 
 
-            $tablePrefix = DB::getTablePrefix();
-            $merchantId = OrbitInput::get('merchant_id', 0);
-
             $defaultBeginDate = date('Y-m-d 00:00:00', strtotime('-14 days'));
             $beginDate = OrbitInput::get('start_date', $defaultBeginDate);
 
@@ -557,12 +554,12 @@ class DashboardAPIController extends ControllerAPI
                 ->whereHas('news', function($q) use ($user) {
                     $q->allowedForPMPUser($user, 'news');
                 })
-                ->where('created_at', '>=', $beginDate)
-                ->where('created_at', '<=', $endDate);
+                ->where('campaign_page_views.created_at', '>=', $beginDate)
+                ->where('campaign_page_views.created_at', '<=', $endDate);
             // Filter news by mall_id
-            OrbitInput::get('current_mall', function ($mall_id) use ($news)
+            OrbitInput::get('merchant_id', function ($mall_id) use ($news)
             {
-                $news->where('location_id', '=', $mall_id);
+                $news->where('campaign_page_views.location_id', '=', $mall_id);
             });
             $news = $news->get();
 
@@ -576,12 +573,12 @@ class DashboardAPIController extends ControllerAPI
                 ->whereHas('promotion', function($q) use ($user) {
                     $q->allowedForPMPUser($user, 'promotion');
                 })
-                ->where('created_at', '>=', $beginDate)
-                ->where('created_at', '<=', $endDate);
+                ->where('campaign_page_views.created_at', '>=', $beginDate)
+                ->where('campaign_page_views.created_at', '<=', $endDate);
             // Filter news by mall_id
-            OrbitInput::get('current_mall', function ($mall_id) use ($promotion)
+            OrbitInput::get('merchant_id', function ($mall_id) use ($promotion)
             {
-                $promotion->where('location_id', '=', $mall_id);
+                $promotion->where('campaign_page_views.location_id', '=', $mall_id);
             });
             $promotion = $promotion->get();
 
@@ -596,12 +593,12 @@ class DashboardAPIController extends ControllerAPI
                 ->whereHas('coupon', function($q) use ($user) {
                     $q->allowedForPMPUser($user, 'coupon');
                 })
-                ->where('created_at', '>=', $beginDate)
-                ->where('created_at', '<=', $endDate);
+                ->where('campaign_page_views.created_at', '>=', $beginDate)
+                ->where('campaign_page_views.created_at', '<=', $endDate);
             // Filter news by mall_id
-            OrbitInput::get('current_mall', function ($mall_id) use ($coupon)
+            OrbitInput::get('merchant_id', function ($mall_id) use ($coupon)
             {
-                $coupon->where('location_id', '=', $mall_id);
+                $coupon->where('campaign_page_views.location_id', '=', $mall_id);
             });
             $coupon = $coupon->get();
 
@@ -963,17 +960,41 @@ class DashboardAPIController extends ControllerAPI
             $newsAndPromotions = News::allowedForPMPUser($user, 'news_promotion')
                 ->selectRaw("{$tablePrefix}news.news_id campaign_id,
                     CASE WHEN {$tablePrefix}news_translations.news_name !='' THEN {$tablePrefix}news_translations.news_name ELSE {$tablePrefix}news.news_name END as campaign_name,
-                    DATEDIFF(end_date, {$this->quote($now_date)}) expire_days, object_type type,
-                    CASE WHEN {$tablePrefix}news.end_date < {$this->quote($now_date)} THEN 'expired' ELSE {$tablePrefix}campaign_status.campaign_status_name END  AS campaign_status")
+                    DATEDIFF(end_date, (
+                                            SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
+                                            FROM {$tablePrefix}merchants om
+                                            LEFT JOIN {$tablePrefix}timezones ot
+                                                ON ot.timezone_id = om.timezone_id
+                                            WHERE (om.merchant_id = nm.merchant_id OR om.parent_id = nm.merchant_id)
+                                        )
+                                    ) expire_days, {$tablePrefix}news.object_type type,
+                    CASE WHEN {$tablePrefix}news.end_date < (
+                                            SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
+                                            FROM {$tablePrefix}merchants om
+                                            LEFT JOIN {$tablePrefix}timezones ot
+                                                ON ot.timezone_id = om.timezone_id
+                                            WHERE (om.merchant_id = nm.merchant_id OR om.parent_id = nm.merchant_id
+                                        )
+                                    ) THEN 'expired' ELSE {$tablePrefix}campaign_status.campaign_status_name END  AS campaign_status")
                 ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
+                ->leftJoin('news_merchant as nm', DB::raw('nm.news_id'), '=', 'news.news_id')
+                ->leftJoin('merchants as m', DB::raw('m.merchant_id'), '=', DB::raw('nm.merchant_id'))
                 // Join translation for get english name
                 ->leftJoin('news_translations', 'news_translations.news_id', '=', 'news.news_id')
                 ->leftJoin('merchant_languages', 'merchant_languages.merchant_language_id', '=', 'news_translations.merchant_language_id')
                 ->leftJoin('languages', 'languages.language_id', '=', 'merchant_languages.language_id')
                 ->where('languages.name', '=', 'en')
                 ->where('end_date', '>', $now_date)
-                ->where('mall_id', $current_mall)
                 ->orderBy('expire_days','asc');
+
+            // Filter news by mall_id
+            OrbitInput::get('current_mall', function ($current_mall) use ($newsAndPromotions)
+            {
+                $newsAndPromotions->where(function ($q) use ($current_mall) {
+                    $q->where(DB::raw('m.merchant_id'), $current_mall)
+                        ->orWhere(DB::raw('m.parent_id'), $current_mall);
+                });
+            });
 
             $coupons = DB::table('promotions')
                 ->selectRaw("{$tablePrefix}promotions.promotion_id campaign_id,
@@ -981,6 +1002,8 @@ class DashboardAPIController extends ControllerAPI
                     DATEDIFF(end_date, {$this->quote($now_date)}) expire_days, IF(is_coupon = 'Y','coupon', '') type,
                     CASE WHEN {$tablePrefix}promotions.end_date < {$this->quote($now_date)} THEN 'expired' ELSE {$tablePrefix}campaign_status.campaign_status_name END AS campaign_status")
                 ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
+                ->leftJoin('promotion_retailer as pr', DB::raw('pr.promotion_id'), '=', 'promotions.promotion_id')
+                ->leftJoin('merchants as m', DB::raw('m.merchant_id'), '=', DB::raw('pr.retailer_id'))
                 // Join translation for get english name
                 ->leftJoin('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
                 ->leftJoin('merchant_languages', 'merchant_languages.merchant_language_id', '=', 'coupon_translations.merchant_language_id')
@@ -991,7 +1014,6 @@ class DashboardAPIController extends ControllerAPI
                 ->where('languages.name', '=', 'en')
                 ->where('is_coupon', '=', 'Y')
                 ->where('end_date', '>', $now_date)
-                ->where('promotions.merchant_id', $current_mall)
                 ->where(function ($q) use ($user, $tablePrefix) {
                     $q->WhereRaw("ca.user_id = (select parent_user_id from {$tablePrefix}campaign_account where user_id = '{$user->user_id}')
                                     or
@@ -1001,6 +1023,15 @@ class DashboardAPIController extends ControllerAPI
                 })
                 ->groupBy('promotions.promotion_id')
                 ->orderBy('expire_days','asc');
+
+            // Filter news by mall_id
+            OrbitInput::get('current_mall', function ($current_mall) use ($coupons)
+            {
+                $coupons->where(function ($q) use ($current_mall) {
+                    $q->where(DB::raw('m.merchant_id'), $current_mall)
+                        ->orWhere(DB::raw('m.parent_id'), $current_mall);
+                });
+            });
 
             $expiringCampaign = $newsAndPromotions->unionAll($coupons);
 
@@ -4477,7 +4508,16 @@ class DashboardAPIController extends ControllerAPI
         // perform this action
         $user = $this->api->user;
 
-        // $mall_id = OrbitInput::get('current_mall');
+        $mall_id = OrbitInput::get('merchant_id', OrbitInput::get('current_mall', 0));
+        $mall = Mall::with('timezone')->excludeDeleted()->where('merchant_id', $mall_id)->first();
+
+        if (empty($mall)) {
+            $errorMessage = 'Mall not found'; // in the morning i will clear this
+            OrbitShopAPI::throwInvalidArgument($errorMessage);
+        }
+
+        $mallTimezone = Carbon::now($mall->timezone->timezone_name);
+
         $campaign_statuses = CampaignStatus::get();
         $promotionCount = [];
         $newsCount = [];
@@ -4486,9 +4526,9 @@ class DashboardAPIController extends ControllerAPI
         foreach ($campaign_statuses as $status) {
             // Promotions
             $promotionCount[$status->campaign_status_name] = News::allowedForPMPUser($user, 'promotion')
-                    ->campaignStatus($status->campaign_status_name);
+                    ->campaignStatus($status->campaign_status_name, $mallTimezone);
             // Filter promotion by mall_id
-            OrbitInput::get('current_mall', function ($mall_id) use ($promotionCount, $status)
+            OrbitInput::get('merchant_id', function ($mall_id) use ($promotionCount, $status)
             {
                 $promotionCount[$status->campaign_status_name]->whereHas('campaignLocations', function($q) use($mall_id) {
                             $q->where(function($q2) {
@@ -4507,7 +4547,7 @@ class DashboardAPIController extends ControllerAPI
 
             // News
             $newsCount[$status->campaign_status_name] = News::allowedForPMPUser($user, 'news')
-                    ->campaignStatus($status->campaign_status_name);
+                    ->campaignStatus($status->campaign_status_name, $mallTimezone);
             // Filter news by mall_id
             OrbitInput::get('current_mall', function ($mall_id) use ($newsCount, $status)
             {
@@ -4528,7 +4568,7 @@ class DashboardAPIController extends ControllerAPI
 
             // Coupons
             $couponCount[$status->campaign_status_name] = Coupon::allowedForPMPUser($user, 'coupon')
-                    ->campaignStatus($status->campaign_status_name);
+                    ->campaignStatus($status->campaign_status_name, $mallTimezone);
             // Filter coupons by mall_id
             OrbitInput::get('current_mall', function ($mall_id) use ($couponCount, $status)
             {
