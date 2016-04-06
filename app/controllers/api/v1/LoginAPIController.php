@@ -255,10 +255,31 @@ class LoginAPIController extends ControllerAPI
 
             $this->response->data = $user;
 
+
+            // get total manage tenant and mall per user pmp
             $pmp_parent = $user->campaignAccount()->where('user_id', '=', $user->user_id)->first();
 
-            // Get total tenant and mall per user
-            $um = $pmp_parent->userTenant()->count();
+            // Get mall id from mall
+            $mallId = array();
+            $userMallAtMall = $pmp_parent->userMall()->get();
+            if (count($userMallAtMall) > 0) {
+                foreach ($userMallAtMall as $key => $vallMall) {
+                    $mallId[] = $vallMall->merchant_id;
+                }
+            }
+
+            // Get mall id from tenant
+            $userTenantAtMall = $pmp_parent->userTenant()
+                ->join('merchants', 'user_merchant.merchant_id', '=', 'merchants.merchant_id')
+                ->groupBy('merchants.parent_id')
+                ->get();
+            if (count($userTenantAtMall) > 0) {
+                foreach ($userTenantAtMall as $key => $valTenant) {
+                    $mallId[] = $valTenant->parent_id;
+                }
+            }
+
+            $um = count(array_unique($mallId));
             $ut = $pmp_parent->userTenant()->count();
 
             $user->total_mall = $um;
