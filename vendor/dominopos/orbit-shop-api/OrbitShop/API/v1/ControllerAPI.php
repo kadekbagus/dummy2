@@ -11,7 +11,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Config;
 use Orbit\Builder as OrbitBuilder;
 use PDO;
-use DominoPOS\OrbitAPI\v10\StatusInterface as Status;
 
 abstract class ControllerAPI extends Controller
 {
