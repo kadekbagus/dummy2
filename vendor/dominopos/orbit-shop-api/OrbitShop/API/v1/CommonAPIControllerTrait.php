@@ -5,6 +5,7 @@
  * @author Rio Astamal <rio@dominopos.com>
  */
 use DB;
+use DominoPOS\OrbitAPI\v10\StatusInterface as Status;
 
 trait CommonAPIControllerTrait
 {
