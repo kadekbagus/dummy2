@@ -4963,7 +4963,7 @@ class DashboardAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $merchant_id = OrbitInput::get('current_mall');
+            $merchant_id = OrbitInput::get('merchant_id', OrbitInput::get('current_mall', 0));
             $start_date = OrbitInput::get('start_date');
             $end_date = OrbitInput::get('end_date');
             $without = OrbitInput::get('without');
@@ -5001,9 +5001,9 @@ class DashboardAPIController extends ControllerAPI
                 ->where('campaign_type', 'news');
 
             // Filter news by mall_id
-            OrbitInput::get('current_mall', function ($merchant_id) use ($totalnews)
+            OrbitInput::get('merchant_id', function ($mall_id) use ($totalnews)
             {
-                $totalnews->where('mall_id', '=', $merchant_id);
+                $totalnews->where('mall_id', '=', $mall_id);
             });
 
             $totalnews = $totalnews->get()->sum('total_spending');
@@ -5017,9 +5017,9 @@ class DashboardAPIController extends ControllerAPI
                 ->where('campaign_type', 'promotion');
 
             // Filter news by mall_id
-            OrbitInput::get('current_mall', function ($merchant_id) use ($totalpromotion)
+            OrbitInput::get('merchant_id', function ($mall_id) use ($totalpromotion)
             {
-                $totalpromotion->where('mall_id', '=', $merchant_id);
+                $totalpromotion->where('mall_id', '=', $mall_id);
             });
 
             $totalpromotion = $totalpromotion->get()->sum('total_spending');
@@ -5033,9 +5033,9 @@ class DashboardAPIController extends ControllerAPI
                 ->where('campaign_type', 'coupon');
 
             // Filter news by mall_id
-            OrbitInput::get('current_mall', function ($merchant_id) use ($totalcoupon)
+            OrbitInput::get('merchant_id', function ($mall_id) use ($totalcoupon)
             {
-                $totalcoupon->where('mall_id', '=', $merchant_id);
+                $totalcoupon->where('mall_id', '=', $mall_id);
             });
 
             $totalcoupon = $totalcoupon->get()->sum('total_spending');
