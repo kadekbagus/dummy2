@@ -256,11 +256,31 @@ class CouponReportAPIController extends ControllerAPI
             });
 
             // Filter coupon merchants by mall name
-            OrbitInput::get('mall_name', function ($mall_name) use ($coupons) {
-                $coupons->whereHas('linkToMalls', function($q) use ($mall_name) {
-                    $q->where('merchants.name', 'like', "%$mall_name%");
-                });
+            // There is laravel bug regarding nested whereHas on the same table like in this case
+            // news->tenant->mall : whereHas('tenant', function($q) { $q->whereHas('mall' ...)}) this is not gonna work
+            OrbitInput::get('mall_name', function ($mall_name) use ($coupons, $prefix) {
+                $quote = function($arg)
+                {
+                    return DB::connection()->getPdo()->quote($arg);
+                };
+                $mall_name = "%" . $mall_name . "%";
+                $mall_name = $quote($mall_name);
+                $coupons->whereRaw(DB::raw("
+                    (select count(*) from {$prefix}merchants mtenant
+                    inner join {$prefix}promotion_retailer opr on mtenant.merchant_id = opr.retailer_id
+                    where mtenant.object_type = 'tenant' and opr.promotion_id = {$prefix}promotions.promotion_id and (
+                        select count(*) from {$prefix}merchants mmall
+                        where mmall.object_type = 'mall' and
+                        mtenant.parent_id = mmall.merchant_id and
+                        mmall.name like {$mall_name} and
+                        mmall.object_type = 'mall'
+                    ) >= 1 and
+                    mtenant.object_type = 'tenant' and
+                    mtenant.is_mall = 'no' and
+                    opr.object_type = 'tenant') >= 1
+                "));
             });
+
 
             //Filter With Checkbox
             //Filter by Campaign Status

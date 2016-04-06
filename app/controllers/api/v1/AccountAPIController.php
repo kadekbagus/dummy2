@@ -123,7 +123,7 @@ class AccountAPIController extends ControllerAPI
             $campaignAccount->status = Input::get('status');
             $campaignAccount->save();
 
-            $newEmployee = ($this->id) ? Employee::whereUserId($user->user_id)->first() : new Employee;
+            $newEmployee = Employee::where('user_id', '=', $user->user_id)->first() ? Employee::where('user_id', '=', $user->user_id)->first() : new Employee;
             $newEmployee->user_id = $user->user_id;
             $newEmployee->position = Input::get('position');
             $newEmployee->status = Input::get('status');
@@ -137,8 +137,28 @@ class AccountAPIController extends ControllerAPI
                     $merchantdb[] = $merchantdbid['merchant_id'];
                 }
                 $removetenant = array_diff($merchantdb, Input::get('merchant_ids'));
+                $addtenant = array_diff(Input::get('merchant_ids'), $merchantdb);
                 $newsPromotionActive = 0; 
                 $couponStatusActive = 0;
+
+                if ($addtenant || $removetenant) {
+                    $validator = Validator::make(
+                        array(
+                            'role_name'    => $user->role->role_name,
+                        ),
+                        array(
+                            'role_name'    => 'in:Campaign Owner',
+                        ),
+                        array(
+                            'role_name.in' => 'Cannot update tenant',
+                        )
+                    );
+
+                    if ($validator->fails()) {
+                        OrbitShopAPI::throwInvalidArgument($validator->messages()->first());
+                    }
+                }
+
                 if ($removetenant) {
                     //get data in news and promotion
                     $newsPromotionActive = News::select('news.news_id')
@@ -155,26 +175,23 @@ class AccountAPIController extends ControllerAPI
                                                 ->whereNotIn('campaign_status.campaign_status_name', ['stopped', 'expired'])
                                                 ->whereIn('promotion_retailer.retailer_id', $removetenant)
                                                 ->count();
-                }
-                $activeCampaign = (int) $newsPromotionActive + (int) $couponStatusActive;                   
+                    $activeCampaign = (int) $newsPromotionActive + (int) $couponStatusActive;                   
 
-                $validator = Validator::make(
-                    array(
-                        'role_name'    => $user->role->role_name,
-                        'active_campaign'  => $activeCampaign,
-                    ),
-                    array(
-                        'role_name'    => 'in:Campaign Owner',
-                        'active_campaign'    => 'in: 0',
-                    ),
-                    array(
-                        'role_name.in' => 'Cannot update tenant',
-                        'active_campaign.in' => 'Cannot unlink the tenant with an active campaign',
-                    )
-                );
+                    $validator = Validator::make(
+                        array(
+                            'active_campaign'  => $activeCampaign,
+                        ),
+                        array(
+                            'active_campaign'    => 'in: 0',
+                        ),
+                        array(
+                            'active_campaign.in' => 'Cannot unlink the tenant with an active campaign',
+                        )
+                    );
 
-                if ($validator->fails()) {
-                    OrbitShopAPI::throwInvalidArgument($validator->messages()->first());
+                    if ($validator->fails()) {
+                        OrbitShopAPI::throwInvalidArgument($validator->messages()->first());
+                    }
                 }
 
                 // get campaign employee and delete merchant 
