@@ -1675,8 +1675,9 @@ class EmployeeAPIController extends ControllerAPI
             $updatedUser->save();
             $updatedUser->apikey;
 
-            OrbitInput::post('position', function($_position) use ($employee) {
+            OrbitInput::post('position', function($_position) use ($employee, $campaignAccount) {
                 $employee->position = $_position;
+                $campaignAccount->position = $_position;
             });
 
             OrbitInput::post('employee_id_char', function($empId) use ($employee) {

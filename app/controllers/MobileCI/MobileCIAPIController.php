@@ -75,6 +75,7 @@ use UserSignin;
 use \WidgetClick;
 use \WidgetGroupName;
 use \Hash;
+use \UserGuest;
 
 class MobileCIAPIController extends BaseCIController
 {
@@ -171,7 +172,8 @@ class MobileCIAPIController extends BaseCIController
             $from_cloud_callback = OrbitInput::get('apikey_id', null) !== null;
             if (! is_object($user) || ($user->status === 'pending' && !$from_cloud_callback) ) {
                 if($mode === 'login') {
-                    return $this->loginStage2($user, $retailer);    
+                    $this->linkGuestToUser($user);
+                    return $this->loginStage2($user, $retailer);
                 }
                 if (empty($payload)) {
                     $payload = $payloadFromReg;
@@ -179,6 +181,7 @@ class MobileCIAPIController extends BaseCIController
 
                 return $this->redirectToCloud($email, $password, $retailer, $payload, '', OrbitInput::post('mac_address', ''));
             } else {
+                $this->linkGuestToUser($user);
                 return $this->loginStage2($user, $retailer);
             }
         } catch (ACLForbiddenException $e) {
@@ -1034,7 +1037,10 @@ class MobileCIAPIController extends BaseCIController
                     $query['from_captive'] = 'yes';
                 }
 
-                if($this->doAutoLogin($userEmail)) {
+                $retailer = $this->getRetailerInfo();
+                $loggedInUser = $this->doAutoLogin($userEmail);
+                if (is_object($loggedInUser)) {
+                    $this->loginStage2($loggedInUser, $retailer);
                     $expireTime = Config::get('orbit.session.session_origin.cookie.expire');
 
                     setcookie('orbit_email', $userEmail, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
@@ -1052,8 +1058,10 @@ class MobileCIAPIController extends BaseCIController
                         throw new Exception($response->message, $response->code);
                     }
 
-                    $user = $response->data;
-                    $this->doAutoLogin($user->user_email);
+                    $loggedInUser = $this->doAutoLogin($response->data->user_email);
+                    $this->linkGuestToUser($loggedInUser);
+                    $this->loginStage2($loggedInUser, $retailer);
+                    
                     return Redirect::route($caller_url, $query);
                 }
 
@@ -1170,8 +1178,10 @@ class MobileCIAPIController extends BaseCIController
             $query['from_captive'] = 'yes';
         }
 
-
-        if($this->doAutoLogin($userEmail)) {
+        $retailer = $this->getRetailerInfo();
+        $loggedInUser = $this->doAutoLogin($userEmail);
+        if (is_object($loggedInUser)) {
+            $this->loginStage2($loggedInUser, $retailer);
             $expireTime = Config::get('orbit.session.session_origin.cookie.expire');
 
             setcookie('orbit_email', $userEmail, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
@@ -1188,8 +1198,8 @@ class MobileCIAPIController extends BaseCIController
                 throw new Exception($response->message, $response->code);
             }
 
-            $user = $response->data;
-            $this->doAutoLogin($user->user_email);
+            $loggedInUser = $this->doAutoLogin($response->data->user_email);
+            $this->loginStage2($loggedInUser, $retailer);
             return Redirect::route($caller_url, $query);
         }
     }
@@ -8722,9 +8732,10 @@ class MobileCIAPIController extends BaseCIController
      * 
      * @author Ahmad <ahmad@dominopos.com>
      * @param string $email User email
-     * @return boolean (TRUE: user exist; FALSE: user not exist)
+     * @return User $user (IF user exist; FALSE: user not exist)
      */
-    public function doAutoLogin($email) {
+    public function doAutoLogin($email)
+    {
         $user = User::excludeDeleted()
             ->with('role')
             ->where('user_email', $email)
@@ -8734,6 +8745,9 @@ class MobileCIAPIController extends BaseCIController
             ->first();
 
         if (is_object($user)) {
+            // link previous guest user to the real user
+            $this->linkGuestToUser($user);
+
             // Start the orbit session
             $data = array(
                 'logged_in' => TRUE,
@@ -8749,9 +8763,61 @@ class MobileCIAPIController extends BaseCIController
             $sessionHeader = 'Set-' . $sessionHeader;
             $this->customHeaders[$sessionHeader] = $this->session->getSessionId();
 
-            return TRUE;
+            return $user;
         }
 
         return FALSE;
+    }
+
+    /**
+     * Link the guest user before sign up/sign in to the user after
+     * 
+     * @author Ahmad <ahmad@dominopos.com>
+     * @param User $user (User object from registration/sign in process)
+     * @return \OrbitShop\API\v1\ResponseProvider
+     */
+    public function linkGuestToUser($user)
+    {
+        try {
+            if (! is_object($this->session)) {
+                $config = new SessionConfig(Config::get('orbit.session'));
+                $config->setConfig('application_id', static::APPLICATION_ID);
+
+                $this->session = new Session($config);
+                $this->session->start();
+            }
+
+            $guest_id = $this->session->read('user_id');
+
+            // check guest user id on session if empty create new one
+            if (empty($guest_id)) {
+                $guest = (new UrlBlock())->generateGuestUser();
+
+                $guest_id = $guest->user_id;
+            }
+
+            $this->beginTransaction();
+
+            $userguest = new UserGuest();
+            $userguest->user_id = $user->user_id;
+            $userguest->guest_id = $guest_id;
+            $userguest->status = 'active';
+            $userguest->save();
+
+            $this->commit();
+
+            $this->response->code = 0;
+            $this->response->status = 'success';
+            $this->response->data = $user;
+            $this->response->message = 'Success';
+        } catch (Exception $e) {
+            $this->rollback();
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+        }
+
+        return $this->render();
     }
 }

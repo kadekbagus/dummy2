@@ -35,6 +35,11 @@ trait CampaignAccessTrait
                 $field_name = 'promotion_id';
                 break;
 
+            case 'news_promotion':
+                $table_name = 'news';
+                $field_name = 'news_id';
+                break;
+
             default:
                 throw new Exception("Wrong campaign type supplied", 1);
         }
@@ -59,7 +64,7 @@ trait CampaignAccessTrait
                 ->orWhere(DB::raw('ca.parent_user_id'), '=', $user->user_id);
         })
         ->where(function ($q) use ($type) {
-            if ($type !== 'coupon') {
+            if (in_array($type, ['news', 'promotion'])) {
                 $q->where('news.object_type', $type);
             }
         })
