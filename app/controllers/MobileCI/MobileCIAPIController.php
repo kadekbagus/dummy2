@@ -8296,7 +8296,8 @@ class MobileCIAPIController extends BaseCIController
                     // Send email process to the queue
                     \Queue::push('Orbit\\Queue\\RegistrationMail', [
                         'user_id' => $user->user_id,
-                        'merchant_id' => $retailer->merchant_id
+                        'merchant_id' => $retailer->merchant_id,
+                        'mode' => 'gotomalls',
                     ]);
                 }
             }
@@ -8412,6 +8413,7 @@ class MobileCIAPIController extends BaseCIController
     {
         // Only do the validation if there is 'mode=registration' on post body.
         $mode = OrbitInput::post('mode');
+
         if ($mode !== 'registration') {
             return '';
         }
