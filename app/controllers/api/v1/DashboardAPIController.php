@@ -235,7 +235,7 @@ class DashboardAPIController extends ControllerAPI
 
             $take = OrbitInput::get('take');
             $type = OrbitInput::get('type');
-            $merchant_id = OrbitInput::get('merchant_id');
+            $merchant_id = OrbitInput::get('merchant_id', OrbitInput::get('current_mall', 0));
             $start_date = OrbitInput::get('start_date');
             $end_date = OrbitInput::get('end_date');
 
@@ -4324,7 +4324,7 @@ class DashboardAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $merchant_id = OrbitInput::get('current_mall');
+            $merchant_id = OrbitInput::get('merchant_id', OrbitInput::get('current_mall', 0));
             $start_date = OrbitInput::get('start_date');
             $end_date = OrbitInput::get('end_date');
 
@@ -4354,7 +4354,10 @@ class DashboardAPIController extends ControllerAPI
             // activity name long should include source.
 
             $tablePrefix = DB::getTablePrefix();
-            $timezone = $this->getTimezone($merchant_id);
+
+            $mall = App::make('orbit.empty.merchant');
+
+            $timezone = $mall->timezone->timezone_name;
             $timezoneOffset = $this->getTimezoneOffset($timezone);
 
             $startConvert = Carbon::createFromFormat('Y-m-d H:i:s', $start_date, 'UTC');
@@ -4371,8 +4374,18 @@ class DashboardAPIController extends ControllerAPI
                         ->join('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                         ->join('campaign_price', 'campaign_price.campaign_id', '=', 'news.news_id')
                         ->join('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
+                        ->leftJoin('user_campaign as uc', DB::raw('uc.campaign_id'), '=', 'news.news_id')
+                        ->leftJoin('campaign_account as ca', DB::raw('ca.user_id'), '=', DB::raw('uc.user_id'))
+                        ->leftJoin('campaign_account as cas', DB::raw('cas.parent_user_id'), '=', DB::raw('ca.parent_user_id'))
+                        ->where(function ($q) use ($user, $tablePrefix) {
+                            $q->WhereRaw("ca.user_id = (select parent_user_id from {$tablePrefix}campaign_account where user_id = '{$user->user_id}')
+                                            or
+                                          ca.parent_user_id = (select parent_user_id from {$tablePrefix}campaign_account where user_id = '{$user->user_id}')")
+                                ->orWhere(DB::raw('ca.user_id'), '=', $user->user_id)
+                                ->orWhere(DB::raw('ca.parent_user_id'), '=', $user->user_id);
+                        })
                         ->where('merchants.status', '=', 'active')
-                        ->where('news.mall_id', '=', $merchant_id)
+                        // ->where('news.mall_id', '=', $merchant_id)
                         ->where(function ($q) use ($start_date, $end_date, $tablePrefix) {
                             $q->WhereRaw("DATE_FORMAT({$tablePrefix}news.begin_date, '%Y-%m-%d') >= DATE_FORMAT({$this->quote($start_date)}, '%Y-%m-%d') and DATE_FORMAT({$tablePrefix}news.begin_date, '%Y-%m-%d') <= DATE_FORMAT({$this->quote($end_date)}, '%Y-%m-%d')")
                               ->orWhereRaw("DATE_FORMAT({$tablePrefix}news.end_date, '%Y-%m-%d') >= DATE_FORMAT({$this->quote($start_date)}, '%Y-%m-%d') and DATE_FORMAT({$tablePrefix}news.end_date, '%Y-%m-%d') <= DATE_FORMAT({$this->quote($end_date)}, '%Y-%m-%d')")
@@ -4384,12 +4397,32 @@ class DashboardAPIController extends ControllerAPI
                         ->where('news.object_type', '=', 'news')
                         ->groupBy('news.news_id');
 
+            // Filter news by mall_id
+            OrbitInput::get('merchant_id', function ($mall_id) use ($news)
+            {
+                $news->where(function ($q) use ($mall_id) {
+                    $q->where('merchants.merchant_id', $mall_id)
+                        ->orWhere('merchants.parent_id', $mall_id);
+                });
+            });
+
+
             $promotions = DB::table('news')->selectraw(DB::raw("COUNT({$tablePrefix}news_merchant.news_merchant_id) * {$tablePrefix}campaign_price.base_price * (DATEDIFF({$tablePrefix}news.end_date, {$tablePrefix}news.begin_date) + 1) AS total"))
                                 ->join('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                                 ->join('campaign_price', 'campaign_price.campaign_id', '=', 'news.news_id')
                                 ->join('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
+                                ->leftJoin('user_campaign as uc', DB::raw('uc.campaign_id'), '=', 'news.news_id')
+                                ->leftJoin('campaign_account as ca', DB::raw('ca.user_id'), '=', DB::raw('uc.user_id'))
+                                ->leftJoin('campaign_account as cas', DB::raw('cas.parent_user_id'), '=', DB::raw('ca.parent_user_id'))
+                                ->where(function ($q) use ($user, $tablePrefix) {
+                                    $q->WhereRaw("ca.user_id = (select parent_user_id from {$tablePrefix}campaign_account where user_id = '{$user->user_id}')
+                                                    or
+                                                  ca.parent_user_id = (select parent_user_id from {$tablePrefix}campaign_account where user_id = '{$user->user_id}')")
+                                        ->orWhere(DB::raw('ca.user_id'), '=', $user->user_id)
+                                        ->orWhere(DB::raw('ca.parent_user_id'), '=', $user->user_id);
+                                })
                                 ->where('merchants.status', '=', 'active')
-                                ->where('news.mall_id', '=', $merchant_id)
+                                // ->where('news.mall_id', '=', $merchant_id)
                                 ->where(function ($q) use ($start_date, $end_date, $tablePrefix) {
                                     $q->WhereRaw("DATE_FORMAT({$tablePrefix}news.begin_date, '%Y-%m-%d') >= DATE_FORMAT({$this->quote($start_date)}, '%Y-%m-%d') and DATE_FORMAT({$tablePrefix}news.begin_date, '%Y-%m-%d') <= DATE_FORMAT({$this->quote($end_date)}, '%Y-%m-%d')")
                                       ->orWhereRaw("DATE_FORMAT({$tablePrefix}news.end_date, '%Y-%m-%d') >= DATE_FORMAT({$this->quote($start_date)}, '%Y-%m-%d') and DATE_FORMAT({$tablePrefix}news.end_date, '%Y-%m-%d') <= DATE_FORMAT({$this->quote($end_date)}, '%Y-%m-%d')")
@@ -4401,12 +4434,31 @@ class DashboardAPIController extends ControllerAPI
                                 ->where('news.object_type', '=', 'promotion')
                                 ->groupBy('news.news_id');
 
+            // Filter news by mall_id
+            OrbitInput::get('merchant_id', function ($mall_id) use ($promotions)
+            {
+                $promotions->where(function ($q) use ($mall_id) {
+                    $q->where('merchants.merchant_id', $mall_id)
+                        ->orWhere('merchants.parent_id', $mall_id);
+                });
+            });
+
             $coupons = DB::table('promotions')->selectraw(DB::raw("COUNT({$tablePrefix}promotion_retailer.promotion_retailer_id) * {$tablePrefix}campaign_price.base_price * (DATEDIFF({$tablePrefix}promotions.end_date, {$tablePrefix}promotions.begin_date) + 1) AS total"))
                         ->join('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                         ->join('campaign_price', 'campaign_price.campaign_id', '=', 'promotions.promotion_id')
                         ->join('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
+                        ->leftJoin('user_campaign as uc', DB::raw('uc.campaign_id'), '=', 'promotions.promotion_id')
+                        ->leftJoin('campaign_account as ca', DB::raw('ca.user_id'), '=', DB::raw('uc.user_id'))
+                        ->leftJoin('campaign_account as cas', DB::raw('cas.parent_user_id'), '=', DB::raw('ca.parent_user_id'))
+                        ->where(function ($q) use ($user, $tablePrefix) {
+                            $q->WhereRaw("ca.user_id = (select parent_user_id from {$tablePrefix}campaign_account where user_id = '{$user->user_id}')
+                                            or
+                                          ca.parent_user_id = (select parent_user_id from {$tablePrefix}campaign_account where user_id = '{$user->user_id}')")
+                                ->orWhere(DB::raw('ca.user_id'), '=', $user->user_id)
+                                ->orWhere(DB::raw('ca.parent_user_id'), '=', $user->user_id);
+                        })
                         ->where('merchants.status', '=', 'active')
-                        ->where('promotions.merchant_id', '=', $merchant_id)
+                        // ->where('promotions.merchant_id', '=', $merchant_id)
                         ->where(function ($q) use ($start_date, $end_date, $tablePrefix) {
                             $q->WhereRaw("DATE_FORMAT({$tablePrefix}promotions.begin_date, '%Y-%m-%d') >= DATE_FORMAT({$this->quote($start_date)}, '%Y-%m-%d') and DATE_FORMAT({$tablePrefix}promotions.begin_date, '%Y-%m-%d') <= DATE_FORMAT({$this->quote($end_date)}, '%Y-%m-%d')")
                               ->orWhereRaw("DATE_FORMAT({$tablePrefix}promotions.end_date, '%Y-%m-%d') >= DATE_FORMAT({$this->quote($start_date)}, '%Y-%m-%d') and DATE_FORMAT({$tablePrefix}promotions.end_date, '%Y-%m-%d') <= DATE_FORMAT({$this->quote($end_date)}, '%Y-%m-%d')")
@@ -4416,6 +4468,15 @@ class DashboardAPIController extends ControllerAPI
                         })
                         ->where('campaign_price.campaign_type', '=', 'coupon')
                         ->groupBy('promotions.promotion_id');
+
+            // Filter news by mall_id
+            OrbitInput::get('merchant_id', function ($mall_id) use ($coupons)
+            {
+                $coupons->where(function ($q) use ($mall_id) {
+                    $q->where('merchants.merchant_id', $mall_id)
+                        ->orWhere('merchants.parent_id', $mall_id);
+                });
+            });
 
             $data = $news->unionAll($promotions)->unionAll($coupons);
             $sql = $data->toSql();
@@ -4826,13 +4887,13 @@ class DashboardAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $current_mall = OrbitInput::get('current_mall');
+            $merchant_id = OrbitInput::get('merchant_id', OrbitInput::get('current_mall', 0));
             $start_date = OrbitInput::get('start_date');
             $end_date = OrbitInput::get('end_date');
 
             $validator = Validator::make(
                 array(
-                    'current_mall' => $current_mall,
+                    'current_mall' => $merchant_id,
                     'start_date' => $start_date,
                     'end_date' => $end_date,
                 ),
@@ -4854,25 +4915,56 @@ class DashboardAPIController extends ControllerAPI
 
             $tablePrefix = DB::getTablePrefix();
 
-
-            $query = DB::select("select date_format(created_at, '%Y-%m-%d') as days, count(distinct user_id) as unique_visit_perday
-                        from {$tablePrefix}user_signin
-                        where location_id = ?
-                            and created_at between ? and ?
-                        group by 1
-                        order by 1
-                        ", array($current_mall, $start_date, $end_date));
-
-            $total_unique_visit = 0;
-
-            if ( !empty($query) ) {
-                foreach ($query as $key => $value) {
-                    $total_unique_visit += $query[$key]->unique_visit_perday;
-                }
-            }
+            $total = DB::Select(DB::Raw("
+                select count(distinct(user_id)) as total_unique_visit from {$tablePrefix}campaign_page_views
+                where (campaign_id in (
+                    select
+                        news_id
+                    from
+                        `{$tablePrefix}news`
+                            left join
+                        `{$tablePrefix}user_campaign` as `uc` ON uc.campaign_id = `{$tablePrefix}news`.`news_id`
+                            left join
+                        `{$tablePrefix}campaign_account` as `ca` ON ca.user_id = uc.user_id
+                            left join
+                        `{$tablePrefix}campaign_account` as `cas` ON cas.parent_user_id = ca.parent_user_id
+                    where
+                            (ca.user_id = (select parent_user_id
+                                                from {$tablePrefix}campaign_account
+                                                where user_id = {$this->quote($user->user_id)})
+                            or ca.parent_user_id = (select parent_user_id
+                                                    from {$tablePrefix}campaign_account
+                                                    where user_id = {$this->quote($user->user_id)})
+                            or ca.user_id = {$this->quote($user->user_id)}
+                            or ca.parent_user_id = {$this->quote($user->user_id)})
+                    group by `{$tablePrefix}news`.`news_id`
+                ) or campaign_id in (
+                    select
+                        promotion_id
+                    from
+                        `{$tablePrefix}promotions`
+                            left join
+                        `{$tablePrefix}user_campaign` as `uc` ON uc.campaign_id = `{$tablePrefix}promotions`.`promotion_id`
+                            left join
+                        `{$tablePrefix}campaign_account` as `ca` ON ca.user_id = uc.user_id
+                            left join
+                        `{$tablePrefix}campaign_account` as `cas` ON cas.parent_user_id = ca.parent_user_id
+                    where
+                        `{$tablePrefix}promotions`.`is_coupon` = 'Y'
+                            and (ca.user_id = (select parent_user_id
+                                                from {$tablePrefix}campaign_account
+                                                where user_id = {$this->quote($user->user_id)})
+                            or ca.parent_user_id = (select parent_user_id
+                                                    from {$tablePrefix}campaign_account
+                                                    where user_id = {$this->quote($user->user_id)})
+                            or ca.user_id = {$this->quote($user->user_id)}
+                            or ca.parent_user_id = {$this->quote($user->user_id)})
+                    group by `{$tablePrefix}promotions`.`promotion_id`
+                )) and location_id = {$this->quote($merchant_id)};
+            "));
 
             $data = new stdclass();
-            $data->unique_users = $total_unique_visit;
+            $data->unique_users = $total[0]->total_unique_visit;
 
             $this->response->data = $data;
 
