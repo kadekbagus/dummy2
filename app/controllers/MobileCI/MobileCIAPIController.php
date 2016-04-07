@@ -178,7 +178,6 @@ class MobileCIAPIController extends BaseCIController
                 if (empty($payload)) {
                     $payload = $payloadFromReg;
                 }
-
                 return $this->redirectToCloud($email, $password, $retailer, $payload, '', OrbitInput::post('mac_address', ''));
             } else {
                 $this->linkGuestToUser($user);
@@ -247,8 +246,9 @@ class MobileCIAPIController extends BaseCIController
         try {
             $urlblock = new UrlBlock;
             $user = $urlblock->checkBlockedUrl();
-
             $retailer = $this->getRetailerInfo('merchantSocialMedia');
+            $this->acquireUser($retailer, $user);
+            Coupon::issueAutoCoupon($retailer, $user, $urlblock->getUserSession());
 
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
 
@@ -926,7 +926,7 @@ class MobileCIAPIController extends BaseCIController
     public function postSocialLoginView()
     {
         $agree_to_terms = \Input::get('agree_to_terms', 'no');
-        $caller_url = OrbitInput::post('from_url');
+        $caller_url = OrbitInput::post('from_url', 'ci-home');
 
         if ($agree_to_terms !== 'yes') {
             return Redirect::route('mobile-ci.signin', ['error' => Lang::get('captive-portal.signin.must_accept_terms')]);
@@ -989,7 +989,7 @@ class MobileCIAPIController extends BaseCIController
 
         $recognized = \Input::get('recognized', 'none');
         $code = \Input::get('code', NULL);
-        $caller_url = \Input::get('from_url', 'ci-home');
+        $caller_url = OrbitInput::post('from_url', 'ci-home');
 
         $googleService = OAuth::consumer( 'Google' );
 
@@ -1052,6 +1052,9 @@ class MobileCIAPIController extends BaseCIController
                 } else {
                     // register user without password and birthdate
                     $_POST['email'] = $userEmail;
+                    $_POST['firstname'] = $firstName;
+                    $_POST['lastname'] = $lastName;
+                    $_POST['gender'] = $gender;
                     $_POST['status'] = 'active';
                     $response = \LoginAPIController::create('raw')->setUseTransaction(false)->postRegisterUserInShop();
                     if ($response->code !== 0) {
@@ -1192,6 +1195,9 @@ class MobileCIAPIController extends BaseCIController
         } else {
             // register user without password and birthdate
             $_POST['email'] = $userEmail;
+            $_POST['firstname'] = $firstName;
+            $_POST['lastname'] = $lastName;
+            $_POST['gender'] = $gender;
             $_POST['status'] = 'active';
             $response = \LoginAPIController::create('raw')->setUseTransaction(false)->postRegisterUserInShop();
             if ($response->code !== 0) {
@@ -1442,6 +1448,8 @@ class MobileCIAPIController extends BaseCIController
             $user = $urlblock->checkBlockedUrl();
 
             $retailer = $this->getRetailerInfo();
+            $this->acquireUser($retailer, $user);
+            Coupon::issueAutoCoupon($retailer, $user, $urlblock->getUserSession());
             $languages = $this->getListLanguages($retailer);
             $pageTitle = Lang::get('mobileci.page_title.my_account');
 
@@ -1997,6 +2005,9 @@ class MobileCIAPIController extends BaseCIController
             $this->registerCustomValidation();
             $urlblock = new UrlBlock;
             $user = $urlblock->checkBlockedUrl();
+            $retailer = $this->getRetailerInfo();
+            $this->acquireUser($retailer, $user);
+            Coupon::issueAutoCoupon($retailer, $user, $urlblock->getUserSession());
 
             $sort_by = OrbitInput::get('sort_by');
             $keyword = trim(OrbitInput::get('keyword'));
@@ -2020,8 +2031,6 @@ class MobileCIAPIController extends BaseCIController
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
             }
-
-            $retailer = $this->getRetailerInfo();
 
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
 
@@ -2647,8 +2656,10 @@ class MobileCIAPIController extends BaseCIController
         try {
             $urlblock = new UrlBlock;
             $user = $urlblock->checkBlockedUrl();
-
             $retailer = $this->getRetailerInfo();
+            $this->acquireUser($retailer, $user);
+            Coupon::issueAutoCoupon($retailer, $user, $urlblock->getUserSession());
+
             $product_id = trim(OrbitInput::get('id'));
             $promo_id = trim(OrbitInput::get('pid'));
             $news_id = trim(OrbitInput::get('nid'));
@@ -3509,8 +3520,9 @@ class MobileCIAPIController extends BaseCIController
         try {
             $urlblock = new UrlBlock;
             $user = $urlblock->checkBlockedUrl();
-
             $retailer = $this->getRetailerInfo();
+            $this->acquireUser($retailer, $user);
+            Coupon::issueAutoCoupon($retailer, $user, $urlblock->getUserSession());
 
             $languages = $this->getListLanguages($retailer);
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
@@ -3868,8 +3880,9 @@ class MobileCIAPIController extends BaseCIController
         try {
             $urlblock = new UrlBlock;
             $user = $urlblock->checkBlockedUrl();
-
             $retailer = $this->getRetailerInfo();
+            $this->acquireUser($retailer, $user);
+            Coupon::issueAutoCoupon($retailer, $user, $urlblock->getUserSession());
 
             $lucky_draw_id = OrbitInput::get('id');
 
@@ -4082,8 +4095,9 @@ class MobileCIAPIController extends BaseCIController
         try {
             $urlblock = new UrlBlock;
             $user = $urlblock->checkBlockedUrl();
-
             $retailer = $this->getRetailerInfo();
+            $this->acquireUser($retailer, $user);
+            Coupon::issueAutoCoupon($retailer, $user, $urlblock->getUserSession());
 
             $lucky_draw_id = OrbitInput::get('id');
 
@@ -4299,10 +4313,11 @@ class MobileCIAPIController extends BaseCIController
             $this->registerCustomValidation();
             $urlblock = new UrlBlock;
             $user = $urlblock->checkBlockedUrl();
+            $retailer = $this->getRetailerInfo();
+            $this->acquireUser($retailer, $user);
+            Coupon::issueAutoCoupon($retailer, $user, $urlblock->getUserSession());
 
             $pagetitle = Lang::get('mobileci.page_title.coupons');
-
-            $retailer = $this->getRetailerInfo();
 
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
 
@@ -4754,8 +4769,10 @@ class MobileCIAPIController extends BaseCIController
         try {
             $urlblock = new UrlBlock;
             $user = $urlblock->checkBlockedUrl();
-
             $retailer = $this->getRetailerInfo();
+            $this->acquireUser($retailer, $user);
+            Coupon::issueAutoCoupon($retailer, $user, $urlblock->getUserSession());
+
             $promotion_id = trim(OrbitInput::get('id'));
 
             $issued_coupons = IssuedCoupon::where('user_id', $user->user_id)
@@ -5014,6 +5031,9 @@ class MobileCIAPIController extends BaseCIController
             $urlblock = new UrlBlock;
             $user = $urlblock->checkBlockedUrl();
             $retailer = $this->getRetailerInfo();
+            $this->acquireUser($retailer, $user);
+            Coupon::issueAutoCoupon($retailer, $user, $urlblock->getUserSession());
+
             $coupon_id = trim(OrbitInput::get('id'));
             $languages = $this->getListLanguages($retailer);
 
@@ -5167,6 +5187,8 @@ class MobileCIAPIController extends BaseCIController
             $urlblock = new UrlBlock;
             $user = $urlblock->checkBlockedUrl();
             $retailer = $this->getRetailerInfo();
+            $this->acquireUser($retailer, $user);
+            Coupon::issueAutoCoupon($retailer, $user, $urlblock->getUserSession());
 
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
 
@@ -5609,6 +5631,8 @@ class MobileCIAPIController extends BaseCIController
             $urlblock = new UrlBlock;
             $user = $urlblock->checkBlockedUrl();
             $retailer = $this->getRetailerInfo();
+            $this->acquireUser($retailer, $user);
+            Coupon::issueAutoCoupon($retailer, $user, $urlblock->getUserSession());
 
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
 
@@ -5757,6 +5781,8 @@ class MobileCIAPIController extends BaseCIController
             $urlblock = new UrlBlock;
             $user = $urlblock->checkBlockedUrl();
             $retailer = $this->getRetailerInfo();
+            $this->acquireUser($retailer, $user);
+            Coupon::issueAutoCoupon($retailer, $user, $urlblock->getUserSession());
 
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
 
@@ -6198,10 +6224,9 @@ class MobileCIAPIController extends BaseCIController
         try {
             $urlblock = new UrlBlock;
             $user = $urlblock->checkBlockedUrl();
-            if(! $user) {
-                throw new Exception('Session error: user not found.');
-            }
             $retailer = $this->getRetailerInfo();
+            $this->acquireUser($retailer, $user);
+            Coupon::issueAutoCoupon($retailer, $user, $urlblock->getUserSession());
 
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
 
@@ -6352,6 +6377,8 @@ class MobileCIAPIController extends BaseCIController
             $urlblock = new UrlBlock;
             $user = $urlblock->checkBlockedUrl();
             $retailer = $this->getRetailerInfo();
+            $this->acquireUser($retailer, $user);
+            Coupon::issueAutoCoupon($retailer, $user, $urlblock->getUserSession());
 
             $languages = $this->getListLanguages($retailer);
 
@@ -6414,6 +6441,9 @@ class MobileCIAPIController extends BaseCIController
             $urlblock = new UrlBlock;
             $user = $urlblock->checkBlockedUrl();
             $retailer = $this->getRetailerInfo();
+            $this->acquireUser($retailer, $user);
+            Coupon::issueAutoCoupon($retailer, $user, $urlblock->getUserSession());
+
             $languages = $this->getListLanguages($retailer);
 
             $inbox_id = OrbitInput::get('id');
@@ -7859,255 +7889,8 @@ class MobileCIAPIController extends BaseCIController
 
             $user->setHidden(array('user_password', 'apikey'));
 
-            $userAge = 0;
-            if ($user->userDetail->birthdate !== '0000-00-00' && $user->userDetail->birthdate !== null) {
-                $userAge =  $this->calculateAge($user->userDetail->birthdate); // 27
-            }
-
-            $userGender = 'U'; // default is Unknown
-            if ($user->userDetail->gender !== '' && $user->userDetail->gender !== null) {
-                $userGender =  $user->userDetail->gender;
-            }
-
-            $mallTime = Carbon::now($retailer->timezone->timezone_name);
-
-
-            //filter by age and gender
-            $queryAgeGender = '';
-
-            if ($userGender !== null) {
-                $queryAgeGender .= " AND ( gender_value = '" . $userGender . "' OR is_all_gender = 'Y' ) ";
-            }
-
-            if ($userAge !== null) {
-                if ($userAge === 0){
-                    $queryAgeGender .= " AND ( (min_value = " . $userAge . " and max_value = " . $userAge . " ) or is_all_age = 'Y' ) ";
-                } else {
-                    if ($userAge >= 55) {
-                        $queryAgeGender .=  " AND ( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ";
-                    } else {
-                        $queryAgeGender .=  " AND ( (min_value <= " . $userAge . " and max_value >= " . $userAge . " ) or is_all_age = 'Y' ) ";
-                    }
-                }
-            }
-
-            // check available coupon campaigns
-            $coupons = DB::select(
-                DB::raw('
-                            SELECT *,
-                            (
-                            select count(ic.issued_coupon_id) from ' . DB::getTablePrefix() . 'issued_coupons ic
-                            where ic.promotion_id = p.promotion_id
-                            and ic.status != "deleted") as total_issued_coupon
-                            FROM ' . DB::getTablePrefix() . 'promotions p
-                            inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id
-
-                            left join ' . DB::getTablePrefix() . 'campaign_gender cg on cg.campaign_id = p.promotion_id
-                            left join ' . DB::getTablePrefix() . 'campaign_age ca on ca.campaign_id = p.promotion_id
-                            left join ' . DB::getTablePrefix() . 'age_ranges ar on ar.age_range_id = ca.age_range_id
-
-                            WHERE 1=1
-                                ' . $queryAgeGender . '
-                                AND p.merchant_id = :merchantid
-                                AND p.is_coupon = "Y" AND p.status = "active"
-                                AND p.begin_date <= "' . $mallTime . '"
-                                AND p.end_date >= "' . $mallTime . '"
-                                AND p.coupon_validity_in_date >= "' . $mallTime . '"
-                            HAVING
-                                (p.maximum_issued_coupon > total_issued_coupon AND p.maximum_issued_coupon <> 0)
-                                OR
-                                (p.maximum_issued_coupon = 0)
-                        '),
-                    array(
-                            'merchantid' => $retailer->merchant_id
-                        )
-                );
-
-            // check available autho-issuance coupon that already obtainde by user
-            $obtained_coupons = DB::select(
-                DB::raw(
-                    'SELECT * FROM ' . DB::getTablePrefix() . 'promotions p
-                inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id
-                inner join ' . DB::getTablePrefix() . 'issued_coupons ic on p.promotion_id = ic.promotion_id
-                WHERE
-                    p.merchant_id = :merchantid
-                    AND ic.user_id = :userid
-                    AND p.is_coupon = "Y" AND p.status = "active"
-                    AND p.begin_date <= "' . $mallTime . '"
-                    AND p.end_date >= "' . $mallTime . '"
-                    AND pr.rule_type != "auto_issue_on_every_signin"
-                    '
-                ),
-                array('merchantid' => $retailer->merchant_id, 'userid' => $user->user_id)
-            );
-
-            // get obtained auto-issuance coupon ids
-            $obtained_coupon_ids = array();
-            foreach ($obtained_coupons as $obtained_coupon) {
-                $obtained_coupon_ids[] = $obtained_coupon->promotion_id;
-            }
-
-            // filter available auto-issuance coupon id by array above
-            $coupons_to_be_obtained = array_filter(
-                $coupons,
-                function ($v) use ($obtained_coupon_ids) {
-                    $match = TRUE;
-                    foreach ($obtained_coupon_ids as $key => $obtained_coupon) {
-                        if($v->promotion_id === $obtained_coupon) {
-                            $match = $match && FALSE;
-                        }
-                    }
-
-                    if($match) {
-                        return $v;
-                    }
-                }
-            );
-
-            // get available auto-issuance coupon ids
-            $couponIds = array();
-            foreach ($coupons_to_be_obtained as $coupon_to_be_obtained) {
-                $couponIds[] = $coupon_to_be_obtained->promotion_id;
-            }
-
-            // use them to issue
-            if(count($couponIds)) {
-                // Issue coupons
-                $objectCoupons = [];
-                $issuedCoupons = [];
-                $numberOfCouponIssued = 0;
-                $applicableCouponNames = [];
-                $issuedCouponNames = [];
-                $prefix = DB::getTablePrefix();
-
-                foreach ($coupons_to_be_obtained as $coupon) {
-                    $issued = false;
-
-                    $ruleBeginDateUTC = Carbon::createFromFormat('Y-m-d H:i:s', $coupon->rule_begin_date, $retailer->timezone->timezone_name);
-                    $ruleBeginDateUTC->setTimezone('UTC');
-
-                    $ruleEndDateUTC = Carbon::createFromFormat('Y-m-d H:i:s', $coupon->rule_end_date, $retailer->timezone->timezone_name);
-                    $ruleEndDateUTC->setTimezone('UTC');
-
-                    $couponBeginDateUTC = Carbon::createFromFormat('Y-m-d H:i:s', $coupon->begin_date, $retailer->timezone->timezone_name);
-                    $couponBeginDateUTC->setTimezone('UTC');
-
-                    $couponEndDateUTC = Carbon::createFromFormat('Y-m-d H:i:s', $coupon->end_date, $retailer->timezone->timezone_name);
-                    $couponEndDateUTC->setTimezone('UTC');
-
-                    if ($coupon->rule_type === 'auto_issue_on_signup') {
-                        $issued = \UserAcquisition::where('acquirer_id', $retailer->merchant_id)
-                                                ->where('user_id', $user->user_id)
-                                                ->whereRaw("created_at between ? and ?", [$ruleBeginDateUTC, $ruleEndDateUTC])->first();
-                    } elseif ($coupon->rule_type === 'auto_issue_on_first_signin') {
-
-                        if ($couponBeginDateUTC == $ruleBeginDateUTC) {
-
-                            if ($mallTime >= $ruleBeginDateUTC && $mallTime <= $ruleEndDateUTC) {
-                                $acq = \UserAcquisition::where('acquirer_id', $retailer->merchant_id)
-                                                        ->where('user_id', $user->user_id)->first();
-
-                                $never_sign_in = \UserSignin::where('location_id', $retailer->merchant_id)
-                                                        ->where('user_id', $user->user_id)->first();
-
-                                $signin_in_rule_period = \UserSignin::where('location_id', $retailer->merchant_id)
-                                                        ->where('user_id', $user->user_id)
-                                                        ->whereRaw("created_at between ? and ?", [$ruleBeginDateUTC, $ruleEndDateUTC])->first();
-
-                                if(! empty($signin_in_rule_period)) {
-                                    $issued = true;
-                                }
-
-                                if (!empty($acq) && empty($never_sign_in)) {
-                                    $issued = true;
-                                }
-
-                                if ($mallTime >= $couponBeginDateUTC && $mallTime <= $couponEndDateUTC) {
-                                    $issued = true;
-                                }
-                            }
-
-                        }
-                        elseif ($ruleBeginDateUTC < $couponBeginDateUTC) {
-
-                            if ($mallTime >= $ruleBeginDateUTC && $mallTime <= $ruleEndDateUTC) {
-                                if ($mallTime >= $couponBeginDateUTC && $mallTime <= $couponEndDateUTC) {
-                                    $acq = \UserAcquisition::where('acquirer_id', $retailer->merchant_id)
-                                                        ->where('user_id', $user->user_id)->first();
-
-                                    $never_sign_in = \UserSignin::where('location_id', $retailer->merchant_id)
-                                                        ->where('user_id', $user->user_id)->first();
-
-                                    $signin_in_rule_period = \UserSignin::where('location_id', $retailer->merchant_id)
-                                                        ->where('user_id', $user->user_id)
-                                                        ->whereRaw("created_at between ? and ?", [$ruleBeginDateUTC, $ruleEndDateUTC])->first();
-
-                                    if(! empty($signin_in_rule_period)) {
-                                        $issued = true;
-                                    }
-
-                                    if (!empty($acq) && empty($never_sign_in)) {
-                                        $issued = true;
-                                    }
-                                }
-                            }
-
-                        }
-
-                    } elseif ($coupon->rule_type === 'auto_issue_on_every_signin') {
-                        $issued = true;
-                    }
-
-                    if (! empty($issued)) {
-                        $issuedCoupon = new IssuedCoupon();
-                        $tmp = $issuedCoupon->issue($coupon, $user->user_id, $user);
-
-                        $obj = new stdClass();
-                        $obj->coupon_number = $tmp->issued_coupon_code;
-                        $obj->coupon_name = $coupon->promotion_name;
-                        $obj->promotion_id = $coupon->promotion_id;
-
-                        $objectCoupons[] = $coupon;
-                        $issuedCoupons[] = $obj;
-                        $applicableCouponNames[] = $coupon->promotion_name;
-                        $issuedCouponNames[$tmp->issued_coupon_code] = $coupon->promotion_name;
-
-                        $tmp = NULL;
-                        $obj = NULL;
-
-                        $numberOfCouponIssued++;
-                    }
-                }
-
-                // Insert to alert system
-                $issuedCouponNames = $this->flipArrayElement($issuedCouponNames);
-
-                if (! empty($issuedCouponNames)) {
-                    $name = $user->getFullName();
-                    $name = trim($name) ? trim($name) : $user->user_email;
-                    $subject = 'Coupon';
-
-                    $inbox = new Inbox();
-                    $inbox->addToInbox($user->user_id, $issuedCouponNames, $retailer->merchant_id, 'coupon_issuance');
-                }
-
-                foreach ($objectCoupons as $object) {
-                    $activity_coupon = Coupon::where('promotion_id', $object->promotion_id)->first();
-
-                    $activity = Activity::mobileci()
-                                        ->setActivityType('view');
-                    $activityPageNotes = sprintf('Page viewed: %s', 'Coupon List Page');
-                    $activity->setUser($user)
-                            ->setActivityName('view_coupon_list')
-                            ->setActivityNameLong('Coupon Issuance')
-                            ->setObject($activity_coupon)
-                            ->setCoupon($activity_coupon)
-                            ->setModuleName('Coupon')
-                            ->setNotes($activityPageNotes)
-                            ->responseOK()
-                            ->save();
-                }
-            }
+            // $urlblock = new UrlBlock;
+            // Coupon::issueAutoCoupon($retailer, $user, $urlblock->getUserSession());
 
             $this->response->data = $user;
 
@@ -8808,5 +8591,14 @@ class MobileCIAPIController extends BaseCIController
         }
 
         return $this->render();
+    }
+
+    protected function acquireUser($retailer, $user)
+    {
+        if (! $user->isConsumer()) {
+            return;
+        }
+
+        $retailer->acquireUser($user);
     }
 }

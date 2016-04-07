@@ -247,7 +247,7 @@ class LoginAPIController extends IntermediateBaseController
                 // There is a chance that user not 'grant' his email while approving our app
                 // so we double check it here
                 if (empty($userEmail)) {
-                    return Redirect::to(Config::get('orbit.shop.after_social_sign_in') . '?error=no_email');
+                    return Redirect::to(Config::get('orbit.shop.after_social_sign_in') . '/#/?error=no_email');
                 }
 
                 $loggedInUser = $this->doAutoLogin($userEmail);

@@ -433,6 +433,9 @@ class LoginAPIController extends ControllerAPI
 
             $email = OrbitInput::post('email');
             $password = OrbitInput::post('password', '');
+            $firstname = OrbitInput::post('firstname', '');
+            $lastname = OrbitInput::post('lastname', '');
+            $gender = OrbitInput::post('gender', '');
             $status = OrbitInput::post('status', null);
 
             $from = OrbitInput::post('from');
@@ -462,7 +465,7 @@ class LoginAPIController extends ControllerAPI
 
             $mall = Mall::where('merchant_id', $mall_id)->first();
 
-            list($newuser, $userdetail, $apikey) = $this->createCustomerUser($email, $password, null, null, null, $status);
+            list($newuser, $userdetail, $apikey) = $this->createCustomerUser($email, $password, $firstname, $lastname, $gender, null, null, null, $status);
 
             $this->response->data = $newuser;
 
@@ -1522,7 +1525,7 @@ class LoginAPIController extends ControllerAPI
      * @return array [User, UserDetail, ApiKey]
      * @throws Exception
      */
-    public function createCustomerUser($email, $password, $userId = null, $userDetailId = null, $apiKeyId = null, $userStatus = null)
+    public function createCustomerUser($email, $password, $firstname, $lastname, $gender, $userId = null, $userDetailId = null, $apiKeyId = null, $userStatus = null)
     {
         // The retailer (shop) which this registration taken
         $retailerId = $this->getRetailerId();
@@ -1550,6 +1553,12 @@ class LoginAPIController extends ControllerAPI
         if (! empty($password)) {
             $new_user->user_password = Hash::make($password);
         }
+        if (! empty($firstname)) {
+            $new_user->user_firstname = $firstname;
+        }
+        if (! empty($lastname)) {
+            $new_user->user_lastname = $lastname;
+        }
         $new_user->status = isset($userStatus) ? $userStatus : 'pending';
         $new_user->user_role_id = $customerRole->role_id;
         $new_user->user_ip = $_SERVER['REMOTE_ADDR'];
@@ -1561,6 +1570,9 @@ class LoginAPIController extends ControllerAPI
 
         if (isset($userDetailId)) {
             $user_detail->user_detail_id = $userDetailId;
+        }
+        if (! empty($gender)) {
+            $user_detail->gender = $gender;
         }
         // Fill the information about retailer (shop)
         $user_detail->merchant_id = $retailer->parent_id;

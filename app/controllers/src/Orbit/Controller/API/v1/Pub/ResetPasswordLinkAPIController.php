@@ -59,8 +59,8 @@ class ResetPasswordLinkAPIController extends ControllerAPI
                 })
                 ->first();
 
-            if (!is_object($user)) {
-                $errorMessage = \Lang::get('validation.orbit.empty.email');
+            if (! is_object($user)) {
+                $errorMessage = \Lang::get('validation.orbit.empty.forgot_email', ['email_addr' => $email]);
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
@@ -103,7 +103,7 @@ class ResetPasswordLinkAPIController extends ControllerAPI
                 'cs_email'          => $contactInfo['email'],
                 'cs_office_hour'    => $contactInfo['office_hour']
             );
-            
+
             $mailviews = array(
                 'html' => 'emails.reset-password.customer-html',
                 'text' => 'emails.reset-password.customer-text'

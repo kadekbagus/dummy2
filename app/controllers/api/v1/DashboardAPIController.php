@@ -279,27 +279,30 @@ class DashboardAPIController extends ControllerAPI
 
                 // show news
                 case 'news':
+                    $total = News::allowedForPMPUser($user, 'news')
+                                ->select(DB::raw("count(distinct({$tablePrefix}campaign_page_views.campaign_page_view_id)) as total"))
+                                ->leftJoin('campaign_page_views', function($q) {
+                                        $q->on('campaign_page_views.campaign_id', '=', 'news.news_id');
+                                        $q->on('news.object_type', '=', DB::raw("'News'"));
+                                })
+                                ->where('campaign_page_views.location_id', '=', $merchant_id)
+                                ->whereBetween('campaign_page_views.created_at', [$start_date, $end_date])->get()->sum('total');
+
                     $query = News::allowedForPMPUser($user, 'news')
-                            ->select(DB::raw("COUNT({$tablePrefix}campaign_page_views.campaign_page_view_id) as score,
+                            ->select(DB::raw("COUNT(DISTINCT({$tablePrefix}campaign_page_views.campaign_page_view_id)) as score,
                             CASE WHEN {$tablePrefix}news_translations.news_name !='' THEN {$tablePrefix}news_translations.news_name ELSE {$tablePrefix}news.news_name END as name,
                                 {$tablePrefix}news.news_id as object_id,
-                          count({$tablePrefix}campaign_page_views.campaign_page_view_id) / (select count(cp.campaign_page_view_id)
-                                from {$tablePrefix}news ne
-                                left join {$tablePrefix}campaign_page_views cp on cp.campaign_id = ne.news_id and ne.object_type = 'News'
-                                left join {$tablePrefix}campaign_group_names cgn on cgn.campaign_group_name_id=cp.campaign_group_name_id
-                                where cp.location_id = {$quote($merchant_id)} and cp.created_at between {$quote($start_date)} and {$quote($end_date)}) * 100 as percentage")
+                          COUNT(DISTINCT({$tablePrefix}campaign_page_views.campaign_page_view_id)) / {$total} * 100 as percentage")
                             )
                             ->leftJoin('campaign_page_views', function($q) {
                                     $q->on('campaign_page_views.campaign_id', '=', 'news.news_id');
                                     $q->on('news.object_type', '=', DB::raw("'News'"));
                             })
                             ->leftJoin('news_translations', 'news_translations.news_id', '=', 'news.news_id')
-                            ->leftJoin('merchant_languages', 'merchant_languages.merchant_language_id', '=', 'news_translations.merchant_language_id')
-                            ->leftJoin('languages', 'languages.language_id', '=', 'merchant_languages.language_id')
+                            ->leftJoin('languages', 'languages.language_id', '=', 'news_translations.merchant_language_id')
                             ->where('languages.name', '=', 'en')
                             ->whereBetween('campaign_page_views.created_at', [$start_date, $end_date])
                             ->where('location_id', $merchant_id)
-                            ->groupBy('news.news_id')
                             ->orderBy(DB::raw('1'), 'desc')
                             ->take($take);
                         $flag_type = true;
@@ -335,23 +338,27 @@ class DashboardAPIController extends ControllerAPI
 
                 // show promotions
                 case 'promotions':
+                    $total = News::allowedForPMPUser($user, 'promotion')
+                                ->select(DB::raw("count(distinct({$tablePrefix}campaign_page_views.campaign_page_view_id)) as total"))
+                                ->leftJoin('campaign_page_views', function($q) {
+                                        $q->on('campaign_page_views.campaign_id', '=', 'news.news_id');
+                                        $q->on('news.object_type', '=', DB::raw("'Promotion'"));
+                                })
+                                ->where('campaign_page_views.location_id', '=', $merchant_id)
+                                ->whereBetween('campaign_page_views.created_at', [$start_date, $end_date])->get()->sum('total');
+
                     $query = News::allowedForPMPUser($user, 'promotion')
-                            ->select(DB::raw("COUNT({$tablePrefix}campaign_page_views.campaign_page_view_id) as score,
+                            ->select(DB::raw("COUNT(DISTINCT({$tablePrefix}campaign_page_views.campaign_page_view_id)) as score,
                                 CASE WHEN {$tablePrefix}news_translations.news_name !='' THEN {$tablePrefix}news_translations.news_name ELSE {$tablePrefix}news.news_name END as name,
                                 {$tablePrefix}news.news_id as object_id,
-                          count({$tablePrefix}campaign_page_views.campaign_page_view_id) / (select count(cp.campaign_page_view_id)
-                                from {$tablePrefix}news ne
-                                left join {$tablePrefix}campaign_page_views cp on cp.campaign_id = ne.news_id and ne.object_type = 'Promotion'
-                                left join {$tablePrefix}campaign_group_names cgn on cgn.campaign_group_name_id=cp.campaign_group_name_id
-                                where cp.location_id = {$quote($merchant_id)} and cp.created_at between {$quote($start_date)} and {$quote($end_date)}) * 100 as percentage")
+                          COUNT(DISTINCT({$tablePrefix}campaign_page_views.campaign_page_view_id)) / {$total} * 100 as percentage")
                             )
                             ->leftJoin('campaign_page_views', function($q) {
                                     $q->on('campaign_page_views.campaign_id', '=', 'news.news_id');
                                     $q->on('news.object_type', '=', DB::raw("'Promotion'"));
                             })
                             ->leftJoin('news_translations', 'news_translations.news_id', '=', 'news.news_id')
-                            ->leftJoin('merchant_languages', 'merchant_languages.merchant_language_id', '=', 'news_translations.merchant_language_id')
-                            ->leftJoin('languages', 'languages.language_id', '=', 'merchant_languages.language_id')
+                            ->leftJoin('languages', 'languages.language_id', '=', 'news_translations.merchant_language_id')
                             ->where('languages.name', '=', 'en')
                             ->whereBetween('campaign_page_views.created_at', [$start_date, $end_date])
                             ->where('location_id', $merchant_id)
@@ -391,15 +398,17 @@ class DashboardAPIController extends ControllerAPI
 
                 // show coupon
                 case 'coupons':
+                    $total = Coupon::allowedForPMPUser($user, 'coupon')
+                                ->select(DB::raw("count(distinct({$tablePrefix}campaign_page_views.campaign_page_view_id)) as total"))
+                                ->leftJoin('campaign_page_views', 'campaign_page_views.campaign_id', '=', 'promotions.promotion_id')
+                                ->where('campaign_page_views.location_id', '=', $merchant_id)
+                                ->whereBetween('campaign_page_views.created_at', [$start_date, $end_date])->get()->sum('total');
+
                     $query = Coupon::allowedForPMPUser($user, 'coupon')
-                            ->select(DB::raw("COUNT({$tablePrefix}campaign_page_views.campaign_page_view_id) as score,
+                            ->select(DB::raw("COUNT(DISTINCT({$tablePrefix}campaign_page_views.campaign_page_view_id)) as score,
                                     CASE WHEN {$tablePrefix}coupon_translations.promotion_name !='' THEN {$tablePrefix}coupon_translations.promotion_name ELSE {$tablePrefix}promotions.promotion_name END as name,
                                     {$tablePrefix}promotions.promotion_id as object_id,
-                                count({$tablePrefix}campaign_page_views.campaign_page_view_id) / (select count(cp.campaign_page_view_id)
-                                from {$tablePrefix}promotions pr
-                                left join {$tablePrefix}campaign_page_views cp on cp.campaign_id = pr.promotion_id and pr.is_coupon = 'Y'
-                                left join {$tablePrefix}campaign_group_names cgn on cgn.campaign_group_name_id=cp.campaign_group_name_id
-                                where cp.location_id = {$quote($merchant_id)} and cp.created_at between {$quote($start_date)} and {$quote($end_date)}) * 100 as percentage")
+                                COUNT(DISTINCT({$tablePrefix}campaign_page_views.campaign_page_view_id)) / {$total} * 100 as percentage")
                             )
                             ->leftJoin('campaign_page_views', 'campaign_page_views.campaign_id', '=', 'promotions.promotion_id')
                             ->leftJoin('campaign_group_names', function($q) use ($quote) {
@@ -407,8 +416,7 @@ class DashboardAPIController extends ControllerAPI
                                     $q->on('campaign_group_names.campaign_group_name', '=', DB::raw($quote('Coupon')));
                             })
                             ->leftJoin('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
-                            ->leftJoin('merchant_languages', 'merchant_languages.merchant_language_id', '=', 'coupon_translations.merchant_language_id')
-                            ->leftJoin('languages', 'languages.language_id', '=', 'merchant_languages.language_id')
+                            ->leftJoin('languages', 'languages.language_id', '=', 'coupon_translations.merchant_language_id')
                             ->where('languages.name', '=', 'en')
                             ->whereBetween('campaign_page_views.created_at', [$start_date, $end_date])
                             ->where('promotions.merchant_id', $merchant_id)
@@ -965,10 +973,8 @@ class DashboardAPIController extends ControllerAPI
                 ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
                 ->leftJoin('news_merchant as nm', DB::raw('nm.news_id'), '=', 'news.news_id')
                 ->leftJoin('merchants as m', DB::raw('m.merchant_id'), '=', DB::raw('nm.merchant_id'))
-                // Join translation for get english name
                 ->leftJoin('news_translations', 'news_translations.news_id', '=', 'news.news_id')
-                ->leftJoin('merchant_languages', 'merchant_languages.merchant_language_id', '=', 'news_translations.merchant_language_id')
-                ->leftJoin('languages', 'languages.language_id', '=', 'merchant_languages.language_id')
+                ->leftJoin('languages', 'languages.language_id', '=', 'news_translations.merchant_language_id')
                 ->where('languages.name', '=', 'en')
                 ->where('end_date', '>', $mallTimezone)
                 ->orderBy('expire_days','asc');
@@ -990,10 +996,8 @@ class DashboardAPIController extends ControllerAPI
                 ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
                 ->leftJoin('promotion_retailer as pr', DB::raw('pr.promotion_id'), '=', 'promotions.promotion_id')
                 ->leftJoin('merchants as m', DB::raw('m.merchant_id'), '=', DB::raw('pr.retailer_id'))
-                // Join translation for get english name
                 ->leftJoin('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
-                ->leftJoin('merchant_languages', 'merchant_languages.merchant_language_id', '=', 'coupon_translations.merchant_language_id')
-                ->leftJoin('languages', 'languages.language_id', '=', 'merchant_languages.language_id')
+                ->leftJoin('languages', 'languages.language_id', '=', 'coupon_translations.merchant_language_id')
                 ->leftJoin('user_campaign as uc', DB::raw('uc.campaign_id'), '=', 'promotions.promotion_id')
                 ->leftJoin('campaign_account as ca', DB::raw('ca.user_id'), '=', DB::raw('uc.user_id'))
                 ->leftJoin('campaign_account as cas', DB::raw('cas.parent_user_id'), '=', DB::raw('ca.parent_user_id'))
@@ -4369,108 +4373,47 @@ class DashboardAPIController extends ControllerAPI
             $start_date = $startConvert->toDateString();
             $end_date = $endConvert->toDateString();
 
-            //get total cost news
-            $news = DB::table('news')->selectraw(DB::raw("COUNT({$tablePrefix}news_merchant.news_merchant_id) * {$tablePrefix}campaign_price.base_price * (DATEDIFF( {$tablePrefix}news.end_date, {$tablePrefix}news.begin_date) + 1) AS total"))
-                        ->join('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
-                        ->join('campaign_price', 'campaign_price.campaign_id', '=', 'news.news_id')
-                        ->join('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
-                        ->leftJoin('user_campaign as uc', DB::raw('uc.campaign_id'), '=', 'news.news_id')
-                        ->leftJoin('campaign_account as ca', DB::raw('ca.user_id'), '=', DB::raw('uc.user_id'))
-                        ->leftJoin('campaign_account as cas', DB::raw('cas.parent_user_id'), '=', DB::raw('ca.parent_user_id'))
-                        ->where(function ($q) use ($user, $tablePrefix) {
-                            $q->WhereRaw("ca.user_id = (select parent_user_id from {$tablePrefix}campaign_account where user_id = '{$user->user_id}')
-                                            or
-                                          ca.parent_user_id = (select parent_user_id from {$tablePrefix}campaign_account where user_id = '{$user->user_id}')")
-                                ->orWhere(DB::raw('ca.user_id'), '=', $user->user_id)
-                                ->orWhere(DB::raw('ca.parent_user_id'), '=', $user->user_id);
-                        })
-                        ->where('merchants.status', '=', 'active')
-                        ->where('news.begin_date', '<=', $end_date)
-                        ->where('news.end_date', '>=', $start_date)
-                        ->where('campaign_price.campaign_type', '=', 'news')
-                        ->where('news.object_type', '=', 'news')
-                        ->groupBy('news.news_id');
-
-            // Filter news by mall_id
-            OrbitInput::get('merchant_id', function ($mall_id) use ($news)
-            {
-                $news->where(function ($q) use ($mall_id) {
-                    $q->where('merchants.merchant_id', $mall_id)
-                        ->orWhere('merchants.parent_id', $mall_id);
-                });
-            });
-
-
-            $promotions = DB::table('news')->selectraw(DB::raw("COUNT({$tablePrefix}news_merchant.news_merchant_id) * {$tablePrefix}campaign_price.base_price * (DATEDIFF({$tablePrefix}news.end_date, {$tablePrefix}news.begin_date) + 1) AS total"))
-                                ->join('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
-                                ->join('campaign_price', 'campaign_price.campaign_id', '=', 'news.news_id')
-                                ->join('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
-                                ->leftJoin('user_campaign as uc', DB::raw('uc.campaign_id'), '=', 'news.news_id')
-                                ->leftJoin('campaign_account as ca', DB::raw('ca.user_id'), '=', DB::raw('uc.user_id'))
-                                ->leftJoin('campaign_account as cas', DB::raw('cas.parent_user_id'), '=', DB::raw('ca.parent_user_id'))
-                                ->where(function ($q) use ($user, $tablePrefix) {
-                                    $q->WhereRaw("ca.user_id = (select parent_user_id from {$tablePrefix}campaign_account where user_id = '{$user->user_id}')
-                                                    or
-                                                  ca.parent_user_id = (select parent_user_id from {$tablePrefix}campaign_account where user_id = '{$user->user_id}')")
-                                        ->orWhere(DB::raw('ca.user_id'), '=', $user->user_id)
-                                        ->orWhere(DB::raw('ca.parent_user_id'), '=', $user->user_id);
+            $news_promotions = CampaignPrice::select(db::raw("nm.news_id, count(nm.news_id) as total_tenant,
+                                                                datediff(n.end_date, n.begin_date) + 1 as total_days,
+                                                                base_price, count(nm.news_id) * (datediff(n.end_date, n.begin_date) + 1) * base_price as total_estimate
+                                                            "))
+                            ->whereHas('news', function($q) use ($user, $start_date, $end_date) {
+                                $q->allowedForPMPUser($user, 'news_promotion')
+                                    ->where('news.begin_date', '<=', $end_date)
+                                    ->where('news.end_date', '>=', $start_date);
+                            })
+                            ->leftJoin('news_merchant as nm', DB::raw('nm.news_id'), '=','campaign_price.campaign_id')
+                            ->leftJoin('news as n', DB::raw('n.news_id'), '=', DB::raw('nm.news_id'))
+                            ->leftJoin('merchants as m', DB::raw('m.merchant_id'), '=', db::raw('nm.merchant_id'))
+                            ->where(db::raw('m.object_type'), '=', 'tenant')
+                            ->where('campaign_price.campaign_type', '=', db::raw('n.object_type'))
+                            ->where(function ($q) use ($merchant_id) {
+                                    $q->where(DB::raw('m.merchant_id'), $merchant_id)
+                                      ->orWhere(DB::raw('m.parent_id'), $merchant_id);
                                 })
-                                ->where('merchants.status', '=', 'active')
-                                ->where('news.begin_date', '<=', $end_date)
-                                ->where('news.end_date', '>=', $start_date)
-                                ->where('campaign_price.campaign_type', '=', 'promotion')
-                                ->where('news.object_type', '=', 'promotion')
-                                ->groupBy('news.news_id');
+                            ->groupBy('campaign_price.campaign_id')
+                            ->get();
 
-            // Filter news by mall_id
-            OrbitInput::get('merchant_id', function ($mall_id) use ($promotions)
-            {
-                $promotions->where(function ($q) use ($mall_id) {
-                    $q->where('merchants.merchant_id', $mall_id)
-                        ->orWhere('merchants.parent_id', $mall_id);
-                });
-            });
+            $coupon = CampaignPrice::select(db::raw("pr.promotion_id, count(pr.promotion_id) as total_tenant, datediff(p.end_date, p.begin_date) + 1 as total_days, base_price, count(pr.promotion_id) * (datediff(p.end_date, p.begin_date) + 1) * base_price as total_estimate"))
+                            ->whereHas('coupon', function($q) use ($user, $start_date, $end_date) {
+                                $q->allowedForPMPUser($user, 'coupon')
+                                    ->where('promotions.begin_date', '<=', $end_date)
+                                    ->where('promotions.end_date', '>=', $start_date);
+                            })
+                            ->leftJoin('promotion_retailer as pr', DB::raw('pr.promotion_id'), '=','campaign_price.campaign_id')
+                            ->leftJoin('promotions as p', DB::raw('p.promotion_id'), '=', DB::raw('pr.promotion_id'))
+                            ->leftJoin('merchants as m', DB::raw('m.merchant_id'), '=', db::raw('pr.retailer_id'))
+                            ->where(db::raw('m.object_type'), '=', 'tenant')
+                            ->where(function ($q) use ($merchant_id) {
+                                    $q->where(DB::raw('m.merchant_id'), $merchant_id)
+                                      ->orWhere(DB::raw('m.parent_id'), $merchant_id);
+                                })
+                            ->groupBy('campaign_price.campaign_id')
+                            ->get();
 
-            $coupons = DB::table('promotions')->selectraw(DB::raw("COUNT({$tablePrefix}promotion_retailer.promotion_retailer_id) * {$tablePrefix}campaign_price.base_price * (DATEDIFF({$tablePrefix}promotions.end_date, {$tablePrefix}promotions.begin_date) + 1) AS total"))
-                        ->join('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
-                        ->join('campaign_price', 'campaign_price.campaign_id', '=', 'promotions.promotion_id')
-                        ->join('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
-                        ->leftJoin('user_campaign as uc', DB::raw('uc.campaign_id'), '=', 'promotions.promotion_id')
-                        ->leftJoin('campaign_account as ca', DB::raw('ca.user_id'), '=', DB::raw('uc.user_id'))
-                        ->leftJoin('campaign_account as cas', DB::raw('cas.parent_user_id'), '=', DB::raw('ca.parent_user_id'))
-                        ->where(function ($q) use ($user, $tablePrefix) {
-                            $q->WhereRaw("ca.user_id = (select parent_user_id from {$tablePrefix}campaign_account where user_id = '{$user->user_id}')
-                                            or
-                                          ca.parent_user_id = (select parent_user_id from {$tablePrefix}campaign_account where user_id = '{$user->user_id}')")
-                                ->orWhere(DB::raw('ca.user_id'), '=', $user->user_id)
-                                ->orWhere(DB::raw('ca.parent_user_id'), '=', $user->user_id);
-                        })
-                        ->where('merchants.status', '=', 'active')
-                        ->where('promotions.begin_date', '<=', $end_date)
-                        ->where('promotions.end_date', '>=', $start_date)
-                        ->where('campaign_price.campaign_type', '=', 'coupon')
-                        ->groupBy('promotions.promotion_id');
+            $total_estimate_cost['estimated_total_cost'] = $news_promotions->sum('total_estimate') + $coupon->sum('total_estimate');
 
-            // Filter news by mall_id
-            OrbitInput::get('merchant_id', function ($mall_id) use ($coupons)
-            {
-                $coupons->where(function ($q) use ($mall_id) {
-                    $q->where('merchants.merchant_id', $mall_id)
-                        ->orWhere('merchants.parent_id', $mall_id);
-                });
-            });
-
-            $data = $news->unionAll($promotions)->unionAll($coupons);
-            $sql = $data->toSql();
-            foreach($data->getBindings() as $binding)
-            {
-              $value = is_numeric($binding) ? $binding : "'".$binding."'";
-              $sql = preg_replace('/\?/', $value, $sql, 1);
-            }
-
-            $grandtotal['estimated_total_cost'] = DB::table(DB::raw('(' . $sql . ') as a'))->sum('total');
-
-            $this->response->data = $grandtotal;
+            $this->response->data = $total_estimate_cost;
 
         } catch (ACLForbiddenException $e) {
             Event::fire('orbit.dashboard.getgeneralcustomerview.access.forbidden', array($this, $e));
