@@ -179,18 +179,23 @@ return array(
         'sign_in' => 'Masuk',
         'sign_up' => 'Daftar',
         'doesnt_have_account' => 'Tidak punya akun',
+        'remember_me' => 'Ingat saya',
+        'forgot_link' => 'Lupa Password?',
+        'forgot_button' => 'Kirim Link Reset Password',
+        'forgot_sent_title' => 'Kami sudah mengirimkan link untuk me-reset password Anda',
+        'forgot_sent_sub_title' => 'silahkan cek kotak masuk email'
     ),
 
     'signup' => array(
-        'email_placeholder' => 'Alamat Email*',
-        'first_name' => 'Nama Depan*',
-        'last_name' => 'Nama Belakang*',
-        'gender' => 'Jenis Kelamin*',
+        'email_placeholder' => 'Alamat Email',
+        'first_name' => 'Nama Depan',
+        'last_name' => 'Nama Belakang',
+        'gender' => 'Jenis Kelamin',
         'male' => 'Laki Laki',
         'female' => 'Perempuan',
-        'day' => 'Hari*',
-        'month' => 'Bulan*',
-        'year' => 'Tahun*',
+        'day' => 'Hari',
+        'month' => 'Bulan',
+        'year' => 'Tahun',
         'policy_terms_message' => 'Dengan mengklik <strong>Daftar</strong> berarti anda setuju dengan
                         <a target="_blank" href="%s">Kebijakan</a> dan 
                         <a target="_blank" href="%s">Syarat dan ketentuan</a>',

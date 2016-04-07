@@ -499,6 +499,6 @@ class Mall extends Eloquent
      */
     public function scopeIncludeDummyOpeningHours($builder)
     {
-        return $builder->addSelect(DB::raw( '"Sun - Mon 10.00 - 22.00" as opening_hours' ));
+        return $builder->addSelect(DB::raw( '"Sun - Mon 10.00 - 22.00" as operating_hours' ));
     }
 }

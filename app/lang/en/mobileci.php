@@ -155,7 +155,7 @@ return array(
 
     // page specific lang
     'signin' => array(
-        'email_placeholder' => 'Insert your email address',
+        'email_placeholder' => 'Email Address',
         'login_button'      => 'Enter',
         'start_button'      => 'Start Shopping',
         'not'               => 'Not',
@@ -179,18 +179,23 @@ return array(
         'sign_in' => 'Sign In',
         'sign_up' => 'Sign Up',
         'doesnt_have_account' => 'Not have an account?',
+        'remember_me' => 'Remember Me',
+        'forgot_link' => 'Forgot Password?',
+        'forgot_button' => 'Send Reset Password Link',
+        'forgot_sent_title' => 'We have sent you the link to reset your password',
+        'forgot_sent_sub_title' => 'please check your email inbox'
     ),
 
     'signup' => array(
-        'email_placeholder' => 'Email Address*',
-        'first_name' => 'First Name*',
-        'last_name' => 'Last Name*',
-        'gender' => 'Gender*',
+        'email_placeholder' => 'Email Address',
+        'first_name' => 'First Name',
+        'last_name' => 'Last Name',
+        'gender' => 'Gender',
         'male' => 'Male',
         'female' => 'Female',
-        'day' => 'Day*',
-        'month' => 'Month*',
-        'year' => 'Year*',
+        'day' => 'Day',
+        'month' => 'Month',
+        'year' => 'Year',
         'policy_terms_message' => 'By clicking <strong>Sign up</strong> you confirm that you accept
                         <a target="_blank" href="%s">Privacy Policy</a> and
                         <a target="_blank" href="%s">Terms and Conditions</a>',
