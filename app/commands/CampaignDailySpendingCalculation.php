@@ -88,7 +88,6 @@ class CampaignDailySpendingCalculation extends Command {
                         ->get();
 
                     // Check campaign which have link to tenant and mall in this mall
-
                     if (count($newsAndPromotions) > 0) {
                         foreach ($newsAndPromotions as $key => $valNewsPromotions) {
 
@@ -133,9 +132,6 @@ class CampaignDailySpendingCalculation extends Command {
                         }
                     }
 
-			        // $this->info('Success, Inserted campaign daily spending for news !');
-			        // $this->info('Success, Inserted campaign daily spending for promotions !');
-
                     // ============================== Coupons ==============================
                     // Check campaign which have link to tenant and mall in this mall
                     $coupons = Coupon::select('promotions.*', 'campaign_status.order',
@@ -156,6 +152,7 @@ class CampaignDailySpendingCalculation extends Command {
                         })
                         ->get();
 
+                    // Check campaign which have link to tenant and mall in this mall
                     if (count($coupons) > 0) {
                         foreach ($coupons as $key => $valCoupons) {
 
@@ -200,8 +197,6 @@ class CampaignDailySpendingCalculation extends Command {
                         }
 
                     }
-
-        			// $this->info('Success, Inserted campaign daily spending for coupon !');
 
                 }
 
