@@ -212,7 +212,7 @@
             <th style="text-align:left;">Promotion Name</th>
             <th style="text-align:left;">Start Date &amp; Time</th>
             <th style="text-align:left;">End Date &amp; Time</th>
-            <th style="text-align:left;">Locations</th>
+            <th style="text-align:left;">Location(s)</th>
             <th style="text-align:left;">Status</th>
             <th style="text-align:left;">Last Update</th>
         </thead>
