@@ -4583,7 +4583,6 @@ class DashboardAPIController extends ControllerAPI
                                 $q2->orWhere('merchants.object_type', 'mall');
                             });
                             $q->where(function($q3) use($mall_id) {
-                                $prefix = DB::getTablePrefix();
                                 $q3->where('merchants.merchant_id', $mall_id);
                                 // avaliable cause merchant_id never same with parent_id
                                 $q3->orWhere('merchants.parent_id', $mall_id);
@@ -4604,7 +4603,6 @@ class DashboardAPIController extends ControllerAPI
                                 $q2->orWhere('merchants.object_type', 'mall');
                             });
                             $q->where(function($q3) use($mall_id) {
-                                $prefix = DB::getTablePrefix();
                                 $q3->where('merchants.merchant_id', $mall_id);
                                 // avaliable cause merchant_id never same with parent_id
                                 $q3->orWhere('merchants.parent_id', $mall_id);
@@ -4625,7 +4623,6 @@ class DashboardAPIController extends ControllerAPI
                                 $q2->orWhere('merchants.object_type', 'mall');
                             });
                             $q->where(function($q3) use($mall_id) {
-                                $prefix = DB::getTablePrefix();
                                 $q3->where('merchants.merchant_id', $mall_id);
                                 // avaliable cause merchant_id never same with parent_id
                                 $q3->orWhere('merchants.parent_id', $mall_id);
