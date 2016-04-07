@@ -179,18 +179,23 @@ return array(
         'sign_in' => '登入',
         'sign_up' => '报名',
         'doesnt_have_account' => '没有帐户',
+        'remember_me' => 'Remember Me',
+        'forgot_link' => 'Forgot Password?',
+        'forgot_button' => 'Send Reset Password Link',
+        'forgot_sent_title' => 'We have sent you the link to reset your password',
+        'forgot_sent_sub_title' => 'please check your email inbox'
     ),
 
     'signup' => array(
-        'email_placeholder' => '电子邮件地址*',
-        'first_name' => '名字*',
-        'last_name' => '姓*',
-        'gender' => '选择性别*',
+        'email_placeholder' => '电子邮件地址',
+        'first_name' => '名字',
+        'last_name' => '姓',
+        'gender' => '选择性别',
         'male' => '男',
         'female' => '女',
-        'day' => '日*',
-        'month' => '月*',
-        'year' => '年*',
+        'day' => '日',
+        'month' => '月',
+        'year' => '年',
         'policy_terms_message' => '通过点击<strong>签署</strong>您证实您接受
                         <a target="_blank" href="%s">隐私权政策</a>和
                         <a target="_blank" href="%s">期限和条件</a>',
