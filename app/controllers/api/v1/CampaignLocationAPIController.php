@@ -172,8 +172,8 @@ class CampaignLocationAPIController extends ControllerAPI
 
             $data = new stdclass();
             $data->total_records = $totalCampaignLocations;
-            $data->returned_records = $totalCampaignLocations - $totalReturnedRecords;
-            $data->remaining_records = count($listOfCampaignLocations);
+            $data->returned_records = $totalReturnedRecords;
+            $data->remaining_records = $totalCampaignLocations - $totalReturnedRecords;
             $data->records = $listOfCampaignLocations;
 
             if ($totalCampaignLocations === 0) {
