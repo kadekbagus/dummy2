@@ -712,9 +712,30 @@ class CouponAPIController extends ControllerAPI
                 }
             }
 
-            OrbitInput::post('translations', function($translation_json_string) use ($newcoupon) {
+            OrbitInput::post('translations', function($translation_json_string) use ($newcoupon, $mallid) {
                 $this->validateAndSaveTranslations($newcoupon, $translation_json_string, 'create');
             });
+
+            foreach ($mallid as $mall) {
+                // get default mall language id
+                $default = Mall::select('mobile_default_language', 'name')
+                                ->where('merchant_id', '=', $mall)
+                                ->first();
+
+                $idLanguage = Language::select('language_id', 'name_long')
+                                    ->where('name', '=', $default->mobile_default_language)
+                                    ->first();
+
+                $isAvailable = CouponTranslation::where('merchant_language_id', '=', $idLanguage->language_id)
+                                                ->where('promotion_id', '=', $newcoupon->promotion_id)
+                                                ->where('promotion_name', '!=', '')
+                                                ->count();
+
+                if ($isAvailable == 0) {
+                    $errorMessage = 'Language ' . $idLanguage->name_long . ' is not available in Mall ' . $default->name . ', you need to setup ' . $idLanguage->name_long . ' as default language in Mall ' . $default->name . '';
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+            }
 
             $this->response->data = $newcoupon;
             $this->response->data->translation_default = $coupon_translation_default;
@@ -1723,9 +1744,30 @@ class CouponAPIController extends ControllerAPI
 
             Event::fire('orbit.coupon.postupdatecoupon.after.save', array($this, $updatedcoupon));
 
-            OrbitInput::post('translations', function($translation_json_string) use ($updatedcoupon) {
+            OrbitInput::post('translations', function($translation_json_string) use ($updatedcoupon, $mallid) {
                 $this->validateAndSaveTranslations($updatedcoupon, $translation_json_string, 'create');
             });
+
+            foreach ($mallid as $mall) {
+                // get default mall language id
+                $default = Mall::select('mobile_default_language', 'name')
+                                ->where('merchant_id', '=', $mall)
+                                ->first();
+
+                $idLanguage = Language::select('language_id', 'name_long')
+                                    ->where('name', '=', $default->mobile_default_language)
+                                    ->first();
+
+                $isAvailable = CouponTranslation::where('merchant_language_id', '=', $idLanguage->language_id)
+                                                ->where('promotion_id', '=', $promotion_id)
+                                                ->where('promotion_name', '!=', '')
+                                                ->count();
+
+                if ($isAvailable == 0) {
+                    $errorMessage = 'Language ' . $idLanguage->name_long . ' is not available in Mall ' . $default->name . ', you need to setup ' . $idLanguage->name_long . ' as default language in Mall ' . $default->name . '';
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+            }
 
             $this->response->data = $updatedcoupon;
             $this->response->data->translation_default = $updatedcoupon_default_language;
@@ -2179,7 +2221,7 @@ class CouponAPIController extends ControllerAPI
             // Addition select case and join for sorting by discount_value.
             $coupons = Coupon::allowedForPMPUser($user, 'coupon')
                 ->with('couponRule')
-                ->select(DB::raw("{$table_prefix}promotions.*, {$table_prefix}campaign_price.campaign_price_id, {$table_prefix}coupon_translations.promotion_name AS name_english, media.path as image_path, 
+                ->select(DB::raw("{$table_prefix}promotions.*, {$table_prefix}campaign_price.campaign_price_id, {$table_prefix}coupon_translations.promotion_name AS name_english, media.path as image_path,
                     CASE WHEN {$table_prefix}campaign_status.campaign_status_name = 'expired' THEN {$table_prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$table_prefix}promotions.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
                                                                                 FROM {$table_prefix}merchants om
                                                                                 LEFT JOIN {$table_prefix}timezones ot on ot.timezone_id = om.timezone_id
@@ -2229,8 +2271,8 @@ class CouponAPIController extends ControllerAPI
                 ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
                 ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                 ->leftJoin('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
-                ->leftJoin('merchant_languages', 'merchant_languages.merchant_language_id', '=', 'coupon_translations.merchant_language_id')
-                ->leftJoin('languages', 'languages.language_id', '=', 'merchant_languages.language_id')
+                //->leftJoin('merchant_languages', 'merchant_languages.merchant_language_id', '=', 'coupon_translations.merchant_language_id')
+                ->leftJoin('languages', 'languages.language_id', '=', 'coupon_translations.merchant_language_id')
                 ->leftJoin(DB::raw("( SELECT * FROM {$table_prefix}media WHERE media_name_long = 'coupon_translation_image_resized_default' ) as media"), DB::raw('media.object_id'), '=', 'coupon_translations.coupon_translation_id')
                 ->where('languages.name', '=', 'en')
                 ->joinPromotionRules()
@@ -2376,10 +2418,11 @@ class CouponAPIController extends ControllerAPI
                 $mall_name_like = "%" . $mall_name_like . "%";
                 $mall_name_like = $quote($mall_name_like);
                 $coupons->whereRaw(DB::raw("
-                    (select count(*) from {$table_prefix}merchants mtenant
+                (
+                    (select count(mtenant.merchant_id) from {$table_prefix}merchants mtenant
                     inner join {$table_prefix}promotion_retailer opr on mtenant.merchant_id = opr.retailer_id
                     where mtenant.object_type = 'tenant' and opr.promotion_id = {$table_prefix}promotions.promotion_id and (
-                        select count(*) from {$table_prefix}merchants mmall
+                        select count(mtenant.merchant_id) from {$table_prefix}merchants mmall
                         where mmall.object_type = 'mall' and
                         mtenant.parent_id = mmall.merchant_id and
                         mmall.name like {$mall_name_like} and
@@ -2388,6 +2431,16 @@ class CouponAPIController extends ControllerAPI
                     mtenant.object_type = 'tenant' and
                     mtenant.is_mall = 'no' and
                     opr.object_type = 'tenant') >= 1
+                )
+                OR
+                (
+                    select count(mmallx.merchant_id) from {$table_prefix}merchants mmallx
+                    inner join {$table_prefix}promotion_retailer oprx on mmallx.merchant_id = oprx.retailer_id
+                    where mmallx.object_type = 'mall' and
+                    oprx.promotion_id = {$table_prefix}promotions.promotion_id and
+                    mmallx.name like {$mall_name_like} and
+                    mmallx.object_type = 'mall'
+                )
                 "));
             });
 
@@ -3328,9 +3381,8 @@ class CouponAPIController extends ControllerAPI
 
         // Check the existance of id_language_default
         Validator::extend('orbit.empty.language_default', function ($attribute, $value, $parameters) {
-            $news = MerchantLanguage::excludeDeleted()
-                        ->where('merchant_language_id', $value)
-                        ->first();
+            $news = Language::where('language_id', '=', $value)
+                             ->first();
 
             if (empty($news)) {
                 return FALSE;
@@ -3895,8 +3947,7 @@ class CouponAPIController extends ControllerAPI
             OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'translations']));
         }
         foreach ($data as $merchant_language_id => $translations) {
-            $language = MerchantLanguage::excludeDeleted()
-                ->where('merchant_language_id', '=', $merchant_language_id)
+            $language = Language::where('language_id', '=', $merchant_language_id)
                 ->first();
             if (empty($language)) {
                 OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.merchant_language'));

@@ -144,7 +144,6 @@
     </div>
 </div>
 <div class="row back-drop sign-in-back-drop"></div>
-
 <div class="modal fade" id="formModal" tabindex="-1" role="dialog" aria-labelledby="formModalLabel" style="z-index: 1005;">
     <div class="modal-dialog">
         <div class="modal-content" id="signin-form-wrapper">
@@ -169,7 +168,7 @@
                             <a id="forgot_password">{{ Lang::get('mobileci.signin.forgot_link') }}</a>
                         </div>
                         <div class="col-xs-6 text-right">
-                            <input type="checkbox" \> {{ Lang::get('mobileci.signin.forgot_link') }}
+                            <input type="checkbox" \> {{ Lang::get('mobileci.signin.remember_me') }}
                         </div>
                     </div>
                     <div class="form-group">
@@ -191,7 +190,7 @@
                         <button type="button" id="btn-forgot-form" class="btn btn-info btn-block icon-button form text-center" disabled>{{ Lang::get('mobileci.signin.forgot_button') }}</button>
                     </div>
                     <div class="form-group">
-                        <i><span>{{ Lang::get('mobileci.signin.doesnt_have_account') }} <a href="#1" id="forgot-sign-in-link">{{ Lang::get('mobileci.signin.sign_in') }}</a></span></i>
+                        <i><span>{{ Lang::get('mobileci.signup.already_have_an_account') }} <a href="#1" id="forgot-sign-in-link">{{ Lang::get('mobileci.signin.sign_in') }}</a></span></i>
                     </div>
                 </div>
             </form>
@@ -209,27 +208,33 @@
                     </button>
 
                     <span class="mandatory-label" style="display:none;">{{ Lang::get('mobileci.signup.fields_are_mandatory') }}</span>
-                    <div class="form-group">
+                    <div class="form-group icon-group">
                         <input type="email" value="{{{ $user_email }}}" class="form-control orbit-auto-login" name="email" id="email" placeholder="{{ Lang::get('mobileci.signup.email_placeholder') }}">
+                        <div class="form-icon"></div>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group icon-group">
                         <input type="password" value="" class="form-control" name="password" id="password" placeholder="{{ Lang::get('mobileci.signup.password_placeholder') }}">
+                        <div class="form-icon"></div>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group icon-group">
                         <input type="password" value="" class="form-control" name="password_confirmation" id="password_confirmation" placeholder="{{ Lang::get('mobileci.signup.password_confirm_placeholder') }}">
+                        <div class="form-icon"></div>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group icon-group">
                         <input type="text" class="form-control userName" value="" placeholder="{{ Lang::get('mobileci.signup.first_name') }}" name="firstname" id="firstName">
+                        <div class="form-icon"></div>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group icon-group">
                         <input type="text" class="form-control" placeholder="{{ Lang::get('mobileci.signup.last_name') }}" name="lastname" id="lastName">
+                        <div class="form-icon"></div>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group icon-group">
                         <select class="form-control" name="gender" id="gender">
                             <option value="">{{ Lang::get('mobileci.signup.gender') }}</option>
                             <option value="m">{{ Lang::get('mobileci.signup.male') }}</option>
                             <option value="f">{{ Lang::get('mobileci.signup.female') }}</option>
                         </select>
+                        <div class="form-icon"></div>
                     </div>
                     <div class="form-group date-of-birth">
                         <div class="row">
@@ -238,29 +243,32 @@
                             </div>
                         </div>
                         <div class="row">
-                            <div class="col-xs-4">
+                            <div class="icon-group col-xs-4">
                                 <select class="form-control" name="day">
                                     <option value="">{{ Lang::get('mobileci.signup.day') }}</option>
                                 @for ($i = 1; $i <= 31; $i++)
                                     <option value="{{$i}}">{{$i}}</option>
                                 @endfor
                                 </select>
+                                <div class="form-icon"></div>
                             </div>
-                            <div class="col-xs-4">
+                            <div class="icon-group col-xs-4">
                                 <select class="form-control" name="month">
                                     <option value="">{{ Lang::get('mobileci.signup.month') }}</option>
                                 @for ($i = 1; $i <= 12; $i++)
                                     <option value="{{$i}}">{{$i}}</option>
                                 @endfor
                                 </select>
+                                <div class="form-icon"></div>
                             </div>
-                            <div class="col-xs-4">
+                            <div class="icon-group col-xs-4">
                                 <select class="form-control" name="year">
                                     <option value="">{{ Lang::get('mobileci.signup.year') }}</option>
                                 @for ($i = date('Y'); $i >= date('Y') - 150; $i--)
                                     <option value="{{$i}}">{{$i}}</option>
                                 @endfor
                                 </select>
+                                <div class="form-icon"></div>
                             </div>
                         </div>
                     </div>
@@ -1320,13 +1328,14 @@
          * @return void
          */
         orbitSignUpForm.enableDisableSignup = function() {
-            $('#signupForm #email, #firstName, #lastName, #gender, #signupForm [name=day], #signupForm [name=month], #signupForm [name=year]').css('border-color', '#ccc');
+            $('#signupForm #email, #signupForm [name=password], #signupForm [name=password_confirmation], #firstName, #lastName, #gender, #signupForm [name=day], #signupForm [name=month], #signupForm [name=year]').css('border-color', '#ccc');
+            $('.form-icon').removeClass('has-error');
             $('.mandatory-label').hide();
             orbitSignUpForm.dataCompleted = $('#signupForm #email').val() &&
                 isValidEmailAddress($('#signupForm #email').val()) &&
                 $('#firstName').val() &&
                 $('#lastName').val() &&
-                $('#password').val() &&
+                $('#signupForm #password').val() &&
                 $('#password_confirmation').val() &&
                 $('#gender').val() &&
                 $('#signupForm [name=day]').val() &&
@@ -1338,35 +1347,45 @@
                 return true;
             } else {
                 $('.mandatory-label').css('color', 'red').show();
-                if (! isValidEmailAddress($('#signupForm #email').val()))    {
+                if (! isValidEmailAddress($('#signupForm #email').val())) {
                     $('#signupForm #email').css('border-color', 'red');
+                    $('#signupForm [name=email]').next('.form-icon').addClass('has-error');
                 }
                 if (! $('#signupForm #email').val()) {
                     $('#signupForm #email').css('border-color', 'red');
+                    $('#signupForm [name=email]').next('.form-icon').addClass('has-error');
                 }
                 if (! $('#signupForm #password').val()) {
-                    $('#signupForm #password').css('border-color', 'red');
+                    $('#signupForm [name=password]').css('border-color', 'red');
+                    $('#signupForm [name=password]').next('.form-icon').addClass('has-error');
                 }
                 if (! $('#password_confirmation').val()) {
                     $('#password_confirmation').css('border-color', 'red');
+                    $('#password_confirmation').next('.form-icon').addClass('has-error');
                 }
                 if (! $('#firstName').val()) {
                     $('#firstName').css('border-color', 'red');
+                    $('#firstName').next('.form-icon').addClass('has-error');
                 }
                 if (! $('#lastName').val()) {
                     $('#lastName').css('border-color', 'red');
+                    $('#lastName').next('.form-icon').addClass('has-error');
                 }
                 if (! $('#gender').val()) {
                     $('#gender').css('border-color', 'red');
+                    $('#gender').next('.form-icon').addClass('has-error');
                 }
                 if (! $('#signupForm [name=day]').val()) {
                     $('#signupForm [name=day]').css('border-color', 'red');
+                    $('#signupForm [name=day]').next('.form-icon').addClass('has-error');
                 }
                 if (! $('#signupForm [name=month]').val()) {
                     $('#signupForm [name=month]').css('border-color', 'red');
+                    $('#signupForm [name=month]').next('.form-icon').addClass('has-error');
                 }
                 if (! $('#signupForm [name=year]').val()) {
                     $('#signupForm [name=year]').css('border-color', 'red');
+                    $('#signupForm [name=year]').next('.form-icon').addClass('has-error');
                 }
                 // $('#btn-signup-form').attr('disabled', 'disabled');
                 return false;

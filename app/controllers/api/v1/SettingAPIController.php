@@ -319,6 +319,7 @@ class SettingAPIController extends ControllerAPI
 
             // Catch the supported language for mall
             $supportedMallLanguageIds = OrbitInput::post('mall_supported_language_ids');
+            // @Todo review this code
             $supportedMallLanguageIds_copy = OrbitInput::post('mall_supported_language_ids');
 
             $mall_id = OrbitInput::post('current_mall');
@@ -531,12 +532,14 @@ class SettingAPIController extends ControllerAPI
             });
 
             // Save the default language setting for start button
-            $default_translation = [
-                $id_language_default => [
-                    'setting_value' => $startButtonSetting->setting_value,
-                ]
-            ];
-            $this->validateAndSaveTranslations($startButtonSetting, json_encode($default_translation), 'create');
+            if (! empty($startButtonSetting)) {
+                $default_translation = [
+                    $id_language_default => [
+                        'setting_value' => $startButtonSetting->setting_value,
+                    ]
+                ];
+                $this->validateAndSaveTranslations($startButtonSetting, json_encode($default_translation), 'create');
+            }
 
             OrbitInput::post('translations', function($translation_json_string) use ($startButtonSetting) {
                 $this->validateAndSaveTranslations($startButtonSetting, $translation_json_string, 'create');
@@ -550,7 +553,10 @@ class SettingAPIController extends ControllerAPI
                 ),
                 array(
                     'merchant_id'   => 'required|orbit.empty.merchant',
-                    'language_id'   => 'required',
+                    'language_id'   => 'required|orbit_empty_default_en',
+                ),
+                array(
+                    'orbit_empty_default_en' => 'English can not be dropped because it is the system language.'
                 )
             );
 
@@ -578,6 +584,7 @@ class SettingAPIController extends ControllerAPI
 
             Event::fire('orbit.news.postlanguage.before.validation', array($this, $validator));
 
+            // @Todo optimize the code
             // Check old merchant language
             $oldMallLanguage = MerchantLanguage::where('merchant_id','=', $mall->merchant_id)->get();
 
@@ -1343,6 +1350,19 @@ class SettingAPIController extends ControllerAPI
 
     protected function registerCustomValidation()
     {
+        // If the 'en' is not exists on list of supported language, return an error
+        Validator::extend('orbit_empty_default_en', function ($attribute, $value, $parameters) {
+            $enLang = Language::where('name', 'en')->first();
+
+            if (! in_array($enLang->language_id, $value)) {
+                return FALSE;
+            }
+
+            App::instance('orbit_empty_default_en', $enLang);
+
+            return TRUE;
+        });
+
         // Check the existance of id_language_default
         Validator::extend('orbit.empty.language_default', function ($attribute, $value, $parameters) {
             $news = MerchantLanguage::excludeDeleted()

@@ -191,7 +191,7 @@
             <th style="text-align:left;">Coupon Name</th>
             <th style="text-align:left;">Campaign Dates</th>
             <th style="text-align:left;">Validity Date</th>
-            <th style="text-align:left;">Location</th>
+            <th style="text-align:left;">Location(s)</th>
             <th style="text-align:left;">Coupon Rule</th>
             <th style="text-align:left;">Issued (Issued/Available)</th>
             <th style="text-align:left;">Redeemed (Redeemed/Issued)</th>
