@@ -149,30 +149,57 @@
     <div class="modal-dialog">
         <div class="modal-content" id="signin-form-wrapper">
             <form  name="signinForm" id="signinForm" method="post">
-                <div class="modal-body">
+                <div class="modal-body text-center">
                     <button type="button" class="close close-form" data-dismiss="modal" aria-label="Close">
                         <i class="fa fa-times"></i>
                     </button>
 
                     <div class="form-group">
-                        <input type="email" value="{{{ $user_email }}}" class="form-control" name="email" id="email" placeholder="{{ Lang::get('mobileci.signin.email_placeholder') }}">
+                        <input type="email" value="{{{ $user_email }}}" class="form-control text-center" name="email" id="email" placeholder="{{ Lang::get('mobileci.signin.email_placeholder') }}">
                     </div>
 
                     <div class="form-group">
-                        <input type="password" value="" class="form-control" name="password" id="password" placeholder="{{ Lang::get('mobileci.signup.password_placeholder') }}">
+                        <input type="password" value="" class="form-control text-center" name="password" id="password" placeholder="{{ Lang::get('mobileci.signup.password_placeholder') }}">
                     </div>
-                </div>
-                <div class="modal-footer footer-form-modal">
+                    <div class="form-group">
+                        <input type="submit" name="submit" id="btn-signin-form" class="btn btn-info btn-block icon-button form text-center" disabled value="{{ Lang::get('mobileci.signin.sign_in') }}">
+                    </div>
                     <div class="row">
-                        <div class="col-xs-8 text-left">
-                            <span>{{ Lang::get('mobileci.signin.doesnt_have_account') }}? <a href="#1" id="sign-up-link">{{ Lang::get('mobileci.signin.sign_up') }}</a></span>
+                        <div class="col-xs-6 text-left">
+                            <a id="forgot_password">{{ Lang::get('mobileci.signin.forgot_link') }}</a>
                         </div>
-                        <div class="col-xs-4 text-right">
-                            <input type="submit" name="submit" id="btn-signin-form" class="btn btn-info icon-button form text-center" disabled value="{{ Lang::get('mobileci.signin.sign_in') }}">
+                        <div class="col-xs-6 text-right">
+                            <input type="checkbox" \> {{ Lang::get('mobileci.signin.remember_me') }}
                         </div>
+                    </div>
+                    <div class="form-group">
+                        <i><span>{{ Lang::get('mobileci.signin.doesnt_have_account') }} <a href="#1" id="sign-up-link">{{ Lang::get('mobileci.signin.sign_up') }}</a></span></i>
                     </div>
                 </div>
             </form>
+        </div>
+        <div class="modal-content hide" id="forget-form-wrapper">
+            <form  name="forgotForm" id="forgotForm" method="post">
+                <div class="modal-body text-center">
+                    <button type="button" class="close close-form" data-dismiss="modal" aria-label="Close">
+                        <i class="fa fa-times"></i>
+                    </button>
+                    <div class="form-group">
+                        <input type="email" value="" class="form-control text-center" name="email_forgot" id="email_forgot" placeholder="{{ Lang::get('mobileci.signin.email_placeholder') }}">
+                    </div>
+                    <div class="form-group">
+                        <button type="button" id="btn-forgot-form" class="btn btn-info btn-block icon-button form text-center" disabled>{{ Lang::get('mobileci.signin.forgot_button') }}</button>
+                    </div>
+                    <div class="form-group">
+                        <i><span>{{ Lang::get('mobileci.signin.doesnt_have_account') }} <a href="#1" id="forgot-sign-in-link">{{ Lang::get('mobileci.signin.sign_in') }}</a></span></i>
+                    </div>
+                </div>
+            </form>
+            <div id="forget-mail-sent" class="vertically-spaced text-center hide">
+                <img class="img-responsive img-center" src="{{asset('mobile-ci/images/mail_sent.png')}}">
+                <h4><strong>{{ Lang::get('mobileci.signin.forgot_sent_title') }}</strong></h4>
+                <p>{{ Lang::get('mobileci.signin.forgot_sent_sub_title') }}</p>
+            </div>
         </div>
         <div class="modal-content hide" id="signup-form-wrapper">
             <form  name="signupForm" id="signupForm" method="post">
@@ -182,27 +209,33 @@
                     </button>
 
                     <span class="mandatory-label" style="display:none;">{{ Lang::get('mobileci.signup.fields_are_mandatory') }}</span>
-                    <div class="form-group">
+                    <div class="form-group icon-group">
                         <input type="email" value="{{{ $user_email }}}" class="form-control orbit-auto-login" name="email" id="email" placeholder="{{ Lang::get('mobileci.signup.email_placeholder') }}">
+                        <div class="form-icon"></div>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group icon-group">
                         <input type="password" value="" class="form-control" name="password" id="password" placeholder="{{ Lang::get('mobileci.signup.password_placeholder') }}">
+                        <div class="form-icon"></div>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group icon-group">
                         <input type="password" value="" class="form-control" name="password_confirmation" id="password_confirmation" placeholder="{{ Lang::get('mobileci.signup.password_confirm_placeholder') }}">
+                        <div class="form-icon"></div>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group icon-group">
                         <input type="text" class="form-control userName" value="" placeholder="{{ Lang::get('mobileci.signup.first_name') }}" name="firstname" id="firstName">
+                        <div class="form-icon"></div>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group icon-group">
                         <input type="text" class="form-control" placeholder="{{ Lang::get('mobileci.signup.last_name') }}" name="lastname" id="lastName">
+                        <div class="form-icon"></div>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group icon-group">
                         <select class="form-control" name="gender" id="gender">
                             <option value="">{{ Lang::get('mobileci.signup.gender') }}</option>
                             <option value="m">{{ Lang::get('mobileci.signup.male') }}</option>
                             <option value="f">{{ Lang::get('mobileci.signup.female') }}</option>
                         </select>
+                        <div class="form-icon"></div>
                     </div>
                     <div class="form-group date-of-birth">
                         <div class="row">
@@ -211,43 +244,48 @@
                             </div>
                         </div>
                         <div class="row">
-                            <div class="col-xs-4">
+                            <div class="icon-group col-xs-4">
                                 <select class="form-control" name="day">
                                     <option value="">{{ Lang::get('mobileci.signup.day') }}</option>
                                 @for ($i = 1; $i <= 31; $i++)
                                     <option value="{{$i}}">{{$i}}</option>
                                 @endfor
                                 </select>
+                                <div class="form-icon"></div>
                             </div>
-                            <div class="col-xs-4">
+                            <div class="icon-group col-xs-4">
                                 <select class="form-control" name="month">
                                     <option value="">{{ Lang::get('mobileci.signup.month') }}</option>
                                 @for ($i = 1; $i <= 12; $i++)
                                     <option value="{{$i}}">{{$i}}</option>
                                 @endfor
                                 </select>
+                                <div class="form-icon"></div>
                             </div>
-                            <div class="col-xs-4">
+                            <div class="icon-group col-xs-4">
                                 <select class="form-control" name="year">
                                     <option value="">{{ Lang::get('mobileci.signup.year') }}</option>
                                 @for ($i = date('Y'); $i >= date('Y') - 150; $i--)
                                     <option value="{{$i}}">{{$i}}</option>
                                 @endfor
                                 </select>
+                                <div class="form-icon"></div>
                             </div>
                         </div>
                     </div>
                     <div class="form-group">
-                        {{ sprintf(Lang::get('mobileci.signup.policy_terms_message'), Config::get('orbit.contact_information.privacy_policy_url'), Config::get('orbit.contact_information.terms_of_service_url')) }}
+                        <i>{{ sprintf(Lang::get('mobileci.signup.policy_terms_message'), Config::get('orbit.contact_information.privacy_policy_url'), Config::get('orbit.contact_information.terms_of_service_url')) }}</i>
                     </div>
-                </div>
-                <div class="modal-footer footer-form-modal">
-                    <div class="row">
-                        <div class="col-xs-8 text-left orbit-auto-login">
-                            <span>{{{ Lang::get('mobileci.signup.already_have_an_account') }}}? <a href="#1" id="sign-in-link">{{{ Lang::get('mobileci.signin.sign_in') }}}</a></span>
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-xs-12">
+                                <input type="submit" name="submit" id="btn-signup-form" class="btn btn-info btn-block icon-button form text-center orbit-auto-login" value="{{ Lang::get('mobileci.signin.sign_up') }}">
+                            </div>
                         </div>
-                        <div class="col-xs-4 text-right orbit-auto-login">
-                            <input type="submit" name="submit" id="btn-signup-form" class="btn btn-info icon-button form text-center orbit-auto-login" value="{{ Lang::get('mobileci.signin.sign_up') }}">
+                        <div class="row vertically-spaced">
+                            <div class="col-xs-12 text-center">
+                                <i><span>{{{ Lang::get('mobileci.signup.already_have_an_account') }}} <a href="#1" id="sign-in-link">{{{ Lang::get('mobileci.signin.sign_in') }}}</a></span></i>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -914,9 +952,53 @@
             $('.sign-in-back-drop').fadeOut('fast');
             $('.sign-in-popup').toggle('slide', {direction: 'down'}, 'fast');
         });
-        // $('#sign-in-popup-sign-in').click(function(){
-        //     window.location.replace('/customer');            
-        // });
+        $('#forgotForm').on('keyup keypress', function(e) {
+            $('#btn-forgot-form').click();
+        });
+        $('#forgot_password').click(function(){
+            $('#signin-form-wrapper').addClass('hide');
+            $('#forget-form-wrapper').removeClass('hide');
+            $('#forgotForm #email_forgot').focus();
+        });
+        $('#forgot-sign-in-link').click(function(){
+            $('#signin-form-wrapper').removeClass('hide');
+            $('#forget-form-wrapper').addClass('hide');
+            $('#signinForm #email').focus();
+        });
+        $('#forgotForm #email_forgot').on('input', function(e) {
+            var value = $(this).val();
+
+            if (isValidEmailAddress(value)) {
+                $('#btn-forgot-form').removeAttr('disabled');
+            } else {
+                $('#btn-forgot-form').attr('disabled', 'disabled');
+            }
+        });
+        $('#btn-forgot-form').click(function() {
+            var value = $('#email_forgot').val();
+            if (isValidEmailAddress(value)) {
+                $.ajax({
+                    url: '{{route('pub-user-reset-password-link', array('app'))}}',
+                    method: 'POST',
+                    data:{
+                        email : $('#email_forgot').val()
+                    }
+                }).done(function(data){
+                    if (data.status === 'success') {
+                        $('#forgotForm').fadeOut('fast');
+                        $('#forgotForm').addClass('hide');
+                        $('#forget-mail-sent').removeClass('hide');
+                        $('#forget-mail-sent').fadeIn('fast');
+                        setTimeout(function(){
+                            $('#forgotForm').fadeIn('fast');
+                            $('#forgotForm').removeClass('hide');
+                            $('#forget-mail-sent').addClass('hide');
+                            $('#forget-mail-sent').fadeOut('fast');
+                        }, 4000);
+                    }
+                });
+            }
+        });
         $('#formModal').on('show.bs.modal', function () {
             $('#slogan-container, #social-media-wraper').addClass('hide');
         });
@@ -1247,12 +1329,15 @@
          * @return void
          */
         orbitSignUpForm.enableDisableSignup = function() {
-            $('#signupForm #email, #firstName, #lastName, #gender, #signupForm [name=day], #signupForm [name=month], #signupForm [name=year]').css('border-color', '#ccc');
+            $('#signupForm #email, #signupForm [name=password], #signupForm [name=password_confirmation], #firstName, #lastName, #gender, #signupForm [name=day], #signupForm [name=month], #signupForm [name=year]').css('border-color', '#ccc');
+            $('.form-icon').removeClass('has-error');
             $('.mandatory-label').hide();
             orbitSignUpForm.dataCompleted = $('#signupForm #email').val() &&
                 isValidEmailAddress($('#signupForm #email').val()) &&
                 $('#firstName').val() &&
                 $('#lastName').val() &&
+                $('#signupForm #password').val() &&
+                $('#password_confirmation').val() &&
                 $('#gender').val() &&
                 $('#signupForm [name=day]').val() &&
                 $('#signupForm [name=month]').val() &&
@@ -1263,29 +1348,45 @@
                 return true;
             } else {
                 $('.mandatory-label').css('color', 'red').show();
-                if (! isValidEmailAddress($('#signupForm #email').val()))    {
+                if (! isValidEmailAddress($('#signupForm #email').val())) {
                     $('#signupForm #email').css('border-color', 'red');
+                    $('#signupForm [name=email]').next('.form-icon').addClass('has-error');
                 }
                 if (! $('#signupForm #email').val()) {
                     $('#signupForm #email').css('border-color', 'red');
+                    $('#signupForm [name=email]').next('.form-icon').addClass('has-error');
+                }
+                if (! $('#signupForm #password').val()) {
+                    $('#signupForm [name=password]').css('border-color', 'red');
+                    $('#signupForm [name=password]').next('.form-icon').addClass('has-error');
+                }
+                if (! $('#password_confirmation').val()) {
+                    $('#password_confirmation').css('border-color', 'red');
+                    $('#password_confirmation').next('.form-icon').addClass('has-error');
                 }
                 if (! $('#firstName').val()) {
                     $('#firstName').css('border-color', 'red');
+                    $('#firstName').next('.form-icon').addClass('has-error');
                 }
                 if (! $('#lastName').val()) {
                     $('#lastName').css('border-color', 'red');
+                    $('#lastName').next('.form-icon').addClass('has-error');
                 }
                 if (! $('#gender').val()) {
                     $('#gender').css('border-color', 'red');
+                    $('#gender').next('.form-icon').addClass('has-error');
                 }
                 if (! $('#signupForm [name=day]').val()) {
                     $('#signupForm [name=day]').css('border-color', 'red');
+                    $('#signupForm [name=day]').next('.form-icon').addClass('has-error');
                 }
                 if (! $('#signupForm [name=month]').val()) {
                     $('#signupForm [name=month]').css('border-color', 'red');
+                    $('#signupForm [name=month]').next('.form-icon').addClass('has-error');
                 }
                 if (! $('#signupForm [name=year]').val()) {
                     $('#signupForm [name=year]').css('border-color', 'red');
+                    $('#signupForm [name=year]').next('.form-icon').addClass('has-error');
                 }
                 // $('#btn-signup-form').attr('disabled', 'disabled');
                 return false;
