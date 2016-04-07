@@ -458,9 +458,30 @@ class NewsAPIController extends ControllerAPI
             $campaignSpending->save();
 
             // translation for mallnews
-            OrbitInput::post('translations', function($translation_json_string) use ($newnews) {
+            OrbitInput::post('translations', function($translation_json_string) use ($newnews, $mallid) {
                 $this->validateAndSaveTranslations($newnews, $translation_json_string, 'create');
             });
+
+            foreach ($mallid as $mall) {
+                // get default mall language id
+                $default = Mall::select('mobile_default_language', 'name')
+                                ->where('merchant_id', '=', $mall)
+                                ->first();
+
+                $idLanguage = Language::select('language_id', 'name_long')
+                                    ->where('name', '=', $default->mobile_default_language)
+                                    ->first();
+
+                $isAvailable = NewsTranslation::where('merchant_language_id', '=', $idLanguage->language_id)
+                                                ->where('news_id', '=', $newnews->news_id)
+                                                ->where('news_name', '!=', '')
+                                                ->count();
+
+                if ($isAvailable == 0) {
+                    $errorMessage = 'Language ' . $idLanguage->name_long . ' is not available in Mall ' . $default->name . ', you need to setup ' . $idLanguage->name_long . ' as default language in Mall ' . $default->name . '';
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+            }
 
             $this->response->data = $newnews;
             $this->response->data->translation_default = $news_translation_default;
@@ -786,6 +807,27 @@ class NewsAPIController extends ControllerAPI
             OrbitInput::post('translations', function($translation_json_string) use ($updatednews) {
                 $this->validateAndSaveTranslations($updatednews, $translation_json_string, 'update');
             });
+
+            foreach ($mallid as $mall) {
+                // get default mall language id
+                $default = Mall::select('mobile_default_language', 'name')
+                                ->where('merchant_id', '=', $mall)
+                                ->first();
+
+                $idLanguage = Language::select('language_id', 'name_long')
+                                    ->where('name', '=', $default->mobile_default_language)
+                                    ->first();
+
+                $isAvailable = NewsTranslation::where('merchant_language_id', '=', $idLanguage->language_id)
+                                                ->where('news_id', '=', $news_id)
+                                                ->where('news_name', '!=', '')
+                                                ->count();
+
+                if ($isAvailable == 0) {
+                    $errorMessage = 'Language ' . $idLanguage->name_long . ' is not available in Mall ' . $default->name . ', you need to setup ' . $idLanguage->name_long . ' as default language in Mall ' . $default->name . '';
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+            }
 
             $updatednews->modified_by = $this->api->user->user_id;
             $updatednews->touch();
@@ -1614,8 +1656,8 @@ class NewsAPIController extends ControllerAPI
                         ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
                         ->leftJoin('news_translations', 'news_translations.news_id', '=', 'news.news_id')
-                        ->leftJoin('merchant_languages', 'merchant_languages.merchant_language_id', '=', 'news_translations.merchant_language_id')
-                        ->leftJoin('languages', 'languages.language_id', '=', 'merchant_languages.language_id')
+                        //->leftJoin('merchant_languages', 'merchant_languages.merchant_language_id', '=', 'news_translations.news_translations')
+                        ->leftJoin('languages', 'languages.language_id', '=', 'news_translations.merchant_language_id')
                         ->leftJoin(DB::raw("( SELECT * FROM {$prefix}media WHERE media_name_long = 'news_translation_image_resized_default' ) as media"), DB::raw('media.object_id'), '=', 'news_translations.news_translation_id')
                         ->where('languages.name', '=', 'en')
                         ->excludeDeleted('news')
@@ -2239,9 +2281,8 @@ class NewsAPIController extends ControllerAPI
     {
         // Check the existance of id_language_default
         Validator::extend('orbit.empty.language_default', function ($attribute, $value, $parameters) {
-            $news = MerchantLanguage::excludeDeleted()
-                        ->where('merchant_language_id', $value)
-                        ->first();
+            $news = Language::where('language_id', '=', $value)
+                                    ->first();
 
             if (empty($news)) {
                 return false;
@@ -2514,9 +2555,7 @@ class NewsAPIController extends ControllerAPI
 
         // translate for mall
         foreach ($data as $merchant_language_id => $translations) {
-            $language = MerchantLanguage::excludeDeleted()
-                // ->allowedForUser($user)
-                ->where('merchant_language_id', '=', $merchant_language_id)
+            $language = Language::where('language_id', '=', $merchant_language_id)
                 ->first();
             if (empty($language)) {
                 OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.merchant_language'));

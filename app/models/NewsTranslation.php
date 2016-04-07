@@ -30,7 +30,7 @@ class NewsTranslation extends Eloquent
 
     public function language()
     {
-        return $this->belongsTo('MerchantLanguage', 'merchant_language_id', 'merchant_language_id');
+        return $this->belongsTo('Language', 'merchant_language_id', 'language_id');
     }
 
     public function media()
