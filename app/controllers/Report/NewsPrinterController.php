@@ -116,7 +116,7 @@ class NewsPrinterController extends DataPrinterController
                 }
 
                 printf("%s,%s,%s,%s,%s,%s,%s,\n", '', '', '', '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s,%s,\n", 'No', 'News Name', 'Start Date & Time', 'End Date & Time', 'Locations', 'Status', 'Last Update');
+                printf("%s,%s,%s,%s,%s,%s,%s,\n", 'No', 'News Name', 'Start Date & Time', 'End Date & Time', 'Location(s)', 'Status', 'Last Update');
                 printf("%s,%s,%s,%s,%s,%s,%s,\n", '', '', '', '', '', '', '', '');
 
                 $count = 1;

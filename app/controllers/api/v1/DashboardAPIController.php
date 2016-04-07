@@ -235,7 +235,7 @@ class DashboardAPIController extends ControllerAPI
 
             $take = OrbitInput::get('take');
             $type = OrbitInput::get('type');
-            $merchant_id = OrbitInput::get('merchant_id');
+            $merchant_id = OrbitInput::get('merchant_id', OrbitInput::get('current_mall', 0));
             $start_date = OrbitInput::get('start_date');
             $end_date = OrbitInput::get('end_date');
 
@@ -540,9 +540,6 @@ class DashboardAPIController extends ControllerAPI
             Event::fire('orbit.dashboard.getgeneralcustomerview.after.validation', array($this, $validator));
 
 
-            $tablePrefix = DB::getTablePrefix();
-            $merchantId = OrbitInput::get('merchant_id', 0);
-
             $defaultBeginDate = date('Y-m-d 00:00:00', strtotime('-14 days'));
             $beginDate = OrbitInput::get('start_date', $defaultBeginDate);
 
@@ -557,12 +554,12 @@ class DashboardAPIController extends ControllerAPI
                 ->whereHas('news', function($q) use ($user) {
                     $q->allowedForPMPUser($user, 'news');
                 })
-                ->where('created_at', '>=', $beginDate)
-                ->where('created_at', '<=', $endDate);
+                ->where('campaign_page_views.created_at', '>=', $beginDate)
+                ->where('campaign_page_views.created_at', '<=', $endDate);
             // Filter news by mall_id
-            OrbitInput::get('current_mall', function ($mall_id) use ($news)
+            OrbitInput::get('merchant_id', function ($mall_id) use ($news)
             {
-                $news->where('location_id', '=', $mall_id);
+                $news->where('campaign_page_views.location_id', '=', $mall_id);
             });
             $news = $news->get();
 
@@ -576,12 +573,12 @@ class DashboardAPIController extends ControllerAPI
                 ->whereHas('promotion', function($q) use ($user) {
                     $q->allowedForPMPUser($user, 'promotion');
                 })
-                ->where('created_at', '>=', $beginDate)
-                ->where('created_at', '<=', $endDate);
+                ->where('campaign_page_views.created_at', '>=', $beginDate)
+                ->where('campaign_page_views.created_at', '<=', $endDate);
             // Filter news by mall_id
-            OrbitInput::get('current_mall', function ($mall_id) use ($promotion)
+            OrbitInput::get('merchant_id', function ($mall_id) use ($promotion)
             {
-                $promotion->where('location_id', '=', $mall_id);
+                $promotion->where('campaign_page_views.location_id', '=', $mall_id);
             });
             $promotion = $promotion->get();
 
@@ -596,12 +593,12 @@ class DashboardAPIController extends ControllerAPI
                 ->whereHas('coupon', function($q) use ($user) {
                     $q->allowedForPMPUser($user, 'coupon');
                 })
-                ->where('created_at', '>=', $beginDate)
-                ->where('created_at', '<=', $endDate);
+                ->where('campaign_page_views.created_at', '>=', $beginDate)
+                ->where('campaign_page_views.created_at', '<=', $endDate);
             // Filter news by mall_id
-            OrbitInput::get('current_mall', function ($mall_id) use ($coupon)
+            OrbitInput::get('merchant_id', function ($mall_id) use ($coupon)
             {
-                $coupon->where('location_id', '=', $mall_id);
+                $coupon->where('campaign_page_views.location_id', '=', $mall_id);
             });
             $coupon = $coupon->get();
 
@@ -933,18 +930,15 @@ class DashboardAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $current_mall = OrbitInput::get('current_mall');
-            $now_date = OrbitInput::get('now_date');
+            $current_mall = OrbitInput::get('merchant_id', OrbitInput::get('current_mall', 0));
             $take = OrbitInput::get('take');
 
             $validator = Validator::make(
                 array(
-                    'current_mall' => $current_mall,
-                    'now_date' => $now_date
+                    'current_mall' => $current_mall
                 ),
                 array(
-                    'current_mall' => 'required | orbit.empty.merchant',
-                    'now_date' => 'required | date_format:Y-m-d H:i:s'
+                    'current_mall' => 'required | orbit.empty.merchant'
                 )
             );
 
@@ -958,29 +952,44 @@ class DashboardAPIController extends ControllerAPI
 
             Event::fire('orbit.dashboard.getexpiringcampaign.after.validation', array($this, $validator));
 
+            $mall =  App::make('orbit.empty.merchant');
+            $mallTimezone = Carbon::now($mall->timezone->timezone_name);
+
             $tablePrefix = DB::getTablePrefix();
 
             $newsAndPromotions = News::allowedForPMPUser($user, 'news_promotion')
                 ->selectRaw("{$tablePrefix}news.news_id campaign_id,
                     CASE WHEN {$tablePrefix}news_translations.news_name !='' THEN {$tablePrefix}news_translations.news_name ELSE {$tablePrefix}news.news_name END as campaign_name,
-                    DATEDIFF(end_date, {$this->quote($now_date)}) expire_days, object_type type,
-                    CASE WHEN {$tablePrefix}news.end_date < {$this->quote($now_date)} THEN 'expired' ELSE {$tablePrefix}campaign_status.campaign_status_name END  AS campaign_status")
+                    DATEDIFF(end_date, '{$mallTimezone}') expire_days, {$tablePrefix}news.object_type type,
+                    CASE WHEN {$tablePrefix}news.end_date < '{$mallTimezone}' THEN 'expired' ELSE {$tablePrefix}campaign_status.campaign_status_name END  AS campaign_status")
                 ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
+                ->leftJoin('news_merchant as nm', DB::raw('nm.news_id'), '=', 'news.news_id')
+                ->leftJoin('merchants as m', DB::raw('m.merchant_id'), '=', DB::raw('nm.merchant_id'))
                 // Join translation for get english name
                 ->leftJoin('news_translations', 'news_translations.news_id', '=', 'news.news_id')
                 ->leftJoin('merchant_languages', 'merchant_languages.merchant_language_id', '=', 'news_translations.merchant_language_id')
                 ->leftJoin('languages', 'languages.language_id', '=', 'merchant_languages.language_id')
                 ->where('languages.name', '=', 'en')
-                ->where('end_date', '>', $now_date)
-                ->where('mall_id', $current_mall)
+                ->where('end_date', '>', $mallTimezone)
                 ->orderBy('expire_days','asc');
+
+            // Filter news by mall_id
+            OrbitInput::get('merchant_id', function ($mall_id) use ($newsAndPromotions)
+            {
+                $newsAndPromotions->where(function ($q) use ($mall_id) {
+                    $q->where(DB::raw('m.merchant_id'), $mall_id)
+                        ->orWhere(DB::raw('m.parent_id'), $mall_id);
+                });
+            });
 
             $coupons = DB::table('promotions')
                 ->selectRaw("{$tablePrefix}promotions.promotion_id campaign_id,
                     CASE WHEN {$tablePrefix}coupon_translations.promotion_name !='' THEN {$tablePrefix}coupon_translations.promotion_name ELSE {$tablePrefix}promotions.promotion_name END as campaign_name,
-                    DATEDIFF(end_date, {$this->quote($now_date)}) expire_days, IF(is_coupon = 'Y','coupon', '') type,
-                    CASE WHEN {$tablePrefix}promotions.end_date < {$this->quote($now_date)} THEN 'expired' ELSE {$tablePrefix}campaign_status.campaign_status_name END AS campaign_status")
+                    DATEDIFF(end_date, '{$mallTimezone}') expire_days, IF(is_coupon = 'Y','coupon', '') type,
+                    CASE WHEN {$tablePrefix}promotions.end_date < '{$mallTimezone}' THEN 'expired' ELSE {$tablePrefix}campaign_status.campaign_status_name END AS campaign_status")
                 ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
+                ->leftJoin('promotion_retailer as pr', DB::raw('pr.promotion_id'), '=', 'promotions.promotion_id')
+                ->leftJoin('merchants as m', DB::raw('m.merchant_id'), '=', DB::raw('pr.retailer_id'))
                 // Join translation for get english name
                 ->leftJoin('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
                 ->leftJoin('merchant_languages', 'merchant_languages.merchant_language_id', '=', 'coupon_translations.merchant_language_id')
@@ -990,8 +999,7 @@ class DashboardAPIController extends ControllerAPI
                 ->leftJoin('campaign_account as cas', DB::raw('cas.parent_user_id'), '=', DB::raw('ca.parent_user_id'))
                 ->where('languages.name', '=', 'en')
                 ->where('is_coupon', '=', 'Y')
-                ->where('end_date', '>', $now_date)
-                ->where('promotions.merchant_id', $current_mall)
+                ->where('end_date', '>', $mallTimezone)
                 ->where(function ($q) use ($user, $tablePrefix) {
                     $q->WhereRaw("ca.user_id = (select parent_user_id from {$tablePrefix}campaign_account where user_id = '{$user->user_id}')
                                     or
@@ -1001,6 +1009,15 @@ class DashboardAPIController extends ControllerAPI
                 })
                 ->groupBy('promotions.promotion_id')
                 ->orderBy('expire_days','asc');
+
+            // Filter news by mall_id
+            OrbitInput::get('merchant_id', function ($mall_id) use ($coupons)
+            {
+                $coupons->where(function ($q) use ($mall_id) {
+                    $q->where(DB::raw('m.merchant_id'), $mall_id)
+                        ->orWhere(DB::raw('m.parent_id'), $mall_id);
+                });
+            });
 
             $expiringCampaign = $newsAndPromotions->unionAll($coupons);
 
@@ -4239,7 +4256,7 @@ class DashboardAPIController extends ControllerAPI
         });
 
         Validator::extend('orbit.empty.merchant', function ($attribute, $value, $parameters) {
-            $merchant = Mall::excludeDeleted()
+            $merchant = Mall::with('timezone')->excludeDeleted()
                         ->where('merchant_id', $value)
                         ->where('is_mall', 'yes')
                         ->first();
@@ -4307,7 +4324,7 @@ class DashboardAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $merchant_id = OrbitInput::get('current_mall');
+            $merchant_id = OrbitInput::get('merchant_id', OrbitInput::get('current_mall', 0));
             $start_date = OrbitInput::get('start_date');
             $end_date = OrbitInput::get('end_date');
 
@@ -4337,7 +4354,10 @@ class DashboardAPIController extends ControllerAPI
             // activity name long should include source.
 
             $tablePrefix = DB::getTablePrefix();
-            $timezone = $this->getTimezone($merchant_id);
+
+            $mall = App::make('orbit.empty.merchant');
+
+            $timezone = $mall->timezone->timezone_name;
             $timezoneOffset = $this->getTimezoneOffset($timezone);
 
             $startConvert = Carbon::createFromFormat('Y-m-d H:i:s', $start_date, 'UTC');
@@ -4354,51 +4374,91 @@ class DashboardAPIController extends ControllerAPI
                         ->join('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                         ->join('campaign_price', 'campaign_price.campaign_id', '=', 'news.news_id')
                         ->join('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
-                        ->where('merchants.status', '=', 'active')
-                        ->where('news.mall_id', '=', $merchant_id)
-                        ->where(function ($q) use ($start_date, $end_date, $tablePrefix) {
-                            $q->WhereRaw("DATE_FORMAT({$tablePrefix}news.begin_date, '%Y-%m-%d') >= DATE_FORMAT({$this->quote($start_date)}, '%Y-%m-%d') and DATE_FORMAT({$tablePrefix}news.begin_date, '%Y-%m-%d') <= DATE_FORMAT({$this->quote($end_date)}, '%Y-%m-%d')")
-                              ->orWhereRaw("DATE_FORMAT({$tablePrefix}news.end_date, '%Y-%m-%d') >= DATE_FORMAT({$this->quote($start_date)}, '%Y-%m-%d') and DATE_FORMAT({$tablePrefix}news.end_date, '%Y-%m-%d') <= DATE_FORMAT({$this->quote($end_date)}, '%Y-%m-%d')")
-                              ->orWhereRaw("DATE_FORMAT({$this->quote($start_date)}, '%Y-%m-%d') >= DATE_FORMAT({$tablePrefix}news.begin_date, '%Y-%m-%d') and DATE_FORMAT({$this->quote($start_date)}, '%Y-%m-%d') <= DATE_FORMAT({$tablePrefix}news.end_date, '%Y-%m-%d')")
-                              ->orWhereRaw("DATE_FORMAT({$this->quote($end_date)}, '%Y-%m-%d') >= DATE_FORMAT({$tablePrefix}news.begin_date, '%Y-%m-%d') and DATE_FORMAT({$this->quote($end_date)}, '%Y-%m-%d') <= DATE_FORMAT({$tablePrefix}news.end_date, '%Y-%m-%d')")
-                              ->orWhereRaw("DATE_FORMAT({$this->quote($start_date)}, '%Y-%m-%d') <= DATE_FORMAT({$tablePrefix}news.begin_date, '%Y-%m-%d') and DATE_FORMAT({$this->quote($end_date)}, '%Y-%m-%d') >= DATE_FORMAT({$tablePrefix}news.end_date, '%Y-%m-%d')");
+                        ->leftJoin('user_campaign as uc', DB::raw('uc.campaign_id'), '=', 'news.news_id')
+                        ->leftJoin('campaign_account as ca', DB::raw('ca.user_id'), '=', DB::raw('uc.user_id'))
+                        ->leftJoin('campaign_account as cas', DB::raw('cas.parent_user_id'), '=', DB::raw('ca.parent_user_id'))
+                        ->where(function ($q) use ($user, $tablePrefix) {
+                            $q->WhereRaw("ca.user_id = (select parent_user_id from {$tablePrefix}campaign_account where user_id = '{$user->user_id}')
+                                            or
+                                          ca.parent_user_id = (select parent_user_id from {$tablePrefix}campaign_account where user_id = '{$user->user_id}')")
+                                ->orWhere(DB::raw('ca.user_id'), '=', $user->user_id)
+                                ->orWhere(DB::raw('ca.parent_user_id'), '=', $user->user_id);
                         })
+                        ->where('merchants.status', '=', 'active')
+                        ->where('news.begin_date', '<=', $end_date)
+                        ->where('news.end_date', '>=', $start_date)
                         ->where('campaign_price.campaign_type', '=', 'news')
                         ->where('news.object_type', '=', 'news')
                         ->groupBy('news.news_id');
+
+            // Filter news by mall_id
+            OrbitInput::get('merchant_id', function ($mall_id) use ($news)
+            {
+                $news->where(function ($q) use ($mall_id) {
+                    $q->where('merchants.merchant_id', $mall_id)
+                        ->orWhere('merchants.parent_id', $mall_id);
+                });
+            });
+
 
             $promotions = DB::table('news')->selectraw(DB::raw("COUNT({$tablePrefix}news_merchant.news_merchant_id) * {$tablePrefix}campaign_price.base_price * (DATEDIFF({$tablePrefix}news.end_date, {$tablePrefix}news.begin_date) + 1) AS total"))
                                 ->join('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                                 ->join('campaign_price', 'campaign_price.campaign_id', '=', 'news.news_id')
                                 ->join('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
-                                ->where('merchants.status', '=', 'active')
-                                ->where('news.mall_id', '=', $merchant_id)
-                                ->where(function ($q) use ($start_date, $end_date, $tablePrefix) {
-                                    $q->WhereRaw("DATE_FORMAT({$tablePrefix}news.begin_date, '%Y-%m-%d') >= DATE_FORMAT({$this->quote($start_date)}, '%Y-%m-%d') and DATE_FORMAT({$tablePrefix}news.begin_date, '%Y-%m-%d') <= DATE_FORMAT({$this->quote($end_date)}, '%Y-%m-%d')")
-                                      ->orWhereRaw("DATE_FORMAT({$tablePrefix}news.end_date, '%Y-%m-%d') >= DATE_FORMAT({$this->quote($start_date)}, '%Y-%m-%d') and DATE_FORMAT({$tablePrefix}news.end_date, '%Y-%m-%d') <= DATE_FORMAT({$this->quote($end_date)}, '%Y-%m-%d')")
-                                      ->orWhereRaw("DATE_FORMAT({$this->quote($start_date)}, '%Y-%m-%d') >= DATE_FORMAT({$tablePrefix}news.begin_date, '%Y-%m-%d') and DATE_FORMAT({$this->quote($start_date)}, '%Y-%m-%d') <= DATE_FORMAT({$tablePrefix}news.end_date, '%Y-%m-%d')")
-                                      ->orWhereRaw("DATE_FORMAT({$this->quote($end_date)}, '%Y-%m-%d') >= DATE_FORMAT({$tablePrefix}news.begin_date, '%Y-%m-%d') and DATE_FORMAT({$this->quote($end_date)}, '%Y-%m-%d') <= DATE_FORMAT({$tablePrefix}news.end_date, '%Y-%m-%d')")
-                                      ->orWhereRaw("DATE_FORMAT({$this->quote($start_date)}, '%Y-%m-%d') <= DATE_FORMAT({$tablePrefix}news.begin_date, '%Y-%m-%d') and DATE_FORMAT({$this->quote($end_date)}, '%Y-%m-%d') >= DATE_FORMAT({$tablePrefix}news.end_date, '%Y-%m-%d')");
+                                ->leftJoin('user_campaign as uc', DB::raw('uc.campaign_id'), '=', 'news.news_id')
+                                ->leftJoin('campaign_account as ca', DB::raw('ca.user_id'), '=', DB::raw('uc.user_id'))
+                                ->leftJoin('campaign_account as cas', DB::raw('cas.parent_user_id'), '=', DB::raw('ca.parent_user_id'))
+                                ->where(function ($q) use ($user, $tablePrefix) {
+                                    $q->WhereRaw("ca.user_id = (select parent_user_id from {$tablePrefix}campaign_account where user_id = '{$user->user_id}')
+                                                    or
+                                                  ca.parent_user_id = (select parent_user_id from {$tablePrefix}campaign_account where user_id = '{$user->user_id}')")
+                                        ->orWhere(DB::raw('ca.user_id'), '=', $user->user_id)
+                                        ->orWhere(DB::raw('ca.parent_user_id'), '=', $user->user_id);
                                 })
+                                ->where('merchants.status', '=', 'active')
+                                ->where('news.begin_date', '<=', $end_date)
+                                ->where('news.end_date', '>=', $start_date)
                                 ->where('campaign_price.campaign_type', '=', 'promotion')
                                 ->where('news.object_type', '=', 'promotion')
                                 ->groupBy('news.news_id');
+
+            // Filter news by mall_id
+            OrbitInput::get('merchant_id', function ($mall_id) use ($promotions)
+            {
+                $promotions->where(function ($q) use ($mall_id) {
+                    $q->where('merchants.merchant_id', $mall_id)
+                        ->orWhere('merchants.parent_id', $mall_id);
+                });
+            });
 
             $coupons = DB::table('promotions')->selectraw(DB::raw("COUNT({$tablePrefix}promotion_retailer.promotion_retailer_id) * {$tablePrefix}campaign_price.base_price * (DATEDIFF({$tablePrefix}promotions.end_date, {$tablePrefix}promotions.begin_date) + 1) AS total"))
                         ->join('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                         ->join('campaign_price', 'campaign_price.campaign_id', '=', 'promotions.promotion_id')
                         ->join('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
-                        ->where('merchants.status', '=', 'active')
-                        ->where('promotions.merchant_id', '=', $merchant_id)
-                        ->where(function ($q) use ($start_date, $end_date, $tablePrefix) {
-                            $q->WhereRaw("DATE_FORMAT({$tablePrefix}promotions.begin_date, '%Y-%m-%d') >= DATE_FORMAT({$this->quote($start_date)}, '%Y-%m-%d') and DATE_FORMAT({$tablePrefix}promotions.begin_date, '%Y-%m-%d') <= DATE_FORMAT({$this->quote($end_date)}, '%Y-%m-%d')")
-                              ->orWhereRaw("DATE_FORMAT({$tablePrefix}promotions.end_date, '%Y-%m-%d') >= DATE_FORMAT({$this->quote($start_date)}, '%Y-%m-%d') and DATE_FORMAT({$tablePrefix}promotions.end_date, '%Y-%m-%d') <= DATE_FORMAT({$this->quote($end_date)}, '%Y-%m-%d')")
-                              ->orWhereRaw("DATE_FORMAT({$this->quote($start_date)}, '%Y-%m-%d') >= DATE_FORMAT({$tablePrefix}promotions.begin_date, '%Y-%m-%d') and DATE_FORMAT({$this->quote($start_date)}, '%Y-%m-%d') <= DATE_FORMAT({$tablePrefix}promotions.end_date, '%Y-%m-%d')")
-                              ->orWhereRaw("DATE_FORMAT({$this->quote($end_date)}, '%Y-%m-%d') >= DATE_FORMAT({$tablePrefix}promotions.begin_date, '%Y-%m-%d') and DATE_FORMAT({$this->quote($end_date)}, '%Y-%m-%d') <= DATE_FORMAT({$tablePrefix}promotions.end_date, '%Y-%m-%d')")
-                              ->orWhereRaw("DATE_FORMAT({$this->quote($start_date)}, '%Y-%m-%d') <= DATE_FORMAT({$tablePrefix}promotions.begin_date, '%Y-%m-%d') and DATE_FORMAT({$this->quote($end_date)}, '%Y-%m-%d') >= DATE_FORMAT({$tablePrefix}promotions.end_date, '%Y-%m-%d')");
+                        ->leftJoin('user_campaign as uc', DB::raw('uc.campaign_id'), '=', 'promotions.promotion_id')
+                        ->leftJoin('campaign_account as ca', DB::raw('ca.user_id'), '=', DB::raw('uc.user_id'))
+                        ->leftJoin('campaign_account as cas', DB::raw('cas.parent_user_id'), '=', DB::raw('ca.parent_user_id'))
+                        ->where(function ($q) use ($user, $tablePrefix) {
+                            $q->WhereRaw("ca.user_id = (select parent_user_id from {$tablePrefix}campaign_account where user_id = '{$user->user_id}')
+                                            or
+                                          ca.parent_user_id = (select parent_user_id from {$tablePrefix}campaign_account where user_id = '{$user->user_id}')")
+                                ->orWhere(DB::raw('ca.user_id'), '=', $user->user_id)
+                                ->orWhere(DB::raw('ca.parent_user_id'), '=', $user->user_id);
                         })
+                        ->where('merchants.status', '=', 'active')
+                        ->where('promotions.begin_date', '<=', $end_date)
+                        ->where('promotions.end_date', '>=', $start_date)
                         ->where('campaign_price.campaign_type', '=', 'coupon')
                         ->groupBy('promotions.promotion_id');
+
+            // Filter news by mall_id
+            OrbitInput::get('merchant_id', function ($mall_id) use ($coupons)
+            {
+                $coupons->where(function ($q) use ($mall_id) {
+                    $q->where('merchants.merchant_id', $mall_id)
+                        ->orWhere('merchants.parent_id', $mall_id);
+                });
+            });
 
             $data = $news->unionAll($promotions)->unionAll($coupons);
             $sql = $data->toSql();
@@ -4477,7 +4537,16 @@ class DashboardAPIController extends ControllerAPI
         // perform this action
         $user = $this->api->user;
 
-        // $mall_id = OrbitInput::get('current_mall');
+        $mall_id = OrbitInput::get('merchant_id', OrbitInput::get('current_mall', 0));
+        $mall = Mall::with('timezone')->excludeDeleted()->where('merchant_id', $mall_id)->first();
+
+        if (empty($mall)) {
+            $errorMessage = Lang::get('validation.orbit.empty.mall');
+            OrbitShopAPI::throwInvalidArgument($errorMessage);
+        }
+
+        $mallTimezone = Carbon::now($mall->timezone->timezone_name);
+
         $campaign_statuses = CampaignStatus::get();
         $promotionCount = [];
         $newsCount = [];
@@ -4486,9 +4555,9 @@ class DashboardAPIController extends ControllerAPI
         foreach ($campaign_statuses as $status) {
             // Promotions
             $promotionCount[$status->campaign_status_name] = News::allowedForPMPUser($user, 'promotion')
-                    ->campaignStatus($status->campaign_status_name);
+                    ->campaignStatus($status->campaign_status_name, $mallTimezone);
             // Filter promotion by mall_id
-            OrbitInput::get('current_mall', function ($mall_id) use ($promotionCount, $status)
+            OrbitInput::get('merchant_id', function ($mall_id) use ($promotionCount, $status)
             {
                 $promotionCount[$status->campaign_status_name]->whereHas('campaignLocations', function($q) use($mall_id) {
                             $q->where(function($q2) {
@@ -4496,7 +4565,6 @@ class DashboardAPIController extends ControllerAPI
                                 $q2->orWhere('merchants.object_type', 'mall');
                             });
                             $q->where(function($q3) use($mall_id) {
-                                $prefix = DB::getTablePrefix();
                                 $q3->where('merchants.merchant_id', $mall_id);
                                 // avaliable cause merchant_id never same with parent_id
                                 $q3->orWhere('merchants.parent_id', $mall_id);
@@ -4507,7 +4575,7 @@ class DashboardAPIController extends ControllerAPI
 
             // News
             $newsCount[$status->campaign_status_name] = News::allowedForPMPUser($user, 'news')
-                    ->campaignStatus($status->campaign_status_name);
+                    ->campaignStatus($status->campaign_status_name, $mallTimezone);
             // Filter news by mall_id
             OrbitInput::get('current_mall', function ($mall_id) use ($newsCount, $status)
             {
@@ -4517,7 +4585,6 @@ class DashboardAPIController extends ControllerAPI
                                 $q2->orWhere('merchants.object_type', 'mall');
                             });
                             $q->where(function($q3) use($mall_id) {
-                                $prefix = DB::getTablePrefix();
                                 $q3->where('merchants.merchant_id', $mall_id);
                                 // avaliable cause merchant_id never same with parent_id
                                 $q3->orWhere('merchants.parent_id', $mall_id);
@@ -4528,7 +4595,7 @@ class DashboardAPIController extends ControllerAPI
 
             // Coupons
             $couponCount[$status->campaign_status_name] = Coupon::allowedForPMPUser($user, 'coupon')
-                    ->campaignStatus($status->campaign_status_name);
+                    ->campaignStatus($status->campaign_status_name, $mallTimezone);
             // Filter coupons by mall_id
             OrbitInput::get('current_mall', function ($mall_id) use ($couponCount, $status)
             {
@@ -4538,7 +4605,6 @@ class DashboardAPIController extends ControllerAPI
                                 $q2->orWhere('merchants.object_type', 'mall');
                             });
                             $q->where(function($q3) use($mall_id) {
-                                $prefix = DB::getTablePrefix();
                                 $q3->where('merchants.merchant_id', $mall_id);
                                 // avaliable cause merchant_id never same with parent_id
                                 $q3->orWhere('merchants.parent_id', $mall_id);
@@ -4611,7 +4677,7 @@ class DashboardAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $current_mall = OrbitInput::get('current_mall');
+            $current_mall = OrbitInput::get('merchant_id', OrbitInput::get('current_mall', 0));
             $start_date = OrbitInput::get('start_date');
             $end_date = OrbitInput::get('end_date');
 
@@ -4649,7 +4715,7 @@ class DashboardAPIController extends ControllerAPI
                 ->where('created_at', '<=', $end_date);
 
             // Filter news by mall_id
-            OrbitInput::get('current_mall', function ($mall_id) use ($news)
+            OrbitInput::get('merchant_id', function ($mall_id) use ($news)
             {
                 $news->where('location_id', '=', $mall_id);
             });
@@ -4672,7 +4738,7 @@ class DashboardAPIController extends ControllerAPI
                 ->where('created_at', '<=', $end_date);
 
             // Filter news by mall_id
-            OrbitInput::get('current_mall', function ($mall_id) use ($promotion)
+            OrbitInput::get('merchant_id', function ($mall_id) use ($promotion)
             {
                 $promotion->where('location_id', '=', $mall_id);
             });
@@ -4695,7 +4761,7 @@ class DashboardAPIController extends ControllerAPI
                 ->where('created_at', '<=', $end_date);
 
             // Filter news by mall_id
-            OrbitInput::get('current_mall', function ($mall_id) use ($coupon)
+            OrbitInput::get('merchant_id', function ($mall_id) use ($coupon)
             {
                 $coupon->where('location_id', '=', $mall_id);
             });
@@ -4800,13 +4866,13 @@ class DashboardAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $current_mall = OrbitInput::get('current_mall');
+            $merchant_id = OrbitInput::get('merchant_id', OrbitInput::get('current_mall', 0));
             $start_date = OrbitInput::get('start_date');
             $end_date = OrbitInput::get('end_date');
 
             $validator = Validator::make(
                 array(
-                    'current_mall' => $current_mall,
+                    'current_mall' => $merchant_id,
                     'start_date' => $start_date,
                     'end_date' => $end_date,
                 ),
@@ -4828,25 +4894,56 @@ class DashboardAPIController extends ControllerAPI
 
             $tablePrefix = DB::getTablePrefix();
 
-
-            $query = DB::select("select date_format(created_at, '%Y-%m-%d') as days, count(distinct user_id) as unique_visit_perday
-                        from {$tablePrefix}user_signin
-                        where location_id = ?
-                            and created_at between ? and ?
-                        group by 1
-                        order by 1
-                        ", array($current_mall, $start_date, $end_date));
-
-            $total_unique_visit = 0;
-
-            if ( !empty($query) ) {
-                foreach ($query as $key => $value) {
-                    $total_unique_visit += $query[$key]->unique_visit_perday;
-                }
-            }
+            $total = DB::Select(DB::Raw("
+                select count(distinct(user_id)) as total_unique_visit from {$tablePrefix}campaign_page_views
+                where (campaign_id in (
+                    select
+                        news_id
+                    from
+                        `{$tablePrefix}news`
+                            left join
+                        `{$tablePrefix}user_campaign` as `uc` ON uc.campaign_id = `{$tablePrefix}news`.`news_id`
+                            left join
+                        `{$tablePrefix}campaign_account` as `ca` ON ca.user_id = uc.user_id
+                            left join
+                        `{$tablePrefix}campaign_account` as `cas` ON cas.parent_user_id = ca.parent_user_id
+                    where
+                            (ca.user_id = (select parent_user_id
+                                                from {$tablePrefix}campaign_account
+                                                where user_id = {$this->quote($user->user_id)})
+                            or ca.parent_user_id = (select parent_user_id
+                                                    from {$tablePrefix}campaign_account
+                                                    where user_id = {$this->quote($user->user_id)})
+                            or ca.user_id = {$this->quote($user->user_id)}
+                            or ca.parent_user_id = {$this->quote($user->user_id)})
+                    group by `{$tablePrefix}news`.`news_id`
+                ) or campaign_id in (
+                    select
+                        promotion_id
+                    from
+                        `{$tablePrefix}promotions`
+                            left join
+                        `{$tablePrefix}user_campaign` as `uc` ON uc.campaign_id = `{$tablePrefix}promotions`.`promotion_id`
+                            left join
+                        `{$tablePrefix}campaign_account` as `ca` ON ca.user_id = uc.user_id
+                            left join
+                        `{$tablePrefix}campaign_account` as `cas` ON cas.parent_user_id = ca.parent_user_id
+                    where
+                        `{$tablePrefix}promotions`.`is_coupon` = 'Y'
+                            and (ca.user_id = (select parent_user_id
+                                                from {$tablePrefix}campaign_account
+                                                where user_id = {$this->quote($user->user_id)})
+                            or ca.parent_user_id = (select parent_user_id
+                                                    from {$tablePrefix}campaign_account
+                                                    where user_id = {$this->quote($user->user_id)})
+                            or ca.user_id = {$this->quote($user->user_id)}
+                            or ca.parent_user_id = {$this->quote($user->user_id)})
+                    group by `{$tablePrefix}promotions`.`promotion_id`
+                )) and location_id = {$this->quote($merchant_id)};
+            "));
 
             $data = new stdclass();
-            $data->unique_users = $total_unique_visit;
+            $data->unique_users = $total[0]->total_unique_visit;
 
             $this->response->data = $data;
 
@@ -4937,7 +5034,7 @@ class DashboardAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $merchant_id = OrbitInput::get('current_mall');
+            $merchant_id = OrbitInput::get('merchant_id', OrbitInput::get('current_mall', 0));
             $start_date = OrbitInput::get('start_date');
             $end_date = OrbitInput::get('end_date');
             $without = OrbitInput::get('without');
@@ -4968,48 +5065,48 @@ class DashboardAPIController extends ControllerAPI
 
             # news
             $totalnews = CampaignDailySpending::whereHas('news', function ($q) use ($user) {
-                    $q->allowedForPMPUser($user, 'news')->excludeStoppedOrExpired('news');
+                    $q->allowedForPMPUser($user, 'news');
                 })
                 ->whereRaw("{$tablePrefix}campaign_daily_spendings.date >= DATE_FORMAT({$this->quote($start_date)}, '%Y-%m-%d')
                             and {$tablePrefix}campaign_daily_spendings.date <= DATE_FORMAT({$this->quote($end_date)}, '%Y-%m-%d')")
                 ->where('campaign_type', 'news');
 
             // Filter news by mall_id
-            OrbitInput::get('current_mall', function ($merchant_id) use ($totalnews)
+            OrbitInput::get('merchant_id', function ($mall_id) use ($totalnews)
             {
-                $totalnews->where('mall_id', '=', $merchant_id);
+                $totalnews->where('mall_id', '=', $mall_id);
             });
 
             $totalnews = $totalnews->get()->sum('total_spending');
 
             # promotions
             $totalpromotion = CampaignDailySpending::whereHas('promotion', function ($q) use ($user) {
-                    $q->allowedForPMPUser($user, 'promotion')->excludeStoppedOrExpired('news');
+                    $q->allowedForPMPUser($user, 'promotion');
                 })
                 ->whereRaw("{$tablePrefix}campaign_daily_spendings.date >= DATE_FORMAT({$this->quote($start_date)}, '%Y-%m-%d')
                             and {$tablePrefix}campaign_daily_spendings.date <= DATE_FORMAT({$this->quote($end_date)}, '%Y-%m-%d')")
                 ->where('campaign_type', 'promotion');
 
             // Filter news by mall_id
-            OrbitInput::get('current_mall', function ($merchant_id) use ($totalpromotion)
+            OrbitInput::get('merchant_id', function ($mall_id) use ($totalpromotion)
             {
-                $totalpromotion->where('mall_id', '=', $merchant_id);
+                $totalpromotion->where('mall_id', '=', $mall_id);
             });
 
             $totalpromotion = $totalpromotion->get()->sum('total_spending');
 
             # coupons
             $totalcoupon = CampaignDailySpending::whereHas('coupon', function ($q) use ($user) {
-                    $q->allowedForPMPUser($user, 'coupon')->excludeStoppedOrExpired('promotions');
+                    $q->allowedForPMPUser($user, 'coupon');
                 })
                 ->whereRaw("{$tablePrefix}campaign_daily_spendings.date >= DATE_FORMAT({$this->quote($start_date)}, '%Y-%m-%d')
                             and {$tablePrefix}campaign_daily_spendings.date <= DATE_FORMAT({$this->quote($end_date)}, '%Y-%m-%d')")
                 ->where('campaign_type', 'coupon');
 
             // Filter news by mall_id
-            OrbitInput::get('current_mall', function ($merchant_id) use ($totalcoupon)
+            OrbitInput::get('merchant_id', function ($mall_id) use ($totalcoupon)
             {
-                $totalcoupon->where('mall_id', '=', $merchant_id);
+                $totalcoupon->where('mall_id', '=', $mall_id);
             });
 
             $totalcoupon = $totalcoupon->get()->sum('total_spending');

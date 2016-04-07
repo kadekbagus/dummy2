@@ -2221,7 +2221,7 @@ class CouponAPIController extends ControllerAPI
             // Addition select case and join for sorting by discount_value.
             $coupons = Coupon::allowedForPMPUser($user, 'coupon')
                 ->with('couponRule')
-                ->select(DB::raw("{$table_prefix}promotions.*, {$table_prefix}campaign_price.campaign_price_id, {$table_prefix}coupon_translations.promotion_name AS name_english, media.path as image_path, 
+                ->select(DB::raw("{$table_prefix}promotions.*, {$table_prefix}campaign_price.campaign_price_id, {$table_prefix}coupon_translations.promotion_name AS name_english, media.path as image_path,
                     CASE WHEN {$table_prefix}campaign_status.campaign_status_name = 'expired' THEN {$table_prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$table_prefix}promotions.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
                                                                                 FROM {$table_prefix}merchants om
                                                                                 LEFT JOIN {$table_prefix}timezones ot on ot.timezone_id = om.timezone_id
@@ -2418,10 +2418,11 @@ class CouponAPIController extends ControllerAPI
                 $mall_name_like = "%" . $mall_name_like . "%";
                 $mall_name_like = $quote($mall_name_like);
                 $coupons->whereRaw(DB::raw("
-                    (select count(*) from {$table_prefix}merchants mtenant
+                (
+                    (select count(mtenant.merchant_id) from {$table_prefix}merchants mtenant
                     inner join {$table_prefix}promotion_retailer opr on mtenant.merchant_id = opr.retailer_id
                     where mtenant.object_type = 'tenant' and opr.promotion_id = {$table_prefix}promotions.promotion_id and (
-                        select count(*) from {$table_prefix}merchants mmall
+                        select count(mtenant.merchant_id) from {$table_prefix}merchants mmall
                         where mmall.object_type = 'mall' and
                         mtenant.parent_id = mmall.merchant_id and
                         mmall.name like {$mall_name_like} and
@@ -2430,6 +2431,16 @@ class CouponAPIController extends ControllerAPI
                     mtenant.object_type = 'tenant' and
                     mtenant.is_mall = 'no' and
                     opr.object_type = 'tenant') >= 1
+                )
+                OR
+                (
+                    select count(mmallx.merchant_id) from {$table_prefix}merchants mmallx
+                    inner join {$table_prefix}promotion_retailer oprx on mmallx.merchant_id = oprx.retailer_id
+                    where mmallx.object_type = 'mall' and
+                    oprx.promotion_id = {$table_prefix}promotions.promotion_id and
+                    mmallx.name like {$mall_name_like} and
+                    mmallx.object_type = 'mall'
+                )
                 "));
             });
 
