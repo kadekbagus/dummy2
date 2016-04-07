@@ -2410,7 +2410,8 @@ class CouponAPIController extends ControllerAPI
             // Filter coupon merchants by mall name
             // There is laravel bug regarding nested whereHas on the same table like in this case
             // news->tenant->mall : whereHas('tenant', function($q) { $q->whereHas('mall' ...)}) this is not gonna work
-            OrbitInput::get('mall_name_like', function ($mall_name_like) use ($coupons, $table_prefix) {
+            OrbitInput::get('mall_name_like', function ($mall_name_like) use ($coupons, $table_prefix, $user) {
+                $user_id = $user->user_id;
                 $quote = function($arg)
                 {
                     return DB::connection()->getPdo()->quote($arg);
@@ -2421,7 +2422,11 @@ class CouponAPIController extends ControllerAPI
                 (
                     (select count(mtenant.merchant_id) from {$table_prefix}merchants mtenant
                     inner join {$table_prefix}promotion_retailer opr on mtenant.merchant_id = opr.retailer_id
-                    where mtenant.object_type = 'tenant' and opr.promotion_id = {$table_prefix}promotions.promotion_id and (
+                    inner join {$prefix}user_campaign ucp on ucp.campaign_id = onm.news_id
+                    where mtenant.object_type = 'tenant' 
+                    and ucp.user_id = '{$user_id}'
+                    and opr.promotion_id = {$table_prefix}promotions.promotion_id 
+                    and (
                         select count(mtenant.merchant_id) from {$table_prefix}merchants mmall
                         where mmall.object_type = 'mall' and
                         mtenant.parent_id = mmall.merchant_id and
@@ -2436,8 +2441,9 @@ class CouponAPIController extends ControllerAPI
                 (
                     select count(mmallx.merchant_id) from {$table_prefix}merchants mmallx
                     inner join {$table_prefix}promotion_retailer oprx on mmallx.merchant_id = oprx.retailer_id
+                    inner join {$prefix}user_campaign ucp on ucp.campaign_id = onm.news_id
                     where mmallx.object_type = 'mall' and
-                    oprx.promotion_id = {$table_prefix}promotions.promotion_id and
+                    ucp.user_id = '{$user_id}' and
                     mmallx.name like {$mall_name_like} and
                     mmallx.object_type = 'mall'
                 )
