@@ -4559,7 +4559,7 @@ class DashboardAPIController extends ControllerAPI
         $mall = Mall::with('timezone')->excludeDeleted()->where('merchant_id', $mall_id)->first();
 
         if (empty($mall)) {
-            $errorMessage = 'Mall not found'; // in the morning i will clear this
+            $errorMessage = Lang::get('validation.orbit.empty.mall');
             OrbitShopAPI::throwInvalidArgument($errorMessage);
         }
 
