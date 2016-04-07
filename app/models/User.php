@@ -240,7 +240,7 @@ class User extends Eloquent implements UserInterface
         $guest_time = time();
         $guest_browser = $_SERVER['HTTP_USER_AGENT'];
         $guest_identifier = sha1($guest_time . $guest_ip . $guest_browser);
-        $guest_email_string = 'guest_' . $guest_identifier . '@myorbit.com';
+        $guest_email_string = 'guest_' . $guest_identifier . '_' . $guest_time . '@myorbit.com';
 
         $user_role_id = Role::where('role_name', 'Guest')->first()->role_id;
 

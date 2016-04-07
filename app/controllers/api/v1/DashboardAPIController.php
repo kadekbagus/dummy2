@@ -294,8 +294,7 @@ class DashboardAPIController extends ControllerAPI
                                     $q->on('news.object_type', '=', DB::raw("'News'"));
                             })
                             ->leftJoin('news_translations', 'news_translations.news_id', '=', 'news.news_id')
-                            ->leftJoin('merchant_languages', 'merchant_languages.merchant_language_id', '=', 'news_translations.merchant_language_id')
-                            ->leftJoin('languages', 'languages.language_id', '=', 'merchant_languages.language_id')
+                            ->leftJoin('languages', 'languages.language_id', '=', 'news_translations.merchant_language_id')
                             ->where('languages.name', '=', 'en')
                             ->whereBetween('campaign_page_views.created_at', [$start_date, $end_date])
                             ->where('location_id', $merchant_id)
@@ -350,8 +349,7 @@ class DashboardAPIController extends ControllerAPI
                                     $q->on('news.object_type', '=', DB::raw("'Promotion'"));
                             })
                             ->leftJoin('news_translations', 'news_translations.news_id', '=', 'news.news_id')
-                            ->leftJoin('merchant_languages', 'merchant_languages.merchant_language_id', '=', 'news_translations.merchant_language_id')
-                            ->leftJoin('languages', 'languages.language_id', '=', 'merchant_languages.language_id')
+                            ->leftJoin('languages', 'languages.language_id', '=', 'news_translations.merchant_language_id')
                             ->where('languages.name', '=', 'en')
                             ->whereBetween('campaign_page_views.created_at', [$start_date, $end_date])
                             ->where('location_id', $merchant_id)
@@ -407,8 +405,7 @@ class DashboardAPIController extends ControllerAPI
                                     $q->on('campaign_group_names.campaign_group_name', '=', DB::raw($quote('Coupon')));
                             })
                             ->leftJoin('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
-                            ->leftJoin('merchant_languages', 'merchant_languages.merchant_language_id', '=', 'coupon_translations.merchant_language_id')
-                            ->leftJoin('languages', 'languages.language_id', '=', 'merchant_languages.language_id')
+                            ->leftJoin('languages', 'languages.language_id', '=', 'coupon_translations.merchant_language_id')
                             ->where('languages.name', '=', 'en')
                             ->whereBetween('campaign_page_views.created_at', [$start_date, $end_date])
                             ->where('promotions.merchant_id', $merchant_id)
@@ -965,10 +962,8 @@ class DashboardAPIController extends ControllerAPI
                 ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
                 ->leftJoin('news_merchant as nm', DB::raw('nm.news_id'), '=', 'news.news_id')
                 ->leftJoin('merchants as m', DB::raw('m.merchant_id'), '=', DB::raw('nm.merchant_id'))
-                // Join translation for get english name
                 ->leftJoin('news_translations', 'news_translations.news_id', '=', 'news.news_id')
-                ->leftJoin('merchant_languages', 'merchant_languages.merchant_language_id', '=', 'news_translations.merchant_language_id')
-                ->leftJoin('languages', 'languages.language_id', '=', 'merchant_languages.language_id')
+                ->leftJoin('languages', 'languages.language_id', '=', 'news_translations.merchant_language_id')
                 ->where('languages.name', '=', 'en')
                 ->where('end_date', '>', $mallTimezone)
                 ->orderBy('expire_days','asc');
@@ -990,10 +985,8 @@ class DashboardAPIController extends ControllerAPI
                 ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
                 ->leftJoin('promotion_retailer as pr', DB::raw('pr.promotion_id'), '=', 'promotions.promotion_id')
                 ->leftJoin('merchants as m', DB::raw('m.merchant_id'), '=', DB::raw('pr.retailer_id'))
-                // Join translation for get english name
                 ->leftJoin('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
-                ->leftJoin('merchant_languages', 'merchant_languages.merchant_language_id', '=', 'coupon_translations.merchant_language_id')
-                ->leftJoin('languages', 'languages.language_id', '=', 'merchant_languages.language_id')
+                ->leftJoin('languages', 'languages.language_id', '=', 'coupon_translations.merchant_language_id')
                 ->leftJoin('user_campaign as uc', DB::raw('uc.campaign_id'), '=', 'promotions.promotion_id')
                 ->leftJoin('campaign_account as ca', DB::raw('ca.user_id'), '=', DB::raw('uc.user_id'))
                 ->leftJoin('campaign_account as cas', DB::raw('cas.parent_user_id'), '=', DB::raw('ca.parent_user_id'))

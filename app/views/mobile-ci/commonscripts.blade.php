@@ -144,7 +144,6 @@
     </div>
 </div>
 <div class="row back-drop sign-in-back-drop"></div>
-
 <div class="modal fade" id="formModal" tabindex="-1" role="dialog" aria-labelledby="formModalLabel" style="z-index: 1005;">
     <div class="modal-dialog">
         <div class="modal-content" id="signin-form-wrapper">
@@ -191,7 +190,7 @@
                         <button type="button" id="btn-forgot-form" class="btn btn-info btn-block icon-button form text-center" disabled>{{ Lang::get('mobileci.signin.forgot_button') }}</button>
                     </div>
                     <div class="form-group">
-                        <i><span>{{ Lang::get('mobileci.signin.doesnt_have_account') }} <a href="#1" id="forgot-sign-in-link">{{ Lang::get('mobileci.signin.sign_in') }}</a></span></i>
+                        <i><span>{{ Lang::get('mobileci.signup.already_have_an_account') }} <a href="#1" id="forgot-sign-in-link">{{ Lang::get('mobileci.signin.sign_in') }}</a></span></i>
                     </div>
                 </div>
             </form>
