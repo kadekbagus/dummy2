@@ -1775,9 +1775,8 @@ class NewsAPIController extends ControllerAPI
                     (
                         (select count(mtenant.merchant_id) from {$prefix}merchants mtenant
                             inner join {$prefix}news_merchant onm on mtenant.merchant_id = onm.merchant_id
-                            inner join {$prefix}user_campaign ucp on ucp.campaign_id = onm.news_id
-                            where mtenant.object_type = 'tenant'
-                            and ucp.user_id = '{$user_id}'  
+                            where mtenant.object_type = 'tenant' 
+                            and onm.news_id = {$prefix}news.news_id 
                             and (
                                 select count(mmall.merchant_id) from {$prefix}merchants mmall
                                 where mmall.object_type = 'mall' and
