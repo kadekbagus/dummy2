@@ -478,7 +478,7 @@ class NewsAPIController extends ControllerAPI
                                                 ->count();
 
                 if ($isAvailable == 0) {
-                    $errorMessage = 'Language ' . $idLanguage->name_long . ' is not available in Mall ' . $default->name . ', you need to setup ' . $idLanguage->name_long . ' as default language in Mall ' . $default->name . '';
+                    $errorMessage = Lang::get('validation.orbit.empty.default_language');
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
             }
@@ -824,7 +824,7 @@ class NewsAPIController extends ControllerAPI
                                                 ->count();
 
                 if ($isAvailable == 0) {
-                    $errorMessage = 'Language ' . $idLanguage->name_long . ' is not available in Mall ' . $default->name . ', you need to setup ' . $idLanguage->name_long . ' as default language in Mall ' . $default->name . '';
+                    $errorMessage = Lang::get('validation.orbit.empty.default_language');
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
             }
@@ -1640,7 +1640,8 @@ class NewsAPIController extends ControllerAPI
             $prefix = DB::getTablePrefix();
             $news = News::allowedForPMPUser($user, $object_type[0])
                         ->select('news.*', 'campaign_status.order', 'campaign_price.campaign_price_id', 'news_translations.news_name as name_english', DB::raw('media.path as image_path'),
-                            DB::raw("(select GROUP_CONCAT(IF({$prefix}merchants.object_type = 'tenant', CONCAT({$prefix}merchants.name,' at ', pm.name), {$prefix}merchants.name) separator ', ') from {$prefix}news_merchant
+                            DB::raw("(select GROUP_CONCAT(IF({$prefix}merchants.object_type = 'tenant', CONCAT({$prefix}merchants.name,' at ', pm.name), CONCAT('Mall at ',{$prefix}merchants.name) ) separator ', ') 
+                                from {$prefix}news_merchant
                                     inner join {$prefix}merchants on {$prefix}merchants.merchant_id = {$prefix}news_merchant.merchant_id
                                     inner join {$prefix}merchants pm on {$prefix}merchants.parent_id = pm.merchant_id
                                     where {$prefix}news_merchant.news_id = {$prefix}news.news_id) as campaign_location_names"),
@@ -1762,7 +1763,8 @@ class NewsAPIController extends ControllerAPI
             // Filter news merchants by mall name
             // There is laravel bug regarding nested whereHas on the same table like in this case
             // news->tenant->mall : whereHas('tenant', function($q) { $q->whereHas('mall' ...)}) this is not gonna work
-            OrbitInput::get('mall_name_like', function ($mall_name_like) use ($news, $prefix) {
+            OrbitInput::get('mall_name_like', function ($mall_name_like) use ($news, $prefix, $user) {
+                $user_id = $user->user_id;
                 $quote = function($arg)
                 {
                     return DB::connection()->getPdo()->quote($arg);
@@ -1773,7 +1775,9 @@ class NewsAPIController extends ControllerAPI
                     (
                         (select count(mtenant.merchant_id) from {$prefix}merchants mtenant
                             inner join {$prefix}news_merchant onm on mtenant.merchant_id = onm.merchant_id
-                            where mtenant.object_type = 'tenant' and onm.news_id = {$prefix}news.news_id and (
+                            where mtenant.object_type = 'tenant' 
+                            and onm.news_id = {$prefix}news.news_id 
+                            and (
                                 select count(mmall.merchant_id) from {$prefix}merchants mmall
                                 where mmall.object_type = 'mall' and
                                 mtenant.parent_id = mmall.merchant_id and
@@ -1782,17 +1786,20 @@ class NewsAPIController extends ControllerAPI
                             ) >= 1 and
                             mtenant.object_type = 'tenant' and
                             mtenant.is_mall = 'no' and
-                            onm.object_type = 'retailer') >= 1
+                            onm.object_type = 'retailer'
+                        ) >= 1
                     )
                     OR
                     (
-                        select count(mmallx.merchant_id) from {$prefix}merchants mmallx
-                        inner join {$prefix}news_merchant onmx on mmallx.merchant_id = onmx.merchant_id
-                        where mmallx.object_type = 'mall' and
-                        onmx.news_id = {$prefix}news.news_id and
-                        mmallx.name like {$mall_name_like} and
-                        mmallx.object_type = 'mall'
-                    ) >= 1
+                        (select count(mmall.merchant_id) from {$prefix}merchants mmall
+                            inner join {$prefix}news_merchant onm on mmall.merchant_id = onm.merchant_id
+                            inner join {$prefix}user_campaign ucp on ucp.campaign_id = onm.news_id
+                            where mmall.object_type = 'mall' and
+                            ucp.user_id = '{$user_id}' and
+                            mmall.name like {$mall_name_like} and
+                            onm.object_type = 'mall'
+                        ) >= 1
+                    )
                 "));
             });
 

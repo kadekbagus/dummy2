@@ -22,7 +22,7 @@ class CampaignReportPrinterController extends DataPrinterController
 
         $mode = OrbitInput::get('export', 'print');
         $current_mall = OrbitInput::get('current_mall');
-
+        $currentDateAndTime = OrbitInput::get('currentDateAndTime');
         $timezone = $this->getTimezoneMall($current_mall);
 
         $user = $this->loggedUser;
@@ -66,11 +66,18 @@ class CampaignReportPrinterController extends DataPrinterController
 
         $pageTitle = 'Campaign Summary Report';
 
+        // the frontend send the current date and time, because pmp portal doesn't have timezone
+        if ( !empty($currentDateAndTime) ) {
+            $filename = $this->getFilename(preg_replace("/[\s_]/", "-", $pageTitle), '.csv', $currentDateAndTime);
+        } else {
+            $filename = OrbitText::exportFilename(preg_replace("/[\s_]/", "-", $pageTitle), '.csv', $timezone);
+        }
+
         switch ($mode) {
             case 'csv':
                 @header('Content-Description: File Transfer');
                 @header('Content-Type: text/csv');
-                @header('Content-Disposition: attachment; filename=' . OrbitText::exportFilename($pageTitle, '.csv', $timezone));
+                @header('Content-Disposition: attachment; filename=' . OrbitText::exportFilename($pageTitle, '.csv', $timezone) );
 
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Campaign Summary Report', '', '', '', '', '');
@@ -164,7 +171,7 @@ class CampaignReportPrinterController extends DataPrinterController
     {
         $mode = OrbitInput::get('export', 'print');
         $current_mall = OrbitInput::get('current_mall');
-
+        $currentDateAndTime = OrbitInput::get('currentDateAndTime');
         $timezone = $this->getTimezoneMall($current_mall);
 
         $user = $this->loggedUser;
@@ -205,11 +212,18 @@ class CampaignReportPrinterController extends DataPrinterController
 
         $pageTitle = 'Campaign Detail Report for ' . $campaignName;
 
+        // the frontend send the current date and time, because pmp portal doesn't have timezone
+        if ( !empty($currentDateAndTime) ) {
+            $filename = $this->getFilename(preg_replace("/[\s_]/", "-", $pageTitle), '.csv', $currentDateAndTime);
+        } else {
+            $filename = OrbitText::exportFilename(preg_replace("/[\s_]/", "-", $pageTitle), '.csv', $timezone);
+        }
+
         switch ($mode) {
             case 'csv':
                 @header('Content-Description: File Transfer');
                 @header('Content-Type: text/csv');
-                @header('Content-Disposition: attachment; filename=' . OrbitText::exportFilename($pageTitle, '.csv', $timezone));
+                @header('Content-Disposition: attachment; filename=' . OrbitText::exportFilename($pageTitle, '.csv', $timezone) );
 
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', $pageTitle, '', '', '', '', '');
@@ -364,6 +378,14 @@ class CampaignReportPrinterController extends DataPrinterController
         }
 
         return $timezone;
+    }
+
+    public function getFilename($pageTitle, $ext = ".csv", $currentDateAndTime=null)
+    {
+        if (empty($currentDateAndTime)) {
+            $currentDateAndTime = Carbon::now();
+        }
+        return 'orbit-export-' . $pageTitle . '-' . Carbon::createFromFormat('Y-m-d H:i:s', $currentDateAndTime)->format('D_d_M_Y_Hi') . $ext;
     }
 
 }
