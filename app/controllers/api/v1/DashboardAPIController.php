@@ -279,15 +279,20 @@ class DashboardAPIController extends ControllerAPI
 
                 // show news
                 case 'news':
+                    $total = News::allowedForPMPUser($user, 'news')
+                                ->select(DB::raw("count(distinct({$tablePrefix}campaign_page_views.campaign_page_view_id)) as total"))
+                                ->leftJoin('campaign_page_views', function($q) {
+                                        $q->on('campaign_page_views.campaign_id', '=', 'news.news_id');
+                                        $q->on('news.object_type', '=', DB::raw("'News'"));
+                                })
+                                ->where('campaign_page_views.location_id', '=', $merchant_id)
+                                ->whereBetween('campaign_page_views.created_at', [$start_date, $end_date])->get()->sum('total');
+
                     $query = News::allowedForPMPUser($user, 'news')
-                            ->select(DB::raw("COUNT({$tablePrefix}campaign_page_views.campaign_page_view_id) as score,
+                            ->select(DB::raw("COUNT(DISTINCT({$tablePrefix}campaign_page_views.campaign_page_view_id)) as score,
                             CASE WHEN {$tablePrefix}news_translations.news_name !='' THEN {$tablePrefix}news_translations.news_name ELSE {$tablePrefix}news.news_name END as name,
                                 {$tablePrefix}news.news_id as object_id,
-                          count({$tablePrefix}campaign_page_views.campaign_page_view_id) / (select count(cp.campaign_page_view_id)
-                                from {$tablePrefix}news ne
-                                left join {$tablePrefix}campaign_page_views cp on cp.campaign_id = ne.news_id and ne.object_type = 'News'
-                                left join {$tablePrefix}campaign_group_names cgn on cgn.campaign_group_name_id=cp.campaign_group_name_id
-                                where cp.location_id = {$quote($merchant_id)} and cp.created_at between {$quote($start_date)} and {$quote($end_date)}) * 100 as percentage")
+                          COUNT(DISTINCT({$tablePrefix}campaign_page_views.campaign_page_view_id)) / {$total} * 100 as percentage")
                             )
                             ->leftJoin('campaign_page_views', function($q) {
                                     $q->on('campaign_page_views.campaign_id', '=', 'news.news_id');
@@ -298,7 +303,6 @@ class DashboardAPIController extends ControllerAPI
                             ->where('languages.name', '=', 'en')
                             ->whereBetween('campaign_page_views.created_at', [$start_date, $end_date])
                             ->where('location_id', $merchant_id)
-                            ->groupBy('news.news_id')
                             ->orderBy(DB::raw('1'), 'desc')
                             ->take($take);
                         $flag_type = true;
@@ -334,15 +338,20 @@ class DashboardAPIController extends ControllerAPI
 
                 // show promotions
                 case 'promotions':
+                    $total = News::allowedForPMPUser($user, 'promotion')
+                                ->select(DB::raw("count(distinct({$tablePrefix}campaign_page_views.campaign_page_view_id)) as total"))
+                                ->leftJoin('campaign_page_views', function($q) {
+                                        $q->on('campaign_page_views.campaign_id', '=', 'news.news_id');
+                                        $q->on('news.object_type', '=', DB::raw("'Promotion'"));
+                                })
+                                ->where('campaign_page_views.location_id', '=', $merchant_id)
+                                ->whereBetween('campaign_page_views.created_at', [$start_date, $end_date])->get()->sum('total');
+
                     $query = News::allowedForPMPUser($user, 'promotion')
-                            ->select(DB::raw("COUNT({$tablePrefix}campaign_page_views.campaign_page_view_id) as score,
+                            ->select(DB::raw("COUNT(DISTINCT({$tablePrefix}campaign_page_views.campaign_page_view_id)) as score,
                                 CASE WHEN {$tablePrefix}news_translations.news_name !='' THEN {$tablePrefix}news_translations.news_name ELSE {$tablePrefix}news.news_name END as name,
                                 {$tablePrefix}news.news_id as object_id,
-                          count({$tablePrefix}campaign_page_views.campaign_page_view_id) / (select count(cp.campaign_page_view_id)
-                                from {$tablePrefix}news ne
-                                left join {$tablePrefix}campaign_page_views cp on cp.campaign_id = ne.news_id and ne.object_type = 'Promotion'
-                                left join {$tablePrefix}campaign_group_names cgn on cgn.campaign_group_name_id=cp.campaign_group_name_id
-                                where cp.location_id = {$quote($merchant_id)} and cp.created_at between {$quote($start_date)} and {$quote($end_date)}) * 100 as percentage")
+                          COUNT(DISTINCT({$tablePrefix}campaign_page_views.campaign_page_view_id)) / {$total} * 100 as percentage")
                             )
                             ->leftJoin('campaign_page_views', function($q) {
                                     $q->on('campaign_page_views.campaign_id', '=', 'news.news_id');
@@ -389,15 +398,17 @@ class DashboardAPIController extends ControllerAPI
 
                 // show coupon
                 case 'coupons':
+                    $total = Coupon::allowedForPMPUser($user, 'coupon')
+                                ->select(DB::raw("count(distinct({$tablePrefix}campaign_page_views.campaign_page_view_id)) as total"))
+                                ->leftJoin('campaign_page_views', 'campaign_page_views.campaign_id', '=', 'promotions.promotion_id')
+                                ->where('campaign_page_views.location_id', '=', $merchant_id)
+                                ->whereBetween('campaign_page_views.created_at', [$start_date, $end_date])->get()->sum('total');
+
                     $query = Coupon::allowedForPMPUser($user, 'coupon')
-                            ->select(DB::raw("COUNT({$tablePrefix}campaign_page_views.campaign_page_view_id) as score,
+                            ->select(DB::raw("COUNT(DISTINCT({$tablePrefix}campaign_page_views.campaign_page_view_id)) as score,
                                     CASE WHEN {$tablePrefix}coupon_translations.promotion_name !='' THEN {$tablePrefix}coupon_translations.promotion_name ELSE {$tablePrefix}promotions.promotion_name END as name,
                                     {$tablePrefix}promotions.promotion_id as object_id,
-                                count({$tablePrefix}campaign_page_views.campaign_page_view_id) / (select count(cp.campaign_page_view_id)
-                                from {$tablePrefix}promotions pr
-                                left join {$tablePrefix}campaign_page_views cp on cp.campaign_id = pr.promotion_id and pr.is_coupon = 'Y'
-                                left join {$tablePrefix}campaign_group_names cgn on cgn.campaign_group_name_id=cp.campaign_group_name_id
-                                where cp.location_id = {$quote($merchant_id)} and cp.created_at between {$quote($start_date)} and {$quote($end_date)}) * 100 as percentage")
+                                COUNT(DISTINCT({$tablePrefix}campaign_page_views.campaign_page_view_id)) / {$total} * 100 as percentage")
                             )
                             ->leftJoin('campaign_page_views', 'campaign_page_views.campaign_id', '=', 'promotions.promotion_id')
                             ->leftJoin('campaign_group_names', function($q) use ($quote) {

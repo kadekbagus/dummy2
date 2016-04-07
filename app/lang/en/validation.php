@@ -305,7 +305,8 @@ return array(
             'reset_password' => array(
                      'token' => 'Token you specified is not found',
                 ),
-            'forgot_email' => 'We couldn\'t find an account associated with :email_addr'
+            'forgot_email' => 'We couldn\'t find an account associated with :email_addr',
+            'default_language' => 'Campaign content in mall default language is required'
         ),
         'queryerror' => 'Database query error, turn on debug mode to see the full query',
         'jsonerror'  => array(

@@ -47,6 +47,10 @@ class UrlChecker
         }
     }
 
+    public function getUserSession()
+    {
+        return $this->session;
+    }
 
 	/**
      * Check user if logged in or not
