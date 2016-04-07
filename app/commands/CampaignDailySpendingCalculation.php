@@ -38,7 +38,8 @@ class CampaignDailySpendingCalculation extends Command {
 	 */
 	public function fire()
 	{
-
+        // Start time for log
+        $started_time = microtime(true);
 
         $prefix = DB::getTablePrefix();
 
@@ -59,19 +60,25 @@ class CampaignDailySpendingCalculation extends Command {
                 $timezoneOffset = $dt->format('P');
                 $mallId = $valMall->merchant_id;
 
+        		$totalCampaign = 0;
+
                 // Check mall time is 00 hours
-                // if ($val->tz === '00') {
+                if ($valMall->tz === '00') {
+
+		        	$this->info('Mall name = ' . $valMall->name);
 
                     // ============================== News and Promotions ==============================
                     // Check campaign in mall which have status not expired or stopped and have tenant with parent id this mall
                     $newsAndPromotions = News::select('news.*', 'campaign_status.order',
-                            DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$prefix}news.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name) FROM {$prefix}merchants om
-                                    LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
-                                    WHERE om.merchant_id = {$prefix}news.mall_id)
-                                THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END  AS campaign_status"))
+                            DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$prefix}news.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
+                            	FROM {$prefix}merchants om
+                                LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
+                                WHERE om.merchant_id = {$prefix}news.mall_id)
+                                THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END AS campaign_status"))
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
                         ->with('tenants')
-                        ->whereNotIn(DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$prefix}news.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name) FROM {$prefix}merchants om
+                        ->whereNotIn(DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$prefix}news.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
+                        			FROM {$prefix}merchants om
                                     LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
                                     WHERE om.merchant_id = {$prefix}news.mall_id)
                                 THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END"), ['expired', 'stopped'] )
@@ -81,17 +88,17 @@ class CampaignDailySpendingCalculation extends Command {
                         ->get();
 
                     // Check campaign which have link to tenant and mall in this mall
+
                     if (count($newsAndPromotions) > 0) {
                         foreach ($newsAndPromotions as $key => $valNewsPromotions) {
 
                             // Check per campaign which have this mall
-                            // Calculatting
-                            // Insert calculation campaign daily spending
-                            $campaign_id = $valNewsPromotions->news_id;
-                            $campaign_type = $valNewsPromotions->object_type;
+                            // Insert campaign daily spending calculation
+                            $campaignId = $valNewsPromotions->news_id;
+                            $campaignType = $valNewsPromotions->object_type;
                             $beginDate = $valNewsPromotions->begin_date;
                             $endDate = $valNewsPromotions->end_date;
-                            $procResults = DB::statement("CALL prc_campaign_detailed_cost({$this->quote($campaign_id)}, {$this->quote($campaign_type)}, {$this->quote($now)}, {$this->quote($now)}, {$this->quote($mallId)})");
+                            $procResults = DB::statement("CALL prc_campaign_detailed_cost({$this->quote($campaignId)}, {$this->quote($campaignType)}, {$this->quote($now)}, {$this->quote($now)}, {$this->quote($mallId)})");
 
                             if ($procResults === false) {
                                 // Do Nothing
@@ -99,12 +106,19 @@ class CampaignDailySpendingCalculation extends Command {
 
                             $getspending = DB::table(DB::raw('tmp_campaign_cost_detail'))->first();
 
-                            // only calculate spending when update date between start and date of campaign
                             if (count($getspending) > 0) {
-                                $dailySpending = new CampaignDailySpending;
+
+			                    $daily = CampaignDailySpending::where('date', '=', $getspending->date_in_utc)->where('campaign_id', '=', $campaignId)->where('mall_id', '=', $mallId)->first();
+
+			                    if (count($daily) > 0) {
+			                        $dailySpending = CampaignDailySpending::find($daily['campaign_daily_spending_id']);
+			                    } else {
+			                        $dailySpending = new CampaignDailySpending;
+			                    }
+
                                 $dailySpending->date = $getspending->date_in_utc;
-                                $dailySpending->campaign_type = $campaign_type;
-                                $dailySpending->campaign_id = $campaign_id;
+                                $dailySpending->campaign_type = $campaignType;
+                                $dailySpending->campaign_id = $campaignId;
                                 $dailySpending->mall_id = $mallId;
                                 $dailySpending->number_active_tenants = $getspending->campaign_number_tenant;
                                 $dailySpending->base_price = $getspending->base_price;
@@ -113,24 +127,89 @@ class CampaignDailySpendingCalculation extends Command {
                                 $dailySpending->save();
                             }
 
+							$totalCampaign++;
+							$this->info($totalCampaign . '. campaign_id = ' . $campaignId . ', campaign_type = '.$campaignType );
 
                         }
                     }
 
-
-
+			        // $this->info('Success, Inserted campaign daily spending for news !');
+			        // $this->info('Success, Inserted campaign daily spending for promotions !');
 
                     // ============================== Coupons ==============================
+                    // Check campaign which have link to tenant and mall in this mall
+                    $coupons = Coupon::select('promotions.*', 'campaign_status.order',
+                            DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$prefix}promotions.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
+                                FROM {$prefix}merchants om
+                                LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
+                                WHERE om.merchant_id = {$prefix}promotions.merchant_id)
+                    			THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END AS campaign_status"))
+                        ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
+                        ->with('tenants')
+                        ->whereNotIn(DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$prefix}promotions.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
+                                FROM {$prefix}merchants om
+                                LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
+                                WHERE om.merchant_id = {$prefix}promotions.merchant_id)
+                    			THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END"), ['expired', 'stopped'] )
+                        ->whereHas('tenants', function($q) use($mallId){
+                            $q->where('parent_id', $mallId);
+                        })
+                        ->get();
 
+                    if (count($coupons) > 0) {
+                        foreach ($coupons as $key => $valCoupons) {
 
+                            // Check per campaign which have this mall
+                            // Insert campaign daily spending calculation
+                            $campaignId = $valCoupons->promotion_id;
+                            $campaignType = 'coupon';
+                            $beginDate = $valCoupons->begin_date;
+                            $endDate = $valCoupons->end_date;
+                            $procResults = DB::statement("CALL prc_campaign_detailed_cost({$this->quote($campaignId)}, {$this->quote($campaignType)}, {$this->quote($now)}, {$this->quote($now)}, {$this->quote($mallId)})");
 
-                // }
+                            if ($procResults === false) {
+                                // Do Nothing
+                            }
 
+                            $getspending = DB::table(DB::raw('tmp_campaign_cost_detail'))->first();
+
+                            if (count($getspending) > 0) {
+
+			                    $daily = CampaignDailySpending::where('date', '=', $getspending->date_in_utc)->where('campaign_id', '=', $campaignId)->where('mall_id', '=', $mallId)->first();
+
+			                    if (count($daily) > 0) {
+			                        $dailySpending = CampaignDailySpending::find($daily['campaign_daily_spending_id']);
+			                    } else {
+			                        $dailySpending = new CampaignDailySpending;
+			                    }
+
+                                $dailySpending->date = $getspending->date_in_utc;
+                                $dailySpending->campaign_type = $campaignType;
+                                $dailySpending->campaign_id = $campaignId;
+                                $dailySpending->mall_id = $mallId;
+                                $dailySpending->number_active_tenants = $getspending->campaign_number_tenant;
+                                $dailySpending->base_price = $getspending->base_price;
+                                $dailySpending->campaign_status = $getspending->campaign_status;
+                                $dailySpending->total_spending = $getspending->daily_cost;
+                                $dailySpending->save();
+                            }
+
+							$totalCampaign++;
+							$this->info($totalCampaign . '. campaign_id = ' . $campaignId . ', campaign_type = '.$campaignType );
+
+                        }
+
+                    }
+
+        			// $this->info('Success, Inserted campaign daily spending for coupon !');
+
+                }
 
             }
         }
 
-
+        // =================== Check time ===================
+        $this->info('Migration successfully, Loaded time  = ' . (microtime(true) - $started_time) . ' ms, total campaign data = ' . $totalCampaign);
 
     }
 
