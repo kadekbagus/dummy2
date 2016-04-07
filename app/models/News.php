@@ -39,9 +39,7 @@ class News extends Eloquent
      */
     public function translations()
     {
-        return $this->hasMany('NewsTranslation', 'news_id', 'news_id')->excludeDeleted()->whereHas('language', function($has) {
-            $has->where('merchant_languages.status', 'active');
-        });
+        return $this->hasMany('NewsTranslation', 'news_id', 'news_id')->excludeDeleted()->has('language');
     }
 
     public function tenants()

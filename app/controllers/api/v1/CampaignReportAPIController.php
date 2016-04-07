@@ -259,7 +259,7 @@ class CampaignReportAPIController extends ControllerAPI
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
                         ->leftJoin('news_translations', 'news_translations.news_id', '=', 'news.news_id')
                         ->leftJoin('merchant_languages', 'merchant_languages.merchant_language_id', '=', 'news_translations.merchant_language_id')
-                        ->leftJoin('languages', 'languages.language_id', '=', 'merchant_languages.language_id')
+                        ->leftJoin('languages', 'languages.language_id', '=', 'news_translations.merchant_language_id')
                         ->where('languages.name', '=', 'en')
                         ->where('news.mall_id', '=', $current_mall)
                         ->where('news.object_type', '=', 'news')
@@ -376,7 +376,7 @@ class CampaignReportAPIController extends ControllerAPI
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
                         ->leftJoin('news_translations', 'news_translations.news_id', '=', 'news.news_id')
                         ->leftJoin('merchant_languages', 'merchant_languages.merchant_language_id', '=', 'news_translations.merchant_language_id')
-                        ->leftJoin('languages', 'languages.language_id', '=', 'merchant_languages.language_id')
+                        ->leftJoin('languages', 'languages.language_id', '=', 'news_translations.merchant_language_id')
                         ->where('languages.name', '=', 'en')
                         ->where('news.mall_id', '=', $current_mall)
                         ->where('news.object_type', '=', 'promotion')
@@ -492,7 +492,7 @@ class CampaignReportAPIController extends ControllerAPI
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
                         ->leftJoin('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
                         ->leftJoin('merchant_languages', 'merchant_languages.merchant_language_id', '=', 'coupon_translations.merchant_language_id')
-                        ->leftJoin('languages', 'languages.language_id', '=', 'merchant_languages.language_id')
+                        ->leftJoin('languages', 'languages.language_id', '=', 'coupon_translations.merchant_language_id')
                         ->where('languages.name', '=', 'en')
                         ->where('user_campaign.user_id', $user->user_id);
 

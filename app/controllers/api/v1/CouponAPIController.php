@@ -712,9 +712,30 @@ class CouponAPIController extends ControllerAPI
                 }
             }
 
-            OrbitInput::post('translations', function($translation_json_string) use ($newcoupon) {
+            OrbitInput::post('translations', function($translation_json_string) use ($newcoupon, $mallid) {
                 $this->validateAndSaveTranslations($newcoupon, $translation_json_string, 'create');
             });
+
+            foreach ($mallid as $mall) {
+                // get default mall language id
+                $default = Mall::select('mobile_default_language', 'name')
+                                ->where('merchant_id', '=', $mall)
+                                ->first();
+
+                $idLanguage = Language::select('language_id', 'name_long')
+                                    ->where('name', '=', $default->mobile_default_language)
+                                    ->first();
+
+                $isAvailable = CouponTranslation::where('merchant_language_id', '=', $idLanguage->language_id)
+                                                ->where('promotion_id', '=', $newcoupon->promotion_id)
+                                                ->where('promotion_name', '!=', '')
+                                                ->count();
+
+                if ($isAvailable == 0) {
+                    $errorMessage = 'Language ' . $idLanguage->name_long . ' is not available in Mall ' . $default->name . ', you need to setup ' . $idLanguage->name_long . ' as default language in Mall ' . $default->name . '';
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+            }
 
             $this->response->data = $newcoupon;
             $this->response->data->translation_default = $coupon_translation_default;
@@ -1723,9 +1744,30 @@ class CouponAPIController extends ControllerAPI
 
             Event::fire('orbit.coupon.postupdatecoupon.after.save', array($this, $updatedcoupon));
 
-            OrbitInput::post('translations', function($translation_json_string) use ($updatedcoupon) {
+            OrbitInput::post('translations', function($translation_json_string) use ($updatedcoupon, $mallid) {
                 $this->validateAndSaveTranslations($updatedcoupon, $translation_json_string, 'create');
             });
+
+            foreach ($mallid as $mall) {
+                // get default mall language id
+                $default = Mall::select('mobile_default_language', 'name')
+                                ->where('merchant_id', '=', $mall)
+                                ->first();
+
+                $idLanguage = Language::select('language_id', 'name_long')
+                                    ->where('name', '=', $default->mobile_default_language)
+                                    ->first();
+
+                $isAvailable = CouponTranslation::where('merchant_language_id', '=', $idLanguage->language_id)
+                                                ->where('promotion_id', '=', $promotion_id)
+                                                ->where('promotion_name', '!=', '')
+                                                ->count();
+
+                if ($isAvailable == 0) {
+                    $errorMessage = 'Language ' . $idLanguage->name_long . ' is not available in Mall ' . $default->name . ', you need to setup ' . $idLanguage->name_long . ' as default language in Mall ' . $default->name . '';
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+            }
 
             $this->response->data = $updatedcoupon;
             $this->response->data->translation_default = $updatedcoupon_default_language;
@@ -2229,8 +2271,8 @@ class CouponAPIController extends ControllerAPI
                 ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
                 ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                 ->leftJoin('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
-                ->leftJoin('merchant_languages', 'merchant_languages.merchant_language_id', '=', 'coupon_translations.merchant_language_id')
-                ->leftJoin('languages', 'languages.language_id', '=', 'merchant_languages.language_id')
+                //->leftJoin('merchant_languages', 'merchant_languages.merchant_language_id', '=', 'coupon_translations.merchant_language_id')
+                ->leftJoin('languages', 'languages.language_id', '=', 'coupon_translations.merchant_language_id')
                 ->leftJoin(DB::raw("( SELECT * FROM {$table_prefix}media WHERE media_name_long = 'coupon_translation_image_resized_default' ) as media"), DB::raw('media.object_id'), '=', 'coupon_translations.coupon_translation_id')
                 ->where('languages.name', '=', 'en')
                 ->joinPromotionRules()
@@ -3339,9 +3381,8 @@ class CouponAPIController extends ControllerAPI
 
         // Check the existance of id_language_default
         Validator::extend('orbit.empty.language_default', function ($attribute, $value, $parameters) {
-            $news = MerchantLanguage::excludeDeleted()
-                        ->where('merchant_language_id', $value)
-                        ->first();
+            $news = Language::where('language_id', '=', $value)
+                             ->first();
 
             if (empty($news)) {
                 return FALSE;
@@ -3906,8 +3947,7 @@ class CouponAPIController extends ControllerAPI
             OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'translations']));
         }
         foreach ($data as $merchant_language_id => $translations) {
-            $language = MerchantLanguage::excludeDeleted()
-                ->where('merchant_language_id', '=', $merchant_language_id)
+            $language = Language::where('language_id', '=', $merchant_language_id)
                 ->first();
             if (empty($language)) {
                 OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.merchant_language'));
