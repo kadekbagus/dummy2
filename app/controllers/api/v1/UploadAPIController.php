@@ -8198,9 +8198,8 @@ class UploadAPIController extends ControllerAPI
         });
 
         Validator::extend('orbit.empty.merchant_language', function ($attribute, $value, $parameters) {
-            $merchant_language = MerchantLanguage::excludeDeleted()
-                        ->where('merchant_language_id', $value)
-                        ->first();
+            $merchant_language = Language::where('language_id', '=', $value)
+                ->first();
 
             if (empty($merchant_language)) {
                 return FALSE;
