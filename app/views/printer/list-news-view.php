@@ -218,7 +218,7 @@
             <th style="text-align:left;">News Name</th>
             <th style="text-align:left;">Start Date & Time</th>
             <th style="text-align:left;">End Date & Time</th>
-            <th style="text-align:left;">Locations</th>
+            <th style="text-align:left;">Location(s)</th>
             <th style="text-align:left;">Status</th>
             <th style="text-align:left;">Last Update</th>
         </thead>

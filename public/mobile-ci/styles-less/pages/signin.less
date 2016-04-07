@@ -165,8 +165,8 @@ html {
         }
         .icon-button {
             opacity: 1;
-            width: 68px;
-            height: 70px;
+            width: 72px;
+            height: 72px;
             &.facebook {
                 background-color: #3B5999 ;
             }
@@ -314,4 +314,20 @@ html {
 }
 #forgotForm input:-ms-input-placeholder {  
    font-style: italic; 
+}
+#signupForm .icon-group .form-icon:after{
+    font-family: FontAwesome;
+    position: absolute;
+    top: -33px;
+    padding: 6px 5px 6px 0;
+    right: 42px;
+}
+#signupForm .icon-group .form-icon.has-error:after{
+    content: '\f06a';
+    color: #FD0000;
+}
+.form-icon{
+    position: absolute;
+    width:100%;
+    height: 18px;
 }
