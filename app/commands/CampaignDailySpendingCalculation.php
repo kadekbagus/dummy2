@@ -53,6 +53,9 @@ class CampaignDailySpendingCalculation extends Command {
 
         // Get all mall
         if (count($getMall) > 0) {
+
+        	$totalCampaign = 0;
+
             foreach ($getMall as $key => $valMall) {
                 // get offset timezone
                 $dt = new DateTime('now', new DateTimeZone($valMall->timezone_name));
@@ -60,7 +63,6 @@ class CampaignDailySpendingCalculation extends Command {
                 $timezoneOffset = $dt->format('P');
                 $mallId = $valMall->merchant_id;
 
-        		$totalCampaign = 0;
 
                 // Check mall time is 00 hours
                 if ($valMall->tz === '00') {
