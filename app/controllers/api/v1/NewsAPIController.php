@@ -1597,7 +1597,7 @@ class NewsAPIController extends ControllerAPI
             // Builder object
             $prefix = DB::getTablePrefix();
             $news = News::allowedForPMPUser($user, $object_type[0])
-                        ->select('news.*', 'campaign_status.order', 'campaign_price.campaign_price_id', 'news_translations.news_name as name_english', DB::raw('media.path as image_path'), 
+                        ->select('news.*', 'campaign_status.order', 'campaign_price.campaign_price_id', 'news_translations.news_name as name_english', DB::raw('media.path as image_path'),
                             DB::raw("(select GROUP_CONCAT(IF({$prefix}merchants.object_type = 'tenant', CONCAT({$prefix}merchants.name,' at ', pm.name), {$prefix}merchants.name) separator ', ') from {$prefix}news_merchant
                                     inner join {$prefix}merchants on {$prefix}merchants.merchant_id = {$prefix}news_merchant.merchant_id
                                     inner join {$prefix}merchants pm on {$prefix}merchants.parent_id = pm.merchant_id
@@ -1620,7 +1620,7 @@ class NewsAPIController extends ControllerAPI
                         ->where('languages.name', '=', 'en')
                         ->excludeDeleted('news')
                         ->groupBy('news.news_id');
-            
+
 
             // Filter news by Ids
             OrbitInput::get('news_id', function($newsIds) use ($news)
@@ -1728,18 +1728,29 @@ class NewsAPIController extends ControllerAPI
                 $mall_name_like = "%" . $mall_name_like . "%";
                 $mall_name_like = $quote($mall_name_like);
                 $news->whereRaw(DB::raw("
-                    (select count(*) from {$prefix}merchants mtenant
-                    inner join {$prefix}news_merchant onm on mtenant.merchant_id = onm.merchant_id
-                    where mtenant.object_type = 'tenant' and onm.news_id = {$prefix}news.news_id and (
-                        select count(*) from {$prefix}merchants mmall
-                        where mmall.object_type = 'mall' and
-                        mtenant.parent_id = mmall.merchant_id and
-                        mmall.name like {$mall_name_like} and
-                        mmall.object_type = 'mall'
-                    ) >= 1 and
-                    mtenant.object_type = 'tenant' and
-                    mtenant.is_mall = 'no' and
-                    onm.object_type = 'retailer') >= 1
+                    (
+                        (select count(mtenant.merchant_id) from {$prefix}merchants mtenant
+                            inner join {$prefix}news_merchant onm on mtenant.merchant_id = onm.merchant_id
+                            where mtenant.object_type = 'tenant' and onm.news_id = {$prefix}news.news_id and (
+                                select count(mmall.merchant_id) from {$prefix}merchants mmall
+                                where mmall.object_type = 'mall' and
+                                mtenant.parent_id = mmall.merchant_id and
+                                mmall.name like {$mall_name_like} and
+                                mmall.object_type = 'mall'
+                            ) >= 1 and
+                            mtenant.object_type = 'tenant' and
+                            mtenant.is_mall = 'no' and
+                            onm.object_type = 'retailer') >= 1
+                    )
+                    OR
+                    (
+                        select count(mmallx.merchant_id) from {$prefix}merchants mmallx
+                        inner join {$prefix}news_merchant onmx on mmallx.merchant_id = onmx.merchant_id
+                        where mmallx.object_type = 'mall' and
+                        onmx.news_id = {$prefix}news.news_id and
+                        mmallx.name like {$mall_name_like} and
+                        mmallx.object_type = 'mall'
+                    ) >= 1
                 "));
             });
 

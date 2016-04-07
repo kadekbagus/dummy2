@@ -266,10 +266,11 @@ class CouponReportAPIController extends ControllerAPI
                 $mall_name = "%" . $mall_name . "%";
                 $mall_name = $quote($mall_name);
                 $coupons->whereRaw(DB::raw("
-                    (select count(*) from {$prefix}merchants mtenant
+                (
+                    (select count(mtenant.merchant_id) from {$prefix}merchants mtenant
                     inner join {$prefix}promotion_retailer opr on mtenant.merchant_id = opr.retailer_id
                     where mtenant.object_type = 'tenant' and opr.promotion_id = {$prefix}promotions.promotion_id and (
-                        select count(*) from {$prefix}merchants mmall
+                        select count(mtenant.merchant_id) from {$prefix}merchants mmall
                         where mmall.object_type = 'mall' and
                         mtenant.parent_id = mmall.merchant_id and
                         mmall.name like {$mall_name} and
@@ -278,6 +279,16 @@ class CouponReportAPIController extends ControllerAPI
                     mtenant.object_type = 'tenant' and
                     mtenant.is_mall = 'no' and
                     opr.object_type = 'tenant') >= 1
+                )
+                OR
+                (
+                    select count(mmallx.merchant_id) from {$prefix}merchants mmallx
+                    inner join {$prefix}promotion_retailer oprx on mmallx.merchant_id = oprx.retailer_id
+                    where mmallx.object_type = 'mall' and
+                    oprx.promotion_id = {$prefix}promotions.promotion_id and
+                    mmallx.name like {$mall_name} and
+                    mmallx.object_type = 'mall'
+                )
                 "));
             });
 
