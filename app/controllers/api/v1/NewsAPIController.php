@@ -1763,7 +1763,8 @@ class NewsAPIController extends ControllerAPI
             // Filter news merchants by mall name
             // There is laravel bug regarding nested whereHas on the same table like in this case
             // news->tenant->mall : whereHas('tenant', function($q) { $q->whereHas('mall' ...)}) this is not gonna work
-            OrbitInput::get('mall_name_like', function ($mall_name_like) use ($news, $prefix) {
+            OrbitInput::get('mall_name_like', function ($mall_name_like) use ($news, $prefix, $user) {
+                $user_id = $user->user_id;
                 $quote = function($arg)
                 {
                     return DB::connection()->getPdo()->quote($arg);
@@ -1774,7 +1775,10 @@ class NewsAPIController extends ControllerAPI
                     (
                         (select count(mtenant.merchant_id) from {$prefix}merchants mtenant
                             inner join {$prefix}news_merchant onm on mtenant.merchant_id = onm.merchant_id
-                            where mtenant.object_type = 'tenant' and onm.news_id = {$prefix}news.news_id and (
+                            inner join {$prefix}user_campaign ucp on ucp.campaign_id = onm.news_id
+                            where mtenant.object_type = 'tenant'
+                            and ucp.user_id = '{$user_id}'  
+                            and (
                                 select count(mmall.merchant_id) from {$prefix}merchants mmall
                                 where mmall.object_type = 'mall' and
                                 mtenant.parent_id = mmall.merchant_id and
@@ -1783,17 +1787,20 @@ class NewsAPIController extends ControllerAPI
                             ) >= 1 and
                             mtenant.object_type = 'tenant' and
                             mtenant.is_mall = 'no' and
-                            onm.object_type = 'retailer') >= 1
+                            onm.object_type = 'retailer'
+                        ) >= 1
                     )
                     OR
                     (
-                        select count(mmallx.merchant_id) from {$prefix}merchants mmallx
-                        inner join {$prefix}news_merchant onmx on mmallx.merchant_id = onmx.merchant_id
-                        where mmallx.object_type = 'mall' and
-                        onmx.news_id = {$prefix}news.news_id and
-                        mmallx.name like {$mall_name_like} and
-                        mmallx.object_type = 'mall'
-                    ) >= 1
+                        (select count(mmall.merchant_id) from {$prefix}merchants mmall
+                            inner join {$prefix}news_merchant onm on mmall.merchant_id = onm.merchant_id
+                            inner join {$prefix}user_campaign ucp on ucp.campaign_id = onm.news_id
+                            where mmall.object_type = 'mall' and
+                            ucp.user_id = '{$user_id}' and
+                            mmall.name like {$mall_name_like} and
+                            onm.object_type = 'mall'
+                        ) >= 1
+                    )
                 "));
             });
 
