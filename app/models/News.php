@@ -117,31 +117,34 @@ class News extends Eloquent
      * @author Irianto <irianto@dominopos.com>
      * @todo change campaign status to expired when over the end date
      */
-    public function scopeCampaignStatus($query, $campaign_status)
+    public function scopeCampaignStatus($query, $campaign_status, $mallTimezone = NULL)
     {
         $prefix = DB::getTablePrefix();
+        $quote = function($arg)
+        {
+            return DB::connection()->getPdo()->quote($arg);
+        };
 
+        if ($mallTimezone != NULL) {
+            return $query->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
+                        ->where(DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
+                                        THEN {$prefix}campaign_status.campaign_status_name
+                                            ELSE (
+                                                CASE WHEN {$prefix}news.end_date < {$quote($mallTimezone)}
+                                                THEN 'expired'
+                                                    ELSE {$prefix}campaign_status.campaign_status_name
+                                                END)
+                                        END"), $campaign_status);
+        }
         return $query->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
-                    ->leftJoin('news_merchant as nm', DB::raw('nm.news_id'), '=', 'news.news_id')
                     ->where(DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
                                     THEN {$prefix}campaign_status.campaign_status_name
                                         ELSE (
-                                            CASE WHEN {$prefix}news.end_date < (
-                                                SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
-                                                FROM {$prefix}merchants om
-                                                LEFT JOIN {$prefix}timezones ot
-                                                    ON ot.timezone_id = om.timezone_id
-                                                WHERE (om.merchant_id = nm.merchant_id OR om.parent_id = nm.merchant_id)
-                                                )
+                                            CASE WHEN {$prefix}news.end_date < UTC_TIMESTAMP()
                                             THEN 'expired'
                                                 ELSE {$prefix}campaign_status.campaign_status_name
                                             END)
                                     END"), $campaign_status);
-    }
-
-    protected function quote($arg)
-    {
-        return DB::connection()->getPdo()->quote($arg);
     }
 
 }
