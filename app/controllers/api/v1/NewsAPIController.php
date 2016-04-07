@@ -478,7 +478,7 @@ class NewsAPIController extends ControllerAPI
                                                 ->count();
 
                 if ($isAvailable == 0) {
-                    $errorMessage = 'Language ' . $idLanguage->name_long . ' is not available in Mall ' . $default->name . ', you need to setup ' . $idLanguage->name_long . ' as default language in Mall ' . $default->name . '';
+                    $errorMessage = Lang::get('validation.orbit.empty.default_language');
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
             }
@@ -824,7 +824,7 @@ class NewsAPIController extends ControllerAPI
                                                 ->count();
 
                 if ($isAvailable == 0) {
-                    $errorMessage = 'Language ' . $idLanguage->name_long . ' is not available in Mall ' . $default->name . ', you need to setup ' . $idLanguage->name_long . ' as default language in Mall ' . $default->name . '';
+                    $errorMessage = Lang::get('validation.orbit.empty.default_language');
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
             }
@@ -1640,6 +1640,7 @@ class NewsAPIController extends ControllerAPI
             $prefix = DB::getTablePrefix();
             $news = News::allowedForPMPUser($user, $object_type[0])
                         ->select('news.*', 'campaign_status.order', 'campaign_price.campaign_price_id', 'news_translations.news_name as name_english', DB::raw('media.path as image_path'),
+                            DB::raw("COUNT(DISTINCT {$prefix}news_merchant.news_merchant_id) as location"),
                             DB::raw("(select GROUP_CONCAT(IF({$prefix}merchants.object_type = 'tenant', CONCAT({$prefix}merchants.name,' at ', pm.name), CONCAT('Mall at ',{$prefix}merchants.name) ) separator ', ') 
                                 from {$prefix}news_merchant
                                     inner join {$prefix}merchants on {$prefix}merchants.merchant_id = {$prefix}news_merchant.merchant_id
@@ -1775,9 +1776,8 @@ class NewsAPIController extends ControllerAPI
                     (
                         (select count(mtenant.merchant_id) from {$prefix}merchants mtenant
                             inner join {$prefix}news_merchant onm on mtenant.merchant_id = onm.merchant_id
-                            inner join {$prefix}user_campaign ucp on ucp.campaign_id = onm.news_id
-                            where mtenant.object_type = 'tenant'
-                            and ucp.user_id = '{$user_id}'  
+                            where mtenant.object_type = 'tenant' 
+                            and onm.news_id = {$prefix}news.news_id 
                             and (
                                 select count(mmall.merchant_id) from {$prefix}merchants mmall
                                 where mmall.object_type = 'mall' and

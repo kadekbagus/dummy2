@@ -732,7 +732,7 @@ class CouponAPIController extends ControllerAPI
                                                 ->count();
 
                 if ($isAvailable == 0) {
-                    $errorMessage = 'Language ' . $idLanguage->name_long . ' is not available in Mall ' . $default->name . ', you need to setup ' . $idLanguage->name_long . ' as default language in Mall ' . $default->name . '';
+                    $errorMessage = Lang::get('validation.orbit.empty.default_language');
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
             }
@@ -1764,7 +1764,7 @@ class CouponAPIController extends ControllerAPI
                                                 ->count();
 
                 if ($isAvailable == 0) {
-                    $errorMessage = 'Language ' . $idLanguage->name_long . ' is not available in Mall ' . $default->name . ', you need to setup ' . $idLanguage->name_long . ' as default language in Mall ' . $default->name . '';
+                    $errorMessage = Lang::get('validation.orbit.empty.default_language');
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
             }
@@ -2262,7 +2262,8 @@ class CouponAPIController extends ControllerAPI
                     ELSE
                         {$table_prefix}promotions.status
                     END as 'coupon_status'"),
-                    DB::raw("((CASE WHEN {$table_prefix}campaign_price.base_price is null THEN 0 ELSE {$table_prefix}campaign_price.base_price END) * (DATEDIFF({$table_prefix}promotions.end_date, {$table_prefix}promotions.begin_date) + 1) * (COUNT({$table_prefix}promotion_retailer.promotion_retailer_id))) AS estimated")
+                    DB::raw("((CASE WHEN {$table_prefix}campaign_price.base_price is null THEN 0 ELSE {$table_prefix}campaign_price.base_price END) * (DATEDIFF({$table_prefix}promotions.end_date, {$table_prefix}promotions.begin_date) + 1) * (COUNT({$table_prefix}promotion_retailer.promotion_retailer_id))) AS estimated"),
+                    DB::raw("COUNT(DISTINCT {$table_prefix}promotion_retailer.promotion_retailer_id) as location")
                 )
                 ->leftJoin('campaign_price', function ($join) {
                          $join->on('promotions.promotion_id', '=', 'campaign_price.campaign_id')
@@ -2422,11 +2423,7 @@ class CouponAPIController extends ControllerAPI
                 (
                     (select count(mtenant.merchant_id) from {$table_prefix}merchants mtenant
                     inner join {$table_prefix}promotion_retailer opr on mtenant.merchant_id = opr.retailer_id
-                    inner join {$prefix}user_campaign ucp on ucp.campaign_id = onm.news_id
-                    where mtenant.object_type = 'tenant' 
-                    and ucp.user_id = '{$user_id}'
-                    and opr.promotion_id = {$table_prefix}promotions.promotion_id 
-                    and (
+                    where mtenant.object_type = 'tenant' and opr.promotion_id = {$table_prefix}promotions.promotion_id and (
                         select count(mtenant.merchant_id) from {$table_prefix}merchants mmall
                         where mmall.object_type = 'mall' and
                         mtenant.parent_id = mmall.merchant_id and
