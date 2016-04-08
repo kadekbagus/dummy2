@@ -2609,7 +2609,7 @@ class CouponAPIController extends ControllerAPI
                     } elseif ($relation === 'translations.media') {
                         $coupons->with('translations.media');
                     } elseif ($relation === 'employee') {
-                        $coupons->with('employee');
+                        $coupons->with('employee.employee.retailers');
                     } elseif ($relation === 'link_to_tenants') {
                         $coupons->with('linkToTenants');
                     } elseif ($relation === 'link_to_tenants.mall') {
