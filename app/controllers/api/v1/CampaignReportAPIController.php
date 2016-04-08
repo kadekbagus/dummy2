@@ -763,11 +763,19 @@ class CampaignReportAPIController extends ControllerAPI
                 }
             }
 
+            // Get total location (tenant / mall) per campaign
+            // Because this version we cannot modify link to tenant so no need joint to campaign history
+            if ($campaign_type === 'news' || $campaign_type === 'promotion') {
+                $totalLinkToLocation = NewsMerchant::where('news_id', $campaign_id)->count();
+            } elseif ($campaign_type === 'coupon') {
+                $totalLinkToLocation = CouponRetailer::where('news_id', $campaign_id)->count();
+            }
+
             $sql = "
                         (SELECT
                             date AS campaign_date,
                             campaign_id,
-                            number_active_tenants AS total_tenant,
+                            {$this->quote($totalLinkToLocation)} AS total_tenant,
                             tenant_name,
                             om_mall.name AS mall_name,
                             unique_users,
