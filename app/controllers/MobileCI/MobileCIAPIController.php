@@ -7020,6 +7020,8 @@ class MobileCIAPIController extends BaseCIController
 
             $prefix = DB::getTablePrefix();
 
+            $mallid = $retailer->merchant_id;
+
             $promo = DB::table('news')
                 ->selectRaw("{$prefix}news.news_id as object_id, {$prefix}news.news_name as object_name, {$prefix}news.description as object_description, {$prefix}news.image as object_image, 'promotion' as object_type")
                 ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'news.news_id')
@@ -7037,9 +7039,14 @@ class MobileCIAPIController extends BaseCIController
                     $join->on('keywords.keyword_id', '=', 'keyword_object.keyword_id');
                     $join->where('keywords.merchant_id', '=', $retailer->merchant_id);
                 })
+                ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
+                ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
+                ->where(function ($q) use ($mallid) {
+                            $q->where('merchants.parent_id', '=', $mallid)
+                              ->orWhere('merchants.merchant_id', '=', $mallid);
+                })
                 ->where('news.object_type', '=', 'promotion')
                 ->where('news.status', 'active')
-                ->where('mall_id', $retailer->merchant_id)
                 ->whereRaw("? between begin_date and end_date", [$mallTime])
                 ->where(function($q) use ($keyword) {
                     $q->where('news_translations.news_name', 'like', "%$keyword%")
@@ -7064,9 +7071,14 @@ class MobileCIAPIController extends BaseCIController
                     $join->on('keywords.keyword_id', '=', 'keyword_object.keyword_id');
                     $join->where('keywords.merchant_id', '=', $retailer->merchant_id);
                 })
+                ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
+                ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
+                ->where(function ($q) use ($mallid) {
+                            $q->where('merchants.parent_id', '=', $mallid)
+                              ->orWhere('merchants.merchant_id', '=', $mallid);
+                })
                 ->where('news.object_type', '=', 'news')
                 ->where('news.status', 'active')
-                ->where('mall_id', $retailer->merchant_id)
                 ->whereRaw("? between begin_date and end_date", [$mallTime])
                 ->where(function($q) use ($keyword) {
                     $q->where('news_translations.news_name', 'like', "%$keyword%")
@@ -7092,12 +7104,17 @@ class MobileCIAPIController extends BaseCIController
                     $join->where('keywords.merchant_id', '=', $retailer->merchant_id);
                 })
                 ->leftJoin('issued_coupons', 'issued_coupons.promotion_id', '=', 'promotions.promotion_id')
+                ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
+                ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
+                ->where(function ($q) use ($mallid) {
+                        $q->where('merchants.parent_id', '=', $mallid)
+                          ->orWhere('merchants.merchant_id', '=', $mallid);
+                    })
                 ->where('issued_coupons.expired_date', '>=', $mallTime)
                 ->where('issued_coupons.user_id', '=', $user->user_id)
                 ->where('issued_coupons.status', '=', 'active')
                 ->where('is_coupon', '=', 'Y')
                 ->where('promotions.status', 'active')
-                ->where('promotions.merchant_id', $retailer->merchant_id)
                 ->where(function($q) use ($keyword) {
                     $q->where('coupon_translations.promotion_name', 'like', "%$keyword%")
                         ->orWhere('coupon_translations.description', 'like', "%$keyword%")
