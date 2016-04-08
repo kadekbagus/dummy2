@@ -1330,6 +1330,7 @@
         orbitSignUpForm.enableDisableSignup = function() {
             $('#signupForm #email, #signupForm [name=password], #signupForm [name=password_confirmation], #firstName, #lastName, #gender, #signupForm [name=day], #signupForm [name=month], #signupForm [name=year]').css('border-color', '#ccc');
             $('.form-icon').removeClass('has-error');
+            $('.form-icon').removeClass('has-success');
             $('.mandatory-label').hide();
             orbitSignUpForm.dataCompleted = $('#signupForm #email').val() &&
                 isValidEmailAddress($('#signupForm #email').val()) &&
@@ -1347,45 +1348,59 @@
                 return true;
             } else {
                 $('.mandatory-label').css('color', 'red').show();
-                if (! isValidEmailAddress($('#signupForm #email').val())) {
+                if (! $('#signupForm #email').val() || ! isValidEmailAddress($('#signupForm #email').val())) {
                     $('#signupForm #email').css('border-color', 'red');
                     $('#signupForm [name=email]').next('.form-icon').addClass('has-error');
-                }
-                if (! $('#signupForm #email').val()) {
-                    $('#signupForm #email').css('border-color', 'red');
-                    $('#signupForm [name=email]').next('.form-icon').addClass('has-error');
+                } else {
+                    $('#signupForm [name=email]').next('.form-icon').addClass('has-success');
                 }
                 if (! $('#signupForm #password').val()) {
                     $('#signupForm [name=password]').css('border-color', 'red');
                     $('#signupForm [name=password]').next('.form-icon').addClass('has-error');
+                } else {
+                    $('#signupForm [name=password]').next('.form-icon').addClass('has-success');
                 }
                 if (! $('#password_confirmation').val()) {
                     $('#password_confirmation').css('border-color', 'red');
                     $('#password_confirmation').next('.form-icon').addClass('has-error');
+                } else {
+                    $('#password_confirmation').next('.form-icon').addClass('has-success');
                 }
                 if (! $('#firstName').val()) {
                     $('#firstName').css('border-color', 'red');
                     $('#firstName').next('.form-icon').addClass('has-error');
+                } else {
+                    $('#firstName').next('.form-icon').addClass('has-success');
                 }
                 if (! $('#lastName').val()) {
                     $('#lastName').css('border-color', 'red');
                     $('#lastName').next('.form-icon').addClass('has-error');
+                } else {
+                    $('#lastName').next('.form-icon').addClass('has-success');
                 }
                 if (! $('#gender').val()) {
                     $('#gender').css('border-color', 'red');
                     $('#gender').next('.form-icon').addClass('has-error');
+                } else {
+                    $('#gender').next('.form-icon').addClass('has-success');
                 }
                 if (! $('#signupForm [name=day]').val()) {
                     $('#signupForm [name=day]').css('border-color', 'red');
                     $('#signupForm [name=day]').next('.form-icon').addClass('has-error');
+                } else {
+                    $('#signupForm [name=day]').next('.form-icon').addClass('has-success');
                 }
                 if (! $('#signupForm [name=month]').val()) {
                     $('#signupForm [name=month]').css('border-color', 'red');
                     $('#signupForm [name=month]').next('.form-icon').addClass('has-error');
+                } else {
+                    $('#signupForm [name=month]').next('.form-icon').addClass('has-success');
                 }
                 if (! $('#signupForm [name=year]').val()) {
                     $('#signupForm [name=year]').css('border-color', 'red');
                     $('#signupForm [name=year]').next('.form-icon').addClass('has-error');
+                } else {
+                    $('#signupForm [name=year]').next('.form-icon').addClass('has-success');
                 }
                 // $('#btn-signup-form').attr('disabled', 'disabled');
                 return false;
