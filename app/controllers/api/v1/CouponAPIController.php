@@ -2262,7 +2262,8 @@ class CouponAPIController extends ControllerAPI
                     ELSE
                         {$table_prefix}promotions.status
                     END as 'coupon_status'"),
-                    DB::raw("((CASE WHEN {$table_prefix}campaign_price.base_price is null THEN 0 ELSE {$table_prefix}campaign_price.base_price END) * (DATEDIFF({$table_prefix}promotions.end_date, {$table_prefix}promotions.begin_date) + 1) * (COUNT({$table_prefix}promotion_retailer.promotion_retailer_id))) AS estimated")
+                    DB::raw("((CASE WHEN {$table_prefix}campaign_price.base_price is null THEN 0 ELSE {$table_prefix}campaign_price.base_price END) * (DATEDIFF({$table_prefix}promotions.end_date, {$table_prefix}promotions.begin_date) + 1) * (COUNT({$table_prefix}promotion_retailer.promotion_retailer_id))) AS estimated"),
+                    DB::raw("COUNT(DISTINCT {$table_prefix}promotion_retailer.promotion_retailer_id) as location")
                 )
                 ->leftJoin('campaign_price', function ($join) {
                          $join->on('promotions.promotion_id', '=', 'campaign_price.campaign_id')
@@ -2437,7 +2438,7 @@ class CouponAPIController extends ControllerAPI
                 (
                     select count(mmallx.merchant_id) from {$table_prefix}merchants mmallx
                     inner join {$table_prefix}promotion_retailer oprx on mmallx.merchant_id = oprx.retailer_id
-                    inner join {$prefix}user_campaign ucp on ucp.campaign_id = onm.news_id
+                    inner join {$table_prefix}user_campaign ucp on ucp.campaign_id = oprx.promotion_id
                     where mmallx.object_type = 'mall' and
                     ucp.user_id = '{$user_id}' and
                     mmallx.name like {$mall_name_like} and
