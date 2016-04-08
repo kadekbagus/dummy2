@@ -29,7 +29,7 @@ class LanguageAPIController extends ControllerAPI
 
             $status = Input::get('status');
             
-            $languages = Language::orderBy('name_long', 'ASC');
+            $languages = Language::orderBy('language_order', 'DESC');
 
             OrbitInput::get('status', function($status) use ($languages) {
                 $languages->where('status', '=', $status);
