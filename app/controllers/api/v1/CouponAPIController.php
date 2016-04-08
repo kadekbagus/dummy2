@@ -2438,7 +2438,7 @@ class CouponAPIController extends ControllerAPI
                 (
                     select count(mmallx.merchant_id) from {$table_prefix}merchants mmallx
                     inner join {$table_prefix}promotion_retailer oprx on mmallx.merchant_id = oprx.retailer_id
-                    inner join {$prefix}user_campaign ucp on ucp.campaign_id = onm.news_id
+                    inner join {$table_prefix}user_campaign ucp on ucp.campaign_id = onm.news_id
                     where mmallx.object_type = 'mall' and
                     ucp.user_id = '{$user_id}' and
                     mmallx.name like {$mall_name_like} and
