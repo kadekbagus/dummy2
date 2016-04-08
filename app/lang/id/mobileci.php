@@ -196,10 +196,10 @@ return array(
         'day' => 'Hari',
         'month' => 'Bulan',
         'year' => 'Tahun',
-        'policy_terms_message' => 'Dengan mengklik <strong>Daftar</strong> berarti anda setuju dengan
-                        <a target="_blank" href="%s">Kebijakan</a> dan 
-                        <a target="_blank" href="%s">Syarat dan ketentuan</a>',
-        'already_have_an_account' => 'Sudah punya akun',
+        'policy_terms_message' => 'Dengan mengklik <strong>Daftar</strong> berarti Anda setuju dengan
+                        <a target="_blank" href="%s">kebijakan</a> dan 
+                        <a target="_blank" href="%s">syarat dan ketentuan</a>',
+        'already_have_an_account' => 'Sudah punya akun?',
         'fields_are_mandatory' => 'Semua kolom wajib diisi',
         'date_of_birth' => 'Tanggal Lahir',
         'password_placeholder' => 'Password',
