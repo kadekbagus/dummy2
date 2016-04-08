@@ -85,6 +85,14 @@ class CouponPrinterController extends DataPrinterController
                     printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Coupon Name', htmlentities($couponName), '', '', '','');
                 }
 
+                if ($tenantName != '') {
+                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Tenant Name', htmlentities($tenantName), '', '', '','');
+                }
+                
+                if ($mallName != '') {
+                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Mall Name', htmlentities($mallName), '', '', '','');
+                }
+
                 if ( is_array($ruleType) && count($ruleType) > 0) {
                     $rule_type_string = '';
                     foreach ($ruleType as $key => $valrule){
@@ -102,13 +110,6 @@ class CouponPrinterController extends DataPrinterController
                         $rule_type_string .= $rule_type . ', ';
                     }
                     printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Coupon Rule', htmlentities(rtrim($rule_type_string, ', ')), '', '', '','');
-                }
-
-                if ($tenantName != '') {
-                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Tenant Name', htmlentities($tenantName), '', '', '','');
-                }
-                if ($mallName != '') {
-                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Mall Name', htmlentities($mallName), '', '', '','');
                 }
 
                 if ($etcFrom != '' && $etcTo != ''){
