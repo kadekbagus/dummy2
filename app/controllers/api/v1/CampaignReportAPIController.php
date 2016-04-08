@@ -728,11 +728,19 @@ class CampaignReportAPIController extends ControllerAPI
                     ->where('object_type', $campaign_type)
                     ->get();
 
+                // Get total location (tenant / mall) per campaign
+                // Because this version we cannot modify link to tenant so no need joint to campaign history
+                $totalLinkToLocation = NewsMerchant::where('news_id', $campaign_id)->count();
+
             } elseif ($campaign_type === 'coupon') {
                 // Get begin and end
                 $getBeginEndDate = Coupon::excludeDeleted()->selectRaw('DATE(begin_date) as begin_date, DATE(end_date) as end_date')
                     ->where('promotion_id', $campaign_id)
                     ->get();
+
+                // Get total location (tenant / mall) per campaign
+                // Because this version we cannot modify link to tenant so no need joint to campaign history
+                $totalLinkToLocation = CouponRetailer::where('promotion_id', $campaign_id)->count();
             }
 
             // Get data from activity per day
@@ -767,7 +775,7 @@ class CampaignReportAPIController extends ControllerAPI
                         (SELECT
                             date AS campaign_date,
                             campaign_id,
-                            number_active_tenants AS total_tenant,
+                            {$this->quote($totalLinkToLocation)} AS total_tenant,
                             tenant_name,
                             om_mall.name AS mall_name,
                             unique_users,
