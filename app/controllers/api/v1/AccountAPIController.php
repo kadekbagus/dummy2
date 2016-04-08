@@ -519,8 +519,6 @@ class AccountAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument('The email address has already been taken');
             }
 
-            //App::instance('orbit.validation.mallemployee', $user);
-
             return TRUE;
         });
     }
