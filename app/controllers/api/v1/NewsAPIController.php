@@ -475,6 +475,7 @@ class NewsAPIController extends ControllerAPI
                 $isAvailable = NewsTranslation::where('merchant_language_id', '=', $idLanguage->language_id)
                                                 ->where('news_id', '=', $newnews->news_id)
                                                 ->where('news_name', '!=', '')
+                                                ->where('description', '!=', '')
                                                 ->count();
 
                 if ($isAvailable == 0) {
@@ -821,6 +822,7 @@ class NewsAPIController extends ControllerAPI
                 $isAvailable = NewsTranslation::where('merchant_language_id', '=', $idLanguage->language_id)
                                                 ->where('news_id', '=', $news_id)
                                                 ->where('news_name', '!=', '')
+                                                ->where('description', '!=', '')
                                                 ->count();
 
                 if ($isAvailable == 0) {

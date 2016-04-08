@@ -729,6 +729,7 @@ class CouponAPIController extends ControllerAPI
                 $isAvailable = CouponTranslation::where('merchant_language_id', '=', $idLanguage->language_id)
                                                 ->where('promotion_id', '=', $newcoupon->promotion_id)
                                                 ->where('promotion_name', '!=', '')
+                                                ->where('description', '!=', '')
                                                 ->count();
 
                 if ($isAvailable == 0) {
@@ -1761,6 +1762,7 @@ class CouponAPIController extends ControllerAPI
                 $isAvailable = CouponTranslation::where('merchant_language_id', '=', $idLanguage->language_id)
                                                 ->where('promotion_id', '=', $promotion_id)
                                                 ->where('promotion_name', '!=', '')
+                                                ->where('description', '!=', '')
                                                 ->count();
 
                 if ($isAvailable == 0) {
