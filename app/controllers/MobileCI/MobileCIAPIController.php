@@ -7027,9 +7027,9 @@ class MobileCIAPIController extends BaseCIController
                 ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'news.news_id')
                 ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
                 ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
-                ->leftJoin('news_translations', function($join) use ($alternateLanguage){
+                ->leftJoin('news_translations', function($join) use ($language){
                     $join->on('news.news_id', '=', 'news_translations.news_id');
-                    $join->where('news_translations.merchant_language_id', '=', $alternateLanguage->merchant_language_id);
+                    $join->where('news_translations.merchant_language_id', '=', $language->language_id);
                 })
                 ->leftJoin('keyword_object', function($join) {
                     $join->on('news.news_id', '=', 'keyword_object.object_id');
@@ -7059,9 +7059,9 @@ class MobileCIAPIController extends BaseCIController
                 ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'news.news_id')
                 ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
                 ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
-                ->leftJoin('news_translations', function($join) use ($alternateLanguage){
+                ->leftJoin('news_translations', function($join) use ($language){
                     $join->on('news.news_id', '=', 'news_translations.news_id');
-                    $join->where('news_translations.merchant_language_id', '=', $alternateLanguage->merchant_language_id);
+                    $join->where('news_translations.merchant_language_id', '=', $language->language_id);
                 })
                 ->leftJoin('keyword_object', function($join) {
                     $join->on('news.news_id', '=', 'keyword_object.object_id');
@@ -7091,9 +7091,9 @@ class MobileCIAPIController extends BaseCIController
                 ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'promotions.promotion_id')
                 ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'promotions.promotion_id')
                 ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
-                ->leftJoin('coupon_translations', function($join) use ($alternateLanguage){
+                ->leftJoin('coupon_translations', function($join) use ($language){
                     $join->on('promotions.promotion_id', '=', 'coupon_translations.promotion_id');
-                    $join->where('coupon_translations.merchant_language_id', '=', $alternateLanguage->merchant_language_id);
+                    $join->where('coupon_translations.merchant_language_id', '=', $language->language_id);
                 })
                 ->leftJoin('keyword_object', function($join) {
                     $join->on('promotions.promotion_id', '=', 'keyword_object.object_id');
@@ -7124,9 +7124,9 @@ class MobileCIAPIController extends BaseCIController
 
             $tenant = DB::table('merchants')
                 ->selectRaw("{$prefix}merchants.merchant_id as object_id, {$prefix}merchants.name as object_name, {$prefix}merchants.description as object_description, {$prefix}media.path as object_image, 'tenant' as object_type, COUNT(DISTINCT {$prefix}merchants.merchant_id) as counter")
-                ->leftJoin('merchant_translations', function($join) use ($alternateLanguage){
+                ->leftJoin('merchant_translations', function($join) use ($language){
                     $join->on('merchants.merchant_id', '=', 'merchant_translations.merchant_id');
-                    $join->where('merchant_translations.merchant_language_id', '=', $alternateLanguage->merchant_language_id);
+                    $join->where('merchant_translations.merchant_language_id', '=', $language->language_id);
                 })
                 ->leftJoin('keyword_object', function($join) {
                     $join->on('merchants.merchant_id', '=', 'keyword_object.object_id');
