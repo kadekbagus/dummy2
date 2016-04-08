@@ -152,7 +152,12 @@
                     <button type="button" class="close close-form" data-dismiss="modal" aria-label="Close">
                         <i class="fa fa-times"></i>
                     </button>
-
+                    <div class="error-msg-box">
+                        <div class="error-msg-box-close">
+                            &times;
+                        </div>
+                        <div class="error-msg-message"></div>
+                    </div>
                     <div class="form-group">
                         <input type="email" value="{{{ $user_email }}}" class="form-control text-center" name="email" id="email" placeholder="{{ Lang::get('mobileci.signin.email_placeholder') }}">
                     </div>
@@ -161,9 +166,9 @@
                         <input type="password" value="" class="form-control text-center" name="password" id="password" placeholder="{{ Lang::get('mobileci.signup.password_placeholder') }}">
                     </div>
                     <div class="form-group">
-                        <input type="submit" name="submit" id="btn-signin-form" class="btn btn-info btn-block icon-button form text-center" disabled value="{{ Lang::get('mobileci.signin.sign_in') }}">
+                        <input type="submit" name="submit" id="btn-signin-form" class="btn btn-info btn-block icon-button form text-center" value="{{ Lang::get('mobileci.signin.sign_in') }}">
                     </div>
-                    <div class="row">
+                    <div class="row vertically-spaced">
                         <div class="col-xs-6 text-left">
                             <a id="forgot_password">{{ Lang::get('mobileci.signin.forgot_link') }}</a>
                         </div>
@@ -995,6 +1000,9 @@
                 });
             }
         });
+        $('.error-msg-box-close').click(function(){
+            $('.error-msg-box').hide();
+        });
         $('#formModal').on('show.bs.modal', function () {
             $('#slogan-container, #social-media-wraper').addClass('hide');
         });
@@ -1030,6 +1038,14 @@
             ]
         };
 
+        orbitSignUpForm.hideErrorMessageBox = function () {
+            $('.error-msg-box .error-msg-message').text('');
+            $('.error-msg-box').hide();
+        };
+        orbitSignUpForm.showErrorMessageBox = function (message) {
+            $('.error-msg-box .error-msg-message').text(message);
+            $('.error-msg-box').show();
+        };
         /**
          * Log in the user.
          *
@@ -1037,9 +1053,9 @@
          * @return void
          */
         orbitSignUpForm.doLogin = function() {
+            orbitSignUpForm.hideErrorMessageBox();
             var custEmail = $('#signinForm #email').val().trim();
             var custPassword = $('#signinForm #password').val();
-
             // Flag the processing
             if (orbitSignUpForm.isProcessing) {
                 return;
@@ -1066,9 +1082,10 @@
                     }
                 }).done(function (response, status, xhr) {
                     if (response.code !== 0 && response.code !== 302) {
-                        toastr.error(response.message);
+                        orbitSignUpForm.showErrorMessageBox(response.message);
                         orbitSignUpForm.isProcessing = false;
                         orbitSignUpForm.disableEnableAllButton();
+                        
                         return;
                     }
                     var shiftHostName = window.location.hostname.split('.');
@@ -1471,11 +1488,11 @@
             $('#signinForm #email').on('input', function(e) {
                 var value = $(this).val();
 
-                if (isValidEmailAddress(value)) {
-                    $('#btn-signin-form').removeAttr('disabled');
-                } else {
-                    $('#btn-signin-form').attr('disabled', 'disabled');
-                }
+                // if (isValidEmailAddress(value)) {
+                //     $('#btn-signin-form').removeAttr('disabled');
+                // } else {
+                //     $('#btn-signin-form').attr('disabled', 'disabled');
+                // }
             });
 
             $('#logged-in-signin-button').click(function() {
@@ -1502,7 +1519,17 @@
             });
 
             $('#btn-signin-form').click(function(e) {
-                orbitSignUpForm.doLogin();
+                $('#signinForm #email, #signinForm #password').css('border-color', '#ccc')
+                var value = $('#signinForm #email').val();
+                if (! value || ! isValidEmailAddress(value)) {
+                    $('#signinForm #email').css('border-color', 'red');
+                }
+                if (! $('#signinForm #password').val()) {
+                    $('#signinForm #password').css('border-color', 'red');   
+                }
+                if ((value || isValidEmailAddress(value)) && $('#signinForm #password').val()) {
+                    orbitSignUpForm.doLogin();
+                }
                 return false;
             });
 

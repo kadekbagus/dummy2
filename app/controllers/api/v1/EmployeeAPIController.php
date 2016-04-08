@@ -2710,14 +2710,53 @@ class EmployeeAPIController extends ControllerAPI
             // Builder object
             $joined = FALSE;
 
+            $pmpAccount = ($user->isCampaignOwner() || $user->isCampaignEmployee() || $user->isCampaignAdmin());
 
-            $users = Employee::excludeDeleted('employees')->joinUserRole()
-                             ->select('employees.*', 'users.username',
-                                     'users.username as login_id', 'users.user_email',
-                                     'users.status as user_status',
-                                     'users.user_firstname', 'users.user_lastname',
-                                     'roles.role_name')
-                             ->groupBy('employees.user_id');
+            if (! $pmpAccount) {
+                $users = Employee::excludeDeleted('employees')->joinUserRole()
+                                 ->select('employees.*', 'users.username',
+                                         'users.username as login_id', 'users.user_email',
+                                         'users.status as user_status',
+                                         'users.user_firstname', 'users.user_lastname',
+                                         'roles.role_name')
+                                 ->groupBy('employees.user_id');
+            } else {
+                $users = Employee::excludeDeleted('employees')->joinUserRole()
+                                 ->select('employees.*', 'users.username',
+                                         'users.username as login_id', 'users.user_email',
+                                         'users.status as user_status',
+                                         'users.user_firstname', 'users.user_lastname',
+                                         'roles.role_name', DB::Raw('er.retailer_id as merchant_id'))
+                                 ->leftJoin('employee_retailer as er', DB::Raw('er.employee_id'), '=', 'employees.employee_id')
+                                 ->whereRaw("er.retailer_id in (
+                                        select merchant_id
+                                        from {$prefix}user_merchant
+                                        where user_id in (
+                                            select cpmp.user_id
+                                            from {$prefix}campaign_account cpmp
+                                            left join {$prefix}campaign_account cas
+                                                on cpmp.parent_user_id = cas.parent_user_id
+                                            where (
+                                                cpmp.user_id = (
+                                                                SELECT parent_user_id
+                                                                FROM   {$prefix}campaign_account
+                                                                WHERE  user_id = {$this->quote($user->user_id)}
+                                                            )
+                                                                OR
+                                                cpmp.parent_user_id = (
+                                                                SELECT parent_user_id
+                                                                FROM   {$prefix}campaign_account
+                                                                WHERE  user_id = {$this->quote($user->user_id)}
+                                                            )
+                                                OR cpmp.user_id = {$this->quote($user->user_id)}
+                                                OR cpmp.parent_user_id = {$this->quote($user->user_id)}
+                                            )
+                                            group by cpmp.user_id
+                                        )
+                                        group by merchant_id
+                                    )")
+                                 ->groupBy('employees.user_id');
+            }
 
 
             // Include Relationship
@@ -3838,5 +3877,10 @@ class EmployeeAPIController extends ControllerAPI
         } 
         
         return FALSE;
+    }
+
+    protected function quote($arg)
+    {
+        return DB::connection()->getPdo()->quote($arg);
     }
 }

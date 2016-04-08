@@ -125,7 +125,8 @@ Route::filter('fb-bot', function() {
         
         $param = is_null($redirect_to) ? NULL : ['socmed_redirect_to' => $redirect_to];
 
-        return Redirect::route('mobile-ci.signin', $param);
+        // return Redirect::route('mobile-ci.signin', $param);
+        return Redirect::to($redirect_to);
     }
 });
 
