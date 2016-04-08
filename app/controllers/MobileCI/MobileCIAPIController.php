@@ -8759,7 +8759,22 @@ class MobileCIAPIController extends BaseCIController
             return;
         }
 
-        $retailer->acquireUser($user);
+        $signUpVia ='form';
+        if (isset($_COOKIE['login_from'])) {
+            switch (strtolower($_COOKIE['login_from'])) {
+                case 'google':
+                    $signUpVia = 'google';
+                    break;
+                case 'facebook':
+                    $signUpVia = 'facebook';
+                    break;
+                default:
+                    $signUpVia = 'form';
+                    break;
+            }
+        }
+
+        $retailer->acquireUser($user, $signUpVia);
     }
 
     // create activity signup from socmed
