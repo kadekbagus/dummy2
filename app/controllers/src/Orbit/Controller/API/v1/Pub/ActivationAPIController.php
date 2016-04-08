@@ -93,9 +93,9 @@ class ActivationAPIController extends IntermediateBaseController
             // Update user password and activate them
             if (! empty($password)) {
                 $user->user_password = Hash::make($password);
-                $user->status = 'active';
             }
 
+            $user->status = 'active';
             $user->save();
 
             $this->response->message = Lang::get('statuses.orbit.activate.account');
