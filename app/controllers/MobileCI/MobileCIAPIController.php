@@ -2177,7 +2177,7 @@ class MobileCIAPIController extends BaseCIController
 
             OrbitInput::get(
                 'promotion_id',
-                function ($pid) use ($tenants, $retailer, &$notfound) {
+                function ($pid) use ($tenants, $retailer, &$notfound, $mallid) {
                     if (! empty($pid)) {
                         $news = \News::leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                             ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
@@ -2210,7 +2210,7 @@ class MobileCIAPIController extends BaseCIController
             // this is came fron my coupon (or issued coupon) page
             OrbitInput::get(
                 'coupon_redeem_id',
-                function ($pid) use ($tenants, $retailer, &$notfound, &$couponTenantRedeem) {
+                function ($pid) use ($tenants, $retailer, &$notfound, &$couponTenantRedeem, $mallid) {
                     if (! empty($pid)) {
                         $coupon = \Coupon::with('employee')
                             ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
@@ -2257,7 +2257,7 @@ class MobileCIAPIController extends BaseCIController
             // this is came fron coupon campaign page
             OrbitInput::get(
                 'coupon_id',
-                function ($pid) use ($tenants, $retailer, &$notfound, &$couponTenantRedeem) {
+                function ($pid) use ($tenants, $retailer, &$notfound, &$couponTenantRedeem, $mallid) {
                     if (! empty($pid)) {
                         $coupon = \Coupon::leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                             ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
@@ -2290,7 +2290,7 @@ class MobileCIAPIController extends BaseCIController
 
             OrbitInput::get(
                 'news_id',
-                function ($pid) use ($tenants, $retailer, &$notfound) {
+                function ($pid) use ($tenants, $retailer, &$notfound, $mallid) {
                     if (! empty($pid)) {
                         $news = \News::leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                             ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
