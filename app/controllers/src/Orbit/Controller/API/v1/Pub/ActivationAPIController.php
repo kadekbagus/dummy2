@@ -21,6 +21,7 @@ use Token;
 use Validator;
 use User;
 use Lang;
+use Mall;
 
 class ActivationAPIController extends IntermediateBaseController
 {
@@ -106,12 +107,29 @@ class ActivationAPIController extends IntermediateBaseController
             // Log in the user
             $this->createLoginSession($user);
 
+            // Get the registration record
+            $userSignUp = NULL;
+            $location = NULL;
+            $userSignUp = Activity::where('activity_name', '=', 'registration_ok')
+                                  ->whereIn('group', ['mobile-ci','cs-portal'])
+                                  ->where('user_id', $user->user_id)
+                                  ->first();
+            if (is_object($user)) {
+                $location = Mall::find($userSignUp->location_id);
+            }
+
             // Successfull activation
+            if (is_object($location)) {
+                $activity->setLocation($location);
+            }
+
             $activity->setUser($user)
                      ->setActivityName('activation_ok')
                      ->setActivityNameLong('Account Activation')
                      ->setModuleName('Application')
-                     ->responseOK();
+                     ->responseOK()
+                     ->save();
+
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
