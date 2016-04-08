@@ -918,7 +918,7 @@ class TenantAPIController extends ControllerAPI
                     'retailer_id'       => 'required|orbit.empty.tenant',
                     'user_id'           => 'orbit.empty.user',
                     'email'             => 'email|email_exists_but_me',
-                    'status'            => 'orbit.empty.tenant_status' . '|orbit.exists.tenant_on_inactive_have_linked',
+                    'status'            => 'orbit.empty.tenant_status' . '| orbit.exists.tenant_on_active_campaign',
                     'parent_id'         => 'orbit.empty.mall',
                     'url'               => 'orbit.formaterror.url.web',
                     'masterbox_number'  => 'alpha_num|orbit_unique_verification_number:' . $mall_id . ',' . $retailer_id,
@@ -927,7 +927,7 @@ class TenantAPIController extends ControllerAPI
                 ),
                 array(
                     'email_exists_but_me' => Lang::get('validation.orbit.exists.email'),
-                    'orbit.exists.tenant_on_inactive_have_linked' => Lang::get('validation.orbit.exists.tenant_on_inactive_have_linked'),
+                    'orbit.exists.tenant_on_active_campaign' => Lang::get('validation.orbit.exists.tenant_on_active_campaign'),
                     'orbit.empty.tenant_floor' => Lang::get('validation.orbit.empty.tenant_floor'),
                     'orbit.empty.tenant_unit' => Lang::get('validation.orbit.empty.tenant_unit'),
                     'orbit_unique_verification_number' => 'The verification number already used by other',
@@ -2502,6 +2502,53 @@ class TenantAPIController extends ControllerAPI
                 // check tenant if exists in promotion.
                 $promotion = NewsMerchant::whereHas('news', function($q) {
                         $q->excludeDeleted()
+                          ->where('object_type','promotion');
+                    })
+                    ->where('merchant_id',$tenant_id)
+                    ->first();
+
+                if (! empty($promotion)) {
+                    return FALSE;
+                }
+            }
+
+            return TRUE;
+        });
+
+        // tenant cannot be inactive if news, promotion, and coupon status is not started, ongoing and paused.
+        Validator::extend('orbit.exists.tenant_on_active_campaign', function ($attribute, $value, $parameters) {
+            $updatedtenant = App::make('orbit.empty.tenant');
+
+            // check if only current status is active and being set to inactive
+            if ($updatedtenant->status === 'active' && $value === 'inactive') {
+                $tenant_id = $updatedtenant->merchant_id;
+
+                // check tenant if exists in coupons.
+                $coupon = CouponRetailer::whereHas('coupon', function($q) {
+                        $q->excludeStoppedOrExpired('promotions');
+                    })
+                    ->where('retailer_id',$tenant_id)
+                    ->first();
+
+                if (! empty($coupon)) {
+                    return FALSE;
+                }
+
+                // check tenant if exists in news.
+                $news = NewsMerchant::whereHas('news', function($q) {
+                        $q->excludeStoppedOrExpired('news')
+                          ->where('object_type','news');
+                    })
+                    ->where('merchant_id',$tenant_id)
+                    ->first();
+
+                if (! empty($news)) {
+                    return FALSE;
+                }
+
+                // check tenant if exists in promotion.
+                $promotion = NewsMerchant::whereHas('news', function($q) {
+                        $q->excludeStoppedOrExpired('news')
                           ->where('object_type','promotion');
                     })
                     ->where('merchant_id',$tenant_id)
