@@ -10,7 +10,7 @@
     </div>
 
     <div id="main" style="width:95%;margin: 0 auto;">
-        <p>Hi <strong style="font-size:18px">{{ $email }}</strong>,</p>
+        <p>Hi <strong style="font-size:18px">{{ $first_name }}</strong>,</p>
         <p style="text-align:justify">We received a request to reset your password for your gotomalls account:</p>
         <p style="text-align:justify"><strong style="font-size:18px">{{ $email }}</strong></p>
 
