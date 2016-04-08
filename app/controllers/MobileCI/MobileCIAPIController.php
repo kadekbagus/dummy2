@@ -2180,7 +2180,6 @@ class MobileCIAPIController extends BaseCIController
                 function ($pid) use ($tenants, $retailer, &$notfound, $mallid) {
                     if (! empty($pid)) {
                         $news = \News::leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
-                            ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                             ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
                             ->where(function ($q) use ($mallid) {
                                 $q->where('merchants.parent_id', '=', $mallid)
