@@ -131,6 +131,22 @@
             </tr>
         <?php } ?>
 
+        <?php if ($tenantName != '') { ?>
+            <tr>
+                <td>Filter by Tenant Name</td>
+                <td>:</td>
+                <td><strong><?php echo htmlentities($tenantName); ?></strong></td>
+            </tr>
+        <?php } ?>
+
+        <?php if ($mallName != '') { ?>
+            <tr>
+                <td>Filter by Mall Name</td>
+                <td>:</td>
+                <td><strong><?php echo htmlentities($mallName); ?></strong></td>
+            </tr>
+        <?php } ?>
+
         <?php if ($ruleType != '') { ?>
             <tr>
                 <td>Filter by Coupon Rule</td>
@@ -157,22 +173,6 @@
                         ?>
                     </strong>
                 </td>
-            </tr>
-        <?php } ?>
-
-        <?php if ($tenantName != '') { ?>
-            <tr>
-                <td>Filter by Tenant Name</td>
-                <td>:</td>
-                <td><strong><?php echo htmlentities($tenantName); ?></strong></td>
-            </tr>
-        <?php } ?>
-
-        <?php if ($mallName != '') { ?>
-            <tr>
-                <td>Filter by Mall Name</td>
-                <td>:</td>
-                <td><strong><?php echo htmlentities($mallName); ?></strong></td>
             </tr>
         <?php } ?>
 
