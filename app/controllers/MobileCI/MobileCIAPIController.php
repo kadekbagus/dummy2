@@ -221,6 +221,7 @@ class MobileCIAPIController extends BaseCIController
     {
         try {
             $this->prepareSession();
+            dd($_COOKIE['login_from']);
             unset($_COOKIE['login_from']);
             unset($_COOKIE['orbit_email']);
             unset($_COOKIE['orbit_firstname']);
