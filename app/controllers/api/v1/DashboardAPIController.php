@@ -4837,56 +4837,24 @@ class DashboardAPIController extends ControllerAPI
 
             $tablePrefix = DB::getTablePrefix();
 
-            $total = DB::Select(DB::Raw("
-                select count(distinct(user_id)) as total_unique_visit from {$tablePrefix}campaign_page_views
-                where (campaign_id in (
-                    select
-                        news_id
-                    from
-                        `{$tablePrefix}news`
-                            left join
-                        `{$tablePrefix}user_campaign` as `uc` ON uc.campaign_id = `{$tablePrefix}news`.`news_id`
-                            left join
-                        `{$tablePrefix}campaign_account` as `ca` ON ca.user_id = uc.user_id
-                            left join
-                        `{$tablePrefix}campaign_account` as `cas` ON cas.parent_user_id = ca.parent_user_id
-                    where
-                            (ca.user_id = (select parent_user_id
-                                                from {$tablePrefix}campaign_account
-                                                where user_id = {$this->quote($user->user_id)})
-                            or ca.parent_user_id = (select parent_user_id
-                                                    from {$tablePrefix}campaign_account
-                                                    where user_id = {$this->quote($user->user_id)})
-                            or ca.user_id = {$this->quote($user->user_id)}
-                            or ca.parent_user_id = {$this->quote($user->user_id)})
-                    group by `{$tablePrefix}news`.`news_id`
-                ) or campaign_id in (
-                    select
-                        promotion_id
-                    from
-                        `{$tablePrefix}promotions`
-                            left join
-                        `{$tablePrefix}user_campaign` as `uc` ON uc.campaign_id = `{$tablePrefix}promotions`.`promotion_id`
-                            left join
-                        `{$tablePrefix}campaign_account` as `ca` ON ca.user_id = uc.user_id
-                            left join
-                        `{$tablePrefix}campaign_account` as `cas` ON cas.parent_user_id = ca.parent_user_id
-                    where
-                        `{$tablePrefix}promotions`.`is_coupon` = 'Y'
-                            and (ca.user_id = (select parent_user_id
-                                                from {$tablePrefix}campaign_account
-                                                where user_id = {$this->quote($user->user_id)})
-                            or ca.parent_user_id = (select parent_user_id
-                                                    from {$tablePrefix}campaign_account
-                                                    where user_id = {$this->quote($user->user_id)})
-                            or ca.user_id = {$this->quote($user->user_id)}
-                            or ca.parent_user_id = {$this->quote($user->user_id)})
-                    group by `{$tablePrefix}promotions`.`promotion_id`
-                )) and location_id = {$this->quote($merchant_id)};
-            "));
+            $query = DB::select("select date_format(created_at, '%Y-%m-%d') as days, count(distinct user_id) as unique_visit_perday
+                        from {$tablePrefix}user_signin
+                        where location_id = ?
+                            and created_at between ? and ?
+                        group by 1
+                        order by 1
+                        ", array($merchant_id, $start_date, $end_date));
+
+            $total_unique_visit = 0;
+
+            if ( !empty($query) ) {
+                foreach ($query as $key => $value) {
+                    $total_unique_visit += $query[$key]->unique_visit_perday;
+                }
+            }
 
             $data = new stdclass();
-            $data->unique_users = $total[0]->total_unique_visit;
+            $data->unique_users = $total_unique_visit;
 
             $this->response->data = $data;
 
