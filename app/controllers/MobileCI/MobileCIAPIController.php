@@ -6778,15 +6778,22 @@ class MobileCIAPIController extends BaseCIController
                 $userGender = $user->userDetail->gender;
             }
 
+            $mallid = $retailer->merchant_id;
+
             $promo = DB::table('news')
                 ->selectRaw('news_id as campaign_id, news_name as campaign_name, description as campaign_description, image as campaign_image, "promotion" as campaign_type')
                 ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'news.news_id')
                 ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
                 ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
+                ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
+                ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
+                ->where(function ($q) use ($mallid) {
+                    $q->where('merchants.parent_id', '=', $mallid)
+                      ->orWhere('merchants.merchant_id', '=', $mallid);
+                })
                 ->where('object_type', '=', 'promotion')
                 ->where('news.status', 'active')
                 ->where('news.is_popup', 'Y')
-                ->where('mall_id', $retailer->merchant_id)
                 ->whereRaw("? between begin_date and end_date", [$mallTime])
                 ->groupBy('news.news_id');
 
@@ -6795,10 +6802,15 @@ class MobileCIAPIController extends BaseCIController
                 ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'news.news_id')
                 ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
                 ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
+                ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
+                ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
+                ->where(function ($q) use ($mallid) {
+                    $q->where('merchants.parent_id', '=', $mallid)
+                      ->orWhere('merchants.merchant_id', '=', $mallid);
+                })
                 ->where('object_type', '=', 'news')
                 ->where('news.status', 'active')
                 ->where('news.is_popup', 'Y')
-                ->where('mall_id', $retailer->merchant_id)
                 ->whereRaw("? between begin_date and end_date", [$mallTime])
                 ->groupBy('news.news_id');
 
@@ -6807,10 +6819,15 @@ class MobileCIAPIController extends BaseCIController
                 ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'promotions.promotion_id')
                 ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'promotions.promotion_id')
                 ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
+                ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
+                ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
+                ->where(function ($q) use ($mallid) {
+                        $q->where('merchants.parent_id', '=', $mallid)
+                          ->orWhere('merchants.merchant_id', '=', $mallid);
+                    })
                 ->where('is_coupon', '=', 'Y')
                 ->where('promotions.is_popup', 'Y')
                 ->where('promotions.status', 'active')
-                ->where('promotions.merchant_id', $retailer->merchant_id)
                 ->whereRaw("? between begin_date and end_date", [$mallTime])
                 ->groupBy('promotions.promotion_id');
 
