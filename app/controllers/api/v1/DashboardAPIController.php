@@ -4838,7 +4838,8 @@ class DashboardAPIController extends ControllerAPI
             $tablePrefix = DB::getTablePrefix();
 
             $total = DB::Select(DB::Raw("
-                select count(distinct(user_id)) as total_unique_visit from {$tablePrefix}campaign_page_views
+                select count(distinct(user_id)) as total_unique_visit
+                from {$tablePrefix}campaign_page_views
                 where (campaign_id in (
                     select
                         news_id
@@ -4882,7 +4883,8 @@ class DashboardAPIController extends ControllerAPI
                             or ca.user_id = {$this->quote($user->user_id)}
                             or ca.parent_user_id = {$this->quote($user->user_id)})
                     group by `{$tablePrefix}promotions`.`promotion_id`
-                )) and location_id = {$this->quote($merchant_id)};
+                )) and location_id = {$this->quote($merchant_id)}
+                   and created_at between {$this->quote($start_date)} and {$this->quote($end_date)};
             "));
 
             $data = new stdclass();
