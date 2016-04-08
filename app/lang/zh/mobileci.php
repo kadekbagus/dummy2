@@ -199,7 +199,7 @@ return array(
         'policy_terms_message' => '通过点击<strong>签署</strong>您证实您接受
                         <a target="_blank" href="%s">隐私权政策</a>和
                         <a target="_blank" href="%s">期限和条件</a>',
-        'already_have_an_account' => '已经有一个帐户',
+        'already_have_an_account' => '已经有一个帐户?',
         'fields_are_mandatory' => '所有字段是强制性的',
         'date_of_birth' => '出生日期',
         'password_placeholder' => '密码',
