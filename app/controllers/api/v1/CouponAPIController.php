@@ -2422,7 +2422,7 @@ class CouponAPIController extends ControllerAPI
                 $mall_name_like = "%" . $mall_name_like . "%";
                 $mall_name_like = $quote($mall_name_like);
                 $coupons->whereRaw(DB::raw("
-                (
+                ((
                     (select count(mtenant.merchant_id) from {$table_prefix}merchants mtenant
                     inner join {$table_prefix}promotion_retailer opr on mtenant.merchant_id = opr.retailer_id
                     where mtenant.object_type = 'tenant' and opr.promotion_id = {$table_prefix}promotions.promotion_id and (
@@ -2445,7 +2445,7 @@ class CouponAPIController extends ControllerAPI
                     ucp.user_id = '{$user_id}' and
                     mmallx.name like {$mall_name_like} and
                     mmallx.object_type = 'mall'
-                )
+                ))
                 "));
             });
 
