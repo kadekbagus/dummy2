@@ -196,12 +196,16 @@ class CouponReportAPIController extends ControllerAPI
 
             $coupons = Coupon::allowedForPMPUser($user, 'coupon')->select(
                                         'promotions.promotion_id',
+                                        'promotions.promotion_id as campaign_id',
                                         'promotions.promotion_name',
                                         'promotions.begin_date',
                                         'promotions.end_date',
                                         'promotions.coupon_validity_in_date',
                                         'promotion_rules.rule_type',
                                         DB::raw("IFNULL(issued.total_issued, 0) AS total_issued"),
+
+                                        DB::raw("'coupon' as campaign_type"),
+
                                         DB::raw("IFNULL(redeemed.total_redeemed, 0) AS total_redeemed"),
                                         DB::raw("IF(maximum_issued_coupon = 0, 'Unlimited', maximum_issued_coupon) as maximum_issued_coupon"),
                                         DB::raw("CASE WHEN {$prefix}promotions.maximum_issued_coupon = 0 THEN

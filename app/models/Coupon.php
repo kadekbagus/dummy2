@@ -387,7 +387,7 @@ class Coupon extends Eloquent
 
                         WHERE 1=1
                             ' . $queryAgeGender . '
-                            AND (m.parent_id = :merchantid or m.merchant_id = :merchantid)
+                            AND (m.parent_id = :merchantid or m.merchant_id = :merchantidx)
                             AND p.is_coupon = "Y" AND p.status = "active"
                             AND p.begin_date <= "' . $mallTime . '"
                             AND p.end_date >= "' . $mallTime . '"
@@ -398,7 +398,8 @@ class Coupon extends Eloquent
                             (p.maximum_issued_coupon = 0)
                     '),
                 array(
-                        'merchantid' => $retailer->merchant_id
+                        'merchantid' => $retailer->merchant_id,
+                        'merchantidx' => $retailer->merchant_id
                     )
             );
 
@@ -411,7 +412,7 @@ class Coupon extends Eloquent
             left join ' . DB::getTablePrefix() . 'promotion_retailer pre on pre.promotion_id = p.promotion_id
             left join ' . DB::getTablePrefix() . 'merchants m on m.merchant_id = pre.retailer_id
             WHERE
-                (m.parent_id = :merchantid or m.merchant_id = :merchantid)
+                (m.parent_id = :merchantid or m.merchant_id = :merchantidx)
                 AND ic.user_id = :userid
                 AND p.is_coupon = "Y" AND p.status = "active"
                 AND p.begin_date <= "' . $mallTime . '"
@@ -419,7 +420,7 @@ class Coupon extends Eloquent
                 AND pr.rule_type != "auto_issue_on_every_signin"
                 '
             ),
-            array('merchantid' => $retailer->merchant_id, 'userid' => $user->user_id)
+            array('merchantid' => $retailer->merchant_id, 'merchantidx' => $retailer->merchant_id, 'userid' => $user->user_id)
         );
 
         // get obtained auto-issuance coupon ids
