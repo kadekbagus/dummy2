@@ -250,7 +250,7 @@
                                     <option value="{{$i}}">{{$i}}</option>
                                 @endfor
                                 </select>
-                                <div class="form-icon"></div>
+                                <div class="form-icon form-icon-select"></div>
                             </div>
                             <div class="icon-group col-xs-4">
                                 <select class="form-control" name="month">
@@ -259,7 +259,7 @@
                                     <option value="{{$i}}">{{$i}}</option>
                                 @endfor
                                 </select>
-                                <div class="form-icon"></div>
+                                <div class="form-icon form-icon-select"></div>
                             </div>
                             <div class="icon-group col-xs-4">
                                 <select class="form-control" name="year">
@@ -268,7 +268,7 @@
                                     <option value="{{$i}}">{{$i}}</option>
                                 @endfor
                                 </select>
-                                <div class="form-icon"></div>
+                                <div class="form-icon form-icon-select"></div>
                             </div>
                         </div>
                     </div>
