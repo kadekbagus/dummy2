@@ -187,8 +187,7 @@
         <thead>
             <th style="text-align:left;">No</th>
             <th style="text-align:left;">Date</th>
-            <th style="text-align:left;">Tenants</th>
-            <th style="text-align:left;">Mall</th>
+            <th style="text-align:left;">Location(s)</th>
             <th style="text-align:left;">Unique Users</th>
             <th style="text-align:left;">Campaign Page Views</th>
             <th style="text-align:left;">Campaign Page View Rate (%)</th>
@@ -203,8 +202,7 @@
                 <tr class="{{ $rowCounter % 2 === 0 ? 'zebra' : '' }}">
                     <td><?php echo $count++; ?></td>
                     <td><?php echo $this->printDateTime($row->campaign_date . '00:00:00', $timezone, 'd M Y'); ?></td>
-                    <td><?php echo number_format($row->total_tenant); ?></td>
-                    <td><?php echo htmlentities($row->mall_name); ?></td>
+                    <td><?php echo number_format($row->total_location); ?></td>
                     <td><?php echo number_format($row->unique_users); ?></td>
                     <td><?php echo number_format($row->campaign_pages_views); ?></td>
                     <td><?php echo round($row->campaign_pages_view_rate, 2); ?></td>
