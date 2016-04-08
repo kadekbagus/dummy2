@@ -4337,6 +4337,8 @@ class MobileCIAPIController extends BaseCIController
                 $userGender =  $user->userDetail->gender;
             }
 
+            $mallid = $retailer->merchant_id;
+
             $coupons = Coupon::selectRaw('*, ' . DB::getTablePrefix() . 'promotions.image AS promo_image, count(' . DB::getTablePrefix() . 'promotions.promotion_id) as quantity')
                 ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'promotions.promotion_id')
                 ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'promotions.promotion_id')
@@ -4349,8 +4351,13 @@ class MobileCIAPIController extends BaseCIController
                     $join->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
                     $join->where('issued_coupons.status', '=', 'active');
                 })
+                ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
+                ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
+                ->where(function ($q) use ($mallid) {
+                        $q->where('merchants.parent_id', '=', $mallid)
+                          ->orWhere('merchants.merchant_id', '=', $mallid);
+                    })
                 ->where('promotions.coupon_validity_in_date', '>=', Carbon::now($retailer->timezone->timezone_name))
-                ->where('promotions.merchant_id', $retailer->merchant_id)
                 ->where('issued_coupons.user_id', $user->user_id);
 
             // filter by age and gender
@@ -4375,7 +4382,7 @@ class MobileCIAPIController extends BaseCIController
                 function ($keyword) use ($coupons, $retailer, $alternateLanguage) {
                     $coupons->leftJoin('coupon_translations', function($join) use ($alternateLanguage){
                             $join->on('promotions.promotion_id', '=', 'coupon_translations.promotion_id');
-                            $join->where('coupon_translations.merchant_language_id', '=', $alternateLanguage->merchant_language_id);
+                            $join->where('coupon_translations.merchant_language_id', '=', $alternateLanguage->language_id);
                         })
                         ->leftJoin('keyword_object', function($join) {
                             $join->on('promotions.promotion_id', '=', 'keyword_object.object_id');
@@ -4434,7 +4441,7 @@ class MobileCIAPIController extends BaseCIController
             if (! empty($alternateLanguage) || ! empty($listOfRec)) {
                 foreach ($listOfRec as $coupon) {
                     $couponTranslation = \CouponTranslation::excludeDeleted()
-                        ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
+                        ->where('merchant_language_id', '=', $alternateLanguage->language_id)
                         ->where('promotion_id', $coupon->promotion_id)->first();
 
                     if (! empty($couponTranslation)) {
@@ -4457,7 +4464,7 @@ class MobileCIAPIController extends BaseCIController
                             $defaultLanguage = $this->getDefaultLanguage($retailer);
                             if ($defaultLanguage !== NULL) {
                                 $contentDefaultLanguage = \CouponTranslation::excludeDeleted()
-                                    ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
+                                    ->where('merchant_language_id', '=', $defaultLanguage->language_id)
                                     ->where('promotion_id', $coupon->promotion_id)->first();
 
                                 // get default image
@@ -4556,6 +4563,8 @@ class MobileCIAPIController extends BaseCIController
                 $userGender =  $user->userDetail->gender;
             }
 
+            $mallid = $retailer->merchant_id;
+
             $coupons = Coupon::selectRaw('*, ' . DB::getTablePrefix() . 'promotions.image AS promo_image, count(' . DB::getTablePrefix() . 'promotions.promotion_id) as quantity')
                 ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'promotions.promotion_id')
                 ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'promotions.promotion_id')
@@ -4568,8 +4577,13 @@ class MobileCIAPIController extends BaseCIController
                     $join->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
                     $join->where('issued_coupons.status', '=', 'active');
                 })
+                ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
+                ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
+                ->where(function ($q) use ($mallid) {
+                        $q->where('merchants.parent_id', '=', $mallid)
+                          ->orWhere('merchants.merchant_id', '=', $mallid);
+                    })
                 ->where('promotions.coupon_validity_in_date', '>=', Carbon::now($retailer->timezone->timezone_name))
-                ->where('promotions.merchant_id', $retailer->merchant_id)
                 ->where('issued_coupons.user_id', $user->user_id);
 
             // filter by age and gender
@@ -4594,7 +4608,7 @@ class MobileCIAPIController extends BaseCIController
                 function ($keyword) use ($coupons, $retailer, $alternateLanguage) {
                     $coupons->leftJoin('coupon_translations', function($join) use ($alternateLanguage){
                             $join->on('promotions.promotion_id', '=', 'coupon_translations.promotion_id');
-                            $join->where('coupon_translations.merchant_language_id', '=', $alternateLanguage->merchant_language_id);
+                            $join->where('coupon_translations.merchant_language_id', '=', $alternateLanguage->language_id);
                         })
                         ->leftJoin('keyword_object', function($join) {
                             $join->on('promotions.promotion_id', '=', 'keyword_object.object_id');
@@ -4662,7 +4676,7 @@ class MobileCIAPIController extends BaseCIController
                 foreach ($listOfRec as $key => $val) {
 
                     $couponTranslation = \CouponTranslation::excludeDeleted()
-                        ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
+                        ->where('merchant_language_id', '=', $alternateLanguage->language_id)
                         ->where('promotion_id', $val->promotion_id)->first();
 
                     if (!empty($couponTranslation)) {
@@ -4685,7 +4699,7 @@ class MobileCIAPIController extends BaseCIController
                             $defaultLanguage = $this->getDefaultLanguage($retailer);
                             if ($defaultLanguage !== NULL) {
                                 $contentDefaultLanguage = \CouponTranslation::excludeDeleted()
-                                    ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
+                                    ->where('merchant_language_id', '=', $defaultLanguage->language_id)
                                     ->where('promotion_id', $val->promotion_id)->first();
 
                                 // get default image
@@ -4792,7 +4806,9 @@ class MobileCIAPIController extends BaseCIController
             $userGender = 'U'; // default is Unknown
             if ($user->userDetail->gender !== '' && $user->userDetail->gender !== null) {
                 $userGender =  $user->userDetail->gender;
-            }                            
+            } 
+
+            $mallid = $retailer->merchant_id;                           
 
             $coupons = Coupon::with(array(
                     'couponRule',
@@ -4804,7 +4820,13 @@ class MobileCIAPIController extends BaseCIController
                 )
                 ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'promotions.promotion_id')
                 ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'promotions.promotion_id')
-                ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id');
+                ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
+                ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
+                ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
+                ->where(function ($q) use ($mallid) {
+                        $q->where('merchants.parent_id', '=', $mallid)
+                          ->orWhere('merchants.merchant_id', '=', $mallid);
+                    });
 
             // filter by age and gender
             if ($userGender !== null) {
@@ -4825,8 +4847,7 @@ class MobileCIAPIController extends BaseCIController
 
             $languages = $this->getListLanguages($retailer);
 
-            $coupons = $coupons->where('promotions.merchant_id', $retailer->merchant_id)
-                ->where('promotions.status', 'active')
+            $coupons = $coupons->where('promotions.status', 'active')
                 ->where('promotions.coupon_validity_in_date', '>=', Carbon::now($retailer->timezone->timezone_name))
                 ->where('promotions.promotion_id', $promotion_id)
                 ->first();
@@ -4846,7 +4867,7 @@ class MobileCIAPIController extends BaseCIController
 
             if (! empty($alternateLanguage)) {
                 $couponTranslation = \CouponTranslation::excludeDeleted()
-                    ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
+                    ->where('merchant_language_id', '=', $alternateLanguage->language_id)
                     ->where('promotion_id', $coupons->promotion_id)->first();
 
                 if (! empty($couponTranslation)) {
@@ -4869,7 +4890,7 @@ class MobileCIAPIController extends BaseCIController
                         $defaultLanguage = $this->getDefaultLanguage($retailer);
                         if ($defaultLanguage !== NULL) {
                             $contentDefaultLanguage = \CouponTranslation::excludeDeleted()
-                                ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
+                                ->where('merchant_language_id', '=', $defaultLanguage->language_id)
                                 ->where('promotion_id', $coupons->promotion_id)->first();
 
                             // get default image
@@ -5211,11 +5232,14 @@ class MobileCIAPIController extends BaseCIController
             }
 
             $mallTime = Carbon::now($retailer->timezone->timezone_name);
+            $mallid = $retailer->merchant_id;
 
             $promotions = \News::with('translations')
                             ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'news.news_id')
                             ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
-                            ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id');
+                            ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
+                            ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
+                            ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id');
 
             // filter by age and gender
             if ($userGender !== null) {
@@ -5235,7 +5259,10 @@ class MobileCIAPIController extends BaseCIController
             }
 
             $promotions = $promotions->where('news.status', '=', 'active')
-                        ->where('mall_id', $retailer->merchant_id)
+                        ->where(function ($q) use ($mallid) {
+                            $q->where('merchants.parent_id', '=', $mallid)
+                              ->orWhere('merchants.merchant_id', '=', $mallid);
+                        })
                         ->where('news.object_type', 'promotion')
                         ->whereRaw("? between begin_date and end_date", [$mallTime]);
 
@@ -5244,7 +5271,7 @@ class MobileCIAPIController extends BaseCIController
                 function ($keyword) use ($promotions, $retailer, $alternateLanguage) {
                     $promotions->leftJoin('news_translations', function($join) use ($alternateLanguage){
                             $join->on('news.news_id', '=', 'news_translations.news_id');
-                            $join->where('news_translations.merchant_language_id', '=', $alternateLanguage->merchant_language_id);
+                            $join->where('news_translations.merchant_language_id', '=', $alternateLanguage->language_id);
                         })
                         ->leftJoin('keyword_object', function($join) {
                             $join->on('news.news_id', '=', 'keyword_object.object_id');
@@ -5303,7 +5330,7 @@ class MobileCIAPIController extends BaseCIController
 
                 foreach ($listOfRec as $key => $val) {
                     $promotionTranslation = \NewsTranslation::excludeDeleted()
-                        ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
+                        ->where('merchant_language_id', '=', $alternateLanguage->language_id)
                         ->where('news_id', $val->news_id)->first();
 
                     if (!empty($promotionTranslation)) {
@@ -5326,7 +5353,7 @@ class MobileCIAPIController extends BaseCIController
                             $defaultLanguage = $this->getDefaultLanguage($retailer);
                             if ($defaultLanguage !== NULL) {
                                 $contentDefaultLanguage = \NewsTranslation::excludeDeleted()
-                                    ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
+                                    ->where('merchant_language_id', '=', $defaultLanguage->language_id)
                                     ->where('news_id', $val->news_id)->first();
 
                                 // get default image
@@ -5427,11 +5454,15 @@ class MobileCIAPIController extends BaseCIController
                 $userGender =  $user->userDetail->gender;
             }
 
+            $mallid = $retailer->merchant_id;
+
             $mallTime = Carbon::now($retailer->timezone->timezone_name);
             $promotions = \News::with('translations')
                             ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'news.news_id')
                             ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
-                            ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id');
+                            ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
+                            ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
+                            ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id');
 
             // filter by age and gender
             if ($userGender !== null) {
@@ -5456,7 +5487,10 @@ class MobileCIAPIController extends BaseCIController
             });
 
             $promotions = $promotions->where('news.status', '=', 'active')
-                ->where('mall_id', $retailer->merchant_id)
+                ->where(function ($q) use ($mallid) {
+                    $q->where('merchants.parent_id', '=', $mallid)
+                      ->orWhere('merchants.merchant_id', '=', $mallid);
+                })
                 ->where('news.object_type', 'promotion')
                 ->whereRaw("? between begin_date and end_date", [$mallTime]);
 
@@ -5465,7 +5499,7 @@ class MobileCIAPIController extends BaseCIController
                 function ($keyword) use ($promotions, $retailer, $alternateLanguage) {
                     $promotions->leftJoin('news_translations', function($join) use ($alternateLanguage){
                             $join->on('news.news_id', '=', 'news_translations.news_id');
-                            $join->where('news_translations.merchant_language_id', '=', $alternateLanguage->merchant_language_id);
+                            $join->where('news_translations.merchant_language_id', '=', $alternateLanguage->language_id);
                         })
                         ->leftJoin('keyword_object', function($join) {
                             $join->on('news.news_id', '=', 'keyword_object.object_id');
@@ -5522,7 +5556,7 @@ class MobileCIAPIController extends BaseCIController
                 foreach ($listOfRec as $key => $val) {
 
                     $promotionTranslation = \NewsTranslation::excludeDeleted()
-                        ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
+                        ->where('merchant_language_id', '=', $alternateLanguage->language_id)
                         ->where('news_id', $val->news_id)->first();
 
                     if (!empty($promotionTranslation)) {
@@ -5545,7 +5579,7 @@ class MobileCIAPIController extends BaseCIController
                             $defaultLanguage = $this->getDefaultLanguage($retailer);
                             if ($defaultLanguage !== NULL) {
                                 $contentDefaultLanguage = \NewsTranslation::excludeDeleted()
-                                    ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
+                                    ->where('merchant_language_id', '=', $defaultLanguage->language_id)
                                     ->where('news_id', $val->news_id)->first();
 
                                 // get default image
@@ -5638,13 +5672,20 @@ class MobileCIAPIController extends BaseCIController
 
             $promotion_id = trim(OrbitInput::get('id'));
 
+            $mallid = $retailer->merchant_id;
+
             $promotion = \News::with(['tenants' => function($q) {
                     $q->where('merchants.status', 'active');
                 }])
-                ->active()
-                ->where('mall_id', $retailer->merchant_id)
-                ->where('object_type', 'promotion')
-                ->where('news_id', $promotion_id)
+                ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
+                ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
+                ->where(function ($q) use ($mallid) {
+                    $q->where('merchants.parent_id', '=', $mallid)
+                      ->orWhere('merchants.merchant_id', '=', $mallid);
+                })
+                ->where('news.object_type', 'promotion')
+                ->where('news.news_id', $promotion_id)
+                ->where('news.status', 'active')
                 ->first();
 
             if (empty($promotion)) {
@@ -5681,7 +5722,7 @@ class MobileCIAPIController extends BaseCIController
 
             if (! empty($alternateLanguage)) {
                 $promotionTranslation = \NewsTranslation::excludeDeleted()
-                    ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
+                    ->where('merchant_language_id', '=', $alternateLanguage->language_id)
                     ->where('news_id', $promotion->news_id)->first();
 
                 if (!empty($promotionTranslation)) {
@@ -5704,7 +5745,7 @@ class MobileCIAPIController extends BaseCIController
                         $defaultLanguage = $this->getDefaultLanguage($retailer);
                         if ($defaultLanguage !== NULL) {
                             $contentDefaultLanguage = \NewsTranslation::excludeDeleted()
-                                ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
+                                ->where('merchant_language_id', '=', $defaultLanguage->language_id)
                                 ->where('news_id', $promotion->news_id)->first();
 
                             // get default image
@@ -5806,10 +5847,15 @@ class MobileCIAPIController extends BaseCIController
 
             $mallTime = Carbon::now($retailer->timezone->timezone_name);
 
+            $prefix = DB::getTablePrefix();
+            $mallid = $retailer->merchant_id;
+
             $news = \News::with('translations')
                             ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'news.news_id')
                             ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
-                            ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id');
+                            ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
+                            ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
+                            ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id');
 
             // filter by age and gender
             if ($userGender !== null) {
@@ -5829,7 +5875,10 @@ class MobileCIAPIController extends BaseCIController
             }
 
             $news = $news->where('news.status', '=', 'active')
-                ->where('mall_id', $retailer->merchant_id)
+                ->where(function ($q) use ($mallid) {
+                    $q->where('merchants.parent_id', '=', $mallid)
+                      ->orWhere('merchants.merchant_id', '=', $mallid);
+                })
                 ->where('news.object_type', 'news')
                 ->whereRaw("? between begin_date and end_date", [$mallTime]);
 
@@ -5838,7 +5887,7 @@ class MobileCIAPIController extends BaseCIController
                 function ($keyword) use ($news, $retailer, $alternateLanguage) {
                     $news->leftJoin('news_translations', function($join) use ($alternateLanguage){
                             $join->on('news.news_id', '=', 'news_translations.news_id');
-                            $join->where('news_translations.merchant_language_id', '=', $alternateLanguage->merchant_language_id);
+                            $join->where('news_translations.merchant_language_id', '=', $alternateLanguage->language_id);
                         })
                         ->leftJoin('keyword_object', function($join) {
                             $join->on('news.news_id', '=', 'keyword_object.object_id');
@@ -5897,7 +5946,7 @@ class MobileCIAPIController extends BaseCIController
                 foreach ($listOfRec as $key => $val) {
 
                     $newsTranslation = \NewsTranslation::excludeDeleted()
-                        ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
+                        ->where('merchant_language_id', '=', $alternateLanguage->language_id)
                         ->where('news_id', $val->news_id)->first();
 
                     if (!empty($newsTranslation)) {
@@ -5920,7 +5969,7 @@ class MobileCIAPIController extends BaseCIController
                             $defaultLanguage = $this->getDefaultLanguage($retailer);
                             if ($defaultLanguage !== NULL) {
                                 $contentDefaultLanguage = \NewsTranslation::excludeDeleted()
-                                    ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
+                                    ->where('merchant_language_id', '=', $defaultLanguage->language_id)
                                     ->where('news_id', $val->news_id)->first();
 
                                 // get default image
@@ -6024,7 +6073,9 @@ class MobileCIAPIController extends BaseCIController
             $news = \News::with('translations')
                             ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'news.news_id')
                             ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
-                            ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id');
+                            ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
+                            ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
+                            ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id');
 
             // filter by age and gender
             if ($userGender !== null) {
@@ -6048,8 +6099,13 @@ class MobileCIAPIController extends BaseCIController
                 $news->whereNotIn('news.news_id', $ids);
             });
 
+            $mallid = $retailer->merchant_id;
+
             $news = $news->where('news.status', '=', 'active')
-                ->where('mall_id', $retailer->merchant_id)
+                ->where(function ($q) use ($mallid) {
+                    $q->where('merchants.parent_id', '=', $mallid)
+                      ->orWhere('merchants.merchant_id', '=', $mallid);
+                })
                 ->where('news.object_type', 'news')
                 ->whereRaw("? between begin_date and end_date", [$mallTime]);
 
@@ -6058,7 +6114,7 @@ class MobileCIAPIController extends BaseCIController
                 function ($keyword) use ($news, $retailer, $alternateLanguage) {
                     $news->leftJoin('news_translations', function($join) use ($alternateLanguage){
                             $join->on('news.news_id', '=', 'news_translations.news_id');
-                            $join->where('news_translations.merchant_language_id', '=', $alternateLanguage->merchant_language_id);
+                            $join->where('news_translations.merchant_language_id', '=', $alternateLanguage->language_id);
                         })
                         ->leftJoin('keyword_object', function($join) {
                             $join->on('news.news_id', '=', 'keyword_object.object_id');
@@ -6116,7 +6172,7 @@ class MobileCIAPIController extends BaseCIController
                 foreach ($listOfRec as $key => $val) {
 
                     $newsTranslation = \NewsTranslation::excludeDeleted()
-                        ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
+                        ->where('merchant_language_id', '=', $alternateLanguage->language_id)
                         ->where('news_id', $val->news_id)->first();
 
                     if (!empty($newsTranslation)) {
@@ -6139,7 +6195,7 @@ class MobileCIAPIController extends BaseCIController
                             $defaultLanguage = $this->getDefaultLanguage($retailer);
                             if ($defaultLanguage !== NULL) {
                                 $contentDefaultLanguage = \NewsTranslation::excludeDeleted()
-                                    ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
+                                    ->where('merchant_language_id', '=', $defaultLanguage->language_id)
                                     ->where('news_id', $val->news_id)->first();
 
                                 // get default image
@@ -6232,13 +6288,20 @@ class MobileCIAPIController extends BaseCIController
 
             $product_id = trim(OrbitInput::get('id'));
 
+            $mallid = $retailer->merchant_id;
+
             $news = \News::with(['tenants' => function($q) {
                     $q->where('merchants.status', 'active');
                 }])
-                ->active()
-                ->where('mall_id', $retailer->merchant_id)
-                ->where('object_type', 'news')
-                ->where('news_id', $product_id)
+                ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
+                ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
+                ->where(function ($q) use ($mallid) {
+                    $q->where('merchants.parent_id', '=', $mallid)
+                      ->orWhere('merchants.merchant_id', '=', $mallid);
+                })
+                ->where('news.object_type', 'news')
+                ->where('news.news_id', $product_id)
+                ->where('news.status', 'active')
                 ->first();
 
             if (empty($news)) {
@@ -6276,7 +6339,7 @@ class MobileCIAPIController extends BaseCIController
             // cek if any language active
             if (!empty($alternateLanguage) && !empty($news)) {
                 $newsTranslation = \NewsTranslation::excludeDeleted()
-                    ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
+                    ->where('merchant_language_id', '=', $alternateLanguage->language_id)
                     ->where('news_id', $news->news_id)->first();
 
                 if (!empty($newsTranslation)) {
@@ -6299,7 +6362,7 @@ class MobileCIAPIController extends BaseCIController
                         $defaultLanguage = $this->getDefaultLanguage($retailer);
                         if ($defaultLanguage !== NULL) {
                             $contentDefaultLanguage = \NewsTranslation::excludeDeleted()
-                                ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
+                                ->where('merchant_language_id', '=', $defaultLanguage->language_id)
                                 ->where('news_id', $news->news_id)->first();
 
                             // get default image
@@ -6957,14 +7020,16 @@ class MobileCIAPIController extends BaseCIController
 
             $prefix = DB::getTablePrefix();
 
+            $mallid = $retailer->merchant_id;
+
             $promo = DB::table('news')
                 ->selectRaw("{$prefix}news.news_id as object_id, {$prefix}news.news_name as object_name, {$prefix}news.description as object_description, {$prefix}news.image as object_image, 'promotion' as object_type")
                 ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'news.news_id')
                 ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
                 ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
-                ->leftJoin('news_translations', function($join) use ($alternateLanguage){
+                ->leftJoin('news_translations', function($join) use ($language){
                     $join->on('news.news_id', '=', 'news_translations.news_id');
-                    $join->where('news_translations.merchant_language_id', '=', $alternateLanguage->merchant_language_id);
+                    $join->where('news_translations.merchant_language_id', '=', $language->language_id);
                 })
                 ->leftJoin('keyword_object', function($join) {
                     $join->on('news.news_id', '=', 'keyword_object.object_id');
@@ -6974,9 +7039,14 @@ class MobileCIAPIController extends BaseCIController
                     $join->on('keywords.keyword_id', '=', 'keyword_object.keyword_id');
                     $join->where('keywords.merchant_id', '=', $retailer->merchant_id);
                 })
+                ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
+                ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
+                ->where(function ($q) use ($mallid) {
+                            $q->where('merchants.parent_id', '=', $mallid)
+                              ->orWhere('merchants.merchant_id', '=', $mallid);
+                })
                 ->where('news.object_type', '=', 'promotion')
                 ->where('news.status', 'active')
-                ->where('mall_id', $retailer->merchant_id)
                 ->whereRaw("? between begin_date and end_date", [$mallTime])
                 ->where(function($q) use ($keyword) {
                     $q->where('news_translations.news_name', 'like', "%$keyword%")
@@ -6989,9 +7059,9 @@ class MobileCIAPIController extends BaseCIController
                 ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'news.news_id')
                 ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
                 ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
-                ->leftJoin('news_translations', function($join) use ($alternateLanguage){
+                ->leftJoin('news_translations', function($join) use ($language){
                     $join->on('news.news_id', '=', 'news_translations.news_id');
-                    $join->where('news_translations.merchant_language_id', '=', $alternateLanguage->merchant_language_id);
+                    $join->where('news_translations.merchant_language_id', '=', $language->language_id);
                 })
                 ->leftJoin('keyword_object', function($join) {
                     $join->on('news.news_id', '=', 'keyword_object.object_id');
@@ -7001,9 +7071,14 @@ class MobileCIAPIController extends BaseCIController
                     $join->on('keywords.keyword_id', '=', 'keyword_object.keyword_id');
                     $join->where('keywords.merchant_id', '=', $retailer->merchant_id);
                 })
+                ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
+                ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
+                ->where(function ($q) use ($mallid) {
+                            $q->where('merchants.parent_id', '=', $mallid)
+                              ->orWhere('merchants.merchant_id', '=', $mallid);
+                })
                 ->where('news.object_type', '=', 'news')
                 ->where('news.status', 'active')
-                ->where('mall_id', $retailer->merchant_id)
                 ->whereRaw("? between begin_date and end_date", [$mallTime])
                 ->where(function($q) use ($keyword) {
                     $q->where('news_translations.news_name', 'like', "%$keyword%")
@@ -7016,9 +7091,9 @@ class MobileCIAPIController extends BaseCIController
                 ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'promotions.promotion_id')
                 ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'promotions.promotion_id')
                 ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
-                ->leftJoin('coupon_translations', function($join) use ($alternateLanguage){
+                ->leftJoin('coupon_translations', function($join) use ($language){
                     $join->on('promotions.promotion_id', '=', 'coupon_translations.promotion_id');
-                    $join->where('coupon_translations.merchant_language_id', '=', $alternateLanguage->merchant_language_id);
+                    $join->where('coupon_translations.merchant_language_id', '=', $language->language_id);
                 })
                 ->leftJoin('keyword_object', function($join) {
                     $join->on('promotions.promotion_id', '=', 'keyword_object.object_id');
@@ -7029,12 +7104,17 @@ class MobileCIAPIController extends BaseCIController
                     $join->where('keywords.merchant_id', '=', $retailer->merchant_id);
                 })
                 ->leftJoin('issued_coupons', 'issued_coupons.promotion_id', '=', 'promotions.promotion_id')
+                ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
+                ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
+                ->where(function ($q) use ($mallid) {
+                        $q->where('merchants.parent_id', '=', $mallid)
+                          ->orWhere('merchants.merchant_id', '=', $mallid);
+                    })
                 ->where('issued_coupons.expired_date', '>=', $mallTime)
                 ->where('issued_coupons.user_id', '=', $user->user_id)
                 ->where('issued_coupons.status', '=', 'active')
                 ->where('is_coupon', '=', 'Y')
                 ->where('promotions.status', 'active')
-                ->where('promotions.merchant_id', $retailer->merchant_id)
                 ->where(function($q) use ($keyword) {
                     $q->where('coupon_translations.promotion_name', 'like', "%$keyword%")
                         ->orWhere('coupon_translations.description', 'like', "%$keyword%")
@@ -7044,9 +7124,9 @@ class MobileCIAPIController extends BaseCIController
 
             $tenant = DB::table('merchants')
                 ->selectRaw("{$prefix}merchants.merchant_id as object_id, {$prefix}merchants.name as object_name, {$prefix}merchants.description as object_description, {$prefix}media.path as object_image, 'tenant' as object_type, COUNT(DISTINCT {$prefix}merchants.merchant_id) as counter")
-                ->leftJoin('merchant_translations', function($join) use ($alternateLanguage){
+                ->leftJoin('merchant_translations', function($join) use ($language){
                     $join->on('merchants.merchant_id', '=', 'merchant_translations.merchant_id');
-                    $join->where('merchant_translations.merchant_language_id', '=', $alternateLanguage->merchant_language_id);
+                    $join->where('merchant_translations.merchant_language_id', '=', $language->language_id);
                 })
                 ->leftJoin('keyword_object', function($join) {
                     $join->on('merchants.merchant_id', '=', 'keyword_object.object_id');
@@ -7176,15 +7256,15 @@ class MobileCIAPIController extends BaseCIController
                 if (!empty($alternateLanguage)) {
                     if ($near_end_result->object_type === 'promotion' || $near_end_result->object_type === 'news') {
                         $objectTranslation = \NewsTranslation::excludeDeleted()
-                            ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
+                            ->where('merchant_language_id', '=', $alternateLanguage->language_id)
                             ->where('news_id', $near_end_result->object_id)->first();
                     } elseif ($near_end_result->object_type === 'coupon'){
                         $objectTranslation = \CouponTranslation::excludeDeleted()
-                            ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
+                            ->where('merchant_language_id', '=', $alternateLanguage->language_id)
                             ->where('promotion_id', $near_end_result->object_id)->first();
                     } elseif ($near_end_result->object_type === 'tenant'){
                         $objectTranslation = \MerchantTranslation::excludeDeleted()
-                            ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
+                            ->where('merchant_language_id', '=', $alternateLanguage->language_id)
                             ->where('merchant_id', $near_end_result->object_id)->first();
                     } elseif ($near_end_result->object_type === 'lucky_draw'){
                         $objectTranslation = \LuckyDrawTranslation::excludeDeleted()
@@ -7215,7 +7295,7 @@ class MobileCIAPIController extends BaseCIController
                                 $defaultLanguage = $this->getDefaultLanguage($retailer);
                                 if ($defaultLanguage !== NULL) {
                                     $contentDefaultLanguage = \NewsTranslation::excludeDeleted()
-                                        ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
+                                        ->where('merchant_language_id', '=', $defaultLanguage->language_id)
                                         ->where('news_id', $near_end_result->object_id)->first();
 
                                     // get default image
@@ -7249,7 +7329,7 @@ class MobileCIAPIController extends BaseCIController
                                 $defaultLanguage = $this->getDefaultLanguage($retailer);
                                 if ($defaultLanguage !== NULL) {
                                     $contentDefaultLanguage = \CouponTranslation::excludeDeleted()
-                                        ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
+                                        ->where('merchant_language_id', '=', $defaultLanguage->language_id)
                                         ->where('promotion_id', $near_end_result->object_id)->first();
 
                                     // get default image
