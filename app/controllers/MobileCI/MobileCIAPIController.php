@@ -1047,6 +1047,8 @@ class MobileCIAPIController extends BaseCIController
                     setcookie('orbit_firstname', $firstName, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
                     setcookie('login_from', 'Google', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
 
+                    $this->socmedSignInActivity($loggedInUser, 'google');
+
                     // todo can we not do this directly
                     return Redirect::route($caller_url, $query);
                 } else {
@@ -1064,6 +1066,8 @@ class MobileCIAPIController extends BaseCIController
                     $loggedInUser = $this->doAutoLogin($response->data->user_email);
                     $this->linkGuestToUser($loggedInUser);
                     $this->loginStage2($loggedInUser, $retailer);
+                    $this->socmedSignUpActivity($loggedInUser, 'google');
+                    $this->socmedSignInActivity($loggedInUser, 'google');
                     
                     return Redirect::route($caller_url, $query);
                 }
@@ -1190,7 +1194,9 @@ class MobileCIAPIController extends BaseCIController
             setcookie('orbit_email', $userEmail, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
             setcookie('orbit_firstname', $firstName, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
             setcookie('login_from', 'Facebook', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
-            
+
+            $this->socmedSignInActivity($loggedInUser, 'facebook');
+
             return Redirect::route($caller_url, $query);
         } else {
             // register user without password and birthdate
@@ -1206,6 +1212,9 @@ class MobileCIAPIController extends BaseCIController
 
             $loggedInUser = $this->doAutoLogin($response->data->user_email);
             $this->loginStage2($loggedInUser, $retailer);
+            $this->socmedSignUpActivity($loggedInUser, 'facebook');
+            $this->socmedSignInActivity($loggedInUser, 'facebook');
+
             return Redirect::route($caller_url, $query);
         }
     }
@@ -8680,5 +8689,66 @@ class MobileCIAPIController extends BaseCIController
         }
 
         $retailer->acquireUser($user);
+    }
+
+    // create activity signup from socmed
+    public function socmedSignUpActivity($user, $from)
+    {
+        $activity = Activity::mobileci()
+            ->setActivityType('registration')
+            ->setUser($user)
+            ->setActivityName('registration_ok')
+            ->setObject($user)
+            ->setModuleName('User')
+            ->responseOK();
+
+        if ($from === 'facebook') {
+            $activity->setActivityNameLong('Sign Up via Mobile (Facebook)')
+                    ->setNotes('Sign Up via Mobile (Facebook) OK');
+            // if ($customer->status === 'active') {
+            //     // Send email process to the queue
+            //     \Queue::push('Orbit\\Queue\\NewPasswordMail', [
+            //         'user_id' => $customer->user_id
+            //     ]);
+            // }
+        } else if ($from === 'google') {
+            $activity->setActivityNameLong('Sign Up via Mobile (Google+)')
+                    ->setNotes('Sign Up via Mobile (Google+) OK');
+            // if ($customer->status === 'active') {
+            //     // Send email process to the queue
+            //     \Queue::push('Orbit\\Queue\\NewPasswordMail', [
+            //         'user_id' => $customer->user_id
+            //     ]);
+            // }
+        }
+        $activity->save();
+
+        $newUserSignin = new UserSignin();
+        $newUserSignin->user_id = $user->user_id;
+        $newUserSignin->signin_via = $from;
+        $newUserSignin->location_id = Config::get('orbit.shop.id');
+        $newUserSignin->activity_id = $activity->activity_id;
+        $newUserSignin->save();
+    }
+
+    // create activity signin from socmed
+    public function socmedSignInActivity($user, $from)
+    {
+        $activity = Activity::mobileci()
+                ->setUser($user)
+                ->setActivityName('login_ok')
+                ->setActivityNameLong('Sign In')
+                ->setObject($user)
+                ->setModuleName('Application')
+                ->responseOK();
+
+        $activity->save();
+
+        $newUserSignin = new UserSignin();
+        $newUserSignin->user_id = $user->user_id;
+        $newUserSignin->signin_via = $from;
+        $newUserSignin->location_id = Config::get('orbit.shop.id');
+        $newUserSignin->activity_id = $activity->activity_id;
+        $newUserSignin->save();
     }
 }
