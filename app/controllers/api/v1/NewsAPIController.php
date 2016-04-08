@@ -1642,7 +1642,7 @@ class NewsAPIController extends ControllerAPI
             $prefix = DB::getTablePrefix();
             $news = News::allowedForPMPUser($user, $object_type[0])
                         ->select('news.*', 'campaign_status.order', 'campaign_price.campaign_price_id', 'news_translations.news_name as name_english', DB::raw('media.path as image_path'),
-                            DB::raw("COUNT(DISTINCT {$prefix}news_merchant.news_merchant_id) as location"),
+                            DB::raw("COUNT(DISTINCT {$prefix}news_merchant.news_merchant_id) as total_location"),
                             DB::raw("(select GROUP_CONCAT(IF({$prefix}merchants.object_type = 'tenant', CONCAT({$prefix}merchants.name,' at ', pm.name), CONCAT('Mall at ',{$prefix}merchants.name) ) separator ', ')
                                 from {$prefix}news_merchant
                                     inner join {$prefix}merchants on {$prefix}merchants.merchant_id = {$prefix}news_merchant.merchant_id
