@@ -95,8 +95,8 @@
             <div class="social-media-container">
                 <div class="row vertically-spaced">
                     <div class="col-xs-12 text-center">
-                        <b>{{ Lang::get('mobileci.signin.sign_up_sign_in_with') }}</b><br>
-                        {{ Lang::get('mobileci.signin.to_access_this_content') }}
+                        {{ Lang::get('mobileci.signin.to_access_this_content') }}<br>
+                        <b>{{ Lang::get('mobileci.signin.sign_up_sign_in_with') }}</b>
                     </div>
                 </div>
                 <div class="row">
