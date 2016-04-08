@@ -235,8 +235,7 @@
             <th style="text-align:left;">No</th>
             <th style="text-align:left;">Campaign Name</th>
             <th style="text-align:left;">Campaign Type</th>
-            <th style="text-align:left;">Tenants</th>
-            <th style="text-align:left;">Mall</th>
+            <th style="text-align:left;">Location(s)</th>
             <th style="text-align:left;">Campaign Dates</th>
             <th style="text-align:left;">Page Views</th>
             <th style="text-align:left;">Pop Up Views</th>
@@ -252,8 +251,7 @@
                     <td><?php echo $count++; ?></td>
                     <td><?php echo htmlentities($row->campaign_name); ?></td>
                     <td><?php echo htmlentities($row->campaign_type); ?></td>
-                    <td><?php echo number_format($row->total_tenant); ?></td>
-                    <td><?php echo htmlentities($row->mall_name); ?></td>
+                    <td><?php echo number_format($row->total_location); ?></td>
                     <td><?php echo date('d M Y', strtotime($row->begin_date)) . ' - ' . date('d M Y', strtotime($row->end_date)); ?></td>
                     <td><?php echo number_format($row->page_views); ?></td>
                     <td><?php echo number_format($row->popup_views); ?></td>

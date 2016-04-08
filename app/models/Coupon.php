@@ -382,10 +382,12 @@ class Coupon extends Eloquent
                         left join ' . DB::getTablePrefix() . 'campaign_gender cg on cg.campaign_id = p.promotion_id
                         left join ' . DB::getTablePrefix() . 'campaign_age ca on ca.campaign_id = p.promotion_id
                         left join ' . DB::getTablePrefix() . 'age_ranges ar on ar.age_range_id = ca.age_range_id
+                        left join ' . DB::getTablePrefix() . 'promotion_retailer pre on pre.promotion_id = p.promotion_id
+                        left join ' . DB::getTablePrefix() . 'merchants m on m.merchant_id = pre.retailer_id
 
                         WHERE 1=1
                             ' . $queryAgeGender . '
-                            AND p.merchant_id = :merchantid
+                            AND (m.parent_id = :merchantid or m.merchant_id = :merchantidx)
                             AND p.is_coupon = "Y" AND p.status = "active"
                             AND p.begin_date <= "' . $mallTime . '"
                             AND p.end_date >= "' . $mallTime . '"
@@ -396,7 +398,8 @@ class Coupon extends Eloquent
                             (p.maximum_issued_coupon = 0)
                     '),
                 array(
-                        'merchantid' => $retailer->merchant_id
+                        'merchantid' => $retailer->merchant_id,
+                        'merchantidx' => $retailer->merchant_id
                     )
             );
 
@@ -406,8 +409,10 @@ class Coupon extends Eloquent
                 'SELECT * FROM ' . DB::getTablePrefix() . 'promotions p
             inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id
             inner join ' . DB::getTablePrefix() . 'issued_coupons ic on p.promotion_id = ic.promotion_id
+            left join ' . DB::getTablePrefix() . 'promotion_retailer pre on pre.promotion_id = p.promotion_id
+            left join ' . DB::getTablePrefix() . 'merchants m on m.merchant_id = pre.retailer_id
             WHERE
-                p.merchant_id = :merchantid
+                (m.parent_id = :merchantid or m.merchant_id = :merchantidx)
                 AND ic.user_id = :userid
                 AND p.is_coupon = "Y" AND p.status = "active"
                 AND p.begin_date <= "' . $mallTime . '"
@@ -415,7 +420,7 @@ class Coupon extends Eloquent
                 AND pr.rule_type != "auto_issue_on_every_signin"
                 '
             ),
-            array('merchantid' => $retailer->merchant_id, 'userid' => $user->user_id)
+            array('merchantid' => $retailer->merchant_id, 'merchantidx' => $retailer->merchant_id, 'userid' => $user->user_id)
         );
 
         // get obtained auto-issuance coupon ids

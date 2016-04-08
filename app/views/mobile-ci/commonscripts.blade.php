@@ -95,8 +95,8 @@
             <div class="social-media-container">
                 <div class="row vertically-spaced">
                     <div class="col-xs-12 text-center">
-                        <b>{{ Lang::get('mobileci.signin.sign_up_sign_in_with') }}</b><br>
-                        {{ Lang::get('mobileci.signin.to_access_this_content') }}
+                        {{ Lang::get('mobileci.signin.to_access_this_content') }}<br>
+                        <b>{{ Lang::get('mobileci.signin.sign_up_sign_in_with') }}</b>
                     </div>
                 </div>
                 <div class="row">
@@ -1016,7 +1016,11 @@
             $('.error-msg-box').hide();
         });
         $('#formModal').on('show.bs.modal', function () {
-            $('#slogan-container, #social-media-wraper').addClass('hide');
+            orbitSignUpForm.hideErrorMessageBox();
+            $('#signin-form-wrapper').removeClass('hide');
+            $('#forget-form-wrapper').addClass('hide');
+            $('#signup-form-wrapper').addClass('hide');
+            $('#slogan-container, #social-media-wrapper').addClass('hide');
         });
 
         $('#formModal').on('shown.bs.modal', function () {
@@ -1025,7 +1029,7 @@
         });
 
         $('#formModal').on('hide.bs.modal', function () {
-            $('#slogan-container, #social-media-wraper').removeClass('hide');
+            $('#slogan-container, #social-media-wrapper').removeClass('hide');
         });
 
         function isValidEmailAddress(emailAddress) {
@@ -1467,7 +1471,7 @@
         },
         isFromCaptiveFn = function () {
             if ('{{{ Input::get('from_captive', 'no') }}}' === 'yes') {
-                $('#social-media-wraper').addClass('hide');
+                $('#social-media-wrapper').addClass('hide');
             }
         };
 
