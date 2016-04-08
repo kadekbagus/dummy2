@@ -209,13 +209,13 @@ class LoginAPIController extends ControllerAPI
                     if ($user_merchant->object_type === 'mall') {
                         $tmp_mall = $user_merchant->mall->load('timezone');
                         if ($tmp_mall[0]->merchant_id !== $parent_id) {
-                            $mall[$key] = $tmp_mall[0];
+                            $mall[] = $tmp_mall[0];
                         }
                         $parent_id = $tmp_mall[0]->merchant_id;
                     } elseif ($user_merchant->object_type === 'tenant') {
                         $tenant = $user_merchant->tenant;
                         if ($tenant->parent_id !== $parent_id) {
-                            $mall[$key] = $user_merchant->tenant->parent->load('timezone');
+                            $mall[] = $user_merchant->tenant->parent->load('timezone');
                         }
                         $parent_id = $tenant->parent_id;
                     }
@@ -228,13 +228,13 @@ class LoginAPIController extends ControllerAPI
                     if ($user_merchant->object_type === 'mall') {
                         $tmp_mall = $user_merchant->mall->load('timezone');
                         if ($tmp_mall[0]->merchant_id !== $parent_id) {
-                            $mall[$key] = $tmp_mall[0];
+                            $mall[] = $tmp_mall[0];
                         }
                         $parent_id = $tmp_mall[0]->merchant_id;
                     } elseif ($user_merchant->object_type === 'tenant') {
                         $tenant = $user_merchant->tenant;
                         if ($tenant->parent_id !== $parent_id) {
-                            $mall[$key] = $user_merchant->tenant->parent->load('timezone');
+                            $mall[] = $user_merchant->tenant->parent->load('timezone');
                         }
                         $parent_id = $tenant->parent_id;
                     }
