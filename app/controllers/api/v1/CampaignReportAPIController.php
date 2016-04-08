@@ -178,6 +178,14 @@ class CampaignReportAPIController extends ControllerAPI
                     where campaign_id = {$tablePrefix}news.news_id
                     and (location_id = mlocation.parent_id or location_id = mlocation.merchant_id)
                 ) as popup_clicks,
+                (
+                    select GROUP_CONCAT(IF({$tablePrefix}merchants.object_type = 'tenant', CONCAT({$tablePrefix}merchants.name,' at ', pm.name), CONCAT('Mall at ',{$tablePrefix}merchants.name) ) separator ', ')
+                    from {$tablePrefix}news_merchant
+                    inner join {$tablePrefix}merchants on {$tablePrefix}merchants.merchant_id = {$tablePrefix}news_merchant.merchant_id
+                    inner join {$tablePrefix}merchants pm on {$tablePrefix}merchants.parent_id = pm.merchant_id
+                    where {$tablePrefix}news_merchant.news_id = {$tablePrefix}news.news_id
+                ) as campaign_location_names,
+
                 {$tablePrefix}news.status, CASE WHEN {$tablePrefix}campaign_status.campaign_status_name = 'expired' THEN {$tablePrefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$tablePrefix}news.end_date < {$this->quote($now)} THEN 'expired' ELSE {$tablePrefix}campaign_status.campaign_status_name END) END  AS campaign_status, {$tablePrefix}campaign_status.order"))
                         // Join for get total spending
                         ->leftJoin(DB::raw("( SELECT campaign_id, sum(total_spending) as total_spending FROM {$tablePrefix}campaign_daily_spendings group by campaign_id ) AS ocds"),
@@ -256,6 +264,13 @@ class CampaignReportAPIController extends ControllerAPI
                     where campaign_id = {$tablePrefix}news.news_id
                     and (location_id = mlocation.parent_id or location_id = mlocation.merchant_id)
                 ) as popup_clicks,
+                (
+                    select GROUP_CONCAT(IF({$tablePrefix}merchants.object_type = 'tenant', CONCAT({$tablePrefix}merchants.name,' at ', pm.name), CONCAT('Mall at ',{$tablePrefix}merchants.name) ) separator ', ')
+                    from {$tablePrefix}news_merchant
+                    inner join {$tablePrefix}merchants on {$tablePrefix}merchants.merchant_id = {$tablePrefix}news_merchant.merchant_id
+                    inner join {$tablePrefix}merchants pm on {$tablePrefix}merchants.parent_id = pm.merchant_id
+                    where {$tablePrefix}news_merchant.news_id = {$tablePrefix}news.news_id
+                ) as campaign_location_names,
                 {$tablePrefix}news.status, CASE WHEN {$tablePrefix}campaign_status.campaign_status_name = 'expired' THEN {$tablePrefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$tablePrefix}news.end_date < {$this->quote($now)} THEN 'expired' ELSE {$tablePrefix}campaign_status.campaign_status_name END) END  AS campaign_status, {$tablePrefix}campaign_status.order"))
                         // Join for get total spending
                         // ->leftJoin(DB::raw("( SELECT campaign_id, sum(total_spending) as total_spending FROM {$tablePrefix}campaign_daily_spendings group by campaign_id ) AS ocds"),
@@ -335,6 +350,13 @@ class CampaignReportAPIController extends ControllerAPI
                     where campaign_id = {$tablePrefix}promotions.promotion_id
                     and (location_id = mlocation.parent_id or location_id = mlocation.merchant_id)
                 ) as popup_clicks,
+                (
+                    select GROUP_CONCAT(IF({$tablePrefix}merchants.object_type = 'tenant', CONCAT({$tablePrefix}merchants.name,' at ', pm.name), {$tablePrefix}merchants.name) separator ', ') from {$tablePrefix}promotion_retailer
+                    inner join {$tablePrefix}merchants on {$tablePrefix}merchants.merchant_id = {$tablePrefix}promotion_retailer.retailer_id
+                    inner join {$tablePrefix}merchants pm on {$tablePrefix}merchants.parent_id = pm.merchant_id
+                    where {$tablePrefix}promotion_retailer.promotion_id = {$tablePrefix}promotions.promotion_id
+                ) as campaign_location_names,
+
                 {$tablePrefix}promotions.status, CASE WHEN {$tablePrefix}campaign_status.campaign_status_name = 'expired' THEN {$tablePrefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$tablePrefix}promotions.end_date < {$this->quote($now)} THEN 'expired' ELSE {$tablePrefix}campaign_status.campaign_status_name END) END AS campaign_status, {$tablePrefix}campaign_status.order"))
                         // Join for get total spending
                         ->leftJoin(DB::raw("( SELECT campaign_id, sum(total_spending) as total_spending FROM {$tablePrefix}campaign_daily_spendings group by campaign_id ) AS ocds"),

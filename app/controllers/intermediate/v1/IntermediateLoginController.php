@@ -1087,7 +1087,13 @@ class IntermediateLoginController extends IntermediateBaseController
     {
         // This Query String trigger how activity would be logged
         $_GET['_orbit_logout_from'] = 'mobile-ci';
-
+        $expireTime = Config::get('orbit.session.session_origin.cookie.expire');
+        unset($_COOKIE['login_from']);
+        unset($_COOKIE['orbit_email']);
+        unset($_COOKIE['orbit_firstname']);
+        setcookie('orbit_email', '', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+        setcookie('orbit_firstname', '', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+        setcookie('login_from', '', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
         $this->session->getSessionConfig()->setConfig('session_origin.header.name', $this->mobileCISessionName['header']);
         $this->session->getSessionConfig()->setConfig('session_origin.query_string.name', $this->mobileCISessionName['query_string']);
         $this->session->getSessionConfig()->setConfig('session_origin.cookie.name', $this->mobileCISessionName['cookie']);
