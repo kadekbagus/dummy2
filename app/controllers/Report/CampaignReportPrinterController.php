@@ -133,7 +133,7 @@ class CampaignReportPrinterController extends DataPrinterController
                 }
 
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Campaign Name', 'Campaign Type', 'Tenants', 'Mall', 'Campaign Dates', 'Page Views', 'Pop Up Views', 'Pop Up Clicks', 'Daily Cost (IDR)', 'Estimated Total Cost (IDR)', 'Spending (IDR)', 'Status');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Campaign Name', 'Campaign Type', 'Location(s)', 'Campaign Dates', 'Page Views', 'Pop Up Views', 'Pop Up Clicks', 'Daily Cost (IDR)', 'Estimated Total Cost (IDR)', 'Spending (IDR)', 'Status');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
 
                 $count = 1;
@@ -142,8 +142,7 @@ class CampaignReportPrinterController extends DataPrinterController
                             $count,
                             $row->campaign_name,
                             $row->campaign_type,
-                            $row->total_tenant,
-                            $row->mall_name,
+                            $row->total_location,
                             date('d M Y', strtotime($row->begin_date)),
                             date('d M Y', strtotime($row->end_date)),
                             $row->page_views,

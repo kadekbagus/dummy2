@@ -164,19 +164,19 @@ class CampaignReportAPIController extends ControllerAPI
                     select count(campaign_page_view_id) as value
                     from {$tablePrefix}campaign_page_views
                     where campaign_id = {$tablePrefix}news.news_id
-                    and location_id = {$this->quote($current_mall)}
+                    and (location_id = mlocation.parent_id or location_id = mlocation.merchant_id)
                 ) as page_views,
                 (
                     select count(campaign_popup_view_id) as value
                     from {$tablePrefix}campaign_popup_views
                     where campaign_id = {$tablePrefix}news.news_id
-                    and location_id = {$this->quote($current_mall)}
+                    and (location_id = mlocation.parent_id or location_id = mlocation.merchant_id)
                 ) as popup_views,
                 (
                     select count(campaign_click_id) as value
                     from {$tablePrefix}campaign_clicks
                     where campaign_id = {$tablePrefix}news.news_id
-                    and location_id = {$this->quote($current_mall)}
+                    and (location_id = mlocation.parent_id or location_id = mlocation.merchant_id)
                 ) as popup_clicks,
                 {$tablePrefix}news.status, CASE WHEN {$tablePrefix}campaign_status.campaign_status_name = 'expired' THEN {$tablePrefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$tablePrefix}news.end_date < {$this->quote($now)} THEN 'expired' ELSE {$tablePrefix}campaign_status.campaign_status_name END) END  AS campaign_status, {$tablePrefix}campaign_status.order"))
                         // Join for get total spending
@@ -242,19 +242,19 @@ class CampaignReportAPIController extends ControllerAPI
                     select count(campaign_page_view_id) as value
                     from {$tablePrefix}campaign_page_views
                     where campaign_id = {$tablePrefix}news.news_id
-                    and location_id = {$this->quote($current_mall)}
+                    and (location_id = mlocation.parent_id or location_id = mlocation.merchant_id)
                 ) as page_views,
                 (
                     select count(campaign_popup_view_id) as value
                     from {$tablePrefix}campaign_popup_views
                     where campaign_id = {$tablePrefix}news.news_id
-                    and location_id = {$this->quote($current_mall)}
+                    and (location_id = mlocation.parent_id or location_id = mlocation.merchant_id)
                 ) as popup_views,
                 (
                     select count(campaign_click_id) as value
                     from {$tablePrefix}campaign_clicks
                     where campaign_id = {$tablePrefix}news.news_id
-                    and location_id = {$this->quote($current_mall)}
+                    and (location_id = mlocation.parent_id or location_id = mlocation.merchant_id)
                 ) as popup_clicks,
                 {$tablePrefix}news.status, CASE WHEN {$tablePrefix}campaign_status.campaign_status_name = 'expired' THEN {$tablePrefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$tablePrefix}news.end_date < {$this->quote($now)} THEN 'expired' ELSE {$tablePrefix}campaign_status.campaign_status_name END) END  AS campaign_status, {$tablePrefix}campaign_status.order"))
                         // Join for get total spending
@@ -321,19 +321,19 @@ class CampaignReportAPIController extends ControllerAPI
                     select count(campaign_page_view_id) as value
                     from {$tablePrefix}campaign_page_views
                     where campaign_id = {$tablePrefix}promotions.promotion_id
-                    and location_id = {$this->quote($current_mall)}
+                    and (location_id = mlocation.parent_id or location_id = mlocation.merchant_id)
                 ) as page_views,
                 (
                     select count(campaign_popup_view_id) as value
                     from {$tablePrefix}campaign_popup_views
                     where campaign_id = {$tablePrefix}promotions.promotion_id
-                    and location_id = {$this->quote($current_mall)}
+                    and (location_id = mlocation.parent_id or location_id = mlocation.merchant_id)
                 ) as popup_views,
                 (
                     select count(campaign_click_id) as value
                     from {$tablePrefix}campaign_clicks
                     where campaign_id = {$tablePrefix}promotions.promotion_id
-                    and location_id = {$this->quote($current_mall)}
+                    and (location_id = mlocation.parent_id or location_id = mlocation.merchant_id)
                 ) as popup_clicks,
                 {$tablePrefix}promotions.status, CASE WHEN {$tablePrefix}campaign_status.campaign_status_name = 'expired' THEN {$tablePrefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$tablePrefix}promotions.end_date < {$this->quote($now)} THEN 'expired' ELSE {$tablePrefix}campaign_status.campaign_status_name END) END AS campaign_status, {$tablePrefix}campaign_status.order"))
                         // Join for get total spending
@@ -547,6 +547,7 @@ class CampaignReportAPIController extends ControllerAPI
                     'campaign_name'   => 'campaign_name',
                     'campaign_type'   => 'campaign_type',
                     'total_tenant'    => 'total_tenant',
+                    'total_location'  => 'total_location',
                     'mall_name'       => 'mall_name',
                     'begin_date'      => 'begin_date',
                     'end_date'        => 'end_date',
@@ -814,7 +815,7 @@ class CampaignReportAPIController extends ControllerAPI
                         (SELECT
                             date AS campaign_date,
                             campaign_id,
-                            {$this->quote($totalLinkToLocation)} AS total_tenant,
+                            {$this->quote($totalLinkToLocation)} AS total_location,
                             tenant_name,
                             om_mall.name AS mall_name,
                             unique_users,
