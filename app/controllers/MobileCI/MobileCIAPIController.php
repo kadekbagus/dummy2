@@ -2219,7 +2219,7 @@ class MobileCIAPIController extends BaseCIController
                                       ->orWhere('merchants.merchant_id', '=', $mallid);
                                 })
                             ->where('promotions.status', 'active')
-                            ->where('promotion_id', $pid)->first();
+                            ->where('promotions.promotion_id', $pid)->first();
                         if (!is_object($coupon)) {
                             $notfound = TRUE;
                         }
@@ -2265,7 +2265,7 @@ class MobileCIAPIController extends BaseCIController
                                       ->orWhere('merchants.merchant_id', '=', $mallid);
                                 })
                             ->where('promotions.status', 'active')
-                            ->where('promotion_id', $pid)->first();
+                            ->where('promotions.promotion_id', $pid)->first();
                         if (!is_object($coupon)) {
                             $notfound = TRUE;
                         }
@@ -2298,8 +2298,8 @@ class MobileCIAPIController extends BaseCIController
                                   ->orWhere('merchants.merchant_id', '=', $mallid);
                             })
                             ->where('news.status', 'active')
-                            ->where('object_type', 'news')
-                            ->where('news_id', $pid)->first();
+                            ->where('news.object_type', 'news')
+                            ->where('news.news_id', $pid)->first();
                         if (!is_object($news)) {
                             $notfound = TRUE;
                         }
