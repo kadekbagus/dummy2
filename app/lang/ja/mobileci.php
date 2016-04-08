@@ -199,7 +199,7 @@ return array(
         'policy_terms_message' => '<strong>サインアップ</strong>クリックすると、あなたは
             <a target="_blank" href="%s">プライバシーポリシーと利用規約に同意するこ</a>と
             <a target="_blank" href="%s">を確認します</a>',
-        'already_have_an_account' => 'すでにアカウントをお持ちですか',
+        'already_have_an_account' => 'すでにアカウントをお持ちですか?',
         'fields_are_mandatory' => 'すべてのフィールドが必須です',
         'date_of_birth' => '生年月日',
         'password_placeholder' => '密码',

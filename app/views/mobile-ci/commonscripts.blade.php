@@ -167,9 +167,6 @@
                         <div class="col-xs-6 text-left">
                             <a id="forgot_password">{{ Lang::get('mobileci.signin.forgot_link') }}</a>
                         </div>
-                        <div class="col-xs-6 text-right">
-                            <input type="checkbox" \> {{ Lang::get('mobileci.signin.remember_me') }}
-                        </div>
                     </div>
                     <div class="form-group">
                         <i><span>{{ Lang::get('mobileci.signin.doesnt_have_account') }} <a href="#1" id="sign-up-link">{{ Lang::get('mobileci.signin.sign_up') }}</a></span></i>
