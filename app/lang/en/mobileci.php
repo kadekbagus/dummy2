@@ -196,10 +196,10 @@ return array(
         'day' => 'Day',
         'month' => 'Month',
         'year' => 'Year',
-        'policy_terms_message' => 'By clicking <strong>Sign up</strong> you confirm that you accept
-                        <a target="_blank" href="%s">Privacy Policy</a> and
-                        <a target="_blank" href="%s">Terms and Conditions</a>',
-        'already_have_an_account' => 'Already have an account',
+        'policy_terms_message' => 'By clicking <strong>sign up</strong> you confirm that you accept
+                        <a target="_blank" href="%s">privacy policy</a> and
+                        <a target="_blank" href="%s">terms and conditions</a>',
+        'already_have_an_account' => 'Already have an account?',
         'fields_are_mandatory' => 'All fields are mandatory',
         'date_of_birth' => 'Date of Birth',
         'password_placeholder' => 'Password',

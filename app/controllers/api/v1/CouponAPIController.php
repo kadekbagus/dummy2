@@ -661,7 +661,7 @@ class CouponAPIController extends ControllerAPI
                 $spendingrule = SpendingRule::select('with_spending')->where('object_id', $tenant_id)->first();
 
                 if ($spendingrule) {
-                    $withSpending = 'Y';
+                    $withSpending = $spendingrule->with_spending;
                 } else {
                     $withSpending = 'N';
                 }
@@ -729,6 +729,7 @@ class CouponAPIController extends ControllerAPI
                 $isAvailable = CouponTranslation::where('merchant_language_id', '=', $idLanguage->language_id)
                                                 ->where('promotion_id', '=', $newcoupon->promotion_id)
                                                 ->where('promotion_name', '!=', '')
+                                                ->where('description', '!=', '')
                                                 ->count();
 
                 if ($isAvailable == 0) {
@@ -1135,7 +1136,7 @@ class CouponAPIController extends ControllerAPI
                     $spendingrule = SpendingRule::select('with_spending')->where('object_id', $retailer_id)->first();
 
                     if ($spendingrule) {
-                        $withSpending = 'Y';
+                        $withSpending = $spendingrule->with_spending;
                     } else {
                         $withSpending = 'N';
                     }
@@ -1761,6 +1762,7 @@ class CouponAPIController extends ControllerAPI
                 $isAvailable = CouponTranslation::where('merchant_language_id', '=', $idLanguage->language_id)
                                                 ->where('promotion_id', '=', $promotion_id)
                                                 ->where('promotion_name', '!=', '')
+                                                ->where('description', '!=', '')
                                                 ->count();
 
                 if ($isAvailable == 0) {
@@ -2420,7 +2422,7 @@ class CouponAPIController extends ControllerAPI
                 $mall_name_like = "%" . $mall_name_like . "%";
                 $mall_name_like = $quote($mall_name_like);
                 $coupons->whereRaw(DB::raw("
-                (
+                ((
                     (select count(mtenant.merchant_id) from {$table_prefix}merchants mtenant
                     inner join {$table_prefix}promotion_retailer opr on mtenant.merchant_id = opr.retailer_id
                     where mtenant.object_type = 'tenant' and opr.promotion_id = {$table_prefix}promotions.promotion_id and (
@@ -2443,7 +2445,7 @@ class CouponAPIController extends ControllerAPI
                     ucp.user_id = '{$user_id}' and
                     mmallx.name like {$mall_name_like} and
                     mmallx.object_type = 'mall'
-                )
+                ))
                 "));
             });
 

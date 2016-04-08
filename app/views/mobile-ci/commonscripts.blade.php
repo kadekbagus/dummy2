@@ -152,7 +152,12 @@
                     <button type="button" class="close close-form" data-dismiss="modal" aria-label="Close">
                         <i class="fa fa-times"></i>
                     </button>
-
+                    <div class="error-msg-box">
+                        <div class="error-msg-box-close">
+                            &times;
+                        </div>
+                        <div class="error-msg-message"></div>
+                    </div>
                     <div class="form-group">
                         <input type="email" value="{{{ $user_email }}}" class="form-control text-center" name="email" id="email" placeholder="{{ Lang::get('mobileci.signin.email_placeholder') }}">
                     </div>
@@ -161,14 +166,11 @@
                         <input type="password" value="" class="form-control text-center" name="password" id="password" placeholder="{{ Lang::get('mobileci.signup.password_placeholder') }}">
                     </div>
                     <div class="form-group">
-                        <input type="submit" name="submit" id="btn-signin-form" class="btn btn-info btn-block icon-button form text-center" disabled value="{{ Lang::get('mobileci.signin.sign_in') }}">
+                        <input type="submit" name="submit" id="btn-signin-form" class="btn btn-info btn-block icon-button form text-center" value="{{ Lang::get('mobileci.signin.sign_in') }}">
                     </div>
-                    <div class="row">
+                    <div class="row vertically-spaced">
                         <div class="col-xs-6 text-left">
                             <a id="forgot_password">{{ Lang::get('mobileci.signin.forgot_link') }}</a>
-                        </div>
-                        <div class="col-xs-6 text-right">
-                            <input type="checkbox" \> {{ Lang::get('mobileci.signin.remember_me') }}
                         </div>
                     </div>
                     <div class="form-group">
@@ -180,18 +182,25 @@
         <div class="modal-content hide" id="forget-form-wrapper">
             <form  name="forgotForm" id="forgotForm" method="post">
                 <div class="modal-body text-center">
+                    <a href="#1" id="forgot-sign-in-link" style="float: left;color: #000;font-weight: bold;font-size: 18px;"><i class="fa fa-chevron-left"></i></a>
                     <button type="button" class="close close-form" data-dismiss="modal" aria-label="Close">
                         <i class="fa fa-times"></i>
                     </button>
+                    <div class="error-msg-box">
+                        <div class="error-msg-box-close">
+                            &times;
+                        </div>
+                        <div class="error-msg-message"></div>
+                    </div>
                     <div class="form-group">
                         <input type="email" value="" class="form-control text-center" name="email_forgot" id="email_forgot" placeholder="{{ Lang::get('mobileci.signin.email_placeholder') }}">
                     </div>
                     <div class="form-group">
                         <button type="button" id="btn-forgot-form" class="btn btn-info btn-block icon-button form text-center" disabled>{{ Lang::get('mobileci.signin.forgot_button') }}</button>
                     </div>
-                    <div class="form-group">
+                    <!-- <div class="form-group">
                         <i><span>{{ Lang::get('mobileci.signup.already_have_an_account') }} <a href="#1" id="forgot-sign-in-link">{{ Lang::get('mobileci.signin.sign_in') }}</a></span></i>
-                    </div>
+                    </div> -->
                 </div>
             </form>
             <div id="forget-mail-sent" class="vertically-spaced text-center hide">
@@ -250,7 +259,7 @@
                                     <option value="{{$i}}">{{$i}}</option>
                                 @endfor
                                 </select>
-                                <div class="form-icon"></div>
+                                <div class="form-icon form-icon-select"></div>
                             </div>
                             <div class="icon-group col-xs-4">
                                 <select class="form-control" name="month">
@@ -259,7 +268,7 @@
                                     <option value="{{$i}}">{{$i}}</option>
                                 @endfor
                                 </select>
-                                <div class="form-icon"></div>
+                                <div class="form-icon form-icon-select"></div>
                             </div>
                             <div class="icon-group col-xs-4">
                                 <select class="form-control" name="year">
@@ -268,7 +277,7 @@
                                     <option value="{{$i}}">{{$i}}</option>
                                 @endfor
                                 </select>
-                                <div class="form-icon"></div>
+                                <div class="form-icon form-icon-select"></div>
                             </div>
                         </div>
                     </div>
@@ -952,7 +961,7 @@
             $('.sign-in-popup').toggle('slide', {direction: 'down'}, 'fast');
         });
         $('#forgotForm').on('keyup keypress', function(e) {
-            $('#btn-forgot-form').click();
+            // $('#btn-forgot-form').click();
         });
         $('#forgot_password').click(function(){
             $('#signin-form-wrapper').addClass('hide');
@@ -974,6 +983,7 @@
             }
         });
         $('#btn-forgot-form').click(function() {
+            orbitSignUpForm.hideErrorMessageBox();
             var value = $('#email_forgot').val();
             if (isValidEmailAddress(value)) {
                 $.ajax({
@@ -994,12 +1004,23 @@
                             $('#forget-mail-sent').addClass('hide');
                             $('#forget-mail-sent').fadeOut('fast');
                         }, 4000);
+                    } else {
+                        orbitSignUpForm.showErrorMessageBox(data.message);
                     }
+                }).fail(function(data){
+                    orbitSignUpForm.showErrorMessageBox(JSON.parse(data.responseText).message);
                 });
             }
         });
+        $('.error-msg-box-close').click(function(){
+            $('.error-msg-box').hide();
+        });
         $('#formModal').on('show.bs.modal', function () {
-            $('#slogan-container, #social-media-wraper').addClass('hide');
+            orbitSignUpForm.hideErrorMessageBox();
+            $('#signin-form-wrapper').removeClass('hide');
+            $('#forget-form-wrapper').addClass('hide');
+            $('#signup-form-wrapper').addClass('hide');
+            $('#slogan-container, #social-media-wrapper').addClass('hide');
         });
 
         $('#formModal').on('shown.bs.modal', function () {
@@ -1008,7 +1029,7 @@
         });
 
         $('#formModal').on('hide.bs.modal', function () {
-            $('#slogan-container, #social-media-wraper').removeClass('hide');
+            $('#slogan-container, #social-media-wrapper').removeClass('hide');
         });
 
         function isValidEmailAddress(emailAddress) {
@@ -1033,6 +1054,14 @@
             ]
         };
 
+        orbitSignUpForm.hideErrorMessageBox = function () {
+            $('.error-msg-box .error-msg-message').text('');
+            $('.error-msg-box').hide();
+        };
+        orbitSignUpForm.showErrorMessageBox = function (message) {
+            $('.error-msg-box .error-msg-message').text(message);
+            $('.error-msg-box').show();
+        };
         /**
          * Log in the user.
          *
@@ -1040,9 +1069,9 @@
          * @return void
          */
         orbitSignUpForm.doLogin = function() {
+            orbitSignUpForm.hideErrorMessageBox();
             var custEmail = $('#signinForm #email').val().trim();
             var custPassword = $('#signinForm #password').val();
-
             // Flag the processing
             if (orbitSignUpForm.isProcessing) {
                 return;
@@ -1069,9 +1098,10 @@
                     }
                 }).done(function (response, status, xhr) {
                     if (response.code !== 0 && response.code !== 302) {
-                        toastr.error(response.message);
+                        orbitSignUpForm.showErrorMessageBox(response.message);
                         orbitSignUpForm.isProcessing = false;
                         orbitSignUpForm.disableEnableAllButton();
+                        
                         return;
                     }
                     var shiftHostName = window.location.hostname.split('.');
@@ -1330,6 +1360,7 @@
         orbitSignUpForm.enableDisableSignup = function() {
             $('#signupForm #email, #signupForm [name=password], #signupForm [name=password_confirmation], #firstName, #lastName, #gender, #signupForm [name=day], #signupForm [name=month], #signupForm [name=year]').css('border-color', '#ccc');
             $('.form-icon').removeClass('has-error');
+            $('.form-icon').removeClass('has-success');
             $('.mandatory-label').hide();
             orbitSignUpForm.dataCompleted = $('#signupForm #email').val() &&
                 isValidEmailAddress($('#signupForm #email').val()) &&
@@ -1347,45 +1378,59 @@
                 return true;
             } else {
                 $('.mandatory-label').css('color', 'red').show();
-                if (! isValidEmailAddress($('#signupForm #email').val())) {
+                if (! $('#signupForm #email').val() || ! isValidEmailAddress($('#signupForm #email').val())) {
                     $('#signupForm #email').css('border-color', 'red');
                     $('#signupForm [name=email]').next('.form-icon').addClass('has-error');
-                }
-                if (! $('#signupForm #email').val()) {
-                    $('#signupForm #email').css('border-color', 'red');
-                    $('#signupForm [name=email]').next('.form-icon').addClass('has-error');
+                } else {
+                    $('#signupForm [name=email]').next('.form-icon').addClass('has-success');
                 }
                 if (! $('#signupForm #password').val()) {
                     $('#signupForm [name=password]').css('border-color', 'red');
                     $('#signupForm [name=password]').next('.form-icon').addClass('has-error');
+                } else {
+                    $('#signupForm [name=password]').next('.form-icon').addClass('has-success');
                 }
                 if (! $('#password_confirmation').val()) {
                     $('#password_confirmation').css('border-color', 'red');
                     $('#password_confirmation').next('.form-icon').addClass('has-error');
+                } else {
+                    $('#password_confirmation').next('.form-icon').addClass('has-success');
                 }
                 if (! $('#firstName').val()) {
                     $('#firstName').css('border-color', 'red');
                     $('#firstName').next('.form-icon').addClass('has-error');
+                } else {
+                    $('#firstName').next('.form-icon').addClass('has-success');
                 }
                 if (! $('#lastName').val()) {
                     $('#lastName').css('border-color', 'red');
                     $('#lastName').next('.form-icon').addClass('has-error');
+                } else {
+                    $('#lastName').next('.form-icon').addClass('has-success');
                 }
                 if (! $('#gender').val()) {
                     $('#gender').css('border-color', 'red');
                     $('#gender').next('.form-icon').addClass('has-error');
+                } else {
+                    $('#gender').next('.form-icon').addClass('has-success');
                 }
                 if (! $('#signupForm [name=day]').val()) {
                     $('#signupForm [name=day]').css('border-color', 'red');
                     $('#signupForm [name=day]').next('.form-icon').addClass('has-error');
+                } else {
+                    $('#signupForm [name=day]').next('.form-icon').addClass('has-success');
                 }
                 if (! $('#signupForm [name=month]').val()) {
                     $('#signupForm [name=month]').css('border-color', 'red');
                     $('#signupForm [name=month]').next('.form-icon').addClass('has-error');
+                } else {
+                    $('#signupForm [name=month]').next('.form-icon').addClass('has-success');
                 }
                 if (! $('#signupForm [name=year]').val()) {
                     $('#signupForm [name=year]').css('border-color', 'red');
                     $('#signupForm [name=year]').next('.form-icon').addClass('has-error');
+                } else {
+                    $('#signupForm [name=year]').next('.form-icon').addClass('has-success');
                 }
                 // $('#btn-signup-form').attr('disabled', 'disabled');
                 return false;
@@ -1426,7 +1471,7 @@
         },
         isFromCaptiveFn = function () {
             if ('{{{ Input::get('from_captive', 'no') }}}' === 'yes') {
-                $('#social-media-wraper').addClass('hide');
+                $('#social-media-wrapper').addClass('hide');
             }
         };
 
@@ -1459,11 +1504,11 @@
             $('#signinForm #email').on('input', function(e) {
                 var value = $(this).val();
 
-                if (isValidEmailAddress(value)) {
-                    $('#btn-signin-form').removeAttr('disabled');
-                } else {
-                    $('#btn-signin-form').attr('disabled', 'disabled');
-                }
+                // if (isValidEmailAddress(value)) {
+                //     $('#btn-signin-form').removeAttr('disabled');
+                // } else {
+                //     $('#btn-signin-form').attr('disabled', 'disabled');
+                // }
             });
 
             $('#logged-in-signin-button').click(function() {
@@ -1490,7 +1535,17 @@
             });
 
             $('#btn-signin-form').click(function(e) {
-                orbitSignUpForm.doLogin();
+                $('#signinForm #email, #signinForm #password').css('border-color', '#ccc')
+                var value = $('#signinForm #email').val();
+                if (! value || ! isValidEmailAddress(value)) {
+                    $('#signinForm #email').css('border-color', 'red');
+                }
+                if (! $('#signinForm #password').val()) {
+                    $('#signinForm #password').css('border-color', 'red');   
+                }
+                if ((value || isValidEmailAddress(value)) && $('#signinForm #password').val()) {
+                    orbitSignUpForm.doLogin();
+                }
                 return false;
             });
 
