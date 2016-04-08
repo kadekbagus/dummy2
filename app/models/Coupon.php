@@ -382,12 +382,10 @@ class Coupon extends Eloquent
                         left join ' . DB::getTablePrefix() . 'campaign_gender cg on cg.campaign_id = p.promotion_id
                         left join ' . DB::getTablePrefix() . 'campaign_age ca on ca.campaign_id = p.promotion_id
                         left join ' . DB::getTablePrefix() . 'age_ranges ar on ar.age_range_id = ca.age_range_id
-                        left join ' . DB::getTablePrefix() . 'promotion_retailer pr on pr.promotion_id = p.promotion_id
-                        left join ' . DB::getTablePrefix() . 'merchants m on m.merchant_id = pr.retailer_id
 
                         WHERE 1=1
                             ' . $queryAgeGender . '
-                            AND (m.parent_id = :merchantid or m.merchant_id = :merchantid)
+                            AND p.merchant_id = :merchantid
                             AND p.is_coupon = "Y" AND p.status = "active"
                             AND p.begin_date <= "' . $mallTime . '"
                             AND p.end_date >= "' . $mallTime . '"
@@ -408,10 +406,8 @@ class Coupon extends Eloquent
                 'SELECT * FROM ' . DB::getTablePrefix() . 'promotions p
             inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id
             inner join ' . DB::getTablePrefix() . 'issued_coupons ic on p.promotion_id = ic.promotion_id
-            left join ' . DB::getTablePrefix() . 'promotion_retailer pr on pr.promotion_id = p.promotion_id
-            left join ' . DB::getTablePrefix() . 'merchants m on m.merchant_id = pr.retailer_id
             WHERE
-                (m.parent_id = :merchantid or m.merchant_id = :merchantid)
+                p.merchant_id = :merchantid
                 AND ic.user_id = :userid
                 AND p.is_coupon = "Y" AND p.status = "active"
                 AND p.begin_date <= "' . $mallTime . '"
