@@ -598,7 +598,7 @@ class Coupon extends Eloquent
             }
         }
 
-        $session->write('coupon_location', $coupon_locations + [$retailer->merchant_id]);
+        $session->write('coupon_location', array_merge($coupon_locations, [$retailer->merchant_id]));
     }
 
     protected static function flipArrayElement($source)
