@@ -21,4 +21,9 @@ class CouponEmployee extends Eloquent
     {
         return $this->belongsTo('User', 'user_id', 'user_id');
     }
+
+    public function employeeMall()
+    {
+        return $this->belongsTo('Employee', 'user_id', 'user_id');
+    }
 }
