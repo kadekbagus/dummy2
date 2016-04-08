@@ -661,7 +661,7 @@ class CouponAPIController extends ControllerAPI
                 $spendingrule = SpendingRule::select('with_spending')->where('object_id', $tenant_id)->first();
 
                 if ($spendingrule) {
-                    $withSpending = 'Y';
+                    $withSpending = $spendingrule->with_spending;
                 } else {
                     $withSpending = 'N';
                 }
@@ -1135,7 +1135,7 @@ class CouponAPIController extends ControllerAPI
                     $spendingrule = SpendingRule::select('with_spending')->where('object_id', $retailer_id)->first();
 
                     if ($spendingrule) {
-                        $withSpending = 'Y';
+                        $withSpending = $spendingrule->with_spending;
                     } else {
                         $withSpending = 'N';
                     }
