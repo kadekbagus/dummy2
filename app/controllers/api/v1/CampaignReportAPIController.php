@@ -1829,9 +1829,12 @@ class CampaignReportAPIController extends ControllerAPI
                 ),
                 array(
                     'current_mall' => 'required',
-                    'campaign_id' => 'required',
+                    'campaign_id' => 'required | orbit.empty.campaign',
                     'start_date' => 'required | date_format:Y-m-d H:i:s',
                     'end_date' => 'required | date_format:Y-m-d H:i:s',
+                ),
+                array(
+                    'orbit.empty.campaign' => 'campaign not found'
                 )
             );
 
@@ -1919,7 +1922,6 @@ class CampaignReportAPIController extends ControllerAPI
                         group by 1
                         order by 1
             ", array($timezoneOffset, $current_mall, $start_date, $end_date));
-
 
             function cmp($a, $b)
             {
@@ -2114,6 +2116,44 @@ class CampaignReportAPIController extends ControllerAPI
             }
 
             App::instance('orbit.empty.mall', $mall);
+
+            return TRUE;
+        });
+
+        Validator::extend('orbit.empty.campaign', function ($attribute, $value, $parameters) use ($user){
+            $user = $this->api->user;
+            $prefix = DB::getTablePrefix();
+            $campaign_id = $value;
+
+            $campaign = UserCampaign::where('campaign_id', '=', $campaign_id)
+                                    ->whereRaw("{$prefix}user_campaign.user_id in (
+                                            select cpmp.user_id
+                                            from {$prefix}campaign_account cpmp
+                                            left join {$prefix}campaign_account cas
+                                                on cpmp.parent_user_id = cas.parent_user_id
+                                            where (
+                                                cpmp.user_id = (
+                                                                SELECT parent_user_id
+                                                                FROM   {$prefix}campaign_account
+                                                                WHERE  user_id = '{$user->user_id}'
+                                                            )
+                                                                OR
+                                                cpmp.parent_user_id = (
+                                                                SELECT parent_user_id
+                                                                FROM   {$prefix}campaign_account
+                                                                WHERE  user_id = '{$user->user_id}'
+                                                            )
+                                                OR cpmp.user_id = '{$user->user_id}'
+                                                OR cpmp.parent_user_id = '{$user->user_id}'
+                                            )
+                                            group by cpmp.user_id
+                                        )")->first();
+
+            if (empty($campaign)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.empty.campaign', $campaign);
 
             return TRUE;
         });
