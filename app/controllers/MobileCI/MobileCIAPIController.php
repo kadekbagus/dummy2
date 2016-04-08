@@ -8694,8 +8694,7 @@ class MobileCIAPIController extends BaseCIController
     // create activity signup from socmed
     public function socmedSignUpActivity($user, $from)
     {
-        $activity = new Activity();
-        $activity->mobileci()
+        $activity = Activity::mobileci()
             ->setActivityType('registration')
             ->setUser($user)
             ->setActivityName('registration_ok')
