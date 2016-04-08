@@ -502,7 +502,7 @@ class Mall extends Eloquent
         return $builder->addSelect(DB::raw( '"Sun - Mon 10.00 - 22.00" as operating_hours' ));
     }
 
-    public function acquireUser($user)
+    public function acquireUser($user, $signUpVia = 'form')
     {
         $acq = UserAcquisition::where('acquirer_id', $this->merchant_id)
             ->where('user_id', $user->user_id)
@@ -511,8 +511,11 @@ class Mall extends Eloquent
         if (! is_object($acq)) {
             $acq = new \UserAcquisition();
             $acq->user_id = $user->user_id;
+            $acq->signup_via = $signUpVia;
             $acq->acquirer_id = $this->merchant_id;
             $acq->save();
+
+
         }
     }
 }
