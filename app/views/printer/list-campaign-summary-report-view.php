@@ -251,7 +251,14 @@
                     <td><?php echo $count++; ?></td>
                     <td><?php echo htmlentities($row->campaign_name); ?></td>
                     <td><?php echo htmlentities($row->campaign_type); ?></td>
-                    <td><?php echo number_format($row->total_location); ?></td>
+                    <td>
+                        <?php
+                            $locations = explode(', ', $row->campaign_location_names);
+                            for($x = 0; $x < count($locations); $x++) {
+                                echo $locations[$x] . '<br>';
+                            }
+                        ?>
+                    </td>
                     <td><?php echo date('d M Y', strtotime($row->begin_date)) . ' - ' . date('d M Y', strtotime($row->end_date)); ?></td>
                     <td><?php echo number_format($row->page_views); ?></td>
                     <td><?php echo number_format($row->popup_views); ?></td>
