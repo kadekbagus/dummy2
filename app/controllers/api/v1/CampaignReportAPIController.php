@@ -164,19 +164,16 @@ class CampaignReportAPIController extends ControllerAPI
                     select count(campaign_page_view_id) as value
                     from {$tablePrefix}campaign_page_views
                     where campaign_id = {$tablePrefix}news.news_id
-                    and (location_id = mlocation.parent_id or location_id = mlocation.merchant_id)
                 ) as page_views,
                 (
                     select count(campaign_popup_view_id) as value
                     from {$tablePrefix}campaign_popup_views
                     where campaign_id = {$tablePrefix}news.news_id
-                    and (location_id = mlocation.parent_id or location_id = mlocation.merchant_id)
                 ) as popup_views,
                 (
                     select count(campaign_click_id) as value
                     from {$tablePrefix}campaign_clicks
                     where campaign_id = {$tablePrefix}news.news_id
-                    and (location_id = mlocation.parent_id or location_id = mlocation.merchant_id)
                 ) as popup_clicks,
                 (
                     select GROUP_CONCAT(IF({$tablePrefix}merchants.object_type = 'tenant', CONCAT({$tablePrefix}merchants.name,' at ', pm.name), CONCAT('Mall at ',{$tablePrefix}merchants.name) ) separator ', ')
@@ -250,19 +247,16 @@ class CampaignReportAPIController extends ControllerAPI
                     select count(campaign_page_view_id) as value
                     from {$tablePrefix}campaign_page_views
                     where campaign_id = {$tablePrefix}news.news_id
-                    and (location_id = mlocation.parent_id or location_id = mlocation.merchant_id)
                 ) as page_views,
                 (
                     select count(campaign_popup_view_id) as value
                     from {$tablePrefix}campaign_popup_views
                     where campaign_id = {$tablePrefix}news.news_id
-                    and (location_id = mlocation.parent_id or location_id = mlocation.merchant_id)
                 ) as popup_views,
                 (
                     select count(campaign_click_id) as value
                     from {$tablePrefix}campaign_clicks
                     where campaign_id = {$tablePrefix}news.news_id
-                    and (location_id = mlocation.parent_id or location_id = mlocation.merchant_id)
                 ) as popup_clicks,
                 (
                     select GROUP_CONCAT(IF({$tablePrefix}merchants.object_type = 'tenant', CONCAT({$tablePrefix}merchants.name,' at ', pm.name), CONCAT('Mall at ',{$tablePrefix}merchants.name) ) separator ', ')
@@ -336,19 +330,16 @@ class CampaignReportAPIController extends ControllerAPI
                     select count(campaign_page_view_id) as value
                     from {$tablePrefix}campaign_page_views
                     where campaign_id = {$tablePrefix}promotions.promotion_id
-                    and (location_id = mlocation.parent_id or location_id = mlocation.merchant_id)
                 ) as page_views,
                 (
                     select count(campaign_popup_view_id) as value
                     from {$tablePrefix}campaign_popup_views
                     where campaign_id = {$tablePrefix}promotions.promotion_id
-                    and (location_id = mlocation.parent_id or location_id = mlocation.merchant_id)
                 ) as popup_views,
                 (
                     select count(campaign_click_id) as value
                     from {$tablePrefix}campaign_clicks
                     where campaign_id = {$tablePrefix}promotions.promotion_id
-                    and (location_id = mlocation.parent_id or location_id = mlocation.merchant_id)
                 ) as popup_clicks,
                 (
                     select GROUP_CONCAT(IF({$tablePrefix}merchants.object_type = 'tenant', CONCAT({$tablePrefix}merchants.name,' at ', pm.name), {$tablePrefix}merchants.name) separator ', ') from {$tablePrefix}promotion_retailer
@@ -857,28 +848,24 @@ class CampaignReportAPIController extends ControllerAPI
                             (
                                 SELECT COUNT(DISTINCT user_id)
                                 FROM {$tablePrefix}user_signin
-                                WHERE location_id = {$this->quote($current_mall)}
-                                AND DATE(created_at) = date
+                                WHERE DATE(created_at) = date
                             ) AS unique_users,
                             (
                                 SELECT COUNT(campaign_page_view_id) AS value
                                 FROM {$tablePrefix}campaign_page_views
                                 WHERE campaign_id = {$this->quote($campaign_id)}
-                                AND location_id = {$this->quote($current_mall)}
                                 AND DATE(created_at) = date
                             ) AS campaign_pages_views,
                             (
                                 SELECT COUNT(campaign_popup_view_id) AS value
                                 FROM {$tablePrefix}campaign_popup_views
                                 WHERE campaign_id = {$this->quote($campaign_id)}
-                                AND location_id = {$this->quote($current_mall)}
                                 AND DATE(created_at) = date
                             ) AS popup_views,
                             (
                                 SELECT COUNT(campaign_click_id) AS value
                                 FROM {$tablePrefix}campaign_clicks
                                 WHERE campaign_id = {$this->quote($campaign_id)}
-                                AND location_id = {$this->quote($current_mall)}
                                 AND DATE(created_at) = date
                             ) AS popup_clicks,
                             (
