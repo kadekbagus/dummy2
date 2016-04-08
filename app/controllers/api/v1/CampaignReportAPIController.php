@@ -815,7 +815,7 @@ class CampaignReportAPIController extends ControllerAPI
                         (SELECT
                             date AS campaign_date,
                             campaign_id,
-                            {$this->quote($totalLinkToLocation)} AS total_tenant,
+                            {$this->quote($totalLinkToLocation)} AS total_location,
                             tenant_name,
                             om_mall.name AS mall_name,
                             unique_users,
