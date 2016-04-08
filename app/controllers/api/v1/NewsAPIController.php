@@ -1775,7 +1775,7 @@ class NewsAPIController extends ControllerAPI
                 $mall_name_like = "%" . $mall_name_like . "%";
                 $mall_name_like = $quote($mall_name_like);
                 $news->whereRaw(DB::raw("
-                    (
+                    ((
                         (select count(mtenant.merchant_id) from {$prefix}merchants mtenant
                             inner join {$prefix}news_merchant onm on mtenant.merchant_id = onm.merchant_id
                             where mtenant.object_type = 'tenant'
@@ -1802,7 +1802,7 @@ class NewsAPIController extends ControllerAPI
                             mmall.name like {$mall_name_like} and
                             onm.object_type = 'mall'
                         ) >= 1
-                    )
+                    ))
                 "));
             });
 
