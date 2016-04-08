@@ -221,7 +221,6 @@ class MobileCIAPIController extends BaseCIController
     {
         try {
             $this->prepareSession();
-
             $this->session->start(array(), 'no-session-creation');
             $this->session->destroy();
         } catch (Exception $e) {
@@ -1098,13 +1097,17 @@ class MobileCIAPIController extends BaseCIController
                     $this->loginStage2($loggedInUser, $retailer);
                     $this->socmedSignUpActivity($loggedInUser, 'google');
                     $this->socmedSignInActivity($loggedInUser, 'google');
-                    
+                    $expireTime = Config::get('orbit.session.session_origin.cookie.expire');
+                    setcookie('orbit_email', $userEmail, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+                    setcookie('orbit_firstname', $firstName, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+                    setcookie('login_from', 'Google', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+
                     return Redirect::route($caller_url, $query);
                 }
 
             } catch (Exception $e) {
                 $errorMessage = 'Error: ' . $e->getMessage();
-                return Redirect::route('mobile-ci.signin', ['error' => $errorMessage]);
+                return Redirect::route($caller_url, ['error' => $errorMessage]);
             }
 
         } else {
@@ -1114,7 +1117,7 @@ class MobileCIAPIController extends BaseCIController
                 return Redirect::to( (string)$url );
             } catch (Exception $e) {
                 $errorMessage = 'Error: ' . $e->getMessage();
-                return Redirect::route('mobile-ci.signin', ['error' => $errorMessage, 'isInProgress' => 'true']);
+                return Redirect::route($caller_url, ['error' => $errorMessage]);
             }
         }
     }
@@ -1244,6 +1247,10 @@ class MobileCIAPIController extends BaseCIController
             $this->loginStage2($loggedInUser, $retailer);
             $this->socmedSignUpActivity($loggedInUser, 'facebook');
             $this->socmedSignInActivity($loggedInUser, 'facebook');
+            $expireTime = Config::get('orbit.session.session_origin.cookie.expire');
+            setcookie('orbit_email', $userEmail, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+            setcookie('orbit_firstname', $firstName, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+            setcookie('login_from', 'Facebook', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
 
             return Redirect::route($caller_url, $query);
         }
@@ -6779,9 +6786,10 @@ class MobileCIAPIController extends BaseCIController
             }
 
             $mallid = $retailer->merchant_id;
+            $prefix = DB::getTablePrefix();
 
             $promo = DB::table('news')
-                ->selectRaw('news_id as campaign_id, news_name as campaign_name, description as campaign_description, image as campaign_image, "promotion" as campaign_type')
+                ->selectRaw("{$prefix}news.news_id as campaign_id, {$prefix}news.news_name as campaign_name, {$prefix}news.description as campaign_description, {$prefix}news.image as campaign_image, 'promotion' as campaign_type")
                 ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'news.news_id')
                 ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
                 ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
@@ -6791,14 +6799,14 @@ class MobileCIAPIController extends BaseCIController
                     $q->where('merchants.parent_id', '=', $mallid)
                       ->orWhere('merchants.merchant_id', '=', $mallid);
                 })
-                ->where('object_type', '=', 'promotion')
+                ->where('news.object_type', '=', 'promotion')
                 ->where('news.status', 'active')
                 ->where('news.is_popup', 'Y')
                 ->whereRaw("? between begin_date and end_date", [$mallTime])
                 ->groupBy('news.news_id');
 
             $news = DB::table('news')
-                ->selectRaw('news_id as campaign_id, news_name as campaign_name, description as campaign_description, image as campaign_image, "news" as campaign_type')
+                ->selectRaw("{$prefix}news.news_id as campaign_id, {$prefix}news.news_name as campaign_name, {$prefix}news.description as campaign_description, {$prefix}news.image as campaign_image, 'news' as campaign_type")
                 ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'news.news_id')
                 ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
                 ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
@@ -6808,14 +6816,14 @@ class MobileCIAPIController extends BaseCIController
                     $q->where('merchants.parent_id', '=', $mallid)
                       ->orWhere('merchants.merchant_id', '=', $mallid);
                 })
-                ->where('object_type', '=', 'news')
+                ->where('news.object_type', '=', 'news')
                 ->where('news.status', 'active')
                 ->where('news.is_popup', 'Y')
                 ->whereRaw("? between begin_date and end_date", [$mallTime])
                 ->groupBy('news.news_id');
 
             $coupon = DB::table('promotions')
-                ->selectRaw('promotion_id as campaign_id, promotion_name as campaign_name, description as campaign_description, image as campaign_image, "coupon" as campaign_type')
+                ->selectRaw("{$prefix}promotions.promotion_id as campaign_id, {$prefix}promotions.promotion_name as campaign_name, {$prefix}promotions.description as campaign_description, {$prefix}promotions.image as campaign_image, 'coupon' as campaign_type")
                 ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'promotions.promotion_id')
                 ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'promotions.promotion_id')
                 ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
@@ -6825,7 +6833,7 @@ class MobileCIAPIController extends BaseCIController
                         $q->where('merchants.parent_id', '=', $mallid)
                           ->orWhere('merchants.merchant_id', '=', $mallid);
                     })
-                ->where('is_coupon', '=', 'Y')
+                ->where('promotions.is_coupon', '=', 'Y')
                 ->where('promotions.is_popup', 'Y')
                 ->where('promotions.status', 'active')
                 ->whereRaw("? between begin_date and end_date", [$mallTime])
@@ -8758,7 +8766,22 @@ class MobileCIAPIController extends BaseCIController
             return;
         }
 
-        $retailer->acquireUser($user);
+        $signUpVia ='form';
+        if (isset($_COOKIE['login_from'])) {
+            switch (strtolower($_COOKIE['login_from'])) {
+                case 'google':
+                    $signUpVia = 'google';
+                    break;
+                case 'facebook':
+                    $signUpVia = 'facebook';
+                    break;
+                default:
+                    $signUpVia = 'form';
+                    break;
+            }
+        }
+
+        $retailer->acquireUser($user, $signUpVia);
     }
 
     // create activity signup from socmed

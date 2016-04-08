@@ -175,7 +175,7 @@ return array(
         'connecting_to_google' => 'Menghubungi Google...',
         'connecting_with' => 'Terhubung dengan',
         'sign_up_sign_in_with' => 'Daftar atau Masuk dengan:',
-        'to_access_this_content' => 'untuk mengakses konten ini',
+        'to_access_this_content' => 'Untuk mengakses konten ini',
         'sign_in' => 'Masuk',
         'sign_up' => 'Daftar',
         'doesnt_have_account' => 'Tidak punya akun',

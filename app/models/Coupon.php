@@ -62,6 +62,11 @@ class Coupon extends Eloquent
         return $this->belongsToMany('User', 'promotion_employee', 'promotion_id', 'user_id');
     }
 
+    public function couponEmployee()
+    {
+        return $this->belongsToMany('CouponEmployee', 'promotion_employee', 'promotion_id', 'user_id');
+    }
+
     public function linkToTenants()
     {
         return $this->belongsToMany('Tenant', 'promotion_retailer', 'promotion_id', 'retailer_id');
