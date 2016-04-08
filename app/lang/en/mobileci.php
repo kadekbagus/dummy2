@@ -41,7 +41,7 @@ return array(
         'my_message'        => 'MY MESSAGE',
         'redemption_places' => 'REDEMPTION PLACE',
         'back_to_map_upper' => 'BACK TO MAP',
-        'back_to_map_title' => 'Back to Map',
+        'back_to_map_lower' => 'Back to Map',
     ),
 
     'widgets' => array(
@@ -175,7 +175,7 @@ return array(
         'connecting_to_google' => 'Connecting to Google...',
         'connecting_with' => 'Connect with',
         'sign_up_sign_in_with' => 'Sign up or Sign in with:',
-        'to_access_this_content' => 'to access this content',
+        'to_access_this_content' => 'To access this content',
         'sign_in' => 'Sign In',
         'sign_up' => 'Sign Up',
         'doesnt_have_account' => 'Not have an account?',
