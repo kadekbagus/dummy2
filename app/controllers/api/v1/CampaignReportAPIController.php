@@ -547,6 +547,7 @@ class CampaignReportAPIController extends ControllerAPI
                     'campaign_name'   => 'campaign_name',
                     'campaign_type'   => 'campaign_type',
                     'total_tenant'    => 'total_tenant',
+                    'total_location'  => 'total_location',
                     'mall_name'       => 'mall_name',
                     'begin_date'      => 'begin_date',
                     'end_date'        => 'end_date',
