@@ -3076,7 +3076,7 @@ class ActivityAPIController extends ControllerAPI
                         IFNULL(MAX(CASE WHEN dt.label = 'Sign Up via Customer Service' THEN dt.count END), 0) AS 'sign_up_via_cs',  
                         IFNULL(MAX(CASE WHEN dt.label = 'Sign In' THEN dt.count END), 0) AS 'sign_in', 
                         IFNULL(MAX(CASE WHEN dt.label = 'Read Activation Notification' THEN dt.count END), 0) AS 'read_activation_notification', 
-                        IFNULL(MAX(CASE WHEN dt.label = 'Customer Activation' THEN dt.count END), 0) AS 'customer_activation',
+                        IFNULL(MAX(CASE WHEN dt.label = 'Customer Activation' THEN dt.count END), 0) AS 'customer_activation', 
                         IFNULL(MAX(CASE WHEN dt.label = 'Sign Out' THEN dt.count END), 0) AS 'sign_out', 
                         IFNULL(MAX(CASE WHEN dt.label = 'View (Home Page)' THEN dt.count END), 0) AS 'view_home_page',
                         IFNULL(MAX(CASE WHEN dt.label = 'Widget Click Tenant' THEN dt.count END), 0) AS 'widget_click_tenant',
@@ -3138,6 +3138,10 @@ class ActivityAPIController extends ControllerAPI
                                 WHEN 
                                     (oa.activity_name_long = 'Sign Up via Mobile (Google+)') 
                                 THEN 'Google Sign Up'
+                                WHEN 
+                                    (oa.activity_name_long = 'Account Activation') or
+                                    (oa.activity_name_long = 'Customer Activation')
+                                THEN 'Customer Activation'
                                 ELSE oa.activity_name_long
                                 END AS label,
                                 count(oa.activity_id) as `count`

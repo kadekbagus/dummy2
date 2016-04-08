@@ -114,7 +114,7 @@ class ActivationAPIController extends IntermediateBaseController
                                   ->whereIn('group', ['mobile-ci','cs-portal'])
                                   ->where('user_id', $user->user_id)
                                   ->first();
-            if (is_object($user)) {
+            if (is_object($userSignUp)) {
                 $location = Mall::find($userSignUp->location_id);
             }
 
