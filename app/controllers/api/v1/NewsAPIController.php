@@ -475,6 +475,7 @@ class NewsAPIController extends ControllerAPI
                 $isAvailable = NewsTranslation::where('merchant_language_id', '=', $idLanguage->language_id)
                                                 ->where('news_id', '=', $newnews->news_id)
                                                 ->where('news_name', '!=', '')
+                                                ->where('description', '!=', '')
                                                 ->count();
 
                 if ($isAvailable == 0) {
@@ -821,6 +822,7 @@ class NewsAPIController extends ControllerAPI
                 $isAvailable = NewsTranslation::where('merchant_language_id', '=', $idLanguage->language_id)
                                                 ->where('news_id', '=', $news_id)
                                                 ->where('news_name', '!=', '')
+                                                ->where('description', '!=', '')
                                                 ->count();
 
                 if ($isAvailable == 0) {
@@ -1105,7 +1107,7 @@ class NewsAPIController extends ControllerAPI
                     $spendingrule = SpendingRule::select('with_spending')->where('object_id', $retailer_id)->first();
 
                     if ($spendingrule) {
-                        $withSpending = 'Y';
+                        $withSpending = $spendingrule->with_spending;
                     } else {
                         $withSpending = 'N';
                     }
@@ -1641,7 +1643,7 @@ class NewsAPIController extends ControllerAPI
             $news = News::allowedForPMPUser($user, $object_type[0])
                         ->select('news.*', 'campaign_status.order', 'campaign_price.campaign_price_id', 'news_translations.news_name as name_english', DB::raw('media.path as image_path'),
                             DB::raw("COUNT(DISTINCT {$prefix}news_merchant.news_merchant_id) as location"),
-                            DB::raw("(select GROUP_CONCAT(IF({$prefix}merchants.object_type = 'tenant', CONCAT({$prefix}merchants.name,' at ', pm.name), CONCAT('Mall at ',{$prefix}merchants.name) ) separator ', ') 
+                            DB::raw("(select GROUP_CONCAT(IF({$prefix}merchants.object_type = 'tenant', CONCAT({$prefix}merchants.name,' at ', pm.name), CONCAT('Mall at ',{$prefix}merchants.name) ) separator ', ')
                                 from {$prefix}news_merchant
                                     inner join {$prefix}merchants on {$prefix}merchants.merchant_id = {$prefix}news_merchant.merchant_id
                                     inner join {$prefix}merchants pm on {$prefix}merchants.parent_id = pm.merchant_id
@@ -1776,8 +1778,8 @@ class NewsAPIController extends ControllerAPI
                     (
                         (select count(mtenant.merchant_id) from {$prefix}merchants mtenant
                             inner join {$prefix}news_merchant onm on mtenant.merchant_id = onm.merchant_id
-                            where mtenant.object_type = 'tenant' 
-                            and onm.news_id = {$prefix}news.news_id 
+                            where mtenant.object_type = 'tenant'
+                            and onm.news_id = {$prefix}news.news_id
                             and (
                                 select count(mmall.merchant_id) from {$prefix}merchants mmall
                                 where mmall.object_type = 'mall' and
