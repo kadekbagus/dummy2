@@ -255,11 +255,11 @@ class LoginAPIController extends IntermediateBaseController
                     // register user without password and birthdate
                     $status = 'active';
                     $response = (new Regs())->createCustomerUser($userEmail, NULL, NULL, $firstName, $lastName, $gender, NULL, TRUE, NULL, NULL, NULL, $status, 'Google');
-                    if ($response->code !== 0) {
+                    if (get_class($response) !== 'User') {
                         throw new Exception($response->message, $response->code);
                     }
 
-                    $loggedInUser = $this->doAutoLogin($response->data->user_email);
+                    $loggedInUser = $this->doAutoLogin($response->user_email);
                 }
 
                 $expireTime = Config::get('orbit.session.session_origin.cookie.expire');
@@ -388,11 +388,11 @@ class LoginAPIController extends IntermediateBaseController
             // register user without password and birthdate
             $status = 'active';
             $response = (new Regs())->createCustomerUser($userEmail, NULL, NULL, $firstName, $lastName, $gender, NULL, TRUE, NULL, NULL, NULL, $status, 'Facebook');
-            if ($response->code !== 0) {
+            if (get_class($response) !== 'User') {
                 throw new Exception($response->message, $response->code);
             }
 
-            $loggedInUser = $this->doAutoLogin($response->data->user_email);
+            $loggedInUser = $this->doAutoLogin($response->user_email);
         }
 
         $expireTime = Config::get('orbit.session.session_origin.cookie.expire');

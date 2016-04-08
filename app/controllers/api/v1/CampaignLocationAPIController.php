@@ -108,12 +108,34 @@ class CampaignLocationAPIController extends ControllerAPI
             $tablePrefix = DB::getTablePrefix();
 
             if ($campaign_type == 'news' || $campaign_type == 'promotion') {
-                $campaignLocations = NewsMerchant::select('merchants.merchant_id', 'merchants.name', 'news_merchant.object_type')
+                $campaignLocations = NewsMerchant::select('merchants.merchant_id', 'merchants.name', 'news_merchant.object_type', DB::raw("
+                        (
+                            SELECT
+                            IF({$tablePrefix}news_merchant.object_type = 'retailer', CONCAT(om.name,' at ', pm.name), CONCAT('Mall at ', om.name) )
+                            FROM {$tablePrefix}news_merchant
+                            inner join {$tablePrefix}merchants om on om.merchant_id = {$tablePrefix}news_merchant.merchant_id
+                            inner join {$tablePrefix}merchants pm on om.parent_id = pm.merchant_id
+                            where 1=1
+                            and {$tablePrefix}news_merchant.news_id = {$this->quote($campaign_id)}
+                            and {$tablePrefix}news_merchant.merchant_id = `{$tablePrefix}merchants`.`merchant_id`
+                        ) as campaign_location_names
+                    "))
                     ->join('merchants', 'news_merchant.merchant_id', '=', 'merchants.merchant_id')
                     ->where('news_id', $campaign_id);
             } elseif ($campaign_type == 'coupon') {
-                $campaignLocations =  PromotionRetailer::select('merchants.merchant_id', 'merchants.name', 'news_merchant.object_type')
-                    ->join('merchants', 'promotion_retailer.promotion_retailer_id', '=', 'merchants.merchant_id')
+                $campaignLocations =  PromotionRetailer::select('merchants.merchant_id', 'merchants.name', 'promotion_retailer.object_type', DB::raw("
+                        (
+                            SELECT
+                            IF({$tablePrefix}promotion_retailer.object_type = 'mall', CONCAT(om.name,' at ', pm.name), CONCAT('Mall at ', om.name) )
+                            FROM {$tablePrefix}promotion_retailer
+                            inner join {$tablePrefix}merchants om on om.merchant_id = {$tablePrefix}promotion_retailer.retailer_id
+                            inner join {$tablePrefix}merchants pm on om.parent_id = pm.merchant_id
+                            where 1=1
+                            and {$tablePrefix}promotion_retailer.promotion_id = {$this->quote($campaign_id)}
+                            and {$tablePrefix}promotion_retailer.retailer_id = `{$tablePrefix}merchants`.`merchant_id`
+                        ) as campaign_location_names
+                    "))
+                    ->join('merchants', 'promotion_retailer.retailer_id', '=', 'merchants.merchant_id')
                     ->where('promotion_id', $campaign_id);
             }
 
@@ -150,8 +172,8 @@ class CampaignLocationAPIController extends ControllerAPI
 
             $data = new stdclass();
             $data->total_records = $totalCampaignLocations;
-            $data->returned_records = $totalCampaignLocations - $totalReturnedRecords;
-            $data->remaining_records = count($listOfCampaignLocations);
+            $data->returned_records = $totalReturnedRecords;
+            $data->remaining_records = $totalCampaignLocations - $totalReturnedRecords;
             $data->records = $listOfCampaignLocations;
 
             if ($totalCampaignLocations === 0) {
