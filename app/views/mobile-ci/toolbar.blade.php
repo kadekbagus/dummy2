@@ -79,7 +79,7 @@
                 </li>
                 <li id="orbit-tour-search"><a id="searchBtn"><span><i class="glyphicon glyphicon-search fa-relative"></i></span> {{ ucwords(strtolower(Lang::get('mobileci.modals.search_button'))) }}</a></li>
                 <li class=""><a id="multi-language"><span><span class="glyphicon glyphicon-globe fa-relative"></span> {{ ucwords(strtolower(Lang::get('mobileci.page_title.language'))) }}</span></a></li>
-                <li class=""><a href="{{ Config::get('orbit.shop.back_to_map_url') }}"><span><i class="fa fa-map fa-relative"></i> {{ Lang::get('mobileci.page_title.back_to_map_title') }}</span></a></li>
+                <li class=""><a href="{{ Config::get('orbit.shop.back_to_map_url') }}"><span><i class="fa fa-map fa-relative"></i> {{ Lang::get('mobileci.page_title.back_to_map_lower') }}</span></a></li>
                 @if($urlblock->isLoggedIn())
                 <li class=""><a href="{{ url('/customer/logout') }}"><span><span class="glyphicon glyphicon-off fa-relative"></span> {{ ucwords(strtolower(Lang::get('mobileci.page_title.logout'))) }}</span></a></li>
                 @endif
