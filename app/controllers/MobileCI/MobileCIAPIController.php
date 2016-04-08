@@ -6779,9 +6779,10 @@ class MobileCIAPIController extends BaseCIController
             }
 
             $mallid = $retailer->merchant_id;
+            $prefix = DB::getTablePrefix();
 
             $promo = DB::table('news')
-                ->selectRaw('news_id as campaign_id, news_name as campaign_name, description as campaign_description, image as campaign_image, "promotion" as campaign_type')
+                ->selectRaw("{$prefix}news.news_id as campaign_id, {$prefix}news.news_name as campaign_name, {$prefix}news.description as campaign_description, {$prefix}news.image as campaign_image, 'promotion' as campaign_type")
                 ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'news.news_id')
                 ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
                 ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
@@ -6791,14 +6792,14 @@ class MobileCIAPIController extends BaseCIController
                     $q->where('merchants.parent_id', '=', $mallid)
                       ->orWhere('merchants.merchant_id', '=', $mallid);
                 })
-                ->where('object_type', '=', 'promotion')
+                ->where('news.object_type', '=', 'promotion')
                 ->where('news.status', 'active')
                 ->where('news.is_popup', 'Y')
                 ->whereRaw("? between begin_date and end_date", [$mallTime])
                 ->groupBy('news.news_id');
 
             $news = DB::table('news')
-                ->selectRaw('news_id as campaign_id, news_name as campaign_name, description as campaign_description, image as campaign_image, "news" as campaign_type')
+                ->selectRaw("{$prefix}news.news_id as campaign_id, {$prefix}news.news_name as campaign_name, {$prefix}news.description as campaign_description, {$prefix}news.image as campaign_image, 'news' as campaign_type")
                 ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'news.news_id')
                 ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
                 ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
@@ -6808,14 +6809,14 @@ class MobileCIAPIController extends BaseCIController
                     $q->where('merchants.parent_id', '=', $mallid)
                       ->orWhere('merchants.merchant_id', '=', $mallid);
                 })
-                ->where('object_type', '=', 'news')
+                ->where('news.object_type', '=', 'news')
                 ->where('news.status', 'active')
                 ->where('news.is_popup', 'Y')
                 ->whereRaw("? between begin_date and end_date", [$mallTime])
                 ->groupBy('news.news_id');
 
             $coupon = DB::table('promotions')
-                ->selectRaw('promotion_id as campaign_id, promotion_name as campaign_name, description as campaign_description, image as campaign_image, "coupon" as campaign_type')
+                ->selectRaw("{$prefix}promotions.promotion_id as campaign_id, {$prefix}promotions.promotion_name as campaign_name, {$prefix}promotions.description as campaign_description, {$prefix}promotions.image as campaign_image, 'coupon' as campaign_type")
                 ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'promotions.promotion_id')
                 ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'promotions.promotion_id')
                 ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
@@ -6825,7 +6826,7 @@ class MobileCIAPIController extends BaseCIController
                         $q->where('merchants.parent_id', '=', $mallid)
                           ->orWhere('merchants.merchant_id', '=', $mallid);
                     })
-                ->where('is_coupon', '=', 'Y')
+                ->where('promotions.is_coupon', '=', 'Y')
                 ->where('promotions.is_popup', 'Y')
                 ->where('promotions.status', 'active')
                 ->whereRaw("? between begin_date and end_date", [$mallTime])
