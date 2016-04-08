@@ -200,7 +200,7 @@ class LoginAPIController extends ControllerAPI
 
             $menus = Config::get('orbit.menus.pmp');
 
-            $mall[] = null;
+            $mall = [];
             if ($user->isCampaignOwner()) {
                 $user_merchants = $user->campaignAccount->userMerchant;
 
