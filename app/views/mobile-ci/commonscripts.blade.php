@@ -182,18 +182,25 @@
         <div class="modal-content hide" id="forget-form-wrapper">
             <form  name="forgotForm" id="forgotForm" method="post">
                 <div class="modal-body text-center">
+                    <a href="#1" id="forgot-sign-in-link" style="float: left;color: #000;font-weight: bold;font-size: 18px;"><i class="fa fa-chevron-left"></i></a>
                     <button type="button" class="close close-form" data-dismiss="modal" aria-label="Close">
                         <i class="fa fa-times"></i>
                     </button>
+                    <div class="error-msg-box">
+                        <div class="error-msg-box-close">
+                            &times;
+                        </div>
+                        <div class="error-msg-message"></div>
+                    </div>
                     <div class="form-group">
                         <input type="email" value="" class="form-control text-center" name="email_forgot" id="email_forgot" placeholder="{{ Lang::get('mobileci.signin.email_placeholder') }}">
                     </div>
                     <div class="form-group">
                         <button type="button" id="btn-forgot-form" class="btn btn-info btn-block icon-button form text-center" disabled>{{ Lang::get('mobileci.signin.forgot_button') }}</button>
                     </div>
-                    <div class="form-group">
+                    <!-- <div class="form-group">
                         <i><span>{{ Lang::get('mobileci.signup.already_have_an_account') }} <a href="#1" id="forgot-sign-in-link">{{ Lang::get('mobileci.signin.sign_in') }}</a></span></i>
-                    </div>
+                    </div> -->
                 </div>
             </form>
             <div id="forget-mail-sent" class="vertically-spaced text-center hide">
@@ -954,7 +961,7 @@
             $('.sign-in-popup').toggle('slide', {direction: 'down'}, 'fast');
         });
         $('#forgotForm').on('keyup keypress', function(e) {
-            $('#btn-forgot-form').click();
+            // $('#btn-forgot-form').click();
         });
         $('#forgot_password').click(function(){
             $('#signin-form-wrapper').addClass('hide');
@@ -976,6 +983,7 @@
             }
         });
         $('#btn-forgot-form').click(function() {
+            orbitSignUpForm.hideErrorMessageBox();
             var value = $('#email_forgot').val();
             if (isValidEmailAddress(value)) {
                 $.ajax({
@@ -996,7 +1004,11 @@
                             $('#forget-mail-sent').addClass('hide');
                             $('#forget-mail-sent').fadeOut('fast');
                         }, 4000);
+                    } else {
+                        orbitSignUpForm.showErrorMessageBox(data.message);
                     }
+                }).fail(function(data){
+                    orbitSignUpForm.showErrorMessageBox(JSON.parse(data.responseText).message);
                 });
             }
         });
@@ -1004,7 +1016,11 @@
             $('.error-msg-box').hide();
         });
         $('#formModal').on('show.bs.modal', function () {
-            $('#slogan-container, #social-media-wraper').addClass('hide');
+            orbitSignUpForm.hideErrorMessageBox();
+            $('#signin-form-wrapper').removeClass('hide');
+            $('#forget-form-wrapper').addClass('hide');
+            $('#signup-form-wrapper').addClass('hide');
+            $('#slogan-container, #social-media-wrapper').addClass('hide');
         });
 
         $('#formModal').on('shown.bs.modal', function () {
@@ -1013,7 +1029,7 @@
         });
 
         $('#formModal').on('hide.bs.modal', function () {
-            $('#slogan-container, #social-media-wraper').removeClass('hide');
+            $('#slogan-container, #social-media-wrapper').removeClass('hide');
         });
 
         function isValidEmailAddress(emailAddress) {
@@ -1455,7 +1471,7 @@
         },
         isFromCaptiveFn = function () {
             if ('{{{ Input::get('from_captive', 'no') }}}' === 'yes') {
-                $('#social-media-wraper').addClass('hide');
+                $('#social-media-wrapper').addClass('hide');
             }
         };
 
