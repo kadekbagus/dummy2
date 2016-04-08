@@ -848,28 +848,24 @@ class CampaignReportAPIController extends ControllerAPI
                             (
                                 SELECT COUNT(DISTINCT user_id)
                                 FROM {$tablePrefix}user_signin
-                                WHERE location_id = {$this->quote($current_mall)}
-                                AND DATE(created_at) = date
+                                WHERE DATE(created_at) = date
                             ) AS unique_users,
                             (
                                 SELECT COUNT(campaign_page_view_id) AS value
                                 FROM {$tablePrefix}campaign_page_views
                                 WHERE campaign_id = {$this->quote($campaign_id)}
-                                AND location_id = {$this->quote($current_mall)}
                                 AND DATE(created_at) = date
                             ) AS campaign_pages_views,
                             (
                                 SELECT COUNT(campaign_popup_view_id) AS value
                                 FROM {$tablePrefix}campaign_popup_views
                                 WHERE campaign_id = {$this->quote($campaign_id)}
-                                AND location_id = {$this->quote($current_mall)}
                                 AND DATE(created_at) = date
                             ) AS popup_views,
                             (
                                 SELECT COUNT(campaign_click_id) AS value
                                 FROM {$tablePrefix}campaign_clicks
                                 WHERE campaign_id = {$this->quote($campaign_id)}
-                                AND location_id = {$this->quote($current_mall)}
                                 AND DATE(created_at) = date
                             ) AS popup_clicks,
                             (
