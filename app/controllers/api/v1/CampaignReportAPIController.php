@@ -1573,9 +1573,12 @@ class CampaignReportAPIController extends ControllerAPI
                 ),
                 array(
                     'current_mall' => 'required',
-                    'campaign_id' => 'required',
+                    'campaign_id' => 'required | orbit.empty.campaign',
                     'start_date' => 'required | date_format:Y-m-d H:i:s',
                     'end_date' => 'required | date_format:Y-m-d H:i:s',
+                ),
+                array(
+                    'orbit.empty.campaign' => 'campaign not found'
                 )
             );
 
