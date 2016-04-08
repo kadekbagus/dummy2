@@ -154,8 +154,9 @@ class CampaignReportAPIController extends ControllerAPI
                 {$tablePrefix}news.object_type AS campaign_type,
                 IFNULL(total_tenant, 0) AS total_tenant,
                 IFNULL(total_location, 0) AS total_location,
-                merchants3.name AS tenant_name,
-                merchants2.name AS mall_name, {$tablePrefix}news.begin_date, {$tablePrefix}news.end_date, {$tablePrefix}news.updated_at, {$tablePrefix}campaign_price.base_price,
+                mlocation.name AS tenant_name,
+                -- merchants2.name AS mall_name,
+                {$tablePrefix}news.begin_date, {$tablePrefix}news.end_date, {$tablePrefix}news.updated_at, {$tablePrefix}campaign_price.base_price,
                 total_tenant * {$tablePrefix}campaign_price.base_price AS daily,
                 total_tenant * {$tablePrefix}campaign_price.base_price * (DATEDIFF( {$tablePrefix}news.end_date, {$tablePrefix}news.begin_date) + 1) AS estimated_total,
                 ocds.total_spending AS spending,
@@ -184,7 +185,7 @@ class CampaignReportAPIController extends ControllerAPI
                         // Join for get campaign price
                         ->leftJoin('campaign_price', 'campaign_price.campaign_id', '=', 'news.news_id')
                         // Join for get mall name
-                        ->leftJoin('merchants as merchants2', 'news.mall_id', '=', DB::raw('merchants2.merchant_id'))
+                        // ->leftJoin('merchants as merchants2', 'news.mall_id', '=', DB::raw('merchants2.merchant_id'))
                         // Join for get total tenant percampaign
                         ->leftJoin(DB::raw("
                                 (
@@ -203,25 +204,37 @@ class CampaignReportAPIController extends ControllerAPI
 
                         // Join for provide searching by tenant
                         ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
-                        ->leftJoin('merchants as merchants3', 'news_merchant.merchant_id', '=', DB::raw('merchants3.merchant_id'))
+                        ->leftJoin('merchants as mlocation', 'news_merchant.merchant_id', '=', DB::raw('mlocation.merchant_id'))
 
-                        ->leftJoin('user_campaign', 'user_campaign.campaign_id', '=', 'news.news_id')
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
                         ->leftJoin('news_translations', 'news_translations.news_id', '=', 'news.news_id')
                         ->leftJoin('merchant_languages', 'merchant_languages.merchant_language_id', '=', 'news_translations.merchant_language_id')
                         ->leftJoin('languages', 'languages.language_id', '=', 'news_translations.merchant_language_id')
+
+                        // Join to get access rule pmp
+                        ->leftJoin('user_campaign as uc', DB::raw('uc.campaign_id'), '=', 'news.news_id')
+                        ->leftJoin('campaign_account as ca', DB::raw('ca.user_id'), '=', DB::raw('uc.user_id'))
+                        ->leftJoin('campaign_account as cas', DB::raw('cas.parent_user_id'), '=', DB::raw('ca.parent_user_id'))
+
                         ->where('languages.name', '=', 'en')
-                        ->where('news.mall_id', '=', $current_mall)
                         ->where('news.object_type', '=', 'news')
-                        ->where('user_campaign.user_id', $user->user_id);
+
+                        ->where(function ($q) use ($user, $tablePrefix) {
+                                $q->WhereRaw("ca.user_id = (select parent_user_id from {$tablePrefix}campaign_account where user_id = '{$user->user_id}')
+                                                or
+                                              ca.parent_user_id = (select parent_user_id from {$tablePrefix}campaign_account where user_id = '{$user->user_id}')")
+                                    ->orWhere(DB::raw('ca.user_id'), '=', $user->user_id)
+                                    ->orWhere(DB::raw('ca.parent_user_id'), '=', $user->user_id);
+                            });
 
             $promotions = DB::table('news')->selectraw(DB::raw("{$tablePrefix}news.news_id AS campaign_id,
                 CASE WHEN {$tablePrefix}news_translations.news_name !='' THEN {$tablePrefix}news_translations.news_name ELSE {$tablePrefix}news.news_name END as campaign_name,
                 {$tablePrefix}news.object_type AS campaign_type,
                 IFNULL(total_tenant, 0) AS total_tenant,
                 IFNULL(total_location, 0) AS total_location,
-                merchants3.name AS tenant_name,
-                merchants2.name AS mall_name, {$tablePrefix}news.begin_date, {$tablePrefix}news.end_date, {$tablePrefix}news.updated_at, {$tablePrefix}campaign_price.base_price,
+                mlocation.name AS tenant_name,
+                -- merchants2.name AS mall_name,
+                {$tablePrefix}news.begin_date, {$tablePrefix}news.end_date, {$tablePrefix}news.updated_at, {$tablePrefix}campaign_price.base_price,
                 total_tenant * {$tablePrefix}campaign_price.base_price AS daily,
                 total_tenant * {$tablePrefix}campaign_price.base_price * (DATEDIFF({$tablePrefix}news.end_date, {$tablePrefix}news.begin_date) + 1) AS estimated_total,
                 ocds.total_spending AS spending,
@@ -251,7 +264,7 @@ class CampaignReportAPIController extends ControllerAPI
                         // Join for get campaign price
                         ->leftJoin('campaign_price', 'campaign_price.campaign_id', '=', 'news.news_id')
                         // Join for get mall name
-                        ->leftJoin('merchants as merchants2', 'news.mall_id', '=', DB::raw('merchants2.merchant_id'))
+                        // ->leftJoin('merchants as merchants2', 'news.mall_id', '=', DB::raw('merchants2.merchant_id'))
                         // Joint for get total tenant percampaign
                         ->leftJoin(DB::raw("
                                 (
@@ -270,25 +283,37 @@ class CampaignReportAPIController extends ControllerAPI
 
                         // Join for get tenant percampaign
                         ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
-                        ->leftJoin('merchants as merchants3', 'news_merchant.merchant_id', '=', DB::raw('merchants3.merchant_id'))
+                        ->leftJoin('merchants as mlocation', 'news_merchant.merchant_id', '=', DB::raw('mlocation.merchant_id'))
 
-                        ->leftJoin('user_campaign', 'user_campaign.campaign_id', '=', 'news.news_id')
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
                         ->leftJoin('news_translations', 'news_translations.news_id', '=', 'news.news_id')
                         ->leftJoin('merchant_languages', 'merchant_languages.merchant_language_id', '=', 'news_translations.merchant_language_id')
                         ->leftJoin('languages', 'languages.language_id', '=', 'news_translations.merchant_language_id')
+
+                        // Join to get access rule pmp
+                        ->leftJoin('user_campaign as uc', DB::raw('uc.campaign_id'), '=', 'news.news_id')
+                        ->leftJoin('campaign_account as ca', DB::raw('ca.user_id'), '=', DB::raw('uc.user_id'))
+                        ->leftJoin('campaign_account as cas', DB::raw('cas.parent_user_id'), '=', DB::raw('ca.parent_user_id'))
+
                         ->where('languages.name', '=', 'en')
-                        ->where('news.mall_id', '=', $current_mall)
                         ->where('news.object_type', '=', 'promotion')
-                        ->where('user_campaign.user_id', $user->user_id);
+
+                        ->where(function ($q) use ($user, $tablePrefix) {
+                                $q->WhereRaw("ca.user_id = (select parent_user_id from {$tablePrefix}campaign_account where user_id = '{$user->user_id}')
+                                                or
+                                              ca.parent_user_id = (select parent_user_id from {$tablePrefix}campaign_account where user_id = '{$user->user_id}')")
+                                    ->orWhere(DB::raw('ca.user_id'), '=', $user->user_id)
+                                    ->orWhere(DB::raw('ca.parent_user_id'), '=', $user->user_id);
+                            });
 
             $coupons = DB::table('promotions')->selectraw(DB::raw("{$tablePrefix}promotions.promotion_id AS campaign_id,
                 CASE WHEN {$tablePrefix}coupon_translations.promotion_name !='' THEN {$tablePrefix}coupon_translations.promotion_name ELSE {$tablePrefix}promotions.promotion_name END as campaign_name,
                 IF(1=1,'coupon', '') AS campaign_type,
                 IFNULL(total_tenant, 0) AS total_tenant,
                 IFNULL(total_location, 0) AS total_location,
-                merchants3.name AS tenant_name,
-                merchants2.name AS mall_name, {$tablePrefix}promotions.begin_date, {$tablePrefix}promotions.end_date, {$tablePrefix}promotions.updated_at, {$tablePrefix}campaign_price.base_price,
+                mlocation.name AS tenant_name,
+                -- merchants2.name AS mall_name,
+                {$tablePrefix}promotions.begin_date, {$tablePrefix}promotions.end_date, {$tablePrefix}promotions.updated_at, {$tablePrefix}campaign_price.base_price,
                 total_tenant * {$tablePrefix}campaign_price.base_price AS daily,
                 total_tenant * {$tablePrefix}campaign_price.base_price * (DATEDIFF({$tablePrefix}promotions.end_date, {$tablePrefix}promotions.begin_date) + 1) AS estimated_total,
                 ocds.total_spending AS spending,
@@ -317,7 +342,7 @@ class CampaignReportAPIController extends ControllerAPI
                         // Join for get campaign price
                         ->leftJoin('campaign_price', 'campaign_price.campaign_id', '=', 'promotions.promotion_id')
                         // Join for get mall name
-                        ->leftJoin('merchants as merchants2', 'promotions.merchant_id', '=', DB::raw('merchants2.merchant_id'))
+                        // ->leftJoin('merchants as merchants2', 'promotions.merchant_id', '=', DB::raw('merchants2.merchant_id'))
                         // Joint for get total tenant percampaign
                         ->leftJoin(DB::raw("
                                 (
@@ -336,15 +361,29 @@ class CampaignReportAPIController extends ControllerAPI
 
                         // Join for get tenant percampaign
                         ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
-                        ->leftJoin('merchants as merchants3', 'promotion_retailer.retailer_id', '=', DB::raw('merchants3.merchant_id'))
+                        ->leftJoin('merchants as mlocation', 'promotion_retailer.retailer_id', '=', DB::raw('mlocation.merchant_id'))
 
                         ->leftJoin('user_campaign', 'user_campaign.campaign_id', '=', 'promotions.promotion_id')
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
                         ->leftJoin('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
                         ->leftJoin('merchant_languages', 'merchant_languages.merchant_language_id', '=', 'coupon_translations.merchant_language_id')
                         ->leftJoin('languages', 'languages.language_id', '=', 'coupon_translations.merchant_language_id')
+
+                        // Join to get access rule pmp
+                        ->leftJoin('user_campaign as uc', DB::raw('uc.campaign_id'), '=', 'promotions.promotion_id')
+                        ->leftJoin('campaign_account as ca', DB::raw('ca.user_id'), '=', DB::raw('uc.user_id'))
+                        ->leftJoin('campaign_account as cas', DB::raw('cas.parent_user_id'), '=', DB::raw('ca.parent_user_id'))
+
                         ->where('languages.name', '=', 'en')
-                        ->where('user_campaign.user_id', $user->user_id);
+
+                        ->where(function ($q) use ($user, $tablePrefix) {
+                                $q->WhereRaw("ca.user_id = (select parent_user_id from {$tablePrefix}campaign_account where user_id = '{$user->user_id}')
+                                                or
+                                              ca.parent_user_id = (select parent_user_id from {$tablePrefix}campaign_account where user_id = '{$user->user_id}')")
+                                    ->orWhere(DB::raw('ca.user_id'), '=', $user->user_id)
+                                    ->orWhere(DB::raw('ca.parent_user_id'), '=', $user->user_id);
+                            });
+
 
             $campaign = $news->unionAll($promotions)->unionAll($coupons);
 
