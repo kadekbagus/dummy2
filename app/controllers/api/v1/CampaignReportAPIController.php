@@ -815,6 +815,7 @@ class CampaignReportAPIController extends ControllerAPI
                         (SELECT
                             date AS campaign_date,
                             campaign_id,
+                            campaign_type,
                             {$this->quote($totalLinkToLocation)} AS total_location,
                             tenant_name,
                             om_mall.name AS mall_name,
@@ -883,6 +884,7 @@ class CampaignReportAPIController extends ControllerAPI
                                         och.campaign_id,
                                         och.campaign_history_action_id,
                                         och.campaign_external_value,
+                                        och.campaign_type,
                                         om.name as tenant_name,
                                         DATE_FORMAT(och.created_at, '%Y-%m-%d') AS history_created_date
                                     FROM
