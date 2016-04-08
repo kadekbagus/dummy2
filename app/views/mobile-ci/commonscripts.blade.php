@@ -1016,6 +1016,9 @@
             $('.error-msg-box').hide();
         });
         $('#formModal').on('show.bs.modal', function () {
+            orbitSignUpForm.hideErrorMessageBox();
+            $('#signin-form-wrapper').removeClass('hide');
+            $('#forget-form-wrapper').addClass('hide');
             $('#slogan-container, #social-media-wraper').addClass('hide');
         });
 
