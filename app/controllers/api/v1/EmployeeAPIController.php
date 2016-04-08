@@ -2726,7 +2726,7 @@ class EmployeeAPIController extends ControllerAPI
                                          'users.username as login_id', 'users.user_email',
                                          'users.status as user_status',
                                          'users.user_firstname', 'users.user_lastname',
-                                         'roles.role_name', DB::Raw('er.retailer_id as merchant_id'))
+                                         'roles.role_name', DB::Raw('er.retailer_id as mall_id'))
                                  ->leftJoin('employee_retailer as er', DB::Raw('er.employee_id'), '=', 'employees.employee_id')
                                  ->whereRaw("er.retailer_id in (
                                         select merchant_id
@@ -2753,6 +2753,7 @@ class EmployeeAPIController extends ControllerAPI
                                             )
                                             group by cpmp.user_id
                                         )
+                                        and object_type = 'mall'
                                         group by merchant_id
                                     )")
                                  ->groupBy('employees.user_id');
