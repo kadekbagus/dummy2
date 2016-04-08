@@ -969,6 +969,7 @@
             $('#forgotForm #email_forgot').focus();
         });
         $('#forgot-sign-in-link').click(function(){
+            orbitSignUpForm.hideErrorMessageBox();
             $('#signin-form-wrapper').removeClass('hide');
             $('#forget-form-wrapper').addClass('hide');
             $('#signinForm #email').focus();
@@ -1556,7 +1557,7 @@
                 return false;
             });
 
-            $('#signinForm, #signupForm').submit(function(e) {
+            $('#signinForm, #signupForm, #forgotForm').submit(function(e) {
                 e.preventDefault();
             });
 

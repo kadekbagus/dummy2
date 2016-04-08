@@ -221,7 +221,6 @@ class MobileCIAPIController extends BaseCIController
     {
         try {
             $this->prepareSession();
-
             $this->session->start(array(), 'no-session-creation');
             $this->session->destroy();
         } catch (Exception $e) {
@@ -1098,13 +1097,17 @@ class MobileCIAPIController extends BaseCIController
                     $this->loginStage2($loggedInUser, $retailer);
                     $this->socmedSignUpActivity($loggedInUser, 'google');
                     $this->socmedSignInActivity($loggedInUser, 'google');
-                    
+                    $expireTime = Config::get('orbit.session.session_origin.cookie.expire');
+                    setcookie('orbit_email', $userEmail, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+                    setcookie('orbit_firstname', $firstName, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+                    setcookie('login_from', 'Google', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+
                     return Redirect::route($caller_url, $query);
                 }
 
             } catch (Exception $e) {
                 $errorMessage = 'Error: ' . $e->getMessage();
-                return Redirect::route('mobile-ci.signin', ['error' => $errorMessage]);
+                return Redirect::route($caller_url, ['error' => $errorMessage]);
             }
 
         } else {
@@ -1114,7 +1117,7 @@ class MobileCIAPIController extends BaseCIController
                 return Redirect::to( (string)$url );
             } catch (Exception $e) {
                 $errorMessage = 'Error: ' . $e->getMessage();
-                return Redirect::route('mobile-ci.signin', ['error' => $errorMessage, 'isInProgress' => 'true']);
+                return Redirect::route($caller_url, ['error' => $errorMessage]);
             }
         }
     }
@@ -1244,6 +1247,10 @@ class MobileCIAPIController extends BaseCIController
             $this->loginStage2($loggedInUser, $retailer);
             $this->socmedSignUpActivity($loggedInUser, 'facebook');
             $this->socmedSignInActivity($loggedInUser, 'facebook');
+            $expireTime = Config::get('orbit.session.session_origin.cookie.expire');
+            setcookie('orbit_email', $userEmail, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+            setcookie('orbit_firstname', $firstName, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+            setcookie('login_from', 'Facebook', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
 
             return Redirect::route($caller_url, $query);
         }
@@ -8759,7 +8766,22 @@ class MobileCIAPIController extends BaseCIController
             return;
         }
 
-        $retailer->acquireUser($user);
+        $signUpVia ='form';
+        if (isset($_COOKIE['login_from'])) {
+            switch (strtolower($_COOKIE['login_from'])) {
+                case 'google':
+                    $signUpVia = 'google';
+                    break;
+                case 'facebook':
+                    $signUpVia = 'facebook';
+                    break;
+                default:
+                    $signUpVia = 'form';
+                    break;
+            }
+        }
+
+        $retailer->acquireUser($user, $signUpVia);
     }
 
     // create activity signup from socmed
