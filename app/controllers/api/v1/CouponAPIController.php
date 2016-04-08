@@ -661,7 +661,7 @@ class CouponAPIController extends ControllerAPI
                 $spendingrule = SpendingRule::select('with_spending')->where('object_id', $tenant_id)->first();
 
                 if ($spendingrule) {
-                    $withSpending = 'Y';
+                    $withSpending = $spendingrule->with_spending;
                 } else {
                     $withSpending = 'N';
                 }
@@ -729,6 +729,7 @@ class CouponAPIController extends ControllerAPI
                 $isAvailable = CouponTranslation::where('merchant_language_id', '=', $idLanguage->language_id)
                                                 ->where('promotion_id', '=', $newcoupon->promotion_id)
                                                 ->where('promotion_name', '!=', '')
+                                                ->where('description', '!=', '')
                                                 ->count();
 
                 if ($isAvailable == 0) {
@@ -1135,7 +1136,7 @@ class CouponAPIController extends ControllerAPI
                     $spendingrule = SpendingRule::select('with_spending')->where('object_id', $retailer_id)->first();
 
                     if ($spendingrule) {
-                        $withSpending = 'Y';
+                        $withSpending = $spendingrule->with_spending;
                     } else {
                         $withSpending = 'N';
                     }
@@ -1761,6 +1762,7 @@ class CouponAPIController extends ControllerAPI
                 $isAvailable = CouponTranslation::where('merchant_language_id', '=', $idLanguage->language_id)
                                                 ->where('promotion_id', '=', $promotion_id)
                                                 ->where('promotion_name', '!=', '')
+                                                ->where('description', '!=', '')
                                                 ->count();
 
                 if ($isAvailable == 0) {
@@ -2438,7 +2440,7 @@ class CouponAPIController extends ControllerAPI
                 (
                     select count(mmallx.merchant_id) from {$table_prefix}merchants mmallx
                     inner join {$table_prefix}promotion_retailer oprx on mmallx.merchant_id = oprx.retailer_id
-                    inner join {$prefix}user_campaign ucp on ucp.campaign_id = onm.news_id
+                    inner join {$table_prefix}user_campaign ucp on ucp.campaign_id = oprx.promotion_id
                     where mmallx.object_type = 'mall' and
                     ucp.user_id = '{$user_id}' and
                     mmallx.name like {$mall_name_like} and
