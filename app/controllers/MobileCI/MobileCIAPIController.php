@@ -6905,11 +6905,11 @@ class MobileCIAPIController extends BaseCIController
                 if (!empty($alternateLanguage)) {
                     if ($near_end_result->campaign_type === 'promotion' || $near_end_result->campaign_type === 'news') {
                         $campaignTranslation = \NewsTranslation::excludeDeleted()
-                            ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
+                            ->where('merchant_language_id', '=', $alternateLanguage->language_id)
                             ->where('news_id', $near_end_result->campaign_id)->first();
                     } elseif ($near_end_result->campaign_type === 'coupon'){
                         $campaignTranslation = \CouponTranslation::excludeDeleted()
-                            ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
+                            ->where('merchant_language_id', '=', $alternateLanguage->language_id)
                             ->where('promotion_id', $near_end_result->campaign_id)->first();
                     }
 
@@ -6936,7 +6936,7 @@ class MobileCIAPIController extends BaseCIController
                                 $defaultLanguage = $this->getDefaultLanguage($retailer);
                                 if ($defaultLanguage !== NULL) {
                                     $contentDefaultLanguage = \NewsTranslation::excludeDeleted()
-                                        ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
+                                        ->where('merchant_language_id', '=', $defaultLanguage->language_id)
                                         ->where('news_id', $near_end_result->campaign_id)->first();
 
                                     // get default image
@@ -6970,7 +6970,7 @@ class MobileCIAPIController extends BaseCIController
                                 $defaultLanguage = $this->getDefaultLanguage($retailer);
                                 if ($defaultLanguage !== NULL) {
                                     $contentDefaultLanguage = \CouponTranslation::excludeDeleted()
-                                        ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
+                                        ->where('merchant_language_id', '=', $defaultLanguage->language_id)
                                         ->where('promotion_id', $near_end_result->campaign_id)->first();
 
                                     // get default image
@@ -8000,11 +8000,7 @@ class MobileCIAPIController extends BaseCIController
         $current_mall = $this->getRetailerInfo();
         if ($lang_name !== null) {
             //check exist lang in db
-            $lang_count = MerchantLanguage::where('merchant_id', $current_mall->merchant_id)
-                                        ->wherehas('language', function($q) use ($lang_name)
-                                        {
-                                            $q->where('name', '=' , $lang_name);
-                                        })->count();
+            $lang_count = Language::where('name', '=' , $lang_name)->count();
 
             //set cookies
             if ($lang_count > 0) {
