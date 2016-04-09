@@ -1932,13 +1932,11 @@ class CampaignReportAPIController extends ControllerAPI
                                     count(campaign_page_view_id) as value
                                 from
                                     {$tablePrefix}campaign_page_views
-                                where
-                                    campaign_id = ? and
-                                    location_id = ? and
-                                    created_at between ? and ?
+                                where campaign_id = ?
+                                and created_at between ? and ?
                                 group by 1
                                 order by 1
-            ", array($timezoneOffset, $campaign_id, $current_mall, $start_date, $end_date));
+            ", array($timezoneOffset, $campaign_id, $start_date, $end_date));
 
 
             $pop_up_view = DB::select("
@@ -1947,13 +1945,11 @@ class CampaignReportAPIController extends ControllerAPI
                                     count(campaign_popup_view_id) as value
                                 from
                                     {$tablePrefix}campaign_popup_views
-                                where
-                                    campaign_id = ? and
-                                    location_id = ? and
-                                    created_at between ? and ?
+                                where campaign_id = ?
+                                and created_at between ? and ?
                                 group by 1
                                 order by 1
-            ", array($timezoneOffset, $campaign_id, $current_mall, $start_date, $end_date));
+            ", array($timezoneOffset, $campaign_id, $start_date, $end_date));
 
             $pop_up_click = DB::select("
                                 select
@@ -1961,13 +1957,11 @@ class CampaignReportAPIController extends ControllerAPI
                                     count(campaign_click_id) as value
                                 from
                                     {$tablePrefix}campaign_clicks
-                                where
-                                    campaign_id = ? and
-                                    location_id = ? and
-                                    created_at between ? and ?
+                                where campaign_id = ?
+                                and created_at between ? and ?
                                 group by 1
                                 order by 1
-            ", array($timezoneOffset, $campaign_id, $current_mall, $start_date, $end_date));
+            ", array($timezoneOffset, $campaign_id, $start_date, $end_date));
 
             $unique_user = DB::select("select date_format(convert_tz(created_at, '+00:00', ?), '%Y-%m-%d') as date, count(distinct user_id) as value
                         from {$tablePrefix}user_signin
