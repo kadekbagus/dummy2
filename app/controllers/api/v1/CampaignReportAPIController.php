@@ -427,9 +427,9 @@ class CampaignReportAPIController extends ControllerAPI
             });
 
             // Filter by mall
-            OrbitInput::get('mall_name', function($mall_name) use ($campaign) {
-                $campaign->where('mall_name', 'like', "%$mall_name%");
-            });
+            // OrbitInput::get('mall_name', function($mall_name) use ($campaign) {
+            //     $campaign->where('mall_name', 'like', "%$mall_name%");
+            // });
 
             // // Filter by campaign status
             // OrbitInput::get('status', function($status) use ($campaign) {
@@ -462,10 +462,6 @@ class CampaignReportAPIController extends ControllerAPI
                       ->orWhereRaw("DATE_FORMAT({$this->quote($start_date)}, '%Y-%m-%d') <= DATE_FORMAT(begin_date, '%Y-%m-%d') and DATE_FORMAT({$this->quote($end_date)}, '%Y-%m-%d') >= DATE_FORMAT(end_date, '%Y-%m-%d')");
                 });
             }
-
-            OrbitInput::get('mall_name', function($mall_name) use ($campaign) {
-                $campaign->where('mall_name', 'like', "%$mall_name%");
-            });
 
             // Grouping campaign
             $campaign = $campaign->groupBy('campaign_id');
@@ -807,44 +803,10 @@ class CampaignReportAPIController extends ControllerAPI
 
             \DB::beginTransaction();
 
-            // Get id add_tenant and delete_tenant for counting total tenant percampaign
-            $campaignHistoryAction = DB::table('campaign_history_actions')
-                            ->select('campaign_history_action_id','action_name')
-                            ->where('action_name','add_tenant')
-                            ->orWhere('action_name','delete_tenant')
-                            ->get();
-
-            $idAddTenant = '';
-            $idDeleteTenant = '';
-            foreach ($campaignHistoryAction as $key => $value) {
-                if ($value->action_name === 'add_tenant') {
-                    $idAddTenant = $value->campaign_history_action_id;
-                } elseif ($value->action_name === 'delete_tenant') {
-                    $idDeleteTenant = $value->campaign_history_action_id;
-                }
-            }
-
-            $sql = "
-                        (SELECT
-                            date AS campaign_date,
-                            campaign_id,
-                            campaign_type,
+            $campaign = CampaignDailySpending::select('date as campaign_date','campaign_id','campaign_type',
+                DB::raw("
+                            sum(total_spending) as spending,
                             {$this->quote($totalLinkToLocation)} AS total_location,
-                            tenant_name,
-                            om_mall.name AS mall_name,
-                            unique_users,
-                            campaign_pages_views,
-                            campaign_pages_view_rate,
-                            popup_views,
-                            popup_view_rate,
-                            popup_clicks,
-                            popup_click_rate,
-                            base_price,
-                            sum_total_spending AS spending,
-                            campaign_status
-                        FROM
-                        (
-                            SELECT *,
                             (
                                 SELECT COUNT(DISTINCT user_id)
                                 FROM {$tablePrefix}user_signin
@@ -877,70 +839,26 @@ class CampaignReportAPIController extends ControllerAPI
                             (
                                 SELECT IFNULL (ROUND((popup_clicks / popup_views) * 100, 2), 0)
                             ) AS popup_click_rate
-
-                            FROM
-                                (
-                                    SELECT date, number_active_tenants, campaign_status, tccd.mall_id, tccd.base_price, total_spending, sum(total_spending) as sum_total_spending
-                                    FROM {$tablePrefix}campaign_daily_spendings AS tccd
-                                    WHERE tccd.campaign_id = {$this->quote($campaign_id)}
-                                    GROUP BY date
-                                ) AS x
-
-                                -- JOIN to get tenant list per date
-                                LEFT JOIN
-                                (
-                                    SELECT
-                                        och.campaign_id,
-                                        och.campaign_history_action_id,
-                                        och.campaign_external_value,
-                                        och.campaign_type,
-                                        om.name as tenant_name,
-                                        DATE_FORMAT(och.created_at, '%Y-%m-%d') AS history_created_date
-                                    FROM
-                                        {$tablePrefix}campaign_histories och
-                                    LEFT JOIN {$tablePrefix}merchants om
-                                    ON om.merchant_id = och.campaign_external_value
-                                    WHERE
-                                        och.campaign_history_action_id IN ({$this->quote($idAddTenant)}, {$this->quote($idDeleteTenant)})
-                                        AND och.campaign_type = {$this->quote($campaign_type)}
-                                        AND och.campaign_id = {$this->quote($campaign_id)}
-                                    ORDER BY och.created_at DESC
-                                ) yy
-                                ON DATE_FORMAT(CONVERT_TZ(history_created_date, '+00:00', {$this->quote($timezoneOffset)}), '%Y-%m-%d') <= date
-
-                                group by date, yy.campaign_id, campaign_external_value
-                            ) as c
-
-                            LEFT JOIN {$tablePrefix}merchants om_mall
-                            ON mall_id = om_mall.merchant_id
-
-                            WHERE (
-                                case when campaign_history_action_id = {$this->quote($idDeleteTenant)}
-                                and DATE_FORMAT(CONVERT_TZ(history_created_date, '+00:00', {$this->quote($timezoneOffset)}), '%Y-%m-%d') < date
-                                then campaign_history_action_id != {$this->quote($idDeleteTenant)} else true end
-                            )
-                            ORDER BY date desc
-                        ) AS tbl
-                    ";
-
-            $campaign = DB::table(DB::raw($sql))->where("campaign_status", '=', 'activate');
+                    ")
+                )
+                ->where('campaign_status', 'activate')
+                ->where('campaign_id', $campaign_id)
+                ->groupBy('date')
+                ;
 
             // Filter by campaign name
-            OrbitInput::get('mall_name', function($campaign_name) use ($campaign) {
-                $campaign->where('mall_name', 'like', "%$campaign_name%");
-            });
+            // OrbitInput::get('mall_name', function($campaign_name) use ($campaign) {
+            //     $campaign->where('mall_name', 'like', "%$campaign_name%");
+            // });
 
             // Filter by tenant name
-            OrbitInput::get('tenant_name', function($tenant_name) use ($campaign) {
-                $campaign->where('tenant_name', 'like', "%$tenant_name%");
-            });
+            // OrbitInput::get('tenant_name', function($tenant_name) use ($campaign) {
+            //     $campaign->where('tenant_name', 'like', "%$tenant_name%");
+            // });
 
             if ($start_date != '' && $end_date != ''){
-                $campaign->whereRaw("campaign_date between ? and ?", [$start_date, $end_date]);
+                $campaign->whereRaw("date between ? and ?", [$start_date, $end_date]);
             }
-
-            // Grouping after filter
-            $campaign->groupBy('campaign_date');
 
             // Clone the query builder which still does not include the take,
             $_campaign = clone $campaign;
