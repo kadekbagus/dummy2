@@ -76,6 +76,12 @@
                 <a href="{{{ $urlblock->blockedRoute('ci-tenants', ['coupon_id' => $coupon->promotion_id]) }}}" class="btn btn-info btn-block">{{{ Lang::get('mobileci.tenant.see_tenants') }}}</a>
             </div>
         </div>
+        @else
+        <div class="row vertically-spaced">
+            <div class="col-xs-12 text-center">
+                <button class="btn btn-info btn-block" disabled="disabled">{{{ Lang::get('mobileci.tenant.see_tenants') }}}</button>
+            </div>
+        </div>
         @endif
         @if(count($coupon->issuedCoupons) > 0)
         @if(count($tenants) > 0)
