@@ -34,7 +34,7 @@ class User extends Eloquent implements UserInterface
 
         return $ids
             ? $query->whereIn('users.user_id', $ids)
-            : $query->whereUserId('');
+            : $query;
     }
 
     /**
@@ -47,7 +47,7 @@ class User extends Eloquent implements UserInterface
         $merchantIds = Tenant::whereParentId($mallId)->lists('merchant_id');
 
         $userTenantArray = UserMerchant::whereObjectType('tenant')->whereIn('merchant_id', $merchantIds)->lists('user_id');
-        
+
         return $userTenantArray
             ? $query->whereIn('users.user_id', $userTenantArray)
             : $query->whereUserId('');

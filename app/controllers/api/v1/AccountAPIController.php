@@ -511,6 +511,8 @@ class AccountAPIController extends ControllerAPI
                 'tenants'      => $tenantAtMallArray,
 
                 // Taken from getUserCreatedAtAttribute() in the model
+                //                                                     What is this?
+                //                                                         \/
                 'created_at'   => $row->user_created_at->setTimezone('Asia/Singapore')->format('d F Y H:i:s'),
 
                 'status'       => $row->campaignAccount->status,
