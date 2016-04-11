@@ -964,6 +964,7 @@
             // $('#btn-forgot-form').click();
         });
         $('#forgot_password').click(function(){
+            orbitSignUpForm.hideErrorMessageBox();
             $('#signin-form-wrapper').addClass('hide');
             $('#forget-form-wrapper').removeClass('hide');
             $('#forgotForm #email_forgot').focus();
