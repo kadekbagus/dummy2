@@ -269,6 +269,8 @@ class NewsAPIController extends ControllerAPI
 
                 if ($tenant_id === $mall_id) {
                     $isMall = 'mall';
+                } else {
+                    $isMall = 'retailer';
                 }
 
                 $newsretailer = new NewsMerchant();
