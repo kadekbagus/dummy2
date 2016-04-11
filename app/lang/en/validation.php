@@ -161,7 +161,7 @@ return array(
             'status_link_to'       => 'The Link To must be Y or N',
             'role'                 => 'The Role ID you specified is not found',
             'consumer_role'        => 'The Consumer role does not exist',
-            'token'                => 'The Token you specified is not found',
+            'token'                => 'The token you specified is no longer available',
             'user'                 => 'The User ID you specified is not found',
             'merchant'             => 'The Merchant ID you specified is not found',
             'retailer'             => 'The Retailer ID you specified is not found',
