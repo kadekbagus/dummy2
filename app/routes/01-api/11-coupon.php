@@ -114,3 +114,11 @@ Route::post('/api/v1/coupon-report/list', function()
 {
     return CouponReportAPIController::create()->getCouponReport();
 });
+
+/**
+ * Route to get CS by coupon ID
+ */
+Route::get('/api/v1/coupon/customer-service', ['as' => 'api-coupon-customer-service', function()
+{
+        return Orbit\Controller\API\v1\CSListByCouponAPIController::create()->getList();
+}]);
