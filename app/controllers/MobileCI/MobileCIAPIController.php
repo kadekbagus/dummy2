@@ -2110,7 +2110,7 @@ class MobileCIAPIController extends BaseCIController
                     $prefix = DB::getTablePrefix();
                     $q->leftJoin('category_translations', function ($join) use ($alternateLanguage) {
                         $join->on('categories.category_id', '=', 'category_translations.category_id');
-                        $join->where('category_translations.merchant_language_id', '=', $alternateLanguage->merchant_language_id);
+                        $join->where('category_translations.merchant_language_id', '=', $alternateLanguage->language_id);
                     });
                     $q->select('categories.*');
                     $q->addSelect([
@@ -2822,7 +2822,7 @@ class MobileCIAPIController extends BaseCIController
                 ->where('merchants.merchant_id', $product_id);
 
             $tenant->select('merchants.*');
-            // $this->maybeJoinWithTranslationsTable($tenant, $alternateLanguage);
+            $this->maybeJoinWithTranslationsTable($tenant, $alternateLanguage);
             $tenant = $tenant->first();
 
             // News per tenant
@@ -7956,7 +7956,7 @@ class MobileCIAPIController extends BaseCIController
             $tenants->leftJoin('merchant_translations', function ($join) use ($alternateLanguage) {
                 $join->on('merchants.merchant_id', '=', 'merchant_translations.merchant_id');
                 $join->where('merchant_translations.merchant_language_id', '=',
-                    $alternateLanguage->merchant_language_id);
+                    $alternateLanguage->language_id);
             });
 
             // and overwrite fields with alternate language fields if present
@@ -7981,7 +7981,7 @@ class MobileCIAPIController extends BaseCIController
             $categories->leftJoin('category_translations', function ($join) use ($alternateLanguage) {
                 $join->on('categories.category_id', '=', 'category_translations.category_id');
                 $join->where('category_translations.merchant_language_id', '=',
-                    $alternateLanguage->merchant_language_id);
+                    $alternateLanguage->language_id);
             });
 
             // and overwrite fields with alternate language fields if present
