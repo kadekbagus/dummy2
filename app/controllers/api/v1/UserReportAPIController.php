@@ -19,7 +19,7 @@ use Helper\EloquentRecordCounter as RecordCounter;
  * @author Qosdil A. <qosdil@dominopos.com>
  * @author Tian <tian@dominopos.com>
  */
-class UserReportAPIController extends IntermediateAuthController
+class UserReportAPIController extends ControllerAPI
 {
     protected $viewRoles = ['super admin', 'mall admin', 'mall owner', 'mall customer service'];
 
