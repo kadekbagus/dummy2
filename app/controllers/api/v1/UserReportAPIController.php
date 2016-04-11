@@ -19,9 +19,9 @@ use Helper\EloquentRecordCounter as RecordCounter;
  * @author Qosdil A. <qosdil@dominopos.com>
  * @author Tian <tian@dominopos.com>
  */
-class UserReportAPIController extends ControllerAPI
+class UserReportAPIController extends IntermediateAuthController
 {
-    protected $viewRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee', 'mall customer service'];
+    protected $viewRoles = ['super admin', 'mall admin', 'mall owner', 'mall customer service'];
 
     /**
      * Flag to return the query builder.
@@ -419,119 +419,139 @@ class UserReportAPIController extends ControllerAPI
 
     public function getUserReport()
     {
-        // Do validation
-        if (!$this->validate()) {
-            return $this->render($this->errorCode);
-        }
+        try {
+            $this->checkAuth();
 
-        $mallId = OrbitInput::get('current_mall');
-        $mallTimezone = OrbitInput::get('timezone');
-        $startDate = OrbitInput::get('start_date');
-        $endDate = OrbitInput::get('end_date');
-        $timeDimensionType = OrbitInput::get('time_dimension_type');
+            $apiUser = $this->api->user;
+            $role = $apiUser->role;
+            $validRoles = $this->viewRoles;
 
-        $mallTimezone = Mall::leftJoin('timezones', 'timezones.timezone_id', '=', 'merchants.timezone_id')
-            ->where('merchants.merchant_id', '=', $mallId)
-            ->first()->timezone_name;
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = sprintf('Your role (%s) are not allowed to access this resource.', $role->role_name);
+                ACL::throwAccessForbidden($message);
+            }
 
-        /**
-        Special sort keys:
-            day_of_week  --> sequence_number
-            hour_of_day  --> sequence_number
-            report_date  --> sequence_date
-            report_month --> sequence_number
-        **/
-        $sortKey = Input::get('sortby', 'sign_up');
-        switch ($sortKey) {
-            case 'day_of_week':
-            case 'hour_of_day':
-            case 'report_month';
-            case 'month':
-                $sortKey = 'sequence_number';
-                break;
-            case 'date':
-            case 'report_date':
-                $sortKey = 'sequence_date';
-                break;
-        }
+            // Do validation
+            if (! $this->validate()) {
+                return $this->render($this->errorCode);
+            }
 
-        $sortType = Input::get('sortmode', 'asc');
+            $mallId = OrbitInput::get('current_mall');
+            $mallTimezone = OrbitInput::get('timezone');
+            $startDate = OrbitInput::get('start_date');
+            $endDate = OrbitInput::get('end_date');
+            $timeDimensionType = OrbitInput::get('time_dimension_type');
 
-        $take = Input::get('take');
-        $skip = Input::get('skip');
+            $mallTimezone = Mall::leftJoin('timezones', 'timezones.timezone_id', '=', 'merchants.timezone_id')
+                ->where('merchants.merchant_id', '=', $mallId)
+                ->first()->timezone_name;
 
-        $data = new stdClass();
-
-        $this->prepareData($mallId, $mallTimezone, $startDate, $endDate, $timeDimensionType);
-
-        // For Totals counting
-        $allRows = clone $this->rows;
-
-        $totalCount = $this->rows->count();
-        if (!$this->returnBuilder) {
-            $this->rows->take($take)->skip($skip);
-        }
-
-        $rows = $this->rows->orderBy($sortKey, $sortType)->get();
-        foreach ($rows as $row) {
-            switch ($timeDimensionType) {
+            /**
+            Special sort keys:
+                day_of_week  --> sequence_number
+                hour_of_day  --> sequence_number
+                report_date  --> sequence_date
+                report_month --> sequence_number
+            **/
+            $sortKey = Input::get('sortby', 'sign_up');
+            switch ($sortKey) {
                 case 'day_of_week':
-                    $firstColumnArray['day_of_week'] = $row->report_day_of_week_name;
-                    unset($row->report_day_of_week, $row->report_day_of_week_name);
-                    break;
                 case 'hour_of_day':
-                    $firstColumnArray['hour_of_day'] = $row->report_hour_of_day_name;
-                    unset($row->report_hour_of_day, $row->report_hour_of_day_name);
+                case 'report_month';
+                case 'month':
+                    $sortKey = 'sequence_number';
                     break;
+                case 'date':
                 case 'report_date':
-                    $firstColumnArray['date'] = Carbon::createFromFormat('Y-m-d', $row->report_date)->format('j M Y');
-                    unset($row->report_date);
-                    break;
-                case 'report_month':
-                    $firstColumnArray['month'] = $row->report_month_name;
-                    unset($row->report_month, $row->report_month_name);
+                    $sortKey = 'sequence_date';
                     break;
             }
 
-            // Add "%" sign on each of percentage column
-            foreach ($row as $rowKey => $rowValue) {
-                if (substr($rowKey, -11) == '_percentage') {
-                    $row->{$rowKey} = $row->{$rowKey}.'%';
+            $sortType = Input::get('sortmode', 'asc');
+
+            $take = Input::get('take');
+            $skip = Input::get('skip');
+
+            $data = new stdClass();
+
+            $this->prepareData($mallId, $mallTimezone, $startDate, $endDate, $timeDimensionType);
+
+            // For Totals counting
+            $allRows = clone $this->rows;
+
+            $totalCount = $this->rows->count();
+            if (!$this->returnBuilder) {
+                $this->rows->take($take)->skip($skip);
+            }
+
+            $rows = $this->rows->orderBy($sortKey, $sortType)->get();
+            $records = [];
+            foreach ($rows as $row) {
+                switch ($timeDimensionType) {
+                    case 'day_of_week':
+                        $firstColumnArray['day_of_week'] = $row->report_day_of_week_name;
+                        unset($row->report_day_of_week, $row->report_day_of_week_name);
+                        break;
+                    case 'hour_of_day':
+                        $firstColumnArray['hour_of_day'] = $row->report_hour_of_day_name;
+                        unset($row->report_hour_of_day, $row->report_hour_of_day_name);
+                        break;
+                    case 'report_date':
+                        $firstColumnArray['date'] = Carbon::createFromFormat('Y-m-d', $row->report_date)->format('j M Y');
+                        unset($row->report_date);
+                        break;
+                    case 'report_month':
+                        $firstColumnArray['month'] = $row->report_month_name;
+                        unset($row->report_month, $row->report_month_name);
+                        break;
+                }
+
+                // Add "%" sign on each of percentage column
+                foreach ($row as $rowKey => $rowValue) {
+                    if (substr($rowKey, -11) == '_percentage') {
+                        $row->{$rowKey} = $row->{$rowKey}.'%';
+                    }
+                }
+
+                $records[] = array_merge($firstColumnArray, (array) $row);
+            }
+
+            $data->columns = $this->getOutputColumns($timeDimensionType);
+            $data->records = $records;
+
+            // Get the row of Totals
+            $totalRow = new stdClass();
+            foreach ($allRows->get() as $row) {
+                foreach ($row as $rowKey => $rowValue) {
+                    @$totalRow->{$rowKey} += $rowValue;
                 }
             }
 
-            $records[] = array_merge($firstColumnArray, (array) $row);
-        }
-
-        $data->columns = $this->getOutputColumns($timeDimensionType);
-        $data->records = $records;
-
-        // Get the row of Totals
-        $totalRow = new stdClass();
-        foreach ($allRows->get() as $row) {
-            foreach ($row as $rowKey => $rowValue) {
-                @$totalRow->{$rowKey} += $rowValue;
+            foreach (Config::get('orbit_user_report_total_columns') as $key => $title) {
+                $totals[$key] = [
+                    'title' => $title,
+                    'total' => $totalRow->{$key},
+                ];
             }
+
+            // Return the instance of Query Builder
+            if ($this->returnBuilder) {
+                return ['builder' => $records, 'totals' => $totals];
+            }
+
+            $data->totals = $totals;
+
+            $data->returned_records = count($records);
+            $data->total_records = $totalCount;
+
+            $this->response->data = $data;
+        } catch (Exception $e) {
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
         }
 
-        foreach (Config::get('orbit_user_report_total_columns') as $key => $title) {
-            $totals[$key] = [
-                'title' => $title,
-                'total' => $totalRow->{$key},
-            ];
-        }
-
-        // Return the instance of Query Builder
-        if ($this->returnBuilder) {
-            return ['builder' => $records, 'totals' => $totals];
-        }
-
-        $data->totals = $totals;
-
-        $data->returned_records = count($records);
-        $data->total_records = $totalCount;
-
-        $this->response->data = $data;
         return $this->render(200);
     }
 
