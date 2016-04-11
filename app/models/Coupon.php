@@ -419,10 +419,16 @@ class Coupon extends Eloquent
                     AND p.is_coupon = 'Y' AND p.status = 'active'
                     AND p.begin_date <= '" . $mallTime . "'
                     AND p.end_date >= '" . $mallTime . "'
-                    AND pr.rule_type != 'auto_issue_on_every_signin'
+                    AND (
+                        pr.rule_type = 'auto_issue_on_first_signin'
+                        OR (
+                            pr.rule_type = 'auto_issue_on_signup'
+                            AND (ic.issuer_retailer_id = :merchantidy)
+                        )
+                    )
                 GROUP BY p.promotion_id
             "),
-            array('merchantid' => $retailer->merchant_id, 'merchantidx' => $retailer->merchant_id, 'userid' => $user->user_id)
+            array('merchantid' => $retailer->merchant_id, 'merchantidx' => $retailer->merchant_id, 'merchantidy' => $retailer->merchant_id, 'userid' => $user->user_id)
         );
 
         // get obtained auto-issuance coupon ids
@@ -556,7 +562,7 @@ class Coupon extends Eloquent
 
                 if (! empty($issued)) {
                     $issuedCoupon = new IssuedCoupon();
-                    $tmp = $issuedCoupon->issue($coupon, $user->user_id, $user);
+                    $tmp = $issuedCoupon->issue($coupon, $user->user_id, $user, $retailer);
 
                     $obj = new stdClass();
                     $obj->coupon_number = $tmp->issued_coupon_code;
