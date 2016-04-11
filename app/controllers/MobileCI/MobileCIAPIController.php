@@ -2251,7 +2251,15 @@ class MobileCIAPIController extends BaseCIController
                         if ($coupon->is_all_employee === 'Y') {
                             $couponTenantRedeem->linkedToCS = TRUE;
                         } else {
-                            $employee = \CouponEmployee::where('promotion_id', $pid)->first();
+                            $employee = \CouponEmployee::where('promotion_id', $pid)
+                                ->whereHas('employee', function ($q) use ($retailer) {
+                                    $q->whereHas('employee', function ($q2) use ($retailer) {
+                                        $q2->whereHas('retailers', function ($q3) use ($retailer) {
+                                            $q3->where('employee_retailer.retailer_id', $retailer->merchant_id);
+                                        });
+                                    });
+                                })
+                                ->first();
                             if (is_object($employee)) {
                                 $couponTenantRedeem->linkedToCS = TRUE;
                             }
