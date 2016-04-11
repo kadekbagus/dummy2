@@ -556,7 +556,7 @@ class Coupon extends Eloquent
 
                 if (! empty($issued)) {
                     $issuedCoupon = new IssuedCoupon();
-                    $tmp = $issuedCoupon->issue($coupon, $user->user_id, $user);
+                    $tmp = $issuedCoupon->issue($coupon, $user->user_id, $user, $retailer);
 
                     $obj = new stdClass();
                     $obj->coupon_number = $tmp->issued_coupon_code;
