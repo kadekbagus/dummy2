@@ -4408,7 +4408,16 @@ class MobileCIAPIController extends BaseCIController
 
             $mallid = $retailer->merchant_id;
 
-            $coupons = Coupon::selectRaw('*, ' . DB::getTablePrefix() . 'promotions.image AS promo_image, count(' . DB::getTablePrefix() . 'promotions.promotion_id) as quantity')
+            $prefix = DB::getTablePrefix();
+            $user_id = $user->user_id;
+            $coupons = Coupon::selectRaw("*, {$prefix}promotions.image AS promo_image, 
+                    (
+                        SELECT COUNT({$prefix}issued_coupons.issued_coupon_id) 
+                        from {$prefix}issued_coupons 
+                        where user_id = '{$user_id}'
+                        AND {$prefix}issued_coupons.status = 'active'
+                        AND {$prefix}issued_coupons.promotion_id = {$prefix}promotions.promotion_id
+                    ) as quantity")
                 ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'promotions.promotion_id')
                 ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'promotions.promotion_id')
                 ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
