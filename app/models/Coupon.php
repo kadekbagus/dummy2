@@ -368,58 +368,60 @@ class Coupon extends Eloquent
             }
         }
 
+        $prefix = DB::getTablePrefix();
         // check available coupon campaigns
         $coupons = DB::select(
-            DB::raw('
+            DB::raw("
                         SELECT *,
                         (
-                        select count(ic.issued_coupon_id) from ' . DB::getTablePrefix() . 'issued_coupons ic
+                        select count(ic.issued_coupon_id) from {$prefix}issued_coupons ic
                         where ic.promotion_id = p.promotion_id
-                        and ic.status != "deleted") as total_issued_coupon
-                        FROM ' . DB::getTablePrefix() . 'promotions p
-                        inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id
+                        and ic.status != 'deleted') as total_issued_coupon
+                        FROM {$prefix}promotions p
+                        inner join {$prefix}promotion_rules pr on p.promotion_id = pr.promotion_id
 
-                        left join ' . DB::getTablePrefix() . 'campaign_gender cg on cg.campaign_id = p.promotion_id
-                        left join ' . DB::getTablePrefix() . 'campaign_age ca on ca.campaign_id = p.promotion_id
-                        left join ' . DB::getTablePrefix() . 'age_ranges ar on ar.age_range_id = ca.age_range_id
-                        left join ' . DB::getTablePrefix() . 'promotion_retailer pre on pre.promotion_id = p.promotion_id
-                        left join ' . DB::getTablePrefix() . 'merchants m on m.merchant_id = pre.retailer_id
+                        left join {$prefix}campaign_gender cg on cg.campaign_id = p.promotion_id
+                        left join {$prefix}campaign_age ca on ca.campaign_id = p.promotion_id
+                        left join {$prefix}age_ranges ar on ar.age_range_id = ca.age_range_id
+                        left join {$prefix}promotion_retailer pre on pre.promotion_id = p.promotion_id
+                        left join {$prefix}merchants m on m.merchant_id = pre.retailer_id
 
                         WHERE 1=1
-                            ' . $queryAgeGender . '
+                            " . $queryAgeGender . "
                             AND (m.parent_id = :merchantid or m.merchant_id = :merchantidx)
-                            AND p.is_coupon = "Y" AND p.status = "active"
-                            AND p.begin_date <= "' . $mallTime . '"
-                            AND p.end_date >= "' . $mallTime . '"
-                            AND p.coupon_validity_in_date >= "' . $mallTime . '"
+                            AND p.is_coupon = 'Y' AND p.status = 'active'
+                            AND p.begin_date <= '" . $mallTime . "'
+                            AND p.end_date >= '" . $mallTime . "'
+                            AND p.coupon_validity_in_date >= '" . $mallTime . "'
+                        GROUP BY p.promotion_id
                         HAVING
                             (p.maximum_issued_coupon > total_issued_coupon AND p.maximum_issued_coupon <> 0)
                             OR
                             (p.maximum_issued_coupon = 0)
-                    '),
+                    "),
                 array(
                         'merchantid' => $retailer->merchant_id,
                         'merchantidx' => $retailer->merchant_id
                     )
             );
 
-        // check available autho-issuance coupon that already obtainde by user
+        // check available auto-issuance coupon that already obtained by user
         $obtained_coupons = DB::select(
-            DB::raw(
-                'SELECT * FROM ' . DB::getTablePrefix() . 'promotions p
-            inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id
-            inner join ' . DB::getTablePrefix() . 'issued_coupons ic on p.promotion_id = ic.promotion_id
-            left join ' . DB::getTablePrefix() . 'promotion_retailer pre on pre.promotion_id = p.promotion_id
-            left join ' . DB::getTablePrefix() . 'merchants m on m.merchant_id = pre.retailer_id
-            WHERE
-                (m.parent_id = :merchantid or m.merchant_id = :merchantidx)
-                AND ic.user_id = :userid
-                AND p.is_coupon = "Y" AND p.status = "active"
-                AND p.begin_date <= "' . $mallTime . '"
-                AND p.end_date >= "' . $mallTime . '"
-                AND pr.rule_type != "auto_issue_on_every_signin"
-                '
-            ),
+            DB::raw("
+                SELECT * FROM {$prefix}promotions p
+                inner join {$prefix}promotion_rules pr on p.promotion_id = pr.promotion_id
+                inner join {$prefix}issued_coupons ic on p.promotion_id = ic.promotion_id
+                left join {$prefix}promotion_retailer pre on pre.promotion_id = p.promotion_id
+                left join {$prefix}merchants m on m.merchant_id = pre.retailer_id
+                WHERE
+                    (m.parent_id = :merchantid or m.merchant_id = :merchantidx)
+                    AND ic.user_id = :userid
+                    AND p.is_coupon = 'Y' AND p.status = 'active'
+                    AND p.begin_date <= '" . $mallTime . "'
+                    AND p.end_date >= '" . $mallTime . "'
+                    AND pr.rule_type != 'auto_issue_on_every_signin'
+                GROUP BY p.promotion_id
+            "),
             array('merchantid' => $retailer->merchant_id, 'merchantidx' => $retailer->merchant_id, 'userid' => $user->user_id)
         );
 
