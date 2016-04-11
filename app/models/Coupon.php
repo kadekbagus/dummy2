@@ -420,15 +420,19 @@ class Coupon extends Eloquent
                     AND p.begin_date <= '" . $mallTime . "'
                     AND p.end_date >= '" . $mallTime . "'
                     AND (
-                        pr.rule_type = 'auto_issue_on_first_signin'
-                        OR (
+                        (
+                            pr.rule_type = 'auto_issue_on_first_signin'
+                            AND ic.issuer_retailer_id = :merchantidy
+                        )
+                        OR 
+                        (
                             pr.rule_type = 'auto_issue_on_signup'
-                            AND (ic.issuer_retailer_id = :merchantidy)
+                            AND ic.issuer_retailer_id = :merchantidz
                         )
                     )
                 GROUP BY p.promotion_id
             "),
-            array('merchantid' => $retailer->merchant_id, 'merchantidx' => $retailer->merchant_id, 'merchantidy' => $retailer->merchant_id, 'userid' => $user->user_id)
+            array('merchantid' => $retailer->merchant_id, 'merchantidx' => $retailer->merchant_id, 'merchantidy' => $retailer->merchant_id, 'merchantidz' => $retailer->merchant_id, 'userid' => $user->user_id)
         );
 
         // get obtained auto-issuance coupon ids
