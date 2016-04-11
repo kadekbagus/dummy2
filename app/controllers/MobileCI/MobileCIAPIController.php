@@ -570,12 +570,23 @@ class MobileCIAPIController extends BaseCIController
                     $couponsCount = Coupon::select('promotions.promotion_id')->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'promotions.promotion_id')
                                     ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'promotions.promotion_id')
                                     ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
-                                    ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
-                                    ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
+                                    ->leftJoin('promotion_retailer_redeem', 'promotion_retailer_redeem.promotion_id', '=', 'promotions.promotion_id')
+                                    ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer_redeem.retailer_id')
                                     ->where(function ($q) use ($mallid) {
-                                            $q->where('merchants.parent_id', '=', $mallid)
-                                              ->orWhere('merchants.merchant_id', '=', $mallid);
+                                        $q->where(function ($q2) use ($mallid) {
+                                            $q2->where('merchants.parent_id', '=', $mallid)
+                                                ->orWhere('merchants.merchant_id', '=', $mallid);
                                         });
+                                        $q->orWhere(function ($q2) use ($mallid) {
+                                            $q2->whereHas('employee', function ($q3) use ($mallid) {
+                                                $q3->whereHas('employee', function ($q4) use ($mallid) {
+                                                    $q4->whereHas('retailers', function ($q5) use ($mallid) {
+                                                        $q5->where('merchants.merchant_id', $mallid);
+                                                    });
+                                                });
+                                            });
+                                        });
+                                    });
 
                     if ($userGender !== null) {
                         $couponsCount = $couponsCount->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
@@ -2110,7 +2121,7 @@ class MobileCIAPIController extends BaseCIController
                     $prefix = DB::getTablePrefix();
                     $q->leftJoin('category_translations', function ($join) use ($alternateLanguage) {
                         $join->on('categories.category_id', '=', 'category_translations.category_id');
-                        $join->where('category_translations.merchant_language_id', '=', $alternateLanguage->merchant_language_id);
+                        $join->where('category_translations.merchant_language_id', '=', $alternateLanguage->language_id);
                     });
                     $q->select('categories.*');
                     $q->addSelect([
@@ -2797,12 +2808,30 @@ class MobileCIAPIController extends BaseCIController
                         }
                         $q->whereRaw("? between begin_date and end_date", [$mallTime]);
                     },
-                    'couponsProfiling' => function($q) use ($userGender, $userAge, $mallTime, $user) {
+                    'couponsProfiling' => function($q) use ($userGender, $userAge, $mallTime, $user, $retailer) {
                         $prefix = DB::getTablePrefix();
+                        $mallid = $retailer->merchant_id;
                         $q->select("*", DB::raw('count(' . DB::getTablePrefix() . 'promotions.promotion_id) as quantity'))
                             ->join('issued_coupons', function ($join) {
                                 $join->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
                                 $join->where('issued_coupons.status', '=', 'active');
+                            })
+                            ->leftJoin('promotion_retailer_redeem', 'promotion_retailer_redeem.promotion_id', '=', 'promotions.promotion_id')
+                            ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer_redeem.retailer_id')
+                            ->where(function ($q) use ($mallid) {
+                                $q->where(function ($q2) use ($mallid) {
+                                    $q2->where('merchants.parent_id', '=', $mallid)
+                                        ->orWhere('merchants.merchant_id', '=', $mallid);
+                                });
+                                $q->orWhere(function ($q2) use ($mallid) {
+                                    $q2->whereHas('employee', function ($q3) use ($mallid) {
+                                        $q3->whereHas('employee', function ($q4) use ($mallid) {
+                                            $q4->whereHas('retailers', function ($q5) use ($mallid) {
+                                                $q5->where('merchants.merchant_id', $mallid);
+                                            });
+                                        });
+                                    });
+                                });
                             })
                             ->where('promotions.coupon_validity_in_date', '>=', $mallTime)
                             ->where('issued_coupons.user_id', $user->user_id);
@@ -2830,7 +2859,7 @@ class MobileCIAPIController extends BaseCIController
                 ->where('merchants.merchant_id', $product_id);
 
             $tenant->select('merchants.*');
-            // $this->maybeJoinWithTranslationsTable($tenant, $alternateLanguage);
+            $this->maybeJoinWithTranslationsTable($tenant, $alternateLanguage);
             $tenant = $tenant->first();
 
             // News per tenant
@@ -4437,12 +4466,23 @@ class MobileCIAPIController extends BaseCIController
                     $join->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
                     $join->where('issued_coupons.status', '=', 'active');
                 })
-                ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
-                ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
+                ->leftJoin('promotion_retailer_redeem', 'promotion_retailer_redeem.promotion_id', '=', 'promotions.promotion_id')
+                ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer_redeem.retailer_id')
                 ->where(function ($q) use ($mallid) {
-                        $q->where('merchants.parent_id', '=', $mallid)
-                          ->orWhere('merchants.merchant_id', '=', $mallid);
-                    })
+                    $q->where(function ($q2) use ($mallid) {
+                        $q2->where('merchants.parent_id', '=', $mallid)
+                            ->orWhere('merchants.merchant_id', '=', $mallid);
+                    });
+                    $q->orWhere(function ($q2) use ($mallid) {
+                        $q2->whereHas('employee', function ($q3) use ($mallid) {
+                            $q3->whereHas('employee', function ($q4) use ($mallid) {
+                                $q4->whereHas('retailers', function ($q5) use ($mallid) {
+                                    $q5->where('merchants.merchant_id', $mallid);
+                                });
+                            });
+                        });
+                    });
+                })
                 ->where('promotions.coupon_validity_in_date', '>=', Carbon::now($retailer->timezone->timezone_name))
                 ->where('issued_coupons.user_id', $user->user_id);
 
@@ -4663,12 +4703,23 @@ class MobileCIAPIController extends BaseCIController
                     $join->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
                     $join->where('issued_coupons.status', '=', 'active');
                 })
-                ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
-                ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
+                ->leftJoin('promotion_retailer_redeem', 'promotion_retailer_redeem.promotion_id', '=', 'promotions.promotion_id')
+                ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer_redeem.retailer_id')
                 ->where(function ($q) use ($mallid) {
-                        $q->where('merchants.parent_id', '=', $mallid)
-                          ->orWhere('merchants.merchant_id', '=', $mallid);
-                    })
+                    $q->where(function ($q2) use ($mallid) {
+                        $q2->where('merchants.parent_id', '=', $mallid)
+                            ->orWhere('merchants.merchant_id', '=', $mallid);
+                    });
+                    $q->orWhere(function ($q2) use ($mallid) {
+                        $q2->whereHas('employee', function ($q3) use ($mallid) {
+                            $q3->whereHas('employee', function ($q4) use ($mallid) {
+                                $q4->whereHas('retailers', function ($q5) use ($mallid) {
+                                    $q5->where('merchants.merchant_id', $mallid);
+                                });
+                            });
+                        });
+                    });
+                })
                 ->where('promotions.coupon_validity_in_date', '>=', Carbon::now($retailer->timezone->timezone_name))
                 ->where('issued_coupons.user_id', $user->user_id);
 
@@ -4907,12 +4958,23 @@ class MobileCIAPIController extends BaseCIController
                 ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'promotions.promotion_id')
                 ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'promotions.promotion_id')
                 ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
-                ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
-                ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
+                ->leftJoin('promotion_retailer_redeem', 'promotion_retailer_redeem.promotion_id', '=', 'promotions.promotion_id')
+                ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer_redeem.retailer_id')
                 ->where(function ($q) use ($mallid) {
-                        $q->where('merchants.parent_id', '=', $mallid)
-                          ->orWhere('merchants.merchant_id', '=', $mallid);
+                    $q->where(function ($q2) use ($mallid) {
+                        $q2->where('merchants.parent_id', '=', $mallid)
+                            ->orWhere('merchants.merchant_id', '=', $mallid);
                     });
+                    $q->orWhere(function ($q2) use ($mallid) {
+                        $q2->whereHas('employee', function ($q3) use ($mallid) {
+                            $q3->whereHas('employee', function ($q4) use ($mallid) {
+                                $q4->whereHas('retailers', function ($q5) use ($mallid) {
+                                    $q5->where('merchants.merchant_id', $mallid);
+                                });
+                            });
+                        });
+                    });
+                });
 
             // filter by age and gender
             if ($userGender !== null) {
@@ -7964,7 +8026,7 @@ class MobileCIAPIController extends BaseCIController
             $tenants->leftJoin('merchant_translations', function ($join) use ($alternateLanguage) {
                 $join->on('merchants.merchant_id', '=', 'merchant_translations.merchant_id');
                 $join->where('merchant_translations.merchant_language_id', '=',
-                    $alternateLanguage->merchant_language_id);
+                    $alternateLanguage->language_id);
             });
 
             // and overwrite fields with alternate language fields if present
@@ -7989,7 +8051,7 @@ class MobileCIAPIController extends BaseCIController
             $categories->leftJoin('category_translations', function ($join) use ($alternateLanguage) {
                 $join->on('categories.category_id', '=', 'category_translations.category_id');
                 $join->where('category_translations.merchant_language_id', '=',
-                    $alternateLanguage->merchant_language_id);
+                    $alternateLanguage->language_id);
             });
 
             // and overwrite fields with alternate language fields if present
