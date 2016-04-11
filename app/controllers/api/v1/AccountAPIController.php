@@ -162,38 +162,71 @@ class AccountAPIController extends ControllerAPI
                     }
                 }
 
+                $prefix = DB::getTablePrefix();
+
                 if ($removetenant) {
-                    //get data in news and promotion
-                    $newsPromotionActive = News::select('news.news_id')
-                                                ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
-                                                ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
-                                                ->whereNotIn('campaign_status.campaign_status_name', ['stopped', 'expired'])
-                                                ->whereIn('news_merchant.merchant_id', $removetenant)
-                                                ->count();
-                                                
-                    //get data in coupon
-                    $couponStatusActive = Coupon::select('campaign_status.campaign_status_name')
-                                                ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
-                                                ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
-                                                ->whereNotIn('campaign_status.campaign_status_name', ['stopped', 'expired'])
-                                                ->whereIn('promotion_retailer.retailer_id', $removetenant)
-                                                ->count();
-                    $activeCampaign = (int) $newsPromotionActive + (int) $couponStatusActive;                   
+                    foreach ($removetenant as $tenant_id) {
+                        $activeCampaign = 0;
+                        $newsPromotionActive = 0;
+                        $couponStatusActive = 0;
 
-                    $validator = Validator::make(
-                        array(
-                            'active_campaign'  => $activeCampaign,
-                        ),
-                        array(
-                            'active_campaign'    => 'in: 0',
-                        ),
-                        array(
-                            'active_campaign.in' => 'Cannot unlink the tenant with an active campaign',
-                        )
-                    );
+                        $mall = CampaignLocation::select('merchant_id', 'parent_id', 'object_type')->where('merchant_id', '=', $tenant_id)->whereIn('object_type', ['mall', 'tenant'])->first();
 
-                    if ($validator->fails()) {
-                        OrbitShopAPI::throwInvalidArgument($validator->messages()->first());
+                        $mallid = '';
+                        if ($mall->object_type === 'mall') {
+                            $mallid = $mall->merchant_id;
+                        } else {
+                            $mallid = $mall->parent_id;
+                        }
+
+                        $timezone = Mall::leftJoin('timezones','timezones.timezone_id','=','merchants.timezone_id')
+                            ->where('merchants.merchant_id','=', $mallid)
+                            ->first();
+
+                        $timezoneName = $timezone->timezone_name;
+
+                        $nowMall = Carbon::now($timezoneName);
+                        $dateNowMall = $nowMall->toDateString();
+
+                        //get data in news and promotion
+                        $newsPromotionActive = News::select('news.news_id')
+                                                    ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
+                                                    ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
+                                                    ->where(function ($q) use ($timezoneName, $prefix, $nowMall){
+                                                        $q->whereNotIn('campaign_status.campaign_status_name', ['stopped', 'expired']);
+                                                          //->orWhereRaw("(CONVERT_TZ({$prefix}news.end_date, '+00:00', '{$timezoneName}') <= '{$nowMall}')");
+                                                    })
+                                                    ->where('news_merchant.merchant_id', $tenant_id)
+                                                    ->count();
+                                                    
+                        //get data in coupon
+                        $couponStatusActive = Coupon::select('campaign_status.campaign_status_name')
+                                                    ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
+                                                    ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
+                                                    ->where(function ($q) use ($timezoneName, $prefix, $nowMall) {
+                                                        $q->whereNotIn('campaign_status.campaign_status_name', ['stopped', 'expired']);
+                                                          //->orWhereRaw("(CONVERT_TZ({$prefix}promotions.end_date, '+00:00', '{$timezoneName}') <= '{$nowMall}')");
+                                                    })
+                                                    ->where('promotion_retailer.retailer_id', $tenant_id)
+                                                    ->count();
+
+                        $activeCampaign = (int) $newsPromotionActive + (int) $couponStatusActive;                   
+
+                        $validator = Validator::make(
+                            array(
+                                'active_campaign'  => $activeCampaign,
+                            ),
+                            array(
+                                'active_campaign'    => 'in: 0',
+                            ),
+                            array(
+                                'active_campaign.in' => 'Cannot unlink the tenant with an active campaign',
+                            )
+                        );
+
+                        if ($validator->fails()) {
+                            OrbitShopAPI::throwInvalidArgument($validator->messages()->first());
+                        }
                     }
                 }
 
