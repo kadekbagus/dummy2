@@ -72,3 +72,8 @@ Route::post('/app/v1/issued-coupon/redeem', 'IntermediateAuthController@Coupon_p
  * Report Coupon By Name
  */
 Route::get('/app/v1/coupon-report/list', 'IntermediateAuthController@CouponReport_getCouponReport');
+
+/**
+ * Route to get CS by coupon ID
+ */
+Route::get('/app/v1/coupon/customer-service', 'IntermediateAuthController@CSListByCoupon_getList');
