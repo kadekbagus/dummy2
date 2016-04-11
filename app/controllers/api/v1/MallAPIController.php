@@ -1451,7 +1451,7 @@ class MallAPIController extends ControllerAPI
                     'url'                  => 'orbit.formaterror.url.web',
                     'contact_person_email' => 'email',
                     // 'user_id'           => 'orbit.empty.user',
-                    'status'               => 'orbit.empty.mall_status|orbit_check_link_mallgroup|orbit_check_link_campaign',//|orbit.exists.merchant_retailers_is_box_current_retailer:'.$merchant_id,
+                    'status'               => 'orbit.empty.mall_status|orbit_check_link_mallgroup|orbit_check_link_campaign|orbit_check_tenant_mall',//|orbit.exists.merchant_retailers_is_box_current_retailer:'.$merchant_id,
                     'parent_id'            => 'orbit.empty.mallgroup',//|orbit.exists.merchant_retailers_is_box_current_retailer:'.$merchant_id,
                     // 'orid'              => 'orid_exists_but_me',
                     'ticket_header'        => 'ticket_header_max_length',
@@ -1468,7 +1468,8 @@ class MallAPIController extends ControllerAPI
                    'orbit_check_link_mallgroup' => 'Mall is not linked to active mall group',
                    'orbit_check_link_campaign'  => 'Mall is linked to active campaign(s)',
                    'ticket_header_max_length'   => Lang::get('validation.orbit.formaterror.merchant.ticket_header.max_length'),
-                   'ticket_footer_max_length'   => Lang::get('validation.orbit.formaterror.merchant.ticket_footer.max_length')
+                   'ticket_footer_max_length'   => Lang::get('validation.orbit.formaterror.merchant.ticket_footer.max_length'),
+                   'orbit_check_tenant_mall'    => 'Mall can not be deactivated, because it has active tenant',
                )
             );
 
@@ -2238,6 +2239,23 @@ class MallAPIController extends ControllerAPI
 
                 if (! empty($promotion)) {
                     return FALSE;
+                }
+            }
+            return TRUE;
+        });
+
+        // Check tenant mall, it should not inactive (for update)
+        Validator::extend('orbit_check_tenant_mall', function ($attribute, $value, $parameters) {
+            $mall_id = OrbitInput::post('merchant_id');
+
+            if ($value === 'inactive') {
+                $tenant = Tenant::excludeDeleted()
+                        ->where('parent_id', '=', $mall_id)
+                        ->where('status', '=', 'active')
+                        ->first();
+
+                if (! empty($tenant)) {
+                    return false;
                 }
             }
             return TRUE;
