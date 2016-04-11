@@ -772,7 +772,7 @@ class CampaignReportAPIController extends ControllerAPI
 
             if ($campaign_type === 'news' or $campaign_type === 'promotion') {
                 // Get begin and end
-                $getBeginEndDate = News::excludeDeleted()->selectRaw('DATE(begin_date) as begin_date, DATE(end_date) as end_date')
+                $getBeginEndDate = News::selectRaw('DATE(begin_date) as begin_date, DATE(end_date) as end_date')
                     ->where('news_id', $campaign_id)
                     ->where('object_type', $campaign_type)
                     ->get();
@@ -783,7 +783,7 @@ class CampaignReportAPIController extends ControllerAPI
 
             } elseif ($campaign_type === 'coupon') {
                 // Get begin and end
-                $getBeginEndDate = Coupon::excludeDeleted()->selectRaw('DATE(begin_date) as begin_date, DATE(end_date) as end_date')
+                $getBeginEndDate = Coupon::selectRaw('DATE(begin_date) as begin_date, DATE(end_date) as end_date')
                     ->where('promotion_id', $campaign_id)
                     ->get();
 
