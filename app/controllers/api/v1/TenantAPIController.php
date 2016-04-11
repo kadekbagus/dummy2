@@ -2543,7 +2543,7 @@ class TenantAPIController extends ControllerAPI
                     ->leftjoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
                     ->where(function ($q) use ($timezoneName, $prefix, $nowMall) {
                         $q->whereNotIn('campaign_status.campaign_status_name', ['stopped', 'expired'])
-                            ->orWhereRaw("(CONVERT_TZ({$prefix}promotions.end_date, '+00:00', '{$timezoneName}') <= '{$nowMall}')");
+                            ->orWhereRaw("promotions.end_date >= '{$nowMall}')");
                     })
                     ->where('promotion_retailer.retailer_id', $tenant_id)
                     ->first();
@@ -2557,7 +2557,7 @@ class TenantAPIController extends ControllerAPI
                     ->leftjoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
                     ->where(function ($q) use ($timezoneName, $prefix, $nowMall){
                         $q->whereNotIn('campaign_status.campaign_status_name', ['stopped', 'expired'])
-                            ->orWhereRaw("(CONVERT_TZ({$prefix}news.end_date, '+00:00', '{$timezoneName}') <= '{$nowMall}')");
+                            ->orWhereRaw("{$prefix}news.end_date >= '{$nowMall}')");
                     })
                     ->where('news_merchant.merchant_id',$tenant_id)
                     ->where('news.object_type','news')
@@ -2572,7 +2572,7 @@ class TenantAPIController extends ControllerAPI
                     ->leftjoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
                     ->where(function ($q) use ($timezoneName, $prefix, $nowMall){
                         $q->whereNotIn('campaign_status.campaign_status_name', ['stopped', 'expired'])
-                            ->orWhereRaw("(CONVERT_TZ({$prefix}news.end_date, '+00:00', '{$timezoneName}') <= '{$nowMall}')");
+                            ->orWhereRaw("{$prefix}news.end_date >= '{$nowMall}')");
                     })
                     ->where('news_merchant.merchant_id',$tenant_id)
                     ->where('news.object_type','promotion')
