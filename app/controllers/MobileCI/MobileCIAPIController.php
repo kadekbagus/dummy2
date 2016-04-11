@@ -5086,11 +5086,8 @@ class MobileCIAPIController extends BaseCIController
                 }
             }
 
-            $link_to_tenants = \CouponRetailer::leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
-                ->where(function ($q2) use ($mallid) {
-                    $q2->where('merchants.parent_id', '=', $mallid)
-                        ->orWhere('merchants.merchant_id', '=', $mallid);
-                })
+            $link_to_tenants = \CouponRetailer::where('promotion_retailer.retailer_id', '=', $mallid)
+                ->where('promotion_retailer.object_type', 'tenant')
                 ->where('promotion_id', $coupon_id)->get();
 
             if (empty($coupons->image)) {
