@@ -76,29 +76,33 @@
                 <a href="{{{ $urlblock->blockedRoute('ci-tenants', ['coupon_id' => $coupon->promotion_id]) }}}" class="btn btn-info btn-block">{{{ Lang::get('mobileci.tenant.see_tenants') }}}</a>
             </div>
         </div>
-        @endif
-        @if(count($coupon->issuedCoupons) > 0)
-        @if(count($tenants) > 0)
+        @else
         <div class="row vertically-spaced">
             <div class="col-xs-12 text-center">
-                <a href="{{{ $urlblock->blockedRoute('ci-tenants', ['coupon_redeem_id' => $coupon->promotion_id]) }}}" class="btn btn-info btn-block">{{{ Lang::get('mobileci.tenant.redemption_places') }}}</a>
+                <button class="btn btn-info btn-block" disabled="disabled">{{{ Lang::get('mobileci.tenant.see_tenants') }}}</button>
             </div>
         </div>
         @endif
-
-        <div class="row">
-            @if(count($tenants) <=0)
-                @if($cs_reedem)
-                    <div class="col-xs-12 text-center">
-                        <button class="btn btn-info btn-block" id="useBtn" disabled="disabled">{{{ Lang::get('mobileci.coupon.use_coupon') }}}</button>
-                    </div>
-                    @endif
+        @if(count($issued_coupons) > 0)
+            @if(count($tenants) > 0 || $coupon->linkedToCS === TRUE)
+            <div class="row vertically-spaced">
+                <div class="col-xs-12 text-center">
+                    <a href="{{{ $urlblock->blockedRoute('ci-tenants', ['coupon_redeem_id' => $coupon->promotion_id]) }}}" class="btn btn-info btn-block">{{{ Lang::get('mobileci.tenant.redemption_places') }}}</a>
+                </div>
+            </div>
             @else
-            <div class="col-xs-12 text-center">
-                <button class="btn btn-info btn-block" id="useBtn" disabled="disabled">{{{ Lang::get('mobileci.coupon.use_coupon') }}}</button>
+            <div class="row vertically-spaced">
+                <div class="col-xs-12 text-center">
+                    <button class="btn btn-info btn-block" disabled="disabled">{{{ Lang::get('mobileci.tenant.redemption_places') }}}</button>
+                </div>
             </div>
             @endif
-        </div>
+
+            <div class="row">
+                <div class="col-xs-12 text-center">
+                    <button class="btn btn-info btn-block" id="useBtn" disabled="disabled">{{{ Lang::get('mobileci.coupon.use_coupon') }}}</button>
+                </div>
+            </div>
         @endif
     </div>
 </div>
@@ -247,7 +251,7 @@
             $('#useBtn').click(function(){
                 $('#hasCouponModal').modal();
             });
-            @if(count($coupon->issuedCoupons) > 0)
+            @if(count($issued_coupons) > 0)
             $('#applyCoupon').click(function(){
                 $('#hasCouponModal .modal-content').css('display', 'none');
                 $('#hasCouponModal .modal-spinner').css('display', 'block');
@@ -255,7 +259,7 @@
                     url: apiPath+'issued-coupon/redeem',
                     method: 'POST',
                     data: {
-                        issued_coupon_id: '{{$coupon->issuedCoupons[0]->issued_coupon_id}}',
+                        issued_coupon_id: '{{$issued_coupons[0]->issued_coupon_id}}',
                         merchant_verification_number: $('#tenantverify').val(),
                         current_mall: '{{$retailer->merchant_id}}'
                     }
