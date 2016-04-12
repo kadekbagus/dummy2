@@ -35,11 +35,13 @@ class EmployeePrinterController extends DataPrinterController
         $role_names = OrbitInput::get('role_names');
         $employee_id_char_like = OrbitInput::get('employee_id_char_like');
         $status = OrbitInput::get('status');
+        $flagMallPortal = false;
 
         if (! in_array( strtolower($role->role_name), $pmpRoles)) {
             $response = EmployeeAPIController::create('raw')
                                          ->setReturnBuilder(true)
                                          ->getSearchMallEmployee();
+            $flagMallPortal = true;
         } else {
             $response = EmployeeAPIController::create('raw')
                                          ->setReturnBuilder(true)
@@ -64,11 +66,17 @@ class EmployeePrinterController extends DataPrinterController
 
         $pageTitle = 'Employee List';
 
+        if ( $flagMallPortal ) {
+            $fileName = OrbitText::exportFilename(preg_replace("/[\s_]/", "-", $pageTitle), '.csv', $timezone);
+        } else {
+            $fileName = $this->getFilename(preg_replace("/[\s_]/", "-", $pageTitle), '.csv', null);
+        }
+
         switch ($mode) {
             case 'csv':
                 @header('Content-Description: File Transfer');
                 @header('Content-Type: text/csv');
-                @header('Content-Disposition: attachment; filename=' . $this->getFilename(preg_replace("/[\s_]/", "-", $pageTitle), '.csv', null) );
+                @header('Content-Disposition: attachment; filename=' . $fileName );
 
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','','');
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Employee List', '', '', '', '', '','','','','');
@@ -110,14 +118,18 @@ class EmployeePrinterController extends DataPrinterController
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','','','');
 
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
-
+                    if( $flagMallPortal) { 
+                        $lastUpdate = $this->printDateTime($row->updated_at, $timezone, 'd F Y H:i:s'); 
+                    } else { 
+                        $lastUpdate = $this->printDateTime($row->updated_at, null, 'd F Y H:i:s'); 
+                    }
                     printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
                         '', $this->printUtf8($row->user_firstname . ' ' . $row->user_lastname),
                             $this->printUtf8($row->user_email),
                             $this->printUtf8($row->role_name),
                             $this->printUtf8($row->employee_id_char),
                             $this->printUtf8($row->status),
-                            $this->printDateTime($row->updated_at, null, 'd F Y H:i:s')
+                            $lastUpdate
                        );
 
                 }

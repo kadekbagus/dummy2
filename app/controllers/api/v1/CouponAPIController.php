@@ -494,6 +494,8 @@ class CouponAPIController extends ControllerAPI
 
                 if ($tenant_id === $mall_id) {
                     $isMall = 'mall';
+                } else {
+                    $isMall = 'tenant';
                 }
 
                 $retailer = new CouponRetailerRedeem();
@@ -533,6 +535,8 @@ class CouponAPIController extends ControllerAPI
 
                 if ($tenant_id === $mall_id) {
                     $isMall = 'mall';
+                } else {
+                    $isMall = 'tenant';
                 }
 
                 $couponretailer = new CouponRetailer();
@@ -1524,7 +1528,10 @@ class CouponAPIController extends ControllerAPI
 
                     if ($tenant_id === $mall_id) {
                         $isMall = 'mall';
+                    } else {
+                        $isMall = 'tenant';
                     }
+
 
                     $retailer = new CouponRetailerRedeem();
                     $retailer->promotion_id = $promotion_id;
