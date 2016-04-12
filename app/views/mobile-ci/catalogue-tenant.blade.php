@@ -17,7 +17,7 @@
 
 @section('content')
     @if($data->status === 1)
-        @if(sizeof($data->records) > 0)
+        @if(sizeof($data->records) > 0 || $link_to_coupon_data->linkedToCS)
             <div id="search-tool">
                 <div class="row">
                     <div class="col-xs-5 search-tool-col">

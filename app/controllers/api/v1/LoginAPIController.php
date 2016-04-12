@@ -315,7 +315,10 @@ class LoginAPIController extends ControllerAPI
                     $token->user_id = $user->user_id;
                     $token->save();
 
-                    $data = sprintf(Config::get('orbit.agreement.pmp'), $token->token_value);
+                    $url = sprintf(Config::get('orbit.agreement.pmp'), $token->token_value);
+                    $data = new stdClass();
+                    $data->role_name = $user->role->role_name;
+                    $data->url = $url;
                 }
 
                 $this->response->code = 302;
@@ -1440,7 +1443,11 @@ class LoginAPIController extends ControllerAPI
                     $this->response->code = 302;
                     $this->response->status = 'redirect';
                     $this->response->message = Lang::get('validation.orbit.access.agreement');
-                    $this->response->data = sprintf(Config::get('orbit.agreement.mall'), $token->token_value);
+
+                    $url = sprintf(Config::get('orbit.agreement.mall'), $token->token_value);
+                    $data = new stdClass();
+                    $data->role_name = $user->role->role_name;
+                    $data->url = $url;
                 } else {
                     $this->response->data->menus = $menus;
                 }

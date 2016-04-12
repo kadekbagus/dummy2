@@ -12,6 +12,8 @@ use OrbitShop\API\v1\OrbitShopAPI;
  */
 class AccountAPIController extends ControllerAPI
 {
+    protected $pmpAccountModifiyRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign admin', 'campaign employee'];
+
     /**
      * The main method
      *
@@ -21,34 +23,80 @@ class AccountAPIController extends ControllerAPI
      */
     public function getAccount()
     {
-        $this->prepareData();
+        try {
+            // Require authentication
+            $this->checkAuth();
 
-        $this->data->returned_records = count($this->data->records);
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $apiUser = $this->api->user;
 
-        $this->response->data = $this->data;
+            // @Todo: Use ACL authentication instead
+            $apiRole = $apiUser->role;
+            $validRoles = $this->pmpAccountModifiyRoles;
+            if (! in_array( strtolower($apiRole->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            $this->prepareData();
+
+            $this->data->returned_records = count($this->data->records);
+
+            $this->response->data = $this->data;
+        } catch (Exception $e) {
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+        }
+
         return $this->render(200);
     }
 
     public function getAvailableTenantsSelection()
     {
-        $availableMerchantIds = UserMerchant::whereIn('object_type', ['mall', 'tenant'])->lists('merchant_id');
+        try {
+            // Require authentication
+            $this->checkAuth();
 
-        // Retrieve from "merchants" table
-        $tenants = CampaignLocation::whereNotIn('merchant_id', $availableMerchantIds)
-                                ->whereIn('object_type', ['mall', 'tenant'])
-                                ->orderBy('name')
-                                ->get();
-        
-        $selection = [];
-        foreach ($tenants as $tenant) {
-            $selection[] = [
-                'id'     => $tenant->merchant_id,
-                'name'   => $tenant->tenant_at_mall,
-                'status' => $tenant->status,
-            ];
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $apiUser = $this->api->user;
+
+            // @Todo: Use ACL authentication instead
+            $apiRole = $apiUser->role;
+            $validRoles = $this->pmpAccountModifiyRoles;
+            if (! in_array( strtolower($apiRole->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            $availableMerchantIds = UserMerchant::whereIn('object_type', ['mall', 'tenant'])->lists('merchant_id');
+
+            // Retrieve from "merchants" table
+            $tenants = CampaignLocation::whereNotIn('merchant_id', $availableMerchantIds)
+                                    ->whereIn('object_type', ['mall', 'tenant'])
+                                    ->orderBy('name')
+                                    ->get();
+
+            $selection = [];
+            foreach ($tenants as $tenant) {
+                $selection[] = [
+                    'id'     => $tenant->merchant_id,
+                    'name'   => $tenant->tenant_at_mall,
+                    'status' => $tenant->status,
+                ];
+            }
+
+            $this->response->data = ['row_count' => count($selection), 'available_tenants' => $selection];
+        } catch (Exception $e) {
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
         }
 
-        $this->response->data = ['row_count' => count($selection), 'available_tenants' => $selection];
         return $this->render(200);
     }
 
@@ -74,7 +122,22 @@ class AccountAPIController extends ControllerAPI
     public function postCreateUpdate()
     {
         try {
-            $httpCode=200;
+            $httpCode = 200;
+
+            // Require authentication
+            $this->checkAuth();
+
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $apiUser = $this->api->user;
+
+            // @Todo: Use ACL authentication instead
+            $apiRole = $apiUser->role;
+            $validRoles = $this->pmpAccountModifiyRoles;
+            if (! in_array( strtolower($apiRole->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
 
             $this->registerCustomValidation();
 
@@ -141,7 +204,7 @@ class AccountAPIController extends ControllerAPI
                 }
                 $removetenant = array_diff($merchantdb, Input::get('merchant_ids'));
                 $addtenant = array_diff(Input::get('merchant_ids'), $merchantdb);
-                $newsPromotionActive = 0; 
+                $newsPromotionActive = 0;
                 $couponStatusActive = 0;
 
                 if ($addtenant || $removetenant) {
@@ -198,7 +261,7 @@ class AccountAPIController extends ControllerAPI
                                                     })
                                                     ->where('news_merchant.merchant_id', $tenant_id)
                                                     ->count();
-                                                    
+
                         //get data in coupon
                         $couponStatusActive = Coupon::select('campaign_status.campaign_status_name')
                                                     ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
@@ -210,7 +273,7 @@ class AccountAPIController extends ControllerAPI
                                                     ->where('promotion_retailer.retailer_id', $tenant_id)
                                                     ->count();
 
-                        $activeCampaign = (int) $newsPromotionActive + (int) $couponStatusActive;                   
+                        $activeCampaign = (int) $newsPromotionActive + (int) $couponStatusActive;
 
                         $validator = Validator::make(
                             array(
@@ -230,35 +293,35 @@ class AccountAPIController extends ControllerAPI
                     }
                 }
 
-                // get campaign employee and delete merchant 
+                // get campaign employee and delete merchant
                 $employee = CampaignAccount::where('parent_user_id', '=', $user->user_id)->lists('user_id');
                 if (! empty($employee)) {
                     $merchantEmployee = UserMerchant::whereIn('user_id', $employee)->delete();
                 }
 
                 $ownermerchant = UserMerchant::where('user_id', $user->user_id)->delete();
-         
-                // Then update the user_id with the submitted ones 
-                foreach (Input::get('merchant_ids') as $merchantId) { 
+
+                // Then update the user_id with the submitted ones
+                foreach (Input::get('merchant_ids') as $merchantId) {
 
                     $userMerchant = new UserMerchant;
-                    $userMerchant->user_id = $user->user_id; 
-                    $userMerchant->merchant_id = $merchantId; 
-                    $userMerchant->object_type = CampaignLocation::find($merchantId)->object_type; 
-                    $userMerchant->save(); 
+                    $userMerchant->user_id = $user->user_id;
+                    $userMerchant->merchant_id = $merchantId;
+                    $userMerchant->object_type = CampaignLocation::find($merchantId)->object_type;
+                    $userMerchant->save();
 
                     if (! empty($employee)) {
                         foreach ($employee as $emp) {
                             $employeeMerchant = new UserMerchant;
-                            $employeeMerchant->user_id = $emp; 
+                            $employeeMerchant->user_id = $emp;
                             $employeeMerchant->merchant_id = $merchantId;
                             $employeeMerchant->object_type = CampaignLocation::find($merchantId)->object_type;
-                            $employeeMerchant->save(); 
+                            $employeeMerchant->save();
                         }
                     }
                 }
             }
-            
+
             if ( ! $this->id) {
                 // Save to "settings" table
                 $setting = new Setting;
@@ -268,7 +331,7 @@ class AccountAPIController extends ControllerAPI
                 $setting->object_type = 'user';
                 $setting->save();
             }
-            
+
             $data = new stdClass();
             $data->id = $user->user_id;
 
@@ -448,8 +511,10 @@ class AccountAPIController extends ControllerAPI
                 'tenants'      => $tenantAtMallArray,
 
                 // Taken from getUserCreatedAtAttribute() in the model
+                //                                                     What is this?
+                //                                                         \/
                 'created_at'   => $row->user_created_at->setTimezone('Asia/Singapore')->format('d F Y H:i:s'),
-                
+
                 'status'       => $row->campaignAccount->status,
                 'id'           => $row->user_id,
 
