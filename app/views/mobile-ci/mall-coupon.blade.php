@@ -84,7 +84,6 @@
         </div>
         @endif
         @if(count($issued_coupons) > 0)
-            @if(count($tenants) > 0 || $coupon->linkedToCS === TRUE)
             <div class="row vertically-spaced">
                 <div class="col-xs-12 text-center">
                     <a href="{{{ $urlblock->blockedRoute('ci-tenants', ['coupon_redeem_id' => $coupon->promotion_id]) }}}" class="btn btn-info btn-block">{{{ Lang::get('mobileci.tenant.redemption_places') }}}</a>
@@ -95,18 +94,6 @@
                     <button class="btn btn-info btn-block" id="useBtn" disabled="disabled">{{{ Lang::get('mobileci.coupon.use_coupon') }}}</button>
                 </div>
             </div>
-            @else
-            <div class="row vertically-spaced">
-                <div class="col-xs-12 text-center">
-                    <button class="btn btn-info btn-block" disabled="disabled">{{{ Lang::get('mobileci.tenant.redemption_places') }}}</button>
-                </div>
-            </div>
-            <div class="row vertically-spaced">
-                <div class="col-xs-12 text-center">
-                    <button class="btn btn-info btn-block" disabled="disabled">{{{ Lang::get('mobileci.coupon.use_coupon') }}}</button>
-                </div>
-            </div>
-            @endif
         @endif
     </div>
 </div>
