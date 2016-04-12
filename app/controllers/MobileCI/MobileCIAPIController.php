@@ -2211,16 +2211,24 @@ class MobileCIAPIController extends BaseCIController
                             ->where('news.status', 'active')
                             ->where('news.object_type', 'promotion')
                             ->where('news.news_id', $pid)->first();
+
                         if (!is_object($news)) {
                             $notfound = TRUE;
                         }
-                        $retailers = \NewsMerchant::whereHas('tenant', function($q) use($pid) {
-                            $q->where('news_id', $pid);
-                        })->whereHas('news', function($q2) {
-                            $q2->where('object_type', 'promotion');
-                        })->get()->lists('merchant_id');
+                        $retailers = \NewsMerchant::whereHas('news', function($q2) use ($pid) {
+                            $q2->where('news.news_id', $pid);
+                            $q2->where('news.object_type', 'promotion');
+                        })
+                        ->where('news_merchant.object_type', 'retailer')
+                        ->get()
+                        ->lists('merchant_id');
+                        // dd($retailers);
                         // <-- should add exception if retailers not found
-                        $tenants->whereIn('merchants.merchant_id', $retailers);
+                        if (! empty($retailers)) {
+                            $tenants->whereIn('merchants.merchant_id', $retailers);
+                        } else {
+                            $notfound = TRUE;
+                        }
                     }
                 }
             );
@@ -2278,7 +2286,14 @@ class MobileCIAPIController extends BaseCIController
                         if ($coupon->is_all_employee === 'Y') {
                             $couponTenantRedeem->linkedToCS = TRUE;
                         } else {
-                            $employee = \Employee::byCouponId($pid)->get();
+                            $employee = \Employee::byCouponId($pid)
+                                ->whereHas('retailers', function ($q) use($retailer) {
+                                    $q->where('merchants.merchant_id', $retailer->merchant_id);
+                                })
+                                ->has('userVerificationNumber')
+                                ->where('employees.status', 'active')
+                                ->get();
+
                             if (count($employee) > 0) {
                                 $couponTenantRedeem->linkedToCS = TRUE;
                             }
@@ -2342,7 +2357,11 @@ class MobileCIAPIController extends BaseCIController
                         })->whereHas('news', function($q2) {
                             $q2->where('object_type', 'news');
                         })->get()->lists('merchant_id');
-                        $tenants->whereIn('merchants.merchant_id', $retailers);
+                        if (! empty($retailers)) {
+                            $tenants->whereIn('merchants.merchant_id', $retailers);
+                        } else {
+                            $notfound = TRUE;
+                        }
                     }
                 }
             );
@@ -5101,7 +5120,11 @@ class MobileCIAPIController extends BaseCIController
             }
 
             $link_to_tenants = \CouponRetailer::where('promotion_retailer.object_type', 'tenant')
-                ->where('promotion_id', $coupon_id)->get();
+                ->whereHas('tenant', function($q) use ($retailer) {
+                    $q->where('parent_id', $retailer->merchant_id);
+                })
+                ->where('promotion_id', $coupon_id)
+                ->get();
 
             if (empty($coupons->image)) {
                 $coupons->image = 'mobile-ci/images/default_coupon.png';
