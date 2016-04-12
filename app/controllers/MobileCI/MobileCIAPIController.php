@@ -158,12 +158,6 @@ class MobileCIAPIController extends BaseCIController
                         OrbitShopAPI::throwInvalidArgument($message);
                     }
                 }
-                $acq = \UserAcquisition::where('user_id', $user->user_id)
-                    ->where('acquirer_id', $retailer->merchant_id)
-                    ->lockForUpdate()->first();
-                if ($acq === null) {
-                    $user = null;
-                }
             }
 
             // if not from cloud callback we redirect to cloud if pending so cloud
@@ -659,9 +653,20 @@ class MobileCIAPIController extends BaseCIController
                         ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                         ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
                         ->where(function ($q) use ($mallid) {
-                                $q->where('merchants.parent_id', '=', $mallid)
-                                  ->orWhere('merchants.merchant_id', '=', $mallid);
-                            })
+                            $q->where(function ($q2) use ($mallid) {
+                                $q2->where('merchants.parent_id', '=', $mallid)
+                                    ->orWhere('merchants.merchant_id', '=', $mallid);
+                            });
+                            $q->orWhere(function ($q2) use ($mallid) {
+                                $q2->whereHas('employee', function ($q3) use ($mallid) {
+                                    $q3->whereHas('employee', function ($q4) use ($mallid) {
+                                        $q4->whereHas('retailers', function ($q5) use ($mallid) {
+                                            $q5->where('merchants.merchant_id', $mallid);
+                                        });
+                                    });
+                                });
+                            });
+                        })
                         ->where('promotions.status', '=', 'active')
                         ->where('promotions.coupon_validity_in_date', '>=', $now)
                         ->where('issued_coupons.user_id', $user->user_id)
@@ -5071,6 +5076,8 @@ class MobileCIAPIController extends BaseCIController
                 $tenants = \CouponRetailerRedeem::with('tenant', 'tenant.categories')
                     ->wherehas('tenant', function($q){
                         $q->where('merchants.status', 'active');
+                        $q->where('merchants.masterbox_number', '<>', '');
+                        $q->whereNotNull('merchants.masterbox_number');
                     })
                     ->where('promotion_id', $coupon_id)->get();
 
@@ -5079,15 +5086,21 @@ class MobileCIAPIController extends BaseCIController
                 if ($coupons->is_all_employee === 'Y') {
                     $coupons->linkedToCS = TRUE;
                 } else {
-                    $employee = \Employee::byCouponId($coupon_id)->get();
+                    $employee = \Employee::byCouponId($coupon_id)
+                        ->whereHas('retailers', function ($q) use($retailer) {
+                            $q->where('merchants.merchant_id', $retailer->merchant_id);
+                        })
+                        ->has('userVerificationNumber')
+                        ->where('employees.status', 'active')
+                        ->get();
+
                     if (count($employee) > 0) {
                         $coupons->linkedToCS = TRUE;
                     }
                 }
             }
 
-            $link_to_tenants = \CouponRetailer::where('promotion_retailer.retailer_id', '=', $mallid)
-                ->where('promotion_retailer.object_type', 'tenant')
+            $link_to_tenants = \CouponRetailer::where('promotion_retailer.object_type', 'tenant')
                 ->where('promotion_id', $coupon_id)->get();
 
             if (empty($coupons->image)) {
@@ -5806,8 +5819,9 @@ class MobileCIAPIController extends BaseCIController
 
             $mallid = $retailer->merchant_id;
 
-            $promotion = \News::with(['tenants' => function($q) {
+            $promotion = \News::with(['tenants' => function($q) use($retailer) {
                     $q->where('merchants.status', 'active');
+                    $q->where('merchants.parent_id', $retailer->merchant_id);
                 }])
                 ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                 ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
@@ -6422,8 +6436,9 @@ class MobileCIAPIController extends BaseCIController
 
             $mallid = $retailer->merchant_id;
 
-            $news = \News::with(['tenants' => function($q) {
+            $news = \News::with(['tenants' => function($q) use($retailer) {
                     $q->where('merchants.status', 'active');
+                    $q->where('merchants.parent_id', $retailer->merchant_id);
                 }])
                 ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                 ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
@@ -8522,6 +8537,7 @@ class MobileCIAPIController extends BaseCIController
     protected function viewItemUserUpdate($type, $user, $retailer){
         $viewedItems = [];
         $now = Carbon::now($retailer->timezone->timezone_name);
+        $mallid = $retailer->merchant_id;
 
         if ($type == 'tenant') {
             $newTenantsCount = Tenant::active()
@@ -8552,11 +8568,17 @@ class MobileCIAPIController extends BaseCIController
             }
 
             // get all new news after new_date filter by age range and gender
-            $newPromotionsCount = \News::
+            $newPromotionsCount = \News::select('news.news_id')
                             // active()
-                            leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'news.news_id')
+                            ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'news.news_id')
                             ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
                             ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
+                            ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
+                            ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
+                            ->where(function ($q) use ($mallid) {
+                                $q->where('merchants.parent_id', '=', $mallid)
+                                  ->orWhere('merchants.merchant_id', '=', $mallid);
+                            })
                             ->whereNotIn('news.news_id', function($q) use ($user) {
                                 $q->select('item_id')
                                     ->from('viewed_item_user')
@@ -8566,32 +8588,30 @@ class MobileCIAPIController extends BaseCIController
                             });
 
             if ($userGender !== null) {
-                $newPromotionsCount = $newPromotionsCount->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
+                $newPromotionsCount->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
             }
 
             if ($userAge !== null) {
                 if ($userAge === 0){
-                    $newPromotionsCount = $newPromotionsCount->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                    $newPromotionsCount->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
                 } else {
                     if ($userAge >= 55) {
-                        $newPromotionsCount = $newPromotionsCount->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
+                        $newPromotionsCount->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
                     } else {
-                        $newPromotionsCount = $newPromotionsCount->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                        $newPromotionsCount->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
                     }
                 }
             }
 
-            $newPromotionsCount = $newPromotionsCount->where('news.status', '=', 'active')
-                        ->where('mall_id', $retailer->merchant_id)
-                        ->where('object_type', 'promotion')
-                        ->whereRaw("? between begin_date and end_date", [$now])
-                        // ->whereRaw("begin_date between ? and ?", [$new_date, $now])
-                        // ->groupBy('news_id')
-                        ->lists('news_id');
+            $newPromotionsCount->where('news.status', '=', 'active')
+                        ->where('news.object_type', 'promotion')
+                        ->whereRaw("? between begin_date and end_date", [$now]);
 
-            foreach ($newPromotionsCount as $counter) {
+            $promotionData = $newPromotionsCount->get();
+
+            foreach ($promotionData as $counter) {
                 $viewedItems[] = array(
-                        'item_id' => $counter,
+                        'item_id' => $counter->news_id,
                         'user_id' => $user->user_id,
                         'mall_id' => $retailer->merchant_id,
                         'item_type' => 'promotion',
@@ -8613,11 +8633,17 @@ class MobileCIAPIController extends BaseCIController
             }
 
             // get all new news after new_date filter by age range and gender
-            $newNewsCount = \News::
+            $newNewsCount = \News::select('news.news_id')
                             // active()
-                            leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'news.news_id')
+                            ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'news.news_id')
                             ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
                             ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
+                            ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
+                            ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
+                            ->where(function ($q) use ($mallid) {
+                                $q->where('merchants.parent_id', '=', $mallid)
+                                  ->orWhere('merchants.merchant_id', '=', $mallid);
+                            })
                             ->whereNotIn('news.news_id', function($q) use ($user) {
                                 $q->select('item_id')
                                     ->from('viewed_item_user')
@@ -8627,32 +8653,30 @@ class MobileCIAPIController extends BaseCIController
                             });
 
             if ($userGender !== null) {
-                $newNewsCount = $newNewsCount->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
+                $newNewsCount->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
             }
 
             if ($userAge !== null) {
                 if ($userAge === 0){
-                    $newNewsCount = $newNewsCount->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                    $newNewsCount->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
                 } else {
                     if ($userAge >= 55) {
-                        $newNewsCount = $newNewsCount->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
+                        $newNewsCount->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
                     } else {
-                        $newNewsCount = $newNewsCount->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                        $newNewsCount->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
                     }
                 }
             }
 
-            $newNewsCount = $newNewsCount->where('news.status', '=', 'active')
-                        ->where('mall_id', $retailer->merchant_id)
-                        ->where('object_type', 'news')
-                        ->whereRaw("? between begin_date and end_date", [$now])
-                        // ->whereRaw("begin_date between ? and ?", [$new_date, $now])
-                        // ->groupBy('news_id')
-                        ->lists('news_id');
+            $newNewsCount->where('news.status', '=', 'active')
+                        ->where('news.object_type', 'news')
+                        ->whereRaw("? between begin_date and end_date", [$now]);
 
-            foreach ($newNewsCount as $counter) {
+            $newsData = $newNewsCount->get();
+
+            foreach ($newsData as $counter) {
                 $viewedItems[] = array(
-                        'item_id' => $counter,
+                        'item_id' => $counter->news_id,
                         'user_id' => $user->user_id,
                         'mall_id' => $retailer->merchant_id,
                         'item_type' => 'news',
@@ -8662,30 +8686,80 @@ class MobileCIAPIController extends BaseCIController
             }
         }
         if ($type == 'coupon') {
-            $newCoupons = DB::select(
-                DB::raw(
-                    'SELECT p.promotion_id FROM ' . DB::getTablePrefix() . 'promotions p
-                inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id AND p.is_coupon = "Y" AND p.status = "active"
-                inner join ' . DB::getTablePrefix() . 'issued_coupons ic on p.promotion_id = ic.promotion_id AND ic.status = "active"
-                WHERE p.promotion_id NOT IN (
-                    SELECT item_id FROM ' . DB::getTablePrefix() . 'viewed_item_user
-                    WHERE user_id = :useridone
-                    AND mall_id = :merchantidone
-                    AND item_type = "coupon"
-                )
-                AND ic.expired_date >= "' . Carbon::now($retailer->timezone->timezone_name) . '"
-                AND p.merchant_id = :merchantid
-                AND ic.user_id = :userid'
-                ),
-                array(
-                    'useridone' => $user->user_id,
-                    'merchantidone' => $retailer->merchant_id,
-                    'merchantid' => $retailer->merchant_id,
-                    'userid' => $user->user_id,
-                )
-            );
+            $userAge = 0;
+            if ($user->userDetail->birthdate !== '0000-00-00' && $user->userDetail->birthdate !== null) {
+                $userAge =  $this->calculateAge($user->userDetail->birthdate); // 27
+            }
 
-            foreach ($newCoupons as $counter) {
+            $userGender = 'U'; // default is Unknown
+            if ($user->userDetail->gender !== '' && $user->userDetail->gender !== null) {
+                $userGender =  $user->userDetail->gender;
+            }
+
+            $newCoupons = Coupon::select('promotions.promotion_id')->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'promotions.promotion_id')
+                            ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'promotions.promotion_id')
+                            ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id');
+
+            if ($userGender !== null) {
+                $newCoupons->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
+            }
+
+            if ($userAge !== null) {
+                if ($userAge === 0){
+                    $newCoupons->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                } else {
+                    if ($userAge >= 55) {
+                        $newCoupons->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
+                    } else {
+                        $newCoupons->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                    }
+                }
+            }
+            $prefix = DB::getTablePrefix();
+            $merchant_id = $retailer->merchant_id;
+            $user_id = $user->user_id;
+            $quote = function ($arg) {
+                return DB::connection()->getPdo()->quote($arg);
+            };
+            $newCoupons->join('promotion_rules', function($join) {
+                    $join->on('promotions.promotion_id', '=', 'promotion_rules.promotion_id')
+                        ->where('promotions.is_coupon', '=', 'Y');
+                })->join('issued_coupons', function($join) {
+                    $join->on('promotions.promotion_id', '=', 'issued_coupons.promotion_id')
+                        ->where('issued_coupons.status', '=', 'active');
+                })
+                ->whereRaw("
+                    {$prefix}promotions.promotion_id NOT IN (
+                    SELECT item_id FROM {$prefix}viewed_item_user
+                    WHERE user_id = {$quote($user_id)}
+                    AND mall_id = {$quote($merchant_id)}
+                    AND item_type = 'coupon'
+                )")
+                ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
+                ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
+                ->where(function ($q) use ($mallid) {
+                    $q->where(function ($q2) use ($mallid) {
+                        $q2->where('merchants.parent_id', '=', $mallid)
+                            ->orWhere('merchants.merchant_id', '=', $mallid);
+                    });
+                    $q->orWhere(function ($q2) use ($mallid) {
+                        $q2->whereHas('employee', function ($q3) use ($mallid) {
+                            $q3->whereHas('employee', function ($q4) use ($mallid) {
+                                $q4->whereHas('retailers', function ($q5) use ($mallid) {
+                                    $q5->where('merchants.merchant_id', $mallid);
+                                });
+                            });
+                        });
+                    });
+                })
+                ->where('promotions.status', '=', 'active')
+                ->where('promotions.coupon_validity_in_date', '>=', $now)
+                ->where('issued_coupons.user_id', $user->user_id)
+                ->groupBy('promotions.promotion_id');
+                
+            $couponData = $newCoupons->get();
+
+            foreach ($couponData as $counter) {
                 $viewedItems[] = array(
                         'item_id' => $counter->promotion_id,
                         'user_id' => $user->user_id,
