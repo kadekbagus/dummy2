@@ -485,6 +485,7 @@ class MallAPIController extends ControllerAPI
             }
             $newmall->is_mall = 'yes';
             $newmall->url = $url;
+            $newmall->ci_domain = $url;
             $newmall->masterbox_number = $masterbox_number;
             $newmall->slavebox_number = $slavebox_number;
             $newmall->mobile_default_language = $mobile_default_language;
@@ -584,7 +585,7 @@ class MallAPIController extends ControllerAPI
 
             // settings
             // @author irianto <irianto@dominopos.com>
-            $domain = OrbitInput::post('domain', strtolower(trim($mall_name)) . '.myorbit.com');
+            $domain = OrbitInput::post('domain', trim($url));
             $setting_items = [
                 'enable_coupon'                 => 'true',
                 'enable_coupon_widget'          => 'true',
@@ -1662,6 +1663,7 @@ class MallAPIController extends ControllerAPI
 
             OrbitInput::post('url', function($url) use ($updatedmall) {
                 $updatedmall->url = $url;
+                $updatedmall->ci_domain = $url;
             });
 
             OrbitInput::post('masterbox_number', function($masterbox_number) use ($updatedmall) {
