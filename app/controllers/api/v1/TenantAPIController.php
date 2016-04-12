@@ -2150,14 +2150,16 @@ class TenantAPIController extends ControllerAPI
             }
 
             if ($filtermode === 'available') {
-                $availableMerchantIds = UserMerchant::whereIn('object_type', ['mall', 'tenant'])->lists('merchant_id');
-                $tenants->whereNotIn('merchants.merchant_id', $availableMerchantIds);
+                $tenants->whereRaw("{$prefix}merchants.merchant_id NOT IN (
+                                    SELECT merchant_id FROM orb_user_merchant
+                                    WHERE {$prefix}user_merchant.object_type IN ('mall', 'tenant'))");
             }
 
             // Only showing tenant only, provide for coupon redemption place.
             if ($filtermode === 'tenant') {
-                $availableMerchantIds = UserMerchant::whereIn('object_type', ['mall'])->lists('merchant_id');
-                $tenants->whereNotIn('merchants.merchant_id', $availableMerchantIds);
+                $tenants->whereRaw("{$prefix}merchants.merchant_id NOT IN (
+                                    SELECT merchant_id FROM orb_user_merchant
+                                    WHERE {$prefix}user_merchant.object_type IN ('mall'))");
             }
 
             // Clone the query builder which still does not include the take,
