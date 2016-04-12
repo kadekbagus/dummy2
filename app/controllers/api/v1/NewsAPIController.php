@@ -1603,7 +1603,7 @@ class NewsAPIController extends ControllerAPI
                     'sort_by' => $sort_by,
                 ),
                 array(
-                    'sort_by' => 'in:registered_date,news_name,object_type,description,begin_date,end_date,updated_at,status',
+                    'sort_by' => 'in:registered_date,news_name,object_type,total_location,description,begin_date,end_date,updated_at,status',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.news_sortby'),
@@ -1892,14 +1892,15 @@ class NewsAPIController extends ControllerAPI
             {
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
-                    'registered_date'   => 'news.created_at',
-                    'news_name'         => 'news_translations.news_name',
-                    'object_type'       => 'news.object_type',
-                    'description'       => 'news.description',
-                    'begin_date'        => 'news.begin_date',
-                    'end_date'          => 'news.end_date',
-                    'updated_at'        => 'news.updated_at',
-                    'status'            => 'campaign_status'
+                    'registered_date' => 'news.created_at',
+                    'news_name'       => 'news_translations.news_name',
+                    'object_type'     => 'news.object_type',
+                    'total_location'  => 'total_location',
+                    'description'     => 'news.description',
+                    'begin_date'      => 'news.begin_date',
+                    'end_date'        => 'news.end_date',
+                    'updated_at'      => 'news.updated_at',
+                    'status'          => 'campaign_status'
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];
