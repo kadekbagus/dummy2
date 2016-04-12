@@ -584,7 +584,7 @@ class MallAPIController extends ControllerAPI
 
             // settings
             // @author irianto <irianto@dominopos.com>
-            $domain = OrbitInput::post('domain', strtolower(trim($mall_name)) . '.myorbit.com');
+            $domain = OrbitInput::post('domain', trim($url));
             $setting_items = [
                 'enable_coupon'                 => 'true',
                 'enable_coupon_widget'          => 'true',
