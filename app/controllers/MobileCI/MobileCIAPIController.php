@@ -158,12 +158,6 @@ class MobileCIAPIController extends BaseCIController
                         OrbitShopAPI::throwInvalidArgument($message);
                     }
                 }
-                $acq = \UserAcquisition::where('user_id', $user->user_id)
-                    ->where('acquirer_id', $retailer->merchant_id)
-                    ->lockForUpdate()->first();
-                if ($acq === null) {
-                    $user = null;
-                }
             }
 
             // if not from cloud callback we redirect to cloud if pending so cloud
@@ -5097,8 +5091,7 @@ class MobileCIAPIController extends BaseCIController
                 }
             }
 
-            $link_to_tenants = \CouponRetailer::where('promotion_retailer.retailer_id', '=', $mallid)
-                ->where('promotion_retailer.object_type', 'tenant')
+            $link_to_tenants = \CouponRetailer::where('promotion_retailer.object_type', 'tenant')
                 ->where('promotion_id', $coupon_id)->get();
 
             if (empty($coupons->image)) {
@@ -5817,8 +5810,9 @@ class MobileCIAPIController extends BaseCIController
 
             $mallid = $retailer->merchant_id;
 
-            $promotion = \News::with(['tenants' => function($q) {
+            $promotion = \News::with(['tenants' => function($q) use($retailer) {
                     $q->where('merchants.status', 'active');
+                    $q->where('merchants.parent_id', $retailer->merchant_id);
                 }])
                 ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                 ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
@@ -6433,8 +6427,9 @@ class MobileCIAPIController extends BaseCIController
 
             $mallid = $retailer->merchant_id;
 
-            $news = \News::with(['tenants' => function($q) {
+            $news = \News::with(['tenants' => function($q) use($retailer) {
                     $q->where('merchants.status', 'active');
+                    $q->where('merchants.parent_id', $retailer->merchant_id);
                 }])
                 ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                 ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')

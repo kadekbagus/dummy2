@@ -24,7 +24,9 @@ class AccountExportController extends \AccountAPIController
                 $tenantNames[] = $tenant['name'];
             }
 
-            $csv .= implode(', ', $tenantNames);
+            $tenantImplode = implode(', ', $tenantNames);
+            $csv .= str_replace(', ', "\n", $tenantImplode);
+
         } elseif ($fieldName == 'city') {
             $countryName = ($row['country']->name) ? ', '.$row['country']->name : '';
             $csv .= $row['city'].$countryName;
