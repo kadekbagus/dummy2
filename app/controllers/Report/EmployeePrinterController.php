@@ -7,6 +7,7 @@ use PDO;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use Orbit\Text as OrbitText;
 use Mall;
+use Role;
 use Carbon\Carbon as Carbon;
 use EmployeeAPIController;
 use Setting;
@@ -14,28 +15,37 @@ use Response;
 
 class EmployeePrinterController extends DataPrinterController
 {
+
     public function getEmployeePrintView()
     {
         $this->preparePDO();
 
+        $pmpRoles = ['campaign owner', 'campaign employee', 'campaign admin'];
+
         $mode = OrbitInput::get('export', 'print');
         $user = $this->loggedUser;
+        $role = Role::where('role_id', '=', $user->user_role_id)->first();
 
         $current_mall = OrbitInput::get('merchant_id');
         $currentDateAndTime = OrbitInput::get('currentDateAndTime');
         $timezone = $this->getTimeZone($current_mall);
 
-        // Filter
         $full_name_like = OrbitInput::get('full_name_like');
         $user_email_like = OrbitInput::get('user_email_like');
         $role_names = OrbitInput::get('role_names');
         $employee_id_char_like = OrbitInput::get('employee_id_char_like');
         $status = OrbitInput::get('status');
 
-        // Instantiate the MallAPIController to get the query builder of Malls
-        $response = EmployeeAPIController::create('raw')
+        if (! in_array( strtolower($role->role_name), $pmpRoles)) {
+            $response = EmployeeAPIController::create('raw')
+                                         ->setReturnBuilder(true)
+                                         ->getSearchMallEmployee();
+        } else {
+            $response = EmployeeAPIController::create('raw')
                                          ->setReturnBuilder(true)
                                          ->getSearchPMPEmployee();
+        }
+
 
         if (! is_array($response)) {
             return Response::make($response->message);
