@@ -7,10 +7,7 @@
 Route::get('/app/v1/account/list', 'IntermediateAuthController@Account_getAccount');
 
 // Create new PMP Account
-Route::post('/app/v1/account/new', function()
-{
-    return AccountAPIController::create()->postCreateUpdate();
-});
+Route::post('/app/v1/account/new', 'IntermediateAuthController@Account_postCreateUpdate');
 
 // Update a PMP Account
 Route::post('/app/v1/account/update', 'IntermediateAuthController@Account_postCreateUpdate');
