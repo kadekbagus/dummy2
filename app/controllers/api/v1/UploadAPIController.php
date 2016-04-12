@@ -6459,7 +6459,7 @@ class UploadAPIController extends ControllerAPI
                 array(
                     'lucky_draw_translation_id'  => 'required|orbit.empty.lucky_draw_translation',
                     'lucky_draw_id'              => 'required|orbit.empty.lucky_draw',
-                    'merchant_language_id'       => 'required|orbit.empty.merchant_language',
+                    'merchant_language_id'       => 'required|orbit.empty.merchant_language_lucky_draw',
                     'image_translation'          => 'required|nomore.than.one',
                 ),
                 $messages
@@ -6899,7 +6899,7 @@ class UploadAPIController extends ControllerAPI
                 array(
                     'lucky_draw_announcement_translation_id'  => 'required|orbit.empty.lucky_draw_announcement_translation',
                     'lucky_draw_announcement_id'              => 'required|orbit.empty.lucky_draw_announcement',
-                    'merchant_language_id'                    => 'required|orbit.empty.merchant_language',
+                    'merchant_language_id'                    => 'required|orbit.empty.merchant_language_lucky_draw',
                     'image_translation'                       => 'required|nomore.than.one',
                 ),
                 $messages
@@ -8197,15 +8197,16 @@ class UploadAPIController extends ControllerAPI
             return TRUE;
         });
 
-        Validator::extend('orbit.empty.merchant_language', function ($attribute, $value, $parameters) {
-            $merchant_language = Language::where('language_id', '=', $value)
-                ->first();
+        Validator::extend('orbit.empty.merchant_language_lucky_draw', function ($attribute, $value, $parameters) {
+            $merchant_language = MerchantLanguage::excludeDeleted()
+                       ->where('merchant_language_id', $value)
+                       ->first();
 
             if (empty($merchant_language)) {
                 return FALSE;
             }
 
-            App::instance('orbit.empty.merchant_language', $merchant_language);
+            App::instance('orbit.empty.merchant_language_lucky_draw', $merchant_language);
 
             return TRUE;
         });
