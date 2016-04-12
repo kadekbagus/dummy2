@@ -2357,7 +2357,11 @@ class MobileCIAPIController extends BaseCIController
                         })->whereHas('news', function($q2) {
                             $q2->where('object_type', 'news');
                         })->get()->lists('merchant_id');
-                        $tenants->whereIn('merchants.merchant_id', $retailers);
+                        if (! empty($retailers)) {
+                            $tenants->whereIn('merchants.merchant_id', $retailers);
+                        } else {
+                            $notfound = TRUE;
+                        }
                     }
                 }
             );
