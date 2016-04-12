@@ -5065,6 +5065,8 @@ class MobileCIAPIController extends BaseCIController
                 $tenants = \CouponRetailerRedeem::with('tenant', 'tenant.categories')
                     ->wherehas('tenant', function($q){
                         $q->where('merchants.status', 'active');
+                        $q->where('merchants.masterbox_number', '<>', '');
+                        $q->whereNotNull('merchants.masterbox_number');
                     })
                     ->where('promotion_id', $coupon_id)->get();
 
@@ -5073,7 +5075,14 @@ class MobileCIAPIController extends BaseCIController
                 if ($coupons->is_all_employee === 'Y') {
                     $coupons->linkedToCS = TRUE;
                 } else {
-                    $employee = \Employee::byCouponId($coupon_id)->get();
+                    $employee = \Employee::byCouponId($coupon_id)
+                        ->whereHas('retailers', function ($q) use($retailer) {
+                            $q->where('merchants.merchant_id', $retailer->merchant_id);
+                        })
+                        ->has('userVerificationNumber')
+                        ->where('employees.status', 'active')
+                        ->get();
+
                     if (count($employee) > 0) {
                         $coupons->linkedToCS = TRUE;
                     }
