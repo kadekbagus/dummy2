@@ -4471,110 +4471,116 @@ class DashboardAPIController extends ControllerAPI
      */
     public function getCampaignStatus()
     {
-        $httpCode = 200;
+        try {
+            $httpCode = 200;
 
-        // Require authentication
-        $this->checkAuth();
+            // Require authentication
+            $this->checkAuth();
 
-        // Try to check access control list, does this user allowed to
-        // perform this action
-        $user = $this->api->user;
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user = $this->api->user;
 
-        $mall_id = OrbitInput::get('merchant_id', OrbitInput::get('current_mall', 0));
-        $mall = Mall::with('timezone')->excludeDeleted()->where('merchant_id', $mall_id)->first();
+            $mall_id = OrbitInput::get('merchant_id', OrbitInput::get('current_mall', 0));
+            $mall = Mall::with('timezone')->excludeDeleted()->where('merchant_id', $mall_id)->first();
 
-        if (empty($mall)) {
-            $errorMessage = Lang::get('validation.orbit.empty.mall');
-            OrbitShopAPI::throwInvalidArgument($errorMessage);
+            if (empty($mall)) {
+                $errorMessage = Lang::get('validation.orbit.empty.mall');
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $mallTimezone = Carbon::now($mall->timezone->timezone_name);
+
+            $campaign_statuses = CampaignStatus::get();
+            $promotionCount = [];
+            $newsCount = [];
+            $couponCount = [];
+
+            foreach ($campaign_statuses as $status) {
+                // Promotions
+                $promotionCount[$status->campaign_status_name] = News::allowedForPMPUser($user, 'promotion')
+                        ->campaignStatus($status->campaign_status_name, $mallTimezone);
+                // Filter promotion by mall_id
+                OrbitInput::get('merchant_id', function ($mall_id) use ($promotionCount, $status)
+                {
+                    $promotionCount[$status->campaign_status_name]->whereHas('campaignLocations', function($q) use($mall_id) {
+                                $q->where(function($q2) {
+                                    $q2->where('merchants.object_type', 'tenant');
+                                    $q2->orWhere('merchants.object_type', 'mall');
+                                });
+                                $q->where(function($q3) use($mall_id) {
+                                    $q3->where('merchants.merchant_id', $mall_id);
+                                    // avaliable cause merchant_id never same with parent_id
+                                    $q3->orWhere('merchants.parent_id', $mall_id);
+                                });
+                            });
+                });
+                $promotionCount[$status->campaign_status_name] = $promotionCount[$status->campaign_status_name]->get()->count();
+
+                // News
+                $newsCount[$status->campaign_status_name] = News::allowedForPMPUser($user, 'news')
+                        ->campaignStatus($status->campaign_status_name, $mallTimezone);
+                // Filter news by mall_id
+                OrbitInput::get('current_mall', function ($mall_id) use ($newsCount, $status)
+                {
+                    $newsCount[$status->campaign_status_name]->whereHas('campaignLocations', function($q) use($mall_id) {
+                                $q->where(function($q2) {
+                                    $q2->where('merchants.object_type', 'tenant');
+                                    $q2->orWhere('merchants.object_type', 'mall');
+                                });
+                                $q->where(function($q3) use($mall_id) {
+                                    $q3->where('merchants.merchant_id', $mall_id);
+                                    // avaliable cause merchant_id never same with parent_id
+                                    $q3->orWhere('merchants.parent_id', $mall_id);
+                                });
+                            });
+                });
+                $newsCount[$status->campaign_status_name] = $newsCount[$status->campaign_status_name]->get()->count();
+
+                // Coupons
+                $couponCount[$status->campaign_status_name] = Coupon::allowedForPMPUser($user, 'coupon')
+                        ->campaignStatus($status->campaign_status_name, $mallTimezone);
+                // Filter coupons by mall_id
+                OrbitInput::get('current_mall', function ($mall_id) use ($couponCount, $status)
+                {
+                    $couponCount[$status->campaign_status_name]->whereHas('campaignLocations', function($q) use($mall_id) {
+                                $q->where(function($q2) {
+                                    $q2->where('merchants.object_type', 'tenant');
+                                    $q2->orWhere('merchants.object_type', 'mall');
+                                });
+                                $q->where(function($q3) use($mall_id) {
+                                    $q3->where('merchants.merchant_id', $mall_id);
+                                    // avaliable cause merchant_id never same with parent_id
+                                    $q3->orWhere('merchants.parent_id', $mall_id);
+                                });
+                            });
+                });
+                $couponCount[$status->campaign_status_name] = $couponCount[$status->campaign_status_name]->get()->count();
+            }
+
+            $this->response->data = [
+                'promotions_not_started' => $promotionCount['not started'],
+                'promotions_ongoing'     => $promotionCount['ongoing'],
+                'promotions_paused'      => $promotionCount['paused'],
+                'promotions_stopped'     => $promotionCount['stopped'],
+                'promotions_expired'     => $promotionCount['expired'],
+                'news_not_started'       => $newsCount['not started'],
+                'news_ongoing'           => $newsCount['ongoing'],
+                'news_paused'            => $newsCount['paused'],
+                'news_stopped'           => $newsCount['stopped'],
+                'news_expired'           => $newsCount['expired'],
+                'coupons_not_started'    => $couponCount['not started'],
+                'coupons_ongoing'        => $couponCount['ongoing'],
+                'coupons_paused'         => $couponCount['paused'],
+                'coupons_stopped'        => $couponCount['stopped'],
+                'coupons_expired'        => $couponCount['expired'],
+            ];
+        } catch (Exception $e) {
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
         }
-
-        $mallTimezone = Carbon::now($mall->timezone->timezone_name);
-
-        $campaign_statuses = CampaignStatus::get();
-        $promotionCount = [];
-        $newsCount = [];
-        $couponCount = [];
-
-        foreach ($campaign_statuses as $status) {
-            // Promotions
-            $promotionCount[$status->campaign_status_name] = News::allowedForPMPUser($user, 'promotion')
-                    ->campaignStatus($status->campaign_status_name, $mallTimezone);
-            // Filter promotion by mall_id
-            OrbitInput::get('merchant_id', function ($mall_id) use ($promotionCount, $status)
-            {
-                $promotionCount[$status->campaign_status_name]->whereHas('campaignLocations', function($q) use($mall_id) {
-                            $q->where(function($q2) {
-                                $q2->where('merchants.object_type', 'tenant');
-                                $q2->orWhere('merchants.object_type', 'mall');
-                            });
-                            $q->where(function($q3) use($mall_id) {
-                                $q3->where('merchants.merchant_id', $mall_id);
-                                // avaliable cause merchant_id never same with parent_id
-                                $q3->orWhere('merchants.parent_id', $mall_id);
-                            });
-                        });
-            });
-            $promotionCount[$status->campaign_status_name] = $promotionCount[$status->campaign_status_name]->get()->count();
-
-            // News
-            $newsCount[$status->campaign_status_name] = News::allowedForPMPUser($user, 'news')
-                    ->campaignStatus($status->campaign_status_name, $mallTimezone);
-            // Filter news by mall_id
-            OrbitInput::get('current_mall', function ($mall_id) use ($newsCount, $status)
-            {
-                $newsCount[$status->campaign_status_name]->whereHas('campaignLocations', function($q) use($mall_id) {
-                            $q->where(function($q2) {
-                                $q2->where('merchants.object_type', 'tenant');
-                                $q2->orWhere('merchants.object_type', 'mall');
-                            });
-                            $q->where(function($q3) use($mall_id) {
-                                $q3->where('merchants.merchant_id', $mall_id);
-                                // avaliable cause merchant_id never same with parent_id
-                                $q3->orWhere('merchants.parent_id', $mall_id);
-                            });
-                        });
-            });
-            $newsCount[$status->campaign_status_name] = $newsCount[$status->campaign_status_name]->get()->count();
-
-            // Coupons
-            $couponCount[$status->campaign_status_name] = Coupon::allowedForPMPUser($user, 'coupon')
-                    ->campaignStatus($status->campaign_status_name, $mallTimezone);
-            // Filter coupons by mall_id
-            OrbitInput::get('current_mall', function ($mall_id) use ($couponCount, $status)
-            {
-                $couponCount[$status->campaign_status_name]->whereHas('campaignLocations', function($q) use($mall_id) {
-                            $q->where(function($q2) {
-                                $q2->where('merchants.object_type', 'tenant');
-                                $q2->orWhere('merchants.object_type', 'mall');
-                            });
-                            $q->where(function($q3) use($mall_id) {
-                                $q3->where('merchants.merchant_id', $mall_id);
-                                // avaliable cause merchant_id never same with parent_id
-                                $q3->orWhere('merchants.parent_id', $mall_id);
-                            });
-                        });
-            });
-            $couponCount[$status->campaign_status_name] = $couponCount[$status->campaign_status_name]->get()->count();
-        }
-
-        $this->response->data = [
-            'promotions_not_started' => $promotionCount['not started'],
-            'promotions_ongoing'     => $promotionCount['ongoing'],
-            'promotions_paused'      => $promotionCount['paused'],
-            'promotions_stopped'     => $promotionCount['stopped'],
-            'promotions_expired'     => $promotionCount['expired'],
-            'news_not_started'       => $newsCount['not started'],
-            'news_ongoing'           => $newsCount['ongoing'],
-            'news_paused'            => $newsCount['paused'],
-            'news_stopped'           => $newsCount['stopped'],
-            'news_expired'           => $newsCount['expired'],
-            'coupons_not_started'    => $couponCount['not started'],
-            'coupons_ongoing'        => $couponCount['ongoing'],
-            'coupons_paused'         => $couponCount['paused'],
-            'coupons_stopped'        => $couponCount['stopped'],
-            'coupons_expired'        => $couponCount['expired'],
-        ];
-
         return $this->render($httpCode);
     }
 
