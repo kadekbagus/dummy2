@@ -5799,8 +5799,9 @@ class MobileCIAPIController extends BaseCIController
 
             $mallid = $retailer->merchant_id;
 
-            $promotion = \News::with(['tenants' => function($q) {
+            $promotion = \News::with(['tenants' => function($q) use($retailer) {
                     $q->where('merchants.status', 'active');
+                    $q->where('merchants.parent_id', $retailer->merchant_id);
                 }])
                 ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                 ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
@@ -6415,8 +6416,9 @@ class MobileCIAPIController extends BaseCIController
 
             $mallid = $retailer->merchant_id;
 
-            $news = \News::with(['tenants' => function($q) {
+            $news = \News::with(['tenants' => function($q) use($retailer) {
                     $q->where('merchants.status', 'active');
+                    $q->where('merchants.parent_id', $retailer->merchant_id);
                 }])
                 ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                 ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')

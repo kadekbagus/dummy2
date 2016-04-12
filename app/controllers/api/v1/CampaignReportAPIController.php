@@ -1678,65 +1678,148 @@ class CampaignReportAPIController extends ControllerAPI
         return $output;
     }
 
+
+    /**
+     * GET - Campaign demographic
+     *
+     * @author Qosdil <qosdil@dominopos.com>
+     * @author Firmansyah <firmansyah@dominopos.com>
+     *
+     * List Of Parameters
+     * ------------------
+     * @param string  `current_mall`  (required) - mall id
+     * @param string  `campaign_id`   (required) - campaign id (news_id, promotion_id, coupon_id)
+     * @param date    `start_date`    (required) - start date, default is 1 month
+     * @param date    `end_date`      (required) - end date
+     * @return Illuminate\Support\Facades\Response
+     */
+
     public function getSpending()
     {
-        // Campaign ID
-        $id = OrbitInput::get('campaign_id');
+        try {
 
-        // News, promotion or coupon
-        $type = OrbitInput::get('campaign_type');
+            $httpCode = 200;
 
-        // Get mall's timezone
-        $mallId = OrbitInput::get('current_mall');
-        $timezone = Mall::find($mallId)->timezone->timezone_name;
+            Event::fire('orbit.dashboard.getspending.before.auth', array($this));
 
-        $requestBeginDateTime = OrbitInput::get('start_date');
+            // Require authentication
+            $this->checkAuth();
 
-        // Begin date in mall's timezone
-        $requestBeginDate = Carbon::createFromFormat('Y-m-d H:i:s', $requestBeginDateTime)->setTimezone($timezone)->toDateString();
+            Event::fire('orbit.dashboard.getspending.after.auth', array($this));
 
-        $requestEndDateTime = OrbitInput::get('end_date');
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user = $this->api->user;
+            Event::fire('orbit.dashboard.getspending.before.auth', array($this, $user));
 
-        // End date in mall's timezone
-        $requestEndDate = Carbon::createFromFormat('Y-m-d H:i:s', $requestEndDateTime)->setTimezone($timezone)->toDateString();
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = $this->viewRoles;
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
 
-        $hoursDiff = OrbitDateTime::getTimezoneOffset($timezone);
+            Event::fire('orbit.dashboard.getspending.after.auth', array($this, $user));
 
-        // DB::select below will need to use the same connection (write) as DB::statement
-        // Otherwise, it won't get the temp table
-        \DB::beginTransaction();
+            // Campaign ID
+            $id = OrbitInput::get('campaign_id');
 
-        $tablePrefix = DB::getTablePrefix();
+            // Get mall's timezone
+            $mallId = OrbitInput::get('current_mall');
+            $timezone = Mall::find($mallId)->timezone->timezone_name;
 
-        // Now let's retrieve the data from the temporary table
-        $procResults = CampaignDailySpending::selectRaw('*, sum(total_spending) as sum_total_spending')
-            ->where('campaign_status', 'activate')
-            ->where('campaign_id', $id)
-            ->groupBy('date')
-            ->get();
+            $requestBeginDateTime = OrbitInput::get('start_date');
 
-        foreach ($procResults as $key => $row) {
-            $costs[$row->date] = $row->sum_total_spending;
+            // Begin date in mall's timezone
+            $requestBeginDate = Carbon::createFromFormat('Y-m-d H:i:s', $requestBeginDateTime)->setTimezone($timezone)->toDateString();
+
+            $requestEndDateTime = OrbitInput::get('end_date');
+
+            // End date in mall's timezone
+            $requestEndDate = Carbon::createFromFormat('Y-m-d H:i:s', $requestEndDateTime)->setTimezone($timezone)->toDateString();
+
+            $hoursDiff = OrbitDateTime::getTimezoneOffset($timezone);
+
+            // DB::select below will need to use the same connection (write) as DB::statement
+            // Otherwise, it won't get the temp table
+            \DB::beginTransaction();
+
+            $tablePrefix = DB::getTablePrefix();
+
+            // Now let's retrieve the data from the temporary table
+            $procResults = CampaignDailySpending::selectRaw('*, sum(total_spending) as sum_total_spending')
+                ->where('campaign_status', 'activate')
+                ->where('campaign_id', $id)
+                ->groupBy('date')
+                ->get();
+
+            foreach ($procResults as $key => $row) {
+                $costs[$row->date] = $row->sum_total_spending;
+            }
+
+            $carbonLoop = Carbon::createFromFormat('Y-m-d', $requestBeginDate);
+            while ($carbonLoop->toDateString() <= $requestEndDate) {
+                $loopDate = $carbonLoop->toDateString();
+                $cost = isset($costs[$loopDate]) ? $costs[$loopDate] : 0;
+
+                // Add to output array
+                $outputs[] = [
+                    'date' => $carbonLoop->toDateString(),
+                    'cost' => (int) $cost, // Format cost as integer
+                ];
+
+                // Increment day by 1
+                $carbonLoop->addDay();
+            }
+
+            $this->response->data = $outputs;
+
+
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.dashboard.getspending.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.dashboard.getspending.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (QueryException $e) {
+            Event::fire('orbit.dashboard.getspending.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+        } catch (Exception $e) {
+            $httpCode = 500;
+            Event::fire('orbit.dashboard.getspending.general.exception', array($this, $e));
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
         }
 
-        $carbonLoop = Carbon::createFromFormat('Y-m-d', $requestBeginDate);
-        while ($carbonLoop->toDateString() <= $requestEndDate) {
-            $loopDate = $carbonLoop->toDateString();
-            $cost = isset($costs[$loopDate]) ? $costs[$loopDate] : 0;
+        $output = $this->render($httpCode);
+        Event::fire('orbit.dashboard.getspending.before.render', array($this, &$output));
 
-            // Add to output array
-            $outputs[] = [
-                'date' => $carbonLoop->toDateString(),
-                'cost' => (int) $cost, // Format cost as integer
-            ];
-
-            // Increment day by 1
-            $carbonLoop->addDay();
-        }
-
-        $this->response->data = $outputs;
-
-        return $this->render(200);
+        return $output;
     }
 
     /**
