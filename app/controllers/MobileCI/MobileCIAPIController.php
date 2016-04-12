@@ -2290,8 +2290,8 @@ class MobileCIAPIController extends BaseCIController
                                 ->whereHas('retailers', function ($q) use($retailer) {
                                     $q->where('merchants.merchant_id', $retailer->merchant_id);
                                 })
-                                ->has('userVerificationNumber')
-                                ->where('employees.status', 'active')
+                                // ->has('userVerificationNumber')
+                                // ->where('employees.status', 'active')
                                 ->get();
 
                             if (count($employee) > 0) {

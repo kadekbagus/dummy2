@@ -3521,6 +3521,8 @@ class CouponAPIController extends ControllerAPI
                     $checkIssuedCoupon = IssuedCoupon::whereNotIn('issued_coupons.status', ['deleted', 'redeemed'])
                                 ->join('promotion_employee', 'promotion_employee.promotion_id', '=', 'issued_coupons.promotion_id')
                                 ->join('user_verification_numbers', 'user_verification_numbers.user_id', '=', 'promotion_employee.user_id')
+                                ->join('employees', 'employees.user_id', '=', 'user_verification_numbers.user_id')
+                                ->where('employees.status', 'active')
                                 ->where('issued_coupons.issued_coupon_id', $value)
                                 ->where('issued_coupons.user_id', $user->user_id)
                                 // ->whereRaw("({$prefix}issued_coupons.expired_date >= ? or {$prefix}issued_coupons.expired_date is null)", [$now])
