@@ -1395,8 +1395,8 @@ class EmployeeAPIController extends ControllerAPI
                         $userVerificationNumber->delete();
 
                         //Delete link to CS
-                        $promotionEmployee = CouponEmployee::where('user_id', $userId);
-                        $promotionEmployee->delete();
+                        // $promotionEmployee = CouponEmployee::where('user_id', $userId);
+                        // $promotionEmployee->delete();
                     }
                 } else {
                     // Updated data verification number
