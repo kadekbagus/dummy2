@@ -208,16 +208,20 @@ class LoginAPIController extends ControllerAPI
                 foreach ($user_merchants as $key => $user_merchant) {
                     if ($user_merchant->object_type === 'mall') {
                         $tmp_mall = $user_merchant->mall->load('timezone');
-                        if ($tmp_mall[0]->merchant_id !== $parent_id) {
-                            $mall[] = $tmp_mall[0];
+                        if (! empty($tmp_mall)) {
+                            if ($tmp_mall[0]->merchant_id !== $parent_id) {
+                                $mall[] = $tmp_mall[0];
+                            }
+                            $parent_id = $tmp_mall[0]->merchant_id;
                         }
-                        $parent_id = $tmp_mall[0]->merchant_id;
                     } elseif ($user_merchant->object_type === 'tenant') {
                         $tenant = $user_merchant->tenant;
-                        if ($tenant->parent_id !== $parent_id) {
-                            $mall[] = $user_merchant->tenant->parent->load('timezone');
+                        if (! empty($tenant)) {
+                            if ($tenant->parent_id !== $parent_id) {
+                                $mall[] = $user_merchant->tenant->parent->load('timezone');
+                            }
+                            $parent_id = $tenant->parent_id;
                         }
-                        $parent_id = $tenant->parent_id;
                     }
                 }
             } elseif ($user->isCampaignEmployee()) {
@@ -244,6 +248,7 @@ class LoginAPIController extends ControllerAPI
                             ->with('timezone')
                             ->get();
             }
+
             $user->mall = $mall;
             unset($user->campaignAccount);
 

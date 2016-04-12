@@ -919,7 +919,7 @@ class TenantAPIController extends ControllerAPI
                     'retailer_id'       => 'required|orbit.empty.tenant',
                     'user_id'           => 'orbit.empty.user',
                     'email'             => 'email|email_exists_but_me',
-                    'status'            => 'orbit.empty.tenant_status' . '| orbit.exists.tenant_on_active_campaign',
+                    'status'            => 'orbit.empty.tenant_status|orbit.exists.tenant_on_active_campaign',
                     'parent_id'         => 'orbit.empty.mall',
                     'url'               => 'orbit.formaterror.url.web',
                     'masterbox_number'  => 'alpha_num|orbit_unique_verification_number:' . $mall_id . ',' . $retailer_id,
@@ -2545,7 +2545,7 @@ class TenantAPIController extends ControllerAPI
                     ->leftjoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
                     ->where(function ($q) use ($timezoneName, $prefix, $nowMall) {
                         $q->whereNotIn('campaign_status.campaign_status_name', ['stopped', 'expired'])
-                            ->orWhereRaw("promotions.end_date >= '{$nowMall}')");
+                            ->orWhereRaw("{$prefix}promotions.end_date >= {$this->quote($nowMall)}");
                     })
                     ->where('promotion_retailer.retailer_id', $tenant_id)
                     ->first();
@@ -2553,13 +2553,12 @@ class TenantAPIController extends ControllerAPI
                 if (! empty($coupon)) {
                     return FALSE;
                 }
-
                 // check tenant if exists in news.
                 $news = NewsMerchant::leftjoin('news', 'news.news_id', '=', 'news_merchant.news_id')
                     ->leftjoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
                     ->where(function ($q) use ($timezoneName, $prefix, $nowMall){
                         $q->whereNotIn('campaign_status.campaign_status_name', ['stopped', 'expired'])
-                            ->orWhereRaw("{$prefix}news.end_date >= '{$nowMall}')");
+                            ->orWhereRaw("{$prefix}news.end_date >= {$this->quote($nowMall)}");
                     })
                     ->where('news_merchant.merchant_id',$tenant_id)
                     ->where('news.object_type','news')
@@ -2574,7 +2573,7 @@ class TenantAPIController extends ControllerAPI
                     ->leftjoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
                     ->where(function ($q) use ($timezoneName, $prefix, $nowMall){
                         $q->whereNotIn('campaign_status.campaign_status_name', ['stopped', 'expired'])
-                            ->orWhereRaw("{$prefix}news.end_date >= '{$nowMall}')");
+                            ->orWhereRaw("{$prefix}news.end_date >= {$this->quote($nowMall)}");
                     })
                     ->where('news_merchant.merchant_id',$tenant_id)
                     ->where('news.object_type','promotion')
@@ -2991,5 +2990,10 @@ class TenantAPIController extends ControllerAPI
         $this->returnBuilder = $bool;
 
         return $this;
+    }
+
+    protected function quote($arg)
+    {
+        return DB::connection()->getPdo()->quote($arg);
     }
 }

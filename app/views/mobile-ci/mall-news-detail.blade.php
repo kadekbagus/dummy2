@@ -45,12 +45,14 @@
     @endif
 </div>
 <div class="row vertically-spaced">
-    @if(!$all_tenant_inactive)
-        @if(count($news->tenants) > 0)
-        <div class="col-xs-12 text-center padded">
-            <a href="{{{ $urlblock->blockedRoute('ci-tenants', ['news_id' => $news->news_id]) }}}" class="btn btn-info btn-block">{{{ Lang::get('mobileci.tenant.see_tenants') }}}</a>
-        </div>
-        @endif
+    @if(count($news->tenants) > 0)
+    <div class="col-xs-12 text-center padded">
+        <a href="{{{ $urlblock->blockedRoute('ci-tenants', ['news_id' => $news->news_id]) }}}" class="btn btn-info btn-block">{{{ Lang::get('mobileci.tenant.see_tenants') }}}</a>
+    </div>
+    @else
+    <div class="col-xs-12 text-center padded">
+        <button class="btn btn-info btn-block" disabled="disabled">{{{ Lang::get('mobileci.tenant.see_tenants') }}}</button>
+    </div>
     @endif
 </div>
 <!-- end of product -->
