@@ -158,12 +158,6 @@ class MobileCIAPIController extends BaseCIController
                         OrbitShopAPI::throwInvalidArgument($message);
                     }
                 }
-                $acq = \UserAcquisition::where('user_id', $user->user_id)
-                    ->where('acquirer_id', $retailer->merchant_id)
-                    ->lockForUpdate()->first();
-                if ($acq === null) {
-                    $user = null;
-                }
             }
 
             // if not from cloud callback we redirect to cloud if pending so cloud
@@ -5086,8 +5080,7 @@ class MobileCIAPIController extends BaseCIController
                 }
             }
 
-            $link_to_tenants = \CouponRetailer::where('promotion_retailer.retailer_id', '=', $mallid)
-                ->where('promotion_retailer.object_type', 'tenant')
+            $link_to_tenants = \CouponRetailer::where('promotion_retailer.object_type', 'tenant')
                 ->where('promotion_id', $coupon_id)->get();
 
             if (empty($coupons->image)) {
