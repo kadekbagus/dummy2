@@ -591,7 +591,7 @@ class DashboardAPIController extends ControllerAPI
             $promotion = $promotion->get();
 
             $objectKeys['promotions'] = new stdClass();
-            $objectKeys['promotions']->label = 'Promotion';
+            $objectKeys['promotions']->label = 'Promotions';
             $objectKeys['promotions']->total = $promotion->count();
 
 
@@ -611,7 +611,7 @@ class DashboardAPIController extends ControllerAPI
             $coupon = $coupon->get();
 
             $objectKeys['coupons'] = new stdClass();
-            $objectKeys['coupons']->label = 'Coupon';
+            $objectKeys['coupons']->label = 'Coupons';
             $objectKeys['coupons']->total = $coupon->count();
 
             $data = new stdclass();
