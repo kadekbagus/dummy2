@@ -40,6 +40,11 @@ class MallFenceAPIController extends ControllerAPI
 
             $malls = Mall::excludeDeleted()->select('merchants.*')->includeLatLong()->InsideArea($lat, $long);
 
+            // Filter by mall_id
+            OrbitInput::get('mall_id', function ($mallid) use ($malls) {
+                $malls->where('merchants.merchant_id', $mallid);
+            });
+
             $_malls = clone $malls;
 
             $take = PaginationNumber::parseTakeFromGet('geo_location');

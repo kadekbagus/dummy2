@@ -201,7 +201,7 @@
                     var geoOptions = {
                        timeout: 10 * 1000
                     }
-
+                    var mall_id = '{{Config::get('orbit.shop.id')}}';
                     var geoSuccess = function(position) {
                         startPos = position;
                         console.log(startPos);
@@ -211,7 +211,8 @@
                             method: 'GET',
                             data: {
                                 latitude: startPos.coords.latitude,
-                                longitude: startPos.coords.longitude
+                                longitude: startPos.coords.longitude,
+                                mall_id: mall_id
                             }
                         }).done(function(response) {
                             if (response.data.total_records > 0) {
