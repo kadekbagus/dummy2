@@ -127,7 +127,7 @@ class CouponReportAPIController extends ControllerAPI
 
                 array(
                     'current_mall' => 'required|orbit.empty.mall',
-                    'sort_by' => 'in:promotion_id,promotion_name,begin_date,coupon_validity_in_date,total_tenant,mall_name,rule_type,total_issued,total_redeemed,campaign_status,order',
+                    'sort_by' => 'in:promotion_id,promotion_name,begin_date,total_location,coupon_validity_in_date,total_tenant,mall_name,rule_type,total_issued,total_redeemed,campaign_status,order',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.couponreportgeneral_sortby'),
@@ -443,6 +443,7 @@ class CouponReportAPIController extends ControllerAPI
                     'coupon_validity_in_date' => 'promotions.coupon_validity_in_date',
                     'total_tenant'            => 'total_tenant',
                     'mall_name'               => 'mall_name',
+                    'total_location'          => 'total_location',
                     'rule_type'               => 'rule_type',
                     'total_issued'            => 'total_issued',
                     'total_redeemed'          => 'total_redeemed',

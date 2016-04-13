@@ -1453,6 +1453,9 @@ class LoginAPIController extends ControllerAPI
                     $data = new stdClass();
                     $data->role_name = $user->role->role_name;
                     $data->url = $url;
+
+                    // Override
+                    $this->response->data = $data;
                 } else {
                     $this->response->data->menus = $menus;
                 }
