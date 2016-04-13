@@ -4377,10 +4377,10 @@ class DashboardAPIController extends ControllerAPI
                                                                 datediff(n.end_date, n.begin_date) + 1 as total_days,
                                                                 base_price, count(nm.news_id) * (datediff(n.end_date, n.begin_date) + 1) * base_price as total_estimate
                                                             "))
-                            ->whereHas('news', function($q) use ($user, $start_date, $end_date) {
+                            ->whereHas('news', function($q) use ($user, $start_date, $end_date, $tablePrefix) {
                                 $q->allowedForPMPUser($user, 'news_promotion')
-                                    ->where('news.begin_date', '<=', $end_date)
-                                    ->where('news.end_date', '>=', $start_date);
+                                    ->where(DB::raw("date_format({$tablePrefix}news.begin_date, '%Y-%m-%d')"), '<=', $end_date)
+                                    ->where(DB::raw("date_format({$tablePrefix}news.end_date, '%Y-%m-%d')"), '>=', $start_date);
                             })
                             ->leftJoin('news_merchant as nm', DB::raw('nm.news_id'), '=','campaign_price.campaign_id')
                             ->leftJoin('news as n', DB::raw('n.news_id'), '=', DB::raw('nm.news_id'))
@@ -4395,10 +4395,10 @@ class DashboardAPIController extends ControllerAPI
                             ->get();
 
             $coupon = CampaignPrice::select(db::raw("pr.promotion_id, count(pr.promotion_id) as total_tenant, datediff(p.end_date, p.begin_date) + 1 as total_days, base_price, count(pr.promotion_id) * (datediff(p.end_date, p.begin_date) + 1) * base_price as total_estimate"))
-                            ->whereHas('coupon', function($q) use ($user, $start_date, $end_date) {
+                            ->whereHas('coupon', function($q) use ($user, $start_date, $end_date, $tablePrefix) {
                                 $q->allowedForPMPUser($user, 'coupon')
-                                    ->where('promotions.begin_date', '<=', $end_date)
-                                    ->where('promotions.end_date', '>=', $start_date);
+                                    ->where(DB::raw("date_format({$tablePrefix}promotions.begin_date, '%Y-%m-%d')"), '<=', $end_date)
+                                    ->where(DB::raw("date_format({$tablePrefix}promotions.end_date, '%Y-%m-%d')"), '>=', $start_date);
                             })
                             ->leftJoin('promotion_retailer as pr', DB::raw('pr.promotion_id'), '=','campaign_price.campaign_id')
                             ->leftJoin('promotions as p', DB::raw('p.promotion_id'), '=', DB::raw('pr.promotion_id'))
