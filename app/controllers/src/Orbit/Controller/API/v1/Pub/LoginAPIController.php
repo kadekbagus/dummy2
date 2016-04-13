@@ -80,6 +80,9 @@ class LoginAPIController extends IntermediateBaseController
             
             $user = User::with('role')
                         ->excludeDeleted()
+                        ->whereHas('role', function($q) {
+                            $q->where('role_name', 'Consumer');
+                        })
                         ->where('user_email', $email);
 
             $user = $user->first();

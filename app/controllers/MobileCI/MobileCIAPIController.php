@@ -392,7 +392,6 @@ class MobileCIAPIController extends BaseCIController
                                         $q->select('item_id')
                                             ->from('viewed_item_user')
                                             ->where('user_id', '=', $user->user_id)
-                                            ->where('mall_id', '=', $retailer->merchant_id)
                                             ->where('item_type', '=', 'promotion')
                                             ->get();
                                     });
@@ -501,7 +500,6 @@ class MobileCIAPIController extends BaseCIController
                                         $q->select('item_id')
                                             ->from('viewed_item_user')
                                             ->where('user_id', '=', $user->user_id)
-                                            ->where('mall_id', '=', $retailer->merchant_id)
                                             ->where('item_type', '=', 'news')
                                             ->get();
                                     });
@@ -526,6 +524,7 @@ class MobileCIAPIController extends BaseCIController
                                 ->where('news.object_type', 'news')
                                 ->whereRaw("? between begin_date and end_date", [$now])
                                 ->groupBy('news.news_id');
+
                     $newNewsCount = RecordCounter::create($newNewsCount)->count();
 
                     $widget->image = 'mobile-ci/images/default_news.png';
@@ -647,7 +646,6 @@ class MobileCIAPIController extends BaseCIController
                             {$prefix}promotions.promotion_id NOT IN (
                             SELECT item_id FROM {$prefix}viewed_item_user
                             WHERE user_id = {$quote($user_id)}
-                            AND mall_id = {$quote($merchant_id)}
                             AND item_type = 'coupon'
                         )")
                         ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
@@ -8305,6 +8303,7 @@ class MobileCIAPIController extends BaseCIController
                 }
 
                 $user = $response->data;
+                $this->socmedSignUpActivity($user, 'form');
             }
 
             $payload = OrbitInput::get('payload');
@@ -8963,6 +8962,15 @@ class MobileCIAPIController extends BaseCIController
         } else if ($from === 'google') {
             $activity->setActivityNameLong('Sign Up via Mobile (Google+)')
                     ->setNotes('Sign Up via Mobile (Google+) OK');
+            // if ($customer->status === 'active') {
+            //     // Send email process to the queue
+            //     \Queue::push('Orbit\\Queue\\NewPasswordMail', [
+            //         'user_id' => $customer->user_id
+            //     ]);
+            // }
+        } else if ($from === 'form') {
+            $activity->setActivityNameLong('Sign Up via Mobile (Email Address)')
+                    ->setNotes('Sign Up via Mobile (Email Address) OK');
             // if ($customer->status === 'active') {
             //     // Send email process to the queue
             //     \Queue::push('Orbit\\Queue\\NewPasswordMail', [
