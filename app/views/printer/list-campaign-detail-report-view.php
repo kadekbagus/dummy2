@@ -202,7 +202,14 @@
                 <tr class="{{ $rowCounter % 2 === 0 ? 'zebra' : '' }}">
                     <td><?php echo $count++; ?></td>
                     <td><?php echo $this->printDateTime($row->campaign_date . '00:00:00', $timezone, 'd M Y'); ?></td>
-                    <td><?php echo number_format($row->total_location); ?></td>
+                    <td>
+                        <?php
+                            $locations = explode(', ', $row->campaign_location_names);
+                            for($x = 0; $x < count($locations); $x++) {
+                                echo $locations[$x] . '<br>';
+                            }
+                        ?>
+                    </td>
                     <td><?php echo number_format($row->unique_users); ?></td>
                     <td><?php echo number_format($row->campaign_pages_views); ?></td>
                     <td><?php echo round($row->campaign_pages_view_rate, 2); ?></td>

@@ -1101,20 +1101,24 @@ class MobileCIAPIController extends BaseCIController
                     $_POST['lastname'] = $lastName;
                     $_POST['gender'] = $gender;
                     $_POST['status'] = 'active';
+                    $_POST['sign_up_origin'] = 'google';
                     $response = \LoginAPIController::create('raw')->setUseTransaction(false)->postRegisterUserInShop();
                     if ($response->code !== 0) {
                         throw new Exception($response->message, $response->code);
                     }
+                    
 
                     $loggedInUser = $this->doAutoLogin($response->data->user_email);
                     $this->linkGuestToUser($loggedInUser);
                     $this->loginStage2($loggedInUser, $retailer);
-                    $this->socmedSignUpActivity($loggedInUser, 'google');
-                    $this->socmedSignInActivity($loggedInUser, 'google');
+                    
                     $expireTime = Config::get('orbit.session.session_origin.cookie.expire');
                     setcookie('orbit_email', $userEmail, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
                     setcookie('orbit_firstname', $firstName, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
                     setcookie('login_from', 'Google', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+                    
+                    $this->acquireUser($retailer, $loggedInUser, 'google');
+                    $this->socmedSignInActivity($loggedInUser, 'google');
 
                     return Redirect::route($caller_url, $query);
                 }
@@ -1251,6 +1255,7 @@ class MobileCIAPIController extends BaseCIController
             $_POST['firstname'] = $firstName;
             $_POST['lastname'] = $lastName;
             $_POST['gender'] = $gender;
+            $_POST['sign_up_origin'] = 'facebook';
             $_POST['status'] = 'active';
             $response = \LoginAPIController::create('raw')->setUseTransaction(false)->postRegisterUserInShop();
             if ($response->code !== 0) {
@@ -1259,12 +1264,14 @@ class MobileCIAPIController extends BaseCIController
 
             $loggedInUser = $this->doAutoLogin($response->data->user_email);
             $this->loginStage2($loggedInUser, $retailer);
-            $this->socmedSignUpActivity($loggedInUser, 'facebook');
-            $this->socmedSignInActivity($loggedInUser, 'facebook');
+            
             $expireTime = Config::get('orbit.session.session_origin.cookie.expire');
             setcookie('orbit_email', $userEmail, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
             setcookie('orbit_firstname', $firstName, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
             setcookie('login_from', 'Facebook', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+            
+            $this->acquireUser($retailer, $loggedInUser, 'facebook');
+            $this->socmedSignInActivity($loggedInUser, 'facebook');
 
             return Redirect::route($caller_url, $query);
         }
@@ -2220,7 +2227,7 @@ class MobileCIAPIController extends BaseCIController
                         ->where('news_merchant.object_type', 'retailer')
                         ->get()
                         ->lists('merchant_id');
-                        // dd($retailers);
+
                         // <-- should add exception if retailers not found
                         if (! empty($retailers)) {
                             $tenants->whereIn('merchants.merchant_id', $retailers);
@@ -8297,13 +8304,17 @@ class MobileCIAPIController extends BaseCIController
                 $_POST['email'] = $email;
                 $_POST['password'] = $password;
                 $_POST['from'] = $from;
+
                 $response = \LoginAPIController::create('raw')->setRetailerId(OrbitInput::get('retailer_id'))->setUseTransaction(false)->postRegisterUserInShop();
+
                 if ($response->code !== 0) {
                     throw new Exception($response->message, $response->code);
                 }
 
                 $user = $response->data;
-                $this->socmedSignUpActivity($user, 'form');
+                $mall = Mall::active()->where('merchant_id', OrbitInput::get('retailer_id'))->first();
+
+                $this->acquireUser($mall, $user, 'form');
             }
 
             $payload = OrbitInput::get('payload');
@@ -8915,34 +8926,40 @@ class MobileCIAPIController extends BaseCIController
         return $this->render();
     }
 
-    protected function acquireUser($retailer, $user)
+    protected function acquireUser($retailer, $user, $signUpVia = null)
     {
         if (! $user->isConsumer()) {
             return;
         }
 
-        $signUpVia ='form';
-        if (isset($_COOKIE['login_from'])) {
-            switch (strtolower($_COOKIE['login_from'])) {
-                case 'google':
-                    $signUpVia = 'google';
-                    break;
-                case 'facebook':
-                    $signUpVia = 'facebook';
-                    break;
-                default:
-                    $signUpVia = 'form';
-                    break;
+        if (is_null($signUpVia)) {
+            $signUpVia ='form';
+            if (isset($_COOKIE['login_from'])) {
+                switch (strtolower($_COOKIE['login_from'])) {
+                    case 'google':
+                        $signUpVia = 'google';
+                        break;
+                    case 'facebook':
+                        $signUpVia = 'facebook';
+                        break;
+                    default:
+                        $signUpVia = 'form';
+                        break;
+                }
             }
         }
 
-        $retailer->acquireUser($user, $signUpVia);
+        $firstAcquired = $retailer->acquireUser($user, $signUpVia);
+        if ($firstAcquired) {
+            $this->socmedSignUpActivity($user, $signUpVia, $retailer);
+        }
     }
 
     // create activity signup from socmed
-    public function socmedSignUpActivity($user, $from)
+    public function socmedSignUpActivity($user, $from, $retailer)
     {
         $activity = Activity::mobileci()
+            ->setLocation($retailer)
             ->setActivityType('registration')
             ->setUser($user)
             ->setActivityName('registration_ok')
@@ -8978,12 +8995,13 @@ class MobileCIAPIController extends BaseCIController
             //     ]);
             // }
         }
+
         $activity->save();
 
         $newUserSignin = new UserSignin();
         $newUserSignin->user_id = $user->user_id;
         $newUserSignin->signin_via = $from;
-        $newUserSignin->location_id = Config::get('orbit.shop.id');
+        $newUserSignin->location_id = $retailer->merchant_id;
         $newUserSignin->activity_id = $activity->activity_id;
         $newUserSignin->save();
     }
