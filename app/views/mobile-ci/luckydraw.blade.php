@@ -33,7 +33,7 @@
 <div class="row product-info padded">
     <div class="col-xs-12 text-left">
         <p>
-            {{{ nl2br($luckydraw->description) }}}
+            {{ nl2br(htmlspecialchars($luckydraw->description)) }}
         </p>
     </div>
     <div class="col-xs-12 text-left">
