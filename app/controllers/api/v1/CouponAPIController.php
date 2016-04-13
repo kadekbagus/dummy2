@@ -2188,7 +2188,7 @@ class CouponAPIController extends ControllerAPI
                     'current_mall' => $currentmall
                 ),
                 array(
-                    'sort_by' => 'in:registered_date,promotion_name,promotion_type,description,begin_date,end_date,status,is_permanent,rule_type,tenant_name,is_auto_issuance,display_discount_value,updated_at,coupon_status',
+                    'sort_by' => 'in:registered_date,promotion_name,promotion_type,total_location,description,begin_date,end_date,status,is_permanent,rule_type,tenant_name,is_auto_issuance,display_discount_value,updated_at,coupon_status',
                     'current_mall' => 'orbit.empty.merchant'
                 ),
                 array(
@@ -2682,20 +2682,21 @@ class CouponAPIController extends ControllerAPI
             {
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
-                    'registered_date'          => 'promotions.created_at',
-                    'promotion_name'           => 'coupon_translations.promotion_name',
-                    'promotion_type'           => 'promotions.promotion_type',
-                    'description'              => 'promotions.description',
-                    'begin_date'               => 'promotions.begin_date',
-                    'end_date'                 => 'promotions.end_date',
-                    'updated_at'               => 'promotions.updated_at',
-                    'is_permanent'             => 'promotions.is_permanent',
-                    'status'                   => 'campaign_status',
-                    'rule_type'                => 'rule_type',
-                    'tenant_name'              => 'tenant_name',
-                    'is_auto_issuance'         => 'is_auto_issue_on_signup',
-                    'display_discount_value'   => 'display_discount_value',
-                    'coupon_status'            => 'coupon_status'
+                    'registered_date'        => 'promotions.created_at',
+                    'promotion_name'         => 'coupon_translations.promotion_name',
+                    'promotion_type'         => 'promotions.promotion_type',
+                    'description'            => 'promotions.description',
+                    'begin_date'             => 'promotions.begin_date',
+                    'end_date'               => 'promotions.end_date',
+                    'updated_at'             => 'promotions.updated_at',
+                    'is_permanent'           => 'promotions.is_permanent',
+                    'status'                 => 'campaign_status',
+                    'rule_type'              => 'rule_type',
+                    'total_location'         => 'total_location',
+                    'tenant_name'            => 'tenant_name',
+                    'is_auto_issuance'       => 'is_auto_issue_on_signup',
+                    'display_discount_value' => 'display_discount_value',
+                    'coupon_status'          => 'coupon_status'
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];
