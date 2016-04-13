@@ -2899,7 +2899,7 @@ class MobileCIAPIController extends BaseCIController
                 foreach ($tenant->newsProfiling as $keyNews => $news) {
 
                     $newsTranslation = \NewsTranslation::excludeDeleted()
-                        ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
+                        ->where('merchant_language_id', '=', $alternateLanguage->language_id)
                         ->where('news_id', $news->news_id)->first();
 
                     if (!empty($newsTranslation)) {
@@ -2922,7 +2922,7 @@ class MobileCIAPIController extends BaseCIController
                             $defaultLanguage = $this->getDefaultLanguage($retailer);
                             if ($defaultLanguage !== NULL) {
                                 $contentDefaultLanguage = \NewsTranslation::excludeDeleted()
-                                    ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
+                                    ->where('merchant_language_id', '=', $defaultLanguage->language_id)
                                     ->where('news_id', $news->news_id)->first();
 
                                 // get default image
@@ -2944,7 +2944,7 @@ class MobileCIAPIController extends BaseCIController
                 foreach ($tenant->newsPromotionsProfiling as $keyNewsPromotions => $newsPromotions) {
 
                     $newsPromotionsTranslation = \NewsTranslation::excludeDeleted()
-                        ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
+                        ->where('merchant_language_id', '=', $alternateLanguage->language_id)
                         ->where('news_id', $newsPromotions->news_id)->first();
 
                     if (!empty($newsPromotionsTranslation)) {
@@ -2967,7 +2967,7 @@ class MobileCIAPIController extends BaseCIController
                             $defaultLanguage = $this->getDefaultLanguage($retailer);
                             if ($defaultLanguage !== NULL) {
                                 $contentDefaultLanguage = \NewsTranslation::excludeDeleted()
-                                    ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
+                                    ->where('merchant_language_id', '=', $defaultLanguage->language_id)
                                     ->where('news_id', $newsPromotions->news_id)->first();
 
                                 // get default image
@@ -2990,7 +2990,7 @@ class MobileCIAPIController extends BaseCIController
                 foreach ($tenant->couponsProfiling as $keycoupons => $coupons) {
 
                     $couponsTranslation = \CouponTranslation::excludeDeleted()
-                        ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
+                        ->where('merchant_language_id', '=', $alternateLanguage->language_id)
                         ->where('promotion_id', $coupons->promotion_id)->first();
 
                     if (!empty($couponsTranslation)) {
@@ -3013,7 +3013,7 @@ class MobileCIAPIController extends BaseCIController
                             $defaultLanguage = $this->getDefaultLanguage($retailer);
                             if ($defaultLanguage !== NULL) {
                                 $contentDefaultLanguage = \CouponTranslation::excludeDeleted()
-                                    ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
+                                    ->where('merchant_language_id', '=', $defaultLanguage->language_id)
                                     ->where('promotion_id', $coupons->promotion_id)->first();
 
                                 // get default image
