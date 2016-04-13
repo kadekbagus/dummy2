@@ -248,7 +248,7 @@ class CampaignReportPrinterController extends DataPrinterController
                         printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
                             $count,
                             $this->printDateTime($row->campaign_date . '00:00:00', $timezone, 'd M Y'),
-                            $row->total_location, 
+                            str_replace(', ', "\n", $row->campaign_location_names),
                             $row->unique_users,
                             $row->campaign_pages_views,
                             round($row->campaign_pages_view_rate, 2),
