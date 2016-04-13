@@ -8305,6 +8305,7 @@ class MobileCIAPIController extends BaseCIController
                 }
 
                 $user = $response->data;
+                $this->socmedSignUpActivity($user, 'form');
             }
 
             $payload = OrbitInput::get('payload');
@@ -8963,6 +8964,15 @@ class MobileCIAPIController extends BaseCIController
         } else if ($from === 'google') {
             $activity->setActivityNameLong('Sign Up via Mobile (Google+)')
                     ->setNotes('Sign Up via Mobile (Google+) OK');
+            // if ($customer->status === 'active') {
+            //     // Send email process to the queue
+            //     \Queue::push('Orbit\\Queue\\NewPasswordMail', [
+            //         'user_id' => $customer->user_id
+            //     ]);
+            // }
+        } else if ($from === 'form') {
+            $activity->setActivityNameLong('Sign Up via Mobile (Email Address)')
+                    ->setNotes('Sign Up via Mobile (Email Address) OK');
             // if ($customer->status === 'active') {
             //     // Send email process to the queue
             //     \Queue::push('Orbit\\Queue\\NewPasswordMail', [
