@@ -4980,7 +4980,7 @@ class MobileCIAPIController extends BaseCIController
             $mallid = $retailer->merchant_id;                           
 
             $coupons = Coupon::with('couponRule')
-                ->select('promotions.*')
+                ->select('promotions.*', 'promotions.description as description')
                 ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'promotions.promotion_id')
                 ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'promotions.promotion_id')
                 ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
@@ -5851,6 +5851,7 @@ class MobileCIAPIController extends BaseCIController
                     $q->where('merchants.status', 'active');
                     $q->where('merchants.parent_id', $retailer->merchant_id);
                 }])
+                ->select('*', 'news.description as description')
                 ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                 ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
                 ->where(function ($q) use ($mallid) {
@@ -6468,6 +6469,7 @@ class MobileCIAPIController extends BaseCIController
                     $q->where('merchants.status', 'active');
                     $q->where('merchants.parent_id', $retailer->merchant_id);
                 }])
+                ->select('*', 'news.description as description')
                 ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                 ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
                 ->where(function ($q) use ($mallid) {
