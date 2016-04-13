@@ -105,7 +105,7 @@ return array(
 
         'coupon_use'             => 'Gunakan',
         'coupon_ignore'          => 'Lain Kali',
-        'search_label'           => 'Cari berdasarkan nama tenant, kategori, lantai atau deskripsi',
+        'search_label'           => 'Cari berdasarkan nama gerai, kategori, lantai atau deskripsi',
         'search_placeholder'     => 'Input kata kunci',
         'search_button'          => 'Cari',
         'cancel_button'          => 'Batal',
@@ -273,7 +273,7 @@ return array(
 
     'coupon' => array(
         'all_tenants'                      => 'SEMUA GERAI',
-        'all_cs'                           => 'KONTER PELAYANAN PELANGAN',
+        'all_cs'                           => 'KONTER PELAYANAN PELANGGAN',
         'tenant_based'                     => 'Berbasis Gerai',
         'mall_based'                       => 'Berbasis Mall',
         'tenant_redeem'                    => 'Dimana untuk penukaran',
@@ -312,7 +312,7 @@ return array(
     ),
 
     'search'                => array(
-        'no_item'            => 'Tidak ada tenant yang sesuai kriteria.',
+        'no_item'            => 'Tidak ada gerai yang sesuai kriteria.',
         'too_much_items'     => 'Hasil pencarian terlalu banyak, tolong persempit pencarian Anda.',
         'no_result'          => 'Maaf, tidak ada hasil pencarian.',
         'error'              => 'Ada error pada waktu melakukan request.',

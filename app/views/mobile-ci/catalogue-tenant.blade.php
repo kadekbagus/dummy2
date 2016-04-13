@@ -18,6 +18,7 @@
 @section('content')
     @if($data->status === 1)
         @if(sizeof($data->records) > 0 || $link_to_coupon_data->linkedToCS)
+            @if(Input::get('coupon_redeem_id') === null && Input::get('coupon_id') === null && Input::get('promotion_id') == null && Input::get('news_id') === null)
             <div id="search-tool">
                 <div class="row">
                     <div class="col-xs-5 search-tool-col">
@@ -70,6 +71,7 @@
                     </div>
                 </div>
             </div>
+            @endif
             <div class="container">
                 <div class="mobile-ci list-item-container">
                     <div class="row">
@@ -153,6 +155,7 @@
                 </div>
             </div>
         @else
+            @if(Input::get('coupon_redeem_id') === null && Input::get('coupon_id') === null && Input::get('promotion_id') == null && Input::get('news_id') === null)
             <div id="search-tool">
                 <div class="row">
                     <div class="col-xs-5 search-tool-col">
@@ -205,6 +208,7 @@
                     </div>
                 </div>
             </div>
+            @endif
             <div class="row padded">
                 <div class="col-xs-12">
                     <h4>{{ Lang::get('mobileci.search.no_item') }}</h4>
@@ -266,7 +270,6 @@
                 val = $('#category > option:selected').attr('value');
             }
             path = updateQueryStringParameter(path, 'cid', val);
-            console.log(path);
             window.location.replace(path);
         });
         $('#floor').change(function(){
@@ -275,7 +278,6 @@
                 val = $('#floor > option:selected').attr('value');
             }
             path = updateQueryStringParameter(path, 'fid', val);
-            console.log(path);
             window.location.replace(path);
         });
 
