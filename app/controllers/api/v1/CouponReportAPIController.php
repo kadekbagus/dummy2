@@ -703,6 +703,8 @@ class CouponReportAPIController extends ControllerAPI
                                                 " group by ic.promotion_id) redeemed"),
                             // On
                             DB::raw('redeemed.promotionid'), '=', 'promotions.promotion_id')
+                            ->leftJoin('promotion_retailer as pr', DB::Raw('pr.promotion_id'), '=', 'promotions.promotion_id')
+                            ->leftJoin('merchants as m', DB::Raw('m.merchant_id'), '=', DB::Raw('pr.retailer_id'))
                             ->where(function($q) {
                                 $q->whereNotNull('total_issued')
                                   ->orWhereNotNull('total_redeemed');
@@ -710,11 +712,18 @@ class CouponReportAPIController extends ControllerAPI
 
             // Filter by mall id
             OrbitInput::get('mall_id', function($mallId) use ($coupons, $configMallId) {
-                $coupons->where('promotions.merchant_id', $mallId);
+                // $coupons->where('promotions.merchant_id', $mallId);
+                $coupons->where(function ($q) use ($mallId) {
+                    $q->where(DB::Raw('m.merchant_id'), '=', $mallId)
+                      ->orWhere(DB::Raw('m.parent_id'), '=', $mallId);
+                });
             });
 
             OrbitInput::get('merchant_id', function($mallId) use ($coupons, $configMallId) {
-                $coupons->where('promotions.merchant_id', $mallId);
+                $coupons->where(function ($q) use ($mallId) {
+                    $q->where(DB::Raw('m.merchant_id'), '=', $mallId)
+                      ->orWhere(DB::Raw('m.parent_id'), '=', $mallId);
+                });
             });
 
             // Filter by Promotion ID
@@ -877,6 +886,7 @@ class CouponReportAPIController extends ControllerAPI
                 }
             });
 
+            $coupons->groupBy('promotions.promotion_id');
             $coupons->orderBy($sortBy, $sortMode);
 
             // sort by status first
