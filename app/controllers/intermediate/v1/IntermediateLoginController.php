@@ -961,7 +961,8 @@ class IntermediateLoginController extends IntermediateBaseController
                          ->setActivityNameLong('Login failed - Fails to register mac address')
                          ->setNotes($response->message)
                          ->setModuleName('Application')
-                         ->responseFailed();
+                         ->responseFailed()
+                         ->save();
 
                 // Call logout to clear session
                 MobileCIAPIController::create('raw')->getLogoutInShop();
@@ -1018,14 +1019,14 @@ class IntermediateLoginController extends IntermediateBaseController
                 }
             }
 
-            // Successfull login
-            $activity->setUser($user)
-                     ->setActivityName('login_ok')
-                     ->setActivityNameLong('Sign In')
-                     ->setSessionId($this->session->getSessionId())
-                     ->responseOK();
+            // // Successfull login
+            // $activity->setUser($user)
+            //          ->setActivityName('login_ok')
+            //          ->setActivityNameLong('Sign In')
+            //          ->setSessionId($this->session->getSessionId())
+            //          ->responseOK();
 
-            static::proceedPayload($activity, $user->registration_activity_id);
+            // static::proceedPayload($activity, $user->registration_activity_id);
         } else {
             // Login Failed
             $activity->setUser('guest')
@@ -1033,44 +1034,45 @@ class IntermediateLoginController extends IntermediateBaseController
                      ->setActivityNameLong('Sign In Failed')
                      ->setModuleName('Application')
                      ->setNotes($response->message)
-                     ->responseFailed();
+                     ->responseFailed()
+                     ->save();
         }
 
         // Save the activity
-        $activity->setModuleName('Application')->save();
+        // $activity->setModuleName('Application')->save();
 
-        // save to user signin table
-        if ($response->code === 0) {
+        // // save to user signin table
+        // if ($response->code === 0) {
 
-            $signin_via = 'form';
-            $payload = '';
+        //     $signin_via = 'form';
+        //     $payload = '';
 
-            if (! empty(OrbitInput::get('payload'))) {
-                $payload = OrbitInput::get('payload');
-            } else {
-                $payload = OrbitInput::post('payload');
-            }
+        //     if (! empty(OrbitInput::get('payload'))) {
+        //         $payload = OrbitInput::get('payload');
+        //     } else {
+        //         $payload = OrbitInput::post('payload');
+        //     }
 
-            if (! empty($payload)) {
-                $key = md5('--orbit-mall--');
-                $payload = (new Encrypter($key))->decrypt($payload);
-                Log::info('[PAYLOAD] Payload decrypted -- ' . serialize($payload));
-                parse_str($payload, $data);
+        //     if (! empty($payload)) {
+        //         $key = md5('--orbit-mall--');
+        //         $payload = (new Encrypter($key))->decrypt($payload);
+        //         Log::info('[PAYLOAD] Payload decrypted -- ' . serialize($payload));
+        //         parse_str($payload, $data);
 
-                if ($data['login_from'] === 'facebook') {
-                    $signin_via = 'facebook';
-                } else if ($data['login_from'] === 'google') {
-                    $signin_via = 'google';
-                }
-            }
+        //         if ($data['login_from'] === 'facebook') {
+        //             $signin_via = 'facebook';
+        //         } else if ($data['login_from'] === 'google') {
+        //             $signin_via = 'google';
+        //         }
+        //     }
 
-            $newUserSignin = new UserSignin();
-            $newUserSignin->user_id = $user->user_id;
-            $newUserSignin->signin_via = $signin_via;
-            $newUserSignin->location_id = Config::get('orbit.shop.id');
-            $newUserSignin->activity_id = $activity->activity_id;
-            $newUserSignin->save();
-        }
+        //     $newUserSignin = new UserSignin();
+        //     $newUserSignin->user_id = $user->user_id;
+        //     $newUserSignin->signin_via = $signin_via;
+        //     $newUserSignin->location_id = Config::get('orbit.shop.id');
+        //     $newUserSignin->activity_id = $activity->activity_id;
+        //     $newUserSignin->save();
+        // }
 
         return $this->render($response);
     }
