@@ -5415,8 +5415,8 @@ class MobileCIAPIController extends BaseCIController
                             ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
                             ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
                             ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
-                            ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id');
-                            ->select('*', 'news.description as description')
+                            ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
+                            ->select('*', 'news.description as description');
             // filter by age and gender
             if ($userGender !== null) {
                 $promotions = $promotions->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
@@ -5638,8 +5638,8 @@ class MobileCIAPIController extends BaseCIController
                             ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
                             ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
                             ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
-                            ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id');
-                            ->select('*', 'news.description as description')
+                            ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
+                            ->select('*', 'news.description as description');
             // filter by age and gender
             if ($userGender !== null) {
                 $promotions = $promotions->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
@@ -6033,8 +6033,8 @@ class MobileCIAPIController extends BaseCIController
                             ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
                             ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
                             ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
-                            ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id');
-                            ->select('*', 'news.description as description')
+                            ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
+                            ->select('*', 'news.description as description');
             // filter by age and gender
             if ($userGender !== null) {
                 $news = $news->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
@@ -6253,8 +6253,8 @@ class MobileCIAPIController extends BaseCIController
                             ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
                             ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
                             ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
-                            ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id');
-                            ->select('*', 'news.description as description')
+                            ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
+                            ->select('*', 'news.description as description');
             // filter by age and gender
             if ($userGender !== null) {
                 $news = $news->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
@@ -8975,30 +8975,12 @@ class MobileCIAPIController extends BaseCIController
         if ($from === 'facebook') {
             $activity->setActivityNameLong('Sign Up via Mobile (Facebook)')
                     ->setNotes('Sign Up via Mobile (Facebook) OK');
-            // if ($customer->status === 'active') {
-            //     // Send email process to the queue
-            //     \Queue::push('Orbit\\Queue\\NewPasswordMail', [
-            //         'user_id' => $customer->user_id
-            //     ]);
-            // }
         } else if ($from === 'google') {
             $activity->setActivityNameLong('Sign Up via Mobile (Google+)')
                     ->setNotes('Sign Up via Mobile (Google+) OK');
-            // if ($customer->status === 'active') {
-            //     // Send email process to the queue
-            //     \Queue::push('Orbit\\Queue\\NewPasswordMail', [
-            //         'user_id' => $customer->user_id
-            //     ]);
-            // }
         } else if ($from === 'form') {
             $activity->setActivityNameLong('Sign Up via Mobile (Email Address)')
                     ->setNotes('Sign Up via Mobile (Email Address) OK');
-            // if ($customer->status === 'active') {
-            //     // Send email process to the queue
-            //     \Queue::push('Orbit\\Queue\\NewPasswordMail', [
-            //         'user_id' => $customer->user_id
-            //     ]);
-            // }
         }
 
         $activity->save();
