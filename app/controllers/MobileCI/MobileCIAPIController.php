@@ -4479,7 +4479,10 @@ class MobileCIAPIController extends BaseCIController
 
             $prefix = DB::getTablePrefix();
             $user_id = $user->user_id;
-            $coupons = Coupon::selectRaw("*, {$prefix}promotions.promotion_id AS promotion_id, {$prefix}promotions.image AS promo_image, 
+            $coupons = Coupon::selectRaw("*, {$prefix}promotions.promotion_id AS promotion_id,
+                    {$prefix}promotions.description AS description,
+                    {$prefix}promotions.long_description AS long_description,
+                    {$prefix}promotions.image AS promo_image, 
                     (
                         SELECT COUNT({$prefix}issued_coupons.issued_coupon_id) 
                         from {$prefix}issued_coupons 
@@ -4723,7 +4726,7 @@ class MobileCIAPIController extends BaseCIController
 
             $mallid = $retailer->merchant_id;
 
-            $coupons = Coupon::selectRaw('*, ' . DB::getTablePrefix() . 'promotions.image AS promo_image, count(' . DB::getTablePrefix() . 'promotions.promotion_id) as quantity')
+            $coupons = Coupon::selectRaw('*, ' . DB::getTablePrefix() . 'promotions.image AS promo_image, ' . DB::getTablePrefix() . 'promotions.description AS description, ' . DB::getTablePrefix() . 'promotions.long_description AS long_description, count(' . DB::getTablePrefix() . 'promotions.promotion_id) as quantity')
                 ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'promotions.promotion_id')
                 ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'promotions.promotion_id')
                 ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
@@ -5413,7 +5416,7 @@ class MobileCIAPIController extends BaseCIController
                             ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
                             ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                             ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id');
-
+                            ->select('*', 'news.description as description')
             // filter by age and gender
             if ($userGender !== null) {
                 $promotions = $promotions->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
@@ -5636,7 +5639,7 @@ class MobileCIAPIController extends BaseCIController
                             ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
                             ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                             ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id');
-
+                            ->select('*', 'news.description as description')
             // filter by age and gender
             if ($userGender !== null) {
                 $promotions = $promotions->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
@@ -6031,7 +6034,7 @@ class MobileCIAPIController extends BaseCIController
                             ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
                             ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                             ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id');
-
+                            ->select('*', 'news.description as description')
             // filter by age and gender
             if ($userGender !== null) {
                 $news = $news->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
@@ -6251,7 +6254,7 @@ class MobileCIAPIController extends BaseCIController
                             ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
                             ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                             ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id');
-
+                            ->select('*', 'news.description as description')
             // filter by age and gender
             if ($userGender !== null) {
                 $news = $news->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
