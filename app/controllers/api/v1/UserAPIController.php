@@ -3811,6 +3811,20 @@ class UserAPIController extends ControllerAPI
         Validator::extend('orbit.empty.mall_have_membership_card', function ($attribute, $value, $parameters) {
             $mallId = $value;
 
+            $setting  = Setting::active()
+                              ->where('object_type', 'merchant')
+                              ->where('object_id', $mallId)
+                              ->where('setting_name', 'enable_membership_card')
+                              ->first();
+
+            if (empty($setting)) {
+                return FALSE;
+            }
+
+            if ($setting->setting_value === 'false') {
+                return TRUE;
+            }
+
             $membershipCard = Membership::excludeDeleted()
                                         ->active()
                                         ->where('merchant_id', $mallId)

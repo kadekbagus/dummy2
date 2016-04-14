@@ -35,9 +35,10 @@ class BaseCIController extends ControllerAPI
     protected function getListLanguages($mall)
     {
         $languages = MerchantLanguage::with('language')
+                                     ->join('languages', 'languages.language_id', '=','merchant_languages.language_id')
                                      ->where('merchant_languages.status', '!=', 'deleted')
                                      ->where('merchant_id', $mall->merchant_id)
-                                     ->join('languages', 'languages.language_id', '=','merchant_languages.language_id')
+                                     ->where('languages.status', 'active')
                                      ->orderBy('languages.name_long', 'ASC')
                                      ->get();
 
