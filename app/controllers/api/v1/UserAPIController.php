@@ -3821,17 +3821,16 @@ class UserAPIController extends ControllerAPI
                 return FALSE;
             }
 
-            if ($setting->setting_value === 'false') {
-                return TRUE;
-            }
+            $membershipCard = [];
+            if ($setting->setting_value === 'true') {
+                $membershipCard = Membership::excludeDeleted()
+                                            ->active()
+                                            ->where('merchant_id', $mallId)
+                                            ->first();
 
-            $membershipCard = Membership::excludeDeleted()
-                                        ->active()
-                                        ->where('merchant_id', $mallId)
-                                        ->first();
-
-            if (empty($membershipCard)) {
-                return FALSE;
+                if (empty($membershipCard)) {
+                    return FALSE;
+                }
             }
 
             App::instance('orbit.empty.mall_have_membership_card', $membershipCard);
