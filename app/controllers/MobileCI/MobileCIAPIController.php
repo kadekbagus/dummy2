@@ -1090,7 +1090,7 @@ class MobileCIAPIController extends BaseCIController
                     setcookie('orbit_firstname', $firstName, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
                     setcookie('login_from', 'Google', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
 
-                    $this->socmedSignInActivity($loggedInUser, 'google');
+                    $this->socmedSignInActivity($loggedInUser, 'google', $retailer);
 
                     // todo can we not do this directly
                     return Redirect::route($caller_url, $query);
@@ -1118,7 +1118,7 @@ class MobileCIAPIController extends BaseCIController
                     setcookie('login_from', 'Google', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
                     
                     $this->acquireUser($retailer, $loggedInUser, 'google');
-                    $this->socmedSignInActivity($loggedInUser, 'google');
+                    $this->socmedSignInActivity($loggedInUser, 'google', $retailer);
 
                     return Redirect::route($caller_url, $query);
                 }
@@ -1246,7 +1246,7 @@ class MobileCIAPIController extends BaseCIController
             setcookie('orbit_firstname', $firstName, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
             setcookie('login_from', 'Facebook', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
 
-            $this->socmedSignInActivity($loggedInUser, 'facebook');
+            $this->socmedSignInActivity($loggedInUser, 'facebook', $retailer);
 
             return Redirect::route($caller_url, $query);
         } else {
@@ -1271,7 +1271,7 @@ class MobileCIAPIController extends BaseCIController
             setcookie('login_from', 'Facebook', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
             
             $this->acquireUser($retailer, $loggedInUser, 'facebook');
-            $this->socmedSignInActivity($loggedInUser, 'facebook');
+            $this->socmedSignInActivity($loggedInUser, 'facebook', $retailer);
 
             return Redirect::route($caller_url, $query);
         }
@@ -8320,6 +8320,7 @@ class MobileCIAPIController extends BaseCIController
                 $mall = Mall::active()->where('merchant_id', OrbitInput::get('retailer_id'))->first();
 
                 $this->acquireUser($mall, $user, 'form');
+                $this->socmedSignInActivity($user, 'form', $mall);
             }
 
             $payload = OrbitInput::get('payload');
@@ -8984,33 +8985,41 @@ class MobileCIAPIController extends BaseCIController
         }
 
         $activity->save();
-
-        $newUserSignin = new UserSignin();
-        $newUserSignin->user_id = $user->user_id;
-        $newUserSignin->signin_via = $from;
-        $newUserSignin->location_id = $retailer->merchant_id;
-        $newUserSignin->activity_id = $activity->activity_id;
-        $newUserSignin->save();
     }
 
     // create activity signin from socmed
-    public function socmedSignInActivity($user, $from)
+    public function socmedSignInActivity($user, $from, $retailer)
     {
-        $activity = Activity::mobileci()
-                ->setUser($user)
-                ->setActivityName('login_ok')
-                ->setActivityNameLong('Sign In')
-                ->setObject($user)
-                ->setModuleName('Application')
-                ->responseOK();
+        if (is_object($user)) {
+            $activity = Activity::mobileci()
+                    ->setLocation($retailer)
+                    ->setUser($user)
+                    ->setActivityName('login_ok')
+                    ->setActivityNameLong('Sign In')
+                    ->setActivityType('login')
+                    ->setObject($user)
+                    ->setModuleName('Application')
+                    ->responseOK();
 
-        $activity->save();
+            $activity->save();
 
-        $newUserSignin = new UserSignin();
-        $newUserSignin->user_id = $user->user_id;
-        $newUserSignin->signin_via = $from;
-        $newUserSignin->location_id = Config::get('orbit.shop.id');
-        $newUserSignin->activity_id = $activity->activity_id;
-        $newUserSignin->save();
+            $newUserSignin = new UserSignin();
+            $newUserSignin->user_id = $user->user_id;
+            $newUserSignin->signin_via = $from;
+            $newUserSignin->location_id = $retailer->merchant_id;
+            $newUserSignin->activity_id = $activity->activity_id;
+            $newUserSignin->save();
+        } else {
+            $activity = Activity::mobileci()
+                    ->setLocation($retailer)
+                    ->setUser('guest')
+                    ->setActivityName('login_failed')
+                    ->setActivityNameLong('Sign In Failed')
+                    ->setActivityType('login')
+                    ->setModuleName('Application')
+                    ->responseFailed();
+
+            $activity->save();
+        }
     }
 }
