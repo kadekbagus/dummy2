@@ -1090,7 +1090,7 @@ class MobileCIAPIController extends BaseCIController
                     setcookie('orbit_firstname', $firstName, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
                     setcookie('login_from', 'Google', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
 
-                    $this->socmedSignInActivity($loggedInUser, 'google');
+                    $this->socmedSignInActivity($loggedInUser, 'google', $retailer);
 
                     // todo can we not do this directly
                     return Redirect::route($caller_url, $query);
@@ -1118,7 +1118,7 @@ class MobileCIAPIController extends BaseCIController
                     setcookie('login_from', 'Google', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
                     
                     $this->acquireUser($retailer, $loggedInUser, 'google');
-                    $this->socmedSignInActivity($loggedInUser, 'google');
+                    $this->socmedSignInActivity($loggedInUser, 'google', $retailer);
 
                     return Redirect::route($caller_url, $query);
                 }
@@ -1246,7 +1246,7 @@ class MobileCIAPIController extends BaseCIController
             setcookie('orbit_firstname', $firstName, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
             setcookie('login_from', 'Facebook', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
 
-            $this->socmedSignInActivity($loggedInUser, 'facebook');
+            $this->socmedSignInActivity($loggedInUser, 'facebook', $retailer);
 
             return Redirect::route($caller_url, $query);
         } else {
@@ -1271,7 +1271,7 @@ class MobileCIAPIController extends BaseCIController
             setcookie('login_from', 'Facebook', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
             
             $this->acquireUser($retailer, $loggedInUser, 'facebook');
-            $this->socmedSignInActivity($loggedInUser, 'facebook');
+            $this->socmedSignInActivity($loggedInUser, 'facebook', $retailer);
 
             return Redirect::route($caller_url, $query);
         }
@@ -4479,7 +4479,10 @@ class MobileCIAPIController extends BaseCIController
 
             $prefix = DB::getTablePrefix();
             $user_id = $user->user_id;
-            $coupons = Coupon::selectRaw("*, {$prefix}promotions.promotion_id AS promotion_id, {$prefix}promotions.image AS promo_image, 
+            $coupons = Coupon::selectRaw("*, {$prefix}promotions.promotion_id AS promotion_id,
+                    {$prefix}promotions.description AS description,
+                    {$prefix}promotions.long_description AS long_description,
+                    {$prefix}promotions.image AS promo_image, 
                     (
                         SELECT COUNT({$prefix}issued_coupons.issued_coupon_id) 
                         from {$prefix}issued_coupons 
@@ -4723,7 +4726,7 @@ class MobileCIAPIController extends BaseCIController
 
             $mallid = $retailer->merchant_id;
 
-            $coupons = Coupon::selectRaw('*, ' . DB::getTablePrefix() . 'promotions.image AS promo_image, count(' . DB::getTablePrefix() . 'promotions.promotion_id) as quantity')
+            $coupons = Coupon::selectRaw('*, ' . DB::getTablePrefix() . 'promotions.image AS promo_image, ' . DB::getTablePrefix() . 'promotions.description AS description, ' . DB::getTablePrefix() . 'promotions.long_description AS long_description, count(' . DB::getTablePrefix() . 'promotions.promotion_id) as quantity')
                 ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'promotions.promotion_id')
                 ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'promotions.promotion_id')
                 ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
@@ -5412,8 +5415,8 @@ class MobileCIAPIController extends BaseCIController
                             ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
                             ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
                             ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
-                            ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id');
-
+                            ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
+                            ->select('*', 'news.description as description');
             // filter by age and gender
             if ($userGender !== null) {
                 $promotions = $promotions->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
@@ -5635,8 +5638,8 @@ class MobileCIAPIController extends BaseCIController
                             ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
                             ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
                             ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
-                            ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id');
-
+                            ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
+                            ->select('*', 'news.description as description');
             // filter by age and gender
             if ($userGender !== null) {
                 $promotions = $promotions->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
@@ -6030,8 +6033,8 @@ class MobileCIAPIController extends BaseCIController
                             ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
                             ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
                             ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
-                            ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id');
-
+                            ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
+                            ->select('*', 'news.description as description');
             // filter by age and gender
             if ($userGender !== null) {
                 $news = $news->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
@@ -6250,8 +6253,8 @@ class MobileCIAPIController extends BaseCIController
                             ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
                             ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
                             ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
-                            ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id');
-
+                            ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
+                            ->select('*', 'news.description as description');
             // filter by age and gender
             if ($userGender !== null) {
                 $news = $news->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
@@ -8317,6 +8320,7 @@ class MobileCIAPIController extends BaseCIController
                 $mall = Mall::active()->where('merchant_id', OrbitInput::get('retailer_id'))->first();
 
                 $this->acquireUser($mall, $user, 'form');
+                $this->socmedSignInActivity($user, 'form', $mall);
             }
 
             $payload = OrbitInput::get('payload');
@@ -8972,60 +8976,50 @@ class MobileCIAPIController extends BaseCIController
         if ($from === 'facebook') {
             $activity->setActivityNameLong('Sign Up via Mobile (Facebook)')
                     ->setNotes('Sign Up via Mobile (Facebook) OK');
-            // if ($customer->status === 'active') {
-            //     // Send email process to the queue
-            //     \Queue::push('Orbit\\Queue\\NewPasswordMail', [
-            //         'user_id' => $customer->user_id
-            //     ]);
-            // }
         } else if ($from === 'google') {
             $activity->setActivityNameLong('Sign Up via Mobile (Google+)')
                     ->setNotes('Sign Up via Mobile (Google+) OK');
-            // if ($customer->status === 'active') {
-            //     // Send email process to the queue
-            //     \Queue::push('Orbit\\Queue\\NewPasswordMail', [
-            //         'user_id' => $customer->user_id
-            //     ]);
-            // }
         } else if ($from === 'form') {
             $activity->setActivityNameLong('Sign Up via Mobile (Email Address)')
                     ->setNotes('Sign Up via Mobile (Email Address) OK');
-            // if ($customer->status === 'active') {
-            //     // Send email process to the queue
-            //     \Queue::push('Orbit\\Queue\\NewPasswordMail', [
-            //         'user_id' => $customer->user_id
-            //     ]);
-            // }
         }
 
         $activity->save();
-
-        $newUserSignin = new UserSignin();
-        $newUserSignin->user_id = $user->user_id;
-        $newUserSignin->signin_via = $from;
-        $newUserSignin->location_id = $retailer->merchant_id;
-        $newUserSignin->activity_id = $activity->activity_id;
-        $newUserSignin->save();
     }
 
     // create activity signin from socmed
-    public function socmedSignInActivity($user, $from)
+    public function socmedSignInActivity($user, $from, $retailer)
     {
-        $activity = Activity::mobileci()
-                ->setUser($user)
-                ->setActivityName('login_ok')
-                ->setActivityNameLong('Sign In')
-                ->setObject($user)
-                ->setModuleName('Application')
-                ->responseOK();
+        if (is_object($user)) {
+            $activity = Activity::mobileci()
+                    ->setLocation($retailer)
+                    ->setUser($user)
+                    ->setActivityName('login_ok')
+                    ->setActivityNameLong('Sign In')
+                    ->setActivityType('login')
+                    ->setObject($user)
+                    ->setModuleName('Application')
+                    ->responseOK();
 
-        $activity->save();
+            $activity->save();
 
-        $newUserSignin = new UserSignin();
-        $newUserSignin->user_id = $user->user_id;
-        $newUserSignin->signin_via = $from;
-        $newUserSignin->location_id = Config::get('orbit.shop.id');
-        $newUserSignin->activity_id = $activity->activity_id;
-        $newUserSignin->save();
+            $newUserSignin = new UserSignin();
+            $newUserSignin->user_id = $user->user_id;
+            $newUserSignin->signin_via = $from;
+            $newUserSignin->location_id = $retailer->merchant_id;
+            $newUserSignin->activity_id = $activity->activity_id;
+            $newUserSignin->save();
+        } else {
+            $activity = Activity::mobileci()
+                    ->setLocation($retailer)
+                    ->setUser('guest')
+                    ->setActivityName('login_failed')
+                    ->setActivityNameLong('Sign In Failed')
+                    ->setActivityType('login')
+                    ->setModuleName('Application')
+                    ->responseFailed();
+
+            $activity->save();
+        }
     }
 }
