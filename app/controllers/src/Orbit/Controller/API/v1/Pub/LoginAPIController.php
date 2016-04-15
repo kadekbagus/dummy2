@@ -109,37 +109,37 @@ class LoginAPIController extends IntermediateBaseController
                 ]);
                 OrbitShopAPI::throwInvalidArgument($message);
             }
-            // let mobileci handle it's own session
-            // if ($activity_origin !== 'mobileci') {
-                // Start the orbit session
-                $data = array(
-                    'logged_in' => TRUE,
-                    'user_id'   => $user->user_id,
-                    'email'     => $user->user_email,
-                    'role'      => $user->role->role_name,
-                    'fullname'  => $user->getFullName(),
-                );
-                $this->session->enableForceNew()->start($data);
-
-                // Send the session id via HTTP header
-                $sessionHeader = $this->session->getSessionConfig()->getConfig('session_origin.header.name');
-                $sessionHeader = 'Set-' . $sessionHeader;
-                $this->customHeaders[$sessionHeader] = $this->session->getSessionId();
-
-                $expireTime = Config::get('orbit.session.session_origin.cookie.expire');
-
-                setcookie('orbit_email', $user->user_email, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
-                setcookie('orbit_firstname', $user->user_firstname, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
-                setcookie('login_from', 'Form', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
-            // }
-
-            // Successfull login
-            $activity->setUser($user)
-                     ->setActivityName('login_ok')
-                     ->setActivityNameLong('Sign in')
-                     ->responseOK()->setModuleName('Application')->save();
             
-            $user->activity = $activity;
+            // Start the orbit session
+            $data = array(
+                'logged_in' => TRUE,
+                'user_id'   => $user->user_id,
+                'email'     => $user->user_email,
+                'role'      => $user->role->role_name,
+                'fullname'  => $user->getFullName(),
+            );
+            $this->session->enableForceNew()->start($data);
+
+            // Send the session id via HTTP header
+            $sessionHeader = $this->session->getSessionConfig()->getConfig('session_origin.header.name');
+            $sessionHeader = 'Set-' . $sessionHeader;
+            $this->customHeaders[$sessionHeader] = $this->session->getSessionId();
+
+            $expireTime = Config::get('orbit.session.session_origin.cookie.expire');
+
+            setcookie('orbit_email', $user->user_email, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+            setcookie('orbit_firstname', $user->user_firstname, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+            setcookie('login_from', 'Form', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+
+            if ($activity_origin !== 'mobileci') {
+                $activity->setUser($user)
+                         ->setActivityName('login_ok')
+                         ->setActivityNameLong('Sign in')
+                         ->responseOK()->setModuleName('Application')->save();
+                
+                $user->activity = $activity;
+            }
+
             $this->response->data = $user;
             $this->response->code = 0;
             $this->response->status = 'success';
@@ -211,6 +211,9 @@ class LoginAPIController extends IntermediateBaseController
         $users = User::select('users.user_email', 'users.user_firstname', 'users.user_lastname', 'users.user_lastname', 'users.user_id', 'user_details.birthdate', 'user_details.gender', 'users.status')
                 ->join('user_details', 'user_details.user_id', '=', 'users.user_id')
                 ->where('users.user_email', $email)
+                ->whereHas('role', function($q) {
+                    $q->where('role_name', 'Consumer');
+                })
                 ->get();
 
         return $users;
