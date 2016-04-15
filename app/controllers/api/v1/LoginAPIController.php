@@ -201,8 +201,8 @@ class LoginAPIController extends ControllerAPI
             $menus = Config::get('orbit.menus.pmp');
 
             $mall = [];
-            if ($user->isCampaignOwner()) {
-                $user_merchants = $user->campaignAccount->userMerchant;
+            if ($user->isCampaignOwner() || $user->isCampaignEmployee()) {
+                $user_merchants = $user->userMerchant;
 
                 $parent_id = '';
                 foreach ($user_merchants as $key => $user_merchant) {
@@ -224,25 +224,6 @@ class LoginAPIController extends ControllerAPI
                         }
                     }
                 }
-            } elseif ($user->isCampaignEmployee()) {
-                $user_merchants = $user->campaignAccount->parentCampaignAccount->userMerchant;
-
-                $parent_id = null;
-                foreach ($user_merchants as $key => $user_merchant) {
-                    if ($user_merchant->object_type === 'mall') {
-                        $tmp_mall = $user_merchant->mall->load('timezone');
-                        if ($tmp_mall[0]->merchant_id !== $parent_id) {
-                            $mall[] = $tmp_mall[0];
-                        }
-                        $parent_id = $tmp_mall[0]->merchant_id;
-                    } elseif ($user_merchant->object_type === 'tenant') {
-                        $tenant = $user_merchant->tenant;
-                        if ($tenant->parent_id !== $parent_id) {
-                            $mall[] = $user_merchant->tenant->parent->load('timezone');
-                        }
-                        $parent_id = $tenant->parent_id;
-                    }
-                }
             } elseif ($user->isCampaignAdmin()) {
                 $mall = Mall::excludeDeleted()
                             ->with('timezone')
@@ -250,7 +231,7 @@ class LoginAPIController extends ControllerAPI
             }
 
             $user->mall = $mall;
-            unset($user->campaignAccount);
+            unset($user->userMerchant);
 
             // Successfull login
             $activity->setUser($user)

@@ -59,6 +59,9 @@ Artisan::add(new CampaignDailySpendingMigration);
 // Merchant geolocation
 Artisan::add(new MerchantGeolocation);
 
+// Tenant Import
+Artisan::add(new TenantImport);
+
 // Insert or update data on settings table
 // @Todo investigate why its error
 // Artisan::add(new MerchantSetting);

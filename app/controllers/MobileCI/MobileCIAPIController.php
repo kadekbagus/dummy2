@@ -1090,8 +1090,14 @@ class MobileCIAPIController extends BaseCIController
                     setcookie('orbit_firstname', $firstName, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
                     setcookie('login_from', 'Google', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
 
-                    $this->socmedSignInActivity($loggedInUser, 'google');
 
+                    $this->setSignInActivity($loggedInUser, 'google', $retailer);
+
+                    // special session value for visited malls within single session
+                    $urlblock = new UrlBlock;
+                    $session = $urlblock->getUserSession();
+                    $session->write('visited_location', [$retailer->merchant_id]);
+                    
                     // todo can we not do this directly
                     return Redirect::route($caller_url, $query);
                 } else {
@@ -1118,7 +1124,6 @@ class MobileCIAPIController extends BaseCIController
                     setcookie('login_from', 'Google', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
                     
                     $this->acquireUser($retailer, $loggedInUser, 'google');
-                    $this->socmedSignInActivity($loggedInUser, 'google');
 
                     return Redirect::route($caller_url, $query);
                 }
@@ -1246,7 +1251,12 @@ class MobileCIAPIController extends BaseCIController
             setcookie('orbit_firstname', $firstName, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
             setcookie('login_from', 'Facebook', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
 
-            $this->socmedSignInActivity($loggedInUser, 'facebook');
+            $this->setSignInActivity($loggedInUser, 'facebook', $retailer);
+
+            // special session value for visited malls within single session
+            $urlblock = new UrlBlock;
+            $session = $urlblock->getUserSession();
+            $session->write('visited_location', [$retailer->merchant_id]);
 
             return Redirect::route($caller_url, $query);
         } else {
@@ -1271,7 +1281,6 @@ class MobileCIAPIController extends BaseCIController
             setcookie('login_from', 'Facebook', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
             
             $this->acquireUser($retailer, $loggedInUser, 'facebook');
-            $this->socmedSignInActivity($loggedInUser, 'facebook');
 
             return Redirect::route($caller_url, $query);
         }
@@ -8320,6 +8329,7 @@ class MobileCIAPIController extends BaseCIController
                 $mall = Mall::active()->where('merchant_id', OrbitInput::get('retailer_id'))->first();
 
                 $this->acquireUser($mall, $user, 'form');
+                $this->setSignInActivity($user, 'form', $mall);
             }
 
             $payload = OrbitInput::get('payload');
@@ -8955,13 +8965,27 @@ class MobileCIAPIController extends BaseCIController
         }
 
         $firstAcquired = $retailer->acquireUser($user, $signUpVia);
+        // if the user is viewing the mall for the 1st time then set the signup activity
         if ($firstAcquired) {
-            $this->socmedSignUpActivity($user, $signUpVia, $retailer);
+            $this->setSignUpActivity($user, $signUpVia, $retailer);
+        }
+
+        // if the user is viewing the mall for the 1st time in this session 
+        // then set also the sign in activity
+        $urlblock = new UrlBlock;
+        $session = $urlblock->getUserSession();
+        $visited_locations = [];
+        if (! empty($session->read('visited_location'))) {
+            $visited_locations = $session->read('visited_location');
+        }
+        if (! in_array($retailer->merchant_id, $visited_locations)) {
+            $this->setSignInActivity($user, $signUpVia, $retailer, null);
+            $session->write('visited_location', array_merge($visited_locations, [$retailer->merchant_id]));
         }
     }
 
     // create activity signup from socmed
-    public function socmedSignUpActivity($user, $from, $retailer)
+    public function setSignUpActivity($user, $from, $retailer)
     {
         $activity = Activity::mobileci()
             ->setLocation($retailer)
@@ -8984,33 +9008,171 @@ class MobileCIAPIController extends BaseCIController
         }
 
         $activity->save();
-
-        $newUserSignin = new UserSignin();
-        $newUserSignin->user_id = $user->user_id;
-        $newUserSignin->signin_via = $from;
-        $newUserSignin->location_id = $retailer->merchant_id;
-        $newUserSignin->activity_id = $activity->activity_id;
-        $newUserSignin->save();
     }
 
     // create activity signin from socmed
-    public function socmedSignInActivity($user, $from)
+    public function setSignInActivity($user, $from, $retailer, $activity = null)
     {
-        $activity = Activity::mobileci()
-                ->setUser($user)
-                ->setActivityName('login_ok')
-                ->setActivityNameLong('Sign In')
-                ->setObject($user)
-                ->setModuleName('Application')
-                ->responseOK();
+        if (is_object($user)) {
+            if (is_null($activity)) {
+                $activity = Activity::mobileci()
+                        ->setLocation($retailer)
+                        ->setUser($user)
+                        ->setActivityName('login_ok')
+                        ->setActivityNameLong('Sign In')
+                        ->setActivityType('login')
+                        ->setObject($user)
+                        ->setModuleName('Application')
+                        ->responseOK();
 
-        $activity->save();
+                $activity->save();
+            }
 
-        $newUserSignin = new UserSignin();
-        $newUserSignin->user_id = $user->user_id;
-        $newUserSignin->signin_via = $from;
-        $newUserSignin->location_id = Config::get('orbit.shop.id');
-        $newUserSignin->activity_id = $activity->activity_id;
-        $newUserSignin->save();
+            $newUserSignin = new UserSignin();
+            $newUserSignin->user_id = $user->user_id;
+            $newUserSignin->signin_via = $from;
+            $newUserSignin->location_id = $retailer->merchant_id;
+            $newUserSignin->activity_id = $activity->activity_id;
+            $newUserSignin->save();
+        } else {
+            $activity = Activity::mobileci()
+                    ->setLocation($retailer)
+                    ->setUser('guest')
+                    ->setActivityName('login_failed')
+                    ->setActivityNameLong('Sign In Failed')
+                    ->setActivityType('login')
+                    ->setModuleName('Application')
+                    ->responseFailed();
+
+            $activity->save();
+        }
+    }
+
+    /**
+     * POST - Login customer in shop v2 : whithout cloud-box sync
+     *
+     * @param string    `email`          (required) - Email address of the user
+     * @param string    `mode`           (required) - registration or login
+     * @return Illuminate\Support\Facades\Response
+     *
+     * @author Ahmad Anshori <ahmad@dominopos.com>
+     */
+    public function postLoginInShopV2()
+    {
+        $this->response = new \OrbitShop\API\v1\ResponseProvider();
+        try {
+            $retailer = $this->getRetailerInfo();
+            $email = trim(OrbitInput::post('email'));
+            $password = OrbitInput::post('password');
+            $password_confirmation = OrbitInput::post('password_confirmation');
+            $mode = OrbitInput::post('mode');
+            $socmed_redirect_to = OrbitInput::post('socmed_redirect_to');
+
+            if ($mode === 'registration') {
+                // do the registration
+                $_POST['activity_name_long'] = 'Sign Up via Mobile (Email Address)';
+                $_POST['activity_origin'] = 'mobileci';
+                $response = \Orbit\Controller\API\v1\Pub\RegistrationAPIController::create('raw')->postRegisterCustomer();
+                $response_data = json_decode($response->getOriginalContent());
+                unset($_POST['activity_name_long']);
+                unset($_POST['activity_origin']);
+                if($response_data->code !== 0) {
+                    $errorMessage = $response_data->message;
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+
+                // set activation notification
+                $inbox = new Inbox();
+                $inbox->addToInbox($response_data->data->user_id, $response_data->data, $retailer->merchant_id, 'activation');
+            }
+
+            // do the login
+            $_POST['activity_name_long'] = 'Sign Up via Mobile (Email Address)';
+            $_POST['activity_origin'] = 'mobileci';
+            $login_response = \Orbit\Controller\API\v1\Pub\LoginAPIController::create('raw')->postLoginCustomer();
+            $login_response_data = json_decode($login_response->getOriginalContent());
+            unset($_POST['activity_name_long']);
+            unset($_POST['activity_origin']);
+            if($login_response_data->code !== 0) {
+                $errorMessage = $login_response_data->message;
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            $user = $login_response_data->data;
+            // fill the user sign in table
+            $this->setSignInActivity($user, 'form', $retailer, $user->activity);
+            
+            $urlblock = new UrlBlock;
+            // append the redirect url to user object
+            $user->redirect_to = $urlblock->blockedRoute('ci-customer-home');
+            OrbitInput::post('from_url', function ($fromUrl) use (&$user, $urlblock) {
+                $user->redirect_to = $urlblock->blockedRoute($fromUrl);
+            });
+
+            // do the stage 2
+            $notAllowedStatus = ['inactive'];
+            $lowerCasedStatus = strtolower($user->status);
+            if (in_array($lowerCasedStatus, $notAllowedStatus)) {
+                throw new Exception('You are not allowed to login. Please check with Customer Service.', 13);
+            }
+            // if a valid MAC specified, associate the MAC with the given email if not associated yet
+            $mac = OrbitInput::get('mac_address', '');
+            if ($mac !== '') {
+                $addr_object = new MacAddr($mac);
+                if ($addr_object->isValid()) {
+                    $addr_entity = \MacAddress::excludeDeleted()->where('user_email', '=', $user->user_email)->where('mac_address', '=', $mac)->first();
+                    if ($addr_entity === null) {
+                        $addr_entity = new \MacAddress();
+                        $addr_entity->user_email = $user->user_email;
+                        $addr_entity->mac_address = $mac;
+                        $addr_entity->status = 'active';
+                        $addr_entity->save();
+                    }
+                }
+            }
+            // update last visited records
+            $user_detail = UserDetail::where('user_id', $user->user_id)->first();
+            $user_detail->last_visit_shop_id = $retailer->merchant_id;
+            $user_detail->last_visit_any_shop = Carbon::now($retailer->timezone->timezone_name);
+            $user_detail->save();
+
+            // set the cookies
+            $expireTime = Config::get('orbit.session.session_origin.cookie.expire');
+            setcookie('orbit_email', $user->user_email, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+            setcookie('orbit_firstname', $user->user_firstname, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+            setcookie('login_from', 'form', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+            // special session value for visited malls within single session
+            $session = $urlblock->getUserSession();
+            $session->write('visited_location', [$retailer->merchant_id]);
+
+            // acquire user
+            $user_obj = User::where('user_id', $user->user_id)->first();
+            $retailer->acquireUser($user_obj, 'form');
+            // auto coupon issuance checkwill happen on each page after the login success
+            Coupon::issueAutoCoupon($retailer, $user_obj, $urlblock->getUserSession());
+
+            // remove activity from user object
+            unset($user->activity);
+            $this->response->code = 0;
+            $this->response->status = 'success';
+            $this->response->message = 'Sign in success';
+            $this->response->data = $user;
+        } catch (ACLForbiddenException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+        } catch (InvalidArgsException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+        } catch (Exception $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = $e->getLine();
+            $this->response->message = $e->getMessage();
+            $this->response->data = Config::get('app.debug') ? [$e->getMessage(), $e->getFile(), $e->getLine()] : null;
+        }
+
+        return $this->render();
     }
 }
