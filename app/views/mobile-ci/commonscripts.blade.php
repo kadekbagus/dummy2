@@ -104,7 +104,7 @@
                         <form name="fbLoginForm" id="fbLoginForm" action="{{ URL::route('mobile-ci.social_login') }}" method="post">
                             <div class="form-group">
                                 <input type="hidden" class="form-control" name="time" value="{{{ time() }}}"/>
-                                <input type="hidden" class="form-control" name="from_url" value="{{{ \Route::currentRouteName() }}}"/>
+                                <input type="hidden" class="form-control" name="from_url" id="from_url" value="{{{ \Route::currentRouteName() }}}"/>
                                 <input type="hidden" class="form-control" name="from_captive" value="{{{ Input::get('from_captive', '') }}}"/>
                                 <input type="hidden" class="form-control" name="mac_address"
                                        value="{{{ Input::get('mac_address', '') }}}"/>
@@ -215,7 +215,6 @@
                     <button type="button" class="close close-form" data-dismiss="modal" aria-label="Close">
                         <i class="fa fa-times"></i>
                     </button>
-
                     <span class="mandatory-label" style="display:none;">{{ Lang::get('mobileci.signup.fields_are_mandatory') }}</span>
                     <div class="form-group icon-group">
                         <input type="email" value="{{{ $user_email }}}" class="form-control orbit-auto-login" name="email" id="email" placeholder="{{ Lang::get('mobileci.signup.email_placeholder') }}">
@@ -1096,7 +1095,8 @@
                         mac_address: {{ json_encode(Input::get('mac_address', '')) }},
                         auto_login: "{{{ Input::get('auto_login', 'no') }}}",
                         from_captive: "{{{ Input::get('from_captive', 'no') }}}",
-                        socmed_redirect_to: "{{{ Input::get('socmed_redirect_to', '') }}}"
+                        socmed_redirect_to: "{{{ Input::get('socmed_redirect_to', '') }}}",
+                        from_url: $('#from_url').val()
                     }
                 }).done(function (response, status, xhr) {
                     if (response.code !== 0 && response.code !== 302) {
@@ -1114,7 +1114,7 @@
                         expires: 3650,
                         domain: baseDomain
                     });
-                    // Cloud redirection?
+                    // redirection?
                     if (response.data.redirect_to) {
                         document.location = response.data.redirect_to;
                         return;
@@ -1207,8 +1207,9 @@
                         password: custPassword,
                         password_confirmation: custPasswordConfirmation,
                         gender: $('#gender').val(),
-                        birth_date: birthdate.day + '-' + birthdate.month + '-' + birthdate.year,
-                        socmed_redirect_to: "{{{ Input::get('socmed_redirect_to', '') }}}"
+                        birthdate: birthdate.day + '-' + birthdate.month + '-' + birthdate.year,
+                        socmed_redirect_to: "{{{ Input::get('socmed_redirect_to', '') }}}",
+                        from_url: $('#from_url').val()
                     }
                 }).done(function (resp, status, xhr) {
                     if (resp.status === 'error') {

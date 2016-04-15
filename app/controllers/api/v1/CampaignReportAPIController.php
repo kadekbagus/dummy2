@@ -781,6 +781,16 @@ class CampaignReportAPIController extends ControllerAPI
                 // Because this version we cannot modify link to tenant so no need joint to campaign history
                 $totalLinkToLocation = NewsMerchant::where('news_id', $campaign_id)->count();
 
+                $locationNames = "
+                    (
+                        select GROUP_CONCAT(IF({$tablePrefix}merchants.object_type = 'tenant', CONCAT({$tablePrefix}merchants.name,' at ', pm.name), CONCAT('Mall at ',{$tablePrefix}merchants.name) ) separator ', ')
+                        from {$tablePrefix}news_merchant
+                        inner join {$tablePrefix}merchants on {$tablePrefix}merchants.merchant_id = {$tablePrefix}news_merchant.merchant_id
+                        inner join {$tablePrefix}merchants pm on {$tablePrefix}merchants.parent_id = pm.merchant_id
+                        where {$tablePrefix}news_merchant.news_id = {$this->quote($campaign_id)}
+                    ) as campaign_location_names
+                ";
+
             } elseif ($campaign_type === 'coupon') {
                 // Get begin and end
                 $getBeginEndDate = Coupon::selectRaw('DATE(begin_date) as begin_date, DATE(end_date) as end_date')
@@ -790,6 +800,16 @@ class CampaignReportAPIController extends ControllerAPI
                 // Get total location (tenant / mall) per campaign
                 // Because this version we cannot modify link to tenant so no need joint to campaign history
                 $totalLinkToLocation = CouponRetailer::where('promotion_id', $campaign_id)->count();
+
+                $locationNames = "
+                    (
+                        select GROUP_CONCAT(IF({$tablePrefix}merchants.object_type = 'tenant', CONCAT({$tablePrefix}merchants.name,' at ', pm.name), CONCAT('Mall at ',{$tablePrefix}merchants.name)) separator ', ')
+                        from {$tablePrefix}promotion_retailer
+                        inner join {$tablePrefix}merchants on {$tablePrefix}merchants.merchant_id = {$tablePrefix}promotion_retailer.retailer_id
+                        inner join {$tablePrefix}merchants pm on {$tablePrefix}merchants.parent_id = pm.merchant_id
+                        where {$tablePrefix}promotion_retailer.promotion_id = {$this->quote($campaign_id)}
+                    ) as campaign_location_names
+                ";
             }
 
             // Get data from activity per day
@@ -838,7 +858,8 @@ class CampaignReportAPIController extends ControllerAPI
                             ) AS popup_view_rate,
                             (
                                 SELECT IFNULL (ROUND((popup_clicks / popup_views) * 100, 2), 0)
-                            ) AS popup_click_rate
+                            ) AS popup_click_rate,
+                            " . $locationNames . "
                     ")
                 )
                 ->where('campaign_status', 'activate')

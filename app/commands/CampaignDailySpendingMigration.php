@@ -217,7 +217,7 @@ class CampaignDailySpendingMigration extends Command {
 
         // =================== Check time ===================
         $totalInsertedSpending = $idKey - 1;
-        $this->info('Migration successfully, Loaded time  = ' . (microtime(true) - $started_time) . ' ms, total campaign data = ' . $totalCampaign . ', total inserted row to daily spending = ' . $totalInsertedSpending );
+        $this->info('Migration successfully, Loaded time  = ' . (microtime(true) - $started_time) . ' seconds, total campaign data = ' . $totalCampaign . ', total inserted row to daily spending = ' . $totalInsertedSpending );
 
     }
 

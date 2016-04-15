@@ -49,9 +49,14 @@ class LoginAPIController extends IntermediateBaseController
     {
         $this->response = new ResponseProvider();
         $roles=['Consumer'];
-        // $modes=['login', 'registration'];
         $activity = Activity::portal()
                             ->setActivityType('login');
+        $activity_origin = OrbitInput::post('activity_origin'); 
+        if ($activity_origin === 'mobileci') {
+            // set this activity as mobileci instead of portal if coming from mobileci
+                $activity = Activity::mobileci()
+                                ->setActivityType('login');
+        };
         try {
             $email = trim(OrbitInput::post('email'));
             $password = trim(OrbitInput::post('password'));
@@ -71,15 +76,18 @@ class LoginAPIController extends IntermediateBaseController
             // if (! in_array($mode, $modes)) {
             //     $mode = 'login';
             // }
-            
+
             // Return the current mall object if this login process coming from the mobileci
             // todo: check later for login from mall
             $from_mall = $from_mall === 'yes' ? TRUE : FALSE;
             $mall_id = NULL;
             $mall = NULL;
-            
+
             $user = User::with('role')
                         ->excludeDeleted()
+                        ->whereHas('role', function($q) {
+                            $q->where('role_name', 'Consumer');
+                        })
                         ->where('user_email', $email);
 
             $user = $user->first();
@@ -101,34 +109,37 @@ class LoginAPIController extends IntermediateBaseController
                 ]);
                 OrbitShopAPI::throwInvalidArgument($message);
             }
+            // let mobileci handle it's own session
+            // if ($activity_origin !== 'mobileci') {
+                // Start the orbit session
+                $data = array(
+                    'logged_in' => TRUE,
+                    'user_id'   => $user->user_id,
+                    'email'     => $user->user_email,
+                    'role'      => $user->role->role_name,
+                    'fullname'  => $user->getFullName(),
+                );
+                $this->session->enableForceNew()->start($data);
 
-            // Start the orbit session
-            $data = array(
-                'logged_in' => TRUE,
-                'user_id'   => $user->user_id,
-                'email'     => $user->user_email,
-                'role'      => $user->role->role_name,
-                'fullname'  => $user->getFullName(),
-            );
-            $this->session->enableForceNew()->start($data);
+                // Send the session id via HTTP header
+                $sessionHeader = $this->session->getSessionConfig()->getConfig('session_origin.header.name');
+                $sessionHeader = 'Set-' . $sessionHeader;
+                $this->customHeaders[$sessionHeader] = $this->session->getSessionId();
 
-            // Send the session id via HTTP header
-            $sessionHeader = $this->session->getSessionConfig()->getConfig('session_origin.header.name');
-            $sessionHeader = 'Set-' . $sessionHeader;
-            $this->customHeaders[$sessionHeader] = $this->session->getSessionId();
+                $expireTime = Config::get('orbit.session.session_origin.cookie.expire');
 
-            $expireTime = Config::get('orbit.session.session_origin.cookie.expire');
-
-            setcookie('orbit_email', $user->user_email, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
-            setcookie('orbit_firstname', $user->user_firstname, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
-            setcookie('login_from', 'Form', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+                setcookie('orbit_email', $user->user_email, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+                setcookie('orbit_firstname', $user->user_firstname, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+                setcookie('login_from', 'Form', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+            // }
 
             // Successfull login
             $activity->setUser($user)
                      ->setActivityName('login_ok')
                      ->setActivityNameLong('Sign in')
-                     ->responseOK();
-
+                     ->responseOK()->setModuleName('Application')->save();
+            
+            $user->activity = $activity;
             $this->response->data = $user;
             $this->response->code = 0;
             $this->response->status = 'success';
@@ -144,7 +155,8 @@ class LoginAPIController extends IntermediateBaseController
                      ->setActivityName('login_failed')
                      ->setActivityNameLong('Login Failed')
                      ->setNotes($e->getMessage())
-                     ->responseFailed();
+                     ->responseFailed()
+                     ->setModuleName('Application')->save();
         } catch (InvalidArgsException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -155,7 +167,8 @@ class LoginAPIController extends IntermediateBaseController
                      ->setActivityName('login_failed')
                      ->setActivityNameLong('Login Failed')
                      ->setNotes($e->getMessage())
-                     ->responseFailed();
+                     ->responseFailed()
+                     ->setModuleName('Application')->save();
         } catch (Exception $e) {
             $this->response->code = Status::UNKNOWN_ERROR;
             $this->response->status = 'error';
@@ -166,11 +179,9 @@ class LoginAPIController extends IntermediateBaseController
                      ->setActivityName('login_failed')
                      ->setActivityNameLong('Login Failed')
                      ->setNotes($e->getMessage())
-                     ->responseFailed();
+                     ->responseFailed()
+                     ->setModuleName('Application')->save();
         }
-
-        // Save the activity
-        $activity->setModuleName('Application')->save();
 
         return $this->render($this->response);
     }

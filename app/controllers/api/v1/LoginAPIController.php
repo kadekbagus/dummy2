@@ -201,8 +201,8 @@ class LoginAPIController extends ControllerAPI
             $menus = Config::get('orbit.menus.pmp');
 
             $mall = [];
-            if ($user->isCampaignOwner()) {
-                $user_merchants = $user->campaignAccount->userMerchant;
+            if ($user->isCampaignOwner() || $user->isCampaignEmployee()) {
+                $user_merchants = $user->userMerchant;
 
                 $parent_id = '';
                 foreach ($user_merchants as $key => $user_merchant) {
@@ -224,25 +224,6 @@ class LoginAPIController extends ControllerAPI
                         }
                     }
                 }
-            } elseif ($user->isCampaignEmployee()) {
-                $user_merchants = $user->campaignAccount->parentCampaignAccount->userMerchant;
-
-                $parent_id = null;
-                foreach ($user_merchants as $key => $user_merchant) {
-                    if ($user_merchant->object_type === 'mall') {
-                        $tmp_mall = $user_merchant->mall->load('timezone');
-                        if ($tmp_mall[0]->merchant_id !== $parent_id) {
-                            $mall[] = $tmp_mall[0];
-                        }
-                        $parent_id = $tmp_mall[0]->merchant_id;
-                    } elseif ($user_merchant->object_type === 'tenant') {
-                        $tenant = $user_merchant->tenant;
-                        if ($tenant->parent_id !== $parent_id) {
-                            $mall[] = $user_merchant->tenant->parent->load('timezone');
-                        }
-                        $parent_id = $tenant->parent_id;
-                    }
-                }
             } elseif ($user->isCampaignAdmin()) {
                 $mall = Mall::excludeDeleted()
                             ->with('timezone')
@@ -250,7 +231,7 @@ class LoginAPIController extends ControllerAPI
             }
 
             $user->mall = $mall;
-            unset($user->campaignAccount);
+            unset($user->userMerchant);
 
             // Successfull login
             $activity->setUser($user)
@@ -445,10 +426,9 @@ class LoginAPIController extends ControllerAPI
             $lastname = OrbitInput::post('lastname', '');
             $gender = OrbitInput::post('gender', '');
             $status = OrbitInput::post('status', null);
-
             $from = OrbitInput::post('from');
+            $sign_up_origin = OrbitInput::post('sign_up_origin', 'form');
             $mall_id = $this->getRetailerId();
-
             $signup_from = 'Sign Up via Mobile (Email Address)';
 
             $validator = Validator::make(
@@ -486,21 +466,22 @@ class LoginAPIController extends ControllerAPI
                 $signup_from = 'Sign Up via Customer Service';
                 $activity = Activity::csportal()
                                     ->setActivityType('registration');
-            } else {
-                $activity = Activity::mobileci()
-                    ->setActivityType('registration');
             }
 
             // Successfull registration
-            $inbox = new Inbox();
-            $inbox->addToInbox($newuser->user_id, $newuser, $mall_id, 'activation');
+            if ($sign_up_origin === 'form') {
+                $inbox = new Inbox();
+                $inbox->addToInbox($newuser->user_id, $newuser, $mall_id, 'activation');
+            }
 
-            $activity->setUser($newuser)
-                     ->setActivityName('registration_ok')
-                     ->setActivityNameLong($signup_from)
-                     ->setModuleName('Application')
-                     ->setLocation($mall)
-                     ->responseOK();
+            if (! is_null($activity)) {
+                $activity->setUser($newuser)
+                         ->setActivityName('registration_ok')
+                         ->setActivityNameLong($signup_from)
+                         ->setModuleName('Application')
+                         ->setLocation($mall)
+                         ->responseOK();
+            }
 
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
@@ -511,14 +492,15 @@ class LoginAPIController extends ControllerAPI
 
             // Rollback the changes
             $this->rollBack();
-
-            // Failed Registration
-            $activity->setUser('guest')
-                     ->setActivityName('registration_failed')
-                     ->setActivityNameLong('Registration Failed')
-                     ->setModuleName('Application')
-                     ->setNotes($e->getMessage())
-                     ->responseFailed();
+            if (! is_null($activity)) {
+                // Failed Registration
+                $activity->setUser('guest')
+                         ->setActivityName('registration_failed')
+                         ->setActivityNameLong('Registration Failed')
+                         ->setModuleName('Application')
+                         ->setNotes($e->getMessage())
+                         ->responseFailed();
+            }
         } catch (InvalidArgsException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -528,14 +510,15 @@ class LoginAPIController extends ControllerAPI
 
             // Rollback the changes
             $this->rollBack();
-
-            // Failed Registration
-            $activity->setUser('guest')
-                     ->setActivityName('registration_failed')
-                     ->setActivityNameLong('Registration Failed')
-                     ->setModuleName('Application')
-                     ->setNotes($e->getMessage())
-                     ->responseFailed();
+            if (! is_null($activity)) {
+                // Failed Registration
+                $activity->setUser('guest')
+                         ->setActivityName('registration_failed')
+                         ->setActivityNameLong('Registration Failed')
+                         ->setModuleName('Application')
+                         ->setNotes($e->getMessage())
+                         ->responseFailed();
+            }
         } catch (QueryException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -551,14 +534,15 @@ class LoginAPIController extends ControllerAPI
 
             // Rollback the changes
             $this->rollBack();
-
-            // Failed Registration
-            $activity->setUser('guest')
-                     ->setActivityName('registration_failed')
-                     ->setActivityNameLong('Registration Failed')
-                     ->setModuleName('Application')
-                     ->setNotes($e->getMessage())
-                     ->responseFailed();
+            if (! is_null($activity)) {
+                // Failed Registration
+                $activity->setUser('guest')
+                         ->setActivityName('registration_failed')
+                         ->setActivityNameLong('Registration Failed')
+                         ->setModuleName('Application')
+                         ->setNotes($e->getMessage())
+                         ->responseFailed();
+            }
         } catch (Exception $e) {
             $this->response->code = Status::UNKNOWN_ERROR;
             $this->response->status = 'error';
@@ -567,27 +551,29 @@ class LoginAPIController extends ControllerAPI
 
             // Rollback the changes
             $this->rollBack();
-
-            // Failed Registration
-            $activity->setUser('guest')
-                     ->setActivityName('registration_failed')
-                     ->setActivityNameLong('Registration Failed')
-                     ->setModuleName('Application')
-                     ->setNotes($e->getMessage())
-                     ->responseFailed();
+            if (! is_null($activity)) {
+                // Failed Registration
+                $activity->setUser('guest')
+                         ->setActivityName('registration_failed')
+                         ->setActivityNameLong('Registration Failed')
+                         ->setModuleName('Application')
+                         ->setNotes($e->getMessage())
+                         ->responseFailed();
+            }
         }
 
-        // Save the activity
-        $activity->save();
+        if (! is_null($activity)) {
+            // Save the activity
+            $activity->save();
+        }
 
         // We want the registration activity to have 'from Facebook' or 'from Email'...
         // Rather than passing the origin here, we save the ID of the registration activity
         // so the caller can add 'from Facebook' later.
-        if ($activity->response_status == Activity::ACTIVITY_REPONSE_OK) {
-            $this->response->data->setAttribute('registration_activity_id', $activity->activity_id);
-            IntermediateLoginController::proceedPayload(null, $activity->activity_id);
-        }
-
+        // if ($activity->response_status == Activity::ACTIVITY_REPONSE_OK) {
+        //     $this->response->data->setAttribute('registration_activity_id', $activity->activity_id);
+        //     IntermediateLoginController::proceedPayload(null, $activity->activity_id);
+        // }
         return $this->render($httpCode);
     }
 
