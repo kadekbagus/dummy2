@@ -346,7 +346,7 @@ class MallAPIController extends ControllerAPI
                     'sector_of_activity'            => 'required',
                     'languages'                     => 'required|array',
                     'mobile_default_language'       => 'required|size:2|valid_language',
-                    'domain'                        => 'required|orbit.formaterror.url.web',
+                    'domain'                        => 'required',
                     'geo_point_latitude'            => 'required',
                     'geo_point_langitude'           => 'required',
                     'geo_area'                      => 'required',
