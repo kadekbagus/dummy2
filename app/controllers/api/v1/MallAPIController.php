@@ -456,7 +456,7 @@ class MallAPIController extends ControllerAPI
             }
             $newmall->is_mall = 'yes';
             $newmall->url = $url;
-            $newmall->ci_domain = $url;
+            $newmall->ci_domain = $domain;
             $newmall->masterbox_number = $masterbox_number;
             $newmall->slavebox_number = $slavebox_number;
             $newmall->mobile_default_language = $mobile_default_language;

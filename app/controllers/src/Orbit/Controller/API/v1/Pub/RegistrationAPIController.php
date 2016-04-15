@@ -52,6 +52,9 @@ class RegistrationAPIController extends IntermediateBaseController
             $password_confirmation = OrbitInput::post('password_confirmation');
 
             $user = User::with('role')
+                        ->whereHas('role', function($q) {
+                            $q->where('role_name', 'Consumer');
+                        })
                         ->excludeDeleted()
                         ->where('user_email', $email);
 
@@ -255,7 +258,12 @@ class RegistrationAPIController extends IntermediateBaseController
     {
         $me = $this;
         Validator::extend('orbit_email_exists', function ($attribute, $value, $parameters) use ($me) {
-            $user = User::excludeDeleted()->where('user_email', $value)->first();
+            $user = User::excludeDeleted()
+                ->where('user_email', $value)
+                ->whereHas('role', function($q) {
+                    $q->where('role_name', 'Consumer');
+                })
+                ->first();
 
             if (is_object($user)) {
                 return FALSE;
