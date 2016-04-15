@@ -258,7 +258,12 @@ class RegistrationAPIController extends IntermediateBaseController
     {
         $me = $this;
         Validator::extend('orbit_email_exists', function ($attribute, $value, $parameters) use ($me) {
-            $user = User::excludeDeleted()->where('user_email', $value)->first();
+            $user = User::excludeDeleted()
+                ->where('user_email', $value)
+                ->whereHas('role', function($q) {
+                    $q->where('role_name', 'Consumer');
+                })
+                ->first();
 
             if (is_object($user)) {
                 return FALSE;
