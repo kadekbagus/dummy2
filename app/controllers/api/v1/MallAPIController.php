@@ -346,7 +346,7 @@ class MallAPIController extends ControllerAPI
                     'sector_of_activity'            => 'required',
                     'languages'                     => 'required|array',
                     'mobile_default_language'       => 'required|size:2|valid_language',
-                    'domain'                        => 'required|orbit.formaterror.url.web',
+                    'domain'                        => 'required',
                     'geo_point_latitude'            => 'required',
                     'geo_point_langitude'           => 'required',
                     'geo_area'                      => 'required',
@@ -456,7 +456,7 @@ class MallAPIController extends ControllerAPI
             }
             $newmall->is_mall = 'yes';
             $newmall->url = $url;
-            $newmall->ci_domain = $url;
+            $newmall->ci_domain = $domain;
             $newmall->masterbox_number = $masterbox_number;
             $newmall->slavebox_number = $slavebox_number;
             $newmall->mobile_default_language = $mobile_default_language;

@@ -267,7 +267,7 @@
 </div>
 <div class="row padded">
     <div class="col-xs-12 font-1-3">
-        <p>{{ nl2br(htmlspecialchars($tenant->description)) }}</p>
+        <p>{{ nl2br(e($tenant->description)) }}</p>
         <ul class="where-list">
             <li><i class="fa fa-map-marker fa-lg" style="padding-left: 11px;"></i>  {{{ !empty($tenant->floor) ? $tenant->floor : '' }}}{{{ !empty($tenant->unit) ? ' - ' . $tenant->unit : '' }}}</li>
             <li><i class="fa fa-globe fa-lg"></i>  {{{ (($tenant->url) != '') ? 'http://'.$tenant->url : '-' }}}</li>
