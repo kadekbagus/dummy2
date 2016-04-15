@@ -95,11 +95,11 @@ class TenantImport extends Command {
                                                         ->first();
                     if (empty($merchantLanguage)) {
                         throw new Exception('Merchant Language is not exist.');
-                    }    
+                    }
                 }
 
                 DB::beginTransaction();
-         
+
                 $newtenant = new Tenant();
                 $newtenant->omid = '';
                 $newtenant->orid = '';
@@ -117,7 +117,7 @@ class TenantImport extends Command {
                 if (! $newtenant->save()) {
                     throw new Exception('Insert Tenant Failed!');
                 }
-                $this->info(sprintf('Success, Insert %s', $data['tenant_name'])); 
+                $this->info(sprintf('Success, Insert %s', $data['tenant_name']));
 
                 $newSpendingRules = new SpendingRule();
                 $newSpendingRules->object_id = $newtenant->merchant_id;
@@ -156,6 +156,11 @@ class TenantImport extends Command {
 
                 foreach ($data['keyword'] as $keyword) {
                     $keyword_id = null;
+
+                    $keyword = trim($keyword);
+                    if (empty($keyword)) {
+                        continue;
+                    }
 
                     $existKeyword = Keyword::excludeDeleted()
                         ->where('keyword', '=', $keyword)
@@ -208,6 +213,9 @@ class TenantImport extends Command {
                 $images = array();
                 foreach ($data['images'] as $key => $image) {
                     if ($key === 'tenant_logo') {
+                        if (! file_exists($image)) {
+                            throw new Exception( sprintf('File image %s not found.', $image) );
+                        }
                         $path_info = pathinfo($image);
                         $images['type'] = 'logo';
                         $images['type_dir'] = 'logo';
@@ -218,10 +226,14 @@ class TenantImport extends Command {
                             $this->uploadImage = TRUE;
                         }
                         $this->uploadImages($newtenant, $images);
-                    } 
+                    }
 
                     if ($key === 'tenant_images') {
                         foreach ($image as $idx => $tenant_image) {
+                            if (! file_exists($tenant_image)) {
+                                throw new Exception( sprintf('File image %s not found.', $tenant_image) );
+                            }
+
                             $path_info = pathinfo($tenant_image);
                             $images['type'] = 'images';
                             $images['type_dir'] = 'pictures';
@@ -233,9 +245,13 @@ class TenantImport extends Command {
                             }
                             $this->uploadImages($newtenant, $images, ($idx+1));
                         }
-                    } 
+                    }
 
                     if ($key === 'image_map') {
+                        if (! file_exists($image)) {
+                            throw new Exception( sprintf('File image %s not found.', $image) );
+                        }
+
                         $path_info = pathinfo($image);
                         $images['type'] = 'map';
                         $images['type_dir'] = 'maps';
@@ -250,13 +266,13 @@ class TenantImport extends Command {
                 }
 
                 DB::commit();
-                $this->info("Success, Data Inserted!"); 
+                $this->info("Success, Data Inserted!");
             }
         } catch (Exception $e) {
             DB::rollback();
             $this->error([$e->getLine(), $e->getMessage()]);
         }
- 
+
     }
 
     protected function uploadImages($tenant, $images, $order = 1)
