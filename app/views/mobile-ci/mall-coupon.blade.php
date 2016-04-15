@@ -50,10 +50,10 @@
     <div class="col-xs-12">
         <div class="row">
             <div class="col-xs-12">
-                <p>{{{ nl2br($coupon->description) }}}</p>
+                <p>{{ nl2br(htmlspecialchars($coupon->description)) }}</p>
             </div>
             <div class="col-xs-12">
-                <p>{{{ nl2br($coupon->long_description) }}}</p>
+                <p>{{ nl2br(htmlspecialchars($coupon->long_description)) }}</p>
             </div>
             <div class="col-xs-12">
                 <h4><strong>{{{ Lang::get('mobileci.coupon_detail.validity_label') }}}</strong></h4>
@@ -201,7 +201,7 @@
                     var geoOptions = {
                        timeout: 10 * 1000
                     }
-
+                    var mall_id = '{{Config::get('orbit.shop.id')}}';
                     var geoSuccess = function(position) {
                         startPos = position;
                         console.log(startPos);
@@ -211,7 +211,8 @@
                             method: 'GET',
                             data: {
                                 latitude: startPos.coords.latitude,
-                                longitude: startPos.coords.longitude
+                                longitude: startPos.coords.longitude,
+                                mall_id: mall_id
                             }
                         }).done(function(response) {
                             if (response.data.total_records > 0) {

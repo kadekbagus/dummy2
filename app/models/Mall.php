@@ -504,6 +504,7 @@ class Mall extends Eloquent
 
     public function acquireUser($user, $signUpVia = 'form')
     {
+        $firstAcquired = FALSE;
         $acq = UserAcquisition::where('acquirer_id', $this->merchant_id)
             ->where('user_id', $user->user_id)
             ->first();
@@ -515,7 +516,9 @@ class Mall extends Eloquent
             $acq->acquirer_id = $this->merchant_id;
             $acq->save();
 
-
+            $firstAcquired = TRUE;
         }
+
+        return $firstAcquired;
     }
 }
