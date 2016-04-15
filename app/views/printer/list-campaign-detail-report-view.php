@@ -188,7 +188,7 @@
             <th style="text-align:left;">No</th>
             <th style="text-align:left;">Date</th>
             <th style="text-align:left;">Location(s)</th>
-            <th style="text-align:left;">Unique Users</th>
+            <th style="text-align:left;">Unique Sign In</th>
             <th style="text-align:left;">Campaign Page Views</th>
             <th style="text-align:left;">Campaign Page View Rate (%)</th>
             <th style="text-align:left;">Pop Up Views</th>
