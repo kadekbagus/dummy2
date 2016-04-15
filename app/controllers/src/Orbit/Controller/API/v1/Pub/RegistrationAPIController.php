@@ -52,6 +52,9 @@ class RegistrationAPIController extends IntermediateBaseController
             $password_confirmation = OrbitInput::post('password_confirmation');
 
             $user = User::with('role')
+                        ->whereHas('role', function($q) {
+                            $q->where('role_name', 'Consumer');
+                        })
                         ->excludeDeleted()
                         ->where('user_email', $email);
 
