@@ -2356,18 +2356,20 @@ class UserAPIController extends ControllerAPI
 
             // create membership number
             // create if only param membership_number or join_date is being sent
-            if ((trim($membershipNumberCode) !== '') || (trim($join_date) !== '')) {
-                $m = new MembershipNumber();
-                $membershipCard = App::make('orbit.empty.mall_have_membership_card');
-                $m->membership_id = $membershipCard->membership_id;
-                $m->user_id = $newuser->user_id;
-                $m->membership_number = $membershipNumberCode;
-                $m->join_date = $join_date . ' 00:00:00';
-                $m->status = 'active';
-                $m->created_by = $user->user_id;
-                $m->save();
+            $membershipCard = App::make('orbit.empty.mall_have_membership_card');
+            if (count($membershipCard) > 0) {
+                if ((trim($membershipNumberCode) !== '') || (trim($join_date) !== '')) {
+                    $m = new MembershipNumber();
+                    $m->membership_id = $membershipCard->membership_id;
+                    $m->user_id = $newuser->user_id;
+                    $m->membership_number = $membershipNumberCode;
+                    $m->join_date = $join_date . ' 00:00:00';
+                    $m->status = 'active';
+                    $m->created_by = $user->user_id;
+                    $m->save();
+                }
+                $newuser->load('membershipNumbers');
             }
-            $newuser->load('membershipNumbers');
 
             $userdetail = new UserDetail();
             $userdetail->gender = $gender;
@@ -2715,7 +2717,9 @@ class UserAPIController extends ControllerAPI
             $userdetail = $updateduser->userdetail;
 
             $membershipCard = App::make('orbit.empty.mall_have_membership_card');
-            $membershipNumbers = $updateduser->getMembershipNumbers($membershipCard);
+            if (count($membershipCard > 0 )) {
+                $membershipNumbers = $updateduser->getMembershipNumbers($membershipCard);
+            }
 
             OrbitInput::post('email', function($email) use ($updateduser) {
                 $updateduser->username = $email;
@@ -3827,17 +3831,16 @@ class UserAPIController extends ControllerAPI
                 return FALSE;
             }
 
-            if ($setting->setting_value === 'false') {
-                return TRUE;
-            }
+            $membershipCard = [];
+            if ($setting->setting_value === 'true') {
+                $membershipCard = Membership::excludeDeleted()
+                                            ->active()
+                                            ->where('merchant_id', $mallId)
+                                            ->first();
 
-            $membershipCard = Membership::excludeDeleted()
-                                        ->active()
-                                        ->where('merchant_id', $mallId)
-                                        ->first();
-
-            if (empty($membershipCard)) {
-                return FALSE;
+                if (empty($membershipCard)) {
+                    return FALSE;
+                }
             }
 
             App::instance('orbit.empty.mall_have_membership_card', $membershipCard);
