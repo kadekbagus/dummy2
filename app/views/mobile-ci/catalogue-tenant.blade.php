@@ -260,7 +260,7 @@
         @if(!empty(Input::get('promotion_id')))
             promo = '&promotion_id='+'{{{Input::get('promotion_id')}}}';
         @endif
-        var path = '{{$urlblock->blockedRoute('ci-tenants', ['keyword' => htmlspecialchars(Input::get('keyword')), 'sort_by' => 'name', 'sort_mode' => 'asc', 'cid' => htmlspecialchars(Input::get('cid')), 'fid' => htmlspecialchars(Input::get('fid'))])}}'+promo;
+        var path = '{{$urlblock->blockedRoute('ci-tenants', ['keyword' => e(Input::get('keyword')), 'sort_by' => 'name', 'sort_mode' => 'asc', 'cid' => e(Input::get('cid')), 'fid' => e(Input::get('fid'))])}}'+promo;
         $('#dLabel').dropdown();
         $('#dLabel2').dropdown();
 
