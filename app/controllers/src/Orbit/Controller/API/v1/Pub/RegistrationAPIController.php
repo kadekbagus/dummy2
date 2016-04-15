@@ -35,6 +35,12 @@ class RegistrationAPIController extends IntermediateBaseController
         $this->response = new ResponseProvider();
         $activity = Activity::portal()
                             ->setActivityType('registration');
+        $activity_origin = OrbitInput::post('activity_origin'); 
+        if ($activity_origin === 'mobileci') {
+            // set this activity as mobileci instead of portal if coming from mobileci
+                $activity = Activity::mobileci()
+                                ->setActivityType('registration');
+        };
         try {
             $email = trim(OrbitInput::post('email'));
             $password = OrbitInput::post('password');
@@ -59,26 +65,32 @@ class RegistrationAPIController extends IntermediateBaseController
             DB::beginTransaction();
 
             $user = $this->createCustomerUser($email, $password, $password_confirmation, $firstname, $lastname, $gender, $birthdate, FALSE);
+            // let mobileci handle it's own session
+            if ($activity_origin !== 'mobileci') {
+                // Start the orbit session
+                $data = array(
+                    'logged_in' => TRUE,
+                    'user_id'   => $user->user_id,
+                    'email'     => $user->user_email,
+                    'role'      => $user->role->role_name,
+                    'fullname'  => $user->getFullName(),
+                );
+                $this->session->enableForceNew()->start($data);
 
-            // Start the orbit session
-            $data = array(
-                'logged_in' => TRUE,
-                'user_id'   => $user->user_id,
-                'email'     => $user->user_email,
-                'role'      => $user->role->role_name,
-                'fullname'  => $user->getFullName(),
-            );
-            $this->session->enableForceNew()->start($data);
+                // Send the session id via HTTP header
+                $sessionHeader = $this->session->getSessionConfig()->getConfig('session_origin.header.name');
+                $sessionHeader = 'Set-' . $sessionHeader;
+                $this->customHeaders[$sessionHeader] = $this->session->getSessionId();
+            }
 
-            // Send the session id via HTTP header
-            $sessionHeader = $this->session->getSessionConfig()->getConfig('session_origin.header.name');
-            $sessionHeader = 'Set-' . $sessionHeader;
-            $this->customHeaders[$sessionHeader] = $this->session->getSessionId();
-
+            $activity_name_long = 'Sign Up';
+            OrbitInput::post('activity_name_long', function ($act) use (&$activity_name_long) {
+                $activity_name_long = $act;
+            });
             // Successfull login
             $activity->setUser($user)
                      ->setActivityName('registration_ok')
-                     ->setActivityNameLong('Sign Up')
+                     ->setActivityNameLong($activity_name_long)
                      ->responseOK();
 
             $this->response->data = $user;
@@ -102,8 +114,8 @@ class RegistrationAPIController extends IntermediateBaseController
             $this->response->data = null;
 
             $activity->setUser('guest')
-                     ->setActivityName('login_failed')
-                     ->setActivityNameLong('Login Failed')
+                     ->setActivityName('registration_failed')
+                     ->setActivityNameLong('Registration Failed')
                      ->setNotes($e->getMessage())
                      ->responseFailed();
         } catch (InvalidArgsException $e) {
@@ -114,8 +126,8 @@ class RegistrationAPIController extends IntermediateBaseController
             $this->response->data = null;
 
             $activity->setUser('guest')
-                     ->setActivityName('login_failed')
-                     ->setActivityNameLong('Login Failed')
+                     ->setActivityName('registration_failed')
+                     ->setActivityNameLong('Registration Failed')
                      ->setNotes($e->getMessage())
                      ->responseFailed();
         } catch (Exception $e) {
@@ -126,8 +138,8 @@ class RegistrationAPIController extends IntermediateBaseController
             $this->response->data = null;
 
             $activity->setUser('guest')
-                     ->setActivityName('login_failed')
-                     ->setActivityNameLong('Login Failed')
+                     ->setActivityName('registration_failed')
+                     ->setActivityNameLong('Registration Failed')
                      ->setNotes($e->getMessage())
                      ->responseFailed();
         }
@@ -193,7 +205,7 @@ class RegistrationAPIController extends IntermediateBaseController
                 if (isset($userDetailId)) {
                     $user_detail->user_detail_id = $userDetailId;
                 }
-                $user_detail->gender = $gender === 'm' ? 'm' : $gender === 'f' ? 'f' : NULL;
+                $user_detail->gender = $gender === 'm' ? 'm' : ($gender === 'f' ? 'f' : NULL);
                 if (! empty($birthdate)) {
                     $user_detail->birthdate = date('Y-m-d', strtotime($birthdate));
                 }
