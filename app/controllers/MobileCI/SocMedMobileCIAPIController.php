@@ -150,7 +150,7 @@ class SocMedMobileCIAPIController extends BaseCIController
             ->first();
 
         if (! empty($promotionTranslation)) {
-            $media = $promotionTranslation->find($promotionTranslation->translation_id)
+            $media = $promotionTranslation->find($promotionTranslation->news_translation_id)
                 ->media_orig()
                 ->first();
 
@@ -165,7 +165,7 @@ class SocMedMobileCIAPIController extends BaseCIController
                         ->where('news_id', $promotion->news_id)->first();
 
                     // get default image
-                    $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->translation_id)
+                    $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->news_translation_id)
                         ->media_orig()
                         ->first();
 
@@ -218,7 +218,7 @@ class SocMedMobileCIAPIController extends BaseCIController
             ->first();
 
         if (! empty($promotionTranslation)) {
-            $media = $promotionTranslation->find($promotionTranslation->translation_id)
+            $media = $promotionTranslation->find($promotionTranslation->news_translation_id)
                 ->media_orig()
                 ->first();
 
@@ -233,7 +233,7 @@ class SocMedMobileCIAPIController extends BaseCIController
                         ->where('news_id', $promotion->news_id)->first();
 
                     // get default image
-                    $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->translation_id)
+                    $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->news_translation_id)
                         ->media_orig()
                         ->first();
 
@@ -285,7 +285,7 @@ class SocMedMobileCIAPIController extends BaseCIController
             ->first();
 
         if (! empty($couponTranslation)) {
-            $media = $couponTranslation->find($couponTranslation->translation_id)
+            $media = $couponTranslation->find($couponTranslation->coupon_translation_id)
                 ->media_orig()
                 ->first();
 
@@ -300,7 +300,7 @@ class SocMedMobileCIAPIController extends BaseCIController
                         ->where('promotion_id', $coupon->promotion_id)->first();
 
                     // get default image
-                    $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->translation_id)
+                    $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->coupon_translation_id)
                         ->media_orig()
                         ->first();
 
