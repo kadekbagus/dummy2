@@ -580,7 +580,7 @@ class MallAPIController extends ControllerAPI
                     $newfloor->object_order = $floor->order;
                     $newfloor->status = 'active';
                     $newfloor->save();
-                };
+                }
             }
 
             // settings
@@ -1850,6 +1850,51 @@ class MallAPIController extends ControllerAPI
                         $newmerchant_language->language_id = Language::where('name', '=', $language_name)->first()->language_id;
                         $newmerchant_language->save();
                     }
+                }
+            });
+
+            OrbitInput::post('floors', function($floors) use ($updatedmall, $merchant_id) {
+                // floor
+                // @author irianto <irianto@dominopos.com>
+                if (count($floors) > 0) {
+                    $floors_on_mall = [];
+                    foreach ($floors as $floor_json) {
+                        $floor = @json_decode($floor_json);
+                        if (json_last_error() != JSON_ERROR_NONE) {
+                            OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.format'));
+                        }
+
+                        // floor
+                        $floor_on_mall = Object::where('merchant_id', '=', $merchant_id)
+                                            ->where('object_type', '=', 'floor')
+                                            ->where('object_name', '=', $floor->name)
+                                            ->first();
+
+                        if (! empty($floor_on_mall)) {
+                            //update order
+                            if ($floor_on_mall->object_order !== $floor->order) {
+                                $floor_on_mall->object_order = $floor->order;
+                                $floor_on_mall->save();
+                            }
+                        } else {
+                            // save new floor
+                            $newfloor = new Object();
+                            $newfloor->merchant_id = $merchant_id;
+                            $newfloor->object_name = $floor->name;
+                            $newfloor->object_type = 'floor';
+                            $newfloor->object_order = $floor->order;
+                            $newfloor->status = 'active';
+                            $newfloor->save();
+                        }
+
+                        $floors_on_mall[] = $floor->name;
+                    }
+
+                    // delete floor
+                    $delete_floor = Object::where('object_type', '=', 'floor')
+                                        // ->where('status', '=', 'active')
+                                        ->whereNotIn('object_name', $floors_on_mall)
+                                        ->delete();
                 }
             });
 
