@@ -162,7 +162,9 @@ class SocMedMobileCIAPIController extends BaseCIController
                 $defaultLanguage = $this->getDefaultLanguage($mall);
                 if ($defaultLanguage !== NULL) {
                     $contentDefaultLanguage = \NewsTranslation::excludeDeleted()
-                        ->where('news_id', $promotion->news_id)->first();
+                        ->where('news_id', $promotion->news_id)
+                        ->where('merchant_language_id', $defaultLanguage->language_id)
+                        ->first();
 
                     // get default image
                     $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->news_translation_id)
@@ -230,7 +232,9 @@ class SocMedMobileCIAPIController extends BaseCIController
                 $defaultLanguage = $this->getDefaultLanguage($mall);
                 if ($defaultLanguage !== NULL) {
                     $contentDefaultLanguage = \NewsTranslation::excludeDeleted()
-                        ->where('news_id', $promotion->news_id)->first();
+                        ->where('news_id', $promotion->news_id)
+                        ->where('merchant_language_id', $defaultLanguage->language_id)
+                        ->first();
 
                     // get default image
                     $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->news_translation_id)
@@ -297,7 +301,9 @@ class SocMedMobileCIAPIController extends BaseCIController
                 $defaultLanguage = $this->getDefaultLanguage($mall);
                 if ($defaultLanguage !== NULL) {
                     $contentDefaultLanguage = \CouponTranslation::excludeDeleted()
-                        ->where('promotion_id', $coupon->promotion_id)->first();
+                        ->where('promotion_id', $coupon->promotion_id)
+                        ->where('merchant_language_id', $defaultLanguage->language_id)
+                        ->first();
 
                     // get default image
                     $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->coupon_translation_id)
@@ -368,7 +374,9 @@ class SocMedMobileCIAPIController extends BaseCIController
                 $defaultLanguage = $this->getDefaultLanguage($mall);
                 if ($defaultLanguage !== NULL) {
                     $contentDefaultLanguage = \LuckyDrawTranslation::excludeDeleted()
-                        ->where('lucky_draw_id', $luckydraw->lucky_draw_id)->first();
+                        ->where('lucky_draw_id', $luckydraw->lucky_draw_id)
+                        ->where('merchant_language_id', $defaultLanguage->merchant_language_id)
+                        ->first();
 
                     // get default image
                     $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->lucky_draw_translation_id)
@@ -407,5 +415,31 @@ class SocMedMobileCIAPIController extends BaseCIController
         } catch (Exception $e) {
             return NULL;
         }
+    }
+
+    /**
+     * Returns an appropriate MerchantLanguage (if any) that the user wants and the mall supports.
+     *
+     * @param \Mall $mall the mall
+     * @return \MerchantLanguage the language or null if a matching one is not found.
+     *
+     * @author Firmansyah <firmansyah@dominopos.com>
+     */
+    private function getDefaultLanguage($mall)
+    {
+        $language = \Language::where('name', '=', $mall->mobile_default_language)->first();
+        if(isset($language) && count($language) > 0){
+            $defaultLanguage = \MerchantLanguage::excludeDeleted()
+                ->where('merchant_id', '=', $mall->merchant_id)
+                ->where('language_id', '=', $language->language_id)
+                ->first();
+
+            if ($defaultLanguage !== null) {
+                return $defaultLanguage;
+            }
+        }
+
+        // above methods did not result in any selected language, use mall default
+        return null;
     }
 }

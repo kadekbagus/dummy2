@@ -8965,6 +8965,7 @@ class MobileCIAPIController extends BaseCIController
         }
 
         $firstAcquired = $retailer->acquireUser($user, $signUpVia);
+
         // if the user is viewing the mall for the 1st time then set the signup activity
         if ($firstAcquired) {
             $this->setSignUpActivity($user, $signUpVia, $retailer);
@@ -9087,7 +9088,7 @@ class MobileCIAPIController extends BaseCIController
             }
 
             // do the login
-            $_POST['activity_name_long'] = 'Sign Up via Mobile (Email Address)';
+            $_POST['activity_name_long'] = 'Sign In via Mobile (Email Address)';
             $_POST['activity_origin'] = 'mobileci';
             $login_response = \Orbit\Controller\API\v1\Pub\LoginAPIController::create('raw')->postLoginCustomer();
             $login_response_data = json_decode($login_response->getOriginalContent());
@@ -9099,8 +9100,11 @@ class MobileCIAPIController extends BaseCIController
             }
             $user = $login_response_data->data;
             // fill the user sign in table
-            $this->setSignInActivity($user, 'form', $retailer, $user->activity);
-            
+            // $this->setSignInActivity($user, 'form', $retailer, $user->activity);
+            // acquire user
+            $user_obj = User::where('user_id', $user->user_id)->first();
+            $this->acquireUser($retailer, $user_obj, 'form');
+
             $urlblock = new UrlBlock;
             // append the redirect url to user object
             $user->redirect_to = $urlblock->blockedRoute('ci-customer-home');
@@ -9134,19 +9138,7 @@ class MobileCIAPIController extends BaseCIController
             $user_detail->last_visit_shop_id = $retailer->merchant_id;
             $user_detail->last_visit_any_shop = Carbon::now($retailer->timezone->timezone_name);
             $user_detail->save();
-
-            // set the cookies
-            $expireTime = Config::get('orbit.session.session_origin.cookie.expire');
-            setcookie('orbit_email', $user->user_email, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
-            setcookie('orbit_firstname', $user->user_firstname, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
-            setcookie('login_from', 'form', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
-            // special session value for visited malls within single session
-            $session = $urlblock->getUserSession();
-            $session->write('visited_location', [$retailer->merchant_id]);
-
-            // acquire user
-            $user_obj = User::where('user_id', $user->user_id)->first();
-            $retailer->acquireUser($user_obj, 'form');
+            
             // auto coupon issuance checkwill happen on each page after the login success
             Coupon::issueAutoCoupon($retailer, $user_obj, $urlblock->getUserSession());
 

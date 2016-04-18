@@ -52,6 +52,9 @@ class RegistrationAPIController extends IntermediateBaseController
             $password_confirmation = OrbitInput::post('password_confirmation');
 
             $user = User::with('role')
+                        ->whereHas('role', function($q) {
+                            $q->where('role_name', 'Consumer');
+                        })
                         ->excludeDeleted()
                         ->where('user_email', $email);
 
@@ -81,17 +84,15 @@ class RegistrationAPIController extends IntermediateBaseController
                 $sessionHeader = $this->session->getSessionConfig()->getConfig('session_origin.header.name');
                 $sessionHeader = 'Set-' . $sessionHeader;
                 $this->customHeaders[$sessionHeader] = $this->session->getSessionId();
-            }
 
-            $activity_name_long = 'Sign Up';
-            OrbitInput::post('activity_name_long', function ($act) use (&$activity_name_long) {
-                $activity_name_long = $act;
-            });
-            // Successfull login
-            $activity->setUser($user)
-                     ->setActivityName('registration_ok')
-                     ->setActivityNameLong($activity_name_long)
-                     ->responseOK();
+                $activity_name_long = 'Sign Up';
+                // Successfull login
+                $activity->setUser($user)
+                         ->setActivityName('registration_ok')
+                         ->setActivityNameLong($activity_name_long)
+                         ->responseOK()
+                         ->setModuleName('Application')->save();
+            }
 
             $this->response->data = $user;
             $this->response->code = 0;
@@ -117,7 +118,8 @@ class RegistrationAPIController extends IntermediateBaseController
                      ->setActivityName('registration_failed')
                      ->setActivityNameLong('Registration Failed')
                      ->setNotes($e->getMessage())
-                     ->responseFailed();
+                     ->responseFailed()
+                     ->setModuleName('Application')->save();
         } catch (InvalidArgsException $e) {
             DB::rollback();
             $this->response->code = $e->getCode();
@@ -129,7 +131,8 @@ class RegistrationAPIController extends IntermediateBaseController
                      ->setActivityName('registration_failed')
                      ->setActivityNameLong('Registration Failed')
                      ->setNotes($e->getMessage())
-                     ->responseFailed();
+                     ->responseFailed()
+                     ->setModuleName('Application')->save();
         } catch (Exception $e) {
             DB::rollback();
             $this->response->code = Status::UNKNOWN_ERROR;
@@ -141,11 +144,9 @@ class RegistrationAPIController extends IntermediateBaseController
                      ->setActivityName('registration_failed')
                      ->setActivityNameLong('Registration Failed')
                      ->setNotes($e->getMessage())
-                     ->responseFailed();
+                     ->responseFailed()
+                     ->setModuleName('Application')->save();
         }
-
-        // Save the activity
-        $activity->setModuleName('Application')->save();
 
         return $this->render($this->response);
     }
@@ -255,7 +256,12 @@ class RegistrationAPIController extends IntermediateBaseController
     {
         $me = $this;
         Validator::extend('orbit_email_exists', function ($attribute, $value, $parameters) use ($me) {
-            $user = User::excludeDeleted()->where('user_email', $value)->first();
+            $user = User::excludeDeleted()
+                ->where('user_email', $value)
+                ->whereHas('role', function($q) {
+                    $q->where('role_name', 'Consumer');
+                })
+                ->first();
 
             if (is_object($user)) {
                 return FALSE;
