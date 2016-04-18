@@ -1501,7 +1501,7 @@ class UserAPIController extends ControllerAPI
                 $filterMallIds = '';
                 $filterMembershipNumberMallIds = '';
             } else { // valid mall id
-                $filterMallIds = ' and p.merchant_id in ("' . join('","', $listOfMallIds) . '") ';
+                $filterMallIds = ' and cp.issuer_retailer_id in ("' . join('","', $listOfMallIds) . '") ';
                 $filterMembershipNumberMallIds = ' and m.merchant_id in ("' . join('","', $listOfMallIds) . '") ';
                 $filterLuckyDrawMallIds = ' and ld.mall_id in ("' . join('","', $listOfMallIds) . '") ';
             }
@@ -1549,12 +1549,18 @@ class UserAPIController extends ControllerAPI
 
             if ($details === 'yes' || $this->detailYes === true) {
                 $users->addSelect(DB::raw("{$prefix}user_acquisitions.created_at as first_visit_date, 'Unknown', '0'"), DB::raw("CASE WHEN {$prefix}tmp_lucky.total_lucky_draw_number is null THEN 0 ELSE {$prefix}tmp_lucky.total_lucky_draw_number END AS total_lucky_draw_number"),
-                               DB::raw("(select count(cp.user_id) from {$prefix}issued_coupons cp
-                                        inner join {$prefix}promotions p on cp.promotion_id = p.promotion_id {$filterMallIds}
-                                        where cp.user_id={$prefix}users.user_id) as total_usable_coupon,
-                                        (select count(cp2.user_id) from {$prefix}issued_coupons cp2
-                                        inner join {$prefix}promotions p on cp2.promotion_id = p.promotion_id {$filterMallIds}
-                                        where cp2.status='redeemed' and cp2.user_id={$prefix}users.user_id) as total_redeemed_coupon"))
+                               DB::raw("
+                                        (
+                                            select count(cp.user_id) from {$prefix}issued_coupons cp
+                                            where cp.user_id={$prefix}users.user_id
+                                            {$filterMallIds}
+                                        ) as total_usable_coupon,
+                                        (
+                                            select count(cp.user_id) from {$prefix}issued_coupons cp
+                                            where cp.status='redeemed' and cp.user_id={$prefix}users.user_id
+                                            {$filterMallIds}
+                                        ) as total_redeemed_coupon
+                                    "))
                                   ->leftJoin(
                                         // Table
                                         DB::raw("(select ldn.user_id, count(ldn.user_id) AS total_lucky_draw_number from `{$prefix}lucky_draw_numbers` ldn

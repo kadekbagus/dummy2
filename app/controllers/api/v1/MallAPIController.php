@@ -22,12 +22,7 @@ class MallAPIController extends ControllerAPI
     protected $returnBuilder = FALSE;
 
     protected $default = [
-        'currency'                => 'IDR',
-        'currency_symbol'         => 'Rp',
         'vat_included'            => 'no',
-        'mobile_default_language' => 'en',
-        'sector_of_activity'      => 'Mall',
-        'timezone'                => 'Asia/Singapore',
         'widgets'                 => [
             [
                 'type'      => 'tenant',
@@ -85,38 +80,6 @@ class MallAPIController extends ControllerAPI
               ]
             ]
         ],
-        'languages' => [
-            'en',
-            'ja',
-            'zh',
-            'id'
-        ],
-        'categories' => [
-            [
-                'default' => 'ATM',
-                'en'      => 'ATM',
-                'zh'      => 'ATM',
-                'ja'      => '自動支払機',
-                'id'      => 'ATM'
-            ],
-            [
-                'default' => 'Restaurants',
-                'en'      => 'Restaurants',
-                'zh'      => '餐馆',
-                'ja'      => 'レストラン',
-                'id'      => 'Restauran'
-            ]
-        ],
-        'floors' => [
-            [
-                'name'  => 'B1',
-                'order' => 1
-            ],
-            [
-                'name'  => 'Level 1',
-                'order' => 2
-            ]
-        ],
         'age_ranges' => [
             [
                 'range_name' => '0-14',
@@ -159,24 +122,6 @@ class MallAPIController extends ControllerAPI
                 'min_value'  => '0',
                 'max_value'  => '0',
                 'status'     => 'active'
-            ]
-        ],
-        'campaign_base_price' => [
-            [
-                'price'         => '10',
-                'campaign_type' => 'promotion'
-            ],
-            [
-                'price'         => '20',
-                'campaign_type' => 'news'
-            ],
-            [
-                'price'         => '30',
-                'campaign_type' => 'coupon'
-            ],
-            [
-                'price'         => '40',
-                'campaign_type' => 'lucky_draw'
             ]
         ]
       ];
@@ -305,8 +250,8 @@ class MallAPIController extends ControllerAPI
             $end_date_activity = OrbitInput::post('end_date_activity');
             $status = OrbitInput::post('status');
             // $logo = OrbitInput::post('logo');
-            $currency = OrbitInput::post('currency', $this->default['currency']);
-            $currency_symbol = OrbitInput::post('currency_symbol', $this->default['currency_symbol']);
+            $currency = OrbitInput::post('currency');
+            $currency_symbol = OrbitInput::post('currency_symbol');
             $tax_code1 = OrbitInput::post('tax_code1');
             $tax_code2 = OrbitInput::post('tax_code2');
             $tax_code3 = OrbitInput::post('tax_code3');
@@ -318,72 +263,98 @@ class MallAPIController extends ControllerAPI
             $contact_person_phone = OrbitInput::post('contact_person_phone');
             $contact_person_phone2 = OrbitInput::post('contact_person_phone2');
             $contact_person_email = OrbitInput::post('contact_person_email');
-            $sector_of_activity = OrbitInput::post('sector_of_activity', $this->default['sector_of_activity']);
+            $sector_of_activity = OrbitInput::post('sector_of_activity');
             $object_type = OrbitInput::post('object_type');
             $parent_id = OrbitInput::post('parent_id');
             $url = OrbitInput::post('url');
             $masterbox_number = OrbitInput::post('masterbox_number');
             $slavebox_number = OrbitInput::post('slavebox_number');
-            $mobile_default_language = OrbitInput::post('mobile_default_language', $this->default['mobile_default_language']);
+            $mobile_default_language = OrbitInput::post('mobile_default_language');
             $pos_language = OrbitInput::post('pos_language');
-            $timezoneName = OrbitInput::post('timezone', $this->default['timezone']);
+            $timezoneName = OrbitInput::post('timezone');
+            $domain = OrbitInput::post('domain');
+            $languages = OrbitInput::post('languages');
+            $categories = OrbitInput::post('categories');
+            $floors = OrbitInput::post('floors');
+            $campaign_base_price_promotion = OrbitInput::post('campaign_base_price_promotion');
+            $campaign_base_price_coupon = OrbitInput::post('campaign_base_price_coupon');
+            $campaign_base_price_news = OrbitInput::post('campaign_base_price_news');
+            $geo_point_latitude = OrbitInput::post('geo_point_latitude');
+            $geo_point_langitude = OrbitInput::post('geo_point_langitude');
+            $geo_area = OrbitInput::post('geo_area');
 
             // for a while this declaration with default value
-            $languages = OrbitInput::post('languages', $this->default['languages']);
-            $categories = OrbitInput::post('categories', $this->default['categories']);
             $widgets = OrbitInput::post('widgets', $this->default['widgets']);
-            $floors = OrbitInput::post('floors', $this->default['floors']);
             $age_ranges = OrbitInput::post('age_ranges', $this->default['age_ranges']);
-            $campaign_base_prices = OrbitInput::post('campaign_base_price', $this->default['campaign_base_price']);
 
             $validator = Validator::make(
                 array(
-                    'name'                     => $mall_name,
-                    'email'                    => $email,
-                    'password'                 => $password,
-                    'address_line1'            => $address_line1,
-                    'city'                     => $city,
-                    'country'                  => $country,
-                    'phone'                    => $phone,
-                    'url'                      => $url,
-                    'contact_person_firstname' => $contact_person_firstname,
-                    'contact_person_lastname'  => $contact_person_lastname,
-                    'contact_person_phone'     => $contact_person_phone,
-                    'contact_person_email'     => $contact_person_email,
-                    'status'                   => $status,
-                    'parent_id'                => $parent_id,
-                    'start_date_activity'      => $start_date_activity,
-                    'end_date_activity'        => $end_date_activity,
-                    'timezone'                 => $timezoneName,
-                    'mobile_default_language'  => $mobile_default_language,
-                    'currency'                 => $currency,
-                    'currency_symbol'          => $currency_symbol,
-                    'vat_included'             => $vat_included,
-                    'sector_of_activity'       => $sector_of_activity,
+                    'name'                          => $mall_name,
+                    'email'                         => $email,
+                    'password'                      => $password,
+                    'address_line1'                 => $address_line1,
+                    'city'                          => $city,
+                    'country'                       => $country,
+                    'phone'                         => $phone,
+                    'url'                           => $url,
+                    'contact_person_firstname'      => $contact_person_firstname,
+                    'contact_person_lastname'       => $contact_person_lastname,
+                    'contact_person_phone'          => $contact_person_phone,
+                    'contact_person_email'          => $contact_person_email,
+                    'status'                        => $status,
+                    'parent_id'                     => $parent_id,
+                    'start_date_activity'           => $start_date_activity,
+                    'end_date_activity'             => $end_date_activity,
+                    'timezone'                      => $timezoneName,
+                    'currency'                      => $currency,
+                    'currency_symbol'               => $currency_symbol,
+                    'vat_included'                  => $vat_included,
+                    'sector_of_activity'            => $sector_of_activity,
+                    'languages'                     => $languages,
+                    'mobile_default_language'       => $mobile_default_language,
+                    'domain'                        => $domain,
+                    'geo_point_latitude'            => $geo_point_latitude,
+                    'geo_point_langitude'           => $geo_point_langitude,
+                    'geo_area'                      => $geo_area,
+                    'campaign_base_price_promotion' => $campaign_base_price_promotion,
+                    'campaign_base_price_coupon'    => $campaign_base_price_coupon,
+                    'campaign_base_price_news'      => $campaign_base_price_news,
+                    'categories'                    => $categories,
+                    'floors'                        => $floors,
                 ),
                 array(
-                    'name'                     => 'required|orbit.exists.mall_name',
-                    'email'                    => 'required|email|orbit.exists.email',
-                    'password'                 => 'required|min:6',
-                    'address_line1'            => 'required',
-                    'city'                     => 'required',
-                    'country'                  => 'required|orbit.empty.country',
-                    'phone'                    => 'required',
-                    'url'                      => 'orbit.formaterror.url.web',
-                    'contact_person_firstname' => 'required',
-                    'contact_person_lastname'  => 'required',
-                    'contact_person_phone'     => 'required',
-                    'contact_person_email'     => 'required|email',
-                    'status'                   => 'required|orbit.empty.mall_status',
-                    'parent_id'                => 'orbit.empty.mallgroup',
-                    'start_date_activity'      => 'date_format:Y-m-d H:i:s',
-                    'end_date_activity'        => 'date_format:Y-m-d H:i:s',
-                    'timezone'                 => 'required|timezone|valid_db_timezone_name',
-                    'mobile_default_language'  => 'required|size:2|valid_language',
-                    'currency'                 => 'required|size:3',
-                    'currency_symbol'          => 'required',
-                    'vat_included'             => 'required|in:yes,no',
-                    'sector_of_activity'       => 'required',
+                    'name'                          => 'required|orbit.exists.mall_name',
+                    'email'                         => 'required|email|orbit.exists.email',
+                    'password'                      => 'required|min:6',
+                    'address_line1'                 => 'required',
+                    'city'                          => 'required',
+                    'country'                       => 'required|orbit.empty.country',
+                    'phone'                         => 'required',
+                    'url'                           => 'orbit.formaterror.url.web',
+                    'contact_person_firstname'      => 'required',
+                    'contact_person_lastname'       => 'required',
+                    'contact_person_phone'          => 'required',
+                    'contact_person_email'          => 'required|email',
+                    'status'                        => 'required|orbit.empty.mall_status',
+                    'parent_id'                     => 'orbit.empty.mallgroup',
+                    'start_date_activity'           => 'date_format:Y-m-d H:i:s',
+                    'end_date_activity'             => 'date_format:Y-m-d H:i:s',
+                    'timezone'                      => 'required|timezone|valid_db_timezone_name',
+                    'currency'                      => 'required|size:3',
+                    'currency_symbol'               => 'required',
+                    'vat_included'                  => 'required|in:yes,no',
+                    'sector_of_activity'            => 'required',
+                    'languages'                     => 'required|array',
+                    'mobile_default_language'       => 'required|size:2|valid_language',
+                    'domain'                        => 'required',
+                    'geo_point_latitude'            => 'required',
+                    'geo_point_langitude'           => 'required',
+                    'geo_area'                      => 'required',
+                    'campaign_base_price_promotion' => 'required',
+                    'campaign_base_price_coupon'    => 'required',
+                    'campaign_base_price_news'      => 'required',
+                    'categories'                    => 'required|array',
+                    'floors'                        => 'required|array',
                 ),
                 array(
                     'name.required'                     => 'Mall name is required',
@@ -485,7 +456,7 @@ class MallAPIController extends ControllerAPI
             }
             $newmall->is_mall = 'yes';
             $newmall->url = $url;
-            $newmall->ci_domain = $url;
+            $newmall->ci_domain = $domain;
             $newmall->masterbox_number = $masterbox_number;
             $newmall->slavebox_number = $slavebox_number;
             $newmall->mobile_default_language = $mobile_default_language;
@@ -499,6 +470,24 @@ class MallAPIController extends ControllerAPI
             // languages
             // @author irianto <irianto@dominopos.com>
             foreach ($languages as $language_name) {
+                $validator = Validator::make(
+                    array(
+                        'language'             => $language_name
+                    ),
+                    array(
+                        'language'             => 'required|size:2|valid_language'
+                    ),
+                    array(
+                        'valid_language' => 'The :attribute must be a valid language code'
+                    )
+                );
+
+                // Run the validation
+                if ($validator->fails()) {
+                    $errorMessage = $validator->messages()->first();
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+
                 $merchant_language = new MerchantLanguage();
                 $merchant_language->merchant_id = $newmall->merchant_id;
                 $merchant_language->language_id = Language::where('name', '=', $language_name)->first()->language_id;
@@ -513,8 +502,14 @@ class MallAPIController extends ControllerAPI
 
             // categories
             // @author irianto <irianto@dominopos.com>
-            foreach ($categories as $index => $category) {
-                $default_translation = trim($category['default']);
+            foreach ($categories as $category_json) {
+
+                $category = @json_decode($category_json);
+                if (json_last_error() != JSON_ERROR_NONE) {
+                    OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.format'));
+                }
+
+                $default_translation = trim($category->default);
 
                 $new_category = new Category();
                 $new_category->merchant_id       = $newmall->merchant_id;
@@ -530,7 +525,7 @@ class MallAPIController extends ControllerAPI
                     $new_category_translation = new CategoryTranslation();
                     $new_category_translation->category_id          = $new_category->category_id;
                     $new_category_translation->merchant_language_id = $languages_by_name[$data_lang]->merchant_language_id;
-                    $new_category_translation->category_name        = trim($category[$data_lang]);
+                    $new_category_translation->category_name        = trim($category->$data_lang);
                     $new_category_translation->status               = 'active';
                     $new_category_translation->created_by           = NULL;
                     $new_category_translation->modified_by          = NULL;
@@ -572,20 +567,24 @@ class MallAPIController extends ControllerAPI
             // floor
             // @author irianto <irianto@dominopos.com>
             if (count($floors) > 0) {
-                foreach ($floors as $floor_data) {
-                    $floor = new Object();
-                    $floor->merchant_id = $newmall->merchant_id;
-                    $floor->object_name = $floor_data['name'];
-                    $floor->object_type = 'floor';
-                    $floor->object_order = $floor_data['order'];
-                    $floor->status = 'active';
-                    $floor->save();
+                foreach ($floors as $floor_json) {
+                    $floor = @json_decode($floor_json);
+                    if (json_last_error() != JSON_ERROR_NONE) {
+                        OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.format'));
+                    }
+
+                    $newfloor = new Object();
+                    $newfloor->merchant_id = $newmall->merchant_id;
+                    $newfloor->object_name = $floor->name;
+                    $newfloor->object_type = 'floor';
+                    $newfloor->object_order = $floor->order;
+                    $newfloor->status = 'active';
+                    $newfloor->save();
                 };
             }
 
             // settings
             // @author irianto <irianto@dominopos.com>
-            $domain = OrbitInput::post('domain', trim($url));
             $setting_items = [
                 'enable_coupon'                 => 'true',
                 'enable_coupon_widget'          => 'true',
@@ -629,6 +628,11 @@ class MallAPIController extends ControllerAPI
 
             // campaign base prices
             // @author irianto <irianto@dominopos.com>
+            $campaign_base_prices = [];
+            $campaign_base_prices[] = ['price' => $campaign_base_price_promotion, 'campaign_type' => 'promotion'];
+            $campaign_base_prices[] = ['price' => $campaign_base_price_coupon, 'campaign_type' => 'coupon'];
+            $campaign_base_prices[] = ['price' => $campaign_base_price_news, 'campaign_type' => 'news'];
+
             foreach ($campaign_base_prices as $campaign_base_price) {
                 $price = new CampaignBasePrice();
                 $price->merchant_id = $newmall->merchant_id;
@@ -651,6 +655,20 @@ class MallAPIController extends ControllerAPI
                 // For response
                 $newmall->facebook_uri = OrbitInput::post('facebook_uri');
             }
+
+            // save geo location mall
+            // @author irianto <irianto@dominopos.com>
+
+            $fence = new MerchantGeofence();
+            $latitude = (double)$geo_point_latitude;
+            $longitude = (double)$geo_point_langitude;
+            $area = preg_replace('/[^0-9\s,\-\.]/', '',  $geo_area);
+
+            $fence->position = DB::raw("POINT($latitude, $longitude)");
+            $fence->area = DB::raw("GEOMFROMTEXT(\"POLYGON(({$area}))\")");
+            $fence->merchant_id = $newmall->merchant_id;
+
+            $fence->save();
 
             Event::fire('orbit.mall.postnewmall.after.save', array($this, $newmall));
             $this->response->data = $newmall;
@@ -1424,41 +1442,73 @@ class MallAPIController extends ControllerAPI
             $ticket_footer = OrbitInput::post('ticket_footer');
             $start_date_activity = OrbitInput::post('start_date_activity');
             $end_date_activity = OrbitInput::post('end_date_activity');
+            $timezoneName = OrbitInput::post('timezone');
+            $currency = OrbitInput::post('currency');
+            $currency_symbol = OrbitInput::post('currency_symbol');
+            $sector_of_activity = OrbitInput::post('sector_of_activity');
+            $mobile_default_language = OrbitInput::post('mobile_default_language');
+            $languages = OrbitInput::post('languages');
+            $categories = OrbitInput::post('categories');
+            $floors = OrbitInput::post('floors');
+            $campaign_base_price_promotion = OrbitInput::post('campaign_base_price_promotion');
+            $campaign_base_price_coupon = OrbitInput::post('campaign_base_price_coupon');
+            $campaign_base_price_news = OrbitInput::post('campaign_base_price_news');
 
             $validator = Validator::make(
                 array(
-                    'merchant_id'          => $merchant_id,
-                    'name'                 => $name,
-                    'email'                => $email,
-                    'password'             => $password,
-                    'country'              => $country,
-                    'url'                  => $url,
-                    'contact_person_email' => $contact_person_email,
-                    // 'user_id'           => $user_id,
-                    'status'               => $status,
-                    'parent_id'            => $parent_id,
-                    // 'orid'              => $orid,
-                    'ticket_header'        => $ticket_header,
-                    'ticket_footer'        => $ticket_footer,
-                    'start_date_activity'  => $start_date_activity,
-                    'end_date_activity'    => $end_date_activity,
+                    'merchant_id'                   => $merchant_id,
+                    'name'                          => $name,
+                    'email'                         => $email,
+                    'password'                      => $password,
+                    'country'                       => $country,
+                    'url'                           => $url,
+                    'contact_person_email'          => $contact_person_email,
+                    // 'user_id'                    => $user_id,
+                    'status'                        => $status,
+                    'parent_id'                     => $parent_id,
+                    // 'orid'                       => $orid,
+                    'ticket_header'                 => $ticket_header,
+                    'ticket_footer'                 => $ticket_footer,
+                    'start_date_activity'           => $start_date_activity,
+                    'end_date_activity'             => $end_date_activity,
+                    'timezone'                      => $timezoneName,
+                    'currency'                      => $currency,
+                    'currency_symbol'               => $currency_symbol,
+                    'sector_of_activity'            => $sector_of_activity,
+                    'languages'                     => $languages,
+                    'mobile_default_language'       => $mobile_default_language,
+                    // 'campaign_base_price_promotion' => $campaign_base_price_promotion,
+                    // 'campaign_base_price_coupon'    => $campaign_base_price_coupon,
+                    // 'campaign_base_price_news'      => $campaign_base_price_news,
+                    'categories'                    => $categories,
+                    'floors'                        => $floors
                 ),
                 array(
-                    'merchant_id'          => 'required|orbit.empty.mall',
-                    'name'                 => 'mall_name_exists_but_me',
-                    'email'                => 'email|email_exists_but_me',
-                    'password'             => 'min:6',
-                    'country'              => 'orbit.empty.country',
-                    'url'                  => 'orbit.formaterror.url.web',
-                    'contact_person_email' => 'email',
-                    // 'user_id'           => 'orbit.empty.user',
-                    'status'               => 'orbit.empty.mall_status|orbit_check_link_mallgroup|orbit_check_link_campaign|orbit_check_tenant_mall',//|orbit.exists.merchant_retailers_is_box_current_retailer:'.$merchant_id,
-                    'parent_id'            => 'orbit.empty.mallgroup',//|orbit.exists.merchant_retailers_is_box_current_retailer:'.$merchant_id,
-                    // 'orid'              => 'orid_exists_but_me',
-                    'ticket_header'        => 'ticket_header_max_length',
-                    'ticket_footer'        => 'ticket_footer_max_length',
-                    'start_date_activity'  => 'date_format:Y-m-d H:i:s',
-                    'end_date_activity'    => 'date_format:Y-m-d H:i:s'
+                    'merchant_id'                      => 'required|orbit.empty.mall',
+                    'name'                             => 'mall_name_exists_but_me',
+                    'email'                            => 'email|email_exists_but_me',
+                    'password'                         => 'min:6',
+                    'country'                          => 'orbit.empty.country',
+                    'url'                              => 'orbit.formaterror.url.web',
+                    'contact_person_email'             => 'email',
+                    // 'user_id'                       => 'orbit.empty.user',
+                    'status'                           => 'orbit.empty.mall_status|orbit_check_link_mallgroup|orbit_check_link_campaign|orbit_check_tenant_mall',//|orbit.exists.merchant_retailers_is_box_current_retailer:'.$merchant_id,
+                    'parent_id'                        => 'orbit.empty.mallgroup',//|orbit.exists.merchant_retailers_is_box_current_retailer:'.$merchant_id,
+                    // 'orid'                          => 'orid_exists_but_me',
+                    'ticket_header'                    => 'ticket_header_max_length',
+                    'ticket_footer'                    => 'ticket_footer_max_length',
+                    'start_date_activity'              => 'date_format:Y-m-d H:i:s',
+                    'end_date_activity'                => 'date_format:Y-m-d H:i:s',
+                    'timezone'                         => 'valid_db_timezone_name',
+                    'currency'                         => 'size:3',
+                    'vat_included'                     => 'in:yes,no',
+                    'languages'                        => 'array',
+                    'mobile_default_language'          => 'size:2|valid_language',
+                    // 'campaign_base_price_promotion' => 'format currency later will be check',
+                    // 'campaign_base_price_coupon'    => 'format currency later will be check',
+                    // 'campaign_base_price_news'      => 'format currency later will be check',
+                    'categories'                       => 'array',
+                    'floors'                           => 'array'
                 ),
                 array(
                    'mall_name_exists_but_me'    => 'Mall name already exists',
@@ -1471,6 +1521,8 @@ class MallAPIController extends ControllerAPI
                    'ticket_header_max_length'   => Lang::get('validation.orbit.formaterror.merchant.ticket_header.max_length'),
                    'ticket_footer_max_length'   => Lang::get('validation.orbit.formaterror.merchant.ticket_footer.max_length'),
                    'orbit_check_tenant_mall'    => 'Mall can not be deactivated, because it has active tenant',
+                   'valid_db_timezone_name'     => 'The :attribute must be an existing timezone',
+                   'valid_language'             => 'The :attribute must be a valid language code'
                )
             );
 
@@ -1693,12 +1745,6 @@ class MallAPIController extends ControllerAPI
                 $updatedmall->ticket_footer = $ticket_footer;
             });
 
-            $updatedmall->modified_by = $this->api->user->user_id;
-
-            Event::fire('orbit.mall.postupdatemall.before.save', array($this, $updatedmall));
-
-            $updatedmall->save();
-
             OrbitInput::post('facebook_uri', function ($fb_uri) use ($merchant_id, $updatedmall) {
                 $this->saveSocmedUri('facebook', $merchant_id, $fb_uri);
 
@@ -1706,6 +1752,109 @@ class MallAPIController extends ControllerAPI
                 $updatedmall->facebook_uri = $fb_uri;
             });
 
+            OrbitInput::post('timezone', function($timezoneName) use ($updatedmall) {
+                $timezone = App::make('valid_db_timezone_name');
+                $updatedmall->timezone_id = $timezone->timezone_id;
+            });
+
+            OrbitInput::post('currency', function($currency) use ($updatedmall) {
+                $updatedmall->currency = $currency;
+            });
+
+            OrbitInput::post('currency_symbol', function($currency_symbol) use ($updatedmall) {
+                $updatedmall->currency_symbol = $currency_symbol;
+            });
+
+            OrbitInput::post('sector_of_activity', function($sector_of_activity) use ($updatedmall) {
+                $updatedmall->sector_of_activity = $sector_of_activity;
+            });
+
+            OrbitInput::post('mobile_default_language', function($mobile_default_language) use ($updatedmall) {
+                $updatedmall->mobile_default_language = $mobile_default_language;
+            });
+
+            OrbitInput::post('campaign_base_price_promotion', function($campaign_base_price_promotion) use ($updatedmall, $merchant_id) {
+                $campaign_base_price = CampaignBasePrice::where('status', '=', 'active')
+                                                        ->where('merchant_id', '=', $merchant_id)
+                                                        ->where('campaign_type', '=', 'promotion')
+                                                        ->first();
+                if (! empty($campaign_base_price)) {
+                    $campaign_base_price->price = $campaign_base_price_promotion;
+                    $campaign_base_price->save();
+                }
+            });
+
+            OrbitInput::post('campaign_base_price_coupon', function($campaign_base_price_coupon) use ($updatedmall, $merchant_id) {
+                $campaign_base_price = CampaignBasePrice::where('status', '=', 'active')
+                                                        ->where('merchant_id', '=', $merchant_id)
+                                                        ->where('campaign_type', '=', 'coupon')
+                                                        ->first();
+                if (! empty($campaign_base_price)) {
+                    $campaign_base_price->price = $campaign_base_price_coupon;
+                    $campaign_base_price->save();
+                }
+            });
+
+            OrbitInput::post('campaign_base_price_news', function($campaign_base_price_news) use ($updatedmall, $merchant_id) {
+                $campaign_base_price = CampaignBasePrice::where('status', '=', 'active')
+                                                        ->where('merchant_id', '=', $merchant_id)
+                                                        ->where('campaign_type', '=', 'news')
+                                                        ->first();
+                if (! empty($campaign_base_price)) {
+                    $campaign_base_price->price = $campaign_base_price_news;
+                    $campaign_base_price->save();
+                }
+            });
+
+            OrbitInput::post('languages', function($languages) use ($updatedmall, $merchant_id) {
+                foreach ($languages as $language_name) {
+                    $validator = Validator::make(
+                        array(
+                            'language'             => $language_name
+                        ),
+                        array(
+                            'language'             => 'required|size:2|valid_language'
+                        ),
+                        array(
+                            'valid_language' => 'The :attribute must be a valid language code'
+                        )
+                    );
+
+                    // Run the validation
+                    if ($validator->fails()) {
+                        $errorMessage = $validator->messages()->first();
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
+
+                    $language_data = Language::where('name', '=', $language_name)
+                                            ->where('status', '=', 'active')
+                                            ->first();
+
+                    $merchant_language = MerchantLanguage::where('merchant_id', '=', $merchant_id)
+                                                        ->where('status', '=', 'active')
+                                                        ->where('language_id', '=', $language_data->language_id)
+                                                        ->first();
+
+                    if (empty($merchant_language)) {
+                        $newmerchant_language = new MerchantLanguage();
+                        $newmerchant_language->merchant_id = $merchant_id;
+                        $newmerchant_language->status = 'active';
+                        $newmerchant_language->language_id = Language::where('name', '=', $language_name)->first()->language_id;
+                        $newmerchant_language->save();
+                    }
+
+                    // delete language except en language
+                    if ($language_name !== 'en') {
+
+                    }
+                }
+            });
+
+            $updatedmall->modified_by = $this->api->user->user_id;
+
+            Event::fire('orbit.mall.postupdatemall.before.save', array($this, $updatedmall));
+
+            $updatedmall->save();
 
             // update user status
             OrbitInput::post('status', function($status) use ($updatedmall) {

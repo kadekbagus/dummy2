@@ -922,6 +922,9 @@ class IntermediateLoginController extends IntermediateBaseController
         $users = User::select('users.user_email', 'users.user_firstname', 'users.user_lastname', 'users.user_lastname', 'users.user_id', 'user_details.birthdate', 'user_details.gender', 'users.status')
                 ->join('user_details', 'user_details.user_id', '=', 'users.user_id')
                 ->where('users.user_email', $email)
+                ->whereHas('role', function($q) {
+                    $q->where('role_name', 'Consumer');
+                })
                 ->get();
 
         return $users;
