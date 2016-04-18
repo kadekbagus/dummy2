@@ -1807,6 +1807,15 @@ class MallAPIController extends ControllerAPI
             });
 
             OrbitInput::post('languages', function($languages) use ($updatedmall, $merchant_id) {
+                // delete languages what ever the lang status
+                $delete_language = MerchantLanguage::leftjoin('languages', 'languages.language_id', '=', 'merchant_languages.language_id')
+                                                // ->where('merchant_languages.status', '=', 'active')
+                                                ->where('merchant_id', '=', $merchant_id)
+                                                ->where('languages.name', '!=', 'en')
+                                                ->whereNotIn('languages.name', $languages)
+                                                ->delete();
+
+                // new languages
                 foreach ($languages as $language_name) {
                     $validator = Validator::make(
                         array(
@@ -1826,10 +1835,9 @@ class MallAPIController extends ControllerAPI
                         OrbitShopAPI::throwInvalidArgument($errorMessage);
                     }
 
-                    $language_data = Language::where('name', '=', $language_name)
-                                            ->where('status', '=', 'active')
-                                            ->first();
+                    $language_data = App::make('valid_language');
 
+                    // check lang with status active
                     $merchant_language = MerchantLanguage::where('merchant_id', '=', $merchant_id)
                                                         ->where('status', '=', 'active')
                                                         ->where('language_id', '=', $language_data->language_id)
@@ -1841,11 +1849,6 @@ class MallAPIController extends ControllerAPI
                         $newmerchant_language->status = 'active';
                         $newmerchant_language->language_id = Language::where('name', '=', $language_name)->first()->language_id;
                         $newmerchant_language->save();
-                    }
-
-                    // delete language except en language
-                    if ($language_name !== 'en') {
-
                     }
                 }
             });
@@ -2668,6 +2671,7 @@ class MallAPIController extends ControllerAPI
                 return FALSE;
             }
 
+            App::instance('valid_language', $lang);
             return TRUE;
         });
     }
