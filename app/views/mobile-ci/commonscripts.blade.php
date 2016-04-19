@@ -634,7 +634,7 @@
                 $('.search-wrapper').append(loader);
 
                 $.ajax({
-                    url: apiPath + 'keyword/search?keyword=' + keyword + '&lang=' + cookieLang,
+                    url: "{{ url('/app/v1/keyword/search') }}&keyword=" + keyword + '&lang=' + cookieLang,
                     method: 'GET'
                 }).done(function(data) {
                     if (data.data.total_records > 0) {
