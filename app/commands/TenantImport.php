@@ -3,6 +3,7 @@
 use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
+use OrbitShop\API\v1\Helper\RecursiveFileIterator;
 
 class TenantImport extends Command {
 
@@ -32,26 +33,38 @@ class TenantImport extends Command {
     }
 
     /**
-     * Execute the console command.
-     *
-     * @return mixed
+     * Read the json file.
      */
-    public function fire()
+    protected function readJSON($file)
+    {
+        if (! file_exists($file) ) {
+           throw new Exception('Could not found json file.');
+        }
+
+        $conf = @json_decode(file_get_contents($file), true);
+        $basefile = $basefile = basename($file);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new Exception( sprintf('Error JSON %s: %s', $basefile, json_last_error_msg()) );
+        }
+
+        return $conf;
+    }
+
+    /**
+     * Import to create new tenant
+     */
+    protected function newTenant()
     {
         try {
-
-            $merchantId = $this->option('merchant_id');
+            $skipFloor = TRUE;
+            $merchantId = $this->option('merchant-id');
             $fileName = $this->option('file');
+            $userBaseDir = $this->option('basedir');
+            $basefile = basename($fileName);
+            $basedir = (! empty($userBaseDir) && file_exists($userBaseDir)) ? $userBaseDir : dirname($fileName);
 
-            if (! file_exists($fileName) ) {
-               throw new Exception('Could not found json file.');
-            }
-
-            $conf = @json_decode(file_get_contents($fileName), true);
-            if (json_last_error() !== JSON_ERROR_NONE) {
-                throw new Exception('JSON error: ' . json_last_error_msg());
-            }
-            $data = $conf;
+            $data = $this->readJSON($fileName);
+            $data['tenant_name'] = trim($data['tenant_name']);
 
             $mall = Mall::excludeDeleted()->where('merchant_id', '=', $merchantId)->first();
 
@@ -65,7 +78,7 @@ class TenantImport extends Command {
                 foreach ($data['categories'] as $category_name) {
                     $category = Category::where('merchant_id', $merchantId)->where('category_name', $category_name)->first();
                     if (empty($category)) {
-                        throw new Exception('Category is not exist.');
+                        throw new Exception(sprintf('ERROR: Category "%s" for tenant "%s" is not exist.', $category_name, $data['tenant_name']));
                     }
                 }
                 if ($data['status'] === 'active') {
@@ -76,11 +89,16 @@ class TenantImport extends Command {
                                     ->first();
 
                     if (empty($floor)) {
-                        throw new Exception('Floor is not exist.');
+                        $errMessage = sprintf('WARNING: Floor %s for tenant %s (%s) is not exist on mall %s.', $data['floor'], $data['tenant_name'], $basefile, $mall->name);
+                        if (! $skipFloor) {
+                            throw new Exception($errMessage);
+                        }
+                        $this->error($errMessage);
                     }
 
                     if ($data['unit'] === '') {
-                        throw new Exception('Unit is required.');
+                        $errMessage = sprintf('WARNING: Unit for tenant %s (%s) is not filled on mall %s.', $data['tenant_name'], $basefile, $mall->name);
+                        $this->error($errMessage);
                     }
                 }
 
@@ -117,7 +135,6 @@ class TenantImport extends Command {
                 if (! $newtenant->save()) {
                     throw new Exception('Insert Tenant Failed!');
                 }
-                $this->info(sprintf('Success, Insert %s', $data['tenant_name']));
 
                 $newSpendingRules = new SpendingRule();
                 $newSpendingRules->object_id = $newtenant->merchant_id;
@@ -140,7 +157,7 @@ class TenantImport extends Command {
 
                     $merchantSocmed->social_media_uri = $data['facebook_id'];
                     if (! $merchantSocmed->save()) {
-                        throw new Exception('Insert Merchant Sosmed Failed!');
+                        throw new Exception( sprintf('Insert Merchant %s Sosmed Failed!', $data['tenant_name']) );
                     }
                 }
 
@@ -150,7 +167,7 @@ class TenantImport extends Command {
                     $categoryMerchant->category_id = $category->category_id;
                     $categoryMerchant->merchant_id = $newtenant->merchant_id;
                     if (! $categoryMerchant->save()) {
-                        throw new Exception('Insert Category Failed!');
+                        throw new Exception( sprintf('Insert Category %s Failed!', $data['tenant_name']) );
                     }
                 }
 
@@ -173,7 +190,7 @@ class TenantImport extends Command {
                         $newKeyword->keyword = $keyword;
                         $newKeyword->status = 'active';
                         if (! $newKeyword->save()) {
-                            throw new Exception('Insert Keyword Failed!');
+                            throw new Exception( sprintf('Insert Keyword %s Failed!', $data['tenant_name']) );
                         }
 
                         $keyword_id = $newKeyword->keyword_id;
@@ -186,7 +203,7 @@ class TenantImport extends Command {
                     $newKeywordObject->object_id = $newtenant->merchant_id;
                     $newKeywordObject->object_type = 'tenant';
                     if (! $newKeywordObject->save()) {
-                        throw new Exception('Insert Keyword Object Failed!');
+                        throw new Exception( sprintf('Insert Keyword Object %s Failed!', $data['tenant_name']) );
                     }
                 }
 
@@ -204,84 +221,227 @@ class TenantImport extends Command {
                     $tenantTranslation->description = $desc['content'];
                     $tenantTranslation->status = 'active';
                     if (! $tenantTranslation->save()) {
-                        throw new Exception('Insert Tenant Translation Failed!');
+                        throw new Exception( sprintf('Insert Tenant Translation %s Failed!', $data['tenant_name']) );
                     }
                 }
 
-
-
                 $images = array();
-                foreach ($data['images'] as $key => $image) {
-                    if ($key === 'tenant_logo') {
-                        if (! file_exists($image)) {
-                            throw new Exception( sprintf('File image %s not found.', $image) );
-                        }
-                        $path_info = pathinfo($image);
-                        $images['type'] = 'logo';
-                        $images['type_dir'] = 'logo';
-                        $images['name'] = $path_info['basename'];
-                        $images['path'] = $image;
+                $skipImage = $this->option('skip-image');
+                $imageMode = $this->option('image-mode');
 
-                        if ($image !== '') {
-                            $this->uploadImage = TRUE;
-                        }
-                        $this->uploadImages($newtenant, $images);
-                    }
-
-                    if ($key === 'tenant_images') {
-                        foreach ($image as $idx => $tenant_image) {
-                            if (! file_exists($tenant_image)) {
-                                throw new Exception( sprintf('File image %s not found.', $tenant_image) );
+                // Made with angry and hurry
+                if (! $skipImage) {
+                    foreach ($data['images'] as $key => $image) {
+                        if ($key === 'tenant_logo') {
+                            try {
+                                if ($imageMode === 'auto') {
+                                    $image = $this->getDirForTenant($basedir, $data['tenant_name'], 'logo', 'auto');
+                                    $image = $this->getFilesFromDir($image)[0];
+                                } else {
+                                    $image = $basedir . '/' . $image;
+                                    $image = $this->getFilesFromDir($image)[0];
+                                }
+                            } catch (Exception $e) {
+                                $this->error( sprintf('WARNING: File image %s (%s) for tenant %s not found.', $key, $image, $data['tenant_name']) );
+                                continue;
                             }
 
-                            $path_info = pathinfo($tenant_image);
-                            $images['type'] = 'images';
-                            $images['type_dir'] = 'pictures';
+                            if (! file_exists($image)) {
+                                $this->error( sprintf('WARNING: File image %s (%s) for tenant %s not found.', $key, $image, $data['tenant_name']) );
+                                continue;
+                            }
+                            $path_info = pathinfo($image);
+
+                            $images['type'] = 'logo';
+                            $images['type_dir'] = 'logo';
                             $images['name'] = $path_info['basename'];
-                            $images['path'] = $tenant_image;
+                            $images['path'] = $image;
 
-                            if ($tenant_image !== '') {
-                                $this->uploadImage = TRUE;
+                            try {
+                                $this->uploadImages($newtenant, $images);
+                            } catch (Exception $e) {
+                                $this->error( sprintf('WARNING: File image %s (%s) for tenant %s save failed.', $key, $image, $data['tenant_name']) );
                             }
-                            $this->uploadImages($newtenant, $images, ($idx+1));
-                        }
-                    }
-
-                    if ($key === 'image_map') {
-                        if (! file_exists($image)) {
-                            throw new Exception( sprintf('File image %s not found.', $image) );
                         }
 
-                        $path_info = pathinfo($image);
-                        $images['type'] = 'map';
-                        $images['type_dir'] = 'maps';
-                        $images['name'] = $path_info['basename'];
-                        $images['path'] = $image;
+                        if ($key === 'tenant_image') {
+                            try {
+                                if ($imageMode === 'auto') {
+                                    $image = $this->getDirForTenant($basedir, $data['tenant_name'], 'images', 'auto');
+                                    $image = $this->getFilesFromDir($image, 3);
+                                } else {
+                                    $image = $basedir . '/' . $image;
+                                    $image = $this->getFilesFromDir($image, 3);
+                                }
+                            } catch (Exception $e) {
+                                $image = is_array($image) ? current($image) : $image;
+                                $this->error( sprintf('WARNING: File image %s (%s) for tenant %s not found. %s', $key, $image, $data['tenant_name'], $e->getMessage()) );
+                                continue;
+                            }
 
-                        if ($image !== '') {
-                            $this->uploadImage = TRUE;
+                            if (empty($image)) {
+                                $image = $basedir . '/' . $data['tenant_name'] . '/images';
+                                $this->error( sprintf('WARNING: File image %s (%s) for tenant %s not found.', $key, $image, $data['tenant_name']) );
+                                continue;
+                            }
+
+                            foreach ($image as $idx => $tenant_image) {
+                                if (! file_exists($tenant_image)) {
+                                    $this->error( sprintf('WARNING: File image %s (%s) for tenant %s not found.', $key, $image, $data['tenant_name']) );
+                                    continue;
+                                }
+
+                                $path_info = pathinfo($tenant_image);
+                                $images['type'] = 'image';
+                                $images['type_dir'] = 'pictures';
+                                $images['name'] = $path_info['basename'];
+                                $images['path'] = $tenant_image;
+
+                                try {
+                                    $this->uploadImages($newtenant, $images, ($idx+1));
+                                } catch (Exception $e) {
+                                    $this->error( sprintf('WARNING: File image %s (%s) for tenant %s save failed.', $key, $image, $data['tenant_name']) );
+                                }
+                            }
                         }
-                        $this->uploadImages($newtenant, $images);
+
+                        if ($key === 'image_map') {
+                            try {
+                                if ($imageMode === 'auto') {
+                                    $image = $this->getDirForTenant($basedir, $data['tenant_name'], 'map', 'auto');
+                                    $image = $this->getFilesFromDir($image)[0];
+                                } else {
+                                    $image = $basedir . '/' . $image;
+                                    $image = $this->getFilesFromDir($image)[0];
+                                }
+                            } catch (Exception $e) {
+                                $this->error( sprintf('WARNING: File image %s (%s) for tenant %s not found.', $key, $image, $data['tenant_name']) );
+                                continue;
+                            }
+
+                            if (! file_exists($image)) {
+                                $this->error( sprintf('File image %s (%s) for tenant %s not found.', $key, $image, $data['tenant_name']) );
+                                continue;
+                            }
+
+                            $path_info = pathinfo($image);
+                            $images['type'] = 'map';
+                            $images['type_dir'] = 'maps';
+                            $images['name'] = $path_info['basename'];
+                            $images['path'] = $image;
+
+
+                            try {
+                                $this->uploadImages($newtenant, $images);
+                            } catch (Exception $e) {
+                                $this->error( sprintf('WARNING: File image %s (%s) for tenant %s save failed.', $key, $image, $data['tenant_name']) );
+                            }
+                        }
                     }
                 }
 
                 DB::commit();
-                $this->info("Success, Data Inserted!");
+                $this->info( sprintf('Tenant %s successfully imported.', $data['tenant_name']) );
             }
         } catch (Exception $e) {
             DB::rollback();
-            $this->error([$e->getLine(), $e->getMessage()]);
+            $this->error('Line #' . $e->getLine() . ': ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * @param string $basedir base directory
+     * @param string $tenant_name
+     * @param string $type Type of the file: 'logo', 'images', 'map'
+     * @param string $mode How to get the files value: 'from_json' or 'auto'.
+     *                     auto means it assumes images/TENANT_NAME/{logo,images,map}
+     * @param string
+     * @return string
+     */
+    protected function getDirForTenant($basedir, $tenant_name, $type, $mode='from_json')
+    {
+        if ($mode === 'from_json') {
+            return $basedir;
         }
 
+        switch ($type) {
+            case 'images':
+                $file = sprintf('%s/images/%s/images', $basedir, $tenant_name);
+                break;
+
+            case 'map':
+                $file = sprintf('%s/images/%s/map', $basedir, $tenant_name);
+                break;
+
+            case 'logo':
+                $file = sprintf('%s/images/%s/logo', $basedir, $tenant_name);
+                break;
+
+            default:
+                throw new Exception('Unknown type ' . $type . ' for getImagesForTenant.');
+        }
+
+        return $file;
+    }
+
+    /**
+     * Get files from directory with a limit
+     *
+     * @param string $dir Directory name
+     * @param int $limit Limit the result
+     */
+    protected function getFilesFromDir($dir, $limit=1)
+    {
+        if (is_file($dir)) {
+            return (array)$dir;
+        }
+
+        $pictureOnly = function($file, $fullPath) {
+            $fileExt = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+
+            if (in_array($fileExt, ['jpg', 'png', 'jpeg'])) {
+                return TRUE;
+            }
+
+            return FALSE;
+        };
+
+        $files = [];
+        $recursiveIterator = RecursiveFileIterator::create($dir)
+                                                  ->setCallbackMatcher($pictureOnly)
+                                                  ->includeFullPath();
+
+        $counter = 0;
+        foreach ($recursiveIterator->get() as $file) {
+            $files[] = $file;
+
+            if (++$counter >= $limit) {
+                break;
+            }
+        }
+
+        return $files;
+    }
+
+    /**
+     * Execute the console command.
+     *
+     * @return mixed
+     */
+    public function fire()
+    {
+        $mode = $this->option('mode');
+        switch ($mode) {
+            case 'update':
+
+            case 'insert':
+            default:
+                $this->newTenant();
+        }
     }
 
     protected function uploadImages($tenant, $images, $order = 1)
     {
-        if (! $this->uploadImage) {
-            $this->info('Skipping ' . $images['type'] . ' seeder.');
-            return TRUE;
-        }
-
         $tenant_id = $tenant->merchant_id;
         $tenant_name = $tenant->name;
         $image_type = $images['type'];
@@ -289,11 +449,11 @@ class TenantImport extends Command {
         $image_name = $images['name'];
         $image_path = $images['path'];
 
-        $filename = sprintf('%s-%s-%s_%s', $tenant_id, Str::slug($tenant_name), time(), $order);
+        $path_info = pathinfo($image_path);
+        $extension = $path_info['extension'];
+        $filename = sprintf('%s-%s-%s_%s_%s_orig.%s', $tenant_id, Str::slug($tenant_name), time(), $order, $image_type, $extension);
         $upload_dir = sprintf('public/uploads/retailers/%s/', $image_type_dir);
         $path = sprintf('uploads/retailers/%s/', $image_type_dir) . $filename;
-        $path_info = pathinfo($image_path);
-        $extension = '.' . $path_info['extension'];
 
         $metadata = [];
         $metadata[0]['filename'] = $filename;
@@ -302,15 +462,7 @@ class TenantImport extends Command {
         $metadata[0]['mime_type'] = 'image/png';
         $metadata[0]['name_id'] = 'retailer_' . $image_type;
         $metadata[0]['name_id_long'] = 'retailer_' . $image_type . '_orig';
-        $metadata[0]['upload_path'] = $path . $extension;
-
-        $metadata[1]['filename'] = $filename . 'resize-default';
-        $metadata[1]['realpath'] = $image_path;
-        $metadata[1]['file_size'] = filesize($image_path);
-        $metadata[1]['mime_type'] = 'image/png';
-        $metadata[1]['name_id'] = 'retailer_' . $image_type;
-        $metadata[1]['name_id_long'] = 'retailer_' . $image_type . '_resize_default';
-        $metadata[1]['upload_path'] = $path . $extension;
+        $metadata[0]['upload_path'] = $path;
 
         foreach ($metadata as $i => $file) {
             if (! file_exists($upload_dir)) {
@@ -330,10 +482,12 @@ class TenantImport extends Command {
             $media->realpath = realpath($file['realpath']);
             $media->metadata = 'order-' . $i;
             $media->modified_by = 1;
-            $media->save();
+            if (! $media->save()) {
+                throw new Exception(sprintf('Failed to save image %s to DB.', $filename));
+            }
         }
 
-        $this->info('tenant ' . $image_type . ' ' . $order . ' seeded.');
+        $this->info( sprintf('Tenant %s %s (%s) successfuly saved.', $tenant->name, $image_type, $order) );
     }
 
     /**
@@ -354,9 +508,12 @@ class TenantImport extends Command {
     protected function getOptions()
     {
         return array(
+            array('mode', 'insert', InputOption::VALUE_REQUIRED, 'Import mode, "insert" or "update".'),
             array('file', null, InputOption::VALUE_REQUIRED, 'JSON file.'),
-            array('merchant_id', null, InputOption::VALUE_REQUIRED, 'Merchant id.'),
+            array('merchant-id', null, InputOption::VALUE_REQUIRED, 'Merchant id.'),
+            array('skip-image', FALSE, InputOption::VALUE_NONE, 'Skip image upload.'),
+            array('image-mode', 'auto', InputOption::VALUE_OPTIONAL, 'Value "from_json" or "auto".'),
+            array('basedir', NULL, InputOption::VALUE_OPTIONAL, 'Base directory for the images.')
         );
     }
-
 }
