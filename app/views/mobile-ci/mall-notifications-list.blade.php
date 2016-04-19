@@ -52,7 +52,7 @@
         {{-- force reload page to disable page cache on ios safari --}}
         $(window).bind("pageshow", function(event) {
             if (event.originalEvent.persisted) {
-                window.location.reload() 
+                window.location.reload()
             }
         });
 
@@ -60,7 +60,7 @@
             function getNotifList() {
                 $.ajax({
                     method: 'GET',
-                    url: apiPath + 'inbox/list'
+                    url: '{{ url("app/v1/inbox/list") }}'
                 }).done(function(data){
                     if(data.data.total_records / (data.data.returned_records + skip) > 1) {
                         $('.loadmore').show();
