@@ -1861,10 +1861,6 @@ class UserAPIController extends ControllerAPI
                 }
             });
 
-            if ($sortBy !== 'users.status') {
-                $users->orderBy('users.status', 'asc');
-            }
-
             $users->orderBy($sortBy, $sortMode);
 
             $summary = [];
