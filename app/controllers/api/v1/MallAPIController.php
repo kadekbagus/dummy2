@@ -1815,13 +1815,13 @@ class MallAPIController extends ControllerAPI
             });
 
             OrbitInput::post('languages', function($languages) use ($updatedmall) {
-                // delete languages what ever the lang status
-                $delete_language = MerchantLanguage::leftjoin('languages', 'languages.language_id', '=', 'merchant_languages.language_id')
-                                                // ->where('merchant_languages.status', '=', 'active')
-                                                ->where('merchant_languages.merchant_id', '=', $updatedmall->merchant_id)
-                                                ->where('languages.name', '!=', 'en')
-                                                ->whereNotIn('languages.name', $languages)
-                                                ->delete();
+                // // delete languages what ever the lang status
+                // $delete_language = MerchantLanguage::leftjoin('languages', 'languages.language_id', '=', 'merchant_languages.language_id')
+                //                                 // ->where('merchant_languages.status', '=', 'active')
+                //                                 ->where('merchant_languages.merchant_id', '=', $updatedmall->merchant_id)
+                //                                 ->where('languages.name', '!=', 'en')
+                //                                 ->whereNotIn('languages.name', $languages)
+                //                                 ->delete();
 
                 // new languages
                 foreach ($languages as $language_name) {
@@ -1859,6 +1859,8 @@ class MallAPIController extends ControllerAPI
                         $newmerchant_language->save();
                     }
                 }
+
+
             });
 
             OrbitInput::post('floors', function($floors) use ($updatedmall) {
@@ -1899,6 +1901,7 @@ class MallAPIController extends ControllerAPI
                     }
 
                     $floors_will_be_delete = Object::where('object_type', '=', 'floor')
+                                ->where('merchant_id', '=', $updatedmall->merchant_id)
                                 ->whereNotIn('object_name', $all_floor)
                                 ->get();
 
@@ -1920,6 +1923,7 @@ class MallAPIController extends ControllerAPI
                         // delete floor
                         $delete_floor = Object::where('object_type', '=', 'floor')
                                             // ->where('status', '=', 'active')
+                                            ->where('merchant_id', '=', $updatedmall->merchant_id)
                                             ->whereIn('object_name', $del_floor)
                                             ->delete();
                     }
