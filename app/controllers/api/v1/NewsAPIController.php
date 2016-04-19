@@ -319,32 +319,34 @@ class NewsAPIController extends ControllerAPI
             foreach ($keywords as $keyword) {
                 $keyword_id = null;
 
-                $existKeyword = Keyword::excludeDeleted()
-                    ->where('keyword', '=', $keyword)
-                    ->where('merchant_id', '=', $newnews->mall_id)
-                    ->first();
+                foreach ($mallid as $mall) {
+                    $existKeyword = Keyword::excludeDeleted()
+                        ->where('keyword', '=', $keyword)
+                        ->where('merchant_id', '=', $mall)
+                        ->first();
 
-                if (empty($existKeyword)) {
-                    $newKeyword = new Keyword();
-                    $newKeyword->merchant_id = $newnews->mall_id;
-                    $newKeyword->keyword = $keyword;
-                    $newKeyword->status = 'active';
-                    $newKeyword->created_by = $this->api->user->user_id;
-                    $newKeyword->modified_by = $this->api->user->user_id;
-                    $newKeyword->save();
+                    if (empty($existKeyword)) {
+                        $newKeyword = new Keyword();
+                        $newKeyword->merchant_id = $mall;
+                        $newKeyword->keyword = $keyword;
+                        $newKeyword->status = 'active';
+                        $newKeyword->created_by = $this->api->user->user_id;
+                        $newKeyword->modified_by = $this->api->user->user_id;
+                        $newKeyword->save();
 
-                    $keyword_id = $newKeyword->keyword_id;
-                    $newsKeywords[] = $newKeyword;
-                } else {
-                    $keyword_id = $existKeyword->keyword_id;
-                    $newsKeywords[] = $existKeyword;
+                        $keyword_id = $newKeyword->keyword_id;
+                        $newsKeywords[] = $newKeyword;
+                    } else {
+                        $keyword_id = $existKeyword->keyword_id;
+                        $newsKeywords[] = $existKeyword;
+                    }
+
+                    $newKeywordObject = new KeywordObject();
+                    $newKeywordObject->keyword_id = $keyword_id;
+                    $newKeywordObject->object_id = $newnews->news_id;
+                    $newKeywordObject->object_type = $object_type;
+                    $newKeywordObject->save();
                 }
-
-                $newKeywordObject = new KeywordObject();
-                $newKeywordObject->keyword_id = $keyword_id;
-                $newKeywordObject->object_id = $newnews->news_id;
-                $newKeywordObject->object_type = $object_type;
-                $newKeywordObject->save();
 
             }
             $newnews->keywords = $newsKeywords;
@@ -1014,39 +1016,42 @@ class NewsAPIController extends ControllerAPI
                                                     ->where('object_type', '=', $object_type);
             $deleted_keyword_object->delete();
 
-            OrbitInput::post('keywords', function($keywords) use ($updatednews, $mall_id, $user, $news_id, $object_type) {
+            OrbitInput::post('keywords', function($keywords) use ($updatednews, $mall_id, $user, $news_id, $object_type, $mallid) {
                 // Insert new data
                 $newsKeywords = array();
                 foreach ($keywords as $keyword) {
                     $keyword_id = null;
 
-                    $existKeyword = Keyword::excludeDeleted()
-                        ->where('keyword', '=', $keyword)
-                        ->where('merchant_id', '=', $mall_id)
-                        ->first();
+                    foreach ($mallid as $mall) {
 
-                    if (empty($existKeyword)) {
-                        $newKeyword = new Keyword();
-                        $newKeyword->merchant_id = $mall_id;
-                        $newKeyword->keyword = $keyword;
-                        $newKeyword->status = 'active';
-                        $newKeyword->created_by = $user->user_id;
-                        $newKeyword->modified_by = $user->user_id;
-                        $newKeyword->save();
+                        $existKeyword = Keyword::excludeDeleted()
+                            ->where('keyword', '=', $keyword)
+                            ->where('merchant_id', '=', $mall)
+                            ->first();
 
-                        $keyword_id = $newKeyword->keyword_id;
-                        $newsKeywords[] = $newKeyword;
-                    } else {
-                        $keyword_id = $existKeyword->keyword_id;
-                        $newsKeywords[] = $existKeyword;
+                        if (empty($existKeyword)) {
+                            $newKeyword = new Keyword();
+                            $newKeyword->merchant_id = $mall;
+                            $newKeyword->keyword = $keyword;
+                            $newKeyword->status = 'active';
+                            $newKeyword->created_by = $user->user_id;
+                            $newKeyword->modified_by = $user->user_id;
+                            $newKeyword->save();
+
+                            $keyword_id = $newKeyword->keyword_id;
+                            $newsKeywords[] = $newKeyword;
+                        } else {
+                            $keyword_id = $existKeyword->keyword_id;
+                            $newsKeywords[] = $existKeyword;
+                        }
+
+
+                        $newKeywordObject = new KeywordObject();
+                        $newKeywordObject->keyword_id = $keyword_id;
+                        $newKeywordObject->object_id = $news_id;
+                        $newKeywordObject->object_type = $object_type;
+                        $newKeywordObject->save();
                     }
-
-
-                    $newKeywordObject = new KeywordObject();
-                    $newKeywordObject->keyword_id = $keyword_id;
-                    $newKeywordObject->object_id = $news_id;
-                    $newKeywordObject->object_type = $object_type;
-                    $newKeywordObject->save();
 
                 }
                 $updatednews->keywords = $newsKeywords;

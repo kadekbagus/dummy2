@@ -796,7 +796,7 @@ class EmployeeAPIController extends ControllerAPI
             $newCampaignAccount->account_name = $parentCampaignAcc->account_name;
             $newCampaignAccount->parent_user_id = $user->user_id;
             $newCampaignAccount->status = $newUser->status;
-            $newCampaignAccount->save(); 
+            $newCampaignAccount->save();
 
             // insert into user merchant
             $userMerchant = UserMerchant::select('user_id', 'merchant_id', 'object_type')->where('user_id', '=', $user->user_id)->get();
@@ -2969,15 +2969,6 @@ class EmployeeAPIController extends ControllerAPI
                 $sortBy = $sortByMapping[$_sortBy];
             });
 
-            // If sortby not active means we should add active as second argument
-            // of sorting
-
-            if ($cs_coupon_redeem_mall === '' || $cs_coupon_redeem_mall === null) {
-                if ($sortBy !== 'users.status') {
-                    $users->orderBy('users.status', 'asc');
-                }
-            }
-
             OrbitInput::get('sortmode', function ($_sortMode) use (&$sortMode) {
                 if (strtolower($_sortMode) !== 'asc') {
                     $sortMode = 'desc';
@@ -3280,7 +3271,7 @@ class EmployeeAPIController extends ControllerAPI
                 $users->whereIn('users.user_role_id', $roleId);
             });
 
-            // Filter user by their role name 
+            // Filter user by their role name
             OrbitInput::get('role_names', function ($data) use ($users) {
                 $data = (array)$data;
                 $users->whereIn('roles.role_name', $data);
@@ -3875,8 +3866,8 @@ class EmployeeAPIController extends ControllerAPI
 
         if(empty($campaignAcc->parent_user_id) && $user->role->role_name === 'Campaign Owner'){
             return TRUE;
-        } 
-        
+        }
+
         return FALSE;
     }
 
