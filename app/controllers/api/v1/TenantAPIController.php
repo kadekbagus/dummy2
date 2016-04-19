@@ -1970,16 +1970,6 @@ class TenantAPIController extends ControllerAPI
                 }
             });
 
-            // this parameter is intended for tenant listing for tenant dropdown list so it will
-            // ignore the sort by status that will broke alphabetical order.
-            $true_sort = OrbitInput::get('true_sort');
-
-            if ($sortBy !== 'merchants.status') {
-                if(empty($true_sort)) {
-                    $tenants->orderBy('merchants.status', 'asc');
-                }
-            }
-
             OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
             {
                 if (strtolower($_sortMode) !== 'asc') {
