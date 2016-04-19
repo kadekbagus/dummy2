@@ -2353,12 +2353,8 @@ class UserAPIController extends ControllerAPI
             // create membership number
             // create if only param membership_number or join_date is being sent
             $membershipCard = App::make('orbit.empty.mall_have_membership_card');
-            $check_membership = false;
             // check membership
-            if (is_object($membershipCard)) {
-                $check_membership = true;
-            }
-            if ($check_membership) {
+            if (count($membershipCard) > 0) {
                 if ((trim($membershipNumberCode) !== '') || (trim($join_date) !== '')) {
                     $m = new MembershipNumber();
                     $m->membership_id = $membershipCard->membership_id;
@@ -2718,13 +2714,8 @@ class UserAPIController extends ControllerAPI
             $userdetail = $updateduser->userdetail;
 
             $membershipCard = App::make('orbit.empty.mall_have_membership_card');
-            $check_membership = false;
             // create membership if not exist
-            if (is_object($membershipCard)) {
-                $check_membership = true;
-            }
-
-            if ($check_membership) {
+            if (count($membershipCard) > 0) {
                 $membershipNumbers = $updateduser->getMembershipNumbers($membershipCard);
             }
 
@@ -2817,7 +2808,7 @@ class UserAPIController extends ControllerAPI
             /**
              * create/update membership number
              */
-            if ($check_membership) {
+            if (count($membershipCard) > 0) {
                 if ($membershipNumbers->first()) {
                     // update
                     $m = $membershipNumbers->first();
@@ -2859,7 +2850,7 @@ class UserAPIController extends ControllerAPI
             $updateduser->save();
             $userdetail->save();
 
-            if ($check_membership) {
+            if (count($membershipCard) > 0) {
                 $membershipNumbers = $updateduser->getMembershipNumbers($membershipCard);
                 if ($membershipNumbers->first()) {
                     $updateduser->membership_number = $membershipNumbers->first()->membership_number;
