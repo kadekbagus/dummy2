@@ -40,7 +40,7 @@
         // Callback function to mark the notification as read
         var readNotif = function(inboxId) {
             $.ajax({
-                url: apiPath + 'alert/read',
+                url: '{{ url("app/v1/alert/read") }}',
                 method: 'POST',
                 data: {
                     inbox_id: inboxId
@@ -63,7 +63,7 @@
             }
 
             $.ajax({
-                url: apiPath + 'inbox/unread-count',
+                url: '{{ url("app/v1/inbox/unread-count") }}',
                 method: 'GET',
                 data: {}
             }).done(function(resp) {
