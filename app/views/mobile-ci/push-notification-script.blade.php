@@ -113,7 +113,7 @@
                         },
                         onShown: function() {
                             $.ajax({
-                                url: apiPath + 'inbox/notified',
+                                url: '{{ url("app/v1/inbox/notified") }}',
                                 method: 'POST',
                                 data: {
                                     inbox_id: inboxId
