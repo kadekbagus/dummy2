@@ -2357,7 +2357,12 @@ class UserAPIController extends ControllerAPI
             // create membership number
             // create if only param membership_number or join_date is being sent
             $membershipCard = App::make('orbit.empty.mall_have_membership_card');
-            if (count($membershipCard) > 0) {
+            $check_membership = false;
+            // check membership
+            if (is_object($membershipCard)) {
+                $check_membership = true;
+            }
+            if ($check_membership) {
                 if ((trim($membershipNumberCode) !== '') || (trim($join_date) !== '')) {
                     $m = new MembershipNumber();
                     $m->membership_id = $membershipCard->membership_id;
@@ -2717,7 +2722,13 @@ class UserAPIController extends ControllerAPI
             $userdetail = $updateduser->userdetail;
 
             $membershipCard = App::make('orbit.empty.mall_have_membership_card');
-            if (count($membershipCard > 0 )) {
+            $check_membership = false;
+            // create membership if not exist
+            if (is_object($membershipCard)) {
+                $check_membership = true;
+            }
+
+            if ($check_membership) {
                 $membershipNumbers = $updateduser->getMembershipNumbers($membershipCard);
             }
 
@@ -2810,38 +2821,40 @@ class UserAPIController extends ControllerAPI
             /**
              * create/update membership number
              */
-            if ($membershipNumbers->first()) {
-                // update
-                $m = $membershipNumbers->first();
+            if ($check_membership) {
+                if ($membershipNumbers->first()) {
+                    // update
+                    $m = $membershipNumbers->first();
 
-                OrbitInput::post('membership_number', function ($arg) use ($m) {
-                    $m->membership_number = $arg;
-                });
+                    OrbitInput::post('membership_number', function ($arg) use ($m) {
+                        $m->membership_number = $arg;
+                    });
 
-                OrbitInput::post('join_date', function ($arg) use ($m) {
-                    $m->join_date = $arg . ' 00:00:00';
-                });
+                    OrbitInput::post('join_date', function ($arg) use ($m) {
+                        $m->join_date = $arg . ' 00:00:00';
+                    });
 
-                if ((empty($membershipNumberCode)) && (empty($join_date))) {
-                    $m->status = 'inactive';
-                } else {
-                    $m->status = 'active';
-                }
+                    if ((empty($membershipNumberCode)) && (empty($join_date))) {
+                        $m->status = 'inactive';
+                    } else {
+                        $m->status = 'active';
+                    }
 
-                $m->modified_by = $user->user_id;
-                $m->save();
-            } else {
-                // create
-                // create if only param membership_number or join_date is being sent
-                if ((trim($membershipNumberCode) !== '') || (trim($join_date) !== '')) {
-                    $m = new MembershipNumber();
-                    $m->membership_id = $membershipCard->membership_id;
-                    $m->user_id = $updateduser->user_id;
-                    $m->membership_number = $membershipNumberCode;
-                    $m->join_date = $join_date . ' 00:00:00';
-                    $m->status = 'active';
-                    $m->created_by = $user->user_id;
+                    $m->modified_by = $user->user_id;
                     $m->save();
+                } else {
+                    // create
+                    // create if only param membership_number or join_date is being sent
+                    if ((trim($membershipNumberCode) !== '') || (trim($join_date) !== '')) {
+                        $m = new MembershipNumber();
+                        $m->membership_id = $membershipCard->membership_id;
+                        $m->user_id = $updateduser->user_id;
+                        $m->membership_number = $membershipNumberCode;
+                        $m->join_date = $join_date . ' 00:00:00';
+                        $m->status = 'active';
+                        $m->created_by = $user->user_id;
+                        $m->save();
+                    }
                 }
             }
 
@@ -2850,16 +2863,17 @@ class UserAPIController extends ControllerAPI
             $updateduser->save();
             $userdetail->save();
 
-            $membershipNumbers = $updateduser->getMembershipNumbers($membershipCard);
-            if ($membershipNumbers->first()) {
-                $updateduser->membership_number = $membershipNumbers->first()->membership_number;
-                $updateduser->join_date  = $membershipNumbers->first()->join_date;
-            } else {
-                $updateduser->membership_number = null;
-                $updateduser->join_date  = '0000-00-00 00:00:00';
+            if ($check_membership) {
+                $membershipNumbers = $updateduser->getMembershipNumbers($membershipCard);
+                if ($membershipNumbers->first()) {
+                    $updateduser->membership_number = $membershipNumbers->first()->membership_number;
+                    $updateduser->join_date  = $membershipNumbers->first()->join_date;
+                } else {
+                    $updateduser->membership_number = null;
+                    $updateduser->join_date  = '0000-00-00 00:00:00';
+                }
+                $updateduser->membership_numbers = $membershipNumbers;
             }
-
-            $updateduser->membership_numbers = $membershipNumbers;
 
             // save user categories
             OrbitInput::post('no_category', function($no_category) use ($updateduser) {
@@ -3313,7 +3327,7 @@ class UserAPIController extends ControllerAPI
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = $e->getLine();
+            $this->response->data = null;
 
             // Rollback the changes
             $this->rollBack();
