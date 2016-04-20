@@ -1815,15 +1815,12 @@ class MallAPIController extends ControllerAPI
             });
 
             OrbitInput::post('languages', function($languages) use ($updatedmall) {
-                // // delete languages what ever the lang status
-                // $delete_language = MerchantLanguage::leftjoin('languages', 'languages.language_id', '=', 'merchant_languages.language_id')
-                //                                 // ->where('merchant_languages.status', '=', 'active')
-                //                                 ->where('merchant_languages.merchant_id', '=', $updatedmall->merchant_id)
-                //                                 ->where('languages.name', '!=', 'en')
-                //                                 ->whereNotIn('languages.name', $languages)
-                //                                 ->delete();
+                if (! in_array('en', $languages)) {
+                    $languages[] = 'en'; //don't delete english
+                }
 
                 // new languages
+                $all_mall_languages = [];
                 foreach ($languages as $language_name) {
                     $validator = Validator::make(
                         array(
@@ -1845,87 +1842,275 @@ class MallAPIController extends ControllerAPI
 
                     $language_data = App::make('valid_language');
 
-                    // check lang with status active
-                    $merchant_language = MerchantLanguage::where('merchant_id', '=', $updatedmall->merchant_id)
-                                                        ->where('status', '=', 'active')
+                    // check lang
+                    $merchant_languages = MerchantLanguage::excludeDeleted()
+                                                        ->where('merchant_id', '=', $updatedmall->merchant_id)
                                                         ->where('language_id', '=', $language_data->language_id)
-                                                        ->first();
+                                                        ->get();
 
-                    if (empty($merchant_language)) {
+                    if (count($merchant_languages) > 0) {
+                        foreach ($merchant_languages as $merchant_language) {
+                            $all_mall_languages[] = $merchant_language->merchant_language_id;
+                        }
+                    } else {
                         $newmerchant_language = new MerchantLanguage();
                         $newmerchant_language->merchant_id = $updatedmall->merchant_id;
                         $newmerchant_language->status = 'active';
                         $newmerchant_language->language_id = Language::where('name', '=', $language_name)->first()->language_id;
                         $newmerchant_language->save();
+
+                        $all_mall_languages[] = $newmerchant_language->merchant_language_id;
                     }
                 }
 
+                // find lang will be delete
+                $languages_will_be_delete = MerchantLanguage::excludeDeleted('merchant_languages')
+                                                ->leftjoin('languages', 'languages.language_id', '=', 'merchant_languages.language_id')
+                                                ->where('merchant_languages.merchant_id', '=', $updatedmall->merchant_id)
+                                                ->whereNotIn('merchant_languages.merchant_language_id', $all_mall_languages)
+                                                ->get();
 
+                if (count($languages_will_be_delete) > 0) {
+                    $del_lang = [];
+                    foreach ($languages_will_be_delete as $check_lang) {
+                        // news translation
+                        $news_translations = NewsTranslation::excludeDeleted('news_translations')
+                                                // ->excludeDeleted('news')
+                                                ->leftJoin('news', 'news.news_id', '=', 'news_translations.news_id')
+                                                ->where('news_translations.merchant_language_id', '=', $check_lang->merchant_language_id)
+                                                ->where('news.object_type', '=', 'news')
+                                                ->get();
+                        if (count($news_translations) > 0) {
+                            $errorMessage = 'Can not delete language ' . $check_lang->name_long . ' because used on news';
+                            OrbitShopAPI::throwInvalidArgument($errorMessage);
+                        }
+
+                        // promotion translation
+                        $promotion_translations = NewsTranslation::excludeDeleted('news_translations')
+                                                // ->excludeDeleted('news')
+                                                ->leftJoin('news', 'news.news_id', '=', 'news_translations.news_id')
+                                                ->where('news_translations.merchant_language_id', '=', $check_lang->merchant_language_id)
+                                                ->where('news.object_type', '=', 'promotion')
+                                                ->get();
+                        if (count($promotion_translations) > 0) {
+                            $errorMessage = 'Can not delete language ' . $check_lang->name_long . ' because used on promotion';
+                            OrbitShopAPI::throwInvalidArgument($errorMessage);
+                        }
+
+                        // coupon translation
+                        $coupon_translations = CouponTranslation::excludeDeleted()
+                                                ->where('merchant_language_id', '=', $check_lang->merchant_language_id)
+                                                ->get();
+                        if (count($coupon_translations) > 0) {
+                            $errorMessage = 'Can not delete language ' . $check_lang->name_long . ' because used on coupon';
+                            OrbitShopAPI::throwInvalidArgument($errorMessage);
+                        }
+
+                        // event translation
+                        $event_translations = EventTranslation::excludeDeleted()
+                                                ->where('merchant_language_id', '=', $check_lang->merchant_language_id)
+                                                ->get();
+                        if (count($event_translations) > 0) {
+                            $errorMessage = 'Can not delete language ' . $check_lang->name_long . ' because used on event';
+                            OrbitShopAPI::throwInvalidArgument($errorMessage);
+                        }
+
+                        // lucky_draw translation
+                        $lucky_draw = LuckyDrawTranslation::excludeDeleted()
+                                                ->where('merchant_language_id', '=', $check_lang->merchant_language_id)
+                                                ->get();
+                        if (count($lucky_draw) > 0) {
+                            $errorMessage = 'Can not delete language ' . $check_lang->name_long . ' because used on lucky draw';
+                            OrbitShopAPI::throwInvalidArgument($errorMessage);
+                        }
+
+                        // setting translation
+                        $setting_translation = SettingTranslation::excludeDeleted()
+                                                ->where('merchant_language_id', '=', $check_lang->merchant_language_id)
+                                                ->get();
+                        if (count($setting_translation) > 0) {
+                            $errorMessage = 'Can not delete language ' . $check_lang->name_long . ' because used on setting';
+                            OrbitShopAPI::throwInvalidArgument($errorMessage);
+                        }
+
+                        // widget translation
+                        $widget_translation = WidgetTranslation::excludeDeleted()
+                                                ->where('merchant_language_id', '=', $check_lang->merchant_language_id)
+                                                ->get();
+                        if (count($widget_translation) > 0) {
+                            $errorMessage = 'Can not delete language ' . $check_lang->name_long . ' because used on widget';
+                            OrbitShopAPI::throwInvalidArgument($errorMessage);
+                        }
+
+                        // category translation
+                        $category_translation = CategoryTranslation::excludeDeleted()
+                                                ->where('merchant_language_id', '=', $check_lang->merchant_language_id)
+                                                ->get();
+                        if (count($category_translation) > 0) {
+                            $errorMessage = 'Can not delete language ' . $check_lang->name_long . ' because used on category';
+                            OrbitShopAPI::throwInvalidArgument($errorMessage);
+                        }
+
+                        // lucky draw announcement translation
+                        $lucky_draw_announcement_translation = LuckyDrawAnnouncementTranslation::excludeDeleted()
+                                                ->where('merchant_language_id', '=', $check_lang->merchant_language_id)
+                                                ->get();
+                        if (count($lucky_draw_announcement_translation) > 0) {
+                            $errorMessage = 'Can not delete language ' . $check_lang->name_long . ' because used on lucky draw announcement';
+                            OrbitShopAPI::throwInvalidArgument($errorMessage);
+                        }
+
+                        // mall group translation
+                        $mall_group_translation = MerchantTranslation::excludeDeleted('merchant_translations')
+                                                // ->excludeDeleted('merchants')
+                                                ->leftJoin('merchants', 'merchants.merchant_id', '=', 'merchant_translations.merchant_id')
+                                                ->where('object_type', '=', 'mall_group')
+                                                ->where('merchant_language_id', '=', $check_lang->merchant_language_id)
+                                                ->get();
+                        if (count($mall_group_translation) > 0) {
+                            $errorMessage = 'Can not delete language ' . $check_lang->name_long . ' because used on mall group';
+                            OrbitShopAPI::throwInvalidArgument($errorMessage);
+                        }
+
+                        // mall translation
+                        $mall_translation = MerchantTranslation::excludeDeleted('merchant_translations')
+                                                // ->excludeDeleted('merchants')
+                                                ->leftJoin('merchants', 'merchants.merchant_id', '=', 'merchant_translations.merchant_id')
+                                                ->where('object_type', '=', 'mall')
+                                                ->where('merchant_language_id', '=', $check_lang->merchant_language_id)
+                                                ->get();
+                        if (count($mall_translation) > 0) {
+                            $errorMessage = 'Can not delete language ' . $check_lang->name_long . ' because used on mall';
+                            OrbitShopAPI::throwInvalidArgument($errorMessage);
+                        }
+
+                        // tenant translation
+                        $tenant_translation = MerchantTranslation::excludeDeleted('merchant_translations')
+                                                // ->excludeDeleted('merchants')
+                                                ->leftJoin('merchants', 'merchants.merchant_id', '=', 'merchant_translations.merchant_id')
+                                                ->where('object_type', '=', 'tenant')
+                                                ->where('merchant_language_id', '=', $check_lang->merchant_language_id)
+                                                ->get();
+                        if (count($tenant_translation) > 0) {
+                            $errorMessage = 'Can not delete language ' . $check_lang->name_long . ' because used on tenant';
+                            OrbitShopAPI::throwInvalidArgument($errorMessage);
+                        }
+
+                        // merchant translation
+                        $merchant_translation = MerchantTranslation::excludeDeleted('merchant_translations')
+                                                // ->excludeDeleted('merchants')
+                                                ->leftJoin('merchants', 'merchants.merchant_id', '=', 'merchant_translations.merchant_id')
+                                                ->where('object_type', '=', 'merchant')
+                                                ->where('merchant_language_id', '=', $check_lang->merchant_language_id)
+                                                ->get();
+                        if (count($merchant_translation) > 0) {
+                            $errorMessage = 'Can not delete language ' . $check_lang->name_long . ' because used on merchant';
+                            OrbitShopAPI::throwInvalidArgument($errorMessage);
+                        }
+
+                        // retailer translation
+                        $retailer_translation = MerchantTranslation::excludeDeleted('merchant_translations')
+                                                // ->excludeDeleted('merchants')
+                                                ->leftJoin('merchants', 'merchants.merchant_id', '=', 'merchant_translations.merchant_id')
+                                                ->where('object_type', '=', 'retailer')
+                                                ->where('merchant_language_id', '=', $check_lang->merchant_language_id)
+                                                ->get();
+                        if (count($retailer_translation) > 0) {
+                            $errorMessage = 'Can not delete language ' . $check_lang->name_long . ' because used on retailer';
+                            OrbitShopAPI::throwInvalidArgument($errorMessage);
+                        }
+                        //colect language will be delete
+                        $del_lang[] = $check_lang->merchant_language_id;
+                    }
+                    if (count($del_lang) > 0) {
+                        // delete languages
+                        $delete_languages = MerchantLanguage::excludeDeleted()
+                                                        ->where('merchant_id', '=', $updatedmall->merchant_id)
+                                                        ->whereIn('merchant_language_id', $del_lang)
+                                                        ->update(['status' => 'deleted']);
+
+                    }
+                }
             });
 
             OrbitInput::post('floors', function($floors) use ($updatedmall) {
                 // floor
                 // @author irianto <irianto@dominopos.com>
+                // create and update floor
                 if (count($floors) > 0) {
-                    $all_floor = [];
+                    $all_floor = []; // all floor except new floor
                     foreach ($floors as $floor_json) {
                         $floor = @json_decode($floor_json);
                         if (json_last_error() != JSON_ERROR_NONE) {
                             OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.format'));
                         }
 
-                        // floor
-                        $floor_on_mall = Object::where('merchant_id', '=', $updatedmall->merchant_id)
+                        // floor on mall
+                        $floors_on_mall = Object::where('merchant_id', '=', $updatedmall->merchant_id)
                                             ->where('object_type', '=', 'floor')
                                             ->where('object_name', '=', $floor->name)
-                                            ->first();
+                                            ->get();
 
-                        if (! empty($floor_on_mall)) {
-                            //update order
-                            if ($floor_on_mall->object_order !== $floor->order) {
-                                $floor_on_mall->object_order = $floor->order;
-                                $floor_on_mall->save();
+                        if (count($floors_on_mall) > 0) {
+                            foreach ($floors_on_mall as $floor_on_mall) {
+                                if (! empty($floor_on_mall)) {
+                                    // update order
+                                    if ($floor_on_mall->object_order !== $floor->order) {
+                                        $floor_on_mall->object_order = $floor->order;
+                                    }
+                                    // reactive deleted floor
+                                    if ($floor_on_mall->status === 'delete') {
+                                        $floor_on_mall->status = 'active';
+                                    }
+
+                                    $floor_on_mall->save();
+                                    $all_floor[] = $floor_on_mall->object_id;
+                                } else {
+                                    // save new floor
+                                    $newfloor = new Object();
+                                    $newfloor->merchant_id = $updatedmall->merchant_id;
+                                    $newfloor->object_name = $floor->name;
+                                    $newfloor->object_type = 'floor';
+                                    $newfloor->object_order = $floor->order;
+                                    $newfloor->status = 'active';
+                                    $newfloor->save();
+
+                                    $all_floor[] = $newfloor->object_id;
+                                }
                             }
-                        } else {
-                            // save new floor
-                            $newfloor = new Object();
-                            $newfloor->merchant_id = $updatedmall->merchant_id;
-                            $newfloor->object_name = $floor->name;
-                            $newfloor->object_type = 'floor';
-                            $newfloor->object_order = $floor->order;
-                            $newfloor->status = 'active';
-                            $newfloor->save();
                         }
-
-                        $all_floor[] = $floor->name;
                     }
 
-                    $floors_will_be_delete = Object::where('object_type', '=', 'floor')
+                    // find floor will be delete
+                    $floors_will_be_delete = Object::excludeDeleted()
+                                ->where('object_type', '=', 'floor')
                                 ->where('merchant_id', '=', $updatedmall->merchant_id)
-                                ->whereNotIn('object_name', $all_floor)
+                                ->whereNotIn('object_id', $all_floor)
                                 ->get();
 
-                    $del_floor = [];
-                    foreach ($floors_will_be_delete as $check_floor) {
-                        $floor_on_tenant = Tenant::where('status', '=','active')
-                                                ->where('parent_id', '=', $updatedmall->merchant_id)
-                                                ->where('floor', '=', $check_floor->object_name)
-                                                ->get();
+                    if (count($floors_will_be_delete) > 0) {
+                        $del_floor = [];
+                        foreach ($floors_will_be_delete as $check_floor) {
+                            $floor_on_tenant = Tenant::excludeDeleted()
+                                                    ->where('parent_id', '=', $updatedmall->merchant_id)
+                                                    ->where('floor', '=', $check_floor->object_name)
+                                                    ->get();
 
-                        if (count($floor_on_tenant) > 0) {
-                            $errorMessage = 'Can not delete floor ' . $check_floor->object_name . ' because used on tenant';
-                            OrbitShopAPI::throwInvalidArgument($errorMessage);
-                        } else {
-                            $del_floor[] = $check_floor->object_name;
+                            if (count($floor_on_tenant) > 0) {
+                                $errorMessage = 'Can not delete floor ' . $check_floor->object_name . ' because used on tenant';
+                                OrbitShopAPI::throwInvalidArgument($errorMessage);
+                            } else {
+                                $del_floor[] = $check_floor->object_name;
+                            }
                         }
-                    }
-                    if(count($del_floor) > 0) {
-                        // delete floor
-                        $delete_floor = Object::where('object_type', '=', 'floor')
-                                            // ->where('status', '=', 'active')
-                                            ->where('merchant_id', '=', $updatedmall->merchant_id)
-                                            ->whereIn('object_name', $del_floor)
-                                            ->delete();
+                        if (count($del_floor) > 0) {
+                            // delete floor
+                            $delete_floors = Object::excludeDeleted()
+                                                ->where('object_type', '=', 'floor')
+                                                ->where('merchant_id', '=', $updatedmall->merchant_id)
+                                                ->whereIn('object_name', $del_floor)
+                                                ->delete();
+                        }
                     }
                 }
             });
