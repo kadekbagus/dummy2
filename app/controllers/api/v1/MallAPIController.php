@@ -1814,6 +1814,64 @@ class MallAPIController extends ControllerAPI
                 }
             });
 
+            OrbitInput::post('floors', function($floors) use ($updatedmall) {
+                // floor
+                // @author irianto <irianto@dominopos.com>
+                if (count($floors) > 0) {
+                    $colect_floor = [];
+                    foreach ($floors as $floor_json) {
+                        $floor = @json_decode($floor_json);
+                        if (json_last_error() != JSON_ERROR_NONE) {
+                            OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.format'));
+                        }
+
+                        $exist_floor = Object::excludeDeleted()
+                                            ->where('object_type', 'floor')
+                                            ->where('merchant_id', $updatedmall->merchant_id)
+                                            ->where('object_name', $floor->name)
+                                            ->first();
+                        if (empty($exist_floor)) {
+                            $newfloor = new Object();
+                            $newfloor->merchant_id = $updatedmall->merchant_id;
+                            $newfloor->object_name = $floor->name;
+                            $newfloor->object_type = 'floor';
+                            $newfloor->object_order = $floor->order;
+                            $newfloor->status = 'active';
+                            $newfloor->save();
+                        }
+
+                        $colect_floor[] = $floor->name;
+                    }
+
+                    $will_del_floor = Object::excludeDeleted()
+                                    ->where('object_type', 'floor')
+                                    ->where('merchant_id', $updatedmall->merchant_id)
+                                    ->whereNotIn('object_name', $colect_floor)
+                                    ->get();
+
+                    //check link
+                    $del_floor = [];
+                    foreach ($will_del_floor as $check_floor) {
+                      $tenant = Tenant::excludeDeleted()
+                                    ->where('floor', $check_floor->object_name)
+                                    ->where('merchant_id', $updatedmall->merchant_id)
+                                    ->first();
+                      if (! empty($tenant)) {
+                          $errorMessage = 'Can not delete floor ' . $check_floor->object_name . ' because used on tenant';
+                          OrbitShopAPI::throwInvalidArgument($errorMessage);
+                      }
+                      $del_floor[] = $check_floor->object_name;
+                    }
+
+                    //delete floor
+                    $delete_floor = Object::excludeDeleted()
+                                    ->where('object_type', 'floor')
+                                    ->where('merchant_id', $updatedmall->merchant_id)
+                                    ->whereIn('object_name', $del_floor)
+                                    ->update(["status" => "deleted"]);
+                }
+            });
+
             // update user status
             OrbitInput::post('status', function($status) use ($updatedmall) {
                 $updateuser = User::with(array('role'))->excludeDeleted()->find($updatedmall->user_id);
