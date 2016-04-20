@@ -810,12 +810,9 @@ class IntermediateLoginController extends IntermediateBaseController
 
         try {
             $this->session->start(array(), 'no-session-creation');
-
-            if (Config::get('app.debug')) {
-                $response->data = $this->session->getSession();
-            } else {
-                $response->data = 'Not in debug mode.';
-            }
+            $response->data = $this->session->getSession();
+            unset($response->data->userAgent);
+            unset($response->data->ipAddress);
         } catch (Exception $e) {
             $response->code = $e->getCode();
             $response->status = 'error';
