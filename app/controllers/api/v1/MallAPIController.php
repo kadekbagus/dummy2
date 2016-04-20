@@ -580,7 +580,7 @@ class MallAPIController extends ControllerAPI
                     $newfloor->object_order = $floor->order;
                     $newfloor->status = 'active';
                     $newfloor->save();
-                };
+                }
             }
 
             // settings
@@ -1807,6 +1807,15 @@ class MallAPIController extends ControllerAPI
             });
 
             OrbitInput::post('languages', function($languages) use ($updatedmall, $merchant_id) {
+                // delete languages what ever the lang status
+                $delete_language = MerchantLanguage::leftjoin('languages', 'languages.language_id', '=', 'merchant_languages.language_id')
+                                                // ->where('merchant_languages.status', '=', 'active')
+                                                ->where('merchant_id', '=', $merchant_id)
+                                                ->where('languages.name', '!=', 'en')
+                                                ->whereNotIn('languages.name', $languages)
+                                                ->delete();
+
+                // new languages
                 foreach ($languages as $language_name) {
                     $validator = Validator::make(
                         array(
@@ -1826,10 +1835,9 @@ class MallAPIController extends ControllerAPI
                         OrbitShopAPI::throwInvalidArgument($errorMessage);
                     }
 
-                    $language_data = Language::where('name', '=', $language_name)
-                                            ->where('status', '=', 'active')
-                                            ->first();
+                    $language_data = App::make('valid_language');
 
+                    // check lang with status active
                     $merchant_language = MerchantLanguage::where('merchant_id', '=', $merchant_id)
                                                         ->where('status', '=', 'active')
                                                         ->where('language_id', '=', $language_data->language_id)
@@ -1842,11 +1850,51 @@ class MallAPIController extends ControllerAPI
                         $newmerchant_language->language_id = Language::where('name', '=', $language_name)->first()->language_id;
                         $newmerchant_language->save();
                     }
+                }
+            });
 
-                    // delete language except en language
-                    if ($language_name !== 'en') {
+            OrbitInput::post('floors', function($floors) use ($updatedmall, $merchant_id) {
+                // floor
+                // @author irianto <irianto@dominopos.com>
+                if (count($floors) > 0) {
+                    $floors_on_mall = [];
+                    foreach ($floors as $floor_json) {
+                        $floor = @json_decode($floor_json);
+                        if (json_last_error() != JSON_ERROR_NONE) {
+                            OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.format'));
+                        }
 
+                        // floor
+                        $floor_on_mall = Object::where('merchant_id', '=', $merchant_id)
+                                            ->where('object_type', '=', 'floor')
+                                            ->where('object_name', '=', $floor->name)
+                                            ->first();
+
+                        if (! empty($floor_on_mall)) {
+                            //update order
+                            if ($floor_on_mall->object_order !== $floor->order) {
+                                $floor_on_mall->object_order = $floor->order;
+                                $floor_on_mall->save();
+                            }
+                        } else {
+                            // save new floor
+                            $newfloor = new Object();
+                            $newfloor->merchant_id = $merchant_id;
+                            $newfloor->object_name = $floor->name;
+                            $newfloor->object_type = 'floor';
+                            $newfloor->object_order = $floor->order;
+                            $newfloor->status = 'active';
+                            $newfloor->save();
+                        }
+
+                        $floors_on_mall[] = $floor->name;
                     }
+
+                    // delete floor
+                    $delete_floor = Object::where('object_type', '=', 'floor')
+                                        // ->where('status', '=', 'active')
+                                        ->whereNotIn('object_name', $floors_on_mall)
+                                        ->delete();
                 }
             });
 
@@ -2668,6 +2716,7 @@ class MallAPIController extends ControllerAPI
                 return FALSE;
             }
 
+            App::instance('valid_language', $lang);
             return TRUE;
         });
     }
