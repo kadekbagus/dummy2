@@ -2533,45 +2533,26 @@ class TenantAPIController extends ControllerAPI
                 // check tenant if exists in coupons.
                 $coupon = CouponRetailer::leftjoin('promotions', 'promotions.promotion_id', '=', 'promotion_retailer.promotion_id')
                     ->leftjoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
-                    ->where(function ($q) use ($timezoneName, $prefix, $nowMall) {
-                        $q->whereNotIn('campaign_status.campaign_status_name', ['stopped', 'expired'])
-                            ->orWhereRaw("{$prefix}promotions.end_date >= {$this->quote($nowMall)}");
-                    })
+                    ->whereRaw("(CASE WHEN {$prefix}promotions.end_date < {$this->quote($nowMall)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) NOT IN ('stopped', 'expired')")
                     ->where('promotion_retailer.retailer_id', $tenant_id)
                     ->first();
 
                 if (! empty($coupon)) {
                     return FALSE;
                 }
-                // check tenant if exists in news.
+
+                // check tenant if exists in news & promotions.
                 $news = NewsMerchant::leftjoin('news', 'news.news_id', '=', 'news_merchant.news_id')
                     ->leftjoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
-                    ->where(function ($q) use ($timezoneName, $prefix, $nowMall){
-                        $q->whereNotIn('campaign_status.campaign_status_name', ['stopped', 'expired'])
-                            ->orWhereRaw("{$prefix}news.end_date >= {$this->quote($nowMall)}");
-                    })
-                    ->where('news_merchant.merchant_id',$tenant_id)
-                    ->where('news.object_type','news')
+                    ->whereRaw("(CASE WHEN {$prefix}news.end_date < {$this->quote($nowMall)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) NOT IN ('stopped', 'expired')")
+                    ->where('news_merchant.merchant_id', $tenant_id)
                     ->first();
 
-                if (! empty($news)) {
+
+                if (! empty($news) ) {
                     return FALSE;
                 }
 
-                // check tenant if exists in promotion.
-                $promotion = NewsMerchant::leftjoin('news', 'news.news_id', '=', 'news_merchant.news_id')
-                    ->leftjoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
-                    ->where(function ($q) use ($timezoneName, $prefix, $nowMall){
-                        $q->whereNotIn('campaign_status.campaign_status_name', ['stopped', 'expired'])
-                            ->orWhereRaw("{$prefix}news.end_date >= {$this->quote($nowMall)}");
-                    })
-                    ->where('news_merchant.merchant_id',$tenant_id)
-                    ->where('news.object_type','promotion')
-                    ->first();
-
-                if (! empty($promotion)) {
-                    return FALSE;
-                }
             }
 
             return TRUE;
