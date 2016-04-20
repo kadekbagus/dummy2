@@ -7455,6 +7455,11 @@ class MobileCIAPIController extends BaseCIController
                     $near_end_result->object_image = URL::asset('mobile-ci/images/default_coupon.png');
                 } elseif ($near_end_result->object_type === 'tenant') {
                     $near_end_result->object_url = $urlblock->blockedRoute('ci-tenant', ['id' => $near_end_result->object_id]);
+                    if (! is_null($near_end_result->object_image)) {
+                        $near_end_result->object_image = URL::asset($near_end_result->object_image);
+                    } else {
+                        $near_end_result->object_image = URL::asset('mobile-ci/images/default_tenants_directory.png');
+                    }
                 } elseif ($near_end_result->object_type === 'lucky_draw') {
                     $near_end_result->object_url = $urlblock->blockedRoute('ci-luckydraw', ['id' => $near_end_result->object_id]);
                     $near_end_result->object_image = URL::asset('mobile-ci/images/default_lucky_number.png');
@@ -7553,11 +7558,6 @@ class MobileCIAPIController extends BaseCIController
                             //if field translation empty or null, value of field back to english (default)
                             if (isset($objectTranslation->description) && $objectTranslation->description !== '') {
                                 $near_end_result->object_description = $objectTranslation->description;
-                            }
-                            if (! is_null($near_end_result->object_image)) {
-                                $near_end_result->object_image = URL::asset($near_end_result->object_image);
-                            } else {
-                                $near_end_result->object_image = URL::asset('mobile-ci/images/default_tenants_directory.png');
                             }
                         } elseif ($near_end_result->object_type === 'lucky_draw') {
                             //if field translation empty or null, value of field back to english (default)
