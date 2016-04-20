@@ -112,8 +112,10 @@
                                                         @endif
                                                     </div>
                                                 </div>
-                                                @if(! empty($tenant->facebook_like_url))
-                                                <div class="fb-like" data-href="{{{$tenant->facebook_like_url}}}" data-layout="button_count" data-action="like" data-show-faces="false" data-share="false"></div>
+                                                @if ($urlblock->isLoggedIn())
+                                                    @if(! empty($tenant->facebook_like_url))
+                                                    <div class="fb-like" data-href="{{{$tenant->facebook_like_url}}}" data-layout="button_count" data-action="like" data-show-faces="false" data-share="false"></div>
+                                                    @endif
                                                 @endif
                                             </header>
                                             <header class="list-item-badges">
