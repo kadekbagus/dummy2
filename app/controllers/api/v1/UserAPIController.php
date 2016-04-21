@@ -2353,12 +2353,8 @@ class UserAPIController extends ControllerAPI
             // create membership number
             // create if only param membership_number or join_date is being sent
             $membershipCard = App::make('orbit.empty.mall_have_membership_card');
-            $check_membership = false;
             // check membership
-            if (is_object($membershipCard)) {
-                $check_membership = true;
-            }
-            if ($check_membership) {
+            if (count($membershipCard) > 0) {
                 if ((trim($membershipNumberCode) !== '') || (trim($join_date) !== '')) {
                     $m = new MembershipNumber();
                     $m->membership_id = $membershipCard->membership_id;
@@ -2675,6 +2671,7 @@ class UserAPIController extends ControllerAPI
                 ),
                 array(
                     'email_exists_but_me' => Lang::get('validation.orbit.email.exists'),
+                    'membership_number_exists_but_me' => 'Membership number has already been exists.',
                     'alpha_num' => 'The membership number must letter and number.',
                 )
             );
@@ -2718,13 +2715,8 @@ class UserAPIController extends ControllerAPI
             $userdetail = $updateduser->userdetail;
 
             $membershipCard = App::make('orbit.empty.mall_have_membership_card');
-            $check_membership = false;
             // create membership if not exist
-            if (is_object($membershipCard)) {
-                $check_membership = true;
-            }
-
-            if ($check_membership) {
+            if (count($membershipCard) > 0) {
                 $membershipNumbers = $updateduser->getMembershipNumbers($membershipCard);
             }
 
@@ -2817,7 +2809,7 @@ class UserAPIController extends ControllerAPI
             /**
              * create/update membership number
              */
-            if ($check_membership) {
+            if (count($membershipCard) > 0) {
                 if ($membershipNumbers->first()) {
                     // update
                     $m = $membershipNumbers->first();
@@ -2859,7 +2851,7 @@ class UserAPIController extends ControllerAPI
             $updateduser->save();
             $userdetail->save();
 
-            if ($check_membership) {
+            if (count($membershipCard) > 0) {
                 $membershipNumbers = $updateduser->getMembershipNumbers($membershipCard);
                 if ($membershipNumbers->first()) {
                     $updateduser->membership_number = $membershipNumbers->first()->membership_number;
@@ -3561,34 +3553,45 @@ class UserAPIController extends ControllerAPI
 
             $user = App::make('orbit.empty.user');
 
-            // currently, mall have one membership card
-            $membershipCard = App::make('orbit.empty.mall_have_membership_card');
+            $setting  = Setting::active()
+                              ->where('object_type', 'merchant')
+                              ->where('object_id', $mall->merchant_id)
+                              ->where('setting_name', 'enable_membership_card')
+                              ->first();
 
-            // currently, user have one membership number based on the mall membership card
-            $membershipNumbers = $user->getMembershipNumbers($membershipCard);
+            if (empty($setting)) {
+                return FALSE;
+            }
 
-            App::instance('membership_number_exists_but_me', $membershipNumbers);
+            if ($setting->setting_value === 'true') {
+                // currently, mall have one membership card
+                $membershipCard = App::make('orbit.empty.mall_have_membership_card');
 
-            if (! $check) {
-                $user = User::excludeDeleted('users')
-                            ->Consumers()
-                            ->join('membership_numbers', 'membership_numbers.user_id', '=', 'users.user_id')
-                            ->join('memberships', 'membership_numbers.membership_id', '=', 'memberships.membership_id')
-                            ->where('memberships.status', '!=', 'deleted')
-                            ->where('memberships.merchant_id', $mall->merchant_id)
-                            ->where('membership_numbers.status', '!=', 'deleted')
-                            ->where('membership_numbers.membership_number', $value);
+                // currently, user have one membership number based on the mall membership card
+                $membershipNumbers = $user->getMembershipNumbers($membershipCard);
 
-                // if user have membership number then exclude the number
-                if ($membershipNumbers->first()) {
-                    $user->where('membership_numbers.membership_number_id', '!=', $membershipNumbers->first()->membership_number_id);
+                App::instance('membership_number_exists_but_me', $membershipNumbers);
+
+                if (! $check) {
+                    $user = User::excludeDeleted('users')
+                                ->Consumers()
+                                ->join('membership_numbers', 'membership_numbers.user_id', '=', 'users.user_id')
+                                ->join('memberships', 'membership_numbers.membership_id', '=', 'memberships.membership_id')
+                                ->where('memberships.status', '!=', 'deleted')
+                                ->where('memberships.merchant_id', $mall->merchant_id)
+                                ->where('membership_numbers.status', '!=', 'deleted')
+                                ->where('membership_numbers.membership_number', $value);
+
+                    // if user have membership number then exclude the number
+                    if ($membershipNumbers->first()) {
+                        $user->where('membership_numbers.membership_number_id', '!=', $membershipNumbers->first()->membership_number_id);
+                    }
+
+                    if ($user->first()) {
+                        return FALSE;
+                    }
+
                 }
-
-                if ($user->first()) {
-                    $errorMessage = 'Membership number has already been exists.';
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-                }
-
             }
 
             return TRUE;

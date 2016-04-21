@@ -59,10 +59,12 @@
                 <h4><strong>{{{ Lang::get('mobileci.coupon_detail.validity_label') }}}</strong></h4>
                 <p>{{{ date('d M Y', strtotime($coupon->begin_date)) }}} - {{{ date('d M Y', strtotime($coupon->end_date)) }}}</p>
             </div>
-            @if(! empty($coupon->facebook_share_url))
-            <div class="col-xs-12">
-                <div class="fb-share-button" data-href="{{{$coupon->facebook_share_url}}}" data-layout="button_count"></div>
-            </div>
+            @if ($urlblock->isLoggedIn())
+                @if(! empty($coupon->facebook_share_url))
+                <div class="col-xs-12">
+                    <div class="fb-share-button" data-href="{{{$coupon->facebook_share_url}}}" data-layout="button_count"></div>
+                </div>
+                @endif
             @endif
         </div>
     </div>

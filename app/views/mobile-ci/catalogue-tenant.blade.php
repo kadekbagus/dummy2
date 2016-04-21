@@ -99,7 +99,7 @@
                                             </header>
                                             <header class="list-item-subtitle">
                                                 <div>
-                                                    <i class="fa fa-map-marker" style="padding-left: 5px;padding-right: 8px;"></i> 
+                                                    <i class="fa fa-map-marker" style="padding-left: 5px;padding-right: 8px;"></i>
                                                     {{{ !empty($tenant->floor) ? ' ' . $tenant->floor : '' }}}{{{ !empty($tenant->unit) ? ' - ' . $tenant->unit : '' }}}
                                                 </div>
                                                 <div>
@@ -112,8 +112,10 @@
                                                         @endif
                                                     </div>
                                                 </div>
-                                                @if(! empty($tenant->facebook_like_url))
-                                                <div class="fb-like" data-href="{{{$tenant->facebook_like_url}}}" data-layout="button_count" data-action="like" data-show-faces="false" data-share="false"></div>
+                                                @if ($urlblock->isLoggedIn())
+                                                    @if(! empty($tenant->facebook_like_url))
+                                                    <div class="fb-like" data-href="{{{$tenant->facebook_like_url}}}" data-layout="button_count" data-action="like" data-show-faces="false" data-share="false"></div>
+                                                    @endif
                                                 @endif
                                             </header>
                                             <header class="list-item-badges">
@@ -281,7 +283,7 @@
             window.location.replace(path);
         });
 
-        var take = {{Config::get('orbit.pagination.per_page', 25)}}, 
+        var take = {{Config::get('orbit.pagination.per_page', 25)}},
             skip = {{Config::get('orbit.pagination.per_page', 25)}};
 
         var keyword = '{{{Input::get('keyword', '')}}}';
@@ -294,7 +296,7 @@
             btn.attr('disabled', 'disabled');
             btn.html('<i class="fa fa-circle-o-notch fa-spin"></i>');
             $.ajax({
-                url: apiPath + 'tenant/load-more',
+                url: '{{ url("app/v1/tenant/load-more") }}',
                 method: 'GET',
                 data: {
                     take: take,
