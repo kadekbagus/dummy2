@@ -41,7 +41,7 @@
     @if ($urlblock->isLoggedIn())
         @if(! empty($promotion->facebook_share_url))
         <div class="col-xs-12">
-            <div class="fb-share-button" data-href="{{$promotion->facebook_share_url}}" data-layout="button_count"></div>
+            <div class="fb-share-button" data-href="{{$promotion->facebook_share_url}}" data-layout="button" style="width:60px; overflow:hidden;"></div>
         </div>
         @endif
     @endif

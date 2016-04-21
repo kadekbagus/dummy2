@@ -375,7 +375,7 @@ class SocMedMobileCIAPIController extends BaseCIController
                 if ($defaultLanguage !== NULL) {
                     $contentDefaultLanguage = \LuckyDrawTranslation::excludeDeleted()
                         ->where('lucky_draw_id', $luckydraw->lucky_draw_id)
-                        ->where('merchant_language_id', $defaultLanguage->merchant_language_id)
+                        ->where('merchant_language_id', $defaultLanguage->language_id)
                         ->first();
 
                     // get default image
