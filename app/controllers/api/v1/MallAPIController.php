@@ -1961,7 +1961,6 @@ class MallAPIController extends ControllerAPI
                         }
                     }
 
-                    print_r($del_category); die();
                     // delete not used category on delete list
                     $delete_categories = Category::excludeDeleted()
                                                 ->where('merchant_id', $updatedmall->merchant_id)
