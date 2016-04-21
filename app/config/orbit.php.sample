@@ -2904,4 +2904,8 @@ return array(
         'distance' => 10,
     ),
 
+    'error_message' => array(
+        'e500' => '<a href=http://gotomalls.com>gotomalls.com</a> is improving your user experience. Come back later.'
+    ),
+
 );
