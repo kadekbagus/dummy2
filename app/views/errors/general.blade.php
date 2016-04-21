@@ -22,7 +22,7 @@
             .sf-reset strong { font-weight:bold; }
             .sf-reset a { color:#6c6159; }
             .sf-reset a img { border:none; }
-            .sf-reset a:hover { text-decoration:underline; }
+            .sf-reset a:hover {  }
             .sf-reset em { font-style:italic; }
             .sf-reset h1, .sf-reset h2 { font: 20px Georgia, "Times New Roman", Times, serif }
             .sf-reset h2 span { background-color: #fff; color: #333; padding: 6px; float: left; margin-right: 10px; }
@@ -52,7 +52,7 @@
                 word-wrap: break-word;
             }
             .sf-reset li a { background:none; color:#868686; text-decoration:none; }
-            .sf-reset li a:hover { background:none; color:#313131; text-decoration:underline; }
+            .sf-reset li a:hover { background:none; color:#313131;  }
             .sf-reset ol { padding: 10px 0; }
             .sf-reset h1 { background-color:#FFFFFF; padding: 15px 28px; margin-bottom: 20px;
                 -webkit-border-radius: 10px;
@@ -64,7 +64,7 @@
     </head>
     <body>
                     <div id="sf-resetcontent" class="sf-reset">
-                <h1><a href='http://gotomalls.com'>gotomalls.com</a> is improving your user experience. Come back later.</h1>
+                <h1>{{ Config::get('orbit.error_message.e500', "<a href='http://gotomalls.com'>gotomalls.com</a> is improving your user experience. Come back later.</h1>") }}</h1>
 
             </div>
     </body>
