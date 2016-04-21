@@ -79,7 +79,7 @@
                 @if(Input::get('keyword') === null)
                 <div class="row padded">
                     <div class="col-xs-12">
-                        <h4>{{ Lang::get('mobileci.greetings.how_to_get_coupons') }}</h4>
+                        <h4>{{ Lang::get('mobileci.greetings.no_coupons_listing') }}</h4>
                     </div>
                 </div>
                 @else
@@ -137,6 +137,6 @@
             });
             loadMoreX('my-coupon', listOfIDs);
         });
-    }); 
+    });
 </script>
 @stop

@@ -658,7 +658,7 @@
                                         </a>\
                                     </li>';
                             }
-                            if (data.data.grouped_records.tenants_counts > 3) {
+                            if (data.data.grouped_records.tenants.length > 3) {
                                 tenants += '<a href="'+ data.data.grouped_records.tenants_url +'" class="text-right" style="display:block;color:#fff;">{{ Lang::get('mobileci.search.show_more') }}</a>';
                             }
                             tenants += '</ul>';
@@ -680,7 +680,7 @@
                                         </a>\
                                     </li>';
                             }
-                            if (data.data.grouped_records.promotions_counts > 3) {
+                            if (data.data.grouped_records.promotions.length > 3) {
                                 promotions += '<a href="'+ data.data.grouped_records.promotions_url +'" class="text-right" style="display:block;color:#fff;">{{ Lang::get('mobileci.search.show_more') }}</a>';
                             }
                             promotions += '</ul>';
@@ -702,7 +702,7 @@
                                         </a>\
                                     </li>';
                             }
-                            if (data.data.grouped_records.news_counts > 3) {
+                            if (data.data.grouped_records.news.length > 3) {
                                 news += '<a href="'+ data.data.grouped_records.news_url +'" class="text-right" style="display:block;color:#fff;">{{ Lang::get('mobileci.search.show_more') }}</a>';
                             }
                             news += '</ul>';
@@ -724,7 +724,7 @@
                                         </a>\
                                     </li>';
                             }
-                            if (data.data.grouped_records.coupons_counts > 3) {
+                            if (data.data.grouped_records.coupons.length > 3) {
                                 coupons += '<a href="'+ data.data.grouped_records.coupons_url +'" class="text-right" style="display:block;color:#fff;">{{ Lang::get('mobileci.search.show_more') }}</a>';
                             }
                             coupons += '</ul>';
@@ -746,7 +746,7 @@
                                         </a>\
                                     </li>';
                             }
-                            if (data.data.grouped_records.lucky_draws_counts > 3) {
+                            if (data.data.grouped_records.lucky_draws.length > 3) {
                                 lucky_draws += '<a href="'+ data.data.grouped_records.lucky_draws_url +'" class="text-right" style="display:block;color:#fff;">{{ Lang::get('mobileci.search.show_more') }}</a>';
                             }
                             lucky_draws += '</ul>';

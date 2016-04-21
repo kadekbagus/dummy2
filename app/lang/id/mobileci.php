@@ -44,7 +44,7 @@ return array(
         'back_to_map_lower' => 'Kembali ke Peta',
     ),
 
-    'widgets'   => array(
+    'widgets' => array(
         'catalogue'             => 'KATALOG',
         'new_product'           => 'PRODUK TERBARU',
         'promotion'             => 'PROMOSI',
@@ -64,17 +64,21 @@ return array(
         'newss_single'          => 'Berita',
     ),
 
-    'greetings'         => array(
-        'welcome'                       => 'Selamat Datang',
-        'latest_news_coming_soon'       => 'Periksa berita terbaru kami yang akan datang.',
-        'new_promotions_coming_soon'    => 'Periksa promosi baru kami yang akan datang.',
-        'how_to_get_coupons'            => 'Silahkan hubungi customer service untuk mengetahui cara mendapatkan kupon.',
-        'find_our_exciting'             => 'Temukan penawaran menarik dan berita terbaru dari kami disini. Jangan lupa tukarkan struk belanja anda dan dapatkan kesempatan untuk memenangkan sebuah mobil !',
-        'latest_luckydraw_coming_soon'  => 'Periksa undian berhadiah kami yang akan datang.',
+    'greetings' => array(
+        'welcome'                      => 'Selamat Datang',
+        'latest_news_coming_soon'      => 'Periksa berita terbaru kami yang akan datang.',
+        'new_promotions_coming_soon'   => 'Periksa promosi baru kami yang akan datang.',
+        'how_to_get_coupons'           => 'Silahkan hubungi customer service untuk mengetahui cara mendapatkan kupon.',
+        'find_our_exciting'            => 'Temukan penawaran menarik dan berita terbaru dari kami disini. Jangan lupa tukarkan struk belanja anda dan dapatkan kesempatan untuk memenangkan sebuah mobil !',
+        'latest_luckydraw_coming_soon' => 'Periksa undian berhadiah kami yang akan datang.',
+        'no_coupons_listing'           => 'Maaf, tidak ada kupon pada saat di mal ini.',
+        'no_luckydraws_listing'        => 'Maaf, tidak ada lucky draw pada saat di mal ini.',
+        'no_news_listing'              => 'Maaf, tidak ada berita pada saat di mal ini.',
+        'no_promotions_listing'        => 'Maaf, tidak ada promosi pada saat di mal ini.',
     ),
 
     // modal specific lang
-    'modals'                     => array(
+    'modals' => array(
         'close'                  => 'Tutup',
         'ok'                     => 'OKE',
         'email_error'            => 'Harap isi email terlebih dahulu.',
@@ -96,7 +100,7 @@ return array(
         'message_no_new_product' => 'Maaf, tidak ada produk baru untuk saat ini.',
         'message_no_promotion'   => 'Maaf, tidak ada promosi untuk saat ini.',
         'message_no_lucky_draw'  => "Daftar sekarang dan dapatkan kesempatan untuk memenangkan Mazda setiap 3 bulan! Tukarkan struk belanja Anda minimum Rp. 100,000 pada VIP Lounge L2. Dapatkan merchandise gratis jika mendaftar saat ini juga! <br><br> • Jika stok masih ada <br> • Syarat & ketentuan berlaku.",
-        
+
         'message_delete_item'    => 'Apakah Anda yakin akan menghapus item ini dari keranjang belanja?',
         'message_delete_coupon'  => 'Apakah Anda yakin akan menghapus kupon ini dari keranjang belanja? Kupon yang Anda hapus masih dapat digunakan lain kali.',
         'message_transfer_cart'  => 'Tunjukkan smartphone Anda ke kasir untuk menyelesaikan checkout.',
@@ -197,7 +201,7 @@ return array(
         'month' => 'Bulan',
         'year' => 'Tahun',
         'policy_terms_message' => 'Dengan mengklik <strong>Daftar</strong> berarti Anda setuju dengan
-                        <a target="_blank" href="%s">kebijakan</a> dan 
+                        <a target="_blank" href="%s">kebijakan</a> dan
                         <a target="_blank" href="%s">syarat dan ketentuan</a>',
         'already_have_an_account' => 'Sudah punya akun?',
         'fields_are_mandatory' => 'Semua kolom wajib diisi',
@@ -453,6 +457,7 @@ return array(
         'view_lucky_draw_btn'       => 'Lihat Undian Berhadiah',
         'no_notif'                  => 'Anda tidak mempunyai pesan',
         'load_more_btn'             => 'Memuat lebih',
+        'view_more_btn'             => 'Melihat lebih',
         'view_coupons_btn'          => 'Lihat kupon anda',
         'congratulation'            => 'Selamat!',
         'you_won'                   => 'Anda mendapatkan hadiah dari ',
