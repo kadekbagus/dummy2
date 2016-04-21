@@ -1966,6 +1966,11 @@ class MallAPIController extends ControllerAPI
                                                 ->where('merchant_id', $updatedmall->merchant_id)
                                                 ->whereIn('category_id', $del_category)
                                                 ->update(["status" => "deleted"]);
+
+                    // delete category translation too
+                    $delete_categories_translation = CategoryTranslation::excludeDeleted()
+                                                ->whereIn('category_id', $del_category)
+                                                ->update(["status" => "deleted"]);
                 }
             });
 
