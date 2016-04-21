@@ -218,7 +218,7 @@ Route::filter('orbit-settings', function()
             if ($value->setting_name == 'start_button_label') {
                 // Get start button translation
                 $startButtonTranslation = $value->hasMany('SettingTranslation', 'setting_id', 'setting_id')
-                                    ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
+                                    ->where('merchant_language_id', '=', $alternateLanguage->language_id)
                                     ->whereHas('language', function($has) {
                                     $has->where('merchant_languages.status', 'active');
                                 })->get();

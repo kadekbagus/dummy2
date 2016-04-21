@@ -146,7 +146,6 @@ class UrlChecker
                 $guest = User::excludeDeleted()->where('user_email', $guest_email)->first();
                 $user = $guest;
             }
-
             // Start the orbit session
             $data = array(
                 'logged_in' => TRUE,
@@ -156,6 +155,7 @@ class UrlChecker
                 'fullname'  => $user->getFullName(),
             );
             $this->session->enableForceNew()->start($data);
+            // todo: add login_ok activity
 
             // Send the session id via HTTP header
             $sessionHeader = $this->session->getSessionConfig()->getConfig('session_origin.header.name');

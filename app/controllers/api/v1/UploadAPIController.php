@@ -8199,7 +8199,7 @@ class UploadAPIController extends ControllerAPI
 
         Validator::extend('orbit.empty.merchant_language_lucky_draw', function ($attribute, $value, $parameters) {
             $merchant_language = MerchantLanguage::excludeDeleted()
-                       ->where('merchant_language_id', $value)
+                       ->where('language_id', $value)
                        ->first();
 
             if (empty($merchant_language)) {
