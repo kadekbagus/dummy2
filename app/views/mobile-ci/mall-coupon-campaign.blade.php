@@ -62,7 +62,7 @@
             </div>
             @if(! empty($coupon->facebook_share_url))
             <div class="col-xs-12">
-                <div class="fb-share-button" data-href="{{{$coupon->facebook_share_url}}}" data-layout="button_count"></div>
+                <div class="fb-share-button" data-href="{{{$coupon->facebook_share_url}}}" data-layout="button" style="width:60px; overflow:hidden;"></div>
             </div>
             @endif
         </div>
