@@ -453,6 +453,7 @@ return array(
         'view_lucky_draw_btn'       => 'View Lucky Draws',
         'no_notif'                  => 'You have no message(s)',
         'load_more_btn'             => 'Load More',
+        'view_more_btn'             => 'View More',
         'view_coupons_btn'          => 'View Your Coupon(s)',
         'congratulation'            => 'Congratulations!',
         'you_won'                   => 'You have won a prize for ',
