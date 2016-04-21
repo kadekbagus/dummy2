@@ -8,6 +8,12 @@
  */
 class Language extends Eloquent
 {
+        /**
+     * Import trait ModelStatusTrait so we can use some common scope dealing
+     * with `status` field.
+     */
+    use ModelStatusTrait;
+
     protected $primaryKey = 'language_id';
 
     protected $table = 'languages';
