@@ -38,10 +38,12 @@
         <h4><strong>{{{ Lang::get('mobileci.promotion.validity') }}}</strong></h4>
         <p>{{{ date('d M Y', strtotime($promotion->begin_date)) }}} - {{{ date('d M Y', strtotime($promotion->end_date)) }}}</p>
     </div>
-    @if(! empty($promotion->facebook_share_url))
-    <div class="col-xs-12">
-        <div class="fb-share-button" data-href="{{$promotion->facebook_share_url}}" data-layout="button_count"></div>
-    </div>
+    @if ($urlblock->isLoggedIn())
+        @if(! empty($promotion->facebook_share_url))
+        <div class="col-xs-12">
+            <div class="fb-share-button" data-href="{{$promotion->facebook_share_url}}" data-layout="button_count"></div>
+        </div>
+        @endif
     @endif
 </div>
 <div class="row vertically-spaced">

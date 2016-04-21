@@ -1097,7 +1097,7 @@ class MobileCIAPIController extends BaseCIController
                     $urlblock = new UrlBlock;
                     $session = $urlblock->getUserSession();
                     $session->write('visited_location', [$retailer->merchant_id]);
-                    
+
                     // todo can we not do this directly
                     return Redirect::route($caller_url, $query);
                 } else {
@@ -1112,17 +1112,17 @@ class MobileCIAPIController extends BaseCIController
                     if ($response->code !== 0) {
                         throw new Exception($response->message, $response->code);
                     }
-                    
+
 
                     $loggedInUser = $this->doAutoLogin($response->data->user_email);
                     $this->linkGuestToUser($loggedInUser);
                     $this->loginStage2($loggedInUser, $retailer);
-                    
+
                     $expireTime = Config::get('orbit.session.session_origin.cookie.expire');
                     setcookie('orbit_email', $userEmail, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
                     setcookie('orbit_firstname', $firstName, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
                     setcookie('login_from', 'Google', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
-                    
+
                     $this->acquireUser($retailer, $loggedInUser, 'google');
 
                     return Redirect::route($caller_url, $query);
@@ -1274,12 +1274,12 @@ class MobileCIAPIController extends BaseCIController
 
             $loggedInUser = $this->doAutoLogin($response->data->user_email);
             $this->loginStage2($loggedInUser, $retailer);
-            
+
             $expireTime = Config::get('orbit.session.session_origin.cookie.expire');
             setcookie('orbit_email', $userEmail, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
             setcookie('orbit_firstname', $firstName, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
             setcookie('login_from', 'Facebook', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
-            
+
             $this->acquireUser($retailer, $loggedInUser, 'facebook');
 
             return Redirect::route($caller_url, $query);
@@ -3068,7 +3068,7 @@ class MobileCIAPIController extends BaseCIController
             // cek if any language active
             if (!empty($alternateLanguage) && !empty($tenant)) {
                     $merchant_translation = \MerchantTranslation::excludeDeleted()
-                        ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
+                        ->where('merchant_language_id', '=', $alternateLanguage->language_id)
                         ->where('merchant_id', $tenant->merchant_id)->first();
 
                 if (!empty($merchant_translation)) {
@@ -3220,7 +3220,7 @@ class MobileCIAPIController extends BaseCIController
                     $prefix = DB::getTablePrefix();
                     $q->leftJoin('category_translations', function ($join) use ($alternateLanguage) {
                         $join->on('categories.category_id', '=', 'category_translations.category_id');
-                        $join->where('category_translations.merchant_language_id', '=', $alternateLanguage->merchant_language_id);
+                        $join->where('category_translations.merchant_language_id', '=', $alternateLanguage->language_id);
                     });
                     $q->select('categories.*');
                     $q->addSelect([
@@ -3691,7 +3691,7 @@ class MobileCIAPIController extends BaseCIController
                 function ($keyword) use ($luckydraws, $retailer, $alternateLanguage) {
                     $luckydraws->leftJoin('lucky_draw_translations', function($join) use ($alternateLanguage){
                             $join->on('lucky_draws.lucky_draw_id', '=', 'lucky_draw_translations.lucky_draw_id');
-                            $join->where('lucky_draw_translations.merchant_language_id', '=', $alternateLanguage->merchant_language_id);
+                            $join->where('lucky_draw_translations.merchant_language_id', '=', $alternateLanguage->language_id);
                         })
                         ->where(function($q) use ($keyword) {
                             $q->where('lucky_draw_translations.lucky_draw_name', 'like', "%$keyword%")
@@ -3741,7 +3741,7 @@ class MobileCIAPIController extends BaseCIController
                 foreach ($listOfRec as $key => $val) {
 
                     $luckyDrawTranslation = \LuckyDrawTranslation::excludeDeleted()
-                        ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
+                        ->where('merchant_language_id', '=', $alternateLanguage->language_id)
                         ->where('lucky_draw_id', $val->lucky_draw_id)->first();
 
                     if (!empty($luckyDrawTranslation)) {
@@ -3764,7 +3764,7 @@ class MobileCIAPIController extends BaseCIController
                             $defaultLanguage = $this->getDefaultLanguage($retailer);
                             if ($defaultLanguage !== NULL) {
                                 $contentDefaultLanguage = \LuckyDrawTranslation::excludeDeleted()
-                                    ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
+                                    ->where('merchant_language_id', '=', $defaultLanguage->language_id)
                                     ->where('lucky_draw_id', $val->lucky_draw_id)->first();
 
                                 // get default image
@@ -3867,7 +3867,7 @@ class MobileCIAPIController extends BaseCIController
                 function ($keyword) use ($luckydraws, $retailer, $alternateLanguage) {
                     $luckydraws->leftJoin('lucky_draw_translations', function($join) use ($alternateLanguage){
                             $join->on('lucky_draws.lucky_draw_id', '=', 'lucky_draw_translations.lucky_draw_id');
-                            $join->where('lucky_draw_translations.merchant_language_id', '=', $alternateLanguage->merchant_language_id);
+                            $join->where('lucky_draw_translations.merchant_language_id', '=', $alternateLanguage->language_id);
                         })
                         ->where(function($q) use ($keyword) {
                             $q->where('lucky_draw_translations.lucky_draw_name', 'like', "%$keyword%")
@@ -3920,7 +3920,7 @@ class MobileCIAPIController extends BaseCIController
                 foreach ($listOfRec as $key => $val) {
 
                     $luckyDrawTranslation = \LuckyDrawTranslation::excludeDeleted()
-                        ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
+                        ->where('merchant_language_id', '=', $alternateLanguage->language_id)
                         ->where('lucky_draw_id', $val->lucky_draw_id)->first();
 
                     if (!empty($luckyDrawTranslation)) {
@@ -3943,7 +3943,7 @@ class MobileCIAPIController extends BaseCIController
                             $defaultLanguage = $this->getDefaultLanguage($retailer);
                             if ($defaultLanguage !== NULL) {
                                 $contentDefaultLanguage = \LuckyDrawTranslation::excludeDeleted()
-                                    ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
+                                    ->where('merchant_language_id', '=', $defaultLanguage->language_id)
                                     ->where('lucky_draw_id', $val->lucky_draw_id)->first();
 
                                 // get default image
@@ -4062,7 +4062,7 @@ class MobileCIAPIController extends BaseCIController
 
             if (!empty($alternateLanguage) && !empty($luckydraw)) {
                 $luckyDrawTranslation = \LuckyDrawTranslation::excludeDeleted()
-                    ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
+                    ->where('merchant_language_id', '=', $alternateLanguage->language_id)
                     ->where('lucky_draw_id', $luckydraw->lucky_draw_id)->first();
 
                 $luckydraw->lucky_draw_name_display = $luckydraw->lucky_draw_name;
@@ -4087,7 +4087,7 @@ class MobileCIAPIController extends BaseCIController
                         $defaultLanguage = $this->getDefaultLanguage($retailer);
                         if ($defaultLanguage !== NULL) {
                             $contentDefaultLanguage = \LuckyDrawTranslation::excludeDeleted()
-                                ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
+                                ->where('merchant_language_id', '=', $defaultLanguage->language_id)
                                 ->where('lucky_draw_id', $luckydraw->lucky_draw_id)->first();
 
                             // get default image
@@ -4274,7 +4274,7 @@ class MobileCIAPIController extends BaseCIController
 
             if (!empty($alternateLanguage) && !empty($luckydraw)) {
                 $luckyDrawTranslation = \LuckyDrawTranslation::excludeDeleted()
-                    ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
+                    ->where('merchant_language_id', '=', $alternateLanguage->language_id)
                     ->where('lucky_draw_id', $luckydraw->lucky_draw_id)->first();
 
                 $luckydraw->lucky_draw_name_display = $luckydraw->lucky_draw_name;
@@ -4299,7 +4299,7 @@ class MobileCIAPIController extends BaseCIController
                         $defaultLanguage = $this->getDefaultLanguage($retailer);
                         if ($defaultLanguage !== NULL) {
                             $contentDefaultLanguage = \LuckyDrawTranslation::excludeDeleted()
-                                ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
+                                ->where('merchant_language_id', '=', $defaultLanguage->language_id)
                                 ->where('lucky_draw_id', $luckydraw->lucky_draw_id)->first();
 
                             // get default image
@@ -4317,7 +4317,7 @@ class MobileCIAPIController extends BaseCIController
 
             if (! empty($alternateLanguage) && isset($luckydraw->announcements[0])) {
                 $luckyDrawAnnouncementTranslation = \LuckyDrawAnnouncementTranslation::excludeDeleted()
-                    ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
+                    ->where('merchant_language_id', '=', $alternateLanguage->language_id)
                     ->where('lucky_draw_announcement_id', $luckydraw->announcements[0]->lucky_draw_announcement_id)
                     ->first();
 
@@ -4341,7 +4341,7 @@ class MobileCIAPIController extends BaseCIController
                         $defaultLanguage = $this->getDefaultLanguage($retailer);
                         if ($defaultLanguage !== NULL) {
                             $contentDefaultLanguage = \LuckyDrawAnnouncementTranslation::excludeDeleted()
-                                ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
+                                ->where('merchant_language_id', '=', $defaultLanguage->language_id)
                                 ->where('lucky_draw_announcement_id', $luckydraw->announcements[0]->lucky_draw_announcement_id)
                                 ->first();
 
@@ -4491,10 +4491,10 @@ class MobileCIAPIController extends BaseCIController
             $coupons = Coupon::selectRaw("*, {$prefix}promotions.promotion_id AS promotion_id,
                     {$prefix}promotions.description AS description,
                     {$prefix}promotions.long_description AS long_description,
-                    {$prefix}promotions.image AS promo_image, 
+                    {$prefix}promotions.image AS promo_image,
                     (
-                        SELECT COUNT({$prefix}issued_coupons.issued_coupon_id) 
-                        from {$prefix}issued_coupons 
+                        SELECT COUNT({$prefix}issued_coupons.issued_coupon_id)
+                        from {$prefix}issued_coupons
                         where user_id = '{$user_id}'
                         AND {$prefix}issued_coupons.status = 'active'
                         AND {$prefix}issued_coupons.promotion_id = {$prefix}promotions.promotion_id
@@ -4987,9 +4987,9 @@ class MobileCIAPIController extends BaseCIController
             $userGender = 'U'; // default is Unknown
             if ($user->userDetail->gender !== '' && $user->userDetail->gender !== null) {
                 $userGender =  $user->userDetail->gender;
-            } 
+            }
 
-            $mallid = $retailer->merchant_id;                           
+            $mallid = $retailer->merchant_id;
 
             $coupons = Coupon::with('couponRule')
                 ->select('promotions.*', 'promotions.description as description')
@@ -5260,7 +5260,7 @@ class MobileCIAPIController extends BaseCIController
 
             if (! empty($alternateLanguage)) {
                 $couponTranslation = \CouponTranslation::excludeDeleted()
-                    ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
+                    ->where('merchant_language_id', '=', $alternateLanguage->language_id)
                     ->where('promotion_id', $coupons->promotion_id)->first();
 
                 if (! empty($couponTranslation)) {
@@ -7361,7 +7361,7 @@ class MobileCIAPIController extends BaseCIController
                 ->selectRaw("{$prefix}lucky_draws.lucky_draw_id as object_id, {$prefix}lucky_draws.lucky_draw_name as object_name, {$prefix}lucky_draws.description as object_description, {$prefix}lucky_draws.image as object_image, 'lucky_draw' as object_type")
                 ->leftJoin('lucky_draw_translations', function($join) use ($alternateLanguage){
                     $join->on('lucky_draws.lucky_draw_id', '=', 'lucky_draw_translations.lucky_draw_id');
-                    $join->where('lucky_draw_translations.merchant_language_id', '=', $alternateLanguage->merchant_language_id);
+                    $join->where('lucky_draw_translations.merchant_language_id', '=', $alternateLanguage->language_id);
                 })
                 ->where('lucky_draws.status', 'active')
                 ->where('mall_id', $retailer->merchant_id)
@@ -7455,6 +7455,11 @@ class MobileCIAPIController extends BaseCIController
                     $near_end_result->object_image = URL::asset('mobile-ci/images/default_coupon.png');
                 } elseif ($near_end_result->object_type === 'tenant') {
                     $near_end_result->object_url = $urlblock->blockedRoute('ci-tenant', ['id' => $near_end_result->object_id]);
+                    if (! is_null($near_end_result->object_image)) {
+                        $near_end_result->object_image = URL::asset($near_end_result->object_image);
+                    } else {
+                        $near_end_result->object_image = URL::asset('mobile-ci/images/default_tenants_directory.png');
+                    }
                 } elseif ($near_end_result->object_type === 'lucky_draw') {
                     $near_end_result->object_url = $urlblock->blockedRoute('ci-luckydraw', ['id' => $near_end_result->object_id]);
                     $near_end_result->object_image = URL::asset('mobile-ci/images/default_lucky_number.png');
@@ -7475,7 +7480,7 @@ class MobileCIAPIController extends BaseCIController
                             ->where('merchant_id', $near_end_result->object_id)->first();
                     } elseif ($near_end_result->object_type === 'lucky_draw'){
                         $objectTranslation = \LuckyDrawTranslation::excludeDeleted()
-                            ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
+                            ->where('merchant_language_id', '=', $alternateLanguage->language_id)
                             ->where('lucky_draw_id', $near_end_result->object_id)->first();
                     }
 
@@ -7553,11 +7558,6 @@ class MobileCIAPIController extends BaseCIController
                             //if field translation empty or null, value of field back to english (default)
                             if (isset($objectTranslation->description) && $objectTranslation->description !== '') {
                                 $near_end_result->object_description = $objectTranslation->description;
-                            }
-                            if (! is_null($near_end_result->object_image)) {
-                                $near_end_result->object_image = URL::asset($near_end_result->object_image);
-                            } else {
-                                $near_end_result->object_image = URL::asset('mobile-ci/images/default_tenants_directory.png');
                             }
                         } elseif ($near_end_result->object_type === 'lucky_draw') {
                             //if field translation empty or null, value of field back to english (default)
@@ -8328,7 +8328,6 @@ class MobileCIAPIController extends BaseCIController
                 $user = $response->data;
                 $mall = Mall::active()->where('merchant_id', OrbitInput::get('retailer_id'))->first();
 
-                $this->acquireUser($mall, $user, 'form');
                 $this->setSignInActivity($user, 'form', $mall);
             }
 
@@ -8804,7 +8803,7 @@ class MobileCIAPIController extends BaseCIController
                 ->where('promotions.coupon_validity_in_date', '>=', $now)
                 ->where('issued_coupons.user_id', $user->user_id)
                 ->groupBy('promotions.promotion_id');
-                
+
             $couponData = $newCoupons->get();
 
             foreach ($couponData as $counter) {
@@ -8849,7 +8848,7 @@ class MobileCIAPIController extends BaseCIController
     /**
      * The purpose of this function is to by pass the new sign in process that use password
      * e.g: User came from Facebook / Google sign in
-     * 
+     *
      * @author Ahmad <ahmad@dominopos.com>
      * @param string $email User email
      * @return User $user (IF user exist; FALSE: user not exist)
@@ -8891,7 +8890,7 @@ class MobileCIAPIController extends BaseCIController
 
     /**
      * Link the guest user before sign up/sign in to the user after
-     * 
+     *
      * @author Ahmad <ahmad@dominopos.com>
      * @param User $user (User object from registration/sign in process)
      * @return \OrbitShop\API\v1\ResponseProvider
@@ -8971,7 +8970,7 @@ class MobileCIAPIController extends BaseCIController
             $this->setSignUpActivity($user, $signUpVia, $retailer);
         }
 
-        // if the user is viewing the mall for the 1st time in this session 
+        // if the user is viewing the mall for the 1st time in this session
         // then set also the sign in activity
         $urlblock = new UrlBlock;
         $session = $urlblock->getUserSession();
@@ -9138,7 +9137,7 @@ class MobileCIAPIController extends BaseCIController
             $user_detail->last_visit_shop_id = $retailer->merchant_id;
             $user_detail->last_visit_any_shop = Carbon::now($retailer->timezone->timezone_name);
             $user_detail->save();
-            
+
             // auto coupon issuance checkwill happen on each page after the login success
             Coupon::issueAutoCoupon($retailer, $user_obj, $urlblock->getUserSession());
 
