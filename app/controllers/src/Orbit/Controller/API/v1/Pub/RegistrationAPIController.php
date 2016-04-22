@@ -288,8 +288,8 @@ class RegistrationAPIController extends IntermediateBaseController
                 'last_name'  => 'required',
                 'gender'     => 'required|in:m,f',
                 'birth_date' => 'required|date_format:d-m-Y',
-                'password_confirmation' => 'required|min:5',
-                'password'  => 'min:5|confirmed',
+                'password_confirmation' => 'required|min:6',
+                'password'  => 'min:6|confirmed',
             ),
             array(
                 'birth_date.date_format' => Lang::get('validation.orbit.formaterror.date.dmy_date'),

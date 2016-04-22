@@ -101,19 +101,19 @@ Route::filter('fb-bot', function() {
     if (! $FBChecker->isFBCrawler()) {
         switch (Route::currentRouteName()) {
             case 'share-tenant':
-                $redirect_to = URL::route('ci-tenant', array('id' => Input::get('id')));
+                $redirect_to = URL::route('ci-tenant-detail', array('id' => Input::get('id')));
                 break;
             case 'share-promotion':
-                $redirect_to = URL::route('ci-mall-promotion', array('id' => Input::get('id')));
+                $redirect_to = URL::route('ci-promotion-detail', array('id' => Input::get('id')));
                 break;
             case 'share-news':
-                $redirect_to = URL::route('ci-mall-news-detail', array('id' => Input::get('id')));
+                $redirect_to = URL::route('ci-news-detail', array('id' => Input::get('id')));
                 break;
             case 'share-coupon':
-                $redirect_to = URL::route('ci-mall-coupon', array('id' => Input::get('id')));
+                $redirect_to = URL::route('ci-coupon-detail', array('id' => Input::get('id')));
                 break;
             case 'share-lucky-draw':
-                $redirect_to = URL::route('ci-luckydraw', array('id' => Input::get('id')));
+                $redirect_to = URL::route('ci-luckydraw-detail', array('id' => Input::get('id')));
                 break;
             case 'share-home':
                 $redirect_to = URL::route('ci-customer-home', array('id' => Input::get('id')));
