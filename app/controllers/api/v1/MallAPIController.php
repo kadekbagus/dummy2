@@ -2107,7 +2107,7 @@ class MallAPIController extends ControllerAPI
                     foreach ($will_del_floor as $check_floor) {
                       $tenant = Tenant::excludeDeleted()
                                     ->where('floor', $check_floor->object_name)
-                                    ->where('merchant_id', $updatedmall->merchant_id)
+                                    ->where('parent_id', $updatedmall->merchant_id)
                                     ->first();
                       if (! empty($tenant)) {
                           $errorMessage = Lang::get('validation.orbit.exists.link_floor', ['attribute' => $check_floor->object_name,
