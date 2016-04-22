@@ -468,6 +468,8 @@ class MallAPIController extends ControllerAPI
 
             $newmall->save();
 
+            $newmall->timezone = $timezone;
+
             // languages
             // @author irianto <irianto@dominopos.com>
             if (count($languages) > 0) {
