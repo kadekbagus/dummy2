@@ -51,7 +51,7 @@
     @if ($urlblock->isLoggedIn())
         @if(! empty($luckydraw->facebook_share_url))
         <div class="col-xs-12">
-            <div class="fb-share-button" data-href="{{{$luckydraw->facebook_share_url}}}" data-layout="button" style="width:60px; overflow:hidden;"></div>
+            <div class="fb-share-button" data-href="{{{$luckydraw->facebook_share_url}}}" data-layout="button"></div>
         </div>
         @endif
     @endif

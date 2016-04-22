@@ -2604,8 +2604,9 @@ class TenantAPIController extends ControllerAPI
 
         // Check the validity of URL
         Validator::extend('orbit.formaterror.url.web', function ($attribute, $value, $parameters) {
-            $url = $value;
-            $pattern = '@^([a-z0-9]+)([a-z0-9\-]+)(\.([a-z0-9]){2}){1}@';
+            $url = 'http://' . $value;
+            
+            $pattern = '@^((http:\/\/www\.)|(www\.)|(http:\/\/))[a-zA-Z0-9._-]+\.[a-zA-Z.]{2,5}$@';
 
             if (! preg_match($pattern, $url)) {
                 return FALSE;

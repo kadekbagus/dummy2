@@ -2122,6 +2122,7 @@ class MobileCIAPIController extends BaseCIController
             $sort_by = OrbitInput::get('sort_by');
             $keyword = trim(OrbitInput::get('keyword'));
             $category_id = trim(OrbitInput::get('cid'));
+            $floor_id = trim(OrbitInput::get('fid'));
             $floor = trim(OrbitInput::get('floor'));
 
             $pagetitle = Lang::get('mobileci.page_title.tenant_directory');
@@ -2679,11 +2680,18 @@ class MobileCIAPIController extends BaseCIController
                 }
             }
 
+            // Check searchmode from searching by category and floor
+            $searchMode = false;
+            if ($category_id != '' || $floor_id != '') {
+                $searchMode = true;
+            }
+
             $data = new stdclass();
             $data->status = 1;
             $data->total_records = $totalRec;
             $data->returned_records = count($listOfRec);
             $data->records = $listOfRec;
+            $data->search_mode = $searchMode;
 
             if (! empty(OrbitInput::get('promotion_id'))) {
                 $pagetitle = Lang::get('mobileci.page_title.promotions_tenants');
