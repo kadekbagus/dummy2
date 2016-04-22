@@ -3061,7 +3061,7 @@ class MobileCIAPIController extends BaseCIController
                 }
             }
             // set tenant facebook share url
-            $tenant->facebook_share_url = $this->getFBShareDummyPage('tenant', $tenant->merchant_id);
+            $tenant->facebook_share_url = $this->getFBShareDummyPage('tenant', $tenant->merchant_id, $alternateLanguage->language_id);
 
             $languages = $this->getListLanguages($retailer);
 
@@ -4058,7 +4058,7 @@ class MobileCIAPIController extends BaseCIController
             }
 
             // set facebook share url
-            $luckydraw->facebook_share_url = $this->getFBShareDummyPage('lucky-draw', $luckydraw->lucky_draw_id);
+            $luckydraw->facebook_share_url = $this->getFBShareDummyPage('lucky-draw', $luckydraw->lucky_draw_id, $alternateLanguage->language_id);
 
             if (!empty($alternateLanguage) && !empty($luckydraw)) {
                 $luckyDrawTranslation = \LuckyDrawTranslation::excludeDeleted()
@@ -5051,11 +5051,12 @@ class MobileCIAPIController extends BaseCIController
                 ->get();
 
             // set facebook share url
-            $coupons->facebook_share_url = $this->getFBShareDummyPage('coupon', $coupons->promotion_id);
 
             $coupon_id = $coupons->promotion_id;
 
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
+
+            $coupons->facebook_share_url = $this->getFBShareDummyPage('coupon', $coupons->promotion_id, $alternateLanguage->language_id);
 
             if (! empty($alternateLanguage)) {
                 $couponTranslation = \CouponTranslation::excludeDeleted()
@@ -5253,10 +5254,10 @@ class MobileCIAPIController extends BaseCIController
                 return View::make('mobile-ci.404', array('page_title'=>Lang::get('mobileci.page_title.not_found'), 'retailer'=>$retailer, 'languages' => $languages));
             }
 
-            // set facebook share url
-            $coupons->facebook_share_url = $this->getFBShareDummyPage('coupon', $coupons->promotion_id);
-
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
+
+            // set facebook share url
+            $coupons->facebook_share_url = $this->getFBShareDummyPage('coupon', $coupons->promotion_id, $alternateLanguage->language_id);
 
             if (! empty($alternateLanguage)) {
                 $couponTranslation = \CouponTranslation::excludeDeleted()
@@ -5885,7 +5886,7 @@ class MobileCIAPIController extends BaseCIController
             }
 
             // set facebook share url
-            $promotion->facebook_share_url = $this->getFBShareDummyPage('promotion', $promotion->news_id);
+            $promotion->facebook_share_url = $this->getFBShareDummyPage('promotion', $promotion->news_id, $alternateLanguage->language_id);
 
             // checking if all tenant linked to this promotion inactive or not
             // so that if all tenant inactive we can disable the 'see tenant' button on the view
@@ -6503,7 +6504,7 @@ class MobileCIAPIController extends BaseCIController
             }
 
             // set facebook share url
-            $news->facebook_share_url = $this->getFBShareDummyPage('news', $news->news_id);
+            $news->facebook_share_url = $this->getFBShareDummyPage('news', $news->news_id, $alternateLanguage->language_id);
 
             // checking if all tenant linked to this news inactive or not
             // so that if all tenant inactive we can disable the 'see tenant' button on the view
@@ -8547,26 +8548,26 @@ class MobileCIAPIController extends BaseCIController
     }
 
     // get the url for Facebook Share dummy page
-    protected function getFBShareDummyPage($type, $id) {
+    protected function getFBShareDummyPage($type, $id, $lang = null) {
         $oldRouteSessionConfigValue = Config::get('orbit.session.availability.query_string');
         Config::set('orbit.session.availability.query_string', false);
 
         $url = '';
         switch ($type) {
             case 'tenant':
-                $url = URL::route('share-tenant', ['id' => $id]);
+                $url = URL::route('share-tenant', ['id' => $id, 'lang' => $lang]);
                 break;
             case 'promotion':
-                $url = URL::route('share-promotion', ['id' => $id]);
+                $url = URL::route('share-promotion', ['id' => $id, 'lang' => $lang]);
                 break;
             case 'news':
-                $url = URL::route('share-news', ['id' => $id]);
+                $url = URL::route('share-news', ['id' => $id, 'lang' => $lang]);
                 break;
             case 'coupon':
-                $url = URL::route('share-coupon', ['id' => $id]);
+                $url = URL::route('share-coupon', ['id' => $id, 'lang' => $lang]);
                 break;
             case 'lucky-draw':
-                $url = URL::route('share-lucky-draw', ['id' => $id]);
+                $url = URL::route('share-lucky-draw', ['id' => $id, 'lang' => $lang]);
                 break;
             case 'home':
                 $url = URL::route('share-home');

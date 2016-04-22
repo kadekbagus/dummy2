@@ -214,10 +214,14 @@
 @parent
 {{ HTML::script('mobile-ci/scripts/particles.min.js') }}
 <script type="text/javascript">
-    @foreach($widgets as $i => $widget)
-    particlesJS.load('particles-js{{$i+1}}', '{{asset('mobile-ci/scripts/particlesjs-config.json')}}', function() {
+    $(document).ready(function(){
+        @foreach($widgets as $i => $widget)
+        if($('#particles-js{{$i+1}}').length) {
+            particlesJS.load('particles-js{{$i+1}}', '{{asset('mobile-ci/scripts/particlesjs-config.json')}}', function() {
 
+            });
+        }
+        @endforeach
     });
-    @endforeach
 </script>
 @stop
