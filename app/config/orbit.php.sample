@@ -4,7 +4,28 @@
  */
 return array(
     // route names that need authentication to be accessed
-    'blocked_routes' => [],
+    'blocked_routes' => [
+        // all route names
+        // 'ci-tenant-list',
+        // 'ci-tenant-detail',
+        // 'ci-news-list',
+        // 'ci-news-detail',
+        // 'ci-promotion-list',
+        // 'ci-promotion-detail',
+        // 'ci-coupon-list',
+        // 'ci-coupon-detail',
+        // 'ci-notification-list',
+        // 'ci-notification-detail',
+        // 'ci-my-account',
+        // 'ci-luckydraw-list',
+        // 'ci-luckydraw-detail',
+        // 'ci-luckydraw-announcement',
+        // 'ci-luckydrawnumber-download',
+        // these home urls should not be blocked, as some of the code use these as default redirection point
+        // 'ci-home', // -> /
+        // 'ci-customer-home', // -> /customer/home
+        // 'mobile-ci-home', // -> /customer
+    ],
 
     // cdn path
     'cdn' => array(

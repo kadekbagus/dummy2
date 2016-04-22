@@ -503,20 +503,22 @@
         ---------- {{-- End of Tour --}} */
         
         $('a.widget-link').click(function(event){
-          var link = $(this).attr('href');
-          var widgetdata = $(this).data('widget');
           event.preventDefault();
 
-          $.ajax({
-            url: '{{ route('click-widget-activity') }}',
-            data: {
-              widgetdata: widgetdata
-            },
-            method: 'POST'
-          }).always(function(){
-            window.location.assign(link);
-          });
-          return false; //for good measure
+          if ($(this).attr('href') !== '#') {
+              var link = $(this).attr('href');
+              var widgetdata = $(this).data('widget');
+              $.ajax({
+                url: '{{ route('click-widget-activity') }}',
+                data: {
+                  widgetdata: widgetdata
+                },
+                method: 'POST'
+              }).always(function(){
+                window.location.assign(link);
+              });
+              return false; //for good measure
+          }
         });
     });
 </script>

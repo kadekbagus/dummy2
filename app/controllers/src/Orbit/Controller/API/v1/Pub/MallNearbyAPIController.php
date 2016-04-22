@@ -60,12 +60,10 @@ class MallNearbyAPIController extends ControllerAPI
                     foreach ($mainKeyword as $key => $value) {
                         $q->orWhere(function($r) use ($value) {
                             $r->where('merchants.name', 'like', "%$value%")
-                                ->orWhere('merchants.description', 'like', "%$value%")
                                 ->orWhere('merchants.city', 'like', "%$value%");
                         });
                     }
                 });
-
             });
 
             // Filter by mall_id
