@@ -2088,6 +2088,7 @@ class MobileCIAPIController extends BaseCIController
             $sort_by = OrbitInput::get('sort_by');
             $keyword = trim(OrbitInput::get('keyword'));
             $category_id = trim(OrbitInput::get('cid'));
+            $floor_id = trim(OrbitInput::get('fid'));
             $floor = trim(OrbitInput::get('floor'));
 
             $pagetitle = Lang::get('mobileci.page_title.tenant_directory');
@@ -2647,7 +2648,7 @@ class MobileCIAPIController extends BaseCIController
 
             // Check searchmode from searching by category and floor
             $searchMode = false;
-            if ($category_id != '' || $floor != '') {
+            if ($category_id != '' || $floor_id != '') {
                 $searchMode = true;
             }
 
