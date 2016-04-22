@@ -90,15 +90,6 @@
                             </div>
                         @endif
 
-                        {{-- Showing info for there is no stores and search mode is false --}}
-                        @if(count($data->records) == 0 && $data->search_mode)
-                            <div class="row padded">
-                                <div class="col-xs-12">
-                                    <h4>{{ Lang::get('mobileci.greetings.no_stores_listing') }}</h4>
-                                </div>
-                            </div>
-                        @endif
-
                         @foreach($data->records as $tenant)
                             <div class="col-xs-12 col-sm-12" id="item-{{$tenant->merchant_id}}">
                                 <section class="list-item-single-tenant">
@@ -221,11 +212,22 @@
                 </div>
             </div>
             @endif
-            <div class="row padded">
-                <div class="col-xs-12">
-                    <h4>{{ Lang::get('mobileci.search.no_item') }}</h4>
+
+            @if($data->search_mode)
+                <div class="row padded">
+                    <div class="col-xs-12">
+                        <h4>{{ Lang::get('mobileci.search.no_item') }}</h4>
+                    </div>
                 </div>
-            </div>
+            @else
+                {{-- Showing info for there is no stores when search mode is false --}}
+                <div class="row padded">
+                    <div class="col-xs-12">
+                        <h4>{{ Lang::get('mobileci.greetings.no_stores_listing') }}</h4>
+                    </div>
+                </div>
+            @endif
+
         @endif
     @else
         <div class="row padded">
