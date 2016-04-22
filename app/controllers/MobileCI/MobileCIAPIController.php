@@ -2908,8 +2908,24 @@ class MobileCIAPIController extends BaseCIController
                 ->where('merchants.merchant_id', $product_id);
 
             $tenant->select('merchants.*');
-            $this->maybeJoinWithTranslationsTable($tenant, $alternateLanguage);
+            // $this->maybeJoinWithTranslationsTable($tenant, $alternateLanguage);
             $tenant = $tenant->first();
+
+            // Check translation for Merchant Translation
+            if (!empty($alternateLanguage) && count($tenant) > 0) {
+                $merchantTranslation = \MerchantTranslation::excludeDeleted()
+                    ->where('merchant_language_id', '=', $alternateLanguage->language_id)
+                    ->where('merchant_id', $tenant->merchant_id)->first();
+
+                if (count($merchantTranslation) > 0) {
+                    foreach (['description'] as $field) {
+                        //if field translation empty or null, value of field back to english (default)
+                        if (isset($merchantTranslation->{$field}) && $merchantTranslation->{$field} !== '') {
+                            $tenant->{$field} = $merchantTranslation->{$field};
+                        }
+                    }
+                }
+            }
 
             // News per tenant
             if (!empty($alternateLanguage) && !empty($tenant->newsProfiling)) {
