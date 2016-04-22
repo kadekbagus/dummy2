@@ -80,6 +80,30 @@ class SocMedMobileCIAPIController extends BaseCIController
             $data->image_url = NULL;
         }
 
+        OrbitInput::get('lang', function($lang) use($data, $tenant) {    
+            $merchant_translation = \MerchantTranslation::where('merchant_id', $tenant->merchant_id)
+                ->where('merchant_language_id', $lang)
+                ->first();
+
+            if (is_object($merchant_translation)) {
+                $data->description = $merchant_translation->description;
+            }
+        });
+
+        if (empty($data->description)) {
+            $defaultLanguage = $this->getDefaultLanguage($mall);
+            if ($defaultLanguage !== NULL) {
+                $contentDefaultLanguage = \MerchantTranslation::excludeDeleted()
+                    ->where('news_id', $promotion->news_id)
+                    ->where('merchant_language_id', $defaultLanguage->language_id)
+                    ->first();
+
+                if (is_object($contentDefaultLanguage)) {
+                    $data->description = $contentDefaultLanguage->description;
+                }
+            }
+        }
+
         return View::make('mobile-ci.templates.fb-sharer', compact('data'));
     }
 
@@ -131,6 +155,7 @@ class SocMedMobileCIAPIController extends BaseCIController
     public function getPromotionDetailView()
     {       
         $id = OrbitInput::get('id');
+        $lang = OrbitInput::get('lang');
         $mall = $this->getRetailerInfo();
 
         $promotion = News::with('media')
@@ -146,33 +171,48 @@ class SocMedMobileCIAPIController extends BaseCIController
         $data->mall = $mall;
 
         $promotionTranslation = \NewsTranslation::excludeDeleted()
-            ->where('news_id', $promotion->news_id)
-            ->first();
-
+            ->where('news_id', $promotion->news_id);
+        if ($lang !== null) {    
+            $promotionTranslation = $promotionTranslation->where('merchant_language_id', $lang);
+        }
+        $promotionTranslation = $promotionTranslation->first();
         if (! empty($promotionTranslation)) {
             $media = $promotionTranslation->find($promotionTranslation->news_translation_id)
                 ->media_orig()
                 ->first();
 
-            if (isset($media->path)) {
-                $promotion->image = $media->path;
-            } else {
-                // back to default image if in the content multilanguage not have image
-                // check the system language
-                $defaultLanguage = $this->getDefaultLanguage($mall);
-                if ($defaultLanguage !== NULL) {
-                    $contentDefaultLanguage = \NewsTranslation::excludeDeleted()
-                        ->where('news_id', $promotion->news_id)
-                        ->where('merchant_language_id', $defaultLanguage->language_id)
-                        ->first();
+            $data->title = $promotionTranslation->news_name;
+            $data->description = $promotionTranslation->description;
 
-                    // get default image
-                    $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->news_translation_id)
-                        ->media_orig()
-                        ->first();
+            $defaultLanguage = $this->getDefaultLanguage($mall);
+            if ($defaultLanguage !== NULL) {
+                $contentDefaultLanguage = \NewsTranslation::excludeDeleted()
+                    ->where('news_id', $promotion->news_id)
+                    ->where('merchant_language_id', $defaultLanguage->language_id)
+                    ->first();
 
-                    if (isset($mediaDefaultLanguage->path)) {
-                        $promotion->image = $mediaDefaultLanguage->path;
+                if (is_object($contentDefaultLanguage)) {
+                    if (empty($data->title)) {
+                        $data->title = $contentDefaultLanguage->news_name;
+                    }
+                    if (empty($data->title)) {
+                        $data->description = $contentDefaultLanguage->description;
+                    }
+                    if (isset($media->path)) {
+                        $promotion->image = $media->path;
+                    } else {
+                        // back to default image if in the content multilanguage not have image
+                        // check the system language
+                        if ($defaultLanguage !== NULL) {
+                            // get default image
+                            $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->news_translation_id)
+                                ->media_orig()
+                                ->first();
+
+                            if (isset($mediaDefaultLanguage->path)) {
+                                $promotion->image = $mediaDefaultLanguage->path;
+                            }
+                        }
                     }
                 }
             }
@@ -201,6 +241,7 @@ class SocMedMobileCIAPIController extends BaseCIController
     public function getNewsDetailView()
     {       
         $id = OrbitInput::get('id');
+        $lang = OrbitInput::get('lang');
         $mall = $this->getRetailerInfo();
 
         $promotion = News::with('media')
@@ -216,33 +257,49 @@ class SocMedMobileCIAPIController extends BaseCIController
         $data->mall = $mall;
 
         $promotionTranslation = \NewsTranslation::excludeDeleted()
-            ->where('news_id', $promotion->news_id)
-            ->first();
+            ->where('news_id', $promotion->news_id);
+        if ($lang !== null) {    
+            $promotionTranslation = $promotionTranslation->where('merchant_language_id', $lang);
+        }
+        $promotionTranslation = $promotionTranslation->first();
 
         if (! empty($promotionTranslation)) {
             $media = $promotionTranslation->find($promotionTranslation->news_translation_id)
                 ->media_orig()
                 ->first();
 
-            if (isset($media->path)) {
-                $promotion->image = $media->path;
-            } else {
-                // back to default image if in the content multilanguage not have image
-                // check the system language
-                $defaultLanguage = $this->getDefaultLanguage($mall);
-                if ($defaultLanguage !== NULL) {
-                    $contentDefaultLanguage = \NewsTranslation::excludeDeleted()
-                        ->where('news_id', $promotion->news_id)
-                        ->where('merchant_language_id', $defaultLanguage->language_id)
-                        ->first();
+            $data->title = $promotionTranslation->news_name;
+            $data->description = $promotionTranslation->description;
 
-                    // get default image
-                    $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->news_translation_id)
-                        ->media_orig()
-                        ->first();
+            $defaultLanguage = $this->getDefaultLanguage($mall);
+            if ($defaultLanguage !== NULL) {
+                $contentDefaultLanguage = \NewsTranslation::excludeDeleted()
+                    ->where('news_id', $promotion->news_id)
+                    ->where('merchant_language_id', $defaultLanguage->language_id)
+                    ->first();
 
-                    if (isset($mediaDefaultLanguage->path)) {
-                        $promotion->image = $mediaDefaultLanguage->path;
+                if (is_object($contentDefaultLanguage)) {
+                    if (empty($data->title)) {
+                        $data->title = $contentDefaultLanguage->news_name;
+                    }
+                    if (empty($data->title)) {
+                        $data->description = $contentDefaultLanguage->description;
+                    }
+                    if (isset($media->path)) {
+                        $promotion->image = $media->path;
+                    } else {
+                        // back to default image if in the content multilanguage not have image
+                        // check the system language
+                        if ($defaultLanguage !== NULL) {
+                            // get default image
+                            $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->news_translation_id)
+                                ->media_orig()
+                                ->first();
+
+                            if (isset($mediaDefaultLanguage->path)) {
+                                $promotion->image = $mediaDefaultLanguage->path;
+                            }
+                        }
                     }
                 }
             }
@@ -271,6 +328,7 @@ class SocMedMobileCIAPIController extends BaseCIController
     public function getCouponDetailView()
     {       
         $id = OrbitInput::get('id');
+        $lang = OrbitInput::get('lang');
         $mall = $this->getRetailerInfo();
 
         $coupon = Coupon::with('media')
@@ -285,33 +343,49 @@ class SocMedMobileCIAPIController extends BaseCIController
         $data->mall = $mall;
 
         $couponTranslation = \CouponTranslation::excludeDeleted()
-            ->where('promotion_id', $coupon->promotion_id)
-            ->first();
+            ->where('promotion_id', $coupon->promotion_id);
+        if ($lang !== null) {    
+            $couponTranslation = $couponTranslation->where('merchant_language_id', $lang);
+        }
+        $couponTranslation = $couponTranslation->first();
 
         if (! empty($couponTranslation)) {
             $media = $couponTranslation->find($couponTranslation->coupon_translation_id)
                 ->media_orig()
                 ->first();
 
-            if (isset($media->path)) {
-                $coupon->image = $media->path;
-            } else {
-                // back to default image if in the content multilanguage not have image
-                // check the system language
-                $defaultLanguage = $this->getDefaultLanguage($mall);
-                if ($defaultLanguage !== NULL) {
-                    $contentDefaultLanguage = \CouponTranslation::excludeDeleted()
-                        ->where('promotion_id', $coupon->promotion_id)
-                        ->where('merchant_language_id', $defaultLanguage->language_id)
-                        ->first();
+            $data->title = $couponTranslation->promotion_name;
+            $data->description = $couponTranslation->description;
 
-                    // get default image
-                    $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->coupon_translation_id)
-                        ->media_orig()
-                        ->first();
+            $defaultLanguage = $this->getDefaultLanguage($mall);
+            if ($defaultLanguage !== NULL) {
+                $contentDefaultLanguage = \CouponTranslation::excludeDeleted()
+                    ->where('promotion_id', $coupon->promotion_id)
+                    ->where('merchant_language_id', $defaultLanguage->language_id)
+                    ->first();
 
-                    if (isset($mediaDefaultLanguage->path)) {
-                        $coupon->image = $mediaDefaultLanguage->path;
+                if (is_object($contentDefaultLanguage)) {
+                    if (empty($data->title)) {
+                        $data->title = $contentDefaultLanguage->promotion_name;
+                    }
+                    if (empty($data->title)) {
+                        $data->description = $contentDefaultLanguage->description;
+                    }
+                    if (isset($media->path)) {
+                        $coupon->image = $media->path;
+                    } else {
+                        // back to default image if in the content multilanguage not have image
+                        // check the system language
+                        if ($defaultLanguage !== NULL) {
+                            // get default image
+                            $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->coupon_translation_id)
+                                ->media_orig()
+                                ->first();
+
+                            if (isset($mediaDefaultLanguage->path)) {
+                                $coupon->image = $mediaDefaultLanguage->path;
+                            }
+                        }
                     }
                 }
             }
@@ -344,6 +418,7 @@ class SocMedMobileCIAPIController extends BaseCIController
     public function getLuckyDrawDetailView()
     {       
         $id = OrbitInput::get('id');
+        $lang = OrbitInput::get('lang');
         $mall = $this->getRetailerInfo();
 
         $luckydraw = LuckyDraw::with('media')
@@ -358,33 +433,49 @@ class SocMedMobileCIAPIController extends BaseCIController
         $data->mall = $mall;
 
         $luckyDrawTranslation = \LuckyDrawTranslation::excludeDeleted()
-            ->where('lucky_draw_id', $luckydraw->lucky_draw_id)
-            ->first();
+            ->where('lucky_draw_id', $luckydraw->lucky_draw_id);
+        if ($lang !== null) {    
+            $luckyDrawTranslation = $luckyDrawTranslation->where('merchant_language_id', $lang);
+        }
+        $luckyDrawTranslation = $luckyDrawTranslation->first();
 
         if (! empty($luckyDrawTranslation)) {
             $media = $luckyDrawTranslation->find($luckyDrawTranslation->lucky_draw_translation_id)
                 ->media_orig()
                 ->first();
+            
+            $data->title = $luckyDrawTranslation->lucky_draw_name;
+            $data->description = $luckyDrawTranslation->description;
 
-            if (isset($media->path)) {
-                $luckydraw->image = $media->path;
-            } else {
-                // back to default image if in the content multilanguage not have image
-                // check the system language
-                $defaultLanguage = $this->getDefaultLanguage($mall);
-                if ($defaultLanguage !== NULL) {
-                    $contentDefaultLanguage = \LuckyDrawTranslation::excludeDeleted()
-                        ->where('lucky_draw_id', $luckydraw->lucky_draw_id)
-                        ->where('merchant_language_id', $defaultLanguage->merchant_language_id)
-                        ->first();
+            $defaultLanguage = $this->getDefaultLanguage($mall);
+            if ($defaultLanguage !== NULL) {
+                $contentDefaultLanguage = \LuckyDrawTranslation::excludeDeleted()
+                    ->where('lucky_draw_id', $luckydraw->lucky_draw_id)
+                    ->where('merchant_language_id', $defaultLanguage->language_id)
+                    ->first();
+                if (is_object($contentDefaultLanguage)) {
+                    if (empty($data->title)) {
+                        $data->title = $contentDefaultLanguage->lucky_draw_name;
+                    }
+                    if (empty($data->title)) {
+                        $data->description = $contentDefaultLanguage->description;
+                    }
 
-                    // get default image
-                    $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->lucky_draw_translation_id)
-                        ->media_orig()
-                        ->first();
+                    if (isset($media->path)) {
+                        $luckydraw->image = $media->path;
+                    } else {
+                        // back to default image if in the content multilanguage not have image
+                        // check the system language
+                        if ($defaultLanguage !== NULL) {
+                            // get default image
+                            $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->lucky_draw_translation_id)
+                                ->media_orig()
+                                ->first();
 
-                    if (isset($mediaDefaultLanguage->path)) {
-                        $luckydraw->image = $mediaDefaultLanguage->path;
+                            if (isset($mediaDefaultLanguage->path)) {
+                                $luckydraw->image = $mediaDefaultLanguage->path;
+                            }
+                        }
                     }
                 }
             }
