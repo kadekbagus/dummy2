@@ -468,6 +468,8 @@ class MallAPIController extends ControllerAPI
 
             $newmall->save();
 
+            $newmall->timezone = $timezone;
+
             // languages
             // @author irianto <irianto@dominopos.com>
             if (count($languages) > 0) {
@@ -532,13 +534,14 @@ class MallAPIController extends ControllerAPI
                             $new_category_translation->status               = 'active';
                             $new_category_translation->created_by           = NULL;
                             $new_category_translation->modified_by          = NULL;
+                            $new_category_translation->save();
                         }
                     }
-
-                    $all_category[] = $new_category;
+                    $all_category[] = $category_json;
                 }
-                $newmall->mall_categories = $all_category;
             }
+
+            $newmall->mall_categories = $all_category;
 
             // widgets
             // @author irianto <irianto@dominopos.com>
@@ -2107,7 +2110,7 @@ class MallAPIController extends ControllerAPI
                     foreach ($will_del_floor as $check_floor) {
                       $tenant = Tenant::excludeDeleted()
                                     ->where('floor', $check_floor->object_name)
-                                    ->where('merchant_id', $updatedmall->merchant_id)
+                                    ->where('parent_id', $updatedmall->merchant_id)
                                     ->first();
                       if (! empty($tenant)) {
                           $errorMessage = Lang::get('validation.orbit.exists.link_floor', ['attribute' => $check_floor->object_name,

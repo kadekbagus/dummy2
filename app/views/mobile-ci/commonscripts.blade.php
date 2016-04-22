@@ -493,7 +493,7 @@
                                     <div class="campaign-cards-info">\
                                         <h4><strong>'+ data.data.records[i].campaign_name +'</strong></h4>\
                                         <p>'+ data.data.records[i].campaign_description +'</p>\
-                                        <a class="campaign-cards-link" data-id="'+ data.data.records[i].campaign_id +'" data-type="'+ data.data.records[i].campaign_type +'" href="'+ data.data.records[i].campaign_url +'"><i>{{ Lang::get('mobileci.campaign_cards.go_to_page') }}</i></a>\
+                                        <a class="campaign-cards-link" data-id="'+ data.data.records[i].campaign_id +'" data-type="'+ data.data.records[i].campaign_type +'" data-href="'+ data.data.records[i].redirect_campaign_url +'" href="'+ data.data.records[i].campaign_url +'"><i>{{ Lang::get('mobileci.campaign_cards.go_to_page') }}</i></a>\
                                     </div>\
                                 </li>';
                             $('#campaign-cards').append(list);

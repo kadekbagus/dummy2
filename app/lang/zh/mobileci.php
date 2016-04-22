@@ -317,7 +317,7 @@ return array(
     ),
 
     'search' => array(
-        'no_item'            => '无店铺匹配条件',
+        'no_item'            => '无店铺匹配条件。',
         'too_much_items'     => '搜索结果的范围太广，请缩小它',
         'no_result'          => '对不起，搜索有没有结果',
         'error'              => '发出请求时有错误',
