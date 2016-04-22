@@ -281,7 +281,7 @@
             <div class="fb-like" data-href="{{{$tenant->facebook_like_url}}}" data-layout="button_count" data-action="like" data-show-faces="false" data-share="false" style="margin-right:25px;"></div>
             @endif
             @if(! empty($tenant->facebook_share_url))
-            <div class="fb-share-button" data-href="{{{$tenant->facebook_share_url}}}" data-layout="button" style="width:60px; overflow:hidden;"></div>
+            <div class="fb-share-button" data-href="{{{$tenant->facebook_share_url}}}" data-layout="button"></div>
             @endif
         @endif
     </div>
