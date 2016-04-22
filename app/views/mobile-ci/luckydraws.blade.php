@@ -83,7 +83,7 @@
                     @else
                     <div class="row padded">
                         <div class="col-xs-12">
-                            <h4>{{ Lang::get('mobileci.greetings.latest_luckydraw_coming_soon') }}</h4>
+                            <h4>{{ Lang::get('mobileci.greetings.no_luckydraws_listing') }}</h4>
                         </div>
                     </div>
                     @endif
@@ -110,6 +110,6 @@
             });
             loadMoreX('lucky-draw', listOfIDs);
         });
-    }); 
+    });
 </script>
 @stop

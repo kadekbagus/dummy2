@@ -65,12 +65,16 @@ return array(
     ),
 
     'greetings' => array(
-        'welcome'                    => '欢迎光临',
-        'latest_news_coming_soon'    => '看看我们特新货.',
-        'new_promotions_coming_soon' => '看看我们最近特色购物.',
-        'how_to_get_coupons'         => '请跟客户服务检查关于取优惠券.',
-        'find_our_exciting'          => '寻找我们的令人兴奋的交易和这里的最新消息。不要忘记您的兑换交易的收据，并有机会赢取一辆车!',
+        'welcome'                      => '欢迎光临',
+        'latest_news_coming_soon'      => '看看我们特新货.',
+        'new_promotions_coming_soon'   => '看看我们最近特色购物.',
+        'how_to_get_coupons'           => '请跟客户服务检查关于取优惠券.',
+        'find_our_exciting'            => '寻找我们的令人兴奋的交易和这里的最新消息。不要忘记您的兑换交易的收据，并有机会赢取一辆车!',
         'latest_luckydraw_coming_soon' => '看看我们的幸运抽奖即将推出。',
+        'no_coupons_listing'           => '对不起，在这家商场的那一刻没有优惠券。',
+        'no_luckydraws_listing'        => '对不起，没有抽奖在这家商场的那一刻。',
+        'no_news_listing'              => '对不起，在这家商场的那一刻没有消息。',
+        'no_promotions_listing'        => '对不起，在这家商场的那一刻没有促销活动。',
     ),
 
     // modal specific lang
@@ -453,7 +457,8 @@ return array(
         'view_lucky_draw_btn'       => '抽選のビュー',
         'no_notif'                  => '你有没有消息',
         'load_more_btn'             => 'よりロード',
-        'view_coupons_btn'          => ' 查看您的优惠券',
+        'view_more_btn'             => '查看更多',
+        'view_coupons_btn'          => '查看您的优惠券',
         'you_won'                   => '你已经赢得了奖品 ',
         'to_redeem'                 => '。 要兑换您的抽奖奖品，请出示在<b>首页您的抽奖号码 - >幸运抽奖</b>以商场客户服务。',
     ),

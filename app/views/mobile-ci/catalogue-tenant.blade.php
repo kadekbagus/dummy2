@@ -150,7 +150,7 @@
                     @if($data->returned_records < $data->total_records)
                         <div class="row">
                             <div class="col-xs-12 padded">
-                                <button class="btn btn-info btn-block" id="load-more-tenants">{{Lang::get('mobileci.notification.load_more_btn')}}</button>
+                                <button class="btn btn-info btn-block" id="load-more-tenants">{{Lang::get('mobileci.notification.view_more_btn')}}</button>
                             </div>
                         </div>
                     @endif
@@ -355,7 +355,7 @@
                 }
             }).always(function(data){
                 btn.removeAttr('disabled', 'disabled');
-                btn.html('{{Lang::get('mobileci.notification.load_more_btn')}}');
+                btn.html('{{Lang::get('mobileci.notification.view_more_btn')}}');
             });
         });
     });
