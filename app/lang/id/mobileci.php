@@ -71,10 +71,11 @@ return array(
         'how_to_get_coupons'           => 'Silahkan hubungi customer service untuk mengetahui cara mendapatkan kupon.',
         'find_our_exciting'            => 'Temukan penawaran menarik dan berita terbaru dari kami disini. Jangan lupa tukarkan struk belanja anda dan dapatkan kesempatan untuk memenangkan sebuah mobil !',
         'latest_luckydraw_coming_soon' => 'Periksa undian berhadiah kami yang akan datang.',
-        'no_coupons_listing'           => 'Maaf, tidak ada kupon pada saat di mal ini.',
-        'no_luckydraws_listing'        => 'Maaf, tidak ada lucky draw pada saat di mal ini.',
-        'no_news_listing'              => 'Maaf, tidak ada berita pada saat di mal ini.',
-        'no_promotions_listing'        => 'Maaf, tidak ada promosi pada saat di mal ini.',
+        'no_coupons_listing'           => 'Maaf, tidak ada kupon pada saat ini di mall ini.',
+        'no_luckydraws_listing'        => 'Maaf, tidak ada undian berhadiah pada saat ini di mall ini.',
+        'no_news_listing'              => 'Maaf, tidak ada berita pada saat ini di mall ini.',
+        'no_promotions_listing'        => 'Maaf, tidak ada promosi pada saat ini di mall ini.',
+        'no_stores_listing'            => 'Maaf, tidak ada gerai pada saat ini di mall ini.',
     ),
 
     // modal specific lang
