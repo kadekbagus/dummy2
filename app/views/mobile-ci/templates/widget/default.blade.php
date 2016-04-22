@@ -8,7 +8,7 @@
                 @if($i % 3 === 0)
                 <div class="col-xs-12 col-sm-12">
                     <section class="widget-single">
-                        <a class="widget-link" data-widget="{{ $widget->widget_id }}" href="{{ url('customer/' . $widget->url) }}">
+                        <a class="widget-link" data-widget="{{ $widget->widget_id }}" data-href="{{$widget->redirect_url}}" href="{{ $widget->url }}">
                             @if(! empty($widget->new_item_count))
                             <div class="widget-new-badge">
                                 <div class="new-number">{{$widget->new_item_count}}</div>
@@ -36,7 +36,7 @@
                     @if($i === count($widgets) - 1)
                         <div class="col-xs-12 col-sm-12">
                             <section class="widget-single">
-                                <a class="widget-link" data-widget="{{ $widget->widget_id }}" href="{{ url('customer/' . $widget->url) }}">
+                                <a class="widget-link" data-widget="{{ $widget->widget_id }}" data-href="{{$widget->redirect_url}}" href="{{ $widget->url }}">
                                     @if(! empty($widget->new_item_count))
                                     <div class="widget-new-badge">
                                         <div class="new-number">{{$widget->new_item_count}}</div>
@@ -63,7 +63,7 @@
                     @else
                         <div class="col-xs-6 col-sm-6">
                             <section class="widget-single">
-                                <a class="widget-link" data-widget="{{ $widget->widget_id }}" href="{{ url('customer/' . $widget->url) }}">
+                                <a class="widget-link" data-widget="{{ $widget->widget_id }}" data-href="{{$widget->redirect_url}}" href="{{ $widget->url }}">
                                     @if(! empty($widget->new_item_count))
                                     <div class="widget-new-badge">
                                         <div class="new-number">{{$widget->new_item_count}}</div>
@@ -91,7 +91,7 @@
                 @else
                     <div class="col-xs-6 col-sm-6">
                         <section class="widget-single">
-                            <a class="widget-link" data-widget="{{ $widget->widget_id }}" href="{{ url('customer/' . $widget->url) }}">
+                            <a class="widget-link" data-widget="{{ $widget->widget_id }}" data-href="{{$widget->redirect_url}}" href="{{ $widget->url }}">
                                 @if(! empty($widget->new_item_count))
                                 <div class="widget-new-badge">
                                     <div class="new-number">{{$widget->new_item_count}}</div>

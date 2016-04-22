@@ -21,6 +21,10 @@ class MallAPIController extends ControllerAPI
      */
     protected $returnBuilder = FALSE;
 
+    protected $valid_lang = NULL;
+    protected $valid_mall_lang = NULL;
+    protected $valid_timezone = NULL;
+
     protected $default = [
         'vat_included'            => 'no',
         'widgets'                 => [
@@ -339,13 +343,13 @@ class MallAPIController extends ControllerAPI
                     'parent_id'                     => 'orbit.empty.mallgroup',
                     'start_date_activity'           => 'date_format:Y-m-d H:i:s',
                     'end_date_activity'             => 'date_format:Y-m-d H:i:s',
-                    'timezone'                      => 'required|timezone|valid_db_timezone_name',
+                    'timezone'                      => 'required|timezone|orbit.exists.timezone',
                     'currency'                      => 'required|size:3',
                     'currency_symbol'               => 'required',
                     'vat_included'                  => 'required|in:yes,no',
                     'sector_of_activity'            => 'required',
                     'languages'                     => 'required|array',
-                    'mobile_default_language'       => 'required|size:2|valid_language',
+                    'mobile_default_language'       => 'required|size:2|orbit.formaterror.language',
                     'domain'                        => 'required',
                     'geo_point_latitude'            => 'required',
                     'geo_point_longitude'           => 'required',
@@ -365,10 +369,7 @@ class MallAPIController extends ControllerAPI
                     'contact_person_firstname.required' => 'The first name is required',
                     'contact_person_lastname.required'  => 'The last name is required',
                     'contact_person_phone.required'     => 'The phone number 1 is required',
-                    'contact_person_email.required'     => 'The email address is required',
-                    'orbit.empty.mall_status'           => 'Mall status you specified is not found',
-                    'valid_db_timezone_name'            => 'The :attribute must be an existing timezone',
-                    'valid_language'                    => 'The :attribute must be a valid language code'
+                    'contact_person_email.required'     => 'The email address is required'
                 )
             );
 
@@ -410,7 +411,7 @@ class MallAPIController extends ControllerAPI
                 $countryName = $countryObject->name;
             }
 
-            $timezone = App::make('valid_db_timezone_name');
+            $timezone = $this->valid_timezone;
 
             $newmall = new Mall();
             $newmall->user_id = $newuser->user_id;
@@ -467,31 +468,32 @@ class MallAPIController extends ControllerAPI
 
             $newmall->save();
 
+            $newmall->timezone = $timezone;
+
             // languages
             // @author irianto <irianto@dominopos.com>
-            foreach ($languages as $language_name) {
-                $validator = Validator::make(
-                    array(
-                        'language'             => $language_name
-                    ),
-                    array(
-                        'language'             => 'required|size:2|valid_language'
-                    ),
-                    array(
-                        'valid_language' => 'The :attribute must be a valid language code'
-                    )
-                );
+            if (count($languages) > 0) {
+                foreach ($languages as $language_name) {
+                    $validator = Validator::make(
+                        array(
+                            'language'             => $language_name
+                        ),
+                        array(
+                            'language'             => 'required|size:2|orbit.formaterror.language'
+                        )
+                    );
 
-                // Run the validation
-                if ($validator->fails()) {
-                    $errorMessage = $validator->messages()->first();
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    // Run the validation
+                    if ($validator->fails()) {
+                        $errorMessage = $validator->messages()->first();
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
+
+                    $merchant_language = new MerchantLanguage();
+                    $merchant_language->merchant_id = $newmall->merchant_id;
+                    $merchant_language->language_id = Language::where('name', '=', $language_name)->first()->language_id;
+                    $merchant_language->save();
                 }
-
-                $merchant_language = new MerchantLanguage();
-                $merchant_language->merchant_id = $newmall->merchant_id;
-                $merchant_language->language_id = Language::where('name', '=', $language_name)->first()->language_id;
-                $merchant_language->save();
             }
 
             $languages_by_name = [];
@@ -503,6 +505,7 @@ class MallAPIController extends ControllerAPI
             // categories
             // @author irianto <irianto@dominopos.com>
             if (count($categories) > 0) {
+                $all_category = [];
                 foreach ($categories as $category_json) {
 
                     $category = @json_decode($category_json);
@@ -522,17 +525,23 @@ class MallAPIController extends ControllerAPI
                     $new_category->modified_by       = NULL;
                     $new_category->save();
 
-                    foreach ($languages as $data_lang) {
-                        $new_category_translation = new CategoryTranslation();
-                        $new_category_translation->category_id          = $new_category->category_id;
-                        $new_category_translation->merchant_language_id = $languages_by_name[$data_lang]->merchant_language_id;
-                        $new_category_translation->category_name        = trim($category->$data_lang);
-                        $new_category_translation->status               = 'active';
-                        $new_category_translation->created_by           = NULL;
-                        $new_category_translation->modified_by          = NULL;
+                    if (count($languages) > 0) {
+                        foreach ($languages as $data_lang) {
+                            $new_category_translation = new CategoryTranslation();
+                            $new_category_translation->category_id          = $new_category->category_id;
+                            $new_category_translation->merchant_language_id = $languages_by_name[$data_lang]->merchant_language_id;
+                            $new_category_translation->category_name        = trim($category->$data_lang);
+                            $new_category_translation->status               = 'active';
+                            $new_category_translation->created_by           = NULL;
+                            $new_category_translation->modified_by          = NULL;
+                            $new_category_translation->save();
+                        }
                     }
+                    $all_category[] = $category_json;
                 }
             }
+
+            $newmall->mall_categories = $all_category;
 
             // widgets
             // @author irianto <irianto@dominopos.com>
@@ -569,6 +578,7 @@ class MallAPIController extends ControllerAPI
             // floor
             // @author irianto <irianto@dominopos.com>
             if (count($floors) > 0) {
+                $all_floor = [];
                 foreach ($floors as $floor_json) {
                     $floor = @json_decode($floor_json);
                     if (json_last_error() != JSON_ERROR_NONE) {
@@ -582,7 +592,11 @@ class MallAPIController extends ControllerAPI
                     $newfloor->object_order = $floor->order;
                     $newfloor->status = 'active';
                     $newfloor->save();
+
+                    // collect new floor
+                    $all_floor[] = $newfloor;
                 }
+                $newmall->mall_floor = $all_floor;
             }
 
             // settings
@@ -600,6 +614,7 @@ class MallAPIController extends ControllerAPI
                 'dom:' . $domain                => $newmall->merchant_id
             ];
 
+            $all_setting = [];
             foreach ($setting_items as $setting_name => $setting_value) {
                 $settings = new Setting();
                 $settings->setting_name = $setting_name;
@@ -614,7 +629,10 @@ class MallAPIController extends ControllerAPI
                 $settings->modified_by = $user->user_id;
 
                 $settings->save();
+
+                $all_setting[] = $settings;
             }
+            $newmall->mall_settings = $all_setting;
 
             // age ranges
             // @author irianto <irianto@dominopos.com>
@@ -635,6 +653,7 @@ class MallAPIController extends ControllerAPI
             $campaign_base_prices[] = ['price' => $campaign_base_price_coupon, 'campaign_type' => 'coupon'];
             $campaign_base_prices[] = ['price' => $campaign_base_price_news, 'campaign_type' => 'news'];
 
+            $all_base_price = [];
             foreach ($campaign_base_prices as $campaign_base_price) {
                 $price = new CampaignBasePrice();
                 $price->merchant_id = $newmall->merchant_id;
@@ -642,7 +661,10 @@ class MallAPIController extends ControllerAPI
                 $price->campaign_type = $campaign_base_price['campaign_type'];
                 $price->status = 'active';
                 $price->save();
+
+                $all_base_price[] = $price;
             }
+            $newmall->campaign_base_prices = $all_base_price;
 
             // save to spending rule, the default is N
             // @author kadek <kadek@dominopos.com>
@@ -671,6 +693,10 @@ class MallAPIController extends ControllerAPI
             $fence->merchant_id = $newmall->merchant_id;
 
             $fence->save();
+
+            $newmall->geo_point_latitude = $geo_point_latitude;
+            $newmall->geo_point_longitude = $geo_point_longitude;
+            $newmall->geo_area = $geo_area;
 
             Event::fire('orbit.mall.postnewmall.after.save', array($this, $newmall));
             $this->response->data = $newmall;
@@ -1501,11 +1527,11 @@ class MallAPIController extends ControllerAPI
                     'ticket_footer'                    => 'ticket_footer_max_length',
                     'start_date_activity'              => 'date_format:Y-m-d H:i:s',
                     'end_date_activity'                => 'date_format:Y-m-d H:i:s',
-                    'timezone'                         => 'valid_db_timezone_name',
+                    'timezone'                         => 'orbit.exists.timezone',
                     'currency'                         => 'size:3',
                     'vat_included'                     => 'in:yes,no',
                     'languages'                        => 'array',
-                    'mobile_default_language'          => 'size:2|valid_language',
+                    'mobile_default_language'          => 'size:2|orbit.formaterror.language',
                     // 'campaign_base_price_promotion' => 'format currency later will be check',
                     // 'campaign_base_price_coupon'    => 'format currency later will be check',
                     // 'campaign_base_price_news'      => 'format currency later will be check',
@@ -1522,9 +1548,7 @@ class MallAPIController extends ControllerAPI
                    'orbit_check_link_campaign'  => 'Mall is linked to active campaign(s)',
                    'ticket_header_max_length'   => Lang::get('validation.orbit.formaterror.merchant.ticket_header.max_length'),
                    'ticket_footer_max_length'   => Lang::get('validation.orbit.formaterror.merchant.ticket_footer.max_length'),
-                   'orbit_check_tenant_mall'    => 'Mall can not be deactivated, because it has active tenant',
-                   'valid_db_timezone_name'     => 'The :attribute must be an existing timezone',
-                   'valid_language'             => 'The :attribute must be a valid language code'
+                   'orbit_check_tenant_mall'    => 'Mall can not be deactivated, because it has active tenant'
                )
             );
 
@@ -1755,7 +1779,7 @@ class MallAPIController extends ControllerAPI
             });
 
             OrbitInput::post('timezone', function($timezoneName) use ($updatedmall) {
-                $timezone = App::make('valid_db_timezone_name');
+                $timezone = $this->valid_timezone;
                 $updatedmall->timezone_id = $timezone->timezone_id;
             });
 
@@ -1811,6 +1835,470 @@ class MallAPIController extends ControllerAPI
                 if (! empty($campaign_base_price)) {
                     $campaign_base_price->price = $campaign_base_price_news;
                     $campaign_base_price->save();
+                }
+            });
+
+            OrbitInput::post('languages', function($languages) use ($updatedmall) {
+                if (! in_array('en', $languages)) {
+                    // $languages[] = 'en'; //don't delete english
+                    $errorMessage = Lang::get('validation.orbit.exists.default_language', ['attribute' => 'English']);
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+
+                // new languages
+                $all_mall_languages = [];
+                foreach ($languages as $language_name) {
+                    $validator = Validator::make(
+                        array(
+                            'language'             => $language_name
+                        ),
+                        array(
+                            'language'             => 'required|size:2|orbit.formaterror.language'
+                        )
+                    );
+
+                    // Run the validation
+                    if ($validator->fails()) {
+                        $errorMessage = $validator->messages()->first();
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
+
+                    $language_data = $this->valid_lang;
+
+                    // check lang
+                    $merchant_languages = MerchantLanguage::excludeDeleted()
+                                                        ->where('merchant_id', '=', $updatedmall->merchant_id)
+                                                        ->where('language_id', '=', $language_data->language_id)
+                                                        ->get();
+
+                    if (count($merchant_languages) > 0) {
+                        foreach ($merchant_languages as $merchant_language) {
+                            $all_mall_languages[] = $merchant_language->merchant_language_id;
+                        }
+                    } else {
+                        $newmerchant_language = new MerchantLanguage();
+                        $newmerchant_language->merchant_id = $updatedmall->merchant_id;
+                        $newmerchant_language->status = 'active';
+                        $newmerchant_language->language_id = Language::where('name', '=', $language_name)->first()->language_id;
+                        $newmerchant_language->save();
+
+                        $all_mall_languages[] = $newmerchant_language->merchant_language_id;
+                    }
+                }
+
+                // find lang will be delete
+                $languages_will_be_delete = MerchantLanguage::excludeDeleted('merchant_languages')
+                                                ->leftjoin('languages', 'languages.language_id', '=', 'merchant_languages.language_id')
+                                                ->where('merchant_languages.merchant_id', '=', $updatedmall->merchant_id)
+                                                ->whereNotIn('merchant_languages.merchant_language_id', $all_mall_languages)
+                                                ->get();
+
+                if (count($languages_will_be_delete) > 0) {
+                    $del_lang = [];
+                    foreach ($languages_will_be_delete as $check_lang) {
+                        // news translation
+                        $news_translations = NewsTranslation::excludeDeleted('news_translations')
+                                                // ->excludeDeleted('news')
+                                                ->leftJoin('news', 'news.news_id', '=', 'news_translations.news_id')
+                                                ->where('news_translations.merchant_language_id', '=', $check_lang->merchant_language_id)
+                                                ->where('news.object_type', '=', 'news')
+                                                ->get();
+                        if (count($news_translations) > 0) {
+                            $errorMessage = Lang::get('validation.orbit.exists.translation', ['attribute' => $check_lang->name_long,
+                                                                                    'link' => 'News']);
+                            OrbitShopAPI::throwInvalidArgument($errorMessage);
+                        }
+
+                        // promotion translation
+                        $promotion_translations = NewsTranslation::excludeDeleted('news_translations')
+                                                // ->excludeDeleted('news')
+                                                ->leftJoin('news', 'news.news_id', '=', 'news_translations.news_id')
+                                                ->where('news_translations.merchant_language_id', '=', $check_lang->merchant_language_id)
+                                                ->where('news.object_type', '=', 'promotion')
+                                                ->get();
+                        if (count($promotion_translations) > 0) {
+                            $errorMessage = Lang::get('validation.orbit.exists.translation', ['attribute' => $check_lang->name_long,
+                                                                                    'link' => 'Promotions']);
+                            OrbitShopAPI::throwInvalidArgument($errorMessage);
+                        }
+
+                        // coupon translation
+                        $coupon_translations = CouponTranslation::excludeDeleted()
+                                                ->where('merchant_language_id', '=', $check_lang->merchant_language_id)
+                                                ->get();
+                        if (count($coupon_translations) > 0) {
+                            $errorMessage = Lang::get('validation.orbit.exists.translation', ['attribute' => $check_lang->name_long,
+                                                                                    'link' => 'Coupons']);
+                            OrbitShopAPI::throwInvalidArgument($errorMessage);
+                        }
+
+                        // event translation
+                        $event_translations = EventTranslation::excludeDeleted()
+                                                ->where('merchant_language_id', '=', $check_lang->merchant_language_id)
+                                                ->get();
+                        if (count($event_translations) > 0) {
+                            $errorMessage = Lang::get('validation.orbit.exists.translation', ['attribute' => $check_lang->name_long,
+                                                                                    'link' => 'Events']);
+                            OrbitShopAPI::throwInvalidArgument($errorMessage);
+                        }
+
+                        // lucky_draw translation
+                        $lucky_draw = LuckyDrawTranslation::excludeDeleted()
+                                                ->where('merchant_language_id', '=', $check_lang->merchant_language_id)
+                                                ->get();
+                        if (count($lucky_draw) > 0) {
+                            $errorMessage = Lang::get('validation.orbit.exists.translation', ['attribute' => $check_lang->name_long,
+                                                                                    'link' => 'Lucky Draws']);
+                            OrbitShopAPI::throwInvalidArgument($errorMessage);
+                        }
+
+                        // setting translation
+                        $setting_translation = SettingTranslation::excludeDeleted()
+                                                ->where('merchant_language_id', '=', $check_lang->merchant_language_id)
+                                                ->get();
+                        if (count($setting_translation) > 0) {
+                            $errorMessage = Lang::get('validation.orbit.exists.translation', ['attribute' => $check_lang->name_long,
+                                                                                    'link' => 'Settings']);
+                            OrbitShopAPI::throwInvalidArgument($errorMessage);
+                        }
+
+                        // widget translation
+                        $widget_translation = WidgetTranslation::excludeDeleted()
+                                                ->where('merchant_language_id', '=', $check_lang->merchant_language_id)
+                                                ->get();
+                        if (count($widget_translation) > 0) {
+                            $errorMessage = Lang::get('validation.orbit.exists.translation', ['attribute' => $check_lang->name_long,
+                                                                                    'link' => 'Widgets']);
+                            OrbitShopAPI::throwInvalidArgument($errorMessage);
+                        }
+
+                        // category translation
+                        $category_translation = CategoryTranslation::excludeDeleted()
+                                                ->where('merchant_language_id', '=', $check_lang->merchant_language_id)
+                                                ->get();
+                        if (count($category_translation) > 0) {
+                            $errorMessage = Lang::get('validation.orbit.exists.translation', ['attribute' => $check_lang->name_long,
+                                                                                    'link' => 'Categories']);
+                            OrbitShopAPI::throwInvalidArgument($errorMessage);
+                        }
+
+                        // lucky draw announcement translation
+                        $lucky_draw_announcement_translation = LuckyDrawAnnouncementTranslation::excludeDeleted()
+                                                ->where('merchant_language_id', '=', $check_lang->merchant_language_id)
+                                                ->get();
+                        if (count($lucky_draw_announcement_translation) > 0) {
+                            $errorMessage = Lang::get('validation.orbit.exists.translation', ['attribute' => $check_lang->name_long,
+                                                        'link' => 'Lucky Draw Announcement']);
+                            OrbitShopAPI::throwInvalidArgument($errorMessage);
+                        }
+
+                        // mall group translation
+                        $mall_group_translation = MerchantTranslation::excludeDeleted('merchant_translations')
+                                                // ->excludeDeleted('merchants')
+                                                ->leftJoin('merchants', 'merchants.merchant_id', '=', 'merchant_translations.merchant_id')
+                                                ->where('object_type', '=', 'mall_group')
+                                                ->where('merchant_language_id', '=', $check_lang->merchant_language_id)
+                                                ->get();
+                        if (count($mall_group_translation) > 0) {
+                            $errorMessage = Lang::get('validation.orbit.exists.translation', ['attribute' => $check_lang->name_long,
+                                                                                    'link' => 'Mall Group']);
+                            OrbitShopAPI::throwInvalidArgument($errorMessage);
+                        }
+
+                        // mall translation
+                        $mall_translation = MerchantTranslation::excludeDeleted('merchant_translations')
+                                                // ->excludeDeleted('merchants')
+                                                ->leftJoin('merchants', 'merchants.merchant_id', '=', 'merchant_translations.merchant_id')
+                                                ->where('object_type', '=', 'mall')
+                                                ->where('merchant_language_id', '=', $check_lang->merchant_language_id)
+                                                ->get();
+                        if (count($mall_translation) > 0) {
+                            $errorMessage = Lang::get('validation.orbit.exists.translation', ['attribute' => $check_lang->name_long,
+                                                                                    'link' => 'Mall']);
+                            OrbitShopAPI::throwInvalidArgument($errorMessage);
+                        }
+
+                        // tenant translation
+                        $tenant_translation = MerchantTranslation::excludeDeleted('merchant_translations')
+                                                // ->excludeDeleted('merchants')
+                                                ->leftJoin('merchants', 'merchants.merchant_id', '=', 'merchant_translations.merchant_id')
+                                                ->where('object_type', '=', 'tenant')
+                                                ->where('merchant_language_id', '=', $check_lang->merchant_language_id)
+                                                ->get();
+                        if (count($tenant_translation) > 0) {
+                            $errorMessage = Lang::get('validation.orbit.exists.translation', ['attribute' => $check_lang->name_long,
+                                                                                    'link' => 'Tenant']);
+                            OrbitShopAPI::throwInvalidArgument($errorMessage);
+                        }
+
+                        // merchant translation
+                        $merchant_translation = MerchantTranslation::excludeDeleted('merchant_translations')
+                                                // ->excludeDeleted('merchants')
+                                                ->leftJoin('merchants', 'merchants.merchant_id', '=', 'merchant_translations.merchant_id')
+                                                ->where('object_type', '=', 'merchant')
+                                                ->where('merchant_language_id', '=', $check_lang->merchant_language_id)
+                                                ->get();
+                        if (count($merchant_translation) > 0) {
+                            $errorMessage = Lang::get('validation.orbit.exists.translation', ['attribute' => $check_lang->name_long,
+                                                                                    'link' => 'Merchant']);
+                            OrbitShopAPI::throwInvalidArgument($errorMessage);
+                        }
+
+                        // retailer translation
+                        $retailer_translation = MerchantTranslation::excludeDeleted('merchant_translations')
+                                                // ->excludeDeleted('merchants')
+                                                ->leftJoin('merchants', 'merchants.merchant_id', '=', 'merchant_translations.merchant_id')
+                                                ->where('object_type', '=', 'retailer')
+                                                ->where('merchant_language_id', '=', $check_lang->merchant_language_id)
+                                                ->get();
+                        if (count($retailer_translation) > 0) {
+                            $errorMessage = Lang::get('validation.orbit.exists.translation', ['attribute' => $check_lang->name_long,
+                                                                                    'link' => 'Retailer']);
+                            OrbitShopAPI::throwInvalidArgument($errorMessage);
+                        }
+                        //colect language will be delete
+                        $del_lang[] = $check_lang->merchant_language_id;
+                    }
+                    if (count($del_lang) > 0) {
+                        // delete languages
+                        $delete_languages = MerchantLanguage::excludeDeleted()
+                                                        ->where('merchant_id', '=', $updatedmall->merchant_id)
+                                                        ->whereIn('merchant_language_id', $del_lang)
+                                                        ->update(['status' => 'deleted']);
+
+                    }
+                }
+            });
+
+            OrbitInput::post('floors', function($floors) use ($updatedmall) {
+                // floor
+                // @author irianto <irianto@dominopos.com>
+                if (count($floors) > 0) {
+                    $colect_floor = [];
+                    foreach ($floors as $floor_json) {
+                        $floor = @json_decode($floor_json);
+                        if (json_last_error() != JSON_ERROR_NONE) {
+                            OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.format'));
+                        }
+
+                        $exist_floor = Object::excludeDeleted()
+                                            ->where('object_type', 'floor')
+                                            ->where('merchant_id', $updatedmall->merchant_id)
+                                            ->where('object_name', $floor->name)
+                                            ->first();
+                        if (empty($exist_floor)) {
+                            $newfloor = new Object();
+                            $newfloor->merchant_id = $updatedmall->merchant_id;
+                            $newfloor->object_name = $floor->name;
+                            $newfloor->object_type = 'floor';
+                            $newfloor->object_order = $floor->order;
+                            $newfloor->status = 'active';
+                            $newfloor->save();
+                        }
+
+                        $colect_floor[] = $floor->name;
+                    }
+
+                    $will_del_floor = Object::excludeDeleted()
+                                    ->where('object_type', 'floor')
+                                    ->where('merchant_id', $updatedmall->merchant_id)
+                                    ->whereNotIn('object_name', $colect_floor)
+                                    ->get();
+
+                    //check link
+                    $del_floor = [];
+                    foreach ($will_del_floor as $check_floor) {
+                      $tenant = Tenant::excludeDeleted()
+                                    ->where('floor', $check_floor->object_name)
+                                    ->where('parent_id', $updatedmall->merchant_id)
+                                    ->first();
+                      if (! empty($tenant)) {
+                          $errorMessage = Lang::get('validation.orbit.exists.link_floor', ['attribute' => $check_floor->object_name,
+                                                                                    'link' => 'Tenant']);
+                          OrbitShopAPI::throwInvalidArgument($errorMessage);
+                      }
+                      $del_floor[] = $check_floor->object_name;
+                    }
+
+                    //delete floor
+                    if (count($del_floor) > 0) {
+                        $delete_floor = Object::excludeDeleted()
+                                      ->where('object_type', 'floor')
+                                      ->where('merchant_id', $updatedmall->merchant_id)
+                                      ->whereIn('object_name', $del_floor)
+                                      ->update(["status" => "deleted"]);
+                    }
+                }
+            });
+
+            OrbitInput::post('categories', function($categories) use ($updatedmall) {
+                if (count($categories) > 0) {
+                    // loop array categories
+                    $new_list_category = [];
+                    foreach ($categories as $category_json) {
+                        // decode json category
+                        $category = @json_decode($category_json);
+                        if (json_last_error() != JSON_ERROR_NONE) {
+                            OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.format'));
+                        }
+
+                        // default language is name of category
+                        $default_category_name = $category->default;
+
+                        // check default
+                        $validator = Validator::make(
+                            array(
+                                'default'       => $default_category_name
+                            ),
+                            array(
+                                'default'       => 'required'
+                            )
+                        );
+
+                        // Run the validation
+                        if ($validator->fails()) {
+                            $errorMessage = $validator->messages()->first();
+                            OrbitShopAPI::throwInvalidArgument($errorMessage);
+                        }
+
+                        // check exist category on mall
+                        $categories_mall = Category::excludeDeleted()
+                                                ->where('merchant_id', $updatedmall->merchant_id)
+                                                ->where('category_name', $default_category_name)
+                                                ->first();
+
+                        if (count($categories_mall) > 0) {
+                            // create / update category translation
+                            // loop keys lang
+                            foreach ($category as $key => $create_update_value) {
+                                if ($key !== 'default') {
+                                    // check exist mall language (language may be not on mall language)
+                                    $validator = Validator::make(
+                                        array(
+                                            'language'             => $key
+                                        ),
+                                        array(
+                                            'language'             => 'required|size:2|orbit.exists.mall_language:' . $updatedmall->merchant_id
+                                        )
+                                    );
+                                    // Run the validation
+                                    if ($validator->fails()) {
+                                        $errorMessage = $validator->messages()->first();
+                                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                                    }
+
+                                    // create from instance valid_mall_language
+                                    $mall_lang = $this->valid_mall_lang;
+
+                                    // check category translation
+                                    $update_category_translation = CategoryTranslation::excludeDeleted()
+                                                                        ->where('merchant_language_id', $mall_lang->merchant_language_id)
+                                                                        ->where('category_id', $categories_mall->category_id)
+                                                                        ->first();
+
+                                    if (count($update_category_translation) > 0) {
+                                        // update translation
+                                        $update_category_translation->category_name = trim($create_update_value);
+                                        $update_category_translation->save();
+                                    } else {
+                                        // create new translation from new lang
+                                        $new_category_translation = new CategoryTranslation();
+                                        $new_category_translation->category_id          = $categories_mall->category_id;
+                                        $new_category_translation->merchant_language_id = $mall_lang->merchant_language_id;
+                                        $new_category_translation->category_name        = trim($create_update_value);
+                                        $new_category_translation->status               = 'active';
+                                        $new_category_translation->created_by           = NULL;
+                                        $new_category_translation->modified_by          = NULL;
+                                        $new_category_translation->save();
+                                    }
+                                }
+                            }
+                            // collection category_id
+                            $new_list_category[] = $categories_mall->category_id;
+                        } else {
+                            // create new category
+                            $new_category = new Category();
+                            $new_category->merchant_id       = $updatedmall->merchant_id;
+                            $new_category->category_name     = $default_category_name;
+                            $new_category->category_level    = 1;
+                            $new_category->category_order    = 0;
+                            $new_category->status            = 'active';
+                            $new_category->created_by        = NULL;
+                            $new_category->modified_by       = NULL;
+                            $new_category->save();
+
+                            // loop keys lang to insert on new category translation
+                            foreach ($category as $key => $new_value) {
+                                if ($key !== 'default') {
+                                    // check exist mall language (language may be not on mall language)
+                                    $validator = Validator::make(
+                                        array(
+                                            'language'             => $key
+                                        ),
+                                        array(
+                                            'language'             => 'required|size:2|orbit.exists.mall_language:' . $updatedmall->merchant_id
+                                        )
+                                    );
+                                    // Run the validation
+                                    if ($validator->fails()) {
+                                        $errorMessage = $validator->messages()->first();
+                                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                                    }
+
+                                    // create from instance valid_mall_language
+                                    $mall_lang = $this->mall_lang;
+
+                                    // insert new category translation
+                                    $new_category_translation = new CategoryTranslation();
+                                    $new_category_translation->category_id          = $new_category->category_id;
+                                    $new_category_translation->merchant_language_id = $mall_lang->merchant_language_id;
+                                    $new_category_translation->category_name        = trim($new_value);
+                                    $new_category_translation->status               = 'active';
+                                    $new_category_translation->created_by           = NULL;
+                                    $new_category_translation->modified_by          = NULL;
+                                    $new_category_translation->save();
+                                }
+                            }
+                            // collection category_id
+                            $new_list_category[] = $new_category->category_id;
+                        }
+                    }
+                    // categories not on list
+                    $categories_not_on_list = Category::excludeDeleted()
+                                                    ->where('merchant_id', $updatedmall->merchant_id)
+                                                    ->whereNotIn('category_id', $new_list_category)
+                                                    ->get();
+
+                    // check link with tenant before delete
+                    $del_category = [];
+                    foreach ($categories_not_on_list as $check_category) {
+                        $link_category = CategoryMerchant::leftJoin('categories', 'categories.category_id', '=', 'category_merchant.category_id')
+                                            ->leftJoin('merchants', 'merchants.merchant_id', '=', 'category_merchant.merchant_id')
+                                            ->where('categories.status', '!=', 'deleted')
+                                            ->where('merchants.status', '!=', 'deleted')
+                                            ->where('merchants.parent_id', $updatedmall->merchant_id)
+                                            ->where('category_merchant.category_id', $check_category->category_id)
+                                            ->first();
+                        if (count($link_category) > 0) {
+                            $errorMessage = Lang::get('validation.orbit.exists.link_floor', ['attribute' => $link_category->category_name,
+                                                                                    'link' => 'Tenant']);
+                            OrbitShopAPI::throwInvalidArgument($errorMessage);
+                        } else {
+                            // collect category_id
+                            $del_category[] = $check_category->category_id;
+                        }
+                    }
+
+                    // delete not used category on delete list
+                    $delete_categories = Category::excludeDeleted()
+                                                ->where('merchant_id', $updatedmall->merchant_id)
+                                                ->whereIn('category_id', $del_category)
+                                                ->update(["status" => "deleted"]);
+
+                    // delete category translation too
+                    $delete_categories_translation = CategoryTranslation::excludeDeleted()
+                                                ->whereIn('category_id', $del_category)
+                                                ->update(["status" => "deleted"]);
                 }
             });
 
@@ -2605,7 +3093,7 @@ class MallAPIController extends ControllerAPI
             return TRUE;
         });
 
-        Validator::extend('valid_db_timezone_name', function($attribute, $value, $parameters) {
+        Validator::extend('orbit.exists.timezone', function($attribute, $value, $parameters) {
             $timezone = Timezone::where('timezone_name', $value)
                 ->first();
 
@@ -2613,12 +3101,12 @@ class MallAPIController extends ControllerAPI
                 return FALSE;
             }
 
-            App::instance('valid_db_timezone_name', $timezone);
+            $this->valid_timezone = $timezone;
 
             return TRUE;
         });
 
-        Validator::extend('valid_language', function($attribute, $value, $parameters)
+        Validator::extend('orbit.formaterror.language', function($attribute, $value, $parameters)
         {
             $lang = Language::where('name', '=', $value)->where('status', '=', 'active')->first();
 
@@ -2626,7 +3114,25 @@ class MallAPIController extends ControllerAPI
                 return FALSE;
             }
 
-            App::instance('valid_language', $lang);
+            $this->valid_lang = $lang;
+            return TRUE;
+        });
+
+        Validator::extend('orbit.exists.mall_language', function($attribute, $value, $parameters)
+        {
+            $mall_id = $parameters[0];
+            $lang = MerchantLanguage::excludeDeleted('merchant_languages')
+                        ->excludeDeleted('languages')
+                        ->join('languages', 'languages.language_id', '=', 'merchant_languages.language_id')
+                        ->where('merchant_languages.merchant_id', $mall_id)
+                        ->where('languages.name', $value)
+                        ->first();
+
+            if (empty($lang)) {
+                return FALSE;
+            }
+
+            $this->valid_mall_lang = $lang;
             return TRUE;
         });
     }

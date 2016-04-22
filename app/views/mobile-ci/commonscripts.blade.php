@@ -105,6 +105,7 @@
                             <div class="form-group">
                                 <input type="hidden" class="form-control" name="time" value="{{{ time() }}}"/>
                                 <input type="hidden" class="form-control" name="from_url" id="from_url" value="{{{ \Route::currentRouteName() }}}"/>
+                                <input type="hidden" class="form-control to_url" name="to_url" value=""/>
                                 <input type="hidden" class="form-control" name="from_captive" value="{{{ Input::get('from_captive', '') }}}"/>
                                 <input type="hidden" class="form-control" name="mac_address"
                                        value="{{{ Input::get('mac_address', '') }}}"/>
@@ -126,6 +127,7 @@
                                 <input type="hidden" class="form-control" name="from_captive" value="{{{ Input::get('from_captive', '') }}}"/>
                                 <input type="hidden" class="form-control" name="mac_address" value="{{{ Input::get('mac_address', '') }}}"/>
                                 <input type="hidden" class="form-control" name="from_url" value="{{{ \Route::currentRouteName() }}}"/>
+                                <input type="hidden" class="form-control to_url" name="to_url" value=""/>
                             </div>
                             <div class="form-group">
                                 <button id="googleLoginButton" type="submit" class="btn btn-danger icon-button google text-center">
@@ -149,6 +151,7 @@
         <div class="modal-content" id="signin-form-wrapper">
             <form  name="signinForm" id="signinForm" method="post">
                 <div class="modal-body text-center">
+                    <input type="hidden" class="form-control to_url" name="to_url" value=""/>
                     <button type="button" class="close close-form" data-dismiss="modal" aria-label="Close">
                         <i class="fa fa-times"></i>
                     </button>
@@ -212,9 +215,16 @@
         <div class="modal-content hide" id="signup-form-wrapper">
             <form  name="signupForm" id="signupForm" method="post">
                 <div class="modal-body">
+                    <input type="hidden" class="form-control to_url" name="to_url" value=""/>
                     <button type="button" class="close close-form" data-dismiss="modal" aria-label="Close">
                         <i class="fa fa-times"></i>
                     </button>
+                    <div class="error-msg-box">
+                        <div class="error-msg-box-close">
+                            &times;
+                        </div>
+                        <div class="error-msg-message"></div>
+                    </div>
                     <span class="mandatory-label" style="display:none;">{{ Lang::get('mobileci.signup.fields_are_mandatory') }}</span>
                     <div class="form-group icon-group">
                         <input type="email" value="{{{ $user_email }}}" class="form-control orbit-auto-login" name="email" id="email" placeholder="{{ Lang::get('mobileci.signup.email_placeholder') }}">
@@ -952,6 +962,11 @@
 
         $('body').on('click', 'a[href=#]', function(e) {
             e.preventDefault();
+            var default_url = 'ci-customer-home';
+            if ($(this).data('href')) {
+                default_url = $(this).data('href');
+            }
+            $('.to_url').val(default_url);
             $('.sign-in-back-drop').fadeIn('fast');
             $('.sign-in-popup').toggle('slide', {direction: 'down'}, 'fast');
         });
@@ -1096,7 +1111,8 @@
                         auto_login: "{{{ Input::get('auto_login', 'no') }}}",
                         from_captive: "{{{ Input::get('from_captive', 'no') }}}",
                         socmed_redirect_to: "{{{ Input::get('socmed_redirect_to', '') }}}",
-                        from_url: $('#from_url').val()
+                        from_url: $('#from_url').val(),
+                        to_url: $('.to_url').val()
                     }
                 }).done(function (response, status, xhr) {
                     if (response.code !== 0 && response.code !== 302) {
@@ -1173,6 +1189,7 @@
          */
         orbitSignUpForm.doRegister = function()
         {
+            orbitSignUpForm.hideErrorMessageBox();
             var custEmail = $('#signupForm #email').val().trim();
             var custPassword = $('#signupForm #password').val();
             var custPasswordConfirmation = $('#signupForm #password_confirmation').val();
@@ -1209,11 +1226,12 @@
                         gender: $('#gender').val(),
                         birthdate: birthdate.day + '-' + birthdate.month + '-' + birthdate.year,
                         socmed_redirect_to: "{{{ Input::get('socmed_redirect_to', '') }}}",
-                        from_url: $('#from_url').val()
+                        from_url: $('#from_url').val(),
+                        to_url: $('.to_url').val()
                     }
                 }).done(function (resp, status, xhr) {
                     if (resp.status === 'error') {
-                        toastr.error(resp.message);
+                        orbitSignUpForm.showErrorMessageBox(resp.message);
                         orbitSignUpForm.isProcessing = false;
                         orbitSignUpForm.disableEnableAllButton();
                         return;

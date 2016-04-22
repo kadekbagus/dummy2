@@ -62,7 +62,7 @@
                         </div>
                     </div>
                     <div class="col-xs-2 search-tool-col text-right">
-                        <a href="{{{ $urlblock->blockedRoute('ci-tenants', ['keyword' => Input::get('keyword')]) }}}" class="btn btn-info btn-block reset-btn">
+                        <a data-href="{{{ route('ci-tenant-list', ['keyword' => Input::get('keyword')]) }}}" href="{{{ $urlblock->blockedRoute('ci-tenant-list', ['keyword' => Input::get('keyword')]) }}}" class="btn btn-info btn-block reset-btn">
                             <span class="fa-stack fa-lg">
                                 <i class="fa fa-filter fa-stack-2x"></i>
                                 <i class="fa fa-times fa-stack-1x"></i>
@@ -93,7 +93,7 @@
                         @foreach($data->records as $tenant)
                             <div class="col-xs-12 col-sm-12" id="item-{{$tenant->merchant_id}}">
                                 <section class="list-item-single-tenant">
-                                    <a class="list-item-link" href="{{ $urlblock->blockedRoute('ci-tenant', ['id' => $tenant->merchant_id]) }}">
+                                    <a class="list-item-link" data-href="{{ route('ci-tenant-detail', ['id' => $tenant->merchant_id]) }}" href="{{ $urlblock->blockedRoute('ci-tenant-detail', ['id' => $tenant->merchant_id]) }}">
                                         <div class="list-item-info">
                                             <header class="list-item-title">
                                                 <div><strong>{{{ $tenant->name }}}</strong></div>
@@ -202,7 +202,7 @@
                         </div>
                     </div>
                     <div class="col-xs-2 search-tool-col text-right">
-                        <a href="{{{ $urlblock->blockedRoute('ci-tenants', ['keyword' => Input::get('keyword')]) }}}" class="btn btn-info btn-block reset-btn">
+                        <a data-href="{{{ route('ci-tenant-list', ['keyword' => Input::get('keyword')]) }}}" href="{{{ $urlblock->blockedRoute('ci-tenant-list', ['keyword' => Input::get('keyword')]) }}}" class="btn btn-info btn-block reset-btn">
                             <span class="fa-stack fa-lg">
                                 <i class="fa fa-filter fa-stack-2x"></i>
                                 <i class="fa fa-times fa-stack-1x"></i>
@@ -274,7 +274,7 @@
         @if(!empty(Input::get('promotion_id')))
             promo = '&promotion_id='+'{{{Input::get('promotion_id')}}}';
         @endif
-        var path = '{{$urlblock->blockedRoute('ci-tenants', ['keyword' => e(Input::get('keyword')), 'sort_by' => 'name', 'sort_mode' => 'asc', 'cid' => e(Input::get('cid')), 'fid' => e(Input::get('fid'))])}}'+promo;
+        var path = '{{$urlblock->blockedRoute('ci-tenant-list', ['keyword' => e(Input::get('keyword')), 'sort_by' => 'name', 'sort_mode' => 'asc', 'cid' => e(Input::get('cid')), 'fid' => e(Input::get('fid'))])}}'+promo;
         $('#dLabel').dropdown();
         $('#dLabel2').dropdown();
 
