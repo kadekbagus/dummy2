@@ -532,13 +532,14 @@ class MallAPIController extends ControllerAPI
                             $new_category_translation->status               = 'active';
                             $new_category_translation->created_by           = NULL;
                             $new_category_translation->modified_by          = NULL;
+                            $new_category_translation->save();
                         }
                     }
-
-                    $all_category[] = $new_category;
+                    $all_category[] = $category_json;
                 }
-                $newmall->mall_categories = $all_category;
             }
+
+            $newmall->mall_categories = $all_category;
 
             // widgets
             // @author irianto <irianto@dominopos.com>
