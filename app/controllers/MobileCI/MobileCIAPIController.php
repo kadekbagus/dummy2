@@ -2645,11 +2645,18 @@ class MobileCIAPIController extends BaseCIController
                 }
             }
 
+            // Check searchmode from searching by category and floor
+            $searchMode = false;
+            if ($category_id != '' || $floor != '') {
+                $searchMode = true;
+            }
+
             $data = new stdclass();
             $data->status = 1;
             $data->total_records = $totalRec;
             $data->returned_records = count($listOfRec);
             $data->records = $listOfRec;
+            $data->search_mode = $searchMode;
 
             if (! empty(OrbitInput::get('promotion_id'))) {
                 $pagetitle = Lang::get('mobileci.page_title.promotions_tenants');
