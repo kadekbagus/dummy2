@@ -21,6 +21,10 @@ class MallAPIController extends ControllerAPI
      */
     protected $returnBuilder = FALSE;
 
+    protected $valid_lang = NULL;
+    protected $valid_mall_lang = NULL;
+    protected $valid_timezone = NULL;
+
     protected $default = [
         'vat_included'            => 'no',
         'widgets'                 => [
@@ -339,13 +343,13 @@ class MallAPIController extends ControllerAPI
                     'parent_id'                     => 'orbit.empty.mallgroup',
                     'start_date_activity'           => 'date_format:Y-m-d H:i:s',
                     'end_date_activity'             => 'date_format:Y-m-d H:i:s',
-                    'timezone'                      => 'required|timezone|valid_db_timezone_name',
+                    'timezone'                      => 'required|timezone|orbit.exists.timezone',
                     'currency'                      => 'required|size:3',
                     'currency_symbol'               => 'required',
                     'vat_included'                  => 'required|in:yes,no',
                     'sector_of_activity'            => 'required',
                     'languages'                     => 'required|array',
-                    'mobile_default_language'       => 'required|size:2|valid_language',
+                    'mobile_default_language'       => 'required|size:2|orbit.formaterror.language',
                     'domain'                        => 'required',
                     'geo_point_latitude'            => 'required',
                     'geo_point_longitude'           => 'required',
@@ -365,10 +369,7 @@ class MallAPIController extends ControllerAPI
                     'contact_person_firstname.required' => 'The first name is required',
                     'contact_person_lastname.required'  => 'The last name is required',
                     'contact_person_phone.required'     => 'The phone number 1 is required',
-                    'contact_person_email.required'     => 'The email address is required',
-                    'orbit.empty.mall_status'           => 'Mall status you specified is not found',
-                    'valid_db_timezone_name'            => 'The :attribute must be an existing timezone',
-                    'valid_language'                    => 'The :attribute must be a valid language code'
+                    'contact_person_email.required'     => 'The email address is required'
                 )
             );
 
@@ -410,7 +411,7 @@ class MallAPIController extends ControllerAPI
                 $countryName = $countryObject->name;
             }
 
-            $timezone = App::make('valid_db_timezone_name');
+            $timezone = $this->valid_timezone;
 
             $newmall = new Mall();
             $newmall->user_id = $newuser->user_id;
@@ -475,10 +476,7 @@ class MallAPIController extends ControllerAPI
                         'language'             => $language_name
                     ),
                     array(
-                        'language'             => 'required|size:2|valid_language'
-                    ),
-                    array(
-                        'valid_language' => 'The :attribute must be a valid language code'
+                        'language'             => 'required|size:2|orbit.formaterror.language'
                     )
                 );
 
@@ -1501,11 +1499,11 @@ class MallAPIController extends ControllerAPI
                     'ticket_footer'                    => 'ticket_footer_max_length',
                     'start_date_activity'              => 'date_format:Y-m-d H:i:s',
                     'end_date_activity'                => 'date_format:Y-m-d H:i:s',
-                    'timezone'                         => 'valid_db_timezone_name',
+                    'timezone'                         => 'orbit.exists.timezone',
                     'currency'                         => 'size:3',
                     'vat_included'                     => 'in:yes,no',
                     'languages'                        => 'array',
-                    'mobile_default_language'          => 'size:2|valid_language',
+                    'mobile_default_language'          => 'size:2|orbit.formaterror.language',
                     // 'campaign_base_price_promotion' => 'format currency later will be check',
                     // 'campaign_base_price_coupon'    => 'format currency later will be check',
                     // 'campaign_base_price_news'      => 'format currency later will be check',
@@ -1522,9 +1520,7 @@ class MallAPIController extends ControllerAPI
                    'orbit_check_link_campaign'  => 'Mall is linked to active campaign(s)',
                    'ticket_header_max_length'   => Lang::get('validation.orbit.formaterror.merchant.ticket_header.max_length'),
                    'ticket_footer_max_length'   => Lang::get('validation.orbit.formaterror.merchant.ticket_footer.max_length'),
-                   'orbit_check_tenant_mall'    => 'Mall can not be deactivated, because it has active tenant',
-                   'valid_db_timezone_name'     => 'The :attribute must be an existing timezone',
-                   'valid_language'             => 'The :attribute must be a valid language code'
+                   'orbit_check_tenant_mall'    => 'Mall can not be deactivated, because it has active tenant'
                )
             );
 
@@ -1755,7 +1751,7 @@ class MallAPIController extends ControllerAPI
             });
 
             OrbitInput::post('timezone', function($timezoneName) use ($updatedmall) {
-                $timezone = App::make('valid_db_timezone_name');
+                $timezone = $this->valid_timezone;
                 $updatedmall->timezone_id = $timezone->timezone_id;
             });
 
@@ -1816,7 +1812,9 @@ class MallAPIController extends ControllerAPI
 
             OrbitInput::post('languages', function($languages) use ($updatedmall) {
                 if (! in_array('en', $languages)) {
-                    $languages[] = 'en'; //don't delete english
+                    // $languages[] = 'en'; //don't delete english
+                    $errorMessage = Lang::get('orbit.exists.default_language', ['attribute' => 'English']);
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
 
                 // new languages
@@ -1827,10 +1825,7 @@ class MallAPIController extends ControllerAPI
                             'language'             => $language_name
                         ),
                         array(
-                            'language'             => 'required|size:2|valid_language'
-                        ),
-                        array(
-                            'valid_language' => 'The :attribute must be a valid language code'
+                            'language'             => 'required|size:2|orbit.formaterror.language'
                         )
                     );
 
@@ -1840,7 +1835,7 @@ class MallAPIController extends ControllerAPI
                         OrbitShopAPI::throwInvalidArgument($errorMessage);
                     }
 
-                    $language_data = App::make('valid_language');
+                    $language_data = $this->valid_lang;
 
                     // check lang
                     $merchant_languages = MerchantLanguage::excludeDeleted()
@@ -1881,7 +1876,8 @@ class MallAPIController extends ControllerAPI
                                                 ->where('news.object_type', '=', 'news')
                                                 ->get();
                         if (count($news_translations) > 0) {
-                            $errorMessage = 'Can not delete language ' . $check_lang->name_long . ' because used on news';
+                            $errorMessage = Lang::get('orbit.exists.translation', ['attribute' => $check_lang->name_long,
+                                                                                    'link' => 'News']);
                             OrbitShopAPI::throwInvalidArgument($errorMessage);
                         }
 
@@ -1893,7 +1889,8 @@ class MallAPIController extends ControllerAPI
                                                 ->where('news.object_type', '=', 'promotion')
                                                 ->get();
                         if (count($promotion_translations) > 0) {
-                            $errorMessage = 'Can not delete language ' . $check_lang->name_long . ' because used on promotion';
+                            $errorMessage = Lang::get('orbit.exists.translation', ['attribute' => $check_lang->name_long,
+                                                                                    'link' => 'Promotions']);
                             OrbitShopAPI::throwInvalidArgument($errorMessage);
                         }
 
@@ -1902,7 +1899,8 @@ class MallAPIController extends ControllerAPI
                                                 ->where('merchant_language_id', '=', $check_lang->merchant_language_id)
                                                 ->get();
                         if (count($coupon_translations) > 0) {
-                            $errorMessage = 'Can not delete language ' . $check_lang->name_long . ' because used on coupon';
+                            $errorMessage = Lang::get('orbit.exists.translation', ['attribute' => $check_lang->name_long,
+                                                                                    'link' => 'Coupons']);
                             OrbitShopAPI::throwInvalidArgument($errorMessage);
                         }
 
@@ -1911,7 +1909,8 @@ class MallAPIController extends ControllerAPI
                                                 ->where('merchant_language_id', '=', $check_lang->merchant_language_id)
                                                 ->get();
                         if (count($event_translations) > 0) {
-                            $errorMessage = 'Can not delete language ' . $check_lang->name_long . ' because used on event';
+                            $errorMessage = Lang::get('orbit.exists.translation', ['attribute' => $check_lang->name_long,
+                                                                                    'link' => 'Events']);
                             OrbitShopAPI::throwInvalidArgument($errorMessage);
                         }
 
@@ -1920,7 +1919,8 @@ class MallAPIController extends ControllerAPI
                                                 ->where('merchant_language_id', '=', $check_lang->merchant_language_id)
                                                 ->get();
                         if (count($lucky_draw) > 0) {
-                            $errorMessage = 'Can not delete language ' . $check_lang->name_long . ' because used on lucky draw';
+                            $errorMessage = Lang::get('orbit.exists.translation', ['attribute' => $check_lang->name_long,
+                                                                                    'link' => 'Lucky Draws']);
                             OrbitShopAPI::throwInvalidArgument($errorMessage);
                         }
 
@@ -1929,7 +1929,8 @@ class MallAPIController extends ControllerAPI
                                                 ->where('merchant_language_id', '=', $check_lang->merchant_language_id)
                                                 ->get();
                         if (count($setting_translation) > 0) {
-                            $errorMessage = 'Can not delete language ' . $check_lang->name_long . ' because used on setting';
+                            $errorMessage = Lang::get('orbit.exists.translation', ['attribute' => $check_lang->name_long,
+                                                                                    'link' => 'Settings']);
                             OrbitShopAPI::throwInvalidArgument($errorMessage);
                         }
 
@@ -1938,7 +1939,8 @@ class MallAPIController extends ControllerAPI
                                                 ->where('merchant_language_id', '=', $check_lang->merchant_language_id)
                                                 ->get();
                         if (count($widget_translation) > 0) {
-                            $errorMessage = 'Can not delete language ' . $check_lang->name_long . ' because used on widget';
+                            $errorMessage = Lang::get('orbit.exists.translation', ['attribute' => $check_lang->name_long,
+                                                                                    'link' => 'Widgets']);
                             OrbitShopAPI::throwInvalidArgument($errorMessage);
                         }
 
@@ -1947,7 +1949,8 @@ class MallAPIController extends ControllerAPI
                                                 ->where('merchant_language_id', '=', $check_lang->merchant_language_id)
                                                 ->get();
                         if (count($category_translation) > 0) {
-                            $errorMessage = 'Can not delete language ' . $check_lang->name_long . ' because used on category';
+                            $errorMessage = Lang::get('orbit.exists.translation', ['attribute' => $check_lang->name_long,
+                                                                                    'link' => 'Categories']);
                             OrbitShopAPI::throwInvalidArgument($errorMessage);
                         }
 
@@ -1956,7 +1959,8 @@ class MallAPIController extends ControllerAPI
                                                 ->where('merchant_language_id', '=', $check_lang->merchant_language_id)
                                                 ->get();
                         if (count($lucky_draw_announcement_translation) > 0) {
-                            $errorMessage = 'Can not delete language ' . $check_lang->name_long . ' because used on lucky draw announcement';
+                            $errorMessage = Lang::get('orbit.exists.translation', ['attribute' => $check_lang->name_long,
+                                                        'link' => 'Lucky Draw Announcement']);
                             OrbitShopAPI::throwInvalidArgument($errorMessage);
                         }
 
@@ -1968,7 +1972,8 @@ class MallAPIController extends ControllerAPI
                                                 ->where('merchant_language_id', '=', $check_lang->merchant_language_id)
                                                 ->get();
                         if (count($mall_group_translation) > 0) {
-                            $errorMessage = 'Can not delete language ' . $check_lang->name_long . ' because used on mall group';
+                            $errorMessage = Lang::get('orbit.exists.translation', ['attribute' => $check_lang->name_long,
+                                                                                    'link' => 'Mall Group']);
                             OrbitShopAPI::throwInvalidArgument($errorMessage);
                         }
 
@@ -1980,7 +1985,8 @@ class MallAPIController extends ControllerAPI
                                                 ->where('merchant_language_id', '=', $check_lang->merchant_language_id)
                                                 ->get();
                         if (count($mall_translation) > 0) {
-                            $errorMessage = 'Can not delete language ' . $check_lang->name_long . ' because used on mall';
+                            $errorMessage = Lang::get('orbit.exists.translation', ['attribute' => $check_lang->name_long,
+                                                                                    'link' => 'Mall']);
                             OrbitShopAPI::throwInvalidArgument($errorMessage);
                         }
 
@@ -1992,7 +1998,8 @@ class MallAPIController extends ControllerAPI
                                                 ->where('merchant_language_id', '=', $check_lang->merchant_language_id)
                                                 ->get();
                         if (count($tenant_translation) > 0) {
-                            $errorMessage = 'Can not delete language ' . $check_lang->name_long . ' because used on tenant';
+                            $errorMessage = Lang::get('orbit.exists.translation', ['attribute' => $check_lang->name_long,
+                                                                                    'link' => 'Tenant']);
                             OrbitShopAPI::throwInvalidArgument($errorMessage);
                         }
 
@@ -2004,7 +2011,8 @@ class MallAPIController extends ControllerAPI
                                                 ->where('merchant_language_id', '=', $check_lang->merchant_language_id)
                                                 ->get();
                         if (count($merchant_translation) > 0) {
-                            $errorMessage = 'Can not delete language ' . $check_lang->name_long . ' because used on merchant';
+                            $errorMessage = Lang::get('orbit.exists.translation', ['attribute' => $check_lang->name_long,
+                                                                                    'link' => 'Merchant']);
                             OrbitShopAPI::throwInvalidArgument($errorMessage);
                         }
 
@@ -2016,7 +2024,8 @@ class MallAPIController extends ControllerAPI
                                                 ->where('merchant_language_id', '=', $check_lang->merchant_language_id)
                                                 ->get();
                         if (count($retailer_translation) > 0) {
-                            $errorMessage = 'Can not delete language ' . $check_lang->name_long . ' because used on retailer';
+                            $errorMessage = Lang::get('orbit.exists.translation', ['attribute' => $check_lang->name_long,
+                                                                                    'link' => 'Retailer']);
                             OrbitShopAPI::throwInvalidArgument($errorMessage);
                         }
                         //colect language will be delete
@@ -2076,7 +2085,8 @@ class MallAPIController extends ControllerAPI
                                     ->where('merchant_id', $updatedmall->merchant_id)
                                     ->first();
                       if (! empty($tenant)) {
-                          $errorMessage = 'Can not delete floor ' . $check_floor->object_name . ' because used on tenant';
+                          $errorMessage = Lang::get('orbit.exists.link_floor', ['attribute' => $check_floor->object_name,
+                                                                                    'link' => 'Tenant']);
                           OrbitShopAPI::throwInvalidArgument($errorMessage);
                       }
                       $del_floor[] = $check_floor->object_name;
@@ -2103,12 +2113,12 @@ class MallAPIController extends ControllerAPI
                         }
 
                         // default language is name of category
-                        $default_translation = $category->default;
+                        $default_category_name = $category->default;
 
                         // check default
                         $validator = Validator::make(
                             array(
-                                'default'       => $default_translation
+                                'default'       => $default_category_name
                             ),
                             array(
                                 'default'       => 'required'
@@ -2124,7 +2134,7 @@ class MallAPIController extends ControllerAPI
                         // check exist category on mall
                         $categories_mall = Category::excludeDeleted()
                                                 ->where('merchant_id', $updatedmall->merchant_id)
-                                                ->where('category_name', $default_translation)
+                                                ->where('category_name', $default_category_name)
                                                 ->first();
 
                         if (count($categories_mall) > 0) {
@@ -2138,10 +2148,7 @@ class MallAPIController extends ControllerAPI
                                             'language'             => $key
                                         ),
                                         array(
-                                            'language'             => 'required|size:2|valid_mall_language:' . $updatedmall->merchant_id
-                                        ),
-                                        array(
-                                            'valid_language' => 'The :attribute must be a valid language code'
+                                            'language'             => 'required|size:2|orbit.exists.mall_language:' . $updatedmall->merchant_id
                                         )
                                     );
                                     // Run the validation
@@ -2151,7 +2158,7 @@ class MallAPIController extends ControllerAPI
                                     }
 
                                     // create from instance valid_mall_language
-                                    $mall_lang = App::make('valid_mall_language');
+                                    $mall_lang = $this->valid_mall_lang;
 
                                     // check category translation
                                     $update_category_translation = CategoryTranslation::excludeDeleted()
@@ -2182,7 +2189,7 @@ class MallAPIController extends ControllerAPI
                             // create new category
                             $new_category = new Category();
                             $new_category->merchant_id       = $updatedmall->merchant_id;
-                            $new_category->category_name     = $default_translation;
+                            $new_category->category_name     = $default_category_name;
                             $new_category->category_level    = 1;
                             $new_category->category_order    = 0;
                             $new_category->status            = 'active';
@@ -2199,10 +2206,7 @@ class MallAPIController extends ControllerAPI
                                             'language'             => $key
                                         ),
                                         array(
-                                            'language'             => 'required|size:2|valid_mall_language:' . $updatedmall->merchant_id
-                                        ),
-                                        array(
-                                            'valid_language' => 'The :attribute must be a valid language code'
+                                            'language'             => 'required|size:2|orbit.exists.mall_language:' . $updatedmall->merchant_id
                                         )
                                     );
                                     // Run the validation
@@ -2212,7 +2216,7 @@ class MallAPIController extends ControllerAPI
                                     }
 
                                     // create from instance valid_mall_language
-                                    $mall_lang = App::make('valid_mall_language');
+                                    $mall_lang = $this->mall_lang;
 
                                     // insert new category translation
                                     $new_category_translation = new CategoryTranslation();
@@ -2246,7 +2250,8 @@ class MallAPIController extends ControllerAPI
                                             ->where('category_merchant.category_id', $check_category->category_id)
                                             ->first();
                         if (count($link_category) > 0) {
-                            $errorMessage = 'Can not delete category ' . $link_category->category_name . ' because used on tenant';
+                            $errorMessage = Lang::get('orbit.exists.link_floor', ['attribute' => $link_category->category_name,
+                                                                                    'link' => 'Tenant']);
                             OrbitShopAPI::throwInvalidArgument($errorMessage);
                         } else {
                             // collect category_id
@@ -3058,7 +3063,7 @@ class MallAPIController extends ControllerAPI
             return TRUE;
         });
 
-        Validator::extend('valid_db_timezone_name', function($attribute, $value, $parameters) {
+        Validator::extend('orbit.exists.timezone', function($attribute, $value, $parameters) {
             $timezone = Timezone::where('timezone_name', $value)
                 ->first();
 
@@ -3066,12 +3071,12 @@ class MallAPIController extends ControllerAPI
                 return FALSE;
             }
 
-            App::instance('valid_db_timezone_name', $timezone);
+            $this->valid_timezone = $timezone;
 
             return TRUE;
         });
 
-        Validator::extend('valid_language', function($attribute, $value, $parameters)
+        Validator::extend('orbit.formaterror.language', function($attribute, $value, $parameters)
         {
             $lang = Language::where('name', '=', $value)->where('status', '=', 'active')->first();
 
@@ -3079,7 +3084,7 @@ class MallAPIController extends ControllerAPI
                 return FALSE;
             }
 
-            App::instance('valid_language', $lang);
+            $this->valid_lang = $lang;
             return TRUE;
         });
     }
