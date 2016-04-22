@@ -142,6 +142,7 @@ return array(
             'translation'            => 'The translation :attribute cannot be deleted: because used on :link',
             'link_floor'             => 'The floor :attribute cannot be deleted: because used on :link',
             'link_category'          => 'The category :attribute cannot be deleted: because used on :link',
+            'mall_language'          => 'The :attribute must be an existing language',
         ),
         'access' => array(
             'forbidden'              => 'You do not have permission to :action',

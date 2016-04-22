@@ -3087,6 +3087,24 @@ class MallAPIController extends ControllerAPI
             $this->valid_lang = $lang;
             return TRUE;
         });
+
+        Validator::extend('orbit.exists.mall_language', function($attribute, $value, $parameters)
+        {
+            $mall_id = $parameters[0];
+            $lang = MerchantLanguage::excludeDeleted('merchant_languages')
+                        ->excludeDeleted('languages')
+                        ->join('languages', 'languages.language_id', '=', 'merchant_languages.language_id')
+                        ->where('merchant_languages.merchant_id', $mall_id)
+                        ->where('languages.name', $value)
+                        ->first();
+
+            if (empty($lang)) {
+                return FALSE;
+            }
+
+            $this->valid_mall_lang = $lang;
+            return TRUE;
+        });
     }
 
 
