@@ -75,6 +75,7 @@ return array(
         'no_luckydraws_listing'        => 'Sorry, there is no lucky draws at the moment in this mall.',
         'no_news_listing'              => 'Sorry, there is no news at the moment in this mall.',
         'no_promotions_listing'        => 'Sorry, there is no promotions at the moment in this mall.',
+        'no_stores_listing'            => 'Sorry, there is no stores at the moment in this mall.',
     ),
 
     // modal specific lang
