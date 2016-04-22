@@ -49,7 +49,7 @@
 <div class="row vertically-spaced">
     @if(count($news->tenants) > 0)
     <div class="col-xs-12 text-center padded">
-        <a href="{{{ $urlblock->blockedRoute('ci-tenants', ['news_id' => $news->news_id]) }}}" class="btn btn-info btn-block">{{{ Lang::get('mobileci.tenant.see_tenants') }}}</a>
+        <a data-href="{{ route('ci-tenant-list', ['news_id' => $news->news_id]) }}" href="{{{ $urlblock->blockedRoute('ci-tenant-list', ['news_id' => $news->news_id]) }}}" class="btn btn-info btn-block">{{{ Lang::get('mobileci.tenant.see_tenants') }}}</a>
     </div>
     @else
     <div class="col-xs-12 text-center padded">
