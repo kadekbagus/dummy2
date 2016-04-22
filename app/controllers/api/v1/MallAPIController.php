@@ -2105,6 +2105,22 @@ class MallAPIController extends ControllerAPI
                         // default language is name of category
                         $default_translation = $category->default;
 
+                        // check default
+                        $validator = Validator::make(
+                            array(
+                                'default'       => $default_translation
+                            ),
+                            array(
+                                'default'       => 'required'
+                            )
+                        );
+
+                        // Run the validation
+                        if ($validator->fails()) {
+                            $errorMessage = $validator->messages()->first();
+                            OrbitShopAPI::throwInvalidArgument($errorMessage);
+                        }
+
                         // check exist category on mall
                         $categories_mall = Category::excludeDeleted()
                                                 ->where('merchant_id', $updatedmall->merchant_id)
