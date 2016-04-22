@@ -238,9 +238,16 @@ class MobileCIAPIController extends BaseCIController
         $activityPage = Activity::mobileci()
                             ->setActivityType('view');
         try {
+            $retailer = $this->getRetailerInfo('merchantSocialMedia');
+            $from_main = OrbitInput::get('from_main', 'false');
+            if ($from_main === 'true') {
+                $landing_url = $this->getLandingUrl($retailer);
+
+                return Redirect::to($landing_url);
+            }
+
             $urlblock = new UrlBlock;
             $user = $urlblock->checkBlockedUrl();
-            $retailer = $this->getRetailerInfo('merchantSocialMedia');
             $this->acquireUser($retailer, $user);
             Coupon::issueAutoCoupon($retailer, $user, $urlblock->getUserSession());
 
@@ -331,7 +338,8 @@ class MobileCIAPIController extends BaseCIController
                     } else {
                         $widget->display_sub_title = Lang::get('mobileci.widgets.tenants_single');
                     }
-                    $widget->url = 'tenants';
+                    $widget->url = $urlblock->blockedRoute('ci-tenant-list');
+                    $widget->redirect_url = URL::route('ci-tenant-list');
                 }
                 if ($widget->widget_type == 'promotion') {
 
@@ -438,7 +446,8 @@ class MobileCIAPIController extends BaseCIController
                     } else {
                         $widget->display_sub_title = Lang::get('mobileci.widgets.promotions_single');
                     }
-                    $widget->url = 'mallpromotions';
+                    $widget->url = $urlblock->blockedRoute('ci-promotion-list');
+                    $widget->redirect_url = URL::route('ci-promotion-list');
                 }
                 if ($widget->widget_type == 'news') {
 
@@ -547,7 +556,8 @@ class MobileCIAPIController extends BaseCIController
                     } else {
                         $widget->display_sub_title = Lang::get('mobileci.widgets.newss_single');
                     }
-                    $widget->url = 'mallnews';
+                    $widget->url = $urlblock->blockedRoute('ci-news-list');
+                    $widget->redirect_url = URL::route('ci-news-list');
                 }
                 if ($widget->widget_type == 'coupon') {
                     $userAge = 0;
@@ -691,7 +701,8 @@ class MobileCIAPIController extends BaseCIController
                     } else {
                         $widget->display_sub_title = Lang::get('mobileci.widgets.coupons_single');
                     }
-                    $widget->url = 'mallcoupons';
+                    $widget->url = $urlblock->blockedRoute('ci-coupon-list');
+                    $widget->redirect_url = URL::route('ci-coupon-list');
                 }
                 if ($widget->widget_type == 'lucky_draw') {
                     $luckydrawsCount = LuckyDraw::active()
@@ -732,7 +743,8 @@ class MobileCIAPIController extends BaseCIController
                     } else {
                         $widget->display_sub_title = Lang::get('mobileci.widgets.lucky_draws_single');
                     }
-                    $widget->url = 'luckydraws';
+                    $widget->url = $urlblock->blockedRoute('ci-luckydraw-list');
+                    $widget->redirect_url = URL::route('ci-luckydraw-list');
                 }
             }
 
@@ -970,6 +982,7 @@ class MobileCIAPIController extends BaseCIController
     {
         $agree_to_terms = \Input::get('agree_to_terms', 'no');
         $caller_url = OrbitInput::post('from_url', 'ci-home');
+        $redirect_to_url = OrbitInput::post('to_url', URL::route('ci-customer-home'));
 
         if ($agree_to_terms !== 'yes') {
             return Redirect::route('mobile-ci.signin', ['error' => Lang::get('captive-portal.signin.must_accept_terms')]);
@@ -986,7 +999,14 @@ class MobileCIAPIController extends BaseCIController
 
         $helper = $fb->getRedirectLoginHelper();
         $permissions = Config::get('orbit.social.facebook.scope', ['email', 'public_profile']);
-        $facebookCallbackUrl = URL::route('mobile-ci.social_login_callback', ['caller_url' => $caller_url , 'orbit_origin' => 'facebook', 'from_captive' => OrbitInput::post('from_captive'), 'mac_address' => \Input::get('mac_address', '')]);
+        $facebookCallbackUrl = URL::route('mobile-ci.social_login_callback', 
+            [
+                'caller_url' => $caller_url ,
+                'orbit_origin' => 'facebook',
+                'from_captive' => OrbitInput::post('from_captive'),
+                'mac_address' => \Input::get('mac_address', ''), 
+                'redirect_to_url' => $redirect_to_url
+            ]);
 
         // This is to re-popup the permission on login in case some of the permissions revoked by user
         $rerequest = '&auth_type=rerequest';
@@ -1032,14 +1052,16 @@ class MobileCIAPIController extends BaseCIController
 
         $recognized = \Input::get('recognized', 'none');
         $code = \Input::get('code', NULL);
-        $caller_url = OrbitInput::post('from_url', 'ci-home');
+        $state = \Input::get('state', NULL);
+        $caller_url = OrbitInput::get('from_url', 'ci-customer-home');
+        $redirect_to_url = OrbitInput::get('to_url', URL::route('ci-customer-home'));
 
         $googleService = OAuth::consumer( 'Google' );
 
         // todo handle google error
         if ( !empty( $code ) ) {
             try {
-
+                $redirect_to_url_from_state = json_decode($this->base64UrlDecode($state))->redirect_to_url;
                 Config::set('orbit.session.availability.query_string', $oldRouteSessionConfigValue);
                 $token = $googleService->requestAccessToken( $code );
 
@@ -1070,7 +1092,7 @@ class MobileCIAPIController extends BaseCIController
                 // There is a chance that user not 'grant' his email while approving our app
                 // so we double check it here
                 if (empty($userEmail)) {
-                    return Redirect::route('mobile-ci.signin', ['error' => 'Email is required.']);
+                    return Redirect::route('ci-customer-home', ['error' => 'Email is required.']);
                 }
 
                 $key = $this->getPayloadEncryptionKey();
@@ -1098,8 +1120,7 @@ class MobileCIAPIController extends BaseCIController
                     $session = $urlblock->getUserSession();
                     $session->write('visited_location', [$retailer->merchant_id]);
 
-                    // todo can we not do this directly
-                    return Redirect::route($caller_url, $query);
+                    return Redirect::to($redirect_to_url_from_state);
                 } else {
                     // register user without password and birthdate
                     $_POST['email'] = $userEmail;
@@ -1125,7 +1146,7 @@ class MobileCIAPIController extends BaseCIController
 
                     $this->acquireUser($retailer, $loggedInUser, 'google');
 
-                    return Redirect::route($caller_url, $query);
+                    return Redirect::to($redirect_to_url_from_state);
                 }
 
             } catch (Exception $e) {
@@ -1137,7 +1158,19 @@ class MobileCIAPIController extends BaseCIController
             try {
                 // get googleService authorization
                 $url = $googleService->getAuthorizationUri();
-                return Redirect::to( (string)$url );
+                // override state param to have our destination url inside
+                $state_array = array('redirect_to_url' => $redirect_to_url);
+                $state = json_encode($state_array);
+                $stateString = $this->base64UrlEncode($state);
+                $parsed_url = parse_url((string)$url);
+                $query = parse_str($parsed_url['query'], $output);
+                $output['state'] = $stateString;
+                $query_string = http_build_query($output);
+                $parsed_url['query'] = $query_string;
+                // rebuild the googleService authorization url
+                $new_url = $parsed_url['scheme'] . '://' . $parsed_url['host'] . $parsed_url['path'] . '?' . $parsed_url['query'];
+
+                return Redirect::to((string)$new_url);
             } catch (Exception $e) {
                 $errorMessage = 'Error: ' . $e->getMessage();
                 return Redirect::route($caller_url, ['error' => $errorMessage]);
@@ -1150,6 +1183,7 @@ class MobileCIAPIController extends BaseCIController
         $recognized = \Input::get('recognized', 'none');
         $caller_url = \Input::get('caller_url', NULL);
         $caller_url = ! is_null($caller_url) ? $caller_url : 'ci-home';
+        $redirect_to_url = \Input::get('redirect_to_url', NULL);
         // error=access_denied&
         // error_code=200&
         // error_description=Permissions+error
@@ -1258,7 +1292,7 @@ class MobileCIAPIController extends BaseCIController
             $session = $urlblock->getUserSession();
             $session->write('visited_location', [$retailer->merchant_id]);
 
-            return Redirect::route($caller_url, $query);
+            return Redirect::to($redirect_to_url);
         } else {
             // register user without password and birthdate
             $_POST['email'] = $userEmail;
@@ -1282,7 +1316,7 @@ class MobileCIAPIController extends BaseCIController
 
             $this->acquireUser($retailer, $loggedInUser, 'facebook');
 
-            return Redirect::route($caller_url, $query);
+            return Redirect::to($redirect_to_url);
         }
     }
 
