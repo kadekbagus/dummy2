@@ -2093,11 +2093,13 @@ class MallAPIController extends ControllerAPI
                     }
 
                     //delete floor
-                    $delete_floor = Object::excludeDeleted()
-                                    ->where('object_type', 'floor')
-                                    ->where('merchant_id', $updatedmall->merchant_id)
-                                    ->whereIn('object_name', $del_floor)
-                                    ->update(["status" => "deleted"]);
+                    if (count($del_floor) > 0) {
+                        $delete_floor = Object::excludeDeleted()
+                                      ->where('object_type', 'floor')
+                                      ->where('merchant_id', $updatedmall->merchant_id)
+                                      ->whereIn('object_name', $del_floor)
+                                      ->update(["status" => "deleted"]);
+                    }
                 }
             });
 
