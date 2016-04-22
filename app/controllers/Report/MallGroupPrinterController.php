@@ -85,6 +85,7 @@ class MallGroupPrinterController extends DataPrinterController
                        );
 
                 }
+                exit;
                 break;
 
             case 'print':

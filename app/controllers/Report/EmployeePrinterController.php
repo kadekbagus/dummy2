@@ -133,6 +133,7 @@ class EmployeePrinterController extends DataPrinterController
                        );
 
                 }
+                exit;
                 break;
 
             case 'print':

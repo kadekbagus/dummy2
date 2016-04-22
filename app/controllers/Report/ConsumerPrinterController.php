@@ -113,6 +113,7 @@ class ConsumerPrinterController extends DataPrinterController
                     }
 
                 }
+                exit;
                 break;
 
             case 'print':

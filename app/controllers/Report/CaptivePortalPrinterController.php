@@ -67,6 +67,7 @@ class CaptivePortalPrinterController extends DataPrinterController
                     $count++;
 
                 }
+                exit;
                 break;
 
             case 'print':
