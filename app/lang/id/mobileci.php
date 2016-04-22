@@ -44,7 +44,7 @@ return array(
         'back_to_map_lower' => 'Kembali ke Peta',
     ),
 
-    'widgets'   => array(
+    'widgets' => array(
         'catalogue'             => 'KATALOG',
         'new_product'           => 'PRODUK TERBARU',
         'promotion'             => 'PROMOSI',
@@ -64,17 +64,21 @@ return array(
         'newss_single'          => 'Berita',
     ),
 
-    'greetings'         => array(
-        'welcome'                       => 'Selamat Datang',
-        'latest_news_coming_soon'       => 'Periksa berita terbaru kami yang akan datang.',
-        'new_promotions_coming_soon'    => 'Periksa promosi baru kami yang akan datang.',
-        'how_to_get_coupons'            => 'Silahkan hubungi customer service untuk mengetahui cara mendapatkan kupon.',
-        'find_our_exciting'             => 'Temukan penawaran menarik dan berita terbaru dari kami disini. Jangan lupa tukarkan struk belanja anda dan dapatkan kesempatan untuk memenangkan sebuah mobil !',
-        'latest_luckydraw_coming_soon'  => 'Periksa undian berhadiah kami yang akan datang.',
+    'greetings' => array(
+        'welcome'                      => 'Selamat Datang',
+        'latest_news_coming_soon'      => 'Periksa berita terbaru kami yang akan datang.',
+        'new_promotions_coming_soon'   => 'Periksa promosi baru kami yang akan datang.',
+        'how_to_get_coupons'           => 'Silahkan hubungi customer service untuk mengetahui cara mendapatkan kupon.',
+        'find_our_exciting'            => 'Temukan penawaran menarik dan berita terbaru dari kami disini. Jangan lupa tukarkan struk belanja anda dan dapatkan kesempatan untuk memenangkan sebuah mobil !',
+        'latest_luckydraw_coming_soon' => 'Periksa undian berhadiah kami yang akan datang.',
+        'no_coupons_listing'           => 'Maaf, tidak ada kupon pada saat di mal ini.',
+        'no_luckydraws_listing'        => 'Maaf, tidak ada lucky draw pada saat di mal ini.',
+        'no_news_listing'              => 'Maaf, tidak ada berita pada saat di mal ini.',
+        'no_promotions_listing'        => 'Maaf, tidak ada promosi pada saat di mal ini.',
     ),
 
     // modal specific lang
-    'modals'                     => array(
+    'modals' => array(
         'close'                  => 'Tutup',
         'ok'                     => 'OKE',
         'email_error'            => 'Harap isi email terlebih dahulu.',
