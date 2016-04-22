@@ -1813,7 +1813,7 @@ class MallAPIController extends ControllerAPI
             OrbitInput::post('languages', function($languages) use ($updatedmall) {
                 if (! in_array('en', $languages)) {
                     // $languages[] = 'en'; //don't delete english
-                    $errorMessage = Lang::get('orbit.exists.default_language', ['attribute' => 'English']);
+                    $errorMessage = Lang::get('validation.orbit.exists.default_language', ['attribute' => 'English']);
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
 
@@ -1876,7 +1876,7 @@ class MallAPIController extends ControllerAPI
                                                 ->where('news.object_type', '=', 'news')
                                                 ->get();
                         if (count($news_translations) > 0) {
-                            $errorMessage = Lang::get('orbit.exists.translation', ['attribute' => $check_lang->name_long,
+                            $errorMessage = Lang::get('validation.orbit.exists.translation', ['attribute' => $check_lang->name_long,
                                                                                     'link' => 'News']);
                             OrbitShopAPI::throwInvalidArgument($errorMessage);
                         }
@@ -1889,7 +1889,7 @@ class MallAPIController extends ControllerAPI
                                                 ->where('news.object_type', '=', 'promotion')
                                                 ->get();
                         if (count($promotion_translations) > 0) {
-                            $errorMessage = Lang::get('orbit.exists.translation', ['attribute' => $check_lang->name_long,
+                            $errorMessage = Lang::get('validation.orbit.exists.translation', ['attribute' => $check_lang->name_long,
                                                                                     'link' => 'Promotions']);
                             OrbitShopAPI::throwInvalidArgument($errorMessage);
                         }
@@ -1899,7 +1899,7 @@ class MallAPIController extends ControllerAPI
                                                 ->where('merchant_language_id', '=', $check_lang->merchant_language_id)
                                                 ->get();
                         if (count($coupon_translations) > 0) {
-                            $errorMessage = Lang::get('orbit.exists.translation', ['attribute' => $check_lang->name_long,
+                            $errorMessage = Lang::get('validation.orbit.exists.translation', ['attribute' => $check_lang->name_long,
                                                                                     'link' => 'Coupons']);
                             OrbitShopAPI::throwInvalidArgument($errorMessage);
                         }
@@ -1909,7 +1909,7 @@ class MallAPIController extends ControllerAPI
                                                 ->where('merchant_language_id', '=', $check_lang->merchant_language_id)
                                                 ->get();
                         if (count($event_translations) > 0) {
-                            $errorMessage = Lang::get('orbit.exists.translation', ['attribute' => $check_lang->name_long,
+                            $errorMessage = Lang::get('validation.orbit.exists.translation', ['attribute' => $check_lang->name_long,
                                                                                     'link' => 'Events']);
                             OrbitShopAPI::throwInvalidArgument($errorMessage);
                         }
@@ -1919,7 +1919,7 @@ class MallAPIController extends ControllerAPI
                                                 ->where('merchant_language_id', '=', $check_lang->merchant_language_id)
                                                 ->get();
                         if (count($lucky_draw) > 0) {
-                            $errorMessage = Lang::get('orbit.exists.translation', ['attribute' => $check_lang->name_long,
+                            $errorMessage = Lang::get('validation.orbit.exists.translation', ['attribute' => $check_lang->name_long,
                                                                                     'link' => 'Lucky Draws']);
                             OrbitShopAPI::throwInvalidArgument($errorMessage);
                         }
@@ -1929,7 +1929,7 @@ class MallAPIController extends ControllerAPI
                                                 ->where('merchant_language_id', '=', $check_lang->merchant_language_id)
                                                 ->get();
                         if (count($setting_translation) > 0) {
-                            $errorMessage = Lang::get('orbit.exists.translation', ['attribute' => $check_lang->name_long,
+                            $errorMessage = Lang::get('validation.orbit.exists.translation', ['attribute' => $check_lang->name_long,
                                                                                     'link' => 'Settings']);
                             OrbitShopAPI::throwInvalidArgument($errorMessage);
                         }
@@ -1939,7 +1939,7 @@ class MallAPIController extends ControllerAPI
                                                 ->where('merchant_language_id', '=', $check_lang->merchant_language_id)
                                                 ->get();
                         if (count($widget_translation) > 0) {
-                            $errorMessage = Lang::get('orbit.exists.translation', ['attribute' => $check_lang->name_long,
+                            $errorMessage = Lang::get('validation.orbit.exists.translation', ['attribute' => $check_lang->name_long,
                                                                                     'link' => 'Widgets']);
                             OrbitShopAPI::throwInvalidArgument($errorMessage);
                         }
@@ -1949,7 +1949,7 @@ class MallAPIController extends ControllerAPI
                                                 ->where('merchant_language_id', '=', $check_lang->merchant_language_id)
                                                 ->get();
                         if (count($category_translation) > 0) {
-                            $errorMessage = Lang::get('orbit.exists.translation', ['attribute' => $check_lang->name_long,
+                            $errorMessage = Lang::get('validation.orbit.exists.translation', ['attribute' => $check_lang->name_long,
                                                                                     'link' => 'Categories']);
                             OrbitShopAPI::throwInvalidArgument($errorMessage);
                         }
@@ -1959,7 +1959,7 @@ class MallAPIController extends ControllerAPI
                                                 ->where('merchant_language_id', '=', $check_lang->merchant_language_id)
                                                 ->get();
                         if (count($lucky_draw_announcement_translation) > 0) {
-                            $errorMessage = Lang::get('orbit.exists.translation', ['attribute' => $check_lang->name_long,
+                            $errorMessage = Lang::get('validation.orbit.exists.translation', ['attribute' => $check_lang->name_long,
                                                         'link' => 'Lucky Draw Announcement']);
                             OrbitShopAPI::throwInvalidArgument($errorMessage);
                         }
@@ -1972,7 +1972,7 @@ class MallAPIController extends ControllerAPI
                                                 ->where('merchant_language_id', '=', $check_lang->merchant_language_id)
                                                 ->get();
                         if (count($mall_group_translation) > 0) {
-                            $errorMessage = Lang::get('orbit.exists.translation', ['attribute' => $check_lang->name_long,
+                            $errorMessage = Lang::get('validation.orbit.exists.translation', ['attribute' => $check_lang->name_long,
                                                                                     'link' => 'Mall Group']);
                             OrbitShopAPI::throwInvalidArgument($errorMessage);
                         }
@@ -1985,7 +1985,7 @@ class MallAPIController extends ControllerAPI
                                                 ->where('merchant_language_id', '=', $check_lang->merchant_language_id)
                                                 ->get();
                         if (count($mall_translation) > 0) {
-                            $errorMessage = Lang::get('orbit.exists.translation', ['attribute' => $check_lang->name_long,
+                            $errorMessage = Lang::get('validation.orbit.exists.translation', ['attribute' => $check_lang->name_long,
                                                                                     'link' => 'Mall']);
                             OrbitShopAPI::throwInvalidArgument($errorMessage);
                         }
@@ -1998,7 +1998,7 @@ class MallAPIController extends ControllerAPI
                                                 ->where('merchant_language_id', '=', $check_lang->merchant_language_id)
                                                 ->get();
                         if (count($tenant_translation) > 0) {
-                            $errorMessage = Lang::get('orbit.exists.translation', ['attribute' => $check_lang->name_long,
+                            $errorMessage = Lang::get('validation.orbit.exists.translation', ['attribute' => $check_lang->name_long,
                                                                                     'link' => 'Tenant']);
                             OrbitShopAPI::throwInvalidArgument($errorMessage);
                         }
@@ -2011,7 +2011,7 @@ class MallAPIController extends ControllerAPI
                                                 ->where('merchant_language_id', '=', $check_lang->merchant_language_id)
                                                 ->get();
                         if (count($merchant_translation) > 0) {
-                            $errorMessage = Lang::get('orbit.exists.translation', ['attribute' => $check_lang->name_long,
+                            $errorMessage = Lang::get('validation.orbit.exists.translation', ['attribute' => $check_lang->name_long,
                                                                                     'link' => 'Merchant']);
                             OrbitShopAPI::throwInvalidArgument($errorMessage);
                         }
@@ -2024,7 +2024,7 @@ class MallAPIController extends ControllerAPI
                                                 ->where('merchant_language_id', '=', $check_lang->merchant_language_id)
                                                 ->get();
                         if (count($retailer_translation) > 0) {
-                            $errorMessage = Lang::get('orbit.exists.translation', ['attribute' => $check_lang->name_long,
+                            $errorMessage = Lang::get('validation.orbit.exists.translation', ['attribute' => $check_lang->name_long,
                                                                                     'link' => 'Retailer']);
                             OrbitShopAPI::throwInvalidArgument($errorMessage);
                         }
@@ -2085,7 +2085,7 @@ class MallAPIController extends ControllerAPI
                                     ->where('merchant_id', $updatedmall->merchant_id)
                                     ->first();
                       if (! empty($tenant)) {
-                          $errorMessage = Lang::get('orbit.exists.link_floor', ['attribute' => $check_floor->object_name,
+                          $errorMessage = Lang::get('validation.orbit.exists.link_floor', ['attribute' => $check_floor->object_name,
                                                                                     'link' => 'Tenant']);
                           OrbitShopAPI::throwInvalidArgument($errorMessage);
                       }
@@ -2250,7 +2250,7 @@ class MallAPIController extends ControllerAPI
                                             ->where('category_merchant.category_id', $check_category->category_id)
                                             ->first();
                         if (count($link_category) > 0) {
-                            $errorMessage = Lang::get('orbit.exists.link_floor', ['attribute' => $link_category->category_name,
+                            $errorMessage = Lang::get('validation.orbit.exists.link_floor', ['attribute' => $link_category->category_name,
                                                                                     'link' => 'Tenant']);
                             OrbitShopAPI::throwInvalidArgument($errorMessage);
                         } else {
