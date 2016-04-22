@@ -1061,7 +1061,7 @@ class MobileCIAPIController extends BaseCIController
         // todo handle google error
         if ( !empty( $code ) ) {
             try {
-                $redirect_to_url_from_state = json_decode($this->base64UrlDecode($state))->redirect_to_url;
+                $redirect_to_url_from_state = $this->remove_querystring_var(json_decode($this->base64UrlDecode($state))->redirect_to_url, $this->getOrbitSessionQueryStringName());
                 Config::set('orbit.session.availability.query_string', $oldRouteSessionConfigValue);
                 $token = $googleService->requestAccessToken( $code );
 
@@ -1183,7 +1183,8 @@ class MobileCIAPIController extends BaseCIController
         $recognized = \Input::get('recognized', 'none');
         $caller_url = \Input::get('caller_url', NULL);
         $caller_url = ! is_null($caller_url) ? $caller_url : 'ci-home';
-        $redirect_to_url = \Input::get('redirect_to_url', NULL);
+        $redirect_to_url = \Input::get('redirect_to_url', URL::route('ci-customer-home'));
+        $redirect_to_url = $this->remove_querystring_var($redirect_to_url, $this->getOrbitSessionQueryStringName());
         // error=access_denied&
         // error_code=200&
         // error_description=Permissions+error
@@ -9150,7 +9151,8 @@ class MobileCIAPIController extends BaseCIController
 
             $urlblock = new UrlBlock;
             // append the redirect url to user object
-            $user->redirect_to = $to_url;
+            // remove the orbit_session from query string for this redirect url
+            $user->redirect_to = $this->remove_querystring_var($to_url, $this->getOrbitSessionQueryStringName());
 
             // do the stage 2
             $notAllowedStatus = ['inactive'];
@@ -9206,5 +9208,22 @@ class MobileCIAPIController extends BaseCIController
         }
 
         return $this->render();
+    }
+
+    public function remove_querystring_var($url, $key)
+    { 
+        $parsed_url = parse_url((string)$url);
+        $query = parse_str($parsed_url['query'], $output);
+        unset($output[$key]);
+        $query_string = http_build_query($output);
+        $parsed_url['query'] = $query_string;
+        $new_url = $parsed_url['scheme'] . '://' . $parsed_url['host'] . $parsed_url['path'] . '?' . $parsed_url['query'];
+
+        return $new_url;
+    }
+
+    public function getOrbitSessionQueryStringName()
+    {
+        return Config::get('orbit.session.session_origin.query_string.name');
     }
 }
