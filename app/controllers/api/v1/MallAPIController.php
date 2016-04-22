@@ -470,26 +470,28 @@ class MallAPIController extends ControllerAPI
 
             // languages
             // @author irianto <irianto@dominopos.com>
-            foreach ($languages as $language_name) {
-                $validator = Validator::make(
-                    array(
-                        'language'             => $language_name
-                    ),
-                    array(
-                        'language'             => 'required|size:2|orbit.formaterror.language'
-                    )
-                );
+            if (count($languages) > 0) {
+                foreach ($languages as $language_name) {
+                    $validator = Validator::make(
+                        array(
+                            'language'             => $language_name
+                        ),
+                        array(
+                            'language'             => 'required|size:2|orbit.formaterror.language'
+                        )
+                    );
 
-                // Run the validation
-                if ($validator->fails()) {
-                    $errorMessage = $validator->messages()->first();
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    // Run the validation
+                    if ($validator->fails()) {
+                        $errorMessage = $validator->messages()->first();
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
+
+                    $merchant_language = new MerchantLanguage();
+                    $merchant_language->merchant_id = $newmall->merchant_id;
+                    $merchant_language->language_id = Language::where('name', '=', $language_name)->first()->language_id;
+                    $merchant_language->save();
                 }
-
-                $merchant_language = new MerchantLanguage();
-                $merchant_language->merchant_id = $newmall->merchant_id;
-                $merchant_language->language_id = Language::where('name', '=', $language_name)->first()->language_id;
-                $merchant_language->save();
             }
 
             $languages_by_name = [];
@@ -501,6 +503,7 @@ class MallAPIController extends ControllerAPI
             // categories
             // @author irianto <irianto@dominopos.com>
             if (count($categories) > 0) {
+                $all_category = [];
                 foreach ($categories as $category_json) {
 
                     $category = @json_decode($category_json);
@@ -520,16 +523,21 @@ class MallAPIController extends ControllerAPI
                     $new_category->modified_by       = NULL;
                     $new_category->save();
 
-                    foreach ($languages as $data_lang) {
-                        $new_category_translation = new CategoryTranslation();
-                        $new_category_translation->category_id          = $new_category->category_id;
-                        $new_category_translation->merchant_language_id = $languages_by_name[$data_lang]->merchant_language_id;
-                        $new_category_translation->category_name        = trim($category->$data_lang);
-                        $new_category_translation->status               = 'active';
-                        $new_category_translation->created_by           = NULL;
-                        $new_category_translation->modified_by          = NULL;
+                    if (count($languages) > 0) {
+                        foreach ($languages as $data_lang) {
+                            $new_category_translation = new CategoryTranslation();
+                            $new_category_translation->category_id          = $new_category->category_id;
+                            $new_category_translation->merchant_language_id = $languages_by_name[$data_lang]->merchant_language_id;
+                            $new_category_translation->category_name        = trim($category->$data_lang);
+                            $new_category_translation->status               = 'active';
+                            $new_category_translation->created_by           = NULL;
+                            $new_category_translation->modified_by          = NULL;
+                        }
                     }
+
+                    $all_category[] = $new_category;
                 }
+                $newmall->mall_categories = $all_category;
             }
 
             // widgets
@@ -567,6 +575,7 @@ class MallAPIController extends ControllerAPI
             // floor
             // @author irianto <irianto@dominopos.com>
             if (count($floors) > 0) {
+                $all_floor = [];
                 foreach ($floors as $floor_json) {
                     $floor = @json_decode($floor_json);
                     if (json_last_error() != JSON_ERROR_NONE) {
@@ -580,7 +589,11 @@ class MallAPIController extends ControllerAPI
                     $newfloor->object_order = $floor->order;
                     $newfloor->status = 'active';
                     $newfloor->save();
+
+                    // collect new floor
+                    $all_floor[] = $newfloor;
                 }
+                $newmall->mall_floor = $all_floor;
             }
 
             // settings
@@ -598,6 +611,7 @@ class MallAPIController extends ControllerAPI
                 'dom:' . $domain                => $newmall->merchant_id
             ];
 
+            $all_setting = [];
             foreach ($setting_items as $setting_name => $setting_value) {
                 $settings = new Setting();
                 $settings->setting_name = $setting_name;
@@ -612,7 +626,10 @@ class MallAPIController extends ControllerAPI
                 $settings->modified_by = $user->user_id;
 
                 $settings->save();
+
+                $all_setting[] = $settings;
             }
+            $newmall->mall_settings = $all_setting;
 
             // age ranges
             // @author irianto <irianto@dominopos.com>
@@ -633,6 +650,7 @@ class MallAPIController extends ControllerAPI
             $campaign_base_prices[] = ['price' => $campaign_base_price_coupon, 'campaign_type' => 'coupon'];
             $campaign_base_prices[] = ['price' => $campaign_base_price_news, 'campaign_type' => 'news'];
 
+            $all_base_price = [];
             foreach ($campaign_base_prices as $campaign_base_price) {
                 $price = new CampaignBasePrice();
                 $price->merchant_id = $newmall->merchant_id;
@@ -640,7 +658,10 @@ class MallAPIController extends ControllerAPI
                 $price->campaign_type = $campaign_base_price['campaign_type'];
                 $price->status = 'active';
                 $price->save();
+
+                $all_base_price[] = $price;
             }
+            $newmall->campaign_base_prices = $all_base_price;
 
             // save to spending rule, the default is N
             // @author kadek <kadek@dominopos.com>
@@ -669,6 +690,10 @@ class MallAPIController extends ControllerAPI
             $fence->merchant_id = $newmall->merchant_id;
 
             $fence->save();
+
+            $newmall->geo_point_latitude = $geo_point_latitude;
+            $newmall->geo_point_longitude = $geo_point_longitude;
+            $newmall->geo_area = $geo_area;
 
             Event::fire('orbit.mall.postnewmall.after.save', array($this, $newmall));
             $this->response->data = $newmall;
