@@ -101,7 +101,7 @@ class TenantPrinterController extends DataPrinterController
                        );
 
                 }
-
+                exit;
                 break;
 
             case 'print':

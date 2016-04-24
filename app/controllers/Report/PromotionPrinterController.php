@@ -128,6 +128,7 @@ class PromotionPrinterController extends DataPrinterController
                         $count, $row->news_name, $startDateTime, $endDateTime, str_replace(', ', "\n", $row->campaign_location_names), $this->printUtf8($row->campaign_status), $lastUpdateDate);
                     $count++;
                 }
+                exit;
                 break;
 
             case 'print':

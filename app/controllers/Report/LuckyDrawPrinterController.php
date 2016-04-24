@@ -118,7 +118,7 @@ class LuckyDrawPrinterController extends DataPrinterController
                        );
 
                 }
-
+                exit;
                 break;
 
             case 'print':
