@@ -149,7 +149,7 @@ class UserReportPrinterController extends DataPrinterController
 
                     printf("\n");
                 }
-
+                exit;
                 break;
 
             case 'print':

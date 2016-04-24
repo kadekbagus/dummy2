@@ -16,7 +16,7 @@
     @elseif($inbox->inbox_type == 'coupon_issuance')
     <div class="row vertically-spaced">
         <div class="col-xs-12 padded">
-        <a href="{{ $urlblock->blockedRoute('ci-mall-coupons') }}" class="btn btn-block btn-info">{{ Lang::get('mobileci.notification.view_coupons_btn') }}</a>
+        <a href="{{ $urlblock->blockedRoute('ci-coupon-list') }}" class="btn btn-block btn-info">{{ Lang::get('mobileci.notification.view_coupons_btn') }}</a>
         </div>
     </div>
     @endif

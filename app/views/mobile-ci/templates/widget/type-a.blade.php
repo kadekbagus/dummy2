@@ -94,7 +94,7 @@
                     <div class="col-xs-12 col-sm-12 widget-col" style="z-index:{{count($widgets)-$i}};">
                         <div id="particles-js{{$i+1}}"></div>
                         <section class="widget-single">
-                            <a class="widget-link" data-widget="{{ $widget->widget_id }}" href="{{ url('customer/' . $widget->url) }}">
+                            <a class="widget-link" data-widget="{{ $widget->widget_id }}" data-href="{{$widget->redirect_url}}" href="{{ $widget->url }}">
                                 @if(! empty($widget->new_item_count))
                                 <div class="widget-new-badge">
                                     <div class="new-number">{{$widget->new_item_count}}</div>
@@ -122,7 +122,7 @@
                     <div class="col-xs-6 col-sm-6 widget-col" style="z-index:{{count($widgets)-$i}};">
                         <div id="particles-js{{$i+1}}"></div>
                         <section class="widget-single">
-                            <a class="widget-link" data-widget="{{ $widget->widget_id }}" href="{{ url('customer/' . $widget->url) }}">
+                            <a class="widget-link" data-widget="{{ $widget->widget_id }}" data-href="{{$widget->redirect_url}}" href="{{ $widget->url }}">
                                 @if(! empty($widget->new_item_count))
                                 <div class="widget-new-badge">
                                     <div class="new-number">{{$widget->new_item_count}}</div>
@@ -151,7 +151,7 @@
                         <div class="col-xs-6 col-sm-6 widget-col" style="z-index:{{count($widgets)-$i}};">
                             <div id="particles-js{{$i+1}}"></div>
                             <section class="widget-single">
-                                <a class="widget-link" data-widget="{{ $widget->widget_id }}" href="{{ url('customer/' . $widget->url) }}">
+                                <a class="widget-link" data-widget="{{ $widget->widget_id }}" data-href="{{$widget->redirect_url}}" href="{{ $widget->url }}">
                                     @if(! empty($widget->new_item_count))
                                     <div class="widget-new-badge">
                                         <div class="new-number">{{$widget->new_item_count}}</div>
@@ -179,7 +179,7 @@
                     <div class="col-xs-12 col-sm-12 widget-col" style="z-index:{{count($widgets)-$i}};">
                         <!-- <div id="particles-js{{$i+1}}"></div> -->
                         <section class="widget-single">
-                            <a class="widget-link" data-widget="{{ $widget->widget_id }}" href="{{ url('customer/' . $widget->url) }}">
+                            <a class="widget-link" data-widget="{{ $widget->widget_id }}" data-href="{{$widget->redirect_url}}" href="{{ $widget->url }}">
                                 @if(! empty($widget->new_item_count))
                                 <div class="widget-new-badge">
                                     <div class="new-number">{{$widget->new_item_count}}</div>
@@ -214,10 +214,14 @@
 @parent
 {{ HTML::script('mobile-ci/scripts/particles.min.js') }}
 <script type="text/javascript">
-    @foreach($widgets as $i => $widget)
-    particlesJS.load('particles-js{{$i+1}}', '{{asset('mobile-ci/scripts/particlesjs-config.json')}}', function() {
+    $(document).ready(function(){
+        @foreach($widgets as $i => $widget)
+        if($('#particles-js{{$i+1}}').length) {
+            particlesJS.load('particles-js{{$i+1}}', '{{asset('mobile-ci/scripts/particlesjs-config.json')}}', function() {
 
+            });
+        }
+        @endforeach
     });
-    @endforeach
 </script>
 @stop

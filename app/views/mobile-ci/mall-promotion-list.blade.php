@@ -9,7 +9,7 @@
                 @foreach($data->records as $promo)
                     <div class="col-xs-12 col-sm-12 item-x" data-ids="{{$promo->news_id}}" id="item-{{$promo->news_id}}">
                         <section class="list-item-single-tenant">
-                            <a class="list-item-link" href="{{ $urlblock->blockedRoute('ci-mall-promotion', ['id' => $promo->news_id]) }}">
+                            <a class="list-item-link" data-href="{{ route('ci-promotion-detail', ['id' => $promo->news_id]) }}" href="{{ $urlblock->blockedRoute('ci-promotion-detail', ['id' => $promo->news_id]) }}">
                                 <div class="list-item-info">
                                     <header class="list-item-title">
                                         <div><strong>{{{ $promo->news_name }}}</strong></div>
@@ -76,7 +76,7 @@
                 @if(Input::get('keyword') === null)
                 <div class="row padded">
                         <div class="col-xs-12">
-                            <h4>{{ Lang::get('mobileci.greetings.new_promotions_coming_soon') }}</h4>
+                            <h4>{{ Lang::get('mobileci.greetings.no_promotions_listing') }}</h4>
                         </div>
                     </div>
                 @else
@@ -102,6 +102,6 @@
             });
             loadMoreX('promotion', listOfIDs);
         });
-    }); 
+    });
 </script>
 @stop

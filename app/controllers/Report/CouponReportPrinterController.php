@@ -189,6 +189,7 @@ class CouponReportPrinterController extends DataPrinterController
                     );
                     $count++;
                 }
+                exit;
                 break;
 
             case 'print':
@@ -264,6 +265,7 @@ class CouponReportPrinterController extends DataPrinterController
                     );
                     $count++;
                 }
+                exit;
                 break;
 
             case 'print':
@@ -424,6 +426,7 @@ class CouponReportPrinterController extends DataPrinterController
                     );
                     $count++;
                 }
+                exit;
                 break;
 
             case 'print':
@@ -502,6 +505,7 @@ class CouponReportPrinterController extends DataPrinterController
                     );
                     $count++;
                 }
+                exit;
                 break;
 
             case 'print':

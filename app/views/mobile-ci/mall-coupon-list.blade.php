@@ -9,7 +9,7 @@
                 @foreach($data->records as $coupon)
                     <div class="col-xs-12 col-sm-12 item-x" data-ids="{{$coupon->promotion_id}}"  id="item-{{$coupon->promotion_id}}">
                         <section class="list-item-single-tenant">
-                            <a class="list-item-link" href="{{ $urlblock->blockedRoute('ci-mall-coupon', ['id' => $coupon->promotion_id]) }}">
+                            <a class="list-item-link" data-href="{{ route('ci-coupon-detail', ['id' => $coupon->promotion_id]) }}" href="{{ $urlblock->blockedRoute('ci-coupon-detail', ['id' => $coupon->promotion_id]) }}">
                                 <div class="coupon-new-badge">
                                     <div class="new-number">{{$coupon->quantity}}</div>
                                 </div>
@@ -79,7 +79,7 @@
                 @if(Input::get('keyword') === null)
                 <div class="row padded">
                     <div class="col-xs-12">
-                        <h4>{{ Lang::get('mobileci.greetings.how_to_get_coupons') }}</h4>
+                        <h4>{{ Lang::get('mobileci.greetings.no_coupons_listing') }}</h4>
                     </div>
                 </div>
                 @else
@@ -137,6 +137,6 @@
             });
             loadMoreX('my-coupon', listOfIDs);
         });
-    }); 
+    });
 </script>
 @stop

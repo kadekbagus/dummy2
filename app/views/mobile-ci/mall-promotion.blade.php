@@ -41,7 +41,7 @@
     @if ($urlblock->isLoggedIn())
         @if(! empty($promotion->facebook_share_url))
         <div class="col-xs-12">
-            <div class="fb-share-button" data-href="{{$promotion->facebook_share_url}}" data-layout="button" style="width:60px; overflow:hidden;"></div>
+            <div class="fb-share-button" data-href="{{$promotion->facebook_share_url}}" data-layout="button"></div>
         </div>
         @endif
     @endif
@@ -49,7 +49,7 @@
 <div class="row vertically-spaced">
     @if(count($promotion->tenants) > 0)
     <div class="col-xs-12 text-center padded">
-        <a href="{{{ $urlblock->blockedRoute('ci-tenants', ['promotion_id' => $promotion->news_id]) }}}" class="btn btn-info btn-block">{{{ Lang::get('mobileci.tenant.see_tenants') }}}</a>
+        <a data-href="{{ route('ci-tenant-list', ['promotion_id' => $promotion->news_id]) }}" href="{{{ $urlblock->blockedRoute('ci-tenant-list', ['promotion_id' => $promotion->news_id]) }}}" class="btn btn-info btn-block">{{{ Lang::get('mobileci.tenant.see_tenants') }}}</a>
     </div>
     @else
     <div class="col-xs-12 text-center padded">

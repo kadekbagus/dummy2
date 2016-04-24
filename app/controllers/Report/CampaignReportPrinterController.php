@@ -148,6 +148,7 @@ class CampaignReportPrinterController extends DataPrinterController
                     );
                     $count++;
                 }
+                exit;
                 break;
 
             case 'print':
@@ -260,6 +261,7 @@ class CampaignReportPrinterController extends DataPrinterController
                     );
                     $count++;
                 }
+                exit;
                 break;
 
             case 'print':

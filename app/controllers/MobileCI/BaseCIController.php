@@ -187,4 +187,14 @@ class BaseCIController extends ControllerAPI
                 return \Redirect::to('/customer');
         }
     }
+
+    public function base64UrlEncode($inputStr)
+    {
+        return strtr(base64_encode($inputStr), '+/=', '-_,');
+    }
+
+    public function base64UrlDecode($inputStr)
+    {
+        return base64_decode(strtr($inputStr, '-_,', '+/='));
+    }
 }

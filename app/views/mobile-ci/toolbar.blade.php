@@ -67,9 +67,9 @@
                 @else
                     <li class="" id="dropdown-disable" style="color:#999999;"><span style="padding: .3em"><span class="glyphicon glyphicon-credit-card fa-relative"></span> {{ ucwords(strtolower(Lang::get('mobileci.page_title.membership'))) }}</span></li>
                 @endif
-                <li class="fa-pad-left"><a href="{{ $urlblock->blockedRoute('ci-my-account') }}"><span><span class="fa fa-user fa-relative"></span> {{ ucwords(strtolower(Lang::get('mobileci.page_title.my_account'))) }}</span></a></li>
+                <li class="fa-pad-left"><a data-href="{{ route('ci-my-account') }}" href="{{ $urlblock->blockedRoute('ci-my-account') }}"><span><span class="fa fa-user fa-relative"></span> {{ ucwords(strtolower(Lang::get('mobileci.page_title.my_account'))) }}</span></a></li>
                 <li class="fa-pad-left">
-                    <a href="{{ $urlblock->blockedRoute('ci-notification-list') }}">
+                    <a data-href="{{ route('ci-notification-list') }}" href="{{ $urlblock->blockedRoute('ci-notification-list') }}">
                         <span>
                             <i class="fa fa-inbox fa-relative"></i>
                             {{ ucwords(strtolower(Lang::get('mobileci.page_title.my_messages'))) }}
