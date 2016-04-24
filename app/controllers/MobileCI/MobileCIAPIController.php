@@ -7073,12 +7073,15 @@ class MobileCIAPIController extends BaseCIController
                 $near_end_result->campaign_link = Lang::get('mobileci.campaign_cards.go_to_page');
                 if ($near_end_result->campaign_type === 'promotion') {
                     $near_end_result->campaign_url = $urlblock->blockedRoute('ci-promotion-detail', ['id' => $near_end_result->campaign_id]);
+                    $near_end_result->redirect_campaign_url = URL::route('ci-promotion-detail', ['id' => $near_end_result->campaign_id]);
                     $near_end_result->campaign_image = URL::asset('mobile-ci/images/default_promotion.png');
                 } elseif ($near_end_result->campaign_type === 'news') {
                     $near_end_result->campaign_url = $urlblock->blockedRoute('ci-news-detail', ['id' => $near_end_result->campaign_id]);
+                    $near_end_result->redirect_campaign_url = URL::route('ci-news-detail', ['id' => $near_end_result->campaign_id]);
                     $near_end_result->campaign_image = URL::asset('mobile-ci/images/default_news.png');
                 } elseif ($near_end_result->campaign_type === 'coupon') {
                     $near_end_result->campaign_url = $urlblock->blockedRoute('ci-coupon-detail', ['id' => $near_end_result->campaign_id]);
+                    $near_end_result->redirect_campaign_url = URL::route('ci-coupon-detail', ['id' => $near_end_result->campaign_id]);
                     $near_end_result->campaign_image = URL::asset('mobile-ci/images/default_coupon.png');
                 }
 
