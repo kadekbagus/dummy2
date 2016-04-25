@@ -1061,7 +1061,6 @@ class MobileCIAPIController extends BaseCIController
         // todo handle google error
         if ( !empty( $code ) ) {
             try {
-                $redirect_to_url_from_state = $this->remove_querystring_var(json_decode($this->base64UrlDecode($state))->redirect_to_url, $this->getOrbitSessionQueryStringName());
                 Config::set('orbit.session.availability.query_string', $oldRouteSessionConfigValue);
                 $token = $googleService->requestAccessToken( $code );
 
@@ -1120,6 +1119,9 @@ class MobileCIAPIController extends BaseCIController
                     $session = $urlblock->getUserSession();
                     $session->write('visited_location', [$retailer->merchant_id]);
 
+                    $redirect_to_url_from_state = $this->remove_querystring_var(json_decode($this->base64UrlDecode($state))->redirect_to_url, $this->getOrbitSessionQueryStringName());
+                    $redirect_to_url_from_state = $this->add_querystring_var($redirect_to_url_from_state, $this->getOrbitSessionQueryStringName(), $urlblock->getUserSession()->getSessionId());
+
                     return Redirect::to($redirect_to_url_from_state);
                 } else {
                     // register user without password and birthdate
@@ -1145,6 +1147,10 @@ class MobileCIAPIController extends BaseCIController
                     setcookie('login_from', 'Google', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
 
                     $this->acquireUser($retailer, $loggedInUser, 'google');
+
+                    $urlblock = new UrlBlock;
+                    $redirect_to_url_from_state = $this->remove_querystring_var(json_decode($this->base64UrlDecode($state))->redirect_to_url, $this->getOrbitSessionQueryStringName());
+                    $redirect_to_url_from_state = $this->add_querystring_var($redirect_to_url_from_state, $this->getOrbitSessionQueryStringName(), $urlblock->getUserSession()->getSessionId());
 
                     return Redirect::to($redirect_to_url_from_state);
                 }
@@ -1184,7 +1190,6 @@ class MobileCIAPIController extends BaseCIController
         $caller_url = \Input::get('caller_url', NULL);
         $caller_url = ! is_null($caller_url) ? $caller_url : 'ci-home';
         $redirect_to_url = \Input::get('redirect_to_url', URL::route('ci-customer-home'));
-        $redirect_to_url = $this->remove_querystring_var($redirect_to_url, $this->getOrbitSessionQueryStringName());
         // error=access_denied&
         // error_code=200&
         // error_description=Permissions+error
@@ -1293,6 +1298,9 @@ class MobileCIAPIController extends BaseCIController
             $session = $urlblock->getUserSession();
             $session->write('visited_location', [$retailer->merchant_id]);
 
+            $redirect_to_url = $this->remove_querystring_var($redirect_to_url, $this->getOrbitSessionQueryStringName());
+            $redirect_to_url = $this->add_querystring_var($redirect_to_url_from_state, $this->getOrbitSessionQueryStringName(), $urlblock->getUserSession()->getSessionId());
+
             return Redirect::to($redirect_to_url);
         } else {
             // register user without password and birthdate
@@ -1316,6 +1324,10 @@ class MobileCIAPIController extends BaseCIController
             setcookie('login_from', 'Facebook', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
 
             $this->acquireUser($retailer, $loggedInUser, 'facebook');
+
+            $urlblock = new UrlBlock;
+            $redirect_to_url = $this->remove_querystring_var($redirect_to_url, $this->getOrbitSessionQueryStringName());
+            $redirect_to_url = $this->add_querystring_var($redirect_to_url_from_state, $this->getOrbitSessionQueryStringName(), $urlblock->getUserSession()->getSessionId());
 
             return Redirect::to($redirect_to_url);
         }
@@ -9181,6 +9193,7 @@ class MobileCIAPIController extends BaseCIController
             // append the redirect url to user object
             // remove the orbit_session from query string for this redirect url
             $user->redirect_to = $this->remove_querystring_var($to_url, $this->getOrbitSessionQueryStringName());
+            $user->redirect_to = $this->add_querystring_var($user->redirect_to, $this->getOrbitSessionQueryStringName(), $urlblock->getUserSession()->getSessionId());
 
             // do the stage 2
             $notAllowedStatus = ['inactive'];
@@ -9246,6 +9259,17 @@ class MobileCIAPIController extends BaseCIController
         $query_string = http_build_query($output);
         $parsed_url['query'] = $query_string;
         $new_url = $parsed_url['scheme'] . '://' . $parsed_url['host'] . $parsed_url['path'] . '?' . $parsed_url['query'];
+
+        return $new_url;
+    }
+
+    public function add_querystring_var($url, $key, $value)
+    {
+        $parsed_url = parse_url((string)$url);
+        $query = parse_str($parsed_url['query'], $output);
+        $output[$key] = $value;
+        $query_string = http_build_query($output);
+        $new_url = $parsed_url['scheme'] . '://' . $parsed_url['host'] . $parsed_url['path'] . '?' . $query_string;
 
         return $new_url;
     }
