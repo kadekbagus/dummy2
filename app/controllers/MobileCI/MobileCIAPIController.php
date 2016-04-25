@@ -1177,7 +1177,6 @@ class MobileCIAPIController extends BaseCIController
 
                 return Redirect::to((string)$new_url);
             } catch (Exception $e) {
-                dd([$e->getMessage(), $e->getLine()]);
                 $errorMessage = 'Error: ' . $e->getMessage();
                 return Redirect::route($caller_url, ['error' => $errorMessage]);
             }
@@ -9266,10 +9265,17 @@ class MobileCIAPIController extends BaseCIController
     public function add_querystring_var($url, $key, $value)
     {
         $parsed_url = parse_url((string)$url);
-        $query = parse_str($parsed_url['query'], $output);
-        $output[$key] = $value;
-        $query_string = http_build_query($output);
-        $new_url = $parsed_url['scheme'] . '://' . $parsed_url['host'] . $parsed_url['path'] . '?' . $query_string;
+        if(isset($parsed_url['query'])){
+            $query = parse_str($parsed_url['query'], $output);
+            $output[$key] = $value;
+            $query_string = http_build_query($output);
+            $new_url = $parsed_url['scheme'] . '://' . $parsed_url['host'] . $parsed_url['path'] . '?' . $query_string;
+        } else {
+            $params = [];
+            $params[$key] = $value;
+            $query_string = http_build_query($params);
+            $new_url = $url . $query_string;
+        }
 
         return $new_url;
     }
