@@ -1120,7 +1120,7 @@ class MobileCIAPIController extends BaseCIController
                     $session->write('visited_location', [$retailer->merchant_id]);
 
                     $redirect_to_url_from_state = $this->remove_querystring_var(json_decode($this->base64UrlDecode($state))->redirect_to_url, $this->getOrbitSessionQueryStringName());
-                    $redirect_to_url_from_state = $this->add_querystring_var($redirect_to_url_from_state, $this->getOrbitSessionQueryStringName(), $urlblock->getUserSession()->getSessionId());
+                    // $redirect_to_url_from_state = $this->add_querystring_var($redirect_to_url_from_state, $this->getOrbitSessionQueryStringName(), $urlblock->getUserSession()->getSessionId());
 
                     return Redirect::to($redirect_to_url_from_state);
                 } else {
@@ -1150,8 +1150,7 @@ class MobileCIAPIController extends BaseCIController
 
                     $urlblock = new UrlBlock;
                     $redirect_to_url_from_state = $this->remove_querystring_var(json_decode($this->base64UrlDecode($state))->redirect_to_url, $this->getOrbitSessionQueryStringName());
-                    $redirect_to_url_from_state = $this->add_querystring_var($redirect_to_url_from_state, $this->getOrbitSessionQueryStringName(), $urlblock->getUserSession()->getSessionId());
-
+                    // $redirect_to_url_from_state = $this->add_querystring_var($redirect_to_url_from_state, $this->getOrbitSessionQueryStringName(), $urlblock->getUserSession()->getSessionId());
                     return Redirect::to($redirect_to_url_from_state);
                 }
 
@@ -1178,6 +1177,7 @@ class MobileCIAPIController extends BaseCIController
 
                 return Redirect::to((string)$new_url);
             } catch (Exception $e) {
+                dd([$e->getMessage(), $e->getLine()]);
                 $errorMessage = 'Error: ' . $e->getMessage();
                 return Redirect::route($caller_url, ['error' => $errorMessage]);
             }
@@ -1299,7 +1299,7 @@ class MobileCIAPIController extends BaseCIController
             $session->write('visited_location', [$retailer->merchant_id]);
 
             $redirect_to_url = $this->remove_querystring_var($redirect_to_url, $this->getOrbitSessionQueryStringName());
-            $redirect_to_url = $this->add_querystring_var($redirect_to_url, $this->getOrbitSessionQueryStringName(), $urlblock->getUserSession()->getSessionId());
+            // $redirect_to_url = $this->add_querystring_var($redirect_to_url, $this->getOrbitSessionQueryStringName(), $urlblock->getUserSession()->getSessionId());
 
             return Redirect::to($redirect_to_url);
         } else {
@@ -1327,7 +1327,7 @@ class MobileCIAPIController extends BaseCIController
 
             $urlblock = new UrlBlock;
             $redirect_to_url = $this->remove_querystring_var($redirect_to_url, $this->getOrbitSessionQueryStringName());
-            $redirect_to_url = $this->add_querystring_var($redirect_to_url, $this->getOrbitSessionQueryStringName(), $urlblock->getUserSession()->getSessionId());
+            // $redirect_to_url = $this->add_querystring_var($redirect_to_url, $this->getOrbitSessionQueryStringName(), $urlblock->getUserSession()->getSessionId());
 
             return Redirect::to($redirect_to_url);
         }
