@@ -7265,8 +7265,8 @@ class MobileCIAPIController extends BaseCIController
         try {
             $httpCode = 200;
 
-            $keyword = trim(urldecode(OrbitInput::get('keyword')));
-            if (empty($keyword)) {
+            $keyword = (string) trim(urldecode(OrbitInput::get('keyword')));
+            if (empty($keyword) && $keyword !== '0') {
                 throw new Exception ('Empty keyword.');
             }
 
@@ -7663,7 +7663,7 @@ class MobileCIAPIController extends BaseCIController
                                 $defaultLanguage = $this->getDefaultLanguage($retailer);
                                 if ($defaultLanguage !== NULL) {
                                     $contentDefaultLanguage = \LuckyDrawTranslation::excludeDeleted()
-                                        ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
+                                        ->where('merchant_language_id', '=', $defaultLanguage->language_id)
                                         ->where('lucky_draw_id', $near_end_result->object_id)->first();
 
                                     // get default image

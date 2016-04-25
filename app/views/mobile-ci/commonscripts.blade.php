@@ -1129,7 +1129,7 @@
                     });
                     // redirection?
                     if (response.data.redirect_to) {
-                        document.location.replace = response.data.redirect_to;
+                        document.location = response.data.redirect_to;
                         return;
                     }
 
@@ -1236,9 +1236,9 @@
                         return;
                     }
 
-                    // Cloud redirection?
+                    // redirection?
                     if (resp.data.redirect_to) {
-                        document.location.replace = resp.data.redirect_to;
+                        document.location = resp.data.redirect_to;
                         return;
                     }
 
