@@ -468,8 +468,6 @@ class MallAPIController extends ControllerAPI
 
             $newmall->save();
 
-            $newmall->timezone = $timezone;
-
             // languages
             // @author irianto <irianto@dominopos.com>
             if (count($languages) > 0) {
@@ -505,7 +503,6 @@ class MallAPIController extends ControllerAPI
             // categories
             // @author irianto <irianto@dominopos.com>
             if (count($categories) > 0) {
-                $all_category = [];
                 foreach ($categories as $category_json) {
 
                     $category = @json_decode($category_json);
@@ -537,11 +534,8 @@ class MallAPIController extends ControllerAPI
                             $new_category_translation->save();
                         }
                     }
-                    $all_category[] = $category_json;
                 }
             }
-
-            $newmall->mall_categories = $all_category;
 
             // widgets
             // @author irianto <irianto@dominopos.com>
@@ -578,7 +572,6 @@ class MallAPIController extends ControllerAPI
             // floor
             // @author irianto <irianto@dominopos.com>
             if (count($floors) > 0) {
-                $all_floor = [];
                 foreach ($floors as $floor_json) {
                     $floor = @json_decode($floor_json);
                     if (json_last_error() != JSON_ERROR_NONE) {
@@ -592,11 +585,7 @@ class MallAPIController extends ControllerAPI
                     $newfloor->object_order = $floor->order;
                     $newfloor->status = 'active';
                     $newfloor->save();
-
-                    // collect new floor
-                    $all_floor[] = $newfloor;
                 }
-                $newmall->mall_floor = $all_floor;
             }
 
             // settings
@@ -614,7 +603,6 @@ class MallAPIController extends ControllerAPI
                 'dom:' . $domain                => $newmall->merchant_id
             ];
 
-            $all_setting = [];
             foreach ($setting_items as $setting_name => $setting_value) {
                 $settings = new Setting();
                 $settings->setting_name = $setting_name;
@@ -629,10 +617,7 @@ class MallAPIController extends ControllerAPI
                 $settings->modified_by = $user->user_id;
 
                 $settings->save();
-
-                $all_setting[] = $settings;
             }
-            $newmall->mall_settings = $all_setting;
 
             // age ranges
             // @author irianto <irianto@dominopos.com>
@@ -653,7 +638,6 @@ class MallAPIController extends ControllerAPI
             $campaign_base_prices[] = ['price' => $campaign_base_price_coupon, 'campaign_type' => 'coupon'];
             $campaign_base_prices[] = ['price' => $campaign_base_price_news, 'campaign_type' => 'news'];
 
-            $all_base_price = [];
             foreach ($campaign_base_prices as $campaign_base_price) {
                 $price = new CampaignBasePrice();
                 $price->merchant_id = $newmall->merchant_id;
@@ -661,10 +645,7 @@ class MallAPIController extends ControllerAPI
                 $price->campaign_type = $campaign_base_price['campaign_type'];
                 $price->status = 'active';
                 $price->save();
-
-                $all_base_price[] = $price;
             }
-            $newmall->campaign_base_prices = $all_base_price;
 
             // save to spending rule, the default is N
             // @author kadek <kadek@dominopos.com>
@@ -693,10 +674,6 @@ class MallAPIController extends ControllerAPI
             $fence->merchant_id = $newmall->merchant_id;
 
             $fence->save();
-
-            $newmall->geo_point_latitude = $geo_point_latitude;
-            $newmall->geo_point_longitude = $geo_point_longitude;
-            $newmall->geo_area = $geo_area;
 
             Event::fire('orbit.mall.postnewmall.after.save', array($this, $newmall));
             $this->response->data = $newmall;
@@ -932,7 +909,18 @@ class MallAPIController extends ControllerAPI
             $facebookSocmedId = SocialMedia::whereSocialMediaCode('facebook')->first()->social_media_id;
 
             $malls = Mall::excludeDeleted('merchants')
-                                ->select('merchants.*', DB::raw('count(tenant.merchant_id) AS total_tenant'), DB::raw('mall_group.name AS mall_group_name'), 'merchant_social_media.social_media_uri as facebook_uri')
+                                ->select(
+                                        'merchants.*',
+                                        DB::raw('count(tenant.merchant_id) AS total_tenant'),
+                                        DB::raw('mall_group.name AS mall_group_name'),
+                                        'merchant_social_media.social_media_uri as facebook_uri',
+                                        // latitude
+                                        DB::raw("SUBSTR(AsText({$prefix}merchant_geofences.position), LOCATE('(', AsText({$prefix}merchant_geofences.position)) + 1, LOCATE(' ', AsText({$prefix}merchant_geofences.position)) - 1 - LOCATE('(', AsText({$prefix}merchant_geofences.position))) as geo_point_latitude"),
+                                        // longitude
+                                        DB::raw("SUBSTR(AsText({$prefix}merchant_geofences.position), LOCATE(' ', AsText({$prefix}merchant_geofences.position)) + 1, LOCATE(')', AsText({$prefix}merchant_geofences.position)) - 1 - LOCATE(' ', AsText({$prefix}merchant_geofences.position))) as geo_point_longitude"),
+                                        // area
+                                        DB::raw("SUBSTR(AsText({$prefix}merchant_geofences.area), LOCATE('((', AsText({$prefix}merchant_geofences.area)) + 2, LOCATE('))', AsText({$prefix}merchant_geofences.area)) - 2 - LOCATE('((', AsText({$prefix}merchant_geofences.area))) as geo_area")
+                                    )
                                 ->leftJoin('merchants AS tenant', function($join) {
                                         $join->on(DB::raw('tenant.parent_id'), '=', 'merchants.merchant_id')
                                             ->where(DB::raw('tenant.status'), '!=', 'deleted')
@@ -944,6 +932,7 @@ class MallAPIController extends ControllerAPI
                                             ->where('social_media_id', '=', $facebookSocmedId);
                                     })
                                 ->leftJoin('merchants AS mall_group', DB::raw('mall_group.merchant_id'), '=', 'merchants.parent_id')
+                                ->leftJoin('merchant_geofences', 'merchant_geofences.merchant_id', '=', 'merchants.merchant_id')
                                 ->groupBy('merchants.merchant_id');
 
             // Filter mall by Ids
