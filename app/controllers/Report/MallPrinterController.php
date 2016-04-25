@@ -74,8 +74,8 @@ class MallPrinterController extends DataPrinterController
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
 
                     printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
-                        '', $this->printUtf8($row->name), 
-                            $this->printLocation($row), 
+                        '', $this->printUtf8($row->name),
+                            $this->printLocation($row),
                             $this->printDateTime($row->start_date_activity, $timezone, 'd F Y'),
                             $this->printDateTime($row->end_date_activity, $timezone, 'd F Y'),
                             $this->printUtf8($row->mall_group_name),
@@ -210,7 +210,7 @@ class MallPrinterController extends DataPrinterController
         if (empty($current_date_and_time)) {
             $current_date_and_time = Carbon::now();
         }
-        return 'orbit-export-' . $pageTitle . '-' . Carbon::createFromFormat('Y-m-d H:i:s', $current_date_and_time)->format('D_d_M_Y_Hi') . $ext;
+        return 'gotomalls-export-' . $pageTitle . '-' . Carbon::createFromFormat('Y-m-d H:i:s', $current_date_and_time)->format('D_d_M_Y_Hi') . $ext;
     }
 
 }
