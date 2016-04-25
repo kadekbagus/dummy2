@@ -39,7 +39,7 @@ class CampaignDailySpendingCalculation extends Command {
     public function fire()
     {
         // date_default_timezone_set('UTC')
-        $this->info('=== Running at ' . date('l jS \of F Y h:i:s A') . " ===");
+        $this->info('=== Running at ' . date('l j \of F Y h:i:s A') . " ===");
 
         // Start time for log
         $started_time = microtime(true);
@@ -147,6 +147,9 @@ class CampaignDailySpendingCalculation extends Command {
                                     DB::rollBack();
                                 }
 
+                            } else {
+                                // Rollback the changes
+                                DB::rollBack();
                             }
 
                         }
@@ -228,8 +231,10 @@ class CampaignDailySpendingCalculation extends Command {
                                     DB::rollBack();
                                 }
 
+                            } else {
+                                // Rollback the changes
+                                DB::rollBack();
                             }
-
 
                         }
 

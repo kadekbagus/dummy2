@@ -88,6 +88,55 @@ class Mall extends Eloquent
     }
 
     /**
+     * Merchant has many category.
+     */
+    public function mallCategories()
+    {
+        return $this->hasMany('Category', 'merchant_id', 'merchant_id')->excludeDeleted();
+    }
+
+    /**
+     * Merchant has many floor.
+     */
+    public function mallFloors()
+    {
+        return $this->hasMany('Object', 'merchant_id', 'merchant_id')
+                    ->where('objects.object_type', 'floor')->excludeDeleted();
+    }
+
+    /**
+     * Merchant has many campaign base prices.
+     */
+    public function mallCampaignBasePrices()
+    {
+        return $this->hasMany('CampaignBasePrice', 'merchant_id', 'merchant_id')->excludeDeleted();
+    }
+
+    /**
+     * Merchant has many campaign base prices promotion.
+     */
+    public function campaignBasePricePromotion()
+    {
+        return $this->mallCampaignBasePrices()->where('campaign_type', 'promotion');
+    }
+
+    /**
+     * Merchant has many campaign base prices coupon.
+     */
+    public function campaignBasePriceCoupon()
+    {
+        return $this->mallCampaignBasePrices()->where('campaign_type', 'coupon');
+    }
+
+    /**
+     * Merchant has many campaign base prices news.
+     */
+    public function campaignBasePriceNews()
+    {
+        return $this->mallCampaignBasePrices()->where('campaign_type', 'news');
+    }
+
+    /**
      * Eagler load the count query. It is not very optimized but it works for now
      *
      * @author Rio Astamal <me@rioastamal.net>
@@ -131,7 +180,15 @@ class Mall extends Eloquent
      */
     public function languages()
     {
-        return $this->hasMany('MerchantLanguage', 'merchant_id', 'merchant_id')->excludeDeleted();
+        return $this->hasMany('MerchantLanguage', 'merchant_id', 'merchant_id')->excludeDeleted('merchant_languages');
+    }
+
+    /**
+     * Merchant has many languages for translations.
+     */
+    public function mallLanguages()
+    {
+        return $this->languages()->join('languages', 'languages.language_id', '=', 'merchant_languages.language_id');
     }
 
     public function getPhoneNumber($separator='|#|')
