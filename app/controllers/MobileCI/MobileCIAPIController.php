@@ -7265,8 +7265,8 @@ class MobileCIAPIController extends BaseCIController
         try {
             $httpCode = 200;
 
-            $keyword = trim(urldecode(OrbitInput::get('keyword')));
-            if (empty($keyword)) {
+            $keyword = (string) trim(urldecode(OrbitInput::get('keyword')));
+            if (empty($keyword) && $keyword !== '0') {
                 throw new Exception ('Empty keyword.');
             }
 
