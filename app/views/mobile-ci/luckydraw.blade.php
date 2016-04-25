@@ -138,15 +138,6 @@
                 @endif
             </div>
         </div>
-        @if ($total_number > 0)
-        <div class="row text-center save-btn vertically-spaced">
-            <div class="col-xs-1"></div>
-            <div class="col-xs-10">
-                <a data-href="{{ route('ci-luckydrawnumber-download', ['id' => $luckydraw->lucky_draw_id]) }}" href="{{ $urlblock->blockedRoute('ci-luckydrawnumber-download', ['id' => $luckydraw->lucky_draw_id]) }}" class="btn btn-info btn-block">{{ Lang::get('mobileci.lucky_draw.save_numbers') }}</a>
-            </div>
-            <div class="col-xs-1"></div>
-        </div>
-        @endif
         @if ($total_pages > 1)
         <div class="row">
             <div class="col-xs-12 text-center">
@@ -174,6 +165,15 @@
                     </ul>
                 </div>
             </div>
+        </div>
+        @endif
+        @if ($total_number > 0)
+        <div class="row text-center save-btn vertically-spaced">
+            <div class="col-xs-1"></div>
+            <div class="col-xs-10">
+                <a data-href="{{ route('ci-luckydrawnumber-download', ['id' => $luckydraw->lucky_draw_id]) }}" href="{{ $urlblock->blockedRoute('ci-luckydrawnumber-download', ['id' => $luckydraw->lucky_draw_id]) }}" class="btn btn-info btn-block">{{ Lang::get('mobileci.lucky_draw.save_numbers') }}</a>
+            </div>
+            <div class="col-xs-1"></div>
         </div>
         @endif
     @endif
