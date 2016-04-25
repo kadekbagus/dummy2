@@ -65,6 +65,6 @@ class Text
 
     public static function exportFilename($pageTitle, $ext = ".csv", $timezone = "UTC")
     {
-        return 'orbit-export-' . Str::slug($pageTitle) . '-' . Carbon::now($timezone)->format('D_d_M_Y_Hi') . $ext;
+        return 'gotomalls-export-' . Str::slug($pageTitle) . '-' . Carbon::now($timezone)->format('D_d_M_Y_Hi') . $ext;
     }
 }
