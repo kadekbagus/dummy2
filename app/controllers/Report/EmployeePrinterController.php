@@ -118,10 +118,10 @@ class EmployeePrinterController extends DataPrinterController
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','','','');
 
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
-                    if( $flagMallPortal) { 
-                        $lastUpdate = $this->printDateTime($row->updated_at, $timezone, 'd F Y H:i:s'); 
-                    } else { 
-                        $lastUpdate = $this->printDateTime($row->updated_at, null, 'd F Y H:i:s'); 
+                    if( $flagMallPortal) {
+                        $lastUpdate = $this->printDateTime($row->updated_at, $timezone, 'd F Y H:i:s');
+                    } else {
+                        $lastUpdate = $this->printDateTime($row->updated_at, null, 'd F Y H:i:s');
                     }
                     printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
                         '', $this->printUtf8($row->user_firstname . ' ' . $row->user_lastname),
@@ -224,6 +224,6 @@ class EmployeePrinterController extends DataPrinterController
             $currentDateAndTime = Carbon::now();
             $utc = '_UTC';
         }
-        return 'orbit-export-' . $pageTitle . '-' . Carbon::createFromFormat('Y-m-d H:i:s', $currentDateAndTime)->format('D_d_M_Y_Hi') . $utc . $ext;
+        return 'gotomalls-export-' . $pageTitle . '-' . Carbon::createFromFormat('Y-m-d H:i:s', $currentDateAndTime)->format('D_d_M_Y_Hi') . $utc . $ext;
     }
 }
