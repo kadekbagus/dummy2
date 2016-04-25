@@ -526,7 +526,7 @@ class MallAPIController extends ControllerAPI
                         foreach ($languages as $data_lang) {
                             $new_category_translation = new CategoryTranslation();
                             $new_category_translation->category_id          = $new_category->category_id;
-                            $new_category_translation->merchant_language_id = $languages_by_name[$data_lang]->merchant_language_id;
+                            $new_category_translation->merchant_language_id = $languages_by_name[$data_lang]->language_id;
                             $new_category_translation->category_name        = trim($category->$data_lang);
                             $new_category_translation->status               = 'active';
                             $new_category_translation->created_by           = NULL;
@@ -561,7 +561,7 @@ class MallAPIController extends ControllerAPI
                         // The content for this particular language is available
                         $widgetTrans = new WidgetTranslation();
                         $widgetTrans->widget_id = $widget->widget_id;
-                        $widgetTrans->merchant_language_id = $languages_by_name[$lang]->merchant_language_id;
+                        $widgetTrans->merchant_language_id = $languages_by_name[$lang]->language_id;
                         $widgetTrans->widget_slogan = $slogan[$lang];
                         $widgetTrans->status = 'active';
                         $widgetTrans->save();
