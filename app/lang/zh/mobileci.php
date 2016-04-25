@@ -71,10 +71,11 @@ return array(
         'how_to_get_coupons'           => '请跟客户服务检查关于取优惠券.',
         'find_our_exciting'            => '寻找我们的令人兴奋的交易和这里的最新消息。不要忘记您的兑换交易的收据，并有机会赢取一辆车!',
         'latest_luckydraw_coming_soon' => '看看我们的幸运抽奖即将推出。',
-        'no_coupons_listing'           => '对不起，在这家商场的那一刻没有优惠券。',
-        'no_luckydraws_listing'        => '对不起，没有抽奖在这家商场的那一刻。',
-        'no_news_listing'              => '对不起，在这家商场的那一刻没有消息。',
-        'no_promotions_listing'        => '对不起，在这家商场的那一刻没有促销活动。',
+        'no_coupons_listing'           => '对不起，这儿没有优惠券此刻在这个购物中心。',
+        'no_luckydraws_listing'        => '对不起，目前没有幸运大抽奖在这个购物商场。',
+        'no_news_listing'              => '对不起，这儿没有消息目前在这个购物中心。',
+        'no_promotions_listing'        => '对不起，这儿没有促销活动目前在这个购物中心。',
+        'no_stores_listing'            => '对不起，这儿没有商店目前在这个购物中心。',
     ),
 
     // modal specific lang
@@ -316,7 +317,7 @@ return array(
     ),
 
     'search' => array(
-        'no_item'            => '无店铺匹配条件',
+        'no_item'            => '无店铺匹配条件。',
         'too_much_items'     => '搜索结果的范围太广，请缩小它',
         'no_result'          => '对不起，搜索有没有结果',
         'error'              => '发出请求时有错误',

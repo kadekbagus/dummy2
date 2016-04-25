@@ -81,7 +81,7 @@ class CouponPrinterController extends DataPrinterController
                 if ($tenantName != '') {
                     printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Tenant Name', htmlentities($tenantName), '', '', '','');
                 }
-                
+
                 if ($mallName != '') {
                     printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Mall Name', htmlentities($mallName), '', '', '','');
                 }
@@ -152,6 +152,7 @@ class CouponPrinterController extends DataPrinterController
                     );
                     $count++;
                 }
+                exit;
                 break;
 
             case 'print':
@@ -232,6 +233,6 @@ class CouponPrinterController extends DataPrinterController
             $currentDateAndTime = Carbon::now();
             $utc = '_UTC';
         }
-        return 'orbit-export-' . $pageTitle . '-' . Carbon::createFromFormat('Y-m-d H:i:s', $currentDateAndTime)->format('D_d_M_Y_Hi') . $utc . $ext;
+        return 'gotomalls-export-' . $pageTitle . '-' . Carbon::createFromFormat('Y-m-d H:i:s', $currentDateAndTime)->format('D_d_M_Y_Hi') . $utc . $ext;
     }
 }

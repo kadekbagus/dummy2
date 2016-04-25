@@ -210,7 +210,7 @@ class DataPrinterController extends IntermediateAuthBrowserController
                             $row->user_email
                     );
                 }
-
+                exit;
                 break;
 
             case 'print':

@@ -9,7 +9,7 @@
                 @foreach($data->records as $news)
                     <div class="col-xs-12 col-sm-12 item-x" data-ids="{{$news->news_id}}" id="item-{{$news->news_id}}">
                         <section class="list-item-single-tenant">
-                            <a class="list-item-link" href="{{ $urlblock->blockedRoute('ci-mall-news-detail', ['id' => $news->news_id]) }}">
+                            <a class="list-item-link" data-href="{{ route('ci-news-detail', ['id' => $news->news_id]) }}" href="{{ $urlblock->blockedRoute('ci-news-detail', ['id' => $news->news_id]) }}">
                                 <div class="list-item-info">
                                     <header class="list-item-title">
                                         <div><strong>{{{ $news->news_name }}}</strong></div>

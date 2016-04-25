@@ -116,7 +116,7 @@ class CRMSummaryReportPrinterController extends DataPrinterController
                         printf("\n");
                     }
                 }
-
+                exit;
                 break;
 
             case 'print':

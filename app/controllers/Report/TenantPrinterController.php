@@ -93,15 +93,15 @@ class TenantPrinterController extends DataPrinterController
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
 
                     printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
-                            $this->printUtf8($row->name), 
-                            $this->printUtf8($row->tenant_categories), 
+                            $this->printUtf8($row->name),
+                            $this->printUtf8($row->tenant_categories),
                             $this->printUtf8($row->location),
                             $row->status,
                             $this->printDateTime($row->updated_at, $timezone, 'd F Y  H:i:s')
                        );
 
                 }
-
+                exit;
                 break;
 
             case 'print':
@@ -203,7 +203,7 @@ class TenantPrinterController extends DataPrinterController
         if (empty($current_date_and_time)) {
             $current_date_and_time = Carbon::now();
         }
-        return 'orbit-export-' . $pageTitle . '-' . Carbon::createFromFormat('Y-m-d H:i:s', $current_date_and_time)->format('D_d_M_Y_Hi') . $ext;
+        return 'gotomalls-export-' . $pageTitle . '-' . Carbon::createFromFormat('Y-m-d H:i:s', $current_date_and_time)->format('D_d_M_Y_Hi') . $ext;
     }
 
 }

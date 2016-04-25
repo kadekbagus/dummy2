@@ -128,6 +128,7 @@ class PromotionPrinterController extends DataPrinterController
                         $count, $row->news_name, $startDateTime, $endDateTime, str_replace(', ', "\n", $row->campaign_location_names), $this->printUtf8($row->campaign_status), $lastUpdateDate);
                     $count++;
                 }
+                exit;
                 break;
 
             case 'print':
@@ -217,6 +218,6 @@ class PromotionPrinterController extends DataPrinterController
             $currentDateAndTime = Carbon::now();
             $utc = '_UTC';
         }
-        return 'orbit-export-' . $pageTitle . '-' . Carbon::createFromFormat('Y-m-d H:i:s', $currentDateAndTime)->format('D_d_M_Y_Hi') . $utc . $ext;
+        return 'gotomalls-export-' . $pageTitle . '-' . Carbon::createFromFormat('Y-m-d H:i:s', $currentDateAndTime)->format('D_d_M_Y_Hi') . $utc . $ext;
     }
 }
