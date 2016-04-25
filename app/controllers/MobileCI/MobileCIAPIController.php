@@ -3654,7 +3654,6 @@ class MobileCIAPIController extends BaseCIController
                     }
                 }
 
-                $tenant->url = $urlblock->blockedRoute('ci-tenant-list', ['id' => $tenant->merchant_id]);
                 // set tenant facebook page url
                 $tenant->facebook_like_url = '';
                 if (count($tenant->merchantSocialMedia) > 0) {
