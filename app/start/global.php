@@ -61,7 +61,9 @@ App::error(function(Exception $exception, $code)
 {
 	Log::error($exception);
 
-	return View::make('errors.general');
+	if (!Config::get('app.debug')) {
+		return View::make('errors.general');
+	}
 });
 
 /*
