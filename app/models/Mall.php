@@ -92,7 +92,22 @@ class Mall extends Eloquent
      */
     public function mallCategories()
     {
-        return $this->hasMany('Category', 'merchant_id', 'merchant_id')->excludeDeleted();
+        return $this->hasMany('Category', 'merchant_id', 'merchant_id');
+    }
+
+    /**
+     * Merchant has many category translation.
+     */
+    public function mallCategoryTranslations()
+    {
+        return $this->mallCategories()
+                    ->leftJoin('category_translations', 'category_translations.category_id', '=', 'categories.category_id')
+                    ->leftJoin('merchant_languages', function($q) {
+                        $q->on('merchant_languages.language_id', '=', 'category_translations.merchant_language_id')
+                            ->on('merchant_languages.merchant_id', '=', 'categories.merchant_id');
+                    })
+                    ->leftJoin('languages', 'languages.language_id', '=', 'merchant_languages.language_id')
+                    ->where('merchant_languages.status', '!=', 'deleted');
     }
 
     /**
