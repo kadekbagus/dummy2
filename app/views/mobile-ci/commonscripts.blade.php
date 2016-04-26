@@ -648,7 +648,7 @@
                 $('.search-wrapper').append(loader);
 
                 $.ajax({
-                    @if(Config::set('orbit.session.availability.query_string'))
+                    @if(Config::get('orbit.session.availability.query_string'))
                     url: "{{ url('/app/v1/keyword/search') }}&keyword=" + keyword + '&lang=' + cookieLang,
                     @else
                     url: "{{ url('/app/v1/keyword/search') }}?keyword=" + keyword + '&lang=' + cookieLang,
