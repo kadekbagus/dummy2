@@ -1663,10 +1663,22 @@ class UserAPIController extends ControllerAPI
             });
 
             // Filter user by gender
-            OrbitInput::get('gender', function ($gender) use ($users) {
-                $users->whereHas('userdetail', function ($q) use ($gender) {
-                    $q->whereIn('gender', $gender);
-                });
+            OrbitInput::get('gender', function ($gender) use ($users, $prefix) {
+                if (in_array('u', $gender) && count($gender) === 1){
+                    $users->whereRaw(" {$prefix}user_details.gender = '' OR {$prefix}user_details.gender IS NULL ");
+                } else {
+                    if (in_array('u', $gender)){
+                        $users->whereHas('userdetail', function ($q) use ($gender) {
+                            $q->whereIn('gender', $gender);
+                        });
+                        $users->orWhereRaw(" {$prefix}user_details.gender = '' OR {$prefix}user_details.gender IS NULL ");
+                    } else {
+                        $users->whereHas('userdetail', function ($q) use ($gender) {
+                                $q->whereIn('gender', $gender);
+                        });
+                    }
+
+                }
             });
 
             // Filter user by membership number
@@ -1874,6 +1886,7 @@ class UserAPIController extends ControllerAPI
             }
 
             if (Input::get('gender') && is_array(Input::get('gender'))) {
+                $genders = array();
                 foreach (Input::get('gender') as $code) {
                     if ($code == 'm') $genders[] = 'Male';
                     if ($code == 'f') $genders[] = 'Female';
