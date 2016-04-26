@@ -356,6 +356,13 @@
 
 {{ HTML::script('mobile-ci/scripts/jquery.cookie.js') }}
 <script type="text/javascript">
+    // force reload page on every visit including back button
+    $(window).bind("pageshow", function(event) {
+        if (event.originalEvent.persisted) {
+            document.body.style.display = "none";
+            window.location.reload();
+        }
+    });
     var keyword = '{{{Input::get('keyword', '')}}}';
     var take = {{Config::get('orbit.pagination.per_page', 25)}}, 
         skip = {{Config::get('orbit.pagination.per_page', 25)}};
@@ -391,7 +398,7 @@
                         }
                         var list = '<div class="col-xs-12 col-sm-12 item-x" data-ids="'+data.records[i].item_id+'" id="item-'+data.records[i].item_id+'">\
                                 <section class="list-item-single-tenant">\
-                                    <a class="list-item-link" href="'+data.records[i].url+'">\
+                                    <a class="list-item-link" href="'+data.records[i].redirect_url+'" href="'+data.records[i].url+'">\
                                         '+coupon_badge+'\
                                         <div class="list-item-info">\
                                             <header class="list-item-title">\
@@ -641,7 +648,11 @@
                 $('.search-wrapper').append(loader);
 
                 $.ajax({
+                    @if(Config::get('orbit.session.availability.query_string'))
                     url: "{{ url('/app/v1/keyword/search') }}&keyword=" + keyword + '&lang=' + cookieLang,
+                    @else
+                    url: "{{ url('/app/v1/keyword/search') }}?keyword=" + keyword + '&lang=' + cookieLang,
+                    @endif
                     method: 'GET'
                 }).done(function(data) {
                     if (data.data.total_records > 0) {
