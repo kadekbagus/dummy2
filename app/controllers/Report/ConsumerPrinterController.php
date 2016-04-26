@@ -192,7 +192,7 @@ class ConsumerPrinterController extends DataPrinterController
                 $result = 'Female';
                 break;
             default:
-                $result = '';
+                $result = 'Unknown';
         }
 
         return $result;
