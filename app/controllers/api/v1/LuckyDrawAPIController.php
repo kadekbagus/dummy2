@@ -235,24 +235,36 @@ class LuckyDrawAPIController extends ControllerAPI
                 $this->validateAndSaveTranslations($newluckydraw, $translation_json_string, 'create', $mall_id);
             });
 
-            // get default mall language id
-            $default = Mall::select('mobile_default_language', 'name')
-                            ->where('merchant_id', '=', $mall_id)
-                            ->first();
+            // english and default language in mall is required
+            $idLanguage = Language::select('language_id')
+                                    ->where('name', '=', 'en')
+                                    ->first();
 
-            $idLanguage = Language::select('language_id', 'name_long')
-                                ->where('name', '=', $default->mobile_default_language)
-                                ->first();
+            $prefix = DB::getTablePrefix();
+            $isAvailable = LuckyDrawTranslation::where('lucky_draw_id', '=', $newluckydraw->lucky_draw_id)
+                                            ->whereRaw("{$prefix}lucky_draw_translations.merchant_language_id IN (select language_id 
+                                                                                                                    from {$prefix}languages 
+                                                                                                                    where name = (select mobile_default_language 
+                                                                                                                                    from {$prefix}merchants 
+                                                                                                                                    where {$prefix}merchants.object_type = 'mall' 
+                                                                                                                                    and merchant_id = {$this->quote($mall_id)}) 
+                                                                                                                    or name = 'en')")
+                                            ->where(function($query) {
+                                                $query->where('lucky_draw_name', '=', '')
+                                                      ->orWhere('description', '=', '')
+                                                      ->orWhereNull('lucky_draw_name')
+                                                      ->orWhereNull('description');
+                                              })
+                                            ->get();
 
-            $isAvailable = LuckyDrawTranslation::where('merchant_language_id', '=', $idLanguage->language_id)
-                                            ->where('lucky_draw_id', '=', $newluckydraw->lucky_draw_id)
-                                            ->where('lucky_draw_name', '!=', '')
-                                            ->where('description', '!=', '')
-                                            ->count();
-
-            if ($isAvailable == 0) {
-                $errorMessage = Lang::get('validation.orbit.empty.default_language');
-                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            foreach ($isAvailable as $val) {
+                if ($val->merchant_language_id === $idLanguage->language_id) {
+                    $errorMessage = Lang::get('validation.orbit.empty.english_language');
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                } else {
+                    $errorMessage = Lang::get('validation.orbit.empty.default_language');
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
             }
 
             $this->response->data = $newluckydraw;
@@ -605,24 +617,36 @@ class LuckyDrawAPIController extends ControllerAPI
                 $this->validateAndSaveTranslations($updatedluckydraw, $translation_json_string, 'update', $mall_id);
             });
 
-            // get default mall language id
-            $default = Mall::select('mobile_default_language', 'name')
-                            ->where('merchant_id', '=', $mall_id)
-                            ->first();
+            // english and default language in mall is required
+            $idLanguage = Language::select('language_id')
+                                    ->where('name', '=', 'en')
+                                    ->first();
 
-            $idLanguage = Language::select('language_id', 'name_long')
-                                ->where('name', '=', $default->mobile_default_language)
-                                ->first();
+            $prefix = DB::getTablePrefix();
+            $isAvailable = LuckyDrawTranslation::where('lucky_draw_id', '=', $lucky_draw_id)
+                                            ->whereRaw("{$prefix}lucky_draw_translations.merchant_language_id IN (select language_id 
+                                                                                                                    from {$prefix}languages 
+                                                                                                                    where name = (select mobile_default_language 
+                                                                                                                                    from {$prefix}merchants 
+                                                                                                                                    where {$prefix}merchants.object_type = 'mall' 
+                                                                                                                                    and merchant_id = {$this->quote($mall_id)}) 
+                                                                                                                    or name = 'en')")
+                                            ->where(function($query) {
+                                                $query->where('lucky_draw_name', '=', '')
+                                                      ->orWhere('description', '=', '')
+                                                      ->orWhereNull('lucky_draw_name')
+                                                      ->orWhereNull('description');
+                                              })
+                                            ->get();
 
-            $isAvailable = LuckyDrawTranslation::where('merchant_language_id', '=', $idLanguage->language_id)
-                                            ->where('lucky_draw_id', '=', $lucky_draw_id)
-                                            ->where('lucky_draw_name', '!=', '')
-                                            ->where('description', '!=', '')
-                                            ->count();
-
-            if ($isAvailable == 0) {
-                $errorMessage = Lang::get('validation.orbit.empty.default_language');
-                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            foreach ($isAvailable as $val) {
+                if ($val->merchant_language_id === $idLanguage->language_id) {
+                    $errorMessage = Lang::get('validation.orbit.empty.english_language');
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                } else {
+                    $errorMessage = Lang::get('validation.orbit.empty.default_language');
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
             }
 
             $this->response->data = $updatedluckydraw;
@@ -2129,24 +2153,36 @@ class LuckyDrawAPIController extends ControllerAPI
                 $this->validateAndSaveAnnouncementTranslations($lucky_draw_announcement, $announcement_translations, 'create');
             });
 
-            // get default mall language id
-            $default = Mall::select('mobile_default_language', 'name')
-                            ->where('merchant_id', '=', $mall_id)
-                            ->first();
+            // english and default language in mall is required
+            $idLanguage = Language::select('language_id')
+                                    ->where('name', '=', 'en')
+                                    ->first();
 
-            $idLanguage = Language::select('language_id', 'name_long')
-                                ->where('name', '=', $default->mobile_default_language)
-                                ->first();
+            $prefix = DB::getTablePrefix();
+            $isAvailable = LuckyDrawAnnouncementTranslation::where('lucky_draw_announcement_id', '=', $lucky_draw_announcement->lucky_draw_announcement_id)
+                                            ->whereRaw("{$prefix}lucky_draw_announcement_translations.merchant_language_id IN (select language_id 
+                                                                                                                    from {$prefix}languages 
+                                                                                                                    where name = (select mobile_default_language 
+                                                                                                                                    from {$prefix}merchants 
+                                                                                                                                    where {$prefix}merchants.object_type = 'mall' 
+                                                                                                                                    and merchant_id = {$this->quote($mall_id)}) 
+                                                                                                                    or name = 'en')")
+                                            ->where(function($query) {
+                                                $query->where('title', '=', '')
+                                                      ->orWhere('description', '=', '')
+                                                      ->orWhereNull('title')
+                                                      ->orWhereNull('description');
+                                              })
+                                            ->get();
 
-            $isAvailable = LuckyDrawAnnouncementTranslation::where('merchant_language_id', '=', $idLanguage->language_id)
-                                            ->where('lucky_draw_announcement_id', '=', $lucky_draw_announcement->lucky_draw_announcement_id)
-                                            ->where('title', '!=', '')
-                                            ->where('description', '!=', '')
-                                            ->count();
-
-            if ($isAvailable == 0) {
-                $errorMessage = Lang::get('validation.orbit.empty.default_language');
-                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            foreach ($isAvailable as $val) {
+                if ($val->merchant_language_id === $idLanguage->language_id) {
+                    $errorMessage = Lang::get('validation.orbit.empty.english_language');
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                } else {
+                    $errorMessage = Lang::get('validation.orbit.empty.default_language');
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
             }
 
             $prize_winners_response = null;
@@ -2510,24 +2546,36 @@ class LuckyDrawAPIController extends ControllerAPI
                 $this->validateAndSaveAnnouncementTranslations($lucky_draw_announcement, $announcement_translations, 'update');
             });
 
-            // get default mall language id
-            $default = Mall::select('mobile_default_language', 'name')
-                            ->where('merchant_id', '=', $mall_id)
-                            ->first();
+            // english and default language in mall is required
+            $idLanguage = Language::select('language_id')
+                                    ->where('name', '=', 'en')
+                                    ->first();
 
-            $idLanguage = Language::select('language_id', 'name_long')
-                                ->where('name', '=', $default->mobile_default_language)
-                                ->first();
+            $prefix = DB::getTablePrefix();
+            $isAvailable = LuckyDrawAnnouncementTranslation::where('lucky_draw_announcement_id', '=', $lucky_draw_announcement_id)
+                                            ->whereRaw("{$prefix}lucky_draw_announcement_translations.merchant_language_id IN (select language_id 
+                                                                                                                    from {$prefix}languages 
+                                                                                                                    where name = (select mobile_default_language 
+                                                                                                                                    from {$prefix}merchants 
+                                                                                                                                    where {$prefix}merchants.object_type = 'mall' 
+                                                                                                                                    and merchant_id = {$this->quote($mall_id)}) 
+                                                                                                                    or name = 'en')")
+                                            ->where(function($query) {
+                                                $query->where('title', '=', '')
+                                                      ->orWhere('description', '=', '')
+                                                      ->orWhereNull('title')
+                                                      ->orWhereNull('description');
+                                              })
+                                            ->get();
 
-            $isAvailable = LuckyDrawAnnouncementTranslation::where('merchant_language_id', '=', $idLanguage->language_id)
-                                            ->where('lucky_draw_announcement_id', '=', $lucky_draw_announcement_id)
-                                            ->where('title', '!=', '')
-                                            ->where('description', '!=', '')
-                                            ->count();
-
-            if ($isAvailable == 0) {
-                $errorMessage = Lang::get('validation.orbit.empty.default_language');
-                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            foreach ($isAvailable as $val) {
+                if ($val->merchant_language_id === $idLanguage->language_id) {
+                    $errorMessage = Lang::get('validation.orbit.empty.english_language');
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                } else {
+                    $errorMessage = Lang::get('validation.orbit.empty.default_language');
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
             }
 
             $prize_winners_response = null;

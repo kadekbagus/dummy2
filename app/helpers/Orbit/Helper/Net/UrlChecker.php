@@ -34,6 +34,11 @@ class UrlChecker
     protected function prepareSession()
     {
         if (! is_object($this->session)) {
+            // set the session strict to FALSE
+            Config::set('orbit.session.strict', FALSE);
+            // set the query session string to FALSE, so the CI will depend on session cookie
+            Config::set('orbit.session.availability.query_string', FALSE);
+
             // This user assumed are Consumer, which has been checked at login process
             $config = new SessionConfig(Config::get('orbit.session'));
             $config->setConfig('application_id', static::APPLICATION_ID);

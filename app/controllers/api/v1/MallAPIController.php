@@ -526,7 +526,7 @@ class MallAPIController extends ControllerAPI
                         foreach ($languages as $data_lang) {
                             $new_category_translation = new CategoryTranslation();
                             $new_category_translation->category_id          = $new_category->category_id;
-                            $new_category_translation->merchant_language_id = $languages_by_name[$data_lang]->merchant_language_id;
+                            $new_category_translation->merchant_language_id = $languages_by_name[$data_lang]->language_id;
                             $new_category_translation->category_name        = trim($category->$data_lang);
                             $new_category_translation->status               = 'active';
                             $new_category_translation->created_by           = NULL;
@@ -561,7 +561,7 @@ class MallAPIController extends ControllerAPI
                         // The content for this particular language is available
                         $widgetTrans = new WidgetTranslation();
                         $widgetTrans->widget_id = $widget->widget_id;
-                        $widgetTrans->merchant_language_id = $languages_by_name[$lang]->merchant_language_id;
+                        $widgetTrans->merchant_language_id = $languages_by_name[$lang]->language_id;
                         $widgetTrans->widget_slogan = $slogan[$lang];
                         $widgetTrans->status = 'active';
                         $widgetTrans->save();
@@ -1829,7 +1829,6 @@ class MallAPIController extends ControllerAPI
 
             OrbitInput::post('languages', function($languages) use ($updatedmall) {
                 if (! in_array('en', $languages)) {
-                    // $languages[] = 'en'; //don't delete english
                     $errorMessage = Lang::get('validation.orbit.exists.default_language', ['attribute' => 'English']);
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
@@ -1887,11 +1886,19 @@ class MallAPIController extends ControllerAPI
                     foreach ($languages_will_be_delete as $check_lang) {
                         // news translation
                         $news_translations = NewsTranslation::excludeDeleted('news_translations')
-                                                // ->excludeDeleted('news')
-                                                ->leftJoin('news', 'news.news_id', '=', 'news_translations.news_id')
-                                                ->where('news_translations.merchant_language_id', '=', $check_lang->merchant_language_id)
+                                                ->excludeDeleted('merchant_languages')
+                                                ->join('news', 'news.news_id', '=', 'news_translations.news_id')
+                                                ->join('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
+                                                ->join('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
+                                                ->join('merchant_languages', function($q) {
+                                                    $q->on('merchant_languages.language_id', '=', 'news_translations.merchant_language_id')
+                                                        ->on('merchant_languages.merchant_id', '=', 'merchants.parent_id');
+                                                })
+                                                ->where('merchants.object_type', 'tenant')
+                                                ->where('merchants.parent_id', $updatedmall->merchant_id)
+                                                ->where('news_translations.merchant_language_id', '=', $check_lang->language_id)
                                                 ->where('news.object_type', '=', 'news')
-                                                ->get();
+                                                ->first();
                         if (count($news_translations) > 0) {
                             $errorMessage = Lang::get('validation.orbit.exists.translation', ['attribute' => $check_lang->name_long,
                                                                                     'link' => 'News']);
@@ -1900,11 +1907,19 @@ class MallAPIController extends ControllerAPI
 
                         // promotion translation
                         $promotion_translations = NewsTranslation::excludeDeleted('news_translations')
-                                                // ->excludeDeleted('news')
-                                                ->leftJoin('news', 'news.news_id', '=', 'news_translations.news_id')
-                                                ->where('news_translations.merchant_language_id', '=', $check_lang->merchant_language_id)
+                                                ->excludeDeleted('merchant_languages')
+                                                ->join('news', 'news.news_id', '=', 'news_translations.news_id')
+                                                ->join('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
+                                                ->join('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
+                                                ->join('merchant_languages', function($q) {
+                                                    $q->on('merchant_languages.language_id', '=', 'news_translations.merchant_language_id')
+                                                        ->on('merchant_languages.merchant_id', '=', 'merchants.parent_id');
+                                                })
+                                                ->where('merchants.object_type', 'tenant')
+                                                ->where('merchants.parent_id', $updatedmall->merchant_id)
+                                                ->where('news_translations.merchant_language_id', '=', $check_lang->language_id)
                                                 ->where('news.object_type', '=', 'promotion')
-                                                ->get();
+                                                ->first();
                         if (count($promotion_translations) > 0) {
                             $errorMessage = Lang::get('validation.orbit.exists.translation', ['attribute' => $check_lang->name_long,
                                                                                     'link' => 'Promotions']);
@@ -1912,29 +1927,35 @@ class MallAPIController extends ControllerAPI
                         }
 
                         // coupon translation
-                        $coupon_translations = CouponTranslation::excludeDeleted()
-                                                ->where('merchant_language_id', '=', $check_lang->merchant_language_id)
-                                                ->get();
+                        $coupon_translations = CouponTranslation::excludeDeleted('coupon_translations')
+                                                ->excludeDeleted('merchant_languages')
+                                                ->join('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'coupon_translations.promotion_id')
+                                                ->join('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
+                                                ->join('merchant_languages', function ($q) {
+                                                    $q->on('merchant_languages.language_id', '=', 'coupon_translations.merchant_language_id')
+                                                        ->on('merchant_languages.merchant_id', '=', 'merchants.parent_id');
+                                                })
+                                                ->where('merchants.object_type', 'tenant')
+                                                ->where('merchants.parent_id', $updatedmall->merchant_id)
+                                                ->where('coupon_translations.merchant_language_id', '=', $check_lang->language_id)
+                                                ->first();
                         if (count($coupon_translations) > 0) {
                             $errorMessage = Lang::get('validation.orbit.exists.translation', ['attribute' => $check_lang->name_long,
                                                                                     'link' => 'Coupons']);
                             OrbitShopAPI::throwInvalidArgument($errorMessage);
                         }
 
-                        // event translation
-                        $event_translations = EventTranslation::excludeDeleted()
-                                                ->where('merchant_language_id', '=', $check_lang->merchant_language_id)
-                                                ->get();
-                        if (count($event_translations) > 0) {
-                            $errorMessage = Lang::get('validation.orbit.exists.translation', ['attribute' => $check_lang->name_long,
-                                                                                    'link' => 'Events']);
-                            OrbitShopAPI::throwInvalidArgument($errorMessage);
-                        }
-
                         // lucky_draw translation
-                        $lucky_draw = LuckyDrawTranslation::excludeDeleted()
-                                                ->where('merchant_language_id', '=', $check_lang->merchant_language_id)
-                                                ->get();
+                        $lucky_draw = LuckyDrawTranslation::excludeDeleted('lucky_draw_translations')
+                                                ->excludeDeleted('merchant_languages')
+                                                ->join('lucky_draws', 'lucky_draws.lucky_draw_id', '=', 'lucky_draw_translations.lucky_draw_id')
+                                                ->join('merchant_languages', function ($q) {
+                                                    $q->on('merchant_languages.language_id', '=', 'lucky_draw_translations.merchant_language_id')
+                                                        ->on('merchant_languages.merchant_id', '=', 'lucky_draws.mall_id');
+                                                })
+                                                ->where('lucky_draws.mall_id', $updatedmall->merchant_id)
+                                                ->where('lucky_draw_translations.merchant_language_id', '=', $check_lang->language_id)
+                                                ->first();
                         if (count($lucky_draw) > 0) {
                             $errorMessage = Lang::get('validation.orbit.exists.translation', ['attribute' => $check_lang->name_long,
                                                                                     'link' => 'Lucky Draws']);
@@ -1942,9 +1963,17 @@ class MallAPIController extends ControllerAPI
                         }
 
                         // setting translation
-                        $setting_translation = SettingTranslation::excludeDeleted()
-                                                ->where('merchant_language_id', '=', $check_lang->merchant_language_id)
-                                                ->get();
+                        $setting_translation = SettingTranslation::excludeDeleted('setting_translations')
+                                                ->excludeDeleted('merchant_languages')
+                                                ->join('settings', 'settings.setting_id', '=', 'setting_translations.setting_id')
+                                                ->join('merchant_languages', function($q) {
+                                                    $q->on('merchant_languages.language_id', '=', 'setting_translations.merchant_language_id')
+                                                        ->on('merchant_languages.merchant_id', '=', 'settings.object_id');
+                                                })
+                                                ->where('settings.object_type', 'merchant')
+                                                ->where('settings.object_id', $updatedmall->merchant_id)
+                                                ->where('setting_translations.merchant_language_id', '=', $check_lang->language_id)
+                                                ->first();
                         if (count($setting_translation) > 0) {
                             $errorMessage = Lang::get('validation.orbit.exists.translation', ['attribute' => $check_lang->name_long,
                                                                                     'link' => 'Settings']);
@@ -1952,9 +1981,16 @@ class MallAPIController extends ControllerAPI
                         }
 
                         // widget translation
-                        $widget_translation = WidgetTranslation::excludeDeleted()
-                                                ->where('merchant_language_id', '=', $check_lang->merchant_language_id)
-                                                ->get();
+                        $widget_translation = WidgetTranslation::excludeDeleted('widget_translations')
+                                                ->excludeDeleted('merchant_languages')
+                                                ->join('widgets', 'widgets.widget_id', '=', 'widget_translations.widget_id')
+                                                ->join('merchant_languages', function ($q) {
+                                                    $q->on('merchant_languages.language_id', '=', 'widget_translations.merchant_language_id')
+                                                        ->on('merchant_languages.merchant_id', '=', 'widgets.merchant_id');
+                                                })
+                                                ->where('widgets.merchant_id', $updatedmall->merchant_id)
+                                                ->where('widget_translations.merchant_language_id', '=', $check_lang->language_id)
+                                                ->first();
                         if (count($widget_translation) > 0) {
                             $errorMessage = Lang::get('validation.orbit.exists.translation', ['attribute' => $check_lang->name_long,
                                                                                     'link' => 'Widgets']);
@@ -1962,9 +1998,17 @@ class MallAPIController extends ControllerAPI
                         }
 
                         // category translation
-                        $category_translation = CategoryTranslation::excludeDeleted()
-                                                ->where('merchant_language_id', '=', $check_lang->merchant_language_id)
-                                                ->get();
+                        $category_translation = CategoryTranslation::excludeDeleted('category_translations')
+                                                ->excludeDeleted('merchant_languages')
+                                                ->join('category_merchant', 'category_merchant.category_id', '=', 'category_translations.category_id')
+                                                ->join('merchants', 'merchants.merchant_id', '=', 'category_merchant.merchant_id')
+                                                ->join('merchant_languages', function ($q) {
+                                                    $q->on('merchant_languages.language_id', '=', 'category_translations.merchant_language_id')
+                                                        ->on('merchant_languages.merchant_id', '=', 'merchants.parent_id');
+                                                })
+                                                ->where('merchants.parent_id', $updatedmall->merchant_id)
+                                                ->where('category_translations.merchant_language_id', '=', $check_lang->language_id)
+                                                ->first();
                         if (count($category_translation) > 0) {
                             $errorMessage = Lang::get('validation.orbit.exists.translation', ['attribute' => $check_lang->name_long,
                                                                                     'link' => 'Categories']);
@@ -1972,79 +2016,41 @@ class MallAPIController extends ControllerAPI
                         }
 
                         // lucky draw announcement translation
-                        $lucky_draw_announcement_translation = LuckyDrawAnnouncementTranslation::excludeDeleted()
-                                                ->where('merchant_language_id', '=', $check_lang->merchant_language_id)
-                                                ->get();
+                        $lucky_draw_announcement_translation = LuckyDrawAnnouncementTranslation::excludeDeleted('lucky_draw_announcement_translations')
+                                                ->excludeDeleted('merchant_languages')
+                                                ->join('lucky_draw_announcements', 'lucky_draw_announcements.lucky_draw_announcement_id', '=', 'lucky_draw_announcement_translations.lucky_draw_announcement_id')
+                                                ->join('lucky_draws', 'lucky_draws.lucky_draw_id', '=', 'lucky_draw_announcements.lucky_draw_id')
+                                                ->join('merchant_languages', function($q) {
+                                                    $q->on('merchant_languages.language_id', '=', 'lucky_draw_announcement_translations.merchant_language_id')
+                                                        ->on('merchant_languages.merchant_id', '=', 'lucky_draws.mall_id');
+                                                })
+                                                ->where('lucky_draws.mall_id', $updatedmall->merchant_id)
+                                                ->where('lucky_draw_announcement_translations.merchant_language_id', '=', $check_lang->language_id)
+                                                ->first();
                         if (count($lucky_draw_announcement_translation) > 0) {
                             $errorMessage = Lang::get('validation.orbit.exists.translation', ['attribute' => $check_lang->name_long,
                                                         'link' => 'Lucky Draw Announcement']);
                             OrbitShopAPI::throwInvalidArgument($errorMessage);
                         }
 
-                        // mall group translation
-                        $mall_group_translation = MerchantTranslation::excludeDeleted('merchant_translations')
-                                                // ->excludeDeleted('merchants')
-                                                ->leftJoin('merchants', 'merchants.merchant_id', '=', 'merchant_translations.merchant_id')
-                                                ->where('object_type', '=', 'mall_group')
-                                                ->where('merchant_language_id', '=', $check_lang->merchant_language_id)
-                                                ->get();
-                        if (count($mall_group_translation) > 0) {
-                            $errorMessage = Lang::get('validation.orbit.exists.translation', ['attribute' => $check_lang->name_long,
-                                                                                    'link' => 'Mall Group']);
-                            OrbitShopAPI::throwInvalidArgument($errorMessage);
-                        }
-
-                        // mall translation
-                        $mall_translation = MerchantTranslation::excludeDeleted('merchant_translations')
-                                                // ->excludeDeleted('merchants')
-                                                ->leftJoin('merchants', 'merchants.merchant_id', '=', 'merchant_translations.merchant_id')
-                                                ->where('object_type', '=', 'mall')
-                                                ->where('merchant_language_id', '=', $check_lang->merchant_language_id)
-                                                ->get();
-                        if (count($mall_translation) > 0) {
-                            $errorMessage = Lang::get('validation.orbit.exists.translation', ['attribute' => $check_lang->name_long,
-                                                                                    'link' => 'Mall']);
-                            OrbitShopAPI::throwInvalidArgument($errorMessage);
-                        }
-
                         // tenant translation
                         $tenant_translation = MerchantTranslation::excludeDeleted('merchant_translations')
-                                                // ->excludeDeleted('merchants')
-                                                ->leftJoin('merchants', 'merchants.merchant_id', '=', 'merchant_translations.merchant_id')
-                                                ->where('object_type', '=', 'tenant')
-                                                ->where('merchant_language_id', '=', $check_lang->merchant_language_id)
-                                                ->get();
+                                                ->excludeDeleted('merchant_languages')
+                                                ->join('merchants', 'merchants.merchant_id', '=', 'merchant_translations.merchant_id')
+                                                ->join('merchant_languages', function ($q) {
+                                                    $q->on('merchant_languages.language_id', '=', 'merchant_translations.merchant_language_id')
+                                                        ->on('merchant_languages.merchant_id', '=', 'merchants.parent_id');
+                                                })
+                                                ->where('merchants.object_type', '=', 'tenant')
+                                                ->where('merchants.parent_id', $updatedmall->merchant_id)
+                                                ->where('merchant_translations.merchant_language_id', '=', $check_lang->language_id)
+                                                ->first();
                         if (count($tenant_translation) > 0) {
                             $errorMessage = Lang::get('validation.orbit.exists.translation', ['attribute' => $check_lang->name_long,
                                                                                     'link' => 'Tenant']);
                             OrbitShopAPI::throwInvalidArgument($errorMessage);
                         }
 
-                        // merchant translation
-                        $merchant_translation = MerchantTranslation::excludeDeleted('merchant_translations')
-                                                // ->excludeDeleted('merchants')
-                                                ->leftJoin('merchants', 'merchants.merchant_id', '=', 'merchant_translations.merchant_id')
-                                                ->where('object_type', '=', 'merchant')
-                                                ->where('merchant_language_id', '=', $check_lang->merchant_language_id)
-                                                ->get();
-                        if (count($merchant_translation) > 0) {
-                            $errorMessage = Lang::get('validation.orbit.exists.translation', ['attribute' => $check_lang->name_long,
-                                                                                    'link' => 'Merchant']);
-                            OrbitShopAPI::throwInvalidArgument($errorMessage);
-                        }
-
-                        // retailer translation
-                        $retailer_translation = MerchantTranslation::excludeDeleted('merchant_translations')
-                                                // ->excludeDeleted('merchants')
-                                                ->leftJoin('merchants', 'merchants.merchant_id', '=', 'merchant_translations.merchant_id')
-                                                ->where('object_type', '=', 'retailer')
-                                                ->where('merchant_language_id', '=', $check_lang->merchant_language_id)
-                                                ->get();
-                        if (count($retailer_translation) > 0) {
-                            $errorMessage = Lang::get('validation.orbit.exists.translation', ['attribute' => $check_lang->name_long,
-                                                                                    'link' => 'Retailer']);
-                            OrbitShopAPI::throwInvalidArgument($errorMessage);
-                        }
                         //colect language will be delete
                         $del_lang[] = $check_lang->merchant_language_id;
                     }
@@ -2054,7 +2060,6 @@ class MallAPIController extends ControllerAPI
                                                         ->where('merchant_id', '=', $updatedmall->merchant_id)
                                                         ->whereIn('merchant_language_id', $del_lang)
                                                         ->update(['status' => 'deleted']);
-
                     }
                 }
             });
@@ -2124,6 +2129,8 @@ class MallAPIController extends ControllerAPI
                 if (count($categories) > 0) {
                     // loop array categories
                     $new_list_category = [];
+                    $default_category_name = null;
+                    $english_category_name = null;
                     foreach ($categories as $category_json) {
                         // decode json category
                         $category = @json_decode($category_json);
@@ -2131,16 +2138,24 @@ class MallAPIController extends ControllerAPI
                             OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.format'));
                         }
 
-                        // default language is name of category
-                        $default_category_name = $category->default;
+                        if (! empty($category->default)) {
+                            // default language is name of category
+                            $default_category_name = $category->default;
+                        }
+                        if (! empty($category->en)) {
+                            // english must be exist
+                            $english_category_name = $category->en;
+                        }
 
                         // check default
                         $validator = Validator::make(
                             array(
-                                'default'       => $default_category_name
+                                'default'       => $default_category_name,
+                                'english'       => $english_category_name
                             ),
                             array(
-                                'default'       => 'required'
+                                'default'       => 'required',
+                                'english'       => 'required'
                             )
                         );
 
@@ -2180,8 +2195,15 @@ class MallAPIController extends ControllerAPI
                                     $mall_lang = $this->valid_mall_lang;
 
                                     // check category translation
-                                    $update_category_translation = CategoryTranslation::excludeDeleted()
-                                                                        ->where('merchant_language_id', $mall_lang->merchant_language_id)
+                                    $update_category_translation = CategoryTranslation::excludeDeleted('category_translations')
+                                                                        ->excludeDeleted('merchant_languages')
+                                                                        ->join('categories', 'categories.category_id', '=', 'category_translations.category_id')
+                                                                        ->join('merchant_languages', function ($q) {
+                                                                            $q->on('merchant_languages.language_id', '=', 'category_translations.merchant_language_id')
+                                                                                ->on('merchant_languages.merchant_id', '=', 'categories.merchant_id');
+                                                                        })
+                                                                        ->where('category_translations.merchant_language_id', $mall_lang->language_id)
+                                                                        ->where('categories.merchant_id', $updatedmall->merchant_id)
                                                                         ->where('category_id', $categories_mall->category_id)
                                                                         ->first();
 
@@ -2193,7 +2215,7 @@ class MallAPIController extends ControllerAPI
                                         // create new translation from new lang
                                         $new_category_translation = new CategoryTranslation();
                                         $new_category_translation->category_id          = $categories_mall->category_id;
-                                        $new_category_translation->merchant_language_id = $mall_lang->merchant_language_id;
+                                        $new_category_translation->merchant_language_id = $mall_lang->language_id;
                                         $new_category_translation->category_name        = trim($create_update_value);
                                         $new_category_translation->status               = 'active';
                                         $new_category_translation->created_by           = NULL;
@@ -2235,12 +2257,12 @@ class MallAPIController extends ControllerAPI
                                     }
 
                                     // create from instance valid_mall_language
-                                    $mall_lang = $this->mall_lang;
+                                    $mall_lang = $this->valid_mall_lang;
 
                                     // insert new category translation
                                     $new_category_translation = new CategoryTranslation();
                                     $new_category_translation->category_id          = $new_category->category_id;
-                                    $new_category_translation->merchant_language_id = $mall_lang->merchant_language_id;
+                                    $new_category_translation->merchant_language_id = $mall_lang->language_id;
                                     $new_category_translation->category_name        = trim($new_value);
                                     $new_category_translation->status               = 'active';
                                     $new_category_translation->created_by           = NULL;
@@ -2269,7 +2291,7 @@ class MallAPIController extends ControllerAPI
                                             ->where('category_merchant.category_id', $check_category->category_id)
                                             ->first();
                         if (count($link_category) > 0) {
-                            $errorMessage = Lang::get('validation.orbit.exists.link_floor', ['attribute' => $link_category->category_name,
+                            $errorMessage = Lang::get('validation.orbit.exists.link_category', ['attribute' => $link_category->category_name,
                                                                                     'link' => 'Tenant']);
                             OrbitShopAPI::throwInvalidArgument($errorMessage);
                         } else {
@@ -2278,16 +2300,18 @@ class MallAPIController extends ControllerAPI
                         }
                     }
 
-                    // delete not used category on delete list
-                    $delete_categories = Category::excludeDeleted()
-                                                ->where('merchant_id', $updatedmall->merchant_id)
-                                                ->whereIn('category_id', $del_category)
-                                                ->update(["status" => "deleted"]);
+                    if (count($del_category) > 0) {
+                        // delete not used category on delete list
+                        $delete_categories = Category::excludeDeleted()
+                                                    ->where('merchant_id', $updatedmall->merchant_id)
+                                                    ->whereIn('category_id', $del_category)
+                                                    ->update(["status" => "deleted"]);
 
-                    // delete category translation too
-                    $delete_categories_translation = CategoryTranslation::excludeDeleted()
-                                                ->whereIn('category_id', $del_category)
-                                                ->update(["status" => "deleted"]);
+                        // delete category translation too
+                        $delete_categories_translation = CategoryTranslation::excludeDeleted()
+                                                    ->whereIn('category_id', $del_category)
+                                                    ->update(["status" => "deleted"]);
+                    }
                 }
             });
 

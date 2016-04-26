@@ -722,24 +722,36 @@ class CouponAPIController extends ControllerAPI
             });
 
             foreach ($mallid as $mall) {
-                // get default mall language id
-                $default = Mall::select('mobile_default_language', 'name')
-                                ->where('merchant_id', '=', $mall)
-                                ->first();
-
-                $idLanguage = Language::select('language_id', 'name_long')
-                                    ->where('name', '=', $default->mobile_default_language)
+                // english and default language in mall is required
+                $idLanguage = Language::select('language_id')
+                                    ->where('name', '=', 'en')
                                     ->first();
 
-                $isAvailable = CouponTranslation::where('merchant_language_id', '=', $idLanguage->language_id)
-                                                ->where('promotion_id', '=', $newcoupon->promotion_id)
-                                                ->where('promotion_name', '!=', '')
-                                                ->where('description', '!=', '')
-                                                ->count();
+                $prefix = DB::getTablePrefix();
+                $isAvailable = CouponTranslation::where('promotion_id', '=', $newcoupon->promotion_id)
+                                            ->whereRaw("{$prefix}coupon_translations.merchant_language_id IN (select language_id 
+                                                                                                                    from {$prefix}languages 
+                                                                                                                    where name = (select mobile_default_language 
+                                                                                                                                    from {$prefix}merchants 
+                                                                                                                                    where {$prefix}merchants.object_type = 'mall' 
+                                                                                                                                    and merchant_id = {$this->quote($mall)}) 
+                                                                                                                    or name = 'en')")
+                                            ->where(function($query) {
+                                                $query->where('promotion_name', '=', '')
+                                                      ->orWhere('description', '=', '')
+                                                      ->orWhereRaw('promotion_name')
+                                                      ->orWhereRaw('description');
+                                              })
+                                            ->get();
 
-                if ($isAvailable == 0) {
-                    $errorMessage = Lang::get('validation.orbit.empty.default_language');
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                foreach ($isAvailable as $val) {
+                    if ($val->merchant_language_id === $idLanguage->language_id) {
+                        $errorMessage = Lang::get('validation.orbit.empty.english_language');
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    } else {
+                        $errorMessage = Lang::get('validation.orbit.empty.default_language');
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
                 }
             }
 
@@ -1759,24 +1771,36 @@ class CouponAPIController extends ControllerAPI
             });
 
             foreach ($mallid as $mall) {
-                // get default mall language id
-                $default = Mall::select('mobile_default_language', 'name')
-                                ->where('merchant_id', '=', $mall)
-                                ->first();
-
-                $idLanguage = Language::select('language_id', 'name_long')
-                                    ->where('name', '=', $default->mobile_default_language)
+                // english and default language in mall is required
+                $idLanguage = Language::select('language_id')
+                                    ->where('name', '=', 'en')
                                     ->first();
 
-                $isAvailable = CouponTranslation::where('merchant_language_id', '=', $idLanguage->language_id)
-                                                ->where('promotion_id', '=', $promotion_id)
-                                                ->where('promotion_name', '!=', '')
-                                                ->where('description', '!=', '')
-                                                ->count();
+                $prefix = DB::getTablePrefix();
+                $isAvailable = CouponTranslation::where('promotion_id', '=', $promotion_id)
+                                            ->whereRaw("{$prefix}coupon_translations.merchant_language_id IN (select language_id 
+                                                                                                                    from {$prefix}languages 
+                                                                                                                    where name = (select mobile_default_language 
+                                                                                                                                    from {$prefix}merchants 
+                                                                                                                                    where {$prefix}merchants.object_type = 'mall' 
+                                                                                                                                    and merchant_id = {$this->quote($mall)}) 
+                                                                                                                    or name = 'en')")
+                                            ->where(function($query) {
+                                                $query->where('promotion_name', '=', '')
+                                                      ->orWhere('description', '=', '')
+                                                      ->orWhereRaw('promotion_name')
+                                                      ->orWhereRaw('description');
+                                              })
+                                            ->get();
 
-                if ($isAvailable == 0) {
-                    $errorMessage = Lang::get('validation.orbit.empty.default_language');
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                foreach ($isAvailable as $val) {
+                    if ($val->merchant_language_id === $idLanguage->language_id) {
+                        $errorMessage = Lang::get('validation.orbit.empty.english_language');
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    } else {
+                        $errorMessage = Lang::get('validation.orbit.empty.default_language');
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
                 }
             }
 
