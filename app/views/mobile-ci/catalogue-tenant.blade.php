@@ -324,7 +324,7 @@
                     for(var i = 0; i < data.records.length; i++) {
                         var list = '<div class="col-xs-12 col-sm-12" id="item-'+data.records[i].merchant_id+'">\
                                 <section class="list-item-single-tenant">\
-                                    <a class="list-item-link" href="'+data.records[i].url+'">\
+                                    <a class="list-item-link" data-href="'+data.records[i].redirect_url+'" href="'+data.records[i].url+'">\
                                         <div class="list-item-info">\
                                             <header class="list-item-title">\
                                                 <div><strong>'+data.records[i].name+'</strong></div>\
