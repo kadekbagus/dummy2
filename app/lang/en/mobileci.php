@@ -188,7 +188,8 @@ return array(
         'forgot_link' => 'Forgot Password?',
         'forgot_button' => 'Send Reset Password Link',
         'forgot_sent_title' => 'We have sent you the link to reset your password',
-        'forgot_sent_sub_title' => 'please check your email inbox'
+        'forgot_sent_sub_title' => 'please check your email inbox',
+        'password_message' => 'If you haven\'t setup any password before, click <b>forgot password</b> to setup a new password'
     ),
 
     'signup' => array(

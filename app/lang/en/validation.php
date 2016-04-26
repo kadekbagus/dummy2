@@ -314,6 +314,7 @@ return array(
                 ),
             'forgot_email' => 'We couldn\'t find an account associated with :email_addr',
             'default_language' => 'Campaign content in mall default language is required',
+            'english_language' => 'Campaign content in English language is required',
             'mall_status' => 'Mall status you specified is not found'
         ),
         'queryerror' => 'Database query error, turn on debug mode to see the full query',

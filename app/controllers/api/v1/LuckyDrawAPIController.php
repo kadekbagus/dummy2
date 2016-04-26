@@ -236,6 +236,10 @@ class LuckyDrawAPIController extends ControllerAPI
             });
 
             // english and default language in mall is required
+            $idLanguage = Language::select('language_id')
+                                    ->where('name', '=', 'en')
+                                    ->first();
+
             $prefix = DB::getTablePrefix();
             $isAvailable = LuckyDrawTranslation::where('lucky_draw_id', '=', $newluckydraw->lucky_draw_id)
                                             ->whereRaw("{$prefix}lucky_draw_translations.merchant_language_id IN (select language_id 
@@ -247,13 +251,20 @@ class LuckyDrawAPIController extends ControllerAPI
                                                                                                                     or name = 'en')")
                                             ->where(function($query) {
                                                 $query->where('lucky_draw_name', '=', '')
-                                                      ->orWhere('description', '=', '');
+                                                      ->orWhere('description', '=', '')
+                                                      ->orWhereNull('lucky_draw_name')
+                                                      ->orWhereNull('description');
                                               })
-                                            ->count();
+                                            ->get();
 
-            if ($isAvailable > 0) {
-                $errorMessage = Lang::get('validation.orbit.empty.default_language');
-                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            foreach ($isAvailable as $val) {
+                if ($val->merchant_language_id === $idLanguage->language_id) {
+                    $errorMessage = Lang::get('validation.orbit.empty.english_language');
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                } else {
+                    $errorMessage = Lang::get('validation.orbit.empty.default_language');
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
             }
 
             $this->response->data = $newluckydraw;
@@ -607,6 +618,10 @@ class LuckyDrawAPIController extends ControllerAPI
             });
 
             // english and default language in mall is required
+            $idLanguage = Language::select('language_id')
+                                    ->where('name', '=', 'en')
+                                    ->first();
+
             $prefix = DB::getTablePrefix();
             $isAvailable = LuckyDrawTranslation::where('lucky_draw_id', '=', $lucky_draw_id)
                                             ->whereRaw("{$prefix}lucky_draw_translations.merchant_language_id IN (select language_id 
@@ -618,13 +633,20 @@ class LuckyDrawAPIController extends ControllerAPI
                                                                                                                     or name = 'en')")
                                             ->where(function($query) {
                                                 $query->where('lucky_draw_name', '=', '')
-                                                      ->orWhere('description', '=', '');
+                                                      ->orWhere('description', '=', '')
+                                                      ->orWhereNull('lucky_draw_name')
+                                                      ->orWhereNull('description');
                                               })
-                                            ->count();
+                                            ->get();
 
-            if ($isAvailable > 0) {
-                $errorMessage = Lang::get('validation.orbit.empty.default_language');
-                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            foreach ($isAvailable as $val) {
+                if ($val->merchant_language_id === $idLanguage->language_id) {
+                    $errorMessage = Lang::get('validation.orbit.empty.english_language');
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                } else {
+                    $errorMessage = Lang::get('validation.orbit.empty.default_language');
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
             }
 
             $this->response->data = $updatedluckydraw;
@@ -2132,6 +2154,10 @@ class LuckyDrawAPIController extends ControllerAPI
             });
 
             // english and default language in mall is required
+            $idLanguage = Language::select('language_id')
+                                    ->where('name', '=', 'en')
+                                    ->first();
+
             $prefix = DB::getTablePrefix();
             $isAvailable = LuckyDrawAnnouncementTranslation::where('lucky_draw_announcement_id', '=', $lucky_draw_announcement->lucky_draw_announcement_id)
                                             ->whereRaw("{$prefix}lucky_draw_announcement_translations.merchant_language_id IN (select language_id 
@@ -2143,13 +2169,20 @@ class LuckyDrawAPIController extends ControllerAPI
                                                                                                                     or name = 'en')")
                                             ->where(function($query) {
                                                 $query->where('title', '=', '')
-                                                      ->orWhere('description', '=', '');
+                                                      ->orWhere('description', '=', '')
+                                                      ->orWhereNull('title')
+                                                      ->orWhereNull('description');
                                               })
-                                            ->count();
+                                            ->get();
 
-            if ($isAvailable > 0) {
-                $errorMessage = Lang::get('validation.orbit.empty.default_language');
-                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            foreach ($isAvailable as $val) {
+                if ($val->merchant_language_id === $idLanguage->language_id) {
+                    $errorMessage = Lang::get('validation.orbit.empty.english_language');
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                } else {
+                    $errorMessage = Lang::get('validation.orbit.empty.default_language');
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
             }
 
             $prize_winners_response = null;
@@ -2514,6 +2547,10 @@ class LuckyDrawAPIController extends ControllerAPI
             });
 
             // english and default language in mall is required
+            $idLanguage = Language::select('language_id')
+                                    ->where('name', '=', 'en')
+                                    ->first();
+
             $prefix = DB::getTablePrefix();
             $isAvailable = LuckyDrawAnnouncementTranslation::where('lucky_draw_announcement_id', '=', $lucky_draw_announcement_id)
                                             ->whereRaw("{$prefix}lucky_draw_announcement_translations.merchant_language_id IN (select language_id 
@@ -2525,13 +2562,20 @@ class LuckyDrawAPIController extends ControllerAPI
                                                                                                                     or name = 'en')")
                                             ->where(function($query) {
                                                 $query->where('title', '=', '')
-                                                      ->orWhere('description', '=', '');
+                                                      ->orWhere('description', '=', '')
+                                                      ->orWhereNull('title')
+                                                      ->orWhereNull('description');
                                               })
-                                            ->count();
+                                            ->get();
 
-            if ($isAvailable > 0) {
-                $errorMessage = Lang::get('validation.orbit.empty.default_language');
-                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            foreach ($isAvailable as $val) {
+                if ($val->merchant_language_id === $idLanguage->language_id) {
+                    $errorMessage = Lang::get('validation.orbit.empty.english_language');
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                } else {
+                    $errorMessage = Lang::get('validation.orbit.empty.default_language');
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
             }
 
             $prize_winners_response = null;
