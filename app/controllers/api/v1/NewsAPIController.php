@@ -467,22 +467,23 @@ class NewsAPIController extends ControllerAPI
             });
 
             foreach ($mallid as $mall) {
-                // get default mall language id
-                $default = Mall::select('mobile_default_language', 'name')
-                                ->where('merchant_id', '=', $mall)
-                                ->first();
+                // english and default language in mall is required
+                $prefix = DB::getTablePrefix();
+                $isAvailable = NewsTranslation::where('news_id', '=', $newnews->news_id)
+                                            ->whereRaw("{$prefix}news_translations.merchant_language_id IN (select language_id 
+                                                                                                                    from {$prefix}languages 
+                                                                                                                    where name = (select mobile_default_language 
+                                                                                                                                    from {$prefix}merchants 
+                                                                                                                                    where {$prefix}merchants.object_type = 'mall' 
+                                                                                                                                    and merchant_id = {$this->quote($mall)}) 
+                                                                                                                    or name = 'en')")
+                                            ->where(function($query) {
+                                                $query->where('news_name', '=', '')
+                                                      ->orWhere('description', '=', '');
+                                              })
+                                            ->count();
 
-                $idLanguage = Language::select('language_id', 'name_long')
-                                    ->where('name', '=', $default->mobile_default_language)
-                                    ->first();
-
-                $isAvailable = NewsTranslation::where('merchant_language_id', '=', $idLanguage->language_id)
-                                                ->where('news_id', '=', $newnews->news_id)
-                                                ->where('news_name', '!=', '')
-                                                ->where('description', '!=', '')
-                                                ->count();
-
-                if ($isAvailable == 0) {
+                if ($isAvailable > 0) {
                     $errorMessage = Lang::get('validation.orbit.empty.default_language');
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
@@ -814,22 +815,23 @@ class NewsAPIController extends ControllerAPI
             });
 
             foreach ($mallid as $mall) {
-                // get default mall language id
-                $default = Mall::select('mobile_default_language', 'name')
-                                ->where('merchant_id', '=', $mall)
-                                ->first();
+                // english and default language in mall is required
+                $prefix = DB::getTablePrefix();
+                $isAvailable = NewsTranslation::where('news_id', '=', $news_id)
+                                            ->whereRaw("{$prefix}news_translations.merchant_language_id IN (select language_id 
+                                                                                                                    from {$prefix}languages 
+                                                                                                                    where name = (select mobile_default_language 
+                                                                                                                                    from {$prefix}merchants 
+                                                                                                                                    where {$prefix}merchants.object_type = 'mall' 
+                                                                                                                                    and merchant_id = {$this->quote($mall)}) 
+                                                                                                                    or name = 'en')")
+                                            ->where(function($query) {
+                                                $query->where('news_name', '=', '')
+                                                      ->orWhere('description', '=', '');
+                                              })
+                                            ->count();
 
-                $idLanguage = Language::select('language_id', 'name_long')
-                                    ->where('name', '=', $default->mobile_default_language)
-                                    ->first();
-
-                $isAvailable = NewsTranslation::where('merchant_language_id', '=', $idLanguage->language_id)
-                                                ->where('news_id', '=', $news_id)
-                                                ->where('news_name', '!=', '')
-                                                ->where('description', '!=', '')
-                                                ->count();
-
-                if ($isAvailable == 0) {
+                if ($isAvailable > 0) {
                     $errorMessage = Lang::get('validation.orbit.empty.default_language');
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
