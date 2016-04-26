@@ -666,7 +666,7 @@
                                     </li>';
                             }
                             if (data.data.grouped_records.tenants.length > 3) {
-                                tenants += '<a data-href="'+ data.data.grouped_records.tenants[i].tenants_redirect_url +'" href="'+ data.data.grouped_records.tenants_url +'" class="text-right" style="display:block;color:#fff;">{{ Lang::get('mobileci.search.show_more') }}</a>';
+                                tenants += '<a data-href="'+ data.data.grouped_records.tenants_redirect_url +'" href="'+ data.data.grouped_records.tenants_url +'" class="text-right" style="display:block;color:#fff;">{{ Lang::get('mobileci.search.show_more') }}</a>';
                             }
                             tenants += '</ul>';
                         }
@@ -1236,7 +1236,7 @@
                         return;
                     }
 
-                    // Cloud redirection?
+                    // redirection?
                     if (resp.data.redirect_to) {
                         document.location = resp.data.redirect_to;
                         return;
