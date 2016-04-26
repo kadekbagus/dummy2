@@ -9253,11 +9253,15 @@ class MobileCIAPIController extends BaseCIController
     public function remove_querystring_var($url, $key)
     { 
         $parsed_url = parse_url((string)$url);
-        $query = parse_str($parsed_url['query'], $output);
-        unset($output[$key]);
-        $query_string = http_build_query($output);
-        $parsed_url['query'] = $query_string;
-        $new_url = $parsed_url['scheme'] . '://' . $parsed_url['host'] . $parsed_url['path'] . '?' . $parsed_url['query'];
+        if(isset($parsed_url['query'])){
+            $query = parse_str($parsed_url['query'], $output);
+            unset($output[$key]);
+            $query_string = http_build_query($output);
+            $parsed_url['query'] = $query_string;
+            $new_url = $parsed_url['scheme'] . '://' . $parsed_url['host'] . $parsed_url['path'] . '?' . $parsed_url['query'];
+        } else {
+            $new_url = $url;
+        }
 
         return $new_url;
     }
