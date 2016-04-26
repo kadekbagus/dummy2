@@ -1034,7 +1034,7 @@ class MobileCIAPIController extends BaseCIController
         }
 
         $errorMessage = 'Facebook Error: ' . $fbError;
-        return Redirect::route('mobile-ci.signin', ['error' => $errorMessage, 'isInProgress' => 'true']);
+        return Redirect::route('ci-home', ['error' => $errorMessage, 'isInProgress' => 'true']);
     }
 
     /**
@@ -9192,7 +9192,7 @@ class MobileCIAPIController extends BaseCIController
             // append the redirect url to user object
             // remove the orbit_session from query string for this redirect url
             $user->redirect_to = $this->remove_querystring_var($to_url, $this->getOrbitSessionQueryStringName());
-            $user->redirect_to = $this->add_querystring_var($user->redirect_to, $this->getOrbitSessionQueryStringName(), $urlblock->getUserSession()->getSessionId());
+            // $user->redirect_to = $this->add_querystring_var($user->redirect_to, $this->getOrbitSessionQueryStringName(), $urlblock->getUserSession()->getSessionId());
 
             // do the stage 2
             $notAllowedStatus = ['inactive'];
@@ -9278,7 +9278,8 @@ class MobileCIAPIController extends BaseCIController
             $params = [];
             $params[$key] = $value;
             $query_string = http_build_query($params);
-            $new_url = $url . $query_string;
+            $new_url = str_replace('?', '', $url);
+            $new_url = $new_url . '?' . $query_string;
         }
 
         return $new_url;
