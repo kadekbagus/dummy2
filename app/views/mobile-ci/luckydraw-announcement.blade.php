@@ -51,7 +51,8 @@
 
 @if($ongoing)
     @if(isset($luckydraw->prizes[0]))
-        @if(count($luckydraw->prizes) === 1 && empty($luckydraw->prizes[0]->winner_number))
+    {{{ $luckydraw->prizes }}}
+        @if(count($luckydraw->prizes) === 1 && $luckydraw->prizes[0]->winner_number === '')
         <div class="row" style="background:#fff;position:relative;">
             <div class="col-xs-12 text-left padded">
                 <div class="text-center vertically-spaced">
@@ -66,7 +67,7 @@
                 <h4>{{ Lang::get('mobileci.lucky_draw.prizes') }}</h4>
                 <table class="table">
                     @foreach($luckydraw->prizes as $prize)
-                        @if(! empty($prize->winner_number))
+                        @if($prize->winner_number !== '')
                             <tr>
                                 <th>{{{ $prize->winner_number . ' ' . $prize->prize_name }}}</th>
                             </tr>
