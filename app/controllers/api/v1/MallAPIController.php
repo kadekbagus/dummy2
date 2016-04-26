@@ -2129,6 +2129,8 @@ class MallAPIController extends ControllerAPI
                 if (count($categories) > 0) {
                     // loop array categories
                     $new_list_category = [];
+                    $default_category_name = null;
+                    $english_category_name = null;
                     foreach ($categories as $category_json) {
                         // decode json category
                         $category = @json_decode($category_json);
@@ -2136,16 +2138,24 @@ class MallAPIController extends ControllerAPI
                             OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.format'));
                         }
 
-                        // default language is name of category
-                        $default_category_name = $category->default;
+                        if (! empty($category->default)) {
+                            // default language is name of category
+                            $default_category_name = $category->default;
+                        }
+                        if (! empty($category->en)) {
+                            // english must be exist
+                            $english_category_name = $category->en;
+                        }
 
                         // check default
                         $validator = Validator::make(
                             array(
-                                'default'       => $default_category_name
+                                'default'       => $default_category_name,
+                                'english'       => $english_category_name
                             ),
                             array(
-                                'default'       => 'required'
+                                'default'       => 'required',
+                                'english'       => 'required'
                             )
                         );
 
@@ -2185,8 +2195,15 @@ class MallAPIController extends ControllerAPI
                                     $mall_lang = $this->valid_mall_lang;
 
                                     // check category translation
-                                    $update_category_translation = CategoryTranslation::excludeDeleted()
-                                                                        ->where('merchant_language_id', $mall_lang->merchant_language_id)
+                                    $update_category_translation = CategoryTranslation::excludeDeleted('category_translations')
+                                                                        ->excludeDeleted('merchant_languages')
+                                                                        ->join('categories', 'categories.category_id', '=', 'category_translations.category_id')
+                                                                        ->join('merchant_languages', function ($q) {
+                                                                            $q->on('merchant_languages.language_id', '=', 'category_translations.merchant_language_id')
+                                                                                ->on('merchant_languages.merchant_id', '=', 'categories.merchant_id');
+                                                                        })
+                                                                        ->where('category_translations.merchant_language_id', $mall_lang->language_id)
+                                                                        ->where('categories.merchant_id', $updatedmall->merchant_id)
                                                                         ->where('category_id', $categories_mall->category_id)
                                                                         ->first();
 
@@ -2198,7 +2215,7 @@ class MallAPIController extends ControllerAPI
                                         // create new translation from new lang
                                         $new_category_translation = new CategoryTranslation();
                                         $new_category_translation->category_id          = $categories_mall->category_id;
-                                        $new_category_translation->merchant_language_id = $mall_lang->merchant_language_id;
+                                        $new_category_translation->merchant_language_id = $mall_lang->language_id;
                                         $new_category_translation->category_name        = trim($create_update_value);
                                         $new_category_translation->status               = 'active';
                                         $new_category_translation->created_by           = NULL;
@@ -2245,7 +2262,7 @@ class MallAPIController extends ControllerAPI
                                     // insert new category translation
                                     $new_category_translation = new CategoryTranslation();
                                     $new_category_translation->category_id          = $new_category->category_id;
-                                    $new_category_translation->merchant_language_id = $mall_lang->merchant_language_id;
+                                    $new_category_translation->merchant_language_id = $mall_lang->language_id;
                                     $new_category_translation->category_name        = trim($new_value);
                                     $new_category_translation->status               = 'active';
                                     $new_category_translation->created_by           = NULL;
@@ -2274,7 +2291,7 @@ class MallAPIController extends ControllerAPI
                                             ->where('category_merchant.category_id', $check_category->category_id)
                                             ->first();
                         if (count($link_category) > 0) {
-                            $errorMessage = Lang::get('validation.orbit.exists.link_floor', ['attribute' => $link_category->category_name,
+                            $errorMessage = Lang::get('validation.orbit.exists.link_category', ['attribute' => $link_category->category_name,
                                                                                     'link' => 'Tenant']);
                             OrbitShopAPI::throwInvalidArgument($errorMessage);
                         } else {
@@ -2283,16 +2300,18 @@ class MallAPIController extends ControllerAPI
                         }
                     }
 
-                    // delete not used category on delete list
-                    $delete_categories = Category::excludeDeleted()
-                                                ->where('merchant_id', $updatedmall->merchant_id)
-                                                ->whereIn('category_id', $del_category)
-                                                ->update(["status" => "deleted"]);
+                    if (count($del_category) > 0) {
+                        // delete not used category on delete list
+                        $delete_categories = Category::excludeDeleted()
+                                                    ->where('merchant_id', $updatedmall->merchant_id)
+                                                    ->whereIn('category_id', $del_category)
+                                                    ->update(["status" => "deleted"]);
 
-                    // delete category translation too
-                    $delete_categories_translation = CategoryTranslation::excludeDeleted()
-                                                ->whereIn('category_id', $del_category)
-                                                ->update(["status" => "deleted"]);
+                        // delete category translation too
+                        $delete_categories_translation = CategoryTranslation::excludeDeleted()
+                                                    ->whereIn('category_id', $del_category)
+                                                    ->update(["status" => "deleted"]);
+                    }
                 }
             });
 
