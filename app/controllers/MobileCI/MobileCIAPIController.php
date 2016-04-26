@@ -7265,8 +7265,8 @@ class MobileCIAPIController extends BaseCIController
         try {
             $httpCode = 200;
 
-            $keyword = trim(urldecode(OrbitInput::get('keyword')));
-            if (empty($keyword)) {
+            $keyword = (string) trim(urldecode(OrbitInput::get('keyword')));
+            if (empty($keyword) && $keyword !== '0') {
                 throw new Exception ('Empty keyword.');
             }
 
@@ -7663,7 +7663,7 @@ class MobileCIAPIController extends BaseCIController
                                 $defaultLanguage = $this->getDefaultLanguage($retailer);
                                 if ($defaultLanguage !== NULL) {
                                     $contentDefaultLanguage = \LuckyDrawTranslation::excludeDeleted()
-                                        ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
+                                        ->where('merchant_language_id', '=', $defaultLanguage->language_id)
                                         ->where('lucky_draw_id', $near_end_result->object_id)->first();
 
                                     // get default image
@@ -9253,11 +9253,15 @@ class MobileCIAPIController extends BaseCIController
     public function remove_querystring_var($url, $key)
     { 
         $parsed_url = parse_url((string)$url);
-        $query = parse_str($parsed_url['query'], $output);
-        unset($output[$key]);
-        $query_string = http_build_query($output);
-        $parsed_url['query'] = $query_string;
-        $new_url = $parsed_url['scheme'] . '://' . $parsed_url['host'] . $parsed_url['path'] . '?' . $parsed_url['query'];
+        if(isset($parsed_url['query'])){
+            $query = parse_str($parsed_url['query'], $output);
+            unset($output[$key]);
+            $query_string = http_build_query($output);
+            $parsed_url['query'] = $query_string;
+            $new_url = $parsed_url['scheme'] . '://' . $parsed_url['host'] . $parsed_url['path'] . '?' . $parsed_url['query'];
+        } else {
+            $new_url = $url;
+        }
 
         return $new_url;
     }

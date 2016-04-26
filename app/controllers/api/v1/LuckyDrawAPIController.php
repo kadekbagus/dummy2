@@ -231,8 +231,8 @@ class LuckyDrawAPIController extends ControllerAPI
 
             Event::fire('orbit.luckydraw.postnewluckydraw.after.save', array($this, $newluckydraw));
 
-            OrbitInput::post('translations', function($translation_json_string) use ($newluckydraw) {
-                $this->validateAndSaveTranslations($newluckydraw, $translation_json_string, 'create');
+            OrbitInput::post('translations', function($translation_json_string) use ($newluckydraw, $mall_id) {
+                $this->validateAndSaveTranslations($newluckydraw, $translation_json_string, 'create', $mall_id);
             });
 
             // get default mall language id
@@ -601,8 +601,8 @@ class LuckyDrawAPIController extends ControllerAPI
 
             Event::fire('orbit.luckydraw.postupdateluckydraw.after.save', array($this, $updatedluckydraw));
 
-            OrbitInput::post('translations', function($translation_json_string) use ($updatedluckydraw) {
-                $this->validateAndSaveTranslations($updatedluckydraw, $translation_json_string, 'update');
+            OrbitInput::post('translations', function($translation_json_string) use ($updatedluckydraw, $mall_id) {
+                $this->validateAndSaveTranslations($updatedluckydraw, $translation_json_string, 'update', $mall_id);
             });
 
             // get default mall language id
@@ -4240,7 +4240,7 @@ class LuckyDrawAPIController extends ControllerAPI
      * @param string $scenario 'create' / 'update'
      * @throws InvalidArgsException
      */
-    private function validateAndSaveTranslations($lucky_draw, $translations_json_string, $scenario = 'create')
+    private function validateAndSaveTranslations($lucky_draw, $translations_json_string, $scenario = 'create', $mall_id = null)
     {
         /*
          * JSON structure: object with keys = merchant_language_id and values = ProductTranslation object or null
@@ -4291,9 +4291,11 @@ class LuckyDrawAPIController extends ControllerAPI
                 }
                 if (empty($existing_translation)) {
                     if (! empty(trim($translations->lucky_draw_name))) {
-                        $lucky_draw_translation = LuckyDrawTranslation::excludeDeleted()
-                                                    ->where('merchant_language_id', '=', $merchant_language_id)
-                                                    ->where('lucky_draw_name', '=', $translations->lucky_draw_name)
+                        $lucky_draw_translation = LuckyDrawTranslation::leftJoin('lucky_draws', 'lucky_draws.lucky_draw_id', '=', 'lucky_draw_translations.lucky_draw_id')
+                                                    ->where('lucky_draws.mall_id', '=', $mall_id)
+                                                    ->where('lucky_draw_translations.merchant_language_id', '=', $merchant_language_id)
+                                                    ->where('lucky_draw_translations.lucky_draw_name', '=', $translations->lucky_draw_name)
+                                                    ->where('lucky_draw_translations.status', '!=', 'deleted')
                                                     ->first();
                         if (! empty($lucky_draw_translation)) {
                             OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.exists.lucky_draw_name'));
@@ -4302,10 +4304,12 @@ class LuckyDrawAPIController extends ControllerAPI
                     $operations[] = ['create', $merchant_language_id, $translations];
                 } else {
                     if (! empty(trim($translations->lucky_draw_name))) {
-                        $lucky_draw_translation_but_not_me = LuckyDrawTranslation::excludeDeleted()
-                                                    ->where('merchant_language_id', '=', $merchant_language_id)
-                                                    ->where('lucky_draw_id', '!=', $lucky_draw->lucky_draw_id)
-                                                    ->where('lucky_draw_name', '=', $translations->lucky_draw_name)
+                        $lucky_draw_translation_but_not_me = LuckyDrawTranslation::leftJoin('lucky_draws', 'lucky_draws.lucky_draw_id', '=', 'lucky_draw_translations.lucky_draw_id')
+                                                    ->where('lucky_draws.mall_id', '=', $mall_id)
+                                                    ->where('lucky_draw_translations.merchant_language_id', '=', $merchant_language_id)
+                                                    ->where('lucky_draw_translations.lucky_draw_id', '!=', $lucky_draw->lucky_draw_id)
+                                                    ->where('lucky_draw_translations.lucky_draw_name', '=', $translations->lucky_draw_name)
+                                                    ->where('lucky_draw_translations.status', '!=', 'deleted')
                                                     ->first();
                         if (! empty($lucky_draw_translation_but_not_me)) {
                             OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.exists.lucky_draw_name'));
