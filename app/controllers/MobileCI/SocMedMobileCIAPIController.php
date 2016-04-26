@@ -96,7 +96,7 @@ class SocMedMobileCIAPIController extends BaseCIController
             $defaultLanguage = $this->getDefaultLanguage($mall);
             if ($defaultLanguage !== NULL) {
                 $contentDefaultLanguage = \MerchantTranslation::excludeDeleted()
-                    ->where('news_id', $promotion->news_id)
+                    ->where('merchant_id', $tenant->merchant_id)
                     ->where('merchant_language_id', $defaultLanguage->language_id)
                     ->first();
 
