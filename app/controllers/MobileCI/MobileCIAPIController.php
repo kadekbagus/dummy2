@@ -4437,6 +4437,13 @@ class MobileCIAPIController extends BaseCIController
                 $pagetitle = Lang::get('mobileci.lucky_draw.prizes_and_winners');
             }
 
+            $have_winner = false;
+            foreach ($luckydraw->prizes as $prize) {
+                if(count($prize->winners) > 0){
+                    $have_winner = true;
+                }
+            }
+
             $activityProductNotes = sprintf('Page viewed: Lucky Draw Winning Numbers & Prizes');
             $activityProduct->setUser($user)
                 ->setActivityName('view_lucky_draw_announcement')
@@ -4452,6 +4459,7 @@ class MobileCIAPIController extends BaseCIController
                                 'user'          => $user,
                                 'retailer'      => $retailer,
                                 'luckydraw'     => $luckydraw,
+                                'have_winner'     => $have_winner,
                                 'languages'     => $languages,
                                 'ongoing'       => $ongoing,
                                 'urlblock' => $urlblock,
