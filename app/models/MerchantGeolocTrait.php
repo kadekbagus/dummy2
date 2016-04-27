@@ -28,6 +28,26 @@ trait MerchantGeolocTrait
     }
 
     /**
+     * Scope used to get list of malls inside polygon area.
+     *
+     * @author Shelgi Prasetyo <shelgi@dominopos.com>
+     * @param \Illuminate\Database\Eloquent\Builder  $builder
+     * @param string $area
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeInsideMapArea($builder, $area)
+    {
+        $prefix = DB::getTablePrefix();
+        $area = preg_replace('/[^0-9\s,\-\.]/', '',  $area);
+        $builder->leftJoin('merchant_geofences', 'merchant_geofences.merchant_id', '=', 'merchants.merchant_id');
+        $builder->where(function($q) use ($prefix, $area) {
+            $q->whereRaw("MBRCONTAINS(GeomFromText('POLYGON(({$area}))'), POINT(X({$prefix}merchant_geofences.position), Y({$prefix}merchant_geofences.position)))");
+        });
+
+        return $builder;
+    }
+
+    /**
      * Scope used to get list of malls within certain radius. We are using
      * haversine formula taken from:
      * http://www.movable-type.co.uk/scripts/latlong.html and
