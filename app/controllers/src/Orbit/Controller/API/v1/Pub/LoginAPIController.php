@@ -235,6 +235,17 @@ class LoginAPIController extends IntermediateBaseController
         $googleService = OAuth::consumer( 'Google' );
         if ( !empty( $code ) ) {
             try {
+                Config::set('orbit.session.availability.query_string', $oldRouteSessionConfigValue);
+                $token = $googleService->requestAccessToken( $code );
+
+                $user = json_decode( $googleService->request( 'https://www.googleapis.com/oauth2/v1/userinfo' ), true );
+
+                $userEmail = isset($user['email']) ? $user['email'] : '';
+                $firstName = isset($user['given_name']) ? $user['given_name'] : '';
+                $lastName = isset($user['family_name']) ? $user['family_name'] : '';
+                $gender = isset($user['gender']) ? $user['gender'] : '';
+                $socialid = isset($user['id']) ? $user['id'] : '';
+
                 $mall_id_from_state = json_decode($this->base64UrlDecode($state))->mid;
                 // from mall = yes, indicate the request coming from Mall CI, then use MobileCIAPIController::getGoogleCallbackView
                 // to set the session and other things
@@ -244,21 +255,15 @@ class LoginAPIController extends IntermediateBaseController
                     $_GET['state'] = $state;
                     $_GET['code'] = $code;
                     $_GET['mall_id'] = $mall_id_from_state;
+                    $_GET['email'] = $userEmail;
+                    $_GET['first_name'] = $firstName;
+                    $_GET['last_name'] = $lastName;
+                    $_GET['gender'] = $gender;
+                    $_GET['socialid'] = $socialid;
                     $response = \MobileCI\MobileCIAPIController::create()->getGoogleCallbackView();
 
                     return $response;
                 } else { // the request coming from landing page (gotomalls.com)
-                    Config::set('orbit.session.availability.query_string', $oldRouteSessionConfigValue);
-                    $token = $googleService->requestAccessToken( $code );
-
-                    $user = json_decode( $googleService->request( 'https://www.googleapis.com/oauth2/v1/userinfo' ), true );
-
-                    $userEmail = isset($user['email']) ? $user['email'] : '';
-                    $firstName = isset($user['given_name']) ? $user['given_name'] : '';
-                    $lastName = isset($user['family_name']) ? $user['family_name'] : '';
-                    $gender = isset($user['gender']) ? $user['gender'] : '';
-                    $socialid = isset($user['id']) ? $user['id'] : '';
-
                     $data = [
                         'email' => $userEmail,
                         'fname' => $firstName,
@@ -271,7 +276,6 @@ class LoginAPIController extends IntermediateBaseController
                         'is_captive' => 'yes',
                         'recognized' => $recognized
                     ];
-
                     $orbit_origin = \Input::get('orbit_origin', 'google');
 
                     // There is a chance that user not 'grant' his email while approving our app
