@@ -130,6 +130,11 @@ Route::filter('fb-bot', function() {
     }
 });
 
+Route::filter('turn-off-query-string-session', function()
+{
+    Config::set('orbit.session.availability.query_string', false);
+});
+
 /*
 |--------------------------------------------------------------------------
 | Mobile-CI Filter
