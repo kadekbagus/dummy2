@@ -230,19 +230,20 @@ class LoginAPIController extends IntermediateBaseController
         $caller_url = OrbitInput::get('from_url', NULL);
         $caller_url = ! is_null($caller_url) ? URL::route($caller_url) : Config::get('orbit.shop.after_social_sign_in');
         $redirect_to_url = OrbitInput::get('to_url', URL::route('ci-customer-home'));
-        $from_mall = OrbitInput::get('from_mall', 'no');
+        $mall_id = OrbitInput::get('mid', NULL);
 
         $googleService = OAuth::consumer( 'Google' );
         if ( !empty( $code ) ) {
             try {
-                $from_mall_from_state = json_decode($this->base64UrlDecode($state))->from_mall;
+                $mall_id_from_state = json_decode($this->base64UrlDecode($state))->mid;
                 // from mall = yes, indicate the request coming from Mall CI, then use MobileCIAPIController::getGoogleCallbackView
                 // to set the session and other things
-                if ($from_mall_from_state === 'yes') {
+                if (! empty($mall_id_from_state)) {
                     $_GET['caller_url'] = $caller_url;
                     $_GET['redirect_to_url'] = $redirect_to_url;
                     $_GET['state'] = $state;
                     $_GET['code'] = $code;
+                    $_GET['mall_id'] = $mall_id_from_state;
                     $response = \MobileCI\MobileCIAPIController::create()->getGoogleCallbackView();
 
                     return $response;
@@ -322,7 +323,7 @@ class LoginAPIController extends IntermediateBaseController
                 // get googleService authorization
                 $url = $googleService->getAuthorizationUri();
                 // override state param to have our destination url inside
-                $state_array = array('redirect_to_url' => $redirect_to_url, 'from_mall' => $from_mall);
+                $state_array = array('redirect_to_url' => $redirect_to_url, 'mid' => $mall_id);
                 $state = json_encode($state_array);
                 $stateString = $this->base64UrlEncode($state);
                 $parsed_url = parse_url((string)$url);
