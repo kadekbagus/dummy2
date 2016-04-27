@@ -96,8 +96,24 @@ class SocMedMobileCIAPIController extends BaseCIController
             $defaultLanguage = $this->getDefaultLanguage($mall);
             if ($defaultLanguage !== NULL) {
                 $contentDefaultLanguage = \MerchantTranslation::excludeDeleted()
-                    ->where('news_id', $promotion->news_id)
+                    ->where('merchant_id', $tenant->merchant_id)
                     ->where('merchant_language_id', $defaultLanguage->language_id)
+                    ->first();
+
+                if (is_object($contentDefaultLanguage)) {
+                    if (! empty($contentDefaultLanguage->description)) {
+                        $data->description = $contentDefaultLanguage->description;
+                    }
+                }
+            }
+        }
+
+        if (empty($data->description)) {
+            $englishLanguage = $this->getEnglishLanguage($mall);
+            if ($englishLanguage !== NULL) {
+                $contentDefaultLanguage = \MerchantTranslation::excludeDeleted()
+                    ->where('merchant_id', $tenant->merchant_id)
+                    ->where('merchant_language_id', $englishLanguage->language_id)
                     ->first();
 
                 if (is_object($contentDefaultLanguage)) {
@@ -539,7 +555,7 @@ class SocMedMobileCIAPIController extends BaseCIController
     private function getDefaultLanguage($mall)
     {
         $language = \Language::where('name', '=', $mall->mobile_default_language)->first();
-        if(isset($language) && count($language) > 0){
+        if (isset($language) && count($language) > 0) {
             $defaultLanguage = \MerchantLanguage::excludeDeleted()
                 ->where('merchant_id', '=', $mall->merchant_id)
                 ->where('language_id', '=', $language->language_id)
@@ -547,6 +563,27 @@ class SocMedMobileCIAPIController extends BaseCIController
 
             if ($defaultLanguage !== null) {
                 return $defaultLanguage;
+            }
+        }
+
+        // above methods did not result in any selected language, use mall default
+        return null;
+    }
+
+    /**
+     *
+     */
+    private function getEnglishLanguage($mall)
+    {
+        $language = \Language::where('name', '=', 'en')->first();
+        if (is_object($language)) {
+            $englishLanguage = \MerchantLanguage::excludeDeleted()
+                ->where('merchant_id', '=', $mall->merchant_id)
+                ->where('language_id', '=', $language->language_id)
+                ->first();
+
+            if ($englishLanguage !== null) {
+                return $englishLanguage;
             }
         }
 
