@@ -49,6 +49,7 @@ class NewsAPIController extends ControllerAPI
      * @param string     `is_all_age`            (optional) - Is all retailer age group. Valid value: Y, N.
      * @param string     `gender_ids`            (optional) - for Male, Female. Unknown. Valid value: M, F, U.
      * @param string     `age_range_ids`         (optional) - Age Range IDs
+     * @param string     `translations`          (optional) - For Translations
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -114,6 +115,7 @@ class NewsAPIController extends ControllerAPI
             $keywords = OrbitInput::post('keywords');
             $keywords = (array) $keywords;
             $is_popup = OrbitInput::post('is_popup');
+            $translations = OrbitInput::post('translations');
 
             if (empty($campaignStatus)) {
                 $campaignStatus = 'not started';
@@ -214,16 +216,19 @@ class NewsAPIController extends ControllerAPI
             // Reformat sticky order
             $sticky_order = (string)$sticky_order === 'true' && (string)$sticky_order !== '0' ? 1 : 0;
 
-            // save News.
+            // Get data status like ongoing, stopped etc
             $idStatus = CampaignStatus::select('campaign_status_id','campaign_status_name')->where('campaign_status_name', $campaignStatus)->first();
+
+            // Get english language_id
+            $idLanguageEnglish = Language::select('language_id')
+                                ->where('name', '=', 'en')
+                                ->first();
 
             $newnews = new News();
             $newnews->mall_id = $mall_id;
-            $newnews->news_name = $news_name;
             $newnews->object_type = $object_type;
             $newnews->status = $status;
             $newnews->campaign_status_id = $idStatus->campaign_status_id;
-            $newnews->description = $description;
             $newnews->begin_date = $begin_date;
             $newnews->end_date = $end_date;
             $newnews->sticky_order = $sticky_order;
@@ -233,26 +238,33 @@ class NewsAPIController extends ControllerAPI
             $newnews->created_by = $this->api->user->user_id;
             $newnews->is_popup = $is_popup;
 
+            // Check for english content
+            $dataTranslations = @json_decode($translations);
+            if (json_last_error() != JSON_ERROR_NONE) {
+                OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'translations']));
+            }
+
+            // Get english news name and description
+            foreach ($dataTranslations as $key => $val) {
+
+                // Validation language id from translation
+                $language = Language::where('language_id', '=', $key)->first();
+                if (empty($language)) {
+                    OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.merchant_language'));
+                }
+
+                if ($key === $idLanguageEnglish->language_id) {
+                    $newnews->news_name = $val->news_name;
+                    $newnews->description = $val->description;
+                }
+            }
+
             Event::fire('orbit.news.postnewnews.before.save', array($this, $newnews));
 
             $newnews->save();
 
             // Return campaign status name
             $newnews->campaign_status = $idStatus->campaign_status_name;
-
-            // save default language translation
-            $news_translation_default = new NewsTranslation();
-            $news_translation_default->news_id = $newnews->news_id;
-            $news_translation_default->merchant_id = $newnews->mall_id;
-            $news_translation_default->merchant_language_id = $id_language_default;
-            $news_translation_default->news_name = $newnews->news_name;
-            $news_translation_default->description = $newnews->description;
-            $news_translation_default->status = 'active';
-            $news_translation_default->created_by = $this->api->user->user_id;
-            $news_translation_default->modified_by = $this->api->user->user_id;
-            $news_translation_default->save();
-
-            Event::fire('orbit.news.after.translation.save', array($this, $news_translation_default));
 
             // save NewsMerchant.
             $newsretailers = array();
@@ -347,7 +359,6 @@ class NewsAPIController extends ControllerAPI
                     $newKeywordObject->object_type = $object_type;
                     $newKeywordObject->save();
                 }
-
             }
             $newnews->keywords = $newsKeywords;
 
@@ -466,20 +477,17 @@ class NewsAPIController extends ControllerAPI
                 $this->validateAndSaveTranslations($newnews, $translation_json_string, 'create');
             });
 
+            // Validation for mall language
             foreach ($mallid as $mall) {
                 // english and default language in mall is required
-                $idLanguage = Language::select('language_id')
-                                    ->where('name', '=', 'en')
-                                    ->first();
-
                 $prefix = DB::getTablePrefix();
                 $isAvailable = NewsTranslation::where('news_id', '=', $newnews->news_id)
-                                            ->whereRaw("{$prefix}news_translations.merchant_language_id IN (select language_id 
-                                                                                                                    from {$prefix}languages 
-                                                                                                                    where name = (select mobile_default_language 
-                                                                                                                                    from {$prefix}merchants 
-                                                                                                                                    where {$prefix}merchants.object_type = 'mall' 
-                                                                                                                                    and merchant_id = {$this->quote($mall)}) 
+                                            ->whereRaw("{$prefix}news_translations.merchant_language_id IN (select language_id
+                                                                                                                    from {$prefix}languages
+                                                                                                                    where name = (select mobile_default_language
+                                                                                                                                    from {$prefix}merchants
+                                                                                                                                    where {$prefix}merchants.object_type = 'mall'
+                                                                                                                                    and merchant_id = {$this->quote($mall)})
                                                                                                                     or name = 'en')")
                                             ->where(function($query) {
                                                 $query->where('news_name', '=', '')
@@ -490,7 +498,7 @@ class NewsAPIController extends ControllerAPI
                                             ->get();
 
                 foreach ($isAvailable as $val) {
-                    if ($val->merchant_language_id === $idLanguage->language_id) {
+                    if ($val->merchant_language_id === $idLanguageEnglish->language_id) {
                         $errorMessage = Lang::get('validation.orbit.empty.english_language');
                         OrbitShopAPI::throwInvalidArgument($errorMessage);
                     } else {
@@ -501,7 +509,7 @@ class NewsAPIController extends ControllerAPI
             }
 
             $this->response->data = $newnews;
-            $this->response->data->translation_default = $news_translation_default;
+            #$this->response->data->translation_default = $news_translation_default;
 
             // Commit the changes
             $this->commit();
@@ -682,6 +690,7 @@ class NewsAPIController extends ControllerAPI
             $id_language_default = OrbitInput::post('id_language_default');
             $is_all_gender = OrbitInput::post('is_all_gender');
             $is_all_age = OrbitInput::post('is_all_age');
+            $translations = OrbitInput::post('translations');
             $retailer_ids = OrbitInput::post('retailer_ids');
             $retailer_ids = (array) $retailer_ids;
 
@@ -764,18 +773,36 @@ class NewsAPIController extends ControllerAPI
                 $merchantdb[] = $merchantdbid['merchant_id'];
             }
 
-            $updatednews_default_language = NewsTranslation::excludeDeleted()->where('news_id', $news_id)->where('merchant_language_id', $id_language_default)->first();
+            // Get english language_id
+            $idLanguageEnglish = Language::select('language_id')
+                                ->where('name', '=', 'en')
+                                ->first();
+
+            // Check for english content
+            $jsonTranslations = @json_decode($translations);
+            if (json_last_error() != JSON_ERROR_NONE) {
+                OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'translations']));
+            }
+
+            // Get english news name and description
+            foreach ($jsonTranslations as $key => $val) {
+
+                // Validation language id from translation
+                $language = Language::where('language_id', '=', $key)->first();
+                if (empty($language)) {
+                    OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.merchant_language'));
+                }
+
+                if ($key === $idLanguageEnglish->language_id) {
+                    $updatednews->news_name = $val->news_name;
+                    $updatednews->description = $val->description;
+                }
+            }
+
+
             // save News
             OrbitInput::post('mall_id', function($mall_id) use ($updatednews) {
                 $updatednews->mall_id = $mall_id;
-            });
-
-            OrbitInput::post('news_name', function($news_name) use ($updatednews) {
-                $updatednews->news_name = $news_name;
-            });
-
-            OrbitInput::post('description', function($description) use ($updatednews) {
-                $updatednews->description = $description;
             });
 
             OrbitInput::post('object_type', function($object_type) use ($updatednews) {
@@ -825,20 +852,17 @@ class NewsAPIController extends ControllerAPI
                 $this->validateAndSaveTranslations($updatednews, $translation_json_string, 'update');
             });
 
+            // Validation for mall language
             foreach ($mallid as $mall) {
                 // english and default language in mall is required
-                $idLanguage = Language::select('language_id')
-                                    ->where('name', '=', 'en')
-                                    ->first();
-
                 $prefix = DB::getTablePrefix();
                 $isAvailable = NewsTranslation::where('news_id', '=', $news_id)
-                                            ->whereRaw("{$prefix}news_translations.merchant_language_id IN (select language_id 
-                                                                                                                    from {$prefix}languages 
-                                                                                                                    where name = (select mobile_default_language 
-                                                                                                                                    from {$prefix}merchants 
-                                                                                                                                    where {$prefix}merchants.object_type = 'mall' 
-                                                                                                                                    and merchant_id = {$this->quote($mall)}) 
+                                            ->whereRaw("{$prefix}news_translations.merchant_language_id IN (select language_id
+                                                                                                                    from {$prefix}languages
+                                                                                                                    where name = (select mobile_default_language
+                                                                                                                                    from {$prefix}merchants
+                                                                                                                                    where {$prefix}merchants.object_type = 'mall'
+                                                                                                                                    and merchant_id = {$this->quote($mall)})
                                                                                                                     or name = 'en')")
                                             ->where(function($query) {
                                                 $query->where('news_name', '=', '')
@@ -849,7 +873,7 @@ class NewsAPIController extends ControllerAPI
                                             ->get();
 
                 foreach ($isAvailable as $val) {
-                    if ($val->merchant_language_id === $idLanguage->language_id) {
+                    if ($val->merchant_language_id === $idLanguageEnglish->language_id) {
                         $errorMessage = Lang::get('validation.orbit.empty.english_language');
                         OrbitShopAPI::throwInvalidArgument($errorMessage);
                     } else {
@@ -861,32 +885,6 @@ class NewsAPIController extends ControllerAPI
 
             $updatednews->modified_by = $this->api->user->user_id;
             $updatednews->touch();
-
-            //  save news default language
-            OrbitInput::post('news_name', function($news_name) use ($updatednews_default_language) {
-                $updatednews_default_language->news_name = $news_name;
-            });
-
-            OrbitInput::post('description', function($description) use ($updatednews_default_language) {
-                $updatednews_default_language->description = $description;
-            });
-
-            OrbitInput::post('campaign_status', function($campaignStatus) use ($updatednews_default_language, $status) {
-                $updatednews_default_language->status = $status;
-            });
-
-            $updatednews_default_language->modified_by = $this->api->user->user_id;
-
-            Event::fire('orbit.news.postupdatenews.before.save', array($this, $updatednews));
-
-            $updatednews->save();
-            $updatednews_default_language->save();
-
-            Event::fire('orbit.news.after.translation.save', array($this, $updatednews_default_language));
-
-            // return respones if any upload image or no
-            $updatednews_default_language->load('media');
-
 
             // save NewsMerchant
             OrbitInput::post('no_retailer', function($no_retailer) use ($updatednews) {
@@ -1231,7 +1229,7 @@ class NewsAPIController extends ControllerAPI
 
             Event::fire('orbit.news.postupdatenews.after.save', array($this, $updatednews));
             $this->response->data = $updatednews;
-            $this->response->data->translation_default = $updatednews_default_language;
+            // $this->response->data->translation_default = $updatednews_default_language;
 
             // Commit the changes
             $this->commit();
