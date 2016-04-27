@@ -73,7 +73,19 @@
                     </div>
                 </div>
                 @endif
+            @else
+            <div class="row text-center vertically-spaced">
+                <div class="col-xs-12 padded">
+                    <button class="btn btn-disabled-ld btn-block">{{ Lang::get('mobileci.lucky_draw.see_prizes_and_winner') }}</button>
+                </div>
+            </div>
             @endif
+        @else
+        <div class="row text-center vertically-spaced">
+            <div class="col-xs-12 padded">
+                <button class="btn btn-disabled-ld btn-block">{{ Lang::get('mobileci.lucky_draw.see_prizes_and_winner') }}</button>
+            </div>
+        </div>
         @endif
     @else
         <div class="row text-center vertically-spaced">
