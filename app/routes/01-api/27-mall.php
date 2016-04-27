@@ -79,3 +79,13 @@ Route::get(
         return Orbit\Controller\API\v1\Pub\MallNearbyAPIController::create()->getSearchMallNearby();
     }]
 )->where('search', '(api|app)');
+
+/**
+ * Get Mall in Map Area
+ */
+Route::get(
+    '/{search}/v1/pub/mall-area', ['as' => 'mall-area', function()
+    {
+        return Orbit\Controller\API\v1\Pub\MallAreaAPIController::create()->getMallArea();
+    }]
+)->where('search', '(api|app)');

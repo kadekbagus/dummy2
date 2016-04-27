@@ -133,9 +133,9 @@ class CampaignReportPrinterController extends DataPrinterController
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
                         printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s - %s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
                             $count,
-                            $row->campaign_name,
+                            $this->printUtf8($row->campaign_name),
                             $row->campaign_type,
-                            str_replace(', ', "\n", $row->campaign_location_names),
+                            str_replace(', ', "\n", $this->printUtf8($row->campaign_location_names)),
                             date('d M Y', strtotime($row->begin_date)),
                             date('d M Y', strtotime($row->end_date)),
                             $row->page_views,
@@ -249,7 +249,7 @@ class CampaignReportPrinterController extends DataPrinterController
                         printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
                             $count,
                             $this->printDateTime($row->campaign_date . '00:00:00', $timezone, 'd M Y'),
-                            str_replace(', ', "\n", $row->campaign_location_names),
+                            str_replace(', ', "\n", $this->printUtf8($row->campaign_location_names)),
                             $row->unique_users,
                             $row->campaign_pages_views,
                             round($row->campaign_pages_view_rate, 2),
@@ -374,5 +374,16 @@ class CampaignReportPrinterController extends DataPrinterController
             $utc = '_UTC';
         }
         return 'gotomalls-export-' . $pageTitle . '-' . Carbon::createFromFormat('Y-m-d H:i:s', $currentDateAndTime)->format('D_d_M_Y_Hi') . $utc . $ext;
+    }
+
+    /**
+     * output utf8.
+     *
+     * @param string $input
+     * @return string
+     */
+    public function printUtf8($input)
+    {
+        return utf8_encode($input);
     }
 }
