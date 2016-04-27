@@ -1730,7 +1730,18 @@ class MallAPIController extends ControllerAPI
 
             OrbitInput::post('url', function($url) use ($updatedmall) {
                 $updatedmall->url = $url;
-                $updatedmall->ci_domain = $url;
+            });
+
+            OrbitInput::post('domain', function($domain) use ($updatedmall, $merchant_id) {
+                $updatedmall->ci_domain = $domain;
+
+                $setting_domain = Setting::excludeDeleted()
+                                        ->where('setting_value', $merchant_id)
+                                        ->first();
+                if (count($setting_domain) > 0) {
+                    $setting_domain->setting_name = 'dom:' . $domain;
+                    $setting_domain->save;
+                }
             });
 
             OrbitInput::post('masterbox_number', function($masterbox_number) use ($updatedmall) {

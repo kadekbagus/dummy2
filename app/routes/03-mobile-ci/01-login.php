@@ -1,7 +1,7 @@
 <?php
 
 Route::group(
-    array('before' => 'orbit-settings'),
+    array('before' => ['orbit-settings', 'turn-off-query-string-session']),
     function () {
 
         // Route::get(
