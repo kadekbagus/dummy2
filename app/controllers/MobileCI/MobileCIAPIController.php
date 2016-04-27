@@ -6892,6 +6892,7 @@ class MobileCIAPIController extends BaseCIController
             $retailer = $this->getRetailerInfo();
             $lucky_draw_id = OrbitInput::get('id');
             $languages = $this->getListLanguages($retailer);
+            $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
             $luckyDraw = LuckyDraw::excludeDeleted()->where('lucky_draw_id', $lucky_draw_id)->first();
 
             if (! is_object($luckyDraw)) {
@@ -6901,6 +6902,23 @@ class MobileCIAPIController extends BaseCIController
                                 'languages'     => $languages,
                                 'retailer'      => $retailer
                 ]);
+            }
+
+            if (!empty($alternateLanguage) && !empty($luckyDraw)) {
+                $luckyDrawTranslation = \LuckyDrawTranslation::excludeDeleted()
+                    ->where('merchant_language_id', '=', $alternateLanguage->language_id)
+                    ->where('lucky_draw_id', $luckyDraw->lucky_draw_id)->first();
+
+                $luckyDraw->lucky_draw_name_display = $luckyDraw->lucky_draw_name;
+
+                if (!empty($luckyDrawTranslation)) {
+                    foreach (['lucky_draw_name', 'description'] as $field) {
+                        //if field translation empty or null, value of field back to english (default)
+                        if (isset($luckyDrawTranslation->{$field}) && $luckyDrawTranslation->{$field} !== '') {
+                            $luckyDraw->{$field} = $luckyDrawTranslation->{$field};
+                        }
+                    }
+                }
             }
 
             $mode = OrbitInput::get('mode', 'view');
