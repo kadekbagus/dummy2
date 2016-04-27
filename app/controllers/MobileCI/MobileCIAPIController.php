@@ -4440,7 +4440,11 @@ class MobileCIAPIController extends BaseCIController
             $have_winner = false;
             foreach ($luckydraw->prizes as $prize) {
                 if(count($prize->winners) > 0){
-                    $have_winner = true;
+                    foreach ($prize->winners as $winner) {
+                        if (trim($winner) === '') {
+                            $have_winner = true;
+                        }
+                    }
                 }
             }
 
