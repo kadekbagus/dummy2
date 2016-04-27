@@ -1054,9 +1054,8 @@ class MobileCIAPIController extends BaseCIController
         $code = \Input::get('code', NULL);
         $state = \Input::get('state', NULL);
         $caller_url = OrbitInput::get('from_url', 'ci-customer-home');
+        $mall_id = OrbitInput::get('mall_id', NULL);
         $redirect_to_url = OrbitInput::get('to_url', URL::route('ci-customer-home'));
-
-        $googleService = OAuth::consumer( 'Google' );
 
         // todo handle google error
         if ( !empty( $code ) ) {
@@ -1101,7 +1100,10 @@ class MobileCIAPIController extends BaseCIController
                     $query['from_captive'] = 'yes';
                 }
 
-                $retailer = $this->getRetailerInfo();
+                $retailer = Mall::excludeDeleted()->where('merchant_id', $mall_id)->first();
+                if (empty($retailer)) {
+                    return Redirect::route('ci-customer-home', ['error' => 'Mall not found.']);
+                }
                 $loggedInUser = $this->doAutoLogin($userEmail);
                 if (is_object($loggedInUser)) {
                     $this->loginStage2($loggedInUser, $retailer);
@@ -1160,26 +1162,8 @@ class MobileCIAPIController extends BaseCIController
             }
 
         } else {
-            try {
-                // get googleService authorization
-                $url = $googleService->getAuthorizationUri();
-                // override state param to have our destination url inside
-                $state_array = array('redirect_to_url' => $redirect_to_url);
-                $state = json_encode($state_array);
-                $stateString = $this->base64UrlEncode($state);
-                $parsed_url = parse_url((string)$url);
-                $query = parse_str($parsed_url['query'], $output);
-                $output['state'] = $stateString;
-                $query_string = http_build_query($output);
-                $parsed_url['query'] = $query_string;
-                // rebuild the googleService authorization url
-                $new_url = $parsed_url['scheme'] . '://' . $parsed_url['host'] . $parsed_url['path'] . '?' . $parsed_url['query'];
-
-                return Redirect::to((string)$new_url);
-            } catch (Exception $e) {
-                $errorMessage = 'Error: ' . $e->getMessage();
-                return Redirect::route($caller_url, ['error' => $errorMessage]);
-            }
+            $errorMessage = 'Error: Google sign in failed, empty code.';
+            return Redirect::route($caller_url, ['error' => $errorMessage]);
         }
     }
 
