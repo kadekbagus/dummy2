@@ -24,9 +24,135 @@ class UserReportPrinterController extends DataPrinterController
         $current_mall = OrbitInput::get('current_mall');
         $startDate = OrbitInput::get('start_date');
         $endDate = OrbitInput::get('end_date');
-
+        $selectedColumns = OrbitInput::get('selectedColumn');
         $user = $this->loggedUser;
 
+        foreach ($selectedColumns as $selectedColumn) {
+            if ($selectedColumn === 'sign_up_by_gender') {
+                $selectedColumns[] = 'sign_up_gender_male';
+                $selectedColumns[] = 'sign_up_gender_female';
+                $selectedColumns[] = 'sign_up_gender_unknown';
+            }
+
+            if ($selectedColumn === 'sign_up_by_gender_percentage') {
+                $selectedColumns[] = 'sign_up_gender_male_percentage';
+                $selectedColumns[] = 'sign_up_gender_female_percentage';
+                $selectedColumns[] = 'sign_up_gender_unknown_percentage';
+            }
+
+            if ($selectedColumn === 'sign_up_by_age_range') {
+                $selectedColumns[] = 'sign_up_age_0_to_14';
+                $selectedColumns[] = 'sign_up_age_15_to_24';
+                $selectedColumns[] = 'sign_up_age_25_to_34';
+                $selectedColumns[] = 'sign_up_age_35_to_44';
+                $selectedColumns[] = 'sign_up_age_45_to_54';
+                $selectedColumns[] = 'sign_up_age_55_to_64';
+                $selectedColumns[] = 'sign_up_age_65_plus';
+                $selectedColumns[] = 'sign_up_age_unknown';
+            }
+
+            if ($selectedColumn === 'sign_up_by_age_range_percentage') {
+                $selectedColumns[] = 'sign_up_age_0_to_14_percentage';
+                $selectedColumns[] = 'sign_up_age_15_to_24_percentage';
+                $selectedColumns[] = 'sign_up_age_25_to_34_percentage';
+                $selectedColumns[] = 'sign_up_age_35_to_44_percentage';
+                $selectedColumns[] = 'sign_up_age_45_to_54_percentage';
+                $selectedColumns[] = 'sign_up_age_55_to_64_percentage';
+                $selectedColumns[] = 'sign_up_age_65_plus_percentage';
+                $selectedColumns[] = 'sign_up_age_unknown_percentage';
+            }
+            
+            if ($selectedColumn === 'sign_up_by_type') {
+                $selectedColumns[] = 'sign_up_type_facebook';
+                $selectedColumns[] = 'sign_up_type_google';
+                $selectedColumns[] = 'sign_up_type_form';
+            }
+
+            if ($selectedColumn === 'sign_up_by_type_percentage') {
+                $selectedColumns[] = 'sign_up_type_facebook_percentage';
+                $selectedColumns[] = 'sign_up_type_google_percentage';
+                $selectedColumns[] = 'sign_up_type_form_percentage';
+            }
+
+            if ($selectedColumn === 'sign_in_by_gender') {
+                $selectedColumns[] = 'sign_in_gender_male';
+                $selectedColumns[] = 'sign_in_gender_female';
+                $selectedColumns[] = 'sign_in_gender_unknown';
+            }
+
+            if ($selectedColumn === 'sign_in_by_gender_percentage') {
+                $selectedColumns[] = 'sign_in_gender_male_percentage';
+                $selectedColumns[] = 'sign_in_gender_female_percentage';
+                $selectedColumns[] = 'sign_in_gender_unknown_percentage';
+            }
+
+            if ($selectedColumn === 'sign_in_by_age_range') {
+                $selectedColumns[] = 'sign_in_age_0_to_14';
+                $selectedColumns[] = 'sign_in_age_15_to_24';
+                $selectedColumns[] = 'sign_in_age_25_to_34';
+                $selectedColumns[] = 'sign_in_age_35_to_44';
+                $selectedColumns[] = 'sign_in_age_45_to_54';
+                $selectedColumns[] = 'sign_in_age_55_to_64';
+                $selectedColumns[] = 'sign_in_age_65_plus';
+                $selectedColumns[] = 'sign_in_age_unknown';
+            }
+
+            if ($selectedColumn === 'sign_in_by_age_range_percentage') {
+                $selectedColumns[] = 'sign_in_age_0_to_14_percentage';
+                $selectedColumns[] = 'sign_in_age_15_to_24_percentage';
+                $selectedColumns[] = 'sign_in_age_25_to_34_percentage';
+                $selectedColumns[] = 'sign_in_age_35_to_44_percentage';
+                $selectedColumns[] = 'sign_in_age_45_to_54_percentage';
+                $selectedColumns[] = 'sign_in_age_55_to_64_percentage';
+                $selectedColumns[] = 'sign_in_age_65_plus_percentage';
+                $selectedColumns[] = 'sign_in_age_unknown_percentage';
+            }
+
+            if ($selectedColumn === 'unique_sign_in_by_gender') {
+                $selectedColumns[] = 'unique_sign_in_gender_male';
+                $selectedColumns[] = 'unique_sign_in_gender_female';
+                $selectedColumns[] = 'unique_sign_in_gender_unknown';
+            }
+
+            if ($selectedColumn === 'unique_sign_in_by_gender_percentage') {
+                $selectedColumns[] = 'unique_sign_in_gender_male_percentage';
+                $selectedColumns[] = 'unique_sign_in_gender_female_percentage';
+                $selectedColumns[] = 'unique_sign_in_gender_unknown_percentage';
+            }
+
+            if ($selectedColumn === 'unique_sign_in_by_age_range') {
+                $selectedColumns[] = 'unique_sign_in_age_0_to_14';
+                $selectedColumns[] = 'unique_sign_in_age_15_to_24';
+                $selectedColumns[] = 'unique_sign_in_age_25_to_34';
+                $selectedColumns[] = 'unique_sign_in_age_35_to_44';
+                $selectedColumns[] = 'unique_sign_in_age_45_to_54';
+                $selectedColumns[] = 'unique_sign_in_age_55_to_64';
+                $selectedColumns[] = 'unique_sign_in_age_65_plus';
+                $selectedColumns[] = 'unique_sign_in_age_unknown';
+            }
+
+            if ($selectedColumn === 'unique_sign_in_by_age_range_percentage') {
+                $selectedColumns[] = 'unique_sign_in_age_0_to_14_percentage';
+                $selectedColumns[] = 'unique_sign_in_age_15_to_24_percentage';
+                $selectedColumns[] = 'unique_sign_in_age_25_to_34_percentage';
+                $selectedColumns[] = 'unique_sign_in_age_35_to_44_percentage';
+                $selectedColumns[] = 'unique_sign_in_age_45_to_54_percentage';
+                $selectedColumns[] = 'unique_sign_in_age_55_to_64_percentage';
+                $selectedColumns[] = 'unique_sign_in_age_65_plus_percentage';
+                $selectedColumns[] = 'unique_sign_in_age_unknown_percentage';
+            }
+
+            if ($selectedColumn === 'status') {
+                $selectedColumns[] = 'unique_sign_in_status_active';
+                $selectedColumns[] = 'unique_sign_in_status_pending';
+            }
+
+            if ($selectedColumn === 'status_percentage') {
+                $selectedColumns[] = 'unique_sign_in_status_active_percentage';
+                $selectedColumns[] = 'unique_sign_in_status_pending_percentage';
+            }
+
+        }
         // Instantiate the UserReportAPIController to get the data
         $response = UserReportAPIController::create('raw')
                                             ->setReturnBuilder(TRUE)
@@ -40,6 +166,14 @@ class UserReportPrinterController extends DataPrinterController
 
         $userReportData = $response['builder'];
         $userReportTotal = $response['totals'];
+
+        foreach ($userReportData as $key => $data) {
+            foreach(array_keys($data) as $datakey) {
+                if (! in_array($datakey, $selectedColumns)) {
+                    unset($userReportData[$key][$datakey]);
+                }
+            }
+        }
 
         // remove unwanted data
         foreach ($userReportTotal as $key => $value) {
@@ -61,25 +195,27 @@ class UserReportPrinterController extends DataPrinterController
         // include percentage
         $userReportHeader = [];  
         foreach ($userReportTotal as $key => $value) {
+            if (in_array($key, $selectedColumns)) {
                 $userReportHeader[] = array(
                                 'key' => $key,
                                 'title' => $value['title'],
                                 'total' => $value['total']
                             );
-                      
+            }
         }
 
         // exclude percentage
-        $userReportHeaderExcludePercent = [];  
+        $userReportHeaderExcludePercent = [];
         foreach ($userReportTotal as $key => $value) {
-            if( !strpos($value['title'], '(%)') ) {
-                $userReportHeaderExcludePercent[] = array(
-                                'key' => $key,
-                                'title' => $value['title'],
-                                'total' => $value['total']
-                            );
-            }
-                      
+            if(in_array($key, $selectedColumns)) {
+                if( !strpos($value['title'], '(%)') ) {
+                    $userReportHeaderExcludePercent[] = array(
+                                    'key' => $key,
+                                    'title' => $value['title'],
+                                    'total' => $value['total']
+                                );
+                }
+            }     
         }
 
         $timeDimensionTitle = null;
