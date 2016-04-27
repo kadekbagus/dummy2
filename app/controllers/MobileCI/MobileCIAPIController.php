@@ -1056,21 +1056,15 @@ class MobileCIAPIController extends BaseCIController
         $caller_url = OrbitInput::get('from_url', 'ci-customer-home');
         $mall_id = OrbitInput::get('mall_id', NULL);
         $redirect_to_url = OrbitInput::get('to_url', URL::route('ci-customer-home'));
+        $userEmail = OrbitInput::get('email', '');
+        $firstName = OrbitInput::get('first_name', '');
+        $lastName = OrbitInput::get('last_name', '');
+        $gender = OrbitInput::get('gender', '');
+        $socialid = OrbitInput::get('socialid', '');
 
         // todo handle google error
         if ( !empty( $code ) ) {
             try {
-                Config::set('orbit.session.availability.query_string', $oldRouteSessionConfigValue);
-                $token = $googleService->requestAccessToken( $code );
-
-                $user = json_decode( $googleService->request( 'https://www.googleapis.com/oauth2/v1/userinfo' ), true );
-
-                $userEmail = isset($user['email']) ? $user['email'] : '';
-                $firstName = isset($user['given_name']) ? $user['given_name'] : '';
-                $lastName = isset($user['family_name']) ? $user['family_name'] : '';
-                $gender = isset($user['gender']) ? $user['gender'] : '';
-                $socialid = isset($user['id']) ? $user['id'] : '';
-
                 $data = [
                     'email' => $userEmail,
                     'fname' => $firstName,
