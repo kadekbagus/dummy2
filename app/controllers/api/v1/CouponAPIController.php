@@ -739,8 +739,8 @@ class CouponAPIController extends ControllerAPI
                                             ->where(function($query) {
                                                 $query->where('promotion_name', '=', '')
                                                       ->orWhere('description', '=', '')
-                                                      ->orWhereRaw('promotion_name')
-                                                      ->orWhereRaw('description');
+                                                      ->orWhereNull('promotion_name')
+                                                      ->orWhereNull('description');
                                               })
                                             ->get();
 
@@ -1788,8 +1788,8 @@ class CouponAPIController extends ControllerAPI
                                             ->where(function($query) {
                                                 $query->where('promotion_name', '=', '')
                                                       ->orWhere('description', '=', '')
-                                                      ->orWhereRaw('promotion_name')
-                                                      ->orWhereRaw('description');
+                                                      ->orWhereNull('promotion_name')
+                                                      ->orWhereNull('description');
                                               })
                                             ->get();
 
