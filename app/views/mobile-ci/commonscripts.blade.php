@@ -121,12 +121,13 @@
                         </form>
                     </div>
                     <div class="col-xs-4 text-center">
-                        <form name="googleLoginForm" id="googleLoginForm" action="{{ URL::route('mobile-ci.social_google_callback') }}" method="get">
+                        <form name="googleLoginForm" id="googleLoginForm" action="{{ Config::get('orbit.social_login.google.callback_url') }}" method="get">
                             <div class="form-group">
                                 <input type="hidden" class="form-control" name="time" value="{{{ time() }}}"/>
                                 <input type="hidden" class="form-control" name="from_captive" value="{{{ Input::get('from_captive', '') }}}"/>
                                 <input type="hidden" class="form-control" name="mac_address" value="{{{ Input::get('mac_address', '') }}}"/>
                                 <input type="hidden" class="form-control" name="from_url" value="{{{ \Route::currentRouteName() }}}"/>
+                                <input type="hidden" class="form-control" name="from_mall" value="{{{ 'yes' }}}"/>
                                 <input type="hidden" class="form-control to_url" name="to_url" value=""/>
                             </div>
                             <div class="form-group">
