@@ -1664,12 +1664,20 @@ class UserAPIController extends ControllerAPI
 
             // Filter user by gender
             OrbitInput::get('gender', function ($gender) use ($users, $prefix) {
-                if (in_array('u', $gender)){
+                if (in_array('u', $gender) && count($gender) === 1){
                     $users->whereRaw(" {$prefix}user_details.gender = '' OR {$prefix}user_details.gender IS NULL ");
                 } else {
-                    $users->whereHas('userdetail', function ($q) use ($gender) {
+                    if (in_array('u', $gender)){
+                        $users->whereHas('userdetail', function ($q) use ($gender) {
                             $q->whereIn('gender', $gender);
-                    });
+                        });
+                        $users->orWhereRaw(" {$prefix}user_details.gender = '' OR {$prefix}user_details.gender IS NULL ");
+                    } else {
+                        $users->whereHas('userdetail', function ($q) use ($gender) {
+                                $q->whereIn('gender', $gender);
+                        });
+                    }
+
                 }
             });
 

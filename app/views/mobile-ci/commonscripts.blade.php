@@ -78,7 +78,7 @@
         </div>
         <div class="col-xs-12 text-center">
             <ul id="campaign-cards" class="gallery list-unstyled cS-hidden">
-                
+
             </ul>
         </div>
     </div>
@@ -167,6 +167,7 @@
 
                     <div class="form-group">
                         <input type="password" value="" class="form-control text-center" name="password" id="password" placeholder="{{ Lang::get('mobileci.signup.password_placeholder') }}">
+                        <p class="password-message text-left">{{ Lang::get('mobileci.signin.password_message') }} </p>
                     </div>
                     <div class="form-group">
                         <input type="submit" name="submit" id="btn-signin-form" class="btn btn-info btn-block icon-button form text-center" value="{{ Lang::get('mobileci.signin.sign_in') }}">
@@ -356,8 +357,15 @@
 
 {{ HTML::script('mobile-ci/scripts/jquery.cookie.js') }}
 <script type="text/javascript">
+    // force reload page on every visit including back button
+    $(window).bind("pageshow", function(event) {
+        if (event.originalEvent.persisted) {
+            document.body.style.display = "none";
+            window.location.reload();
+        }
+    });
     var keyword = '{{{Input::get('keyword', '')}}}';
-    var take = {{Config::get('orbit.pagination.per_page', 25)}}, 
+    var take = {{Config::get('orbit.pagination.per_page', 25)}},
         skip = {{Config::get('orbit.pagination.per_page', 25)}};
         total_x_item = 0;
     /* Load more X function
@@ -641,7 +649,11 @@
                 $('.search-wrapper').append(loader);
 
                 $.ajax({
+                    @if(Config::get('orbit.session.availability.query_string'))
                     url: "{{ url('/app/v1/keyword/search') }}&keyword=" + keyword + '&lang=' + cookieLang,
+                    @else
+                    url: "{{ url('/app/v1/keyword/search') }}?keyword=" + keyword + '&lang=' + cookieLang,
+                    @endif
                     method: 'GET'
                 }).done(function(data) {
                     if (data.data.total_records > 0) {
@@ -1116,7 +1128,7 @@
                         orbitSignUpForm.showErrorMessageBox(response.message);
                         orbitSignUpForm.isProcessing = false;
                         orbitSignUpForm.disableEnableAllButton();
-                        
+
                         return;
                     }
                     var shiftHostName = window.location.hostname.split('.');
@@ -1563,7 +1575,7 @@
                     $('#signinForm #email').css('border-color', 'red');
                 }
                 if (! $('#signinForm #password').val()) {
-                    $('#signinForm #password').css('border-color', 'red');   
+                    $('#signinForm #password').css('border-color', 'red');
                 }
                 if ((value || isValidEmailAddress(value)) && $('#signinForm #password').val()) {
                     orbitSignUpForm.doLogin();
