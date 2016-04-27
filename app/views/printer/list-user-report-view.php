@@ -54,7 +54,7 @@
         }
 
         table.user-report {
-            width:400%;
+            width:50%;
             table-layout: fixed;
         }
     </style>
