@@ -127,7 +127,7 @@
                                 <input type="hidden" class="form-control" name="from_captive" value="{{{ Input::get('from_captive', '') }}}"/>
                                 <input type="hidden" class="form-control" name="mac_address" value="{{{ Input::get('mac_address', '') }}}"/>
                                 <input type="hidden" class="form-control" name="from_url" value="{{{ \Route::currentRouteName() }}}"/>
-                                <input type="hidden" class="form-control" name="from_mall" value="{{{ 'yes' }}}"/>
+                                <input type="hidden" class="form-control" name="mid" value="{{{ $retailer->merchant_id }}}"/>
                                 <input type="hidden" class="form-control to_url" name="to_url" value=""/>
                             </div>
                             <div class="form-group">
