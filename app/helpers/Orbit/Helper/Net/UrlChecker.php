@@ -15,6 +15,7 @@ use \User;
 use \UserDetail;
 use \Exception;
 use \Request;
+use \App;
 
 class UrlChecker
 {
@@ -47,7 +48,7 @@ class UrlChecker
                 $this->session = new Session($config);
                 $this->session->start(array(), 'no-session-creation');
             } catch (Exception $e) {
-                $this->session->start();
+                $this->session->start();   
             }
         }
     }
@@ -184,20 +185,26 @@ class UrlChecker
     protected function getLoggedInUser()
     {
         $this->prepareSession();
-
+        $mall_id = App::make('orbitSetting')->getSetting('current_retailer');
         $userId = $this->session->read('user_id');
 
         if ($this->session->read('logged_in') !== true || ! $userId) {
             // throw new Exception('Invalid session data.');
         }
 
-        $user = User::with(['userDetail'])
+        $user = User::with(['userDetail', 'membershipNumbers' => function($q) use ($mall_id) {
+                $q->select('membership_numbers.*')
+                    ->with('membership.media')
+                    ->join('memberships', 'memberships.membership_id', '=', 'membership_numbers.membership_id')
+                    ->excludeDeleted('membership_numbers')
+                    ->excludeDeleted('memberships')
+                    ->where('memberships.merchant_id', $mall_id);
+            }])
             ->where('user_id', $userId)
             ->whereHas('role', function($q) {
                 $q->where('role_name', 'Consumer');
             })
             ->first();
-
         if (! $user) {
             // throw new Exception('Session error: user not found.');
             $user = NULL;
