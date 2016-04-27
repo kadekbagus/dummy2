@@ -1593,27 +1593,25 @@ class CampaignReportAPIController extends ControllerAPI
                     SUM(case when age >= 55 then 1 else 0 end) as '55 +',
                     SUM(case when age >= 0 then 1 else 0 end) as 'total'
                 FROM(
-                    SELECT activity_id, activity_name, user_email, {$tablePrefix}user_details.gender, birthdate ,TIMESTAMPDIFF(YEAR, birthdate, CURDATE()) AS age
-                    FROM {$tablePrefix}activities
-                    LEFT JOIN {$tablePrefix}user_details
-                    ON {$tablePrefix}activities.user_id = {$tablePrefix}user_details.user_id
+                    SELECT activity_id, {$tablePrefix}user_details.gender, birthdate ,TIMESTAMPDIFF(YEAR, birthdate, CURDATE()) AS age
+                    FROM {$tablePrefix}campaign_page_views
+                    INNER JOIN {$tablePrefix}user_details
+                    ON {$tablePrefix}campaign_page_views.user_id = {$tablePrefix}user_details.user_id
                     WHERE 1 = 1
-                    AND {$tablePrefix}activities.object_id = ?
-                    AND `group` = 'mobile-ci' AND activity_type = 'view'
-                    AND (activity_name = 'view_promotion' OR activity_name = 'view_news' OR activity_name = 'view_coupon')
+                    AND {$tablePrefix}campaign_page_views.campaign_id = ?
                     AND (birthdate != '0000-00-00' AND birthdate != '' AND birthdate is not null)
-                    AND {$tablePrefix}activities.gender is not null
+                    AND {$tablePrefix}user_details.gender is not null
                 ";
 
             $demograhicFemale = DB::select($query . "
                         AND {$tablePrefix}user_details.gender = 'f'
-                        AND {$tablePrefix}activities.created_at between ? and ?
+                        AND {$tablePrefix}campaign_page_views.created_at between ? and ?
                     ) as A
             ", array($campaign_id, $start_date, $end_date));
 
             $demograhicMale = DB::select($query . "
                         AND {$tablePrefix}user_details.gender = 'm'
-                        AND {$tablePrefix}activities.created_at between ? and ?
+                        AND {$tablePrefix}campaign_page_views.created_at between ? and ?
                     ) as A
             ", array($campaign_id, $start_date, $end_date));
 

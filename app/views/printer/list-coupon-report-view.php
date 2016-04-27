@@ -107,7 +107,7 @@
         <?php while ($row = $statement->fetch(PDO::FETCH_OBJ)) : ?>
             <tr class="{{ $rowCounter % 2 === 0 ? 'zebra' : '' }}">
                 <td><?php echo (++$rowCounter); ?></td>
-                <td><?php echo htmlentities(($row->redeem_retailer_name)); ?></td>
+                <td><?php echo $me->printUtf8(($row->redeem_retailer_name)); ?></td>
                 <td><?php printf('%s / %s', '1', $row->total_issued); ?></td>
                 <td><?php echo htmlentities($row->issued_coupon_code); ?></td>
                 <td><?php echo htmlentities($row->user_email); ?></td>

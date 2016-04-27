@@ -201,14 +201,14 @@
         <?php while ($row = $statement->fetch(PDO::FETCH_OBJ)) : ?>
             <tr class="{{ $rowCounter % 2 === 0 ? 'zebra' : '' }}">
                 <td><?php echo (++$rowCounter); ?></td>
-                <td><?php echo $row->promotion_name; ?></td>
+                <td><?php echo $me->printUtf8($row->promotion_name); ?></td>
                 <td><?php echo date('d M Y', strtotime($row->begin_date)) . ' - ' . date('d M Y', strtotime($row->end_date)); ?></td>
                 <td><?php echo date('d M Y', strtotime($row->coupon_validity_in_date)); ?></td>
                 <td>
                     <?php
                         $locations = explode(', ', $row->campaign_location_names);
                         for($x = 0; $x < count($locations); $x++) {
-                            echo $locations[$x] . '<br>';
+                            echo $me->printUtf8($locations[$x]) . '<br>';
                         }
                     ?>
                 </td>

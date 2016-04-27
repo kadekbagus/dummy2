@@ -15,7 +15,7 @@
 @if($inbox->inbox_type == 'activation')
 <div class="row vertically-spaced">
 	<div class="col-xs-12 padded">
-		<p>An email has been sent to <b>{{{ $fullName }}}</b>. Please follow the instruction to activate your account.</p>
+		<p>An email has been sent to <b>{{{ $email }}}</b>. Please follow the instruction to activate your account.</p>
 		<p><small>If for some reason you don't see an email from us in a couple of hours, please check your Spam or Junk folder.</small></p>
 	</div>
 </div>
