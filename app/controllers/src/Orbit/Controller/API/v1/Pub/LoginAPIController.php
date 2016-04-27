@@ -226,78 +226,123 @@ class LoginAPIController extends IntermediateBaseController
 
         $recognized = \Input::get('recognized', 'none');
         $code = \Input::get('code', NULL);
-
+        $state = \Input::get('state', NULL);
+        $caller_url = OrbitInput::get('from_url', NULL);
+        $caller_url = ! is_null($caller_url) ? URL::route($caller_url) : Config::get('orbit.shop.after_social_sign_in');
+        $redirect_to_url = OrbitInput::get('to_url', URL::route('ci-customer-home'));
+        $from_mall = OrbitInput::get('from_mall', 'no');
 
         $googleService = OAuth::consumer( 'Google' );
         if ( !empty( $code ) ) {
             try {
+                $from_mall_from_state = json_decode($this->base64UrlDecode($state))->from_mall;
+                // from mall = yes, indicate the request coming from Mall CI, then use MobileCIAPIController::getGoogleCallbackView
+                // to set the session and other things
+                if ($from_mall_from_state === 'yes') {
+                    $_GET['caller_url'] = $caller_url;
+                    $_GET['redirect_to_url'] = $redirect_to_url;
+                    $_GET['state'] = $state;
+                    $_GET['code'] = $code;
+                    $response = \MobileCI\MobileCIAPIController::create()->getGoogleCallbackView();
 
-                Config::set('orbit.session.availability.query_string', $oldRouteSessionConfigValue);
-                $token = $googleService->requestAccessToken( $code );
+                    return $response;
+                } else { // the request coming from landing page (gotomalls.com)
+                    Config::set('orbit.session.availability.query_string', $oldRouteSessionConfigValue);
+                    $token = $googleService->requestAccessToken( $code );
 
-                $user = json_decode( $googleService->request( 'https://www.googleapis.com/oauth2/v1/userinfo' ), true );
+                    $user = json_decode( $googleService->request( 'https://www.googleapis.com/oauth2/v1/userinfo' ), true );
 
-                $userEmail = isset($user['email']) ? $user['email'] : '';
-                $firstName = isset($user['given_name']) ? $user['given_name'] : '';
-                $lastName = isset($user['family_name']) ? $user['family_name'] : '';
-                $gender = isset($user['gender']) ? $user['gender'] : '';
-                $socialid = isset($user['id']) ? $user['id'] : '';
+                    $userEmail = isset($user['email']) ? $user['email'] : '';
+                    $firstName = isset($user['given_name']) ? $user['given_name'] : '';
+                    $lastName = isset($user['family_name']) ? $user['family_name'] : '';
+                    $gender = isset($user['gender']) ? $user['gender'] : '';
+                    $socialid = isset($user['id']) ? $user['id'] : '';
 
-                $data = [
-                    'email' => $userEmail,
-                    'fname' => $firstName,
-                    'lname' => $lastName,
-                    'gender' => $gender,
-                    'login_from'  => 'google',
-                    'social_id'  => $socialid,
-                    'mac' => \Input::get('mac_address', ''),
-                    'ip' => $_SERVER['REMOTE_ADDR'],
-                    'is_captive' => 'yes',
-                    'recognized' => $recognized
-                ];
+                    $data = [
+                        'email' => $userEmail,
+                        'fname' => $firstName,
+                        'lname' => $lastName,
+                        'gender' => $gender,
+                        'login_from'  => 'google',
+                        'social_id'  => $socialid,
+                        'mac' => \Input::get('mac_address', ''),
+                        'ip' => $_SERVER['REMOTE_ADDR'],
+                        'is_captive' => 'yes',
+                        'recognized' => $recognized
+                    ];
 
-                $orbit_origin = \Input::get('orbit_origin', 'google');
+                    $orbit_origin = \Input::get('orbit_origin', 'google');
 
-                // There is a chance that user not 'grant' his email while approving our app
-                // so we double check it here
-                if (empty($userEmail)) {
-                    return Redirect::to(Config::get('orbit.shop.after_social_sign_in') . '/#/?error=no_email');
-                }
+                    // There is a chance that user not 'grant' his email while approving our app
+                    // so we double check it here
+                    if (empty($userEmail)) {
+                        $parsed_caller_url = parse_url((string)$caller_url);
+                        if (isset($parsed_caller_url['query'])) {
+                            $caller_url .= '&error=no_email';
+                        } else {
+                            $caller_url .= '?error=no_email';
+                        }
 
-                $loggedInUser = $this->doAutoLogin($userEmail);
-                if (! is_object($loggedInUser)) {
-                    // register user without password and birthdate
-                    $status = 'active';
-                    $response = (new Regs())->createCustomerUser($userEmail, NULL, NULL, $firstName, $lastName, $gender, NULL, TRUE, NULL, NULL, NULL, $status, 'Google');
-                    if (get_class($response) !== 'User') {
-                        throw new Exception($response->message, $response->code);
+                        return Redirect::to($caller_url);
                     }
 
-                    $loggedInUser = $this->doAutoLogin($response->user_email);
+                    $loggedInUser = $this->doAutoLogin($userEmail);
+                    if (! is_object($loggedInUser)) {
+                        // register user without password and birthdate
+                        $status = 'active';
+                        $response = (new Regs())->createCustomerUser($userEmail, NULL, NULL, $firstName, $lastName, $gender, NULL, TRUE, NULL, NULL, NULL, $status, 'Google');
+                        if (get_class($response) !== 'User') {
+                            throw new Exception($response->message, $response->code);
+                        }
+
+                        $loggedInUser = $this->doAutoLogin($response->user_email);
+                    }
+
+                    $expireTime = Config::get('orbit.session.session_origin.cookie.expire');
+
+                    setcookie('orbit_email', $userEmail, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+                    setcookie('orbit_firstname', $firstName, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+                    setcookie('login_from', 'Google', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+
+                    return Redirect::to(Config::get('orbit.shop.after_social_sign_in'));
                 }
-
-                $expireTime = Config::get('orbit.session.session_origin.cookie.expire');
-
-                setcookie('orbit_email', $userEmail, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
-                setcookie('orbit_firstname', $firstName, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
-                setcookie('login_from', 'Google', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
-
-                // todo can we not do this directly
-                return Redirect::to(Config::get('orbit.shop.after_social_sign_in'));
-
             } catch (Exception $e) {
                 $errorMessage = 'Error: ' . $e->getMessage();
-                return Redirect::to(Config::get('orbit.shop.after_social_sign_in') . '/#/?error=' . $errorMessage);
+                $parsed_caller_url = parse_url((string)$caller_url);
+                if (isset($parsed_caller_url['query'])) {
+                    $caller_url .= '&error=' . $errorMessage;
+                } else {
+                    $caller_url .= '?error=' . $errorMessage;
+                }
+                return Redirect::to($caller_url);
             }
 
         } else {
             try {
                 // get googleService authorization
                 $url = $googleService->getAuthorizationUri();
-                return Redirect::to( (string)$url );
+                // override state param to have our destination url inside
+                $state_array = array('redirect_to_url' => $redirect_to_url, 'from_mall' => $from_mall);
+                $state = json_encode($state_array);
+                $stateString = $this->base64UrlEncode($state);
+                $parsed_url = parse_url((string)$url);
+                $query = parse_str($parsed_url['query'], $output);
+                $output['state'] = $stateString;
+                $query_string = http_build_query($output);
+                $parsed_url['query'] = $query_string;
+                // rebuild the googleService authorization url
+                $new_url = $parsed_url['scheme'] . '://' . $parsed_url['host'] . $parsed_url['path'] . '?' . $parsed_url['query'];
+
+                return Redirect::to((string)$new_url);
             } catch (Exception $e) {
                 $errorMessage = 'Error: ' . $e->getMessage();
-                return Redirect::to(Config::get('orbit.shop.after_social_sign_in') . '/#/?error=' . $errorMessage);
+                $parsed_caller_url = parse_url((string)$caller_url);
+                if (isset($parsed_caller_url['query'])) {
+                    $caller_url .= '&error=' . $errorMessage;
+                } else {
+                    $caller_url .= '?error=' . $errorMessage;
+                }
+                return Redirect::to($caller_url);
             }
         }   
     }
@@ -494,5 +539,15 @@ class LoginAPIController extends IntermediateBaseController
         }
 
         return FALSE;
+    }
+
+    public function base64UrlEncode($inputStr)
+    {
+        return strtr(base64_encode($inputStr), '+/=', '-_,');
+    }
+
+    public function base64UrlDecode($inputStr)
+    {
+        return base64_decode(strtr($inputStr, '-_,', '+/='));
     }
 }
