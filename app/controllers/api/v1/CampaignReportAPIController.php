@@ -403,7 +403,7 @@ class CampaignReportAPIController extends ControllerAPI
             $sql = $campaign->toSql();
             foreach($campaign->getBindings() as $binding)
             {
-              $value = is_numeric($binding) ? $binding : "'" . $binding . "'";
+              $value = is_numeric($binding) ? $binding : $this->quote($binding);
               $sql = preg_replace('/\?/', $value, $sql, 1);
             }
 
