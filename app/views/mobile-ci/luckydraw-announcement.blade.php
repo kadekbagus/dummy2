@@ -76,39 +76,32 @@
 @else
 <div class="row" style="background:#fff;position:relative;">
     <div class="col-xs-12 padded">
-        @if(isset($luckydraw->prizes[0]))
-            @if (count($luckydraw->prizes) === 1 && count($luckydraw->prizes[0]->winners) === 0)
-                <div class="text-center vertically-spaced">
-                    <img class="img-responsive vertically-spaced side-margin-center" src="{{ asset('mobile-ci/images/default_prize.png') }}">
-                    <p class="vertically-spaced"><b>{{ Lang::get('mobileci.lucky_draw.no_prize') }}</b></p>
-                </div>
-            @else
-                <h4 style="margin-top:20px;">{{ Lang::get('mobileci.lucky_draw.prizes_and_winners') }}</h4>
-                <table class="table">
-                    @foreach($luckydraw->prizes as $prize)
-                    @if(count($prize->winners) > 0)
-                    <tr>
-                        <th colspan="2">{{{ $prize->prize_name }}}</th>
-                    </tr>
-                        @foreach($prize->winners as $winner)
-                            @if (isset($winner->number->user))
-                                @if ($winner->number->user->user_id === $user->user_id)
-                                    <tr>
-                                        <td><span style="color:#337AB7">{{{ $winner->number->user->getFullName() }}}</span></td>
-                                        <td><span style="color:#337AB7">{{ $winner->lucky_draw_winner_code }}</span></td>
-                                    </tr>
-                                @else
-                                    <tr>
-                                        <td>{{{ $winner->number->user->getFullName() }}}</td>
-                                        <td>{{ $winner->lucky_draw_winner_code }}</td>
-                                    </tr>
-                                @endif
+        @if(isset($luckydraw->prizes[0]) && $luckydraw->have_winner)
+            <h4 style="margin-top:20px;">{{ Lang::get('mobileci.lucky_draw.prizes_and_winners') }}</h4>
+            <table class="table">
+                @foreach($luckydraw->prizes as $prize)
+                @if(count($prize->winners) > 0 && $prize->available)
+                <tr>
+                    <th colspan="2">{{{ $prize->prize_name }}}</th>
+                </tr>
+                    @foreach($prize->winners as $winner)
+                        @if (isset($winner->number->user))
+                            @if ($winner->number->user->user_id === $user->user_id)
+                                <tr>
+                                    <td><span style="color:#337AB7">{{{ $winner->number->user->getFullName() }}}</span></td>
+                                    <td><span style="color:#337AB7">{{ $winner->lucky_draw_winner_code }}</span></td>
+                                </tr>
+                            @else
+                                <tr>
+                                    <td>{{{ $winner->number->user->getFullName() }}}</td>
+                                    <td>{{ $winner->lucky_draw_winner_code }}</td>
+                                </tr>
                             @endif
-                        @endforeach
-                    @endif
+                        @endif
                     @endforeach
-                </table>
-            @endif
+                @endif
+                @endforeach
+            </table>
         @else
             <div class="text-center vertically-spaced">
                 <img class="img-responsive vertically-spaced side-margin-center" src="{{ asset('mobile-ci/images/default_prize.png') }}">
