@@ -89,10 +89,10 @@ class SpendingCalculation
                 $dailySpending->save();
 
                 if ($dailySpending) {
-                    Log::info('*** Spending Calculation Queue for campaign_id : ' . $campaign_id . ' completed ***');
+                    \Log::info('*** Spending Calculation Queue for campaign_id : ' . $campaign_id . ' completed ***');
                     DB::commit();
                 } else {
-                    Log::error('*** Spending Calculation Queue for campaign_id : ' . $campaign_id . ' error ***');
+                    \Log::error('*** Spending Calculation Queue for campaign_id : ' . $campaign_id . ' error ***');
                     DB::rollBack();
                 }
             }            
