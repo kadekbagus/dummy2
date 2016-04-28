@@ -1028,7 +1028,7 @@ class DashboardAPIController extends ControllerAPI
             $sql = $expiringCampaign->toSql();
             foreach($expiringCampaign->getBindings() as $binding)
             {
-              $value = is_numeric($binding) ? $binding : "'" . $binding . "'";
+              $value = is_numeric($binding) ? $binding : $this->quote($binding);
               $sql = preg_replace('/\?/', $value, $sql, 1);
             }
 
