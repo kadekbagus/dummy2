@@ -374,7 +374,7 @@
 
                     window.history.pushState({tenantStateObjects: tenantStateObjects}, "TenantStateObjects", "#");
 
-                    //FB.XFBML.parse();
+                    FB.XFBML.parse();
                 }
 
                 if (skip >= data.total_records) {
@@ -394,7 +394,7 @@
             if (skip >= window.history.state.tenantStateObjects.total_records) {
                 $('#load-more-tenants').remove();
             }
-        } 
+        }
     });
 </script>
 @stop
