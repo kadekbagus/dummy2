@@ -999,12 +999,12 @@ class MobileCIAPIController extends BaseCIController
 
         $helper = $fb->getRedirectLoginHelper();
         $permissions = Config::get('orbit.social.facebook.scope', ['email', 'public_profile']);
-        $facebookCallbackUrl = URL::route('mobile-ci.social_login_callback', 
+        $facebookCallbackUrl = URL::route('mobile-ci.social_login_callback',
             [
                 'caller_url' => $caller_url ,
                 'orbit_origin' => 'facebook',
                 'from_captive' => OrbitInput::post('from_captive'),
-                'mac_address' => \Input::get('mac_address', ''), 
+                'mac_address' => \Input::get('mac_address', ''),
                 'redirect_to_url' => $redirect_to_url
             ]);
 
@@ -8136,7 +8136,8 @@ class MobileCIAPIController extends BaseCIController
      */
     private function getDefaultLanguage($mall)
     {
-        $language = \Language::where('name', '=', $mall->mobile_default_language)->first();
+        // English is default language
+        $language = \Language::where('name', '=', 'en')->first();
         if(isset($language) && count($language) > 0){
             $defaultLanguage = \MerchantLanguage::excludeDeleted()
                 ->where('merchant_id', '=', $mall->merchant_id)
@@ -9266,7 +9267,7 @@ class MobileCIAPIController extends BaseCIController
     }
 
     public function remove_querystring_var($url, $key)
-    { 
+    {
         $parsed_url = parse_url((string)$url);
         if(isset($parsed_url['query'])){
             $query = parse_str($parsed_url['query'], $output);
