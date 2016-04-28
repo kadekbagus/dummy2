@@ -133,7 +133,7 @@
                 <td>Date Period</td>
                 <td>:</td>
                 <td>
-                    <strong><?php echo $me->printDatePeriod($startDate, $endDate); ?> </strong>
+                    <strong><?php echo $me->printDatePeriod($startDate, $endDate, 'd F Y'); ?> </strong>
                 </td>
         <?php } ?>
 
