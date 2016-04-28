@@ -76,11 +76,11 @@
 @else
 <div class="row" style="background:#fff;position:relative;">
     <div class="col-xs-12 padded">
-        @if(isset($luckydraw->prizes[0]) && $have_winner)
+        @if(isset($luckydraw->prizes[0]) && $luckydraw->have_winner)
             <h4 style="margin-top:20px;">{{ Lang::get('mobileci.lucky_draw.prizes_and_winners') }}</h4>
             <table class="table">
                 @foreach($luckydraw->prizes as $prize)
-                @if(count($prize->winners) > 0)
+                @if(count($prize->winners) > 0 && $prize->available)
                 <tr>
                     <th colspan="2">{{{ $prize->prize_name }}}</th>
                 </tr>

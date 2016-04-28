@@ -2819,6 +2819,9 @@ return array(
             'app_secret'    => '',
             'version'       => 'v2.4'
         ],
+        'google' => array(
+            'callback_url' => 'http://mall-api.gotomalls.cool/pub/social-google-callback',
+        ),
     ],
 
     // set the external crawler user agent
