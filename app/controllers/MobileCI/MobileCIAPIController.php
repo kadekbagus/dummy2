@@ -1126,6 +1126,7 @@ class MobileCIAPIController extends BaseCIController
                     $_POST['lastname'] = $lastName;
                     $_POST['gender'] = $gender;
                     $_POST['status'] = 'active';
+                    $_POST['mall_id'] = $mall_id;
                     $_POST['sign_up_origin'] = 'google';
                     $response = \LoginAPIController::create('raw')->setUseTransaction(false)->postRegisterUserInShop();
                     if ($response->code !== 0) {
