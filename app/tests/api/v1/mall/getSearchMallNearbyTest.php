@@ -4,6 +4,7 @@
  * API does not need authentication.
  *
  * @author Rio Astamal <rio@dominopos.com>
+ * @author Shelgi Prasetyo <shelgi@dominopos.com>
  */
 use DominoPOS\OrbitAPI\v10\StatusInterface as Status;
 use Laracasts\TestDummy\Factory;
@@ -178,5 +179,39 @@ class getSearchMallNearBy extends TestCase
         // The first mall should be Beruang Hutan, because by searching
         // by keyword will trigger sorting by name
         $this->assertSame('Beruang Hutan', $response->data->records[0]->name);
+    }
+
+    public function testOK_Found_One_Mall_OrderBy_distance()
+    {
+        // Create 2 malls in antartica
+        $geofence = Factory::create('MerchantGeofence');
+        $geofence2 = Factory::create('MerchantGeofence_Antartica2');
+
+        $antartica1 = $geofence->mall;
+        $antartica1->name = 'Beruang Kutub';
+        $antartica1->save();
+
+        $antartica2 = $geofence2->mall;
+        $antartica2->name = 'Beruang Hutan';
+        $antartica2->save();
+
+        $_GET['latitude'] = $this->myAntarticaLocation[0];
+        $_GET['longitude'] = $this->myAntarticaLocation[1];
+        // The distance to the antartica 2 is 610.xx
+        $_GET['distance'] = -1;
+        $_GET['sortby'] = 'distance';
+        $_GET['sortmode'] = 'asc';
+        $_GET['take'] = 1;
+
+        $response = $this->call('GET', $this->baseUrl)->getContent();
+        $response = json_decode($response);
+
+        $this->assertSame(Status::OK, (int)$response->code);
+        $this->assertSame(2, (int)$response->data->total_records);
+        $this->assertSame(1, (int)$response->data->returned_records);
+
+        // The first mall should be Beruang Hutan, because by searching
+        // by keyword will trigger sorting by name
+        $this->assertSame('Beruang Kutub', $response->data->records[0]->name);
     }
 }
