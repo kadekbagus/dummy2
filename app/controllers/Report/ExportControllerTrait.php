@@ -41,7 +41,7 @@ trait ExportControllerTrait
         $csv .= ',,,,,,';
         $csv .= "\r\n";
         $csv .= ',,,,,,';
-        
+
         $csv .= "\r\n";
 
         if ($this->data->summary) {
@@ -50,7 +50,7 @@ trait ExportControllerTrait
                 $csv .= "\r\n";
             }
 
-            $csv .= "\r\n";            
+            $csv .= "\r\n";
         }
 
         foreach ($this->data->columns as $column) {
@@ -72,7 +72,7 @@ trait ExportControllerTrait
         $response->header('Content-Type', 'text/csv');
 
         $date = Carbon::now()->setTimezone($this->timezone)->format('D_d_M_Y_Hi');
-        $fileName = 'orbit-export-'.str_replace(' ', '-', $this->data->pageTitle.'-'.$date).'.csv';
+        $fileName = 'gotomalls-export-'.str_replace(' ', '-', $this->data->pageTitle.'-'.$date).'.csv';
         $response->header('Content-Disposition', 'inline; filename="'.$fileName.'"');
 
         return $response;

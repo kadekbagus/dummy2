@@ -15,6 +15,7 @@ use \User;
 use \UserDetail;
 use \Exception;
 use \Request;
+use \App;
 
 class UrlChecker
 {
@@ -34,15 +35,20 @@ class UrlChecker
     protected function prepareSession()
     {
         if (! is_object($this->session)) {
+            // set the session strict to FALSE
+            Config::set('orbit.session.strict', FALSE);
+            // set the query session string to FALSE, so the CI will depend on session cookie
+            Config::set('orbit.session.availability.query_string', FALSE);
+
             // This user assumed are Consumer, which has been checked at login process
             $config = new SessionConfig(Config::get('orbit.session'));
             $config->setConfig('application_id', static::APPLICATION_ID);
 
             try {
                 $this->session = new Session($config);
-                $this->session->start();
+                $this->session->start(array(), 'no-session-creation');
             } catch (Exception $e) {
-                
+                $this->session->start();   
             }
         }
     }
@@ -142,25 +148,26 @@ class UrlChecker
             	DB::beginTransaction();
                 $user = (new User)->generateGuestUser();
                 DB::commit();
+                // Start the orbit session
+                $data = array(
+                    'logged_in' => TRUE,
+                    'user_id'   => $user->user_id,
+                    'email'     => $user->user_email,
+                    'role'      => $user->role->role_name,
+                    'fullname'  => $user->getFullName(),
+                );
+                $this->session->enableForceNew()->start($data);
+                // todo: add login_ok activity
+
+                // Send the session id via HTTP header
+                $sessionHeader = $this->session->getSessionConfig()->getConfig('session_origin.header.name');
+                $sessionHeader = 'Set-' . $sessionHeader;
+                $this->customHeaders[$sessionHeader] = $this->session->getSessionId();
+
             } else {
                 $guest = User::excludeDeleted()->where('user_email', $guest_email)->first();
                 $user = $guest;
             }
-
-            // Start the orbit session
-            $data = array(
-                'logged_in' => TRUE,
-                'user_id'   => $user->user_id,
-                'email'     => $user->user_email,
-                'role'      => $user->role->role_name,
-                'fullname'  => $user->getFullName(),
-            );
-            $this->session->enableForceNew()->start($data);
-
-            // Send the session id via HTTP header
-            $sessionHeader = $this->session->getSessionConfig()->getConfig('session_origin.header.name');
-            $sessionHeader = 'Set-' . $sessionHeader;
-            $this->customHeaders[$sessionHeader] = $this->session->getSessionId();
 
             return $user;
 
@@ -178,20 +185,26 @@ class UrlChecker
     protected function getLoggedInUser()
     {
         $this->prepareSession();
-
+        $mall_id = App::make('orbitSetting')->getSetting('current_retailer');
         $userId = $this->session->read('user_id');
 
         if ($this->session->read('logged_in') !== true || ! $userId) {
             // throw new Exception('Invalid session data.');
         }
 
-        $user = User::with(['userDetail'])
+        $user = User::with(['userDetail', 'membershipNumbers' => function($q) use ($mall_id) {
+                $q->select('membership_numbers.*')
+                    ->with('membership.media')
+                    ->join('memberships', 'memberships.membership_id', '=', 'membership_numbers.membership_id')
+                    ->excludeDeleted('membership_numbers')
+                    ->excludeDeleted('memberships')
+                    ->where('memberships.merchant_id', $mall_id);
+            }])
             ->where('user_id', $userId)
             ->whereHas('role', function($q) {
                 $q->where('role_name', 'Consumer');
             })
             ->first();
-
         if (! $user) {
             // throw new Exception('Session error: user not found.');
             $user = NULL;

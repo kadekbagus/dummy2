@@ -50,7 +50,7 @@
             @foreach($tenant->newsPromotionsProfiling as $promotab)
                 <div class="col-xs-12 col-sm-12">
                     <section class="list-item-single-tenant">
-                        <a class="list-item-link" href="{{ $urlblock->blockedRoute('ci-mall-promotion', ['id' => $promotab->news_id]) }}">
+                        <a class="list-item-link" data-href="{{ route('ci-promotion-detail', ['id' => $promotab->news_id]) }}" href="{{ $urlblock->blockedRoute('ci-promotion-detail', ['id' => $promotab->news_id]) }}">
                             <div class="list-item-info">
                                 <header class="list-item-title">
                                     <div><strong>{{{ $promotab->news_name }}}</strong></div>
@@ -112,7 +112,7 @@
             @foreach($tenant->newsProfiling as $newstab)
                 <div class="col-xs-12 col-sm-12">
                     <section class="list-item-single-tenant">
-                        <a class="list-item-link" href="{{ $urlblock->blockedRoute('ci-mall-news-detail', ['id' => $newstab->news_id]) }}">
+                        <a class="list-item-link" data-href="{{ route('ci-news-detail', ['id' => $newstab->news_id]) }}" href="{{ $urlblock->blockedRoute('ci-news-detail', ['id' => $newstab->news_id]) }}">
                             <div class="list-item-info">
                                 <header class="list-item-title">
                                     <div><strong>{{{ $newstab->news_name }}}</strong></div>
@@ -174,7 +174,7 @@
             @foreach($tenant->couponsProfiling as $coupontab)
                 <div class="col-xs-12 col-sm-12">
                     <section class="list-item-single-tenant">
-                        <a class="list-item-link" href="{{ $urlblock->blockedRoute('ci-mall-coupon', ['id' => $coupontab->promotion_id]) }}">
+                        <a class="list-item-link" data-href="{{ route('ci-coupon-detail', ['id' => $coupontab->promotion_id]) }}" href="{{ $urlblock->blockedRoute('ci-coupon-detail', ['id' => $coupontab->promotion_id]) }}">
                             <div class="coupon-new-badge">
                                 <div class="new-number">{{$coupontab->quantity}}</div>
                             </div>
@@ -267,7 +267,7 @@
 </div>
 <div class="row padded">
     <div class="col-xs-12 font-1-3">
-        <p>{{ nl2br(htmlspecialchars($tenant->description)) }}</p>
+        <p>{{ nl2br(e($tenant->description)) }}</p>
         <ul class="where-list">
             <li><i class="fa fa-map-marker fa-lg" style="padding-left: 11px;"></i>  {{{ !empty($tenant->floor) ? $tenant->floor : '' }}}{{{ !empty($tenant->unit) ? ' - ' . $tenant->unit : '' }}}</li>
             <li><i class="fa fa-globe fa-lg"></i>  {{{ (($tenant->url) != '') ? 'http://'.$tenant->url : '-' }}}</li>
@@ -276,11 +276,13 @@
             @endif
             <li><i class="fa fa-phone-square fa-lg"></i>  @if($tenant->phone != '') <a href="tel:{{{ $tenant->phone }}}"> {{{ $tenant->phone }}}</a> @else - @endif</li>
         </ul>
-        @if(! empty($tenant->facebook_like_url))
-        <div class="fb-like" data-href="{{{$tenant->facebook_like_url}}}" data-layout="button_count" data-action="like" data-show-faces="false" data-share="false" style="margin-right:25px;"></div>
-        @endif
-        @if(! empty($tenant->facebook_share_url))
-        <div class="fb-share-button" data-href="{{{$tenant->facebook_share_url}}}" data-layout="button_count"></div>
+        @if ($urlblock->isLoggedIn())
+            @if(! empty($tenant->facebook_like_url))
+            <div class="fb-like" data-href="{{{$tenant->facebook_like_url}}}" data-layout="button_count" data-action="like" data-show-faces="false" data-share="false" style="margin-right:25px;"></div>
+            @endif
+            @if(! empty($tenant->facebook_share_url))
+            <div class="fb-share-button" data-href="{{{$tenant->facebook_share_url}}}" data-layout="button"></div>
+            @endif
         @endif
     </div>
 </div>

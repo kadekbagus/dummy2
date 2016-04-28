@@ -58,9 +58,11 @@
                 <div class="modal-body">
                     <select class="form-control" name="lang" id="selected-lang">
                         @if (isset($languages))
-                                @foreach ($languages as $lang)
-                                    <option value="{{{ $lang->language->name }}}" @if (isset($_COOKIE['orbit_preferred_language'])) @if ($lang->language->name === $_COOKIE['orbit_preferred_language']) selected @endif @else @if($lang->language->name === $default_lang) selected @endif @endif>{{{ $lang->language->name_long }}} @if($lang->language->name === $default_lang) (Default) @endif</option>
-                                @endforeach
+                            @foreach ($languages as $lang)
+                                <option value="{{{ $lang->language->name }}}" @if ($lang->language->name === App::getLocale()) selected @endif>
+                                    {{{ $lang->language->name_long }}} @if($lang->language->name === $default_lang) (Default) @endif
+                                </option>
+                            @endforeach
                         @endif
                     </select>
                 </div>
@@ -78,7 +80,7 @@
         </div>
         <div class="col-xs-12 text-center">
             <ul id="campaign-cards" class="gallery list-unstyled cS-hidden">
-                
+
             </ul>
         </div>
     </div>
@@ -105,6 +107,7 @@
                             <div class="form-group">
                                 <input type="hidden" class="form-control" name="time" value="{{{ time() }}}"/>
                                 <input type="hidden" class="form-control" name="from_url" id="from_url" value="{{{ \Route::currentRouteName() }}}"/>
+                                <input type="hidden" class="form-control to_url" name="to_url" value=""/>
                                 <input type="hidden" class="form-control" name="from_captive" value="{{{ Input::get('from_captive', '') }}}"/>
                                 <input type="hidden" class="form-control" name="mac_address"
                                        value="{{{ Input::get('mac_address', '') }}}"/>
@@ -120,12 +123,14 @@
                         </form>
                     </div>
                     <div class="col-xs-4 text-center">
-                        <form name="googleLoginForm" id="googleLoginForm" action="{{ URL::route('mobile-ci.social_google_callback') }}" method="get">
+                        <form name="googleLoginForm" id="googleLoginForm" action="{{ Config::get('orbit.social_login.google.callback_url') }}" method="get">
                             <div class="form-group">
                                 <input type="hidden" class="form-control" name="time" value="{{{ time() }}}"/>
                                 <input type="hidden" class="form-control" name="from_captive" value="{{{ Input::get('from_captive', '') }}}"/>
                                 <input type="hidden" class="form-control" name="mac_address" value="{{{ Input::get('mac_address', '') }}}"/>
                                 <input type="hidden" class="form-control" name="from_url" value="{{{ \Route::currentRouteName() }}}"/>
+                                <input type="hidden" class="form-control" name="mid" value="{{{ $retailer->merchant_id }}}"/>
+                                <input type="hidden" class="form-control to_url" name="to_url" value=""/>
                             </div>
                             <div class="form-group">
                                 <button id="googleLoginButton" type="submit" class="btn btn-danger icon-button google text-center">
@@ -149,6 +154,7 @@
         <div class="modal-content" id="signin-form-wrapper">
             <form  name="signinForm" id="signinForm" method="post">
                 <div class="modal-body text-center">
+                    <input type="hidden" class="form-control to_url" name="to_url" value=""/>
                     <button type="button" class="close close-form" data-dismiss="modal" aria-label="Close">
                         <i class="fa fa-times"></i>
                     </button>
@@ -164,6 +170,7 @@
 
                     <div class="form-group">
                         <input type="password" value="" class="form-control text-center" name="password" id="password" placeholder="{{ Lang::get('mobileci.signup.password_placeholder') }}">
+                        <p class="password-message text-left">{{ Lang::get('mobileci.signin.password_message') }} </p>
                     </div>
                     <div class="form-group">
                         <input type="submit" name="submit" id="btn-signin-form" class="btn btn-info btn-block icon-button form text-center" value="{{ Lang::get('mobileci.signin.sign_in') }}">
@@ -198,9 +205,6 @@
                     <div class="form-group">
                         <button type="button" id="btn-forgot-form" class="btn btn-info btn-block icon-button form text-center" disabled>{{ Lang::get('mobileci.signin.forgot_button') }}</button>
                     </div>
-                    <!-- <div class="form-group">
-                        <i><span>{{ Lang::get('mobileci.signup.already_have_an_account') }} <a href="#1" id="forgot-sign-in-link">{{ Lang::get('mobileci.signin.sign_in') }}</a></span></i>
-                    </div> -->
                 </div>
             </form>
             <div id="forget-mail-sent" class="vertically-spaced text-center hide">
@@ -212,9 +216,16 @@
         <div class="modal-content hide" id="signup-form-wrapper">
             <form  name="signupForm" id="signupForm" method="post">
                 <div class="modal-body">
+                    <input type="hidden" class="form-control to_url" name="to_url" value=""/>
                     <button type="button" class="close close-form" data-dismiss="modal" aria-label="Close">
                         <i class="fa fa-times"></i>
                     </button>
+                    <div class="error-msg-box">
+                        <div class="error-msg-box-close">
+                            &times;
+                        </div>
+                        <div class="error-msg-message"></div>
+                    </div>
                     <span class="mandatory-label" style="display:none;">{{ Lang::get('mobileci.signup.fields_are_mandatory') }}</span>
                     <div class="form-group icon-group">
                         <input type="email" value="{{{ $user_email }}}" class="form-control orbit-auto-login" name="email" id="email" placeholder="{{ Lang::get('mobileci.signup.email_placeholder') }}">
@@ -349,8 +360,15 @@
 
 {{ HTML::script('mobile-ci/scripts/jquery.cookie.js') }}
 <script type="text/javascript">
+    // force reload page on every visit including back button
+    $(window).bind("pageshow", function(event) {
+        if (event.originalEvent.persisted) {
+            document.body.style.display = "none";
+            window.location.reload();
+        }
+    });
     var keyword = '{{{Input::get('keyword', '')}}}';
-    var take = {{Config::get('orbit.pagination.per_page', 25)}}, 
+    var take = {{Config::get('orbit.pagination.per_page', 25)}},
         skip = {{Config::get('orbit.pagination.per_page', 25)}};
         total_x_item = 0;
     /* Load more X function
@@ -384,7 +402,7 @@
                         }
                         var list = '<div class="col-xs-12 col-sm-12 item-x" data-ids="'+data.records[i].item_id+'" id="item-'+data.records[i].item_id+'">\
                                 <section class="list-item-single-tenant">\
-                                    <a class="list-item-link" href="'+data.records[i].url+'">\
+                                    <a class="list-item-link" href="'+data.records[i].redirect_url+'" href="'+data.records[i].url+'">\
                                         '+coupon_badge+'\
                                         <div class="list-item-info">\
                                             <header class="list-item-title">\
@@ -483,7 +501,7 @@
                                     <div class="campaign-cards-info">\
                                         <h4><strong>'+ data.data.records[i].campaign_name +'</strong></h4>\
                                         <p>'+ data.data.records[i].campaign_description +'</p>\
-                                        <a class="campaign-cards-link" data-id="'+ data.data.records[i].campaign_id +'" data-type="'+ data.data.records[i].campaign_type +'" href="'+ data.data.records[i].campaign_url +'"><i>{{ Lang::get('mobileci.campaign_cards.go_to_page') }}</i></a>\
+                                        <a class="campaign-cards-link" data-id="'+ data.data.records[i].campaign_id +'" data-type="'+ data.data.records[i].campaign_type +'" data-href="'+ data.data.records[i].redirect_campaign_url +'" href="'+ data.data.records[i].campaign_url +'"><i>{{ Lang::get('mobileci.campaign_cards.go_to_page') }}</i></a>\
                                     </div>\
                                 </li>';
                             $('#campaign-cards').append(list);
@@ -634,7 +652,11 @@
                 $('.search-wrapper').append(loader);
 
                 $.ajax({
-                    url: apiPath + 'keyword/search?keyword=' + keyword + '&lang=' + cookieLang,
+                    @if(Config::get('orbit.session.availability.query_string'))
+                    url: "{{ url('/app/v1/keyword/search') }}&keyword=" + keyword + '&lang=' + cookieLang,
+                    @else
+                    url: "{{ url('/app/v1/keyword/search') }}?keyword=" + keyword + '&lang=' + cookieLang,
+                    @endif
                     method: 'GET'
                 }).done(function(data) {
                     if (data.data.total_records > 0) {
@@ -647,7 +669,7 @@
                             for(var i = 0; i < data.data.grouped_records.tenants.length; i++) {
                                 var hide = i > 2 ? 'limited hide' : '';
                                 tenants += '<li class="search-result-group '+ hide +'">\
-                                        <a href="'+ data.data.grouped_records.tenants[i].object_url +'">\
+                                        <a data-href="'+ data.data.grouped_records.tenants[i].object_redirect_url +'" href="'+ data.data.grouped_records.tenants[i].object_url +'">\
                                             <div class="col-xs-2 text-center">\
                                                 <img src="'+ data.data.grouped_records.tenants[i].object_image +'">\
                                             </div>\
@@ -658,8 +680,8 @@
                                         </a>\
                                     </li>';
                             }
-                            if (data.data.grouped_records.tenants_counts > 3) {
-                                tenants += '<a href="'+ data.data.grouped_records.tenants_url +'" class="text-right" style="display:block;color:#fff;">{{ Lang::get('mobileci.search.show_more') }}</a>';
+                            if (data.data.grouped_records.tenants.length > 3) {
+                                tenants += '<a data-href="'+ data.data.grouped_records.tenants_redirect_url +'" href="'+ data.data.grouped_records.tenants_url +'" class="text-right" style="display:block;color:#fff;">{{ Lang::get('mobileci.search.show_more') }}</a>';
                             }
                             tenants += '</ul>';
                         }
@@ -669,7 +691,7 @@
                             for(var i = 0; i < data.data.grouped_records.promotions.length; i++) {
                                 var hide = i > 2 ? 'limited hide' : '';
                                 promotions += '<li class="search-result-group '+ hide +'">\
-                                        <a href="'+ data.data.grouped_records.promotions[i].object_url +'">\
+                                        <a data-href="'+ data.data.grouped_records.promotions[i].object_redirect_url +'" href="'+ data.data.grouped_records.promotions[i].object_url +'">\
                                             <div class="col-xs-2 text-center">\
                                                 <img src="'+ data.data.grouped_records.promotions[i].object_image +'">\
                                             </div>\
@@ -680,8 +702,8 @@
                                         </a>\
                                     </li>';
                             }
-                            if (data.data.grouped_records.promotions_counts > 3) {
-                                promotions += '<a href="'+ data.data.grouped_records.promotions_url +'" class="text-right" style="display:block;color:#fff;">{{ Lang::get('mobileci.search.show_more') }}</a>';
+                            if (data.data.grouped_records.promotions.length > 3) {
+                                promotions += '<a data-href="'+ data.data.grouped_records.promotions_redirect_url +'" href="'+ data.data.grouped_records.promotions_url +'" class="text-right" style="display:block;color:#fff;">{{ Lang::get('mobileci.search.show_more') }}</a>';
                             }
                             promotions += '</ul>';
                         }
@@ -691,7 +713,7 @@
                             for(var i = 0; i < data.data.grouped_records.news.length; i++) {
                                 var hide = i > 2 ? 'limited hide' : '';
                                 news += '<li class="search-result-group '+ hide +'">\
-                                        <a href="'+ data.data.grouped_records.news[i].object_url +'">\
+                                        <a data-href="'+ data.data.grouped_records.news[i].object_redirect_url +'" href="'+ data.data.grouped_records.news[i].object_url +'">\
                                             <div class="col-xs-2 text-center">\
                                                 <img src="'+ data.data.grouped_records.news[i].object_image +'">\
                                             </div>\
@@ -702,8 +724,8 @@
                                         </a>\
                                     </li>';
                             }
-                            if (data.data.grouped_records.news_counts > 3) {
-                                news += '<a href="'+ data.data.grouped_records.news_url +'" class="text-right" style="display:block;color:#fff;">{{ Lang::get('mobileci.search.show_more') }}</a>';
+                            if (data.data.grouped_records.news.length > 3) {
+                                news += '<a data-href="'+ data.data.grouped_records.news_redirect_url +'" href="'+ data.data.grouped_records.news_url +'" class="text-right" style="display:block;color:#fff;">{{ Lang::get('mobileci.search.show_more') }}</a>';
                             }
                             news += '</ul>';
                         }
@@ -713,7 +735,7 @@
                             for(var i = 0; i < data.data.grouped_records.coupons.length; i++) {
                                 var hide = i > 2 ? 'limited hide' : '';
                                 coupons += '<li class="search-result-group '+ hide +'">\
-                                        <a href="'+ data.data.grouped_records.coupons[i].object_url +'">\
+                                        <a data-href="'+ data.data.grouped_records.coupons[i].object_redirect_url +'" href="'+ data.data.grouped_records.coupons[i].object_url +'">\
                                             <div class="col-xs-2 text-center">\
                                                 <img src="'+ data.data.grouped_records.coupons[i].object_image +'">\
                                             </div>\
@@ -724,8 +746,8 @@
                                         </a>\
                                     </li>';
                             }
-                            if (data.data.grouped_records.coupons_counts > 3) {
-                                coupons += '<a href="'+ data.data.grouped_records.coupons_url +'" class="text-right" style="display:block;color:#fff;">{{ Lang::get('mobileci.search.show_more') }}</a>';
+                            if (data.data.grouped_records.coupons.length > 3) {
+                                coupons += '<a data-href="'+ data.data.grouped_records.coupons_redirect_url +'" href="'+ data.data.grouped_records.coupons_url +'" class="text-right" style="display:block;color:#fff;">{{ Lang::get('mobileci.search.show_more') }}</a>';
                             }
                             coupons += '</ul>';
                         }
@@ -735,7 +757,7 @@
                             for(var i = 0; i < data.data.grouped_records.lucky_draws.length; i++) {
                                 var hide = i > 2 ? 'limited hide' : '';
                                 lucky_draws += '<li class="search-result-group '+ hide +'">\
-                                        <a href="'+ data.data.grouped_records.lucky_draws[i].object_url +'">\
+                                        <a data-href="'+ data.data.grouped_records.lucky_draws[i].object_redirect_url +'" href="'+ data.data.grouped_records.lucky_draws[i].object_url +'">\
                                             <div class="col-xs-2 text-center">\
                                                 <img src="'+ data.data.grouped_records.lucky_draws[i].object_image +'">\
                                             </div>\
@@ -746,8 +768,8 @@
                                         </a>\
                                     </li>';
                             }
-                            if (data.data.grouped_records.lucky_draws_counts > 3) {
-                                lucky_draws += '<a href="'+ data.data.grouped_records.lucky_draws_url +'" class="text-right" style="display:block;color:#fff;">{{ Lang::get('mobileci.search.show_more') }}</a>';
+                            if (data.data.grouped_records.lucky_draws.length > 3) {
+                                lucky_draws += '<a data-href="'+ data.data.grouped_records.lucky_draws_redirect_url +'" href="'+ data.data.grouped_records.lucky_draws_url +'" class="text-right" style="display:block;color:#fff;">{{ Lang::get('mobileci.search.show_more') }}</a>';
                             }
                             lucky_draws += '</ul>';
                         }
@@ -952,6 +974,11 @@
 
         $('body').on('click', 'a[href=#]', function(e) {
             e.preventDefault();
+            var default_url = 'ci-customer-home';
+            if ($(this).data('href')) {
+                default_url = $(this).data('href');
+            }
+            $('.to_url').val(default_url);
             $('.sign-in-back-drop').fadeIn('fast');
             $('.sign-in-popup').toggle('slide', {direction: 'down'}, 'fast');
         });
@@ -1079,11 +1106,11 @@
             }
             orbitSignUpForm.isProcessing = true;
             orbitSignUpForm.disableEnableAllButton();
-
             // Check if this email already registered or not
             // We suppose to not let user login when they are not registered yet
             // which is different from the old Orbit behavior
             var userIdentified = function() {
+                $('#btn-signin-form').attr('disabled', 'disabled');
                 $.ajax({
                     method: 'post',
                     url: apiPath + 'customer/login',
@@ -1096,14 +1123,15 @@
                         auto_login: "{{{ Input::get('auto_login', 'no') }}}",
                         from_captive: "{{{ Input::get('from_captive', 'no') }}}",
                         socmed_redirect_to: "{{{ Input::get('socmed_redirect_to', '') }}}",
-                        from_url: $('#from_url').val()
+                        from_url: $('#from_url').val(),
+                        to_url: $('.to_url').val()
                     }
                 }).done(function (response, status, xhr) {
                     if (response.code !== 0 && response.code !== 302) {
                         orbitSignUpForm.showErrorMessageBox(response.message);
                         orbitSignUpForm.isProcessing = false;
                         orbitSignUpForm.disableEnableAllButton();
-                        
+
                         return;
                     }
                     var shiftHostName = window.location.hostname.split('.');
@@ -1148,6 +1176,8 @@
                     // Something bad happens
                     // @todo isplay this the error
                     orbitSignUpForm.disableEnableAllButton();
+                }).always(function() {
+                    $('#btn-signin-form').removeAttr('disabled');
                 });
             };
 
@@ -1173,6 +1203,7 @@
          */
         orbitSignUpForm.doRegister = function()
         {
+            orbitSignUpForm.hideErrorMessageBox();
             var custEmail = $('#signupForm #email').val().trim();
             var custPassword = $('#signupForm #password').val();
             var custPasswordConfirmation = $('#signupForm #password_confirmation').val();
@@ -1193,7 +1224,7 @@
                     'month': $('#signupForm [name=month]').val(),
                     'year': $('#signupForm [name=year]').val()
                 };
-
+                $('#btn-signup-form').attr('disabled', 'disabled');
                 $.ajax({
                     method: 'post',
                     url: apiPath + 'customer/login',
@@ -1209,17 +1240,18 @@
                         gender: $('#gender').val(),
                         birthdate: birthdate.day + '-' + birthdate.month + '-' + birthdate.year,
                         socmed_redirect_to: "{{{ Input::get('socmed_redirect_to', '') }}}",
-                        from_url: $('#from_url').val()
+                        from_url: $('#from_url').val(),
+                        to_url: $('.to_url').val()
                     }
                 }).done(function (resp, status, xhr) {
                     if (resp.status === 'error') {
-                        toastr.error(resp.message);
+                        orbitSignUpForm.showErrorMessageBox(resp.message);
                         orbitSignUpForm.isProcessing = false;
                         orbitSignUpForm.disableEnableAllButton();
                         return;
                     }
 
-                    // Cloud redirection?
+                    // redirection?
                     if (resp.data.redirect_to) {
                         document.location = resp.data.redirect_to;
                         return;
@@ -1253,6 +1285,8 @@
                     // Something bad happens
                     // @todo isplay this the error
                     orbitSignUpForm.disableEnableAllButton();
+                }).always(function() {
+                    $('#btn-signup-form').removeAttr('disabled');
                 });
             }
 
@@ -1544,7 +1578,7 @@
                     $('#signinForm #email').css('border-color', 'red');
                 }
                 if (! $('#signinForm #password').val()) {
-                    $('#signinForm #password').css('border-color', 'red');   
+                    $('#signinForm #password').css('border-color', 'red');
                 }
                 if ((value || isValidEmailAddress(value)) && $('#signinForm #password').val()) {
                     orbitSignUpForm.doLogin();

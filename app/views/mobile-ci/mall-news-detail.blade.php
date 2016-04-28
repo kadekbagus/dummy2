@@ -32,22 +32,24 @@
 </div>
 <div class="row product-info padded">
     <div class="col-xs-12">
-        <p>{{ nl2br(htmlspecialchars($news->description)) }}</p>
+        <p>{{ nl2br(e($news->description)) }}</p>
     </div>
     <div class="col-xs-12">
         <h4><strong>{{{ Lang::get('mobileci.promotion.validity') }}}</strong></h4>
         <p>{{{ date('d M Y', strtotime($news->begin_date)) }}} - {{{ date('d M Y', strtotime($news->end_date)) }}}</p>
     </div>
-    @if(! empty($news->facebook_share_url))
-    <div class="col-xs-12">
-        <div class="fb-share-button" data-href="{{{$news->facebook_share_url}}}" data-layout="button_count"></div>
-    </div>
+    @if ($urlblock->isLoggedIn())
+        @if(! empty($news->facebook_share_url))
+        <div class="col-xs-12">
+            <div class="fb-share-button" data-href="{{{$news->facebook_share_url}}}" data-layout="button"></div>
+        </div>
+        @endif
     @endif
 </div>
 <div class="row vertically-spaced">
     @if(count($news->tenants) > 0)
     <div class="col-xs-12 text-center padded">
-        <a href="{{{ $urlblock->blockedRoute('ci-tenants', ['news_id' => $news->news_id]) }}}" class="btn btn-info btn-block">{{{ Lang::get('mobileci.tenant.see_tenants') }}}</a>
+        <a data-href="{{ route('ci-tenant-list', ['news_id' => $news->news_id]) }}" href="{{{ $urlblock->blockedRoute('ci-tenant-list', ['news_id' => $news->news_id]) }}}" class="btn btn-info btn-block">{{{ Lang::get('mobileci.tenant.see_tenants') }}}</a>
     </div>
     @else
     <div class="col-xs-12 text-center padded">

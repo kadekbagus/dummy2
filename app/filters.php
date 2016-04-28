@@ -101,19 +101,19 @@ Route::filter('fb-bot', function() {
     if (! $FBChecker->isFBCrawler()) {
         switch (Route::currentRouteName()) {
             case 'share-tenant':
-                $redirect_to = URL::route('ci-tenant', array('id' => Input::get('id')));
+                $redirect_to = URL::route('ci-tenant-detail', array('id' => Input::get('id')));
                 break;
             case 'share-promotion':
-                $redirect_to = URL::route('ci-mall-promotion', array('id' => Input::get('id')));
+                $redirect_to = URL::route('ci-promotion-detail', array('id' => Input::get('id')));
                 break;
             case 'share-news':
-                $redirect_to = URL::route('ci-mall-news-detail', array('id' => Input::get('id')));
+                $redirect_to = URL::route('ci-news-detail', array('id' => Input::get('id')));
                 break;
             case 'share-coupon':
-                $redirect_to = URL::route('ci-mall-coupon', array('id' => Input::get('id')));
+                $redirect_to = URL::route('ci-coupon-detail', array('id' => Input::get('id')));
                 break;
             case 'share-lucky-draw':
-                $redirect_to = URL::route('ci-luckydraw', array('id' => Input::get('id')));
+                $redirect_to = URL::route('ci-luckydraw-detail', array('id' => Input::get('id')));
                 break;
             case 'share-home':
                 $redirect_to = URL::route('ci-customer-home', array('id' => Input::get('id')));
@@ -128,6 +128,11 @@ Route::filter('fb-bot', function() {
         // return Redirect::route('mobile-ci.signin', $param);
         return Redirect::to($redirect_to);
     }
+});
+
+Route::filter('turn-off-query-string-session', function()
+{
+    Config::set('orbit.session.availability.query_string', false);
 });
 
 /*
@@ -218,13 +223,13 @@ Route::filter('orbit-settings', function()
             if ($value->setting_name == 'start_button_label') {
                 // Get start button translation
                 $startButtonTranslation = $value->hasMany('SettingTranslation', 'setting_id', 'setting_id')
-                                    ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
+                                    ->where('merchant_language_id', '=', $alternateLanguage->language_id)
                                     ->whereHas('language', function($has) {
                                     $has->where('merchant_languages.status', 'active');
                                 })->get();
 
                 if (! empty($startButtonTranslation)) {
-                    if(! empty($startButtonTranslation[0]->setting_value)) {
+                    if (isset($startButtonTranslation[0]) && property_exists($startButtonTranslation[0], 'setting_value')) {
                         Config::set('shop.start_button_label', $startButtonTranslation[0]->setting_value);
                     }
                 }

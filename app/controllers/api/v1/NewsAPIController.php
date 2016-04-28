@@ -11,6 +11,7 @@ use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Helper\EloquentRecordCounter as RecordCounter;
 use Carbon\Carbon as Carbon;
+use Queue;
 
 class NewsAPIController extends ControllerAPI
 {
@@ -49,6 +50,7 @@ class NewsAPIController extends ControllerAPI
      * @param string     `is_all_age`            (optional) - Is all retailer age group. Valid value: Y, N.
      * @param string     `gender_ids`            (optional) - for Male, Female. Unknown. Valid value: M, F, U.
      * @param string     `age_range_ids`         (optional) - Age Range IDs
+     * @param string     `translations`          (optional) - For Translations
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -114,6 +116,7 @@ class NewsAPIController extends ControllerAPI
             $keywords = OrbitInput::post('keywords');
             $keywords = (array) $keywords;
             $is_popup = OrbitInput::post('is_popup');
+            $translations = OrbitInput::post('translations');
 
             if (empty($campaignStatus)) {
                 $campaignStatus = 'not started';
@@ -214,16 +217,19 @@ class NewsAPIController extends ControllerAPI
             // Reformat sticky order
             $sticky_order = (string)$sticky_order === 'true' && (string)$sticky_order !== '0' ? 1 : 0;
 
-            // save News.
+            // Get data status like ongoing, stopped etc
             $idStatus = CampaignStatus::select('campaign_status_id','campaign_status_name')->where('campaign_status_name', $campaignStatus)->first();
+
+            // Get english language_id
+            $idLanguageEnglish = Language::select('language_id')
+                                ->where('name', '=', 'en')
+                                ->first();
 
             $newnews = new News();
             $newnews->mall_id = $mall_id;
-            $newnews->news_name = $news_name;
             $newnews->object_type = $object_type;
             $newnews->status = $status;
             $newnews->campaign_status_id = $idStatus->campaign_status_id;
-            $newnews->description = $description;
             $newnews->begin_date = $begin_date;
             $newnews->end_date = $end_date;
             $newnews->sticky_order = $sticky_order;
@@ -233,26 +239,33 @@ class NewsAPIController extends ControllerAPI
             $newnews->created_by = $this->api->user->user_id;
             $newnews->is_popup = $is_popup;
 
+            // Check for english content
+            $dataTranslations = @json_decode($translations);
+            if (json_last_error() != JSON_ERROR_NONE) {
+                OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'translations']));
+            }
+
+            // Get english news name and description
+            foreach ($dataTranslations as $key => $val) {
+
+                // Validation language id from translation
+                $language = Language::where('language_id', '=', $key)->first();
+                if (empty($language)) {
+                    OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.merchant_language'));
+                }
+
+                if ($key === $idLanguageEnglish->language_id) {
+                    $newnews->news_name = $val->news_name;
+                    $newnews->description = $val->description;
+                }
+            }
+
             Event::fire('orbit.news.postnewnews.before.save', array($this, $newnews));
 
             $newnews->save();
 
             // Return campaign status name
             $newnews->campaign_status = $idStatus->campaign_status_name;
-
-            // save default language translation
-            $news_translation_default = new NewsTranslation();
-            $news_translation_default->news_id = $newnews->news_id;
-            $news_translation_default->merchant_id = $newnews->mall_id;
-            $news_translation_default->merchant_language_id = $id_language_default;
-            $news_translation_default->news_name = $newnews->news_name;
-            $news_translation_default->description = $newnews->description;
-            $news_translation_default->status = 'active';
-            $news_translation_default->created_by = $this->api->user->user_id;
-            $news_translation_default->modified_by = $this->api->user->user_id;
-            $news_translation_default->save();
-
-            Event::fire('orbit.news.after.translation.save', array($this, $news_translation_default));
 
             // save NewsMerchant.
             $newsretailers = array();
@@ -319,33 +332,34 @@ class NewsAPIController extends ControllerAPI
             foreach ($keywords as $keyword) {
                 $keyword_id = null;
 
-                $existKeyword = Keyword::excludeDeleted()
-                    ->where('keyword', '=', $keyword)
-                    ->where('merchant_id', '=', $newnews->mall_id)
-                    ->first();
+                foreach ($mallid as $mall) {
+                    $existKeyword = Keyword::excludeDeleted()
+                        ->where('keyword', '=', $keyword)
+                        ->where('merchant_id', '=', $mall)
+                        ->first();
 
-                if (empty($existKeyword)) {
-                    $newKeyword = new Keyword();
-                    $newKeyword->merchant_id = $newnews->mall_id;
-                    $newKeyword->keyword = $keyword;
-                    $newKeyword->status = 'active';
-                    $newKeyword->created_by = $this->api->user->user_id;
-                    $newKeyword->modified_by = $this->api->user->user_id;
-                    $newKeyword->save();
+                    if (empty($existKeyword)) {
+                        $newKeyword = new Keyword();
+                        $newKeyword->merchant_id = $mall;
+                        $newKeyword->keyword = $keyword;
+                        $newKeyword->status = 'active';
+                        $newKeyword->created_by = $this->api->user->user_id;
+                        $newKeyword->modified_by = $this->api->user->user_id;
+                        $newKeyword->save();
 
-                    $keyword_id = $newKeyword->keyword_id;
-                    $newsKeywords[] = $newKeyword;
-                } else {
-                    $keyword_id = $existKeyword->keyword_id;
-                    $newsKeywords[] = $existKeyword;
+                        $keyword_id = $newKeyword->keyword_id;
+                        $newsKeywords[] = $newKeyword;
+                    } else {
+                        $keyword_id = $existKeyword->keyword_id;
+                        $newsKeywords[] = $existKeyword;
+                    }
+
+                    $newKeywordObject = new KeywordObject();
+                    $newKeywordObject->keyword_id = $keyword_id;
+                    $newKeywordObject->object_id = $newnews->news_id;
+                    $newKeywordObject->object_type = $object_type;
+                    $newKeywordObject->save();
                 }
-
-                $newKeywordObject = new KeywordObject();
-                $newKeywordObject->keyword_id = $keyword_id;
-                $newKeywordObject->object_id = $newnews->news_id;
-                $newKeywordObject->object_type = $object_type;
-                $newKeywordObject->save();
-
             }
             $newnews->keywords = $newsKeywords;
 
@@ -416,81 +430,52 @@ class NewsAPIController extends ControllerAPI
                 }
             }
 
-            //calculate spending
-            foreach ($mallid as $mall) {
-
-                $campaign_id = $newnews->news_id;
-                $campaign_type = $object_type;
-                $procResults = DB::statement("CALL prc_campaign_detailed_cost({$this->quote($campaign_id)}, {$this->quote($campaign_type)}, NULL, NULL, {$this->quote($mall)})");
-
-                if ($procResults === false) {
-                    // Do Nothing
-                }
-
-                $getspending = DB::table(DB::raw('tmp_campaign_cost_detail'))->first();
-
-                $mallTimezone = $this->getTimezone($mall);
-                $nowMall = Carbon::now($mallTimezone);
-                $dateNowMall = $nowMall->toDateString();
-
-                // if campaign begin date is same with date now
-                if ($dateNowMall === date('Y-m-d', strtotime($begin_date))) {
-                    $dailySpending = new CampaignDailySpending();
-                    $dailySpending->date = $getspending->date_in_utc;
-                    $dailySpending->campaign_type = $campaign_type;
-                    $dailySpending->campaign_id = $campaign_id;
-                    $dailySpending->mall_id = $mall;
-                    $dailySpending->number_active_tenants = $getspending->campaign_number_tenant;
-                    $dailySpending->base_price = $getspending->base_price;
-                    $dailySpending->campaign_status = $getspending->campaign_status;
-                    $dailySpending->total_spending = 0;
-                    $dailySpending->save();
-                }
-            }
-
-            // Save campaign spending with default spending 0
-            // remove after migration new table, campaign daily spending
-            $campaignSpending = new CampaignSpendingCount();
-            $campaignSpending->campaign_id = $newnews->news_id;
-            $campaignSpending->campaign_type = $object_type;
-            $campaignSpending->spending = 0;
-            $campaignSpending->mall_id = $mall_id;
-            $campaignSpending->begin_date = $begin_date;
-            $campaignSpending->end_date = $end_date;
-            $campaignSpending->save();
-
             // translation for mallnews
             OrbitInput::post('translations', function($translation_json_string) use ($newnews, $mallid) {
                 $this->validateAndSaveTranslations($newnews, $translation_json_string, 'create');
             });
 
+            // Validation for mall language
             foreach ($mallid as $mall) {
-                // get default mall language id
-                $default = Mall::select('mobile_default_language', 'name')
-                                ->where('merchant_id', '=', $mall)
-                                ->first();
+                // english and default language in mall is required
+                $prefix = DB::getTablePrefix();
+                $isAvailable = NewsTranslation::where('news_id', '=', $newnews->news_id)
+                                            ->whereRaw("{$prefix}news_translations.merchant_language_id IN (select language_id
+                                                                                                                    from {$prefix}languages
+                                                                                                                    where name = (select mobile_default_language
+                                                                                                                                    from {$prefix}merchants
+                                                                                                                                    where {$prefix}merchants.object_type = 'mall'
+                                                                                                                                    and merchant_id = {$this->quote($mall)})
+                                                                                                                    or name = 'en')")
+                                            ->where(function($query) {
+                                                $query->where('news_name', '=', '')
+                                                      ->orWhere('description', '=', '')
+                                                      ->orWhereNull('news_name')
+                                                      ->orWhereNull('description');
+                                              })
+                                            ->get();
 
-                $idLanguage = Language::select('language_id', 'name_long')
-                                    ->where('name', '=', $default->mobile_default_language)
-                                    ->first();
-
-                $isAvailable = NewsTranslation::where('merchant_language_id', '=', $idLanguage->language_id)
-                                                ->where('news_id', '=', $newnews->news_id)
-                                                ->where('news_name', '!=', '')
-                                                ->where('description', '!=', '')
-                                                ->count();
-
-                if ($isAvailable == 0) {
-                    $errorMessage = Lang::get('validation.orbit.empty.default_language');
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                foreach ($isAvailable as $val) {
+                    if ($val->merchant_language_id === $idLanguageEnglish->language_id) {
+                        $errorMessage = Lang::get('validation.orbit.empty.english_language');
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    } else {
+                        $errorMessage = Lang::get('validation.orbit.empty.default_language');
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
                 }
             }
 
             $this->response->data = $newnews;
-            $this->response->data->translation_default = $news_translation_default;
 
             // Commit the changes
             $this->commit();
+
+            // queue for campaign spending news & promotion
+            Queue::push('Orbit\\Queue\\SpendingCalculation', [
+                'campaign_id' => $newnews->news_id,
+                'campaign_type' => $object_type,
+            ]);
 
             // Successfull Creation
             $activityNotes = sprintf('News Created: %s', $newnews->news_name);
@@ -668,6 +653,7 @@ class NewsAPIController extends ControllerAPI
             $id_language_default = OrbitInput::post('id_language_default');
             $is_all_gender = OrbitInput::post('is_all_gender');
             $is_all_age = OrbitInput::post('is_all_age');
+            $translations = OrbitInput::post('translations');
             $retailer_ids = OrbitInput::post('retailer_ids');
             $retailer_ids = (array) $retailer_ids;
 
@@ -750,18 +736,36 @@ class NewsAPIController extends ControllerAPI
                 $merchantdb[] = $merchantdbid['merchant_id'];
             }
 
-            $updatednews_default_language = NewsTranslation::excludeDeleted()->where('news_id', $news_id)->where('merchant_language_id', $id_language_default)->first();
+            // Get english language_id
+            $idLanguageEnglish = Language::select('language_id')
+                                ->where('name', '=', 'en')
+                                ->first();
+
+            // Check for english content
+            $jsonTranslations = @json_decode($translations);
+            if (json_last_error() != JSON_ERROR_NONE) {
+                OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'translations']));
+            }
+
+            // Get english news name and description
+            foreach ($jsonTranslations as $key => $val) {
+
+                // Validation language id from translation
+                $language = Language::where('language_id', '=', $key)->first();
+                if (empty($language)) {
+                    OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.merchant_language'));
+                }
+
+                if ($key === $idLanguageEnglish->language_id) {
+                    $updatednews->news_name = $val->news_name;
+                    $updatednews->description = $val->description;
+                }
+            }
+
+
             // save News
             OrbitInput::post('mall_id', function($mall_id) use ($updatednews) {
                 $updatednews->mall_id = $mall_id;
-            });
-
-            OrbitInput::post('news_name', function($news_name) use ($updatednews) {
-                $updatednews->news_name = $news_name;
-            });
-
-            OrbitInput::post('description', function($description) use ($updatednews) {
-                $updatednews->description = $description;
             });
 
             OrbitInput::post('object_type', function($object_type) use ($updatednews) {
@@ -811,56 +815,39 @@ class NewsAPIController extends ControllerAPI
                 $this->validateAndSaveTranslations($updatednews, $translation_json_string, 'update');
             });
 
+            // Validation for mall language
             foreach ($mallid as $mall) {
-                // get default mall language id
-                $default = Mall::select('mobile_default_language', 'name')
-                                ->where('merchant_id', '=', $mall)
-                                ->first();
+                // english and default language in mall is required
+                $prefix = DB::getTablePrefix();
+                $isAvailable = NewsTranslation::where('news_id', '=', $news_id)
+                                            ->whereRaw("{$prefix}news_translations.merchant_language_id IN (select language_id
+                                                                                                                    from {$prefix}languages
+                                                                                                                    where name = (select mobile_default_language
+                                                                                                                                    from {$prefix}merchants
+                                                                                                                                    where {$prefix}merchants.object_type = 'mall'
+                                                                                                                                    and merchant_id = {$this->quote($mall)})
+                                                                                                                    or name = 'en')")
+                                            ->where(function($query) {
+                                                $query->where('news_name', '=', '')
+                                                      ->orWhere('description', '=', '')
+                                                      ->orWhereNull('news_name')
+                                                      ->orWhereNull('description');
+                                              })
+                                            ->get();
 
-                $idLanguage = Language::select('language_id', 'name_long')
-                                    ->where('name', '=', $default->mobile_default_language)
-                                    ->first();
-
-                $isAvailable = NewsTranslation::where('merchant_language_id', '=', $idLanguage->language_id)
-                                                ->where('news_id', '=', $news_id)
-                                                ->where('news_name', '!=', '')
-                                                ->where('description', '!=', '')
-                                                ->count();
-
-                if ($isAvailable == 0) {
-                    $errorMessage = Lang::get('validation.orbit.empty.default_language');
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                foreach ($isAvailable as $val) {
+                    if ($val->merchant_language_id === $idLanguageEnglish->language_id) {
+                        $errorMessage = Lang::get('validation.orbit.empty.english_language');
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    } else {
+                        $errorMessage = Lang::get('validation.orbit.empty.default_language');
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
                 }
             }
 
             $updatednews->modified_by = $this->api->user->user_id;
             $updatednews->touch();
-
-            //  save news default language
-            OrbitInput::post('news_name', function($news_name) use ($updatednews_default_language) {
-                $updatednews_default_language->news_name = $news_name;
-            });
-
-            OrbitInput::post('description', function($description) use ($updatednews_default_language) {
-                $updatednews_default_language->description = $description;
-            });
-
-            OrbitInput::post('campaign_status', function($campaignStatus) use ($updatednews_default_language, $status) {
-                $updatednews_default_language->status = $status;
-            });
-
-            $updatednews_default_language->modified_by = $this->api->user->user_id;
-
-            Event::fire('orbit.news.postupdatenews.before.save', array($this, $updatednews));
-
-            $updatednews->save();
-            $updatednews_default_language->save();
-
-            Event::fire('orbit.news.after.translation.save', array($this, $updatednews_default_language));
-
-            // return respones if any upload image or no
-            $updatednews_default_language->load('media');
-
 
             // save NewsMerchant
             OrbitInput::post('no_retailer', function($no_retailer) use ($updatednews) {
@@ -1014,39 +1001,42 @@ class NewsAPIController extends ControllerAPI
                                                     ->where('object_type', '=', $object_type);
             $deleted_keyword_object->delete();
 
-            OrbitInput::post('keywords', function($keywords) use ($updatednews, $mall_id, $user, $news_id, $object_type) {
+            OrbitInput::post('keywords', function($keywords) use ($updatednews, $mall_id, $user, $news_id, $object_type, $mallid) {
                 // Insert new data
                 $newsKeywords = array();
                 foreach ($keywords as $keyword) {
                     $keyword_id = null;
 
-                    $existKeyword = Keyword::excludeDeleted()
-                        ->where('keyword', '=', $keyword)
-                        ->where('merchant_id', '=', $mall_id)
-                        ->first();
+                    foreach ($mallid as $mall) {
 
-                    if (empty($existKeyword)) {
-                        $newKeyword = new Keyword();
-                        $newKeyword->merchant_id = $mall_id;
-                        $newKeyword->keyword = $keyword;
-                        $newKeyword->status = 'active';
-                        $newKeyword->created_by = $user->user_id;
-                        $newKeyword->modified_by = $user->user_id;
-                        $newKeyword->save();
+                        $existKeyword = Keyword::excludeDeleted()
+                            ->where('keyword', '=', $keyword)
+                            ->where('merchant_id', '=', $mall)
+                            ->first();
 
-                        $keyword_id = $newKeyword->keyword_id;
-                        $newsKeywords[] = $newKeyword;
-                    } else {
-                        $keyword_id = $existKeyword->keyword_id;
-                        $newsKeywords[] = $existKeyword;
+                        if (empty($existKeyword)) {
+                            $newKeyword = new Keyword();
+                            $newKeyword->merchant_id = $mall;
+                            $newKeyword->keyword = $keyword;
+                            $newKeyword->status = 'active';
+                            $newKeyword->created_by = $user->user_id;
+                            $newKeyword->modified_by = $user->user_id;
+                            $newKeyword->save();
+
+                            $keyword_id = $newKeyword->keyword_id;
+                            $newsKeywords[] = $newKeyword;
+                        } else {
+                            $keyword_id = $existKeyword->keyword_id;
+                            $newsKeywords[] = $existKeyword;
+                        }
+
+
+                        $newKeywordObject = new KeywordObject();
+                        $newKeywordObject->keyword_id = $keyword_id;
+                        $newKeywordObject->object_id = $news_id;
+                        $newKeywordObject->object_type = $object_type;
+                        $newKeywordObject->save();
                     }
-
-
-                    $newKeywordObject = new KeywordObject();
-                    $newKeywordObject->keyword_id = $keyword_id;
-                    $newKeywordObject->object_id = $news_id;
-                    $newKeywordObject->object_type = $object_type;
-                    $newKeywordObject->save();
 
                 }
                 $updatednews->keywords = $newsKeywords;
@@ -1159,53 +1149,18 @@ class NewsAPIController extends ControllerAPI
                 }
             }
 
-            //calculate spending
-            foreach ($mallid as $mall) {
-
-                $campaign_id = $news_id;
-                $campaign_type = $object_type;
-                $procResults = DB::statement("CALL prc_campaign_detailed_cost({$this->quote($campaign_id)}, {$this->quote($campaign_type)}, NULL, NULL, {$this->quote($mall)})");
-
-                if ($procResults === false) {
-                    // Do Nothing
-                }
-
-                $getspending = DB::table(DB::raw('tmp_campaign_cost_detail'))->first();
-
-                $mallTimezone = $this->getTimezone($mall);
-                $nowMall = Carbon::now($mallTimezone);
-                $dateNowMall = $nowMall->toDateString();
-                $beginMall = date('Y-m-d', strtotime($begin_date));
-                $endMall = date('Y-m-d', strtotime($end_date));
-
-                // only calculate spending when update date between start and date of campaign
-                if ($dateNowMall >= $beginMall && $dateNowMall <= $endMall) {
-                    $daily = CampaignDailySpending::where('date', '=', $getspending->date_in_utc)->where('campaign_id', '=', $campaign_id)->where('mall_id', '=', $mall)->first();
-
-                    if ($daily['campaign_daily_spending_id']) {
-                        $dailySpending = CampaignDailySpending::find($daily['campaign_daily_spending_id']);
-                    } else {
-                        $dailySpending = new CampaignDailySpending;
-                    }
-
-                    $dailySpending->date = $getspending->date_in_utc;
-                    $dailySpending->campaign_type = $campaign_type;
-                    $dailySpending->campaign_id = $campaign_id;
-                    $dailySpending->mall_id = $mall;
-                    $dailySpending->number_active_tenants = $getspending->campaign_number_tenant;
-                    $dailySpending->base_price = $getspending->base_price;
-                    $dailySpending->campaign_status = $getspending->campaign_status;
-                    $dailySpending->total_spending = $getspending->daily_cost;
-                    $dailySpending->save();
-                }
-            }
-
             Event::fire('orbit.news.postupdatenews.after.save', array($this, $updatednews));
             $this->response->data = $updatednews;
-            $this->response->data->translation_default = $updatednews_default_language;
+            // $this->response->data->translation_default = $updatednews_default_language;
 
             // Commit the changes
             $this->commit();
+
+            // queue for campaign spending news & promotion
+            Queue::push('Orbit\\Queue\\SpendingCalculation', [
+                'campaign_id' => $news_id,
+                'campaign_type' => $object_type,
+            ]);
 
             // Successfull Update
             $activityNotes = sprintf('News updated: %s', $updatednews->news_name);
@@ -1654,7 +1609,7 @@ class NewsAPIController extends ControllerAPI
                                     LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
                                     WHERE om.merchant_id = {$prefix}news.mall_id)
                                 THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END  AS campaign_status"),
-                            DB::raw("CASE WHEN {$prefix}campaign_price.base_price is null THEN 0 ELSE {$prefix}campaign_price.base_price END AS base_price, ((CASE WHEN {$prefix}campaign_price.base_price is null THEN 0 ELSE {$prefix}campaign_price.base_price END) * (DATEDIFF({$prefix}news.end_date, {$prefix}news.begin_date) + 1) * (COUNT({$prefix}news_merchant.news_merchant_id))) AS estimated"))
+                            DB::raw("CASE WHEN {$prefix}campaign_price.base_price is null THEN 0 ELSE {$prefix}campaign_price.base_price END AS base_price, ((CASE WHEN {$prefix}campaign_price.base_price is null THEN 0 ELSE {$prefix}campaign_price.base_price END) * (DATEDIFF({$prefix}news.end_date, {$prefix}news.begin_date) + 1) * (SELECT COUNT(nm.news_merchant_id) FROM {$prefix}news_merchant as nm WHERE nm.object_type != 'mall' and nm.news_id = {$prefix}news.news_id)) AS estimated"))
                         ->leftJoin('campaign_price', function ($join) use ($object_type) {
                                 $join->on('news.news_id', '=', 'campaign_price.campaign_id')
                                      ->where('campaign_price.campaign_type', '=', $object_type);

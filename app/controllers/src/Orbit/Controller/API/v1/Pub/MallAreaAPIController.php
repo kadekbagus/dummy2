@@ -16,60 +16,27 @@ use Mall;
 use stdClass;
 use Orbit\Helper\Util\PaginationNumber;
 
-class MallNearbyAPIController extends ControllerAPI
+class MallAreaAPIController extends ControllerAPI
 {
     /**
-     * GET - Search mall by location
+     * GET - check if mall inside map area
      *
      * @author Shelgi Prasetyo <shelgi@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
-     * @param string latitude
-     * @param string longitude
-     * @param string distance
+     * @param string area
      *
      * @return Illuminate\Support\Facades\Response
      */
-    public function getSearchMallNearby()
+    public function getMallArea()
     {
         $httpCode = 200;
         try {
-            $lat = OrbitInput::get('latitude', null);
-            $long = OrbitInput::get('longitude', null);
-            $distance = OrbitInput::get('distance');
 
-            if (empty($distance)) {
-                $distance = Config::get('orbit.geo_location.distance', 10);
-            }
+            $area = OrbitInput::get('area', null);
 
-            $malls = Mall::excludeDeleted()->select('merchants.*')
-                         ->includeLatLong()
-                         ->includeDummyOpeningHours()   // @Todo: Remove this in the future
-                         ->join('merchant_geofences', 'merchant_geofences.merchant_id', '=', 'merchants.merchant_id');
-                         
-            $callNearBy = TRUE;
-
-            // Filter
-            OrbitInput::get('keyword_search', function ($keyword) use ($malls, $callNearBy) {
-                $mainKeyword = explode(" ", $keyword);
-
-                $malls->where(function($q) use ($mainKeyword) {
-                    foreach ($mainKeyword as $key => $value) {
-                        $q->orWhere(function($r) use ($value) {
-                            $r->where('merchants.name', 'like', "%$value%")
-                                ->orWhere('merchants.city', 'like', "%$value%");
-                        });
-                    }
-                });
-
-                // Keyword does not need the distance we make it false
-                $callNearBy = FALSE;
-            });
-
-            if ($callNearBy) {
-                $malls->nearBy($lat, $long, $distance);
-            }
+            $malls = Mall::excludeDeleted()->select('merchants.*')->includeLatLong()->InsideMapArea($area);
 
             // Filter by mall_id
             OrbitInput::get('mall_id', function ($mallid) use ($malls) {
@@ -89,13 +56,6 @@ class MallNearbyAPIController extends ControllerAPI
             // Default sort mode
             $sortMode = 'asc';
 
-            if ((int) $distance !== -1) {
-                // Default sort by
-                $sortBy = 'distance';
-                // Default sort mode
-                $sortMode = 'asc';
-            }
-
             OrbitInput::get('sortby', function($_sortBy) use (&$sortBy)
             {
                 // Map the sortby request to the real column name
@@ -103,8 +63,7 @@ class MallNearbyAPIController extends ControllerAPI
                     'mall_name'         => 'merchants.name',
                     'city'              => 'merchants.city',
                     'created_at'        => 'merchants.created_at',
-                    'updated_at'        => 'merchants.updated_at',
-                    'distance'          => 'distance'
+                    'updated_at'        => 'merchants.updated_at'
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];
@@ -116,6 +75,7 @@ class MallNearbyAPIController extends ControllerAPI
                     $sortMode = 'desc';
                 }
             });
+            
             $malls->orderBy($sortBy, $sortMode);
 
             $listmalls = $malls->get();

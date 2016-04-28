@@ -80,6 +80,50 @@ class SocMedMobileCIAPIController extends BaseCIController
             $data->image_url = NULL;
         }
 
+        // OrbitInput::get('lang', function($lang) use(&$data, $tenant) {    
+        //     $merchant_translation = \MerchantTranslation::where('merchant_id', $tenant->merchant_id)
+        //         ->where('merchant_language_id', $lang)
+        //         ->first();
+
+        //     if (is_object($merchant_translation)) {
+        //         if (! empty($merchant_translation->description)) {
+        //             $data->description = $merchant_translation->description;
+        //         }
+        //     }
+        // });
+
+        // if (empty($data->description)) {
+        //     $defaultLanguage = $this->getDefaultLanguage($mall);
+        //     if ($defaultLanguage !== NULL) {
+        //         $contentDefaultLanguage = \MerchantTranslation::excludeDeleted()
+        //             ->where('merchant_id', $tenant->merchant_id)
+        //             ->where('merchant_language_id', $defaultLanguage->language_id)
+        //             ->first();
+
+        //         if (is_object($contentDefaultLanguage)) {
+        //             if (! empty($contentDefaultLanguage->description)) {
+        //                 $data->description = $contentDefaultLanguage->description;
+        //             }
+        //         }
+        //     }
+        // }
+
+        if (empty($data->description)) {
+            $englishLanguage = $this->getEnglishLanguage($mall);
+            if ($englishLanguage !== NULL) {
+                $contentDefaultLanguage = \MerchantTranslation::excludeDeleted()
+                    ->where('merchant_id', $tenant->merchant_id)
+                    ->where('merchant_language_id', $englishLanguage->language_id)
+                    ->first();
+
+                if (is_object($contentDefaultLanguage)) {
+                    if (! empty($contentDefaultLanguage->description)) {
+                        $data->description = $contentDefaultLanguage->description;
+                    }
+                }
+            }
+        }
+
         return View::make('mobile-ci.templates.fb-sharer', compact('data'));
     }
 
@@ -131,6 +175,7 @@ class SocMedMobileCIAPIController extends BaseCIController
     public function getPromotionDetailView()
     {       
         $id = OrbitInput::get('id');
+        $lang = OrbitInput::get('lang');
         $mall = $this->getRetailerInfo();
 
         $promotion = News::with('media')
@@ -146,31 +191,52 @@ class SocMedMobileCIAPIController extends BaseCIController
         $data->mall = $mall;
 
         $promotionTranslation = \NewsTranslation::excludeDeleted()
-            ->where('news_id', $promotion->news_id)
-            ->first();
-
+            ->where('news_id', $promotion->news_id);
+        // if ($lang !== null) {    
+        //     $promotionTranslation = $promotionTranslation->where('merchant_language_id', $lang);
+        // }
+        $promotionTranslation = $promotionTranslation->first();
         if (! empty($promotionTranslation)) {
             $media = $promotionTranslation->find($promotionTranslation->news_translation_id)
                 ->media_orig()
                 ->first();
 
-            if (isset($media->path)) {
-                $promotion->image = $media->path;
-            } else {
-                // back to default image if in the content multilanguage not have image
-                // check the system language
-                $defaultLanguage = $this->getDefaultLanguage($mall);
-                if ($defaultLanguage !== NULL) {
-                    $contentDefaultLanguage = \NewsTranslation::excludeDeleted()
-                        ->where('news_id', $promotion->news_id)->first();
+            if (! empty($promotionTranslation->title)) {
+                $data->title = $promotionTranslation->news_name;
+            }
+            if (! empty($promotionTranslation->description)) {
+                $data->description = $promotionTranslation->description;
+            }
 
-                    // get default image
-                    $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->news_translation_id)
-                        ->media_orig()
-                        ->first();
+            $defaultLanguage = $this->getEnglishLanguage($mall);
+            if ($defaultLanguage !== NULL) {
+                $contentDefaultLanguage = \NewsTranslation::excludeDeleted()
+                    ->where('news_id', $promotion->news_id)
+                    ->where('merchant_language_id', $defaultLanguage->language_id)
+                    ->first();
 
-                    if (isset($mediaDefaultLanguage->path)) {
-                        $promotion->image = $mediaDefaultLanguage->path;
+                if (is_object($contentDefaultLanguage)) {
+                    if (empty($data->title)) {
+                        $data->title = $contentDefaultLanguage->news_name;
+                    }
+                    if (empty($data->title)) {
+                        $data->description = $contentDefaultLanguage->description;
+                    }
+                    if (isset($media->path)) {
+                        $promotion->image = $media->path;
+                    } else {
+                        // back to default image if in the content multilanguage not have image
+                        // check the system language
+                        if ($defaultLanguage !== NULL) {
+                            // get default image
+                            $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->news_translation_id)
+                                ->media_orig()
+                                ->first();
+
+                            if (isset($mediaDefaultLanguage->path)) {
+                                $promotion->image = $mediaDefaultLanguage->path;
+                            }
+                        }
                     }
                 }
             }
@@ -199,6 +265,7 @@ class SocMedMobileCIAPIController extends BaseCIController
     public function getNewsDetailView()
     {       
         $id = OrbitInput::get('id');
+        $lang = OrbitInput::get('lang');
         $mall = $this->getRetailerInfo();
 
         $promotion = News::with('media')
@@ -214,31 +281,53 @@ class SocMedMobileCIAPIController extends BaseCIController
         $data->mall = $mall;
 
         $promotionTranslation = \NewsTranslation::excludeDeleted()
-            ->where('news_id', $promotion->news_id)
-            ->first();
+            ->where('news_id', $promotion->news_id);
+        // if ($lang !== null) {    
+        //     $promotionTranslation = $promotionTranslation->where('merchant_language_id', $lang);
+        // }
+        $promotionTranslation = $promotionTranslation->first();
 
         if (! empty($promotionTranslation)) {
             $media = $promotionTranslation->find($promotionTranslation->news_translation_id)
                 ->media_orig()
                 ->first();
 
-            if (isset($media->path)) {
-                $promotion->image = $media->path;
-            } else {
-                // back to default image if in the content multilanguage not have image
-                // check the system language
-                $defaultLanguage = $this->getDefaultLanguage($mall);
-                if ($defaultLanguage !== NULL) {
-                    $contentDefaultLanguage = \NewsTranslation::excludeDeleted()
-                        ->where('news_id', $promotion->news_id)->first();
+            if (! empty($promotionTranslation->title)) {
+                $data->title = $promotionTranslation->news_name;
+            }
+            if (! empty($promotionTranslation->description)) {
+                $data->description = $promotionTranslation->description;
+            }
 
-                    // get default image
-                    $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->news_translation_id)
-                        ->media_orig()
-                        ->first();
+            $defaultLanguage = $this->getEnglishLanguage($mall);
+            if ($defaultLanguage !== NULL) {
+                $contentDefaultLanguage = \NewsTranslation::excludeDeleted()
+                    ->where('news_id', $promotion->news_id)
+                    ->where('merchant_language_id', $defaultLanguage->language_id)
+                    ->first();
 
-                    if (isset($mediaDefaultLanguage->path)) {
-                        $promotion->image = $mediaDefaultLanguage->path;
+                if (is_object($contentDefaultLanguage)) {
+                    if (empty($data->title)) {
+                        $data->title = $contentDefaultLanguage->news_name;
+                    }
+                    if (empty($data->description)) {
+                        $data->description = $contentDefaultLanguage->description;
+                    }
+                    if (isset($media->path)) {
+                        $promotion->image = $media->path;
+                    } else {
+                        // back to default image if in the content multilanguage not have image
+                        // check the system language
+                        if ($defaultLanguage !== NULL) {
+                            // get default image
+                            $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->news_translation_id)
+                                ->media_orig()
+                                ->first();
+
+                            if (isset($mediaDefaultLanguage->path)) {
+                                $promotion->image = $mediaDefaultLanguage->path;
+                            }
+                        }
                     }
                 }
             }
@@ -267,6 +356,7 @@ class SocMedMobileCIAPIController extends BaseCIController
     public function getCouponDetailView()
     {       
         $id = OrbitInput::get('id');
+        $lang = OrbitInput::get('lang');
         $mall = $this->getRetailerInfo();
 
         $coupon = Coupon::with('media')
@@ -281,31 +371,53 @@ class SocMedMobileCIAPIController extends BaseCIController
         $data->mall = $mall;
 
         $couponTranslation = \CouponTranslation::excludeDeleted()
-            ->where('promotion_id', $coupon->promotion_id)
-            ->first();
+            ->where('promotion_id', $coupon->promotion_id);
+        // if ($lang !== null) {    
+        //     $couponTranslation = $couponTranslation->where('merchant_language_id', $lang);
+        // }
+        $couponTranslation = $couponTranslation->first();
 
         if (! empty($couponTranslation)) {
             $media = $couponTranslation->find($couponTranslation->coupon_translation_id)
                 ->media_orig()
                 ->first();
 
-            if (isset($media->path)) {
-                $coupon->image = $media->path;
-            } else {
-                // back to default image if in the content multilanguage not have image
-                // check the system language
-                $defaultLanguage = $this->getDefaultLanguage($mall);
-                if ($defaultLanguage !== NULL) {
-                    $contentDefaultLanguage = \CouponTranslation::excludeDeleted()
-                        ->where('promotion_id', $coupon->promotion_id)->first();
+            if (! empty($couponTranslation->title)) {
+                $data->title = $couponTranslation->promotion_name;
+            }
+            if (! empty($couponTranslation->description)) {
+                $data->description = $couponTranslation->description;
+            }
 
-                    // get default image
-                    $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->coupon_translation_id)
-                        ->media_orig()
-                        ->first();
+            $defaultLanguage = $this->getEnglishLanguage($mall);
+            if ($defaultLanguage !== NULL) {
+                $contentDefaultLanguage = \CouponTranslation::excludeDeleted()
+                    ->where('promotion_id', $coupon->promotion_id)
+                    ->where('merchant_language_id', $defaultLanguage->language_id)
+                    ->first();
 
-                    if (isset($mediaDefaultLanguage->path)) {
-                        $coupon->image = $mediaDefaultLanguage->path;
+                if (is_object($contentDefaultLanguage)) {
+                    if (empty($data->title)) {
+                        $data->title = $contentDefaultLanguage->promotion_name;
+                    }
+                    if (empty($data->description)) {
+                        $data->description = $contentDefaultLanguage->description;
+                    }
+                    if (isset($media->path)) {
+                        $coupon->image = $media->path;
+                    } else {
+                        // back to default image if in the content multilanguage not have image
+                        // check the system language
+                        if ($defaultLanguage !== NULL) {
+                            // get default image
+                            $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->coupon_translation_id)
+                                ->media_orig()
+                                ->first();
+
+                            if (isset($mediaDefaultLanguage->path)) {
+                                $coupon->image = $mediaDefaultLanguage->path;
+                            }
+                        }
                     }
                 }
             }
@@ -338,6 +450,7 @@ class SocMedMobileCIAPIController extends BaseCIController
     public function getLuckyDrawDetailView()
     {       
         $id = OrbitInput::get('id');
+        $lang = OrbitInput::get('lang');
         $mall = $this->getRetailerInfo();
 
         $luckydraw = LuckyDraw::with('media')
@@ -352,31 +465,53 @@ class SocMedMobileCIAPIController extends BaseCIController
         $data->mall = $mall;
 
         $luckyDrawTranslation = \LuckyDrawTranslation::excludeDeleted()
-            ->where('lucky_draw_id', $luckydraw->lucky_draw_id)
-            ->first();
+            ->where('lucky_draw_id', $luckydraw->lucky_draw_id);
+        // if ($lang !== null) {    
+        //     $luckyDrawTranslation = $luckyDrawTranslation->where('merchant_language_id', $lang);
+        // }
+        $luckyDrawTranslation = $luckyDrawTranslation->first();
 
         if (! empty($luckyDrawTranslation)) {
             $media = $luckyDrawTranslation->find($luckyDrawTranslation->lucky_draw_translation_id)
                 ->media_orig()
                 ->first();
 
-            if (isset($media->path)) {
-                $luckydraw->image = $media->path;
-            } else {
-                // back to default image if in the content multilanguage not have image
-                // check the system language
-                $defaultLanguage = $this->getDefaultLanguage($mall);
-                if ($defaultLanguage !== NULL) {
-                    $contentDefaultLanguage = \LuckyDrawTranslation::excludeDeleted()
-                        ->where('lucky_draw_id', $luckydraw->lucky_draw_id)->first();
+            if (! empty($luckyDrawTranslation->title)) {
+                $data->title = $luckyDrawTranslation->lucky_draw_name;
+            }
+            if (! empty($luckyDrawTranslation->description)) {
+                $data->description = $luckyDrawTranslation->description;
+            }
 
-                    // get default image
-                    $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->lucky_draw_translation_id)
-                        ->media_orig()
-                        ->first();
+            $defaultLanguage = $this->getEnglishLanguage($mall);
+            if ($defaultLanguage !== NULL) {
+                $contentDefaultLanguage = \LuckyDrawTranslation::excludeDeleted()
+                    ->where('lucky_draw_id', $luckydraw->lucky_draw_id)
+                    ->where('merchant_language_id', $defaultLanguage->language_id)
+                    ->first();
+                if (is_object($contentDefaultLanguage)) {
+                    if (empty($data->title)) {
+                        $data->title = $contentDefaultLanguage->lucky_draw_name;
+                    }
+                    if (empty($data->description)) {
+                        $data->description = $contentDefaultLanguage->description;
+                    }
 
-                    if (isset($mediaDefaultLanguage->path)) {
-                        $luckydraw->image = $mediaDefaultLanguage->path;
+                    if (isset($media->path)) {
+                        $luckydraw->image = $media->path;
+                    } else {
+                        // back to default image if in the content multilanguage not have image
+                        // check the system language
+                        if ($defaultLanguage !== NULL) {
+                            // get default image
+                            $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->lucky_draw_translation_id)
+                                ->media_orig()
+                                ->first();
+
+                            if (isset($mediaDefaultLanguage->path)) {
+                                $luckydraw->image = $mediaDefaultLanguage->path;
+                            }
+                        }
                     }
                 }
             }
@@ -407,5 +542,52 @@ class SocMedMobileCIAPIController extends BaseCIController
         } catch (Exception $e) {
             return NULL;
         }
+    }
+
+    /**
+     * Returns an appropriate MerchantLanguage (if any) that the user wants and the mall supports.
+     *
+     * @param \Mall $mall the mall
+     * @return \MerchantLanguage the language or null if a matching one is not found.
+     *
+     * @author Firmansyah <firmansyah@dominopos.com>
+     */
+    private function getDefaultLanguage($mall)
+    {
+        $language = \Language::where('name', '=', $mall->mobile_default_language)->first();
+        if (isset($language) && count($language) > 0) {
+            $defaultLanguage = \MerchantLanguage::excludeDeleted()
+                ->where('merchant_id', '=', $mall->merchant_id)
+                ->where('language_id', '=', $language->language_id)
+                ->first();
+
+            if ($defaultLanguage !== null) {
+                return $defaultLanguage;
+            }
+        }
+
+        // above methods did not result in any selected language, use mall default
+        return null;
+    }
+
+    /**
+     *
+     */
+    private function getEnglishLanguage($mall)
+    {
+        $language = \Language::where('name', '=', 'en')->first();
+        if (is_object($language)) {
+            $englishLanguage = \MerchantLanguage::excludeDeleted()
+                ->where('merchant_id', '=', $mall->merchant_id)
+                ->where('language_id', '=', $language->language_id)
+                ->first();
+
+            if ($englishLanguage !== null) {
+                return $englishLanguage;
+            }
+        }
+
+        // above methods did not result in any selected language, use mall default
+        return null;
     }
 }

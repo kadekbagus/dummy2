@@ -62,7 +62,7 @@
                         </div>
                     </div>
                     <div class="col-xs-2 search-tool-col text-right">
-                        <a href="{{{ $urlblock->blockedRoute('ci-tenants', ['keyword' => Input::get('keyword')]) }}}" class="btn btn-info btn-block reset-btn">
+                        <a data-href="{{{ route('ci-tenant-list', ['keyword' => Input::get('keyword')]) }}}" href="{{{ $urlblock->blockedRoute('ci-tenant-list', ['keyword' => Input::get('keyword')]) }}}" class="btn btn-info btn-block reset-btn">
                             <span class="fa-stack fa-lg">
                                 <i class="fa fa-filter fa-stack-2x"></i>
                                 <i class="fa fa-times fa-stack-1x"></i>
@@ -89,17 +89,18 @@
                                 </section>
                             </div>
                         @endif
+
                         @foreach($data->records as $tenant)
                             <div class="col-xs-12 col-sm-12" id="item-{{$tenant->merchant_id}}">
                                 <section class="list-item-single-tenant">
-                                    <a class="list-item-link" href="{{ $urlblock->blockedRoute('ci-tenant', ['id' => $tenant->merchant_id]) }}">
+                                    <a class="list-item-link" data-href="{{ route('ci-tenant-detail', ['id' => $tenant->merchant_id]) }}" href="{{ $urlblock->blockedRoute('ci-tenant-detail', ['id' => $tenant->merchant_id]) }}">
                                         <div class="list-item-info">
                                             <header class="list-item-title">
                                                 <div><strong>{{{ $tenant->name }}}</strong></div>
                                             </header>
                                             <header class="list-item-subtitle">
                                                 <div>
-                                                    <i class="fa fa-map-marker" style="padding-left: 5px;padding-right: 8px;"></i> 
+                                                    <i class="fa fa-map-marker" style="padding-left: 5px;padding-right: 8px;"></i>
                                                     {{{ !empty($tenant->floor) ? ' ' . $tenant->floor : '' }}}{{{ !empty($tenant->unit) ? ' - ' . $tenant->unit : '' }}}
                                                 </div>
                                                 <div>
@@ -112,8 +113,10 @@
                                                         @endif
                                                     </div>
                                                 </div>
-                                                @if(! empty($tenant->facebook_like_url))
-                                                <div class="fb-like" data-href="{{{$tenant->facebook_like_url}}}" data-layout="button_count" data-action="like" data-show-faces="false" data-share="false"></div>
+                                                @if ($urlblock->isLoggedIn())
+                                                    @if(! empty($tenant->facebook_like_url))
+                                                    <div class="fb-like" data-href="{{{$tenant->facebook_like_url}}}" data-layout="button_count" data-action="like" data-show-faces="false" data-share="false"></div>
+                                                    @endif
                                                 @endif
                                             </header>
                                             <header class="list-item-badges">
@@ -148,7 +151,7 @@
                     @if($data->returned_records < $data->total_records)
                         <div class="row">
                             <div class="col-xs-12 padded">
-                                <button class="btn btn-info btn-block" id="load-more-tenants">{{Lang::get('mobileci.notification.load_more_btn')}}</button>
+                                <button class="btn btn-info btn-block" id="load-more-tenants">{{Lang::get('mobileci.notification.view_more_btn')}}</button>
                             </div>
                         </div>
                     @endif
@@ -199,7 +202,7 @@
                         </div>
                     </div>
                     <div class="col-xs-2 search-tool-col text-right">
-                        <a href="{{{ $urlblock->blockedRoute('ci-tenants', ['keyword' => Input::get('keyword')]) }}}" class="btn btn-info btn-block reset-btn">
+                        <a data-href="{{{ route('ci-tenant-list', ['keyword' => Input::get('keyword')]) }}}" href="{{{ $urlblock->blockedRoute('ci-tenant-list', ['keyword' => Input::get('keyword')]) }}}" class="btn btn-info btn-block reset-btn">
                             <span class="fa-stack fa-lg">
                                 <i class="fa fa-filter fa-stack-2x"></i>
                                 <i class="fa fa-times fa-stack-1x"></i>
@@ -209,11 +212,22 @@
                 </div>
             </div>
             @endif
-            <div class="row padded">
-                <div class="col-xs-12">
-                    <h4>{{ Lang::get('mobileci.search.no_item') }}</h4>
+
+            @if($data->search_mode)
+                <div class="row padded">
+                    <div class="col-xs-12">
+                        <h4>{{ Lang::get('mobileci.search.no_item') }}</h4>
+                    </div>
                 </div>
-            </div>
+            @else
+                {{-- Showing info for there is no stores when search mode is false --}}
+                <div class="row padded">
+                    <div class="col-xs-12">
+                        <h4>{{ Lang::get('mobileci.greetings.no_stores_listing') }}</h4>
+                    </div>
+                </div>
+            @endif
+
         @endif
     @else
         <div class="row padded">
@@ -247,6 +261,49 @@
             return uri + separator + key + "=" + value;
         }
     }
+
+    function insertRecords(records) {
+        for(var i = 0; i < records.length; i++) {
+            var list = '<div class="col-xs-12 col-sm-12" id="item-'+records[i].merchant_id+'">\
+                    <section class="list-item-single-tenant">\
+                        <a class="list-item-link" data-href="'+records[i].redirect_url+'" href="'+records[i].url+'">\
+                            <div class="list-item-info">\
+                                <header class="list-item-title">\
+                                    <div><strong>'+records[i].name+'</strong></div>\
+                                </header>\
+                                <header class="list-item-subtitle">\
+                                    <div>\
+                                        <i class="fa fa-map-marker" style="padding-left: 5px;padding-right: 8px;"></i> \
+                                        '+ (records[i].floor ?  ' ' + records[i].floor : '') + (records[i].unit ? ' - ' + records[i].unit : '') +'\
+                                    </div>\
+                                    <div>\
+                                        <div class="col-xs-6">\
+                                            <i class="fa fa-list" style="padding-left: 2px;padding-right: 4px;"></i>\
+                                            <span>'+ (records[i].category_string ? records[i].category_string : '-') +'</span>\
+                                        </div>\
+                                    </div>';
+                if (records[i].facebook_like_url) {
+                    list += '<div class="fb-like" data-href="' + records[i].facebook_like_url + '" data-layout="button_count" data-action="like" data-show-faces="false" data-share="false"></div>';
+                }
+
+                list += '</header>\
+                                <header class="list-item-badges">\
+                                    <div class="col-xs-12 badges-wrapper text-right">\
+                                        '+ (records[i].promotion_flag ? '<span class="badges promo-badges text-center"><i class="fa fa-bullhorn"></i></span>' : '') +'\
+                                        '+ (records[i].news_flag ? '<span class="badges news-badges text-center"><i class="fa fa-newspaper-o"></i></span>' : '') +'\
+                                        '+ (records[i].coupon_flag ? '<span class="badges coupon-badges text-center"><i class="fa fa-ticket"></i></span>' : '') +'\
+                                    </div>\
+                                </header>\
+                            </div>\
+                            <div class="list-vignette-non-tenant"></div>\
+                            <img class="img-responsive img-fit-tenant" src="'+ records[i].logo_orig +'"/>\
+                        </a>\
+                    </section>\
+                </div>';
+            $('.catalogue-wrapper').append(list);
+        };
+    }
+
     $(document).ready(function(){
         $(document).on('show.bs.modal', '.modal', function (event) {
             var zIndex = 1040 + (10 * $('.modal:visible').length);
@@ -260,7 +317,7 @@
         @if(!empty(Input::get('promotion_id')))
             promo = '&promotion_id='+'{{{Input::get('promotion_id')}}}';
         @endif
-        var path = '{{$urlblock->blockedRoute('ci-tenants', ['keyword' => htmlspecialchars(Input::get('keyword')), 'sort_by' => 'name', 'sort_mode' => 'asc', 'cid' => htmlspecialchars(Input::get('cid')), 'fid' => htmlspecialchars(Input::get('fid'))])}}'+promo;
+        var path = '{{$urlblock->blockedRoute('ci-tenant-list', ['keyword' => e(Input::get('keyword')), 'sort_by' => 'name', 'sort_mode' => 'asc', 'cid' => e(Input::get('cid')), 'fid' => e(Input::get('fid'))])}}'+promo;
         $('#dLabel').dropdown();
         $('#dLabel2').dropdown();
 
@@ -281,7 +338,7 @@
             window.location.replace(path);
         });
 
-        var take = {{Config::get('orbit.pagination.per_page', 25)}}, 
+        var take = {{Config::get('orbit.pagination.per_page', 25)}},
             skip = {{Config::get('orbit.pagination.per_page', 25)}};
 
         var keyword = '{{{Input::get('keyword', '')}}}';
@@ -289,12 +346,27 @@
         var fid = '{{{Input::get('fid', '')}}}';
         var promotion_id = '{{{Input::get('promotion_id', '')}}}';
 
+        function recordScrollTop() {
+            var scrollTop = $(this).scrollTop();
+            if (window.history.state && window.history.state.scrollTop !== undefined)
+                window.history.state.scrollTop = scrollTop;
+        }
+
+        if (navigator.userAgent.match(/(iPod|iPhone|iPad|Android)/i)) {
+            // Events to track window scroll position on mobile device
+            $('body').on('touchmove', recordScrollTop);
+        }
+        else {
+            // Events to track window scroll position on desktop browser
+            $(window).on('scroll', recordScrollTop);
+        }
+
         $('#load-more-tenants').click(function(){
             var btn = $(this);
             btn.attr('disabled', 'disabled');
             btn.html('<i class="fa fa-circle-o-notch fa-spin"></i>');
             $.ajax({
-                url: apiPath + 'tenant/load-more',
+                url: '{{ url("app/v1/tenant/load-more") }}',
                 method: 'GET',
                 data: {
                     take: take,
@@ -306,56 +378,59 @@
                 }
             }).done(function(data) {
                 skip = skip + take;
-                if(data.records.length > 0) {
-                    for(var i = 0; i < data.records.length; i++) {
-                        var list = '<div class="col-xs-12 col-sm-12" id="item-'+data.records[i].merchant_id+'">\
-                                <section class="list-item-single-tenant">\
-                                    <a class="list-item-link" href="'+data.records[i].url+'">\
-                                        <div class="list-item-info">\
-                                            <header class="list-item-title">\
-                                                <div><strong>'+data.records[i].name+'</strong></div>\
-                                            </header>\
-                                            <header class="list-item-subtitle">\
-                                                <div>\
-                                                    <i class="fa fa-map-marker" style="padding-left: 5px;padding-right: 8px;"></i> \
-                                                    '+ (data.records[i].floor ?  ' ' + data.records[i].floor : '') + (data.records[i].unit ? ' - ' + data.records[i].unit : '') +'\
-                                                </div>\
-                                                <div>\
-                                                    <div class="col-xs-6">\
-                                                        <i class="fa fa-list" style="padding-left: 2px;padding-right: 4px;"></i>\
-                                                        <span>'+ (data.records[i].category_string ? data.records[i].category_string : '-') +'</span>\
-                                                    </div>\
-                                                </div>';
-                            if (data.records[i].facebook_like_url) {
-                                list += '<div class="fb-like" data-href="' + data.records[i].facebook_like_url + '" data-layout="button_count" data-action="like" data-show-faces="false" data-share="false"></div>';
-                            }
 
-                            list += '</header>\
-                                            <header class="list-item-badges">\
-                                                <div class="col-xs-12 badges-wrapper text-right">\
-                                                    '+ (data.records[i].promotion_flag ? '<span class="badges promo-badges text-center"><i class="fa fa-bullhorn"></i></span>' : '') +'\
-                                                    '+ (data.records[i].news_flag ? '<span class="badges news-badges text-center"><i class="fa fa-newspaper-o"></i></span>' : '') +'\
-                                                    '+ (data.records[i].coupon_flag ? '<span class="badges coupon-badges text-center"><i class="fa fa-ticket"></i></span>' : '') +'\
-                                                </div>\
-                                            </header>\
-                                        </div>\
-                                        <div class="list-vignette-non-tenant"></div>\
-                                        <img class="img-responsive img-fit-tenant" src="'+ data.records[i].logo_orig +'"/>\
-                                    </a>\
-                                </section>\
-                            </div>';
-                        $('.catalogue-wrapper').append(list);
-                    };
+                if(data.records.length > 0) {
+                    insertRecords(data.records);
+
+                    var tenantStateObjects = data;
+                    if (window.history.state && window.history.state.tenantStateObjects) {
+                        tenantStateObjects.records = window.history.state.tenantStateObjects.records.concat(tenantStateObjects.records);
+                    }
+
+                    window.history.pushState({tenantStateObjects: tenantStateObjects, scrollTop: $(window).scrollTop()}, "CatalogueState", "#");
+
                     FB.XFBML.parse();
                 }
+
                 if (skip >= data.total_records) {
                     btn.remove();
                 }
             }).always(function(data){
                 btn.removeAttr('disabled', 'disabled');
-                btn.html('{{Lang::get('mobileci.notification.load_more_btn')}}');
+                btn.html('{{Lang::get('mobileci.notification.view_more_btn')}}');
             });
         });
+
+
+        // Check if window history state exists.
+        if (window.history.state) {
+            // Check if there's tenantStateObjects in history state.
+            if (window.history.state.tenantStateObjects) {
+                var records = window.history.state.tenantStateObjects.records;
+                skip += records.length;
+                insertRecords(records);
+
+                if (skip >= window.history.state.tenantStateObjects.total_records) {
+                    $('#load-more-tenants').remove();
+                }
+            }
+
+            // Check if there's scrollTop in history state.
+            if (window.history.state.scrollTop) {
+                var scrollTop = window.history.state.scrollTop;
+
+                setTimeout(function() {
+                    if (navigator.userAgent.match(/(iPod|iPhone|iPad|Android)/i)) {
+                        // Mobile device
+                        $("body").scrollTop(scrollTop);
+                    }
+                    else {
+                        // Desktop browser
+                        $(window).scrollTop(scrollTop);
+                    }
+                }, 1000);
+            }
+        }
     });
 </script>
 @stop

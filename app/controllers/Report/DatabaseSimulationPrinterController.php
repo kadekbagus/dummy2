@@ -423,6 +423,7 @@ class DatabaseSimulationPrinterController extends DataPrinterController
                     $count++;
 
                 }
+                exit;
                 break;
 
             case 'print':

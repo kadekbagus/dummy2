@@ -100,7 +100,8 @@ class Inbox extends Eloquent
         }
 
         $name = $user->getFullName();
-        $name = ! empty(trim($name)) ? $name : $user->user_email;
+        $email = $user->user_email;
+        $name = ! empty(trim($name)) ? $name : $email;
 
         $inbox = new Inbox();
         $inbox->user_id = $userId;
@@ -151,7 +152,8 @@ class Inbox extends Eloquent
             'listItem'              => $listItem,
             'mallName'              => $retailer->name,
             'dateIssued'            => $dateIssued,
-            'user'                  => $user
+            'user'                  => $user,
+            'email'                 => $email
         ];
 
         $template = View::make('mobile-ci.mall-push-notification-content', $data);

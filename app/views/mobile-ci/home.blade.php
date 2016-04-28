@@ -65,14 +65,16 @@
 @stop
 
 @section('mall-fb-footer')
+    @if ($urlblock->isLoggedIn())
     <div class="text-center" style="padding-bottom: 20px;">
         @if(! empty($retailer->facebook_like_url))
         <div class="fb-like" data-href="{{{$retailer->facebook_like_url}}}" data-layout="button_count" data-action="like" data-show-faces="false" data-share="false" style="margin-right:25px;"></div>
         @endif
         @if(! empty($retailer->facebook_share_url))
-        <div class="fb-share-button" data-href="{{{$retailer->facebook_share_url}}}" data-layout="button_count"></div>
+        <div class="fb-share-button" data-href="{{{$retailer->facebook_share_url}}}" data-layout="button"></div>
         @endif
     </div>
+    @endif
 @stop
 
 @section('ext_script_bot')
@@ -501,20 +503,22 @@
         ---------- {{-- End of Tour --}} */
         
         $('a.widget-link').click(function(event){
-          var link = $(this).attr('href');
-          var widgetdata = $(this).data('widget');
           event.preventDefault();
 
-          $.ajax({
-            url: '{{ route('click-widget-activity') }}',
-            data: {
-              widgetdata: widgetdata
-            },
-            method: 'POST'
-          }).always(function(){
-            window.location.assign(link);
-          });
-          return false; //for good measure
+          if ($(this).attr('href') !== '#') {
+              var link = $(this).attr('href');
+              var widgetdata = $(this).data('widget');
+              $.ajax({
+                url: '{{ route('click-widget-activity') }}',
+                data: {
+                  widgetdata: widgetdata
+                },
+                method: 'POST'
+              }).always(function(){
+                window.location.assign(link);
+              });
+              return false; //for good measure
+          }
         });
     });
 </script>

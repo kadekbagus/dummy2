@@ -44,7 +44,7 @@ return array(
         'back_to_map_lower' => 'Kembali ke Peta',
     ),
 
-    'widgets'   => array(
+    'widgets' => array(
         'catalogue'             => 'KATALOG',
         'new_product'           => 'PRODUK TERBARU',
         'promotion'             => 'PROMOSI',
@@ -64,17 +64,22 @@ return array(
         'newss_single'          => 'Berita',
     ),
 
-    'greetings'         => array(
-        'welcome'                       => 'Selamat Datang',
-        'latest_news_coming_soon'       => 'Periksa berita terbaru kami yang akan datang.',
-        'new_promotions_coming_soon'    => 'Periksa promosi baru kami yang akan datang.',
-        'how_to_get_coupons'            => 'Silahkan hubungi customer service untuk mengetahui cara mendapatkan kupon.',
-        'find_our_exciting'             => 'Temukan penawaran menarik dan berita terbaru dari kami disini. Jangan lupa tukarkan struk belanja anda dan dapatkan kesempatan untuk memenangkan sebuah mobil !',
-        'latest_luckydraw_coming_soon'  => 'Periksa undian berhadiah kami yang akan datang.',
+    'greetings' => array(
+        'welcome'                      => 'Selamat Datang',
+        'latest_news_coming_soon'      => 'Periksa berita terbaru kami yang akan datang.',
+        'new_promotions_coming_soon'   => 'Periksa promosi baru kami yang akan datang.',
+        'how_to_get_coupons'           => 'Silahkan hubungi customer service untuk mengetahui cara mendapatkan kupon.',
+        'find_our_exciting'            => 'Temukan penawaran menarik dan berita terbaru dari kami disini. Jangan lupa tukarkan struk belanja anda dan dapatkan kesempatan untuk memenangkan sebuah mobil !',
+        'latest_luckydraw_coming_soon' => 'Periksa undian berhadiah kami yang akan datang.',
+        'no_coupons_listing'           => 'Maaf, tidak ada kupon pada saat ini di mall ini.',
+        'no_luckydraws_listing'        => 'Maaf, tidak ada undian berhadiah pada saat ini di mall ini.',
+        'no_news_listing'              => 'Maaf, tidak ada berita pada saat ini di mall ini.',
+        'no_promotions_listing'        => 'Maaf, tidak ada promosi pada saat ini di mall ini.',
+        'no_stores_listing'            => 'Maaf, tidak ada gerai pada saat ini di mall ini.',
     ),
 
     // modal specific lang
-    'modals'                     => array(
+    'modals' => array(
         'close'                  => 'Tutup',
         'ok'                     => 'OKE',
         'email_error'            => 'Harap isi email terlebih dahulu.',
@@ -96,7 +101,7 @@ return array(
         'message_no_new_product' => 'Maaf, tidak ada produk baru untuk saat ini.',
         'message_no_promotion'   => 'Maaf, tidak ada promosi untuk saat ini.',
         'message_no_lucky_draw'  => "Daftar sekarang dan dapatkan kesempatan untuk memenangkan Mazda setiap 3 bulan! Tukarkan struk belanja Anda minimum Rp. 100,000 pada VIP Lounge L2. Dapatkan merchandise gratis jika mendaftar saat ini juga! <br><br> • Jika stok masih ada <br> • Syarat & ketentuan berlaku.",
-        
+
         'message_delete_item'    => 'Apakah Anda yakin akan menghapus item ini dari keranjang belanja?',
         'message_delete_coupon'  => 'Apakah Anda yakin akan menghapus kupon ini dari keranjang belanja? Kupon yang Anda hapus masih dapat digunakan lain kali.',
         'message_transfer_cart'  => 'Tunjukkan smartphone Anda ke kasir untuk menyelesaikan checkout.',
@@ -155,35 +160,36 @@ return array(
 
     // page specific lang
     'signin'         => array(
-        'email_placeholder' => 'Harap masukan alamat email Anda',
-        'login_button'      => 'Masuk',
-        'start_button'      => 'Mulai Belanja',
-        'not'               => 'Bukan',
-        'click_here'        => 'Klik disini',
-        'email_not_valid'   => 'Alamat email tidak valid',
-        'logging_in_button' => 'Sedang login. Harap tunggu...',
-        'loading_orbit'     => 'Loading Orbit, please wait...',
-        'start_button_mall' => 'Rasakan Pengalaman Baru Berbelanja',
-        'register'          => 'Daftar',
-        'login_via_facebook' => 'Login via Facebook',
-        'login_via_google' => 'Login via Google+',
-        'or_between_email_and_fb' => 'ATAU',
-        'agree_to_terms' => 'Saya setuju dengan <a href="%s" id="orbit-privacy-policy-anchor">Privacy Policy</a> dan <a href="%s" id="orbit-tos-anchor">Syarat dan Ketentuan</a>',
-        'must_accept_terms' => 'Anda harus menyetujui <strong>Privacy Policy</strong> dan <strong>Syarat dan Ketentuan</strong> Orbit sebelum anda bisa login',
+        'email_placeholder'        => 'Harap masukan alamat email Anda',
+        'login_button'             => 'Masuk',
+        'start_button'             => 'Mulai Belanja',
+        'not'                      => 'Bukan',
+        'click_here'               => 'Klik disini',
+        'email_not_valid'          => 'Alamat email tidak valid',
+        'logging_in_button'        => 'Sedang login. Harap tunggu...',
+        'loading_orbit'            => 'Loading Orbit, please wait...',
+        'start_button_mall'        => 'Rasakan Pengalaman Baru Berbelanja',
+        'register'                 => 'Daftar',
+        'login_via_facebook'       => 'Login via Facebook',
+        'login_via_google'         => 'Login via Google+',
+        'or_between_email_and_fb'  => 'ATAU',
+        'agree_to_terms'           => 'Saya setuju dengan <a href="%s" id="orbit-privacy-policy-anchor">Privacy Policy</a> dan <a href="%s" id="orbit-tos-anchor">Syarat dan Ketentuan</a>',
+        'must_accept_terms'        => 'Anda harus menyetujui <strong>Privacy Policy</strong> dan <strong>Syarat dan Ketentuan</strong> Orbit sebelum anda bisa login',
         'accept_modal_button_text' => 'OK',
-        'connecting_to_facebook' => 'Menghubungi Facebook...',
-        'connecting_to_google' => 'Menghubungi Google...',
-        'connecting_with' => 'Terhubung dengan',
-        'sign_up_sign_in_with' => 'Daftar atau Masuk dengan:',
-        'to_access_this_content' => 'Untuk mengakses konten ini',
-        'sign_in' => 'Masuk',
-        'sign_up' => 'Daftar',
-        'doesnt_have_account' => 'Tidak punya akun',
-        'remember_me' => 'Ingat saya',
-        'forgot_link' => 'Lupa Password?',
-        'forgot_button' => 'Kirim Link Reset Password',
-        'forgot_sent_title' => 'Kami sudah mengirimkan link untuk me-reset password Anda',
-        'forgot_sent_sub_title' => 'silahkan cek kotak masuk email'
+        'connecting_to_facebook'   => 'Menghubungi Facebook...',
+        'connecting_to_google'     => 'Menghubungi Google...',
+        'connecting_with'          => 'Terhubung dengan',
+        'sign_up_sign_in_with'     => 'Daftar atau Masuk dengan:',
+        'to_access_this_content'   => 'Untuk mengakses konten ini',
+        'sign_in'                  => 'Masuk',
+        'sign_up'                  => 'Daftar',
+        'doesnt_have_account'      => 'Tidak punya akun',
+        'remember_me'              => 'Ingat saya',
+        'forgot_link'              => 'Lupa Password?',
+        'forgot_button'            => 'Kirim Link Reset Password',
+        'forgot_sent_title'        => 'Kami sudah mengirimkan link untuk me-reset password Anda',
+        'forgot_sent_sub_title'    => 'silahkan cek kotak masuk email',
+        'password_message'         => 'Jika Anda belum setup password sebelumnya, klik <b>lupa password</b> untuk setup password baru',
     ),
 
     'signup' => array(
@@ -197,7 +203,7 @@ return array(
         'month' => 'Bulan',
         'year' => 'Tahun',
         'policy_terms_message' => 'Dengan mengklik <strong>Daftar</strong> berarti Anda setuju dengan
-                        <a target="_blank" href="%s">kebijakan</a> dan 
+                        <a target="_blank" href="%s">kebijakan</a> dan
                         <a target="_blank" href="%s">syarat dan ketentuan</a>',
         'already_have_an_account' => 'Sudah punya akun?',
         'fields_are_mandatory' => 'Semua kolom wajib diisi',
@@ -453,6 +459,7 @@ return array(
         'view_lucky_draw_btn'       => 'Lihat Undian Berhadiah',
         'no_notif'                  => 'Anda tidak mempunyai pesan',
         'load_more_btn'             => 'Memuat lebih',
+        'view_more_btn'             => 'Melihat lebih',
         'view_coupons_btn'          => 'Lihat kupon anda',
         'congratulation'            => 'Selamat!',
         'you_won'                   => 'Anda mendapatkan hadiah dari ',

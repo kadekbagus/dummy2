@@ -137,6 +137,12 @@ return array(
             'tenant_on_inactive_have_linked'    => 'Tenant can not be deactivated, because it has links',
             'tenant_on_active_campaign'    => 'Tenant can not be deactivated, because it has links to active campaign',
             'membership_name'        => 'The membership name has already been used',
+            'timezone'               => 'The :attribute must be an existing timezone',
+            'default_language'       => 'The :attribute cannot be deleted: because default language',
+            'translation'            => 'The translation :attribute cannot be deleted: because used on :link',
+            'link_floor'             => 'The floor :attribute cannot be deleted: because used on :link',
+            'link_category'          => 'The category :attribute cannot be deleted: because used on :link',
+            'mall_language'          => 'The :attribute must be an existing language',
         ),
         'access' => array(
             'forbidden'              => 'You do not have permission to :action',
@@ -307,7 +313,9 @@ return array(
                      'token' => 'Token you specified is not found',
                 ),
             'forgot_email' => 'We couldn\'t find an account associated with :email_addr',
-            'default_language' => 'Campaign content in mall default language is required'
+            'default_language' => 'Campaign content in mall default language is required',
+            'english_language' => 'Campaign content in English language is required',
+            'mall_status' => 'Mall status you specified is not found'
         ),
         'queryerror' => 'Database query error, turn on debug mode to see the full query',
         'jsonerror'  => array(
@@ -354,7 +362,8 @@ return array(
             ),
             'date' => array(
                 'dmy_date' => 'The :attribute does not match the format dd-mm-yyyy'
-            )
+            ),
+            'language' => 'The :attribute must be a valid language code'
         ),
         'actionlist' => array(
             'change_password'           => 'change password',

@@ -17,7 +17,7 @@
     <div class="col-xs-12 text-center" id="spinner"><i class="fa fa-circle-o-notch fa-spin"></i></div>
     <div class="col-xs-12 text-center vertically-spaced" style="display:none;" id="no-notification">{{ Lang::get('mobileci.notification.no_notif') }}</div>
     <div class="row">
-        <button class="col-xs-offset-2 col-xs-8 btn btn-default loadmore">{{ Lang::get('mobileci.notification.load_more_btn') }}</button>
+        <button class="col-xs-offset-2 col-xs-8 btn btn-default loadmore">{{ Lang::get('mobileci.notification.view_more_btn') }}</button>
     </div>
 
 @stop
@@ -52,7 +52,7 @@
         {{-- force reload page to disable page cache on ios safari --}}
         $(window).bind("pageshow", function(event) {
             if (event.originalEvent.persisted) {
-                window.location.reload() 
+                window.location.reload()
             }
         });
 
@@ -60,7 +60,7 @@
             function getNotifList() {
                 $.ajax({
                     method: 'GET',
-                    url: apiPath + 'inbox/list'
+                    url: '{{ url("app/v1/inbox/list") }}'
                 }).done(function(data){
                     if(data.data.total_records / (data.data.returned_records + skip) > 1) {
                         $('.loadmore').show();

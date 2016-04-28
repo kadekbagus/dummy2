@@ -6,40 +6,40 @@ use Symfony\Component\Console\Input\InputArgument;
 
 class CampaignDailySpendingCalculation extends Command {
 
-	/**
-	 * This artisan command for calculate total campaign daily spending (news, promotion, coupon) per mall per campaign and per date
-	 * This command will be implement with cronjob / scheduler every hour
-	 *
-	 * @var string
-	 */
-	protected $name = 'campaign:spending-daily-calculation';
+    /**
+     * This artisan command for calculate total campaign daily spending (news, promotion, coupon) per mall per campaign and per date
+     * This command will be implement with cronjob / scheduler every hour
+     *
+     * @var string
+     */
+    protected $name = 'campaign:spending-daily-calculation';
 
-	/**
-	 * The console command description.
-	 *
-	 * @var string
-	 */
+    /**
+     * The console command description.
+     *
+     * @var string
+     */
     protected $description = 'Daily spending calculation per day.';
 
-	/**
-	 * Create a new command instance.
-	 *
-	 * @return void
-	 */
-	public function __construct()
-	{
-		parent::__construct();
-	}
+    /**
+     * Create a new command instance.
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+        parent::__construct();
+    }
 
-	/**
-	 * Execute the console command.
-	 *
-	 * @return mixed
-	 */
-	public function fire()
-	{
+    /**
+     * Execute the console command.
+     *
+     * @return mixed
+     */
+    public function fire()
+    {
         // date_default_timezone_set('UTC')
-        $this->info('=== Running at ' . date('l jS \of F Y h:i:s A') . " ===");
+        $this->info('=== Running at ' . date('l j \of F Y h:i:s A') . " ===");
 
         // Start time for log
         $started_time = microtime(true);
@@ -57,7 +57,7 @@ class CampaignDailySpendingCalculation extends Command {
         // Get all mall
         if (count($getMall) > 0) {
 
-        	$totalCampaign = 0;
+            $totalCampaign = 0;
 
             foreach ($getMall as $key => $valMall) {
                 // get offset timezone
@@ -66,23 +66,22 @@ class CampaignDailySpendingCalculation extends Command {
                 $timezoneOffset = $dt->format('P');
                 $mallId = $valMall->merchant_id;
 
-
                 // Check mall time is 00 hours
                 if ($valMall->tz == '00') {
 
-		        	$this->info('Mall name = ' . $valMall->name);
+                    $this->info('Mall name = ' . $valMall->name);
 
                     // ============================== News and Promotions ==============================
                     // Check campaign in mall which have status not expired or stopped and have tenant with parent id this mall
                     $newsAndPromotions = News::select('news.*', 'campaign_status.order',
                             DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$prefix}news.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
-                            	FROM {$prefix}merchants om
+                                FROM {$prefix}merchants om
                                 LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
                                 WHERE om.merchant_id = {$prefix}news.mall_id)
                                 THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END AS campaign_status"))
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
                         ->whereNotIn(DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$prefix}news.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
-                        			FROM {$prefix}merchants om
+                                    FROM {$prefix}merchants om
                                     LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
                                     WHERE om.merchant_id = {$prefix}news.mall_id)
                                 THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END"), ['expired', 'stopped'] )
@@ -95,8 +94,9 @@ class CampaignDailySpendingCalculation extends Command {
                     if (count($newsAndPromotions) > 0) {
                         foreach ($newsAndPromotions as $key => $valNewsPromotions) {
 
-                            $startLoadTimeCampaign = microtime(true);
+                            \DB::beginTransaction();
 
+                            $startLoadTimeCampaign = microtime(true);
 
                             // Check per campaign which have this mall
                             // Insert campaign daily spending calculation
@@ -107,20 +107,21 @@ class CampaignDailySpendingCalculation extends Command {
                             $procResults = DB::statement("CALL prc_campaign_detailed_cost({$this->quote($campaignId)}, {$this->quote($campaignType)}, {$this->quote($now)}, {$this->quote($now)}, {$this->quote($mallId)})");
 
                             if ($procResults === false) {
-                                // Do Nothing
+                                // Continue to next loop
+                                continue;
                             }
 
                             $getspending = DB::table(DB::raw('tmp_campaign_cost_detail'))->first();
 
                             if (count($getspending) > 0) {
 
-			                    $daily = CampaignDailySpending::where('date', '=', $getspending->date_in_utc)->where('campaign_id', '=', $campaignId)->where('mall_id', '=', $mallId)->first();
+                                $daily = CampaignDailySpending::where('date', '=', $getspending->date_in_utc)->where('campaign_id', '=', $campaignId)->where('mall_id', '=', $mallId)->first();
 
-			                    if (count($daily) > 0) {
-			                        $dailySpending = CampaignDailySpending::find($daily['campaign_daily_spending_id']);
-			                    } else {
-			                        $dailySpending = new CampaignDailySpending;
-			                    }
+                                if (count($daily) > 0) {
+                                    $dailySpending = CampaignDailySpending::find($daily['campaign_daily_spending_id']);
+                                } else {
+                                    $dailySpending = new CampaignDailySpending;
+                                }
 
                                 $dailySpending->date = $getspending->date_in_utc;
                                 $dailySpending->campaign_type = $campaignType;
@@ -133,13 +134,22 @@ class CampaignDailySpendingCalculation extends Command {
                                 $dailySpending->save();
 
                                 if ($dailySpending) {
+                                    // Commit the changes
+                                    DB::commit();
+
                                     $endLoadTimeCampaign = microtime(true);
                                     $loadTimeCampaign = $endLoadTimeCampaign - $startLoadTimeCampaign;
 
                                     $totalCampaign++;
                                     $this->info($totalCampaign . '. Inserted campaign_id = ' . $campaignId . ', campaign_type = '. $campaignType . ', time = ' .$loadTimeCampaign . ' seconds'  );
+                                } else {
+                                    // Rollback the changes
+                                    DB::rollBack();
                                 }
 
+                            } else {
+                                // Rollback the changes
+                                DB::rollBack();
                             }
 
                         }
@@ -152,13 +162,13 @@ class CampaignDailySpendingCalculation extends Command {
                                 FROM {$prefix}merchants om
                                 LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
                                 WHERE om.merchant_id = {$prefix}promotions.merchant_id)
-                    			THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END AS campaign_status"))
+                                THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END AS campaign_status"))
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
                         ->whereNotIn(DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$prefix}promotions.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
                                 FROM {$prefix}merchants om
                                 LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
                                 WHERE om.merchant_id = {$prefix}promotions.merchant_id)
-                    			THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END"), ['expired', 'stopped'] )
+                                THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END"), ['expired', 'stopped'] )
                         ->whereHas('tenants', function($q) use($mallId){
                             $q->where('parent_id', $mallId);
                         })
@@ -167,6 +177,8 @@ class CampaignDailySpendingCalculation extends Command {
                     // Check campaign which have link to tenant and mall in this mall
                     if (count($coupons) > 0) {
                         foreach ($coupons as $key => $valCoupons) {
+
+                            \DB::beginTransaction();
 
                             $startLoadTimeCampaign = microtime(true);
 
@@ -179,20 +191,21 @@ class CampaignDailySpendingCalculation extends Command {
                             $procResults = DB::statement("CALL prc_campaign_detailed_cost({$this->quote($campaignId)}, {$this->quote($campaignType)}, {$this->quote($now)}, {$this->quote($now)}, {$this->quote($mallId)})");
 
                             if ($procResults === false) {
-                                // Do Nothing
+                                // Continue to next loop
+                                continue;
                             }
 
                             $getspending = DB::table(DB::raw('tmp_campaign_cost_detail'))->first();
 
                             if (count($getspending) > 0) {
 
-			                    $daily = CampaignDailySpending::where('date', '=', $getspending->date_in_utc)->where('campaign_id', '=', $campaignId)->where('mall_id', '=', $mallId)->first();
+                                $daily = CampaignDailySpending::where('date', '=', $getspending->date_in_utc)->where('campaign_id', '=', $campaignId)->where('mall_id', '=', $mallId)->first();
 
-			                    if (count($daily) > 0) {
-			                        $dailySpending = CampaignDailySpending::find($daily['campaign_daily_spending_id']);
-			                    } else {
-			                        $dailySpending = new CampaignDailySpending;
-			                    }
+                                if (count($daily) > 0) {
+                                    $dailySpending = CampaignDailySpending::find($daily['campaign_daily_spending_id']);
+                                } else {
+                                    $dailySpending = new CampaignDailySpending;
+                                }
 
                                 $dailySpending->date = $getspending->date_in_utc;
                                 $dailySpending->campaign_type = $campaignType;
@@ -205,15 +218,23 @@ class CampaignDailySpendingCalculation extends Command {
                                 $dailySpending->save();
 
                                 if ($dailySpending) {
+                                    // Commit the changes
+                                    DB::commit();
+
                                     $endLoadTimeCampaign = microtime(true);
                                     $loadTimeCampaign = $endLoadTimeCampaign - $startLoadTimeCampaign;
 
                                     $totalCampaign++;
                                     $this->info($totalCampaign . '. Inserted campaign_id = ' . $campaignId . ', campaign_type = '. $campaignType . ', time = ' .$loadTimeCampaign . ' seconds'  );
+                                } else {
+                                    // Rollback the changes
+                                    DB::rollBack();
                                 }
 
+                            } else {
+                                // Rollback the changes
+                                DB::rollBack();
                             }
-
 
                         }
 
@@ -225,33 +246,33 @@ class CampaignDailySpendingCalculation extends Command {
         }
 
         // =================== Check time ===================
-        $this->info('Migration successfully, Loaded time  = ' . (microtime(true) - $started_time) . ' seconds, total campaign data = ' . $totalCampaign);
+        $this->info('Calculation successfully, Loaded time  = ' . (microtime(true) - $started_time) . ' seconds, total campaign data = ' . $totalCampaign);
 
     }
 
-	/**
-	 * Get the console command arguments.
-	 *
-	 * @return array
-	 */
-	protected function getArguments()
-	{
-		return array(
-			// array('example', InputArgument::REQUIRED, 'An example argument.'),
-		);
-	}
+    /**
+     * Get the console command arguments.
+     *
+     * @return array
+     */
+    protected function getArguments()
+    {
+        return array(
+            // array('example', InputArgument::REQUIRED, 'An example argument.'),
+        );
+    }
 
-	/**
-	 * Get the console command options.
-	 *
-	 * @return array
-	 */
-	protected function getOptions()
-	{
-		return array(
-			// array('example', null, InputOption::VALUE_OPTIONAL, 'An example option.', null),
-		);
-	}
+    /**
+     * Get the console command options.
+     *
+     * @return array
+     */
+    protected function getOptions()
+    {
+        return array(
+            // array('example', null, InputOption::VALUE_OPTIONAL, 'An example option.', null),
+        );
+    }
 
     protected function getTimezone($current_mall)
     {

@@ -1,7 +1,7 @@
 <?php
 
 Route::group(
-    array('before' => 'orbit-settings'),
+    array('before' => ['orbit-settings', 'turn-off-query-string-session']),
     function () {
 
         // Route::get(
@@ -13,7 +13,7 @@ Route::group(
         // );
 
         Route::get(
-            '/customer', ['as' => 'mobile-ci.home',
+            '/customer', ['as' => 'mobile-ci-home',
             function () {
 
                 return MobileCI\MobileCIAPIController::create()->getHomeView();
@@ -145,14 +145,14 @@ Route::group(
         );
 
         Route::get(
-            '/customer/tenants', ['as' => 'ci-tenants',
+            '/customer/tenants', ['as' => 'ci-tenant-list',
             function () {
                 return MobileCI\MobileCIAPIController::create()->getTenantsView();
             }]
         );
 
         Route::get(
-            '/customer/tenant', ['as' => 'ci-tenant',
+            '/customer/tenant', ['as' => 'ci-tenant-detail',
             function () {
 
                 return MobileCI\MobileCIAPIController::create()->getTenantDetailView();
@@ -163,7 +163,7 @@ Route::group(
             array('before' => 'check-routes-luckydraw'),
             function() {
                 Route::get(
-                    '/customer/luckydraw', ['as' => 'ci-luckydraw',
+                    '/customer/luckydraw', ['as' => 'ci-luckydraw-detail',
                     function () {
                         return MobileCI\MobileCIAPIController::create()->getLuckyDrawView();
                     }]
@@ -194,14 +194,14 @@ Route::group(
         );
 
         Route::get(
-            '/customer/mallcoupons', ['as' => 'ci-mall-coupons',
+            '/customer/mallcoupons', ['as' => 'ci-coupon-list',
             function () {
                 return MobileCI\MobileCIAPIController::create()->getMallCouponList();
             }]
         );
 
         Route::get(
-            '/customer/mallcoupon', ['as' => 'ci-mall-coupon',
+            '/customer/mallcoupon', ['as' => 'ci-coupon-detail',
             function () {
 
                 return MobileCI\MobileCIAPIController::create()->getMallCouponDetailView();
@@ -209,22 +209,14 @@ Route::group(
         );
 
         Route::get(
-            '/customer/mallcouponcampaign', ['as' => 'ci-mall-coupon-campaign',
-            function () {
-
-                return MobileCI\MobileCIAPIController::create()->getMallCouponCampaignDetailView();
-            }]
-        );
-
-        Route::get(
-            '/customer/mallpromotions', ['as' => 'ci-mall-promotions',
+            '/customer/mallpromotions', ['as' => 'ci-promotion-list',
             function () {
                 return MobileCI\MobileCIAPIController::create()->getMallPromotionList();
             }]
         );
 
         Route::get(
-            '/customer/mallpromotion', ['as' => 'ci-mall-promotion',
+            '/customer/mallpromotion', ['as' => 'ci-promotion-detail',
             function () {
 
                 return MobileCI\MobileCIAPIController::create()->getMallPromotionDetailView();
@@ -232,14 +224,14 @@ Route::group(
         );
 
         Route::get(
-            '/customer/mallnews', ['as' => 'ci-mall-news',
+            '/customer/mallnews', ['as' => 'ci-news-list',
             function () {
                 return MobileCI\MobileCIAPIController::create()->getMallNewsList();
             }]
         );
 
         Route::get(
-            '/customer/mallnewsdetail', ['as' => 'ci-mall-news-detail',
+            '/customer/mallnewsdetail', ['as' => 'ci-news-detail',
             function () {
                 return MobileCI\MobileCIAPIController::create()->getMallNewsDetailView();
             }]

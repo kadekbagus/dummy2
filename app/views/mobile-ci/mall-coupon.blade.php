@@ -50,19 +50,21 @@
     <div class="col-xs-12">
         <div class="row">
             <div class="col-xs-12">
-                <p>{{ nl2br(htmlspecialchars($coupon->description)) }}</p>
+                <p>{{ nl2br(e($coupon->description)) }}</p>
             </div>
             <div class="col-xs-12">
-                <p>{{ nl2br(htmlspecialchars($coupon->long_description)) }}</p>
+                <p>{{ nl2br(e($coupon->long_description)) }}</p>
             </div>
             <div class="col-xs-12">
                 <h4><strong>{{{ Lang::get('mobileci.coupon_detail.validity_label') }}}</strong></h4>
                 <p>{{{ date('d M Y', strtotime($coupon->begin_date)) }}} - {{{ date('d M Y', strtotime($coupon->end_date)) }}}</p>
             </div>
-            @if(! empty($coupon->facebook_share_url))
-            <div class="col-xs-12">
-                <div class="fb-share-button" data-href="{{{$coupon->facebook_share_url}}}" data-layout="button_count"></div>
-            </div>
+            @if ($urlblock->isLoggedIn())
+                @if(! empty($coupon->facebook_share_url))
+                <div class="col-xs-12">
+                    <div class="fb-share-button" data-href="{{{$coupon->facebook_share_url}}}" data-layout="button"></div>
+                </div>
+                @endif
             @endif
         </div>
     </div>
@@ -73,7 +75,7 @@
         @if(count($link_to_tenants) > 0)
         <div class="row vertically-spaced">
             <div class="col-xs-12 text-center">
-                <a href="{{{ $urlblock->blockedRoute('ci-tenants', ['coupon_id' => $coupon->promotion_id]) }}}" class="btn btn-info btn-block">{{{ Lang::get('mobileci.tenant.see_tenants') }}}</a>
+                <a data-href="{{ route('ci-tenant-list', ['coupon_id' => $coupon->promotion_id]) }}" href="{{{ $urlblock->blockedRoute('ci-tenant-list', ['coupon_id' => $coupon->promotion_id]) }}}" class="btn btn-info btn-block">{{{ Lang::get('mobileci.tenant.see_tenants') }}}</a>
             </div>
         </div>
         @else
@@ -86,7 +88,7 @@
         @if(count($issued_coupons) > 0)
             <div class="row vertically-spaced">
                 <div class="col-xs-12 text-center">
-                    <a href="{{{ $urlblock->blockedRoute('ci-tenants', ['coupon_redeem_id' => $coupon->promotion_id]) }}}" class="btn btn-info btn-block">{{{ Lang::get('mobileci.tenant.redemption_places') }}}</a>
+                    <a data-href="{{ route('ci-tenant-list', ['coupon_redeem_id' => $coupon->promotion_id]) }}" href="{{{ $urlblock->blockedRoute('ci-tenant-list', ['coupon_redeem_id' => $coupon->promotion_id]) }}}" class="btn btn-info btn-block">{{{ Lang::get('mobileci.tenant.redemption_places') }}}</a>
                 </div>
             </div>
             <div class="row">
@@ -275,7 +277,7 @@
                             }, 1000);
                         });
                         $('#successCouponModal').on('hide.bs.modal', function($event){
-                            window.location.replace('{{ $urlblock->blockedRoute('ci-mall-coupons') }}');
+                            window.location.replace('{{ $urlblock->blockedRoute('ci-coupon-list') }}');
                         });
                     }else{
                         $('#wrongCouponModal').modal();

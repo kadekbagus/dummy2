@@ -175,11 +175,11 @@ class CouponReportPrinterController extends DataPrinterController
 
                     printf("\"%s\",\"%s\",\"%s - %s\",\"%s\",\"%s\",\"%s\",\"%s / %s\",\"%s / %s\",\"%s\"\n",
                         $count,
-                        $row->promotion_name,
+                        $this->printUtf8($row->promotion_name),
                         date('d M Y', strtotime($row->begin_date)),
                         date('d M Y', strtotime($row->end_date)),
                         date('d M Y', strtotime($row->coupon_validity_in_date)),
-                        str_replace(', ', "\n", $row->campaign_location_names),
+                        str_replace(', ', "\n", $this->printUtf8($row->campaign_location_names)),
                         $rule_type,
                         $row->total_issued != 'Unlimited' ? number_format($row->total_issued, 0, '', '') : 'Unlimited',
                         $row->available != 'Unlimited' ? number_format($row->available, 0, '', '') : 'Unlimited',
@@ -189,6 +189,7 @@ class CouponReportPrinterController extends DataPrinterController
                     );
                     $count++;
                 }
+                exit;
                 break;
 
             case 'print':
@@ -255,7 +256,7 @@ class CouponReportPrinterController extends DataPrinterController
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
                     printf("\"%s\",\"%s\",\"=\"\"%s\"\"\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
                             $count,
-                            $row->redeem_retailer_name,
+                            $this->printUtf8($row->redeem_retailer_name),
                             '1 / ' . $row->total_issued,
                             $row->issued_coupon_code,
                             $row->user_email,
@@ -264,6 +265,7 @@ class CouponReportPrinterController extends DataPrinterController
                     );
                     $count++;
                 }
+                exit;
                 break;
 
             case 'print':
@@ -424,6 +426,7 @@ class CouponReportPrinterController extends DataPrinterController
                     );
                     $count++;
                 }
+                exit;
                 break;
 
             case 'print':
@@ -502,6 +505,7 @@ class CouponReportPrinterController extends DataPrinterController
                     );
                     $count++;
                 }
+                exit;
                 break;
 
             case 'print':
@@ -613,6 +617,17 @@ class CouponReportPrinterController extends DataPrinterController
             $currentDateAndTime = Carbon::now();
             $utc = '_UTC';
         }
-        return 'orbit-export-' . $pageTitle . '-' . Carbon::createFromFormat('Y-m-d H:i:s', $currentDateAndTime)->format('D_d_M_Y_Hi') . $utc . $ext;
+        return 'gotomalls-export-' . $pageTitle . '-' . Carbon::createFromFormat('Y-m-d H:i:s', $currentDateAndTime)->format('D_d_M_Y_Hi') . $utc . $ext;
+    }
+
+    /**
+     * output utf8.
+     *
+     * @param string $input
+     * @return string
+     */
+    public function printUtf8($input)
+    {
+        return utf8_encode($input);
     }
 }

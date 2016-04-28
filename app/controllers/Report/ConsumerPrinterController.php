@@ -113,6 +113,7 @@ class ConsumerPrinterController extends DataPrinterController
                     }
 
                 }
+                exit;
                 break;
 
             case 'print':
@@ -191,7 +192,7 @@ class ConsumerPrinterController extends DataPrinterController
                 $result = 'Female';
                 break;
             default:
-                $result = '';
+                $result = 'Unknown';
         }
 
         return $result;

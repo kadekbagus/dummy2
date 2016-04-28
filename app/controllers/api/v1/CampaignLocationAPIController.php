@@ -33,17 +33,17 @@ class CampaignLocationAPIController extends ControllerAPI
         try {
             $httpCode = 200;
 
-            Event::fire('orbit.CampaignLocations.gettenantcampaignsummary.before.auth', array($this));
+            Event::fire('orbit.campaignlocations.getcampaignlocations.before.auth', array($this));
 
             // Require authentication
             $this->checkAuth();
 
-            Event::fire('orbit.CampaignLocations.gettenantcampaignsummary.after.auth', array($this));
+            Event::fire('orbit.campaignlocations.getcampaignlocations.after.auth', array($this));
 
             // Try to check access control list, does this user allowed to
             // perform this action
             $user = $this->api->user;
-            Event::fire('orbit.CampaignLocations.gettenantcampaignsummary.before.authz', array($this, $user));
+            Event::fire('orbit.campaignlocations.getcampaignlocations.before.authz', array($this, $user));
 
             // @Todo: Use ACL authentication instead
             // $role = $user->role;
@@ -53,7 +53,7 @@ class CampaignLocationAPIController extends ControllerAPI
             //     ACL::throwAccessForbidden($message);
             // }
 
-            Event::fire('orbit.CampaignLocations.gettenantcampaignsummary.after.authz', array($this, $user));
+            Event::fire('orbit.campaignlocations.getcampaignlocations.after.authz', array($this, $user));
 
             $this->registerCustomValidation();
 
@@ -76,14 +76,14 @@ class CampaignLocationAPIController extends ControllerAPI
                 )
             );
 
-            Event::fire('orbit.CampaignLocations.gettenantcampaignsummary.before.validation', array($this, $validator));
+            Event::fire('orbit.campaignlocations.getcampaignlocations.before.validation', array($this, $validator));
 
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
-            Event::fire('orbit.CampaignLocations.gettenantcampaignsummary.after.validation', array($this, $validator));
+            Event::fire('orbit.campaignlocations.getcampaignlocations.after.validation', array($this, $validator));
 
             // Get the maximum record
             $maxRecord = (int) Config::get('orbit.pagination.coupon.max_record');
@@ -186,7 +186,7 @@ class CampaignLocationAPIController extends ControllerAPI
             $this->response->data = $data;
 
         } catch (ACLForbiddenException $e) {
-            Event::fire('orbit.CampaignLocations.gettenantcampaignsummary.access.forbidden', array($this, $e));
+            Event::fire('orbit.campaignlocations.getcampaignlocations.access.forbidden', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -194,7 +194,7 @@ class CampaignLocationAPIController extends ControllerAPI
             $this->response->data = null;
             $httpCode = 403;
         } catch (InvalidArgsException $e) {
-            Event::fire('orbit.CampaignLocations.gettenantcampaignsummary.invalid.arguments', array($this, $e));
+            Event::fire('orbit.campaignlocations.getcampaignlocations.invalid.arguments', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -206,7 +206,7 @@ class CampaignLocationAPIController extends ControllerAPI
             $this->response->data = $result;
             $httpCode = 400;
         } catch (QueryException $e) {
-            Event::fire('orbit.CampaignLocations.gettenantcampaignsummary.query.error', array($this, $e));
+            Event::fire('orbit.campaignlocations.getcampaignlocations.query.error', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -220,7 +220,7 @@ class CampaignLocationAPIController extends ControllerAPI
             $this->response->data = null;
             $httpCode = 500;
         } catch (Exception $e) {
-            Event::fire('orbit.CampaignLocations.gettenantcampaignsummary.general.exception', array($this, $e));
+            Event::fire('orbit.campaignlocations.getcampaignlocations.general.exception', array($this, $e));
 
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
@@ -229,7 +229,7 @@ class CampaignLocationAPIController extends ControllerAPI
         }
 
         $output = $this->render($httpCode);
-        Event::fire('orbit.campaignlocations.gettenantcampaignsummary.before.render', array($this, &$output));
+        Event::fire('orbit.campaignlocations.getcampaignlocations.before.render', array($this, &$output));
 
         return $output;
     }

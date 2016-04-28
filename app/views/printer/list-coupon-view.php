@@ -255,14 +255,14 @@
             <?php $count = 1; while ($row = $statement->fetch(PDO::FETCH_OBJ)) : ?>
                 <tr class="{{ $rowCounter % 2 === 0 ? 'zebra' : '' }}">
                     <td><?php echo $count++; ?></td>
-                    <td><?php echo htmlentities($row->name_english); ?></td>
+                    <td><?php echo $me->printUtf8($row->name_english); ?></td>
                     <td><?php echo date('d F Y H:i', strtotime($row->begin_date)); ?></td>
                     <td><?php echo date('d F Y H:i', strtotime($row->end_date)); ?></td>
                     <td>
                         <?php
                             $locations = explode(', ', $row->campaign_location_names);
                             for($x = 0; $x < count($locations); $x++) {
-                                echo $locations[$x] . '<br>';
+                                echo $me->printUtf8($locations[$x]) . '<br>';
                             }
                         ?>
                     </td>

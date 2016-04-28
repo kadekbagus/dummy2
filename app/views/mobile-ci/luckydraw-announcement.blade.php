@@ -76,14 +76,14 @@
 @else
 <div class="row" style="background:#fff;position:relative;">
     <div class="col-xs-12 padded">
-        @if(isset($luckydraw->prizes[0]))
+        @if(isset($luckydraw->prizes[0]) && $luckydraw->have_winner)
             <h4 style="margin-top:20px;">{{ Lang::get('mobileci.lucky_draw.prizes_and_winners') }}</h4>
             <table class="table">
                 @foreach($luckydraw->prizes as $prize)
+                @if(count($prize->winners) > 0 && $prize->available)
                 <tr>
                     <th colspan="2">{{{ $prize->prize_name }}}</th>
                 </tr>
-                @if(! empty($prize->winners))
                     @foreach($prize->winners as $winner)
                         @if (isset($winner->number->user))
                             @if ($winner->number->user->user_id === $user->user_id)
@@ -146,7 +146,7 @@
                         <b>{{{ $luckydraw->lucky_draw_name }}}</b>
                         <br>
                         <img src="{{ asset($luckydraw->image) }}" class="img-responsive">
-                        <p>{{ nl2br(htmlspecialchars($luckydraw->description)) }}</p>
+                        <p>{{ nl2br(e($luckydraw->description)) }}</p>
                         <p>{{ Lang::get('mobileci.coupon_detail.validity_label') }} : {{{ date('d M Y H:m', strtotime($luckydraw->end_date)) }}}</p>
                     </div>
                 </div>

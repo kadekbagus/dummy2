@@ -133,9 +133,9 @@ class CampaignReportPrinterController extends DataPrinterController
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
                         printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s - %s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
                             $count,
-                            $row->campaign_name,
+                            $this->printUtf8($row->campaign_name),
                             $row->campaign_type,
-                            str_replace(', ', "\n", $row->campaign_location_names),
+                            str_replace(', ', "\n", $this->printUtf8($row->campaign_location_names)),
                             date('d M Y', strtotime($row->begin_date)),
                             date('d M Y', strtotime($row->end_date)),
                             $row->page_views,
@@ -148,6 +148,7 @@ class CampaignReportPrinterController extends DataPrinterController
                     );
                     $count++;
                 }
+                exit;
                 break;
 
             case 'print':
@@ -240,7 +241,7 @@ class CampaignReportPrinterController extends DataPrinterController
                 }
 
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Date', 'Location(s)', 'Unique Users', 'Campaign Page Views', 'Campaign Page View Rate (%)', 'Pop Up Views', 'Pop Up View Rate (%)', 'Pop Up Clicks', 'Pop Up Click Rate (%)', 'Spending (IDR)');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Date', 'Location(s)', 'Unique Sign In', 'Campaign Page Views', 'Campaign Page View Rate (%)', 'Pop Up Views', 'Pop Up View Rate (%)', 'Pop Up Clicks', 'Pop Up Click Rate (%)', 'Spending (IDR)');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
 
                 $count = 1;
@@ -248,7 +249,7 @@ class CampaignReportPrinterController extends DataPrinterController
                         printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
                             $count,
                             $this->printDateTime($row->campaign_date . '00:00:00', $timezone, 'd M Y'),
-                            str_replace(', ', "\n", $row->campaign_location_names),
+                            str_replace(', ', "\n", $this->printUtf8($row->campaign_location_names)),
                             $row->unique_users,
                             $row->campaign_pages_views,
                             round($row->campaign_pages_view_rate, 2),
@@ -260,6 +261,7 @@ class CampaignReportPrinterController extends DataPrinterController
                     );
                     $count++;
                 }
+                exit;
                 break;
 
             case 'print':
@@ -371,6 +373,17 @@ class CampaignReportPrinterController extends DataPrinterController
             $currentDateAndTime = Carbon::now();
             $utc = '_UTC';
         }
-        return 'orbit-export-' . $pageTitle . '-' . Carbon::createFromFormat('Y-m-d H:i:s', $currentDateAndTime)->format('D_d_M_Y_Hi') . $utc . $ext;
+        return 'gotomalls-export-' . $pageTitle . '-' . Carbon::createFromFormat('Y-m-d H:i:s', $currentDateAndTime)->format('D_d_M_Y_Hi') . $utc . $ext;
+    }
+
+    /**
+     * output utf8.
+     *
+     * @param string $input
+     * @return string
+     */
+    public function printUtf8($input)
+    {
+        return utf8_encode($input);
     }
 }

@@ -45,7 +45,7 @@ class CampaignDailySpendingMigration extends Command {
         $deletedTable = CampaignDailySpending::truncate();
 
         // Check all campaign existing (news, promotions, coupons)
-        if (! $deletedTable ){
+        if (! $deletedTable) {
             // Do Nothing
         }
 
@@ -58,6 +58,8 @@ class CampaignDailySpendingMigration extends Command {
 
         if (count($newsAndPromotions) > 0) {
             foreach ($newsAndPromotions as $key => $valNewsPromotions) {
+                // start time
+                $startLoadTimeCampaign = microtime(true);
 
                 $campaignId = $valNewsPromotions->news_id;
                 $campaignType = $valNewsPromotions->object_type;
@@ -94,16 +96,18 @@ class CampaignDailySpendingMigration extends Command {
                             $endDate = $dateNowMall;
                         }
 
+                        \DB::beginTransaction();
+
                         $procResults = DB::statement("CALL prc_campaign_detailed_cost( {$this->quote($campaignId)}, {$this->quote($campaignType)}, {$this->quote($startDate)}, {$this->quote($endDate)}, {$this->quote($mallId)})");
 
                         if ($procResults === false) {
-                            // Do Nothing
+                            // Continue to next loop
+                            continue;
                         }
 
                         $getSpending = DB::table(DB::raw('tmp_campaign_cost_detail'))
                             ->groupBy('date_in_utc')
                             ->get();
-
 
                         if (count($getSpending) > 0) {
                             foreach ($getSpending as $key => $valTmp) {
@@ -120,12 +124,27 @@ class CampaignDailySpendingMigration extends Command {
                                 $dailySpending->save();
                                 $idKey++;
                             }
+
+                            if ($dailySpending) {
+                                DB::commit();
+                            } else {
+                                DB::rollBack();
+                            }
+
+                        } else {
+                            DB::rollBack();
                         }
+
                     }
 
                 }
+
+                // end time
+                $endLoadTimeCampaign = microtime(true);
+                $loadTimeCampaign = $endLoadTimeCampaign - $startLoadTimeCampaign;
+
                 $totalCampaign++;
-                $this->info($totalCampaign . '. campaign_id = ' . $campaignId . ', campaign_type = '.$campaignType );
+                $this->info($totalCampaign . '. campaign_id = ' . $campaignId . ', campaign_type = '.$campaignType . ', time = ' .$loadTimeCampaign . ' seconds'  );
 
             }
 
@@ -141,6 +160,9 @@ class CampaignDailySpendingMigration extends Command {
 
         if (count($coupons) > 0) {
             foreach ($coupons as $key => $valCoupon) {
+
+                // start time
+                $startLoadTimeCampaign = microtime(true);
 
                 $campaignId = $valCoupon->promotion_id;
                 $campaignType = 'coupon';
@@ -177,10 +199,13 @@ class CampaignDailySpendingMigration extends Command {
                             $endDate = $dateNowMall;
                         }
 
+                        \DB::beginTransaction();
+
                         $procResults = DB::statement("CALL prc_campaign_detailed_cost( {$this->quote($campaignId)}, {$this->quote($campaignType)}, {$this->quote($startDate)}, {$this->quote($endDate)}, {$this->quote($mallId)})");
 
                         if ($procResults === false) {
-                            // Do Nothing
+                            // Continue to next loop
+                            continue;
                         }
 
                         $getSpending = DB::table(DB::raw('tmp_campaign_cost_detail'))
@@ -202,13 +227,26 @@ class CampaignDailySpendingMigration extends Command {
                                 $dailySpending->save();
                                 $idKey++;
                             }
+
+                            if ($dailySpending) {
+                                DB::commit();
+                            } else {
+                                DB::rollBack();
+                            }
+
+                        } else {
+                            DB::rollBack();
                         }
+
+                        $endLoadTimeCampaign = microtime(true);
+                        $loadTimeCampaign = $endLoadTimeCampaign - $startLoadTimeCampaign;
+
                     }
 
                 }
 
                 $totalCampaign++;
-                $this->info($totalCampaign . '. campaign_id = ' . $campaignId . ', campaign_type = '.$campaignType );
+                $this->info($totalCampaign . '. campaign_id = ' . $campaignId . ', campaign_type = '.$campaignType . ', time = ' .$loadTimeCampaign . ' seconds'  );
 
             }
         }

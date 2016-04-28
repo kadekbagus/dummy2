@@ -81,7 +81,7 @@ class CouponPrinterController extends DataPrinterController
                 if ($tenantName != '') {
                     printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Tenant Name', htmlentities($tenantName), '', '', '','');
                 }
-                
+
                 if ($mallName != '') {
                     printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Mall Name', htmlentities($mallName), '', '', '','');
                 }
@@ -143,15 +143,16 @@ class CouponPrinterController extends DataPrinterController
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
                         printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
                             $count,
-                            $row->name_english,
+                            $this->printUtf8($row->name_english),
                             date('d F Y H:i', strtotime($row->begin_date)),
                             date('d F Y H:i', strtotime($row->end_date)),
-                            str_replace(', ', "\n", $row->campaign_location_names),
+                            str_replace(', ', "\n", $this->printUtf8($row->campaign_location_names)),
                             $row->campaign_status,
                             $this->printDateTime($row->updated_at, null, 'd F Y H:i:s')
                     );
                     $count++;
                 }
+                exit;
                 break;
 
             case 'print':
@@ -232,6 +233,17 @@ class CouponPrinterController extends DataPrinterController
             $currentDateAndTime = Carbon::now();
             $utc = '_UTC';
         }
-        return 'orbit-export-' . $pageTitle . '-' . Carbon::createFromFormat('Y-m-d H:i:s', $currentDateAndTime)->format('D_d_M_Y_Hi') . $utc . $ext;
+        return 'gotomalls-export-' . $pageTitle . '-' . Carbon::createFromFormat('Y-m-d H:i:s', $currentDateAndTime)->format('D_d_M_Y_Hi') . $utc . $ext;
+    }
+
+    /**
+     * output utf8.
+     *
+     * @param string $input
+     * @return string
+     */
+    public function printUtf8($input)
+    {
+        return utf8_encode($input);
     }
 }
