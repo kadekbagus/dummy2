@@ -58,9 +58,11 @@
                 <div class="modal-body">
                     <select class="form-control" name="lang" id="selected-lang">
                         @if (isset($languages))
-                                @foreach ($languages as $lang)
-                                    <option value="{{{ $lang->language->name }}}" @if (isset($_COOKIE['orbit_preferred_language'])) @if ($lang->language->name === $_COOKIE['orbit_preferred_language']) selected @endif @else @if($lang->language->name === $default_lang) selected @endif @endif>{{{ $lang->language->name_long }}} @if($lang->language->name === $default_lang) (Default) @endif</option>
-                                @endforeach
+                            @foreach ($languages as $lang)
+                                <option value="{{{ $lang->language->name }}}" @if ($lang->language->name === App::getLocale()) selected @endif>
+                                    {{{ $lang->language->name_long }}} @if($lang->language->name === $default_lang) (Default) @endif
+                                </option>
+                            @endforeach
                         @endif
                     </select>
                 </div>
@@ -121,12 +123,13 @@
                         </form>
                     </div>
                     <div class="col-xs-4 text-center">
-                        <form name="googleLoginForm" id="googleLoginForm" action="{{ URL::route('mobile-ci.social_google_callback') }}" method="get">
+                        <form name="googleLoginForm" id="googleLoginForm" action="{{ Config::get('orbit.social_login.google.callback_url') }}" method="get">
                             <div class="form-group">
                                 <input type="hidden" class="form-control" name="time" value="{{{ time() }}}"/>
                                 <input type="hidden" class="form-control" name="from_captive" value="{{{ Input::get('from_captive', '') }}}"/>
                                 <input type="hidden" class="form-control" name="mac_address" value="{{{ Input::get('mac_address', '') }}}"/>
                                 <input type="hidden" class="form-control" name="from_url" value="{{{ \Route::currentRouteName() }}}"/>
+                                <input type="hidden" class="form-control" name="mid" value="{{{ $retailer->merchant_id }}}"/>
                                 <input type="hidden" class="form-control to_url" name="to_url" value=""/>
                             </div>
                             <div class="form-group">

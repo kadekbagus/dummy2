@@ -999,12 +999,12 @@ class MobileCIAPIController extends BaseCIController
 
         $helper = $fb->getRedirectLoginHelper();
         $permissions = Config::get('orbit.social.facebook.scope', ['email', 'public_profile']);
-        $facebookCallbackUrl = URL::route('mobile-ci.social_login_callback', 
+        $facebookCallbackUrl = URL::route('mobile-ci.social_login_callback',
             [
                 'caller_url' => $caller_url ,
                 'orbit_origin' => 'facebook',
                 'from_captive' => OrbitInput::post('from_captive'),
-                'mac_address' => \Input::get('mac_address', ''), 
+                'mac_address' => \Input::get('mac_address', ''),
                 'redirect_to_url' => $redirect_to_url
             ]);
 
@@ -1054,24 +1054,17 @@ class MobileCIAPIController extends BaseCIController
         $code = \Input::get('code', NULL);
         $state = \Input::get('state', NULL);
         $caller_url = OrbitInput::get('from_url', 'ci-customer-home');
+        $mall_id = OrbitInput::get('mall_id', NULL);
         $redirect_to_url = OrbitInput::get('to_url', URL::route('ci-customer-home'));
-
-        $googleService = OAuth::consumer( 'Google' );
+        $userEmail = OrbitInput::get('email', '');
+        $firstName = OrbitInput::get('first_name', '');
+        $lastName = OrbitInput::get('last_name', '');
+        $gender = OrbitInput::get('gender', '');
+        $socialid = OrbitInput::get('socialid', '');
 
         // todo handle google error
         if ( !empty( $code ) ) {
             try {
-                Config::set('orbit.session.availability.query_string', $oldRouteSessionConfigValue);
-                $token = $googleService->requestAccessToken( $code );
-
-                $user = json_decode( $googleService->request( 'https://www.googleapis.com/oauth2/v1/userinfo' ), true );
-
-                $userEmail = isset($user['email']) ? $user['email'] : '';
-                $firstName = isset($user['given_name']) ? $user['given_name'] : '';
-                $lastName = isset($user['family_name']) ? $user['family_name'] : '';
-                $gender = isset($user['gender']) ? $user['gender'] : '';
-                $socialid = isset($user['id']) ? $user['id'] : '';
-
                 $data = [
                     'email' => $userEmail,
                     'fname' => $firstName,
@@ -1101,7 +1094,10 @@ class MobileCIAPIController extends BaseCIController
                     $query['from_captive'] = 'yes';
                 }
 
-                $retailer = $this->getRetailerInfo();
+                $retailer = Mall::excludeDeleted()->where('merchant_id', $mall_id)->first();
+                if (empty($retailer)) {
+                    return Redirect::route('ci-customer-home', ['error' => 'Mall not found.']);
+                }
                 $loggedInUser = $this->doAutoLogin($userEmail);
                 if (is_object($loggedInUser)) {
                     $this->loginStage2($loggedInUser, $retailer);
@@ -1130,6 +1126,7 @@ class MobileCIAPIController extends BaseCIController
                     $_POST['lastname'] = $lastName;
                     $_POST['gender'] = $gender;
                     $_POST['status'] = 'active';
+                    $_POST['mall_id'] = $mall_id;
                     $_POST['sign_up_origin'] = 'google';
                     $response = \LoginAPIController::create('raw')->setUseTransaction(false)->postRegisterUserInShop();
                     if ($response->code !== 0) {
@@ -1160,26 +1157,8 @@ class MobileCIAPIController extends BaseCIController
             }
 
         } else {
-            try {
-                // get googleService authorization
-                $url = $googleService->getAuthorizationUri();
-                // override state param to have our destination url inside
-                $state_array = array('redirect_to_url' => $redirect_to_url);
-                $state = json_encode($state_array);
-                $stateString = $this->base64UrlEncode($state);
-                $parsed_url = parse_url((string)$url);
-                $query = parse_str($parsed_url['query'], $output);
-                $output['state'] = $stateString;
-                $query_string = http_build_query($output);
-                $parsed_url['query'] = $query_string;
-                // rebuild the googleService authorization url
-                $new_url = $parsed_url['scheme'] . '://' . $parsed_url['host'] . $parsed_url['path'] . '?' . $parsed_url['query'];
-
-                return Redirect::to((string)$new_url);
-            } catch (Exception $e) {
-                $errorMessage = 'Error: ' . $e->getMessage();
-                return Redirect::route($caller_url, ['error' => $errorMessage]);
-            }
+            $errorMessage = 'Error: Google sign in failed, empty code.';
+            return Redirect::route($caller_url, ['error' => $errorMessage]);
         }
     }
 
@@ -8157,7 +8136,8 @@ class MobileCIAPIController extends BaseCIController
      */
     private function getDefaultLanguage($mall)
     {
-        $language = \Language::where('name', '=', $mall->mobile_default_language)->first();
+        // English is default language
+        $language = \Language::where('name', '=', 'en')->first();
         if(isset($language) && count($language) > 0){
             $defaultLanguage = \MerchantLanguage::excludeDeleted()
                 ->where('merchant_id', '=', $mall->merchant_id)
@@ -9287,7 +9267,7 @@ class MobileCIAPIController extends BaseCIController
     }
 
     public function remove_querystring_var($url, $key)
-    { 
+    {
         $parsed_url = parse_url((string)$url);
         if(isset($parsed_url['query'])){
             $query = parse_str($parsed_url['query'], $output);

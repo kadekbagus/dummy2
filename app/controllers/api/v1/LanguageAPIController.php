@@ -27,12 +27,20 @@ class LanguageAPIController extends ControllerAPI
         try {
             $this->checkAuth();
 
-            $status = Input::get('status');
-            
-            $languages = Language::orderBy('language_order', 'DESC');
+            $prefix = DB::getTablePrefix();
+            $languages = Language::select('languages.language_id', 'languages.name', 'languages.name_native', 'languages.name_long', 'languages.language_order', 'languages.created_at', 'languages.updated_at', 'languages.status')
+                                ->leftJoin('merchant_languages', 'merchant_languages.language_id', '=', 'languages.language_id')
+                                ->orderBy('language_order', 'DESC')
+                                ->distinct();
 
             OrbitInput::get('status', function($status) use ($languages) {
-                $languages->where('status', '=', $status);
+                $languages->where('languages.status', '=', $status);
+            });
+
+            OrbitInput::get('mall_id', function($mall_id) use ($languages, $prefix) {
+                $mall_id = (array) $mall_id;
+                $languages->whereIn('merchant_languages.merchant_id', $mall_id)
+                         ->where('merchant_languages.status', '=', 'active');
             });
 
             $_languages = clone $languages;
