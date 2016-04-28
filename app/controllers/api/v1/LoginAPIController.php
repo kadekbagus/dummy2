@@ -428,7 +428,7 @@ class LoginAPIController extends ControllerAPI
             $status = OrbitInput::post('status', null);
             $from = OrbitInput::post('from');
             $sign_up_origin = OrbitInput::post('sign_up_origin', 'form');
-            $mall_id = $this->getRetailerId();
+            $mall_id = OrbitInput::post('mall_id', $this->getRetailerId());
             $signup_from = 'Sign Up via Mobile (Email Address)';
 
             $validator = Validator::make(
@@ -453,7 +453,7 @@ class LoginAPIController extends ControllerAPI
 
             $mall = Mall::where('merchant_id', $mall_id)->first();
 
-            list($newuser, $userdetail, $apikey) = $this->createCustomerUser($email, $password, $firstname, $lastname, $gender, null, null, null, $status);
+            list($newuser, $userdetail, $apikey) = $this->createCustomerUser($email, $password, $firstname, $lastname, $gender, null, null, null, $status, $mall_id);
 
             $this->response->data = $newuser;
 
@@ -1526,10 +1526,10 @@ class LoginAPIController extends ControllerAPI
      * @return array [User, UserDetail, ApiKey]
      * @throws Exception
      */
-    public function createCustomerUser($email, $password, $firstname, $lastname, $gender, $userId = null, $userDetailId = null, $apiKeyId = null, $userStatus = null)
+    public function createCustomerUser($email, $password, $firstname, $lastname, $gender, $userId = null, $userDetailId = null, $apiKeyId = null, $userStatus = null, $mall_id = null)
     {
         // The retailer (shop) which this registration taken
-        $retailerId = $this->getRetailerId();
+        $retailerId = ! empty($mall_id) ? $mall_id : $this->getRetailerId();
         $retailer = Mall::excludeDeleted()
             ->where('merchant_id', $retailerId)
             ->first();

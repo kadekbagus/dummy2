@@ -400,6 +400,7 @@ class TenantAPIController extends ControllerAPI
             $country = OrbitInput::post('country');
             $phone = OrbitInput::post('phone');
             $fax = OrbitInput::post('fax');
+            $translations = OrbitInput::post('translations');
             $start_date_activity = OrbitInput::post('start_date_activity');
             $end_date_activity = OrbitInput::post('end_date_activity');
 
@@ -538,12 +539,17 @@ class TenantAPIController extends ControllerAPI
                 $countryName = $countryObject->name;
             }
 
+            // Get english language_id
+            $idLanguageEnglish = Language::select('language_id')
+                                ->where('name', '=', 'en')
+                                ->first();
+
             $newtenant = new Tenant();
             $newtenant->omid = '';
             $newtenant->orid = '';
             $newtenant->email = $email;
             $newtenant->name = $name;
-            $newtenant->description = $description;
+            // $newtenant->description = $description;
             $newtenant->address_line1 = $address_line1;
             $newtenant->address_line2 = $address_line2;
             $newtenant->address_line3 = $address_line3;
@@ -582,6 +588,25 @@ class TenantAPIController extends ControllerAPI
             $newtenant->external_object_id = $external_object_id;
             $newtenant->box_url = $box_url;
 
+            // Check for english content
+            $dataTranslations = @json_decode($translations);
+            if (json_last_error() != JSON_ERROR_NONE) {
+                OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'translations']));
+            }
+
+            // Get english tenant description for saving to default language
+            foreach ($dataTranslations as $key => $val) {
+                // Validation language id from translation
+                $language = Language::where('language_id', '=', $key)->first();
+                if (empty($language)) {
+                    OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.merchant_language'));
+                }
+
+                if ($key === $idLanguageEnglish->language_id) {
+                    $newtenant->description = $val->description;
+                }
+            }
+
             Event::fire('orbit.tenant.postnewtenant.before.save', array($this, $newtenant));
 
             $newtenant->save();
@@ -610,12 +635,6 @@ class TenantAPIController extends ControllerAPI
                 $categoryMerchants[] = $categoryMerchant;
             }
             $newtenant->categories = $categoryMerchants;
-
-            // @author Irianto Pratama <irianto@dominopos.com>
-            // save RetailerTenant - link to tenant
-            OrbitInput::post('tenant_id', function($tenant_id) use ($newtenant) {
-                $this->validateAndSaveLinkToTenant($newtenant, $tenant_id);
-            });
 
             // save Keyword
             $tenantKeywords = array();
@@ -653,15 +672,6 @@ class TenantAPIController extends ControllerAPI
             $newtenant->keywords = $tenantKeywords;
 
             Event::fire('orbit.tenant.postnewtenant.after.save', array($this, $newtenant));
-
-            // @author Irianto Pratama <irianto@dominopos.com>
-            // save default_translation
-            $default_translation = [
-                $id_language_default => [
-                    'description' => $newtenant->description
-                ]
-            ];
-            $this->validateAndSaveTranslations($newtenant, json_encode($default_translation), 'create');
 
             OrbitInput::post('translations', function($translation_json_string) use ($newtenant) {
                 $this->validateAndSaveTranslations($newtenant, $translation_json_string, 'create');
@@ -888,6 +898,7 @@ class TenantAPIController extends ControllerAPI
             $masterbox_number = OrbitInput::post('masterbox_number');
             $category_ids = OrbitInput::post('category_ids');
             $box_url = OrbitInput::post('box_url');
+            $translations = OrbitInput::post('translations');
 
             $default_merchant_language_id = MerchantLanguage::getLanguageIdByMerchant($mall_id, static::DEFAULT_LANG);
             $id_language_default = OrbitInput::post('id_language_default', $default_merchant_language_id);
@@ -962,9 +973,9 @@ class TenantAPIController extends ControllerAPI
                 $updatedtenant->name = $name;
             });
 
-            OrbitInput::post('description', function($description) use ($updatedtenant) {
-                $updatedtenant->description = $description;
-            });
+            // OrbitInput::post('description', function($description) use ($updatedtenant) {
+            //     $updatedtenant->description = $description;
+            // });
 
             OrbitInput::post('address_line1', function($address_line1) use ($updatedtenant) {
                 $updatedtenant->address_line1 = $address_line1;
@@ -1115,19 +1126,43 @@ class TenantAPIController extends ControllerAPI
                 $this->validateAndSaveLinkToTenant($updatedtenant, $tenant_id);
             });
 
-            // @author Irianto Pratama <irianto@dominopos.com>
-            $default_translation = [
-                $id_language_default => [
-                    'description' => $updatedtenant->description
-                ]
-            ];
-            $this->validateAndSaveTranslations($updatedtenant, json_encode($default_translation), 'update');
+            // // @author Irianto Pratama <irianto@dominopos.com>
+            // $default_translation = [
+            //     $id_language_default => [
+            //         'description' => $updatedtenant->description
+            //     ]
+            // ];
+            // $this->validateAndSaveTranslations($updatedtenant, json_encode($default_translation), 'update');
 
             OrbitInput::post('translations', function($translation_json_string) use ($updatedtenant) {
                 $this->validateAndSaveTranslations($updatedtenant, $translation_json_string, 'update');
             });
 
             $updatedtenant->modified_by = $this->api->user->user_id;
+
+            // Get english language_id
+            $idLanguageEnglish = Language::select('language_id')
+                                ->where('name', '=', 'en')
+                                ->first();
+
+            // Check for english content
+            $dataTranslations = @json_decode($translations);
+            if (json_last_error() != JSON_ERROR_NONE) {
+                OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'translations']));
+            }
+
+            // Get english tenant description for saving to default language
+            foreach ($dataTranslations as $key => $val) {
+                // Validation language id from translation
+                $language = Language::where('language_id', '=', $key)->first();
+                if (empty($language)) {
+                    OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.merchant_language'));
+                }
+
+                if ($key === $idLanguageEnglish->language_id) {
+                    $updatedtenant->description = $val->description;
+                }
+            }
 
             Event::fire('orbit.tenant.postupdatetenant.before.save', array($this, $updatedtenant));
 
@@ -2606,7 +2641,7 @@ class TenantAPIController extends ControllerAPI
         // Check the validity of URL
         Validator::extend('orbit.formaterror.url.web', function ($attribute, $value, $parameters) {
             $url = 'http://' . $value;
-            
+
             $pattern = '@^((http:\/\/www\.)|(www\.)|(http:\/\/))[a-zA-Z0-9._-]+\.[a-zA-Z.]{2,5}$@';
 
             if (! preg_match($pattern, $url)) {
