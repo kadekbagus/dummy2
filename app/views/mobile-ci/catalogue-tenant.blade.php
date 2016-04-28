@@ -346,11 +346,20 @@
         var fid = '{{{Input::get('fid', '')}}}';
         var promotion_id = '{{{Input::get('promotion_id', '')}}}';
 
-        // Tracking window scroll position
-        $(window).on('scroll', function() {
+        function recordScrollTop() {
+            var scrollTop = $(this).scrollTop();
             if (window.history.state && window.history.state.scrollTop !== undefined)
-                window.history.state.scrollTop = $(window).scrollTop();
-        });
+                window.history.state.scrollTop = scrollTop;
+        }
+
+        if (navigator.userAgent.match(/(iPod|iPhone|iPad|Android)/i)) {
+            // Events to track window scroll position on mobile device
+            $('body').on('touchmove', recordScrollTop);
+        }
+        else {
+            // Events to track window scroll position on desktop browser
+            $(window).on('scroll', recordScrollTop);
+        }
 
         $('#load-more-tenants').click(function(){
             var btn = $(this);
@@ -409,7 +418,15 @@
             // Check if there's scrollTop in history state.
             if (window.history.state.scrollTop) {
                 var scrollTop = window.history.state.scrollTop;
-                $(window).scrollTop(scrollTop);
+
+                if (navigator.userAgent.match(/(iPod|iPhone|iPad|Android)/i)) {
+                    // Mobile device
+                    $('body').scrollTop(scrollTop);
+                }
+                else {
+                    // Desktop browser
+                    $(window).scrollTop(scrollTop);
+                }
             }
         }
     });
