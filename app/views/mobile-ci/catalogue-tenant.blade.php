@@ -419,14 +419,16 @@
             if (window.history.state.scrollTop) {
                 var scrollTop = window.history.state.scrollTop;
 
-                if (navigator.userAgent.match(/(iPod|iPhone|iPad|Android)/i)) {
-                    // Mobile device
-                    $('body').scrollTop(scrollTop);
-                }
-                else {
-                    // Desktop browser
-                    $(window).scrollTop(scrollTop);
-                }
+                setTimeout(function() {
+                    if (navigator.userAgent.match(/(iPod|iPhone|iPad|Android)/i)) {
+                        // Mobile device
+                        $("body").scrollTop(scrollTop);
+                    }
+                    else {
+                        // Desktop browser
+                        $(window).scrollTop(scrollTop);
+                    }
+                }, 1000);
             }
         }
     });
