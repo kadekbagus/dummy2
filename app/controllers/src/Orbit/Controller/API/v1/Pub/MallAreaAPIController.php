@@ -51,6 +51,33 @@ class MallAreaAPIController extends ControllerAPI
             $skip = PaginationNumber::parseSkipFromGet();
             $malls->skip($skip);
 
+            // Default sort by
+            $sortBy = 'merchants.name';
+            // Default sort mode
+            $sortMode = 'asc';
+
+            OrbitInput::get('sortby', function($_sortBy) use (&$sortBy)
+            {
+                // Map the sortby request to the real column name
+                $sortByMapping = array(
+                    'mall_name'         => 'merchants.name',
+                    'city'              => 'merchants.city',
+                    'created_at'        => 'merchants.created_at',
+                    'updated_at'        => 'merchants.updated_at'
+                );
+
+                $sortBy = $sortByMapping[$_sortBy];
+            });
+
+            OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
+            {
+                if (strtolower($_sortMode) !== 'asc') {
+                    $sortMode = 'desc';
+                }
+            });
+            
+            $malls->orderBy($sortBy, $sortMode);
+
             $listmalls = $malls->get();
             $count = RecordCounter::create($_malls)->count();
 

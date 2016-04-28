@@ -47,13 +47,11 @@ class MallNearbyAPIController extends ControllerAPI
                          ->includeLatLong()
                          ->includeDummyOpeningHours()   // @Todo: Remove this in the future
                          ->join('merchant_geofences', 'merchant_geofences.merchant_id', '=', 'merchants.merchant_id');
-
-            if ((int) $distance !== -1) {
-                $malls->nearBy($lat, $long, $distance);
-            }
+                         
+            $callNearBy = TRUE;
 
             // Filter
-            OrbitInput::get('keyword_search', function ($keyword) use ($malls) {
+            OrbitInput::get('keyword_search', function ($keyword) use ($malls, $callNearBy) {
                 $mainKeyword = explode(" ", $keyword);
 
                 $malls->where(function($q) use ($mainKeyword) {
@@ -64,7 +62,14 @@ class MallNearbyAPIController extends ControllerAPI
                         });
                     }
                 });
+
+                // Keyword does not need the distance we make it false
+                $callNearBy = FALSE;
             });
+
+            if ($callNearBy) {
+                $malls->nearBy($lat, $long, $distance);
+            }
 
             // Filter by mall_id
             OrbitInput::get('mall_id', function ($mallid) use ($malls) {
