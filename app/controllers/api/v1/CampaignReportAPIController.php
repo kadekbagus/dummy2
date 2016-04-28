@@ -476,7 +476,7 @@ class CampaignReportAPIController extends ControllerAPI
             if (count($campaign->getBindings()) > 0) {
                 foreach($campaign->getBindings() as $binding)
                 {
-                  $value = is_numeric($binding) ? $binding : "'" . $binding . "'";
+                  $value = is_numeric($binding) ? $binding : $this->quote($binding);
                   $_campaign_sql = preg_replace('/\?/', $value, $_campaign_sql, 1);
                 }
             }
@@ -889,7 +889,7 @@ class CampaignReportAPIController extends ControllerAPI
 
             foreach($campaign->getBindings() as $binding)
             {
-              $value = is_numeric($binding) ? $binding : "'" . $binding . "'";
+              $value = is_numeric($binding) ? $binding : $this->quote($binding);
               $_campaign_sql = preg_replace('/\?/', $value, $_campaign_sql, 1);
             }
 

@@ -1656,7 +1656,7 @@ class CouponReportAPIController extends ControllerAPI
             if (count($coupons->getBindings()) > 0) {
                 foreach($coupons->getBindings() as $binding)
                 {
-                  $value = is_numeric($binding) ? $binding : "'" . $binding . "'";
+                  $value = is_numeric($binding) ? $binding : $this->quote($binding);
                   $_coupons_sql = preg_replace('/\?/', $value, $_coupons_sql, 1);
                 }
             }
