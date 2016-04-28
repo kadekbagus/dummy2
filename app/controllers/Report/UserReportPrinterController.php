@@ -289,7 +289,7 @@ class UserReportPrinterController extends DataPrinterController
                 printf("%s,%s,%s,%s,%s,%s,%s\n", 'User Report', '', '', '', '', '', '');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
 
-                $datePeriod = $this->printDatePeriod($startDate, $endDate);
+                $datePeriod = $this->printDatePeriod($startDate, $endDate, 'd F Y');
 
                 foreach ($userReportHeaderExcludePercent as $value) {
                     printf('%s,%s', 'Total '.$value['title'], $value['total']);

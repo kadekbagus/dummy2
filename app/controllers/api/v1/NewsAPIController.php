@@ -11,6 +11,7 @@ use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Helper\EloquentRecordCounter as RecordCounter;
 use Carbon\Carbon as Carbon;
+use Queue;
 
 class NewsAPIController extends ControllerAPI
 {
@@ -429,49 +430,6 @@ class NewsAPIController extends ControllerAPI
                 }
             }
 
-            //calculate spending
-            foreach ($mallid as $mall) {
-
-                $campaign_id = $newnews->news_id;
-                $campaign_type = $object_type;
-                $procResults = DB::statement("CALL prc_campaign_detailed_cost({$this->quote($campaign_id)}, {$this->quote($campaign_type)}, NULL, NULL, {$this->quote($mall)})");
-
-                if ($procResults === false) {
-                    // Do Nothing
-                }
-
-                $getspending = DB::table(DB::raw('tmp_campaign_cost_detail'))->first();
-
-                $mallTimezone = $this->getTimezone($mall);
-                $nowMall = Carbon::now($mallTimezone);
-                $dateNowMall = $nowMall->toDateString();
-
-                // if campaign begin date is same with date now
-                if ($dateNowMall === date('Y-m-d', strtotime($begin_date))) {
-                    $dailySpending = new CampaignDailySpending();
-                    $dailySpending->date = $getspending->date_in_utc;
-                    $dailySpending->campaign_type = $campaign_type;
-                    $dailySpending->campaign_id = $campaign_id;
-                    $dailySpending->mall_id = $mall;
-                    $dailySpending->number_active_tenants = $getspending->campaign_number_tenant;
-                    $dailySpending->base_price = $getspending->base_price;
-                    $dailySpending->campaign_status = $getspending->campaign_status;
-                    $dailySpending->total_spending = 0;
-                    $dailySpending->save();
-                }
-            }
-
-            // Save campaign spending with default spending 0
-            // remove after migration new table, campaign daily spending
-            $campaignSpending = new CampaignSpendingCount();
-            $campaignSpending->campaign_id = $newnews->news_id;
-            $campaignSpending->campaign_type = $object_type;
-            $campaignSpending->spending = 0;
-            $campaignSpending->mall_id = $mall_id;
-            $campaignSpending->begin_date = $begin_date;
-            $campaignSpending->end_date = $end_date;
-            $campaignSpending->save();
-
             // translation for mallnews
             OrbitInput::post('translations', function($translation_json_string) use ($newnews, $mallid) {
                 $this->validateAndSaveTranslations($newnews, $translation_json_string, 'create');
@@ -509,10 +467,15 @@ class NewsAPIController extends ControllerAPI
             }
 
             $this->response->data = $newnews;
-            #$this->response->data->translation_default = $news_translation_default;
 
             // Commit the changes
             $this->commit();
+
+            // queue for campaign spending news & promotion
+            Queue::push('Orbit\\Queue\\SpendingCalculation', [
+                'campaign_id' => $newnews->news_id,
+                'campaign_type' => $object_type,
+            ]);
 
             // Successfull Creation
             $activityNotes = sprintf('News Created: %s', $newnews->news_name);
@@ -1186,53 +1149,18 @@ class NewsAPIController extends ControllerAPI
                 }
             }
 
-            //calculate spending
-            foreach ($mallid as $mall) {
-
-                $campaign_id = $news_id;
-                $campaign_type = $object_type;
-                $procResults = DB::statement("CALL prc_campaign_detailed_cost({$this->quote($campaign_id)}, {$this->quote($campaign_type)}, NULL, NULL, {$this->quote($mall)})");
-
-                if ($procResults === false) {
-                    // Do Nothing
-                }
-
-                $getspending = DB::table(DB::raw('tmp_campaign_cost_detail'))->first();
-
-                $mallTimezone = $this->getTimezone($mall);
-                $nowMall = Carbon::now($mallTimezone);
-                $dateNowMall = $nowMall->toDateString();
-                $beginMall = date('Y-m-d', strtotime($begin_date));
-                $endMall = date('Y-m-d', strtotime($end_date));
-
-                // only calculate spending when update date between start and date of campaign
-                if ($dateNowMall >= $beginMall && $dateNowMall <= $endMall) {
-                    $daily = CampaignDailySpending::where('date', '=', $getspending->date_in_utc)->where('campaign_id', '=', $campaign_id)->where('mall_id', '=', $mall)->first();
-
-                    if ($daily['campaign_daily_spending_id']) {
-                        $dailySpending = CampaignDailySpending::find($daily['campaign_daily_spending_id']);
-                    } else {
-                        $dailySpending = new CampaignDailySpending;
-                    }
-
-                    $dailySpending->date = $getspending->date_in_utc;
-                    $dailySpending->campaign_type = $campaign_type;
-                    $dailySpending->campaign_id = $campaign_id;
-                    $dailySpending->mall_id = $mall;
-                    $dailySpending->number_active_tenants = $getspending->campaign_number_tenant;
-                    $dailySpending->base_price = $getspending->base_price;
-                    $dailySpending->campaign_status = $getspending->campaign_status;
-                    $dailySpending->total_spending = $getspending->daily_cost;
-                    $dailySpending->save();
-                }
-            }
-
             Event::fire('orbit.news.postupdatenews.after.save', array($this, $updatednews));
             $this->response->data = $updatednews;
             // $this->response->data->translation_default = $updatednews_default_language;
 
             // Commit the changes
             $this->commit();
+
+            // queue for campaign spending news & promotion
+            Queue::push('Orbit\\Queue\\SpendingCalculation', [
+                'campaign_id' => $news_id,
+                'campaign_type' => $object_type,
+            ]);
 
             // Successfull Update
             $activityNotes = sprintf('News updated: %s', $updatednews->news_name);
@@ -1681,7 +1609,7 @@ class NewsAPIController extends ControllerAPI
                                     LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
                                     WHERE om.merchant_id = {$prefix}news.mall_id)
                                 THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END  AS campaign_status"),
-                            DB::raw("CASE WHEN {$prefix}campaign_price.base_price is null THEN 0 ELSE {$prefix}campaign_price.base_price END AS base_price, ((CASE WHEN {$prefix}campaign_price.base_price is null THEN 0 ELSE {$prefix}campaign_price.base_price END) * (DATEDIFF({$prefix}news.end_date, {$prefix}news.begin_date) + 1) * (COUNT({$prefix}news_merchant.news_merchant_id))) AS estimated"))
+                            DB::raw("CASE WHEN {$prefix}campaign_price.base_price is null THEN 0 ELSE {$prefix}campaign_price.base_price END AS base_price, ((CASE WHEN {$prefix}campaign_price.base_price is null THEN 0 ELSE {$prefix}campaign_price.base_price END) * (DATEDIFF({$prefix}news.end_date, {$prefix}news.begin_date) + 1) * (SELECT COUNT(nm.news_merchant_id) FROM {$prefix}news_merchant as nm WHERE nm.object_type != 'mall' and nm.news_id = {$prefix}news.news_id)) AS estimated"))
                         ->leftJoin('campaign_price', function ($join) use ($object_type) {
                                 $join->on('news.news_id', '=', 'campaign_price.campaign_id')
                                      ->where('campaign_price.campaign_type', '=', $object_type);

@@ -11,6 +11,7 @@ use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Helper\EloquentRecordCounter as RecordCounter;
 use Carbon\Carbon as Carbon;
+use Queue;
 
 class CouponAPIController extends ControllerAPI
 {
@@ -698,38 +699,6 @@ class CouponAPIController extends ControllerAPI
                 }
             }
 
-            //calculate spending
-            foreach ($mallid as $mall) {
-
-                $campaign_id = $newcoupon->promotion_id;
-                $campaign_type = 'coupon';
-                $procResults = DB::statement("CALL prc_campaign_detailed_cost({$this->quote($campaign_id)}, {$this->quote($campaign_type)}, NULL, NULL, {$this->quote($mall)})");
-
-                if ($procResults === false) {
-                    // Do Nothing
-                }
-
-                $getspending = DB::table(DB::raw('tmp_campaign_cost_detail'))->first();
-
-                $mallTimezone = $this->getTimezone($mall);
-                $nowMall = Carbon::now($mallTimezone);
-                $dateNowMall = $nowMall->toDateString();
-
-                // if campaign begin date is same with date now
-                if ($dateNowMall === date('Y-m-d', strtotime($begin_date))) {
-                    $dailySpending = new CampaignDailySpending();
-                    $dailySpending->date = $getspending->date_in_utc;
-                    $dailySpending->campaign_type = $campaign_type;
-                    $dailySpending->campaign_id = $campaign_id;
-                    $dailySpending->mall_id = $mall;
-                    $dailySpending->number_active_tenants = 0;
-                    $dailySpending->base_price = $getspending->base_price;
-                    $dailySpending->campaign_status = $getspending->campaign_status;
-                    $dailySpending->total_spending = 0;
-                    $dailySpending->save();
-                }
-            }
-
             OrbitInput::post('translations', function($translation_json_string) use ($newcoupon, $mallid) {
                 $this->validateAndSaveTranslations($newcoupon, $translation_json_string, 'create');
             });
@@ -769,6 +738,12 @@ class CouponAPIController extends ControllerAPI
 
             // Commit the changes
             $this->commit();
+
+            // queue for campaign spending coupon
+            Queue::push('Orbit\\Queue\\SpendingCalculation', [
+                'campaign_id' => $newcoupon->promotion_id,
+                'campaign_type' => 'coupon',
+            ]);
 
             // Successfull Creation
             $activityNotes = sprintf('Coupon Created: %s', $newcoupon->promotion_name);
@@ -1726,46 +1701,6 @@ class CouponAPIController extends ControllerAPI
                 $updatedcoupon->keywords = $couponKeywords;
             });
 
-            //calculate spending
-            foreach ($mallid as $mall) {
-                $campaign_id = $promotion_id;
-                $campaign_type = 'coupon';
-                $procResults = DB::statement("CALL prc_campaign_detailed_cost({$this->quote($campaign_id)}, {$this->quote($campaign_type)}, NULL, NULL, {$this->quote($mall)})");
-
-                if ($procResults === false) {
-                    // Do Nothing
-                }
-
-                $getspending = DB::table(DB::raw('tmp_campaign_cost_detail'))->first();
-
-                $mallTimezone = $this->getTimezone($mall);
-                $nowMall = Carbon::now($mallTimezone);
-                $dateNowMall = $nowMall->toDateString();
-                $beginMall = date('Y-m-d', strtotime($begin_date));
-                $endMall = date('Y-m-d', strtotime($end_date));
-
-                // only calculate spending when update date between start and date of campaign
-                if ($dateNowMall >= $beginMall && $dateNowMall <= $endMall) {
-                    $daily = CampaignDailySpending::where('date', '=', $getspending->date_in_utc)->where('campaign_id', '=', $campaign_id)->where('mall_id', '=', $mall)->first();
-
-                    if ($daily['campaign_daily_spending_id']) {
-                        $dailySpending = CampaignDailySpending::find($daily['campaign_daily_spending_id']);
-                    } else {
-                        $dailySpending = new CampaignDailySpending;
-                    }
-
-                    $dailySpending->date = $getspending->date_in_utc;
-                    $dailySpending->campaign_type = $campaign_type;
-                    $dailySpending->campaign_id = $campaign_id;
-                    $dailySpending->mall_id = $mall;
-                    $dailySpending->number_active_tenants = $getspending->campaign_number_tenant;
-                    $dailySpending->base_price = $getspending->base_price;
-                    $dailySpending->campaign_status = $getspending->campaign_status;
-                    $dailySpending->total_spending = $getspending->daily_cost;
-                    $dailySpending->save();
-                }
-            }
-
             Event::fire('orbit.coupon.postupdatecoupon.after.save', array($this, $updatedcoupon));
 
             OrbitInput::post('translations', function($translation_json_string) use ($updatedcoupon, $mallid) {
@@ -1807,6 +1742,12 @@ class CouponAPIController extends ControllerAPI
 
             // Commit the changes
             $this->commit();
+
+            // queue for campaign spending coupon
+            Queue::push('Orbit\\Queue\\SpendingCalculation', [
+                'campaign_id' => $promotion_id,
+                'campaign_type' => 'coupon',
+            ]);
 
             // Successfull Update
             $activityNotes = sprintf('Coupon updated: %s', $updatedcoupon->promotion_name);
@@ -2295,7 +2236,7 @@ class CouponAPIController extends ControllerAPI
                     ELSE
                         {$table_prefix}promotions.status
                     END as 'coupon_status'"),
-                    DB::raw("((CASE WHEN {$table_prefix}campaign_price.base_price is null THEN 0 ELSE {$table_prefix}campaign_price.base_price END) * (DATEDIFF({$table_prefix}promotions.end_date, {$table_prefix}promotions.begin_date) + 1) * (COUNT({$table_prefix}promotion_retailer.promotion_retailer_id))) AS estimated"),
+                    DB::raw("((CASE WHEN {$table_prefix}campaign_price.base_price is null THEN 0 ELSE {$table_prefix}campaign_price.base_price END) * (DATEDIFF({$table_prefix}promotions.end_date, {$table_prefix}promotions.begin_date) + 1) * (SELECT COUNT(pr.promotion_retailer_id) FROM {$table_prefix}promotion_retailer as pr WHERE pr.object_type != 'mall' and pr.promotion_id = {$table_prefix}promotions.promotion_id)) AS estimated"),
                     DB::raw("COUNT(DISTINCT {$table_prefix}promotion_retailer.promotion_retailer_id) as total_location")
                 )
                 ->leftJoin('campaign_price', function ($join) {

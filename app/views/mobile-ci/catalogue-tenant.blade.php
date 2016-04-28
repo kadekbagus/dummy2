@@ -346,6 +346,12 @@
         var fid = '{{{Input::get('fid', '')}}}';
         var promotion_id = '{{{Input::get('promotion_id', '')}}}';
 
+        // Tracking window scroll position
+        $(window).on('scroll', function() {
+            if (window.history.state && window.history.state.scrollTop !== undefined)
+                window.history.state.scrollTop = $(window).scrollTop();
+        });
+
         $('#load-more-tenants').click(function(){
             var btn = $(this);
             btn.attr('disabled', 'disabled');
@@ -372,7 +378,7 @@
                         tenantStateObjects.records = window.history.state.tenantStateObjects.records.concat(tenantStateObjects.records);
                     }
 
-                    window.history.pushState({tenantStateObjects: tenantStateObjects}, "TenantStateObjects", "#");
+                    window.history.pushState({tenantStateObjects: tenantStateObjects, scrollTop: $(window).scrollTop()}, "CatalogueState", "#");
 
                     FB.XFBML.parse();
                 }
@@ -386,13 +392,24 @@
             });
         });
 
-        if (window.history.state && window.history.state.tenantStateObjects) {
-            var records = window.history.state.tenantStateObjects.records;
-            skip += records.length;
-            insertRecords(records);
 
-            if (skip >= window.history.state.tenantStateObjects.total_records) {
-                $('#load-more-tenants').remove();
+        // Check if window history state exists.
+        if (window.history.state) {
+            // Check if there's tenantStateObjects in history state.
+            if (window.history.state.tenantStateObjects) {
+                var records = window.history.state.tenantStateObjects.records;
+                skip += records.length;
+                insertRecords(records);
+
+                if (skip >= window.history.state.tenantStateObjects.total_records) {
+                    $('#load-more-tenants').remove();
+                }
+            }
+
+            // Check if there's scrollTop in history state.
+            if (window.history.state.scrollTop) {
+                var scrollTop = window.history.state.scrollTop;
+                $(window).scrollTop(scrollTop);
             }
         }
     });
