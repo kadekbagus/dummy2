@@ -801,7 +801,8 @@ class CouponReportAPIController extends ControllerAPI
             // Clone the query builder which still does not include the take,
             // skip, and order by
             $_coupons = clone $coupons;
-            $_coupons->select('promotions.promotion_id');
+            $_coupons->select('promotions.promotion_id')->groupBy('promotions.promotion_id');
+
 
             $_couponsCountReddem = clone $coupons;
             $_couponsCountIssued = clone $coupons;
