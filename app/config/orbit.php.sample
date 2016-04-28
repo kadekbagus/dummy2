@@ -132,6 +132,9 @@ return array(
 
         // back to map url
         'back_to_map_url' => 'http://gotomalls.cool',
+
+        // after sign in social url
+        'after_social_sign_in' => 'http://gotomalls.cool',
     ),
 
     // General contact data
@@ -2816,6 +2819,9 @@ return array(
             'app_secret'    => '',
             'version'       => 'v2.4'
         ],
+        'google' => array(
+            'callback_url' => 'http://mall-api.gotomalls.cool/pub/social-google-callback',
+        ),
     ],
 
     // set the external crawler user agent

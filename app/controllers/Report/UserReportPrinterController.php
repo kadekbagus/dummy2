@@ -27,17 +27,36 @@ class UserReportPrinterController extends DataPrinterController
         $selectedColumns = OrbitInput::get('selectedColumn');
         $user = $this->loggedUser;
 
+        $cols = 0;
         foreach ($selectedColumns as $selectedColumn) {
+            if($selectedColumn === 'sign_up') {
+                $cols = $cols+1;
+            }
+
+            if($selectedColumn === 'sign_in') {
+                $cols = $cols+1;
+            }
+
+            if($selectedColumn === 'unique_sign_in') {
+                $cols = $cols+1;
+            }
+
+            if($selectedColumn === 'unique_sign_in') {
+                $cols = $cols+1;
+            }
+
             if ($selectedColumn === 'sign_up_by_gender') {
                 $selectedColumns[] = 'sign_up_gender_male';
                 $selectedColumns[] = 'sign_up_gender_female';
                 $selectedColumns[] = 'sign_up_gender_unknown';
+                $cols = $cols+3;
             }
 
             if ($selectedColumn === 'sign_up_by_gender_percentage') {
                 $selectedColumns[] = 'sign_up_gender_male_percentage';
                 $selectedColumns[] = 'sign_up_gender_female_percentage';
                 $selectedColumns[] = 'sign_up_gender_unknown_percentage';
+                $cols = $cols+3;
             }
 
             if ($selectedColumn === 'sign_up_by_age_range') {
@@ -49,6 +68,7 @@ class UserReportPrinterController extends DataPrinterController
                 $selectedColumns[] = 'sign_up_age_55_to_64';
                 $selectedColumns[] = 'sign_up_age_65_plus';
                 $selectedColumns[] = 'sign_up_age_unknown';
+                $cols = $cols+8;
             }
 
             if ($selectedColumn === 'sign_up_by_age_range_percentage') {
@@ -60,30 +80,35 @@ class UserReportPrinterController extends DataPrinterController
                 $selectedColumns[] = 'sign_up_age_55_to_64_percentage';
                 $selectedColumns[] = 'sign_up_age_65_plus_percentage';
                 $selectedColumns[] = 'sign_up_age_unknown_percentage';
+                $cols = $cols+8;
             }
             
             if ($selectedColumn === 'sign_up_by_type') {
                 $selectedColumns[] = 'sign_up_type_facebook';
                 $selectedColumns[] = 'sign_up_type_google';
                 $selectedColumns[] = 'sign_up_type_form';
+                $cols = $cols+3;
             }
 
             if ($selectedColumn === 'sign_up_by_type_percentage') {
                 $selectedColumns[] = 'sign_up_type_facebook_percentage';
                 $selectedColumns[] = 'sign_up_type_google_percentage';
                 $selectedColumns[] = 'sign_up_type_form_percentage';
+                $cols = $cols+3;
             }
 
             if ($selectedColumn === 'sign_in_by_gender') {
                 $selectedColumns[] = 'sign_in_gender_male';
                 $selectedColumns[] = 'sign_in_gender_female';
                 $selectedColumns[] = 'sign_in_gender_unknown';
+                $cols = $cols+3;
             }
 
             if ($selectedColumn === 'sign_in_by_gender_percentage') {
                 $selectedColumns[] = 'sign_in_gender_male_percentage';
                 $selectedColumns[] = 'sign_in_gender_female_percentage';
                 $selectedColumns[] = 'sign_in_gender_unknown_percentage';
+                $cols = $cols+3;
             }
 
             if ($selectedColumn === 'sign_in_by_age_range') {
@@ -95,6 +120,7 @@ class UserReportPrinterController extends DataPrinterController
                 $selectedColumns[] = 'sign_in_age_55_to_64';
                 $selectedColumns[] = 'sign_in_age_65_plus';
                 $selectedColumns[] = 'sign_in_age_unknown';
+                $cols = $cols+8;
             }
 
             if ($selectedColumn === 'sign_in_by_age_range_percentage') {
@@ -106,18 +132,21 @@ class UserReportPrinterController extends DataPrinterController
                 $selectedColumns[] = 'sign_in_age_55_to_64_percentage';
                 $selectedColumns[] = 'sign_in_age_65_plus_percentage';
                 $selectedColumns[] = 'sign_in_age_unknown_percentage';
+                $cols = $cols+8;
             }
 
             if ($selectedColumn === 'unique_sign_in_by_gender') {
                 $selectedColumns[] = 'unique_sign_in_gender_male';
                 $selectedColumns[] = 'unique_sign_in_gender_female';
                 $selectedColumns[] = 'unique_sign_in_gender_unknown';
+                $cols = $cols+3;
             }
 
             if ($selectedColumn === 'unique_sign_in_by_gender_percentage') {
                 $selectedColumns[] = 'unique_sign_in_gender_male_percentage';
                 $selectedColumns[] = 'unique_sign_in_gender_female_percentage';
                 $selectedColumns[] = 'unique_sign_in_gender_unknown_percentage';
+                $cols = $cols+3;
             }
 
             if ($selectedColumn === 'unique_sign_in_by_age_range') {
@@ -129,6 +158,7 @@ class UserReportPrinterController extends DataPrinterController
                 $selectedColumns[] = 'unique_sign_in_age_55_to_64';
                 $selectedColumns[] = 'unique_sign_in_age_65_plus';
                 $selectedColumns[] = 'unique_sign_in_age_unknown';
+                $cols = $cols+8;
             }
 
             if ($selectedColumn === 'unique_sign_in_by_age_range_percentage') {
@@ -140,19 +170,23 @@ class UserReportPrinterController extends DataPrinterController
                 $selectedColumns[] = 'unique_sign_in_age_55_to_64_percentage';
                 $selectedColumns[] = 'unique_sign_in_age_65_plus_percentage';
                 $selectedColumns[] = 'unique_sign_in_age_unknown_percentage';
+                $cols = $cols+8;
             }
 
             if ($selectedColumn === 'status') {
                 $selectedColumns[] = 'unique_sign_in_status_active';
                 $selectedColumns[] = 'unique_sign_in_status_pending';
+                $cols = $cols+2;
             }
 
             if ($selectedColumn === 'status_percentage') {
                 $selectedColumns[] = 'unique_sign_in_status_active_percentage';
                 $selectedColumns[] = 'unique_sign_in_status_pending_percentage';
+                $cols = $cols+2;
             }
 
         }
+
         // Instantiate the UserReportAPIController to get the data
         $response = UserReportAPIController::create('raw')
                                             ->setReturnBuilder(TRUE)

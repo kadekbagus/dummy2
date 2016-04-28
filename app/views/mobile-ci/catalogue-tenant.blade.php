@@ -261,6 +261,49 @@
             return uri + separator + key + "=" + value;
         }
     }
+
+    function insertRecords(records) {
+        for(var i = 0; i < records.length; i++) {
+            var list = '<div class="col-xs-12 col-sm-12" id="item-'+records[i].merchant_id+'">\
+                    <section class="list-item-single-tenant">\
+                        <a class="list-item-link" data-href="'+records[i].redirect_url+'" href="'+records[i].url+'">\
+                            <div class="list-item-info">\
+                                <header class="list-item-title">\
+                                    <div><strong>'+records[i].name+'</strong></div>\
+                                </header>\
+                                <header class="list-item-subtitle">\
+                                    <div>\
+                                        <i class="fa fa-map-marker" style="padding-left: 5px;padding-right: 8px;"></i> \
+                                        '+ (records[i].floor ?  ' ' + records[i].floor : '') + (records[i].unit ? ' - ' + records[i].unit : '') +'\
+                                    </div>\
+                                    <div>\
+                                        <div class="col-xs-6">\
+                                            <i class="fa fa-list" style="padding-left: 2px;padding-right: 4px;"></i>\
+                                            <span>'+ (records[i].category_string ? records[i].category_string : '-') +'</span>\
+                                        </div>\
+                                    </div>';
+                if (records[i].facebook_like_url) {
+                    list += '<div class="fb-like" data-href="' + records[i].facebook_like_url + '" data-layout="button_count" data-action="like" data-show-faces="false" data-share="false"></div>';
+                }
+
+                list += '</header>\
+                                <header class="list-item-badges">\
+                                    <div class="col-xs-12 badges-wrapper text-right">\
+                                        '+ (records[i].promotion_flag ? '<span class="badges promo-badges text-center"><i class="fa fa-bullhorn"></i></span>' : '') +'\
+                                        '+ (records[i].news_flag ? '<span class="badges news-badges text-center"><i class="fa fa-newspaper-o"></i></span>' : '') +'\
+                                        '+ (records[i].coupon_flag ? '<span class="badges coupon-badges text-center"><i class="fa fa-ticket"></i></span>' : '') +'\
+                                    </div>\
+                                </header>\
+                            </div>\
+                            <div class="list-vignette-non-tenant"></div>\
+                            <img class="img-responsive img-fit-tenant" src="'+ records[i].logo_orig +'"/>\
+                        </a>\
+                    </section>\
+                </div>';
+            $('.catalogue-wrapper').append(list);
+        };
+    }
+
     $(document).ready(function(){
         $(document).on('show.bs.modal', '.modal', function (event) {
             var zIndex = 1040 + (10 * $('.modal:visible').length);
@@ -320,48 +363,20 @@
                 }
             }).done(function(data) {
                 skip = skip + take;
-                if(data.records.length > 0) {
-                    for(var i = 0; i < data.records.length; i++) {
-                        var list = '<div class="col-xs-12 col-sm-12" id="item-'+data.records[i].merchant_id+'">\
-                                <section class="list-item-single-tenant">\
-                                    <a class="list-item-link" data-href="'+data.records[i].redirect_url+'" href="'+data.records[i].url+'">\
-                                        <div class="list-item-info">\
-                                            <header class="list-item-title">\
-                                                <div><strong>'+data.records[i].name+'</strong></div>\
-                                            </header>\
-                                            <header class="list-item-subtitle">\
-                                                <div>\
-                                                    <i class="fa fa-map-marker" style="padding-left: 5px;padding-right: 8px;"></i> \
-                                                    '+ (data.records[i].floor ?  ' ' + data.records[i].floor : '') + (data.records[i].unit ? ' - ' + data.records[i].unit : '') +'\
-                                                </div>\
-                                                <div>\
-                                                    <div class="col-xs-6">\
-                                                        <i class="fa fa-list" style="padding-left: 2px;padding-right: 4px;"></i>\
-                                                        <span>'+ (data.records[i].category_string ? data.records[i].category_string : '-') +'</span>\
-                                                    </div>\
-                                                </div>';
-                            if (data.records[i].facebook_like_url) {
-                                list += '<div class="fb-like" data-href="' + data.records[i].facebook_like_url + '" data-layout="button_count" data-action="like" data-show-faces="false" data-share="false"></div>';
-                            }
 
-                            list += '</header>\
-                                            <header class="list-item-badges">\
-                                                <div class="col-xs-12 badges-wrapper text-right">\
-                                                    '+ (data.records[i].promotion_flag ? '<span class="badges promo-badges text-center"><i class="fa fa-bullhorn"></i></span>' : '') +'\
-                                                    '+ (data.records[i].news_flag ? '<span class="badges news-badges text-center"><i class="fa fa-newspaper-o"></i></span>' : '') +'\
-                                                    '+ (data.records[i].coupon_flag ? '<span class="badges coupon-badges text-center"><i class="fa fa-ticket"></i></span>' : '') +'\
-                                                </div>\
-                                            </header>\
-                                        </div>\
-                                        <div class="list-vignette-non-tenant"></div>\
-                                        <img class="img-responsive img-fit-tenant" src="'+ data.records[i].logo_orig +'"/>\
-                                    </a>\
-                                </section>\
-                            </div>';
-                        $('.catalogue-wrapper').append(list);
-                    };
+                if(data.records.length > 0) {
+                    insertRecords(data.records);
+
+                    var tenantStateObjects = data;
+                    if (window.history.state && window.history.state.tenantStateObjects) {
+                        tenantStateObjects.records = window.history.state.tenantStateObjects.records.concat(tenantStateObjects.records);
+                    }
+
+                    window.history.pushState({tenantStateObjects: tenantStateObjects}, "TenantStateObjects", "#");
+
                     FB.XFBML.parse();
                 }
+
                 if (skip >= data.total_records) {
                     btn.remove();
                 }
@@ -370,6 +385,16 @@
                 btn.html('{{Lang::get('mobileci.notification.view_more_btn')}}');
             });
         });
+
+        if (window.history.state && window.history.state.tenantStateObjects) {
+            var records = window.history.state.tenantStateObjects.records;
+            skip += records.length;
+            insertRecords(records);
+
+            if (skip >= window.history.state.tenantStateObjects.total_records) {
+                $('#load-more-tenants').remove();
+            }
+        }
     });
 </script>
 @stop
