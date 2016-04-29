@@ -30,6 +30,8 @@ class RegistrationAPIController extends IntermediateBaseController
 {
     protected $tmpUserObject = NULL;
 
+    protected $mallId = NULL;
+
     public function postRegisterCustomer()
     {
         $this->response = new ResponseProvider();
@@ -69,7 +71,7 @@ class RegistrationAPIController extends IntermediateBaseController
                 DB::beginTransaction();
             }
 
-            $user = $this->createCustomerUser($email, $password, $password_confirmation, $firstname, $lastname, $gender, $birthdate, FALSE);
+            $user = $this->createCustomerUser($email, $password, $password_confirmation, $firstname, $lastname, $gender, $birthdate, $this->mallId, FALSE);
             // let mobileci handle it's own session
             if ($activity_origin !== 'mobileci') {
                 // Start the orbit session
@@ -175,7 +177,8 @@ class RegistrationAPIController extends IntermediateBaseController
      * @return array [User, UserDetail, ApiKey]
      * @throws Exception
      */
-    public function createCustomerUser($email, $password, $password_confirmation, $firstname, $lastname, $gender, $birthdate, $useTransaction = TRUE, $userId = null, $userDetailId = null, $apiKeyId = null, $userStatus = null, $from = 'form')
+    public function createCustomerUser($email, $password, $password_confirmation, $firstname, $lastname, $gender, $birthdate, $mall_id = NULL,
+        $useTransaction = TRUE, $userId = null, $userDetailId = null, $apiKeyId = null, $userStatus = null, $from = 'form')
     {
         $validation = TRUE;
         if ($from === 'form') {
@@ -214,6 +217,9 @@ class RegistrationAPIController extends IntermediateBaseController
 
                 if (isset($userDetailId)) {
                     $user_detail->user_detail_id = $userDetailId;
+                }
+                if (! is_null($mall_id)) {
+                    $user_detail->merchant_id = $mall_id;
                 }
                 $user_detail->gender = $gender === 'm' ? 'm' : ($gender === 'f' ? 'f' : NULL);
                 if (! empty($birthdate)) {
@@ -312,5 +318,12 @@ class RegistrationAPIController extends IntermediateBaseController
         }
 
         return TRUE;
+    }
+
+    public function setMallId($mallId)
+    {
+        $this->mallId = $mallId;
+
+        return $this;
     }
 }
