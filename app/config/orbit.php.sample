@@ -401,7 +401,7 @@ return array(
             'activation_base_url' => 'http://customer.orbit-mall.here/#/activate-account?token=%s',
 
             // GotoMalls URL (The New Mobile)
-            'gotomalls_activation_base_url' => 'http://gotomalls.here/#/account/activate',
+            'gotomalls_activation_base_url' => 'http://gotomalls.here/#/account/activate/%s',
 
             // Setup Password URL
             // This should be frontend URL not backend
