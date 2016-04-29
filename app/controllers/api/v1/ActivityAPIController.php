@@ -63,6 +63,7 @@ class ActivityAPIController extends ControllerAPI
 
             Event::fire('orbit.activity.getactivity.before.auth', array($this));
 
+            // In case it kills our server
             if (Config::get('orbit.maintenance_mode.crmsummary', FALSE) === TRUE) {
                 throw new Exception('Sorry, we are in maintenance mode right now.');
             }
