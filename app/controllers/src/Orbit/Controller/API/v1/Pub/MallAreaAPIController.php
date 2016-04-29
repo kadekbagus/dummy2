@@ -36,7 +36,11 @@ class MallAreaAPIController extends ControllerAPI
 
             $area = OrbitInput::get('area', null);
 
-            $malls = Mall::excludeDeleted()->select('merchants.*')->includeLatLong()->InsideMapArea($area);
+            $malls = Mall::excludeDeleted()
+                        ->select('merchants.*')
+                        ->includeLatLong()
+                        ->includeDummyOpeningHours()
+                        ->InsideMapArea($area);
 
             // Filter by mall_id
             OrbitInput::get('mall_id', function ($mallid) use ($malls) {
