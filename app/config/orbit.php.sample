@@ -2935,4 +2935,8 @@ return array(
         'e500' => '<a href=http://gotomalls.com>gotomalls.com</a> is improving your user experience. Come back later.'
     ),
 
+    // Block access to some end point
+    'maintenance_mode' => [
+        'crmsummary' => FALSE
+    ]
 );
