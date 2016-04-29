@@ -295,7 +295,7 @@ class LoginAPIController extends IntermediateBaseController
                     if (! is_object($loggedInUser)) {
                         // register user without password and birthdate
                         $status = 'active';
-                        $response = (new Regs())->createCustomerUser($userEmail, NULL, NULL, $firstName, $lastName, $gender, NULL, TRUE, NULL, NULL, NULL, $status, 'Google');
+                        $response = (new Regs())->createCustomerUser($userEmail, NULL, NULL, $firstName, $lastName, $gender, NULL, NULL, TRUE, NULL, NULL, NULL, $status, 'Google');
                         if (get_class($response) !== 'User') {
                             throw new Exception($response->message, $response->code);
                         }
@@ -451,7 +451,7 @@ class LoginAPIController extends IntermediateBaseController
         if (! is_object($loggedInUser)) {
             // register user without password and birthdate
             $status = 'active';
-            $response = (new Regs())->createCustomerUser($userEmail, NULL, NULL, $firstName, $lastName, $gender, NULL, TRUE, NULL, NULL, NULL, $status, 'Facebook');
+            $response = (new Regs())->createCustomerUser($userEmail, NULL, NULL, $firstName, $lastName, $gender, NULL, NULL, TRUE, NULL, NULL, NULL, $status, 'Facebook');
             if (get_class($response) !== 'User') {
                 throw new Exception($response->message, $response->code);
             }

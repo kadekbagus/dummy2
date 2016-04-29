@@ -108,14 +108,11 @@ class ActivationAPIController extends IntermediateBaseController
             $this->createLoginSession($user);
 
             // Get the registration record
-            $userSignUp = NULL;
+            // $userSignUp = NULL;
             $location = NULL;
-            $userSignUp = Activity::where('activity_name', '=', 'registration_ok')
-                                  ->whereIn('group', ['mobile-ci','cs-portal'])
-                                  ->where('user_id', $user->user_id)
-                                  ->first();
-            if (is_object($userSignUp)) {
-                $location = Mall::find($userSignUp->location_id);
+
+            if (! empty($user->userdetail->merchant_id)) {
+                $location = Mall::find($user->userdetail->merchant_id);
             }
 
             // Successfull activation

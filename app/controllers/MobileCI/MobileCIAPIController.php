@@ -9174,7 +9174,8 @@ class MobileCIAPIController extends BaseCIController
                 $_POST['activity_name_long'] = 'Sign Up via Mobile (Email Address)';
                 $_POST['activity_origin'] = 'mobileci';
                 $_POST['use_transaction'] = FALSE;
-                $response = \Orbit\Controller\API\v1\Pub\RegistrationAPIController::create('raw')->postRegisterCustomer();
+                $registration = \Orbit\Controller\API\v1\Pub\RegistrationAPIController::create('raw');
+                $response = $registration->setMallId($retailer->merchant_id)->postRegisterCustomer();
                 $response_data = json_decode($response->getOriginalContent());
 
                 unset($_POST['activity_name_long']);
