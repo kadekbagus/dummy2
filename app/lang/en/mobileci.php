@@ -190,6 +190,7 @@ return array(
         'forgot_sent_title'        => 'We have sent you the link to reset your password',
         'forgot_sent_sub_title'    => 'please check your email inbox',
         'password_message'         => 'If you haven\'t setup any password before, click <b>forgot password</b> to setup a new password',
+        'email_not_exist'          => 'Email address is not registered.',
     ),
 
     'signup' => array(
@@ -210,6 +211,7 @@ return array(
         'date_of_birth' => 'Date of Birth',
         'password_placeholder' => 'Password',
         'password_confirm_placeholder' => 'Confirm Password',
+        'email_exist' => 'Email address has already been taken.',
     ),
 
     'catalogue' => array(

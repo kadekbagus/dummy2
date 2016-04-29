@@ -50,6 +50,7 @@ class RegistrationAPIController extends IntermediateBaseController
             $gender = OrbitInput::post('gender');
             $birthdate = OrbitInput::post('birthdate');
             $password_confirmation = OrbitInput::post('password_confirmation');
+            $useTransaction = OrbitInput::post('use_transaction', TRUE);
 
             $user = User::with('role')
                         ->whereHas('role', function($q) {
@@ -64,8 +65,9 @@ class RegistrationAPIController extends IntermediateBaseController
                 $message = Lang::get('validation.orbit.exists.email');
                 OrbitShopAPI::throwInvalidArgument($message);
             }
-
-            DB::beginTransaction();
+            if ($useTransaction) {
+                DB::beginTransaction();
+            }
 
             $user = $this->createCustomerUser($email, $password, $password_confirmation, $firstname, $lastname, $gender, $birthdate, FALSE);
             // let mobileci handle it's own session
@@ -105,10 +107,13 @@ class RegistrationAPIController extends IntermediateBaseController
                 'mode' => 'gotomalls'
             ]);
 
-            DB::commit();
-
+            if ($useTransaction) {
+                DB::commit();
+            }
         } catch (ACLForbiddenException $e) {
-            DB::rollback();
+            if ($useTransaction) {
+                DB::rollback();
+            }
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
@@ -121,7 +126,9 @@ class RegistrationAPIController extends IntermediateBaseController
                      ->responseFailed()
                      ->setModuleName('Application')->save();
         } catch (InvalidArgsException $e) {
-            DB::rollback();
+            if ($useTransaction) {
+                DB::rollback();
+            }
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
@@ -134,7 +141,9 @@ class RegistrationAPIController extends IntermediateBaseController
                      ->responseFailed()
                      ->setModuleName('Application')->save();
         } catch (Exception $e) {
-            DB::rollback();
+            if ($useTransaction) {
+                DB::rollback();
+            }
             $this->response->code = Status::UNKNOWN_ERROR;
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();

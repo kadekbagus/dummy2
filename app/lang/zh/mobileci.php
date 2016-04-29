@@ -190,6 +190,7 @@ return array(
         'forgot_sent_title'        => '我们送您链接重新设置您的密码',
         'forgot_sent_sub_title'    => '请检查您的电子邮件inbox',
         'password_message'         => '如果您未设定任何密码前面，点击忘记密码设定一个新的密码',
+        'email_not_exist'          => '电子邮件地址未注册',
     ),
 
     'signup' => array(
@@ -210,6 +211,7 @@ return array(
         'date_of_birth' => '出生日期',
         'password_placeholder' => '密码',
         'password_confirm_placeholder' => '确认密码',
+        'email_exist' => '电子邮件地址已被占用',
     ),
 
     'catalogue' => array(
