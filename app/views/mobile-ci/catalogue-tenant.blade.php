@@ -367,12 +367,20 @@
                 if(data.records.length > 0) {
                     insertRecords(data.records);
 
-                    var tenantStateObjects = data;
-                    if (window.history.state && window.history.state.tenantStateObjects) {
-                        tenantStateObjects.records = window.history.state.tenantStateObjects.records.concat(tenantStateObjects.records);
+                    if (!window.history.state) {
+                        localStorage.removeItem('tenantData');
                     }
 
-                    window.history.pushState({tenantStateObjects: tenantStateObjects}, "TenantStateObjects", "#");
+                    var dataJson = data;
+                    var tenantData = localStorage.getItem('tenantData');
+
+                    if (tenantData !== null) {
+                        var jsonObj = JSON.parse(tenantData);
+                        dataJson.records = jsonObj.records.concat(dataJson.records);
+                    }
+
+                    localStorage.setItem('tenantData', JSON.stringify(dataJson));
+                    window.history.pushState({tenantsFromLocalStorage: true}, "MyTitle", '#');
 
                     FB.XFBML.parse();
                 }
@@ -386,13 +394,20 @@
             });
         });
 
-        if (window.history.state && window.history.state.tenantStateObjects) {
-            var records = window.history.state.tenantStateObjects.records;
-            skip += records.length;
-            insertRecords(records);
+        // Check if window history state exists.
+        if (window.history.state) {
+            //Check if there's tenantStateObjects in history state.
+            if (window.history.state.tenantsFromLocalStorage) {
+                var tenantData = localStorage.getItem('tenantData');
+                var tenants = JSON.parse(tenantData);
+                var records = tenants.records;
 
-            if (skip >= window.history.state.tenantStateObjects.total_records) {
-                $('#load-more-tenants').remove();
+                skip += records.length;
+                insertRecords(records);
+
+                if (skip >= tenants.total_records) {
+                    $('#load-more-tenants').remove();
+                }
             }
         }
     });
