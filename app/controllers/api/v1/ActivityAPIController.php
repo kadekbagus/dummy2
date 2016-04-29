@@ -63,11 +63,6 @@ class ActivityAPIController extends ControllerAPI
 
             Event::fire('orbit.activity.getactivity.before.auth', array($this));
 
-            // In case it kills our server
-            if (Config::get('orbit.maintenance_mode.crmsummary', FALSE) === TRUE) {
-                throw new Exception('Sorry, we are in maintenance mode right now.');
-            }
-
             // Require authentication
             $this->checkAuth();
 
@@ -2972,6 +2967,11 @@ class ActivityAPIController extends ControllerAPI
     {
         try {
             $httpCode = 200;
+
+            // In case it kills our server
+            if (Config::get('orbit.maintenance_mode.crmsummary', FALSE) === TRUE) {
+                throw new Exception('Sorry, we are in maintenance mode right now.');
+            }
 
             Event::fire('orbit.dashboard.getcrmsummaryreport.before.auth', array($this));
 
