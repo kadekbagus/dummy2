@@ -240,6 +240,17 @@
 
 @section('ext_script_bot')
 <script type="text/javascript">
+    $(window).on('scroll', function() {
+        // Check if browser supports LocalStorage
+        if(typeof(Storage) !== 'undefined') {
+            var scrollTop = $(window).scrollTop();
+            // Prevent Safari to set scrollTop position to 0 on page load.
+            if (scrollTop) {
+                localStorage.setItem('scrollTop', scrollTop);
+            }
+        }
+    });
+
     /**
      * Get Query String from the URL
      *
@@ -262,8 +273,10 @@
         }
     }
 
-    function insertRecords(records) {
+    var insertRecords = function(records) {
+        var promises = [];
         for(var i = 0; i < records.length; i++) {
+            var deferred = new $.Deferred();
             var list = '<div class="col-xs-12 col-sm-12" id="item-'+records[i].merchant_id+'">\
                     <section class="list-item-single-tenant">\
                         <a class="list-item-link" data-href="'+records[i].redirect_url+'" href="'+records[i].url+'">\
@@ -301,7 +314,10 @@
                     </section>\
                 </div>';
             $('.catalogue-wrapper').append(list);
+            deferred.resolve();
+            promises.push(deferred);
         };
+        return $.when.apply(undefined, promises).promise();
     }
 
     $(document).ready(function(){
@@ -353,6 +369,8 @@
             $.ajax({
                 url: '{{ url("app/v1/tenant/load-more") }}',
                 method: 'GET',
+                timeout: 60000,
+                async: true,
                 data: {
                     take: take,
                     skip: skip,
@@ -360,6 +378,11 @@
                     cid: cid,
                     fid: fid,
                     promotion_id: promotion_id
+                },
+                error: function(xhr, textStatus, errorThrown) {
+                    if (textStatus === 'timeout') {
+                        alert('Request timeout. Failed to retrieve more tenants');
+                    }
                 }
             }).done(function(data) {
                 skip = skip + take;
@@ -367,28 +390,40 @@
                 if(data.records.length > 0) {
                     insertRecords(data.records);
 
-                    if (!window.history.state) {
-                        localStorage.removeItem('tenantData');
+                    // Check if browser supports LocalStorage
+                    if(typeof(Storage) !== 'undefined') {
+                        // Check if history state is null, which means the page is loaded NOT from back button.
+                        if (!window.history.state) {
+                            // Clear tenantData in localStorage.
+                            localStorage.removeItem('tenantData');
+                        }
+
+                        var dataJson = data;
+                        var tenantData = localStorage.getItem('tenantData');
+
+                        // Check if tenantData exists.
+                        if (tenantData) {
+                            var jsonObj = JSON.parse(tenantData);
+                            // Concat the current record with the existing tenantData.
+                            dataJson.records = jsonObj.records.concat(dataJson.records);
+                        }
+
+                        // Set tenantData in localStorage.
+                        localStorage.setItem('tenantData', JSON.stringify(dataJson));
+
+                        // Set history state.
+                        window.history.pushState({tenantData: true}, "HashTitle", '#');
                     }
 
-                    var dataJson = data;
-                    var tenantData = localStorage.getItem('tenantData');
-
-                    if (tenantData !== null) {
-                        var jsonObj = JSON.parse(tenantData);
-                        dataJson.records = jsonObj.records.concat(dataJson.records);
-                    }
-
-                    localStorage.setItem('tenantData', JSON.stringify(dataJson));
-                    window.history.pushState({tenantsFromLocalStorage: true}, "MyTitle", '#');
-
-                    FB.XFBML.parse();
+                    //FB.XFBML.parse();
                 }
 
                 if (skip >= data.total_records) {
                     btn.remove();
                 }
-            }).always(function(data){
+
+            })
+            .always(function(data){
                 btn.removeAttr('disabled', 'disabled');
                 btn.html('{{Lang::get('mobileci.notification.view_more_btn')}}');
             });
@@ -397,13 +432,23 @@
         // Check if window history state exists.
         if (window.history.state) {
             //Check if there's tenantStateObjects in history state.
-            if (window.history.state.tenantsFromLocalStorage) {
+            if (window.history.state.tenantData) {
                 var tenantData = localStorage.getItem('tenantData');
                 var tenants = JSON.parse(tenantData);
                 var records = tenants.records;
 
                 skip += records.length;
-                insertRecords(records);
+
+                insertRecords(records).then(function() {
+                    // See if there is a scrollTop and go there.
+                    var scrollTop = +localStorage.getItem('scrollTop');
+                    if (scrollTop) {
+                        // This setTimeout is needed for Safari.
+                        setTimeout(function() {
+                            $(window).scrollTop(scrollTop);
+                        }, 500);
+                    }
+                });
 
                 if (skip >= tenants.total_records) {
                     $('#load-more-tenants').remove();
