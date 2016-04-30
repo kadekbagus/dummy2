@@ -415,7 +415,7 @@
                         window.history.pushState({tenantData: true}, "HashTitle", '#');
                     }
 
-                    //FB.XFBML.parse();
+                    FB.XFBML.parse();
                 }
 
                 if (skip >= data.total_records) {
