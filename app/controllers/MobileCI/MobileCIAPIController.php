@@ -9168,12 +9168,16 @@ class MobileCIAPIController extends BaseCIController
             $socmed_redirect_to = OrbitInput::post('socmed_redirect_to');
             $to_url = OrbitInput::post('to_url', URL::route('ci-customer-home'));
 
+            DB::beginTransaction();
             if ($mode === 'registration') {
                 // do the registration
                 $_POST['activity_name_long'] = 'Sign Up via Mobile (Email Address)';
                 $_POST['activity_origin'] = 'mobileci';
-                $response = \Orbit\Controller\API\v1\Pub\RegistrationAPIController::create('raw')->postRegisterCustomer();
+                $_POST['use_transaction'] = FALSE;
+                $registration = \Orbit\Controller\API\v1\Pub\RegistrationAPIController::create('raw');
+                $response = $registration->setMallId($retailer->merchant_id)->postRegisterCustomer();
                 $response_data = json_decode($response->getOriginalContent());
+
                 unset($_POST['activity_name_long']);
                 unset($_POST['activity_origin']);
                 if($response_data->code !== 0) {
@@ -9214,7 +9218,7 @@ class MobileCIAPIController extends BaseCIController
             $notAllowedStatus = ['inactive'];
             $lowerCasedStatus = strtolower($user->status);
             if (in_array($lowerCasedStatus, $notAllowedStatus)) {
-                throw new Exception('You are not allowed to login. Please check with Customer Service.', 13);
+                OrbitShopAPI::throwInvalidArgument('You are not allowed to login. Please check with Customer Service.');
             }
             // if a valid MAC specified, associate the MAC with the given email if not associated yet
             $mac = OrbitInput::get('mac_address', '');
@@ -9240,6 +9244,8 @@ class MobileCIAPIController extends BaseCIController
             // auto coupon issuance checkwill happen on each page after the login success
             Coupon::issueAutoCoupon($retailer, $user_obj, $urlblock->getUserSession());
 
+            DB::commit();
+
             // remove activity from user object
             unset($user->activity);
             $this->response->code = 0;
@@ -9247,18 +9253,21 @@ class MobileCIAPIController extends BaseCIController
             $this->response->message = 'Sign in success';
             $this->response->data = $user;
         } catch (ACLForbiddenException $e) {
+            DB::rollback();
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $this->response->data = null;
         } catch (InvalidArgsException $e) {
+            DB::rollback();
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $this->response->data = null;
         } catch (Exception $e) {
+            DB::rollback();
             $this->response->code = $e->getCode();
-            $this->response->status = $e->getLine();
+            $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $this->response->data = Config::get('app.debug') ? [$e->getMessage(), $e->getFile(), $e->getLine()] : null;
         }

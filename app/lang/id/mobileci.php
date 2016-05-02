@@ -190,6 +190,7 @@ return array(
         'forgot_sent_title'        => 'Kami sudah mengirimkan link untuk me-reset password Anda',
         'forgot_sent_sub_title'    => 'silahkan cek kotak masuk email',
         'password_message'         => 'Jika Anda belum setup password sebelumnya, klik <b>lupa password</b> untuk setup password baru',
+        'email_not_exist'          => 'Alamat email belum terdaftar.',
     ),
 
     'signup' => array(
@@ -210,6 +211,7 @@ return array(
         'date_of_birth' => 'Tanggal Lahir',
         'password_placeholder' => 'Password',
         'password_confirm_placeholder' => 'Konfirmasi Password',
+        'email_exist' => 'Alamat email sudah terdaftar.',
     ),
 
     'catalogue'         => array(
