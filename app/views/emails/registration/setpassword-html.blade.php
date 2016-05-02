@@ -4,7 +4,7 @@
 <title>Orbit - A DominoPOS Product</title>
 </head>
 <body style="padding:0;margin:0;background-color:#fff;width:100%;font-family:Arial,Verdana,Tahoma,Serif;line-height:22px;font-size:16px;">
-<div id="container;" style="padding:0; margin:0 auto;width:451px;border:1px solid #ccc">
+<div id="container;" style="padding:0; margin:0 auto;width:451px;border:1px solid #ccc;display: table;">
     <div id="header" style="">
         <img style="width:451px;height:63" src="{{ asset('emails/orbit-almost-in-orbit.png ') }}" alt="You are almost in Orbit!">
     </div>
