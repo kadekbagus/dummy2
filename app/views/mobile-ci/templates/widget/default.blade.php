@@ -121,13 +121,3 @@
     </div>
 </div>
 @stop
-@section('ext_script_bot')
-<script type="text/javascript">
-    $(document).ready(function(){
-        // Check if browser supports LocalStorage
-        if(typeof(Storage) !== 'undefined') {
-            localStorage.setItem('fromSource', 'home');
-        }
-    });
-</script>
-@stop

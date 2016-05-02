@@ -215,11 +215,6 @@
 {{ HTML::script('mobile-ci/scripts/particles.min.js') }}
 <script type="text/javascript">
     $(document).ready(function(){
-        // Check if browser supports LocalStorage
-        if(typeof(Storage) !== 'undefined') {
-            localStorage.setItem('fromSource', 'home');
-        }
-
         @foreach($widgets as $i => $widget)
         if($('#particles-js{{$i+1}}').length) {
             particlesJS.load('particles-js{{$i+1}}', '{{asset('mobile-ci/scripts/particlesjs-config.json')}}', function() {
