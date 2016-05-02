@@ -321,6 +321,24 @@
     }
 
     $(document).ready(function(){
+        var isFromDetail = false;
+        // Check if browser supports LocalStorage
+        if(typeof(Storage) !== 'undefined') {
+            // This feature is implemented for tracking whether this page is loaded from detail page. (Which is back button)
+            var currentValue = localStorage.getItem('fromSource');
+            if (currentValue && currentValue === 'detail') {
+                // Set isFromDetail to true
+                isFromDetail = true;
+            }
+            else {
+                // Clear tenantData in localStorage.
+                localStorage.removeItem('tenantData');
+            }
+
+            // Set fromSource in localStorage.
+            localStorage.setItem('fromSource', 'store');
+        }
+
         $(document).on('show.bs.modal', '.modal', function (event) {
             var zIndex = 1040 + (10 * $('.modal:visible').length);
             $(this).css('z-index', zIndex);
@@ -392,12 +410,6 @@
 
                     // Check if browser supports LocalStorage
                     if(typeof(Storage) !== 'undefined') {
-                        // Check if history state is null, which means the page is loaded NOT from back button.
-                        if (!window.history.state) {
-                            // Clear tenantData in localStorage.
-                            localStorage.removeItem('tenantData');
-                        }
-
                         var dataJson = data;
                         var tenantData = localStorage.getItem('tenantData');
 
@@ -410,9 +422,6 @@
 
                         // Set tenantData in localStorage.
                         localStorage.setItem('tenantData', JSON.stringify(dataJson));
-
-                        // Set history state.
-                        window.history.pushState({tenantData: true}, "HashTitle", '#');
                     }
 
                     FB.XFBML.parse();
@@ -429,29 +438,39 @@
             });
         });
 
-        // Check if window history state exists.
-        if (window.history.state) {
-            //Check if there's tenantStateObjects in history state.
-            if (window.history.state.tenantData) {
-                var tenantData = localStorage.getItem('tenantData');
+        // Check if page is from back button.
+        if (isFromDetail) {
+            var tenantData = localStorage.getItem('tenantData');
+            // Check if there's tenantData in localStorage.
+            if (tenantData) {
+                // Re-insert all the tenant data records back.
                 var tenants = JSON.parse(tenantData);
                 var records = tenants.records;
-
                 skip += records.length;
 
                 insertRecords(records).then(function() {
                     // See if there is a scrollTop and go there.
                     var scrollTop = +localStorage.getItem('scrollTop');
                     if (scrollTop) {
-                        // This setTimeout is needed for Safari.
+                        // This setTimeout is needed for iOS mobile browser.
                         setTimeout(function() {
                             $(window).scrollTop(scrollTop);
-                        }, 500);
+                        }, 750);
                     }
                 });
 
                 if (skip >= tenants.total_records) {
                     $('#load-more-tenants').remove();
+                }
+            }
+            else {
+                // Just maintain scroll position.
+                var scrollTop = +localStorage.getItem('scrollTop');
+                if (scrollTop) {
+                    // This setTimeout is needed for mostly iOS mobile browser.
+                    setTimeout(function() {
+                        $(window).scrollTop(scrollTop);
+                    }, 750);
                 }
             }
         }
