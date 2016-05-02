@@ -16,7 +16,7 @@
     -moz-transform: skew(-45deg, 0deg);
     -ms-transform: skew(-45deg, 0deg);
     -o-transform: skew(-45deg, 0deg);
-     transform: skew(-45deg, 0deg); 
+     transform: skew(-45deg, 0deg);
 }
 #particles-js2{
     pointer-events: none;
@@ -31,7 +31,7 @@
     -moz-transform: skew(45deg, 0deg);
     -ms-transform: skew(45deg, 0deg);
     -o-transform: skew(45deg, 0deg);
-     transform: skew(45deg, 0deg); 
+     transform: skew(45deg, 0deg);
 }
 #particles-js3{
     pointer-events: none;
@@ -46,7 +46,7 @@
     -moz-transform: skew(-45deg, 0deg);
     -ms-transform: skew(-45deg, 0deg);
     -o-transform: skew(-45deg, 0deg);
-     transform: skew(-45deg, 0deg); 
+     transform: skew(-45deg, 0deg);
 }
 #particles-js4{
     pointer-events: none;
@@ -61,7 +61,7 @@
     -moz-transform: skew(45deg, 0deg);
     -ms-transform: skew(45deg, 0deg);
     -o-transform: skew(45deg, 0deg);
-     transform: skew(45deg, 0deg); 
+     transform: skew(45deg, 0deg);
 }
 #particles-js5{
     pointer-events: none;
@@ -76,7 +76,7 @@
     -moz-transform: skew(-45deg, 0deg);
     -ms-transform: skew(-45deg, 0deg);
     -o-transform: skew(-45deg, 0deg);
-     transform: skew(-45deg, 0deg); 
+     transform: skew(-45deg, 0deg);
 }
 .widget-col{
     overflow: hidden;

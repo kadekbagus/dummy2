@@ -531,4 +531,22 @@ return array(
     'campaign_cards' => array(
         'go_to_page' => 'Go to page',
     ),
+
+    'captive'   => array(
+        'request_internet' => array(
+            'title'     => 'FREE Internet',
+            'heading'   => 'FREE Internet Access!',
+            'message'   => 'By connecting to our Wi-Fi you are agree to our terms and conditions. Click button below to get free internet access.',
+            'button'    => 'Get FREE Internet Access!',
+            'check_connection' => 'Checking internet connection please wait...',
+            'too_long' => 'If it takes too long try to refresh your browser.'
+        ),
+        'granted' => array(
+            'title'     => 'Connected to WiFi',
+            'heading'   => 'You\'re Already Connected',
+            'message'   => 'Hey,<br>You are now connected to Internet for free. Do you know what are the promotions here today?',
+            'button'    => 'Yes, Please!'
+        ),
+        'widget_slogan' => 'FREE Internet!'
+    )
 );

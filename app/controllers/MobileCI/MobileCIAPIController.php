@@ -77,6 +77,7 @@ use \WidgetGroupName;
 use \Hash;
 use \UserGuest;
 use Helper\EloquentRecordCounter as RecordCounter;
+use MobileCI\ExCaptivePortalController as CaptivePortalController;
 
 class MobileCIAPIController extends BaseCIController
 {
@@ -293,6 +294,15 @@ class MobileCIAPIController extends BaseCIController
                 ->groupBy('widget_type')
                 ->take(5)
                 ->get();
+
+            if (CaptivePortalController::isFromCaptive()) {
+                // Inject number of widget on-the-fly
+                $captiveWidget = CaptivePortalController::generateDummyWidget($retailer, $urlblock);
+                $widgets->push($captiveWidget);
+
+                // Push the from_captive cookie
+                CaptivePortalController::setCookieForCaptive();
+            }
 
             $now = Carbon::now($retailer->timezone->timezone_name);
 
