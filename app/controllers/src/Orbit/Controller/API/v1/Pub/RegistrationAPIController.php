@@ -30,6 +30,8 @@ class RegistrationAPIController extends IntermediateBaseController
 {
     protected $tmpUserObject = NULL;
 
+    protected $mallId = NULL;
+
     public function postRegisterCustomer()
     {
         $this->response = new ResponseProvider();
@@ -50,6 +52,7 @@ class RegistrationAPIController extends IntermediateBaseController
             $gender = OrbitInput::post('gender');
             $birthdate = OrbitInput::post('birthdate');
             $password_confirmation = OrbitInput::post('password_confirmation');
+            $useTransaction = OrbitInput::post('use_transaction', TRUE);
 
             $user = User::with('role')
                         ->whereHas('role', function($q) {
@@ -64,10 +67,11 @@ class RegistrationAPIController extends IntermediateBaseController
                 $message = Lang::get('validation.orbit.exists.email');
                 OrbitShopAPI::throwInvalidArgument($message);
             }
+            if ($useTransaction) {
+                DB::beginTransaction();
+            }
 
-            DB::beginTransaction();
-
-            $user = $this->createCustomerUser($email, $password, $password_confirmation, $firstname, $lastname, $gender, $birthdate, FALSE);
+            $user = $this->createCustomerUser($email, $password, $password_confirmation, $firstname, $lastname, $gender, $birthdate, $this->mallId, FALSE);
             // let mobileci handle it's own session
             if ($activity_origin !== 'mobileci') {
                 // Start the orbit session
@@ -105,10 +109,13 @@ class RegistrationAPIController extends IntermediateBaseController
                 'mode' => 'gotomalls'
             ]);
 
-            DB::commit();
-
+            if ($useTransaction) {
+                DB::commit();
+            }
         } catch (ACLForbiddenException $e) {
-            DB::rollback();
+            if ($useTransaction) {
+                DB::rollback();
+            }
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
@@ -121,7 +128,9 @@ class RegistrationAPIController extends IntermediateBaseController
                      ->responseFailed()
                      ->setModuleName('Application')->save();
         } catch (InvalidArgsException $e) {
-            DB::rollback();
+            if ($useTransaction) {
+                DB::rollback();
+            }
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
@@ -134,7 +143,9 @@ class RegistrationAPIController extends IntermediateBaseController
                      ->responseFailed()
                      ->setModuleName('Application')->save();
         } catch (Exception $e) {
-            DB::rollback();
+            if ($useTransaction) {
+                DB::rollback();
+            }
             $this->response->code = Status::UNKNOWN_ERROR;
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
@@ -166,7 +177,8 @@ class RegistrationAPIController extends IntermediateBaseController
      * @return array [User, UserDetail, ApiKey]
      * @throws Exception
      */
-    public function createCustomerUser($email, $password, $password_confirmation, $firstname, $lastname, $gender, $birthdate, $useTransaction = TRUE, $userId = null, $userDetailId = null, $apiKeyId = null, $userStatus = null, $from = 'form')
+    public function createCustomerUser($email, $password, $password_confirmation, $firstname, $lastname, $gender, $birthdate, $mall_id = NULL,
+        $useTransaction = TRUE, $userId = null, $userDetailId = null, $apiKeyId = null, $userStatus = null, $from = 'form')
     {
         $validation = TRUE;
         if ($from === 'form') {
@@ -205,6 +217,9 @@ class RegistrationAPIController extends IntermediateBaseController
 
                 if (isset($userDetailId)) {
                     $user_detail->user_detail_id = $userDetailId;
+                }
+                if (! is_null($mall_id)) {
+                    $user_detail->merchant_id = $mall_id;
                 }
                 $user_detail->gender = $gender === 'm' ? 'm' : ($gender === 'f' ? 'f' : NULL);
                 if (! empty($birthdate)) {
@@ -303,5 +318,12 @@ class RegistrationAPIController extends IntermediateBaseController
         }
 
         return TRUE;
+    }
+
+    public function setMallId($mallId)
+    {
+        $this->mallId = $mallId;
+
+        return $this;
     }
 }
