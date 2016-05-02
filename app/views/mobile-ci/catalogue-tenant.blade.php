@@ -346,21 +346,6 @@
         var fid = '{{{Input::get('fid', '')}}}';
         var promotion_id = '{{{Input::get('promotion_id', '')}}}';
 
-        function recordScrollTop() {
-            var scrollTop = $(this).scrollTop();
-            if (window.history.state && window.history.state.scrollTop !== undefined)
-                window.history.state.scrollTop = scrollTop;
-        }
-
-        if (navigator.userAgent.match(/(iPod|iPhone|iPad|Android)/i)) {
-            // Events to track window scroll position on mobile device
-            $('body').on('touchmove', recordScrollTop);
-        }
-        else {
-            // Events to track window scroll position on desktop browser
-            $(window).on('scroll', recordScrollTop);
-        }
-
         $('#load-more-tenants').click(function(){
             var btn = $(this);
             btn.attr('disabled', 'disabled');
@@ -382,12 +367,20 @@
                 if(data.records.length > 0) {
                     insertRecords(data.records);
 
-                    var tenantStateObjects = data;
-                    if (window.history.state && window.history.state.tenantStateObjects) {
-                        tenantStateObjects.records = window.history.state.tenantStateObjects.records.concat(tenantStateObjects.records);
+                    if (!window.history.state) {
+                        localStorage.removeItem('tenantData');
                     }
 
-                    window.history.pushState({tenantStateObjects: tenantStateObjects, scrollTop: $(window).scrollTop()}, "CatalogueState", "#");
+                    var dataJson = data;
+                    var tenantData = localStorage.getItem('tenantData');
+
+                    if (tenantData !== null) {
+                        var jsonObj = JSON.parse(tenantData);
+                        dataJson.records = jsonObj.records.concat(dataJson.records);
+                    }
+
+                    localStorage.setItem('tenantData', JSON.stringify(dataJson));
+                    window.history.pushState({tenantsFromLocalStorage: true}, "MyTitle", '#');
 
                     FB.XFBML.parse();
                 }
@@ -401,34 +394,20 @@
             });
         });
 
-
         // Check if window history state exists.
         if (window.history.state) {
-            // Check if there's tenantStateObjects in history state.
-            if (window.history.state.tenantStateObjects) {
-                var records = window.history.state.tenantStateObjects.records;
+            //Check if there's tenantStateObjects in history state.
+            if (window.history.state.tenantsFromLocalStorage) {
+                var tenantData = localStorage.getItem('tenantData');
+                var tenants = JSON.parse(tenantData);
+                var records = tenants.records;
+
                 skip += records.length;
                 insertRecords(records);
 
-                if (skip >= window.history.state.tenantStateObjects.total_records) {
+                if (skip >= tenants.total_records) {
                     $('#load-more-tenants').remove();
                 }
-            }
-
-            // Check if there's scrollTop in history state.
-            if (window.history.state.scrollTop) {
-                var scrollTop = window.history.state.scrollTop;
-
-                setTimeout(function() {
-                    if (navigator.userAgent.match(/(iPod|iPhone|iPad|Android)/i)) {
-                        // Mobile device
-                        $("body").scrollTop(scrollTop);
-                    }
-                    else {
-                        // Desktop browser
-                        $(window).scrollTop(scrollTop);
-                    }
-                }, 1000);
             }
         }
     });

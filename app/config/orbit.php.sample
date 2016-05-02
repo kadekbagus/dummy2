@@ -131,7 +131,7 @@ return array(
         'after_logout_url' => '',
 
         // back to map url
-        'back_to_map_url' => 'http://gotomalls.cool',
+        'back_to_map_url' => 'http://gotomalls.cool/#/?redirect_ci=false',
 
         // after sign in social url
         'after_social_sign_in' => 'http://gotomalls.cool',
@@ -401,7 +401,7 @@ return array(
             'activation_base_url' => 'http://customer.orbit-mall.here/#/activate-account?token=%s',
 
             // GotoMalls URL (The New Mobile)
-            'gotomalls_activation_base_url' => 'http://gotomalls.here/#/account/activate',
+            'gotomalls_activation_base_url' => 'http://gotomalls.here/#/account/activate/%s',
 
             // Setup Password URL
             // This should be frontend URL not backend
@@ -2935,4 +2935,8 @@ return array(
         'e500' => '<a href=http://gotomalls.com>gotomalls.com</a> is improving your user experience. Come back later.'
     ),
 
+    // Block access to some end point
+    'maintenance_mode' => [
+        'crmsummary' => FALSE
+    ]
 );
