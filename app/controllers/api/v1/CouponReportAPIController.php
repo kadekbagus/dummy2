@@ -372,7 +372,7 @@ class CouponReportAPIController extends ControllerAPI
             if (count($coupons->getBindings()) > 0) {
                 foreach($coupons->getBindings() as $binding)
                 {
-                  $value = is_numeric($binding) ? $binding : "'" . $binding . "'";
+                  $value = is_numeric($binding) ? $binding : $this->quote($binding);
                   $_coupons_sql = preg_replace('/\?/', $value, $_coupons_sql, 1);
                 }
             }
@@ -801,7 +801,8 @@ class CouponReportAPIController extends ControllerAPI
             // Clone the query builder which still does not include the take,
             // skip, and order by
             $_coupons = clone $coupons;
-            $_coupons->select('promotions.promotion_id');
+            $_coupons->select('promotions.promotion_id')->groupBy('promotions.promotion_id');
+
 
             $_couponsCountReddem = clone $coupons;
             $_couponsCountIssued = clone $coupons;
@@ -1655,7 +1656,7 @@ class CouponReportAPIController extends ControllerAPI
             if (count($coupons->getBindings()) > 0) {
                 foreach($coupons->getBindings() as $binding)
                 {
-                  $value = is_numeric($binding) ? $binding : "'" . $binding . "'";
+                  $value = is_numeric($binding) ? $binding : $this->quote($binding);
                   $_coupons_sql = preg_replace('/\?/', $value, $_coupons_sql, 1);
                 }
             }

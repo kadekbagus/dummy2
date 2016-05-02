@@ -2236,7 +2236,7 @@ class CouponAPIController extends ControllerAPI
                     ELSE
                         {$table_prefix}promotions.status
                     END as 'coupon_status'"),
-                    DB::raw("((CASE WHEN {$table_prefix}campaign_price.base_price is null THEN 0 ELSE {$table_prefix}campaign_price.base_price END) * (DATEDIFF({$table_prefix}promotions.end_date, {$table_prefix}promotions.begin_date) + 1) * (COUNT({$table_prefix}promotion_retailer.promotion_retailer_id))) AS estimated"),
+                    DB::raw("((CASE WHEN {$table_prefix}campaign_price.base_price is null THEN 0 ELSE {$table_prefix}campaign_price.base_price END) * (DATEDIFF({$table_prefix}promotions.end_date, {$table_prefix}promotions.begin_date) + 1) * (SELECT COUNT(pr.promotion_retailer_id) FROM {$table_prefix}promotion_retailer as pr WHERE pr.object_type != 'mall' and pr.promotion_id = {$table_prefix}promotions.promotion_id)) AS estimated"),
                     DB::raw("COUNT(DISTINCT {$table_prefix}promotion_retailer.promotion_retailer_id) as total_location")
                 )
                 ->leftJoin('campaign_price', function ($join) {

@@ -25,7 +25,7 @@ class getMallAreaTest extends TestCase
         $geofence = Factory::create('MerchantGeofence');
 
         //area in antartica sea
-        $_GET['area'] = '-58.524626 -32.635680, -58.636791 -2.620075, -67.355143 -2.189744, -67.230556 -28.547533, -58.524626 -32.635680';
+        $_GET['area'] = '-61.93644640661632 57.95057812426762, -39.97304109648114 57.95057812426762, -39.97304109648114 91.34901562426762, -61.93644640661632 91.34901562426762, -61.93644640661632 57.95057812426762';
 
         $antartica1 = $geofence->mall;
         $antartica1->name = 'Beruang Kutub';
@@ -41,12 +41,12 @@ class getMallAreaTest extends TestCase
     public function testOK_Found_One_Mall_In_Area()
     {
         // Create mall in antartica
-        $geofence = Factory::create('MerchantGeofence');
+        $geofence = Factory::create('MerchantGeofence_Antartica2');
 
-        $_GET['area'] = '-75.325459 17.759327, -75.413558 31.432058, -77.117319 31.153023, -77.054959 20.200886, -75.325459 17.759327';
+        $_GET['area'] = '-75.18442825097793 8.698869139892622, -69.85292893887913 8.698869139892622, -69.85292893887913 25.398087889892622, -75.18442825097793 25.398087889892622, -75.18442825097793 8.698869139892622';
 
         $antartica1 = $geofence->mall;
-        $antartica1->name = 'Beruang Kutub';
+        $antartica1->name = 'Beruang Hutan';
         $antartica1->save();
 
         $response = $this->call('GET', $this->baseUrl)->getContent();
@@ -62,7 +62,30 @@ class getMallAreaTest extends TestCase
         $geofence = Factory::create('MerchantGeofence');
         $geofence2 = Factory::create('MerchantGeofence_Antartica2');
 
-        $_GET['area'] = '-71.193575 6.976403, -71.362837 33.695150, -77.527021 34.134603, -77.488999 8.558434, -71.193575 6.976403';
+        $_GET['area'] = '-81.85111601628252 -12.252058594482378, -62.111671481762606 -12.252058594482378, -62.111671481762606 54.54481640551762, -81.85111601628252 54.54481640551762, -81.85111601628252 -12.252058594482378';
+
+        $antartica1 = $geofence->mall;
+        $antartica1->name = 'Beruang Kutub';
+        $antartica1->save();
+
+        $antartica2 = $geofence2->mall;
+        $antartica2->name = 'Beruang Hutan';
+        $antartica2->save();
+
+        $response = $this->call('GET', $this->baseUrl)->getContent();
+        $response = json_decode($response);
+
+        $this->assertSame(Status::OK, (int)$response->code);
+        $this->assertSame(2, (int)$response->data->total_records);
+    }
+
+    public function testOK_Found_Two_Mall_In_Area_Cross_International_Date_Line()
+    {
+        // Create 2 malls in antartica
+        $geofence = Factory::create('MerchantGeofence');
+        $geofence2 = Factory::create('MerchantGeofence_Antartica2');
+
+        $_GET['area'] = '-84.78803812147538 -49.64951953198238, 73.06899542190443 -49.64951953198238, 73.06899542190443 -142.46201953198238, -84.78803812147538 -142.46201953198238, -84.78803812147538 -49.64951953198238';
 
         $antartica1 = $geofence->mall;
         $antartica1->name = 'Beruang Kutub';

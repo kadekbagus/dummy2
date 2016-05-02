@@ -190,6 +190,7 @@ return array(
         'forgot_sent_title'        => '私達はパスワードを再調節するためにリンクを送った',
         'forgot_sent_sub_title'    => 'あなたの電子メールのinboxを点検しなさい',
         'password_message'         => 'パスワードをの前にセットアップしなかったら、かちりと言う音は新しいパスワードをセットアップするためにパスワードを忘れていた',
+        'email_not_exist'          => 'メールアドレスが登録されていません',
     ),
 
     'signup' => array(
@@ -210,6 +211,7 @@ return array(
         'date_of_birth' => '生年月日',
         'password_placeholder' => '密码',
         'password_confirm_placeholder' => 'パスワードを認証する',
+        'email_exist' => '電子メールアドレスは、すでに使われています',
     ),
 
     'catalogue' => array(

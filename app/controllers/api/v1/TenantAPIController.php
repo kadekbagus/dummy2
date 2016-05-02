@@ -2567,7 +2567,7 @@ class TenantAPIController extends ControllerAPI
                 $tenant_id = $updatedtenant->merchant_id;
 
                 // check tenant if exists in coupons.
-                $coupon = CouponRetailer::leftjoin('promotions', 'promotions.promotion_id', '=', 'promotion_retailer.promotion_id')
+                $coupon = PromotionRetailer::leftjoin('promotions', 'promotions.promotion_id', '=', 'promotion_retailer.promotion_id')
                     ->leftjoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
                     ->whereRaw("(CASE WHEN {$prefix}promotions.end_date < {$this->quote($nowMall)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) NOT IN ('stopped', 'expired')")
                     ->where('promotion_retailer.retailer_id', $tenant_id)

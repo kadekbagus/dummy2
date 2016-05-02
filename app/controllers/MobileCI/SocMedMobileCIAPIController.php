@@ -190,12 +190,13 @@ class SocMedMobileCIAPIController extends BaseCIController
         $data->description = $promotion->description;
         $data->mall = $mall;
 
+        $defaultLanguage = $this->getEnglishLanguage($mall);
+
         $promotionTranslation = \NewsTranslation::excludeDeleted()
-            ->where('news_id', $promotion->news_id);
-        // if ($lang !== null) {    
-        //     $promotionTranslation = $promotionTranslation->where('merchant_language_id', $lang);
-        // }
-        $promotionTranslation = $promotionTranslation->first();
+            ->where('news_id', $promotion->news_id)
+            ->where('merchant_language_id', $defaultLanguage->language_id)
+            ->first();
+
         if (! empty($promotionTranslation)) {
             $media = $promotionTranslation->find($promotionTranslation->news_translation_id)
                 ->media_orig()
@@ -208,7 +209,6 @@ class SocMedMobileCIAPIController extends BaseCIController
                 $data->description = $promotionTranslation->description;
             }
 
-            $defaultLanguage = $this->getEnglishLanguage($mall);
             if ($defaultLanguage !== NULL) {
                 $contentDefaultLanguage = \NewsTranslation::excludeDeleted()
                     ->where('news_id', $promotion->news_id)
@@ -280,12 +280,12 @@ class SocMedMobileCIAPIController extends BaseCIController
         $data->description = $promotion->description;
         $data->mall = $mall;
 
+        $defaultLanguage = $this->getEnglishLanguage($mall);
+
         $promotionTranslation = \NewsTranslation::excludeDeleted()
-            ->where('news_id', $promotion->news_id);
-        // if ($lang !== null) {    
-        //     $promotionTranslation = $promotionTranslation->where('merchant_language_id', $lang);
-        // }
-        $promotionTranslation = $promotionTranslation->first();
+            ->where('news_id', $promotion->news_id)
+            ->where('merchant_language_id', $defaultLanguage->language_id)
+            ->first();
 
         if (! empty($promotionTranslation)) {
             $media = $promotionTranslation->find($promotionTranslation->news_translation_id)
@@ -299,7 +299,6 @@ class SocMedMobileCIAPIController extends BaseCIController
                 $data->description = $promotionTranslation->description;
             }
 
-            $defaultLanguage = $this->getEnglishLanguage($mall);
             if ($defaultLanguage !== NULL) {
                 $contentDefaultLanguage = \NewsTranslation::excludeDeleted()
                     ->where('news_id', $promotion->news_id)
@@ -370,12 +369,12 @@ class SocMedMobileCIAPIController extends BaseCIController
         $data->description = $coupon->description;
         $data->mall = $mall;
 
+        $defaultLanguage = $this->getEnglishLanguage($mall);
+
         $couponTranslation = \CouponTranslation::excludeDeleted()
-            ->where('promotion_id', $coupon->promotion_id);
-        // if ($lang !== null) {    
-        //     $couponTranslation = $couponTranslation->where('merchant_language_id', $lang);
-        // }
-        $couponTranslation = $couponTranslation->first();
+            ->where('promotion_id', $coupon->promotion_id)
+            ->where('merchant_language_id', $defaultLanguage->language_id)
+            ->first();
 
         if (! empty($couponTranslation)) {
             $media = $couponTranslation->find($couponTranslation->coupon_translation_id)
@@ -389,7 +388,6 @@ class SocMedMobileCIAPIController extends BaseCIController
                 $data->description = $couponTranslation->description;
             }
 
-            $defaultLanguage = $this->getEnglishLanguage($mall);
             if ($defaultLanguage !== NULL) {
                 $contentDefaultLanguage = \CouponTranslation::excludeDeleted()
                     ->where('promotion_id', $coupon->promotion_id)
@@ -464,12 +462,12 @@ class SocMedMobileCIAPIController extends BaseCIController
         $data->description = $luckydraw->description;
         $data->mall = $mall;
 
+        $defaultLanguage = $this->getEnglishLanguage($mall);
+
         $luckyDrawTranslation = \LuckyDrawTranslation::excludeDeleted()
-            ->where('lucky_draw_id', $luckydraw->lucky_draw_id);
-        // if ($lang !== null) {    
-        //     $luckyDrawTranslation = $luckyDrawTranslation->where('merchant_language_id', $lang);
-        // }
-        $luckyDrawTranslation = $luckyDrawTranslation->first();
+            ->where('lucky_draw_id', $luckydraw->lucky_draw_id)
+            ->where('merchant_language_id', $defaultLanguage->language_id)
+            ->first();
 
         if (! empty($luckyDrawTranslation)) {
             $media = $luckyDrawTranslation->find($luckyDrawTranslation->lucky_draw_translation_id)
@@ -483,7 +481,6 @@ class SocMedMobileCIAPIController extends BaseCIController
                 $data->description = $luckyDrawTranslation->description;
             }
 
-            $defaultLanguage = $this->getEnglishLanguage($mall);
             if ($defaultLanguage !== NULL) {
                 $contentDefaultLanguage = \LuckyDrawTranslation::excludeDeleted()
                     ->where('lucky_draw_id', $luckydraw->lucky_draw_id)

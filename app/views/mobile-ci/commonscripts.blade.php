@@ -1105,7 +1105,6 @@
                 return;
             }
             orbitSignUpForm.isProcessing = true;
-            orbitSignUpForm.disableEnableAllButton();
             // Check if this email already registered or not
             // We suppose to not let user login when they are not registered yet
             // which is different from the old Orbit behavior
@@ -1130,7 +1129,6 @@
                     if (response.code !== 0 && response.code !== 302) {
                         orbitSignUpForm.showErrorMessageBox(response.message);
                         orbitSignUpForm.isProcessing = false;
-                        orbitSignUpForm.disableEnableAllButton();
 
                         return;
                     }
@@ -1147,9 +1145,6 @@
                         document.location = response.data.redirect_to;
                         return;
                     }
-
-                    // Todo check the login from captive
-                    // the '?from_captive=yes'
 
                     // @Todo: Replace the hardcoded name
                     session_id = xhr.getResponseHeader('Set-X-Orbit-Session');
@@ -1172,10 +1167,6 @@
                     window.location.replace(landing_url);
                 }).fail(function (data) {
                     orbitSignUpForm.isProcessing = false;
-
-                    // Something bad happens
-                    // @todo isplay this the error
-                    orbitSignUpForm.disableEnableAllButton();
                 }).always(function() {
                     $('#btn-signin-form').removeAttr('disabled');
                 });
@@ -1186,8 +1177,7 @@
                 function() {
                     $('#signupForm #email').val(custEmail);
                     orbitSignUpForm.isProcessing = false;
-                    orbitSignUpForm.disableEnableAllButton();
-
+                    orbitSignUpForm.showErrorMessageBox('{{Lang::get('mobileci.signin.email_not_exist')}}');
                     orbitSignUpForm.switchForm('signup');
                 },
                 // Proceed the login for identified user
@@ -1213,7 +1203,6 @@
                 return;
             }
             orbitSignUpForm.isProcessing = true;
-            orbitSignUpForm.disableEnableAllButton();
 
             // Check if this email already registered or not
             // We suppose to not let user login when they are not registered yet
@@ -1247,7 +1236,6 @@
                     if (resp.status === 'error') {
                         orbitSignUpForm.showErrorMessageBox(resp.message);
                         orbitSignUpForm.isProcessing = false;
-                        orbitSignUpForm.disableEnableAllButton();
                         return;
                     }
 
@@ -1284,7 +1272,6 @@
 
                     // Something bad happens
                     // @todo isplay this the error
-                    orbitSignUpForm.disableEnableAllButton();
                 }).always(function() {
                     $('#btn-signup-form').removeAttr('disabled');
                 });
@@ -1297,9 +1284,7 @@
                 function() {
                     $('#signinForm #email').val(custEmail);
                     orbitSignUpForm.isProcessing = false;
-                    orbitSignUpForm.disableEnableAllButton();
-
-                    orbitSignUpForm.switchForm('signin');
+                    orbitSignUpForm.showErrorMessageBox('{{Lang::get('mobileci.signup.email_exist')}}');
                 }
             );
         }
@@ -1513,22 +1498,9 @@
         };
 
         orbitSignUpForm.boot = function() {
-            // isSignedInFn();
             inProgressFn();
             isFromCaptiveFn();
             errorValidationFn();
-
-            for (var i=0; i<orbitSignUpForm.formElementsInput.length; i++) {
-                $(orbitSignUpForm.formElementsInput[i]).keyup(function(e) {
-                    // orbitSignUpForm.enableDisableSignup();
-                });
-            }
-
-            for (var i=0; i<orbitSignUpForm.formElementsSelect.length; i++) {
-                $(orbitSignUpForm.formElementsSelect[i]).change(function(e) {
-                    // orbitSignUpForm.enableDisableSignup();
-                });
-            }
 
             $('#signupForm #email').keyup(function(e) {
                 var value = $(this).val();
@@ -1540,12 +1512,6 @@
 
             $('#signinForm #email').on('input', function(e) {
                 var value = $(this).val();
-
-                // if (isValidEmailAddress(value)) {
-                //     $('#btn-signin-form').removeAttr('disabled');
-                // } else {
-                //     $('#btn-signin-form').attr('disabled', 'disabled');
-                // }
             });
 
             $('#logged-in-signin-button').click(function() {
