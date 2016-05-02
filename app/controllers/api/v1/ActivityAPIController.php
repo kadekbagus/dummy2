@@ -63,6 +63,10 @@ class ActivityAPIController extends ControllerAPI
 
             Event::fire('orbit.activity.getactivity.before.auth', array($this));
 
+            if (Config::get('orbit.maintenance_mode.crmsummary', FALSE) === TRUE) {
+                throw new Exception('Sorry, we are in maintenance mode right now.');
+            }
+
             // Require authentication
             $this->checkAuth();
 
@@ -2760,15 +2764,15 @@ class ActivityAPIController extends ControllerAPI
 
             // Thomas's number of connected users hourly with aggregates v2
             $activities = DB::select(DB::raw("
-                SELECT 
+                SELECT
                     q_hours.comp_hours AS start_time,
                     DATE_FORMAT(DATE_ADD(q_hours.comp_hours, INTERVAL 1 HOUR),'%H:00') AS end_time,
                     IFNULL(ppp2.score, 0) AS score
                 FROM
                     (
-                        SELECT 
-                            DATE_FORMAT(DATE_ADD('1971-01-01 23:00:00', INTERVAL osn.sequence_number HOUR),'%H:00') AS comp_hours 
-                        FROM 
+                        SELECT
+                            DATE_FORMAT(DATE_ADD('1971-01-01 23:00:00', INTERVAL osn.sequence_number HOUR),'%H:00') AS comp_hours
+                        FROM
                             {$tablePrefix}sequence osn
                         WHERE
                             osn.sequence_number < 24
@@ -2776,29 +2780,29 @@ class ActivityAPIController extends ControllerAPI
                     LEFT JOIN
                     (
                         SELECT
-                            DATE_FORMAT(ppp1.comp_date,'%H:00') AS start_time, 
+                            DATE_FORMAT(ppp1.comp_date,'%H:00') AS start_time,
                             SUM(ppp1.connected_hourly) AS score
                         FROM
                             (
-                                SELECT 
+                                SELECT
                                     pp1.comp_date,
-                                    pp2.login_count, 
+                                    pp2.login_count,
                                     pp1.delayed_logout_count,
-                                    @conn_hour,  
+                                    @conn_hour,
                                     (@conn_hour := (@conn_hour + pp2.login_count) - pp1.delayed_logout_count) AS connected_hourly,
-                                    pp1.logout_count 
+                                    pp1.logout_count
                                 FROM
                                     (SELECT @conn_hour := 0) AS init_var_main,
                                     (
-                                        SELECT 
+                                        SELECT
                                             s2.comp_date,
                                             IFNULL(p2.logout_count, 0) AS logout_count,
                                             @delayed_lo_count AS delayed_logout_count,
-                                            (@delayed_lo_count := IFNULL(p2.logout_count, 0)) 
+                                            (@delayed_lo_count := IFNULL(p2.logout_count, 0))
                                         FROM
                                             (SELECT @delayed_lo_count := 0) AS init_var_sp2,
                                             (
-                                                SELECT 
+                                                SELECT
                                                     DATE_FORMAT(DATE_ADD('{$start_date_minus_one_hour}', INTERVAL sequence_number HOUR), '%Y-%m-%d %H:00:00') AS comp_date
                                                 FROM
                                                     {$tablePrefix}sequence ts
@@ -2807,17 +2811,17 @@ class ActivityAPIController extends ControllerAPI
                                             ) AS s2
                                         LEFT JOIN
                                             (
-                                                SELECT 
+                                                SELECT
                                                     DATE_FORMAT(s_lo.logout_at, '%Y-%m-%d %H:00:00') AS logout_datehour,
                                                     COUNT(DATE_FORMAT(s_lo.logout_at, '%Y-%m-%d %H:00:00')) AS logout_count
                                                 FROM
                                                     (
-                                                        (   SELECT 
+                                                        (   SELECT
                                                                 oct.connection_time_id,
                                                                 oct.session_id,
                                                                 oct.user_id,
                                                                 oct.location_id,
-                                                                oct.login_at,  
+                                                                oct.login_at,
                                                                 oct.logout_at
                                                             FROM
                                                                 {$tablePrefix}connection_times oct
@@ -2833,18 +2837,18 @@ class ActivityAPIController extends ControllerAPI
                                                                 oct.session_id,
                                                                 oct.user_id,
                                                                 oct.location_id,
-                                                                oct.login_at,  
+                                                                oct.login_at,
                                                                 IF( TIMEDIFF('{$mallTime}', oct.login_at) > '{$expiry_time}',
                                                                     DATE_ADD(oct.login_at, INTERVAL {$expiry} SECOND),
                                                                     NULL
                                                                   ) AS logout_at
-                                                            FROM 
+                                                            FROM
                                                                 {$tablePrefix}connection_times oct
-                                                            WHERE 
+                                                            WHERE
                                                                 oct.location_id = {$quote($current_mall)} AND
                                                                 oct.logout_at IS NULL
                                                                 AND oct.login_at BETWEEN {$quote($start_date)} AND {$quote($end_date)}
-                                                        ) 
+                                                        )
                                                     )AS s_lo
                                                 GROUP BY logout_datehour
                                                 ORDER BY logout_datehour
@@ -2853,12 +2857,12 @@ class ActivityAPIController extends ControllerAPI
                                     ) AS pp1
                                 LEFT JOIN
                                     (
-                                        SELECT 
+                                        SELECT
                                             s1.comp_date,
                                             IFNULL(p1.login_count, 0) AS login_count
                                         FROM
                                             (
-                                                SELECT 
+                                                SELECT
                                                     DATE_FORMAT(DATE_ADD('{$start_date_minus_one_hour}', INTERVAL sequence_number HOUR), '%Y-%m-%d %H:00:00') AS comp_date
                                                 FROM
                                                     {$tablePrefix}sequence ts
@@ -2867,7 +2871,7 @@ class ActivityAPIController extends ControllerAPI
                                             ) AS s1
                                         LEFT JOIN
                                             (
-                                                SELECT 
+                                                SELECT
                                                     DATE_FORMAT(oct.login_at, '%Y-%m-%d %H:00:00') AS login_datehour,
                                                     COUNT(DATE_FORMAT(oct.login_at, '%Y-%m-%d %H:00:00')) AS login_count
                                                 FROM
@@ -3068,16 +3072,16 @@ class ActivityAPIController extends ControllerAPI
             };
 
             $sql = "select DATE_FORMAT(dt.comp_date, '%d/%m/%Y') as date,
-                        IFNULL(MAX(CASE WHEN dt.label = 'Network Check In' THEN dt.count END), 0) AS 'network_check_in', 
-                        IFNULL(MAX(CASE WHEN dt.label = 'Network Check Out' THEN dt.count END), 0) AS 'network_check_out', 
-                        IFNULL(MAX(CASE WHEN dt.label = 'Email Sign Up' THEN dt.count END), 0) AS 'email_sign_up', 
-                        IFNULL(MAX(CASE WHEN dt.label = 'Facebook Sign Up' THEN dt.count END), 0) AS 'facebook_sign_up', 
+                        IFNULL(MAX(CASE WHEN dt.label = 'Network Check In' THEN dt.count END), 0) AS 'network_check_in',
+                        IFNULL(MAX(CASE WHEN dt.label = 'Network Check Out' THEN dt.count END), 0) AS 'network_check_out',
+                        IFNULL(MAX(CASE WHEN dt.label = 'Email Sign Up' THEN dt.count END), 0) AS 'email_sign_up',
+                        IFNULL(MAX(CASE WHEN dt.label = 'Facebook Sign Up' THEN dt.count END), 0) AS 'facebook_sign_up',
                         IFNULL(MAX(CASE WHEN dt.label = 'Google Sign Up' THEN dt.count END), 0) AS 'google_sign_up',
-                        IFNULL(MAX(CASE WHEN dt.label = 'Sign Up via Customer Service' THEN dt.count END), 0) AS 'sign_up_via_cs',  
-                        IFNULL(MAX(CASE WHEN dt.label = 'Sign In' THEN dt.count END), 0) AS 'sign_in', 
-                        IFNULL(MAX(CASE WHEN dt.label = 'Read Activation Notification' THEN dt.count END), 0) AS 'read_activation_notification', 
-                        IFNULL(MAX(CASE WHEN dt.label = 'Customer Activation' THEN dt.count END), 0) AS 'customer_activation', 
-                        IFNULL(MAX(CASE WHEN dt.label = 'Sign Out' THEN dt.count END), 0) AS 'sign_out', 
+                        IFNULL(MAX(CASE WHEN dt.label = 'Sign Up via Customer Service' THEN dt.count END), 0) AS 'sign_up_via_cs',
+                        IFNULL(MAX(CASE WHEN dt.label = 'Sign In' THEN dt.count END), 0) AS 'sign_in',
+                        IFNULL(MAX(CASE WHEN dt.label = 'Read Activation Notification' THEN dt.count END), 0) AS 'read_activation_notification',
+                        IFNULL(MAX(CASE WHEN dt.label = 'Customer Activation' THEN dt.count END), 0) AS 'customer_activation',
+                        IFNULL(MAX(CASE WHEN dt.label = 'Sign Out' THEN dt.count END), 0) AS 'sign_out',
                         IFNULL(MAX(CASE WHEN dt.label = 'View (Home Page)' THEN dt.count END), 0) AS 'view_home_page',
                         IFNULL(MAX(CASE WHEN dt.label = 'Widget Click Tenant' THEN dt.count END), 0) AS 'widget_click_tenant',
                         IFNULL(MAX(CASE WHEN dt.label = 'View Tenant List' THEN dt.count END), 0) AS 'view_tenant_list',
@@ -3110,63 +3114,63 @@ class ActivityAPIController extends ControllerAPI
                         IFNULL(MAX(CASE WHEN dt.label = 'View Lucky Draw Detail' THEN dt.count END), 0) AS 'view_lucky_draw_detail',
                         IFNULL(MAX(CASE WHEN dt.label = 'Lucky Draw Number Issuance' THEN dt.count END), 0) AS 'lucky_draw_number_issued',
                         IFNULL(MAX(CASE WHEN dt.label = 'Read Lucky Draw Number Issuance Notification' THEN dt.count END), 0) AS 'read_lucky_draw_number_issuance_notification',
-                        IFNULL(MAX(CASE WHEN dt.label = 'View Winning Numbers & Prizes' THEN dt.count END), 0) AS 'view_prizes_&_winning_numbers', 
-                        IFNULL(MAX(CASE WHEN dt.label = 'Read Winner Announcement Notification' THEN dt.count END), 0) AS 'read_winner_announcement_notification', 
-                        IFNULL(MAX(CASE WHEN dt.label = 'Search' THEN dt.count END), 0) AS 'search', 
-                        IFNULL(MAX(CASE WHEN dt.label = 'View My Account' THEN dt.count END), 0) AS 'view_my_account', 
+                        IFNULL(MAX(CASE WHEN dt.label = 'View Winning Numbers & Prizes' THEN dt.count END), 0) AS 'view_prizes_&_winning_numbers',
+                        IFNULL(MAX(CASE WHEN dt.label = 'Read Winner Announcement Notification' THEN dt.count END), 0) AS 'read_winner_announcement_notification',
+                        IFNULL(MAX(CASE WHEN dt.label = 'Search' THEN dt.count END), 0) AS 'search',
+                        IFNULL(MAX(CASE WHEN dt.label = 'View My Account' THEN dt.count END), 0) AS 'view_my_account',
                         IFNULL(MAX(CASE WHEN dt.label = 'View Notification List' THEN dt.count END), 0) AS 'view_notification_list'
                     FROM
                         (
                             SELECT mydate.comp_date,
-                                CASE WHEN 
-                                    (oa.activity_name_long = 'Sign In via Automatic MAC Recognition (Captive)') or 
+                                CASE WHEN
+                                    (oa.activity_name_long = 'Sign In via Automatic MAC Recognition (Captive)') or
                                     (oa.activity_name_long = 'Sign In via Automatic Email Recognition (Captive)') or
                                     (oa.activity_name_long = 'Sign In via Facebook') or
                                     (oa.activity_name_long = 'Sign In via Google') or
                                     (oa.activity_name_long = 'Sign In via Email (Captive)') or
-                                    (oa.activity_name_long = 'Sign in') 
+                                    (oa.activity_name_long = 'Sign in')
                                 THEN 'Sign In'
-                                WHEN 
+                                WHEN
                                     (oa.activity_name_long = 'Sign Up') or
                                     (oa.activity_name_long = 'Sign Up via Mobile (Email Address)') or
-                                    (oa.activity_name_long = 'Sign Up with email address') 
+                                    (oa.activity_name_long = 'Sign Up with email address')
                                 THEN 'Email Sign Up'
-                                WHEN 
+                                WHEN
                                     (oa.activity_name_long = 'Sign Up via Mobile (Facebook)') or
-                                    (oa.activity_name_long = 'Facebook Sign Up') 
+                                    (oa.activity_name_long = 'Facebook Sign Up')
                                 THEN 'Facebook Sign Up'
-                                WHEN 
-                                    (oa.activity_name_long = 'Sign Up via Mobile (Google+)') 
+                                WHEN
+                                    (oa.activity_name_long = 'Sign Up via Mobile (Google+)')
                                 THEN 'Google Sign Up'
-                                WHEN 
+                                WHEN
                                     (oa.activity_name_long = 'Account Activation') or
                                     (oa.activity_name_long = 'Customer Activation')
                                 THEN 'Customer Activation'
                                 ELSE oa.activity_name_long
                                 END AS label,
                                 count(oa.activity_id) as `count`
-                            FROM 
-                                (SELECT 
+                            FROM
+                                (SELECT
                                     DATE_FORMAT(DATE_ADD({$quote($mallbegindate)}, INTERVAL sequence_number DAY), '%Y-%m-%d') AS comp_date
                                 FROM
                                     (SELECT 0 AS sequence_number UNION ALL SELECT * from {$tablePrefix}sequence) os
                                 WHERE
                                     os.sequence_number <= ((DATEDIFF(DATE_FORMAT({$quote($mallenddate)}, '%Y-%m-%d'), DATE_FORMAT({$quote($mallbegindate)}, '%Y-%m-%d'))))
                                     ) AS mydate
-                                LEFT JOIN 
+                                LEFT JOIN
                                     (select activity_id, activity_name_long, date_format(convert_tz(created_at, '+00:00', {$quote($timezoneOffset)}), '%Y-%m-%d') as createdat from {$tablePrefix}activities
                                     where (`group` = 'mobile-ci'
                                             or (`group` = 'portal' and activity_type in ('activation','create'))
                                             or (`group` = 'cs-portal' and activity_type in ('registration')))
                                             and response_status = 'OK' and location_id = {$quote($current_mall)}
-                                            and created_at between {$quote($start_date)} and {$quote($end_date)}) as oa 
+                                            and created_at between {$quote($start_date)} and {$quote($end_date)}) as oa
                                 ON mydate.comp_date = oa.createdat
                             GROUP BY comp_date, 2
                         ) dt
                     GROUP BY dt.comp_date";
 
             $summary = [];
-            
+
             // Filter with activity names (activity_name_long)
             $longActivityNameWhere = '';
             $activityKeys = [];
@@ -3189,7 +3193,7 @@ class ActivityAPIController extends ControllerAPI
                 $lowerActivityGroupSearch = strtolower($activityGroupSearch);
                 $lowerActivityColumns = array_map('strtolower', Config::get('orbit.activity_columns'));
                 $activityKey = array_search($lowerActivityGroupSearch, $lowerActivityColumns);
-                
+
                 if ($activityKey) {
                     $columns = array_merge($columns, [$activityKey => Config::get('orbit.activity_columns.'.$activityKey)]);
                     $activityKeys[] = strtolower(str_replace(' ', '_', $activityKey));
@@ -3198,7 +3202,7 @@ class ActivityAPIController extends ControllerAPI
                         $searchNotAvailable = true;
                     }
                 }
-                
+
                 $summary['Filter by Others'] = $activityGroupSearch;
             }
 
@@ -3218,7 +3222,7 @@ class ActivityAPIController extends ControllerAPI
             } else {
                 $result = $activities->get();
             }
-            
+
             $records = [];
 
             $summary['Activity Date'] = date('d F Y', strtotime($mallbegindate));
