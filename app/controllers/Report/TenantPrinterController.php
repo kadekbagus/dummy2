@@ -95,7 +95,7 @@ class TenantPrinterController extends DataPrinterController
                     printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
                             $this->printUtf8($row->name),
                             $this->printUtf8($row->tenant_categories),
-                            $this->printUtf8($row->location),
+                            $this->printLocation($row),
                             $row->status,
                             $this->printDateTime($row->updated_at, $timezone, 'd F Y  H:i:s')
                        );
@@ -194,7 +194,15 @@ class TenantPrinterController extends DataPrinterController
      */
     public function printLocation($row)
     {
-        return utf8_encode($row->floor." - ".$row->unit);
+        $result = '';
+        if (!empty($row->floor) && !empty($row->unit)) {
+            $result = utf8_encode($row->floor." - ".$row->unit);
+        } else if (!empty($row->floor) && empty($row->unit)) {
+            $result = utf8_encode($row->floor);
+        } else if (!empty($row->unit) && empty($row->floor)) {
+            $result = utf8_encode($row->unit);
+        }
+        return $result;
     }
 
 
