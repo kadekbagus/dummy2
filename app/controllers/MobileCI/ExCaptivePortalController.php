@@ -68,12 +68,23 @@ class ExCaptivePortalController extends BaseCIController
         $user = null;
         $media = null;
         $user_full_name = null;
+        $cookieName = Config::get('orbit.session.session_origin.cookie.name', 'orbit_sessionx');
+        $sessionQueryName = Config::get('orbit.session.session_origin.query_string.name', 'orbit_session');
 
         try {
             $this->pageTitle = Lang::get('mobileci.captive.granted.title');
+
+            $sessionId = isset($_COOKIE[$cookieName]) ? $_COOKIE[$cookieName] : NULL;
+            Log::info(sprintf('-- CAPTIVE PORTAL -> INTERNET GRANTED SID: %s', $sessionId));
+
             $params = [
                 'from_captive' => 'yes'
             ];
+
+            if (! is_null($sessionId)) {
+                $params = $params + [$sessionQueryName => $sessionId];
+            }
+
             $continueUrl = Config::get('orbit.captive.continue_url',
                 URL::route('ci-customer-home'));
 
@@ -131,9 +142,34 @@ class ExCaptivePortalController extends BaseCIController
     public static function setCookieForCaptive()
     {
         $domain = Config::get('orbit.session.session_origin.cookie.domain', NULL);
-        $path = Config::get('orbit.session.session_origin.cookie.path', NULL);
+        $path = Config::get('orbit.session.session_origin.cookie.path', '/');
         $expire = time() + 7200;
 
         setcookie('from_captive', 'yes', $expire, $path, $domain, FALSE);
+    }
+
+    public static function isSessionQueryExists()
+    {
+        // is there any query string called 'from_captive' and
+        // the value is 'yes'
+        $sessionQueryName = Config::get('orbit.session.session_origin.query_string.name', 'orbit_session');
+
+        return (! empty(OrbitInput::get($sessionQueryName, FALSE)));
+    }
+
+    public static function forceOverrideCookie($sessionId)
+    {
+        $cookieName = Config::get('orbit.session.session_origin.cookie.name', 'orbit_sessionx');
+        $expire = Config::get('orbit.session.session_origin.cookie.expire', 7200);
+        $path = Config::get('orbit.session.session_origin.cookie.path', '/');
+        $domain = Config::get('orbit.session.session_origin.cookie.domain', NULL);
+        $expire = time() + $expire;
+
+        Log::info(sprintf('-- CAPTIVE PORTAL -> Force SID to %s', $sessionId));
+
+        // Force the cookie global variable so it affected on current request
+        $_COOKIE[$cookieName] = $sessionId;
+
+        setcookie($cookieName, $sessionId, $expire, $path, $domain, FALSE);
     }
 }

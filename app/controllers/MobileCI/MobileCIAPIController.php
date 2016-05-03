@@ -239,6 +239,11 @@ class MobileCIAPIController extends BaseCIController
         $activityPage = Activity::mobileci()
                             ->setActivityType('view');
         try {
+            if (CaptivePortalController::isFromCaptive() && CaptivePortalController::isSessionQueryExists()) {
+                $sessionQueryName = Config::get('orbit.session.session_origin.query_string.name', 'orbit_session');
+                CaptivePortalController::forceOverrideCookie( OrbitInput::get($sessionQueryName, NULL) );
+            }
+
             $retailer = $this->getRetailerInfo('merchantSocialMedia');
             $from_main = OrbitInput::get('from_main', 'false');
             if ($from_main === 'true') {
@@ -246,6 +251,9 @@ class MobileCIAPIController extends BaseCIController
 
                 return Redirect::to($landing_url);
             }
+
+            /*Log::info(sprintf('-- CAPTIVE PORTAL -> SID: %s, Cookie: %s',
+                    $this->session->getSessionId(), print_r($_COOKIE, TRUE)));*/
 
             $urlblock = new UrlBlock;
             $user = $urlblock->checkBlockedUrl();
