@@ -39,7 +39,7 @@
 
 @section('content')
 <div class="row">
-    <div class="col-xs-12  main-theme product-detail">
+    <div class="col-xs-12 product-detail">
         @if(($coupon->image!='mobile-ci/images/default_coupon.png'))
         <a href="{{{ asset($coupon->image) }}}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer"><img class="img-responsive" alt="" src="{{{ asset($coupon->image) }}}" ></a>
         @else
