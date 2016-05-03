@@ -22,7 +22,7 @@
 @section('content')
 <!-- product -->
 <div class="row">
-    <div class="col-xs-12 main-theme product-detail">
+    <div class="col-xs-12 product-detail">
         @if(($news->image!='mobile-ci/images/default_news.png'))
         <a href="{{{ asset($news->image) }}}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer"><img src="{{ asset($news->image) }}"></a>
         @else
