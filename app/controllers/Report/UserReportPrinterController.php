@@ -431,14 +431,21 @@ class UserReportPrinterController extends DataPrinterController
     public function printDatePeriod($startDate = null, $endDate = null, $format='d M Y') 
     {
         $datePeriod = null;
+        $_startDate = null;
+        $_endDate = null;
+
         if (! empty($startDate) ) {
-            $time = strtotime($startDate);
-            $datePeriod = date($format, $time);
+            $_startDate = strtotime($startDate);
+            $datePeriod = date($format, $_startDate);
         }
 
         if(! empty($endDate) ) {
-            $time = strtotime($endDate);
-            $datePeriod = $datePeriod. ' - ' . date($format, $time);
+            $_endDate = strtotime($endDate);
+            if (date('d M Y', $_startDate) === date('d M Y', $_endDate)){
+
+            } else {
+                $datePeriod = $datePeriod. ' - ' . date($format, $_endDate);
+            }
         }
 
         return $datePeriod;
