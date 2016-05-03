@@ -2,6 +2,11 @@
 
 @section('ext_style')
     {{ HTML::style('mobile-ci/stylesheet/featherlight.min.css') }}
+    <style>
+        .header-buttons-container > .col-xs-2 {
+            display: none;
+        }
+    </style>
 @stop
 
 @section('content')
