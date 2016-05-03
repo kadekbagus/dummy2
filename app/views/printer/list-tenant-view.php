@@ -171,7 +171,7 @@
             <tr class="{{ $rowCounter % 2 === 0 ? 'zebra' : '' }}">
                  <td><?php echo $me->printUtf8($row->name); ?></td>
                  <td><?php echo $me->printUtf8($row->tenant_categories); ?></td>
-                 <td><?php echo $me->printUtf8($row->location); ?></td>
+                 <td><?php echo $me->printLocation($row); ?></td>
                  <td><?php echo $row->status; ?></td>
                  <td><?php echo $me->printDateTime($row->updated_at, $timezone, 'd F Y  H:i:s'); ?></td>
             </tr>

@@ -348,6 +348,11 @@
     {{-- End of Script fallback --}}
     <script type="text/javascript">
         $(document).ready(function(){
+            // Check if browser supports LocalStorage
+            if(typeof(Storage) !== 'undefined') {
+                localStorage.setItem('fromSource', 'detail');
+            }
+
             $('#image-gallery').lightSlider({
                 gallery:false,
                 item:1,
