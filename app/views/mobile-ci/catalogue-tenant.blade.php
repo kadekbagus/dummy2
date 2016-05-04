@@ -1,18 +1,19 @@
 @extends('mobile-ci.layout')
 
 @section('fb_scripts')
-@if(! empty($facebookInfo))
-@if(! empty($facebookInfo['version']) && ! empty($facebookInfo['app_id']))
-<div id="fb-root"></div>
-<script>(function(d, s, id) {
-  var js, fjs = d.getElementsByTagName(s)[0];
-  if (d.getElementById(id)) return;
-  js = d.createElement(s); js.id = id;
-  js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version={{$facebookInfo['version']}}&appId={{$facebookInfo['app_id']}}";
-  fjs.parentNode.insertBefore(js, fjs);
-}(document, 'script', 'facebook-jssdk'));</script>
-@endif
-@endif
+    @if(! empty($facebookInfo))
+        @if(! empty($facebookInfo['version']) && ! empty($facebookInfo['app_id']))
+        <div id="fb-root"></div>
+        <script>(function(d, s, id) {
+          var js, fjs = d.getElementsByTagName(s)[0];
+          if (d.getElementById(id)) return;
+          js = d.createElement(s); js.id = id;
+          js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version={{$facebookInfo['version']}}&appId={{$facebookInfo['app_id']}}";
+          fjs.parentNode.insertBefore(js, fjs);
+        }(document, 'script', 'facebook-jssdk'));
+        </script>
+        @endif
+    @endif
 @stop
 
 @section('content')
@@ -139,7 +140,7 @@
                                         @endif
                                         @foreach($tenant->mediaLogo as $media)
                                         @if($media->media_name_long == 'retailer_logo_orig')
-                                        <img class="img-responsive img-fit-tenant" alt="" src="{{ asset($media->path) }}"/>
+                                        <img class="img-responsive img-fit-tenant" alt="" data-original="{{ asset($media->path) }}"/>
                                         @endif
                                         @endforeach
                                     </a>
@@ -239,6 +240,7 @@
 @stop
 
 @section('ext_script_bot')
+{{ HTML::script('mobile-ci/scripts/jquery.lazyload.min.js') }}
 <script type="text/javascript">
     $(window).on('scroll', function() {
         // Check if browser supports LocalStorage
@@ -250,6 +252,16 @@
             }
         }
     });
+
+    var initImageLazyload = function(jImageElems) {
+        if (jImageElems instanceof jQuery) {
+            jImageElems.lazyload({
+                threshold : 100,
+                effect: "fadeIn",
+                placeholder: "",
+            });
+        }
+    };
 
     /**
      * Get Query String from the URL
@@ -273,47 +285,121 @@
         }
     }
 
+    var generateListItem = function(merchantId, redirectUrl, url, name, floor, unit, category, facebook_like_url, promotion_flag, news_flag, coupon_flag, logoUrl) {
+        var $listDiv = $('<div />').addClass('col-xs-12 col-sm-12').attr('id', 'item-'+merchantId);
+        var $listSection = $('<section />').addClass('list-item-single-tenant');
+        var $itemLink = $('<a />').addClass('list-item-link').attr({
+            'data-href': redirectUrl,
+            'href': url
+        });
+
+        var $itemListInfo = $('<div />').addClass('list-item-info');
+        var $titleHeader = $('<header />').addClass('list-item-title').append(
+            $('<div />').append(
+                $('<strong />').text(name)
+            )
+        );
+
+        var $subtitleHeader = $('<header />').addClass('list-item-subtitle');
+        var markerText = (floor ? ' ' + floor : '') + (unit ? '- ' + unit : '');
+        var $divMarker = $('<div />').append(
+            $('<i />').addClass('fa fa-map-marker').attr('style', 'padding-left: 5px;padding-right: 8px;')
+        ).append(markerText);
+
+        var categoryText = category ? category : '-';
+        var $divCategory = $('<div />').append(
+            $('<div />').addClass('col-xs-6').append(
+                $('<i />').addClass('fa fa-list').attr('style', 'padding-left: 2px;padding-right: 4px;')
+            ).append(
+                $('<span />').text(categoryText)
+            )
+        );
+
+        $subtitleHeader.append($divMarker);
+        $subtitleHeader.append($divCategory);
+        $itemListInfo.append($titleHeader);
+        $itemListInfo.append($subtitleHeader);
+        $itemLink.append($itemListInfo);
+        $listSection.append($itemLink);
+        $listDiv.append($listSection);
+
+        if (facebook_like_url) {
+            var $fbLikeDiv = $('<div />').addClass('fb-like').attr({
+                'data-href': facebook_like_url,
+                'data-layout': 'button_count',
+                'data-action': 'like',
+                'data-show-faces': 'false',
+                'data-share': 'false'
+            });
+            $subtitleHeader.append($fbLikeDiv);
+        }
+
+        var $badgeHeader = $('<header />').addClass('list-item-badges');
+        var $badgeWrapper = $('<div />').addClass('col-xs-12 badges-wrapper text-right');
+        var $theBadge;
+
+        if (promotion_flag) {
+            var $theBadge = $('<span />').addClass('badges promo-badges text-center').append(
+                $('<i />').addClass('fa fa-bullhorn')
+            )
+            $badgeWrapper.append($theBadge);
+        }
+        if (news_flag) {
+            var $theBadge = $('<span />').addClass('badges news-badges text-center').append(
+                $('<i />').addClass('fa fa-newspaper-o')
+            )
+            $badgeWrapper.append($theBadge);
+        }
+        if (coupon_flag) {
+            var $theBadge = $('<span />').addClass('badges coupon-badges text-center').append(
+                $('<i />').addClass('fa fa-ticket')
+            )
+            $badgeWrapper.append($theBadge);
+        }
+
+        $badgeHeader.append($badgeWrapper);
+        $itemListInfo.append($badgeHeader);
+
+        var $nonTenantDiv = $('<div />').addClass('list-vignette-non-tenant');
+        var $tenantLogo;
+
+        if (/default_product.png/i.test(logoUrl)){
+            $tenantLogo = $('<img />').addClass('img-responsive img-fit-tenant').attr('src', logoUrl);
+        }
+        else {
+            $tenantLogo = $('<img />').addClass('img-responsive img-fit-tenant').attr('data-original', logoUrl);
+            // Apply lazy load to tenantLogo image.
+            initImageLazyload($tenantLogo);
+        }
+
+        $itemLink.append($nonTenantDiv);
+        $itemLink.append($tenantLogo);
+
+        return $listDiv;
+    };
+
+
     var insertRecords = function(records) {
         var promises = [];
         for(var i = 0; i < records.length; i++) {
             var deferred = new $.Deferred();
-            var list = '<div class="col-xs-12 col-sm-12" id="item-'+records[i].merchant_id+'">\
-                    <section class="list-item-single-tenant">\
-                        <a class="list-item-link" data-href="'+records[i].redirect_url+'" href="'+records[i].url+'">\
-                            <div class="list-item-info">\
-                                <header class="list-item-title">\
-                                    <div><strong>'+records[i].name+'</strong></div>\
-                                </header>\
-                                <header class="list-item-subtitle">\
-                                    <div>\
-                                        <i class="fa fa-map-marker" style="padding-left: 5px;padding-right: 8px;"></i> \
-                                        '+ (records[i].floor ?  ' ' + records[i].floor : '') + (records[i].unit ? ' - ' + records[i].unit : '') +'\
-                                    </div>\
-                                    <div>\
-                                        <div class="col-xs-6">\
-                                            <i class="fa fa-list" style="padding-left: 2px;padding-right: 4px;"></i>\
-                                            <span>'+ (records[i].category_string ? records[i].category_string : '-') +'</span>\
-                                        </div>\
-                                    </div>';
-                if (records[i].facebook_like_url) {
-                    list += '<div class="fb-like" data-href="' + records[i].facebook_like_url + '" data-layout="button_count" data-action="like" data-show-faces="false" data-share="false"></div>';
-                }
 
-                list += '</header>\
-                                <header class="list-item-badges">\
-                                    <div class="col-xs-12 badges-wrapper text-right">\
-                                        '+ (records[i].promotion_flag ? '<span class="badges promo-badges text-center"><i class="fa fa-bullhorn"></i></span>' : '') +'\
-                                        '+ (records[i].news_flag ? '<span class="badges news-badges text-center"><i class="fa fa-newspaper-o"></i></span>' : '') +'\
-                                        '+ (records[i].coupon_flag ? '<span class="badges coupon-badges text-center"><i class="fa fa-ticket"></i></span>' : '') +'\
-                                    </div>\
-                                </header>\
-                            </div>\
-                            <div class="list-vignette-non-tenant"></div>\
-                            <img class="img-responsive img-fit-tenant" src="'+ records[i].logo_orig +'"/>\
-                        </a>\
-                    </section>\
-                </div>';
-            $('.catalogue-wrapper').append(list);
+            var merchantId = records[i].merchant_id;
+            var redirectUrl = records[i].redirect_url;
+            var url = records[i].url;
+            var name = records[i].name;
+            var floor = records[i].floor;
+            var unit = records[i].unit;
+            var category = records[i].category_string;
+            var facebook_like_url = records[i].facebook_like_url;
+            var promotion_flag = records[i].promotion_flag;
+            var news_flag = records[i].news_flag;
+            var coupon_flag = records[i].coupon_flag;
+            var logoUrl = records[i].logo_orig;
+
+            var $listDiv = generateListItem(merchantId, redirectUrl, url, name, floor, unit, category, facebook_like_url, promotion_flag, news_flag, coupon_flag, logoUrl);
+
+            $('.catalogue-wrapper').append($listDiv);
             deferred.resolve();
             promises.push(deferred);
         };
@@ -321,6 +407,9 @@
     }
 
     $(document).ready(function(){
+        // Apply lazy loads to images.
+        initImageLazyload($('img.img-fit-tenant[data-original]'));
+
         var isFromDetail = false;
         // Check if browser supports LocalStorage
         if(typeof(Storage) !== 'undefined') {
