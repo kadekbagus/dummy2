@@ -1673,15 +1673,6 @@ class CouponReportAPIController extends ControllerAPI
                 ->where('campaign_status', 'activate')
                 ->first();
 
-            // We need check issuence date for handling issue on OM-2000
-            if (isset($activeDays->total) && $activeDays->total == 0) {
-                // Calculate campaign activate days from coupon Issued Date
-                $activeDays = IssuedCoupon::select(DB::raw("count(distinct(DATE_FORMAT(issued_date, '%d-%m-%Y'))) as total"))
-                    ->where('promotion_id', '=', $couponId)
-                    ->first();
-            }
-
-
             $query_sum = array(
                 "COUNT(issued_coupon_id) AS total_record",
                 "COUNT(DISTINCT(user_id)) AS total_acquiring_customers",
