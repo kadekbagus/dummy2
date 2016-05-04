@@ -766,12 +766,14 @@ class IntermediateLoginController extends IntermediateBaseController
             // Store session id only from mobile-ci login & logout
             if($from == 'mobile-ci'){
                 $activity->setSessionId($this->session->getSessionId());
-
+                // just to make sure the guest user is exist in user table
                 $guestUser = User::with('role')->where('user_id', $this->session->read('guest_user_id'))->first();
-
                 if (is_object($guestUser)) {
                     $this->session->remove('user_id');
                     $this->session->remove('email');
+                    $this->session->remove('facebooksdk.state');
+                    $this->session->remove('visited_location');
+                    $this->session->remove('coupon_location');
                     $sessionData = $this->session->read(NULL);
                     $sessionData['fullname'] = '';
                     $sessionData['role'] = $guestUser->role->role_name;
