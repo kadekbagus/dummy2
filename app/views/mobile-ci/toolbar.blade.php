@@ -8,7 +8,7 @@
 
         <div class="col-xs-2">
             <ul class="buttons-list">
-                <li id="orbit-tour-home"><a href="{{ (new \Orbit\Helper\Net\UrlChecker)->blockedRoute('ci-customer-home') }}"><span><i class="glyphicon glyphicon-home"></i></span></a></li>
+                <li id="orbit-tour-home"><a href="{{ $urlblock->blockedRoute('ci-customer-home') }}"><span><i class="glyphicon glyphicon-home"></i></span></a></li>
             </ul>
         </div>
         <div class="col-xs-8 text-center">
