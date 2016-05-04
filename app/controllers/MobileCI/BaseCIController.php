@@ -58,7 +58,7 @@ class BaseCIController extends ControllerAPI
         $userId = $this->session->read('user_id');
 
         if ($this->session->read('logged_in') !== true || ! $userId) {
-            throw new Exception('Invalid session data.');
+            // throw new Exception('Invalid session data.');
         }
 
         if (empty($this->retailer)) {
@@ -75,10 +75,16 @@ class BaseCIController extends ControllerAPI
                     ->excludeDeleted('membership_numbers')
                     ->excludeDeleted('memberships')
                     ->where('memberships.merchant_id', $retailer->merchant_id);
-            }])->where('user_id', $userId)->first();
+            }])
+            ->where('user_id', $userId)
+            ->whereHas('role', function($q) {
+                $q->where('role_name', 'Consumer');
+            })
+            ->first();
 
         if (! $user) {
-            throw new Exception('Session error: user not found.');
+            $user = NULL;
+            // throw new Exception('Session error: user not found.');
         } else {
             $_user = clone($user);
             if (count($_user->membershipNumbers)) {
@@ -141,20 +147,26 @@ class BaseCIController extends ControllerAPI
      * Prepare session.
      *
      * @author Rio Astamal <me@rioastamal.net>
+     * @author Ahmad Anshori <ahmad@dominopos.com>
      * @return void
      */
     protected function prepareSession()
     {
         if (! is_object($this->session)) {
+            // set the session strict to FALSE
+            Config::set('orbit.session.strict', FALSE);
+            // set the query session string to FALSE, so the CI will depend on session cookie
+            Config::set('orbit.session.availability.query_string', FALSE);
+
             // This user assumed are Consumer, which has been checked at login process
             $config = new SessionConfig(Config::get('orbit.session'));
             $config->setConfig('application_id', static::APPLICATION_ID);
 
             try {
                 $this->session = new Session($config);
-                $this->session->start();
+                $this->session->start(array(), 'no-session-creation');
             } catch (Exception $e) {
-                Redirect::to('/customer/logout');
+                $this->session->start();   
             }
         }
     }
