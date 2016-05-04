@@ -761,12 +761,27 @@ class IntermediateLoginController extends IntermediateBaseController
                 throw new Exception ('Session error: user not found.');
             }
 
-            $this->session->destroy();
             $response->data = NULL;
 
             // Store session id only from mobile-ci login & logout
             if($from == 'mobile-ci'){
                 $activity->setSessionId($this->session->getSessionId());
+
+                $guestUser = User::with('role')->where('user_id', $this->session->read('guest_user_id'))->first();
+
+                if (is_object($guestUser)) {
+                    $this->session->remove('user_id');
+                    $this->session->remove('email');
+                    $sessionData = $this->session->read(NULL);
+                    $sessionData['fullname'] = '';
+                    $sessionData['role'] = $guestUser->role->role_name;
+
+                    $this->session->update($sessionData);
+                } else {
+                    $this->session->destroy();
+                }
+            } else {
+                $this->session->destroy();
             }
 
             // Successfull logout
