@@ -8,6 +8,7 @@ use Net\MacAddr;
 use Orbit\Helper\Email\MXEmailChecker;
 use Orbit\Helper\Net\Domain;
 use Orbit\Helper\Net\UrlChecker as UrlBlock;
+use Orbit\Helper\Net\GenerateGuestUser;
 use Orbit\CloudMAC;
 use OrbitShop\API\v1\ControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
@@ -245,9 +246,9 @@ class MobileCIAPIController extends BaseCIController
 
                 return Redirect::to($landing_url);
             }
-
-            $urlblock = new UrlBlock;
-            $user = $urlblock->checkBlockedUrl();
+            $user = $this->getLoggedInUser(); // could be null if the user is not signed in
+            $urlblock = new UrlBlock($this->session, $user);
+            $user = $urlblock->checkBlockedUrl(); // if previous $user is null then the return will be guest user
             $this->acquireUser($retailer, $user);
             Coupon::issueAutoCoupon($retailer, $user, $urlblock->getUserSession());
 
@@ -1111,13 +1112,10 @@ class MobileCIAPIController extends BaseCIController
                     $this->setSignInActivity($loggedInUser, 'google', $retailer);
 
                     // special session value for visited malls within single session
-                    $urlblock = new UrlBlock;
-                    $session = $urlblock->getUserSession();
+                    $session = $this->session;
                     $session->write('visited_location', [$retailer->merchant_id]);
 
                     $redirect_to_url_from_state = $this->remove_querystring_var(json_decode($this->base64UrlDecode($state))->redirect_to_url, $this->getOrbitSessionQueryStringName());
-                    // $redirect_to_url_from_state = $this->add_querystring_var($redirect_to_url_from_state, $this->getOrbitSessionQueryStringName(), $urlblock->getUserSession()->getSessionId());
-
                     return Redirect::to($redirect_to_url_from_state);
                 } else {
                     // register user without password and birthdate
@@ -1145,9 +1143,7 @@ class MobileCIAPIController extends BaseCIController
 
                     $this->acquireUser($retailer, $loggedInUser, 'google');
 
-                    $urlblock = new UrlBlock;
                     $redirect_to_url_from_state = $this->remove_querystring_var(json_decode($this->base64UrlDecode($state))->redirect_to_url, $this->getOrbitSessionQueryStringName());
-                    // $redirect_to_url_from_state = $this->add_querystring_var($redirect_to_url_from_state, $this->getOrbitSessionQueryStringName(), $urlblock->getUserSession()->getSessionId());
                     return Redirect::to($redirect_to_url_from_state);
                 }
 
@@ -1272,12 +1268,10 @@ class MobileCIAPIController extends BaseCIController
             $this->setSignInActivity($loggedInUser, 'facebook', $retailer);
 
             // special session value for visited malls within single session
-            $urlblock = new UrlBlock;
-            $session = $urlblock->getUserSession();
+            $session = $this->session;
             $session->write('visited_location', [$retailer->merchant_id]);
 
             $redirect_to_url = $this->remove_querystring_var($redirect_to_url, $this->getOrbitSessionQueryStringName());
-            // $redirect_to_url = $this->add_querystring_var($redirect_to_url, $this->getOrbitSessionQueryStringName(), $urlblock->getUserSession()->getSessionId());
 
             return Redirect::to($redirect_to_url);
         } else {
@@ -1303,9 +1297,7 @@ class MobileCIAPIController extends BaseCIController
 
             $this->acquireUser($retailer, $loggedInUser, 'facebook');
 
-            $urlblock = new UrlBlock;
             $redirect_to_url = $this->remove_querystring_var($redirect_to_url, $this->getOrbitSessionQueryStringName());
-            // $redirect_to_url = $this->add_querystring_var($redirect_to_url, $this->getOrbitSessionQueryStringName(), $urlblock->getUserSession()->getSessionId());
 
             return Redirect::to($redirect_to_url);
         }
@@ -1452,8 +1444,9 @@ class MobileCIAPIController extends BaseCIController
         $widget_id = null;
         $widget = null;
         try {
-            $urlblock = new UrlBlock;
-            $user = $urlblock->checkBlockedUrl();
+            $user = $this->getLoggedInUser(); // could be null if the user is not signed in
+            $urlblock = new UrlBlock($this->session, $user);
+            $user = $urlblock->checkBlockedUrl(); // if previous $user is null then the return will be guest user
 
             $retailer = $this->getRetailerInfo();
 
@@ -1545,8 +1538,9 @@ class MobileCIAPIController extends BaseCIController
         $activityPage = Activity::mobileci()
                                    ->setActivityType('view');
         try {
-            $urlblock = new UrlBlock;
-            $user = $urlblock->checkBlockedUrl();
+            $user = $this->getLoggedInUser(); // could be null if the user is not signed in
+            $urlblock = new UrlBlock($this->session, $user);
+            $user = $urlblock->checkBlockedUrl(); // if previous $user is null then the return will be guest user
 
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
@@ -1619,8 +1613,9 @@ class MobileCIAPIController extends BaseCIController
         $activity_type = null;
 
         try {
-            $urlblock = new UrlBlock;
-            $user = $urlblock->checkBlockedUrl();
+            $user = $this->getLoggedInUser(); // could be null if the user is not signed in
+            $urlblock = new UrlBlock($this->session, $user);
+            $user = $urlblock->checkBlockedUrl(); // if previous $user is null then the return will be guest user
 
             $retailer = $this->getRetailerInfo();
 
@@ -1932,7 +1927,7 @@ class MobileCIAPIController extends BaseCIController
      */
     public function getLandingUrl($mall)
     {
-        $urlblock = new UrlBlock;
+        $urlblock = new UrlBlock();
         $landing = Setting::getFromList($mall->settings, 'landing_page');
 
         // Get the landing page URL based on settings
@@ -2104,8 +2099,10 @@ class MobileCIAPIController extends BaseCIController
         try {
             // Require authentication
             $this->registerCustomValidation();
-            $urlblock = new UrlBlock;
-            $user = $urlblock->checkBlockedUrl();
+            $user = $this->getLoggedInUser(); // could be null if the user is not signed in
+            $urlblock = new UrlBlock($this->session, $user);
+            $user = $urlblock->checkBlockedUrl(); // if previous $user is null then the return will be guest user
+
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
             Coupon::issueAutoCoupon($retailer, $user, $urlblock->getUserSession());
@@ -2816,8 +2813,10 @@ class MobileCIAPIController extends BaseCIController
                                    ->setActivityType('view');
         $tenant = null;
         try {
-            $urlblock = new UrlBlock;
-            $user = $urlblock->checkBlockedUrl();
+            $user = $this->getLoggedInUser(); // could be null if the user is not signed in
+            $urlblock = new UrlBlock($this->session, $user);
+            $user = $urlblock->checkBlockedUrl(); // if previous $user is null then the return will be guest user
+
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
             Coupon::issueAutoCoupon($retailer, $user, $urlblock->getUserSession());
@@ -3226,8 +3225,9 @@ class MobileCIAPIController extends BaseCIController
     {
         $user = null;
         try {
-            $urlblock = new UrlBlock;
-            $user = $urlblock->checkBlockedUrl();
+            $user = $this->getLoggedInUser(); // could be null if the user is not signed in
+            $urlblock = new UrlBlock($this->session, $user);
+            $user = $urlblock->checkBlockedUrl(); // if previous $user is null then the return will be guest user
 
             $sort_by = OrbitInput::get('sort_by');
             $keyword = trim(OrbitInput::get('keyword'));
@@ -3714,8 +3714,9 @@ class MobileCIAPIController extends BaseCIController
         $activityPage = Activity::mobileci()
             ->setActivityType('view');
         try {
-            $urlblock = new UrlBlock;
-            $user = $urlblock->checkBlockedUrl();
+            $user = $this->getLoggedInUser(); // could be null if the user is not signed in
+            $urlblock = new UrlBlock($this->session, $user);
+            $user = $urlblock->checkBlockedUrl(); // if previous $user is null then the return will be guest user
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
             Coupon::issueAutoCoupon($retailer, $user, $urlblock->getUserSession());
@@ -3894,8 +3895,9 @@ class MobileCIAPIController extends BaseCIController
         try {
             // Require authentication
             $this->registerCustomValidation();
-            $urlblock = new UrlBlock;
-            $user = $urlblock->checkBlockedUrl();
+            $user = $this->getLoggedInUser(); // could be null if the user is not signed in
+            $urlblock = new UrlBlock($this->session, $user);
+            $user = $urlblock->checkBlockedUrl(); // if previous $user is null then the return will be guest user
             $retailer = $this->getRetailerInfo();
 
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
@@ -4075,8 +4077,9 @@ class MobileCIAPIController extends BaseCIController
                                    ->setActivityType('view');
         $product = null;
         try {
-            $urlblock = new UrlBlock;
-            $user = $urlblock->checkBlockedUrl();
+            $user = $this->getLoggedInUser(); // could be null if the user is not signed in
+            $urlblock = new UrlBlock($this->session, $user);
+            $user = $urlblock->checkBlockedUrl(); // if previous $user is null then the return will be guest user
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
             Coupon::issueAutoCoupon($retailer, $user, $urlblock->getUserSession());
@@ -4290,8 +4293,9 @@ class MobileCIAPIController extends BaseCIController
                                    ->setActivityType('view');
 
         try {
-            $urlblock = new UrlBlock;
-            $user = $urlblock->checkBlockedUrl();
+            $user = $this->getLoggedInUser(); // could be null if the user is not signed in
+            $urlblock = new UrlBlock($this->session, $user);
+            $user = $urlblock->checkBlockedUrl(); // if previous $user is null then the return will be guest user
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
             Coupon::issueAutoCoupon($retailer, $user, $urlblock->getUserSession());
@@ -4521,8 +4525,9 @@ class MobileCIAPIController extends BaseCIController
         try {
             // Require authentication
             $this->registerCustomValidation();
-            $urlblock = new UrlBlock;
-            $user = $urlblock->checkBlockedUrl();
+            $user = $this->getLoggedInUser(); // could be null if the user is not signed in
+            $urlblock = new UrlBlock($this->session, $user);
+            $user = $urlblock->checkBlockedUrl(); // if previous $user is null then the return will be guest user
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
             Coupon::issueAutoCoupon($retailer, $user, $urlblock->getUserSession());
@@ -4780,8 +4785,9 @@ class MobileCIAPIController extends BaseCIController
         try {
             // Require authentication
             $this->registerCustomValidation();
-            $urlblock = new UrlBlock;
-            $user = $urlblock->checkBlockedUrl();
+            $user = $this->getLoggedInUser(); // could be null if the user is not signed in
+            $urlblock = new UrlBlock($this->session, $user);
+            $user = $urlblock->checkBlockedUrl(); // if previous $user is null then the return will be guest user
             $retailer = $this->getRetailerInfo();
 
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
@@ -5026,8 +5032,9 @@ class MobileCIAPIController extends BaseCIController
         $activityPage = Activity::mobileci()
                                    ->setActivityType('view');
         try {
-            $urlblock = new UrlBlock;
-            $user = $urlblock->checkBlockedUrl();
+            $user = $this->getLoggedInUser(); // could be null if the user is not signed in
+            $urlblock = new UrlBlock($this->session, $user);
+            $user = $urlblock->checkBlockedUrl(); // if previous $user is null then the return will be guest user
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
             Coupon::issueAutoCoupon($retailer, $user, $urlblock->getUserSession());
@@ -5299,8 +5306,9 @@ class MobileCIAPIController extends BaseCIController
         $activityPage = Activity::mobileci()
                                    ->setActivityType('view');
         try {
-            $urlblock = new UrlBlock;
-            $user = $urlblock->checkBlockedUrl();
+            $user = $this->getLoggedInUser(); // could be null if the user is not signed in
+            $urlblock = new UrlBlock($this->session, $user);
+            $user = $urlblock->checkBlockedUrl(); // if previous $user is null then the return will be guest user
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
             Coupon::issueAutoCoupon($retailer, $user, $urlblock->getUserSession());
@@ -5455,8 +5463,9 @@ class MobileCIAPIController extends BaseCIController
         try {
             // Require authentication
             $this->registerCustomValidation();
-            $urlblock = new UrlBlock;
-            $user = $urlblock->checkBlockedUrl();
+            $user = $this->getLoggedInUser(); // could be null if the user is not signed in
+            $urlblock = new UrlBlock($this->session, $user);
+            $user = $urlblock->checkBlockedUrl(); // if previous $user is null then the return will be guest user
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
             Coupon::issueAutoCoupon($retailer, $user, $urlblock->getUserSession());
@@ -5683,8 +5692,9 @@ class MobileCIAPIController extends BaseCIController
         try {
             // Require authentication
             $this->registerCustomValidation();
-            $urlblock = new UrlBlock;
-            $user = $urlblock->checkBlockedUrl();
+            $user = $this->getLoggedInUser(); // could be null if the user is not signed in
+            $urlblock = new UrlBlock($this->session, $user);
+            $user = $urlblock->checkBlockedUrl(); // if previous $user is null then the return will be guest user
             $retailer = $this->getRetailerInfo();
 
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
@@ -5913,8 +5923,9 @@ class MobileCIAPIController extends BaseCIController
                                    ->setActivityType('view');
         $promotion = null;
         try {
-            $urlblock = new UrlBlock;
-            $user = $urlblock->checkBlockedUrl();
+            $user = $this->getLoggedInUser(); // could be null if the user is not signed in
+            $urlblock = new UrlBlock($this->session, $user);
+            $user = $urlblock->checkBlockedUrl(); // if previous $user is null then the return will be guest user
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
             Coupon::issueAutoCoupon($retailer, $user, $urlblock->getUserSession());
@@ -6072,8 +6083,9 @@ class MobileCIAPIController extends BaseCIController
         try {
             // Require authentication
             $this->registerCustomValidation();
-            $urlblock = new UrlBlock;
-            $user = $urlblock->checkBlockedUrl();
+            $user = $this->getLoggedInUser(); // could be null if the user is not signed in
+            $urlblock = new UrlBlock($this->session, $user);
+            $user = $urlblock->checkBlockedUrl(); // if previous $user is null then the return will be guest user
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
             Coupon::issueAutoCoupon($retailer, $user, $urlblock->getUserSession());
@@ -6301,8 +6313,9 @@ class MobileCIAPIController extends BaseCIController
         try {
             // Require authentication
             $this->registerCustomValidation();
-            $urlblock = new UrlBlock;
-            $user = $urlblock->checkBlockedUrl();
+            $user = $this->getLoggedInUser(); // could be null if the user is not signed in
+            $urlblock = new UrlBlock($this->session, $user);
+            $user = $urlblock->checkBlockedUrl(); // if previous $user is null then the return will be guest user
             $retailer = $this->getRetailerInfo();
 
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
@@ -6532,8 +6545,9 @@ class MobileCIAPIController extends BaseCIController
                                    ->setActivityType('view');
         $product = null;
         try {
-            $urlblock = new UrlBlock;
-            $user = $urlblock->checkBlockedUrl();
+            $user = $this->getLoggedInUser(); // could be null if the user is not signed in
+            $urlblock = new UrlBlock($this->session, $user);
+            $user = $urlblock->checkBlockedUrl(); // if previous $user is null then the return will be guest user
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
             Coupon::issueAutoCoupon($retailer, $user, $urlblock->getUserSession());
@@ -6693,8 +6707,9 @@ class MobileCIAPIController extends BaseCIController
         try {
             // Require authentication
             $this->registerCustomValidation();
-            $urlblock = new UrlBlock;
-            $user = $urlblock->checkBlockedUrl();
+            $user = $this->getLoggedInUser(); // could be null if the user is not signed in
+            $urlblock = new UrlBlock($this->session, $user);
+            $user = $urlblock->checkBlockedUrl(); // if previous $user is null then the return will be guest user
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
             Coupon::issueAutoCoupon($retailer, $user, $urlblock->getUserSession());
@@ -6757,8 +6772,9 @@ class MobileCIAPIController extends BaseCIController
         try {
             // Require authentication
             $this->registerCustomValidation();
-            $urlblock = new UrlBlock;
-            $user = $urlblock->checkBlockedUrl();
+            $user = $this->getLoggedInUser(); // could be null if the user is not signed in
+            $urlblock = new UrlBlock($this->session, $user);
+            $user = $urlblock->checkBlockedUrl(); // if previous $user is null then the return will be guest user
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
             Coupon::issueAutoCoupon($retailer, $user, $urlblock->getUserSession());
@@ -6879,8 +6895,9 @@ class MobileCIAPIController extends BaseCIController
     public function getMallLuckyDrawDownloadList()
     {
         try {
-            $urlblock = new UrlBlock;
-            $user = $urlblock->checkBlockedUrl();
+            $user = $this->getLoggedInUser(); // could be null if the user is not signed in
+            $urlblock = new UrlBlock($this->session, $user);
+            $user = $urlblock->checkBlockedUrl(); // if previous $user is null then the return will be guest user
             $retailer = $this->getRetailerInfo();
             $lucky_draw_id = OrbitInput::get('id');
             $languages = $this->getListLanguages($retailer);
@@ -6964,8 +6981,9 @@ class MobileCIAPIController extends BaseCIController
             $httpCode = 200;
             // Require authentication
             $this->registerCustomValidation();
-            $urlblock = new UrlBlock;
-            $user = $urlblock->checkBlockedUrl();
+            $user = $this->getLoggedInUser(); // could be null if the user is not signed in
+            $urlblock = new UrlBlock($this->session, $user);
+            $user = $urlblock->checkBlockedUrl(); // if previous $user is null then the return will be guest user
             $retailer = $this->getRetailerInfo();
 
             $alternateLanguage = null;
@@ -7287,8 +7305,9 @@ class MobileCIAPIController extends BaseCIController
 
             // Require authentication
             $this->registerCustomValidation();
-            $urlblock = new UrlBlock;
-            $user = $urlblock->checkBlockedUrl();
+            $user = $this->getLoggedInUser(); // could be null if the user is not signed in
+            $urlblock = new UrlBlock($this->session, $user);
+            $user = $urlblock->checkBlockedUrl(); // if previous $user is null then the return will be guest user
             $retailer = $this->getRetailerInfo();
 
             $alternateLanguage = null;
@@ -8271,9 +8290,6 @@ class MobileCIAPIController extends BaseCIController
 
             $user->setHidden(array('user_password', 'apikey'));
 
-            // $urlblock = new UrlBlock;
-            // Coupon::issueAutoCoupon($retailer, $user, $urlblock->getUserSession());
-
             $this->response->data = $user;
 
             $this->commit();
@@ -9005,11 +9021,12 @@ class MobileCIAPIController extends BaseCIController
                 $this->session->start(array(), 'no-session-creation');
             }
 
-            $guest_id = $this->session->read('user_id');
+            $guest_id = $this->session->read('guest_user_id');
 
             // check guest user id on session if empty create new one
             if (empty($guest_id)) {
-                $guest = (new UrlBlock())->generateGuestUser();
+                $urlblock = new UrlBlock($this->session, NULL);
+                $guest = $urlblock->generateGuestUser();
 
                 $guest_id = $guest->user_id;
             }
@@ -9071,8 +9088,10 @@ class MobileCIAPIController extends BaseCIController
 
         // if the user is viewing the mall for the 1st time in this session
         // then set also the sign in activity
-        $urlblock = new UrlBlock;
+        $this->prepareSession();
+        $urlblock = new UrlBlock($this->session, $user);
         $session = $urlblock->getUserSession();
+
         $visited_locations = [];
         if (! empty($session->read('visited_location'))) {
             $visited_locations = $session->read('visited_location');
@@ -9202,13 +9221,12 @@ class MobileCIAPIController extends BaseCIController
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             $user = $login_response_data->data;
-            // fill the user sign in table
-            // $this->setSignInActivity($user, 'form', $retailer, $user->activity);
+
             // acquire user
             $user_obj = User::where('user_id', $user->user_id)->first();
             $this->acquireUser($retailer, $user_obj, 'form');
 
-            $urlblock = new UrlBlock;
+            $urlblock = new UrlBlock($this->session, $user_obj);
             // append the redirect url to user object
             // remove the orbit_session from query string for this redirect url
             $user->redirect_to = $this->remove_querystring_var($to_url, $this->getOrbitSessionQueryStringName());
@@ -9313,5 +9331,12 @@ class MobileCIAPIController extends BaseCIController
     public function getOrbitSessionQueryStringName()
     {
         return Config::get('orbit.session.session_origin.query_string.name');
+    }
+
+    public function setSession($session)
+    {
+        $this->session = $session;
+
+        return $this;
     }
 }
