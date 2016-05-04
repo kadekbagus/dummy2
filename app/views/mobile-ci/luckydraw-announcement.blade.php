@@ -6,7 +6,7 @@
 
 @section('content')
 <div class="row">
-    <div class="col-xs-12 main-theme product-detail">
+    <div class="col-xs-12 product-detail">
     @if(isset($luckydraw->announcements[0]))
         @if(! empty($luckydraw->announcements[0]->image))
         <a href="{{ asset($luckydraw->announcements[0]->image) }}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer text-left"><img src="{{ asset($luckydraw->announcements[0]->image) }}" class="img-responsive" style="width:100%;"></a>
