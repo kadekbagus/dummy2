@@ -1075,7 +1075,7 @@ class Activity extends Eloquent
         }
 
         // Save also the activity to particular `campaign_xyz` table
-        $connection = ConnectionTime::where('session_id', $this->session_id)->first();
+        $connection = ConnectionTime::where('session_id', $this->session_id)->where('location_id', $this->location_id)->first();
         if (! is_object($connection)) {
             $connection = new ConnectionTime();
         }
