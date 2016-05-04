@@ -8990,7 +8990,18 @@ class MobileCIAPIController extends BaseCIController
                 'role'      => $user->role->role_name,
                 'fullname'  => $user->getFullName(),
             );
-            $this->session->enableForceNew()->start($data);
+
+            $this->session->start(array(), 'no-session-creation');
+            // get the session data
+            $sessionData = $this->session->read(NULL);
+            $sessionData['logged_in'] = TRUE;
+            $sessionData['user_id'] = $user->user_id;
+            $sessionData['email'] = $user->user_email;
+            $sessionData['role'] = $user->role->role_name;
+            $sessionData['fullname'] = $user->getFullName();
+
+            // update the guest session data, append user data to it so the user will be recognized
+            $this->session->update($sessionData);
 
             // Send the session id via HTTP header
             $sessionHeader = $this->session->getSessionConfig()->getConfig('session_origin.header.name');
