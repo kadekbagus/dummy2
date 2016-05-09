@@ -41,7 +41,7 @@
         </div>
         <a href="{{ asset($product->image) }}" data-featherlight="image"><img class="img-responsive" alt="" src="{{ asset($product->image) }}"></a>
     </div>
-    <div class="col-xs-12 main-theme product-detail">
+    <div class="col-xs-12 product-detail">
         <div class="row">
             <div class="col-xs-12">
                 <h3>{{ $product->product_name }}</h3>
