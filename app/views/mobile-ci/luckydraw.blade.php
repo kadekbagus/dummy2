@@ -22,7 +22,7 @@
 
 @section('content')
 <div class="row">
-    <div class="col-xs-12 main-theme product-detail">
+    <div class="col-xs-12 product-detail">
         @if(! empty($luckydraw->image))
         <a href="{{{ asset($luckydraw->image) }}}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer"><img src="{{ asset($luckydraw->image) }}"></a>
         @else
