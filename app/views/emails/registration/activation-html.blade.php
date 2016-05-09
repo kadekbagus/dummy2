@@ -4,9 +4,9 @@
 <title>Activate Your Account - GotoMalls</title>
 </head>
 <body style="padding:0;margin:0;background-color:#fff;width:100%;font-family:Arial,Verdana,Tahoma,Serif;line-height:22px;font-size:16px;">
-<div id="container;" style="padding:0; margin:0 auto;width:451px;border:1px solid #ccc">
+<div id="container;" style="padding:0; margin:0 auto;width:451px;border:1px solid #ccc;display: table;">
     <div id="header" style="">
-        <img style="width:451px;height:63" src="{{ asset('emails/orbit-gotomalls-header.png') }}" alt="Activate Your GotoMalls Account">
+        <img style="width:451px;height:63px" src="{{ asset('emails/orbit-gotomalls-header.png') }}" alt="Activate Your GotoMalls Account">
     </div>
 
     <div id="main" style="width:95%;margin: 0 auto;">

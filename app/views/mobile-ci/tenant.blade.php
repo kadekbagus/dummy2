@@ -247,18 +247,34 @@
             @if(!count($tenant->mediaLogoOrig) > 0)
             <li data-thumb="{{ asset('mobile-ci/images/default_tenants_directory.png') }}">
                 <span class="gallery-helper"></span>
-                <img class="img-responsive" src="{{ asset('mobile-ci/images/default_tenants_directory.png') }}"/>
+                <div class="vertical-align-middle-outer">
+                    <div class="vertical-align-middle-inner">
+                        <img class="img-responsive" src="{{ asset('mobile-ci/images/default_tenants_directory.png') }}"/>
+                    </div>
+                </div>
             </li>
             @endif
             @foreach($tenant->mediaLogoOrig as $media)
             <li data-thumb="{{ asset($media->path) }}">
                 <span class="gallery-helper"></span>
-                <a href="{{ asset($media->path) }}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer"><img class="img-responsive" src="{{ asset($media->path) }}" /></a>
+                <div class="vertical-align-middle-outer">
+                    <div class="vertical-align-middle-inner">
+                        <a href="{{ asset($media->path) }}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer">
+                            <img class="img-responsive" src="{{ asset($media->path) }}" />
+                        </a>
+                    </div>
+                </div>
             </li>
             @endforeach
             @foreach($tenant->mediaImageOrig as $media)
             <li data-thumb="{{ asset($media->path) }}">
-                <a href="{{ asset($media->path) }}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer"><img class="img-responsive" src="{{ asset($media->path) }}" /></a>
+                <a href="{{ asset($media->path) }}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer">
+                    <div class="vertical-align-middle-outer">
+                        <div class="vertical-align-middle-inner">
+                            <img class="img-responsive" src="{{ asset($media->path) }}" />
+                        </div>
+                    </div>
+                </a>
             </li>
             @endforeach
         </ul>
@@ -348,6 +364,11 @@
     {{-- End of Script fallback --}}
     <script type="text/javascript">
         $(document).ready(function(){
+            // Check if browser supports LocalStorage
+            if(typeof(Storage) !== 'undefined') {
+                localStorage.setItem('fromSource', 'detail');
+            }
+
             $('#image-gallery').lightSlider({
                 gallery:false,
                 item:1,
