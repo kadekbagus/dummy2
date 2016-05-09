@@ -731,7 +731,7 @@ class CampaignReportAPIController extends ControllerAPI
                     'campaign_id' => 'required',
                     'campaign_type' => 'required',
                     'current_mall' => 'required|orbit.empty.mall',
-                    'sort_by' => 'in:campaign_date,total_tenant,mall_name,unique_users,campaign_pages_views,campaign_pages_view_rate,popup_views,popup_view_rate,popup_clicks,popup_click_rate,spending',
+                    'sort_by' => 'in:campaign_date,total_tenant,total_location,mall_name,unique_users,campaign_pages_views,campaign_pages_view_rate,popup_views,popup_view_rate,popup_clicks,popup_click_rate,spending',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.campaignreportgeneral_sortby'),
@@ -867,15 +867,15 @@ class CampaignReportAPIController extends ControllerAPI
                 ->groupBy('date')
                 ;
 
-            // Filter by campaign name
-            // OrbitInput::get('mall_name', function($campaign_name) use ($campaign) {
-            //     $campaign->where('mall_name', 'like', "%$campaign_name%");
-            // });
+            // Filter by mall name
+            OrbitInput::get('mall_name', function($mall_name) use ($campaign) {
+                $campaign->having('campaign_location_names', 'like', "%$mall_name%");
+            });
 
             // Filter by tenant name
-            // OrbitInput::get('tenant_name', function($tenant_name) use ($campaign) {
-            //     $campaign->where('tenant_name', 'like', "%$tenant_name%");
-            // });
+            OrbitInput::get('tenant_name', function($tenant_name) use ($campaign) {
+                $campaign->having('campaign_location_names', 'like', "%$tenant_name%");
+            });
 
             if ($start_date != '' && $end_date != ''){
                 $campaign->whereRaw("date between ? and ?", [$start_date, $end_date]);
@@ -956,6 +956,7 @@ class CampaignReportAPIController extends ControllerAPI
                 $sortByMapping = array(
                     'campaign_date'            => 'campaign_date',
                     'total_tenant'             => 'total_tenant',
+                    'total_location'           => 'total_location',
                     'mall_name'                => 'mall_name',
                     'unique_users'             => 'unique_users',
                     'campaign_pages_views'     => 'campaign_pages_views',
