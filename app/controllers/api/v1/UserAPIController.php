@@ -1634,7 +1634,7 @@ class UserAPIController extends ControllerAPI
 
             // Filter retailer by name_like (first_name last_name)
             OrbitInput::get('name_like', function($data) use ($users) {
-                $users->where(DB::raw('CONCAT(COALESCE(user_firstname, ""), " ", COALESCE(user_lastname, ""))'), 'like', "%$data%");
+                $users->where(DB::raw('CONCAT(COALESCE(TRIM(user_firstname), ""), " ", COALESCE(TRIM(user_lastname), ""))'), 'like', "%$data%");
             });
 
             // Filter user by their firstname pattern
