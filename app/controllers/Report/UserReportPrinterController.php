@@ -431,14 +431,26 @@ class UserReportPrinterController extends DataPrinterController
     public function printDatePeriod($startDate = null, $endDate = null, $format='d M Y') 
     {
         $datePeriod = null;
+        $_startDate = null;
+        $_endDate = null;
+
+        $current_mall = OrbitInput::get('current_mall');
+        $timezone = $this->getTimezoneMall($current_mall);
+        $startDate = $this->printDateTime($startDate, $timezone, 'Y-m-d H:i:s');
+        $endDate = $this->printDateTime($endDate, $timezone, 'Y-m-d H:i:s');
+
         if (! empty($startDate) ) {
-            $time = strtotime($startDate);
-            $datePeriod = date($format, $time);
+            $_startDate = strtotime($startDate);
+            $datePeriod = date($format, $_startDate);
         }
 
         if(! empty($endDate) ) {
-            $time = strtotime($endDate);
-            $datePeriod = $datePeriod. ' - ' . date($format, $time);
+            $_endDate = strtotime($endDate);
+            if (date('d M Y', $_startDate) === date('d M Y', $_endDate)){
+
+            } else {
+                $datePeriod = $datePeriod. ' - ' . date($format, $_endDate);
+            }
         }
 
         return $datePeriod;

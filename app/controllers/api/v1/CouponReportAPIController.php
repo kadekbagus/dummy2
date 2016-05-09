@@ -1591,29 +1591,21 @@ class CouponReportAPIController extends ControllerAPI
             // Filter by Redeemed date
             // Greater Than Equals
             OrbitInput::get('issued_date_gte', function($date) use ($coupons, $timezone) {
-                $convert = Carbon::createFromFormat('Y-m-d H:i:s', $date, 'UTC');
-                $convert->setTimezone($timezone);
-                $coupons->where('issued_coupons.issued_date', '>=', $convert);
+                $coupons->where('issued_coupons.issued_date', '>=', $date);
             });
             // Less Than Equals
             OrbitInput::get('issued_date_lte', function($date) use ($coupons, $timezone) {
-                $convert = Carbon::createFromFormat('Y-m-d H:i:s', $date, 'UTC');
-                $convert->setTimezone($timezone);
-                $coupons->where('issued_coupons.issued_date', '<=', $convert);
+                $coupons->where('issued_coupons.issued_date', '<=', $date);
             });
 
             // Filter by Redeemed date
             // Greater Than Equals
             OrbitInput::get('redeemed_date_gte', function($date) use ($coupons, $timezone) {
-                $convert = Carbon::createFromFormat('Y-m-d H:i:s', $date, 'UTC');
-                $convert->setTimezone($timezone);
-                $coupons->where('issued_coupons.redeemed_date', '>=', $convert);
+                $coupons->where('issued_coupons.redeemed_date', '>=', $date);
             });
             // Less Than Equals
             OrbitInput::get('redeemed_date_lte', function($date) use ($coupons, $timezone) {
-                $convert = Carbon::createFromFormat('Y-m-d H:i:s', $date, 'UTC');
-                $convert->setTimezone($timezone);
-                $coupons->where('issued_coupons.redeemed_date', '<=', $convert);
+                $coupons->where('issued_coupons.redeemed_date', '<=', $date);
             });
 
             // Filter by total_issued
@@ -1667,98 +1659,11 @@ class CouponReportAPIController extends ControllerAPI
             $couponId = OrbitInput::get('promotion_id');
             $promoId = $couponId[0];
 
-            $activeDaysSql = "
-                        SELECT
-                            mquery.comp_date,
-                            mquery.campaign_id,
-                            mquery.campaign_status,
-                            mquery.campaign_start_date,
-                            mquery.campaign_end_date
-                        FROM
-                        (
-                            SELECT
-                                DATE_FORMAT(ppp.comp_date, '%Y-%m-%d') AS comp_date,
-                                ppp.campaign_id,
-                                ppp.campaign_status,
-                                ppp.campaign_start_date,
-                                ppp.campaign_end_date
-                            FROM
-                                (
-                                    SELECT
-                                        p1.comp_date,
-                                        IF( p2.campaign_id IS NULL,
-                                            @preCampaign := @preCampaign,
-                                            @preCampaign := p2.campaign_id) AS campaign_id,
-                                        IF( p2.action_name IS NULL,
-                                            @preAction := @preAction,
-                                            @preAction := p2.action_name
-                                        ) AS campaign_status,
-                                        IF( p2.begin_date IS NULL,
-                                            @beginDate := @beginDate,
-                                            @beginDate := p2.begin_date
-                                            ) AS campaign_start_date,
-                                        IF( p2.end_date IS NULL,
-                                            @endDate := @endDate,
-                                            @endDate := p2.end_date
-                                            ) AS campaign_end_date
-                                    FROM
-                                        (
-                                            SELECT
-                                                DATE_FORMAT(DATE_ADD(st.i_start, INTERVAL sequence_number DAY), '%Y-%m-%d') AS comp_date
-                                            FROM
-                                                (SELECT 0 AS sequence_number UNION ALL SELECT * from {$prefix}sequence) os,
-                                                (SELECT
-                                                        DATE_FORMAT(MIN(CONVERT_TZ(och.created_at, '+00:00', {$this->quote($timezone)})), '%Y-%m-%d') AS i_start
-                                                    FROM
-                                                        {$prefix}campaign_histories och
-                                                    WHERE
-                                                        och.campaign_id = {$this->quote($promoId)}
-                                                        AND och.campaign_type = 'coupon') st
-                                            WHERE
-                                                os.sequence_number <= (DATEDIFF(DATE_FORMAT({$this->quote($now)}, '%Y-%m-%d'), DATE_FORMAT(st.i_start, '%Y-%m-%d')))
-                                            GROUP BY comp_date
-                                        ) AS p1
-                                    LEFT JOIN
-                                        (
-                                            SELECT
-                                                och.campaign_id,
-                                                och.campaign_history_action_id,
-                                                ocha.action_name,
-                                                och.campaign_external_value,
-                                                DATE_FORMAT(CONVERT_TZ(och.created_at, '+00:00', {$this->quote($timezone)}), '%Y-%m-%d') AS history_created_date,
-                                                orn.begin_date,
-                                                orn.end_date
-                                            FROM
-                                                {$prefix}campaign_histories och
-                                            LEFT JOIN
-                                                {$prefix}campaign_history_actions ocha
-                                            ON och.campaign_history_action_id = ocha.campaign_history_action_id
-                                            LEFT JOIN
-                                                {$prefix}promotions orn
-                                            ON och.campaign_id = orn.promotion_id
-                                            WHERE
-                                                och.campaign_history_action_id IN   (   SELECT campaign_history_action_id
-                                                                                        FROM {$prefix}campaign_history_actions
-                                                                                        WHERE action_name IN ('activate', 'deactivate')
-                                                                                    )
-                                                AND och.campaign_type = 'coupon'
-                                                AND och.campaign_id =  {$this->quote($promoId)}
-                                            ORDER BY DATE_FORMAT(history_created_date, '%Y-%m-%d'), action_name
-                                        ) AS p2
-                                    ON p1.comp_date = p2.history_created_date
-                                    HAVING
-                                        campaign_id IS NOT NULL
-                                    ORDER BY DATE_FORMAT(p1.comp_date, '%Y-%m-%d'), campaign_status
-                                ) AS ppp
-                            WHERE DATE_FORMAT(campaign_start_date, '%Y-%m-%d') <= comp_date
-                                AND DATE_FORMAT(campaign_end_date, '%Y-%m-%d') >= comp_date
-                                AND campaign_status = 'activate'
-                            GROUP BY DATE_FORMAT(comp_date, '%Y-%m-%d')
-                        ) AS mquery";
-
-            $activeDays = DB::table(DB::raw('(' . $activeDaysSql . ') as s'))
-                            ->whereRaw("s.comp_date <= (CASE WHEN {$this->quote($now)} < DATE_FORMAT(campaign_end_date, '%Y-%m-%d') THEN {$this->quote($now)} ELSE DATE_FORMAT(campaign_end_date, '%Y-%m-%d') END)")
-                            ->count();
+            // Calculate campaign activate days from campaign daily spending
+            $activeDays = CampaignDailySpending::select(DB::raw("count(distinct date) as total"))
+                ->where('campaign_id', '=', $couponId)
+                ->where('campaign_status', 'activate')
+                ->first();
 
             $query_sum = array(
                 "COUNT(issued_coupon_id) AS total_record",
@@ -1773,7 +1678,7 @@ class CouponReportAPIController extends ControllerAPI
             // Get total acquiring customers
             $totalAcquiringCustomers = isset($total[0]->total_acquiring_customers)?$total[0]->total_acquiring_customers:0;
             // Get total active days
-            $totalActiveDays = isset($activeDays)?$activeDays:0;
+            $totalActiveDays = isset($activeDays->total)?$activeDays->total:0;
             // Get total redemption place
             $totalRedemptionPlace = isset($total[0]->total_redemption_place)?$total[0]->total_redemption_place:0;
 
