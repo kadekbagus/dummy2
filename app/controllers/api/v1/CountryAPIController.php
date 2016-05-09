@@ -71,7 +71,11 @@ class CountryAPIController extends ControllerAPI
                 $names = (array)$names;
                 $countries->whereIn('name', $names);
             });
-
+            
+            OrbitInput::get('name_like', function ($name) use ($countries) {
+                $countries->where('name', 'like', "%$name%");
+            });
+                
             // Clone the query builder which still does not include the take,
             // skip, and order by
             $_countries = clone $countries;

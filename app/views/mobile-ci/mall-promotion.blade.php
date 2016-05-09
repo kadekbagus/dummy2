@@ -22,7 +22,7 @@
 @section('content')
 <!-- promotion -->
 <div class="row">
-    <div class="col-xs-12 main-theme product-detail">
+    <div class="col-xs-12 product-detail">
         @if(($promotion->image!='mobile-ci/images/default_promotion.png'))
         <a href="{{{ asset($promotion->image) }}}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer"><img src="{{ asset($promotion->image) }}"></a>
         @else
