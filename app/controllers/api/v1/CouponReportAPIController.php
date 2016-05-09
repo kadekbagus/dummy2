@@ -1591,29 +1591,21 @@ class CouponReportAPIController extends ControllerAPI
             // Filter by Redeemed date
             // Greater Than Equals
             OrbitInput::get('issued_date_gte', function($date) use ($coupons, $timezone) {
-                $convert = Carbon::createFromFormat('Y-m-d H:i:s', $date, 'UTC');
-                $convert->setTimezone($timezone);
-                $coupons->where('issued_coupons.issued_date', '>=', $convert);
+                $coupons->where('issued_coupons.issued_date', '>=', $date);
             });
             // Less Than Equals
             OrbitInput::get('issued_date_lte', function($date) use ($coupons, $timezone) {
-                $convert = Carbon::createFromFormat('Y-m-d H:i:s', $date, 'UTC');
-                $convert->setTimezone($timezone);
-                $coupons->where('issued_coupons.issued_date', '<=', $convert);
+                $coupons->where('issued_coupons.issued_date', '<=', $date);
             });
 
             // Filter by Redeemed date
             // Greater Than Equals
             OrbitInput::get('redeemed_date_gte', function($date) use ($coupons, $timezone) {
-                $convert = Carbon::createFromFormat('Y-m-d H:i:s', $date, 'UTC');
-                $convert->setTimezone($timezone);
-                $coupons->where('issued_coupons.redeemed_date', '>=', $convert);
+                $coupons->where('issued_coupons.redeemed_date', '>=', $date);
             });
             // Less Than Equals
             OrbitInput::get('redeemed_date_lte', function($date) use ($coupons, $timezone) {
-                $convert = Carbon::createFromFormat('Y-m-d H:i:s', $date, 'UTC');
-                $convert->setTimezone($timezone);
-                $coupons->where('issued_coupons.redeemed_date', '<=', $convert);
+                $coupons->where('issued_coupons.redeemed_date', '<=', $date);
             });
 
             // Filter by total_issued
