@@ -162,18 +162,24 @@ class CampaignReportAPIController extends ControllerAPI
                 ocds.total_spending AS spending,
                 (
                     select count(campaign_page_view_id) as value
-                    from {$tablePrefix}campaign_page_views
+                    from {$tablePrefix}campaign_page_views ocpv
+                    inner join {$tablePrefix}campaign_group_names ocgn ON ocgn.campaign_group_name_id = ocpv.campaign_group_name_id
                     where campaign_id = {$tablePrefix}news.news_id
+                    and ocgn.campaign_group_name = 'News'
                 ) as page_views,
                 (
                     select count(campaign_popup_view_id) as value
-                    from {$tablePrefix}campaign_popup_views
+                    from {$tablePrefix}campaign_popup_views ocpv
+                    inner join {$tablePrefix}campaign_group_names ocgn ON ocgn.campaign_group_name_id = ocpv.campaign_group_name_id
                     where campaign_id = {$tablePrefix}news.news_id
+                    and ocgn.campaign_group_name = 'News'
                 ) as popup_views,
                 (
                     select count(campaign_click_id) as value
-                    from {$tablePrefix}campaign_clicks
+                    from {$tablePrefix}campaign_clicks occ
+                    inner join {$tablePrefix}campaign_group_names ocgn ON ocgn.campaign_group_name_id = occ.campaign_group_name_id
                     where campaign_id = {$tablePrefix}news.news_id
+                    and ocgn.campaign_group_name = 'News'
                 ) as popup_clicks,
                 (
                     select GROUP_CONCAT(IF({$tablePrefix}merchants.object_type = 'tenant', CONCAT({$tablePrefix}merchants.name,' at ', pm.name), CONCAT('Mall at ',{$tablePrefix}merchants.name) ) separator ', ')
@@ -245,18 +251,24 @@ class CampaignReportAPIController extends ControllerAPI
                 ocds.total_spending AS spending,
                 (
                     select count(campaign_page_view_id) as value
-                    from {$tablePrefix}campaign_page_views
+                    from {$tablePrefix}campaign_page_views ocpv
+                    inner join {$tablePrefix}campaign_group_names ocgn ON ocgn.campaign_group_name_id = ocpv.campaign_group_name_id
                     where campaign_id = {$tablePrefix}news.news_id
+                    and ocgn.campaign_group_name = 'Promotion'
                 ) as page_views,
                 (
                     select count(campaign_popup_view_id) as value
-                    from {$tablePrefix}campaign_popup_views
+                    from {$tablePrefix}campaign_popup_views ocpv
+                    inner join {$tablePrefix}campaign_group_names ocgn ON ocgn.campaign_group_name_id = ocpv.campaign_group_name_id
                     where campaign_id = {$tablePrefix}news.news_id
+                    and ocgn.campaign_group_name = 'Promotion'
                 ) as popup_views,
                 (
                     select count(campaign_click_id) as value
-                    from {$tablePrefix}campaign_clicks
+                    from {$tablePrefix}campaign_clicks occ
+                    inner join {$tablePrefix}campaign_group_names ocgn ON ocgn.campaign_group_name_id = occ.campaign_group_name_id
                     where campaign_id = {$tablePrefix}news.news_id
+                    and ocgn.campaign_group_name = 'Promotion'
                 ) as popup_clicks,
                 (
                     select GROUP_CONCAT(IF({$tablePrefix}merchants.object_type = 'tenant', CONCAT({$tablePrefix}merchants.name,' at ', pm.name), CONCAT('Mall at ',{$tablePrefix}merchants.name) ) separator ', ')
@@ -328,18 +340,24 @@ class CampaignReportAPIController extends ControllerAPI
                 ocds.total_spending AS spending,
                 (
                     select count(campaign_page_view_id) as value
-                    from {$tablePrefix}campaign_page_views
+                    from {$tablePrefix}campaign_page_views ocpv
+                    inner join {$tablePrefix}campaign_group_names ocgn ON ocgn.campaign_group_name_id = ocpv.campaign_group_name_id
                     where campaign_id = {$tablePrefix}promotions.promotion_id
+                    and ocgn.campaign_group_name = 'Coupon'
                 ) as page_views,
                 (
                     select count(campaign_popup_view_id) as value
-                    from {$tablePrefix}campaign_popup_views
+                    from {$tablePrefix}campaign_popup_views ocpv
+                    inner join {$tablePrefix}campaign_group_names ocgn ON ocgn.campaign_group_name_id = ocpv.campaign_group_name_id
                     where campaign_id = {$tablePrefix}promotions.promotion_id
+                    and ocgn.campaign_group_name = 'Coupon'
                 ) as popup_views,
                 (
                     select count(campaign_click_id) as value
-                    from {$tablePrefix}campaign_clicks
+                    from {$tablePrefix}campaign_clicks occ
+                    inner join {$tablePrefix}campaign_group_names ocgn ON ocgn.campaign_group_name_id = occ.campaign_group_name_id
                     where campaign_id = {$tablePrefix}promotions.promotion_id
+                    and ocgn.campaign_group_name = 'Coupon'
                 ) as popup_clicks,
                 (
                     select GROUP_CONCAT(IF({$tablePrefix}merchants.object_type = 'tenant', CONCAT({$tablePrefix}merchants.name,' at ', pm.name), CONCAT('Mall at ',{$tablePrefix}merchants.name)) separator ', ') from {$tablePrefix}promotion_retailer
@@ -820,6 +838,7 @@ class CampaignReportAPIController extends ControllerAPI
             $beginDate = date("Y-m-d", strtotime($getBeginEndDate[0]->begin_date));
             $endDate = date("Y-m-d", strtotime($getBeginEndDate[0]->end_date));
             $now = Carbon::now($mall->timezone->timezone_name);
+            $campaigntype = ucfirst($campaign_type);
 
             \DB::beginTransaction();
 
@@ -833,22 +852,28 @@ class CampaignReportAPIController extends ControllerAPI
                                 WHERE DATE(created_at) = date
                             ) AS unique_users,
                             (
-                                SELECT COUNT(campaign_page_view_id) AS value
-                                FROM {$tablePrefix}campaign_page_views
-                                WHERE campaign_id = {$this->quote($campaign_id)}
-                                AND DATE(created_at) = date
+                                SELECT COUNT(ocpv.campaign_page_view_id) AS value
+                                FROM {$tablePrefix}campaign_page_views ocpv
+                                INNER JOIN {$tablePrefix}campaign_group_names ocgn ON ocgn.campaign_group_name_id = ocpv.campaign_group_name_id
+                                WHERE ocpv.campaign_id = {$this->quote($campaign_id)}
+                                AND DATE(ocpv.created_at) = date
+                                AND ocgn.campaign_group_name = {$this->quote($campaigntype)}
                             ) AS campaign_pages_views,
                             (
-                                SELECT COUNT(campaign_popup_view_id) AS value
-                                FROM {$tablePrefix}campaign_popup_views
-                                WHERE campaign_id = {$this->quote($campaign_id)}
-                                AND DATE(created_at) = date
+                                SELECT COUNT(ocpv.campaign_popup_view_id) AS value
+                                FROM {$tablePrefix}campaign_popup_views ocpv
+                                INNER JOIN {$tablePrefix}campaign_group_names ocgn ON ocgn.campaign_group_name_id = ocpv.campaign_group_name_id
+                                WHERE ocpv.campaign_id = {$this->quote($campaign_id)}
+                                AND DATE(ocpv.created_at) = date
+                                AND ocgn.campaign_group_name = {$this->quote($campaigntype)}
                             ) AS popup_views,
                             (
-                                SELECT COUNT(campaign_click_id) AS value
-                                FROM {$tablePrefix}campaign_clicks
-                                WHERE campaign_id = {$this->quote($campaign_id)}
-                                AND DATE(created_at) = date
+                                SELECT COUNT(occ.campaign_click_id) AS value
+                                FROM {$tablePrefix}campaign_clicks occ
+                                INNER JOIN {$tablePrefix}campaign_group_names ocgn ON ocgn.campaign_group_name_id = occ.campaign_group_name_id
+                                WHERE occ.campaign_id = {$this->quote($campaign_id)}
+                                AND DATE(occ.created_at) = date
+                                AND ocgn.campaign_group_name = {$this->quote($campaigntype)}
                             ) AS popup_clicks,
                             (
                                 SELECT IFNULL(ROUND((campaign_pages_views / unique_users) * 100, 2), 0)
@@ -1553,6 +1578,8 @@ class CampaignReportAPIController extends ControllerAPI
             $campaign_id = OrbitInput::get('campaign_id');
             $start_date = OrbitInput::get('start_date');
             $end_date = OrbitInput::get('end_date');
+            $campaign_type = OrbitInput::get('campaign_type');
+            $campaign_type = ucfirst($campaign_type);
 
             $validator = Validator::make(
                 array(
@@ -1598,10 +1625,13 @@ class CampaignReportAPIController extends ControllerAPI
                     FROM {$tablePrefix}campaign_page_views
                     INNER JOIN {$tablePrefix}user_details
                     ON {$tablePrefix}campaign_page_views.user_id = {$tablePrefix}user_details.user_id
+                    INNER JOIN {$tablePrefix}campaign_group_names
+                    ON {$tablePrefix}campaign_group_names.campaign_group_name_id = {$tablePrefix}campaign_page_views.campaign_group_name_id
                     WHERE 1 = 1
                     AND {$tablePrefix}campaign_page_views.campaign_id = ?
                     AND (birthdate != '0000-00-00' AND birthdate != '' AND birthdate is not null)
                     AND {$tablePrefix}user_details.gender is not null
+                    AND {$tablePrefix}campaign_group_names.campaign_group_name = {$this->quote($campaign_type)}
                 ";
 
             $demograhicFemale = DB::select($query . "
@@ -1890,6 +1920,8 @@ class CampaignReportAPIController extends ControllerAPI
             $campaign_id = OrbitInput::get('campaign_id');
             $start_date = OrbitInput::get('start_date');
             $end_date = OrbitInput::get('end_date');
+            $campaign_type = OrbitInput::get('campaign_type');
+            $campaign_type = ucfirst($campaign_type);
 
             $validator = Validator::make(
                 array(
@@ -1944,41 +1976,47 @@ class CampaignReportAPIController extends ControllerAPI
             }
 
             $campaign_view = DB::select("
-                                select
-                                    date_format(convert_tz(created_at, '+00:00', ?), '%Y-%m-%d') as date,
-                                    count(campaign_page_view_id) as value
-                                from
-                                    {$tablePrefix}campaign_page_views
-                                where campaign_id = ?
-                                and created_at between ? and ?
-                                group by 1
-                                order by 1
-            ", array($timezoneOffset, $campaign_id, $start_date, $end_date));
+                                SELECT
+                                    DATE_FORMAT(CONVERT_TZ(ocpv.created_at, '+00:00', ?), '%Y-%m-%d') AS date,
+                                    COUNT(ocpv.campaign_page_view_id) AS value
+                                FROM
+                                    {$tablePrefix}campaign_page_views ocpv
+                                INNER JOIN {$tablePrefix}campaign_group_names ocgn ON ocgn.campaign_group_name_id = ocpv.campaign_group_name_id
+                                WHERE ocpv.campaign_id = ?
+                                AND ocpv.created_at between ? AND ?
+                                AND ocgn.campaign_group_name = ?
+                                GROUP BY 1
+                                ORDER BY 1
+            ", array($timezoneOffset, $campaign_id, $start_date, $end_date, $campaign_type));
 
 
             $pop_up_view = DB::select("
-                                select
-                                    date_format(convert_tz(created_at, '+00:00', ?), '%Y-%m-%d') as date,
-                                    count(campaign_popup_view_id) as value
-                                from
-                                    {$tablePrefix}campaign_popup_views
-                                where campaign_id = ?
-                                and created_at between ? and ?
-                                group by 1
-                                order by 1
-            ", array($timezoneOffset, $campaign_id, $start_date, $end_date));
+                                SELECT
+                                    DATE_FORMAT(CONVERT_TZ(ocpv.created_at, '+00:00', ?), '%Y-%m-%d') AS date,
+                                    COUNT(ocpv.campaign_popup_view_id) AS value
+                                FROM
+                                    {$tablePrefix}campaign_popup_views ocpv
+                                INNER JOIN {$tablePrefix}campaign_group_names ocgn ON ocgn.campaign_group_name_id = ocpv.campaign_group_name_id
+                                WHERE ocpv.campaign_id = ?
+                                AND ocpv.created_at between ? AND ?
+                                AND ocgn.campaign_group_name = ?
+                                GROUP BY 1
+                                ORDER BY 1
+            ", array($timezoneOffset, $campaign_id, $start_date, $end_date, $campaign_type));
 
             $pop_up_click = DB::select("
-                                select
-                                    date_format(convert_tz(created_at, '+00:00', ?), '%Y-%m-%d') as date,
-                                    count(campaign_click_id) as value
-                                from
-                                    {$tablePrefix}campaign_clicks
-                                where campaign_id = ?
-                                and created_at between ? and ?
-                                group by 1
-                                order by 1
-            ", array($timezoneOffset, $campaign_id, $start_date, $end_date));
+                                SELECT
+                                    DATE_FORMAT(CONVERT_TZ(occ.created_at, '+00:00', ?), '%Y-%m-%d') AS date,
+                                    COUNT(occ.campaign_click_id) AS value
+                                FROM
+                                    {$tablePrefix}campaign_clicks occ
+                                INNER JOIN {$tablePrefix}campaign_group_names ocgn ON ocgn.campaign_group_name_id = occ.campaign_group_name_id
+                                WHERE occ.campaign_id = ?
+                                AND occ.created_at between ? AND ?
+                                AND ocgn.campaign_group_name = ?
+                                GROUP BY 1
+                                ORDER BY 1
+            ", array($timezoneOffset, $campaign_id, $start_date, $end_date, $campaign_type));
 
             $unique_user = DB::select("select date_format(convert_tz(created_at, '+00:00', ?), '%Y-%m-%d') as date, count(distinct user_id) as value
                         from {$tablePrefix}user_signin
