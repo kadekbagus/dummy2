@@ -73,7 +73,7 @@
                 </div>
             </div>
             @endif
-            <div class="container">
+            <div id="catContainer" class="container">
                 <div class="mobile-ci list-item-container">
                     <div class="row">
                         <div class="catalogue-wrapper">
@@ -149,13 +149,6 @@
                         @endforeach
                         </div>
                     </div>
-                    @if($data->returned_records < $data->total_records)
-                        <div class="row">
-                            <div class="col-xs-12 padded">
-                                <button class="btn btn-info btn-block" id="load-more-tenants">{{Lang::get('mobileci.notification.view_more_btn')}}</button>
-                            </div>
-                        </div>
-                    @endif
                 </div>
             </div>
         @else
@@ -242,16 +235,15 @@
 @section('ext_script_bot')
 {{ HTML::script('mobile-ci/scripts/jquery.lazyload.min.js') }}
 <script type="text/javascript">
-    $(window).on('scroll', function() {
-        // Check if browser supports LocalStorage
-        if(typeof(Storage) !== 'undefined') {
-            var scrollTop = $(window).scrollTop();
-            // Prevent Safari to set scrollTop position to 0 on page load.
-            if (scrollTop) {
-                localStorage.setItem('scrollTop', scrollTop);
-            }
-        }
-    });
+
+    var take = {{ Config::get('orbit.pagination.per_page', 25) }},
+        skip = {{ Config::get('orbit.pagination.per_page', 25) }},
+        keyword = '{{{ Input::get('keyword', '') }}}',
+        cid = '{{{ Input::get('cid', '') }}}',
+        fid = '{{{ Input::get('fid', '') }}}',
+        promotion_id = '{{{ Input::get('promotion_id', '')}}}',
+        isFromDetail = false,
+        canLoadMoreTenant = Boolean({{ $data->returned_records < $data->total_records }});
 
     var initImageLazyload = function(jImageElems) {
         if (jImageElems instanceof jQuery) {
@@ -269,8 +261,7 @@
      * @author Rio Astamal <me@rioastamal.net>
      * @param string n - Name of the parameter
      */
-    function get(n)
-    {
+    function get(n) {
         var half = location.search.split(n + '=')[1];
         return half !== undefined ? decodeURIComponent(half.split('&')[0]) : null;
     }
@@ -286,11 +277,14 @@
     }
 
     var generateListItem = function(merchantId, redirectUrl, url, name, floor, unit, category, facebook_like_url, promotion_flag, news_flag, coupon_flag, logoUrl) {
-        var $listDiv = $('<div />').addClass('col-xs-12 col-sm-12').attr('id', 'item-'+merchantId);
+        var $listDiv = $('<div />').addClass('col-xs-12 col-sm-12').attr({
+            'id': 'item-' + merchantId
+        });
         var $listSection = $('<section />').addClass('list-item-single-tenant');
+
         var $itemLink = $('<a />').addClass('list-item-link').attr({
             'data-href': redirectUrl,
-            'href': url
+            'href': $.cookie('login_from') ? redirectUrl : url
         });
 
         var $itemListInfo = $('<div />').addClass('list-item-info');
@@ -378,7 +372,6 @@
         return $listDiv;
     };
 
-
     var insertRecords = function(records) {
         var promises = [];
         for(var i = 0; i < records.length; i++) {
@@ -406,11 +399,80 @@
         return $.when.apply(undefined, promises).promise();
     }
 
+    var loadMoreTenant = function() {
+        $.ajax({
+            url: '{{ url("app/v1/tenant/load-more") }}',
+            method: 'GET',
+            timeout: 60000,
+            async: true,
+            data: {
+                take: take,
+                skip: skip,
+                keyword: keyword,
+                cid: cid,
+                fid: fid,
+                promotion_id: promotion_id
+            },
+            error: function(xhr, textStatus, errorThrown) {
+                if (textStatus === 'timeout') {
+                    alert('Request timeout. Failed to retrieve more tenants');
+                }
+            }
+        })
+        .done(function(data) {
+            skip = skip + take;
+
+            if(data.records.length > 0) {
+                insertRecords(data.records);
+
+                // Check if browser supports LocalStorage
+                if(typeof(Storage) !== 'undefined') {
+                    var dataJson = data;
+                    var tenantData = localStorage.getItem('tenantData');
+
+                    // Check if tenantData exists.
+                    if (tenantData) {
+                        var jsonObj = JSON.parse(tenantData);
+                        // Concat the current record with the existing tenantData.
+                        dataJson.records = jsonObj.records.concat(dataJson.records);
+                    }
+
+                    // Set tenantData in localStorage.
+                    localStorage.setItem('tenantData', JSON.stringify(dataJson));
+                }
+
+                FB.XFBML.parse();
+            }
+
+            canLoadMoreTenant = (skip < data.total_records);
+        });
+    };
+
+
+    $(window).on('scroll', function() {
+        var scrollTop = $(window).scrollTop();
+        // Check if browser supports LocalStorage
+        if(typeof(Storage) !== 'undefined') {
+            // Prevent Safari to set scrollTop position to 0 on page load.
+            if (scrollTop) {
+                localStorage.setItem('scrollTop', scrollTop);
+            }
+        }
+
+        // Auto load more implementation.
+        var totalHeight = $(document).height();
+
+        // Check if scroll has reached 75% of total page height.
+        if (canLoadMoreTenant && scrollTop >= (totalHeight * 0.75)) {
+            canLoadMoreTenant = false;
+            loadMoreTenant();
+        }
+    });
+
     $(document).ready(function(){
         // Apply lazy loads to images.
         initImageLazyload($('img.img-fit-tenant[data-original]'));
 
-        var isFromDetail = false;
         // Check if browser supports LocalStorage
         if(typeof(Storage) !== 'undefined') {
             // This feature is implemented for tracking whether this page is loaded from detail page. (Which is back button)
@@ -461,72 +523,6 @@
             window.location.replace(path);
         });
 
-        var take = {{Config::get('orbit.pagination.per_page', 25)}},
-            skip = {{Config::get('orbit.pagination.per_page', 25)}};
-
-        var keyword = '{{{Input::get('keyword', '')}}}';
-        var cid = '{{{Input::get('cid', '')}}}';
-        var fid = '{{{Input::get('fid', '')}}}';
-        var promotion_id = '{{{Input::get('promotion_id', '')}}}';
-
-        $('#load-more-tenants').click(function(){
-            var btn = $(this);
-            btn.attr('disabled', 'disabled');
-            btn.html('<i class="fa fa-circle-o-notch fa-spin"></i>');
-            $.ajax({
-                url: '{{ url("app/v1/tenant/load-more") }}',
-                method: 'GET',
-                timeout: 60000,
-                async: true,
-                data: {
-                    take: take,
-                    skip: skip,
-                    keyword: keyword,
-                    cid: cid,
-                    fid: fid,
-                    promotion_id: promotion_id
-                },
-                error: function(xhr, textStatus, errorThrown) {
-                    if (textStatus === 'timeout') {
-                        alert('Request timeout. Failed to retrieve more tenants');
-                    }
-                }
-            }).done(function(data) {
-                skip = skip + take;
-
-                if(data.records.length > 0) {
-                    insertRecords(data.records);
-
-                    // Check if browser supports LocalStorage
-                    if(typeof(Storage) !== 'undefined') {
-                        var dataJson = data;
-                        var tenantData = localStorage.getItem('tenantData');
-
-                        // Check if tenantData exists.
-                        if (tenantData) {
-                            var jsonObj = JSON.parse(tenantData);
-                            // Concat the current record with the existing tenantData.
-                            dataJson.records = jsonObj.records.concat(dataJson.records);
-                        }
-
-                        // Set tenantData in localStorage.
-                        localStorage.setItem('tenantData', JSON.stringify(dataJson));
-                    }
-
-                    FB.XFBML.parse();
-                }
-
-                if (skip >= data.total_records) {
-                    btn.remove();
-                }
-
-            })
-            .always(function(data){
-                btn.removeAttr('disabled', 'disabled');
-                btn.html('{{Lang::get('mobileci.notification.view_more_btn')}}');
-            });
-        });
-
         // Check if page is from back button.
         if (isFromDetail) {
             var tenantData = localStorage.getItem('tenantData');
@@ -548,9 +544,7 @@
                     }
                 });
 
-                if (skip >= tenants.total_records) {
-                    $('#load-more-tenants').remove();
-                }
+                canLoadMoreTenant = (skip < tenants.total_records);
             }
             else {
                 // Just maintain scroll position.
@@ -563,6 +557,8 @@
                 }
             }
         }
+
+
     });
 </script>
 @stop
