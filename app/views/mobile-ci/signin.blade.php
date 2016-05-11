@@ -2,21 +2,27 @@
 
 @section('ext_style')
     <style>
-        .content-signin {
+        body {
         @if(!empty($bg) && !empty($bg->path))
             background: url('{{ asset($bg->path) }}');
-        @else
-            background: url('{{ asset('mobile-ci/images/skelatal_weave.png') }}');
-        @endif
-            background-size: 100% 100%;
+            background-size: cover;
             background-repeat: no-repeat;
             background-position: center;
+            width: 100%;
+        @else
+            background: url('{{ asset('mobile-ci/images/skelatal_weave.png') }}');
+            background-repeat: repeat;
+        @endif
+        }
+
+        .content-signin{
             position: absolute;
             height: 478px;
             display: table;
             width: 100%;
+            top: 40%;
         }
-
+        }
         .modal-backdrop {
             z-index: 0;
         }
@@ -399,7 +405,8 @@
                     payload: "{{{ Input::get('payload', '') }}}",
                     mac_address: {{ json_encode(Input::get('mac_address', '')) }},
                     auto_login: "{{{ Input::get('auto_login', 'no') }}}",
-                    from_captive: "{{{ Input::get('from_captive', 'no') }}}"
+                    from_captive: "{{{ Input::get('from_captive', 'no') }}}",
+                    socmed_redirect_to: "{{{ Input::get('socmed_redirect_to', '') }}}"
                 }
             }).done(function (data, status, xhr) {
                 orbit_login_processing = false;
@@ -447,6 +454,12 @@
         }
         @endif
         $(document).ready(function () {
+            $.removeCookie('dismiss_campaign_cards', {path: '/'}); // remove campaign cards popup flags from cookie
+            
+            if (localStorage) {
+                localStorage.removeItem('campaign_popup');
+            }
+            
             var em;
             var user_em = '{{ strtolower($user_email) }}';
 

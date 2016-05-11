@@ -292,6 +292,7 @@ class WidgetAPIController extends ControllerAPI
      *
      * @author Rio Astamal <me@rioastamal.net>
      * @author Firmansyah <firmansyah@dominopos.net>
+     * @author Irianto Pratama <irianto@dominopos.net>
      *
      * List of API Parameters
      * ----------------------
@@ -353,7 +354,7 @@ class WidgetAPIController extends ControllerAPI
                 )
             );
 
-            Event::fire('orbit.widget.postnewwidget.before.validation', array($this, $validator));
+            Event::fire('orbit.widget.postupdatewidget.before.validation', array($this, $validator));
 
             // Begin database transaction
             $this->beginTransaction();
@@ -362,6 +363,59 @@ class WidgetAPIController extends ControllerAPI
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            // split all validation for validation image first
+            foreach ($widgetbatch as $key => $value) {
+                $widgetId = $value['widget_id'];
+                $widgetType = $value['widget_type'];
+                $widgetObjectId = $value['object_id'];
+                $merchantId = $value['merchant_id'];
+                $slogan = $value['slogan'];
+                $animation = $value['animation'];
+                $widgetOrder = $value['widget_order'];
+                $images = OrbitInput::files('image_' . $widgetType);
+                $idLanguageDefault = $value['id_language_default'];
+                $widgetImageConfig = Config::get('orbit.upload.widget.main');
+                $widget_units = static::bytesToUnits($widgetImageConfig['file_size']);
+
+                $validator = Validator::make(
+                    array(
+                        'widget_id'           => $widgetId,
+                        'object_id'           => $widgetObjectId,
+                        'merchant_id'         => $merchantId,
+                        'widget_type'         => $widgetType,
+                        'animation'           => $animation,
+                        'widget_order'        => $widgetOrder,
+                        'widget_image_type'   => $images['type'],
+                        'widget_image_size'   => $images['size'],
+                        'id_language_default' => $idLanguageDefault,
+                    ),
+                    array(
+                        'widget_id'           => 'required|orbit.empty.widget',
+                        'object_id'           => '',
+                        'merchant_id'         => 'orbit.empty.merchant',
+                        'widget_type'         => 'required|in:tenant,lucky_draw,promotion,coupon,news|orbit.exists.widget_type_but_me:' . $merchantId . ', ' . $widgetId,
+                        'animation'           => 'in:none,horizontal,vertical',
+                        'widget_order'        => 'numeric',
+                        'widget_image_type'   => 'in:image/jpg,image/png,image/jpeg,image/gif',
+                        'widget_image_size'   => 'orbit.max.file_size:' . $widgetImageConfig['file_size'],
+                        'id_language_default' => 'required|orbit.empty.language_default',
+                    ),
+                    array(
+                        'orbit.exists.widget_type_but_me' => Lang::get('validation.orbit.exists.widget_type'),
+                        'orbit.max.file_size' => 'Picture ' . $widgetOrder . ' size is too big, maximum size allowed is ' . $widget_units['newsize'] . $widget_units['unit'],
+                    )
+                );
+
+                Event::fire('orbit.widget.postupdatewidget.before.validation', array($this, $validator));
+
+                // Run the validation
+                if ($validator->fails()) {
+                    $errorMessage = $validator->messages()->first();
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+                Event::fire('orbit.widget.postupdatewidget.after.validation', array($this, $validator));
             }
 
             foreach ($widgetbatch as $key => $value) {
@@ -373,48 +427,12 @@ class WidgetAPIController extends ControllerAPI
                 $slogan = $value['slogan'];
                 $animation = $value['animation'];
                 $widgetOrder = $value['widget_order'];
-                $images = OrbitInput::files('widget');
+                $images = OrbitInput::files('image_' . $widgetType);
                 $idLanguageDefault = $value['id_language_default'];
-
-                $validator = Validator::make(
-                    array(
-                        'widget_id'             => $widgetId,
-                        'object_id'             => $widgetObjectId,
-                        'merchant_id'           => $merchantId,
-                        'widget_type'           => $widgetType,
-                        // 'retailer_ids'          => $retailerIds,
-                        // 'slogan'                => $slogan,
-                        'animation'             => $animation,
-                        'widget_order'          => $widgetOrder,
-                        // 'images'                => $images,
-                        'id_language_default'   => $idLanguageDefault,
-                    ),
-                    array(
-                        'widget_id'             => 'required|orbit.empty.widget',
-                        'object_id'             => '',
-                        'merchant_id'           => 'orbit.empty.merchant',
-                        'widget_type'           => 'required|in:tenant,lucky_draw,promotion,coupon,news|orbit.exists.widget_type_but_me:' . $merchantId . ', ' . $widgetId,
-                        'animation'             => 'in:none,horizontal,vertical',
-                        // 'images'                => 'required_if:animation,none',
-                        'widget_order'          => 'numeric',
-                        // 'retailer_ids'          => 'array|orbit.empty.retailer',
-                        'id_language_default'   => 'required|orbit.empty.language_default',
-                    ),
-                    array(
-                        'orbit.exists.widget_type_but_me' => Lang::get('validation.orbit.exists.widget_type'),
-                    )
-                );
+                $widgetImageConfig = Config::get('orbit.upload.widget.main');
+                $widget_units = static::bytesToUnits($widgetImageConfig['file_size']);
 
                 $updatedwidget = Widget::where('widget_id', $widgetId)->first();
-
-                Event::fire('orbit.widget.postupdatewidget.before.validation', array($this, $validator));
-
-                // Run the validation
-                if ($validator->fails()) {
-                    $errorMessage = $validator->messages()->first();
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-                }
-                Event::fire('orbit.widget.postupdatewidget.after.validation', array($this, $validator));
 
                 $mall = Mall::find($merchantId);
 
@@ -433,7 +451,7 @@ class WidgetAPIController extends ControllerAPI
                 }
 
                 if ($widgetOrder != NULL) {
-                    $updatedwidget->widget_slogan = $widgetOrder;
+                    $updatedwidget->widget_order = $widgetOrder;
                 }
 
                 if ($animation != NULL) {
@@ -461,7 +479,13 @@ class WidgetAPIController extends ControllerAPI
                 //     $updatedwidget->retailers()->sync($listOfRetailerIds);
                 // }
 
-                Event::fire('orbit.widget.postnewwidget.after.save', array($this, $updatedwidget));
+                Event::fire('orbit.widget.postupdatewidget.after.save', array($this, $updatedwidget));
+
+                OrbitInput::post('image_' . $updatedwidget->widget_type, function ($files_string) use ($updatedwidget) {
+                    if (empty(trim($files_string))) {
+                        $this->deleteWidgetImage($updatedwidget->widget_id);
+                    }
+                });
 
                 // Default translation
                 $default_translation = [
@@ -478,6 +502,36 @@ class WidgetAPIController extends ControllerAPI
 
                 $dataResponse[$widgetType] = $updatedwidget;
             }
+
+            OrbitInput::post('widget_template', function($label) use ($mall, $user) {
+                $widget_template = WidgetTemplate::active()->where('template_file_name', $label)->first();
+                if(! is_object($widget_template)) {
+                    $errorMessage = 'Template name cannot be found.';
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+                $widgetTemplateSetting = NULL;
+                $updatedsetting = Setting::active()
+                    ->where('object_id', $mall->merchant_id)
+                    ->where('object_type', 'merchant')
+                    ->get();
+
+                foreach ($updatedsetting as $currentSetting) {
+                    if ($currentSetting->setting_name === 'widget_template') {
+                        $widgetTemplateSetting = $currentSetting;
+                    }
+                }
+
+                if (is_null($widgetTemplateSetting)) {
+                    $widgetTemplateSetting = new Setting();
+                    $widgetTemplateSetting->setting_name = 'widget_template';
+                    $widgetTemplateSetting->object_id = $mall->merchant_id;
+                    $widgetTemplateSetting->object_type = 'merchant';
+                }
+
+                $widgetTemplateSetting->setting_value = $widget_template->widget_template_id;
+                $widgetTemplateSetting->modified_by = $user->user_id;
+                $widgetTemplateSetting->save();
+            });
 
             $this->response->data = $dataResponse;
 
@@ -792,24 +846,28 @@ class WidgetAPIController extends ControllerAPI
             Event::fire('orbit.widget.postdeletewigetimage.before.auth', array($this));
 
             // Require authentication
-            $this->checkAuth();
+           if (! $this->calledFrom('widget.new, widget.update'))
+            {
+                $this->checkAuth();
+                Event::fire('orbit.widget.postdeletewigetimage.after.auth', array($this));
 
-            Event::fire('orbit.widget.postdeletewigetimage.after.auth', array($this));
+                // Try to check access control list, does this user allowed to
+                // perform this action
+                $user = $this->api->user;
+                Event::fire('orbit.widget.postdeletewigetimage.before.authz', array($this, $user));
 
-            // Try to check access control list, does this user allowed to
-            // perform this action
-            $user = $this->api->user;
-            Event::fire('orbit.widget.postdeletewigetimage.before.authz', array($this, $user));
+                if (! ACL::create($user)->isAllowed('delete_widget')) {
+                    Event::fire('orbit.widget.postdeletewigetimage.authz.notallowed', array($this, $user));
 
-            if (! ACL::create($user)->isAllowed('delete_widget')) {
-                Event::fire('orbit.widget.postdeletewigetimage.authz.notallowed', array($this, $user));
+                    $errorMessage = Lang::get('validation.orbit.actionlist.delete_widget');
+                    $message = Lang::get('validation.orbit.access.forbidden', array('action' => $errorMessage));
 
-                $errorMessage = Lang::get('validation.orbit.actionlist.delete_widget');
-                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $errorMessage));
-
-                ACL::throwAccessForbidden($message);
+                    ACL::throwAccessForbidden($message);
+                }
+                Event::fire('orbit.widget.postdeletewigetimage.after.authz', array($this, $user));
+            } else {
+                $user = App::make('orbit.upload.user');
             }
-            Event::fire('orbit.widget.postdeletewigetimage.after.authz', array($this, $user));
 
             $this->registerCustomValidation();
 
@@ -826,6 +884,173 @@ class WidgetAPIController extends ControllerAPI
             Event::fire('orbit.widget.postdeletewigetimage.before.validation', array($this, $validator));
 
             // Begin database transaction
+           if (! $this->calledFrom('widget.new, widget.update'))
+            {
+                $this->beginTransaction();
+            }
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.widget.postdeletewigetimage.after.validation', array($this, $validator));
+
+            $imgs = Media::where('object_name', 'widget')->where('object_id', $widgetId)->get();
+            // dd($img);
+            foreach ($imgs as $img) {
+                $img->delete(TRUE);
+            }
+
+            Event::fire('orbit.widget.postdeletewigetimage.after.save', array($this, $imgs));
+            $this->response->data = NULL;
+
+            // Commit the changes
+           if (! $this->calledFrom('widget.new, widget.update'))
+            {
+                $this->commit();
+            }
+
+            // Successfull Creation
+            $activityNotes = sprintf('Widget Image Deleted');
+            $activity->setUser($user)
+                    ->setActivityName('delete_widget_image')
+                    ->setActivityNameLong('Delete Widget Image OK')
+                    ->setObject($widget)
+                    ->setNotes($activityNotes)
+                    ->responseOK();
+
+            Event::fire('orbit.widget.postdeletewigetimage.after.commit', array($this, $imgs));
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.widget.postdeletewigetimage.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+           if (! $this->calledFrom('widget.new, widget.update'))
+            {
+                $this->rollBack();
+            }
+
+            // Deletion failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('delete_widget')
+                    ->setActivityNameLong('Delete Widget Failed')
+                    ->setObject($widget)
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.widget.postdeletewigetimage.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+           if (! $this->calledFrom('widget.new, widget.update'))
+            {
+                $this->rollBack();
+            }
+
+            // Deletion failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('delete_widget')
+                    ->setActivityNameLong('Delete Widget Failed')
+                    ->setObject($widget)
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        } catch (QueryException $e) {
+            Event::fire('orbit.widget.postdeletewigetimage.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            // Rollback the changes
+           if (! $this->calledFrom('widget.new, widget.update'))
+            {
+                $this->rollBack();
+            }
+
+            // Deletion failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('delete_widget')
+                    ->setActivityNameLong('Delete Widget Failed')
+                    ->setObject($widget)
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        } catch (Exception $e) {
+            Event::fire('orbit.widget.postdeletewigetimage.general.exception', array($this, $e));
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+
+            if (Config::get('app.debug')) {
+                $this->response->data = $e->__toString();
+            } else {
+                $this->response->data = null;
+            }
+
+            // Rollback the changes\
+           if (! $this->calledFrom('widget.new, widget.update'))
+            {
+                $this->rollBack();
+            }
+
+            // Deletion failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('delete_widget')
+                    ->setActivityNameLong('Delete Widget Failed')
+                    ->setObject($widget)
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        }
+
+        // Save the activity
+        $activity->save();
+
+        return $this->render($httpCode);
+    }
+
+    public function deleteWidgetImage($widgetId)
+    {
+        $activity = Activity::portal()
+                          ->setActivityType('delete');
+
+        $user = NULL;
+        $widget = NULL;
+        try {
+            $httpCode = 200;
+
+            $this->registerCustomValidation();
+
+            $widgetId = $widgetId;
+            $validator = Validator::make(
+                array(
+                    'widget_id'             => $widgetId,
+                ),
+                array(
+                    'widget_id'             => 'required|orbit.empty.widget',
+                )
+            );
+
+            Event::fire('orbit.widget.postdeletewigetimage.before.validation', array($this, $validator));
+
             $this->beginTransaction();
 
             // Run the validation
@@ -1240,7 +1465,7 @@ class WidgetAPIController extends ControllerAPI
         // Check the existance of id_language_default
         Validator::extend('orbit.empty.language_default', function ($attribute, $value, $parameters) {
             $news = MerchantLanguage::excludeDeleted()
-                        ->where('merchant_language_id', $value)
+                        ->where('language_id', $value)
                         ->first();
 
             if (empty($news)) {
@@ -1372,6 +1597,18 @@ class WidgetAPIController extends ControllerAPI
 
             return TRUE;
         });
+
+        Validator::extend('orbit.max.file_size', function ($attribute, $value, $parameters) {
+            $config_size = $parameters[0];
+            $file_size = $value;
+
+            if ($file_size > $config_size) {
+                return false;
+            }
+
+            return true;
+        });
+
     }
 
     /**
@@ -1404,7 +1641,7 @@ class WidgetAPIController extends ControllerAPI
         }
         foreach ($data as $merchant_language_id => $translations) {
             $language = MerchantLanguage::excludeDeleted()
-                ->where('merchant_language_id', '=', $merchant_language_id)
+                ->where('language_id', '=', $merchant_language_id)
                 ->first();
 
             if (empty($language)) {
@@ -1473,6 +1710,67 @@ class WidgetAPIController extends ControllerAPI
                 $existing_translation->delete();
             }
         }
+    }
+
+    /**
+     * Set the called from value.
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @author Irianto <irianto@dominopos.com>
+     * @param string $from The source of the caller
+     * @return UploadAPIController
+     */
+    public function setCalledFrom($from)
+    {
+        $this->calledFrom = $from;
+
+        return $this;
+    }
+
+    /**
+     * Method to convert the size from bytes to more human readable units. As
+     * an example:
+     *
+     * Input 356 produces => array('unit' => 'bytes', 'newsize' => 356)
+     * Input 2045 produces => array('unit' => 'kB', 'newsize' => 2.045)
+     * Input 1055000 produces => array('unit' => 'MB', 'newsize' => 1.055)
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @author Irianto <irianto@dominopos.com>
+     * @param int $size - The size in bytes
+     * @return array
+     */
+    public static function bytesToUnits($size)
+    {
+       $kb = 1000;
+       $mb = $kb * 1000;
+       $gb = $mb * 1000;
+
+       if ($size > $gb) {
+            return array(
+                    'unit' => 'GB',
+                    'newsize' => $size / $gb
+                   );
+       }
+
+       if ($size > $mb) {
+            return array(
+                    'unit' => 'MB',
+                    'newsize' => $size / $mb
+                   );
+       }
+
+       if ($size > $kb) {
+            return array(
+                    'unit' => 'kB',
+                    'newsize' => $size / $kb
+                   );
+       }
+
+       return array(
+                'unit' => 'bytes',
+                'newsize' => 1
+              );
     }
 
 }

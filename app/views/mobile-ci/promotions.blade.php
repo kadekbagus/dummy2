@@ -212,7 +212,14 @@
 
 @section('ext_script_bot')
     {{ HTML::script('mobile-ci/scripts/jquery-ui.min.js') }}
-    {{ HTML::script('mobile-ci/scripts/featherlight.min.js') }}
+    {{ HTML::script(Config::get('orbit.cdn.featherlight.1_0_3', 'mobile-ci/scripts/featherlight.min.js')) }}
+{{-- Script fallback --}}
+<script>
+    if (typeof $().featherlight === 'undefined') {
+        document.write('<script src="{{asset('mobile-ci/scripts/featherlight.min.js')}}">\x3C/script>');
+    }
+</script>
+{{-- End of Script fallback --}}
     {{ HTML::script('mobile-ci/scripts/autoNumeric.js') }}
     <script type="text/javascript">
         // window.onunload = function(){};

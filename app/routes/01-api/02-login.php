@@ -37,6 +37,16 @@ Route::post('/api/v1/logout/mall', function()
     return LoginAPIController::create()->postLogout();
 });
 
+Route::post('/api/v1/login/pmp', function()
+{
+    return LoginAPIController::create()->postLoginPMP();
+});
+
+Route::post('/api/v1/logout/pmp', function()
+{
+    return LoginAPIController::create()->postLogout();
+});
+
 Route::post('/api/v1/login/mallcs', function()
 {
     return LoginAPIController::create()->postLoginMallCustomerService();
@@ -76,9 +86,17 @@ Route::post('/api/v1/user/setup-new-password', function()
 /**
  * URL to update service agreement
  */
-Route::get('/api/v1/service-agreement/update', function()
+Route::post('/api/v1/service-agreement/update', function()
 {
     return LoginAPIController::create()->postUpdateServiceAgreement();
+});
+
+/**
+ * URL to update service agreement pmp account
+ */
+Route::post('/api/v1/service-agreement-pmp/update', function()
+{
+    return LoginAPIController::create()->postUpdateServiceAgreementPMP();
 });
 
 /**
@@ -96,3 +114,54 @@ Route::post('/api/v1/activate-account', function()
 {
     return LoginAPIController::create()->postActivateAccount();
 });
+
+/**
+ * Public customer login
+ */
+Route::post(
+    '/{app}/v1/pub/login/customer', ['as' => 'pub-customer-login', function()
+    {
+        return Orbit\Controller\API\v1\Pub\LoginAPIController::create()->postLoginCustomer();
+    }]
+)->where('app', '(api|app)');
+
+/**
+ * Public customer signup
+ */
+Route::post(
+    '/{app}/v1/pub/signup/customer', ['as' => 'pub-customer-signup', function()
+    {
+        return Orbit\Controller\API\v1\Pub\RegistrationAPIController::create()->postRegisterCustomer();
+    }]
+)->where('app', '(api|app)');
+
+Route::post(
+    '/{app}/v1/pub/customer/basic-data', ['as' => 'pub-customer-check-email', function()
+    {
+        return Orbit\Controller\API\v1\Pub\LoginAPIController::create()->checkEmailSignUp();
+    }]
+)->where('app', '(api|app)');
+
+Route::get(
+    '/pub/social-google-callback', ['as' => 'pub.social_google_callback',
+        function () {
+            return Orbit\Controller\API\v1\Pub\LoginAPIController::create()->getGoogleCallbackView();
+        },
+    ]
+);
+
+Route::get(
+    '/pub/social-login-callback', ['as' => 'pub.social_login_callback',
+        function () {
+            return Orbit\Controller\API\v1\Pub\LoginAPIController::create()->getSocialLoginCallbackView();
+        },
+    ]
+);
+
+Route::post(
+    '/pub/social-login', ['as' => 'pub.social_login',
+        function () {
+            return Orbit\Controller\API\v1\Pub\LoginAPIController::create()->postSocialLoginView();
+        },
+    ]
+);

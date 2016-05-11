@@ -194,19 +194,16 @@ a:hover{
 }
 .catalogue-img {
     background: #fefefe;
-    padding-left: 4px;
-    padding-right: 4px;
     a {
         display: block;
     }
     img {
-        //max-height: 80px;
+        max-height: 80px;
         margin-top: 4px;
         //margin: 0 auto;
         width: 100%;
         height: 76px;
         object-fit: contain;
-
     }
     /*&:before {
         content: ' ';
@@ -555,14 +552,6 @@ h3.currency.currency-promo{
     left: 0;
     z-index: 1;
 }
-.link-spanner-other{
-    position:absolute; 
-    width:100%;
-    height:86px; //same as .catalogue-other height
-    top:0;
-    left: 0;
-    z-index: 1;
-}
 .promo-cover{
     margin: 0 auto;
 }
@@ -636,5 +625,89 @@ h5.tenant-category{
     height:130px;
 }
 .catalogue-other{
-    height:110px;
+    height:86px;
+}
+
+.list-item-container{
+    
+}
+
+.list-item-title {
+  color: @theme-main-complimentary-2;
+  //background-color: @theme-main;
+  //font-size: 3vw;
+  font-size: 22px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  div {
+      height:28px;
+      overflow: hidden;
+  }
+}
+.list-item-subtitle{
+    //font-size:2.5vw;
+    font-size:14px;
+    div{
+        height:20px;
+        overflow: hidden;
+    }
+}
+.list-item-single {
+  background-color: #fff;
+  height:96px;
+}
+.list-item-single-tenant {
+  background-color: #fff;
+  height:150px;
+}
+    
+.list-item-info{
+  position:absolute;
+  bottom:0;
+  left:0;
+  width:100%;
+  color:#fff;
+  padding:0 12px 8px 12px;
+  z-index:1;
+}
+
+.img-fit-not-tenant{
+  width:100%;
+  height:96px;
+  object-fit:cover;
+}
+
+.img-fit-tenant{
+  height:150px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.product-detail{
+    img{
+        display: block;
+        margin: 0 auto;
+        width: auto;
+        height: auto;
+        max-height: 350px;
+        object-fit:cover;
+    }
+
+    @media @smartphone {
+        img {
+            width: 100%;
+            max-height: 300px;
+        }
+    }
+}
+
+.product-info{
+    position: relative;
+    background: @theme-main;
+    color:#fff;
+    font-size: 1.3em;
+    z-index: 2;
+    -webkit-box-shadow: 0px -25px 91px -6px rgba(0,0,0,0.4);
+    -moz-box-shadow: 0px -25px 91px -6px rgba(0,0,0,0.4);
+    box-shadow: 0px -25px 91px -6px rgba(0,0,0,0.4);
 }

@@ -2,7 +2,6 @@
 
 @section('ext_style')
     {{ HTML::style('mobile-ci/stylesheet/featherlight.min.css') }}
-    {{ HTML::style('mobile-ci/stylesheet/lightslider.min.css') }}
     <style type="text/css">
     .product-detail .tab-pane p {
         font-size: .9em;
@@ -10,152 +9,315 @@
     </style>
 @stop
 
+@section('fb_scripts')
+@if(! empty($facebookInfo))
+@if(! empty($facebookInfo['version']) && ! empty($facebookInfo['app_id']))
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version={{$facebookInfo['version']}}&appId={{$facebookInfo['app_id']}}";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+@endif
+@endif
+@stop
+
+@section('tenant_tab')
+    {{-- todo: create flag for this tabs --}}
+    @if(sizeof($tenant->newsPromotionsProfiling) > 0 || sizeof($tenant->newsProfiling) > 0 || sizeof($tenant->couponsProfiling) > 0)
+    <div class="header-tenant-tab">
+        <ul>
+            @if(sizeof($tenant->newsPromotionsProfiling) > 0)
+            <li><a id="slide-tab-promo">{{Lang::get('mobileci.page_title.promotions')}}</a></li>
+            @endif
+            @if(sizeof($tenant->newsProfiling) > 0)
+            <li><a id="slide-tab-news">{{Lang::get('mobileci.page_title.news')}}</a></li>
+            @endif
+            @if(sizeof($tenant->couponsProfiling) > 0)
+            <li><a id="slide-tab-coupon">{{Lang::get('mobileci.page_title.coupon_plural')}}</a></li>
+            @endif
+        </ul>
+    </div>
+    @endif
+@stop
+
 @section('content')
-<!-- product -->
-<div class="row product">
-    <div class="col-xs-12 product-img">
-        @if(count($tenant->mediaLogoOrig) > 0)
-        <div class="zoom-wrapper">
-            <div class="zoom"><a href="#" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer"><img alt="" src="{{ asset('mobile-ci/images/product-zoom.png') }}" ></a></div>
-        </div>
+<div class="slide-tab-container">
+    <div id="slide-tab-promo-container">
+        @if(sizeof($tenant->newsPromotionsProfiling) > 0)
+            @foreach($tenant->newsPromotionsProfiling as $promotab)
+                <div class="col-xs-12 col-sm-12">
+                    <section class="list-item-single-tenant">
+                        <a class="list-item-link" data-href="{{ route('ci-promotion-detail', ['id' => $promotab->news_id]) }}" href="{{ $urlblock->blockedRoute('ci-promotion-detail', ['id' => $promotab->news_id]) }}">
+                            <div class="list-item-info">
+                                <header class="list-item-title">
+                                    <div><strong>{{{ $promotab->news_name }}}</strong></div>
+                                </header>
+                                <header class="list-item-subtitle">
+                                    <div>
+                                        {{-- Limit description per two line and 45 total character --}}
+                                        <?php
+                                            $desc = explode("\n", $promotab->description);
+                                        ?>
+                                        @if (mb_strlen($promotab->description) > 45)
+                                            @if (count($desc) > 1)
+                                                <?php
+                                                    $two_row = array_slice($desc, 0, 1);
+                                                ?>
+                                                @foreach ($two_row as $key => $value)
+                                                    @if ($key === 0)
+                                                        {{{ $value }}} <br>
+                                                    @else
+                                                        {{{ $value }}} ...
+                                                    @endif
+                                                @endforeach
+                                            @else
+                                                {{{ mb_substr($promotab->description, 0, 45, 'UTF-8') . '...' }}}
+                                            @endif
+                                        @else
+                                            @if (count($desc) > 1)
+                                                <?php
+                                                    $two_row = array_slice($desc, 0, 1);
+                                                ?>
+                                                @foreach ($two_row as $key => $value)
+                                                    @if ($key === 0)
+                                                        {{{ $value }}} <br>
+                                                    @else
+                                                        {{{ $value }}} ...
+                                                    @endif
+                                                @endforeach
+                                            @else
+                                                {{{ mb_substr($promotab->description, 0, 45, 'UTF-8') }}}
+                                            @endif
+                                        @endif
+                                    </div>
+                                </header>
+                            </div>
+                            <div class="list-vignette-non-tenant"></div>
+                            @if(!empty($promotab->image))
+                            <img class="img-responsive img-fit-tenant" src="{{ asset($promotab->image) }}" />
+                            @else
+                            <img class="img-responsive img-fit-tenant" src="{{ asset('mobile-ci/images/default_promotion.png') }}"/>
+                            @endif
+                        </a>
+                    </section>
+                </div>
+            @endforeach
         @endif
+    </div>
+    <div id="slide-tab-news-container">
+        @if(sizeof($tenant->newsProfiling) > 0)
+            @foreach($tenant->newsProfiling as $newstab)
+                <div class="col-xs-12 col-sm-12">
+                    <section class="list-item-single-tenant">
+                        <a class="list-item-link" data-href="{{ route('ci-news-detail', ['id' => $newstab->news_id]) }}" href="{{ $urlblock->blockedRoute('ci-news-detail', ['id' => $newstab->news_id]) }}">
+                            <div class="list-item-info">
+                                <header class="list-item-title">
+                                    <div><strong>{{{ $newstab->news_name }}}</strong></div>
+                                </header>
+                                <header class="list-item-subtitle">
+                                    <div>
+                                        {{-- Limit description per two line and 45 total character --}}
+                                        <?php
+                                            $desc = explode("\n", $newstab->description);
+                                        ?>
+                                        @if (mb_strlen($newstab->description) > 45)
+                                            @if (count($desc) > 1)
+                                                <?php
+                                                    $two_row = array_slice($desc, 0, 1);
+                                                ?>
+                                                @foreach ($two_row as $key => $value)
+                                                    @if ($key === 0)
+                                                        {{{ $value }}} <br>
+                                                    @else
+                                                        {{{ $value }}} ...
+                                                    @endif
+                                                @endforeach
+                                            @else
+                                                {{{ mb_substr($newstab->description, 0, 45, 'UTF-8') . '...' }}}
+                                            @endif
+                                        @else
+                                            @if (count($desc) > 1)
+                                                <?php
+                                                    $two_row = array_slice($desc, 0, 1);
+                                                ?>
+                                                @foreach ($two_row as $key => $value)
+                                                    @if ($key === 0)
+                                                        {{{ $value }}} <br>
+                                                    @else
+                                                        {{{ $value }}} ...
+                                                    @endif
+                                                @endforeach
+                                            @else
+                                                {{{ mb_substr($newstab->description, 0, 45, 'UTF-8') }}}
+                                            @endif
+                                        @endif
+                                    </div>
+                                </header>
+                            </div>
+                            <div class="list-vignette-non-tenant"></div>
+                            @if(!empty($newstab->image))
+                            <img class="img-responsive img-fit-tenant" src="{{ asset($newstab->image) }}" />
+                            @else
+                            <img class="img-responsive img-fit-tenant" src="{{ asset('mobile-ci/images/default_news.png') }}"/>
+                            @endif
+                        </a>
+                    </section>
+                </div>
+            @endforeach
+        @endif
+    </div>
+    <div id="slide-tab-coupon-container">
+        @if(sizeof($tenant->couponsProfiling) > 0)
+            @foreach($tenant->couponsProfiling as $coupontab)
+                <div class="col-xs-12 col-sm-12">
+                    <section class="list-item-single-tenant">
+                        <a class="list-item-link" data-href="{{ route('ci-coupon-detail', ['id' => $coupontab->promotion_id]) }}" href="{{ $urlblock->blockedRoute('ci-coupon-detail', ['id' => $coupontab->promotion_id]) }}">
+                            <div class="coupon-new-badge">
+                                <div class="new-number">{{$coupontab->quantity}}</div>
+                            </div>
+                            <div class="list-item-info">
+                                <header class="list-item-title">
+                                    <div><strong>{{{ $coupontab->promotion_name }}}</strong></div>
+                                </header>
+                                <header class="list-item-subtitle">
+                                    <div>
+                                        {{-- Limit description per two line and 45 total character --}}
+                                        <?php
+                                            $desc = explode("\n", $coupontab->description);
+                                        ?>
+                                        @if (mb_strlen($coupontab->description) > 45)
+                                            @if (count($desc) > 1)
+                                                <?php
+                                                    $two_row = array_slice($desc, 0, 1);
+                                                ?>
+                                                @foreach ($two_row as $key => $value)
+                                                    @if ($key === 0)
+                                                        {{{ $value }}} <br>
+                                                    @else
+                                                        {{{ $value }}} ...
+                                                    @endif
+                                                @endforeach
+                                            @else
+                                                {{{ mb_substr($coupontab->description, 0, 45, 'UTF-8') . '...' }}}
+                                            @endif
+                                        @else
+                                            @if (count($desc) > 1)
+                                                <?php
+                                                    $two_row = array_slice($desc, 0, 1);
+                                                ?>
+                                                @foreach ($two_row as $key => $value)
+                                                    @if ($key === 0)
+                                                        {{{ $value }}} <br>
+                                                    @else
+                                                        {{{ $value }}} ...
+                                                    @endif
+                                                @endforeach
+                                            @else
+                                                {{{ mb_substr($coupontab->description, 0, 45, 'UTF-8') }}}
+                                            @endif
+                                        @endif
+                                    </div>
+                                </header>
+                            </div>
+                            <div class="list-vignette-non-tenant"></div>
+                            @if(!empty($coupontab->image))
+                            <img class="img-responsive img-fit-tenant" src="{{ asset($coupontab->image) }}" />
+                            @else
+                            <img class="img-responsive img-fit-tenant" src="{{ asset('mobile-ci/images/default_coupon.png') }}"/>
+                            @endif
+                        </a>
+                    </section>
+                </div>
+            @endforeach
+        @endif
+    </div>
+</div>
+<div class="slide-menu-backdrop-tab"></div>
+
+<!-- product -->
+<div class="row header-tenant-tab-present">
+    <div class="col-xs-12">
+        @if(count($tenant->mediaLogoOrig) === 0 && count($tenant->mediaImageOrig) === 0)
+        <img class="img-responsive img-center" src="{{ asset('mobile-ci/images/default_tenants_directory.png') }}"/>
+        @else
         <ul id="image-gallery" class="gallery list-unstyled cS-hidden">
             @if(!count($tenant->mediaLogoOrig) > 0)
-            <li data-thumb="{{ asset('mobile-ci/images/default_product.png') }}">
+            <li data-thumb="{{ asset('mobile-ci/images/default_tenants_directory.png') }}">
                 <span class="gallery-helper"></span>
-                <img class="img-responsive" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
+                <div class="vertical-align-middle-outer">
+                    <div class="vertical-align-middle-inner">
+                        <img class="img-responsive" src="{{ asset('mobile-ci/images/default_tenants_directory.png') }}"/>
+                    </div>
+                </div>
             </li>
             @endif
             @foreach($tenant->mediaLogoOrig as $media)
             <li data-thumb="{{ asset($media->path) }}">
                 <span class="gallery-helper"></span>
-                <a href="{{ asset($media->path) }}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer"><img class="img-responsive" src="{{ asset($media->path) }}" /></a>
+                <div class="vertical-align-middle-outer">
+                    <div class="vertical-align-middle-inner">
+                        <a href="{{ asset($media->path) }}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer">
+                            <img class="img-responsive" src="{{ asset($media->path) }}" />
+                        </a>
+                    </div>
+                </div>
             </li>
             @endforeach
             @foreach($tenant->mediaImageOrig as $media)
             <li data-thumb="{{ asset($media->path) }}">
-                <a href="{{ asset($media->path) }}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer"><img class="img-responsive" src="{{ asset($media->path) }}" /></a>
+                <a href="{{ asset($media->path) }}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer">
+                    <div class="vertical-align-middle-outer">
+                        <div class="vertical-align-middle-inner">
+                            <img class="img-responsive" src="{{ asset($media->path) }}" />
+                        </div>
+                    </div>
+                </a>
             </li>
             @endforeach
         </ul>
+        @endif
     </div>
-
-    <div class="col-xs-12 main-theme product-detail">
-        <div class="row">
-            <div class="col-xs-12">
-                <h3>{{ $tenant->name }}</h3>
-            </div>
-            <div class="col-xs-12">
-                <p>{{ $tenant->description }}</p>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-xs-12 main-theme-mall product-detail where">
-        <div class="row">
-            <div class="col-xs-12">
-            </div>
-            <div class="col-xs-12">
-
-                <br/>
-                <p>{{ $tenant->name }}</p>
-                <ul class="where-list">
-                    <li><i class="fa fa-map-marker fa-lg" style="padding-left: 11px;"></i>  {{{ !empty($tenant->floor) ? $tenant->floor : '' }}}{{{ !empty($tenant->unit) ? ' - ' . $tenant->unit : '' }}}</li>
-                    <li><i class="fa fa-globe fa-lg"></i>  {{{ (($tenant->url) != '') ? 'http://'.$tenant->url : '-' }}}</li>
-                    <li><i class="fa fa-phone-square fa-lg"></i>  @if($tenant->phone != '') <a href="tel:{{{ $tenant->phone }}}"> {{{ $tenant->phone }}}</a> @else - @endif</li>
-                </ul>
-
-                @if ($box_url)
-                <a style="position:relative;margin-bottom:16px;" class="btn btn-danger btn-block" href="{{ $box_url }}">{{ $enter_shop_text or 'Go to Store' }}</a>
-                @endif
-
-                @foreach($tenant->mediaMapOrig as $map)
-                <p>
-                    <a href="{{ asset($map->path) }}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer"><img class="img-responsive maps" src="{{ asset($map->path) }}"></a>
-                </p>
-                @endforeach
-            </div>
-        </div>
-        <div role="tabpanel" class="">
-        <!-- Nav tabs -->
-        <ul class="nav nav-tabs" role="tablist">
-            <li role="presentation" class="active"><a href="#promotions" aria-controls="promotions" role="tab" data-toggle="tab">{{ Lang::get('mobileci.tenant.promotions') }}</a></li>
-            <li role="presentation"><a href="#news" aria-controls="news" role="tab" data-toggle="tab">{{ Lang::get('mobileci.tenant.news') }}</a></li>
+</div>
+<div class="row padded">
+    <div class="col-xs-12 font-1-3">
+        <p>{{ nl2br(e($tenant->description)) }}</p>
+        <ul class="where-list">
+            <li><span class="tenant-list-icon"><i class="fa fa-map-marker fa-lg" style="padding-left: 11px;"></i></span><p class="tenant-list-text">{{{ !empty($tenant->floor) ? $tenant->floor : '' }}}{{{ !empty($tenant->unit) ? ' - ' . $tenant->unit : '' }}}</p></li>
+            <li><span class="tenant-list-icon"><i class="fa fa-globe fa-lg"></i></span><p class="tenant-list-text">{{{ (($tenant->url) != '') ? 'http://'.$tenant->url : '-' }}}</p></li>
+            @if(! empty($tenant->facebook_like_url))
+            <li><span class="tenant-list-icon"><i class="fa fa-facebook-square fa-lg"></i></span><p class="tenant-list-text">{{{ str_replace('//', '', $tenant->facebook_like_url) }}}</p></li>
+            @endif
+            <li><span class="tenant-list-icon"><i class="fa fa-phone-square fa-lg"></i></span><p class="tenant-list-text">@if($tenant->phone != '')<a href="tel:{{{ $tenant->phone }}}">{{{ $tenant->phone }}}</a>@else - @endif</p></li>
         </ul>
-        <!-- Tab panes -->
-        <div class="tab-content">
-            <div role="tabpanel" class="tab-pane active" id="promotions">
-                @if(sizeof($tenant->newsPromotions) > 0)
-                    @foreach($tenant->newsPromotions as $tenant->newsPromotions)
-                        <a href="{{ url('customer/mallpromotion?id='.$tenant->newsPromotions->news_id) }}">
-                            <div class="main-theme-mall catalogue" id="promotions-{{$tenant->newsPromotions->promotion_id}}">
-                                <div class="row catalogue-top">
-                                    <div class="col-xs-3 catalogue-img">
-                                        @if(!empty($tenant->newsPromotions->image))
-                                            <img class="img-responsive" alt="" src="{{ asset($tenant->newsPromotions->image) }}">
-                                        @else
-                                            <img class="img-responsive" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
-                                        @endif
-                                    </div>
-                                    <div class="col-xs-6">
-                                        <h4>{{ $tenant->newsPromotions->news_name }}</h4>
-                                        @if (strlen($tenant->newsPromotions->description) > 120)
-                                        <p>{{{ mb_substr($tenant->newsPromotions->description, 0, 120, 'UTF-8') }}} [<a href="{{ url('customer/mallpromotion?id='.$tenant->newsPromotions->news_id) }}">...</a>] </p>
-                                        @else
-                                        <p>{{{ $tenant->newsPromotions->description }}}</p>
-                                        @endif
-                                    </div>
-                                </div>
-                            </div>
-                        </a>
-                    @endforeach
-                @else
-                    <div class="row padded">
-                        <div class="col-xs-12">
-                            <p>{{ Lang::get('mobileci.tenant.check_our_new_promo') }}</p>
-                        </div>
-                    </div>
-                @endif
-            </div>
-            <div role="tabpanel" class="tab-pane" id="news">
-                @if(sizeof($tenant->news) > 0)
-                    @foreach($tenant->news as $tenant->news)
-                        <a href="{{ url('customer/mallnewsdetail?id='.$tenant->news->news_id) }}">
-                            <div class="main-theme-mall catalogue" id="news-{{$tenant->news->promotion_id}}">
-                                <div class="row catalogue-top">
-                                    <div class="col-xs-3 catalogue-img">
-                                        @if(!empty($tenant->news->image))
-                                            <img class="img-responsive" alt="" src="{{ asset($tenant->news->image) }}">
-                                        @else
-                                            <img class="img-responsive" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
-                                        @endif
-                                    </div>
-                                    <div class="col-xs-6">
-                                        <h4>{{ $tenant->news->news_name }}</h4>
-                                        @if (strlen($tenant->news->description) > 120)
-                                        <p>{{{ mb_substr($tenant->news->description, 0, 120, 'UTF-8') }}} [<a href="{{ url('customer/mallnewsdetail?id='.$tenant->news->news_id) }}">...</a>] </p>
-                                        @else
-                                        <p>{{{ $tenant->news->description }}}</p>
-                                        @endif
-                                    </div>
-                                </div>
-                            </div>
-                        </a>
-                    @endforeach
-                @else
-                    <div class="row padded">
-                        <div class="col-xs-12">
-                            <p>{{ Lang::get('mobileci.tenant.check_our_latest_news') }}</p>
-                        </div>
-                    </div>
-                @endif
-            </div>
-        </div>
+        @if ($urlblock->isLoggedIn())
+            @if(! empty($tenant->facebook_like_url))
+            <div class="fb-like" data-href="{{{$tenant->facebook_like_url}}}" data-layout="button_count" data-action="like" data-show-faces="false" data-share="false" style="margin-right:25px;"></div>
+            @endif
+            @if(! empty($tenant->facebook_share_url))
+            <div class="fb-share-button" data-href="{{{$tenant->facebook_share_url}}}" data-layout="button"></div>
+            @endif
+        @endif
     </div>
+</div>
+<div class="row padded vertically-spaced">
+    <div class="col-xs-12 font-1-3">
+        @foreach($tenant->mediaMapOrig as $map)
+            <a href="{{ asset($map->path) }}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer"><img class="img-responsive maps" src="{{ asset($map->path) }}"></a>
+        @endforeach
     </div>
-
 
 </div>
+<div class="row padded">
+    <div class="col-xs-12 font-1-3">
+        @if ($box_url)
+        <a style="position:relative;margin-bottom:16px;" class="btn btn-danger btn-block" href="{{ $box_url }}">{{ $enter_shop_text or 'Go to Store' }}</a>
+        @endif
+    </div>
+</div>
+
 <!-- end of product -->
 @stop
 
@@ -192,16 +354,24 @@
 @stop
 
 @section('ext_script_bot')
-    {{ HTML::script('mobile-ci/scripts/jquery-ui.min.js') }}
-    {{ HTML::script('mobile-ci/scripts/featherlight.min.js') }}
-    {{ HTML::script('mobile-ci/scripts/lightslider.min.js') }}
-    {{ HTML::script('mobile-ci/scripts/autoNumeric.js') }}
+    {{ HTML::script(Config::get('orbit.cdn.featherlight.1_0_3', 'mobile-ci/scripts/featherlight.min.js')) }}
+    {{-- Script fallback --}}
+    <script>
+        if (typeof $().featherlight === 'undefined') {
+            document.write('<script src="{{asset('mobile-ci/scripts/featherlight.min.js')}}">\x3C/script>');
+        }
+    </script>
+    {{-- End of Script fallback --}}
     <script type="text/javascript">
         $(document).ready(function(){
+            // Check if browser supports LocalStorage
+            if(typeof(Storage) !== 'undefined') {
+                localStorage.setItem('fromSource', 'detail');
+            }
+
             $('#image-gallery').lightSlider({
-                gallery:true,
+                gallery:false,
                 item:1,
-                thumbItem:4,
                 slideMargin: 0,
                 speed:500,
                 pause:2000,
@@ -219,6 +389,108 @@
                 e.preventDefault()
                 $(this).tab('show')
             })
+            function hideOpenTabs() {
+                if($('#slide-tab-news-container').is(':visible')) {
+                    $('#slide-tab-news-container').hide();
+                    $('#slide-tab-news').closest('li').toggleClass('active');
+                    $('#slide-tab-news').blur();
+                }
+                if($('#slide-tab-promo-container').is(':visible')) {
+                    $('#slide-tab-promo-container').hide();
+                    $('#slide-tab-promo').closest('li').toggleClass('active');
+                    $('#slide-tab-promo').blur();
+                }
+                if($('#slide-tab-coupon-container').is(':visible')) {
+                    $('#slide-tab-coupon-container').hide();
+                    $('#slide-tab-coupon').closest('li').toggleClass('active');
+                    $('#slide-tab-coupon').blur();
+                }
+            }
+            // set the slide tab container so it could be scrolled
+            $('.slide-tab-container').css('height', ($(window).height()-92) + 'px');
+            $(window).resize(function(){
+                $('.slide-tab-container').css('height', ($(window).height()-92) + 'px');
+            });
+            $('.slide-tab-container').click(function(){
+                hideOpenTabs();
+                $('.slide-tab-container').toggle('slide', {direction: 'up'}, 'slow');
+                $('.slide-menu-backdrop-tab').toggle('fade', 'slow');
+                $('body').toggleClass('freeze-scroll');
+                tabOpen = false;
+                $('.content-container').children().not('.slide-tab-container, .slide-menu-backdrop-tab').removeBlur();
+            });
+            $('#slide-tab-promo').click(function(){
+                if($('#slide-tab-news-container').is(':visible') || $('#slide-tab-coupon-container').is(':visible')) {
+                    $('#slide-tab-news-container').hide();
+                    $('#slide-tab-coupon-container').hide();
+                    $('#slide-tab-news').closest('li').removeClass('active');
+                    $('#slide-tab-coupon').closest('li').removeClass('active');
+                } else {
+                    if(tabOpen){
+                        tabOpen = false;
+                    } else {
+                        tabOpen = true;
+                    }
+                    $('.slide-tab-container').toggle('slide', {direction: 'up'}, 'slow');
+                    $('.slide-menu-backdrop-tab').toggle('fade', 'slow');
+                    $('body').toggleClass('freeze-scroll');
+                    $('.content-container').children().not('.slide-tab-container, .slide-menu-backdrop-tab').addBlur();
+                }
+                if(!tabOpen){
+                    $('.content-container').children().not('.slide-tab-container, .slide-menu-backdrop-tab').removeBlur();
+                }
+                $('#slide-tab-promo-container').toggle('fade', 'slow');
+                $('#slide-tab-promo').closest('li').toggleClass('active');
+                $('#slide-tab-promo').blur();
+            });
+            $('#slide-tab-news').click(function(){
+                if($('#slide-tab-promo-container').is(':visible') || $('#slide-tab-coupon-container').is(':visible')) {
+                    $('#slide-tab-promo-container').hide();
+                    $('#slide-tab-coupon-container').hide();
+                    $('#slide-tab-promo').closest('li').removeClass('active');
+                    $('#slide-tab-coupon').closest('li').removeClass('active');
+                } else {
+                    if(tabOpen){
+                        tabOpen = false;
+                    } else {
+                        tabOpen = true;
+                    }
+                    $('.slide-tab-container').toggle('slide', {direction: 'up'}, 'slow');
+                    $('.slide-menu-backdrop-tab').toggle('fade', 'slow');
+                    $('body').toggleClass('freeze-scroll');
+                    $('.content-container').children().not('.slide-tab-container, .slide-menu-backdrop-tab').addBlur();
+                }
+                if(!tabOpen){
+                    $('.content-container').children().not('.slide-tab-container, .slide-menu-backdrop-tab').removeBlur();
+                }
+                $('#slide-tab-news-container').toggle('fade', 'slow');
+                $('#slide-tab-news').closest('li').toggleClass('active');
+                $('#slide-tab-news').blur();
+            });
+            $('#slide-tab-coupon').click(function(){
+                if($('#slide-tab-promo-container').is(':visible') || $('#slide-tab-news-container').is(':visible')) {
+                    $('#slide-tab-promo-container').hide();
+                    $('#slide-tab-news-container').hide();
+                    $('#slide-tab-promo').closest('li').removeClass('active');
+                    $('#slide-tab-news').closest('li').removeClass('active');
+                } else {
+                    if(tabOpen){
+                        tabOpen = false;
+                    } else {
+                        tabOpen = true;
+                    }
+                    $('.slide-tab-container').toggle('slide', {direction: 'up'}, 'slow');
+                    $('.slide-menu-backdrop-tab').toggle('fade', 'slow');
+                    $('body').toggleClass('freeze-scroll');
+                    $('.content-container').children().not('.slide-tab-container, .slide-menu-backdrop-tab').addBlur();
+                }
+                if(!tabOpen){
+                    $('.content-container').children().not('.slide-tab-container, .slide-menu-backdrop-tab').removeBlur();
+                }
+                $('#slide-tab-coupon-container').toggle('fade', 'slow');
+                $('#slide-tab-coupon').closest('li').toggleClass('active');
+                $('#slide-tab-coupon').blur();
+            });
         });
     </script>
 @stop

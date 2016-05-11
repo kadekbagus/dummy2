@@ -1,12 +1,24 @@
 @extends('mobile-ci.layout')
 
-@section('ext_style')
-    {{ HTML::style('mobile-ci/stylesheet/featherlight.min.css') }}
+@section('fb_scripts')
+@if(! empty($facebookInfo))
+@if(! empty($facebookInfo['version']) && ! empty($facebookInfo['app_id']))
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version={{$facebookInfo['version']}}&appId={{$facebookInfo['app_id']}}";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+@endif
+@endif
 @stop
 
 @section('content')
     @if($data->status === 1)
-        @if(sizeof($data->records) > 0)
+        @if(sizeof($data->records) > 0 || $link_to_coupon_data->linkedToCS)
+            @if(Input::get('coupon_redeem_id') === null && Input::get('coupon_id') === null && Input::get('promotion_id') == null && Input::get('news_id') === null)
             <div id="search-tool">
                 <div class="row">
                     <div class="col-xs-5 search-tool-col">
@@ -20,9 +32,9 @@
                                     @endif
                                     @foreach($categories as $category)
                                     @if($category->category_id == Input::get('cid'))
-                                    <option value="{{ $category->category_id }}" selected="selected">{{ $category->category_name }}</option>
+                                    <option value="{{ $category->category_id }}" selected="selected">{{{ $category->category_name }}}</option>
                                     @else
-                                    <option value="{{ $category->category_id }}">{{ $category->category_name }}</option>
+                                    <option value="{{ $category->category_id }}">{{{ $category->category_name }}}</option>
                                     @endif
                                     @endforeach
                                 </select>
@@ -40,9 +52,9 @@
                                     @endif
                                     @foreach($floorList as $floor)
                                     @if($floor->object_name == Input::get('fid'))
-                                    <option value="{{ $floor->object_name }}" selected="selected">{{ $floor->object_name }}</option>
+                                    <option value="{{{ $floor->object_name }}}" selected="selected">{{{ $floor->object_name }}}</option>
                                     @else
-                                    <option value="{{ $floor->object_name }}">{{ $floor->object_name }}</option>
+                                    <option value="{{{ $floor->object_name }}}">{{{ $floor->object_name }}}</option>
                                     @endif
                                     @endforeach
                                 </select>
@@ -50,7 +62,7 @@
                         </div>
                     </div>
                     <div class="col-xs-2 search-tool-col text-right">
-                        <a href="{{ url('/customer/tenants') }}" class="btn btn-info btn-block reset-btn">
+                        <a data-href="{{{ route('ci-tenant-list', ['keyword' => Input::get('keyword')]) }}}" href="{{{ $urlblock->blockedRoute('ci-tenant-list', ['keyword' => Input::get('keyword')]) }}}" class="btn btn-info btn-block reset-btn">
                             <span class="fa-stack fa-lg">
                                 <i class="fa fa-filter fa-stack-2x"></i>
                                 <i class="fa fa-times fa-stack-1x"></i>
@@ -59,107 +71,163 @@
                     </div>
                 </div>
             </div>
-            <div class="catalogue-wrapper">
-            @foreach($data->records as $product)
-                <div class="main-theme-mall catalogue catalogue-tenant" id="product-{{$product->product_id}}">
-                    <div class="row catalogue-top catalogue-top-tenant">
-                        <div class="col-xs-3 catalogue-img">
-                            <a href="{{ url('customer/tenant?id='.$product->merchant_id) }}">
-                                <span class="link-spanner"></span>
-                                @if(!count($product->mediaLogo) > 0)
-                                <img class="img-responsive side-margin-center" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
-                                @endif
-                                @foreach($product->mediaLogo as $media)
-                                @if($media->media_name_long == 'retailer_logo_orig')
-                                <img class="img-responsive side-margin-center" alt="" src="{{ asset($media->path) }}"/>
-                                @endif
-                                @endforeach
-                            </a>
-                        </div>
-                        <div class="col-xs-9 catalogue-info">
-                            <a href="{{ url('customer/tenant?id='.$product->merchant_id) }}">
-                                <span class="link-spanner"></span>
-                                <h4>{{ mb_strlen($product->name) > 64 ? mb_substr($product->name, 0, 64) . '...' : $product->name }}</h4>
-                                <h3><i class="fa fa-map-marker" style="padding-left: 5px;padding-right: 8px;"></i> {{{ !empty($product->floor) ? ' ' . $product->floor : '' }}}{{{ !empty($product->unit) ? ' - ' . $product->unit : '' }}}</h3>
-                                <h5 class="tenant-category">
-                                    <i class="fa fa-tags" style="padding-left: 2px;padding-right: 4px;"></i>
-                                    @if(empty($product->category_string))
-                                        <span>-</span>
-                                    @else
-                                        <span>{{ mb_strlen($product->category_string) > 30 ? mb_substr($product->category_string, 0, 30, 'UTF-8') . '...' : $product->category_string }}</span>
-                                    @endif
-                                </h5>
-                            </a>
+            @endif
+            <div class="container">
+                <div class="mobile-ci list-item-container">
+                    <div class="row">
+                        <div class="catalogue-wrapper">
+                        @if($link_to_coupon_data->linkedToCS)
+                            <div class="col-xs-12 col-sm-12" id="item-cs">
+                                <section class="list-item-single-tenant">
+                                    <div class="list-item-info">
+                                        <header class="list-item-title">
+                                            <div><strong>{{ Lang::get('mobileci.coupon.all_cs') }}</strong></div>
+                                        </header>
+                                    </div>
+                                    <div class="list-vignette-non-tenant"></div>
+                                    <img class="img-responsive img-fit-tenant" alt="" src="{{ asset('mobile-ci/images/default_cs.png') }}"/>
+                                </section>
+                            </div>
+                        @endif
+
+                        @foreach($data->records as $tenant)
+                            <div class="col-xs-12 col-sm-12" id="item-{{$tenant->merchant_id}}">
+                                <section class="list-item-single-tenant">
+                                    <a class="list-item-link" data-href="{{ route('ci-tenant-detail', ['id' => $tenant->merchant_id]) }}" href="{{ $urlblock->blockedRoute('ci-tenant-detail', ['id' => $tenant->merchant_id]) }}">
+                                        <div class="list-item-info">
+                                            <header class="list-item-title">
+                                                <div><strong>{{{ $tenant->name }}}</strong></div>
+                                            </header>
+                                            <header class="list-item-subtitle">
+                                                <div>
+                                                    <i class="fa fa-map-marker" style="padding-left: 5px;padding-right: 8px;"></i>
+                                                    {{{ !empty($tenant->floor) ? ' ' . $tenant->floor : '' }}}{{{ !empty($tenant->unit) ? ' - ' . $tenant->unit : '' }}}
+                                                </div>
+                                                <div>
+                                                    <div class="col-xs-6">
+                                                        <i class="fa fa-list" style="padding-left: 2px;padding-right: 4px;"></i>
+                                                        @if(empty($tenant->category_string))
+                                                            <span>-</span>
+                                                        @else
+                                                            <span>{{{ mb_strlen($tenant->category_string) > 30 ? mb_substr($tenant->category_string, 0, 30, 'UTF-8') . '...' : $tenant->category_string }}}</span>
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                                @if ($urlblock->isLoggedIn())
+                                                    @if(! empty($tenant->facebook_like_url))
+                                                    <div class="fb-like" data-href="{{{$tenant->facebook_like_url}}}" data-layout="button_count" data-action="like" data-show-faces="false" data-share="false"></div>
+                                                    @endif
+                                                @endif
+                                            </header>
+                                            <header class="list-item-badges">
+                                                <div class="col-xs-12 badges-wrapper text-right">
+                                                    @if($tenant->promotion_flag)
+                                                    <span class="badges promo-badges text-center"><i class="fa fa-bullhorn"></i></span>
+                                                    @endif
+                                                    @if($tenant->news_flag)
+                                                    <span class="badges news-badges text-center"><i class="fa fa-newspaper-o"></i></span>
+                                                    @endif
+                                                    @if($tenant->coupon_flag)
+                                                    <span class="badges coupon-badges text-center"><i class="fa fa-ticket"></i></span>
+                                                    @endif
+                                                </div>
+                                            </header>
+                                        </div>
+                                        <div class="list-vignette-non-tenant"></div>
+                                        @if(!count($tenant->mediaLogo) > 0)
+                                        <img class="img-responsive img-fit-tenant" src="{{ asset('mobile-ci/images/default_tenants_directory.png') }}"/>
+                                        @endif
+                                        @foreach($tenant->mediaLogo as $media)
+                                        @if($media->media_name_long == 'retailer_logo_orig')
+                                        <img class="img-responsive img-fit-tenant" alt="" src="{{ asset($media->path) }}"/>
+                                        @endif
+                                        @endforeach
+                                    </a>
+                                </section>
+                            </div>
+                        @endforeach
                         </div>
                     </div>
+                    @if($data->returned_records < $data->total_records)
+                        <div class="row">
+                            <div class="col-xs-12 padded">
+                                <button class="btn btn-info btn-block" id="load-more-tenants">{{Lang::get('mobileci.notification.view_more_btn')}}</button>
+                            </div>
+                        </div>
+                    @endif
                 </div>
-            @endforeach
             </div>
-            @if($data->returned_records < $data->total_records)
+        @else
+            @if(Input::get('coupon_redeem_id') === null && Input::get('coupon_id') === null && Input::get('promotion_id') == null && Input::get('news_id') === null)
+            <div id="search-tool">
                 <div class="row">
-                    <div class="col-xs-12 padded">
-                        <button class="btn btn-info btn-block" id="load-more-tenants">{{Lang::get('mobileci.notification.load_more_btn')}}</button>
+                    <div class="col-xs-5 search-tool-col">
+                        <div class="dropdown">
+                            <label class="select-label">
+                                <select class="select" id="category">
+                                    @if(empty(Input::get('cid')))
+                                        <option>{{ Lang::get('mobileci.tenant.category') }}</option>
+                                    @else
+                                        <option>{{ Lang::get('mobileci.tenant.all') }}</option>
+                                    @endif
+                                    @foreach($categories as $category)
+                                    @if($category->category_id == Input::get('cid'))
+                                    <option value="{{ $category->category_id }}" selected="selected">{{{ $category->category_name }}}</option>
+                                    @else
+                                    <option value="{{ $category->category_id }}">{{{ $category->category_name }}}</option>
+                                    @endif
+                                    @endforeach
+                                </select>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-xs-5 search-tool-col">
+                        <div class="dropdown">
+                            <label class="select-label">
+                                <select class="select" id="floor">
+                                    @if(empty(Input::get('fid')))
+                                        <option>{{ Lang::get('mobileci.tenant.floor') }}</option>
+                                    @else
+                                        <option>{{ Lang::get('mobileci.tenant.all') }}</option>
+                                    @endif
+                                    @foreach($floorList as $floor)
+                                    @if($floor->object_name == Input::get('fid'))
+                                    <option value="{{{ $floor->object_name }}}" selected="selected">{{{ $floor->object_name }}}</option>
+                                    @else
+                                    <option value="{{{ $floor->object_name }}}">{{{ $floor->object_name }}}</option>
+                                    @endif
+                                    @endforeach
+                                </select>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-xs-2 search-tool-col text-right">
+                        <a data-href="{{{ route('ci-tenant-list', ['keyword' => Input::get('keyword')]) }}}" href="{{{ $urlblock->blockedRoute('ci-tenant-list', ['keyword' => Input::get('keyword')]) }}}" class="btn btn-info btn-block reset-btn">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-filter fa-stack-2x"></i>
+                                <i class="fa fa-times fa-stack-1x"></i>
+                            </span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            @endif
+
+            @if($data->search_mode)
+                <div class="row padded">
+                    <div class="col-xs-12">
+                        <h4>{{ Lang::get('mobileci.search.no_item') }}</h4>
+                    </div>
+                </div>
+            @else
+                {{-- Showing info for there is no stores when search mode is false --}}
+                <div class="row padded">
+                    <div class="col-xs-12">
+                        <h4>{{ Lang::get('mobileci.greetings.no_stores_listing') }}</h4>
                     </div>
                 </div>
             @endif
-        @else
-            <div id="search-tool">
-                <div class="row">
-                    <div class="col-xs-5 search-tool-col">
-                        <div class="dropdown">
-                            <label class="select-label">
-                                <select class="select" id="category">
-                                    @if(empty(Input::get('cid')))
-                                        <option>{{ Lang::get('mobileci.tenant.category') }}</option>
-                                    @else
-                                        <option>{{ Lang::get('mobileci.tenant.all') }}</option>
-                                    @endif
-                                    @foreach($categories as $category)
-                                    @if($category->category_id == Input::get('cid'))
-                                    <option value="{{ $category->category_id }}" selected="selected">{{ $category->category_name }}</option>
-                                    @else
-                                    <option value="{{ $category->category_id }}">{{ $category->category_name }}</option>
-                                    @endif
-                                    @endforeach
-                                </select>
-                            </label>
-                        </div>
-                    </div>
-                    <div class="col-xs-5 search-tool-col">
-                        <div class="dropdown">
-                            <label class="select-label">
-                                <select class="select" id="floor">
-                                    @if(empty(Input::get('fid')))
-                                        <option>{{ Lang::get('mobileci.tenant.floor') }}</option>
-                                    @else
-                                        <option>{{ Lang::get('mobileci.tenant.all') }}</option>
-                                    @endif
-                                    @foreach($floorList as $floor)
-                                    @if($floor->object_name == Input::get('fid'))
-                                    <option value="{{ $floor->object_name }}" selected="selected">{{ $floor->object_name }}</option>
-                                    @else
-                                    <option value="{{ $floor->object_name }}">{{ $floor->object_name }}</option>
-                                    @endif
-                                    @endforeach
-                                </select>
-                            </label>
-                        </div>
-                    </div>
-                    <div class="col-xs-2 search-tool-col text-right">
-                        <a href="{{ url('/customer/tenants') }}" class="btn btn-info btn-block reset-btn">
-                            <span class="fa-stack fa-lg">
-                                <i class="fa fa-filter fa-stack-2x"></i>
-                                <i class="fa fa-times fa-stack-1x"></i>
-                            </span>
-                        </a>
-                    </div>
-                </div>
-            </div>
-            <div class="row padded">
-                <div class="col-xs-12">
-                    <h4>{{ Lang::get('mobileci.search.no_item') }}</h4>
-                </div>
-            </div>
+
         @endif
     @else
         <div class="row padded">
@@ -170,70 +238,18 @@
     @endif
 @stop
 
-@section('modals')
-<!-- Modal -->
-<div class="modal fade" id="verifyModal" tabindex="-1" role="dialog" aria-labelledby="verifyModalLabel" aria-hidden="true">
-    <div class="modal-dialog orbit-modal">
-        <div class="modal-content">
-            <div class="modal-header orbit-modal-header">
-                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{{ Lang::get('mobileci.modals.close') }}</span></button>
-                <h4 class="modal-title" id="verifyModalLabel"><i class="fa fa-envelope-o"></i> {{ Lang::get('mobileci.promotion.info') }}</h4>
-            </div>
-            <div class="modal-body">
-                <div class="row">
-                    <div class="col-xs-12 text-center">
-                        <p style="font-size:15px;">
-                            <b>{{ Lang::get('mobileci.modals.enjoy_free') }}</b>
-                            <br>
-                            @if ($active_user)
-                                <span style="color:#0aa5d5; font-size:22px; font-weight: bold;">{{ Lang::get('mobileci.modals.unlimited') }}</span>
-                            @else
-                                <span style="color:#0aa5d5; font-size:22px; font-weight: bold;">30 {{ Lang::get('mobileci.modals.minutes') }}</span>
-                            @endif
-                            <br>
-                            <b>{{ Lang::get('mobileci.modals.internet') }}</b>
-                            <br><br>
-                            <b>{{ Lang::get('mobileci.modals.check_out_our') }}</b>
-                            <br>
-                            <b><span style="color:#0aa5d5;">{{ Lang::get('mobileci.page_title.promotion') }}</span> {{ Lang::get('mobileci.page_title.and') }} <span style="color:#0aa5d5;">{{ Lang::get('mobileci.page_title.coupon_single') }}</span></b>
-                        </p>
-                    </div>
-                </div>
-                <div class="row" style="margin-left: -30px; margin-right: -30px; margin-bottom: -15px;">
-                    <div class="col-xs-12">
-                        <img class="img-responsive" src="{{ asset('mobile-ci/images/pop-up-banner.png') }}">
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <div class="row">
-                    <div class="col-xs-12 text-center">
-                        <button type="button" class="btn btn-info btn-block" data-dismiss="modal">{{ Lang::get('mobileci.modals.okay') }}</button>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-xs-12 text-left">
-                            <input type="checkbox" name="verifyModalCheck" id="verifyModalCheck" style="top:2px;position:relative;">
-                            <label for="verifyModalCheck">{{ Lang::get('mobileci.modals.do_not_display') }}</label>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-@stop
-
 @section('ext_script_bot')
-{{ HTML::script('mobile-ci/scripts/jquery-ui.min.js') }}
-{{ HTML::script('mobile-ci/scripts/featherlight.min.js') }}
-{{ HTML::script('mobile-ci/scripts/jquery.cookie.js') }}
 <script type="text/javascript">
-    var cookie_dismiss_name = 'dismiss_verification_popup';
-    var cookie_dismiss_name_2 = 'dismiss_activation_popup';
-
-    @if ($active_user)
-    cookie_dismiss_name = 'dismiss_verification_popup_unlimited';
-    @endif
+    $(window).on('scroll', function() {
+        // Check if browser supports LocalStorage
+        if(typeof(Storage) !== 'undefined') {
+            var scrollTop = $(window).scrollTop();
+            // Prevent Safari to set scrollTop position to 0 on page load.
+            if (scrollTop) {
+                localStorage.setItem('scrollTop', scrollTop);
+            }
+        }
+    });
 
     /**
      * Get Query String from the URL
@@ -256,57 +272,71 @@
             return uri + separator + key + "=" + value;
         }
     }
-    $(document).ready(function(){   
-        $('#verifyModal').on('hidden.bs.modal', function () {
-            if ($('#verifyModalCheck')[0].checked) {
-                $.cookie(cookie_dismiss_name, 't', {expires: 3650});
-            }
-        });
 
-        // $('#userActivationModal').on('hidden.bs.modal', function () {
-        //     $.cookie(cookie_dismiss_name_2, 't', {path: '/', domain: window.location.hostname, expires: 3650});
-        // });
+    var insertRecords = function(records) {
+        var promises = [];
+        for(var i = 0; i < records.length; i++) {
+            var deferred = new $.Deferred();
+            var list = '<div class="col-xs-12 col-sm-12" id="item-'+records[i].merchant_id+'">\
+                    <section class="list-item-single-tenant">\
+                        <a class="list-item-link" data-href="'+records[i].redirect_url+'" href="'+records[i].url+'">\
+                            <div class="list-item-info">\
+                                <header class="list-item-title">\
+                                    <div><strong>'+records[i].name+'</strong></div>\
+                                </header>\
+                                <header class="list-item-subtitle">\
+                                    <div>\
+                                        <i class="fa fa-map-marker" style="padding-left: 5px;padding-right: 8px;"></i> \
+                                        '+ (records[i].floor ?  ' ' + records[i].floor : '') + (records[i].unit ? ' - ' + records[i].unit : '') +'\
+                                    </div>\
+                                    <div>\
+                                        <div class="col-xs-6">\
+                                            <i class="fa fa-list" style="padding-left: 2px;padding-right: 4px;"></i>\
+                                            <span>'+ (records[i].category_string ? records[i].category_string : '-') +'</span>\
+                                        </div>\
+                                    </div>';
+                if (records[i].facebook_like_url) {
+                    list += '<div class="fb-like" data-href="' + records[i].facebook_like_url + '" data-layout="button_count" data-action="like" data-show-faces="false" data-share="false"></div>';
+                }
 
-        {{-- a sequence of modals... --}}
-        var modals = [
-            {
-                selector: '#verifyModal',
-                display: get('internet_info') == 'yes' && !$.cookie(cookie_dismiss_name)
-            }
-            // ,
-            // {
-            //     selector: '#userActivationModal',
-            //     @if ($active_user)
-            //         display: false
-            //     @else
-            //         display: get('from_login') === 'yes' && !$.cookie(cookie_dismiss_name_2)
-            //     @endif
-            // }
-        ];
-        var modalIndex;
+                list += '</header>\
+                                <header class="list-item-badges">\
+                                    <div class="col-xs-12 badges-wrapper text-right">\
+                                        '+ (records[i].promotion_flag ? '<span class="badges promo-badges text-center"><i class="fa fa-bullhorn"></i></span>' : '') +'\
+                                        '+ (records[i].news_flag ? '<span class="badges news-badges text-center"><i class="fa fa-newspaper-o"></i></span>' : '') +'\
+                                        '+ (records[i].coupon_flag ? '<span class="badges coupon-badges text-center"><i class="fa fa-ticket"></i></span>' : '') +'\
+                                    </div>\
+                                </header>\
+                            </div>\
+                            <div class="list-vignette-non-tenant"></div>\
+                            <img class="img-responsive img-fit-tenant" src="'+ records[i].logo_orig +'"/>\
+                        </a>\
+                    </section>\
+                </div>';
+            $('.catalogue-wrapper').append(list);
+            deferred.resolve();
+            promises.push(deferred);
+        };
+        return $.when.apply(undefined, promises).promise();
+    }
 
-        for (modalIndex = 0; modalIndex < modals.length; modalIndex++) {
-            {{-- for each displayable modal, after it is hidden try and display the next displayable modal --}}
-            if (modals[modalIndex].display) {
-                $(modals[modalIndex].selector).on('hidden.bs.modal', (function(myIndex) {
-                    return function() {
-                        for (var i = myIndex + 1; i < modals.length; i++) {
-                            if (modals[i].display) {
-                                $(modals[i].selector).modal();
-                                return;
-                            }
-                        }
-                    }
-                })(modalIndex));
+    $(document).ready(function(){
+        var isFromDetail = false;
+        // Check if browser supports LocalStorage
+        if(typeof(Storage) !== 'undefined') {
+            // This feature is implemented for tracking whether this page is loaded from detail page. (Which is back button)
+            var currentValue = localStorage.getItem('fromSource');
+            if (currentValue && currentValue === 'detail') {
+                // Set isFromDetail to true
+                isFromDetail = true;
             }
-        }
+            else {
+                // Clear tenantData in localStorage.
+                localStorage.removeItem('tenantData');
+            }
 
-        {{-- display the first displayable modal --}}
-        for (modalIndex = 0; modalIndex < modals.length; modalIndex++) {
-            if (modals[modalIndex].display) {
-                $(modals[modalIndex].selector).modal();
-                break;
-            }
+            // Set fromSource in localStorage.
+            localStorage.setItem('fromSource', 'store');
         }
 
         $(document).on('show.bs.modal', '.modal', function (event) {
@@ -319,9 +349,9 @@
 
         var promo = '';
         @if(!empty(Input::get('promotion_id')))
-            promo = '&promotion_id='+'{{Input::get('promotion_id')}}';
+            promo = '&promotion_id='+'{{{Input::get('promotion_id')}}}';
         @endif
-        var path = '{{ url('/customer/tenants?keyword='.Input::get('keyword').'&sort_by=name&sort_mode=asc&cid='.Input::get('cid').'&fid='.Input::get('fid')) }}'+promo;
+        var path = '{{$urlblock->blockedRoute('ci-tenant-list', ['keyword' => e(Input::get('keyword')), 'sort_by' => 'name', 'sort_mode' => 'asc', 'cid' => e(Input::get('cid')), 'fid' => e(Input::get('fid'))])}}'+promo;
         $('#dLabel').dropdown();
         $('#dLabel2').dropdown();
 
@@ -331,7 +361,6 @@
                 val = $('#category > option:selected').attr('value');
             }
             path = updateQueryStringParameter(path, 'cid', val);
-            console.log(path);
             window.location.replace(path);
         });
         $('#floor').change(function(){
@@ -340,11 +369,10 @@
                 val = $('#floor > option:selected').attr('value');
             }
             path = updateQueryStringParameter(path, 'fid', val);
-            console.log(path);
             window.location.replace(path);
         });
 
-        var take = {{Config::get('orbit.pagination.per_page', 25)}}, 
+        var take = {{Config::get('orbit.pagination.per_page', 25)}},
             skip = {{Config::get('orbit.pagination.per_page', 25)}};
 
         var keyword = '{{{Input::get('keyword', '')}}}';
@@ -357,8 +385,10 @@
             btn.attr('disabled', 'disabled');
             btn.html('<i class="fa fa-circle-o-notch fa-spin"></i>');
             $.ajax({
-                url: apiPath + 'tenant/load-more',
+                url: '{{ url("app/v1/tenant/load-more") }}',
                 method: 'GET',
+                timeout: 60000,
+                async: true,
                 data: {
                     take: take,
                     skip: skip,
@@ -366,43 +396,84 @@
                     cid: cid,
                     fid: fid,
                     promotion_id: promotion_id
-                }
-            }).done(function(data) {
-                skip = skip + skip;
-                if(data.records.length > 0) {
-                    for(var i = 0; i < data.records.length; i++) {
-                        var list = '<div class="main-theme-mall catalogue catalogue-tenant" id="product-'+data.records[i].merchant_id+'">\
-                                <div class="row catalogue-top catalogue-top-tenant">\
-                                    <div class="col-xs-3 catalogue-img">\
-                                        <a href="'+data.records[i].url+'">\
-                                            <span class="link-spanner"></span>\
-                                            <img class="img-responsive side-margin-center" alt="" src="'+data.records[i].logo_orig+'"/>\
-                                        </a>\
-                                    </div>\
-                                    <div class="col-xs-9 catalogue-info">\
-                                        <a href="'+data.records[i].url+'">\
-                                            <span class="link-spanner"></span>\
-                                            <h4>'+data.records[i].name+'</h4>\
-                                            <h3><i class="fa fa-map-marker" style="padding-left: 5px;padding-right: 8px;"></i> '+ (data.records[i].floor ? ' ' + data.records[i].floor : '' ) + (data.records[i].unit ? ' - ' + data.records[i].unit : '' ) + '</h3>\
-                                            <h5 class="tenant-category">\
-                                                <i class="fa fa-tags" style="padding-left: 2px;padding-right: 4px;"></i>\
-                                                <span>'+ (data.records[i].category_string ? data.records[i].category_string : '-') +'</span>\
-                                            </h5>\
-                                        </a>\
-                                    </div>\
-                                </div>\
-                            </div>';
-                        $('.catalogue-wrapper').append(list);
+                },
+                error: function(xhr, textStatus, errorThrown) {
+                    if (textStatus === 'timeout') {
+                        alert('Request timeout. Failed to retrieve more tenants');
                     }
                 }
+            }).done(function(data) {
+                skip = skip + take;
+
+                if(data.records.length > 0) {
+                    insertRecords(data.records);
+
+                    // Check if browser supports LocalStorage
+                    if(typeof(Storage) !== 'undefined') {
+                        var dataJson = data;
+                        var tenantData = localStorage.getItem('tenantData');
+
+                        // Check if tenantData exists.
+                        if (tenantData) {
+                            var jsonObj = JSON.parse(tenantData);
+                            // Concat the current record with the existing tenantData.
+                            dataJson.records = jsonObj.records.concat(dataJson.records);
+                        }
+
+                        // Set tenantData in localStorage.
+                        localStorage.setItem('tenantData', JSON.stringify(dataJson));
+                    }
+
+                    FB.XFBML.parse();
+                }
+
                 if (skip >= data.total_records) {
                     btn.remove();
                 }
-            }).always(function(data){
+
+            })
+            .always(function(data){
                 btn.removeAttr('disabled', 'disabled');
-                btn.html('{{Lang::get('mobileci.notification.load_more_btn')}}');
+                btn.html('{{Lang::get('mobileci.notification.view_more_btn')}}');
             });
         });
-    }); 
+
+        // Check if page is from back button.
+        if (isFromDetail) {
+            var tenantData = localStorage.getItem('tenantData');
+            // Check if there's tenantData in localStorage.
+            if (tenantData) {
+                // Re-insert all the tenant data records back.
+                var tenants = JSON.parse(tenantData);
+                var records = tenants.records;
+                skip += records.length;
+
+                insertRecords(records).then(function() {
+                    // See if there is a scrollTop and go there.
+                    var scrollTop = +localStorage.getItem('scrollTop');
+                    if (scrollTop) {
+                        // This setTimeout is needed for iOS mobile browser.
+                        setTimeout(function() {
+                            $(window).scrollTop(scrollTop);
+                        }, 750);
+                    }
+                });
+
+                if (skip >= tenants.total_records) {
+                    $('#load-more-tenants').remove();
+                }
+            }
+            else {
+                // Just maintain scroll position.
+                var scrollTop = +localStorage.getItem('scrollTop');
+                if (scrollTop) {
+                    // This setTimeout is needed for mostly iOS mobile browser.
+                    setTimeout(function() {
+                        $(window).scrollTop(scrollTop);
+                    }, 750);
+                }
+            }
+        }
+    });
 </script>
 @stop

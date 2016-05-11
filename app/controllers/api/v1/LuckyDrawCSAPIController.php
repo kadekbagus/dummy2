@@ -698,9 +698,12 @@ class LuckyDrawCSAPIController extends ControllerAPI
                                         ->count();
 
             $issued_lucky_draw_numbers_obj = DB::table('lucky_draw_numbers')
-                    ->select('lucky_draw_numbers.*', 'lucky_draws.lucky_draw_name')
+                    ->select('lucky_draw_numbers.*', 'lucky_draws.lucky_draw_name', 'lucky_draw_number_receipt.lucky_draw_receipt_id')
                     ->leftJoin('lucky_draws', function($q) {
                         $q->on('lucky_draws.lucky_draw_id', '=', 'lucky_draw_numbers.lucky_draw_id');
+                    })
+                    ->leftJoin('lucky_draw_number_receipt', function($q) {
+                        $q->on('lucky_draw_numbers.lucky_draw_number_id', '=', 'lucky_draw_number_receipt.lucky_draw_number_id');
                     })
                     ->where('lucky_draw_numbers.lucky_draw_id', $luckyDrawId)
                     ->where('user_id', $customer->user_id)

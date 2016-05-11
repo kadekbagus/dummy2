@@ -32,6 +32,30 @@ Artisan::add(new ConfigAgreement);
 // Delete Inactive CI sessions
 Artisan::add(new DeleteInactiveCISessions);
 
+// Insert campaign base price for merchant
+Artisan::add(new BasePrice);
+
+//Create/install function and stored procedure
+Artisan::add(new MysqlStoredProcedure);
+
+// Delete Inactive CI sessions
+Artisan::add(new MerchantLogoCommand);
+
+// Set campaign status to expired when past the date and time
+Artisan::add(new CampaignSetToExpired);
+
+// Campaign spending counting
+Artisan::add(new CampaignDailySpendingCalculation);
+
+// Campaign daily spending mmigration
+Artisan::add(new CampaignDailySpendingMigration);
+
+// Merchant geolocation
+Artisan::add(new MerchantGeolocation);
+
+// Tenant Import
+Artisan::add(new TenantImport);
+
 // Insert or update data on settings table
 // @Todo investigate why its error
 // Artisan::add(new MerchantSetting);

@@ -9,5 +9,6 @@ $factory('LuckyDraw', [
     'minimum_amount'    => 100000,
     'min_number'        => 1001,
     'max_number'        => 5000,
-    'status'            => 'active'
+    'status'            => 'active',
+    'campaign_status_id' => 'factory:CampaignStatus',
 ]);

@@ -24,6 +24,11 @@ class Mall extends Eloquent
     use MallTypeTrait;
 
     /**
+     * Trait related with Geolocation
+     */
+    use MerchantGeolocTrait;
+
+    /**
      * Column name which determine the type of Mall or Tenant.
      */
     const OBJECT_TYPE = 'object_type';
@@ -69,12 +74,81 @@ class Mall extends Eloquent
         return $this->hasMany('Setting', 'object_id', 'merchant_id')->where('object_type', 'merchant');
     }
 
+    public function geofence()
+    {
+        return $this->hasOne('MerchantGeofence', 'merchant_id', 'merchant_id');
+    }
+
     /**
      * Merchant belongs to and has many category.
      */
     public function categories()
     {
         return $this->belongsToMany('Category', 'category_merchant', 'merchant_id', 'category_id');
+    }
+
+    /**
+     * Merchant has many category.
+     */
+    public function mallCategories()
+    {
+        return $this->hasMany('Category', 'merchant_id', 'merchant_id');
+    }
+
+    /**
+     * Merchant has many category translation.
+     */
+    public function mallCategoryTranslations()
+    {
+        return $this->mallCategories()
+                    ->leftJoin('category_translations', 'category_translations.category_id', '=', 'categories.category_id')
+                    ->leftJoin('merchant_languages', function($q) {
+                        $q->on('merchant_languages.language_id', '=', 'category_translations.merchant_language_id')
+                            ->on('merchant_languages.merchant_id', '=', 'categories.merchant_id');
+                    })
+                    ->leftJoin('languages', 'languages.language_id', '=', 'merchant_languages.language_id')
+                    ->where('merchant_languages.status', '!=', 'deleted');
+    }
+
+    /**
+     * Merchant has many floor.
+     */
+    public function mallFloors()
+    {
+        return $this->hasMany('Object', 'merchant_id', 'merchant_id')
+                    ->where('objects.object_type', 'floor')->excludeDeleted();
+    }
+
+    /**
+     * Merchant has many campaign base prices.
+     */
+    public function mallCampaignBasePrices()
+    {
+        return $this->hasMany('CampaignBasePrice', 'merchant_id', 'merchant_id')->excludeDeleted();
+    }
+
+    /**
+     * Merchant has many campaign base prices promotion.
+     */
+    public function campaignBasePricePromotion()
+    {
+        return $this->mallCampaignBasePrices()->where('campaign_type', 'promotion');
+    }
+
+    /**
+     * Merchant has many campaign base prices coupon.
+     */
+    public function campaignBasePriceCoupon()
+    {
+        return $this->mallCampaignBasePrices()->where('campaign_type', 'coupon');
+    }
+
+    /**
+     * Merchant has many campaign base prices news.
+     */
+    public function campaignBasePriceNews()
+    {
+        return $this->mallCampaignBasePrices()->where('campaign_type', 'news');
     }
 
     /**
@@ -121,7 +195,15 @@ class Mall extends Eloquent
      */
     public function languages()
     {
-        return $this->hasMany('MerchantLanguage', 'merchant_id', 'merchant_id')->excludeDeleted();
+        return $this->hasMany('MerchantLanguage', 'merchant_id', 'merchant_id')->excludeDeleted('merchant_languages');
+    }
+
+    /**
+     * Merchant has many languages for translations.
+     */
+    public function mallLanguages()
+    {
+        return $this->languages()->join('languages', 'languages.language_id', '=', 'merchant_languages.language_id');
     }
 
     public function getPhoneNumber($separator='|#|')
@@ -300,6 +382,28 @@ class Mall extends Eloquent
     }
 
     /**
+     * Merchant has many uploaded background.
+     *
+     * @author Irianto <irianto@dominopos.com>
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function mediaBackground()
+    {
+        return $this->media()->where('media_name_id', 'retailer_background');
+    }
+
+    /**
+     * Mall has many uploaded background.
+     *
+     * @author Irianto <irianto@dominopos.com>
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function mediaBackgroundOrig()
+    {
+        return $this->mediaOrig()->where('media_name_id', 'retailer_background');
+    }
+
+    /**
      * Merchant has one uploaded icon.
      *
      * @author Rio Astamal <me@rioastamal.net>
@@ -365,7 +469,7 @@ class Mall extends Eloquent
      * @author Ahmad Anshori <ahmad@dominopos.com>
      *
      */
-    public function getLogoAttribute($value)
+    public function getLogo2Attribute($value)
     {
         $domain = Request::getHost();
         // Prevent directory travelsal
@@ -452,5 +556,41 @@ class Mall extends Eloquent
                                      ->where('parent_id', $this->merchant_id)
                                      ->lists('merchant_id');
     }
+
+    public function merchantSocialMedia()
+    {
+        return $this->hasMany('MerchantSocialMedia', 'merchant_id', 'merchant_id');
+    }
+
+    /**
+     * Dummy attribute for displaying Mall Opening Hours.
+     * @author Rio Astamal <rio@dominopos.com>
+     * @todo this attribute should be coming from table field.
+     * @param Builder $builder Query Builder
+     * @return Builder $builder Query Builder
+     */
+    public function scopeIncludeDummyOpeningHours($builder)
+    {
+        return $builder->addSelect(DB::raw( '"Sun - Mon 10.00 - 22.00" as operating_hours' ));
+    }
+
+    public function acquireUser($user, $signUpVia = 'form')
+    {
+        $firstAcquired = FALSE;
+        $acq = UserAcquisition::where('acquirer_id', $this->merchant_id)
+            ->where('user_id', $user->user_id)
+            ->first();
+
+        if (! is_object($acq)) {
+            $acq = new \UserAcquisition();
+            $acq->user_id = $user->user_id;
+            $acq->signup_via = $signUpVia;
+            $acq->acquirer_id = $this->merchant_id;
+            $acq->save();
+
+            $firstAcquired = TRUE;
+        }
+
+        return $firstAcquired;
+    }
 }
-?>

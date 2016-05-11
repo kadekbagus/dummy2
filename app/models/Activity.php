@@ -332,7 +332,7 @@ class Activity extends Eloquent
                         break;
 
                     case 'LuckyDraw':
-                        $this->object_display_name = $object->lucky_draw_name_display;
+                        $this->object_display_name = $object->lucky_draw_name;
                         break;
 
                     case 'EventModel':
@@ -762,6 +762,8 @@ class Activity extends Eloquent
 
         // Save to additional activities table
         $this->saveToCampaignPageViews();
+        $this->saveToCampaignPopUpView();
+        $this->saveToCampaignPopUpClick();
         $this->saveToMerchantPageView();
         $this->saveToWidgetClick();
         $this->saveToConnectionTime();
@@ -909,6 +911,9 @@ class Activity extends Eloquent
      */
     protected function saveToCampaignPageViews()
     {
+        if (empty($this->object_id)) {
+            return;
+        }
         // Save also the activity to particular `campaign_xyz` table
         switch ($this->activity_name) {
             case 'view_promotion':
@@ -996,6 +1001,64 @@ class Activity extends Eloquent
         $pageview->location_id = $this->location_id;
         $pageview->activity_id = $this->activity_id;
         $pageview->save();
+    }
+
+    /**
+     * Save to campaign_popup_views table
+     *
+     * @author Ahmad <ahmad@dominopos.com>
+     * @return void
+     */
+    protected function saveToCampaignPopUpView()
+    {
+        $activity_name_long_array = array(
+            'View Coupon Pop Up'       => 'View Coupon Pop Up',
+            'View Promotion Pop Up'    => 'View Promotion Pop Up',
+            'View News Pop Up'         => 'View News Pop Up'
+        );
+        
+        $proceed = in_array($this->activity_name_long, $activity_name_long_array);
+        if (! $proceed) {
+            return;
+        }
+
+        // Save also the activity to particular `campaign_xyz` table
+        $popupview = new CampaignPopupView();
+        $popupview->campaign_id = $this->object_id;
+        $popupview->user_id = $this->user_id;
+        $popupview->location_id = $this->location_id;
+        $popupview->activity_id = $this->activity_id;
+        $popupview->campaign_group_name_id = $this->campaignGroupNameIdFromActivityName();
+        $popupview->save();
+    }
+
+    /**
+     * Save to campaign_popup_views table
+     *
+     * @author Ahmad <ahmad@dominopos.com>
+     * @return void
+     */
+    protected function saveToCampaignPopUpClick()
+    {
+        $activity_name_long_array = array(
+            'Click Coupon Pop Up'      => 'Click Coupon Pop Up',
+            'Click Promotion Pop Up'   => 'Click Promotion Pop Up',
+            'Click News Pop Up'        => 'Click News Pop Up',
+        );
+        
+        $proceed = in_array($this->activity_name_long, $activity_name_long_array);
+        if (! $proceed) {
+            return;
+        }
+
+        // Save also the activity to particular `campaign_xyz` table
+        $popupview = new CampaignClicks();
+        $popupview->campaign_id = $this->object_id;
+        $popupview->user_id = $this->user_id;
+        $popupview->location_id = $this->location_id;
+        $popupview->activity_id = $this->activity_id;
+        $popupview->campaign_group_name_id = $this->campaignGroupNameIdFromActivityName();
+        $popupview->save();
     }
 
     /**
@@ -1107,6 +1170,30 @@ class Activity extends Eloquent
                 break;
 
             case 'view_news':
+                $groupName = 'News';
+                break;
+
+            case 'view_promotion_popup':
+                $groupName = 'Promotion';
+                break;
+
+            case 'view_coupon_popup':
+                $groupName = 'Coupon';
+                break;
+
+            case 'view_news_popup':
+                $groupName = 'News';
+                break;
+
+            case 'click_promotion_popup':
+                $groupName = 'Promotion';
+                break;
+
+            case 'click_coupon_popup':
+                $groupName = 'Coupon';
+                break;
+
+            case 'click_news_popup':
                 $groupName = 'News';
                 break;
         }

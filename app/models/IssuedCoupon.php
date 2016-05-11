@@ -59,7 +59,7 @@ class IssuedCoupon extends Eloquent
      * @param User $admin - The one who issue the coupon
      * @return IssuedCoupon
      */
-    public function issue($promotion, $userId, $admin)
+    public function issue($promotion, $userId, $admin, $retailer = NULL)
     {
         $maxIssueId = DB::table('issued_coupons')->max(DB::raw('CAST(issued_coupon_code as UNSIGNED)'));
         if (empty($maxIssueId)) {
@@ -72,6 +72,9 @@ class IssuedCoupon extends Eloquent
         $issued->expired_date = $promotion->coupon_validity_in_date;
         $issued->issued_date = date('Y-m-d H:i:s');
         $issued->status = 'active';
+        if (! is_null($retailer)) {
+            $issued->issuer_retailer_id = $retailer->merchant_id;
+        }
         $issued->save();
 
         return $issued;

@@ -10,13 +10,51 @@ use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Helper\EloquentRecordCounter as RecordCounter;
+use Orbit\Helper\Util\PaginationNumber;
+use Carbon\Carbon as Carbon;
 
 class TenantAPIController extends ControllerAPI
 {
+
+    protected $tenantViewRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee', 'mall customer service'];
+    protected $tenantModifiyRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee'];
+    protected $campaignRole = ['campaign owner', 'campaign employee'];
+
+    /**
+     * Flag to return the query builder.
+     *
+     * @var Builder
+     */
+    protected $returnBuilder = FALSE;
+
     /**
      * Default language name used if none are sent
      */
     const DEFAULT_LANG = 'en';
+
+    /**
+     * saveSocmedUri()
+     *
+     * @author Qosdil A. <qosdil@dominopos.com>
+     * @param string $socmedCode
+     * @param string $merchantId
+     * @param string $uri
+     */
+    private function saveSocmedUri($socmedCode, $merchantId, $uri)
+    {
+        $socmedId = SocialMedia::whereSocialMediaCode($socmedCode)->first()->social_media_id;
+
+        $merchantSocmed = MerchantSocialMedia::whereMerchantId($merchantId)->whereSocialMediaId($socmedId)->first();
+
+        if (!$merchantSocmed) {
+            $merchantSocmed = new MerchantSocialMedia;
+            $merchantSocmed->social_media_id = $socmedId;
+            $merchantSocmed->merchant_id = $merchantId;
+        }
+
+        $merchantSocmed->social_media_uri = $uri;
+        $merchantSocmed->save();
+    }
 
     /**
      * POST - Delete Tenant
@@ -95,7 +133,7 @@ class TenantAPIController extends ControllerAPI
                     */
                 ),
                 array(
-                    'merchant_id' => 'orbit.empty.mall',
+                    'merchant_id' => 'required|orbit.empty.mall',
                     'retailer_id' => 'required|orbit.empty.tenant',//|orbit.exists.deleted_tenant_is_box_current_retailer',
                     /* for next version
                     'password'    => [
@@ -253,6 +291,7 @@ class TenantAPIController extends ControllerAPI
      *
      * @author Tian <tian@dominopos.com>
      * @author Irianto Pratama <irianto@dominopos.com>
+     * @author kadek <kadek@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -361,6 +400,7 @@ class TenantAPIController extends ControllerAPI
             $country = OrbitInput::post('country');
             $phone = OrbitInput::post('phone');
             $fax = OrbitInput::post('fax');
+            $translations = OrbitInput::post('translations');
             $start_date_activity = OrbitInput::post('start_date_activity');
             $end_date_activity = OrbitInput::post('end_date_activity');
 
@@ -380,6 +420,8 @@ class TenantAPIController extends ControllerAPI
             $id_language_default = OrbitInput::post('id_language_default', $default_merchant_language_id);
 
             $box_url = OrbitInput::post('box_url');
+            $keywords = OrbitInput::post('keywords');
+            $keywords = (array) $keywords;
 
             // default value for status is inactive
             $status = OrbitInput::post('status');
@@ -453,6 +495,7 @@ class TenantAPIController extends ControllerAPI
                     'orbit.empty.tenant_unit' => Lang::get('validation.orbit.empty.tenant_unit'),
                     'alpha_num' => 'The verification number must letter and number.',
                     'regex' => 'Wrong phone number format',
+                    'orbit.formaterror.url.web' => 'Tenant URL is not valid',
                )
             );
 
@@ -496,12 +539,17 @@ class TenantAPIController extends ControllerAPI
                 $countryName = $countryObject->name;
             }
 
+            // Get english language_id
+            $idLanguageEnglish = Language::select('language_id')
+                                ->where('name', '=', 'en')
+                                ->first();
+
             $newtenant = new Tenant();
             $newtenant->omid = '';
             $newtenant->orid = '';
             $newtenant->email = $email;
             $newtenant->name = $name;
-            $newtenant->description = $description;
+            // $newtenant->description = $description;
             $newtenant->address_line1 = $address_line1;
             $newtenant->address_line2 = $address_line2;
             $newtenant->address_line3 = $address_line3;
@@ -540,9 +588,42 @@ class TenantAPIController extends ControllerAPI
             $newtenant->external_object_id = $external_object_id;
             $newtenant->box_url = $box_url;
 
+            // Check for english content
+            $dataTranslations = @json_decode($translations);
+            if (json_last_error() != JSON_ERROR_NONE) {
+                OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'translations']));
+            }
+
+            // Get english tenant description for saving to default language
+            foreach ($dataTranslations as $key => $val) {
+                // Validation language id from translation
+                $language = Language::where('language_id', '=', $key)->first();
+                if (empty($language)) {
+                    OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.merchant_language'));
+                }
+
+                if ($key === $idLanguageEnglish->language_id) {
+                    $newtenant->description = $val->description;
+                }
+            }
+
             Event::fire('orbit.tenant.postnewtenant.before.save', array($this, $newtenant));
 
             $newtenant->save();
+
+            // save to spending rule, the default is Y
+            // @author kadek <kadek@dominopos.com>
+            $newSpendingRules = new SpendingRule();
+            $newSpendingRules->object_id = $newtenant->merchant_id;
+            $newSpendingRules->with_spending = 'Y';
+            $newSpendingRules->save();
+
+            if (OrbitInput::post('facebook_uri')) {
+                $this->saveSocmedUri('facebook', $newtenant->merchant_id, OrbitInput::post('facebook_uri'));
+
+                // For response
+                $newtenant->facebook_uri = OrbitInput::post('facebook_uri');
+            }
 
             // save merchant categories
             $categoryMerchants = array();
@@ -555,22 +636,42 @@ class TenantAPIController extends ControllerAPI
             }
             $newtenant->categories = $categoryMerchants;
 
-            // @author Irianto Pratama <irianto@dominopos.com>
-            // save RetailerTenant - link to tenant
-            OrbitInput::post('tenant_id', function($tenant_id) use ($newtenant) {
-                $this->validateAndSaveLinkToTenant($newtenant, $tenant_id);
-            });
+            // save Keyword
+            $tenantKeywords = array();
+            foreach ($keywords as $keyword) {
+                $keyword_id = null;
+
+                $existKeyword = Keyword::excludeDeleted()
+                    ->where('keyword', '=', $keyword)
+                    ->where('merchant_id', '=', $parent_id)
+                    ->first();
+
+                if (empty($existKeyword)) {
+                    $newKeyword = new Keyword();
+                    $newKeyword->merchant_id = $parent_id;
+                    $newKeyword->keyword = $keyword;
+                    $newKeyword->status = 'active';
+                    $newKeyword->created_by = $this->api->user->user_id;
+                    $newKeyword->modified_by = $this->api->user->user_id;
+                    $newKeyword->save();
+
+                    $keyword_id = $newKeyword->keyword_id;
+                    $tenantKeywords[] = $newKeyword;
+                } else {
+                    $keyword_id = $existKeyword->keyword_id;
+                    $tenantKeywords[] = $existKeyword;
+                }
+
+                $newKeywordObject = new KeywordObject();
+                $newKeywordObject->keyword_id = $keyword_id;
+                $newKeywordObject->object_id = $newtenant->merchant_id;
+                $newKeywordObject->object_type = 'tenant';
+                $newKeywordObject->save();
+
+            }
+            $newtenant->keywords = $tenantKeywords;
 
             Event::fire('orbit.tenant.postnewtenant.after.save', array($this, $newtenant));
-
-            // @author Irianto Pratama <irianto@dominopos.com>
-            // save default_translation
-            $default_translation = [
-                $id_language_default => [
-                    'description' => $newtenant->description
-                ]
-            ];
-            $this->validateAndSaveTranslations($newtenant, json_encode($default_translation), 'create');
 
             OrbitInput::post('translations', function($translation_json_string) use ($newtenant) {
                 $this->validateAndSaveTranslations($newtenant, $translation_json_string, 'create');
@@ -797,6 +898,7 @@ class TenantAPIController extends ControllerAPI
             $masterbox_number = OrbitInput::post('masterbox_number');
             $category_ids = OrbitInput::post('category_ids');
             $box_url = OrbitInput::post('box_url');
+            $translations = OrbitInput::post('translations');
 
             $default_merchant_language_id = MerchantLanguage::getLanguageIdByMerchant($mall_id, static::DEFAULT_LANG);
             $id_language_default = OrbitInput::post('id_language_default', $default_merchant_language_id);
@@ -828,7 +930,7 @@ class TenantAPIController extends ControllerAPI
                     'retailer_id'       => 'required|orbit.empty.tenant',
                     'user_id'           => 'orbit.empty.user',
                     'email'             => 'email|email_exists_but_me',
-                    'status'            => 'orbit.empty.tenant_status',
+                    'status'            => 'orbit.empty.tenant_status|orbit.exists.tenant_on_active_campaign',
                     'parent_id'         => 'orbit.empty.mall',
                     'url'               => 'orbit.formaterror.url.web',
                     'masterbox_number'  => 'alpha_num|orbit_unique_verification_number:' . $mall_id . ',' . $retailer_id,
@@ -837,12 +939,13 @@ class TenantAPIController extends ControllerAPI
                 ),
                 array(
                     'email_exists_but_me' => Lang::get('validation.orbit.exists.email'),
-                    'orbit.exists.tenant_on_inactive_have_linked' => Lang::get('validation.orbit.exists.tenant_on_inactive_have_linked'),
+                    'orbit.exists.tenant_on_active_campaign' => Lang::get('validation.orbit.exists.tenant_on_active_campaign'),
                     'orbit.empty.tenant_floor' => Lang::get('validation.orbit.empty.tenant_floor'),
                     'orbit.empty.tenant_unit' => Lang::get('validation.orbit.empty.tenant_unit'),
                     'orbit_unique_verification_number' => 'The verification number already used by other',
                     'alpha_num' => 'The verification number must letter and number.',
                     'regex' => 'Wrong phone number format',
+                    'orbit.formaterror.url.web' => 'Tenant URL is not valid',
                 //ACL::throwAccessForbidden($message);
                )
             );
@@ -870,9 +973,9 @@ class TenantAPIController extends ControllerAPI
                 $updatedtenant->name = $name;
             });
 
-            OrbitInput::post('description', function($description) use ($updatedtenant) {
-                $updatedtenant->description = $description;
-            });
+            // OrbitInput::post('description', function($description) use ($updatedtenant) {
+            //     $updatedtenant->description = $description;
+            // });
 
             OrbitInput::post('address_line1', function($address_line1) use ($updatedtenant) {
                 $updatedtenant->address_line1 = $address_line1;
@@ -1023,13 +1126,13 @@ class TenantAPIController extends ControllerAPI
                 $this->validateAndSaveLinkToTenant($updatedtenant, $tenant_id);
             });
 
-            // @author Irianto Pratama <irianto@dominopos.com>
-            $default_translation = [
-                $id_language_default => [
-                    'description' => $updatedtenant->description
-                ]
-            ];
-            $this->validateAndSaveTranslations($updatedtenant, json_encode($default_translation), 'update');
+            // // @author Irianto Pratama <irianto@dominopos.com>
+            // $default_translation = [
+            //     $id_language_default => [
+            //         'description' => $updatedtenant->description
+            //     ]
+            // ];
+            // $this->validateAndSaveTranslations($updatedtenant, json_encode($default_translation), 'update');
 
             OrbitInput::post('translations', function($translation_json_string) use ($updatedtenant) {
                 $this->validateAndSaveTranslations($updatedtenant, $translation_json_string, 'update');
@@ -1037,9 +1140,38 @@ class TenantAPIController extends ControllerAPI
 
             $updatedtenant->modified_by = $this->api->user->user_id;
 
+            // Get english language_id
+            $idLanguageEnglish = Language::select('language_id')
+                                ->where('name', '=', 'en')
+                                ->first();
+
+            // Check for english content
+            $dataTranslations = @json_decode($translations);
+            if (json_last_error() != JSON_ERROR_NONE) {
+                OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'translations']));
+            }
+
+            // Get english tenant description for saving to default language
+            foreach ($dataTranslations as $key => $val) {
+                // Validation language id from translation
+                $language = Language::where('language_id', '=', $key)->first();
+                if (empty($language)) {
+                    OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.merchant_language'));
+                }
+
+                if ($key === $idLanguageEnglish->language_id) {
+                    $updatedtenant->description = $val->description;
+                }
+            }
+
             Event::fire('orbit.tenant.postupdatetenant.before.save', array($this, $updatedtenant));
 
             $updatedtenant->save();
+
+            $this->saveSocmedUri('facebook', $retailer_id, OrbitInput::post('facebook_uri'));
+
+            // For response
+            $updatedtenant->facebook_uri = OrbitInput::post('facebook_uri');
 
             // save CategoryMerchant
             OrbitInput::post('no_category', function($no_category) use ($updatedtenant) {
@@ -1078,6 +1210,49 @@ class TenantAPIController extends ControllerAPI
 
                 // reload categories relation
                 $updatedtenant->load('categories');
+            });
+
+            // Delete old data
+            $deleted_keyword_object = KeywordObject::where('object_id', '=', $retailer_id)
+                                                    ->where('object_type', '=', 'tenant');
+            $deleted_keyword_object->delete();
+
+            OrbitInput::post('keywords', function($keywords) use ($updatedtenant, $mall_id, $user, $retailer_id) {
+                // Insert new data
+                $tenantKeywords = array();
+                foreach ($keywords as $keyword) {
+                    $keyword_id = null;
+
+                    $existKeyword = Keyword::excludeDeleted()
+                        ->where('keyword', '=', $keyword)
+                        ->where('merchant_id', '=', $mall_id)
+                        ->first();
+
+                    if (empty($existKeyword)) {
+                        $newKeyword = new Keyword();
+                        $newKeyword->merchant_id = $mall_id;
+                        $newKeyword->keyword = $keyword;
+                        $newKeyword->status = 'active';
+                        $newKeyword->created_by = $user->user_id;
+                        $newKeyword->modified_by = $user->user_id;
+                        $newKeyword->save();
+
+                        $keyword_id = $newKeyword->keyword_id;
+                        $tenantKeywords[] = $newKeyword;
+                    } else {
+                        $keyword_id = $existKeyword->keyword_id;
+                        $tenantKeywords[] = $existKeyword;
+                    }
+
+
+                    $newKeywordObject = new KeywordObject();
+                    $newKeywordObject->keyword_id = $keyword_id;
+                    $newKeywordObject->object_id = $retailer_id;
+                    $newKeywordObject->object_type = 'tenant';
+                    $newKeywordObject->save();
+
+                }
+                $updatedtenant->keywords = $tenantKeywords;
             });
 
             Event::fire('orbit.tenant.postupdatetenant.after.save', array($this, $updatedtenant));
@@ -1268,13 +1443,22 @@ class TenantAPIController extends ControllerAPI
             // perform this action
             $user = $this->api->user;
             Event::fire('orbit.tenant.getsearchtenant.before.authz', array($this, $user));
-
+/*
             if (! ACL::create($user)->isAllowed('view_tenant')) {
                 Event::fire('orbit.tenant.getsearchtenant.authz.notallowed', array($this, $user));
                 $viewTenantLang = Lang::get('validation.orbit.actionlist.view_tenant');
                 $message = Lang::get('validation.orbit.access.forbidden', array('action' => $viewTenantLang));
                 ACL::throwAccessForbidden($message);
             }
+*/
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = $this->tenantViewRoles;
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
             Event::fire('orbit.tenant.getsearchtenant.after.authz', array($this, $user));
 
             $this->registerCustomValidation();
@@ -1341,12 +1525,32 @@ class TenantAPIController extends ControllerAPI
             // TODO : remove this with something like is_all_retailer just like on orbit-shop
             if ($limit) {
                 $tenants = Tenant::with('link_to_tenant')
-                                 ->select('merchant_id', 'name')
+                                 ->select('merchant_id', 'name', 'status')
                                  ->excludeDeleted('merchants');
             } else {
+
+                // Get Facebook social media ID
+                $facebookSocmedId = SocialMedia::whereSocialMediaCode('facebook')->first()->social_media_id;
+
                 $tenants = Tenant::with('link_to_tenant')
-                                 ->select('merchants.*', DB::raw('CONCAT(floor, " - ", unit) AS location'))
+                                 ->select('merchants.*', DB::raw('CONCAT(floor, " - ", unit) AS location'), 'merchant_social_media.social_media_uri as facebook_uri')
+
+                                 // A left join to get tenants' Facebook URIs
+                                 ->leftJoin('merchant_social_media', function ($join) use ($facebookSocmedId) {
+                                    $join->on('merchants.merchant_id', '=', 'merchant_social_media.merchant_id')
+                                        ->where('social_media_id', '=', $facebookSocmedId);
+                                    })
+
                                  ->excludeDeleted('merchants');
+            }
+
+            $prefix = DB::getTablePrefix();
+
+            if ($this->returnBuilder) {
+                $tenants->addSelect(DB::raw("GROUP_CONCAT(`{$prefix}categories`.`category_name` SEPARATOR ', ') as tenant_categories"))
+                        ->leftJoin('category_merchant','category_merchant.merchant_id','=','merchants.merchant_id')
+                        ->leftJoin('categories','categories.category_id','=','category_merchant.category_id')
+                        ->groupBy('merchants.merchant_id');
             }
 
             // Filter tenant by parent_id / mall id
@@ -1584,6 +1788,18 @@ class TenantAPIController extends ControllerAPI
                 $tenants->whereIn('merchants.unit', $unit);
             });
 
+            // Filter tenant by floor
+            OrbitInput::get('floor_like', function($floor) use ($tenants)
+            {
+                $tenants->where('merchants.floor', 'like', "%$floor%");
+            });
+
+            // Filter tenant by unit
+            OrbitInput::get('unit_like', function($unit) use ($tenants)
+            {
+                $tenants->where('merchants.unit', 'like', "%$unit%");
+            });
+
             // Filter tenant by location (floor - unit)
             OrbitInput::get('location', function($data) use ($tenants)
             {
@@ -1685,6 +1901,8 @@ class TenantAPIController extends ControllerAPI
                     // relation with translation
                     if ($relation === 'translations') {
                         $tenants->with('translations');
+                    } elseif ($relation === 'keywords') {
+                        $tenants->with('keywords');
                     }
                 }
             });
@@ -1704,33 +1922,36 @@ class TenantAPIController extends ControllerAPI
 
             // if limit is true show all records
             // TODO : replace this with something else in the future
-            if (!$limit) {
-
-                // Get the take args
-                $take = $perPage;
-                OrbitInput::get('take', function ($_take) use (&$take, $maxRecord) {
-                    if ($_take > $maxRecord) {
-                        $_take = $maxRecord;
-                    }
-                    $take = $_take;
-
-                    if ((int)$take <= 0) {
-                        $take = $maxRecord;
-                    }
-                });
-                $tenants->take($take);
-
-                $skip = 0;
-                OrbitInput::get('skip', function($_skip) use (&$skip, $tenants)
+            if (!$limit)
+            {
+                // if not printing / exporting data then do pagination.
+                if (! $this->returnBuilder)
                 {
-                    if ($_skip < 0) {
-                        $_skip = 0;
-                    }
+                    // Get the take args
+                    $take = $perPage;
+                    OrbitInput::get('take', function ($_take) use (&$take, $maxRecord) {
+                        if ($_take > $maxRecord) {
+                            $_take = $maxRecord;
+                        }
+                        $take = $_take;
 
-                    $skip = $_skip;
-                });
-                $tenants->skip($skip);
+                        if ((int)$take <= 0) {
+                            $take = $maxRecord;
+                        }
+                    });
+                    $tenants->take($take);
 
+                    $skip = 0;
+                    OrbitInput::get('skip', function($_skip) use (&$skip, $tenants)
+                    {
+                        if ($_skip < 0) {
+                            $_skip = 0;
+                        }
+
+                        $skip = $_skip;
+                    });
+                    $tenants->skip($skip);
+                }
             }
 
             // Default sort by
@@ -1777,6 +1998,253 @@ class TenantAPIController extends ControllerAPI
                     'tenant_external_object_id' => 'merchants.external_object_id',
                     'tenant_created_at' => 'merchants.created_at',
                     'tenant_updated_at' => 'merchants.updated_at',
+                );
+
+                if (array_key_exists($_sortBy, $sortByMapping)) {
+                    $sortBy = $sortByMapping[$_sortBy];
+                }
+            });
+
+            OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
+            {
+                if (strtolower($_sortMode) !== 'asc') {
+                    $sortMode = 'desc';
+                }
+            });
+            $tenants->orderBy($sortBy, $sortMode);
+
+            // Return the instance of Query Builder
+            if ($this->returnBuilder) {
+                return ['builder' => $tenants, 'count' => RecordCounter::create($_tenants)->count()];
+            }
+
+            $totalTenants = RecordCounter::create($_tenants)->count();
+            $listOfTenants = $tenants->get();
+
+            $data = new stdclass();
+            $data->total_records = $totalTenants;
+            $data->returned_records = count($listOfTenants);
+            $data->records = $listOfTenants;
+
+            if ($totalTenants === 0) {
+                $data->records = NULL;
+                $this->response->message = Lang::get('statuses.orbit.nodata.tenant');
+            }
+
+            $this->response->data = $data;
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.tenant.getsearchtenant.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.tenant.getsearchtenant.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $result['total_records'] = 0;
+            $result['returned_records'] = 0;
+            $result['records'] = null;
+
+            $this->response->data = $result;
+            $httpCode = 403;
+        } catch (QueryException $e) {
+            Event::fire('orbit.tenant.getsearchtenant.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+        } catch (Exception $e) {
+            Event::fire('orbit.tenant.getsearchtenant.general.exception', array($this, $e));
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.tenant.getsearchtenant.before.render', array($this, &$output));
+
+        return $output;
+    }
+
+    /**
+     * GET - Campaign Location
+     *
+     * @author shelgi <shelgi@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param string            `sort_by`                       (optional) - column order by
+     * @param string            `sort_mode`                     (optional) - asc or desc
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function getCampaignLocation()
+    {
+        // flag for limit the query result
+        // TODO : should be change in the future
+        $limit = FALSE;
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.tenant.getsearchtenant.before.auth', array($this));
+
+            // Require authentication
+            $this->checkAuth();
+
+            Event::fire('orbit.tenant.getsearchtenant.after.auth', array($this));
+
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user = $this->api->user;
+            Event::fire('orbit.tenant.getsearchtenant.before.authz', array($this, $user));
+/*
+            if (! ACL::create($user)->isAllowed('view_tenant')) {
+                Event::fire('orbit.tenant.getsearchtenant.authz.notallowed', array($this, $user));
+                $viewTenantLang = Lang::get('validation.orbit.actionlist.view_tenant');
+                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $viewTenantLang));
+                ACL::throwAccessForbidden($message);
+            }
+*/
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = $this->tenantViewRoles;
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            Event::fire('orbit.tenant.getsearchtenant.after.authz', array($this, $user));
+
+            $this->registerCustomValidation();
+
+            $sort_by = OrbitInput::get('sortby');
+            $filtermode = OrbitInput::get('filtermode');
+
+            $validator = Validator::make(
+                array(
+                    'sortby' => $sort_by,
+                ),
+                array(
+                    'sortby' => 'in:registered_date,retailer_name,retailer_email,retailer_userid,retailer_description,retailerid,retailer_address1,retailer_address2,retailer_address3,retailer_cityid,retailer_city,retailer_countryid,retailer_country,retailer_phone,retailer_fax,retailer_status,retailer_currency,contact_person_firstname,merchant_name,retailer_floor,retailer_unit,retailer_external_object_id,retailer_created_at,retailer_updated_at',
+                ),
+                array(
+                    'sortby.in' => Lang::get('validation.orbit.empty.retailer_sortby'),
+                )
+            );
+
+            Event::fire('orbit.tenant.getsearchtenant.before.validation', array($this, $validator));
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.tenant.getsearchtenant.after.validation', array($this, $validator));
+
+            $prefix = DB::getTablePrefix();
+
+            $tenants = CampaignLocation::select('merchants.merchant_id',
+                                            DB::raw("IF({$prefix}merchants.object_type = 'tenant', pm.merchant_id, {$prefix}merchants.merchant_id) as mall_id"),
+                                            DB::raw("IF({$prefix}merchants.object_type = 'tenant', CONCAT({$prefix}merchants.name,' at ', pm.name), CONCAT('Mall at ', {$prefix}merchants.name)) as display_name"),
+                                            'merchants.status'
+                                        )
+                                       ->leftjoin('merchants as pm', DB::raw("pm.merchant_id"), '=', 'merchants.parent_id')
+                                       ->whereIn('merchants.object_type', ['mall', 'tenant'])
+                                       ->where('merchants.status', '!=', 'deleted');
+
+            if (in_array(strtolower($user->role->role_name), $this->campaignRole)) {
+                $tenants->join('user_merchant', function($q) use ($user)
+                {
+                    $q->on('user_merchant.merchant_id', '=', 'merchants.merchant_id')
+                         ->where('user_merchant.user_id', '=', $user->user_id);
+                });
+            }
+
+            if ($filtermode === 'available') {
+                $tenants->whereRaw("{$prefix}merchants.merchant_id NOT IN (
+                                    SELECT merchant_id FROM orb_user_merchant
+                                    WHERE {$prefix}user_merchant.object_type IN ('mall', 'tenant'))");
+            }
+
+            // Only showing tenant only, provide for coupon redemption place.
+            if ($filtermode === 'tenant') {
+                $tenants->whereRaw("{$prefix}merchants.merchant_id NOT IN (
+                                    SELECT merchant_id FROM orb_user_merchant
+                                    WHERE {$prefix}user_merchant.object_type IN ('mall'))");
+            }
+
+            // Clone the query builder which still does not include the take,
+            // skip, and order by
+            $_tenants = clone $tenants;
+
+            // to do : enable take and skip
+            /*$take = PaginationNumber::parseTakeFromGet('link_to_tenant');
+            $tenants->take($take);
+
+            $skip = PaginationNumber::parseSkipFromGet();
+            $tenants->skip($skip);*/
+
+            // Default sort by
+            $sortBy = 'display_name';
+            // Default sort mode
+            $sortMode = 'asc';
+
+            OrbitInput::get('sortby', function($_sortBy) use (&$sortBy)
+            {
+                // Map the sortby request to the real column name
+                $sortByMapping = array(
+                    'registered_date' => 'merchants.created_at',
+                    'retailer_name' => 'merchants.name',
+                    'retailer_email' => 'merchants.email',
+                    'retailer_userid' => 'merchants.user_id',
+                    'retailerid' => 'merchants.merchant_id',
+                    'retailer_cityid' => 'merchants.city_id',
+                    'retailer_city' => 'merchants.city',
+                    'retailer_countryid' => 'merchants.country_id',
+                    'retailer_country' => 'merchants.country',
+                    'retailer_phone' => 'merchants.phone',
+                    'retailer_fax' => 'merchants.fax',
+                    'retailer_status' => 'merchants.status',
+                    'retailer_floor' => 'merchants.floor',
+                    'retailer_unit' => 'merchants.unit',
+                    'retailer_external_object_id' => 'merchants.external_object_id',
+                    'retailer_created_at' => 'merchants.created_at',
+                    'retailer_updated_at' => 'merchants.updated_at',
+
+                    // Synonyms
+                    'tenant_name' => 'merchants.name',
+                    'tenant_email' => 'merchants.email',
+                    'tenant_userid' => 'merchants.user_id',
+                    'tenantid' => 'merchants.merchant_id',
+                    'tenant_cityid' => 'merchants.city_id',
+                    'tenant_city' => 'merchants.city',
+                    'tenant_countryid' => 'merchants.country_id',
+                    'tenant_country' => 'merchants.country',
+                    'tenant_phone' => 'merchants.phone',
+                    'tenant_fax' => 'merchants.fax',
+                    'tenant_status' => 'merchants.status',
+                    'tenant_floor' => 'merchants.floor',
+                    'tenant_unit' => 'merchants.unit',
+                    'tenant_external_object_id' => 'merchants.external_object_id',
+                    'tenant_created_at' => 'merchants.created_at',
+                    'tenant_updated_at' => 'merchants.updated_at',
+
+                    'display_name' => 'display_name',
                 );
 
                 if (array_key_exists($_sortBy, $sortByMapping)) {
@@ -1871,7 +2339,7 @@ class TenantAPIController extends ControllerAPI
         // Check the existance of id_language_default
         Validator::extend('orbit.empty.language_default', function ($attribute, $value, $parameters) {
             $news = MerchantLanguage::excludeDeleted()
-                        ->where('merchant_language_id', $value)
+                        ->where('language_id', $value)
                         ->first();
 
             if (empty($news)) {
@@ -2029,11 +2497,13 @@ class TenantAPIController extends ControllerAPI
             return TRUE;
         });
 
-        // tenant cannot be inactive if have linked to news, promotion, event and coupon.
+        // tenant cannot be inactive if have linked to news, promotion, and coupon.
         Validator::extend('orbit.exists.tenant_on_inactive_have_linked', function ($attribute, $value, $parameters) {
-            // check if only status is being set to inactive
-            if ($value === 'inactive') {
-                $tenant_id = $parameters[0];
+            $updatedtenant = App::make('orbit.empty.tenant');
+
+            // check if only current status is active and being set to inactive
+            if ($updatedtenant->status === 'active' && $value === 'inactive') {
+                $tenant_id = $updatedtenant->merchant_id;
 
                 // check tenant if exists in coupons.
                 $coupon = CouponRetailer::whereHas('coupon', function($q) {
@@ -2069,17 +2539,56 @@ class TenantAPIController extends ControllerAPI
                 if (! empty($promotion)) {
                     return FALSE;
                 }
+            }
 
-                // check tenant if exists in events.
-                $event = EventRetailer::whereHas('event', function($q) {
-                        $q->excludeDeleted();
-                    })
-                    ->where('retailer_id',$tenant_id)
+            return TRUE;
+        });
+
+        // tenant cannot be inactive if news, promotion, and coupon status is not started, ongoing and paused.
+        Validator::extend('orbit.exists.tenant_on_active_campaign', function ($attribute, $value, $parameters) {
+            $updatedtenant = App::make('orbit.empty.tenant');
+            $tenant_id = $updatedtenant->merchant_id;
+
+            $mall = CampaignLocation::select('parent_id')->where('merchant_id', '=', $tenant_id)->first();
+
+            $timezone = Mall::leftJoin('timezones','timezones.timezone_id','=','merchants.timezone_id')
+                ->where('merchants.merchant_id','=', $mall->parent_id)
+                ->first();
+
+            $timezoneName = $timezone->timezone_name;
+
+            $nowMall = Carbon::now($timezoneName);
+            $dateNowMall = $nowMall->toDateString();
+
+            $prefix = DB::getTablePrefix();
+
+            // check if only current status is active and being set to inactive
+            if ($updatedtenant->status === 'active' && $value === 'inactive') {
+                $tenant_id = $updatedtenant->merchant_id;
+
+                // check tenant if exists in coupons.
+                $coupon = PromotionRetailer::leftjoin('promotions', 'promotions.promotion_id', '=', 'promotion_retailer.promotion_id')
+                    ->leftjoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
+                    ->whereRaw("(CASE WHEN {$prefix}promotions.end_date < {$this->quote($nowMall)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) NOT IN ('stopped', 'expired')")
+                    ->where('promotion_retailer.retailer_id', $tenant_id)
                     ->first();
 
-                if (! empty($event)) {
+                if (! empty($coupon)) {
                     return FALSE;
                 }
+
+                // check tenant if exists in news & promotions.
+                $news = NewsMerchant::leftjoin('news', 'news.news_id', '=', 'news_merchant.news_id')
+                    ->leftjoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
+                    ->whereRaw("(CASE WHEN {$prefix}news.end_date < {$this->quote($nowMall)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) NOT IN ('stopped', 'expired')")
+                    ->where('news_merchant.merchant_id', $tenant_id)
+                    ->first();
+
+
+                if (! empty($news) ) {
+                    return FALSE;
+                }
+
             }
 
             return TRUE;
@@ -2131,8 +2640,9 @@ class TenantAPIController extends ControllerAPI
 
         // Check the validity of URL
         Validator::extend('orbit.formaterror.url.web', function ($attribute, $value, $parameters) {
-            $url = $value;
-            $pattern = '@^([a-z0-9]+)([a-z0-9\-]+)(\.([a-z0-9]){2}){1}@';
+            $url = 'http://' . $value;
+
+            $pattern = '@^((http:\/\/www\.)|(www\.)|(http:\/\/))[a-zA-Z0-9._-]+\.[a-zA-Z.]{2,5}$@';
 
             if (! preg_match($pattern, $url)) {
                 return FALSE;
@@ -2369,7 +2879,7 @@ class TenantAPIController extends ControllerAPI
         }
         foreach ($data as $merchant_language_id => $translations) {
             $language = MerchantLanguage::excludeDeleted()
-                ->where('merchant_language_id', '=', $merchant_language_id)
+                ->where('language_id', '=', $merchant_language_id)
                 ->first();
             if (empty($language)) {
                 OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.merchant_language'));
@@ -2481,5 +2991,17 @@ class TenantAPIController extends ControllerAPI
             $retailertenant->save();
         }
         $tenant->setRelation('link_to_tenant', $retailertenant);
+    }
+
+    public function setReturnBuilder($bool)
+    {
+        $this->returnBuilder = $bool;
+
+        return $this;
+    }
+
+    protected function quote($arg)
+    {
+        return DB::connection()->getPdo()->quote($arg);
     }
 }

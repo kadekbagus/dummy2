@@ -411,7 +411,7 @@ class DatabaseSimulationPrinterController extends DataPrinterController
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total CRM Data', $totalRec, '', '', '', '', '', '', '', '');
 
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Customer', 'Gender', 'Date & Time', 'Action', 'Tenant', 'News', 'Events', 'Promotions', 'Coupons', 'Lucky Draws');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Customer', 'Gender', 'Date & Time', 'Action', 'Tenant', 'News', 'Promotions', 'Coupons', 'Lucky Draws');
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '', '', '');
 
                 $count = 1;
@@ -419,10 +419,11 @@ class DatabaseSimulationPrinterController extends DataPrinterController
 
                     $gender = $this->printGender($row);
                     $date = $this->printDateTime($row, $timezone, 'no');
-                    printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n", $count, $row->user_email, $gender, $date, $row->activity_name_long, $this->printUtf8($row->retailer_name), $this->printUtf8($row->news_name), $this->printUtf8($row->event_name), $this->printUtf8($row->promotion_news_name), $this->printUtf8($row->coupon_name), $this->printUtf8($row->object_display_name));
+                    printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n", $count, $row->user_email, $gender, $date, $row->activity_name_long, $this->printUtf8($row->retailer_name), $this->printUtf8($row->news_name), $this->printUtf8($row->promotion_news_name), $this->printUtf8($row->coupon_name), $this->printUtf8($row->object_display_name));
                     $count++;
 
                 }
+                exit;
                 break;
 
             case 'print':

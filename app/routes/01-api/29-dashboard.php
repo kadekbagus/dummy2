@@ -54,3 +54,27 @@ Route::get('/api/v1/dashboard/top-tenant-redeem', "DashboardAPIController@getTop
 
 // Get Dashboard detail of top customer view
 Route::get('/api/v1/dashboard/detail-top-customer-view', "DashboardAPIController@getDetailTopCustomerView");
+
+// Get Dashboard expiting campaigns
+Route::get('/api/v1/dashboard/expiring-campaign', "DashboardAPIController@getExpiringCampaign");
+
+// Get Dashboard estimate total cost
+Route::get('/api/v1/dashboard/estimated-total-cost', "DashboardAPIController@getEstimateTotalCost");
+
+// Get Dashboard campaign status
+Route::get('/api/v1/dashboard/campaign-statuses', "DashboardAPIController@getCampaignStatus");
+
+// Get Dashboard total page view
+Route::get('/api/v1/dashboard/total-page-view', "DashboardAPIController@getTotalPageView");
+
+// Get Dashboard campaign total spending
+Route::get('/api/v1/dashboard/campaign-total-spending', "DashboardAPIController@getCampaignTotalSpending");
+
+// Get Dashboard unique users
+Route::get('/api/v1/dashboard/unique-user', "DashboardAPIController@getUniqueUsers");
+
+// Get Dashboard Campaign spending
+Route::get('/api/v1/dashboard/campaign-spending', "DashboardAPIController@getCampaignSpending");
+
+// Get Dashboard Total campaign spending
+Route::get('/api/v1/dashboard/total-spending', "DashboardAPIController@getCampaignSpending");

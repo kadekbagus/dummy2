@@ -143,6 +143,219 @@ class LoginAPIController extends ControllerAPI
     }
 
     /**
+     * POST - Login Campaign Owner, Campaign Employee and Campaign Admin
+     *
+     * @author Irianto <irianto@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param string    `email`                 (required) - Email address of the user
+     * @param string    `password`              (required) - Password for the account
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postLoginPMP()
+    {
+        $activity = Activity::portal()
+                            ->setActivityType('login');
+        try {
+            $email = trim(OrbitInput::post('email'));
+            $password = trim(OrbitInput::post('password'));
+
+            if (trim($email) === '') {
+                $errorMessage = Lang::get('validation.required', array('attribute' => 'email'));
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            if (trim($password) === '') {
+                $errorMessage = Lang::get('validation.required', array('attribute' => 'password'));
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $roles = ['Campaign Owner', 'Campaign Employee', 'Campaign Admin'];
+
+            $user = User::with('role')
+                        ->active()
+                        ->join('roles', 'users.user_role_id', '=', 'roles.role_id')
+                        ->where('user_email', $email)
+                        ->whereIn('roles.role_name', $roles)
+                        ->first();
+
+            if (! is_object($user)) {
+                $message = Lang::get('validation.orbit.access.inactiveuser');
+                ACL::throwAccessForbidden($message);
+            }
+
+            if (! Hash::check($password, $user->user_password)) {
+                $message = Lang::get('validation.orbit.access.loginfailed');
+                ACL::throwAccessForbidden($message);
+            }
+
+            $roleIds = Role::roleIdsByName($roles);
+            if (! in_array($user->user_role_id, $roleIds)) {
+                $message = Lang::get('validation.orbit.access.forbidden', [
+                    'action' => 'Login (Role Denied)'
+                ]);
+                ACL::throwAccessForbidden($message);
+            }
+
+            $menus = Config::get('orbit.menus.pmp');
+
+            $mall = [];
+            if ($user->isCampaignOwner() || $user->isCampaignEmployee()) {
+                $user_merchants = $user->userMerchant;
+
+                $parent_id = '';
+                foreach ($user_merchants as $key => $user_merchant) {
+                    if ($user_merchant->object_type === 'mall') {
+                        $tmp_mall = $user_merchant->mall->load('timezone');
+                        if (! empty($tmp_mall)) {
+                            if ($tmp_mall[0]->merchant_id !== $parent_id) {
+                                $mall[] = $tmp_mall[0];
+                            }
+                            $parent_id = $tmp_mall[0]->merchant_id;
+                        }
+                    } elseif ($user_merchant->object_type === 'tenant') {
+                        $tenant = $user_merchant->tenant;
+                        if (! empty($tenant)) {
+                            if ($tenant->parent_id !== $parent_id) {
+                                $mall[] = $user_merchant->tenant->parent->load('timezone');
+                            }
+                            $parent_id = $tenant->parent_id;
+                        }
+                    }
+                }
+            } elseif ($user->isCampaignAdmin()) {
+                $mall = Mall::excludeDeleted()
+                            ->with('timezone')
+                            ->get();
+            }
+
+            $user->mall = $mall;
+            unset($user->userMerchant);
+
+            // Successfull login
+            $activity->setUser($user)
+                     ->setActivityName('login_ok')
+                     ->setActivityNameLong('Sign in')
+                     ->responseOK();
+
+            $this->response->data = $user;
+
+
+            // get total manage tenant and mall per user pmp
+            $pmp_parent = $user->campaignAccount()->where('user_id', '=', $user->user_id)->first();
+
+            // Get mall id from mall
+            $mallId = array();
+            $userMallAtMall = $pmp_parent->userMall()->get();
+            if (count($userMallAtMall) > 0) {
+                foreach ($userMallAtMall as $key => $vallMall) {
+                    $mallId[] = $vallMall->merchant_id;
+                }
+            }
+
+            // Get mall id from tenant
+            $userTenantAtMall = $pmp_parent->userTenant()
+                ->join('merchants', 'user_merchant.merchant_id', '=', 'merchants.merchant_id')
+                ->groupBy('merchants.parent_id')
+                ->get();
+            if (count($userTenantAtMall) > 0) {
+                foreach ($userTenantAtMall as $key => $valTenant) {
+                    $mallId[] = $valTenant->parent_id;
+                }
+            }
+
+            $um = count(array_unique($mallId));
+            $ut = $pmp_parent->userTenant()->count();
+
+            $user->total_mall = $um;
+            $user->total_tenant = $ut;
+
+
+            $user_id = $user->user_id;
+
+            if (! empty($pmp_parent->parent_user_id)) {
+                $user_id = $pmp_parent->parent_user_id;
+            }
+
+            $agreement_accepted = Setting::where('setting_name', 'agreement_accepted_pmp_account')
+                                       ->where('setting_value', 'true')
+                                       ->where('object_id', $user_id)
+                                       ->where('object_type', 'user')
+                                       ->first();
+
+            if (empty($agreement_accepted)) {
+                // Token expiration, fallback to 30 days
+                $expireInDays = Config::get('orbit.registration.mobile.activation_expire', 30);
+
+                $data = null;
+                if (! $user->isCampaignEmployee()) {
+                    // Token Settings
+                    $token = new Token();
+                    $token->token_name = 'service_agreement';
+                    $token->token_value = $token->generateToken($user->user_email);
+                    $token->status = 'active';
+                    $token->email = $user->user_email;
+                    $token->expire = date('Y-m-d H:i:s', strtotime('+' . $expireInDays . ' days'));
+                    $token->ip_address = $user->user_ip;
+                    $token->user_id = $user->user_id;
+                    $token->save();
+
+                    $url = sprintf(Config::get('orbit.agreement.pmp'), $token->token_value);
+                    $data = new stdClass();
+                    $data->role_name = $user->role->role_name;
+                    $data->url = $url;
+                }
+
+                $this->response->code = 302;
+                $this->response->status = 'redirect';
+                $this->response->message = Lang::get('validation.orbit.access.agreement');
+                $this->response->data = $data;
+            } else {
+                $this->response->data->menus = $menus;
+            }
+        } catch (ACLForbiddenException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            $activity->setUser('guest')
+                     ->setActivityName('login_failed')
+                     ->setActivityNameLong('Login Failed')
+                     ->setNotes($e->getMessage())
+                     ->responseFailed();
+        } catch (InvalidArgsException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            $activity->setUser('guest')
+                     ->setActivityName('login_failed')
+                     ->setActivityNameLong('Login Failed')
+                     ->setNotes($e->getMessage())
+                     ->responseFailed();
+        } catch (Exception $e) {
+            $this->response->code = Status::UNKNOWN_ERROR;
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            $activity->setUser('guest')
+                     ->setActivityName('login_failed')
+                     ->setActivityNameLong('Login Failed')
+                     ->setNotes($e->getMessage())
+                     ->responseFailed();
+        }
+
+        // Save the activity
+        $activity->setModuleName('Application')->save();
+
+        return $this->render();
+    }
+
+    /**
      * POST - Login Mall Customer Service
      *
      * @author Rio Astamal <me@rioastamal.net>
@@ -208,9 +421,14 @@ class LoginAPIController extends ControllerAPI
             $activity = null;
 
             $email = OrbitInput::post('email');
+            $password = OrbitInput::post('password', '');
+            $firstname = OrbitInput::post('firstname', '');
+            $lastname = OrbitInput::post('lastname', '');
+            $gender = OrbitInput::post('gender', '');
+            $status = OrbitInput::post('status', null);
             $from = OrbitInput::post('from');
-            $mall_id = $this->getRetailerId();
-
+            $sign_up_origin = OrbitInput::post('sign_up_origin', 'form');
+            $mall_id = OrbitInput::post('mall_id', $this->getRetailerId());
             $signup_from = 'Sign Up via Mobile (Email Address)';
 
             $validator = Validator::make(
@@ -235,7 +453,7 @@ class LoginAPIController extends ControllerAPI
 
             $mall = Mall::where('merchant_id', $mall_id)->first();
 
-            list($newuser, $userdetail, $apikey) = $this->createCustomerUser($email);
+            list($newuser, $userdetail, $apikey) = $this->createCustomerUser($email, $password, $firstname, $lastname, $gender, null, null, null, $status, $mall_id);
 
             $this->response->data = $newuser;
 
@@ -248,21 +466,22 @@ class LoginAPIController extends ControllerAPI
                 $signup_from = 'Sign Up via Customer Service';
                 $activity = Activity::csportal()
                                     ->setActivityType('registration');
-            } else {
-                $activity = Activity::mobileci()
-                    ->setActivityType('registration');
             }
 
             // Successfull registration
-            $inbox = new Inbox();
-            $inbox->addToInbox($newuser->user_id, $newuser, $mall_id, 'activation');
+            if ($sign_up_origin === 'form') {
+                $inbox = new Inbox();
+                $inbox->addToInbox($newuser->user_id, $newuser, $mall_id, 'activation');
+            }
 
-            $activity->setUser($newuser)
-                     ->setActivityName('registration_ok')
-                     ->setActivityNameLong($signup_from)
-                     ->setModuleName('Application')
-                     ->setLocation($mall)
-                     ->responseOK();
+            if (! is_null($activity)) {
+                $activity->setUser($newuser)
+                         ->setActivityName('registration_ok')
+                         ->setActivityNameLong($signup_from)
+                         ->setModuleName('Application')
+                         ->setLocation($mall)
+                         ->responseOK();
+            }
 
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
@@ -273,14 +492,15 @@ class LoginAPIController extends ControllerAPI
 
             // Rollback the changes
             $this->rollBack();
-
-            // Failed Registration
-            $activity->setUser('guest')
-                     ->setActivityName('registration_failed')
-                     ->setActivityNameLong('Registration Failed')
-                     ->setModuleName('Application')
-                     ->setNotes($e->getMessage())
-                     ->responseFailed();
+            if (! is_null($activity)) {
+                // Failed Registration
+                $activity->setUser('guest')
+                         ->setActivityName('registration_failed')
+                         ->setActivityNameLong('Registration Failed')
+                         ->setModuleName('Application')
+                         ->setNotes($e->getMessage())
+                         ->responseFailed();
+            }
         } catch (InvalidArgsException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -290,14 +510,15 @@ class LoginAPIController extends ControllerAPI
 
             // Rollback the changes
             $this->rollBack();
-
-            // Failed Registration
-            $activity->setUser('guest')
-                     ->setActivityName('registration_failed')
-                     ->setActivityNameLong('Registration Failed')
-                     ->setModuleName('Application')
-                     ->setNotes($e->getMessage())
-                     ->responseFailed();
+            if (! is_null($activity)) {
+                // Failed Registration
+                $activity->setUser('guest')
+                         ->setActivityName('registration_failed')
+                         ->setActivityNameLong('Registration Failed')
+                         ->setModuleName('Application')
+                         ->setNotes($e->getMessage())
+                         ->responseFailed();
+            }
         } catch (QueryException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -313,14 +534,15 @@ class LoginAPIController extends ControllerAPI
 
             // Rollback the changes
             $this->rollBack();
-
-            // Failed Registration
-            $activity->setUser('guest')
-                     ->setActivityName('registration_failed')
-                     ->setActivityNameLong('Registration Failed')
-                     ->setModuleName('Application')
-                     ->setNotes($e->getMessage())
-                     ->responseFailed();
+            if (! is_null($activity)) {
+                // Failed Registration
+                $activity->setUser('guest')
+                         ->setActivityName('registration_failed')
+                         ->setActivityNameLong('Registration Failed')
+                         ->setModuleName('Application')
+                         ->setNotes($e->getMessage())
+                         ->responseFailed();
+            }
         } catch (Exception $e) {
             $this->response->code = Status::UNKNOWN_ERROR;
             $this->response->status = 'error';
@@ -329,27 +551,29 @@ class LoginAPIController extends ControllerAPI
 
             // Rollback the changes
             $this->rollBack();
-
-            // Failed Registration
-            $activity->setUser('guest')
-                     ->setActivityName('registration_failed')
-                     ->setActivityNameLong('Registration Failed')
-                     ->setModuleName('Application')
-                     ->setNotes($e->getMessage())
-                     ->responseFailed();
+            if (! is_null($activity)) {
+                // Failed Registration
+                $activity->setUser('guest')
+                         ->setActivityName('registration_failed')
+                         ->setActivityNameLong('Registration Failed')
+                         ->setModuleName('Application')
+                         ->setNotes($e->getMessage())
+                         ->responseFailed();
+            }
         }
 
-        // Save the activity
-        $activity->save();
+        if (! is_null($activity)) {
+            // Save the activity
+            $activity->save();
+        }
 
         // We want the registration activity to have 'from Facebook' or 'from Email'...
         // Rather than passing the origin here, we save the ID of the registration activity
         // so the caller can add 'from Facebook' later.
-        if ($activity->response_status == Activity::ACTIVITY_REPONSE_OK) {
-            $this->response->data->setAttribute('registration_activity_id', $activity->activity_id);
-            IntermediateLoginController::proceedPayload(null, $activity->activity_id);
-        }
-
+        // if ($activity->response_status == Activity::ACTIVITY_REPONSE_OK) {
+        //     $this->response->data->setAttribute('registration_activity_id', $activity->activity_id);
+        //     IntermediateLoginController::proceedPayload(null, $activity->activity_id);
+        // }
         return $this->render($httpCode);
     }
 
@@ -658,6 +882,163 @@ class LoginAPIController extends ControllerAPI
             $activity->setUser('mall')
                      ->setActivityName('service_agreement_failed')
                      ->setActivityNameLong('Update Service Agreement Failed')
+                     ->setModuleName('Application')
+                     ->setNotes($e->getMessage())
+                     ->responseFailed();
+        }
+
+        // Save the activity
+        $activity->save();
+
+        return $this->render();
+    }
+
+    /**
+     * Post - Update Service Agreement PMP
+     *
+     * @author Irianto Pratama <irianto@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param string    `token`          (required) - Token to be check
+     * @param string    `first_name`     (required) - value of first name
+     * @param string    `last_name`      (required) - value of last name
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postUpdateServiceAgreementPMP()
+    {
+        $activity = Activity::portal()
+                            ->setActivityType('activation');
+        try {
+            $this->registerCustomValidation();
+
+            $tokenValue = trim(OrbitInput::post('token'));
+            $first_name = OrbitInput::post('first_name');
+            $last_name = OrbitInput::post('last_name');
+
+            $validator = Validator::make(
+                array(
+                    'token_value'   => $tokenValue,
+                    'first_name'    => $first_name,
+                    'last_name'     => $last_name
+                ),
+                array(
+                    'token_value'   => 'required|orbit.empty.token',
+                    'first_name'    => 'required|min:1',
+                    'last_name'     => 'required|min:1',
+                )
+            );
+
+            // Begin database transaction
+            $this->beginTransaction();
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $token = App::make('orbit.empty.token');
+            $user  = User::excludeDeleted()
+                        ->where('user_id', $token->user_id)
+                        ->first();
+            $campaign_account = CampaignAccount::where('user_id', $token->user_id)->first();
+
+            if (! is_object($token) || ! is_object($user) || ! is_object($campaign_account)) {
+                $message = Lang::get('validation.orbit.access.loginfailed');
+                ACL::throwAccessForbidden($message);
+            }
+
+            // update the token status so it cannot be use again
+            $token->status = 'deleted';
+            $token->save();
+
+            $setting_items = array('agreement_accepted_pmp_account' => 'true',
+                                     'agreement_acceptor_pmp_first_name' => $first_name,
+                                     'agreement_acceptor_pmp_last_name' => $last_name);
+
+            foreach ($setting_items as $setting_name => $setting_value) {
+                $settings = Setting::excludeDeleted()
+                                   ->where('object_id',$campaign_account->user_id)
+                                   ->where('object_type','user')
+                                   ->where('setting_name', $setting_name)
+                                   ->first();
+
+                if (empty($settings)) {
+                    // do insert
+                    $settings = new Setting();
+                    $settings->setting_name = $setting_name;
+                    $settings->setting_value = $setting_value;
+                    $settings->object_id = $campaign_account->user_id;
+                    $settings->object_type = 'user';
+                    $settings->status = 'active';
+                    $settings->modified_by = $user->user_id;
+
+                    $settings->save();
+                } else {
+                    $settings->setting_value = $setting_value;
+
+                    $settings->save();
+                }
+            }
+            $campaign_account->load('settings');
+
+            $this->response->message = Lang::get('statuses.orbit.updated.serviceagreement');
+            $this->response->data = $campaign_account;
+
+            // Commit the changes
+            $this->commit();
+
+            // Successfull activation
+            $activity->setUser($user)
+                     ->setActivityName('service_agreement')
+                     ->setActivityNameLong('Update Service Agreement PMP Successfull')
+                     ->setModuleName('Application')
+                     ->responseOK();
+        } catch (ACLForbiddenException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Failed Activation
+            $activity->setUser('user')
+                     ->setActivityName('service_agreement_failed')
+                     ->setActivityNameLong('Update Service Agreement PMP Failed')
+                     ->setModuleName('Application')
+                     ->responseFailed();
+        } catch (InvalidArgsException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Failed Activation
+            $activity->setUser('user')
+                     ->setActivityName('service_agreement_failed')
+                     ->setActivityNameLong('Update Service Agreement PMP Failed')
+                     ->setModuleName('Application')
+                     ->setNotes($e->getMessage())
+                     ->responseFailed();
+        } catch (Exception $e) {
+            $this->response->code = Status::UNKNOWN_ERROR;
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Failed Activation
+            $activity->setUser('user')
+                     ->setActivityName('service_agreement_failed')
+                     ->setActivityNameLong('Update Service Agreement PMP Failed')
                      ->setModuleName('Application')
                      ->setNotes($e->getMessage())
                      ->responseFailed();
@@ -1002,8 +1383,10 @@ class LoginAPIController extends ControllerAPI
                 ACL::throwAccessForbidden($message);
             }
 
+            $menus = array();
             if (in_array($from, ['mall', 'cs-portal'])) {
                 if ($from === 'mall') {
+                    $menus = Config::get('orbit.menus.mall');
                     if (strtolower($user->role->role_name) === 'mall admin') {
                         $mall = $user->employee->retailers[0]->load('timezone');
                     } else {
@@ -1032,7 +1415,7 @@ class LoginAPIController extends ControllerAPI
                                            ->where('object_type', 'merchant')
                                            ->first();
 
-                if (empty($agreement_accepted) || $agreement_accepted->setting_value !== 'true') {
+                if (empty($agreement_accepted)) {
 
                     // Token expiration, fallback to 30 days
                     $expireInDays = Config::get('orbit.registration.mobile.activation_expire', 30);
@@ -1051,9 +1434,19 @@ class LoginAPIController extends ControllerAPI
                     $this->response->code = 302;
                     $this->response->status = 'redirect';
                     $this->response->message = Lang::get('validation.orbit.access.agreement');
-                    $this->response->data = sprintf(Config::get('orbit.agreement.url'), $token->token_value);
+
+                    $url = sprintf(Config::get('orbit.agreement.mall'), $token->token_value);
+                    $data = new stdClass();
+                    $data->role_name = $user->role->role_name;
+                    $data->url = $url;
+
+                    // Override
+                    $this->response->data = $data;
+                } else {
+                    $this->response->data->menus = $menus;
                 }
             }
+
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -1133,10 +1526,10 @@ class LoginAPIController extends ControllerAPI
      * @return array [User, UserDetail, ApiKey]
      * @throws Exception
      */
-    public function createCustomerUser($email, $userId = null, $userDetailId = null, $apiKeyId = null, $userStatus = null)
+    public function createCustomerUser($email, $password, $firstname, $lastname, $gender, $userId = null, $userDetailId = null, $apiKeyId = null, $userStatus = null, $mall_id = null)
     {
         // The retailer (shop) which this registration taken
-        $retailerId = $this->getRetailerId();
+        $retailerId = ! empty($mall_id) ? $mall_id : $this->getRetailerId();
         $retailer = Mall::excludeDeleted()
             ->where('merchant_id', $retailerId)
             ->first();
@@ -1158,6 +1551,15 @@ class LoginAPIController extends ControllerAPI
         }
         $new_user->username = strtolower($email);
         $new_user->user_email = strtolower($email);
+        if (! empty($password)) {
+            $new_user->user_password = Hash::make($password);
+        }
+        if (! empty($firstname)) {
+            $new_user->user_firstname = $firstname;
+        }
+        if (! empty($lastname)) {
+            $new_user->user_lastname = $lastname;
+        }
         $new_user->status = isset($userStatus) ? $userStatus : 'pending';
         $new_user->user_role_id = $customerRole->role_id;
         $new_user->user_ip = $_SERVER['REMOTE_ADDR'];
@@ -1169,6 +1571,9 @@ class LoginAPIController extends ControllerAPI
 
         if (isset($userDetailId)) {
             $user_detail->user_detail_id = $userDetailId;
+        }
+        if (! empty($gender)) {
+            $user_detail->gender = $gender;
         }
         // Fill the information about retailer (shop)
         $user_detail->merchant_id = $retailer->parent_id;
@@ -1186,7 +1591,7 @@ class LoginAPIController extends ControllerAPI
 
         $new_user->setRelation('apikey', $apikey);
         $new_user->apikey = $apikey;
-        
+
         return [$new_user, $user_detail, $apikey];
     }
 }

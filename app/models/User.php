@@ -20,6 +20,44 @@ class User extends Eloquent implements UserInterface
         return $this->belongsTo('Role', 'user_role_id', 'role_id');
     }
 
+    /**
+     * Get the "PMP Account" users only.
+     *
+     * @author Qosdil A. <qosdil@dominopos.com>
+     */
+    public function scopePmpAccounts($query)
+    {
+        $ids = CampaignAccount::lists('user_id');
+
+        // "Campaign Owner" & "Campaign Employee" only
+        $query->join('roles', 'users.user_role_id', '=', 'roles.role_id')->whereIn('role_name', ['Campaign Owner', 'Campaign Employee']);
+
+        return $ids
+            ? $query->whereIn('users.user_id', $ids)
+            : $query;
+    }
+
+    /**
+     * Get the "PMP Account" users attached to a specific mall.
+     *
+     * @author Qosdil A. <qosdil@dominopos.com>
+     */
+    public function scopeOfSpecificMallPmpAccounts($query, $mallId)
+    {
+        $merchantIds = Tenant::whereParentId($mallId)->lists('merchant_id');
+
+        $userTenantArray = UserMerchant::whereObjectType('tenant')->whereIn('merchant_id', $merchantIds)->lists('user_id');
+
+        return $userTenantArray
+            ? $query->whereIn('users.user_id', $userTenantArray)
+            : $query->whereUserId('');
+    }
+
+    public function userTenants()
+    {
+        return $this->hasMany('UserMerchant')->whereIn('object_type', ['mall', 'tenant']);
+    }
+
     public function permissions()
     {
         return $this->belongsToMany('Permission', 'custom_permission', 'user_id', 'permission_id')->withPivot('allowed');
@@ -53,6 +91,17 @@ class User extends Eloquent implements UserInterface
     public function getFullName()
     {
         return $this->user_firstname . ' ' . $this->user_lastname;
+    }
+
+    /** This enables $user->full_name. */
+    public function getFullNameAttribute()
+    {
+        return $this->user_firstname.' '.$this->user_lastname;
+    }
+
+    public function getUserCreatedAtAttribute()
+    {
+        return self::find($this->user_id)->created_at;
     }
 
     public function merchants()
@@ -102,6 +151,35 @@ class User extends Eloquent implements UserInterface
         return $this->media()->where('media_name_id', 'user_profile_picture');
     }
 
+    public function campaignAccount()
+    {
+        return $this->belongsTo('CampaignAccount', 'user_id', 'user_id');
+    }
+
+    public function userMerchant()
+    {
+        return $this->hasMany('UserMerchant', 'user_id', 'user_id');
+    }
+
+    public function userMall()
+    {
+        return $this->userMerchant()->where('object_type', '=', 'mall');
+    }
+
+    public function userTenant()
+    {
+        return $this->userMerchant()->where('object_type', '=', 'tenant');
+    }
+
+    public function settings()
+    {
+        return $this->hasMany('Setting', 'object_id', 'user_id')->where('object_type', 'user');
+    }
+
+    public function guest()
+    {
+        return $this->belongsToMany('Guest', 'user_guest', 'user_id', 'guest_id');
+    }
     /**
      * A user could be also mapped to an employee
      */
@@ -148,6 +226,39 @@ class User extends Eloquent implements UserInterface
         $apikey = $this->apikey()->save($apikey);
 
         return $apikey;
+    }
+
+    /**
+     * Generate guest user for mobile ci
+     *
+     * @author Ahmad <ahmad@dominopos.com>
+     *
+     */
+    public function generateGuestUser() {
+        $guest_identifier = '';
+        $guest_ip = $_SERVER['REMOTE_ADDR'];
+        $guest_time = time();
+        $guest_browser = $_SERVER['HTTP_USER_AGENT'];
+        $guest_identifier = sha1($guest_time . $guest_ip . $guest_browser);
+        $guest_email_string = 'guest_' . $guest_identifier . '_' . $guest_time . '@myorbit.com';
+
+        $user_role_id = Role::where('role_name', 'Guest')->first()->role_id;
+
+        $guest_user = new User;
+        $guest_user->user_email = $guest_email_string;
+        $guest_user->user_password = '';
+        $guest_user->username = 'guest_' . $guest_identifier;
+        $guest_user->user_role_id = $user_role_id;
+        $guest_user->user_ip = $guest_ip;
+        $guest_user->save();
+
+        $user_detail = new UserDetail;
+        $user_detail->user_id = $guest_user->user_id;
+        $user_detail->save();
+
+        $guest_user->load('userdetail', 'role');
+
+        return $guest_user;
     }
 
     /**
@@ -202,6 +313,20 @@ class User extends Eloquent implements UserInterface
                 return [$mall->merchant_id];
             }
         } elseif ($this->isMallAdmin() || $this->isMallCS()) {
+            $mall = $this->employee->retailers();
+
+            if (! empty($mallIds)) {
+                $mall->whereIn('retailer_id', (array)$mallIds);
+            }
+
+            $mall = $mall->first();
+
+            if (empty($mall)) {
+                return [];
+            } else {
+                return [$mall->merchant_id];
+            }
+        } elseif ($this->isCampaignOwner() || $this->isCampaignEmployee()) {
             $mall = $this->employee->retailers();
 
             if (! empty($mallIds)) {

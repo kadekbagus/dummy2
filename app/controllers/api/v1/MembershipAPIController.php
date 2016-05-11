@@ -274,6 +274,9 @@ class MembershipAPIController extends ControllerAPI
             $mall_id = OrbitInput::post('mall_id');
             $status = OrbitInput::post('status');
             $enable_membership_card = OrbitInput::post('enable_membership_card');
+            $membership_images = OrbitInput::files('images');
+            $membership_images_config = Config::get('orbit.upload.membership.main');;
+            $membership_images_units = static::bytesToUnits($membership_images_config['file_size']);
 
             // get user mall_ids
             $listOfMallIds = $user->getUserMallIds($mall_id);
@@ -306,9 +309,11 @@ class MembershipAPIController extends ControllerAPI
             }
 
             $data = array(
-                'membership_id'       => $membership_id,
-                'mall_id'             => $mall_id,
-                'status'              => $status,
+                'membership_id' => $membership_id,
+                'mall_id'       => $mall_id,
+                'status'        => $status,
+                'images_type'   => $membership_images['type'],
+                'images_size'   => $membership_images['size'],
             );
 
             // Validate membership_name only if exists in POST.
@@ -324,14 +329,17 @@ class MembershipAPIController extends ControllerAPI
             $validator = Validator::make(
                 $data,
                 array(
-                    'membership_id'    => 'required|orbit.empty.membership',
-                    'mall_id'          => 'orbit.empty.mall',
-                    'membership_name'  => 'sometimes|required|membership_name_exists_but_me:' . $membership_id,
-                    'status'           => 'orbit.empty.membership_status',
+                    'membership_id'          => 'required|orbit.empty.membership',
+                    'mall_id'                => 'orbit.empty.mall',
+                    'membership_name'        => 'sometimes|required|membership_name_exists_but_me:' . $membership_id,
+                    'status'                 => 'orbit.empty.membership_status',
                     'enable_membership_card' => 'sometimes|required|orbit.empty.enable_membership_card',
+                    'images_type'            => 'in:image/jpg,image/png,image/jpeg,image/gif',
+                    'images_size'            => 'orbit.max.file_size:' . $membership_images_config['file_size'],
                 ),
                 array(
                    'membership_name_exists_but_me' => Lang::get('validation.orbit.exists.membership_name'),
+                   'orbit.max.file_size'           => 'Picture size is too big, maximum size allowed is ' . $membership_images_units['newsize'] . $membership_images_units['unit'],
                 )
             );
 
@@ -1145,6 +1153,63 @@ class MembershipAPIController extends ControllerAPI
             return $valid;
         });
 
+        Validator::extend('orbit.max.file_size', function ($attribute, $value, $parameters) {
+            $config_size = $parameters[0];
+            $file_size = $value;
+
+            if ($file_size > $config_size) {
+                return false;
+            }
+
+            return true;
+        });
+
+    }
+
+    /**
+     * Method to convert the size from bytes to more human readable units. As
+     * an example:
+     *
+     * Input 356 produces => array('unit' => 'bytes', 'newsize' => 356)
+     * Input 2045 produces => array('unit' => 'kB', 'newsize' => 2.045)
+     * Input 1055000 produces => array('unit' => 'MB', 'newsize' => 1.055)
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @author Irianto <irianto@dominopos.com>
+     * @param int $size - The size in bytes
+     * @return array
+     */
+    public static function bytesToUnits($size)
+    {
+       $kb = 1000;
+       $mb = $kb * 1000;
+       $gb = $mb * 1000;
+
+       if ($size > $gb) {
+            return array(
+                    'unit' => 'GB',
+                    'newsize' => $size / $gb
+                   );
+       }
+
+       if ($size > $mb) {
+            return array(
+                    'unit' => 'MB',
+                    'newsize' => $size / $mb
+                   );
+       }
+
+       if ($size > $kb) {
+            return array(
+                    'unit' => 'kB',
+                    'newsize' => $size / $kb
+                   );
+       }
+
+       return array(
+                'unit' => 'bytes',
+                'newsize' => 1
+              );
     }
 
 }

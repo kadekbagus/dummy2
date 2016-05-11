@@ -74,60 +74,16 @@
     @endif
 @stop
 
-@section('modals')
-<!-- Modal -->
-<div class="modal fade" id="verifyModal" tabindex="-1" role="dialog" aria-labelledby="verifyModalLabel" aria-hidden="true">
-    <div class="modal-dialog orbit-modal">
-        <div class="modal-content">
-            <div class="modal-header orbit-modal-header">
-                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{{ Lang::get('mobileci.modals.close') }}</span></button>
-                <h4 class="modal-title" id="verifyModalLabel"><i class="fa fa-envelope-o"></i> {{ Lang::get('mobileci.promotion.info') }}</h4>
-            </div>
-            <div class="modal-body">
-                <div class="row">
-                    <div class="col-xs-12 text-center">
-                        <p style="font-size:15px;">
-                            <b>{{ Lang::get('mobileci.modals.enjoy_free') }}</b>
-                            <br>
-                            <span style="color:#0aa5d5; font-size:22px; font-weight: bold;">{{ Lang::get('mobileci.modals.unlimited') }}</span>
-                            <br>
-                            <b>{{ Lang::get('mobileci.modals.internet') }}</b>
-                            <br><br>
-                            <b>{{ Lang::get('mobileci.modals.check_out_our') }}</b>
-                            <br>
-                            <b><span style="color:#0aa5d5;">{{ Lang::get('mobileci.page_title.promotion') }}</span> {{ Lang::get('mobileci.page_title.and') }} <span style="color:#0aa5d5;">{{ Lang::get('mobileci.page_title.coupon_single') }}</span></b>
-                        </p>
-                    </div>
-                </div>
-                <div class="row" style="margin-left: -30px; margin-right: -30px; margin-bottom: -15px;">
-                    <div class="col-xs-12">
-                        <img class="img-responsive" src="{{ asset('mobile-ci/images/pop-up-banner.png') }}">
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <div class="row">
-                    <div class="col-xs-12 text-center">
-                        <button type="button" class="btn btn-info btn-block" data-dismiss="modal">{{ Lang::get('mobileci.modals.okay') }}</button>
-                    </div>
-                    <div class="col-xs-12 text-left">
-                        <p>
-                            <input type="checkbox" name="verifyModalCheck" id="verifyModalCheck"> <span>{{ Lang::get('mobileci.modals.do_not_display') }}</span>
-                        </p>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <div class="pull-right"><button type="button" class="btn btn-default" data-dismiss="modal">{{ Lang::get('mobileci.modals.close') }}</button></div>
-            </div>
-        </div>
-    </div>
-</div>
-@stop
-
 @section('ext_script_bot')
 {{ HTML::script('mobile-ci/scripts/jquery-ui.min.js') }}
-{{ HTML::script('mobile-ci/scripts/featherlight.min.js') }}
+{{ HTML::script(Config::get('orbit.cdn.featherlight.1_0_3', 'mobile-ci/scripts/featherlight.min.js')) }}
+{{-- Script fallback --}}
+<script>
+    if (typeof $().featherlight === 'undefined') {
+        document.write('<script src="{{asset('mobile-ci/scripts/featherlight.min.js')}}">\x3C/script>');
+    }
+</script>
+{{-- End of Script fallback --}}
 {{ HTML::script('mobile-ci/scripts/jquery.cookie.js') }}
 <script type="text/javascript">
     $(window).bind("pageshow", function(event) {
@@ -136,9 +92,6 @@
         }
     });
     $(document).ready(function(){
-        var fromLogin = $.cookie('orbit_from_login');
-        $.removeCookie('orbit_from_login', {path: '/'});
-        var displayModal = (fromLogin === '1');
         $(document).on('show.bs.modal', '.modal', function (event) {
             var zIndex = 1040 + (10 * $('.modal:visible').length);
             $(this).css('z-index', zIndex);
@@ -146,15 +99,6 @@
                 $('.modal-backdrop').not('.modal-stack').css('z-index', 0).addClass('modal-stack');
             }, 0);
         });
-        if(!$.cookie('dismiss_verification_popup')) {
-            if (displayModal) {
-                $('#verifyModal').on('hidden.bs.modal', function () {
-                    if ($('#verifyModalCheck')[0].checked) {
-                        $.cookie('dismiss_verification_popup', 't', {expires: 3650});
-                    }
-                }).modal();
-            }
-        }
         if(window.location.hash){
             var hash = window.location.hash;
             var producthash = "#promo-"+hash.replace(/^.*?(#|$)/,'');

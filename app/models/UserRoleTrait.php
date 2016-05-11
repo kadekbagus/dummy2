@@ -320,6 +320,42 @@ trait UserRoleTrait
     }
 
     /**
+     * Campaign Owner check.
+     *
+     * @return boolean
+     */
+    public function isCampaignOwner()
+    {
+        $role = 'campaign owner';
+
+        return strtolower($this->role->role_name) === $role;
+    }
+
+    /**
+     * Campaign Employee check.
+     *
+     * @return boolean
+     */
+    public function isCampaignEmployee()
+    {
+        $role = 'campaign employee';
+
+        return strtolower($this->role->role_name) === $role;
+    }
+
+    /**
+     * Campaign Admin check.
+     *
+     * @return boolean
+     */
+    public function isCampaignAdmin()
+    {
+        $role = 'campaign admin';
+
+        return strtolower($this->role->role_name) === $role;
+    }
+
+    /**
      * Super admin check.
      *
      * @Todo: Prevent query.

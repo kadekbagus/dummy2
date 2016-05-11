@@ -10,6 +10,7 @@
 |
 */
 use Net\Security\RequestAccess;
+use Orbit\Helper\Net\FBBotChecker;
 
 App::after(function($request, $response)
 {
@@ -88,6 +89,50 @@ Route::filter('csrf', function()
     {
         throw new Illuminate\Session\TokenMismatchException;
     }
+});
+
+/*
+|--------------------------------------------------------------------------
+| Facebook crawler goes here
+|--------------------------------------------------------------------------
+*/
+Route::filter('fb-bot', function() {
+    $FBChecker = new FBBotChecker();
+    if (! $FBChecker->isFBCrawler()) {
+        switch (Route::currentRouteName()) {
+            case 'share-tenant':
+                $redirect_to = URL::route('ci-tenant-detail', array('id' => Input::get('id')));
+                break;
+            case 'share-promotion':
+                $redirect_to = URL::route('ci-promotion-detail', array('id' => Input::get('id')));
+                break;
+            case 'share-news':
+                $redirect_to = URL::route('ci-news-detail', array('id' => Input::get('id')));
+                break;
+            case 'share-coupon':
+                $redirect_to = URL::route('ci-coupon-detail', array('id' => Input::get('id')));
+                break;
+            case 'share-lucky-draw':
+                $redirect_to = URL::route('ci-luckydraw-detail', array('id' => Input::get('id')));
+                break;
+            case 'share-home':
+                $redirect_to = URL::route('ci-customer-home', array('id' => Input::get('id')));
+                break;
+            default:
+                $redirect_to = NULL;
+                break;
+        }
+        
+        $param = is_null($redirect_to) ? NULL : ['socmed_redirect_to' => $redirect_to];
+
+        // return Redirect::route('mobile-ci.signin', $param);
+        return Redirect::to($redirect_to);
+    }
+});
+
+Route::filter('turn-off-query-string-session', function()
+{
+    Config::set('orbit.session.availability.query_string', false);
 });
 
 /*
@@ -178,13 +223,13 @@ Route::filter('orbit-settings', function()
             if ($value->setting_name == 'start_button_label') {
                 // Get start button translation
                 $startButtonTranslation = $value->hasMany('SettingTranslation', 'setting_id', 'setting_id')
-                                    ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
+                                    ->where('merchant_language_id', '=', $alternateLanguage->language_id)
                                     ->whereHas('language', function($has) {
                                     $has->where('merchant_languages.status', 'active');
                                 })->get();
 
                 if (! empty($startButtonTranslation)) {
-                    if(! empty($startButtonTranslation[0]->setting_value)) {
+                    if (isset($startButtonTranslation[0]) && property_exists($startButtonTranslation[0], 'setting_value')) {
                         Config::set('shop.start_button_label', $startButtonTranslation[0]->setting_value);
                     }
                 }
@@ -193,7 +238,7 @@ Route::filter('orbit-settings', function()
     }
 
     if(empty(Config::get('shop.start_button_label'))) {
-        Config::set('shop.start_button_label', Lang::get('mobileci.signin.start_button_mall'));
+        Config::set('shop.start_button_label', '');
     }
 });
 
@@ -205,6 +250,20 @@ Route::filter('orbit-settings', function()
 Route::filter('check-routes-luckydraw', function()
 {
     $retailer = Mall::with('parent')->where('merchant_id', Config::get('orbit.shop.id'))->excludeDeleted()->first();
+
+    foreach ($retailer->settings as $setting) {
+        if ($setting->setting_name == 'enable_lucky_draw') {
+            if ($setting->setting_value != 'true') {
+                return Redirect::route('ci-customer-home');
+            }
+        }
+    }
+});
+
+Route::filter('check-routes-luckydraw-alternative', function()
+{
+    $retailer_id = App::make('orbitSetting')->getSetting('current_retailer');
+    $retailer = Mall::with('parent')->where('merchant_id', $retailer_id)->first();
 
     foreach ($retailer->settings as $setting) {
         if ($setting->setting_name == 'enable_lucky_draw') {

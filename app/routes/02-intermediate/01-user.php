@@ -3,6 +3,18 @@
  * Routes file for Intermediate User API
  */
 
+// PMP Account List
+Route::get('/app/v1/account/list', 'IntermediateAuthController@Account_getAccount');
+
+// Create new PMP Account
+Route::post('/app/v1/account/new', 'IntermediateAuthController@Account_postCreateUpdate');
+
+// Update a PMP Account
+Route::post('/app/v1/account/update', 'IntermediateAuthController@Account_postCreateUpdate');
+
+// ...
+Route::get('/app/v1/account/tenants/available', 'IntermediateAuthController@Account_getAvailableTenantsSelection');
+
 /**
  * Create new user
  */
@@ -72,3 +84,23 @@ Route::post('/app/v1/membership/update', 'IntermediateAuthController@User_postUp
  * Delete Membership
  */
 Route::post('/app/v1/membership/delete', 'IntermediateAuthController@User_postDeleteMembership');
+
+/**
+ * User Report Listing
+ */
+Route::get('/app/v1/user-report/list', 'IntermediateAuthController@UserReport_getUserReport');
+
+/**
+ * Create New PMP Employee
+ */
+Route::post('/app/v1/pmp-employee/new', 'IntermediateAuthController@Employee_postNewPMPEmployee');
+
+/**
+ * Update PMP Employee
+ */
+Route::post('/app/v1/pmp-employee/update', 'IntermediateAuthController@Employee_postUpdatePMPEmployee');
+
+/**
+ * Search PMP Employees
+ */
+Route::get('/app/v1/pmp-employee/list', 'IntermediateAuthController@Employee_getSearchPMPEmployee');

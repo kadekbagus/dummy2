@@ -8,313 +8,26 @@
 </style>
 @stop
 
+@section('fb_scripts')
+@if(! empty($facebookInfo))
+@if(! empty($facebookInfo['version']) && ! empty($facebookInfo['app_id']))
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version={{$facebookInfo['version']}}&appId={{$facebookInfo['app_id']}}";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+@endif
+@endif
+@stop
+
 @section('content')
-<div class="container new-widget-container">
-    <div class="mobile-ci home-widget widget-container">
-        <div class="row">
-        @foreach($widgets as $i => $widget)
-            @if($i % 3 === 0)
-            <div class="col-xs-12 col-sm-12">
-                <section class="widget-single">
-                    <a class="widget-link" data-widget="{{ $widget->widget_id }}" href="{{ url('customer/' . $widget->url) }}">
-                        @if(! empty($widget->new_item_count))
-                        <div class="widget-new-badge">
-                            <div class="new-number">{{$widget->new_item_count}}</div>
-                            <div class="new-number-label">new</div>
-                        </div>
-                        @endif
-                        <div class="widget-info">
-                            <header class="widget-title">
-                                <div><strong>{{ucwords(strtolower($widget->display_title))}}</strong></div>
-                            </header>
-                            <header class="widget-subtitle">
-                                @if($widget->item_count > 0)
-                                <div>{{$widget->item_count}} {{$widget->display_sub_title}}</div>
-                                @else
-                                <div>&nbsp;</div>
-                                @endif
-                            </header>
-                        </div>
-                        <div class="list-vignette"></div>
-                        <img class="img-responsive img-fit" src="{{ asset($widget->image) }}" />
-                    </a>
-                </section>
-            </div>
-            @elseif($i % 3 === 1)
-                @if($i === count($widgets) - 1)
-                    <div class="col-xs-12 col-sm-12">
-                        <section class="widget-single">
-                            <a class="widget-link" data-widget="{{ $widget->widget_id }}" href="{{ url('customer/' . $widget->url) }}">
-                                @if(! empty($widget->new_item_count))
-                                <div class="widget-new-badge">
-                                    <div class="new-number">{{$widget->new_item_count}}</div>
-                                    <div class="new-number-label">new</div>
-                                </div>
-                                @endif
-                                <div class="widget-info">
-                                    <header class="widget-title">
-                                        <div><strong>{{ucwords(strtolower($widget->display_title))}}</strong></div>
-                                    </header>
-                                    <header class="widget-subtitle">
-                                        @if($widget->item_count > 0)
-                                        <div>{{$widget->item_count}} {{$widget->display_sub_title}}</div>
-                                        @else
-                                        <div>&nbsp;</div>
-                                        @endif
-                                    </header>
-                                </div>
-                                <div class="list-vignette"></div>
-                                <img class="img-responsive img-fit" src="{{ asset($widget->image) }}" />
-                            </a>
-                        </section>
-                    </div>
-                @else
-                    <div class="col-xs-6 col-sm-6">
-                        <section class="widget-single">
-                            <a class="widget-link" data-widget="{{ $widget->widget_id }}" href="{{ url('customer/' . $widget->url) }}">
-                                @if(! empty($widget->new_item_count))
-                                <div class="widget-new-badge">
-                                    <div class="new-number">{{$widget->new_item_count}}</div>
-                                    <div class="new-number-label">new</div>
-                                </div>
-                                @endif
-                                <div class="widget-info">
-                                    <header class="widget-title">
-                                        <div><strong>{{ucwords(strtolower($widget->display_title))}}</strong></div>
-                                    </header>
-                                    <header class="widget-subtitle">
-                                        @if($widget->item_count > 0)
-                                        <div>{{$widget->item_count}} {{$widget->display_sub_title}}</div>
-                                        @else
-                                        <div>&nbsp;</div>
-                                        @endif
-                                    </header>
-                                </div>
-                                <div class="list-vignette"></div>
-                                <img class="img-responsive img-fit" src="{{ asset($widget->image) }}" />
-                            </a>
-                        </section>
-                    </div>
-                @endif
-            @else
-                <div class="col-xs-6 col-sm-6">
-                    <section class="widget-single">
-                        <a class="widget-link" data-widget="{{ $widget->widget_id }}" href="{{ url('customer/' . $widget->url) }}">
-                            @if(! empty($widget->new_item_count))
-                            <div class="widget-new-badge">
-                                <div class="new-number">{{$widget->new_item_count}}</div>
-                                <div class="new-number-label">new</div>
-                            </div>
-                            @endif
-                            <div class="widget-info">
-                                <header class="widget-title">
-                                    <div><strong>{{ucwords(strtolower($widget->display_title))}}</strong></div>
-                                </header>
-                                <header class="widget-subtitle">
-                                    @if($widget->item_count > 0)
-                                    <div>{{$widget->item_count}} {{$widget->display_sub_title}}</div>
-                                    @else
-                                    <div>&nbsp;</div>
-                                    @endif
-                                </header>
-                            </div>
-                            <div class="list-vignette"></div>
-                            <img class="img-responsive img-fit" src="{{ asset($widget->image) }}" />
-                        </a>
-                    </section>
-                </div>
-            @endif
-        @endforeach
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-xs-12 text-center merchant-logo">
-            <img class="img-responsive" src="{{ asset($retailer->logo) }}" />
-        </div>
-    </div>
-</div>
+    @yield('widget-template')
 @stop
 
 @section('modals')
-<!-- Modal -->
-<div class="modal fade" id="promoModal" tabindex="-1" role="dialog" aria-labelledby="promoModalLabel" aria-hidden="true">
-    <div class="modal-dialog orbit-modal">
-        <div class="modal-content">
-            <div class="modal-header orbit-modal-header">
-                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{{ Lang::get('mobileci.modals.close') }}</span></button>
-                <h4 class="modal-title" id="promoModalLabel">{{ Lang::get('mobileci.modals.event_title') }}</h4>
-            </div>
-            <div class="modal-body">
-                <p id="promoModalText">
-                    @if(! empty($events))
-                    @if($events->event_type == 'link')
-                    @if($events->link_object_type == 'product')
-                    @if(! empty($events->image))
-                    <a data-event="{{ $events->event_id }}" href="{{ url('customer/product?id='.$events->link_object_id1) }}">
-                        <img class="img-responsive" src="{{ asset($events->image) }}">
-                    </a>
-                    <br>
-                    <b><a data-event="{{ $events->event_id }}" href="{{ url('customer/product?id='.$events->link_object_id1) }}">{{ $events->event_name }}</a></b> <br>
-                    {{ nl2br($events->description) }}
-                    @else
-                    <a data-event="{{ $events->event_id }}" href="{{ url('customer/product?id='.$events->link_object_id1) }}">
-                        <img class="img-responsive" src="{{ asset('mobile-ci/images/default_event.png') }}">
-                    </a>
-                    <br>
-                    <b><a data-event="{{ $events->event_id }}" href="{{ url('customer/product?id='.$events->link_object_id1) }}">{{ $events->event_name }}</a></b> <br>
-                    {{ nl2br($events->description) }}
-                    @endif
-                    @elseif($events->link_object_type == 'family')
-                    @if(! empty($events->image))
-                    <a data-event="{{ $events->event_id }}" href="{{ url('customer/category?'.$event_family_url_param) }}">
-                        <img class="img-responsive" src="{{ asset($events->image) }}">
-                    </a>
-                    <br>
-                    <b><a data-event="{{ $events->event_id }}" href="{{ url('customer/category?'.$event_family_url_param) }}">{{ $events->event_name }}</a></b> <br>
-                    {{ nl2br($events->description) }}
-                    @else
-                    <a data-event="{{ $events->event_id }}" href="{{ url('customer/category?'.$event_family_url_param) }}">
-                        <img class="img-responsive" src="{{ asset('mobile-ci/images/default_event.png') }}">
-                    </a>
-                    <br>
-                    <b><a data-event="{{ $events->event_id }}" href="{{ url('customer/category?id='.$events->link_object_id1) }}">{{ $events->event_name }}</a></b> <br>
-                    {{ nl2br($events->description) }}
-                    @endif
-                    @elseif($events->link_object_type == 'promotion')
-                        @if(! empty($events->image))
-                        <a data-event="{{ $events->event_id }}" href="{{ url('customer/promotion?promoid='.$events->link_object_id1) }}">
-                            <img class="img-responsive" src="{{ asset($events->image) }}">
-                        </a>
-                        <br>
-                        <b><a data-event="{{ $events->event_id }}" href="{{ url('customer/promotion?promoid='.$events->link_object_id1) }}">{{ $events->event_name }}</a></b> <br>
-                        {{ nl2br($events->description) }}
-                        @else
-                        <a data-event="{{ $events->event_id }}" href="{{ url('customer/promotion?promoid='.$events->link_object_id1) }}">
-                            <img class="img-responsive" src="{{ asset('mobile-ci/images/default_event.png') }}">
-                        </a>
-                        <br>
-                        <b><a data-event="{{ $events->event_id }}" href="{{ url('customer/promotion?promoid='.$events->link_object_id1) }}">{{ $events->event_name }}</a></b> <br>
-                        {{ nl2br($events->description) }}
-                        @endif
-                    @elseif($events->link_object_type == 'retailer')
-                        @if(count($events->retailers) > 1)
-                        <a data-event="{{ $events->event_id }}" href="{{ url('customer/tenants?event_id='.$events->event_id) }}">
-                            @if(! empty($events->image))
-                            <img class="img-responsive" src="{{ asset($events->image) }}">
-                            @else
-                            <img class="img-responsive" src="{{ asset('mobile-ci/images/default_event.png') }}">
-                            @endif
-                        </a>
-                        <br>
-                        <b><a data-event="{{ $events->event_id }}" href="{{ url('customer/tenants?event_id='.$events->event_id) }}">{{ $events->event_name }}</a></b> <br>
-                        {{ nl2br($events->description) }}
-                        @elseif(count($events->retailers) == 1)
-                        <a data-event="{{ $events->event_id }}" href="{{ url('customer/tenant?id='.$events->retailers[0]->merchant_id) }}">
-                            @if(! empty($events->image))
-                            <img class="img-responsive" src="{{ asset($events->image) }}">
-                            @else
-                            <img class="img-responsive" src="{{ asset('mobile-ci/images/default_event.png') }}">
-                            @endif
-                        </a>
-                        <br>
-                        <b><a data-event="{{ $events->event_id }}" href="{{ url('customer/tenant?id='.$events->retailers[0]->merchant_id) }}">{{ $events->event_name }}</a></b> <br>
-                        {{ nl2br($events->description) }}
-                        @else
-                        @if(! empty($events->image))
-                        <img class="img-responsive" src="{{ asset($events->image) }}">
-                        @else
-                        <img class="img-responsive" src="{{ asset('mobile-ci/images/default_event.png') }}">
-                        @endif
-                        <br>
-                        <b>{{ $events->event_name }}</b> <br>
-                        {{ nl2br($events->description) }}
-                        @endif
-                    @elseif($events->link_object_type == 'widget')
-                    @if($events->widget_object_type == 'promotion')
-                    @if(! empty($events->image))
-                    <a data-event="{{ $events->event_id }}" href="{{ url('customer/promotions') }}">
-                        <img class="img-responsive" src="{{ asset($events->image) }}">
-                    </a>
-                    <br>
-                    <b><a data-event="{{ $events->event_id }}" href="{{ url('customer/promotions') }}">{{ $events->event_name }}</a></b> <br>
-                    {{ nl2br($events->description) }}
-                    @else
-                    <a data-event="{{ $events->event_id }}" href="{{ url('customer/promotions') }}">
-                        <img class="img-responsive" src="{{ asset('mobile-ci/images/default_event.png') }}">
-                    </a>
-                    <br>
-                    <b><a data-event="{{ $events->event_id }}" href="{{ url('customer/promotions') }}">{{ $events->event_name }}</a></b> <br>
-                    {{ nl2br($events->description) }}
-                    @endif
-                    @elseif($events->widget_object_type == 'coupon')
-                    @if(! empty($events->image))
-                    <a data-event="{{ $events->event_id }}" href="{{ url('customer/coupons') }}">
-                        <img class="img-responsive" src="{{ asset($events->image) }}">
-                    </a>
-                    <br>
-                    <b><a data-event="{{ $events->event_id }}" href="{{ url('customer/coupons') }}">{{ $events->event_name }}</a></b> <br>
-                    {{ nl2br($events->description) }}
-                    @else
-                    <a data-event="{{ $events->event_id }}" href="{{ url('customer/coupons') }}">
-                        <img class="img-responsive" src="{{ asset('mobile-ci/images/default_event.png') }}">
-                    </a>
-                    <br>
-                    <b><a data-event="{{ $events->event_id }}" href="{{ url('customer/coupons') }}">{{ $events->event_name }}</a></b> <br>
-                    {{ nl2br($events->description) }}
-                    @endif
-                    @elseif($events->widget_object_type == 'new_product')
-                    @if(! empty($events->image))
-                    <a data-event="{{ $events->event_id }}" href="{{ url('customer/search?new=1') }}">
-                        <img class="img-responsive" src="{{ asset($events->image) }}">
-                    </a>
-                    <br>
-                    <b><a data-event="{{ $events->event_id }}" href="{{ url('customer/search?new=1') }}">{{ $events->event_name }}</a></b> <br>
-                    {{ nl2br($events->description) }}
-                    @else
-                    <a data-event="{{ $events->event_id }}" href="{{ url('customer/search?new=1') }}">
-                        <img class="img-responsive" src="{{ asset('mobile-ci/images/default_event.png') }}">
-                    </a>
-                    <br>
-                    <b><a data-event="{{ $events->event_id }}" href="{{ url('customer/search?new=1') }}">{{ $events->event_name }}</a></b> <br>
-                    {{ nl2br($events->description) }}
-                    @endif
-                    @elseif($events->widget_object_type == 'catalogue')
-                    @if(! empty($events->image))
-                    <a data-event="{{ $events->event_id }}" href="{{ url('customer/catalogue') }}">
-                        <img class="img-responsive" src="{{ asset($events->image) }}">
-                    </a>
-                    <br>
-                    <b><a data-event="{{ $events->event_id }}" href="{{ url('customer/catalogue') }}">{{ $events->event_name }}</a></b> <br>
-                    {{ nl2br($events->description) }}
-                    @else
-                    <a data-event="{{ $events->event_id }}" href="{{ url('customer/catalogue') }}">
-                        <img class="img-responsive" src="{{ asset('mobile-ci/images/default_event.png') }}">
-                    </a>
-                    <br>
-                    <b><a data-event="{{ $events->event_id }}" href="{{ url('customer/catalogue') }}">{{ $events->event_name }}</a></b> <br>
-                    {{ nl2br($events->description) }}
-                    @endif
-                    @endif
-                    @endif
-                    @elseif($events->event_type == 'informative')
-                    @if(! empty($events->image))
-                    <img class="img-responsive" src="{{ asset($events->image) }}">
-                    <br>
-                    <b>{{ $events->event_name }}</b> <br>
-                    {{ nl2br($events->description) }}
-                    @else
-                    <img class="img-responsive" src="{{ asset('mobile-ci/images/default_event.png') }}">
-                    <br>
-                    <b>{{ $events->event_name }}</b> <br>
-                    {{ nl2br($events->description) }}
-                    @endif
-                    @endif
-                    @endif
-                </p>
-            </div>
-        </div>
-    </div>
-</div>
 <!-- Modal -->
 <div class="modal fade" id="noModal" tabindex="-1" role="dialog" aria-labelledby="noModalLabel" aria-hidden="true">
     <div class="modal-dialog orbit-modal">
@@ -333,56 +46,6 @@
     </div>
 </div>
 
-<!-- Modal -->
-<div class="modal fade" id="verifyModal" tabindex="-1" role="dialog" aria-labelledby="verifyModalLabel" aria-hidden="true">
-    <div class="modal-dialog orbit-modal">
-        <div class="modal-content">
-            <div class="modal-header orbit-modal-header">
-                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{{ Lang::get('mobileci.modals.close') }}</span></button>
-                <h4 class="modal-title" id="verifyModalLabel"><i class="fa fa-envelope-o"></i> Info</h4>
-            </div>
-            <div class="modal-body">
-                <div class="row">
-                    <div class="col-xs-12 text-center">
-                        <p style="font-size:15px;">
-                            <b>{{ Lang::get('mobileci.modals.enjoy_free') }}</b>
-                            <br>
-                            @if ($active_user)
-                            <span style="color:#0aa5d5; font-size:22px; font-weight: bold;">{{ Lang::get('mobileci.modals.unlimited') }}</span>
-                            @else
-                            <span style="color:#0aa5d5; font-size:22px; font-weight: bold;">30 {{ Lang::get('mobileci.modals.minutes') }}</span>
-                            @endif
-                            <br>
-                            <b>{{ Lang::get('mobileci.modals.internet') }}</b>
-                            <br><br>
-                            <b>{{ Lang::get('mobileci.modals.check_out_our') }}</b>
-                            <br>
-                            <b><span style="color:#0aa5d5;">{{ Lang::get('mobileci.page_title.promotion') }}</span> {{ Lang::get('mobileci.modals.and') }} <span style="color:#0aa5d5;">{{ Lang::get('mobileci.page_title.coupon_single') }}</span></b>
-                        </p>
-                    </div>
-                </div>
-                <div class="row" style="margin-left: -30px; margin-right: -30px; margin-bottom: -15px;">
-                    <div class="col-xs-12">
-                        <img class="img-responsive" src="{{ asset('mobile-ci/images/pop-up-banner.png') }}">
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <div class="row">
-                    <div class="col-xs-12 text-center">
-                        <button type="button" class="btn btn-info btn-block" data-dismiss="modal">{{ Lang::get('mobileci.modals.okay') }}</button>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-xs-12 text-left">
-                            <input type="checkbox" name="verifyModalCheck" id="verifyModalCheck" style="top:2px;position:relative;">
-                            <label for="verifyModalCheck">{{ Lang::get('mobileci.modals.do_not_display') }}</label>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 <div class="modal fade" id="tour-confirmation" data-keyboard="false" data-backdrop="static">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -401,17 +64,21 @@
 </div>
 @stop
 
-@section('ext_script_bot')
-{{ HTML::script('mobile-ci/scripts/responsiveslides.min.js') }}
-{{ HTML::script('mobile-ci/scripts/jquery.cookie.js') }}
-<script type="text/javascript">
-    var cookie_dismiss_name = 'dismiss_verification_popup';
-    var cookie_dismiss_name_2 = 'dismiss_activation_popup';
-
-    @if ($active_user)
-    cookie_dismiss_name = 'dismiss_verification_popup_unlimited';
+@section('mall-fb-footer')
+    @if ($urlblock->isLoggedIn())
+    <div class="text-center" style="padding-bottom: 20px;">
+        @if(! empty($retailer->facebook_like_url))
+        <div class="fb-like" data-href="{{{$retailer->facebook_like_url}}}" data-layout="button_count" data-action="like" data-show-faces="false" data-share="false" style="margin-right:25px;"></div>
+        @endif
+        @if(! empty($retailer->facebook_share_url))
+        <div class="fb-share-button" data-href="{{{$retailer->facebook_share_url}}}" data-layout="button"></div>
+        @endif
+    </div>
     @endif
+@stop
 
+@section('ext_script_bot')
+<script type="text/javascript">
     /**
      * Get Query String from the URL
      *
@@ -453,6 +120,11 @@
     }
 
     $(document).ready(function() {
+        // Check if browser supports LocalStorage
+        if(typeof(Storage) !== 'undefined') {
+            localStorage.setItem('fromSource', 'home');
+        }
+        /* ------- {{-- Orbit Tour Currently Disabled --}}
         var homescreenPopover = {};
         function homescreenPopup() {
             // get the os first
@@ -559,76 +231,10 @@
         homescreenPopup();
 
         var displayTutorial = false;
-        orbitIsViewing = true; {{-- declared in layout --}}
         // Override the content of displayTutorial
         if (get('show_tour') === 'yes') {
             displayTutorial = true;
         }
-
-        var loadModal = function () {
-            var onlyEvent = false;
-
-            if (get('from_login') !== 'yes') {
-                onlyEvent = true;
-            }
-            orbitIsViewing = false;
-            $('#verifyModal').on('hidden.bs.modal', function () {
-                if ($('#verifyModalCheck')[0].checked) {
-                    $.cookie(cookie_dismiss_name, 't', {expires: 3650});
-                }
-            });
-
-            @if(! is_null($events))
-            $('#promoModal').on('show.bs.modal', function() {
-                $.ajax({
-                    url: '{{ route('display-event-popup-activity') }}',
-                    data: {
-                        eventdata: '{{$events->event_id}}'
-                    },
-                    method: 'POST'
-                });
-            });
-            @endif
-            {{-- a sequence of modals... --}}
-            var modals = [
-            {
-                selector: '#verifyModal',
-                display: get('internet_info') === 'yes' && !$.cookie(cookie_dismiss_name)
-            },
-            @if(! is_null($events))
-            {
-                selector: '#promoModal',
-                display: true
-            },
-            @endif
-            ];
-            var modalIndex;
-
-            for (modalIndex = 0; modalIndex < modals.length; modalIndex++) {
-                {{-- for each displayable modal, after it is hidden try and display the next displayable modal --}}
-                if (modals[modalIndex].display) {
-                    $(modals[modalIndex].selector).on('hidden.bs.modal', (function(myIndex) {
-                        return function() {
-                            for (var i = myIndex + 1; i < modals.length; i++) {
-                                if (modals[i].display) {
-                                    $(modals[i].selector).modal();
-                                    return;
-                                }
-                            }
-                        }
-                    })(modalIndex));
-                }
-            }
-
-            {{-- display the first displayable modal --}}
-            for (modalIndex = 0; modalIndex < modals.length; modalIndex++) {
-                if (modals[modalIndex].display) {
-                    $(modals[modalIndex].selector).modal();
-                    break;
-                }
-            }
-
-        };
 
         // Instance the tour
         var endTour = new Tour({
@@ -893,109 +499,30 @@
             loadTutorial();
         });
 
-        if (displayTutorial || !$.cookie('orbit-tour')) {
+        if ((displayTutorial || !$.cookie('orbit-tour')) && false) {
             loadTutorial();
         } else {
             loadModal();
         }
-
-        $('#emptyCoupon').click(function(){
-          $('#noModalLabel').text('{{ Lang::get('mobileci.modals.info_title') }}');
-          $('#noModalText').text('{{ Lang::get('mobileci.modals.message_no_coupon') }}');
-          $('#noModal').modal();
-        });
-        $('#emptyNew').click(function(){
-          $('#noModalLabel').text('{{ Lang::get('mobileci.modals.info_title') }}');
-          $('#noModalText').text('{{ Lang::get('mobileci.modals.message_no_new_product') }}');
-          $('#noModal').modal();
-        });
-        $('#emptyPromo').click(function(){
-          $('#noModalLabel').text('{{ Lang::get('mobileci.modals.info_title') }}');
-          $('#noModalText').text('{{ Lang::get('mobileci.modals.message_no_promotion') }}');
-          $('#noModal').modal();
-        });
-        $('#emptyLuck').click(function(){
-          $('#noModalLabel').text('{{ Lang::get('mobileci.modals.info_title') }}');
-          $('#noModalText').html('{{ Lang::get('mobileci.modals.message_no_lucky_draw') }}');
-          $('#noModal').modal();
-        });
+        ---------- {{-- End of Tour --}} */
+        
         $('a.widget-link').click(function(event){
-          var link = $(this).attr('href');
-          var widgetdata = $(this).data('widget');
           event.preventDefault();
 
-          $.ajax({
-            url: '{{ route('click-widget-activity') }}',
-            data: {
-              widgetdata: widgetdata
-            },
-            method: 'POST'
-          }).always(function(){
-            window.location.assign(link);
-          });
-          return false; //for good measure
-        });
-        $('#promoModal a').click(function (event){
-            var link = $(this).attr('href');
-            var eventdata = $(this).data('event');
-
-            event.preventDefault();
-            $.ajax({
-              data: {
-                eventdata: eventdata
-              },
-              method: 'POST',
-              url:apiPath+'customer/eventpopupactivity'
-            }).always(function(data){
-              window.location.assign(link);
-            });
-            return false; //for good measure
-        });
-        $('#slider1').responsiveSlides({
-            auto: true,
-            pager: false,
-            nav: true,
-            prevText: '<i class="fa fa-chevron-left"></i>',
-            nextText: '<i class="fa fa-chevron-right"></i>',
-            speed: 500
-        });
-        $('#slider2').responsiveSlides({
-            auto: true,
-            pager: false,
-            nav: true,
-            prevText: '<i class="fa fa-chevron-left"></i>',
-            nextText: '<i class="fa fa-chevron-right"></i>',
-            speed: 500
-        });
-        $('#slider3').responsiveSlides({
-            auto: true,
-            pager: false,
-            nav: true,
-            prevText: '<i class="fa fa-chevron-left"></i>',
-            nextText: '<i class="fa fa-chevron-right"></i>',
-            speed: 500
-        });
-        $('#slider4').responsiveSlides({
-            auto: true,
-            pager: false,
-            nav: true,
-            prevText: '<i class="fa fa-chevron-left"></i>',
-            nextText: '<i class="fa fa-chevron-right"></i>',
-            speed: 500
-        });
-
-        $.each($('.rslides li'), function(i, v){
-            $(this).css('height', $(this).width());
-        });
-    });
-    $(window).resize(function(){
-        $.each($('.rslides li'), function(i, v){
-            $(this).css('height', $(this).width());
-        });
-    });
-    $(window).ready(function(){
-        $.each($('.rslides li'), function(i, v){
-            $(this).css('height', $(this).width());
+          if ($(this).attr('href') !== '#') {
+              var link = $(this).attr('href');
+              var widgetdata = $(this).data('widget');
+              $.ajax({
+                url: '{{ route('click-widget-activity') }}',
+                data: {
+                  widgetdata: widgetdata
+                },
+                method: 'POST'
+              }).always(function(){
+                window.location.assign(link);
+              });
+              return false; //for good measure
+          }
         });
     });
 </script>

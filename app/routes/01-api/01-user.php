@@ -3,6 +3,29 @@
  * Routes file for user related API
  */
 
+// PMP Account List
+Route::get('/api/v1/account/list', function()
+{
+    return AccountAPIController::create()->getAccount();
+});
+
+// Create new PMP Account
+Route::post('/api/v1/account/new', function()
+{
+    return AccountAPIController::create()->postCreateUpdate();
+});
+
+// Update a PMP Account
+Route::post('/api/v1/account/update', function()
+{
+    return AccountAPIController::create()->postCreateUpdate();
+});
+
+Route::get('/api/v1/account/tenants/available', function()
+{
+    return AccountAPIController::create()->getAvailableTenantsSelection();
+});
+
 /**
  * Create new user
  */
@@ -106,3 +129,65 @@ Route::post('/api/v1/user/changepassword', ['as' => 'change-password', function(
 {
     return UserAPIController::create()->postChangePassword();
 }]);
+
+/**
+ * User Report Listing
+ */
+Route::get('/api/v1/user-report/list', function()
+{
+    return UserReportAPIController::create()->getUserReport();
+});
+
+/**
+ * Create New PMP Employee
+ */
+Route::post('/api/v1/pmp-employee/new', function()
+{
+    return EmployeeAPIController::create()->postNewPMPEmployee();
+});
+
+/**
+ * Update PMP Employee
+ */
+Route::post('/api/v1/pmp-employee/update', function()
+{
+    return EmployeeAPIController::create()->postUpdatePMPEmployee();
+});
+
+/**
+ * Search PMP Employees
+ */
+Route::get('/api/v1/pmp-employee/list', function()
+{
+    return EmployeeAPIController::create()->getSearchPMPEmployee();
+});
+
+/**
+ * Route for sending the reset password link to user email
+ */
+Route::post(
+    '/{prefix}/v1/pub/user/reset-password-link', ['as' => 'pub-user-reset-password-link', function()
+    {
+        return Orbit\Controller\API\v1\Pub\ResetPasswordLinkAPIController::create()->postResetPasswordLink();
+    }]
+)->where('prefix', '(api|app)');
+
+/**
+ * Route for updating password which coming from reset password link request
+ */
+Route::post(
+    '/{prefix}/v1/pub/user/reset-password', ['as' => 'pub-user-reset-password', function()
+    {
+        return Orbit\Controller\API\v1\Pub\ResetPasswordAPIController::create()->postResetPassword();
+    }]
+)->where('prefix', '(api|app)');
+
+/**
+ * Route for user activitation
+ */
+Route::post(
+    '/{prefix}/v1/pub/user/activate-account', ['as' => 'pub-user-activate-account', function()
+    {
+        return Orbit\Controller\API\v1\Pub\ActivationAPIController::create()->postActivateAccount();
+    }]
+)->where('prefix', '(api|app)');

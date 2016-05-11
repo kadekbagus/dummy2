@@ -115,7 +115,7 @@
         <tr>
             <td>Total CRM Data</td>
             <td>:</td>
-            <td><strong><?php echo number_format($totalRec, 0, '.', '.'); ?></strong></td>
+            <td><strong><?php echo number_format($totalRec); ?></strong></td>
         </tr>
     </table>
 
@@ -128,7 +128,6 @@
             <th style="text-align:left;">Action</th>
             <th style="text-align:left;">Tenant</th>
             <th style="text-align:left;">News</th>
-            <th style="text-align:left;">Events</th>
             <th style="text-align:left;">Promotions</th>
             <th style="text-align:left;">Coupons</th>
             <th style="text-align:left;">Lucky Draws</th>
@@ -143,7 +142,6 @@
                 <td><?php echo ($row->activity_name_long); ?></td>
                 <td><?php echo $me->printUtf8($row->retailer_name); ?></td>
                 <td><?php echo $me->printUtf8($row->news_name); ?></td>
-                <td><?php echo $me->printUtf8($row->event_name); ?></td>
                 <td><?php echo $me->printUtf8($row->promotion_news_name); ?></td>
                 <td><?php echo $me->printUtf8($row->coupon_name); ?></td>
                 <td><?php echo $me->printUtf8($row->object_display_name); ?></td>

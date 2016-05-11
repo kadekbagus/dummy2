@@ -13,6 +13,10 @@ use Helper\EloquentRecordCounter as RecordCounter;
 
 class SettingAPIController extends ControllerAPI
 {
+
+    protected $settingViewRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee', 'campaign admin', 'mall customer service'];
+    protected $settingModifiyRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee', 'campaign admin'];
+
     /**
      * POST - Update Setting
      *
@@ -303,13 +307,19 @@ class SettingAPIController extends ControllerAPI
 
             $language = OrbitInput::post('language', NULL);
             $background = OrbitInput::files('backgrounds');
+            $mall_logo = OrbitInput::files('logo');
             $landingPage = OrbitInput::post('landing_page');
             $password = OrbitInput::post('password');
             $password2 = OrbitInput::post('password_confirmation');
             $id_language_default = OrbitInput::post('id_language_default');
+            $background_config = Config::get('orbit.upload.retailer.background');
+            $logo_config = Config::get('orbit.upload.mall.logo');
+            $background_units = static::bytesToUnits($background_config['file_size']);
+            $logo_units = static::bytesToUnits($logo_config['file_size']);
 
             // Catch the supported language for mall
             $supportedMallLanguageIds = OrbitInput::post('mall_supported_language_ids');
+            // @Todo review this code
             $supportedMallLanguageIds_copy = OrbitInput::post('mall_supported_language_ids');
 
             $mall_id = OrbitInput::post('current_mall');
@@ -322,13 +332,25 @@ class SettingAPIController extends ControllerAPI
                     'password'              => $password,
                     'password_confirmation' => $password2,
                     'id_language_default'   => $id_language_default,
+                    'background_type'       => $background['type'],
+                    'logo_type'             => $mall_logo['type'],
+                    'background_size'       => $background['size'],
+                    'logo_size'             => $mall_logo['size'],
                 ),
                 array(
                     'current_mall'        => 'required|orbit.empty.mall',
                     'language'            => 'required',
-                    'landing_page'        => 'required|in:widget,news,promotion,tenant',
+                    'landing_page'        => 'required|in:widget,news,promotion,tenant,my-coupon,lucky-draw',
                     'password'            => 'min:5|confirmed',
                     'id_language_default' => 'required|orbit.empty.language_default',
+                    'background_type'     => 'in:image/jpg,image/png,image/jpeg,image/gif',
+                    'logo_type'           => 'in:image/jpg,image/png,image/jpeg,image/gif',
+                    'background_size'     => 'orbit.max.file_size:' . $background_config['file_size'],
+                    'logo_size'           => 'orbit.max.file_size:' . $logo_config['file_size'],
+                ),
+                array(
+                    'background_size.orbit.max.file_size' => 'Login Page Background Image size is too big, maximum size allowed is '. $background_units['newsize'] . $background_units['unit'],
+                    'logo_size.orbit.max.file_size'       => 'Mobile Toolbar Logo Image size is too big, maximum size allowed is ' . $logo_units['newsize'] . $logo_units['unit']
                 )
             );
 
@@ -436,6 +458,65 @@ class SettingAPIController extends ControllerAPI
                 $mall->media_background = $response->data;
             });
 
+            OrbitInput::post('backgrounds', function($files_string) use ($mall, $user, &$backgroundSetting) {
+                if (empty(trim($files_string))) {
+                    $_POST['merchant_id'] = $mall->merchant_id;
+
+                    // This will be used on UploadAPIController
+                    App::instance('orbit.upload.user', $user);
+
+                    $response = UploadAPIController::create('raw')
+                                                   ->setCalledFrom('mall.update')
+                                                   ->postDeleteMallBackground();
+
+                    if ($response->code !== 0)
+                    {
+                        throw new \Exception($response->message, $response->code);
+                    }
+
+                    $mall->setRelation('mediaBackground', $response->data);
+                    $mall->media_background = $response->data;
+                }
+            });
+
+            OrbitInput::files('logo', function($files) use ($mall, $user) {
+                $_POST['merchant_id'] = $mall->merchant_id;
+
+                // This will be used on UploadAPIController
+                App::instance('orbit.upload.user', $user);
+
+                $response = UploadAPIController::create('raw')
+                                               ->setCalledFrom('mall.update')
+                                               ->postUploadMallLogo();
+
+                if ($response->code !== 0)
+                {
+                    throw new \Exception($response->message, $response->code);
+                }
+
+                $mall->load('mediaLogo');
+            });
+
+            OrbitInput::post('logo', function($files_string) use ($mall, $user) {
+                if (empty(trim($files_string))) {
+                    $_POST['merchant_id'] = $mall->merchant_id;
+
+                    // This will be used on UploadAPIController
+                    App::instance('orbit.upload.user', $user);
+
+                    $response = UploadAPIController::create('raw')
+                                                   ->setCalledFrom('mall.update')
+                                                   ->postDeleteMallLogo();
+
+                    if ($response->code !== 0)
+                    {
+                        throw new \Exception($response->message, $response->code);
+                    }
+
+                    $mall->load('mediaLogo');
+                }
+            });
+
             OrbitInput::post('start_button', function($label) use (&$startButtonSetting, $mall, $user) {
                 // Start button label setting
                 if (is_null($startButtonSetting)) {
@@ -451,12 +532,14 @@ class SettingAPIController extends ControllerAPI
             });
 
             // Save the default language setting for start button
-            $default_translation = [
-                $id_language_default => [
-                    'setting_value' => $startButtonSetting->setting_value,
-                ]
-            ];
-            $this->validateAndSaveTranslations($startButtonSetting, json_encode($default_translation), 'create');
+            if (! empty($startButtonSetting)) {
+                $default_translation = [
+                    $id_language_default => [
+                        'setting_value' => $startButtonSetting->setting_value,
+                    ]
+                ];
+                $this->validateAndSaveTranslations($startButtonSetting, json_encode($default_translation), 'create');
+            }
 
             OrbitInput::post('translations', function($translation_json_string) use ($startButtonSetting) {
                 $this->validateAndSaveTranslations($startButtonSetting, $translation_json_string, 'create');
@@ -470,7 +553,10 @@ class SettingAPIController extends ControllerAPI
                 ),
                 array(
                     'merchant_id'   => 'required|orbit.empty.merchant',
-                    'language_id'   => 'required',
+                    'language_id'   => 'required|orbit_empty_default_en',
+                ),
+                array(
+                    'orbit_empty_default_en' => 'English can not be dropped because it is the system language.'
                 )
             );
 
@@ -498,6 +584,7 @@ class SettingAPIController extends ControllerAPI
 
             Event::fire('orbit.news.postlanguage.before.validation', array($this, $validator));
 
+            // @Todo optimize the code
             // Check old merchant language
             $oldMallLanguage = MerchantLanguage::where('merchant_id','=', $mall->merchant_id)->get();
 
@@ -688,13 +775,23 @@ class SettingAPIController extends ControllerAPI
             // perform this action
             $user = $this->api->user;
             Event::fire('orbit.setting.getsearchsetting.before.authz', array($this, $user));
-
+/*
             if (! ACL::create($user)->isAllowed('view_setting')) {
                 Event::fire('orbit.setting.getsearchsetting.authz.notallowed', array($this, $user));
                 $viewSettingLang = Lang::get('validation.orbit.actionlist.view_setting');
                 $message = Lang::get('validation.orbit.access.forbidden', array('action' => $viewSettingLang));
                 ACL::throwAccessForbidden($message);
             }
+*/
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = $this->settingViewRoles;
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
+
             Event::fire('orbit.setting.getsearchsetting.after.authz', array($this, $user));
 
             $this->registerCustomValidation();
@@ -1181,12 +1278,95 @@ class SettingAPIController extends ControllerAPI
 
     }
 
+
+    /**
+     * GET - Mobile CI Signin Language
+     *
+     * @author <kadek> <kadek@dominopos.com>
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function getMobileCiSigninLanguage()
+    {
+        try {
+            $httpCode=200;
+
+            Event::fire('orbit.setting.getmobilecisigninlanguage.before.auth', array($this));
+
+            // Require authentication
+            $this->checkAuth();
+
+            Event::fire('orbit.setting.getmobilecisigninlanguage.after.auth', array($this));
+
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user = $this->api->user;
+            Event::fire('orbit.setting.getmobilecisigninlanguage.before.authz', array($this, $user));
+
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = $this->settingViewRoles;
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            $langs = array();
+            App::setLocale('en');
+            $langs['en'] = Lang::get('mobileci.signin');
+            App::setLocale('ja');
+            $langs['ja'] = Lang::get('mobileci.signin');
+            App::setLocale('zh');
+            $langs['zh'] = Lang::get('mobileci.signin');
+            App::setLocale('id');
+            $langs['id'] = Lang::get('mobileci.signin');
+            App::setLocale('en');
+
+            $this->response->data = $langs;
+
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.setting.getmobilecisigninlanguage.access.forbidden', array($this, $e));
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.setting.getmobilecisigninlanguage.invalid.arguments', array($this, $e));
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        }  catch (Exception $e) {
+            Event::fire('orbit.setting.getmobilecisigninlanguage.general.exception', array($this, $e));
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+        }
+        return $this->render($httpCode);
+    }
+
     protected function registerCustomValidation()
     {
+        // If the 'en' is not exists on list of supported language, return an error
+        Validator::extend('orbit_empty_default_en', function ($attribute, $value, $parameters) {
+            $enLang = Language::where('name', 'en')->first();
+
+            if (! in_array($enLang->language_id, $value)) {
+                return FALSE;
+            }
+
+            App::instance('orbit_empty_default_en', $enLang);
+
+            return TRUE;
+        });
+
         // Check the existance of id_language_default
         Validator::extend('orbit.empty.language_default', function ($attribute, $value, $parameters) {
             $news = MerchantLanguage::excludeDeleted()
-                        ->where('merchant_language_id', $value)
+                        ->where('language_id', $value)
                         ->first();
 
             if (empty($news)) {
@@ -1209,9 +1389,7 @@ class SettingAPIController extends ControllerAPI
             return $valid;
         });
 
-        // @Todo: Refactor by adding allowedForUser for mall
-        $user = $this->api->user;
-        Validator::extend('orbit.empty.mall', function ($attribute, $value, $parameters) use ($user) {
+        Validator::extend('orbit.empty.mall', function ($attribute, $value, $parameters) {
             $merchant = Mall::excludeDeleted()
                         ->where('merchant_id', $value)
                         ->first();
@@ -1220,13 +1398,12 @@ class SettingAPIController extends ControllerAPI
                 return FALSE;
             }
 
-            App::instance('orbit.empty.tenant', $merchant);
+            App::instance('orbit.empty.mall', $merchant);
 
             return TRUE;
         });
 
-
-        // $user = $this->api->user;
+        $user = $this->api->user;
         Validator::extend('orbit.empty.merchant', function ($attribute, $value, $parameters) use ($user) {
             $merchant = Mall::excludeDeleted()
                 /* ->allowedForUser($user) */
@@ -1250,6 +1427,17 @@ class SettingAPIController extends ControllerAPI
                 return false;
             }
             App::instance('orbit.empty.language', $language);
+            return true;
+        });
+
+        Validator::extend('orbit.max.file_size', function ($attribute, $value, $parameters) {
+            $config_size = $parameters[0];
+            $file_size = $value;
+
+            if ($file_size > $config_size) {
+                return false;
+            }
+
             return true;
         });
 
@@ -1286,7 +1474,7 @@ class SettingAPIController extends ControllerAPI
         }
         foreach ($data as $merchant_language_id => $translations) {
             $language = MerchantLanguage::excludeDeleted()
-                ->where('merchant_language_id', '=', $merchant_language_id)
+                ->where('language_id', '=', $merchant_language_id)
                 ->first();
 
             if (empty($language)) {
@@ -1356,6 +1544,52 @@ class SettingAPIController extends ControllerAPI
                 $existing_translation->delete();
             }
         }
+    }
+
+    /**
+     * Method to convert the size from bytes to more human readable units. As
+     * an example:
+     *
+     * Input 356 produces => array('unit' => 'bytes', 'newsize' => 356)
+     * Input 2045 produces => array('unit' => 'kB', 'newsize' => 2.045)
+     * Input 1055000 produces => array('unit' => 'MB', 'newsize' => 1.055)
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @author Irianto <irianto@dominopos.com>
+     * @param int $size - The size in bytes
+     * @return array
+     */
+    public static function bytesToUnits($size)
+    {
+       $kb = 1000;
+       $mb = $kb * 1000;
+       $gb = $mb * 1000;
+
+       if ($size > $gb) {
+            return array(
+                    'unit' => 'GB',
+                    'newsize' => $size / $gb
+                   );
+       }
+
+       if ($size > $mb) {
+            return array(
+                    'unit' => 'MB',
+                    'newsize' => $size / $mb
+                   );
+       }
+
+       if ($size > $kb) {
+            return array(
+                    'unit' => 'kB',
+                    'newsize' => $size / $kb
+                   );
+       }
+
+       return array(
+                'unit' => 'bytes',
+                'newsize' => 1
+              );
     }
 
 }

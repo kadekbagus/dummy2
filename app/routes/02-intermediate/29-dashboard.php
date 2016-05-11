@@ -48,3 +48,27 @@ Route::get('/app/v1/dashboard/top-tenant-redeem', "IntermediateAuthController@Da
 
 // Get Dashboard detail of top customer view
 Route::get('/app/v1/dashboard/detail-top-customer-view', "IntermediateAuthController@Dashboard_getDetailTopCustomerView");
+
+// Get Dashboard expiring
+Route::get('/app/v1/dashboard/expiring-campaign', "IntermediateAuthController@Dashboard_getExpiringCampaign");
+
+// Get Dashboard estimate total cost
+Route::get('/app/v1/dashboard/estimated-total-cost', "IntermediateAuthController@Dashboard_getEstimateTotalCost");
+
+// Get Dashboard campaign status
+Route::get('/app/v1/dashboard/campaign-statuses', "IntermediateAuthController@Dashboard_getCampaignStatus");
+
+// Get Dashboard campaign status
+Route::get('/app/v1/dashboard/total-page-view', "IntermediateAuthController@Dashboard_getTotalPageView");
+
+// Get Dashboard campaign total spending
+Route::get('/app/v1/dashboard/campaign-total-spending', "IntermediateAuthController@Dashboard_getCampaignTotalSpending");
+
+// Get Dashboard unique users
+Route::get('/app/v1/dashboard/unique-user', "IntermediateAuthController@Dashboard_getUniqueUsers");
+
+// Get Dashboard Cmpaign spending
+Route::get('/app/v1/dashboard/campaign-spending', "IntermediateAuthController@Dashboard_getCampaignSpending");
+
+// Get Dashboard Total cmpaign spending
+Route::get('/app/v1/dashboard/total-spending', "IntermediateAuthController@Dashboard_getCampaignSpending");

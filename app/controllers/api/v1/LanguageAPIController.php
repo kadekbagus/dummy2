@@ -7,6 +7,7 @@ use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
+use Helper\EloquentRecordCounter as RecordCounter;
 
 /**
  * Controller to handle listing master languages, merchant languages, and adding languages to merchants.
@@ -26,22 +27,31 @@ class LanguageAPIController extends ControllerAPI
         try {
             $this->checkAuth();
 
-            $status = Input::get('status');
+            $prefix = DB::getTablePrefix();
+            $languages = Language::select('languages.language_id', 'languages.name', 'languages.name_native', 'languages.name_long', 'languages.language_order', 'languages.created_at', 'languages.updated_at', 'languages.status')
+                                ->leftJoin('merchant_languages', 'merchant_languages.language_id', '=', 'languages.language_id')
+                                ->orderBy('language_order', 'DESC')
+                                ->distinct();
 
-            if($status != ""){
-                $all_languages = Language::where('status', '=', $status)
-                                         ->orderBy('name_long', 'ASC')
-                                         ->get();
-            } else{
-                $all_languages = Language::all();
-            }
+            OrbitInput::get('status', function($status) use ($languages) {
+                $languages->where('languages.status', '=', $status);
+            });
 
-            $count = count($all_languages);
+            OrbitInput::get('mall_id', function($mall_id) use ($languages, $prefix) {
+                $mall_id = (array) $mall_id;
+                $languages->whereIn('merchant_languages.merchant_id', $mall_id)
+                         ->where('merchant_languages.status', '=', 'active');
+            });
+
+            $_languages = clone $languages;
+
+            $listlanguages = $languages->get();
+            $count = RecordCounter::create($_languages)->count();
 
             $this->response->data = new stdClass();
             $this->response->data->total_records = $count;
-            $this->response->data->returned_records = $count;
-            $this->response->data->records = $all_languages;
+            $this->response->data->returned_records = count($listlanguages);
+            $this->response->data->records = $listlanguages;
         } catch (ACLForbiddenException $e) {
 
             $this->response->code = $e->getCode();

@@ -1,9 +1,5 @@
 @extends('mobile-ci.layout')
 
-@section('ext_style')
-    {{ HTML::style('mobile-ci/stylesheet/featherlight.min.css') }}
-@stop
-
 @section('content')
     <div id="delete-bar" class="row text-right">
         <div class="col-xs-10 text-delete-mode">
@@ -21,24 +17,16 @@
     <div class="col-xs-12 text-center" id="spinner"><i class="fa fa-circle-o-notch fa-spin"></i></div>
     <div class="col-xs-12 text-center vertically-spaced" style="display:none;" id="no-notification">{{ Lang::get('mobileci.notification.no_notif') }}</div>
     <div class="row">
-        <button class="col-xs-offset-2 col-xs-8 btn btn-default loadmore">{{ Lang::get('mobileci.notification.load_more_btn') }}</button>
+        <button class="col-xs-offset-2 col-xs-8 btn btn-default loadmore">{{ Lang::get('mobileci.notification.view_more_btn') }}</button>
     </div>
 
 @stop
 
 @section('ext_script_bot')
-    {{ HTML::script('mobile-ci/scripts/jquery-ui.min.js') }}
-    {{ HTML::script('mobile-ci/scripts/featherlight.min.js') }}
-    {{ HTML::script('mobile-ci/scripts/jquery.cookie.js') }}
     <script type="text/javascript">
-        var cookie_dismiss_name = 'dismiss_verification_popup';
-        var cookie_dismiss_name_2 = 'dismiss_activation_popup';
+        notInMessagesPage = false;
         var skip = 0;
         var total_page = 0;
-        @if ($active_user)
-        cookie_dismiss_name = 'dismiss_verification_popup_unlimited';
-        @endif
-
         /**
          * Get Query String from the URL
          *
@@ -61,11 +49,18 @@
             }
         }
 
+        {{-- force reload page to disable page cache on ios safari --}}
+        $(window).bind("pageshow", function(event) {
+            if (event.originalEvent.persisted) {
+                window.location.reload()
+            }
+        });
+
         $(document).ready(function(){
             function getNotifList() {
                 $.ajax({
                     method: 'GET',
-                    url: apiPath + 'inbox/list'
+                    url: '{{ url("app/v1/inbox/list") }}'
                 }).done(function(data){
                     if(data.data.total_records / (data.data.returned_records + skip) > 1) {
                         $('.loadmore').show();
@@ -78,7 +73,8 @@
                             var isRead = inBox.is_read == 'Y' ? true : false;
                             var read = isRead ? 'read' : 'unread';
                             var mark = isRead ? 'check' : 'exclamation';
-                            var individualList = '<div class="main-theme-mall list-notification" id="notification-'+inBox.inbox_id+'"><div class="row catalogue-top"><a class="link-detail" href="{{ url('/customer/message/detail?id=') }}'+inBox.inbox_id+'"><div class="col-xs-3 notification-icon"><span class="fa-stack fa-lg '+read+'"><i class="fa fa-circle fa-stack-2x circle"></i><i class="fa fa-'+mark+' fa-stack-1x symbol"></i></span></div><div class="col-xs-8 notification-title" style=""><h4 class="'+read+'">'+inBox.subject+'</h4></div></a><div class="col-xs-1 deleteNotif" data-id="'+inBox.inbox_id+'"><span class="delete-button-child"><i class="fa fa-times"></i></span></div></div></div>';
+                            var readUnread = isRead ? 'read-unread' : '';
+                            var individualList = '<div class="main-theme-mall list-notification" id="notification-'+inBox.inbox_id+'"><div class="row catalogue-top"><a data-id='+inBox.inbox_id+' class="'+readUnread+'"><div class="col-xs-3 notification-icon text-center"><span class="fa-stack fa-lg '+read+'"><i class="fa fa-circle fa-stack-2x circle"></i><i class="fa fa-'+mark+' fa-stack-1x symbol"></i></span></div></a><a class="link-detail" href="{{ url('/customer/message/detail?id=') }}'+inBox.inbox_id+'"><div class="col-xs-8 notification-title" style=""><h4 class="'+read+'">'+inBox.subject+'</h4></div></a><div class="col-xs-1 deleteNotif" data-id="'+inBox.inbox_id+'"><span class="delete-button-child"><i class="fa fa-times"></i></span></div></div></div>';
                             $('#notification').append(individualList);
                         }
                         skip = skip + {{ Config::get('orbit.pagination.inbox.per_page', 15) }};
@@ -89,12 +85,44 @@
                 }).fail(function(data){
                     $('#spinner').hide();
                 }).always(function(data){
-                    console.log('xxx');
                     $('#spinner').hide();
                 });
             }
 
             getNotifList();
+
+            $('body').on('click', '.read-unread', function(e){
+                $('body').addClass('modal-open');
+                var inbox_id = $(this).data('id');
+                $.ajax({
+                    method: 'POST',
+                    url: apiPath + 'inbox/read-unread',
+                    data: {
+                        inbox_id: inbox_id
+                    }
+                }).done(function(data){
+                    if(data.status === 'success') {
+                        if (data.data === 'read') {
+                            $('#notification-'+inbox_id+' .link-detail h4').addClass('read');
+                            $('#notification-'+inbox_id+' .link-detail h4').removeClass('unread');
+                            $('#notification-'+inbox_id+' .read-unread .fa-stack').removeClass('unread');
+                            $('#notification-'+inbox_id+' .read-unread .fa-stack').addClass('read');
+                            $('#notification-'+inbox_id+' .read-unread .fa-stack .fa-stack-1x').addClass('fa-check');
+                            $('#notification-'+inbox_id+' .read-unread .fa-stack .fa-stack-1x').removeClass('fa-exclamation');
+                        } else {
+                            $('#notification-'+inbox_id+' .link-detail h4').addClass('unread');
+                            $('#notification-'+inbox_id+' .link-detail h4').removeClass('read');
+                            $('#notification-'+inbox_id+' .read-unread .fa-stack').removeClass('read');
+                            $('#notification-'+inbox_id+' .read-unread .fa-stack').addClass('unread');
+                            $('#notification-'+inbox_id+' .read-unread .fa-stack .fa-stack-1x').addClass('fa-exclamation');
+                            $('#notification-'+inbox_id+' .read-unread .fa-stack .fa-stack-1x').removeClass('fa-check');
+                            $('#notification-'+inbox_id+' .read-unread').removeClass('read-unread'); // disable read on unread notif
+                        }
+                    }
+                }).always(function(data){
+                    $('body').removeClass('modal-open');
+                });
+            });
 
             $('body').on('click', '.deleteNotif', function(e){
                 $('body').addClass('modal-open');
@@ -135,7 +163,8 @@
                         var isRead = inBox.is_read == 'Y' ? true : false;
                         var read = isRead ? 'read' : 'unread';
                         var mark = isRead ? 'check' : 'exclamation';
-                        var individualList = '<div class="main-theme-mall list-notification" id="notification-'+inBox.inbox_id+'"><div class="row catalogue-top"><a class="link-detail" href="{{ url('/customer/message/detail?id=') }}'+inBox.inbox_id+'"><div class="col-xs-3 notification-icon"><span class="fa-stack fa-lg '+read+'"><i class="fa fa-circle fa-stack-2x circle"></i><i class="fa fa-'+mark+' fa-stack-1x symbol"></i></span></div><div class="col-xs-8 notification-title" style=""><h4 class="'+read+'">'+inBox.subject+'</h4></div></a><div class="col-xs-1 deleteNotif" data-id="'+inBox.inbox_id+'"><span class="delete-button-child"><i class="fa fa-times"></i></span></div></div></div>';
+                        var readUnread = isRead ? 'read-unread' : '';
+                        var individualList = '<div class="main-theme-mall list-notification" id="notification-'+inBox.inbox_id+'"><div class="row catalogue-top"><a data-id='+inBox.inbox_id+' class="'+readUnread+'"><div class="col-xs-3 notification-icon text-center"><span class="fa-stack fa-lg '+read+'"><i class="fa fa-circle fa-stack-2x circle"></i><i class="fa fa-'+mark+' fa-stack-1x symbol"></i></span></div></a><a class="link-detail" href="{{ url('/customer/message/detail?id=') }}'+inBox.inbox_id+'"><div class="col-xs-8 notification-title" style=""><h4 class="'+read+'">'+inBox.subject+'</h4></div></a><div class="col-xs-1 deleteNotif" data-id="'+inBox.inbox_id+'"><span class="delete-button-child"><i class="fa fa-times"></i></span></div></div></div>';
                         $('#notification').append(individualList);
                         if(openDelete){
                             $('.delete-button-child').css('display', 'inline-block');
@@ -153,63 +182,11 @@
             });
 
             $('body').on('click', '.link-detail', function(e){
-                console.log('x');
                 if(openDelete){
-                    console.log('y');
                     e.preventDefault();
                 }
             });
 
-            $('#verifyModal').on('hidden.bs.modal', function () {
-                if ($('#verifyModalCheck')[0].checked) {
-                    $.cookie(cookie_dismiss_name, 't', {expires: 3650});
-                }
-            });
-
-            $('#userActivationModal').on('hidden.bs.modal', function () {
-                $.cookie(cookie_dismiss_name_2, 't', {path: '/', domain: window.location.hostname, expires: 3650});
-            });
-
-            {{-- a sequence of modals... --}}
-            var modals = [
-                {
-                    selector: '#verifyModal',
-                    display: get('internet_info') == 'yes' && !$.cookie(cookie_dismiss_name)
-                },
-                {
-                    selector: '#userActivationModal',
-                    @if ($active_user)
-                        display: false
-                    @else
-                        display: get('from_login') === 'yes' && !$.cookie(cookie_dismiss_name_2)
-                    @endif
-                }
-            ];
-            var modalIndex;
-
-            for (modalIndex = 0; modalIndex < modals.length; modalIndex++) {
-                {{-- for each displayable modal, after it is hidden try and display the next displayable modal --}}
-                if (modals[modalIndex].display) {
-                    $(modals[modalIndex].selector).on('hidden.bs.modal', (function(myIndex) {
-                        return function() {
-                            for (var i = myIndex + 1; i < modals.length; i++) {
-                                if (modals[i].display) {
-                                    $(modals[i].selector).modal();
-                                    return;
-                                }
-                            }
-                        }
-                    })(modalIndex));
-                }
-            }
-
-            {{-- display the first displayable modal --}}
-            for (modalIndex = 0; modalIndex < modals.length; modalIndex++) {
-                if (modals[modalIndex].display) {
-                    $(modals[modalIndex].selector).modal();
-                    break;
-                }
-            }
             var openDelete = false;
             $('body').on('click', '.button-delete-mode', function(e){
                 openDelete = !openDelete ? true : false;

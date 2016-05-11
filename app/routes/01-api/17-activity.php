@@ -106,3 +106,8 @@ Route::get('/api/v1/activity/crm-summary-report', function()
 {
     return ActivityAPIController::create()->getCRMSummaryReport();
 });
+
+Route::get('/api/v1/activity/groups', function()
+{
+   return ActivityAPIController::create()->getGroups(); 
+});

@@ -1,10 +1,10 @@
 
 <!-- Push Notification Popup -->
 <div id="orbit-push-notification-wrapper"></div>
-{{ HTML::script('mobile-ci/scripts/jquery.ba-replacetext.min.js') }}
 <script>
 
     $(document).ready(function() {
+        var untoasteds = [];
         var langs = {};
         langs.coupon = {};
         langs.lucky_draw = {};
@@ -40,14 +40,13 @@
         // Callback function to mark the notification as read
         var readNotif = function(inboxId) {
             $.ajax({
-                url: apiPath + 'alert/read',
+                url: '{{ url("app/v1/alert/read") }}',
                 method: 'POST',
                 data: {
                     inbox_id: inboxId
                 }
             }).done(function(resp) {
                 // Succeed
-                // console.log(resp.data);
             }).fail(function(resp) {
                 // Fail
             }).always(function(resp) {
@@ -55,33 +54,34 @@
             });
         };
 
+        @if ($urlblock->isLoggedIn())
         // Callback function to get the notification
         var getNotif = function() {
             // No need to poll if one is viewing
-            // console.log(orbitIsViewing);
             if (orbitIsViewing) {
                 return;
             }
 
             $.ajax({
-                url: apiPath + 'inbox/unread-count',
+                url: '{{ url("app/v1/inbox/unread-count") }}',
                 method: 'GET',
                 data: {}
             }).done(function(resp) {
                 // Succeed
-                // console.log(resp.data.records);
                 if (resp.data.records > 0 || resp.data.records === '9+') {
-                    console.log('a');
-                    $('.notification-badge').text(resp.data.records);
-                    $('.notification-badge').show();
+                    $('.notification-badge-txt').text(resp.data.records);
+                    $('.notification-badge-txt').show();
                 } else {
-                    console.log('b');
-                    $('.notification-badge').text('0');
-                    $('.notification-badge').hide();
+                    $('.notification-badge-txt').text('0');
+                    $('.notification-badge-txt').hide();
+                }
+                if (resp.data.untoasted_records.length > 0) {
+                    untoasteds = []; // reset untoasted stack
+                    untoasteds = resp.data.untoasted_records;
                 }
             }).fail(function(resp) {
-                $('.notification-badge').text('0');
-                $('.notification-badge').hide();
+                $('.notification-badge-txt').text('0');
+                $('.notification-badge-txt').hide();
             }).always(function(resp) {
 
             });
@@ -92,6 +92,43 @@
         setInterval(function() {
             getNotif()
         }, pushNotificationDelay);
+        @endif
+
+        if(notInMessagesPage){
+            setInterval(function() {
+                if (untoasteds.length > 0) {
+                    var inboxId = untoasteds[0].inbox_id,
+                        inboxUrl = untoasteds[0].url,
+                        inboxSubject = untoasteds[0].subject;
+                    toastr.options = {
+                        closeButton: true,
+                        closeHtml: '<button>×</button>',
+                        closeDuration: 200,
+                        showDuration: 30,
+                        timeOut: 2500,
+                        positionClass: 'toast-bottom-right',
+                        escapeHtml: true,
+                        onclick: function() {
+                            window.location.href = inboxUrl;
+                        },
+                        onShown: function() {
+                            $.ajax({
+                                url: '{{ url("app/v1/inbox/notified") }}',
+                                method: 'POST',
+                                data: {
+                                    inbox_id: inboxId
+                                }
+                            }).done(function(resp) {
+                                for(var i = untoasteds.length-1; i >= 0; i--) { // remove inbox with the last notified inbox_id
+                                    if( untoasteds[i].inbox_id == inboxId) untoasteds.splice(i,1);
+                                }
+                            });
+                        }
+                    };
+                    toastr.info('<div class="toast-header"><i class="fa fa-circle toast-bullet"></i> &nbsp {{ucwords(strtolower(Lang::get('mobileci.page_title.my_message')))}}</div><div>' + inboxSubject + '</div>');
+                }
+            }, 2730);
+        }
 
         $(document).on('hidden.bs.modal', '.modal', function () {
             $('.modal:visible').length && $(document.body).addClass('modal-open');

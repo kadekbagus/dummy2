@@ -3,6 +3,67 @@
  * Orbit specific configuraiton.
  */
 return array(
+    // route names that need authentication to be accessed
+    'blocked_routes' => [
+        // all route names
+        // 'ci-tenant-list',
+        // 'ci-tenant-detail',
+        // 'ci-news-list',
+        // 'ci-news-detail',
+        // 'ci-promotion-list',
+        // 'ci-promotion-detail',
+        // 'ci-coupon-list',
+        // 'ci-coupon-detail',
+        // 'ci-notification-list',
+        // 'ci-notification-detail',
+        // 'ci-my-account',
+        // 'ci-luckydraw-list',
+        // 'ci-luckydraw-detail',
+        // 'ci-luckydraw-announcement',
+        // 'ci-luckydrawnumber-download',
+        // these home urls should not be blocked, as some of the code use these as default redirection point
+        // 'ci-home', // -> /
+        // 'ci-customer-home', // -> /customer/home
+        // 'mobile-ci-home', // -> /customer
+    ],
+
+    // cdn path
+    'cdn' => array(
+        'jquery' => array(
+            '2_1_1' => 'https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js'
+        ),
+        'bootstrap' => array(
+            '3_3_1' => 'https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.1/js/bootstrap.min.js'
+        ),
+        'jqueryui' => array(
+            '1_11_2' => 'https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.11.2/jquery-ui.min.js'
+        ),
+        'lightslider' => array(
+            '1_1_2' => 'https://cdnjs.cloudflare.com/ajax/libs/lightslider/1.1.2/js/lightslider.min.js'
+        ),
+        'panzoom' => array(
+            '2_0_5' => 'https://cdnjs.cloudflare.com/ajax/libs/jquery.panzoom/2.0.5/jquery.panzoom.min.js'
+        ),
+        'featherlight' => array(
+            '1_0_3' => 'https://cdnjs.cloudflare.com/ajax/libs/featherlight/1.0.3/featherlight.min.js'
+        ),
+        'countdown' => array(
+            '2_0_2' => 'https://cdnjs.cloudflare.com/ajax/libs/jquery-countdown/2.0.2/jquery.countdown.min.js'
+        ),
+        // this is for countdown above
+        'jquery_plugin' => array(
+            '2_0_2' => 'https://cdnjs.cloudflare.com/ajax/libs/jquery-countdown/2.0.2/jquery.plugin.min.js'
+        ),
+        //font
+        'fonts' => array(
+            'ubuntu' => 'https://fonts.googleapis.com/css?family=Ubuntu:400',
+            'font_awesome' => array(
+                '4_2_0' => 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.2.0/fonts/fontawesome-webfont', // this url without font extension
+                '4_5_0' => 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.5.0/fonts/fontawesome-webfont' // this url without font extension
+            ),
+            'glyphicon' => 'https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/fonts/glyphicons-halflings-regular' // this url without font extension
+        ),
+    ),
 
     'assets' => array(
         // Asset root (without trailing slash)
@@ -11,7 +72,7 @@ return array(
     ),
 
     // Languages that supported by orbit app
-    'languages' => array('en', 'zh', 'ja'),
+    'languages' => array('en', 'zh', 'ja', 'id'),
 
     'api' => array(
         'signature' => array(
@@ -29,7 +90,8 @@ return array(
     // agreement configuration
     'agreement' => array(
         // This should be frontend URL not backend
-        'url'  => 'http://mall-portal.url/#/service-agreement?token=%s'
+        'mall'  => 'http://portal.orbit-mall.here/#/service-agreement?token=%s',
+        'pmp'   => 'http://pmp-portal.orbit-mall.here/?mode=pmp/#/service-agreement?token=%s'
     ),
 
     'shop' => array(
@@ -56,7 +118,23 @@ return array(
             'interval'  => 5000
         ],
 
-        'membership' => true
+        // enable/disable membership card pop up
+        'membership' => true,
+
+        // number of days to define the campaigns/tenants as "new" on widgets
+        'widget_new_threshold' => 1, // in day(s)
+
+        // number of seconds to delay the display of campaign pop up
+        'event_delay' => 2.5, //in second(s)
+
+        // after logout url (will be /customer if empty)
+        'after_logout_url' => '',
+
+        // back to map url
+        'back_to_map_url' => 'http://gotomalls.cool/#/?redirect_ci=false',
+
+        // after sign in social url
+        'after_social_sign_in' => 'http://gotomalls.cool',
     ),
 
     // General contact data
@@ -88,6 +166,9 @@ return array(
             // if TRUE then winner can have another same prize on the same campaign
             'more_than_one_single_prize_enabled' => TRUE,
         ),
+
+        // no existing lucky draw custom message
+        'custom_message' => '',
     ),
 
     // Default Pagination
@@ -268,6 +349,37 @@ return array(
             'per_page'      => 15,
             'max_record'    => 100,
         ),
+
+        // User Report
+        'user_report' => array(
+            'per_page'      => 15,
+            'max_record'    => 100,
+        ),
+
+        // Mall list by geolocation
+        'geo_location' => array(
+            'per_page'      => 20,
+            'max_record'    => 100,
+        ),
+
+        // link to tenant pagination
+        'link_to_tenant' => array(
+            'per_page'      => 50,
+            'max_record'    => 1000,
+        ),
+    ),
+
+    'reset_password' => array(
+        'sender' => array(
+            'email' => 'no-reply@gotomalls.com',
+            'name'  => 'Gotomalls'
+        ),
+
+        // URL for password reset (frontend URL)
+        'reset_base_url' => 'http://gotomalls.com/#/password/reset/%s?email=%s',
+
+        // Number of days before token in reset link expires
+        'reset_expire' => 7,
     ),
 
     'registration' => array(
@@ -287,6 +399,9 @@ return array(
             // Activation URL
             // This should be frontend URL not backend
             'activation_base_url' => 'http://customer.orbit-mall.here/#/activate-account?token=%s',
+
+            // GotoMalls URL (The New Mobile)
+            'gotomalls_activation_base_url' => 'http://gotomalls.here/#/account/activate/%s',
 
             // Setup Password URL
             // This should be frontend URL not backend
@@ -899,6 +1014,77 @@ return array(
                 // Callback after saving the file
                 'after_saving'  => NULL,
             ),
+        ),
+
+        'mallgroup'  => array(
+            'logo'  => array(
+                // Allowed Extension
+                'file_type'     => array('jpg', 'png', 'jpeg', 'gif'),
+
+                // Allowed Mimetype
+                'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
+
+                // Maximum file size allowed in bytes
+                'file_size'     => 150000,
+
+                // The target path which file to be stored
+                'path'          => 'uploads/mallgroups/logo',
+
+                // Default HTML element name
+                'name'          => 'logo',
+
+                // Force create directory when not exists
+                'create_directory'  => TRUE,
+
+                // Append year and month to the path
+                'append_year_month' => FALSE,
+
+                // Keeping the aspect ratio
+                'keep_aspect_ratio' => TRUE,
+
+                // Resize the image
+                'resize_image'      => TRUE,
+
+                // Crop the image
+                'crop_image'        => TRUE,
+
+                // Scale the image
+                'scale_image'       => FALSE,
+
+                // Name suffix of the generated image
+                'suffix'            => '',
+
+                // Resize the image
+                'resize'        => array(
+                    // Profile name
+                    'default'   => array(
+                        'width'     => 200,
+                        'height'    => 200
+                    )
+                ),
+
+                // Crop the image
+                'crop'          => array(
+                    // Profile name
+                    'default' => array(
+                        'width'     => 100,
+                        'height'    => 100,
+                    )
+                ),
+
+                // Scale the image in percent
+                'scale'         => array(
+                    // Profile name
+                    'default'   => 50
+                ),
+
+                // Callback before saving the file
+                'before_saving' => NULL,
+
+                // Callback after saving the file
+                'after_saving'  => NULL,
+            ),
+
         ),
 
         'retailer'  => array(
@@ -2626,49 +2812,131 @@ return array(
             'path'  => '/home/orbitadmin/scripts/helpers/screen-display.sh'
         )
     ),
+
     'social_login' => [
         'facebook' => [
             'app_id'        => '',
             'app_secret'    => '',
             'version'       => 'v2.4'
         ],
+        'google' => array(
+            'callback_url' => 'http://mall-api.gotomalls.cool/pub/social-google-callback',
+        ),
     ],
 
+    // set the external crawler user agent
+    'social_crawler' => array(
+        'facebook' => ['facebookexternalhit/1.1', 'Facebot']
+    ),
+
+    // The grouping of the following items is located in /app/config/orbit_activity.php
+    // key   = db:activities.activity_name_long
+    // value = alias
     'activity_columns' => array(
-        'Email Sign Up'                                => 'Sign Up via Mobile (Email Address)',
-        'Facebook Sign Up'                             => 'Sign Up via Mobile (Facebook)',
-        'Google Sign Up'                               => 'Sign Up via Mobile (Google+)',
-        'Sign In'                                      => 'Sign In',
-        'Sign Up via CS'                               => 'Sign Up via Customer Service',
-        'Customer Activation'                          => 'Customer Activation',
         'Network Check In'                             => 'Network Check In',
         'Network Check Out'                            => 'Network Check Out',
+        'Sign Up via Mobile (Email Address)'           => 'Email Sign Up',
+        'Sign Up via Mobile (Facebook)'                => 'Facebook Sign Up',
+        'Sign Up via Mobile (Google+)'                 => 'Google Sign Up',
+        'Sign Up via Customer Service'                 => 'Sign Up via CS',
+        'Sign In'                                      => 'Sign In',
+        'Read Activation Notification'                 => 'Read Activation Notification',
+        'Customer Activation'                          => 'Customer Activation',
         'Sign Out'                                     => 'Sign Out',
-        'View (Home Page)'                             => 'View (Home Page)',
-        'Event View (Pop Up)'                          => 'Event View (Pop Up)',
-        'Event Click'                                  => 'Event Click',
-        'View Coupon List'                             => 'View Coupon List',
-        'View Coupon Detail'                           => 'View Coupon Detail',
-        'Coupon Redemption Successful'                 => 'Coupon Redemption (Successful)',
-        'Coupon Issuance'                              => 'Coupon Issuance',
-        'View Events Tenant List'                      => 'View Events Tenant List',
-        'View News List'                               => 'View News List',
-        'View News Detail'                             => 'View News Detail',
-        'View News Tenant List'                        => 'View News Tenant List',
-        'View Promotion List'                          => 'View Promotion List',
-        'View Promotion Detail'                        => 'View Promotion Detail',
-        'View Promotion Tenant List'                   => 'View Promotion Tenant List',
+        'View (Home Page)'                             => 'View Home Page',
+        'Widget Click Tenant'                          => 'Widget Click Tenant',
         'View Tenant List'                             => 'View Tenant List',
         'View Tenant Detail'                           => 'View Tenant Detail',
-        'Widget Click Tenant'                          => 'Widget Click Tenant',
-        'Widget Click News'                            => 'Widget Click News',
         'Widget Click Promotion'                       => 'Widget Click Promotion',
+        'View Promotion Pop Up'                        => 'View Promotion Pop Up',
+        'Click Promotion Pop Up'                       => 'Click Promotion Pop Up',
+        'View Promotion List'                          => 'View Promotion List',
+        'View Promotion Tenant List'                   => 'View Promotion Tenant List',
+        'View Promotion Detail'                        => 'View Promotion Detail',
+        'Widget Click News'                            => 'Widget Click News',
+        'View News Pop Up'                             => 'View News Pop Up',
+        'Click News Pop Up'                            => 'Click News Pop Up',
+        'View News List'                               => 'View News List',
+        'View News Tenant List'                        => 'View News Tenant List',
+        'View News Detail'                             => 'View News Detail',
         'Widget Click Coupon'                          => 'Widget Click Coupon',
+        'View Coupon Pop Up'                           => 'View Coupon Pop Up',
+        'Click Coupon Pop Up'                          => 'Click Coupon Pop Up',
+        'View Coupon List'                             => 'View Coupon List',
+        'View Coupon Tenant List'                      => 'View Coupon Tenant List',
+        'View Coupon Detail'                           => 'View Coupon Detail',
+        'View Coupon Campaign Detail'                  => 'View Coupon Campaign Detail',
+        'View Coupon Redemption Places'                => 'View Coupon Redemption Places',
+        'Coupon Issuance'                              => 'Coupon Issued',
+        'Read Coupon Issuance Notification'            => 'Read Coupon Issuance Notification',
+        'Coupon Redemption (Successful)'               => 'Coupon Redeemed',
         'Widget Click Lucky Draw'                      => 'Widget Click Lucky Draw',
         'View Lucky Draw List'                         => 'View Lucky Draw List',
         'View Lucky Draw Detail'                       => 'View Lucky Draw Detail',
-        'View Prizes & Winning Numbers'                => 'View Winning Numbers & Prizes',
-        'Read Notification Lucky Draw Number Issuance' => 'Read Notification Lucky Draw Number Issuance',
-        'View Winner Announcement Notification'        => 'View Winner Announcement Notification'
+        'Lucky Draw Number Issuance'                   => 'Lucky Draw Number Issued',
+        'Read Lucky Draw Number Issuance Notification' => 'Read Lucky Draw Number Issuance Notification',
+        'View Winning Numbers & Prizes'                => 'View Prizes & Winning Numbers',
+        'Read Winner Announcement Notification'        => 'Read Winner Announcement Notification',
+        'Search'                                       => 'Search',
+        'View My Account'                              => 'View My Account',
+        'View Notification List'                       => 'View Notification List',
     ),
+
+    'menus' => array(
+        'mall' => array(
+            'mall_dashboard',
+            'mall_settings',
+            'mall_widgets',
+            'mall_tenants',
+            'mall_luckydraws',
+            'mall_employee',
+            'mall_membership',
+            'mall_crm_detail',
+            'mall_crm_summary',
+            'mall_consumer',
+            'mall_user_report'
+        ),
+        'pmp' => array(
+            'pmp_dashboard',
+            'pmp_campaign_dashboard',
+            'pmp_campaign_detail',
+            'pmp_campaigns',
+            'pmp_news',
+            'pmp_coupons',
+            'pmp_coupon_reports',
+            'pmp_promotions',
+            'pmp_report_news',
+            'pmp_report_promotions',
+            'pmp_employee'
+        )
+    ),
+
+    'genders' => array(
+        'M' => 'Male',
+        'F' => 'Female',
+        'U' => 'Unknown',
+    ),
+
+    'age_ranges' => array(
+        '55 +',
+        '45 - 54',
+        '35 - 44',
+        '25 - 34',
+        '15 - 24',
+        '0 - 14',
+    ),
+
+    'geo_location' => array(
+        // distance of range
+        'distance' => 10,
+    ),
+
+    'error_message' => array(
+        'e500' => '<a href=http://gotomalls.com>gotomalls.com</a> is improving your user experience. Come back later.'
+    ),
+
+    // Block access to some end point
+    'maintenance_mode' => [
+        'crmsummary' => FALSE
+    ]
 );
