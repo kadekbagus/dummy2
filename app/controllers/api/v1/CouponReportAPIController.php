@@ -1527,6 +1527,15 @@ class CouponReportAPIController extends ControllerAPI
                                        ->leftJoin('users', 'users.user_id', '=', 'issued_coupons.redeem_user_id');
             }
 
+            //GET active days from campaign histories
+            $couponId = OrbitInput::get('promotion_id');
+            $promoId = $couponId[0];
+
+            // Calculate campaign activate days from campaign daily spending
+            $activeDays = CampaignDailySpending::select(DB::raw("count(distinct date) as total"))
+                ->where('campaign_id', '=', $couponId)
+                ->where('campaign_status', 'activate');
+
             if ($user->isSuperAdmin()) {
                 // Filter by mall id
                 OrbitInput::get('mall_id', function($mallId) use ($coupons) {
@@ -1590,22 +1599,26 @@ class CouponReportAPIController extends ControllerAPI
 
             // Filter by Redeemed date
             // Greater Than Equals
-            OrbitInput::get('issued_date_gte', function($date) use ($coupons, $timezone) {
+            OrbitInput::get('issued_date_gte', function($date) use ($coupons, $timezone, $activeDays) {
                 $coupons->where('issued_coupons.issued_date', '>=', $date);
+                $activeDays->where('date', '>=', date("Y-m-d", strtotime($date)));
             });
             // Less Than Equals
-            OrbitInput::get('issued_date_lte', function($date) use ($coupons, $timezone) {
+            OrbitInput::get('issued_date_lte', function($date) use ($coupons, $timezone, $activeDays) {
                 $coupons->where('issued_coupons.issued_date', '<=', $date);
+                $activeDays->where('date', '<=', date("Y-m-d", strtotime($date)));
             });
 
             // Filter by Redeemed date
             // Greater Than Equals
-            OrbitInput::get('redeemed_date_gte', function($date) use ($coupons, $timezone) {
+            OrbitInput::get('redeemed_date_gte', function($date) use ($coupons, $timezone, $activeDays) {
                 $coupons->where('issued_coupons.redeemed_date', '>=', $date);
+                $activeDays->where('date', '>=', date("Y-m-d", strtotime($date)));
             });
             // Less Than Equals
-            OrbitInput::get('redeemed_date_lte', function($date) use ($coupons, $timezone) {
+            OrbitInput::get('redeemed_date_lte', function($date) use ($coupons, $timezone, $activeDays) {
                 $coupons->where('issued_coupons.redeemed_date', '<=', $date);
+                $activeDays->where('date', '<=', date("Y-m-d", strtotime($date)));
             });
 
             // Filter by total_issued
@@ -1655,15 +1668,7 @@ class CouponReportAPIController extends ControllerAPI
 
             $_coupons = DB::table(DB::raw('(' . $_coupons_sql . ') as b'));
 
-            //GET active days from campaign histories
-            $couponId = OrbitInput::get('promotion_id');
-            $promoId = $couponId[0];
-
-            // Calculate campaign activate days from campaign daily spending
-            $activeDays = CampaignDailySpending::select(DB::raw("count(distinct date) as total"))
-                ->where('campaign_id', '=', $couponId)
-                ->where('campaign_status', 'activate')
-                ->first();
+            $listActiveDays = $activeDays->first();
 
             $query_sum = array(
                 "COUNT(issued_coupon_id) AS total_record",
@@ -1678,7 +1683,7 @@ class CouponReportAPIController extends ControllerAPI
             // Get total acquiring customers
             $totalAcquiringCustomers = isset($total[0]->total_acquiring_customers)?$total[0]->total_acquiring_customers:0;
             // Get total active days
-            $totalActiveDays = isset($activeDays->total)?$activeDays->total:0;
+            $totalActiveDays = isset($listActiveDays->total)?$listActiveDays->total:0;
             // Get total redemption place
             $totalRedemptionPlace = isset($total[0]->total_redemption_place)?$total[0]->total_redemption_place:0;
 
