@@ -3210,12 +3210,10 @@ class ActivityAPIController extends ControllerAPI
                 //can't filter by "&" column, so it's must be replace to "and"
                 $keys = 'date, ' . str_replace("view_prizes_and_winning_numbers", "view_prizes_and_winning_numbers AS 'view_prizes_&_winning_numbers'", implode(", ", $activityKeys));
                 $sql = str_replace('view_prizes_&_winning_numbers', 'view_prizes_and_winning_numbers', $sql);
-                $activities = DB::table(DB::raw('(' . $sql . ') as a'))->selectRaw($keys);
+                $activities = DB::table(DB::raw('(' . $sql . ' order by DATE(dt.comp_date) desc) as a'))->selectRaw($keys);
             } else {
-                $activities = DB::table(DB::raw('(' . $sql . ') as a'));
+                $activities = DB::table(DB::raw('(' . $sql . ' order by DATE(dt.comp_date) desc) as a'));
             }
-
-            $activities->orderBy('date', 'dsc');
 
             if ($searchNotAvailable) {
                 $result = null;

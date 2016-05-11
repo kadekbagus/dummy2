@@ -18,3 +18,14 @@
         font-size: 5em;
     }
 }
+
+.vertical-align-middle-outer {
+    height: 100%;
+    width: 100%;
+    display: table;
+    
+    >.vertical-align-middle-inner {
+        display: table-cell;
+        vertical-align: middle;
+    }
+}
