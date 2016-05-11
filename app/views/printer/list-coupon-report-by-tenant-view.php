@@ -154,8 +154,8 @@
 
         <?php
             if ($issuedDateGte != '' && $issuedDateLte != ''){
-                $startDate = $this->printDateTime($issuedDateGte, $timezoneCurrentMall, 'd M Y');
-                $endDate = $this->printDateTime($issuedDateLte, $timezoneCurrentMall, 'd M Y');
+                $startDate = $this->printDateTime($issuedDateGte, '', 'd M Y');
+                $endDate = $this->printDateTime($issuedDateLte, '', 'd M Y');
                 $dateRange = $startDate . ' - ' . $endDate;
                 if ($startDate === $endDate) {
                     $dateRange = $startDate;
@@ -172,8 +172,8 @@
 
         <?php
             if ($redeemedDateGte != '' && $redeemedDateLte != ''){
-                $startDate = $this->printDateTime($redeemedDateGte, $timezoneCurrentMall, 'd M Y');
-                $endDate = $this->printDateTime($redeemedDateLte, $timezoneCurrentMall, 'd M Y');
+                $startDate = $this->printDateTime($redeemedDateGte, '', 'd M Y');
+                $endDate = $this->printDateTime($redeemedDateLte, '', 'd M Y');
                 $dateRange = $startDate . ' - ' . $endDate;
                 if ($startDate === $endDate) {
                     $dateRange = $startDate;
@@ -206,8 +206,8 @@
                 <td><?php echo $row->issued_coupon_code; ?></td>
                 <td><?php echo $row->age; ?></td>
                 <td><?php echo $row->gender; ?></td>
-                <td><?php echo $this->printDateTime($row->issued_date, $timezoneCurrentMall, 'd M Y H:i'); ?></td>
-                <td><?php if (! empty($row->redeemed_date)) { echo $this->printDateTime($row->redeemed_date, $timezoneCurrentMall, 'd M Y H:i'); } else { echo '--'; } ?></td>
+                <td><?php echo $this->printDateTime($row->issued_date, '', 'd M Y H:i'); ?> (UTC)</td>
+                <td><?php if (! empty($row->redeemed_date)) { echo $this->printDateTime($row->redeemed_date, '', 'd M Y H:i') . ' (UTC)'; } else { echo '--'; } ?></td>
                 <td><?php if (! empty($row->redemption_place)) { echo htmlentities($row->redemption_place); } else { echo '--'; } ?></td>
                 <td><?php if ($row->status != 'active') { echo $row->status; } else { echo 'issued'; } ?></td>
             </tr>
