@@ -147,12 +147,12 @@ class TenantImport extends Command {
                 if ($data['facebook_id'] !== '') {
                     $socmedId = SocialMedia::whereSocialMediaCode('facebook')->first()->social_media_id;
 
-                    $merchantSocmed = MerchantSocialMedia::whereMerchantId($merchantId)->whereSocialMediaId($socmedId)->first();
+                    $merchantSocmed = MerchantSocialMedia::whereMerchantId($newtenant->merchant_id)->whereSocialMediaId($socmedId)->first();
 
                     if (!$merchantSocmed) {
                         $merchantSocmed = new MerchantSocialMedia;
                         $merchantSocmed->social_media_id = $socmedId;
-                        $merchantSocmed->merchant_id = $merchantId;
+                        $merchantSocmed->merchant_id = $newtenant->merchant_id;
                     }
 
                     $merchantSocmed->social_media_uri = $data['facebook_id'];
