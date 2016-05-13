@@ -2182,7 +2182,7 @@ class MobileCIAPIController extends BaseCIController
             $tenants = $tenants->active('merchants')
                 ->where('parent_id', $retailer->merchant_id);
 
-            $tenants->select('merchants.*');
+            $tenants->select('merchants.merchant_id', 'floor', 'unit');
 
             $mallid = $retailer->merchant_id;
 
@@ -2440,6 +2440,8 @@ class MobileCIAPIController extends BaseCIController
 
             $this->viewItemUserUpdate('tenant', $user, $retailer);
 
+            $tenants->groupBy('merchants.merchant_id');
+
             $_tenants = clone $tenants;
 
             // Get the take args
@@ -2613,7 +2615,7 @@ class MobileCIAPIController extends BaseCIController
                         ->whereRaw("? between {$prefix}promotions.begin_date and {$prefix}promotions.end_date", [$mallTime])
                         ->groupBy('merchants.name')->get();
 
-            $totalRec = $_tenants->count();
+            $totalRec = RecordCounter::create($_tenants)->count();
             $listOfRec = $tenants->get();
 
             foreach ($listOfRec as $tenant) {
@@ -3285,7 +3287,7 @@ class MobileCIAPIController extends BaseCIController
             $tenants = $tenants->active('merchants')
                 ->where('parent_id', $retailer->merchant_id);
 
-            $tenants->select('merchants.*');
+            $tenants->select('merchants.merchant_id', 'floor', 'unit');
 
             $this->maybeJoinWithTranslationsTable($tenants, $alternateLanguage);
 
@@ -3409,6 +3411,8 @@ class MobileCIAPIController extends BaseCIController
                     }
                 }
             );
+
+            $tenants->groupBy('merchants.merchant_id');
 
             $_tenants = clone $tenants;
 
@@ -3587,7 +3591,7 @@ class MobileCIAPIController extends BaseCIController
                         ->whereRaw("? between {$prefix}promotions.begin_date and {$prefix}promotions.end_date", [$mallTime])
                         ->groupBy('merchants.name')->get();
 
-            $totalRec = $_tenants->count();
+            $totalRec = RecordCounter::create($_tenants)->count();
             $listOfRec = $tenants->get();
 
             foreach ($listOfRec as $tenant) {
