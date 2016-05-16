@@ -215,15 +215,6 @@
     </script>
     {{-- End of Script fallback --}}
 
-    {{ HTML::script(Config::get('orbit.cdn.countdown.2_0_2', 'mobile-ci/scripts/jquery.countdown.min.js')) }}
-    {{-- Script fallback --}}
-    <script>
-        if (typeof $().countdown === 'undefined') {
-            document.write('<script src="{{asset('mobile-ci/scripts/jquery.countdown.min.js')}}">\x3C/script>');
-        }
-    </script>
-    {{-- End of Script fallback --}}
-
     {{ HTML::script(Config::get('orbit.cdn.featherlight.1_0_3', 'mobile-ci/scripts/featherlight.min.js')) }}
     {{-- Script fallback --}}
     <script>
@@ -231,22 +222,83 @@
             document.write('<script src="{{asset('mobile-ci/scripts/featherlight.min.js')}}">\x3C/script>');
         }
     </script>
+    
     {{-- End of Script fallback --}}
+    {{ HTML::script(Config::get('orbit.cdn.moment.2_13_0', 'mobile-ci/scripts/moment.min.js')) }}   
+    {{-- Script fallback --}}
+    <script>
+        if ((typeof moment === 'undefined')) {
+            document.write('<script src="{{asset('mobile-ci/scripts/moment.min.js')}}">\x3C/script>');
+        }
+    </script>
+    {{-- End of Script fallback --}}
+   
+    {{ HTML::script(Config::get('orbit.cdn.moment_timezone_data.0_5_4', 'mobile-ci/scripts/moment-timezone-with-data.min.js')) }}
+    {{-- Script fallback --}}
+    <script>
+        if ((typeof moment.tz === 'undefined')) {
+            document.write('<script src="{{asset('mobile-ci/scripts/moment-timezone-with-data.min.js')}}">\x3C/script>');
+        }
+    </script>
+    {{-- End of Script fallback --}}    
+    
     <script type="text/javascript">
         $(document).ready(function(){
             $('#ldtitle').click(function(){
                 $('#lddetail').modal();
-            })
-
-            $('#clock').countdown({
-                start:$.countdown.UTCDate({{ \Carbon\Carbon::now($retailer->timezone->timezone_name)->offsetHours }}, new Date('{{$servertime}}')),
-                @if(!empty($luckydraw))
-                until:$.countdown.UTCDate({{ \Carbon\Carbon::now($retailer->timezone->timezone_name)->offsetHours }}, new Date('{{{ date('Y/m/d H:i:s', strtotime($luckydraw->end_date)) }}}')),
-                layout: '<span class="countdown-row countdown-show4"><span class="countdown-section"><span class="countdown-amount">{dn}</span><span class="countdown-period">{dl}</span></span><span class="countdown-section"><span class="countdown-amount">{hn}</span><span class="countdown-period">{hl}</span></span><span class="countdown-section"><span class="countdown-amount">{mn}</span><span class="countdown-period">{ml}</span></span><span class="countdown-section"><span class="countdown-amount">{sn}</span><span class="countdown-period">{sl}</span></span></span>'
-                @else
-                layout: '<span class="countdown-row countdown-show4"><span class="countdown-section"><span class="countdown-amount">0</span><span class="countdown-period">{dl}</span></span><span class="countdown-section"><span class="countdown-amount">0</span><span class="countdown-period">{hl}</span></span><span class="countdown-section"><span class="countdown-amount">0</span><span class="countdown-period">{ml}</span></span><span class="countdown-section"><span class="countdown-amount">0</span><span class="countdown-period">{sl}</span></span></span>'
-                @endif
             });
+
+            /**
+             * Custom countdown timer
+             *
+             * we avoid jquery.countdown plugin because countdown is changed when user changed their device date/time
+             * See issue OM-2009
+             * Require: moment.js
+             * @author zamroni@dominopos.com
+             */
+            var countdownTimer = function (timerData, clockElem, timeChangeCallback) {
+                    
+                if (timerData.startDate) {
+                    timerData.startDate.add(1, 'second');
+                }
+                if (timerData.endDate) {
+                    var diff = timerData.endDate.diff(timerData.startDate);
+
+                    if (diff > 0) {
+                        timerData.days = moment.duration(diff).days();
+                        timerData.hours = moment.duration(diff).hours();
+                        timerData.minutes = moment.duration(diff).minutes();
+                        timerData.seconds = moment.duration(diff).seconds();
+                    }
+                }
+
+                timeChangeCallback(timerData, clockElem);
+             };
+
+            var timerInitData = {
+                    startDate : moment.tz('{{ $servertime }}', '{{ $retailer->timezone->timezone_name }}'),
+                    endDate : moment.tz('{{ $luckydraw->end_date }}', '{{ $retailer->timezone->timezone_name }}'),
+                    days : 0,
+                    hours: 0,
+                    minutes : 0,
+                    seconds : 0
+            };
+            
+            var timeChanged = function(timerData, clockElem) {
+                @if(!empty($luckydraw))
+                    var days = timerData.days < 10 ? '0' + timerData.days : timerData.days;
+                    var hours = timerData.hours < 10 ? '0' + timerData.hours : timerData.hours;
+                    var minutes = timerData.minutes < 10 ? '0' + timerData.minutes : timerData.minutes;
+                    var seconds = timerData.seconds < 10 ? '0' + timerData.seconds : timerData.seconds;
+                    var template = '<span class="countdown-row countdown-show4"><span class="countdown-section"><span class="countdown-amount">'+days+'</span><span class="countdown-period">Days</span></span><span class="countdown-section"><span class="countdown-amount">' + hours + '</span><span class="countdown-period">Hours</span></span><span class="countdown-section"><span class="countdown-amount">' + minutes + '</span><span class="countdown-period">Minutes</span></span><span class="countdown-section"><span class="countdown-amount">' + seconds + '</span><span class="countdown-period">Seconds</span></span></span>';
+                @else
+                    var template = '<span class="countdown-row countdown-show4"><span class="countdown-section"><span class="countdown-amount">0</span><span class="countdown-period">Days</span></span><span class="countdown-section"><span class="countdown-amount">0</span><span class="countdown-period">Hours</span></span><span class="countdown-section"><span class="countdown-amount">0</span><span class="countdown-period">Minutes</span></span><span class="countdown-section"><span class="countdown-amount">0</span><span class="countdown-period">Seconds</span></span></span>';
+                @endif
+                
+                clockElem.html(template);
+            };
+            
+            setInterval(countdownTimer, 1000, timerInitData, $('#clock'), timeChanged);
 
             $('#datenow').text(new Date().toDateString() + ' ' + new Date().getHours() + ':' + new Date().getMinutes());
 
