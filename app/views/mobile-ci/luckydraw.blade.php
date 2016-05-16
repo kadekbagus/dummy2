@@ -252,6 +252,7 @@
              * Custom countdown timer
              *
              * we avoid jquery.countdown plugin because countdown is changed when user changed their device date/time
+             * This is because jquery.countdown use Javascript Date which use device current date/time
              * See issue OM-2009
              * Require: moment.js
              * @author zamroni@dominopos.com
