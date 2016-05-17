@@ -265,11 +265,11 @@
              */
             var countdownTimer = function (timerData, clockElem, timeChangeCallback) {
                     
-                if (timerData.startDate) {
-                    timerData.startDate.add(1, 'second');
+                if (timerData.currentDateTime) {
+                    timerData.currentDateTime.add(1, 'second');
                 }
-                if (timerData.endDate) {
-                    var diff = timerData.endDate.diff(timerData.startDate);
+                if (timerData.luckydrawEndDateTime) {
+                    var diff = timerData.luckydrawEndDateTime.diff(timerData.currentDateTime);
 
                     if (diff > 0) {
                         timerData.days = moment.duration(diff).days();
@@ -288,8 +288,8 @@
              };
 
             var timerInitData = {
-                    startDate : moment.tz('{{ $servertime }}', '{{ $retailer->timezone->timezone_name }}'),
-                    endDate : moment.tz('{{ $luckydraw->end_date }}', '{{ $retailer->timezone->timezone_name }}'),
+                    currentDateTime : moment.tz('{{ $servertime }}', '{{ $retailer->timezone->timezone_name }}'),
+                    luckydrawEndDateTime : moment.tz('{{ $luckydraw->end_date }}', '{{ $retailer->timezone->timezone_name }}'),
                     days : 0,
                     hours: 0,
                     minutes : 0,
@@ -305,7 +305,7 @@
                 clockElem.html(template);
             };
             
-            countdownTimer(timerInitdata, $('#clock'), timeChanged);
+            countdownTimer(timerInitData, $('#clock'), timeChanged);
             setInterval(countdownTimer, 1000, timerInitData, $('#clock'), timeChanged);
           @else
               {{-- if lucky draw is empty we just display static element --}}
