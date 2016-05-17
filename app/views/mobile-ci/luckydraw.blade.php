@@ -276,6 +276,11 @@
                         timerData.hours = moment.duration(diff).hours();
                         timerData.minutes = moment.duration(diff).minutes();
                         timerData.seconds = moment.duration(diff).seconds();
+                    } else {
+                        timerData.days = 0;
+                        timerData.hours = 0;
+                        timerData.minutes = 0;
+                        timerData.seconds = 0;
                     }
                 }
 
@@ -300,6 +305,7 @@
                 clockElem.html(template);
             };
             
+            countdownTimer(timerInitdata, $('#clock'), timeChanged);
             setInterval(countdownTimer, 1000, timerInitData, $('#clock'), timeChanged);
           @else
               {{-- if lucky draw is empty we just display static element --}}
