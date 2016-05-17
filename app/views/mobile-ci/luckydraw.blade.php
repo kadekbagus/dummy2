@@ -221,26 +221,30 @@
         if (typeof $().featherlight === 'undefined') {
             document.write('<script src="{{asset('mobile-ci/scripts/featherlight.min.js')}}">\x3C/script>');
         }
-    </script>
+    </script>    
+    {{-- End of Script fallback --}}
     
-    {{-- End of Script fallback --}}
-    {{ HTML::script(Config::get('orbit.cdn.moment.2_13_0', 'mobile-ci/scripts/moment.min.js')) }}   
-    {{-- Script fallback --}}
-    <script>
-        if ((typeof moment === 'undefined')) {
-            document.write('<script src="{{asset('mobile-ci/scripts/moment.min.js')}}">\x3C/script>');
-        }
-    </script>
-    {{-- End of Script fallback --}}
+    @if (!empty($luckydraw))
+       {{-- we only use moment.js to display countdown timer --}}
+       
+       {{ HTML::script(Config::get('orbit.cdn.moment.2_13_0', 'mobile-ci/scripts/moment.min.js')) }}   
+       {{-- Script fallback --}}
+       <script>
+          if ((typeof moment === 'undefined')) {
+              document.write('<script src="{{asset('mobile-ci/scripts/moment.min.js')}}">\x3C/script>');
+          }
+       </script>
+       {{-- End of Script fallback --}}
    
-    {{ HTML::script(Config::get('orbit.cdn.moment_timezone_data.0_5_4', 'mobile-ci/scripts/moment-timezone-with-data.min.js')) }}
-    {{-- Script fallback --}}
-    <script>
-        if ((typeof moment.tz === 'undefined')) {
-            document.write('<script src="{{asset('mobile-ci/scripts/moment-timezone-with-data.min.js')}}">\x3C/script>');
-        }
-    </script>
-    {{-- End of Script fallback --}}    
+       {{ HTML::script(Config::get('orbit.cdn.moment_timezone_data.0_5_4', 'mobile-ci/scripts/moment-timezone-with-data.min.js')) }}
+       {{-- Script fallback --}}
+       <script>
+          if ((typeof moment.tz === 'undefined')) {
+              document.write('<script src="{{asset('mobile-ci/scripts/moment-timezone-with-data.min.js')}}">\x3C/script>');
+          }
+       </script>
+       {{-- End of Script fallback --}}
+    @endif
     
     <script type="text/javascript">
         $(document).ready(function(){
@@ -248,6 +252,8 @@
                 $('#lddetail').modal();
             });
 
+        @if(!empty($luckydraw))
+           {{-- we only display countdown timer when there is valid lucky draw --}}
             /**
              * Custom countdown timer
              *
@@ -286,20 +292,21 @@
             };
             
             var timeChanged = function(timerData, clockElem) {
-                @if(!empty($luckydraw))
-                    var days = timerData.days < 10 ? '0' + timerData.days : timerData.days;
-                    var hours = timerData.hours < 10 ? '0' + timerData.hours : timerData.hours;
-                    var minutes = timerData.minutes < 10 ? '0' + timerData.minutes : timerData.minutes;
-                    var seconds = timerData.seconds < 10 ? '0' + timerData.seconds : timerData.seconds;
-                    var template = '<span class="countdown-row countdown-show4"><span class="countdown-section"><span class="countdown-amount">'+days+'</span><span class="countdown-period">Days</span></span><span class="countdown-section"><span class="countdown-amount">' + hours + '</span><span class="countdown-period">Hours</span></span><span class="countdown-section"><span class="countdown-amount">' + minutes + '</span><span class="countdown-period">Minutes</span></span><span class="countdown-section"><span class="countdown-amount">' + seconds + '</span><span class="countdown-period">Seconds</span></span></span>';
-                @else
-                    var template = '<span class="countdown-row countdown-show4"><span class="countdown-section"><span class="countdown-amount">0</span><span class="countdown-period">Days</span></span><span class="countdown-section"><span class="countdown-amount">0</span><span class="countdown-period">Hours</span></span><span class="countdown-section"><span class="countdown-amount">0</span><span class="countdown-period">Minutes</span></span><span class="countdown-section"><span class="countdown-amount">0</span><span class="countdown-period">Seconds</span></span></span>';
-                @endif
-                
+                var days = timerData.days < 10 ? '0' + timerData.days : timerData.days;
+                var hours = timerData.hours < 10 ? '0' + timerData.hours : timerData.hours;
+                var minutes = timerData.minutes < 10 ? '0' + timerData.minutes : timerData.minutes;
+                var seconds = timerData.seconds < 10 ? '0' + timerData.seconds : timerData.seconds;
+                var template = '<span class="countdown-row countdown-show4"><span class="countdown-section"><span class="countdown-amount">'+days+'</span><span class="countdown-period">Days</span></span><span class="countdown-section"><span class="countdown-amount">' + hours + '</span><span class="countdown-period">Hours</span></span><span class="countdown-section"><span class="countdown-amount">' + minutes + '</span><span class="countdown-period">Minutes</span></span><span class="countdown-section"><span class="countdown-amount">' + seconds + '</span><span class="countdown-period">Seconds</span></span></span>';
                 clockElem.html(template);
             };
             
             setInterval(countdownTimer, 1000, timerInitData, $('#clock'), timeChanged);
+          @else
+              {{-- if lucky draw is empty we just display static element --}}
+              var template = '<span class="countdown-row countdown-show4"><span class="countdown-section"><span class="countdown-amount">0</span><span class="countdown-period">Days</span></span><span class="countdown-section"><span class="countdown-amount">0</span><span class="countdown-period">Hours</span></span><span class="countdown-section"><span class="countdown-amount">0</span><span class="countdown-period">Minutes</span></span><span class="countdown-section"><span class="countdown-amount">0</span><span class="countdown-period">Seconds</span></span></span>';
+              $('#clock').(template);
+          @endif
+            
 
             $('#datenow').text(new Date().toDateString() + ' ' + new Date().getHours() + ':' + new Date().getMinutes());
 
