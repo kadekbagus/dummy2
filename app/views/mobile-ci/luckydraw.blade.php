@@ -254,59 +254,126 @@
 
         @if(!empty($luckydraw))
            {{-- we only display countdown timer when there is valid lucky draw --}}
-            /**
-             * Custom countdown timer
+
+           {{-- 
+            
+             *  Accurate setTimeInterval replacement
+             *  See related issue OM-2009 in Dominopos JIRA 
+             *  Modified version of https://gist.github.com/manast/1185904
+                 
+             *  Issue with original code:
+             *  if user change their device date/time setting for example due
+             *  timezone change, nextTick calculation may cause nextTick to 
+             *  become very large or very small thus interval will break.
+             *  (Note: JavaScript Date always use current device date time)
              *
-             * we avoid jquery.countdown plugin because countdown is changed when user changed their device date/time
-             * This is because jquery.countdown use Javascript Date which use device current date/time
-             * See issue OM-2009
-             * Require: moment.js
-             * @author zamroni@dominopos.com
-             */
-            var countdownTimer = function (timerData, clockElem, timeChangeCallback) {
-                    
-                if (timerData.currentDateTime) {
-                    timerData.currentDateTime.add(1, 'second');
-                }
-                if (timerData.luckydrawEndDateTime) {
-                    var diff = timerData.luckydrawEndDateTime.diff(timerData.currentDateTime);
+             *  Modified version detect if nextTick is not between threshold value then
+             *  we will call syncNeededCallback() and let application handle it.
+             *
+            
+           --}}
+           function interval(duration, intervalCallback, syncNeededCallback) {
+               //5 seconds threshold
+               const THRESHOLD_MS = 5000;
+               this.baseline = undefined;
+               
+               var isWithinThreshold = function (tick) {
+                   var diff = tick - THRESHOLD_MS;
+                   return !((diff < -THRESHOLD_MS) || (diff > THRESHOLD_MS));
+               };
+               
+               this.run = function () {
+                   if (this.baseline === undefined) {
+                       this.baseline = new Date().getTime()
+                   };
+                  
+                   var end = new Date().getTime();
+                   var deltaTime = end - this.baseline;
+                   
+                   intervalCallback(deltaTime);
+                  
+                   this.baseline += duration;
+           
+                   var nextTick = duration - deltaTime;
+                   
+                   if (isWithinThreshold(nextTick)) {
+                       if (nextTick < 0) {
+                           nextTick = 0;
+                       }
+                   } else {
+                       syncNeededCallback();
+                       //reset baseline
+                       this.baseline = new Date().getTime();
+                       //trigger next setTimeOut immediately
+                       nextTick = 0;
+                   };
+                  
+                   (function(i){
+                       i.timer = setTimeout(function(){
+                           i.run();
+                       }, nextTick);
+                   }(this));
+               }
 
-                    if (diff > 0) {
-                        timerData.days = moment.duration(diff).days();
-                        timerData.hours = moment.duration(diff).hours();
-                        timerData.minutes = moment.duration(diff).minutes();
-                        timerData.seconds = moment.duration(diff).seconds();
-                    } else {
-                        timerData.days = 0;
-                        timerData.hours = 0;
-                        timerData.minutes = 0;
-                        timerData.seconds = 0;
-                    }
-                }
-
-                timeChangeCallback(timerData, clockElem);
-             };
+               this.stop = function(){
+                  clearTimeout(this.timer)
+               }
+            }
 
             var timerInitData = {
-                    currentDateTime : moment.tz('{{ $servertime }}', '{{ $retailer->timezone->timezone_name }}'),
-                    luckydrawEndDateTime : moment.tz('{{ $luckydraw->end_date }}', '{{ $retailer->timezone->timezone_name }}'),
-                    days : 0,
-                    hours: 0,
-                    minutes : 0,
-                    seconds : 0
+                   currentDateTime : moment.tz('{{ $servertime }}', '{{ $retailer->timezone->timezone_name }}'),
+                   luckydrawEndDateTime : moment.tz('{{ $luckydraw->end_date }}', '{{ $retailer->timezone->timezone_name }}'),
+                   days : 0,
+                   hours: 0,
+                   minutes : 0,
+                   seconds : 0
             };
             
-            var timeChanged = function(timerData, clockElem) {
-                var days = timerData.days < 10 ? '0' + timerData.days : timerData.days;
-                var hours = timerData.hours < 10 ? '0' + timerData.hours : timerData.hours;
-                var minutes = timerData.minutes < 10 ? '0' + timerData.minutes : timerData.minutes;
-                var seconds = timerData.seconds < 10 ? '0' + timerData.seconds : timerData.seconds;
-                var template = '<span class="countdown-row countdown-show4"><span class="countdown-section"><span class="countdown-amount">'+days+'</span><span class="countdown-period">Days</span></span><span class="countdown-section"><span class="countdown-amount">' + hours + '</span><span class="countdown-period">Hours</span></span><span class="countdown-section"><span class="countdown-amount">' + minutes + '</span><span class="countdown-period">Minutes</span></span><span class="countdown-section"><span class="countdown-amount">' + seconds + '</span><span class="countdown-period">Seconds</span></span></span>';
-                clockElem.html(template);
+            var timerCallback = function(deltaTime) {
+                if (timerInitData.currentDateTime) {
+                    timerInitData.currentDateTime.add(1, 'second');
+                }
+                if (timerInitData.luckydrawEndDateTime) {
+                    var diff = timerInitData.luckydrawEndDateTime.diff(timerInitData.currentDateTime);
+
+                    if (diff > 0) {
+                        timerInitData.days = moment.duration(diff).days();
+                        timerInitData.hours = moment.duration(diff).hours();
+                        timerInitData.minutes = moment.duration(diff).minutes();
+                        timerInitData.seconds = moment.duration(diff).seconds();
+                    } else {
+                        timerInitData.days = 0;
+                        timerInitData.hours = 0;
+                        timerInitData.minutes = 0;
+                        timerInitData.seconds = 0;
+                    }
+                }
+                updateTimerUI(timerInitData, $('#clock'));
             };
             
-            countdownTimer(timerInitData, $('#clock'), timeChanged);
-            setInterval(countdownTimer, 1000, timerInitData, $('#clock'), timeChanged);
+            var updateTimerUI = function(timerData, clockElem) {
+                    var days = timerData.days < 10 ? '0' + timerData.days : timerData.days;
+                    var hours = timerData.hours < 10 ? '0' + timerData.hours : timerData.hours;
+                    var minutes = timerData.minutes < 10 ? '0' + timerData.minutes : timerData.minutes;
+                    var seconds = timerData.seconds < 10 ? '0' + timerData.seconds : timerData.seconds;
+                    var template = '<span class="countdown-row countdown-show4"><span class="countdown-section"><span class="countdown-amount">'+days+'</span><span class="countdown-period">Days</span></span><span class="countdown-section"><span class="countdown-amount">' + hours + '</span><span class="countdown-period">Hours</span></span><span class="countdown-section"><span class="countdown-amount">' + minutes + '</span><span class="countdown-period">Minutes</span></span><span class="countdown-section"><span class="countdown-amount">' + seconds + '</span><span class="countdown-period">Seconds</span></span></span>';
+                    clockElem.html(template);
+            };
+            
+            var syncDateTimeWithServer = function () {
+                $.get(apiPath + 'server-time?format=Y-m-d%20H:i:s', function (data, status) {
+                    if (data.code === 0) {
+                        //API always return date with UTC timezone so 
+                        //we need to convert to mall timezone
+                        var serverTime = moment.tz(data.data, 'UTC');
+                        timerInitData.currentDateTime = serverTime.tz('{{ $retailer->timezone->timezone_name }}');
+                    }
+                });
+            };
+            
+            var timer = new interval(1000, timerCallback, syncDateTimeWithServer);
+            timer.run();
+            
           @else
               {{-- if lucky draw is empty we just display static element --}}
               var template = '<span class="countdown-row countdown-show4"><span class="countdown-section"><span class="countdown-amount">0</span><span class="countdown-period">Days</span></span><span class="countdown-section"><span class="countdown-amount">0</span><span class="countdown-period">Hours</span></span><span class="countdown-section"><span class="countdown-amount">0</span><span class="countdown-period">Minutes</span></span><span class="countdown-section"><span class="countdown-amount">0</span><span class="countdown-period">Seconds</span></span></span>';
