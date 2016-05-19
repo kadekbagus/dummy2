@@ -292,7 +292,7 @@
                    this.baseline += duration;
                    var deltaTime = end - this.baseline;
                    
-                   intervalCallback(deltaTime);
+                   intervalCallback(this, deltaTime);
                   
            
                    var nextTick = duration - deltaTime;
@@ -330,7 +330,7 @@
                    seconds : 0
             };
             
-            var timerCallback = function(deltaTime) {
+            var timerCallback = function(intervalObj, deltaTime) {
                 if (timerInitData.currentDateTime) {
                     timerInitData.currentDateTime.add(1, 'second');
                 }
@@ -358,6 +358,11 @@
                     var minutes = timerData.minutes < 10 ? '0' + timerData.minutes : timerData.minutes;
                     var seconds = timerData.seconds < 10 ? '0' + timerData.seconds : timerData.seconds;
                     var template = '<span class="countdown-row countdown-show4"><span class="countdown-section"><span class="countdown-amount">'+days+'</span><span class="countdown-period">Days</span></span><span class="countdown-section"><span class="countdown-amount">' + hours + '</span><span class="countdown-period">Hours</span></span><span class="countdown-section"><span class="countdown-amount">' + minutes + '</span><span class="countdown-period">Minutes</span></span><span class="countdown-section"><span class="countdown-amount">' + seconds + '</span><span class="countdown-period">Seconds</span></span></span>';
+                    
+                    if ((timerData.days === 0) && (timerData.hours ===0) && (timerData.minutes===0) && (timerData.seconds === 0)) {
+                        clockElem.parent().removeClass('active-countdown');
+                        clockElem.parent().addClass('inactive-countdown');
+                    }
                     clockElem.html(template);
             };
             
@@ -372,8 +377,8 @@
                 });
             };
             
-            var timer = new interval(1000, timerCallback, syncDateTimeWithServer);
-            timer.run();
+            var countdownTimer = new interval(1000, timerCallback, syncDateTimeWithServer);
+            countdownTimer.run();
             
           @else
               {{-- if lucky draw is empty we just display static element --}}
