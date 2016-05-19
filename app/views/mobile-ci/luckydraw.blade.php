@@ -319,10 +319,10 @@
                }
 
                this.stop = function(){
-                  clearTimeout(this.timer);
-                  this.ended = true;
+                   clearTimeout(this.timer);
+                   this.ended = true;
                }
-            }
+            };
 
             var timerInitData = {
                    currentDateTime : moment.tz('{{ $servertime }}', '{{ $retailer->timezone->timezone_name }}'),
@@ -333,7 +333,7 @@
                    seconds : 0
             };
 
-            var timerCallback = function(intervalObj, deltaTime) {
+            var timerCallback = function(timerObj, deltaTime) {
                 if (timerInitData.currentDateTime) {
                     timerInitData.currentDateTime.add(1, 'second');
                 }
@@ -350,7 +350,7 @@
                         timerInitData.hours = 0;
                         timerInitData.minutes = 0;
                         timerInitData.seconds = 0;
-                        intervalObj.stop();
+                        timerObj.stop();
                     }
                 }
                 updateTimerUI(timerInitData, $('#clock'));
