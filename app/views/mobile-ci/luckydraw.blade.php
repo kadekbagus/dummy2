@@ -272,6 +272,7 @@
              *
             
            --}}
+           
            function interval(duration, intervalCallback, syncNeededCallback) {
                //5 seconds threshold
                const THRESHOLD_MS = 5000;
@@ -288,11 +289,11 @@
                    };
                   
                    var end = new Date().getTime();
+                   this.baseline += duration;
                    var deltaTime = end - this.baseline;
                    
                    intervalCallback(deltaTime);
                   
-                   this.baseline += duration;
            
                    var nextTick = duration - deltaTime;
                    
