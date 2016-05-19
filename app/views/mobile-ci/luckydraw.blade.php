@@ -277,6 +277,7 @@
                //5 seconds threshold
                const THRESHOLD_MS = 5000;
                this.baseline = undefined;
+               this.ended = false;
                
                var isWithinThreshold = function (tick) {
                    var diff = tick - THRESHOLD_MS;
@@ -293,7 +294,6 @@
                    var deltaTime = end - this.baseline;
                    
                    intervalCallback(this, deltaTime);
-                  
            
                    var nextTick = duration - deltaTime;
                    
@@ -308,16 +308,19 @@
                        //trigger next setTimeOut immediately
                        nextTick = 0;
                    };
-                  
-                   (function(i){
-                       i.timer = setTimeout(function(){
-                           i.run();
-                       }, nextTick);
-                   }(this));
+                   
+                   if (this.ended === false) {
+                       (function(i){
+                           i.timer = setTimeout(function(){
+                               i.run();
+                           }, nextTick);
+                       }(this));
+                   };
                }
 
                this.stop = function(){
-                  clearTimeout(this.timer)
+                  clearTimeout(this.timer);
+                  this.ended = true;
                }
             }
 
@@ -347,6 +350,7 @@
                         timerInitData.hours = 0;
                         timerInitData.minutes = 0;
                         timerInitData.seconds = 0;
+                        intervalObj.stop();
                     }
                 }
                 updateTimerUI(timerInitData, $('#clock'));
