@@ -65,29 +65,33 @@ class ResetPasswordLinkAPIController extends ControllerAPI
             }
 
             // remove all existing reset tokens
-            $existing_tokens = Token::active()
+            $existing_token = Token::active()
                 ->NotExpire()
                 ->where('token_name', 'reset_password')
                 ->where('user_id', $user->user_id)
-                ->get();
-
-            foreach ($existing_tokens as $existing_token) {
-                $existing_token->delete();
-            }
+                ->orderBy('expire', 'desc')
+                ->first();
 
             // Token expiration, fallback to 30 days
             $expireInDays = Config::get('orbit.reset_password.reset_expire', 7);
-
-            // Token Settings
-            $token = new Token();
-            $token->token_name = 'reset_password';
-            $token->token_value = $token->generateToken($email);
-            $token->status = 'active';
-            $token->email = $email;
-            $token->expire = date('Y-m-d H:i:s', strtotime('+' . $expireInDays . ' days'));
-            $token->ip_address = $_SERVER['REMOTE_ADDR'];
-            $token->user_id = $user->user_id;
-            $token->save();
+            if(! is_object($existing_token)) {
+                // create the new token
+                // Token Settings
+                $token = new Token();
+                $token->token_name = 'reset_password';
+                $token->token_value = $token->generateToken($email);
+                $token->status = 'active';
+                $token->email = $email;
+                $token->expire = date('Y-m-d H:i:s', strtotime('+' . $expireInDays . ' days'));
+                $token->ip_address = $_SERVER['REMOTE_ADDR'];
+                $token->user_id = $user->user_id;
+                $token->save();
+            } else {
+                // use the existing one, and extend the expiration date
+                $token = $existing_token;
+                $token->expire = date('Y-m-d H:i:s', strtotime('+' . $expireInDays . ' days'));
+                $token->save();
+            }
 
             // URL Activation link
             $baseUrl = Config::get('orbit.reset_password.reset_base_url');
