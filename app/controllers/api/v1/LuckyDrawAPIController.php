@@ -3957,9 +3957,13 @@ class LuckyDrawAPIController extends ControllerAPI
             // create notification
             foreach ($lucky_draw_announcement->luckyDraw->prizes as $prize) {
                 foreach ($prize->winners as $winner) {
-                    $user_id = $winner->number->user->user_id;
-                    $inbox = new Inbox();
-                    $inbox->addToInbox($user_id, $lucky_draw_announcement, $mall_id, 'lucky_draw_blast');
+                    if (is_object($winner->number)) {
+                        if (is_object($winner->number->user)) {
+                            $user_id = $winner->number->user->user_id;
+                            $inbox = new Inbox();
+                            $inbox->addToInbox($user_id, $lucky_draw_announcement, $mall_id, 'lucky_draw_blast');
+                        }
+                    }
                 }
             }
 
