@@ -145,8 +145,8 @@ return array(
         // enable or disable the google analytics tracking
         'enable_google_analytics' => FALSE,
 
-        // the google analytics ID
-        'google_analytics_id' => 'UA-77535161-1',
+        // the google analytics ID, eg: UA-XXXXXXX-X
+        'google_analytics_id' => '',
     ),
 
     // General contact data
