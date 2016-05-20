@@ -157,6 +157,64 @@ class ResetPasswordAPIController extends ControllerAPI
         return $this->render();
     }
 
+    /**
+     * GET - Check reset password token
+     *
+     * @author Ahmad <ahmad@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param string token (required) - Token
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function getCheckResetPasswordToken()
+    {
+        $this->response = new ResponseProvider();
+        try {
+            $this->registerCustomValidation();
+            $tokenValue = trim(OrbitInput::get('token'));
+            $email = trim(OrbitInput::get('email'));
+
+            $validator = Validator::make(
+                array(
+                    'token_value'   => $tokenValue,
+                    'email'   => $email,
+                ),
+                array(
+                    'token_value'   => 'required|orbit.empty.reset_password.token',
+                    'email'         => 'required|orbit.empty.reset_password.email:' . $tokenValue,
+                )
+            );
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $this->response->message = 'Token OK';
+            $this->response->data = $tokenValue;
+
+        } catch (ACLForbiddenException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+        } catch (InvalidArgsException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+        } catch (Exception $e) {
+            $this->response->code = Status::UNKNOWN_ERROR;
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+        }
+
+        return $this->render();
+    }
 
     protected function registerCustomValidation()
     {
@@ -173,6 +231,31 @@ class ResetPasswordAPIController extends ControllerAPI
             }
 
             App::instance('orbit.empty.reset_password.token', $token);
+
+            return TRUE;
+        });
+
+        // Check the existance of token
+        Validator::extend('orbit.empty.reset_password.email', function ($attribute, $value, $parameters) {
+            $token = Token::active()
+                ->NotExpire()
+                ->where('token_value', $parameters[0])
+                ->where('token_name', 'reset_password')
+                ->first();
+
+            if (empty($token)) {
+                return FALSE;
+            }
+
+            $user = User::where('user_id', $token->user_id)
+                ->where('user_email', $value)
+                ->first();
+
+            if (empty($user)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.empty.reset_password.email', $token);
 
             return TRUE;
         });
