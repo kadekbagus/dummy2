@@ -4,7 +4,6 @@
  * An API controller for managing Mobile CI.
  */
 use Log;
-use Net\MacAddr;
 use Orbit\Helper\Email\MXEmailChecker;
 use Orbit\Helper\Net\Domain;
 use Orbit\Helper\Net\UrlChecker as UrlBlock;
