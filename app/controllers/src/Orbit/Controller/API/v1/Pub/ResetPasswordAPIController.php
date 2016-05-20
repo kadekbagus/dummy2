@@ -243,6 +243,10 @@ class ResetPasswordAPIController extends ControllerAPI
                 ->where('token_name', 'reset_password')
                 ->first();
 
+            if (empty($token)) {
+                return FALSE;
+            }
+
             $user = User::where('user_id', $token->user_id)
                 ->where('user_email', $value)
                 ->first();
