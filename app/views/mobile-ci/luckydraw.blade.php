@@ -215,38 +215,185 @@
     </script>
     {{-- End of Script fallback --}}
 
-    {{ HTML::script(Config::get('orbit.cdn.countdown.2_0_2', 'mobile-ci/scripts/jquery.countdown.min.js')) }}
-    {{-- Script fallback --}}
-    <script>
-        if (typeof $().countdown === 'undefined') {
-            document.write('<script src="{{asset('mobile-ci/scripts/jquery.countdown.min.js')}}">\x3C/script>');
-        }
-    </script>
-    {{-- End of Script fallback --}}
-
     {{ HTML::script(Config::get('orbit.cdn.featherlight.1_0_3', 'mobile-ci/scripts/featherlight.min.js')) }}
     {{-- Script fallback --}}
     <script>
         if (typeof $().featherlight === 'undefined') {
             document.write('<script src="{{asset('mobile-ci/scripts/featherlight.min.js')}}">\x3C/script>');
         }
-    </script>
+    </script>    
     {{-- End of Script fallback --}}
+    
+    @if (!empty($luckydraw))
+       {{-- we only use moment.js to display countdown timer --}}
+       
+       {{ HTML::script(Config::get('orbit.cdn.moment.2_13_0', 'mobile-ci/scripts/moment.min.js')) }}   
+       {{-- Script fallback --}}
+       <script>
+          if ((typeof moment === 'undefined')) {
+              document.write('<script src="{{asset('mobile-ci/scripts/moment.min.js')}}">\x3C/script>');
+          }
+       </script>
+       {{-- End of Script fallback --}}
+   
+       {{ HTML::script(Config::get('orbit.cdn.moment_timezone_data.0_5_4', 'mobile-ci/scripts/moment-timezone-with-data.min.js')) }}
+       {{-- Script fallback --}}
+       <script>
+          if ((typeof moment.tz === 'undefined')) {
+              document.write('<script src="{{asset('mobile-ci/scripts/moment-timezone-with-data.min.js')}}">\x3C/script>');
+          }
+       </script>
+       {{-- End of Script fallback --}}
+    @endif
+    
     <script type="text/javascript">
         $(document).ready(function(){
             $('#ldtitle').click(function(){
                 $('#lddetail').modal();
-            })
-
-            $('#clock').countdown({
-                start:$.countdown.UTCDate({{ \Carbon\Carbon::now($retailer->timezone->timezone_name)->offsetHours }}, new Date('{{$servertime}}')),
-                @if(!empty($luckydraw))
-                until:$.countdown.UTCDate({{ \Carbon\Carbon::now($retailer->timezone->timezone_name)->offsetHours }}, new Date('{{{ date('Y/m/d H:i:s', strtotime($luckydraw->end_date)) }}}')),
-                layout: '<span class="countdown-row countdown-show4"><span class="countdown-section"><span class="countdown-amount">{dn}</span><span class="countdown-period">{dl}</span></span><span class="countdown-section"><span class="countdown-amount">{hn}</span><span class="countdown-period">{hl}</span></span><span class="countdown-section"><span class="countdown-amount">{mn}</span><span class="countdown-period">{ml}</span></span><span class="countdown-section"><span class="countdown-amount">{sn}</span><span class="countdown-period">{sl}</span></span></span>'
-                @else
-                layout: '<span class="countdown-row countdown-show4"><span class="countdown-section"><span class="countdown-amount">0</span><span class="countdown-period">{dl}</span></span><span class="countdown-section"><span class="countdown-amount">0</span><span class="countdown-period">{hl}</span></span><span class="countdown-section"><span class="countdown-amount">0</span><span class="countdown-period">{ml}</span></span><span class="countdown-section"><span class="countdown-amount">0</span><span class="countdown-period">{sl}</span></span></span>'
-                @endif
             });
+
+        @if(!empty($luckydraw))
+           {{-- we only display countdown timer when there is valid lucky draw --}}
+
+           {{-- 
+            
+             *  Accurate setTimeInterval replacement
+             *  See related issue OM-2009 in Dominopos JIRA 
+             *  Modified version of https://gist.github.com/manast/1185904
+                 
+             *  Issue with original code:
+             *  if user change their device date/time setting for example due
+             *  timezone change, nextTick calculation may cause nextTick to 
+             *  become very large or very small thus interval will break.
+             *  (Note: JavaScript Date always use current device date time)
+             *
+             *  Modified version detect if nextTick is not between threshold value then
+             *  we will call syncNeededCallback() and let application handle it.
+             *
+            
+           --}}
+           
+           function interval(duration, intervalCallback, syncNeededCallback) {
+               //5 seconds threshold
+               const THRESHOLD_MS = 5000;
+               this.baseline = undefined;
+               this.ended = false;
+               
+               var isWithinThreshold = function (tick) {
+                   var diff = tick - THRESHOLD_MS;
+                   return !((diff < -THRESHOLD_MS) || (diff > THRESHOLD_MS));
+               };
+               
+               this.run = function () {
+                   if (this.baseline === undefined) {
+                       this.baseline = new Date().getTime()
+                   };
+                  
+                   var end = new Date().getTime();
+                   this.baseline += duration;
+                   var deltaTime = end - this.baseline;
+                   
+                   intervalCallback(this, deltaTime);
+           
+                   var nextTick = duration - deltaTime;
+                   
+                   if (isWithinThreshold(nextTick)) {
+                       if (nextTick < 0) {
+                           nextTick = 0;
+                       }
+                   } else {
+                       syncNeededCallback();
+                       //reset baseline
+                       this.baseline = new Date().getTime();
+                       //trigger next setTimeOut immediately
+                       nextTick = 0;
+                   };
+                   
+                   if (this.ended === false) {
+                       (function(i){
+                           i.timer = setTimeout(function(){
+                               i.run();
+                           }, nextTick);
+                       }(this));
+                   };
+               }
+
+               this.stop = function(){
+                   clearTimeout(this.timer);
+                   this.ended = true;
+               }
+            };
+
+            var timerInitData = {
+                   currentDateTime : moment.tz('{{ $servertime }}', '{{ $retailer->timezone->timezone_name }}'),
+                   luckydrawEndDateTime : moment.tz('{{ $luckydraw->end_date }}', '{{ $retailer->timezone->timezone_name }}'),
+                   days : 0,
+                   hours: 0,
+                   minutes : 0,
+                   seconds : 0
+            };
+
+            var timerCallback = function(timerObj, deltaTime) {
+                if (timerInitData.currentDateTime) {
+                    timerInitData.currentDateTime.add(1, 'second');
+                }
+                if (timerInitData.luckydrawEndDateTime) {
+                    var diff = timerInitData.luckydrawEndDateTime.diff(timerInitData.currentDateTime);
+
+                    if (diff > 0) {
+                        timerInitData.days = moment.duration(diff).days();
+                        timerInitData.hours = moment.duration(diff).hours();
+                        timerInitData.minutes = moment.duration(diff).minutes();
+                        timerInitData.seconds = moment.duration(diff).seconds();
+                    } else {
+                        timerInitData.days = 0;
+                        timerInitData.hours = 0;
+                        timerInitData.minutes = 0;
+                        timerInitData.seconds = 0;
+                        timerObj.stop();
+                    }
+                }
+                updateTimerUI(timerInitData, $('#clock'));
+            };
+            
+            var updateTimerUI = function(timerData, clockElem) {
+                    var days = timerData.days < 10 ? '0' + timerData.days : timerData.days;
+                    var hours = timerData.hours < 10 ? '0' + timerData.hours : timerData.hours;
+                    var minutes = timerData.minutes < 10 ? '0' + timerData.minutes : timerData.minutes;
+                    var seconds = timerData.seconds < 10 ? '0' + timerData.seconds : timerData.seconds;
+                    var template = '<span class="countdown-row countdown-show4"><span class="countdown-section"><span class="countdown-amount">'+days+
+                                   '</span><span class="countdown-period">Days</span></span><span class="countdown-section"><span class="countdown-amount">' + hours +
+                                   '</span><span class="countdown-period">Hours</span></span><span class="countdown-section"><span class="countdown-amount">' + minutes +
+                                   '</span><span class="countdown-period">Minutes</span></span><span class="countdown-section"><span class="countdown-amount">' + seconds +
+                                   '</span><span class="countdown-period">Seconds</span></span></span>';
+                    
+                    if ((timerData.days === 0) && (timerData.hours ===0) && (timerData.minutes===0) && (timerData.seconds === 0)) {
+                        clockElem.parent().removeClass('active-countdown');
+                        clockElem.parent().addClass('inactive-countdown');
+                    }
+                    clockElem.html(template);
+            };
+            
+            var syncDateTimeWithServer = function () {
+                $.get(apiPath + 'server-time?format=Y-m-d%20H:i:s', function (data, status) {
+                    if (data.code === 0) {
+                        //API always return date with UTC timezone so 
+                        //we need to convert to mall timezone
+                        var serverTime = moment.tz(data.data, 'UTC');
+                        timerInitData.currentDateTime = serverTime.tz('{{ $retailer->timezone->timezone_name }}');
+                    }
+                });
+            };
+            
+            var countdownTimer = new interval(1000, timerCallback, syncDateTimeWithServer);
+            countdownTimer.run();
+            
+          @else
+              {{-- if lucky draw is empty we just display static element --}}
+              var template = '<span class="countdown-row countdown-show4"><span class="countdown-section"><span class="countdown-amount">0</span><span class="countdown-period">Days</span></span><span class="countdown-section"><span class="countdown-amount">0</span><span class="countdown-period">Hours</span></span><span class="countdown-section"><span class="countdown-amount">0</span><span class="countdown-period">Minutes</span></span><span class="countdown-section"><span class="countdown-amount">0</span><span class="countdown-period">Seconds</span></span></span>';
+              $('#clock').html(template);
+          @endif
+            
 
             $('#datenow').text(new Date().toDateString() + ' ' + new Date().getHours() + ':' + new Date().getMinutes());
 
