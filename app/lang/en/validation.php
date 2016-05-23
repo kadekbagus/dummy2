@@ -310,8 +310,9 @@ return array(
             'country' => 'Country does not on list',
             'email' => 'Email you specified is not found',
             'reset_password' => array(
-                     'token' => 'Token you specified is not found',
-                ),
+                'token' => 'Token you specified is not found',
+                'email' => 'Email missmatch'
+            ),
             'forgot_email' => 'We couldn\'t find an account associated with :email_addr',
             'default_language' => 'Campaign content in mall default language is required',
             'english_language' => 'Campaign content in English language is required',
