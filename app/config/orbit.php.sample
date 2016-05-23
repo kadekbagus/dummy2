@@ -3,6 +3,9 @@
  * Orbit specific configuraiton.
  */
 return array(
+    // Demo environtment
+    'is_demo' => FALSE,
+
     // route names that need authentication to be accessed
     'blocked_routes' => [
         // all route names
