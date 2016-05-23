@@ -33,11 +33,11 @@ class MallAreaAPIController extends ControllerAPI
     {
         $httpCode = 200;
         try {
-
             $area = OrbitInput::get('area', null);
 
-            $malls = Mall::excludeDeleted()
-                        ->select('merchants.*')
+            $usingDemo = Config::get('orbit.is_demo', FALSE);
+            
+            $malls = Mall::select('merchants.*')
                         ->includeLatLong()
                         ->includeDummyOpeningHours()
                         ->InsideMapArea($area);
@@ -46,6 +46,13 @@ class MallAreaAPIController extends ControllerAPI
             OrbitInput::get('mall_id', function ($mallid) use ($malls) {
                 $malls->where('merchants.merchant_id', $mallid);
             });
+
+            if ($usingDemo) {
+                $malls->excludeDeleted();
+            } else {
+                // Production
+                $malls->active();
+            }
 
             $_malls = clone $malls;
 
