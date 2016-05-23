@@ -28,9 +28,18 @@
             <directory>./app/tests/uuid</directory>
         </testsuite>
 
+        <testsuite name="Mall Geolocation">
+            <file>./app/tests/api/v1/mall/getSearchMallNearbyTest.php</file>
+            <file>./app/tests/api/v1/mall/getMallAreaTest.php</file>
+            <file>./app/tests/api/v1/mall/getMallFenceTest.php</file>
+        </testsuite>
+
         <testsuite name="Orbit 2.2">
             <directory>./app/tests/acl</directory>
             <directory>./app/tests/uploader</directory>
+            <file>./app/tests/api/v1/mall/getSearchMallNearbyTest.php</file>
+            <file>./app/tests/api/v1/mall/getMallAreaTest.php</file>
+            <file>./app/tests/api/v1/mall/getMallFenceTest.php</file>
         </testsuite>
     </testsuites>
 </phpunit>
