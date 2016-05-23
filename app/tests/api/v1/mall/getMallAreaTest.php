@@ -15,7 +15,7 @@ class getMallAreaTest extends TestCase
     public function setUp()
     {
         parent::setUp();
-        $_SERVER['HTTP_HOST'] = 'example2.com';
+        Config::set('orbit.is_demo', FALSE);
 
         $_GET = [];
     }
@@ -146,6 +146,8 @@ class getMallAreaTest extends TestCase
         $antartica2->name = 'Beruang Hutan';
         $antartica2->status = 'active';
         $antartica2->save();
+
+        Config::set('orbit.is_demo', TRUE);
 
         $response = $this->call('GET', $this->baseUrl)->getContent();
         $response = json_decode($response);

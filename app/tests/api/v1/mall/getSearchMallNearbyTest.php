@@ -17,7 +17,7 @@ class getSearchMallNearBy extends TestCase
     public function setUp()
     {
         parent::setUp();
-        $_SERVER['HTTP_HOST'] = 'example2.com';
+        Config::set('orbit.is_demo', FALSE);
         
         $_GET = [];
     }
@@ -265,6 +265,8 @@ class getSearchMallNearBy extends TestCase
         $_GET['longitude'] = $this->myAntarticaLocation[1];
         // The distance to the antartica 2 is 610.xx
         $_GET['distance'] = 611;
+
+        Config::set('orbit.is_demo', TRUE);
 
         $url = $this->baseUrl . '?' . http_build_query($_GET);
 

@@ -16,7 +16,7 @@ class getMallFenceTest extends TestCase
     public function setUp()
     {
         parent::setUp();
-        $_SERVER['HTTP_HOST'] = 'example2.com';
+        Config::set('orbit.is_demo', FALSE);
         $_GET = [];
     }
 
@@ -119,6 +119,8 @@ class getMallFenceTest extends TestCase
 
         $_GET['latitude'] = -76.099223;
         $_GET['longitude'] = 28.738754;
+
+        Config::set('orbit.is_demo', TRUE);
 
         $response = $this->call('GET', $this->baseUrl)->getContent();
         $response = json_decode($response);
