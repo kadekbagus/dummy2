@@ -48,7 +48,7 @@ class UrlChecker
                 $this->session = new Session($config);
                 $this->session->start(array(), 'no-session-creation');
             } catch (Exception $e) {
-                $this->session->start();   
+                $this->session->start();
             }
         }
     }

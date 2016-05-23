@@ -531,5 +531,23 @@ return array(
     'campaign_cards' => array(
         'go_to_page' => 'Buka halaman',
     ),
+
+    'captive'   => array(
+        'request_internet' => array(
+            'title'     => 'GRATIS Internet',
+            'heading'   => 'GRANTIS Akses Internet!',
+            'message'   => 'By connecting to our Wi-Fi you are agree to our terms and conditions. Click button below to get free internet access.',
+            'button'    => 'Get FREE Internet Access!',
+            'check_connection' => 'Checking internet connection please wait...',
+            'too_long' => 'If it takes too long try to refresh your browser.'
+        ),
+        'granted' => array(
+            'title'     => 'Terkoneksi ke WiFi',
+            'heading'   => 'Anda Telah Terkoneksi',
+            'message'   => 'Halo,<br>Anda telah mendapatkan akses internet gratis. Apakah anda tertarik untuk melihat promosi hari ini?',
+            'button'    => 'OK, Tunjukkan!'
+        ),
+        'widget_slogan' => 'Internet GRATIS!'
+    )
 );
 
