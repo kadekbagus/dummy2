@@ -37,8 +37,26 @@ class MallFenceAPIController extends ControllerAPI
 
             $lat = OrbitInput::get('latitude', null);
             $long = OrbitInput::get('longitude', null);
+            $hostname = OrbitInput::get('hostname', $_SERVER['HTTP_HOST']);
 
-            $malls = Mall::excludeDeleted()->select('merchants.*')->includeLatLong()->InsideArea($lat, $long);
+            $demoDomains = Config::get('orbit.demo_domain');
+            $usingDemo = FALSE;
+
+            $malls = Mall::select('merchants.*')->includeLatLong()->InsideArea($lat, $long);
+
+            foreach ($demoDomains as $domain) {
+                $pattern = "/$domain\$/";
+                if (preg_match($pattern, $hostname)) {
+                    $usingDemo = TRUE;
+                }
+            }
+
+            if ($usingDemo) {
+                $malls->excludeDeleted();
+            } else {
+                // Production
+                $malls->active();
+            }
 
             // Filter by mall_id
             OrbitInput::get('mall_id', function ($mallid) use ($malls) {
