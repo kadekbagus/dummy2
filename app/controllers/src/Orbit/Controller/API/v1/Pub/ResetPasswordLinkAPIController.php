@@ -73,7 +73,7 @@ class ResetPasswordLinkAPIController extends ControllerAPI
                 ->first();
 
             // Token expiration, fallback to 30 days
-            $expireInDays = Config::get('orbit.reset_password.reset_expire', 7);
+            $expireInDays = Config::get('orbit.reset_password.reset_expire', 1);
             if(! is_object($existing_token)) {
                 // create the new token
                 // Token Settings
