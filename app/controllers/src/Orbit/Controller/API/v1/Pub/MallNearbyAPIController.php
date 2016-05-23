@@ -37,16 +37,34 @@ class MallNearbyAPIController extends ControllerAPI
         try {
             $lat = OrbitInput::get('latitude', null);
             $long = OrbitInput::get('longitude', null);
+            $hostname = OrbitInput::get('hostname', $_SERVER['HTTP_HOST']);
             $distance = OrbitInput::get('distance');
 
             if (empty($distance)) {
                 $distance = Config::get('orbit.geo_location.distance', 10);
             }
 
-            $malls = Mall::excludeDeleted()->select('merchants.*')
+            $demoDomains = Config::get('orbit.demo_domain');
+            $usingDemo = FALSE;
+
+            $malls = Mall::select('merchants.*')
                          ->includeLatLong()
                          ->includeDummyOpeningHours()   // @Todo: Remove this in the future
                          ->join('merchant_geofences', 'merchant_geofences.merchant_id', '=', 'merchants.merchant_id');
+
+            foreach ($demoDomains as $domain) {
+                $pattern = "/$domain\$/";
+                if (preg_match($pattern, $hostname)) {
+                    $usingDemo = TRUE;
+                }
+            }
+
+            if ($usingDemo) {
+                $malls->excludeDeleted();
+            } else {
+                // Production
+                $malls->active();
+            }
                          
             $callNearBy = TRUE;
 

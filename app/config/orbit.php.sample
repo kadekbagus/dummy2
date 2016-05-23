@@ -3,6 +3,9 @@
  * Orbit specific configuraiton.
  */
 return array(
+    // list of demo domain name, to get different mall data in maps
+    'demo_domain' => ['example1.com', 'example2.com'],
+
     // route names that need authentication to be accessed
     'blocked_routes' => [
         // all route names

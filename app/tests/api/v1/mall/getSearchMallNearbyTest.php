@@ -17,7 +17,8 @@ class getSearchMallNearBy extends TestCase
     public function setUp()
     {
         parent::setUp();
-
+        $_SERVER['HTTP_HOST'] = 'example2.com';
+        
         $_GET = [];
     }
 
@@ -213,5 +214,64 @@ class getSearchMallNearBy extends TestCase
         // The first mall should be Beruang Hutan, because by searching
         // by keyword will trigger sorting by name
         $this->assertSame('Beruang Kutub', $response->data->records[0]->name);
+    }
+
+    public function testOK_Get_Mall_NearBy_With_Production_Host_Name()
+    {
+        $geofence = Factory::create('MerchantGeofence');
+        $geofence2 = Factory::create('MerchantGeofence_Antartica2');
+
+        $antartica1 = $geofence->mall;
+        $antartica1->name = 'Beruang Kutub';
+        $antartica1->status = 'inactive';
+        $antartica1->save();
+
+        $antartica2 = $geofence2->mall;
+        $antartica2->name = 'Beruang Hutan';
+        $antartica2->status = 'active';
+        $antartica2->save();
+
+        $_GET['latitude'] = $this->myAntarticaLocation[0];
+        $_GET['longitude'] = $this->myAntarticaLocation[1];
+        $_GET['hostname'] = 'example3.com';
+        // The distance to the antartica 2 is 610.xx
+        $_GET['distance'] = 611;
+
+        $url = $this->baseUrl . '?' . http_build_query($_GET);
+
+        $response = $this->call('GET', $url)->getContent();
+        $response = json_decode($response);
+        
+        $this->assertSame(Status::OK, (int)$response->code);
+        $this->assertSame(1, (int)$response->data->total_records);
+    }
+
+    public function testOK_Get_Mall_NearBy_With_Demo_Host_Name()
+    {
+        $geofence = Factory::create('MerchantGeofence');
+        $geofence2 = Factory::create('MerchantGeofence_Antartica2');
+
+        $antartica1 = $geofence->mall;
+        $antartica1->name = 'Beruang Kutub';
+        $antartica1->status = 'inactive';
+        $antartica1->save();
+
+        $antartica2 = $geofence2->mall;
+        $antartica2->name = 'Beruang Hutan';
+        $antartica2->status = 'active';
+        $antartica2->save();
+
+        $_GET['latitude'] = $this->myAntarticaLocation[0];
+        $_GET['longitude'] = $this->myAntarticaLocation[1];
+        // The distance to the antartica 2 is 610.xx
+        $_GET['distance'] = 611;
+
+        $url = $this->baseUrl . '?' . http_build_query($_GET);
+
+        $response = $this->call('GET', $url)->getContent();
+        $response = json_decode($response);
+        
+        $this->assertSame(Status::OK, (int)$response->code);
+        $this->assertSame(2, (int)$response->data->total_records);
     }
 }
