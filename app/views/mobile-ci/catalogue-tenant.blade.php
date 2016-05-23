@@ -1,18 +1,19 @@
 @extends('mobile-ci.layout')
 
 @section('fb_scripts')
-@if(! empty($facebookInfo))
-@if(! empty($facebookInfo['version']) && ! empty($facebookInfo['app_id']))
-<div id="fb-root"></div>
-<script>(function(d, s, id) {
-  var js, fjs = d.getElementsByTagName(s)[0];
-  if (d.getElementById(id)) return;
-  js = d.createElement(s); js.id = id;
-  js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version={{$facebookInfo['version']}}&appId={{$facebookInfo['app_id']}}";
-  fjs.parentNode.insertBefore(js, fjs);
-}(document, 'script', 'facebook-jssdk'));</script>
-@endif
-@endif
+    @if(! empty($facebookInfo))
+        @if(! empty($facebookInfo['version']) && ! empty($facebookInfo['app_id']))
+        <div id="fb-root"></div>
+        <script>(function(d, s, id) {
+          var js, fjs = d.getElementsByTagName(s)[0];
+          if (d.getElementById(id)) return;
+          js = d.createElement(s); js.id = id;
+          js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version={{$facebookInfo['version']}}&appId={{$facebookInfo['app_id']}}";
+          fjs.parentNode.insertBefore(js, fjs);
+        }(document, 'script', 'facebook-jssdk'));
+        </script>
+        @endif
+    @endif
 @stop
 
 @section('content')
@@ -72,7 +73,7 @@
                 </div>
             </div>
             @endif
-            <div class="container">
+            <div id="catContainer" class="container">
                 <div class="mobile-ci list-item-container">
                     <div class="row">
                         <div class="catalogue-wrapper">
@@ -139,7 +140,7 @@
                                         @endif
                                         @foreach($tenant->mediaLogo as $media)
                                         @if($media->media_name_long == 'retailer_logo_orig')
-                                        <img class="img-responsive img-fit-tenant" alt="" src="{{ asset($media->path) }}"/>
+                                        <img class="img-responsive img-fit-tenant" alt="" data-original="{{ asset($media->path) }}"/>
                                         @endif
                                         @endforeach
                                     </a>
@@ -148,13 +149,6 @@
                         @endforeach
                         </div>
                     </div>
-                    @if($data->returned_records < $data->total_records)
-                        <div class="row">
-                            <div class="col-xs-12 padded">
-                                <button class="btn btn-info btn-block" id="load-more-tenants">{{Lang::get('mobileci.notification.view_more_btn')}}</button>
-                            </div>
-                        </div>
-                    @endif
                 </div>
             </div>
         @else
@@ -239,17 +233,27 @@
 @stop
 
 @section('ext_script_bot')
+{{ HTML::script('mobile-ci/scripts/jquery.lazyload.min.js') }}
 <script type="text/javascript">
-    $(window).on('scroll', function() {
-        // Check if browser supports LocalStorage
-        if(typeof(Storage) !== 'undefined') {
-            var scrollTop = $(window).scrollTop();
-            // Prevent Safari to set scrollTop position to 0 on page load.
-            if (scrollTop) {
-                localStorage.setItem('scrollTop', scrollTop);
-            }
+    var take = {{ Config::get('orbit.pagination.per_page', 25) }},
+        skip = {{ Config::get('orbit.pagination.per_page', 25) }},
+        keyword = '{{{ Input::get('keyword', '') }}}',
+        cid = '{{{ Input::get('cid', '') }}}',
+        fid = '{{{ Input::get('fid', '') }}}',
+        promotion_id = '{{{ Input::get('promotion_id', '')}}}',
+        isFromDetail = false,
+        isLoggedIn = Boolean({{ $urlblock->isLoggedIn() }}),
+        canLoadMoreTenant = Boolean({{ $data->returned_records < $data->total_records }});
+
+    var initImageLazyload = function(jImageElems) {
+        if (jImageElems instanceof jQuery) {
+            jImageElems.lazyload({
+                threshold : 100,
+                effect: "fadeIn",
+                placeholder: "",
+            });
         }
-    });
+    };
 
     /**
      * Get Query String from the URL
@@ -257,8 +261,7 @@
      * @author Rio Astamal <me@rioastamal.net>
      * @param string n - Name of the parameter
      */
-    function get(n)
-    {
+    function get(n) {
         var half = location.search.split(n + '=')[1];
         return half !== undefined ? decodeURIComponent(half.split('&')[0]) : null;
     }
@@ -273,55 +276,203 @@
         }
     }
 
+    var generateListItem = function(merchantId, redirectUrl, url, name, floor, unit, category, facebook_like_url, promotion_flag, news_flag, coupon_flag, logoUrl) {
+        var $listDiv = $('<div />').addClass('col-xs-12 col-sm-12').attr({
+            'id': 'item-' + merchantId
+        });
+        var $listSection = $('<section />').addClass('list-item-single-tenant');
+
+        var $itemLink = $('<a />').addClass('list-item-link').attr({
+            'data-href': redirectUrl,
+            'href': isLoggedIn ? redirectUrl : '#'
+        });
+
+        var $itemListInfo = $('<div />').addClass('list-item-info');
+        var $titleHeader = $('<header />').addClass('list-item-title').append(
+            $('<div />').append(
+                $('<strong />').text(name)
+            )
+        );
+
+        var $subtitleHeader = $('<header />').addClass('list-item-subtitle');
+        var markerText = (floor ? ' ' + floor : '') + (unit ? '- ' + unit : '');
+        var $divMarker = $('<div />').append(
+            $('<i />').addClass('fa fa-map-marker').attr('style', 'padding-left: 5px;padding-right: 8px;')
+        ).append(markerText);
+
+        var categoryText = category ? category : '-';
+        var $divCategory = $('<div />').append(
+            $('<div />').addClass('col-xs-6').append(
+                $('<i />').addClass('fa fa-list').attr('style', 'padding-left: 2px;padding-right: 4px;')
+            ).append(
+                $('<span />').text(categoryText)
+            )
+        );
+
+        $subtitleHeader.append($divMarker);
+        $subtitleHeader.append($divCategory);
+        $itemListInfo.append($titleHeader);
+        $itemListInfo.append($subtitleHeader);
+        $itemLink.append($itemListInfo);
+        $listSection.append($itemLink);
+        $listDiv.append($listSection);
+
+        if (facebook_like_url) {
+            var $fbLikeDiv = $('<div />').addClass('fb-like').attr({
+                'data-href': facebook_like_url,
+                'data-layout': 'button_count',
+                'data-action': 'like',
+                'data-show-faces': 'false',
+                'data-share': 'false'
+            });
+            $subtitleHeader.append($fbLikeDiv);
+        }
+
+        var $badgeHeader = $('<header />').addClass('list-item-badges');
+        var $badgeWrapper = $('<div />').addClass('col-xs-12 badges-wrapper text-right');
+        var $theBadge;
+
+        if (promotion_flag) {
+            var $theBadge = $('<span />').addClass('badges promo-badges text-center').append(
+                $('<i />').addClass('fa fa-bullhorn')
+            )
+            $badgeWrapper.append($theBadge);
+        }
+        if (news_flag) {
+            var $theBadge = $('<span />').addClass('badges news-badges text-center').append(
+                $('<i />').addClass('fa fa-newspaper-o')
+            )
+            $badgeWrapper.append($theBadge);
+        }
+        if (coupon_flag) {
+            var $theBadge = $('<span />').addClass('badges coupon-badges text-center').append(
+                $('<i />').addClass('fa fa-ticket')
+            )
+            $badgeWrapper.append($theBadge);
+        }
+
+        $badgeHeader.append($badgeWrapper);
+        $itemListInfo.append($badgeHeader);
+
+        var $nonTenantDiv = $('<div />').addClass('list-vignette-non-tenant');
+        var $tenantLogo;
+
+        if (/default_product.png/i.test(logoUrl)){
+            $tenantLogo = $('<img />').addClass('img-responsive img-fit-tenant').attr('src', logoUrl);
+        }
+        else {
+            $tenantLogo = $('<img />').addClass('img-responsive img-fit-tenant').attr('data-original', logoUrl);
+            // Apply lazy load to tenantLogo image.
+            initImageLazyload($tenantLogo);
+        }
+
+        $itemLink.append($nonTenantDiv);
+        $itemLink.append($tenantLogo);
+
+        return $listDiv;
+    };
+
     var insertRecords = function(records) {
         var promises = [];
         for(var i = 0; i < records.length; i++) {
             var deferred = new $.Deferred();
-            var list = '<div class="col-xs-12 col-sm-12" id="item-'+records[i].merchant_id+'">\
-                    <section class="list-item-single-tenant">\
-                        <a class="list-item-link" data-href="'+records[i].redirect_url+'" href="'+records[i].url+'">\
-                            <div class="list-item-info">\
-                                <header class="list-item-title">\
-                                    <div><strong>'+records[i].name+'</strong></div>\
-                                </header>\
-                                <header class="list-item-subtitle">\
-                                    <div>\
-                                        <i class="fa fa-map-marker" style="padding-left: 5px;padding-right: 8px;"></i> \
-                                        '+ (records[i].floor ?  ' ' + records[i].floor : '') + (records[i].unit ? ' - ' + records[i].unit : '') +'\
-                                    </div>\
-                                    <div>\
-                                        <div class="col-xs-6">\
-                                            <i class="fa fa-list" style="padding-left: 2px;padding-right: 4px;"></i>\
-                                            <span>'+ (records[i].category_string ? records[i].category_string : '-') +'</span>\
-                                        </div>\
-                                    </div>';
-                if (records[i].facebook_like_url) {
-                    list += '<div class="fb-like" data-href="' + records[i].facebook_like_url + '" data-layout="button_count" data-action="like" data-show-faces="false" data-share="false"></div>';
-                }
 
-                list += '</header>\
-                                <header class="list-item-badges">\
-                                    <div class="col-xs-12 badges-wrapper text-right">\
-                                        '+ (records[i].promotion_flag ? '<span class="badges promo-badges text-center"><i class="fa fa-bullhorn"></i></span>' : '') +'\
-                                        '+ (records[i].news_flag ? '<span class="badges news-badges text-center"><i class="fa fa-newspaper-o"></i></span>' : '') +'\
-                                        '+ (records[i].coupon_flag ? '<span class="badges coupon-badges text-center"><i class="fa fa-ticket"></i></span>' : '') +'\
-                                    </div>\
-                                </header>\
-                            </div>\
-                            <div class="list-vignette-non-tenant"></div>\
-                            <img class="img-responsive img-fit-tenant" src="'+ records[i].logo_orig +'"/>\
-                        </a>\
-                    </section>\
-                </div>';
-            $('.catalogue-wrapper').append(list);
+            var merchantId = records[i].merchant_id;
+            var redirectUrl = records[i].redirect_url;
+            var url = records[i].url;
+            var name = records[i].name;
+            var floor = records[i].floor;
+            var unit = records[i].unit;
+            var category = records[i].category_string;
+            var facebook_like_url = records[i].facebook_like_url;
+            var promotion_flag = records[i].promotion_flag;
+            var news_flag = records[i].news_flag;
+            var coupon_flag = records[i].coupon_flag;
+            var logoUrl = records[i].logo_orig;
+
+            var $listDiv = generateListItem(merchantId, redirectUrl, url, name, floor, unit, category, facebook_like_url, promotion_flag, news_flag, coupon_flag, logoUrl);
+
+            $('.catalogue-wrapper').append($listDiv);
             deferred.resolve();
             promises.push(deferred);
         };
         return $.when.apply(undefined, promises).promise();
     }
 
+    var loadMoreTenant = function() {
+        $.ajax({
+            url: '{{ url("app/v1/tenant/load-more") }}',
+            method: 'GET',
+            timeout: 60000,
+            async: true,
+            data: {
+                take: take,
+                skip: skip,
+                keyword: keyword,
+                cid: cid,
+                fid: fid,
+                promotion_id: promotion_id
+            },
+            error: function(xhr, textStatus, errorThrown) {
+                if (textStatus === 'timeout') {
+                    alert('Request timeout. Failed to retrieve more tenants');
+                }
+            }
+        })
+        .done(function(data) {
+            skip = skip + take;
+
+            if(data.records.length > 0) {
+                insertRecords(data.records);
+
+                // Check if browser supports LocalStorage
+                if(typeof(Storage) !== 'undefined') {
+                    var dataJson = data;
+                    var tenantData = localStorage.getItem('tenantData');
+
+                    // Check if tenantData exists.
+                    if (tenantData) {
+                        var jsonObj = JSON.parse(tenantData);
+                        // Concat the current record with the existing tenantData.
+                        dataJson.records = jsonObj.records.concat(dataJson.records);
+                    }
+
+                    // Set tenantData in localStorage.
+                    localStorage.setItem('tenantData', JSON.stringify(dataJson));
+                }
+
+                FB.XFBML.parse();
+            }
+
+            canLoadMoreTenant = (skip < data.total_records);
+        });
+    };
+
+
+    $(window).on('scroll', function() {
+        var scrollTop = $(window).scrollTop();
+        // Check if browser supports LocalStorage
+        if(typeof(Storage) !== 'undefined') {
+            // Prevent Safari to set scrollTop position to 0 on page load.
+            if (scrollTop) {
+                localStorage.setItem('scrollTop', scrollTop);
+            }
+        }
+
+        // Auto load more implementation.
+        var totalHeight = $(document).height();
+
+        // Check if scroll has reached 75% of total page height.
+        if (canLoadMoreTenant && scrollTop >= (totalHeight * 0.75)) {
+            canLoadMoreTenant = false;
+            loadMoreTenant();
+        }
+    });
+
     $(document).ready(function(){
-        var isFromDetail = false;
+        // Apply lazy loads to images.
+        initImageLazyload($('img.img-fit-tenant[data-original]'));
+
         // Check if browser supports LocalStorage
         if(typeof(Storage) !== 'undefined') {
             // This feature is implemented for tracking whether this page is loaded from detail page. (Which is back button)
@@ -372,72 +523,6 @@
             window.location.replace(path);
         });
 
-        var take = {{Config::get('orbit.pagination.per_page', 25)}},
-            skip = {{Config::get('orbit.pagination.per_page', 25)}};
-
-        var keyword = '{{{Input::get('keyword', '')}}}';
-        var cid = '{{{Input::get('cid', '')}}}';
-        var fid = '{{{Input::get('fid', '')}}}';
-        var promotion_id = '{{{Input::get('promotion_id', '')}}}';
-
-        $('#load-more-tenants').click(function(){
-            var btn = $(this);
-            btn.attr('disabled', 'disabled');
-            btn.html('<i class="fa fa-circle-o-notch fa-spin"></i>');
-            $.ajax({
-                url: '{{ url("app/v1/tenant/load-more") }}',
-                method: 'GET',
-                timeout: 60000,
-                async: true,
-                data: {
-                    take: take,
-                    skip: skip,
-                    keyword: keyword,
-                    cid: cid,
-                    fid: fid,
-                    promotion_id: promotion_id
-                },
-                error: function(xhr, textStatus, errorThrown) {
-                    if (textStatus === 'timeout') {
-                        alert('Request timeout. Failed to retrieve more tenants');
-                    }
-                }
-            }).done(function(data) {
-                skip = skip + take;
-
-                if(data.records.length > 0) {
-                    insertRecords(data.records);
-
-                    // Check if browser supports LocalStorage
-                    if(typeof(Storage) !== 'undefined') {
-                        var dataJson = data;
-                        var tenantData = localStorage.getItem('tenantData');
-
-                        // Check if tenantData exists.
-                        if (tenantData) {
-                            var jsonObj = JSON.parse(tenantData);
-                            // Concat the current record with the existing tenantData.
-                            dataJson.records = jsonObj.records.concat(dataJson.records);
-                        }
-
-                        // Set tenantData in localStorage.
-                        localStorage.setItem('tenantData', JSON.stringify(dataJson));
-                    }
-
-                    FB.XFBML.parse();
-                }
-
-                if (skip >= data.total_records) {
-                    btn.remove();
-                }
-
-            })
-            .always(function(data){
-                btn.removeAttr('disabled', 'disabled');
-                btn.html('{{Lang::get('mobileci.notification.view_more_btn')}}');
-            });
-        });
-
         // Check if page is from back button.
         if (isFromDetail) {
             var tenantData = localStorage.getItem('tenantData');
@@ -459,9 +544,7 @@
                     }
                 });
 
-                if (skip >= tenants.total_records) {
-                    $('#load-more-tenants').remove();
-                }
+                canLoadMoreTenant = (skip < tenants.total_records);
             }
             else {
                 // Just maintain scroll position.
@@ -474,6 +557,8 @@
                 }
             }
         }
+
+
     });
 </script>
 @stop
