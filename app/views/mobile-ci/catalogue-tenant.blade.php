@@ -242,6 +242,7 @@
         fid = '{{{ Input::get('fid', '') }}}',
         promotion_id = '{{{ Input::get('promotion_id', '')}}}',
         isFromDetail = false,
+        defaultTenantLogoUrl = '{{ asset('mobile-ci/images/default_tenants_directory.png') }}',
         isLoggedIn = Boolean({{ $urlblock->isLoggedIn() }}),
         canLoadMoreTenant = Boolean({{ $data->returned_records < $data->total_records }});
 
@@ -250,7 +251,7 @@
             jImageElems.lazyload({
                 threshold : 100,
                 effect: "fadeIn",
-                placeholder: "",
+                placeholder: defaultTenantLogoUrl
             });
         }
     };
