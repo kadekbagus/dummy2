@@ -79,8 +79,12 @@
 
 @section('ext_script_bot')
 <script type="text/javascript">
-
     $(document).ready(function() {
+        // Check if browser supports LocalStorage
+        if(typeof(Storage) !== 'undefined') {
+            localStorage.setItem('fromSource', 'home');
+        }
+        
         $('a.widget-link').click(function(event){
           event.preventDefault();
 
