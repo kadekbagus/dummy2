@@ -4,7 +4,6 @@
  * An API controller for managing Mobile CI.
  */
 use Log;
-use Net\MacAddr;
 use Orbit\Helper\Email\MXEmailChecker;
 use Orbit\Helper\Net\Domain;
 use Orbit\Helper\Net\UrlChecker as UrlBlock;
@@ -77,6 +76,7 @@ use \WidgetGroupName;
 use \Hash;
 use \UserGuest;
 use Helper\EloquentRecordCounter as RecordCounter;
+use MobileCI\ExCaptivePortalController as CaptivePortalController;
 
 class MobileCIAPIController extends BaseCIController
 {
@@ -238,6 +238,11 @@ class MobileCIAPIController extends BaseCIController
         $activityPage = Activity::mobileci()
                             ->setActivityType('view');
         try {
+            if (CaptivePortalController::isFromCaptive() && CaptivePortalController::isSessionQueryExists()) {
+                $sessionQueryName = Config::get('orbit.session.session_origin.query_string.name', 'orbit_session');
+                CaptivePortalController::forceOverrideCookie( OrbitInput::get($sessionQueryName, NULL) );
+            }
+
             $retailer = $this->getRetailerInfo('merchantSocialMedia');
             $from_main = OrbitInput::get('from_main', 'false');
             if ($from_main === 'true') {
@@ -245,6 +250,9 @@ class MobileCIAPIController extends BaseCIController
 
                 return Redirect::to($landing_url);
             }
+
+            /*Log::info(sprintf('-- CAPTIVE PORTAL -> SID: %s, Cookie: %s',
+                    $this->session->getSessionId(), print_r($_COOKIE, TRUE)));*/
 
             $urlblock = new UrlBlock;
             $user = $urlblock->checkBlockedUrl();
@@ -293,6 +301,15 @@ class MobileCIAPIController extends BaseCIController
                 ->groupBy('widget_type')
                 ->take(5)
                 ->get();
+
+            if (CaptivePortalController::isFromCaptive()) {
+                // Inject number of widget on-the-fly
+                $captiveWidget = CaptivePortalController::generateDummyWidget($retailer, $urlblock);
+                $widgets->push($captiveWidget);
+
+                // Push the from_captive cookie
+                CaptivePortalController::setCookieForCaptive();
+            }
 
             $now = Carbon::now($retailer->timezone->timezone_name);
 
@@ -2182,7 +2199,7 @@ class MobileCIAPIController extends BaseCIController
             $tenants = $tenants->active('merchants')
                 ->where('parent_id', $retailer->merchant_id);
 
-            $tenants->select('merchants.*');
+            $tenants->select('merchants.merchant_id', 'floor', 'unit');
 
             $mallid = $retailer->merchant_id;
 
@@ -2440,6 +2457,8 @@ class MobileCIAPIController extends BaseCIController
 
             $this->viewItemUserUpdate('tenant', $user, $retailer);
 
+            $tenants->groupBy('merchants.merchant_id');
+
             $_tenants = clone $tenants;
 
             // Get the take args
@@ -2613,7 +2632,7 @@ class MobileCIAPIController extends BaseCIController
                         ->whereRaw("? between {$prefix}promotions.begin_date and {$prefix}promotions.end_date", [$mallTime])
                         ->groupBy('merchants.name')->get();
 
-            $totalRec = $_tenants->count();
+            $totalRec = RecordCounter::create($_tenants)->count();
             $listOfRec = $tenants->get();
 
             foreach ($listOfRec as $tenant) {
@@ -3285,7 +3304,7 @@ class MobileCIAPIController extends BaseCIController
             $tenants = $tenants->active('merchants')
                 ->where('parent_id', $retailer->merchant_id);
 
-            $tenants->select('merchants.*');
+            $tenants->select('merchants.merchant_id', 'floor', 'unit');
 
             $this->maybeJoinWithTranslationsTable($tenants, $alternateLanguage);
 
@@ -3409,6 +3428,8 @@ class MobileCIAPIController extends BaseCIController
                     }
                 }
             );
+
+            $tenants->groupBy('merchants.merchant_id');
 
             $_tenants = clone $tenants;
 
@@ -3587,7 +3608,7 @@ class MobileCIAPIController extends BaseCIController
                         ->whereRaw("? between {$prefix}promotions.begin_date and {$prefix}promotions.end_date", [$mallTime])
                         ->groupBy('merchants.name')->get();
 
-            $totalRec = $_tenants->count();
+            $totalRec = RecordCounter::create($_tenants)->count();
             $listOfRec = $tenants->get();
 
             foreach ($listOfRec as $tenant) {

@@ -370,8 +370,8 @@ class CouponReportPrinterController extends DataPrinterController
                 }
 
                 if ($issuedDateGte != '' && $issuedDateLte != ''){
-                    $startDate = $this->printDateTime($issuedDateGte, $timezoneCurrentMall, 'd M Y');
-                    $endDate = $this->printDateTime($issuedDateLte, $timezoneCurrentMall, 'd M Y');
+                    $startDate = $this->printDateTime($issuedDateGte, '', 'd M Y');
+                    $endDate = $this->printDateTime($issuedDateLte, '', 'd M Y');
                     $dateRange = $startDate . ' - ' . $endDate;
                     if ($startDate === $endDate) {
                         $dateRange = $startDate;
@@ -380,8 +380,8 @@ class CouponReportPrinterController extends DataPrinterController
                 }
 
                 if ($redeemedDateGte != '' && $redeemedDateLte != ''){
-                    $startDate = $this->printDateTime($redeemedDateGte, $timezoneCurrentMall, 'd M Y');
-                    $endDate = $this->printDateTime($redeemedDateLte, $timezoneCurrentMall, 'd M Y');
+                    $startDate = $this->printDateTime($redeemedDateGte, '', 'd M Y');
+                    $endDate = $this->printDateTime($redeemedDateLte, '', 'd M Y');
                     $dateRange = $startDate . ' - ' . $endDate;
                     if ($startDate === $endDate) {
                         $dateRange = $startDate;
@@ -405,7 +405,7 @@ class CouponReportPrinterController extends DataPrinterController
                     if (empty($row->redeemed_date)) {
                         $dateRedeem = '--';
                     } else {
-                        $dateRedeem = $this->printDateTime($row->redeemed_date, $timezoneCurrentMall, 'd M Y H:i');
+                        $dateRedeem = $this->printDateTime($row->redeemed_date, '', 'd M Y H:i')  . ' (UTC)';
                     }
 
                     if (empty($row->redemption_place)) {
@@ -419,7 +419,7 @@ class CouponReportPrinterController extends DataPrinterController
                             $row->issued_coupon_code,
                             $row->age,
                             $row->gender,
-                            $this->printDateTime($row->issued_date, $timezoneCurrentMall, 'd M Y H:i'),
+                            $this->printDateTime($row->issued_date, '', 'd M Y H:i') . ' (UTC)',
                             $dateRedeem,
                             $place,
                             $stat

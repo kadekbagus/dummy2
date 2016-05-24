@@ -71,11 +71,11 @@ return array(
         'how_to_get_coupons'           => 'Please check with customer service how to get coupons.',
         'find_our_exciting'            => 'Find our exciting deals and latest news here. Dont forget to exchange your transaction receipts and get a chance to win a car!',
         'latest_luckydraw_coming_soon' => 'Check out our lucky draws coming soon.',
-        'no_coupons_listing'           => 'Sorry, there is no coupons at the moment in this mall.',
-        'no_luckydraws_listing'        => 'Sorry, there is no lucky draws at the moment in this mall.',
+        'no_coupons_listing'           => 'Sorry, there is no coupon at the moment in this mall.',
+        'no_luckydraws_listing'        => 'Sorry, there is no lucky draw at the moment in this mall.',
         'no_news_listing'              => 'Sorry, there is no news at the moment in this mall.',
-        'no_promotions_listing'        => 'Sorry, there is no promotions at the moment in this mall.',
-        'no_stores_listing'            => 'Sorry, there is no stores at the moment in this mall.',
+        'no_promotions_listing'        => 'Sorry, there is no promotion at the moment in this mall.',
+        'no_stores_listing'            => 'Sorry, there is no store at the moment in this mall.',
     ),
 
     // modal specific lang
@@ -531,4 +531,22 @@ return array(
     'campaign_cards' => array(
         'go_to_page' => 'Go to page',
     ),
+
+    'captive'   => array(
+        'request_internet' => array(
+            'title'     => 'FREE Internet',
+            'heading'   => 'FREE Internet Access!',
+            'message'   => 'By connecting to our Wi-Fi you agree with our terms and conditions. Click the button below to get free internet access.',
+            'button'    => 'Get FREE Internet Access!',
+            'check_connection' => 'Checking internet connection please wait...',
+            'too_long' => 'If it takes too long try to refresh your browser.'
+        ),
+        'granted' => array(
+            'title'     => 'Connected to WiFi',
+            'heading'   => 'You\'re Already Connected',
+            'message'   => 'Hey,<br>You are now connected to Internet for free. Do you know what are the promotions here today?',
+            'button'    => 'Yes, Please!'
+        ),
+        'widget_slogan' => 'FREE Internet!'
+    )
 );

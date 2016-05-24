@@ -15,6 +15,7 @@ class getMallAreaTest extends TestCase
     public function setUp()
     {
         parent::setUp();
+        Config::set('orbit.is_demo', FALSE);
 
         $_GET = [];
     }
@@ -94,6 +95,59 @@ class getMallAreaTest extends TestCase
         $antartica2 = $geofence2->mall;
         $antartica2->name = 'Beruang Hutan';
         $antartica2->save();
+
+        $response = $this->call('GET', $this->baseUrl)->getContent();
+        $response = json_decode($response);
+
+        $this->assertSame(Status::OK, (int)$response->code);
+        $this->assertSame(2, (int)$response->data->total_records);
+    }
+
+    public function testOK_Found_One_Mall_In_Area_With_Production_Host_Name()
+    {
+        // Create 2 malls in antartica
+        $geofence = Factory::create('MerchantGeofence');
+        $geofence2 = Factory::create('MerchantGeofence_Antartica2');
+
+        $_GET['area'] = '-81.85111601628252 -12.252058594482378, -62.111671481762606 -12.252058594482378, -62.111671481762606 54.54481640551762, -81.85111601628252 54.54481640551762, -81.85111601628252 -12.252058594482378';
+        $_GET['hostname'] = 'example3.com';
+
+        $antartica1 = $geofence->mall;
+        $antartica1->name = 'Beruang Kutub';
+        $antartica1->status = 'inactive';
+        $antartica1->save();
+
+        $antartica2 = $geofence2->mall;
+        $antartica2->name = 'Beruang Hutan';
+        $antartica2->status = 'active';
+        $antartica2->save();
+
+        $response = $this->call('GET', $this->baseUrl)->getContent();
+        $response = json_decode($response);
+
+        $this->assertSame(Status::OK, (int)$response->code);
+        $this->assertSame(1, (int)$response->data->total_records);
+    }
+
+    public function testOK_Found_Two_Mall_In_Area_With_Demo_Host_Name()
+    {
+        // Create 2 malls in antartica
+        $geofence = Factory::create('MerchantGeofence');
+        $geofence2 = Factory::create('MerchantGeofence_Antartica2');
+
+        $_GET['area'] = '-81.85111601628252 -12.252058594482378, -62.111671481762606 -12.252058594482378, -62.111671481762606 54.54481640551762, -81.85111601628252 54.54481640551762, -81.85111601628252 -12.252058594482378';
+        
+        $antartica1 = $geofence->mall;
+        $antartica1->name = 'Beruang Kutub';
+        $antartica1->status = 'inactive';
+        $antartica1->save();
+
+        $antartica2 = $geofence2->mall;
+        $antartica2->name = 'Beruang Hutan';
+        $antartica2->status = 'active';
+        $antartica2->save();
+
+        Config::set('orbit.is_demo', TRUE);
 
         $response = $this->call('GET', $this->baseUrl)->getContent();
         $response = json_decode($response);

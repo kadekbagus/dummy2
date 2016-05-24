@@ -71,6 +71,9 @@
     {{-- End of Script fallback --}}
     <script type="text/javascript">
         $(document).ready(function(){
+            // Set fromSource in localStorage.
+            localStorage.setItem('fromSource', 'mall-promotion');
+
             $(window).scroll(function(){
                 s = $(window).scrollTop();
                 $('.product-detail img').css('-webkit-transform', 'translateY('+(s/3)+'px)');
