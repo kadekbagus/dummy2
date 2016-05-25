@@ -1,95 +1,170 @@
 @extends('mobile-ci.layout')
 
 @section('content')
-    <div id="delete-bar" class="row text-right">
-        <div class="col-xs-10 text-delete-mode">
-            <p class="delete-mode">{{ Lang::get('mobileci.notification.delete_mode') }}</p>
-            <p class="read-mode">{{ Lang::get('mobileci.notification.read_mode') }}</p>
-        </div>
-        <div class="col-xs-2 button-delete-mode">
-            <span class="delete-button-parent">
-                <i id="delete-icon" class="fa fa-trash"></i>
-            </span>
-        </div>
+<div id="delete-bar" class="row text-right">
+    <div class="col-xs-10 text-delete-mode">
+        <p class="delete-mode">{{ Lang::get('mobileci.notification.delete_mode') }}</p>
+        <p class="read-mode">{{ Lang::get('mobileci.notification.read_mode') }}</p>
     </div>
-    <div id="notification">
+    <div class="col-xs-2 button-delete-mode">
+        <span class="delete-button-parent">
+            <i id="delete-icon" class="fa fa-trash"></i>
+        </span>
     </div>
-    <div class="col-xs-12 text-center" id="spinner"><i class="fa fa-circle-o-notch fa-spin"></i></div>
-    <div class="col-xs-12 text-center vertically-spaced" style="display:none;" id="no-notification">{{ Lang::get('mobileci.notification.no_notif') }}</div>
-    <div class="row">
-        <button class="col-xs-offset-2 col-xs-8 btn btn-default loadmore">{{ Lang::get('mobileci.notification.view_more_btn') }}</button>
-    </div>
-
+</div>
+<div id="notification">
+</div>
+<div class="col-xs-12 text-center" id="spinner"><i class="fa fa-circle-o-notch fa-spin"></i></div>
+<div class="col-xs-12 text-center vertically-spaced" style="display:none;" id="no-notification">{{ Lang::get('mobileci.notification.no_notif') }}</div>
+<div class="row">
+    <button class="col-xs-offset-2 col-xs-8 btn btn-default loadmore">{{ Lang::get('mobileci.notification.view_more_btn') }}</button>
+</div>
 @stop
 
 @section('ext_script_bot')
     <script type="text/javascript">
+        // this var is used to enable/disable pop up notification
         notInMessagesPage = false;
-        var skip = 0;
-        var total_page = 0;
-        /**
-         * Get Query String from the URL
-         *
-         * @author Rio Astamal <me@rioastamal.net>
-         * @param string n - Name of the parameter
-         */
-        function get(n)
-        {
-            var half = location.search.split(n + '=')[1];
-            return half !== undefined ? decodeURIComponent(half.split('&')[0]) : null;
+
+        var skip = 0,
+            total_page = 0;
+
+        var deleteNotification = function () {
+            var inbox_id = $(this).data('id');
+            var $notificationList = $('#notification-' + inbox_id);
+            var $body = $('body');
+
+            $body.addClass('modal-open');
+
+            $.ajax({
+                method: 'POST',
+                url: apiPath + 'inbox/delete',
+                data: {
+                    inbox_id: inbox_id
+                }
+            })
+            .done(function(data){
+                if(data.status === 'success') {
+                    $notificationList.fadeOut('slow', function(){
+                        $notificationList.remove();
+                    });
+                }
+            })
+            .always(function(data){
+                $body.removeClass('modal-open');
+            });
         }
 
-        function updateQueryStringParameter(uri, key, value) {
-            var re = new RegExp("([?&])" + key + "=.*?(&|$)", "i");
-            var separator = uri.indexOf('?') !== -1 ? "&" : "?";
-            if (uri.match(re)) {
-                return uri.replace(re, '$1' + key + "=" + value + '$2');
-            } else {
-                return uri + separator + key + "=" + value;
+        var monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+        var printDate = function (date) {
+            if (date instanceof Date) {
+                var day = date.getDate().toString();
+                var mth = monthNames[date.getMonth()];
+                var yr = date.getFullYear();
+                var hr = date.getHours().toString();
+                var min = date.getMinutes().toString();
+                var sec = date.getSeconds().toString();
+
+                return (day[1]?day:"0"+day[0]) + ' ' + mth + ' ' + yr + ' ' + (hr[1]?hr:"0"+hr[0]) + ':' + (min[1]?min:"0"+min[0]) + ':' + (sec[1]?sec:"0"+sec[0]);
             }
+            return null;
         }
 
-        {{-- force reload page to disable page cache on ios safari --}}
-        $(window).bind("pageshow", function(event) {
-            if (event.originalEvent.persisted) {
-                window.location.reload()
-            }
-        });
+        var generateListNotification = function (inbox) {
+            var inboxId = inbox.inbox_id;
+            var subject = inbox.subject;
+            var isRead = inbox.is_read == 'Y' ? true : false;
+
+            var read = isRead ? 'read' : 'unread';
+            var mark = isRead ? 'check' : 'exclamation';
+            var readUnread = isRead ? 'read-unread' : '';
+            var createdDate = new Date(inbox.created_at + " UTC");
+
+            var $listDivNotification = $('<div />').attr({
+                'id': 'notification-' + inboxId,
+                'class': 'main-theme-mall list-notification'
+            });
+            var $topDivCatalogue = $('<div />').addClass('row catalogue-top');
+
+            var $divNotif = $('<div />').addClass('col-xs-3 notification-icon text-center');
+            var $linkWrapper = $('<a />').attr({
+                'data-id': inboxId,
+                'class': readUnread
+            });
+            var $spanNotif = $('<span />').attr({
+                'class': 'fa-stack fa-lg ' + read
+            }).append(
+                $('<i />').addClass('fa fa-circle fa-stack-2x circle')
+            ).append(
+                $('<i />').attr({
+                    'class': 'fa fa-' + mark + ' fa-stack-1x symbol'
+                })
+            );
+
+            var $divTitle = $('<div />').addClass('col-xs-8 notification-title');
+            var $linkDetail = $('<a />').attr({
+                'class': 'link-detail',
+                'href': '{{ url('/customer/message/detail?id=') }}' + inboxId
+            });
+            var $titleHeader = $('<h4 />').attr({
+                'class': read
+            }).text(subject);
+            var $titleSubheader = $('<small />').text(printDate(createdDate));
+
+            var $divDeleteNotif = $('<div />').attr({
+                'class': 'col-xs-1 deleteNotif',
+                'data-id': inboxId
+            });
+            var $spanDeleteBtn = $('<span />').attr({
+                'class': 'delete-button-child'
+            }).append(
+                $('<i />').addClass('fa fa-times')
+            );
+
+            $linkWrapper.append($spanNotif);
+            $divNotif.append($linkWrapper);
+
+            $linkDetail.append($titleHeader);
+            $linkDetail.append($titleSubheader);
+            $divTitle.append($linkDetail);
+
+            $divDeleteNotif.append($spanDeleteBtn);
+
+            $topDivCatalogue.append($divNotif);
+            $topDivCatalogue.append($divTitle);
+            $topDivCatalogue.append($divDeleteNotif);
+
+            $listDivNotification.append($topDivCatalogue);
+            return $listDivNotification;
+        };
 
         $(document).ready(function(){
-            function getNotifList() {
-                $.ajax({
-                    method: 'GET',
-                    url: '{{ url("app/v1/inbox/list") }}'
-                }).done(function(data){
-                    if(data.data.total_records / (data.data.returned_records + skip) > 1) {
-                        $('.loadmore').show();
-                    } else {
-                        $('.loadmore').hide();
+            $.ajax({
+                method: 'GET',
+                url: '{{ url("app/v1/inbox/list") }}'
+            }).done(function(data){
+                if(data.data.total_records / (data.data.returned_records + skip) > 1) {
+                    $('.loadmore').show();
+                } else {
+                    $('.loadmore').hide();
+                }
+                if(data.data.records) {
+                    for(var i = 0; i < data.data.records.length; i++) {
+                        var inbox = data.data.records[i];
+                        var $individualList = generateListNotification(inbox);
+                        $('#notification').append($individualList);
                     }
-                    if(data.data.records) {
-                        for(var i = 0; i < data.data.records.length; i++) {
-                            var inBox = data.data.records[i];
-                            var isRead = inBox.is_read == 'Y' ? true : false;
-                            var read = isRead ? 'read' : 'unread';
-                            var mark = isRead ? 'check' : 'exclamation';
-                            var readUnread = isRead ? 'read-unread' : '';
-                            var individualList = '<div class="main-theme-mall list-notification" id="notification-'+inBox.inbox_id+'"><div class="row catalogue-top"><a data-id='+inBox.inbox_id+' class="'+readUnread+'"><div class="col-xs-3 notification-icon text-center"><span class="fa-stack fa-lg '+read+'"><i class="fa fa-circle fa-stack-2x circle"></i><i class="fa fa-'+mark+' fa-stack-1x symbol"></i></span></div></a><a class="link-detail" href="{{ url('/customer/message/detail?id=') }}'+inBox.inbox_id+'"><div class="col-xs-8 notification-title" style=""><h4 class="'+read+'">'+inBox.subject+'</h4></div></a><div class="col-xs-1 deleteNotif" data-id="'+inBox.inbox_id+'"><span class="delete-button-child"><i class="fa fa-times"></i></span></div></div></div>';
-                            $('#notification').append(individualList);
-                        }
-                        skip = skip + {{ Config::get('orbit.pagination.inbox.per_page', 15) }};
-                    } else {
-                        $('#no-notification').show();
-                    }
-                    $('#spinner').hide();
-                }).fail(function(data){
-                    $('#spinner').hide();
-                }).always(function(data){
-                    $('#spinner').hide();
-                });
-            }
-
-            getNotifList();
+                    skip = skip + {{ Config::get('orbit.pagination.inbox.per_page', 15) }};
+                } else {
+                    $('#no-notification').show();
+                }
+                $('#spinner').hide();
+            }).fail(function(data){
+                $('#spinner').hide();
+            }).always(function(data){
+                $('#spinner').hide();
+            });
 
             $('body').on('click', '.read-unread', function(e){
                 $('body').addClass('modal-open');
@@ -124,25 +199,7 @@
                 });
             });
 
-            $('body').on('click', '.deleteNotif', function(e){
-                $('body').addClass('modal-open');
-                var inbox_id = $(this).data('id');
-                $.ajax({
-                    method: 'POST',
-                    url: apiPath + 'inbox/delete',
-                    data: {
-                        inbox_id: inbox_id
-                    }
-                }).done(function(data){
-                    if(data.status === 'success') {
-                        $('#notification-'+inbox_id).fadeOut('slow', function(){
-                            $('#notification-'+inbox_id).remove();
-                        });
-                    }
-                }).always(function(data){
-                    $('body').removeClass('modal-open');
-                });
-            });
+            $('body').on('click', '.deleteNotif', deleteNotification);
 
             $('body').on('click', '.loadmore', function(e){
                 param = 'take={{ Config::get('orbit.pagination.inbox.per_page', 15) }}';
@@ -159,13 +216,10 @@
                         $('.loadmore').hide();
                     }
                     for(var i = 0; i < data.data.records.length; i++) {
-                        var inBox = data.data.records[i];
-                        var isRead = inBox.is_read == 'Y' ? true : false;
-                        var read = isRead ? 'read' : 'unread';
-                        var mark = isRead ? 'check' : 'exclamation';
-                        var readUnread = isRead ? 'read-unread' : '';
-                        var individualList = '<div class="main-theme-mall list-notification" id="notification-'+inBox.inbox_id+'"><div class="row catalogue-top"><a data-id='+inBox.inbox_id+' class="'+readUnread+'"><div class="col-xs-3 notification-icon text-center"><span class="fa-stack fa-lg '+read+'"><i class="fa fa-circle fa-stack-2x circle"></i><i class="fa fa-'+mark+' fa-stack-1x symbol"></i></span></div></a><a class="link-detail" href="{{ url('/customer/message/detail?id=') }}'+inBox.inbox_id+'"><div class="col-xs-8 notification-title" style=""><h4 class="'+read+'">'+inBox.subject+'</h4></div></a><div class="col-xs-1 deleteNotif" data-id="'+inBox.inbox_id+'"><span class="delete-button-child"><i class="fa fa-times"></i></span></div></div></div>';
-                        $('#notification').append(individualList);
+                        var inbox = data.data.records[i];
+                        var $individualList = generateListNotification(inbox);
+                        $('#notification').append($individualList);
+
                         if(openDelete){
                             $('.delete-button-child').css('display', 'inline-block');
                         } else {

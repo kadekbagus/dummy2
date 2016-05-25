@@ -96,7 +96,7 @@ class CategoryAPIController extends ControllerAPI
                     'category_level'   => 'numeric',
                     'category_order'   => 'numeric',
                     'status'           => 'required|orbit.empty.category_status',
-                    'default_language' => 'required|orbit.empty.default_language',
+                    'default_language' => 'required|orbit.empty.language_default',
                 )
             );
 
@@ -326,7 +326,7 @@ class CategoryAPIController extends ControllerAPI
                     'category_name'    => 'category_name_exists_but_me:'.$category_id,
                     'category_level'   => 'numeric',
                     'status'           => 'orbit.empty.category_status',
-                    'default_language' => 'required|orbit.empty.default_language',
+                    'default_language' => 'required|orbit.empty.language_default',
                 ),
                 array(
                    'category_name_exists_but_me' => Lang::get('validation.orbit.exists.category_name'),
@@ -1001,7 +1001,7 @@ class CategoryAPIController extends ControllerAPI
     protected function registerCustomValidation()
     {
         // Check the existance of default_language
-        Validator::extend('orbit.empty.default_language', function ($attribute, $value, $parameters) {
+        Validator::extend('orbit.empty.language_default', function ($attribute, $value, $parameters) {
             $lang = Language::excludeDeleted()
                         ->where('name', $value)
                         ->first();
@@ -1162,8 +1162,27 @@ class CategoryAPIController extends ControllerAPI
                     }
                 }
                 if (empty($existing_translation)) {
+                    if (! empty(trim($translations->category_name))) {
+                        $category_translation = CategoryTranslation::excludeDeleted()
+                                                    ->where('merchant_language_id', '=', $language_id)
+                                                    ->where('category_name', '=', $translations->category_name)
+                                                    ->first();
+                        if (! empty($category_translation)) {
+                            OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.exists.category_name'));
+                        }
+                    }
                     $operations[] = ['create', $language_id, $translations];
                 } else {
+                    if (! empty(trim($translations->category_name))) {
+                        $category_translation_but_not_me = CategoryTranslation::excludeDeleted()
+                                                    ->where('merchant_language_id', '=', $language_id)
+                                                    ->where('category_id', '!=', $category->category_id)
+                                                    ->where('category_name', '=', $translations->category_name)
+                                                    ->first();
+                        if (! empty($category_translation_but_not_me)) {
+                            OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.exists.category_name'));
+                        }
+                    }
                     $operations[] = ['update', $existing_translation, $translations];
                 }
             }
