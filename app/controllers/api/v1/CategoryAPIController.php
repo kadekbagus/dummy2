@@ -13,6 +13,10 @@ use Helper\EloquentRecordCounter as RecordCounter;
 
 class CategoryAPIController extends ControllerAPI
 {
+    protected $valid_default_lang = '';
+    protected $valid_lang = '';
+    protected $valid_category = '';
+    protected $update_valid_category = '';
     /**
      * POST - Create New Category
      *
@@ -22,13 +26,12 @@ class CategoryAPIController extends ControllerAPI
      *
      * List of API Parameters
      * ----------------------
-     * @param integer    `merchant_id`              (required) - Merchant ID
      * @param string     `category_name`            (required) - Category name
      * @param integer    `category_level`           (optional) - Category level.
-     * @param string     `status`                   (required) - Status. Valid value: active, inactive, pending, blocked, deleted.
      * @param integer    `category_order`           (optional) - Category order
      * @param string     `description`              (optional) - Description
-     * @param integer    `id_language_default`      (required) - ID language default
+     * @param string     `status`                   (required) - Status. Valid value: active, inactive, pending, blocked, deleted.
+     * @param integer    `default_language`      (required) - ID language default
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -73,28 +76,27 @@ class CategoryAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $merchant_id = OrbitInput::post('current_mall');;
             $category_name = OrbitInput::post('category_name');
             $category_level = OrbitInput::post('category_level');
             $category_order = OrbitInput::post('category_order');
             $description = OrbitInput::post('description');
             $status = OrbitInput::post('status');
-            $id_language_default = OrbitInput::post('id_language_default');
+            $default_language = OrbitInput::post('default_language');
 
             $validator = Validator::make(
                 array(
-                    'current_mall'           => $merchant_id,
-                    'category_name'         => $category_name,
-                    'category_level'        => $category_level,
-                    'status'                => $status,
-                    'id_language_default'   => $id_language_default,
+                    'category_name'    => $category_name,
+                    'category_level'   => $category_level,
+                    'category_order'   => $category_order,
+                    'status'           => $status,
+                    'default_language' => $default_language,
                 ),
                 array(
-                    'current_mall'           => 'required|orbit.empty.merchant',
-                    'category_name'         => 'required|orbit.exists.category_name:' . $merchant_id,
-                    'category_level'        => 'numeric',
-                    'status'                => 'required|orbit.empty.category_status',
-                    'id_language_default'   => 'required|orbit.empty.language_default',
+                    'category_name'    => 'required|orbit.exists.category_name',
+                    'category_level'   => 'numeric',
+                    'category_order'   => 'numeric',
+                    'status'           => 'required|orbit.empty.category_status',
+                    'default_language' => 'required|orbit.empty.default_language',
                 )
             );
 
@@ -111,8 +113,10 @@ class CategoryAPIController extends ControllerAPI
 
             Event::fire('orbit.category.postnewcategory.after.validation', array($this, $validator));
 
+            $language = $this->valid_default_lang;
+
             $newcategory = new Category();
-            $newcategory->merchant_id = $merchant_id;
+            $newcategory->merchant_id = 0;
             $newcategory->category_name = $category_name;
             $newcategory->category_level = $category_level;
             $newcategory->category_order = $category_order;
@@ -129,7 +133,7 @@ class CategoryAPIController extends ControllerAPI
 
             // @author Irianto Pratama <irianto@dominopos.com>
             $default_translation = [
-                $id_language_default => [
+                $language->language_id => [
                     'category_name' => $newcategory->category_name,
                     'description' => $newcategory->description
                 ]
@@ -250,13 +254,12 @@ class CategoryAPIController extends ControllerAPI
      * List of API Parameters
      * ----------------------
      * @param integer    `category_id`           (required) - Category ID
-     * @param integer    `merchant_id`           (optional) - Merchant ID
      * @param string     `category_name`         (optional) - Category name
      * @param integer    `category_level`        (optional) - Category level.
      * @param integer    `category_order`        (optional) - Category order
      * @param string     `description`           (optional) - Description
      * @param string     `status`                (optional) - Status. Valid value: active, inactive, pending, blocked, deleted.
-     * @param integer    `id_language_default`   (required) - ID language default
+     * @param integer    `default_language`   (required) - ID language default
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -303,30 +306,27 @@ class CategoryAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $category_id = OrbitInput::post('category_id');
-            $merchant_id = OrbitInput::post('current_mall');;
             $category_name = OrbitInput::post('category_name');
             $category_level = OrbitInput::post('category_level');
             $category_order = OrbitInput::post('category_order');
             $description = OrbitInput::post('description');
             $status = OrbitInput::post('status');
-            $id_language_default = OrbitInput::post('id_language_default');
+            $default_language = OrbitInput::post('default_language');
 
             $validator = Validator::make(
                 array(
-                    'category_id'       => $category_id,
-                    'current_mall'       => $merchant_id,
-                    'category_name'     => $category_name,
-                    'category_level'    => $category_level,
-                    'status'            => $status,
-                    'id_language_default' => $id_language_default,
+                    'category_id'      => $category_id,
+                    'category_name'    => $category_name,
+                    'category_level'   => $category_level,
+                    'status'           => $status,
+                    'default_language' => $default_language,
                 ),
                 array(
-                    'category_id'       => 'required|orbit.empty.category',
-                    'current_mall'      => 'orbit.empty.merchant',
-                    'category_name'     => 'category_name_exists_but_me:'.$category_id.','.$merchant_id,
-                    'category_level'    => 'numeric',
-                    'status'            => 'orbit.empty.category_status',
-                    'id_language_default' => 'required|orbit.empty.language_default',
+                    'category_id'      => 'required|orbit.empty.category',
+                    'category_name'    => 'category_name_exists_but_me:'.$category_id,
+                    'category_level'   => 'numeric',
+                    'status'           => 'orbit.empty.category_status',
+                    'default_language' => 'required|orbit.empty.default_language',
                 ),
                 array(
                    'category_name_exists_but_me' => Lang::get('validation.orbit.exists.category_name'),
@@ -346,12 +346,6 @@ class CategoryAPIController extends ControllerAPI
             Event::fire('orbit.category.postupdatecategory.after.validation', array($this, $validator));
 
             $updatedcategory = Category::excludeDeleted()->allowedForUser($user)->where('category_id', $category_id)->first();
-
-            OrbitInput::post('merchant_id', function($merchant_id) use ($updatedcategory) {
-                if (! (trim($merchant_id) === '')) {
-                    $updatedcategory->merchant_id = $merchant_id;
-                }
-            });
 
             OrbitInput::post('category_name', function($category_name) use ($updatedcategory) {
                 $updatedcategory->category_name = $category_name;
@@ -375,7 +369,7 @@ class CategoryAPIController extends ControllerAPI
 
             // @author Irianto Pratama <irianto@dominopos.com>
             $default_translation = [
-                $id_language_default => [
+                $default_language => [
                     'category_name' => $updatedcategory->category_name,
                     'description' => $updatedcategory->description
                 ]
@@ -1006,17 +1000,32 @@ class CategoryAPIController extends ControllerAPI
 
     protected function registerCustomValidation()
     {
-        // Check the existance of id_language_default
-        Validator::extend('orbit.empty.language_default', function ($attribute, $value, $parameters) {
-            $news = MerchantLanguage::excludeDeleted()
-                        ->where('merchant_language_id', $value)
+        // Check the existance of default_language
+        Validator::extend('orbit.empty.default_language', function ($attribute, $value, $parameters) {
+            $lang = Language::excludeDeleted()
+                        ->where('name', $value)
                         ->first();
 
-            if (empty($news)) {
+            if (empty($lang)) {
                 return FALSE;
             }
 
-            App::instance('orbit.empty.language_default', $news);
+            $this->valid_default_lang = $lang;
+
+            return TRUE;
+        });
+
+        // Check the existance of language
+        Validator::extend('orbit.empty.language', function ($attribute, $value, $parameters) {
+            $lang = Language::excludeDeleted()
+                        ->where('name', $value)
+                        ->first();
+
+            if (empty($lang)) {
+                return FALSE;
+            }
+
+            $this->valid_lang = $lang;
 
             return TRUE;
         });
@@ -1031,7 +1040,7 @@ class CategoryAPIController extends ControllerAPI
                 return FALSE;
             }
 
-            App::instance('orbit.empty.category', $category);
+            $this->valid_category = $category;
 
             return TRUE;
         });
@@ -1054,10 +1063,8 @@ class CategoryAPIController extends ControllerAPI
 
         // Check category name, it should not exists
         Validator::extend('orbit.exists.category_name', function ($attribute, $value, $parameters) {
-            $merchant_id = $parameters[0];
             $categoryName = Category::excludeDeleted()
                         ->where('category_name', $value)
-                        ->where('merchant_id', $merchant_id)
                         ->first();
 
             if (! empty($categoryName)) {
@@ -1072,25 +1079,17 @@ class CategoryAPIController extends ControllerAPI
         // Check category name, it should not exists (for update)
         Validator::extend('category_name_exists_but_me', function ($attribute, $value, $parameters) {
             $category_id = trim($parameters[0]);
-            $merchant_id = trim($parameters[1]);
-
-            // if merchant_id not being updated, then get merchant_id from db.
-            if ($merchant_id === '') {
-                $category = Category::where('category_id', $category_id)->first();
-                $merchant_id = $category->merchant_id;
-            }
 
             $category = Category::excludeDeleted()
                         ->where('category_name', $value)
                         ->where('category_id', '!=', $category_id)
-                        ->where('merchant_id', $merchant_id)
                         ->first();
 
             if (! empty($category)) {
                 return FALSE;
             }
 
-            App::instance('orbit.validation.category', $category);
+            $this->update_valid_category = $category;
 
             return TRUE;
         });
@@ -1136,21 +1135,21 @@ class CategoryAPIController extends ControllerAPI
         if (json_last_error() != JSON_ERROR_NONE) {
             OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'translations']));
         }
-        foreach ($data as $merchant_language_id => $translations) {
-            $language = MerchantLanguage::excludeDeleted()
-                ->where('merchant_language_id', '=', $merchant_language_id)
+        foreach ($data as $language_id => $translations) {
+            $language = Language::excludeDeleted()
+                ->where('language_id', '=', $language_id)
                 ->first();
             if (empty($language)) {
-                OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.merchant_language'));
+                OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.language'));
             }
             $existing_translation = CategoryTranslation::excludeDeleted()
                 ->where('category_id', '=', $category->category_id)
-                ->where('merchant_language_id', '=', $merchant_language_id)
+                ->where('merchant_language_id', '=', $language_id)
                 ->first();
             if ($translations === null) {
                 // deleting, verify exists
                 if (empty($existing_translation)) {
-                    OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.merchant_language'));
+                    OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.language'));
                 }
                 $operations[] = ['delete', $existing_translation];
             } else {
@@ -1163,7 +1162,7 @@ class CategoryAPIController extends ControllerAPI
                     }
                 }
                 if (empty($existing_translation)) {
-                    $operations[] = ['create', $merchant_language_id, $translations];
+                    $operations[] = ['create', $language_id, $translations];
                 } else {
                     $operations[] = ['update', $existing_translation, $translations];
                 }

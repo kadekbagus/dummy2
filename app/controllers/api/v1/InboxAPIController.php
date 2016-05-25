@@ -15,7 +15,7 @@ use DominoPOS\OrbitSession\Session;
 use DominoPOS\OrbitSession\SessionConfig;
 
 class InboxAPIController extends ControllerAPI
-{   
+{
     const APPLICATION_ID = 1;
     protected $session = null;
 
@@ -541,7 +541,7 @@ class InboxAPIController extends ControllerAPI
             Event::fire('orbit.inbox.postnotifiedmessage.after.validation', array($this, $validator));
 
             $inbox = App::make('orbit.empty.alert');
-            
+
             $inbox->is_notified = 'Y';
             $inbox->save();
 
@@ -826,6 +826,9 @@ class InboxAPIController extends ControllerAPI
     protected function prepareSession()
     {
         if (! is_object($this->session)) {
+            // set the session strict to FALSE
+            Config::set('orbit.session.strict', FALSE);
+
             // This user assumed are Consumer, which has been checked at login process
             $config = new SessionConfig(Config::get('orbit.session'));
             $config->setConfig('session_origin.header.name', 'X-Orbit-Session');
