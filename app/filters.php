@@ -165,7 +165,7 @@ Route::filter('orbit-settings', function()
     $retailer = Mall::with('parent', 'mediaIcon')->where('merchant_id', Config::get('orbit.shop.id'))->excludeDeleted()->first();
 
     if (! MallAccess::create()->isAccessible($retailer)) {
-        App::abort(403, sprintf('Mall %s is inaccessible at the moment.', htmlentities($retailer->name)));
+        App::abort(403, sprintf('%s is inaccessible at the moment.', htmlentities($retailer->name)));
     }
 
     View::share('this_mall', $retailer);
