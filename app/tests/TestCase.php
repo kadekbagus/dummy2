@@ -2,7 +2,7 @@
 
 use Laracasts\TestDummy\Factory;
 
-class TestCase extends Illuminate\Foundation\Testing\TestCase {
+abstract class TestCase extends Illuminate\Foundation\Testing\TestCase {
 
     protected static $registered;
 

@@ -14,6 +14,7 @@ use Mall;
 use Setting;
 use MerchantLanguage;
 use \Redirect;
+use Orbit\Helper\Net\UrlChecker as UrlBlock;
 
 class BaseCIController extends ControllerAPI
 {
@@ -21,6 +22,8 @@ class BaseCIController extends ControllerAPI
     const PAYLOAD_KEY = '--orbit-mall--';
     protected $session = null;
     protected $retailer = null;
+    protected $commonViewsData = [];
+    protected $pageTitle = '';
 
     /**
     * Get list language from current merchant or mall
@@ -109,7 +112,7 @@ class BaseCIController extends ControllerAPI
                 }
             }
             $retailer = $retailer->first();
-            
+
             $membership_card = Setting::where('setting_name','enable_membership_card')->where('object_id',$retailer_id)->first();
 
             if (! empty($membership_card)){
@@ -162,13 +165,13 @@ class BaseCIController extends ControllerAPI
     /**
      * Redirect user if not logged in to sign page
      *
-     * @param object $e - Error object
-     *
-     * @return Illuminate\Support\Facades\Redirect
-     *
      * @author Ahmad Anshori <ahmad@dominopos.com>
+     * @author Rio Astamal <rio@dominopos.com>
+     * @param object $e - Error object
+     * @param string $urlLogout - Redirect to URL
+     * @return Illuminate\Support\Facades\Redirect
      */
-    public function redirectIfNotLoggedIn($e)
+    public function redirectIfNotLoggedIn($e, $urlLogout='/customer/logout')
     {
         if (Config::get('app.debug')) {
             return $e;
@@ -180,7 +183,7 @@ class BaseCIController extends ControllerAPI
             case Session::ERR_UA_MISS_MATCH;
             case Session::ERR_SESS_NOT_FOUND;
             case Session::ERR_SESS_EXPIRE;
-                return \Redirect::to('/customer/logout');
+                return \Redirect::to($urlLogout);
                 break;
 
             default:
@@ -196,5 +199,27 @@ class BaseCIController extends ControllerAPI
     public function base64UrlDecode($inputStr)
     {
         return base64_decode(strtr($inputStr, '-_,', '+/='));
+    }
+
+    /**
+     * This method return list of data which mostly needed by views.
+     *
+     * @return array
+     */
+    protected function fillCommonViewsData()
+    {
+        $urlblock = new UrlBlock();
+        $retailer = $this->getRetailerInfo();
+        $languages = $this->getListLanguages($retailer);
+        $user = $this->getLoggedInUser();
+
+        return [
+            'user' => $user,
+            'retailer' => $retailer,
+            'urlblock' => $urlblock,
+            'languages' => $languages,
+            'page_title' => $this->pageTitle,
+            'user_email' => $user->role->role_name !== 'Guest' ? $user->user_email : '',
+        ];
     }
 }
