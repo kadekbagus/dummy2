@@ -28,6 +28,13 @@ class DeniedAccessInactiveMallTest extends TestCase
         }]);
     }
 
+    public function tearDown()
+    {
+        parent::tearDown();
+
+        Route::disableFilters();
+    }
+
     public function testOK_MallActive_ProdEnv()
     {
         $mall = Factory::create('Mall', ['status' => 'active']);
