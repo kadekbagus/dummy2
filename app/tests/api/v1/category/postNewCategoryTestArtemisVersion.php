@@ -275,6 +275,97 @@ class postNewCategoryTestArtemisVersion extends TestCase
 
     public function testPostNewCategorySuccess()
     {
+        /*
+        * create new category restauran
+        */
+        $data = [
+                'category_name'    => 'restaurant',
+                'category_level'   => 1,
+                'category_order'   => 0,
+                'status'           => 'active',
+                'default_language' => 'en',
+                'translations'     => '{"' . $this->idLang->language_id . '":{"category_name":"restoran","description":"ini adalah rumah makan"}}'
+                ];
 
+        $response = $this->setRequestPostNewCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
+        $this->assertSame("Request OK", $response->message);
+        foreach ($data as $field => $value) {
+            switch (true) {
+                case ($field === 'default_language'):
+                    $translations_key_id = 'translation_' . snake_case($this->enLang->language_id);
+                    if (ctype_upper(substr($this->enLang->language_id, 0, 1))) {
+                        $translations_key_id = 'translation__' . snake_case($this->enLang->language_id);
+                    }
+                    $this->assertSame($data['category_name'], $response->data->$translations_key_id->category_name);
+                    break;
+                case ($field === 'translations'):
+                    $data_translation = @json_decode($data['translations']);
+                    foreach ($data_translation as $translations_key => $translation_value) {
+                        $translations_key_id = 'translation_' . snake_case($translations_key);
+                        if (ctype_upper(substr($translations_key, 0, 1))) {
+                            $translations_key_id = 'translation__' . snake_case($translations_key);
+                        }
+                        $this->assertSame($translation_value->category_name, $response->data->$translations_key_id->category_name);
+                        $this->assertSame($translation_value->description, $response->data->$translations_key_id->description);
+                    }
+                    break;
+                default:
+                    $this->assertSame((string)$data[$field], (string)$response->data->{$field});
+                    break;
+            }
+        }
+
+        /*
+        * create new category book store
+        */
+        $data = [
+                'category_name'    => 'book store',
+                'category_level'   => 1,
+                'category_order'   => 0,
+                'status'           => 'active',
+                'default_language' => 'en',
+                'translations'     => '{"' . $this->idLang->language_id . '":{"category_name":"toko buku","description":"ini adalah toko buku"}}'
+                ];
+
+        $response = $this->setRequestPostNewCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
+        $this->assertSame("Request OK", $response->message);
+        foreach ($data as $field => $value) {
+            switch (true) {
+                case ($field === 'default_language'):
+                    $translations_key_id = 'translation_' . snake_case($this->enLang->language_id);
+                    if (ctype_upper(substr($this->enLang->language_id, 0, 1))) {
+                        $translations_key_id = 'translation__' . snake_case($this->enLang->language_id);
+                    }
+                    $this->assertSame($data['category_name'], $response->data->$translations_key_id->category_name);
+                    break;
+                case ($field === 'translations'):
+                    $data_translation = @json_decode($data['translations']);
+                    foreach ($data_translation as $translations_key => $translation_value) {
+                        $translations_key_id = 'translation_' . snake_case($translations_key);
+                        if (ctype_upper(substr($translations_key, 0, 1))) {
+                            $translations_key_id = 'translation__' . snake_case($translations_key);
+                        }
+                        $this->assertSame($translation_value->category_name, $response->data->$translations_key_id->category_name);
+                        $this->assertSame($translation_value->description, $response->data->$translations_key_id->description);
+                    }
+                    break;
+                default:
+                    $this->assertSame((string)$data[$field], (string)$response->data->{$field});
+                    break;
+            }
+        }
+
+        /*
+        * test count of category
+        */
+        $get_category = Category::get();
+        $count_category = count($get_category);
+        $this->assertSame(2, $count_category);
     }
 }
