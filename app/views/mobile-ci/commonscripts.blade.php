@@ -1181,7 +1181,11 @@
                     orbitSignUpForm.switchForm('signup');
                 },
                 // Proceed the login for identified user
-                userIdentified
+                userIdentified,
+                function() {
+                    orbitSignUpForm.isProcessing = false;
+                    orbitSignUpForm.showErrorMessageBox('Something went wrong, please try again in a few moments.');
+                }
             );
         }
 
@@ -1285,6 +1289,11 @@
                     $('#signinForm #email').val(custEmail);
                     orbitSignUpForm.isProcessing = false;
                     orbitSignUpForm.showErrorMessageBox('{{Lang::get('mobileci.signup.email_exist')}}');
+                },
+
+                function() {
+                    orbitSignUpForm.isProcessing = false;
+                    orbitSignUpForm.showErrorMessageBox('Something went wrong, please try again in a few moments.');
                 }
             );
         }
@@ -1332,9 +1341,10 @@
          * @param string custEmail - Customer email
          * @param callback emptyCallback - Calback called when empty data returned
          * @param callback dataCallback - Callback called when user data is found
+         * @param callback errorCallback - Callback called when there is an error
          * @return void|object
          */
-        orbitSignUpForm.checkCustomerEmail = function(custEmail, emptyCallback, dataCallback) {
+        orbitSignUpForm.checkCustomerEmail = function(custEmail, emptyCallback, dataCallback, errorCallback) {
             $.ajax({
                 method: 'POST',
                 url: apiPath + 'customer/basic-data',
@@ -1346,6 +1356,8 @@
                 }
 
                 return dataCallback(data[0]);
+            }).fail(function (xhr, status, exception) {
+                return errorCallback();
             });
         };
 

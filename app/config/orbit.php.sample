@@ -3,6 +3,9 @@
  * Orbit specific configuraiton.
  */
 return array(
+    // Demo environtment
+    'is_demo' => FALSE,
+
     // route names that need authentication to be accessed
     'blocked_routes' => [
         // all route names
@@ -91,6 +94,20 @@ return array(
     'captive' => array(
         // All unregistered traffic should be redirected to this domain
         'blackhole_domain'  => 'orbit.mall'
+
+        // The URL which we redirect user to grant them internet access
+        'base_grant_url' => 'https://n69.network-auth.com/splash/grant',
+
+        // After the external captive portal grant internet, user should be
+        // redirected to this URL. Leave empty for default Orbit behavior
+        'user_continue_url' => ''
+
+        // URL to check for internet connection
+        'ping_url' => 'http://tools.pingdom.com/fpt/favicon.icox',
+
+        // Delay for setTimeout before displaying the button for
+        // getting internet connection, in seconds
+        'delay_button' => 1.5
     ),
 
     // agreement configuration
