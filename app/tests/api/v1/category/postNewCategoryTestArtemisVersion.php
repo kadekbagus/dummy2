@@ -20,6 +20,8 @@ class postNewCategoryTestArtemisVersion extends TestCase
         $this->apiKey = Factory::create('apikey_super_admin');
 
         $this->enLang = Factory::create('Language', ['name' => 'en']);
+        $this->idLang = Factory::create('Language', ['name' => 'id']);
+        $this->zhLang = Factory::create('Language', ['name' => 'zh']);
     }
 
     public function setRequestPostNewCategory($api_key, $api_secret_key, $data)
@@ -101,12 +103,41 @@ class postNewCategoryTestArtemisVersion extends TestCase
         $this->assertSame(0, $response->code);
         $this->assertSame("success", $response->status);
         $this->assertSame("Request OK", $response->message);
-        $this->assertSame("book store", $response->data->category_name);
+        $this->assertSame($data['category_name'], $response->data->category_name);
     }
 
     public function testResponseSuccessPostNewCategory()
     {
+        /*
+        * test response success
+        */
+        $data = [
+                'category_name'    => 'book store',
+                'category_level'   => 1,
+                'category_order'   => 0,
+                'status'           => 'active',
+                'default_language' => 'en',
+                'translations'     => '{"' . $this->idLang->language_id . '":{"category_name":"toko buku","description":"ini adalah toko buku"}}'
+                ];
 
+        $response = $this->setRequestPostNewCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
+        $this->assertSame("Request OK", $response->message);
+        foreach ($data as $field => $value) {
+            switch (true) {
+                case ($field === 'default_language'):
+                    
+                    break;
+                case ($field === 'translations'):
+                    
+                    break;
+                default:
+                    $this->assertSame((string)$data[$field], (string)$response->data->{$field});
+                    break;
+            }
+        }
     }
 
     public function testResponseFailedPostNewCategory()
