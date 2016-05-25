@@ -28,6 +28,13 @@ class DeniedAccessInactiveMallTest extends TestCase
         }]);
     }
 
+    public function tearDown()
+    {
+        parent::tearDown();
+
+        Route::disableFilters();
+    }
+
     public function testOK_MallActive_ProdEnv()
     {
         $mall = Factory::create('Mall', ['status' => 'active']);
@@ -60,7 +67,7 @@ class DeniedAccessInactiveMallTest extends TestCase
         Config::set('orbit.is_demo', FALSE);
         Config::set('orbit.shop.id', $mall->merchant_id);
 
-        $errorMessage = sprintf('Mall %s is inaccessible at the moment.', $mall->name);
+        $errorMessage = sprintf('%s is inaccessible at the moment.', $mall->name);
         $this->setExpectedException('Symfony\Component\HttpKernel\Exception\HttpException', $errorMessage);
         $response = $this->call('GET', '/unit-test/mall-access');
     }
