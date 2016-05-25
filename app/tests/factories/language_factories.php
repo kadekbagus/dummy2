@@ -1,4 +1,5 @@
 <?php
 $factory('Language', [
-    'name'    => $faker->locale,
+    'name'          => $faker->languageCode,
+    'status'        => 'active'
 ]);

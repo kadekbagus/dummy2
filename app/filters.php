@@ -11,6 +11,7 @@
 */
 use Net\Security\RequestAccess;
 use Orbit\Helper\Net\FBBotChecker;
+use Orbit\Helper\Security\MallAccess;
 
 App::after(function($request, $response)
 {
@@ -122,7 +123,7 @@ Route::filter('fb-bot', function() {
                 $redirect_to = NULL;
                 break;
         }
-        
+
         $param = is_null($redirect_to) ? NULL : ['socmed_redirect_to' => $redirect_to];
 
         // return Redirect::route('mobile-ci.signin', $param);
@@ -163,6 +164,10 @@ Route::filter('orbit-settings', function()
     $browserLang = substr(Request::server('HTTP_ACCEPT_LANGUAGE'), 0, 2);
     $retailer = Mall::with('parent', 'mediaIcon')->where('merchant_id', Config::get('orbit.shop.id'))->excludeDeleted()->first();
 
+    if (! MallAccess::create()->isAccessible($retailer)) {
+        App::abort(403, sprintf('Mall %s is inaccessible at the moment.', htmlentities($retailer->name)));
+    }
+
     View::share('this_mall', $retailer);
 
     // Timezone should be set
@@ -182,7 +187,7 @@ Route::filter('orbit-settings', function()
             App::setLocale($browserLang);
         } else {
             // 3. Cek mall / merchant setting
-            $merchantLang = Mall::with('parent')->where('merchant_id', Config::get('orbit.shop.id'))->excludeDeleted()->first()->mobile_default_language;
+            $merchantLang = $retailer->mobile_default_language;
             if (! empty($merchantLang)) {
                 App::setLocale($merchantLang);
             } else {
@@ -195,11 +200,16 @@ Route::filter('orbit-settings', function()
     $getLocaleLang = App::getLocale();
 
     // get language label for default mall lang
-    App::singleton('default_lang', function() {
+    App::singleton('default_lang', function() use ($retailer) {
         $default_lang = 'en';
 
-        $lg = Mall::with('parent')->where('merchant_id', Config::get('orbit.shop.id'))->excludeDeleted()->first()->mobile_default_language;
+        if (empty($retailer->mobile_default_language)) {
+            throw new Exception (sprintf('Mobile default language is not set on the table for mall %s.', $retailer->name));
+        }
+
+        $lg = $retailer->mobile_default_language;
         $lang_str = Language::where('name', $lg)->first()->name;
+
         if(! empty($lang_str)) {
             $default_lang = $lang_str;
         }
