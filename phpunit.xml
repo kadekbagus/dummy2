@@ -34,9 +34,14 @@
             <file>./app/tests/api/v1/mall/getMallFenceTest.php</file>
         </testsuite>
 
+        <testsuite name="End-to-End">
+            <directory>./app/tests/api/v1/end-to-end</directory>
+        </testsuite>
+
         <testsuite name="Orbit 2.2">
             <directory>./app/tests/acl</directory>
             <directory>./app/tests/uploader</directory>
+            <directory>./app/test/api/v1/end-to-end</directory>
             <file>./app/tests/api/v1/mall/getSearchMallNearbyTest.php</file>
             <file>./app/tests/api/v1/mall/getMallAreaTest.php</file>
             <file>./app/tests/api/v1/mall/getMallFenceTest.php</file>
