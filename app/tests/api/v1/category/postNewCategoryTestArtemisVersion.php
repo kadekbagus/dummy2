@@ -128,10 +128,22 @@ class postNewCategoryTestArtemisVersion extends TestCase
         foreach ($data as $field => $value) {
             switch (true) {
                 case ($field === 'default_language'):
-                    
+                    $translations_key_id = 'translation_' . snake_case($this->enLang->language_id);
+                    if (ctype_upper(substr($this->enLang->language_id, 0, 1))) {
+                        $translations_key_id = 'translation__' . snake_case($this->enLang->language_id);
+                    }
+                    $this->assertSame($data['category_name'], $response->data->$translations_key_id->category_name);
                     break;
                 case ($field === 'translations'):
-                    
+                    $data_translation = @json_decode($data['translations']);
+                    foreach ($data_translation as $translations_key => $translation_value) {
+                        $translations_key_id = 'translation_' . snake_case($translations_key);
+                        if (ctype_upper(substr($translations_key, 0, 1))) {
+                            $translations_key_id = 'translation__' . snake_case($translations_key);
+                        }
+                        $this->assertSame($translation_value->category_name, $response->data->$translations_key_id->category_name);
+                        $this->assertSame($translation_value->description, $response->data->$translations_key_id->description);
+                    }
                     break;
                 default:
                     $this->assertSame((string)$data[$field], (string)$response->data->{$field});
