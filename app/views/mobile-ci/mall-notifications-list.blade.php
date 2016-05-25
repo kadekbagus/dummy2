@@ -59,14 +59,14 @@
 
         var printDate = function (date) {
             if (date instanceof Date) {
-                var day = date.getDate();
+                var day = date.getDate().toString();
                 var mth = monthNames[date.getMonth()];
                 var yr = date.getFullYear();
-                var hr = date.getHours();
-                var min = date.getMinutes();
-                var sec = date.getSeconds();
+                var hr = date.getHours().toString();
+                var min = date.getMinutes().toString();
+                var sec = date.getSeconds().toString();
 
-                return day + ' ' + mth + ' ' + yr + ' ' + hr + ':' + min + ':' + sec;
+                return (day[1]?day:"0"+day[0]) + ' ' + mth + ' ' + yr + ' ' + (hr[1]?hr:"0"+hr[0]) + ':' + (min[1]?min:"0"+min[0]) + ':' + (sec[1]?sec:"0"+sec[0]);
             }
             return null;
         }
