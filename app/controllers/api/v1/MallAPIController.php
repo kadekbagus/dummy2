@@ -1771,13 +1771,6 @@ class MallAPIController extends ControllerAPI
                 $updatedmall->ticket_footer = $ticket_footer;
             });
 
-            OrbitInput::post('facebook_uri', function ($fb_uri) use ($merchant_id, $updatedmall) {
-                $this->saveSocmedUri('facebook', $merchant_id, $fb_uri);
-
-                // For response
-                $updatedmall->facebook_uri = $fb_uri;
-            });
-
             OrbitInput::post('timezone', function($timezoneName) use ($updatedmall) {
                 $timezone = $this->valid_timezone;
                 $updatedmall->timezone_id = $timezone->timezone_id;
@@ -1804,6 +1797,13 @@ class MallAPIController extends ControllerAPI
             Event::fire('orbit.mall.postupdatemall.before.save', array($this, $updatedmall));
 
             $updatedmall->save();
+
+            OrbitInput::post('facebook_uri', function ($fb_uri) use ($merchant_id, $updatedmall) {
+                $this->saveSocmedUri('facebook', $merchant_id, $fb_uri);
+
+                // For response
+                $updatedmall->facebook_uri = $fb_uri;
+            });
 
             OrbitInput::post('campaign_base_price_promotion', function($campaign_base_price_promotion) use ($updatedmall) {
                 $campaign_base_price = CampaignBasePrice::where('status', '=', 'active')
