@@ -71,7 +71,21 @@
             return null;
         }
 
+        var parseDate = function (strDate) {
+            var parts = strDate.match(/([0-9]+)/g);
+
+            // This is still in UTC
+            var date = new Date(parts[0], parts[1], parts[2], parts[3], parts[4], parts[5]);
+
+            // Convert it to local browser
+            date.setMinutes(date.getMinutes() - (new Date()).getTimezoneOffset());
+
+            return date;
+        };
+
         var generateListNotification = function (inbox) {
+            console.log(inbox.created_at);
+
             var inboxId = inbox.inbox_id;
             var subject = inbox.subject;
             var isRead = inbox.is_read == 'Y' ? true : false;
@@ -79,7 +93,7 @@
             var read = isRead ? 'read' : 'unread';
             var mark = isRead ? 'check' : 'exclamation';
             var readUnread = isRead ? 'read-unread' : '';
-            var createdDate = new Date(inbox.created_at + " UTC");
+            var createdDate = parseDate(inbox.created_at);
 
             var $listDivNotification = $('<div />').attr({
                 'id': 'notification-' + inboxId,

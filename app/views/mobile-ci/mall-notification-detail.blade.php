@@ -46,8 +46,20 @@
             return null;
         }
 
+        var parseDate = function (strDate) {
+            var parts = strDate.match(/([0-9]+)/g);
+
+            // This is still in UTC
+            var date = new Date(parts[0], parts[1], parts[2], parts[3], parts[4], parts[5]);
+
+            // Convert it to local browser
+            date.setMinutes(date.getMinutes() - (new Date()).getTimezoneOffset());
+
+            return date;
+        };
+
         $(function() {
-            var date = new Date(dateUtc + " UTC");
+            var date = parseDate(dateUtc);
             $('#created_at').text(printDate(date));
         });
     </script>
