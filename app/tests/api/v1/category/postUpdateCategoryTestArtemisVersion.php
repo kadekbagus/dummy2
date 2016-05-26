@@ -285,6 +285,30 @@ class postUpdateCategoryTestArtemisVersion extends TestCase
         $this->assertSame("success", $response->status);
         $this->assertSame("Request OK", $response->message);
         $this->assertSame('inactive', $response->data->status);
+
+        /*
+        * translation
+        */
+        $update_data = [
+                            'category_id' => $this->category_book_store->category_id,
+                            'default_language' => 'en',
+                            'translations'     => '{"' . $this->idLang->language_id . '":{"category_name":"toko majalah","description":"ini adalah toko buku"}}'
+                        ];
+
+        $response = $this->setRequestPostUpdateCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $update_data);
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
+        $this->assertSame("Request OK", $response->message);
+
+        $data_translation = @json_decode($update_data['translations']);
+        foreach ($data_translation as $translations_key => $translation_value) {
+            $translations_key_id = 'translation_' . snake_case($translations_key);
+            if (ctype_upper(substr($translations_key, 0, 1))) {
+                $translations_key_id = 'translation__' . snake_case($translations_key);
+            }
+            $this->assertSame($translation_value->category_name, $response->data->$translations_key_id->category_name);
+            $this->assertSame($translation_value->description, $response->data->$translations_key_id->description);
+        }
     }
 
     public function testFailedPostUpdateCategory()
