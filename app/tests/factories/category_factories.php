@@ -16,11 +16,12 @@
  */
 
 $factory('Category', [
-    'merchant_id' => 'factory:Merchant',
-    'created_by'  => 'factory:User',
-    'modified_by' => 'factory:User',
-    'status'      => 'active',
-    'description' => $faker->words(2),
+    'merchant_id' => 0,
+    'category_name' => $faker->word,
     'category_level' => 1,
-    'category_name' => $faker->word
+    'category_order' => 0,
+    'description' => $faker->words(2),
+    'status'      => 'active',
+    'created_by'  => 'factory:User',
+    'modified_by' => 'factory:User'
 ]);

@@ -26,6 +26,7 @@ class TenantPrinterController extends DataPrinterController
         $filterCategory = OrbitInput::get('categories_like');
         $filterFloor = OrbitInput::get('floor_like');
         $filterUnit = OrbitInput::get('unit_like');
+        $filterType = OrbitInput::get('object_type');
         $filterStatus = OrbitInput::get('status');
 
         $timezone = $this->getTimeZone($current_mall);
@@ -79,6 +80,10 @@ class TenantPrinterController extends DataPrinterController
                     printf("%s,%s,\n", 'Filter by Tenant Unit', $filterUnit);
                 }
 
+                if ($filterType != '') {
+                    printf("%s,%s,\n", 'Filter by Type', implode(' ', $filterType));
+                }
+
                 if ($filterStatus != '') {
                     printf("%s,%s,\n", 'Filter by Tenant Status', implode(' ', $filterStatus));
                 }
@@ -86,16 +91,19 @@ class TenantPrinterController extends DataPrinterController
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','','','');
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','','','');
 
-                printf("%s,%s,%s,%s,%s,%s,%s\n", 'Tenant Name', 'Categories', 'Location', 'Status', 'Last Update', '', '');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", 'Tenant Name', 'Categories', 'Location', 'Type', 'Status', 'Last Update', '', '');
 
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','','','');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '', '', '', '', '');
 
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
+
+                    $type = (isset($row->object_type) && $row->object_type === 'tenant') ? 'store' : 'service' ;
 
                     printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
                             $this->printUtf8($row->name),
                             $this->printUtf8($row->tenant_categories),
                             $this->printLocation($row),
+                            $type,
                             $row->status,
                             $this->printDateTime($row->updated_at, $timezone, 'd F Y  H:i:s')
                        );

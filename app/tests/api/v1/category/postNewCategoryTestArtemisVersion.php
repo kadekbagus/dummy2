@@ -237,21 +237,21 @@ class postNewCategoryTestArtemisVersion extends TestCase
         $this->assertSame(NULL, $response->data);
 
         /*
-        * test default language failed
+        * test default language failed (default language must english)
         */
         $data = [
                 'category_name'    => 'book store 2',
                 'category_level'   => 1,
                 'category_order'   => 0,
                 'status'           => 'active',
-                'default_language' => 'jp',
+                'default_language' => 'id',
                 'translations'     => '{"' . $this->idLang->language_id . '":{"category_name":"toko buku","description":"ini adalah toko buku"}}'
                 ];
 
         $response = $this->setRequestPostNewCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
         $this->assertSame(14, $response->code);
         $this->assertSame("error", $response->status);
-        $this->assertSame("The language default you specified is not found", $response->message);
+        $this->assertSame("The default language must english", $response->message);
         $this->assertSame(NULL, $response->data);
 
         /*
