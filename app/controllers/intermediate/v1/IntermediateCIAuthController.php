@@ -26,11 +26,10 @@ class IntermediateCIAuthController extends IntermediateBaseController
         {
             try
             {
-                $urlchecker = new UrlChecker();
+                $urlchecker = new UrlChecker('IntermediateCIAuthController');
                 $user = $urlchecker->checkBlockedUrl();
 
                 $this->session = $urlchecker->getUserSession();
-
             } catch (ACLForbiddenException $e) {
                 $response = new ResponseProvider();
                 $response->code = $e->getCode();
