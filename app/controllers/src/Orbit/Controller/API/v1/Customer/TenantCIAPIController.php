@@ -6,6 +6,7 @@
  */
 use Orbit\Controller\API\v1\Customer\BaseAPIController;
 use OrbitShop\API\v1\ResponseProvider;
+use OrbitShop\API\v1\OrbitShopAPI;
 use Helper\EloquentRecordCounter as RecordCounter;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use DominoPOS\OrbitSession\Session;
@@ -19,13 +20,14 @@ use \Carbon\Carbon as Carbon;
 use \Validator;
 use Tenant;
 use Mall;
+use App;
 
 class TenantCIAPIController extends BaseAPIController
 {
-    protected $validRoles = ['consumer', 'guest'];
+    protected $validRoles = ['super admin', 'consumer', 'guest'];
     protected $mall_id = NULL;
 
-    public function getTenantList()
+    public function getTenantList ()
     {
         $httpCode = 200;
         $this->response = new ResponseProvider();
@@ -44,12 +46,13 @@ class TenantCIAPIController extends BaseAPIController
 
             $this->mall_id = OrbitInput::get('mall_id', NULL);
 
+            $this->registerCustomValidation();
             $validator = Validator::make(
                 array(
                     'mall_id' => $this->mall_id,
                 ),
                 array(
-                    'mall_id' => 'required',
+                    'mall_id' => 'required|orbit.empty.mall',
                 )
             );
             if ($validator->fails()) {
@@ -57,19 +60,84 @@ class TenantCIAPIController extends BaseAPIController
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $tenants = Tenant::with(
+            $prefix = DB::getTablePrefix();
+
+            $tenants = Tenant::
+            with(
             [
                 'categories' => function($q) {
+                    $q->select('category_name');
                     $q->where('categories.status', 'active');
                     $q->orderBy('category_name', 'asc');
-                }, 
-                'media' => function($q) {
-                    $q->where('media_name_long', 'retailer_logo_orig');
-                },
-                'merchantSocialMedia.socialMedia'
+                }
             ])
-            ->active()
+            ->select(
+                'merchants.merchant_id',
+                'name',
+                'floor',
+                'unit',
+                'media.path as logo',
+                'merchant_social_media.social_media_uri as facebook_like_url',
+                DB::raw('CASE WHEN news_merch.news_counter > 0 THEN "true" ELSE "false" END as news_flag'),
+                DB::raw('CASE WHEN promo_merch.promotion_counter > 0 THEN "true" ELSE "false" END as promotion_flag'),
+                DB::raw('CASE WHEN coupon_merch.coupon_counter > 0 THEN "true" ELSE "false" END as coupon_flag')
+            )
+            ->leftJoin('media', function ($join) {
+                $join->on('media.object_id', '=', 'merchants.merchant_id')
+                    ->where('media_name_long', '=', 'retailer_logo_orig');
+            })
+            ->leftJoin('category_merchant', function ($join) {
+                $join->on('category_merchant.merchant_id', '=', 'merchants.merchant_id');
+            })
+            ->leftJoin('categories', function ($join) {
+                $join->on('category_merchant.category_id', '=', 'categories.category_id');
+            })
+            ->leftJoin('merchant_social_media', function ($join) {
+                $join->on('merchant_social_media.merchant_id', '=', 'merchants.merchant_id');
+            })
+            ->leftJoin('social_media', function ($join) {
+                $join->on('social_media.social_media_id', '=', 'merchant_social_media.social_media_id');
+                $join->where('social_media_code', '=', 'facebook');
+            })
+            // news badge
+            ->leftJoin(DB::raw("(
+                    SELECT {$prefix}merchants.merchant_id, count({$prefix}news.news_id) as news_counter
+                    from {$prefix}news
+                    LEFT JOIN {$prefix}news_merchant on {$prefix}news_merchant.news_id = {$prefix}news.news_id
+                    LEFT JOIN {$prefix}merchants on {$prefix}news_merchant.merchant_id = {$prefix}merchants.merchant_id
+                    WHERE {$prefix}news_merchant.object_type = 'retailer'
+                    AND {$prefix}news.object_type = 'news'
+                    AND {$prefix}news.status = 'active'
+                    AND {$prefix}merchants.parent_id = '{$this->mall_id}'
+                    GROUP BY {$prefix}merchants.merchant_id
+            ) as news_merch"), DB::raw('news_merch.merchant_id'), '=', 'merchants.merchant_id')
+            // promotion badge
+            ->leftJoin(DB::raw("(
+                    SELECT {$prefix}merchants.merchant_id, count({$prefix}news.news_id) as promotion_counter
+                    from {$prefix}news
+                    LEFT JOIN {$prefix}news_merchant on {$prefix}news_merchant.news_id = {$prefix}news.news_id
+                    LEFT JOIN {$prefix}merchants on {$prefix}news_merchant.merchant_id = {$prefix}merchants.merchant_id
+                    WHERE {$prefix}news_merchant.object_type = 'retailer'
+                    AND {$prefix}news.object_type = 'promotion'
+                    AND {$prefix}news.status = 'active'
+                    AND {$prefix}merchants.parent_id = '{$this->mall_id}'
+                    GROUP BY {$prefix}merchants.merchant_id
+            ) as promo_merch"), DB::raw('promo_merch.merchant_id'), '=', 'merchants.merchant_id')
+            // coupon badge
+            ->leftJoin(DB::raw("(
+                    SELECT {$prefix}merchants.merchant_id, count({$prefix}promotions.promotion_id) as coupon_counter
+                    from {$prefix}promotions
+                    LEFT JOIN {$prefix}promotion_retailer on {$prefix}promotion_retailer.promotion_id = {$prefix}promotions.promotion_id
+                    LEFT JOIN {$prefix}merchants on {$prefix}promotion_retailer.retailer_id = {$prefix}merchants.merchant_id
+                    WHERE {$prefix}promotion_retailer.object_type = 'tenant'
+                    AND {$prefix}promotions.is_coupon = 'Y'
+                    AND {$prefix}promotions.status = 'active'
+                    AND {$prefix}merchants.parent_id = '{$this->mall_id}'
+                    GROUP BY {$prefix}merchants.merchant_id
+            ) as coupon_merch"), DB::raw('coupon_merch.merchant_id'), '=', 'merchants.merchant_id')
+            ->active('merchants')
             ->where('parent_id', $this->mall_id);
+            // ->groupBy('merchants.merchant_id');
 
             $_tenants = clone($tenants);
 
@@ -119,14 +187,14 @@ class TenantCIAPIController extends BaseAPIController
             $tenants = $tenants->get();
 
             $data = new \stdclass();
-            $data->records = $this->collectionTransformer($tenants);
+            $data->records = $tenants;
             $data->returned_records = count($tenants);
             $data->total_records = RecordCounter::create($_tenants)->count();
 
             $this->response->data = $data;
             $this->response->code = 0;
             $this->response->status = 'success';
-            $this->response->message = 'Fetch OK';
+            $this->response->message = 'Success';
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -158,14 +226,14 @@ class TenantCIAPIController extends BaseAPIController
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = null;
+            $this->response->data = [$e->getFile(), $e->getLine(), $e->getMessage()];
             $httpCode = 500;
         }
 
         return $this->render($httpCode);
     }
 
-    public function getTenantItem($id)
+    public function getTenantItem ($id)
     {
         $httpCode = 200;
         $this->response = new ResponseProvider();
@@ -210,171 +278,28 @@ class TenantCIAPIController extends BaseAPIController
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = null;
+            $this->response->data = [$e->getFile(), $e->getLine(), $e->getMessage];
             $httpCode = 500;
         }
 
         return $this->render($httpCode);
     }
 
-    private function collectionTransformer(\Illuminate\Database\Eloquent\Collection $tenants)
+    protected function registerCustomValidation()
     {
-        $user = $this->api->user;
+        // Check the existance of merchant id
+        Validator::extend('orbit.empty.mall', function ($attribute, $value, $parameters) {
+            $mall = Mall::excludeDeleted()
+                        ->where('merchant_id', $value)
+                        ->first();
 
-        $mall = Mall::where('merchant_id', $this->mall_id)->firstOrFail();
-
-        $prefix = DB::getTablePrefix();
-
-        $userAge = 0;
-        if ($user->userDetail->birthdate !== '0000-00-00' && $user->userDetail->birthdate !== null) {
-            $userAge =  $this->calculateAge($user->userDetail->birthdate); // 27
-        }
-
-        $userGender = 'U'; // default is Unknown
-        if ($user->userDetail->gender !== '' && $user->userDetail->gender !== null) {
-            $userGender =  $user->userDetail->gender;
-        }
-
-        $mallTime = Carbon::now($mall->timezone->timezone_name);
-
-        $news_flag = Tenant::select('merchants.name','news.news_name')->excludeDeleted('merchants')
-                    ->leftJoin('news_merchant', 'news_merchant.merchant_id', '=', 'merchants.merchant_id')
-                    ->leftJoin('news', 'news.news_id', '=', 'news_merchant.news_id')
-                        ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'news.news_id')
-                        ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
-                        ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id');
-
-        // filter by age and gender
-        if ($userGender !== null) {
-            $news_flag = $news_flag->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
-        }
-        if ($userAge !== null) {
-            if ($userAge === 0){
-                $news_flag = $news_flag->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
-            } else {
-                if ($userAge >= 55) {
-                    $news_flag = $news_flag->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
-                } else {
-                    $news_flag = $news_flag->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
-                }
+            if (empty($mall)) {
+                return FALSE;
             }
-        }
 
-        $news_flag = $news_flag->where('merchants.parent_id', '=', $mall->merchant_id)
-                    ->where('news.object_type', '=', 'news')
-                    ->where('news.status', '=', 'active')
-                    ->whereRaw("? between {$prefix}news.begin_date and {$prefix}news.end_date", [$mallTime])
-                    ->groupBy('merchants.name')->get();
+            App::instance('orbit.empty.mall', $mall);
 
-        $promotion_flag = Tenant::select('merchants.name','news.news_name')->excludeDeleted('merchants')
-                    ->leftJoin('news_merchant', 'news_merchant.merchant_id', '=', 'merchants.merchant_id')
-                    ->leftJoin('news', 'news.news_id', '=', 'news_merchant.news_id')
-                        ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'news.news_id')
-                        ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
-                        ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id');
-
-        // filter by age and gender
-        if ($userGender !== null) {
-            $promotion_flag = $promotion_flag->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
-        }
-        if ($userAge !== null) {
-            if ($userAge === 0){
-                $promotion_flag = $promotion_flag->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
-            } else {
-                if ($userAge >= 55) {
-                    $promotion_flag = $promotion_flag->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
-                } else {
-                    $promotion_flag = $promotion_flag->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
-                }
-            }
-        }
-
-        $promotion_flag = $promotion_flag->where('merchants.parent_id', '=', $mall->merchant_id)
-                    ->where('news.object_type', '=', 'promotion')
-                    ->where('news.status', '=', 'active')
-                    ->whereRaw("? between {$prefix}news.begin_date and {$prefix}news.end_date", [$mallTime])
-                    ->groupBy('merchants.name')->get();
-
-        $coupon_flag = Tenant::select('merchants.name','promotions.promotion_name')->excludeDeleted('merchants')
-                    ->leftJoin('promotion_retailer', 'promotion_retailer.retailer_id', '=', 'merchants.merchant_id')
-                    ->leftJoin('promotions', 'promotions.promotion_id', '=', 'promotion_retailer.promotion_id')
-                    ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'promotions.promotion_id')
-                    ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'promotions.promotion_id')
-                    ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
-                    ->join('issued_coupons', function ($join) {
-                        $join->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
-                        $join->where('issued_coupons.status', '=', 'active');
-                    })
-                    ->where('promotions.coupon_validity_in_date', '>=', Carbon::now($mall->timezone->timezone_name))
-                    ->where('issued_coupons.user_id', $user->user_id);
-
-        // filter by age and gender
-        if ($userGender !== null) {
-            $coupon_flag = $coupon_flag->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
-        }
-        if ($userAge !== null) {
-            if ($userAge === 0){
-                $coupon_flag = $coupon_flag->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
-            } else {
-                if ($userAge >= 55) {
-                    $coupon_flag = $coupon_flag->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
-                } else {
-                    $coupon_flag = $coupon_flag->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
-                }
-            }
-        }
-
-        $coupon_flag = $coupon_flag->where('merchants.parent_id', '=', $mall->merchant_id)
-                    ->where('promotions.is_coupon', '=', 'Y')
-                    ->where('promotions.status', '=', 'active')
-                    ->whereRaw("? between {$prefix}promotions.begin_date and {$prefix}promotions.end_date", [$mallTime])
-                    ->groupBy('merchants.name')->get();
-
-        $output = array();
-        foreach ($tenants as $tenant) {
-            $categories_array = array();
-            foreach ($tenant->categories as $category) {
-                $category_obj = new \stdclass();
-                $category_obj->category_id = $category->category_id;
-                $category_obj->category_name = $category->category_name;
-                $categories_array[] = $category_obj;
-            }
-            $facebook_like_url = '';
-            if (count($tenant->merchantSocialMedia) > 0) {
-                foreach ($tenant->merchantSocialMedia as $merchantSocialMedia) {
-                    if ($merchantSocialMedia->socialMedia->social_media_code === 'facebook') {
-                        if (! empty($merchantSocialMedia->social_media_uri)) {
-                            $facebook_like_url = '//' . $merchantSocialMedia->socialMedia->social_media_main_url . '/' . $merchantSocialMedia->social_media_uri;
-                        }
-                    }
-                }
-            }
-            $output[] = array(
-                'merchant_id' => $tenant->merchant_id,
-                'name' => $tenant->name,
-                'floor' => $tenant->floor,
-                'unit' => $tenant->unit,
-                'logo' => isset($tenant->media[0]) ? $tenant->media[0]->path : null,
-                'categories' => $categories_array,
-                'facebook_like_url' => $facebook_like_url,
-                'news_flag' => count($news_flag) > 0 ? "true" : "false",
-                'promotion_flag' => count($promotion_flag) > 0 ? "true" : "false",
-                'coupon_flag' => count($coupon_flag) > 0 ? "true" : "false",
-            );
-        }
-
-        return $output;
-    }
-
-    private function itemTransformer(Tenant $tenant)
-    {
-        $output = array(
-            'merchant_id' => $tenant->merchant_id,
-            'name' => $tenant->name,
-            'floor' => $tenant->floor,
-            'unit' => $tenant->unit
-        );
-
-        return $output;
+            return TRUE;
+        });
     }
 }
