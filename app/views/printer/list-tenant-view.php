@@ -147,6 +147,14 @@
             </tr>
         <?php } ?>
 
+        <?php if ($filterType != '') { ?>
+            <tr>
+                <td>Filter by Type</td>
+                <td>:</td>
+                <td><strong><?php echo htmlentities(implode(' , ',$filterType)); ?></strong></td>
+            </tr>
+        <?php } ?>
+
         <?php if ($filterStatus != '') { ?>
             <tr>
                 <td>Filter by Status</td>
@@ -163,17 +171,19 @@
             <th style="text-align:left;">Tenant Name</th>
             <th style="text-align:left;">Categories</th>
             <th style="text-align:left;">Location</th>
+            <th style="text-align:left;">Type</th>
             <th style="text-align:left;">Status</th>
             <th style="text-align:left;">Last Update</th>
         </thead>
         <tbody>
         <?php $count = 1; while ($row = $statement->fetch(PDO::FETCH_OBJ)) : ?>
             <tr class="{{ $rowCounter % 2 === 0 ? 'zebra' : '' }}">
-                 <td><?php echo $me->printUtf8($row->name); ?></td>
-                 <td><?php echo $me->printUtf8($row->tenant_categories); ?></td>
-                 <td><?php echo $me->printLocation($row); ?></td>
-                 <td><?php echo $row->status; ?></td>
-                 <td><?php echo $me->printDateTime($row->updated_at, $timezone, 'd F Y  H:i:s'); ?></td>
+                <td><?php echo $me->printUtf8($row->name); ?></td>
+                <td><?php echo $me->printUtf8($row->tenant_categories); ?></td>
+                <td><?php echo $me->printLocation($row); ?></td>
+                <td> <?php echo (isset($row->object_type) && $row->object_type === 'tenant') ? 'store' : 'service'; ?> </td>
+                <td><?php echo $row->status; ?></td>
+                <td><?php echo $me->printDateTime($row->updated_at, $timezone, 'd F Y  H:i:s'); ?></td>
             </tr>
         <?php  $count++; endwhile; ?>
         </tbody>
