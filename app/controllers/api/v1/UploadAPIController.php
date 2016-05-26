@@ -4013,6 +4013,7 @@ class UploadAPIController extends ControllerAPI
      * ----------------------
      * @param integer    `merchant_id`                  (required) - ID of the merchant/retailer
      * @param integer    `picture_index`                (required) - Index of the picture
+     * @param integer    `object_type`                  (required) - Object type of tenant : tenant or service
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -4050,15 +4051,18 @@ class UploadAPIController extends ControllerAPI
             // Application input
             $merchant_id = OrbitInput::post('merchant_id');
             $picture_index = OrbitInput::post('picture_index');
+            $object_type = OrbitInput::post('object_type');
 
             $validator = Validator::make(
                 array(
                     'merchant_id'   => $merchant_id,
                     'picture_index' => $picture_index,
+                    'object_type'   => $object_type,
                 ),
                 array(
-                    'merchant_id'    => 'required|orbit.empty.tenant',
-                    'picture_index'  => 'array',
+                    'merchant_id'   => 'required|orbit.empty.tenantstoreandservice',
+                    'picture_index' => 'array',
+                    'object_type'   => 'orbit.empty.tenant_type',
                 )
             );
 
@@ -4078,12 +4082,25 @@ class UploadAPIController extends ControllerAPI
 
             // We already had Product instance on the RegisterCustomValidation
             // get it from there no need to re-query the database
-            $merchant = App::make('orbit.empty.tenant');
+            $merchant = App::make('orbit.empty.tenantstoreandservice');
+
+            $object_name = '';
+            $media_name_id = '';
+
+            // Set object_name and media name id as each object type (tenant or sevice)
+            if ($object_type === 'tenant') {
+                $object_name = 'retailer';
+                $media_name_id = 'retailer_image';
+            } elseif ($object_type === 'service') {
+                $object_name = 'service';
+                $media_name_id = 'service_image';
+            }
+
 
             // Delete old merchant logo
             $pastMedia = Media::where('object_id', $merchant->merchant_id)
-                              ->where('object_name', 'retailer')
-                              ->where('media_name_id', 'retailer_image');
+                              ->where('object_name', $object_name)
+                              ->where('media_name_id', $media_name_id);
 
             if (! empty($picture_index)) {
                 $pastMedia->where(function($q) use ($picture_index) {
@@ -7937,9 +7954,13 @@ class UploadAPIController extends ControllerAPI
                 return TRUE;
             });
 
-            Validator::extend('orbit.empty.tenantstoreandservice', function ($attribute, $value, $parameters) use ($user) {
-
+            // Check existing tenant (with type tenant or service)
+            Validator::extend('orbit.empty.tenantstoreandservice', function ($attribute, $value, $parameters){
                 $merchant = TenantStoreAndService::excludeDeleted()
+                            ->where(function($q) {
+                                 $q->where('object_type', 'tenant')
+                                   ->orWhere('object_type', 'service');
+                            })
                             ->where('merchant_id', $value)
                             ->first();
 
@@ -7950,6 +7971,18 @@ class UploadAPIController extends ControllerAPI
                 App::instance('orbit.empty.tenantstoreandservice', $merchant);
 
                 return TRUE;
+            });
+
+
+            // Check the existance of the tenant type
+            Validator::extend('orbit.empty.tenant_type', function ($attribute, $value, $parameters) {
+                $valid = false;
+                $statuses = array('tenant', 'service');
+                foreach ($statuses as $status) {
+                    if($value === $status) $valid = $valid || TRUE;
+                }
+
+                return $valid;
             });
 
             // @Todo: Refactor by adding allowedForUser for mall
