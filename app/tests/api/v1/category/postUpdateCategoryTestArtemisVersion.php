@@ -212,7 +212,7 @@ class postUpdateCategoryTestArtemisVersion extends TestCase
         $_POST = [];
 
         /*
-        * test exist category name but not me
+        * exist category name but not me
         */
         $update_data = [
                             'category_id' => $this->category_book_store->category_id,
@@ -227,7 +227,7 @@ class postUpdateCategoryTestArtemisVersion extends TestCase
         $this->assertSame($this->category_book_store->category_name, $response->data->category_name);
 
         /*
-        * test not exist category name
+        * not exist category name
         */
         $update_data = [
                             'category_id' => $this->category_book_store->category_id,
@@ -240,6 +240,51 @@ class postUpdateCategoryTestArtemisVersion extends TestCase
         $this->assertSame("success", $response->status);
         $this->assertSame("Request OK", $response->message);
         $this->assertSame('library', $response->data->category_name);
+
+        /*
+        * category level
+        */
+        $update_data = [
+                            'category_id' => $this->category_book_store->category_id,
+                            'default_language' => 'en',
+                            'category_level' => 2
+                        ];
+
+        $response = $this->setRequestPostUpdateCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $update_data);
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
+        $this->assertSame("Request OK", $response->message);
+        $this->assertSame(2, $response->data->category_level);
+
+        /*
+        * category order
+        */
+        $update_data = [
+                            'category_id' => $this->category_book_store->category_id,
+                            'default_language' => 'en',
+                            'category_order' => 1
+                        ];
+
+        $response = $this->setRequestPostUpdateCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $update_data);
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
+        $this->assertSame("Request OK", $response->message);
+        $this->assertSame(1, $response->data->category_order);
+
+        /*
+        * status
+        */
+        $update_data = [
+                            'category_id' => $this->category_book_store->category_id,
+                            'default_language' => 'en',
+                            'status' => 'inactive'
+                        ];
+
+        $response = $this->setRequestPostUpdateCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $update_data);
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
+        $this->assertSame("Request OK", $response->message);
+        $this->assertSame('inactive', $response->data->status);
     }
 
     public function testFailedPostUpdateCategory()
@@ -275,6 +320,65 @@ class postUpdateCategoryTestArtemisVersion extends TestCase
         $this->assertSame(14, $response->code);
         $this->assertSame("error", $response->status);
         $this->assertSame("The category name has already been used", $response->message);
+        $this->assertSame(NULL, $response->data);
+
+        /*
+        * test category level must numeric
+        */
+        $update_data = [
+                            'category_id' => $this->category_book_store->category_id,
+                            'default_language' => 'en',
+                            'category_level' => 'restaurant'
+                        ];
+
+        $response = $this->setRequestPostUpdateCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $update_data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("The category level must be a number", $response->message);
+        $this->assertSame(NULL, $response->data);
+
+        /*
+        * test category order must numeric
+        */
+        $update_data = [
+                            'category_id' => $this->category_book_store->category_id,
+                            'default_language' => 'en',
+                            'category_order' => 'restaurant'
+                        ];
+
+        $response = $this->setRequestPostUpdateCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $update_data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("The category order must be a number", $response->message);
+        $this->assertSame(NULL, $response->data);
+
+        /*
+        * test failed status
+        */
+        $update_data = [
+                            'category_id' => $this->category_book_store->category_id,
+                            'default_language' => 'en',
+                            'status' => 'off'
+                        ];
+
+        $response = $this->setRequestPostUpdateCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $update_data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("The category status you specified is not found", $response->message);
+        $this->assertSame(NULL, $response->data);
+
+        /*
+        * test failed default language
+        */
+        $update_data = [
+                            'category_id' => $this->category_book_store->category_id,
+                            'default_language' => 'jp',
+                        ];
+
+        $response = $this->setRequestPostUpdateCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $update_data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("The default language must english", $response->message);
         $this->assertSame(NULL, $response->data);
     }
 }
