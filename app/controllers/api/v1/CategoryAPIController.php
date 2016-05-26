@@ -96,7 +96,7 @@ class CategoryAPIController extends ControllerAPI
                     'category_level'   => 'numeric',
                     'category_order'   => 'numeric',
                     'status'           => 'required|orbit.empty.category_status',
-                    'default_language' => 'required|orbit.empty.language_default',
+                    'default_language' => 'required|orbit.empty.default_en',
                 )
             );
 
@@ -318,6 +318,7 @@ class CategoryAPIController extends ControllerAPI
                     'category_id'      => $category_id,
                     'category_name'    => $category_name,
                     'category_level'   => $category_level,
+                    'category_order'   => $category_order,
                     'status'           => $status,
                     'default_language' => $default_language,
                 ),
@@ -325,8 +326,9 @@ class CategoryAPIController extends ControllerAPI
                     'category_id'      => 'required|orbit.empty.category',
                     'category_name'    => 'category_name_exists_but_me:'.$category_id,
                     'category_level'   => 'numeric',
+                    'category_order'   => 'numeric',
                     'status'           => 'orbit.empty.category_status',
-                    'default_language' => 'required|orbit.empty.language_default',
+                    'default_language' => 'required|orbit.empty.default_en',
                 ),
                 array(
                    'category_name_exists_but_me' => Lang::get('validation.orbit.exists.category_name'),
@@ -344,6 +346,8 @@ class CategoryAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.category.postupdatecategory.after.validation', array($this, $validator));
+
+            $language = $this->valid_default_lang;
 
             $updatedcategory = Category::excludeDeleted()->allowedForUser($user)->where('category_id', $category_id)->first();
 
@@ -369,7 +373,7 @@ class CategoryAPIController extends ControllerAPI
 
             // @author Irianto Pratama <irianto@dominopos.com>
             $default_translation = [
-                $default_language => [
+                $language->language_id => [
                     'category_name' => $updatedcategory->category_name,
                     'description' => $updatedcategory->description
                 ]
@@ -761,7 +765,7 @@ class CategoryAPIController extends ControllerAPI
                     'sort_by' => $sort_by,
                 ),
                 array(
-                    'sort_by' => 'in:registered_date,category_name,category_level,category_order,description,status',
+                    'sort_by' => 'in:registered_date,category_name,category_level,category_order,description,status,translation_category_name',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.category_sortby'),
@@ -800,9 +804,9 @@ class CategoryAPIController extends ControllerAPI
             // if flag limit is true then show only category_id and category_name to make the frontend life easier
             // TODO : remove this with something like is_all_retailer on orbit-shop
             if ($limit) {
-                $categories = Category::select('category_id','category_name')->excludeDeleted();
+                $categories = Category::select('categories.category_id','category_name')->excludeDeleted('categories');
             } else {
-                $categories = Category::excludeDeleted();
+                $categories = Category::excludeDeleted('categories');
             }
 
             // Filter category by Ids
@@ -868,6 +872,21 @@ class CategoryAPIController extends ControllerAPI
                 }
             });
 
+            // filter by language id
+            OrbitInput::get('language_id', function($language_id) use ($categories) {
+                $prefix = DB::getTablePrefix();
+
+                $categories->selectRaw("{$prefix}categories.*");
+                $categories->leftJoin('category_translations', 'category_translations.category_id', '=', 'categories.category_id');
+                $categories->where('category_translations.merchant_language_id', $language_id);
+            });
+
+            // Filter category by matching category name pattern
+            OrbitInput::get('translation_category_name_like', function($categoryname) use ($categories)
+            {
+                $categories->where('category_translations.category_name', 'like', "%$categoryname%");
+            });
+
             // Clone the query builder which still does not include the take,
             // skip, and order by
             $_categories = clone $categories;
@@ -910,12 +929,13 @@ class CategoryAPIController extends ControllerAPI
             {
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
-                    'registered_date'   => 'categories.created_at',
-                    'category_name'     => 'categories.category_name',
-                    'category_level'    => 'categories.category_level',
-                    'category_order'    => 'categories.category_order',
-                    'description'       => 'categories.description',
-                    'status'            => 'categories.status'
+                    'registered_date'           => 'categories.created_at',
+                    'category_name'             => 'categories.category_name',
+                    'category_level'            => 'categories.category_level',
+                    'category_order'            => 'categories.category_order',
+                    'description'               => 'categories.description',
+                    'status'                    => 'categories.status',
+                    'translation_category_name' => 'category_translations.category_name'
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];
@@ -1001,12 +1021,12 @@ class CategoryAPIController extends ControllerAPI
     protected function registerCustomValidation()
     {
         // Check the existance of default_language
-        Validator::extend('orbit.empty.language_default', function ($attribute, $value, $parameters) {
+        Validator::extend('orbit.empty.default_en', function ($attribute, $value, $parameters) {
             $lang = Language::excludeDeleted()
                         ->where('name', $value)
                         ->first();
 
-            if (empty($lang)) {
+            if (empty($lang) || $value !== 'en') {
                 return FALSE;
             }
 
