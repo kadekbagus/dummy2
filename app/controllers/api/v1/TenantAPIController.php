@@ -334,11 +334,13 @@ class TenantAPIController extends ControllerAPI
      * @param string     `floor`                   (optional) - The Floor
      * @param string     `unit`                    (optional) - The unit number
      * @param string     `category_ids`            (optional) - List of category ids
+     * @param string     `object_type`             (optional) - object_type of tenant : tenant or service
      * @param string     `external_object_id`      (required) - External object ID
      * @param integer    `id_language_default`     (required) - ID language default
      *
      * @return Illuminate\Support\Facades\Response
      */
+
     public function postNewTenant()
     {
         $activity = Activity::portal()
@@ -403,6 +405,7 @@ class TenantAPIController extends ControllerAPI
             $translations = OrbitInput::post('translations');
             $start_date_activity = OrbitInput::post('start_date_activity');
             $end_date_activity = OrbitInput::post('end_date_activity');
+            $object_type = OrbitInput::post('object_type');
 
             // set user mall id
             $parent_id = OrbitInput::post('parent_id', OrbitInput::post('merchant_id'));
@@ -466,27 +469,29 @@ class TenantAPIController extends ControllerAPI
             $validator = Validator::make(
                 array(
                     'name'                => $name,
+                    'box_url'             => $box_url,
                     'external_object_id'  => $external_object_id,
                     'status'              => $status,
                     'parent_id'           => $parent_id,
+                    'object_type'         => $object_type,
                     /* 'country'          => $country, */
-                    'url'                 => $url,
                     'id_language_default' => $id_language_default,
+                    'url'                 => $url,
+                    'phone'               => $phone,
                     'masterbox_number'    => $masterbox_number,
-                    'box_url'             => $box_url,
-                    'phone'             => $phone,
                 ),
                 array(
-                    'name'                 => 'required',
-                    'box_url'              => 'orbit.formaterror.url.web',
-                    'external_object_id'   => 'required',
-                    'status'               => 'orbit.empty.tenant_status',
-                    'parent_id'            => 'orbit.empty.mall',
-                    /* 'country'              => 'numeric', */
-                    'url'                  => 'orbit.formaterror.url.web',
+                    'name'                => 'required',
+                    'box_url'             => 'orbit.formaterror.url.web',
+                    'external_object_id'  => 'required',
+                    'status'              => 'orbit.empty.tenant_status',
+                    'parent_id'           => 'orbit.empty.mall',
+                    'object_type'         => 'required|orbit.empty.tenant_type',
+                    /* 'country'          => 'numeric', */
                     'id_language_default' => 'required|orbit.empty.language_default',
-                    'masterbox_number'  => 'alpha_num|orbit_unique_verification_number:' . $parent_id . ',' . '',
-                    'phone' => array('regex:/^\+?\d+$/'),
+                    'url'                 => 'orbit.empty.for_tenant_only:' . $object_type . '|orbit.formaterror.url.web',
+                    'phone'               => array('orbit.empty.for_tenant_only:' . $object_type,'regex:/^\+?\d+$/'),
+                    'masterbox_number'    => 'orbit.empty.for_tenant_only:' . $object_type . '|alpha_num|orbit_unique_verification_number:' . $parent_id . ',' . '',
                 ),
                 array(
                     //ACL::throwAccessForbidden($message);
@@ -544,12 +549,11 @@ class TenantAPIController extends ControllerAPI
                                 ->where('name', '=', 'en')
                                 ->first();
 
-            $newtenant = new Tenant();
+            $newtenant = new TenantStoreAndService();
             $newtenant->omid = '';
             $newtenant->orid = '';
             $newtenant->email = $email;
             $newtenant->name = $name;
-            // $newtenant->description = $description;
             $newtenant->address_line1 = $address_line1;
             $newtenant->address_line2 = $address_line2;
             $newtenant->address_line3 = $address_line3;
@@ -558,7 +562,6 @@ class TenantAPIController extends ControllerAPI
             $newtenant->city = $city;
             $newtenant->country_id = $country;
             $newtenant->country = $countryName;
-            $newtenant->phone = $phone;
             $newtenant->fax = $fax;
             $newtenant->start_date_activity = $start_date_activity;
             $newtenant->end_date_activity = $end_date_activity;
@@ -579,6 +582,7 @@ class TenantAPIController extends ControllerAPI
             $newtenant->contact_person_email = $contact_person_email;
             $newtenant->sector_of_activity = $sector_of_activity;
             $newtenant->parent_id = $parent_id;
+            $newtenant->phone = $phone;
             $newtenant->url = $url;
             $newtenant->masterbox_number = $masterbox_number;
             $newtenant->slavebox_number = $slavebox_number;
@@ -587,6 +591,7 @@ class TenantAPIController extends ControllerAPI
             $newtenant->unit = $unit;
             $newtenant->external_object_id = $external_object_id;
             $newtenant->box_url = $box_url;
+            $newtenant->object_type = $object_type;
 
             // Check for english content
             $dataTranslations = @json_decode($translations);
@@ -619,6 +624,22 @@ class TenantAPIController extends ControllerAPI
             $newSpendingRules->save();
 
             if (OrbitInput::post('facebook_uri')) {
+
+                // Validation facebvook uri set only for tenant, cannot save as a service
+                $validator = Validator::make(
+                    array('facebook_uri'    => OrbitInput::post('facebook_uri')),
+                    array('facebook_uri'    => 'orbit.empty.for_tenant_only:' . $object_type),
+                );
+
+                Event::fire('orbit.tenant.postnewtenant.before.validation', array($this, $validator));
+
+                // Run the validation
+                if ($validator->fails()) {
+                    $errorMessage = $validator->messages()->first();
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+
+                // Save sosmed uri
                 $this->saveSocmedUri('facebook', $newtenant->merchant_id, OrbitInput::post('facebook_uri'));
 
                 // For response
@@ -665,7 +686,7 @@ class TenantAPIController extends ControllerAPI
                 $newKeywordObject = new KeywordObject();
                 $newKeywordObject->keyword_id = $keyword_id;
                 $newKeywordObject->object_id = $newtenant->merchant_id;
-                $newKeywordObject->object_type = 'tenant';
+                $newKeywordObject->object_type = $object_type;
                 $newKeywordObject->save();
 
             }
@@ -906,36 +927,37 @@ class TenantAPIController extends ControllerAPI
             $floor = OrbitInput::post('floor');
             $unit = OrbitInput::post('unit');
             $phone = OrbitInput::post('phone');
+            $object_type = OrbitInput::post('object_type');
 
             // Begin database transaction
             $this->beginTransaction();
 
             $validator = Validator::make(
                 array(
-                    'current_mall'      => $mall_id,
-                    'retailer_id'       => $retailer_id,
-                    'user_id'           => $user_id,
-                    'email'             => $email,
-                    'status'            => $status,
-                    'parent_id'         => $parent_id,
-                    'url'               => $url,
-                    'masterbox_number'  => $masterbox_number,
-                    'category_ids'      => $category_ids,
-                    'box_url'           => $box_url,
-                    'id_language_default'   => $id_language_default,
-                    'phone'   => $phone,
+                    'current_mall'        => $mall_id,
+                    'retailer_id'         => $retailer_id,
+                    'user_id'             => $user_id,
+                    'email'               => $email,
+                    'status'              => $status,
+                    'parent_id'           => $parent_id,
+                    'url'                 => $url,
+                    'masterbox_number'    => $masterbox_number,
+                    'category_ids'        => $category_ids,
+                    'box_url'             => $box_url,
+                    'id_language_default' => $id_language_default,
+                    'phone'               => $phone,
                 ),
                 array(
-                    'current_mall'      => 'orbit.empty.mall',
-                    'retailer_id'       => 'required|orbit.empty.tenant',
-                    'user_id'           => 'orbit.empty.user',
-                    'email'             => 'email|email_exists_but_me',
-                    'status'            => 'orbit.empty.tenant_status|orbit.exists.tenant_on_active_campaign',
-                    'parent_id'         => 'orbit.empty.mall',
-                    'url'               => 'orbit.formaterror.url.web',
-                    'masterbox_number'  => 'alpha_num|orbit_unique_verification_number:' . $mall_id . ',' . $retailer_id,
-                    'category_ids'      => 'array',
-                    'phone'      => array('regex:/^\+?\d+$/'),
+                    'current_mall'     => 'orbit.empty.mall',
+                    'retailer_id'      => 'required|orbit.empty.tenant',
+                    'user_id'          => 'orbit.empty.user',
+                    'email'            => 'email|email_exists_but_me',
+                    'status'           => 'orbit.empty.tenant_status|orbit.exists.tenant_on_active_campaign',
+                    'parent_id'        => 'orbit.empty.mall',
+                    'url'              => 'orbit.empty.for_tenant_only:' . $object_type . '|orbit.formaterror.url.web',
+                    'masterbox_number' => 'orbit.empty.for_tenant_only:' . $object_type . '|alpha_num|orbit_unique_verification_number:' . $mall_id . ',' . $retailer_id,
+                    'category_ids'     => 'array',
+                    'phone'            => array('regex:/^\+?\d+$/','orbit.empty.for_tenant_only:' . $object_type),
                 ),
                 array(
                     'email_exists_but_me' => Lang::get('validation.orbit.exists.email'),
@@ -961,6 +983,7 @@ class TenantAPIController extends ControllerAPI
 
             $updatedtenant = App::make('orbit.empty.tenant');
 
+            // Get post input from form
             OrbitInput::post('user_id', function($user_id) use ($updatedtenant) {
                 $updatedtenant->user_id = $user_id;
             });
@@ -969,9 +992,9 @@ class TenantAPIController extends ControllerAPI
                 $updatedtenant->email = $email;
             });
 
-            OrbitInput::post('name', function($name) use ($updatedtenant) {
-                $updatedtenant->name = $name;
-            });
+            // OrbitInput::post('name', function($name) use ($updatedtenant) {
+            //     $updatedtenant->name = $name;
+            // });
 
             // OrbitInput::post('description', function($description) use ($updatedtenant) {
             //     $updatedtenant->description = $description;
@@ -1214,7 +1237,7 @@ class TenantAPIController extends ControllerAPI
 
             // Delete old data
             $deleted_keyword_object = KeywordObject::where('object_id', '=', $retailer_id)
-                                                    ->where('object_type', '=', 'tenant');
+                                                    ->where('object_type', '=', $object_type);
             $deleted_keyword_object->delete();
 
             OrbitInput::post('keywords', function($keywords) use ($updatedtenant, $mall_id, $user, $retailer_id) {
@@ -1248,7 +1271,7 @@ class TenantAPIController extends ControllerAPI
                     $newKeywordObject = new KeywordObject();
                     $newKeywordObject->keyword_id = $keyword_id;
                     $newKeywordObject->object_id = $retailer_id;
-                    $newKeywordObject->object_type = 'tenant';
+                    $newKeywordObject->object_type = $object_type;
                     $newKeywordObject->save();
 
                 }
@@ -1472,6 +1495,8 @@ class TenantAPIController extends ControllerAPI
                 $limit = TRUE;
             }
 
+            $object_type = OrbitInput::get('object_type');
+
             // get user mall_ids
             $parent_id = OrbitInput::get('parent_id');
             $listOfMallIds = $user->getUserMallIds($parent_id);
@@ -1485,7 +1510,7 @@ class TenantAPIController extends ControllerAPI
                     'sortby' => $sort_by,
                 ),
                 array(
-                    'sortby' => 'in:registered_date,retailer_name,retailer_email,retailer_userid,retailer_description,retailerid,retailer_address1,retailer_address2,retailer_address3,retailer_cityid,retailer_city,retailer_countryid,retailer_country,retailer_phone,retailer_fax,retailer_status,retailer_currency,contact_person_firstname,merchant_name,retailer_floor,retailer_unit,retailer_external_object_id,retailer_created_at,retailer_updated_at',
+                    'sortby' => 'in:registered_date,retailer_name,retailer_email,retailer_userid,retailer_description,retailerid,retailer_address1,retailer_address2,retailer_address3,retailer_cityid,retailer_city,retailer_countryid,retailer_country,retailer_phone,retailer_fax,retailer_status,retailer_currency,contact_person_firstname,merchant_name,retailer_floor,retailer_unit,retailer_object_type,retailer_external_object_id,retailer_created_at,retailer_updated_at',
                 ),
                 array(
                     'sortby.in' => Lang::get('validation.orbit.empty.retailer_sortby'),
@@ -1524,7 +1549,7 @@ class TenantAPIController extends ControllerAPI
             // if flag limit is true then show only merchant_id and name to make the frontend life easier
             // TODO : remove this with something like is_all_retailer just like on orbit-shop
             if ($limit) {
-                $tenants = Tenant::with('link_to_tenant')
+                $tenants = TenantStoreAndService::with('link_to_tenant')
                                  ->select('merchant_id', 'name', 'status')
                                  ->excludeDeleted('merchants');
             } else {
@@ -1532,9 +1557,8 @@ class TenantAPIController extends ControllerAPI
                 // Get Facebook social media ID
                 $facebookSocmedId = SocialMedia::whereSocialMediaCode('facebook')->first()->social_media_id;
 
-                $tenants = Tenant::with('link_to_tenant')
+                $tenants = TenantStoreAndService::with('link_to_tenant')
                                  ->select('merchants.*', DB::raw('CONCAT(floor, " - ", unit) AS location'), 'merchant_social_media.social_media_uri as facebook_uri')
-
                                  // A left join to get tenants' Facebook URIs
                                  ->leftJoin('merchant_social_media', function ($join) use ($facebookSocmedId) {
                                     $join->on('merchants.merchant_id', '=', 'merchant_social_media.merchant_id')
@@ -1555,6 +1579,31 @@ class TenantAPIController extends ControllerAPI
 
             // Filter tenant by parent_id / mall id
             $tenants->whereIn('merchants.parent_id', $listOfMallIds);
+
+            // Filter tenant by object_type
+            if (! empty($object_type) && is_array($object_type)) {
+
+                //Validate objety_type only parsing 'tenant' or 'service'
+                foreach ($object_type as $type) {
+                    $validator = Validator::make(
+                        array('object_type' => $type),
+                        array('object_type' => 'orbit.empty.tenant_type')
+                    );
+
+                    // Run the validation
+                    if ($validator->fails()) {
+                        $errorMessage = $validator->messages()->first();
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
+                }
+
+                $tenants->whereIn('merchants.object_type', $object_type);
+
+            } else {
+
+                $tenants->where('merchants.object_type', 'tenant');
+                // $tenants->whereIn('merchants.object_type', ['tenant','service']);
+            }
 
             // Filter tenant by Ids
             OrbitInput::get('tenant_id', function($tenantIds) use ($tenants)
@@ -1978,6 +2027,7 @@ class TenantAPIController extends ControllerAPI
                     'retailer_floor' => 'merchants.floor',
                     'retailer_unit' => 'merchants.unit',
                     'retailer_external_object_id' => 'merchants.external_object_id',
+                    'retailer_object_type' => 'merchants.object_type',
                     'retailer_created_at' => 'merchants.created_at',
                     'retailer_updated_at' => 'merchants.updated_at',
 
@@ -1996,6 +2046,7 @@ class TenantAPIController extends ControllerAPI
                     'tenant_floor' => 'merchants.floor',
                     'tenant_unit' => 'merchants.unit',
                     'tenant_external_object_id' => 'merchants.external_object_id',
+                    'tenant_object_type' => 'merchants.object_type',
                     'tenant_created_at' => 'merchants.created_at',
                     'tenant_updated_at' => 'merchants.updated_at',
                 );
@@ -2366,6 +2417,34 @@ class TenantAPIController extends ControllerAPI
             return TRUE;
         });
 
+        // Check existing tenant (with type tenant or service)
+        Validator::extend('orbit.empty.tenantstoreandservice', function ($attribute, $value, $parameters){
+            $merchant = TenantStoreAndService::excludeDeleted()
+                        ->where(function($q) {
+                             $q->where('object_type', 'tenant')
+                               ->orWhere('object_type', 'service');
+                        })
+                        ->where('merchant_id', $value)
+                        ->first();
+
+            if (empty($merchant)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.empty.tenantstoreandservice', $merchant);
+
+            return TRUE;
+        });
+
+        // Check existing tenant (with type tenant or service)
+        Validator::extend('orbit.empty.for_tenant_only', function ($attribute, $value, $parameters){
+            if ($parameters[0] !== 'tenant') {
+                return FALSE;
+            }
+
+            return TRUE;
+        });
+
         // Check user email address, it should not exists
         Validator::extend('orbit.exists.email', function ($attribute, $value, $parameters) {
             $tenant = Tenant::excludeDeleted()
@@ -2409,6 +2488,17 @@ class TenantAPIController extends ControllerAPI
             App::instance('orbit.validation.tenant', $tenant);
 
             return TRUE;
+        });
+
+        // Check the existance of the tenant type
+        Validator::extend('orbit.empty.tenant_type', function ($attribute, $value, $parameters) {
+            $valid = false;
+            $statuses = array('tenant', 'service');
+            foreach ($statuses as $status) {
+                if($value === $status) $valid = $valid || TRUE;
+            }
+
+            return $valid;
         });
 
         // Check the existance of the merchant status

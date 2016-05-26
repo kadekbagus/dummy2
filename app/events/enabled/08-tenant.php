@@ -9,12 +9,14 @@ use OrbitShop\API\v1\Helper\Input as OrbitInput;
 
 /**
  * Listen on:    `orbit.tenant.postnewtenant.after.save`
- * Purpose:      Handle file upload on tenant creation
+ * Purpose:      Handle file upload on tenant creation with object type tenant or store
  *
  * @author Tian <tian@dominopos.com>
+ * @author Firmansyah <firmansyah@dominopos.com>
  *
  * @param EventAPIController $controller - The instance of the EventAPIController or its subclass
  * @param Event $tenant - Instance of object Event
+ * @param Event $tenant->object_type - value : tenant or service
  */
 Event::listen('orbit.tenant.postnewtenant.after.save', function($controller, $tenant)
 {
@@ -22,6 +24,7 @@ Event::listen('orbit.tenant.postnewtenant.after.save', function($controller, $te
 
     if (! empty($logo)) {
         $_POST['merchant_id'] = $tenant->merchant_id;
+        $_POST['object_type'] = $tenant->object_type;
 
         // This will be used on UploadAPIController
         App::instance('orbit.upload.user', $controller->api->user);
@@ -41,6 +44,7 @@ Event::listen('orbit.tenant.postnewtenant.after.save', function($controller, $te
 
     if (! empty($maps)) {
         $_POST['merchant_id'] = $tenant->merchant_id;
+        $_POST['object_type'] = $tenant->object_type;
 
         // This will be used on UploadAPIController
         App::instance('orbit.upload.user', $controller->api->user);
@@ -63,6 +67,7 @@ Event::listen('orbit.tenant.postnewtenant.after.save', function($controller, $te
 
     if (! empty($pictures)) {
         $_POST['merchant_id'] = $tenant->merchant_id;
+        $_POST['object_type'] = $tenant->object_type;
 
         // This will be used on UploadAPIController
         App::instance('orbit.upload.user', $controller->api->user);
@@ -90,6 +95,8 @@ Event::listen('orbit.tenant.postnewtenant.after.save', function($controller, $te
  * @author Rio Astamal <me@rioastamal.net>
  * @param TenantAPIController $controller - The instance of the TenantAPIController or its subclass
  * @param Retailer $tenant - Instance of object Merchant
+ * @param Event $tenant->object_type - value : tenant or service
+ *
  */
 Event::listen('orbit.tenant.postupdatetenant.after.save', function($controller, $tenant)
 {
@@ -97,6 +104,7 @@ Event::listen('orbit.tenant.postupdatetenant.after.save', function($controller, 
 
     if (! empty($logo)) {
         $_POST['merchant_id'] = $tenant->merchant_id;
+        $_POST['object_type'] = $tenant->object_type;
 
         // This will be used on UploadAPIController
         App::instance('orbit.upload.user', $controller->api->user);
@@ -116,6 +124,7 @@ Event::listen('orbit.tenant.postupdatetenant.after.save', function($controller, 
 
     if (! empty($maps)) {
         $_POST['merchant_id'] = $tenant->merchant_id;
+        $_POST['object_type'] = $tenant->object_type;
 
         // This will be used on UploadAPIController
         App::instance('orbit.upload.user', $controller->api->user);
@@ -138,6 +147,7 @@ Event::listen('orbit.tenant.postupdatetenant.after.save', function($controller, 
 
     if (! empty($pictures)) {
         $_POST['merchant_id'] = $tenant->merchant_id;
+        $_POST['object_type'] = $tenant->object_type;
 
         // This will be used on UploadAPIController
         App::instance('orbit.upload.user', $controller->api->user);
