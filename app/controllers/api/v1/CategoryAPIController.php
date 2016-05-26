@@ -800,9 +800,9 @@ class CategoryAPIController extends ControllerAPI
             // if flag limit is true then show only category_id and category_name to make the frontend life easier
             // TODO : remove this with something like is_all_retailer on orbit-shop
             if ($limit) {
-                $categories = Category::select('category_id','category_name')->excludeDeleted();
+                $categories = Category::select('categories.category_id','category_name')->excludeDeleted('categories');
             } else {
-                $categories = Category::excludeDeleted();
+                $categories = Category::excludeDeleted('categories');
             }
 
             // Filter category by Ids
@@ -868,6 +868,13 @@ class CategoryAPIController extends ControllerAPI
                 }
             });
 
+            OrbitInput::get('language_id', function($language_id) use ($categories) {
+                $prefix = DB::getTablePrefix();
+
+                $categories->selectRaw("{$prefix}categories.*");
+                $categories->leftJoin('category_translations', 'category_translations.category_id', '=', 'categories.category_id');
+                $categories->where('category_translations.merchant_language_id', $language_id);
+            });
             // Clone the query builder which still does not include the take,
             // skip, and order by
             $_categories = clone $categories;
