@@ -186,6 +186,7 @@ return array(
             'event_translations'   => 'The Event Translation ID is not found',
             'merchant_language'    => 'The Merchant_Language ID is not found',
             'language_default'     => 'The language default you specified is not found',
+            'default_en'           => 'The default language must english',
             'user_status'          => 'The user status you specified is not found',
             'user_sortby'          => 'The sort by argument you specified is not valid, the valid values are: status, total_lucky_draw_number, total_usable_coupon, total_redeemed_coupon, username, email, firstname, lastname, registered_date, gender, city, last_visit_shop, last_visit_date, last_spent_amount, mobile_phone, membership_number, join_date, created_at, updated_at, first_visit_date, membership_since',
             'merchant_status'      => 'The merchant status you specified is not found',

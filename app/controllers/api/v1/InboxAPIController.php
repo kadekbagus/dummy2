@@ -15,7 +15,7 @@ use DominoPOS\OrbitSession\Session;
 use DominoPOS\OrbitSession\SessionConfig;
 
 class InboxAPIController extends ControllerAPI
-{   
+{
     const APPLICATION_ID = 1;
     protected $session = null;
 
@@ -541,7 +541,7 @@ class InboxAPIController extends ControllerAPI
             Event::fire('orbit.inbox.postnotifiedmessage.after.validation', array($this, $validator));
 
             $inbox = App::make('orbit.empty.alert');
-            
+
             $inbox->is_notified = 'Y';
             $inbox->save();
 
