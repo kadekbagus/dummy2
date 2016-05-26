@@ -880,6 +880,13 @@ class CategoryAPIController extends ControllerAPI
                 $categories->leftJoin('category_translations', 'category_translations.category_id', '=', 'categories.category_id');
                 $categories->where('category_translations.merchant_language_id', $language_id);
             });
+
+            // Filter category by matching category name pattern
+            OrbitInput::get('translation_category_name_like', function($categoryname) use ($categories)
+            {
+                $categories->where('category_translations.category_name', 'like', "%$categoryname%");
+            });
+
             // Clone the query builder which still does not include the take,
             // skip, and order by
             $_categories = clone $categories;

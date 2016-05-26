@@ -293,6 +293,20 @@ class getSearchCategoryTestArtemisVersion extends TestCase
         $response_list = $this->setRequestGetListCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $filter);
         $this->assertSame(0, $response_list->code);
         $this->assertSame('restaurant', $response_list->data->records[0]->category_name);
+
+        /*
+        * test get translation category restaurant
+        */
+        $filter = [
+                    'translation_category_name_like' => 'estor',
+                    'with'                           => ['translations'],
+                    'language_id'                    => $this->zhLang->language_id
+                    ];
+
+        $response_list = $this->setRequestGetListCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $filter);
+        $this->assertSame(0, $response_list->code);
+        // dd($response_list->data->records[0]);
+        $this->assertSame('restoran zh', $response_list->data->records[0]->translations[1]->category_name);
     }
 
     public function testFilterLanguage()
