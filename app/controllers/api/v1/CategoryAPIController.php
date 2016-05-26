@@ -96,7 +96,7 @@ class CategoryAPIController extends ControllerAPI
                     'category_level'   => 'numeric',
                     'category_order'   => 'numeric',
                     'status'           => 'required|orbit.empty.category_status',
-                    'default_language' => 'required|orbit.empty.language_default',
+                    'default_language' => 'required|orbit.empty.default_en',
                 )
             );
 
@@ -326,7 +326,7 @@ class CategoryAPIController extends ControllerAPI
                     'category_name'    => 'category_name_exists_but_me:'.$category_id,
                     'category_level'   => 'numeric',
                     'status'           => 'orbit.empty.category_status',
-                    'default_language' => 'required|orbit.empty.language_default',
+                    'default_language' => 'required|orbit.empty.default_en',
                 ),
                 array(
                    'category_name_exists_but_me' => Lang::get('validation.orbit.exists.category_name'),
@@ -1001,12 +1001,12 @@ class CategoryAPIController extends ControllerAPI
     protected function registerCustomValidation()
     {
         // Check the existance of default_language
-        Validator::extend('orbit.empty.language_default', function ($attribute, $value, $parameters) {
+        Validator::extend('orbit.empty.default_en', function ($attribute, $value, $parameters) {
             $lang = Language::excludeDeleted()
                         ->where('name', $value)
                         ->first();
 
-            if (empty($lang)) {
+            if (empty($lang) || $value !== 'en') {
                 return FALSE;
             }
 
