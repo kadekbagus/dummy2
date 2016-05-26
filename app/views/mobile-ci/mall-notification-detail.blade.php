@@ -8,6 +8,7 @@
     <div class="row vertically-spaced" style="padding-right: 10px;">
         <p id="created_at" class="text-right small" style="font-style: italic;"></p>
     </div>
+
     {{ $inbox->content }}
 
     @if($inbox->inbox_type == 'lucky_draw_issuance')
@@ -26,41 +27,24 @@
 @stop
 
 @section('ext_script_bot')
+    {{ HTML::script('mobile-ci/scripts/moment.min.js') }}
+
     <script type="text/javascript">
         notInMessagesPage = false;
+        var _createdAt = '{{ $inbox->created_at }}';
 
-        var dateUtc = '{{ $inbox->created_at }}';
-        var monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        var printDate = function (strDate) {
+            // Parse to moment utc date.
+            var utc = moment.utc(strDate, 'YYYY-MM-DD HH:mm:ss');
 
-        var printDate = function (date) {
-            if (date instanceof Date) {
-                var day = date.getDate().toString();
-                var mth = monthNames[date.getMonth()];
-                var yr = date.getFullYear();
-                var hr = date.getHours().toString();
-                var min = date.getMinutes().toString();
-                var sec = date.getSeconds().toString();
+            // Parse to local date.
+            var localMoment = moment(utc.toDate());
 
-                return (day[1]?day:"0"+day[0]) + ' ' + mth + ' ' + yr + ' ' + (hr[1]?hr:"0"+hr[0]) + ':' + (min[1]?min:"0"+min[0]) + ':' + (sec[1]?sec:"0"+sec[0]);
-            }
-            return null;
-        }
-
-        var parseDate = function (strDate) {
-            var parts = strDate.match(/([0-9]+)/g);
-
-            // This is still in UTC
-            var date = new Date(parts[0], parts[1], parts[2], parts[3], parts[4], parts[5]);
-
-            // Convert it to local browser
-            date.setMinutes(date.getMinutes() - (new Date()).getTimezoneOffset());
-
-            return date;
+            return localMoment.format('DD MMM YYYY HH:mm:ss');
         };
 
         $(function() {
-            var date = parseDate(dateUtc);
-            $('#created_at').text(printDate(date));
+            $('#created_at').text(printDate(_createdAt));
         });
     </script>
 @stop
