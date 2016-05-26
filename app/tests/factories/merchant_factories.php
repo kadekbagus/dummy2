@@ -110,3 +110,14 @@ $factory('Tenant', [
     'contact_person_phone'     => $faker->phoneNumber,
     'mobile_default_language'  => 'en'
 ]);
+
+$factory('Tenant',  'tenant_angular_ci', [
+    'parent_id' => 'factory:Mall',
+    'name'      => $faker->company,
+    'user_id'   => 'factory:User',
+    'contact_person_firstname' => $faker->firstName,
+    'contact_person_lastname'  => $faker->lastName,
+    'contact_person_phone'     => $faker->phoneNumber,
+    'floor'     => $faker->randomDigitNotNull,
+    'unit'      => $faker->buildingNumber
+]);

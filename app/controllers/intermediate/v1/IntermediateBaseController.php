@@ -191,11 +191,30 @@ class IntermediateBaseController extends Controller
     {
         // Get the API key of current user
         $theClass = get_class($this);
+        $namespace = '';
 
         if ($theClass === 'IntermediateAuthController') {
             if ($userId = $this->authCheck()) {
                 $user = User::find($userId);
 
+                // This will query the database if the apikey has not been set up yet
+                $apikey = $user->apikey;
+
+                if (empty($apikey)) {
+                    // Create new one
+                    $apikey = $user->createAPiKey();
+                }
+
+                // Generate the signature
+                $_GET['apikey'] = $apikey->api_key;
+                $_GET['apitimestamp'] = time();
+                $signature = Generator::genSignature($apikey->api_secret_key);
+                $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = $signature;
+            }
+        } elseif ($theClass === 'IntermediateCIAuthController') {
+            if ($userId = $this->authCheck()) {
+                $user = User::find($userId);
+                $namespace = 'Orbit\Controller\API\v1\Customer\\';
                 // This will query the database if the apikey has not been set up yet
                 $apikey = $user->apikey;
 
@@ -217,10 +236,11 @@ class IntermediateBaseController extends Controller
         $args = func_get_args();
 
         if (count($args) === 2) {
-            $class = $args[0];
+            $class = $namespace . $args[0];
             $method = $args[1];
         } elseif (count($args) === 1) {
             list($class, $method) = explode('@', $args[0]);
+            $class = $namespace . $class;
         } else {
             $class = 'Foo';
             $method = 'Bar';
