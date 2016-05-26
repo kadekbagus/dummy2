@@ -318,6 +318,7 @@ class CategoryAPIController extends ControllerAPI
                     'category_id'      => $category_id,
                     'category_name'    => $category_name,
                     'category_level'   => $category_level,
+                    'category_order'   => $category_order,
                     'status'           => $status,
                     'default_language' => $default_language,
                 ),
@@ -325,6 +326,7 @@ class CategoryAPIController extends ControllerAPI
                     'category_id'      => 'required|orbit.empty.category',
                     'category_name'    => 'category_name_exists_but_me:'.$category_id,
                     'category_level'   => 'numeric',
+                    'category_order'   => 'numeric',
                     'status'           => 'orbit.empty.category_status',
                     'default_language' => 'required|orbit.empty.default_en',
                 ),
@@ -344,6 +346,8 @@ class CategoryAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.category.postupdatecategory.after.validation', array($this, $validator));
+
+            $language = $this->valid_default_lang;
 
             $updatedcategory = Category::excludeDeleted()->allowedForUser($user)->where('category_id', $category_id)->first();
 
@@ -369,7 +373,7 @@ class CategoryAPIController extends ControllerAPI
 
             // @author Irianto Pratama <irianto@dominopos.com>
             $default_translation = [
-                $default_language => [
+                $language->language_id => [
                     'category_name' => $updatedcategory->category_name,
                     'description' => $updatedcategory->description
                 ]
