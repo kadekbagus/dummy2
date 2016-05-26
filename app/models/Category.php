@@ -59,9 +59,7 @@ class Category extends Eloquent
      */
     public function translations()
     {
-        return $this->hasMany('CategoryTranslation', 'category_id', 'category_id')->excludeDeleted()->whereHas('language', function($has) {
-            $has->where('merchant_languages.status', 'active');
-        });
+        return $this->hasMany('CategoryTranslation', 'category_id', 'category_id')->excludeDeleted();
     }
 
     /**
