@@ -628,7 +628,7 @@ class TenantAPIController extends ControllerAPI
                 // Validation facebvook uri set only for tenant, cannot save as a service
                 $validator = Validator::make(
                     array('facebook_uri'    => OrbitInput::post('facebook_uri')),
-                    array('facebook_uri'    => 'orbit.empty.for_tenant_only:' . $object_type),
+                    array('facebook_uri'    => 'orbit.empty.for_tenant_only:' . $object_type)
                 );
 
                 Event::fire('orbit.tenant.postnewtenant.before.validation', array($this, $validator));
@@ -949,7 +949,7 @@ class TenantAPIController extends ControllerAPI
                 ),
                 array(
                     'current_mall'     => 'orbit.empty.mall',
-                    'retailer_id'      => 'required|orbit.empty.tenant',
+                    'retailer_id'      => 'required|orbit.empty.tenantstoreandservice',
                     'user_id'          => 'orbit.empty.user',
                     'email'            => 'email|email_exists_but_me',
                     'status'           => 'orbit.empty.tenant_status|orbit.exists.tenant_on_active_campaign',
@@ -981,7 +981,7 @@ class TenantAPIController extends ControllerAPI
             }
             Event::fire('orbit.tenant.postupdatetenant.after.validation', array($this, $validator));
 
-            $updatedtenant = App::make('orbit.empty.tenant');
+            $updatedtenant = App::make('orbit.empty.tenantstoreandservice');
 
             // Get post input from form
             OrbitInput::post('user_id', function($user_id) use ($updatedtenant) {
@@ -1240,7 +1240,7 @@ class TenantAPIController extends ControllerAPI
                                                     ->where('object_type', '=', $object_type);
             $deleted_keyword_object->delete();
 
-            OrbitInput::post('keywords', function($keywords) use ($updatedtenant, $mall_id, $user, $retailer_id) {
+            OrbitInput::post('keywords', function($keywords) use ($updatedtenant, $mall_id, $user, $retailer_id, $object_type) {
                 // Insert new data
                 $tenantKeywords = array();
                 foreach ($keywords as $keyword) {
@@ -2636,7 +2636,7 @@ class TenantAPIController extends ControllerAPI
 
         // tenant cannot be inactive if news, promotion, and coupon status is not started, ongoing and paused.
         Validator::extend('orbit.exists.tenant_on_active_campaign', function ($attribute, $value, $parameters) {
-            $updatedtenant = App::make('orbit.empty.tenant');
+            $updatedtenant = App::make('orbit.empty.tenantstoreandservice');
             $tenant_id = $updatedtenant->merchant_id;
 
             $mall = CampaignLocation::select('parent_id')->where('merchant_id', '=', $tenant_id)->first();
