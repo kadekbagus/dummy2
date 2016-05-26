@@ -24,21 +24,29 @@ class UrlChecker
     protected $retailer = null;
     protected $customHeaders = array();
 
-    public function __construct() {
-        $this->prepareSession();
+    public function __construct($caller = null) {
+        if (empty($caller)) {
+            $this->prepareSession();
+        } else {
+            $this->prepareSession('IntermediateCIAuthController');
+        }
     }
 	/**
      * Prepare session.
      *
      * @return void
      */
-    protected function prepareSession()
+    protected function prepareSession($caller = null)
     {
         if (! is_object($this->session)) {
             // set the session strict to FALSE
             Config::set('orbit.session.strict', FALSE);
-            // set the query session string to FALSE, so the CI will depend on session cookie
-            Config::set('orbit.session.availability.query_string', FALSE);
+            if (empty($caller)) {
+                // set the query session string to FALSE, so the CI will depend on session cookie
+                Config::set('orbit.session.availability.query_string', FALSE);
+            } else {
+                Config::set('orbit.session.availability.query_string', TRUE);
+            }
 
             // This user assumed are Consumer, which has been checked at login process
             $config = new SessionConfig(Config::get('orbit.session'));
