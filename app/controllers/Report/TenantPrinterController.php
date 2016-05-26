@@ -81,7 +81,7 @@ class TenantPrinterController extends DataPrinterController
                 }
 
                 if ($filterType != '') {
-                    printf("%s,%s,\n", 'Filter by Type', implode(' ', $filterType));
+                    printf("%s,%s,\n", 'Filter by Type', str_replace('tenant', 'store', implode(' ',$filterType)) );
                 }
 
                 if ($filterStatus != '') {
