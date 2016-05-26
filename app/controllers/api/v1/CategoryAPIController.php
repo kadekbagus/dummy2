@@ -765,7 +765,7 @@ class CategoryAPIController extends ControllerAPI
                     'sort_by' => $sort_by,
                 ),
                 array(
-                    'sort_by' => 'in:registered_date,category_name,category_level,category_order,description,status',
+                    'sort_by' => 'in:registered_date,category_name,category_level,category_order,description,status,translation_category_name',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.category_sortby'),
@@ -872,6 +872,7 @@ class CategoryAPIController extends ControllerAPI
                 }
             });
 
+            // filter by language id
             OrbitInput::get('language_id', function($language_id) use ($categories) {
                 $prefix = DB::getTablePrefix();
 
@@ -921,12 +922,13 @@ class CategoryAPIController extends ControllerAPI
             {
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
-                    'registered_date'   => 'categories.created_at',
-                    'category_name'     => 'categories.category_name',
-                    'category_level'    => 'categories.category_level',
-                    'category_order'    => 'categories.category_order',
-                    'description'       => 'categories.description',
-                    'status'            => 'categories.status'
+                    'registered_date'           => 'categories.created_at',
+                    'category_name'             => 'categories.category_name',
+                    'category_level'            => 'categories.category_level',
+                    'category_order'            => 'categories.category_order',
+                    'description'               => 'categories.description',
+                    'status'                    => 'categories.status',
+                    'translation_category_name' => 'category_translations.category_name'
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];

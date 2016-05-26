@@ -90,7 +90,7 @@ class getSearchCategoryTestArtemisVersion extends TestCase
                 'category_name'    => 'health',
                 'status'           => 'active',
                 'default_language' => 'en',
-                'translations'     => '{"' . $this->idLang->language_id . '":{"category_name":"kesehatan","description":"ini adalah toko kesehatan"}}'
+                'translations'     => '{"' . $this->idLang->language_id . '":{"category_name":"sehat","description":"ini adalah toko kesehatan"}}'
                 ];
 
         $response = $this->setRequestPostNewCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
@@ -209,6 +209,50 @@ class getSearchCategoryTestArtemisVersion extends TestCase
         * test sort by and sort mode check last category
         */
         $this->assertSame('book store', $response_list->data->records[3]->category_name);
+
+        /*
+        * test sort by translation language id (indonesia)
+        */
+        $filter = [
+                    'sortby'      => 'translation_category_name',
+                    'with'        => ['translations'],
+                    'language_id' => $this->idLang->language_id
+                  ];
+
+        $response_list = $this->setRequestGetListCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $filter);
+        $this->assertSame(0, $response_list->code);
+        $this->assertSame(2, $response_list->data->total_records);
+        /*
+        * test sort by and sort mode check first category
+        */
+        $this->assertSame('perhiasan', $response_list->data->records[0]->translations[2]->category_name);
+
+        /*
+        * test sort by and sort mode check last category
+        */
+        $this->assertSame('sehat', $response_list->data->records[1]->translations[1]->category_name);
+
+        /*
+        * test sort by translation language id (english)
+        */
+        $filter = [
+                    'sortby'      => 'translation_category_name',
+                    'with'        => ['translations'],
+                    'language_id' => $this->enLang->language_id
+                  ];
+
+        $response_list = $this->setRequestGetListCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $filter);
+        $this->assertSame(0, $response_list->code);
+        $this->assertSame(4, $response_list->data->total_records);
+        /*
+        * test sort by and sort mode check first category
+        */
+        $this->assertSame('health', $response_list->data->records[1]->translations[0]->category_name);
+
+        /*
+        * test sort by and sort mode check last category
+        */
+        $this->assertSame('jewellery', $response_list->data->records[2]->translations[0]->category_name);
     }
 
     public function testTakeDataCategory()
