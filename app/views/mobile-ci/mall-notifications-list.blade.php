@@ -22,6 +22,8 @@
 @stop
 
 @section('ext_script_bot')
+    {{ HTML::script('mobile-ci/scripts/moment.min.js') }}
+
     <script type="text/javascript">
         // this var is used to enable/disable pop up notification
         notInMessagesPage = false;
@@ -55,37 +57,17 @@
             });
         }
 
-        var monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        var printDate = function (strDate) {
+            // Parse to moment utc date.
+            var utc = moment.utc(strDate, 'YYYY-MM-DD HH:mm:ss');
 
-        var printDate = function (date) {
-            if (date instanceof Date) {
-                var day = date.getDate().toString();
-                var mth = monthNames[date.getMonth()];
-                var yr = date.getFullYear();
-                var hr = date.getHours().toString();
-                var min = date.getMinutes().toString();
-                var sec = date.getSeconds().toString();
+            // Parse to local date.
+            var localMoment = moment(utc.toDate());
 
-                return (day[1]?day:"0"+day[0]) + ' ' + mth + ' ' + yr + ' ' + (hr[1]?hr:"0"+hr[0]) + ':' + (min[1]?min:"0"+min[0]) + ':' + (sec[1]?sec:"0"+sec[0]);
-            }
-            return null;
-        }
-
-        var parseDate = function (strDate) {
-            var parts = strDate.match(/([0-9]+)/g);
-
-            // This is still in UTC
-            var date = new Date(parts[0], parts[1], parts[2], parts[3], parts[4], parts[5]);
-
-            // Convert it to local browser
-            date.setMinutes(date.getMinutes() - (new Date()).getTimezoneOffset());
-
-            return date;
+            return localMoment.format('DD MMM YYYY HH:mm:ss');
         };
 
         var generateListNotification = function (inbox) {
-            console.log(inbox.created_at);
-
             var inboxId = inbox.inbox_id;
             var subject = inbox.subject;
             var isRead = inbox.is_read == 'Y' ? true : false;
@@ -93,7 +75,6 @@
             var read = isRead ? 'read' : 'unread';
             var mark = isRead ? 'check' : 'exclamation';
             var readUnread = isRead ? 'read-unread' : '';
-            var createdDate = parseDate(inbox.created_at);
 
             var $listDivNotification = $('<div />').attr({
                 'id': 'notification-' + inboxId,
@@ -124,7 +105,7 @@
             var $titleHeader = $('<h4 />').attr({
                 'class': read
             }).text(subject);
-            var $titleSubheader = $('<small />').text(printDate(createdDate));
+            var $titleSubheader = $('<small />').text(printDate(inbox.created_at));
 
             var $divDeleteNotif = $('<div />').attr({
                 'class': 'col-xs-1 deleteNotif',
