@@ -3878,10 +3878,10 @@ class UploadAPIController extends ControllerAPI
             // Set object_name and media name id as each object type (tenant or sevice)
             if ($object_type === 'tenant') {
                 $object_name = 'retailer';
-                $media_name_id = 'retailer_logo';
+                $media_name_id = 'retailer_image';
             } elseif ($object_type === 'service') {
                 $object_name = 'service';
-                $media_name_id = 'service_logo';
+                $media_name_id = 'service_image';
             }
 
             // Delete old merchant logo
@@ -4306,10 +4306,10 @@ class UploadAPIController extends ControllerAPI
             // Set object_name and media name id as each object type (tenant or sevice)
             if ($object_type === 'tenant') {
                 $object_name = 'retailer';
-                $media_name_id = 'retailer_logo';
+                $media_name_id = 'retailer_map';
             } elseif ($object_type === 'service') {
                 $object_name = 'service';
-                $media_name_id = 'service_logo';
+                $media_name_id = 'service_map';
             }
 
             // Delete old merchant logo
