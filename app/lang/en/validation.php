@@ -172,6 +172,9 @@ return array(
             'merchant'             => 'The Merchant ID you specified is not found',
             'retailer'             => 'The Retailer ID you specified is not found',
             'tenant'               => 'The Tenant ID you specified is not found',
+            'tenantandservice'     => 'The Tenant ID you specified is not found',
+            'tenantstoreandservice'=> 'The Tenant ID you specified is not found',
+            'for_tenant_only'      => 'There is any value for tenant only, cannot save as a service',
             'product'              => 'The Product ID you specified is not found',
             'category'             => 'The Category ID you specified is not found',
             'tax'                  => 'The Tax ID you specified is not found',
@@ -190,7 +193,7 @@ return array(
             'merchant_sortby'      => 'The sort by argument you specified is not valid, the valid values are: registered_date, merchant_name, merchant_email, merchant_userid, merchant_description, merchantid, merchant_address1, merchant_address2, merchant_address3, merchant_cityid, merchant_city, merchant_countryid, merchant_country, merchant_phone, merchant_fax, merchant_status, merchant_currency, start_date_activity, total_retailer',
             'retailer_status'      => 'The retailer status you specified is not found',
             'tenant_status'        => 'The tenant status you specified is not found',
-            'retailer_sortby'      => 'The sort by argument for retailer you specified is not valid, the valid values are: orid, registered_date, retailer_name, retailer_email, retailer_userid, retailer_description, retailerid, retailer_address1, retailer_address2, retailer_address3, retailer_cityid, retailer_city, retailer_countryid, retailer_country, retailer_phone, retailer_fax, retailer_status, retailer_currency, contact_person_firstname, merchant_name, retailer_floor, retailer_unit, retailer_external_object_id, retailer_created_at, retailer_updated_at',
+            'retailer_sortby'      => 'The sort by argument for retailer you specified is not valid, the valid values are: registered_date, retailer_name, retailer_email, retailer_userid, retailer_description, retailerid, retailer_address1, retailer_address2, retailer_address3, retailer_cityid, retailer_city, retailer_countryid, retailer_country, retailer_phone, retailer_fax, retailer_status, retailer_currency, contact_person_firstname, merchant_name, retailer_floor, retailer_unit, retailer_object_type, retailer_external_object_id, retailer_created_at, retailer_updated_at',
             'tax_status'           => 'The tax status you specified is not found',
             'tax_sortby'           => 'The sort by argument for tax you specified is not valid, the valid values are: registered_date, merchant_tax_id, tax_name, tax_type, tax_value, tax_order',
             'tax_type'             => 'The tax type you specified is not found. Valid values are: government, service, luxury',
@@ -317,7 +320,8 @@ return array(
             'forgot_email' => 'We couldn\'t find an account associated with :email_addr',
             'default_language' => 'Campaign content in mall default language is required',
             'english_language' => 'Campaign content in English language is required',
-            'mall_status' => 'Mall status you specified is not found'
+            'mall_status' => 'Mall status you specified is not found',
+            'tenant_type' => 'Tenant type you specified is not found : the valid values are: tenant, service',
         ),
         'queryerror' => 'Database query error, turn on debug mode to see the full query',
         'jsonerror'  => array(
