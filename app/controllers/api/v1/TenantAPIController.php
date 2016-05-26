@@ -1601,8 +1601,8 @@ class TenantAPIController extends ControllerAPI
 
             } else {
 
-                $tenants->where('merchants.object_type', 'tenant');
-                // $tenants->whereIn('merchants.object_type', ['tenant','service']);
+                // $tenants->where('merchants.object_type', 'tenant');
+                $tenants->whereIn('merchants.object_type', ['tenant','service']);
             }
 
             // Filter tenant by Ids

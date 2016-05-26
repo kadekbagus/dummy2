@@ -6,6 +6,6 @@
  */
 class WidgetRetailer extends Eloquent
 {
-    protected $table = 'widgets';
-    protected $primaryKey = 'widget_id';
+    protected $table = 'widget_retailer';
+    protected $primaryKey = 'widget_retailer_id';
 }

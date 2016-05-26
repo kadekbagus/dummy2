@@ -151,7 +151,7 @@
             <tr>
                 <td>Filter by Type</td>
                 <td>:</td>
-                <td><strong><?php echo htmlentities(implode(' , ',$filterType)); ?></strong></td>
+                <td><strong><?php echo htmlentities(str_replace('tenant', 'store', implode(' , ',$filterType))); ?></strong></td>
             </tr>
         <?php } ?>
 
