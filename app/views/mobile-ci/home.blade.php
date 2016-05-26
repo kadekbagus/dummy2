@@ -84,7 +84,7 @@
         if(typeof(Storage) !== 'undefined') {
             localStorage.setItem('fromSource', 'home');
         }
-        
+
         $('a.widget-link').click(function(event){
           event.preventDefault();
 
