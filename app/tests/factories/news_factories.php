@@ -28,4 +28,7 @@ $factory('News', [
     'end_date'    => $faker->dateTimeBetween('+2 days', "+1 months"),
     'link_object_type'    => $faker->randomElement(['tenant', 'tenant_category']),
     'campaign_status_id' => 'factory:CampaignStatus',
+    'is_all_gender' => 'Y',
+    'is_all_age' => 'Y',
+    'is_popup' => 'Y',
 ]);
