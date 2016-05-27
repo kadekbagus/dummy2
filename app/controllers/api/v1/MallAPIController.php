@@ -82,6 +82,17 @@ class MallAPIController extends ControllerAPI
                     'default' => 'Your Lucky Draw Number',
                     'en'      => 'Your Lucky Draw Number'
               ]
+            ],
+            [
+                'type'      => 'service',
+                'object_id' => 0,
+                'order'     => 6,
+                'animation' => 'none',
+                'status'    => 'active',
+                'slogan'    => [
+                    'default' => 'View All Service',
+                    'en'      => 'View All Service'
+              ]
             ]
         ],
         'age_ranges' => [
