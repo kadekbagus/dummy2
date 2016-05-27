@@ -28,7 +28,7 @@ class Widget extends Eloquent
      */
     public function retailers()
     {
-        return $this->belongsToMany('WidgetRetailer', 'widget_retailer', 'widget_id', 'retailer_id');
+        return $this->hasMany('WidgetRetailer', 'widget_id', 'widget_id');
     }
 
     /**
