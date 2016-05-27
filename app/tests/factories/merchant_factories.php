@@ -56,6 +56,7 @@ $factory('Merchant', [
     'contact_person_firstname' => $faker->firstName,
     'contact_person_lastname'  => $faker->lastName,
     'contact_person_phone'     => $faker->phoneNumber,
+    'mobile_default_language'  => 'en'
 ]);
 
 
@@ -66,6 +67,7 @@ $factory('Retailer', [
     'contact_person_firstname' => $faker->firstName,
     'contact_person_lastname'  => $faker->lastName,
     'contact_person_phone'     => $faker->phoneNumber,
+    'mobile_default_language'  => 'en'
 ]);
 
 $factory('Retailer', 'retailer_mall', [
@@ -76,6 +78,7 @@ $factory('Retailer', 'retailer_mall', [
     'contact_person_firstname' => $faker->firstName,
     'contact_person_lastname'  => $faker->lastName,
     'contact_person_phone'     => $faker->phoneNumber,
+    'mobile_default_language'  => 'en'
 ]);
 
 $factory('MallGroup', [
@@ -84,6 +87,7 @@ $factory('MallGroup', [
     'contact_person_firstname' => $faker->firstName,
     'contact_person_lastname'  => $faker->lastName,
     'contact_person_phone'     => $faker->phoneNumber,
+    'mobile_default_language'  => 'en'
 ]);
 
 $factory('Mall', [
@@ -94,6 +98,7 @@ $factory('Mall', [
     'contact_person_lastname'  => $faker->lastName,
     'contact_person_phone'     => $faker->phoneNumber,
     'timezone_id'     => 'factory:Timezone',
+    'mobile_default_language'  => 'en'
 ]);
 
 $factory('Tenant', [
@@ -103,4 +108,16 @@ $factory('Tenant', [
     'contact_person_firstname' => $faker->firstName,
     'contact_person_lastname'  => $faker->lastName,
     'contact_person_phone'     => $faker->phoneNumber,
+    'mobile_default_language'  => 'en'
+]);
+
+$factory('Tenant',  'tenant_angular_ci', [
+    'parent_id' => 'factory:Mall',
+    'name'      => $faker->company,
+    'user_id'   => 'factory:User',
+    'contact_person_firstname' => $faker->firstName,
+    'contact_person_lastname'  => $faker->lastName,
+    'contact_person_phone'     => $faker->phoneNumber,
+    'floor'     => $faker->randomDigitNotNull,
+    'unit'      => $faker->buildingNumber
 ]);

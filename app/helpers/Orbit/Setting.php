@@ -112,7 +112,7 @@ class Setting
 
         // Do not do further checking if this is running from console
         if (App::runningInConsole()) {
-            return;
+            return $this;
         }
 
         // Check the application secret key, make sure developer change it first
@@ -194,7 +194,19 @@ class Setting
         return $default;
     }
 
+    /**
+     * Set setting by name
+     *
+     * @param string $configName
+     * @param mixed $configValue
+     * @return Setting
+     */
+    public function setSetting($configName, $configValue)
+    {
+        $this->settings[$configName] = $configValue;
 
+        return $this;
+    }
 
     /**
      * Magic method to read properties.

@@ -1,6 +1,7 @@
 <?php
 
 use Laracasts\TestDummy\Factory;
+use Illuminate\Http\Request;
 
 abstract class TestCase extends Illuminate\Foundation\Testing\TestCase {
 
@@ -119,6 +120,18 @@ abstract class TestCase extends Illuminate\Foundation\Testing\TestCase {
         }
 
         return false;
+    }
+
+    protected function disableCatchAllRoute($uri='{all}', $methods=['GET', 'OPTIONS'])
+    {
+        // Get the global catcher route object
+        $md5NonExistent = md5('--non-existent--' . time());
+
+        foreach ($methods as $method) {
+            $request = Request::create($uri, $method);
+            $catchAll = Route::getRoutes()->match($request);
+            $catchAll->setUri($md5NonExistent);
+        }
     }
 
 }

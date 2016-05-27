@@ -11,5 +11,12 @@
 
 $factory('CouponRetailer', [
     'promotion_id' => 'factory:Promotion',
-    'retailer_id'  => 'factory:Merchant'
+    'retailer_id'  => 'factory:Merchant',
+    'object_type'  => $faker->randomElement(['mall', 'tenant'])
+]);
+
+$factory('CouponRetailer', 'coupon_link_tenant', [
+    'promotion_id' => 'factory:Coupon',
+    'retailer_id'  => 'factory:Tenant',
+    'object_type'  => $faker->randomElement(['mall', 'tenant'])
 ]);

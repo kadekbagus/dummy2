@@ -5,6 +5,10 @@
 @stop
 
 @section('content')
+    <div class="row vertically-spaced" style="padding-right: 10px;">
+        <p id="created_at" class="text-right small" style="font-style: italic;"></p>
+    </div>
+
     {{ $inbox->content }}
 
     @if($inbox->inbox_type == 'lucky_draw_issuance')
@@ -23,7 +27,24 @@
 @stop
 
 @section('ext_script_bot')
+    {{ HTML::script('mobile-ci/scripts/moment.min.js') }}
+
     <script type="text/javascript">
         notInMessagesPage = false;
+        var _createdAt = '{{ $inbox->created_at }}';
+
+        var printDate = function (strDate) {
+            // Parse to moment utc date.
+            var utc = moment.utc(strDate, 'YYYY-MM-DD HH:mm:ss');
+
+            // Parse to local date.
+            var localMoment = moment(utc.toDate());
+
+            return localMoment.format('DD MMM YYYY HH:mm:ss');
+        };
+
+        $(function() {
+            $('#created_at').text(printDate(_createdAt));
+        });
     </script>
 @stop
