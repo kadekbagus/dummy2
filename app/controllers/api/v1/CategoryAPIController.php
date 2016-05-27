@@ -889,9 +889,10 @@ class CategoryAPIController extends ControllerAPI
             OrbitInput::get('language_id', function($language_id) use ($categories) {
                 $prefix = DB::getTablePrefix();
 
-                $categories->selectRaw("{$prefix}categories.*");
-                $categories->leftJoin('category_translations', 'category_translations.category_id', '=', 'categories.category_id');
-                $categories->where('category_translations.merchant_language_id', $language_id);
+                $categories->selectRaw("{$prefix}categories.*")
+                           ->leftJoin('category_translations', 'category_translations.category_id', '=', 'categories.category_id')
+                           ->where('category_translations.merchant_language_id', $language_id)
+                           ->where('category_translations.category_name', '!=', '');
             });
 
             // Filter category by matching category name pattern

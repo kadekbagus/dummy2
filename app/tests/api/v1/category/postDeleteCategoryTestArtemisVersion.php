@@ -1,6 +1,6 @@
 <?php
 /**
- * PHP Unit Test for Category API Controller postUpdateCategory
+ * PHP Unit Test for Category API Controller postDeleteCategory
  *
  * @author: Irianto Pratama <irianto@dominopos.com>
  */
