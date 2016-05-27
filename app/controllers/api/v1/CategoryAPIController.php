@@ -584,6 +584,20 @@ class CategoryAPIController extends ControllerAPI
             Event::fire('orbit.category.postdeletecategory.after.validation', array($this, $validator));
 
             $deletecategory = Category::excludeDeleted()->allowedForUser($user)->where('category_id', $category_id)->first();
+
+            // check link tenant category
+            $link_category = CategoryMerchant::leftJoin('categories', 'categories.category_id', '=', 'category_merchant.category_id')
+                                ->leftJoin('merchants', 'merchants.merchant_id', '=', 'category_merchant.merchant_id')
+                                ->where('categories.status', '!=', 'deleted')
+                                ->where('merchants.status', '!=', 'deleted')
+                                ->where('category_merchant.category_id', $category_id)
+                                ->first();
+            if (count($link_category) > 0) {
+                $errorMessage = Lang::get('validation.orbit.exists.link_category', ['attribute' => $link_category->category_name,
+                                                                        'link' => 'Tenant']);
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
             $deletecategory->status = 'deleted';
             $deletecategory->modified_by = $this->api->user->user_id;
 
