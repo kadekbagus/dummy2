@@ -2715,7 +2715,6 @@ class TenantAPIController extends ControllerAPI
             $mallId = $parameters[0];
 
             $category = Category::excludeDeleted()
-                                ->where('merchant_id', $mallId)
                                 ->where('category_id', $value)
                                 ->first();
 

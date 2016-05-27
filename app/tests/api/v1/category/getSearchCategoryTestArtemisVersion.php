@@ -324,4 +324,23 @@ class getSearchCategoryTestArtemisVersion extends TestCase
         $this->assertSame(0, $response_list->code);
         $this->assertSame(2, $response_list->data->total_records);
     }
+
+    public function testFilterLimited()
+    {
+        $this->setDefaultCategory();
+        /*
+        * test filter limited for list link to tenant category
+        */
+        $filter = [
+                    'limited' => 'yes'
+                  ];
+
+        $response_list = $this->setRequestGetListCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $filter);
+        $this->assertSame(0, $response_list->code);
+        $this->assertSame(4, $response_list->data->total_records);
+        foreach ($response_list->data->records[0] as $key => $value) {
+            $this->assertSame(true, in_array($key, ['category_id', 'category_name']));
+            $this->assertSame(false, in_array($key, ['category_order', 'category_level']));
+        }
+    }
 }

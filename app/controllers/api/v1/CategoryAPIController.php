@@ -593,8 +593,7 @@ class CategoryAPIController extends ControllerAPI
                                 ->where('category_merchant.category_id', $category_id)
                                 ->first();
             if (count($link_category) > 0) {
-                $errorMessage = Lang::get('validation.orbit.exists.link_category', ['attribute' => $link_category->category_name,
-                                                                        'link' => 'Tenant']);
+                $errorMessage = Lang::get('validation.orbit.exists.link_category', ['link' => 'tenants']);
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
