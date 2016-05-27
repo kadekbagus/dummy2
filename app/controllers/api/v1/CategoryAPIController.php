@@ -584,6 +584,19 @@ class CategoryAPIController extends ControllerAPI
             Event::fire('orbit.category.postdeletecategory.after.validation', array($this, $validator));
 
             $deletecategory = Category::excludeDeleted()->allowedForUser($user)->where('category_id', $category_id)->first();
+
+            // check link tenant category
+            $link_category = CategoryMerchant::leftJoin('categories', 'categories.category_id', '=', 'category_merchant.category_id')
+                                ->leftJoin('merchants', 'merchants.merchant_id', '=', 'category_merchant.merchant_id')
+                                ->where('categories.status', '!=', 'deleted')
+                                ->where('merchants.status', '!=', 'deleted')
+                                ->where('category_merchant.category_id', $category_id)
+                                ->first();
+            if (count($link_category) > 0) {
+                $errorMessage = Lang::get('validation.orbit.exists.link_category', ['link' => 'tenants']);
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
             $deletecategory->status = 'deleted';
             $deletecategory->modified_by = $this->api->user->user_id;
 
@@ -876,9 +889,10 @@ class CategoryAPIController extends ControllerAPI
             OrbitInput::get('language_id', function($language_id) use ($categories) {
                 $prefix = DB::getTablePrefix();
 
-                $categories->selectRaw("{$prefix}categories.*");
-                $categories->leftJoin('category_translations', 'category_translations.category_id', '=', 'categories.category_id');
-                $categories->where('category_translations.merchant_language_id', $language_id);
+                $categories->selectRaw("{$prefix}categories.*")
+                           ->leftJoin('category_translations', 'category_translations.category_id', '=', 'categories.category_id')
+                           ->where('category_translations.merchant_language_id', $language_id)
+                           ->where('category_translations.category_name', '!=', '');
             });
 
             // Filter category by matching category name pattern

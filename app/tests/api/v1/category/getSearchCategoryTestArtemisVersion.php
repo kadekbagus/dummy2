@@ -313,7 +313,7 @@ class getSearchCategoryTestArtemisVersion extends TestCase
     {
         $this->setDefaultCategory();
         /*
-        * test get category with english translation
+        * test get category with indonesian translation
         */
         $filter = [
                     'with' => ['translations'],
@@ -323,5 +323,49 @@ class getSearchCategoryTestArtemisVersion extends TestCase
         $response_list = $this->setRequestGetListCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $filter);
         $this->assertSame(0, $response_list->code);
         $this->assertSame(2, $response_list->data->total_records);
+
+        /*
+        * category hobbies with empty string translation
+        */
+        $data = [
+                'category_name'    => 'hobbies',
+                'status'           => 'active',
+                'default_language' => 'en',
+                'translations'     => '{"' . $this->zhLang->language_id . '":{"category_name":"","description":""},"' . $this->idLang->language_id . '":{"category_name":"hobi","description":"ini adalah toko peralatan hobi"}}'
+                ];
+
+        $response = $this->setRequestPostNewCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+
+        /*
+        * test get category with china translation without empty category name translation
+        */
+        $filter = [
+                    'with' => ['translations'],
+                    'language_id' => $this->zhLang->language_id
+                    ];
+
+        $response_list = $this->setRequestGetListCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $filter);
+        $this->assertSame(0, $response_list->code);
+        $this->assertSame(2, $response_list->data->total_records);
+
+    }
+
+    public function testFilterLimited()
+    {
+        $this->setDefaultCategory();
+        /*
+        * test filter limited for list link to tenant category
+        */
+        $filter = [
+                    'limited' => 'yes'
+                  ];
+
+        $response_list = $this->setRequestGetListCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $filter);
+        $this->assertSame(0, $response_list->code);
+        $this->assertSame(4, $response_list->data->total_records);
+        foreach ($response_list->data->records[0] as $key => $value) {
+            $this->assertSame(true, in_array($key, ['category_id', 'category_name']));
+            $this->assertSame(false, in_array($key, ['category_order', 'category_level']));
+        }
     }
 }
