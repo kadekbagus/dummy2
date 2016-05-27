@@ -1195,7 +1195,7 @@ class TenantAPIController extends ControllerAPI
 
             $updatedtenant->save();
 
-            OrbitInput::post('facebook_uri', function($facebook_uri) use($updatedtenant) {
+            OrbitInput::post('facebook_uri', function($facebook_uri) use($updatedtenant, $retailer_id) {
                 $this->saveSocmedUri('facebook', $retailer_id, $facebook_uri);
 
                 // For response
