@@ -9,8 +9,6 @@ use OrbitShop\API\v1\ResponseProvider;
 use OrbitShop\API\v1\OrbitShopAPI;
 use Helper\EloquentRecordCounter as RecordCounter;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
-use DominoPOS\OrbitSession\Session;
-use DominoPOS\OrbitSession\SessionConfig;
 use \Config;
 use \Exception;
 use DominoPOS\OrbitACL\ACL;
@@ -24,6 +22,7 @@ use App;
 use Employee;
 use Coupon;
 use News;
+use Lang;
 
 class TenantCIAPIController extends BaseAPIController
 {
@@ -48,14 +47,20 @@ class TenantCIAPIController extends BaseAPIController
             }
 
             $this->mall_id = OrbitInput::get('mall_id', NULL);
+            $sort_by = OrbitInput::get('sortby');
 
             $this->registerCustomValidation();
             $validator = Validator::make(
                 array(
                     'mall_id' => $this->mall_id,
+                    'sort_by' => $sort_by,
                 ),
                 array(
                     'mall_id' => 'required|orbit.empty.mall',
+                    'sortby' => 'in:store_name',
+                ),
+                array(
+                    'sortby.in' => Lang::get('validation.orbit.empty.tenant_ci_sortby'),
                 )
             );
             if ($validator->fails()) {
@@ -326,6 +331,32 @@ class TenantCIAPIController extends BaseAPIController
                 $skip = $_skip;
             });
             $tenants->skip($skip);
+
+            $sortBy = '';
+            $sortMode = 'asc';
+
+            OrbitInput::get('sortby', function($_sortBy) use (&$sortBy)
+            {
+                // Map the sortby request to the real column name
+                $sortByMapping = array(
+                    'store_name' => 'merchants.name',
+                );
+
+                if (array_key_exists($_sortBy, $sortByMapping)) {
+                    $sortBy = $sortByMapping[$_sortBy];
+                }
+            });
+
+            OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
+            {
+                if (strtolower($_sortMode) !== 'asc') {
+                    $sortMode = 'desc';
+                }
+            });
+
+            if (! empty($sortBy)) {
+                $tenants->orderBy($sortBy, $sortMode);
+            }
 
             $tenants = $tenants->get();
 
