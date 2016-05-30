@@ -11,6 +11,8 @@ return array(
         // all route names
         // 'ci-tenant-list',
         // 'ci-tenant-detail',
+        // 'ci-service-list',
+        // 'ci-service-detail',
         // 'ci-news-list',
         // 'ci-news-detail',
         // 'ci-promotion-list',
