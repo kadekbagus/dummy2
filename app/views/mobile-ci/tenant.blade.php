@@ -317,6 +317,19 @@
             <li><span class="tenant-list-icon"><i class="fa fa-facebook-square fa-lg"></i></span><p class="tenant-list-text">{{{ str_replace('//', '', $tenant->facebook_like_url) }}}</p></li>
             @endif
             <li><span class="tenant-list-icon"><i class="fa fa-phone-square fa-lg"></i></span><p class="tenant-list-text">@if($tenant->phone != '')<a href="tel:{{{ $tenant->phone }}}">{{{ $tenant->phone }}}</a>@else - @endif</p></li>
+            @if(empty($tenant->categories))
+                <li><span class="tenant-list-icon"><i class="fa fa-list-ul"></i></span><p class="tenant-list-text">-</p></li>
+            @else
+                <li><span class="tenant-list-icon"><i class="fa fa-list-ul"></i></span><p class="tenant-list-text">
+                @for($idx = 0; $idx < count($tenant->categories); $idx++)
+                    @if($idx === (count($tenant->categories)-1))
+                        {{{ $tenant->categories[$idx]->category_name }}}
+                    @else
+                        {{{ $tenant->categories[$idx]->category_name }}}, 
+                    @endif
+                @endfor
+                </p></li>
+            @endif
         </ul>
     </div>
 </div>

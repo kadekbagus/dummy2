@@ -45,6 +45,7 @@
             <file>./app/tests/api/v1/mall/getSearchMallNearbyTest.php</file>
             <file>./app/tests/api/v1/mall/getMallAreaTest.php</file>
             <file>./app/tests/api/v1/mall/getMallFenceTest.php</file>
+            <file>./app/tests/api/v1/tenant/getTenantListAngularCITest.php</file>
         </testsuite>
     </testsuites>
 </phpunit>

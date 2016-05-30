@@ -36,8 +36,8 @@ class PromotionCIAPIController extends BaseAPIController
 
         $user = null;
         $keyword = null;
-        $activityPage = Activity::mobileci()
-                        ->setActivityType('view');
+        // $activityPage = Activity::mobileci()
+        //                 ->setActivityType('view');
 
         try{
             $this->checkAuth();
@@ -69,12 +69,12 @@ class PromotionCIAPIController extends BaseAPIController
 
             $mall = Mall::where('merchant_id', $mallId)->first();
 
-            $alternateLanguage = $this->getMerchantLanguage($mall->merchant_id, $languageId);
-
             if (!is_object($mall)) {
                 $errorMessage = "Mall id not found";
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
+
+            $alternateLanguage = $this->getMerchantLanguage($mall, $languageId);
 
             $userAge = 0;
             if ($user->userDetail->birthdate !== '0000-00-00' && $user->userDetail->birthdate !== null) {
@@ -88,8 +88,7 @@ class PromotionCIAPIController extends BaseAPIController
 
             $mallTime = Carbon::now($mall->timezone->timezone_name);
 
-            $promotions = News::with('translations')
-                ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'news.news_id')
+            $promotions = News::leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'news.news_id')
                 ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
                 ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
                 ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
@@ -250,15 +249,15 @@ class PromotionCIAPIController extends BaseAPIController
             $this->response->status = 'success';
             $this->response->message = 'Request Ok';
 
-            $activityPageNotes = sprintf('Page viewed: %s', 'Promotion List Page');
-            $activityPage->setUser($user)
-                ->setActivityName('view_promotion_list')
-                ->setActivityNameLong('View Promotion List')
-                ->setObject(null)
-                ->setModuleName('Promotion')
-                ->setNotes($activityPageNotes)
-                ->responseOK()
-                ->save();
+            // $activityPageNotes = sprintf('Page viewed: %s', 'Promotion List Page');
+            // $activityPage->setUser($user)
+            //     ->setActivityName('view_promotion_list')
+            //     ->setActivityNameLong('View Promotion List')
+            //     ->setObject(null)
+            //     ->setModuleName('Promotion')
+            //     ->setNotes($activityPageNotes)
+            //     ->responseOK()
+            //     ->save();
 
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
@@ -267,15 +266,15 @@ class PromotionCIAPIController extends BaseAPIController
             $this->response->data = null;
             $httpCode = 403;
             
-            $activityPageNotes = sprintf('Failed to view Page: %s', 'Promotion List');
-            $activityPage->setUser($user)
-                ->setActivityName('view_promotion_list')
-                ->setActivityNameLong('View Promotion List Failed')
-                ->setObject(null)
-                ->setModuleName('Promotion')
-                ->setNotes($activityPageNotes)
-                ->responseFailed()
-                ->save();
+            // $activityPageNotes = sprintf('Failed to view Page: %s', 'Promotion List');
+            // $activityPage->setUser($user)
+            //     ->setActivityName('view_promotion_list')
+            //     ->setActivityNameLong('View Promotion List Failed')
+            //     ->setObject(null)
+            //     ->setModuleName('Promotion')
+            //     ->setNotes($activityPageNotes)
+            //     ->responseFailed()
+            //     ->save();
 
         } catch (InvalidArgsException $e) {
             $this->response->code = $e->getCode();
@@ -288,15 +287,15 @@ class PromotionCIAPIController extends BaseAPIController
             $this->response->data = $result;
             $httpCode = 403;
 
-            $activityPageNotes = sprintf('Failed to view Page: %s', 'Promotion List');
-            $activityPage->setUser($user)
-                ->setActivityName('view_promotion_list')
-                ->setActivityNameLong('View Promotion List Failed')
-                ->setObject(null)
-                ->setModuleName('Promotion')
-                ->setNotes($activityPageNotes)
-                ->responseFailed()
-                ->save();
+            // $activityPageNotes = sprintf('Failed to view Page: %s', 'Promotion List');
+            // $activityPage->setUser($user)
+            //     ->setActivityName('view_promotion_list')
+            //     ->setActivityNameLong('View Promotion List Failed')
+            //     ->setObject(null)
+            //     ->setModuleName('Promotion')
+            //     ->setNotes($activityPageNotes)
+            //     ->responseFailed()
+            //     ->save();
 
         } catch (QueryException $e) {
             $this->response->code = $e->getCode();
@@ -310,32 +309,32 @@ class PromotionCIAPIController extends BaseAPIController
             $this->response->data = null;
             $httpCode = 500;
             
-            $activityPageNotes = sprintf('Failed to view Page: %s', 'Promotion List');
-            $activityPage->setUser($user)
-                ->setActivityName('view_promotion_list')
-                ->setActivityNameLong('View Promotion List Failed')
-                ->setObject(null)
-                ->setModuleName('Promotion')
-                ->setNotes($activityPageNotes)
-                ->responseFailed()
-                ->save();
+            // $activityPageNotes = sprintf('Failed to view Page: %s', 'Promotion List');
+            // $activityPage->setUser($user)
+            //     ->setActivityName('view_promotion_list')
+            //     ->setActivityNameLong('View Promotion List Failed')
+            //     ->setObject(null)
+            //     ->setModuleName('Promotion')
+            //     ->setNotes($activityPageNotes)
+            //     ->responseFailed()
+            //     ->save();
 
         } catch (Exception $e) {
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = null;//[$e->getMessage(), $e->getFile(), $e->getLine()];
+            $this->response->data = [$e->getMessage(), $e->getFile(), $e->getLine()];
             $httpCode = 500;
 
-            $activityPageNotes = sprintf('Failed to view Page: %s', 'Promotion List');
-            $activityPage->setUser($user)
-                ->setActivityName('view_promotion_list')
-                ->setActivityNameLong('View Promotion List Failed')
-                ->setObject(null)
-                ->setModuleName('Promotion')
-                ->setNotes($activityPageNotes)
-                ->responseFailed()
-                ->save();
+            // $activityPageNotes = sprintf('Failed to view Page: %s', 'Promotion List');
+            // $activityPage->setUser($user)
+            //     ->setActivityName('view_promotion_list')
+            //     ->setActivityNameLong('View Promotion List Failed')
+            //     ->setObject(null)
+            //     ->setModuleName('Promotion')
+            //     ->setNotes($activityPageNotes)
+            //     ->responseFailed()
+            //     ->save();
         }
 
         return $this->render($httpCode);
@@ -348,8 +347,8 @@ class PromotionCIAPIController extends BaseAPIController
 
         $user = null;
         $promotionId = 0;
-        $activityPage = Activity::mobileci()
-                                   ->setActivityType('view');
+        // $activityPage = Activity::mobileci()
+        //                            ->setActivityType('view');
         try{
             $this->checkAuth();
             $user = $this->api->user;
@@ -389,12 +388,8 @@ class PromotionCIAPIController extends BaseAPIController
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $alternateLanguage = $this->getMerchantLanguage($mall->merchant_id, $languageId);
-
-            if (!is_object($alternateLanguage)) {
-                $alternateLanguage = $this->getDefaultLanguage($mall);
-            }
-
+            $alternateLanguage = $this->getMerchantLanguage($mall, $languageId);
+            
             $promotion = News::with(['tenants' => function($q) use($mall) {
                     $q->where('merchants.status', 'active');
                     $q->where('merchants.parent_id', $mall->merchant_id);
@@ -492,16 +487,16 @@ class PromotionCIAPIController extends BaseAPIController
             $this->response->status = 'success';
             $this->response->message = 'Request Ok';
 
-            $activityPageNotes = sprintf('Page viewed: Promotion Detail, promotion Id: %s', $promotionId);
-            $activityPage->setUser($user)
-                ->setActivityName('view_promotion')
-                ->setActivityNameLong('View Promotion Detail')
-                ->setObject($promotion)
-                ->setNews($promotion)
-                ->setModuleName('Promotion')
-                ->setNotes($activityPageNotes)
-                ->responseOK()
-                ->save();
+            // $activityPageNotes = sprintf('Page viewed: Promotion Detail, promotion Id: %s', $promotionId);
+            // $activityPage->setUser($user)
+            //     ->setActivityName('view_promotion')
+            //     ->setActivityNameLong('View Promotion Detail')
+            //     ->setObject($promotion)
+            //     ->setNews($promotion)
+            //     ->setModuleName('Promotion')
+            //     ->setNotes($activityPageNotes)
+            //     ->responseOK()
+            //     ->save();
 
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
@@ -510,15 +505,15 @@ class PromotionCIAPIController extends BaseAPIController
             $this->response->data = null;
             $httpCode = 403;
 
-            $activityPageNotes = sprintf('Failed to view Page: Promotion Detail, promotion Id: %s', $promotionId);
-            $activityPage->setUser($user)
-                ->setActivityName('view_promotion')
-                ->setActivityNameLong('View Promotion Failed')
-                ->setObject(null)
-                ->setModuleName('Promotion')
-                ->setNotes($activityPageNotes)
-                ->responseFailed()
-                ->save();
+            // $activityPageNotes = sprintf('Failed to view Page: Promotion Detail, promotion Id: %s', $promotionId);
+            // $activityPage->setUser($user)
+            //     ->setActivityName('view_promotion')
+            //     ->setActivityNameLong('View Promotion Failed')
+            //     ->setObject(null)
+            //     ->setModuleName('Promotion')
+            //     ->setNotes($activityPageNotes)
+            //     ->responseFailed()
+            //     ->save();
 
         } catch (InvalidArgsException $e) {
             $this->response->code = $e->getCode();
@@ -531,15 +526,15 @@ class PromotionCIAPIController extends BaseAPIController
             $this->response->data = $result;
             $httpCode = 403;
 
-            $activityPageNotes = sprintf('Failed to view Page: Promotion Detail, promotion Id: %s', $promotionId);
-            $activityPage->setUser($user)
-                ->setActivityName('view_promotion')
-                ->setActivityNameLong('View Promotion Failed')
-                ->setObject(null)
-                ->setModuleName('Promotion')
-                ->setNotes($activityPageNotes)
-                ->responseFailed()
-                ->save();
+            // $activityPageNotes = sprintf('Failed to view Page: Promotion Detail, promotion Id: %s', $promotionId);
+            // $activityPage->setUser($user)
+            //     ->setActivityName('view_promotion')
+            //     ->setActivityNameLong('View Promotion Failed')
+            //     ->setObject(null)
+            //     ->setModuleName('Promotion')
+            //     ->setNotes($activityPageNotes)
+            //     ->responseFailed()
+            //     ->save();
 
         } catch (QueryException $e) {
             $this->response->code = $e->getCode();
@@ -553,15 +548,15 @@ class PromotionCIAPIController extends BaseAPIController
             $this->response->data = null;
             $httpCode = 500;
 
-            $activityPageNotes = sprintf('Failed to view Page: Promotion Detail, promotion Id: %s', $promotionId);
-            $activityPage->setUser($user)
-                ->setActivityName('view_promotion')
-                ->setActivityNameLong('View Promotion Failed')
-                ->setObject(null)
-                ->setModuleName('Promotion')
-                ->setNotes($activityPageNotes)
-                ->responseFailed()
-                ->save();
+            // $activityPageNotes = sprintf('Failed to view Page: Promotion Detail, promotion Id: %s', $promotionId);
+            // $activityPage->setUser($user)
+            //     ->setActivityName('view_promotion')
+            //     ->setActivityNameLong('View Promotion Failed')
+            //     ->setObject(null)
+            //     ->setModuleName('Promotion')
+            //     ->setNotes($activityPageNotes)
+            //     ->responseFailed()
+            //     ->save();
 
         } catch (Exception $e) {
             $this->response->code = $this->getNonZeroCode($e->getCode());
@@ -570,15 +565,15 @@ class PromotionCIAPIController extends BaseAPIController
             $this->response->data = [$e->getMessage(), $e->getFile(), $e->getLine()];
             $httpCode = 500;
 
-            $activityPageNotes = sprintf('Failed to view Page: Promotion Detail, promotion Id: %s', $promotionId);
-            $activityPage->setUser($user)
-                ->setActivityName('view_promotion')
-                ->setActivityNameLong('View Promotion Failed')
-                ->setObject(null)
-                ->setModuleName('Promotion')
-                ->setNotes($activityPageNotes)
-                ->responseFailed()
-                ->save();
+            // $activityPageNotes = sprintf('Failed to view Page: Promotion Detail, promotion Id: %s', $promotionId);
+            // $activityPage->setUser($user)
+            //     ->setActivityName('view_promotion')
+            //     ->setActivityNameLong('View Promotion Failed')
+            //     ->setObject(null)
+            //     ->setModuleName('Promotion')
+            //     ->setNotes($activityPageNotes)
+            //     ->responseFailed()
+            //     ->save();
         }
 
         return $this->render($httpCode);
@@ -586,11 +581,14 @@ class PromotionCIAPIController extends BaseAPIController
 
 
 
-    private function getMerchantLanguage($mallId, $languageId = null)
+    private function getMerchantLanguage($mall, $languageId = null)
     {
-        $merchantLanguage = MerchantLanguage::where('merchant_languages.merchant_id', '=', $mallId)
+        $merchantLanguage = MerchantLanguage::where('merchant_languages.merchant_id', '=', $mall->merchant_id)
                                             ->where('merchant_languages.language_id', '=', $languageId)
                                             ->first();
+        if (!is_object($merchantLanguage)) {
+            $merchantLanguage = $this->getDefaultLanguage($mall);
+        }
         return $merchantLanguage;
     }
 
@@ -608,11 +606,10 @@ class PromotionCIAPIController extends BaseAPIController
         // English is default language
         $language = \Language::where('name', '=', 'en')->first();
         if(isset($language) && count($language) > 0){
-            $defaultLanguage = \MerchantLanguage::excludeDeleted()
-                ->where('merchant_id', '=', $mall->merchant_id)
+            $defaultLanguage = MerchantLanguage::
+                where('merchant_id', '=', $mall->merchant_id)
                 ->where('language_id', '=', $language->language_id)
                 ->first();
-
             if ($defaultLanguage !== null) {
                 return $defaultLanguage;
             }
