@@ -24,11 +24,19 @@ class Widget extends Eloquent
     }
 
     /**
-     * A widget belongs to many retailer
+     * A widget belongs to retailer
      */
     public function retailers()
     {
         return $this->hasMany('WidgetRetailer', 'widget_id', 'widget_id');
+    }
+
+    /**
+     * A widget belongs to many retailer
+     */
+    public function malls()
+    {
+        return $this->belongsToMany('merchant', 'widget_retailer', 'widget_id', 'retailer_id');
     }
 
     /**
