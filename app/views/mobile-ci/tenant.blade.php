@@ -175,9 +175,16 @@
                 <div class="col-xs-12 col-sm-12">
                     <section class="list-item-single-tenant">
                         <a class="list-item-link" data-href="{{ route('ci-coupon-detail', ['id' => $coupontab->promotion_id]) }}" href="{{ $urlblock->blockedRoute('ci-coupon-detail', ['id' => $coupontab->promotion_id]) }}">
+                                <span class="fa-stack fa-2x pull-right couponbadge-container" data-count="{{$coupontab->quantity}}+">
+                                   <i class="fa fa-circle fa-stack-2x color-white"></i>
+                                   <i class="fa fa-ticket fa-stack-1x color-black"></i>
+                                   <i class="fa fa-certificate fa-stack couponbadge"></i>
+                                </span>
+                            <!--
                             <div class="coupon-new-badge">
-                                <div class="new-number">{{$coupontab->quantity}}</div>
+                                <div class="new-number">{{$coupontab->quantity}}</div> 
                             </div>
+                            -->
                             <div class="list-item-info">
                                 <header class="list-item-title">
                                     <div><strong>{{{ $coupontab->promotion_name }}}</strong></div>
