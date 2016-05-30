@@ -223,6 +223,12 @@ return array(
             'max_record'    => 100,
         ),
 
+        // Tenant Category
+        'category' => array(
+            'per_page'      => 50,
+            'max_record'    => 100,
+        ),
+
         // Employee
         'employee' => array(
             'per_page'      => 50,
