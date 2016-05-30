@@ -2193,14 +2193,14 @@ class MobileCIAPIController extends BaseCIController
 
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
 
-            $categories = Category::active('categories')
-                ->whereHas('tenants', function($q) use($retailer) {
-                    $q->where('merchants.parent_id', $retailer->merchant_id);
-                });
+            $categories = Category::active('categories');
 
             $categories->select('categories.*');
             $this->maybeJoinWithCategoryTranslationsTable($categories, $alternateLanguage);
-
+            $categories->whereHas('tenants', function($q) use($retailer) {
+                $q->where('merchants.parent_id', $retailer->merchant_id);
+                $q->where('merchants.status', 'active');
+            });
             $categories = $categories->get();
 
             // Get the maximum record
@@ -2225,6 +2225,7 @@ class MobileCIAPIController extends BaseCIController
                     $q->leftJoin('category_translations', function ($join) use ($alternateLanguage) {
                         $join->on('categories.category_id', '=', 'category_translations.category_id');
                         $join->where('category_translations.merchant_language_id', '=', $alternateLanguage->language_id);
+                        $join->where('category_translations.category_name', '!=', '');
                     });
                     $q->select('categories.*');
                     $q->addSelect([
@@ -8924,8 +8925,9 @@ class MobileCIAPIController extends BaseCIController
                 $join->on('categories.category_id', '=', 'category_translations.category_id');
                 $join->where('category_translations.merchant_language_id', '=',
                     $alternateLanguage->language_id);
+                $join->where('category_translations.category_name', '!=', '');
             });
-
+            $categories->select('categories.*');
             // and overwrite fields with alternate language fields if present
             foreach (['category_name', 'description'] as $field) {
                 $categories->addSelect([
