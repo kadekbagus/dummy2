@@ -98,6 +98,11 @@ class Tenant extends Eloquent
         return $this->belongsToMany('Coupon', 'promotion_retailer', 'retailer_id', 'promotion_id')->active();
     }
 
+    public function redeemCoupons()
+    {
+        return $this->belongsToMany('Coupon', 'promotion_retailer_redeem', 'retailer_id', 'promotion_id')->active();
+    }
+
     public function couponsProfiling()
     {
         return $this->belongsToMany('Coupon', 'promotion_retailer', 'retailer_id', 'promotion_id')
