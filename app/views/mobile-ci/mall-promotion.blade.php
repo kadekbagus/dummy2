@@ -61,12 +61,16 @@
             </ul>
         </div>
     </div>
-    <div class="col-xs-12 product-detail"  style="z-index: 100;">
-        @if(($promotion->image!='mobile-ci/images/default_promotion.png'))
-        <a href="{{{ asset($promotion->image) }}}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer"><img src="{{ asset($promotion->image) }}"></a>
-        @else
-        <img src="{{ asset($promotion->image) }}">
-        @endif
+    <div class="col-xs-12 product-detail img-wrapper"  style="z-index: 100;">
+      <div class="vertical-align-middle-outer">
+        <div class="vertical-align-middle-inner">
+            @if(($promotion->image!='mobile-ci/images/default_promotion.png'))
+            <a href="{{{ asset($promotion->image) }}}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer"><img src="{{ asset($promotion->image) }}"></a>
+            @else
+            <img src="{{ asset($promotion->image) }}">
+            @endif
+        </div>
+      </div>
     </div>
 </div>
 <div class="row product-info padded" style="z-index: 101;">
