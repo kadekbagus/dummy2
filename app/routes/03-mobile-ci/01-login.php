@@ -152,6 +152,13 @@ Route::group(
         );
 
         Route::get(
+            '/customer/services', ['as' => 'ci-service-list',
+            function () {
+                return MobileCI\MobileCIAPIController::create()->getServiceView();
+            }]
+        );
+
+        Route::get(
             '/customer/tenant', ['as' => 'ci-tenant-detail',
             function () {
 

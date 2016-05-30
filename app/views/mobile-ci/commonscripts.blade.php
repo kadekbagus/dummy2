@@ -662,7 +662,7 @@
                     if (data.data.total_records > 0) {
                         // var show_result = '<div class="search-btn"><a id="show_all_result"><span class="col-xs-8"><strong>{{Lang::get('mobileci.search.show_all_result')}}</strong></span><span class="col-xs-4 text-right"><i class="fa fa-chevron-right"></i></span></a></div>';
                         var show_result = '';
-                        var tenants='',promotions='',news='',coupons='',lucky_draws='';
+                        var tenants='',promotions='',news='',coupons='',lucky_draws='',services='';
                         if (data.data.grouped_records.tenants.length > 0) {
                             search_results.tenants = data.data.grouped_records.tenants;
                             tenants = '<h4>{{Lang::get('mobileci.page_title.tenant_directory')}}</h4><ul>'
@@ -684,6 +684,29 @@
                                 tenants += '<a data-href="'+ data.data.grouped_records.tenants_redirect_url +'" href="'+ data.data.grouped_records.tenants_url +'" class="text-right" style="display:block;color:#fff;">{{ Lang::get('mobileci.search.show_more') }}</a>';
                             }
                             tenants += '</ul>';
+                        }
+                        if (data.data.grouped_records.services.length > 0) {
+
+                            search_results.services = data.data.grouped_records.services;
+                            services = '<h4>{{Lang::get('mobileci.page_title.service_directory')}}</h4><ul>'
+                            for(var i = 0; i < data.data.grouped_records.services.length; i++) {
+                                var hide = i > 2 ? 'limited hide' : '';
+                                services += '<li class="search-result-group '+ hide +'">\
+                                        <a data-href="'+ data.data.grouped_records.services[i].object_redirect_url +'" href="'+ data.data.grouped_records.services[i].object_url +'">\
+                                            <div class="col-xs-2 text-center">\
+                                                <img src="'+ data.data.grouped_records.services[i].object_image +'">\
+                                            </div>\
+                                            <div class="col-xs-10">\
+                                                <h5><strong>'+ data.data.grouped_records.services[i].object_name +'</strong></h5>\
+                                                <p>'+ (data.data.grouped_records.services[i].object_description ? data.data.grouped_records.services[i].object_description : '') +'</p>\
+                                            </div>\
+                                        </a>\
+                                    </li>';
+                            }
+                            if (data.data.grouped_records.services.length > 3) {
+                                services += '<a data-href="'+ data.data.grouped_records.services_redirect_url +'" href="'+ data.data.grouped_records.services_url +'" class="text-right" style="display:block;color:#fff;">{{ Lang::get('mobileci.search.show_more') }}</a>';
+                            }
+                            services += '</ul>';
                         }
                         if (data.data.grouped_records.promotions.length > 0) {
                             search_results.promotions = data.data.grouped_records.promotions;
@@ -774,7 +797,7 @@
                             lucky_draws += '</ul>';
                         }
                         var zonk = '<div style="width:100%;height:160px;background:transparent;">&nbsp;</div>'
-                        $('.search-results').html(show_result + tenants + promotions + news + coupons + lucky_draws + zonk);
+                        $('.search-results').html(show_result + tenants + promotions + news + coupons + lucky_draws + services + zonk);
                     } else {
                         if(data.message == 'Your session has expired.' || data.message == 'Invalid session data.') {
                             window.location.href = 'http://' + location.host;
