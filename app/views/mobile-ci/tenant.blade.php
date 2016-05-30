@@ -334,10 +334,13 @@
                         <li><span class="tenant-list-text">{{{ $category->category_name }}}</span></li>
                     @endif
                 @endforeach
+
+                @if(count($tenant->categories) >= 3)
+                    <li><span class="tenant-list-text"><label for="post-2" class="read-more-trigger"></label></span></li>
+                @endif
             @else
                 <li><span class="tenant-list-icon"><i class="fa fa-list-ul"></i></span><p class="tenant-list-text">-</p></li>
             @endif
-            <li><span class="tenant-list-text"><label for="post-2" class="read-more-trigger"></label></span></li>
         </ul>
     </div>
 </div>
