@@ -278,6 +278,66 @@ class postNewTenantStoreAndServiceTest extends TestCase
         }
     }
 
+    public function testFieldsStoredTenantStore()
+    {
+        $faker = Faker::create();
+
+        $data['merchant_id'] = $this->mall_1->merchant_id;
+        $data['current_mall'] = $this->mall_1->merchant_id;
+        $data['id_language_default'] = $this->mall_en_lang->language_id;
+
+        $data['floor'] = 'LG';
+        $data['unit'] = '10';
+        $data['external_object_id'] = '0';
+        $data['status'] = 'active';
+        $data['name'] = $faker->company;
+        $data['object_type'] = 'tenant';
+        $data['phone'] = '+85794076666';
+        $data['url'] = 'gotomalls.com';
+        $data['masterbox_number'] = '1111155555';
+        // $data['category_ids'][] = $faker->;
+        // $data['category_ids'][] = $faker->;
+        // $data['category_ids'][] = $faker->;
+        $data['keywords'][] = 'tenant';
+        $data['keywords'][] = 'store';
+        $data['keywords'][] = 'phone';
+        $data['translations'] = '{"' .$this->mall_id_lang->language_id . '":{"description":"Tenant tenant Indonesia"},"' .$this->mall_en_lang->language_id . '":{"description":"Tenant tenant English"},"' .$this->mall_zh_lang->language_id . '":{"description":"Tenant tenant China"}}';
+
+        $count_before = TenantStoreAndService::excludeDeleted()->count();
+
+        $response = $this->makeRequest($this->apikey_user_mall_owner_1->api_key, $this->apikey_user_mall_owner_1->api_secret_key, $data);
+
+        $this->assertSame('success', $response->status);
+        $this->assertSame('Request OK', $response->message);
+        $this->assertResponseStatus(200);
+
+        $count_after = TenantStoreAndService::excludeDeleted()->count();
+        $this->assertSame($count_before + 1, $count_after);
+
+        // Check value tenant
+        $tenant = TenantStoreAndService::find($response->data->merchant_id);
+
+        $fields = array(
+            'floor',
+            'unit',
+            'external_object_id',
+            'status',
+            'name',
+            'object_type',
+            'phone',
+            'url',
+            'masterbox_number',
+        );
+
+        foreach ($fields as $key => $field) {
+            $this->assertSame($data[$field], $tenant->$field);
+        }
+
+        // Check keyword
+        foreach ($response->data->keywords as $key => $val) {
+            $this->assertSame($val->keyword, $data['keywords'][$key]);
+        }
+    }
 
     public function testOkDuplicateTenantname()
     {
