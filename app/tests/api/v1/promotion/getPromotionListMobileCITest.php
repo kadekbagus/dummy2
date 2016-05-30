@@ -733,4 +733,75 @@ class getPromotionListMobileCITest extends TestCase
         $this->assertSame($promotion2->news_id, $response->data->records[0]->news_id);
         $this->assertSame($promotion2->news_name, $response->data->records[0]->news_name);
     }
+
+    public function testGetPromotionBasedOnTenant()
+    {
+        $user = Factory::create('user_consumer');
+        $user_detail = Factory::create('UserDetail', [
+            'user_id' => $user->user_id,
+            'gender' => 'm'
+        ]);
+
+        $apikey = Factory::create('Apikey', ['user_id' => $user->user_id]);
+
+        $tenant1 = Factory::create('Tenant', ['parent_id' => $this->mallB->merchant_id]);
+        $tenant2 = Factory::create('Tenant', ['parent_id' => $this->mallA->merchant_id]);
+
+        $promotion1 = Factory::create('News', ['mall_id' => $this->mallB->merchant_id, 
+                                             'object_type' => 'promotion',
+                                             'link_object_type' => 'tenant', 
+                                             'campaign_status_id' => $this->campaign_status_ongoing->campaign_status_id,
+                                             'is_all_gender' => 'Y',
+                                             'is_all_age' => 'Y'
+                                            ]
+                                    );
+
+        $promotion2 = Factory::create('News', ['mall_id' => $this->mallB->merchant_id, 
+                                             'object_type' => 'promotion',
+                                             'link_object_type' => 'tenant', 
+                                             'campaign_status_id' => $this->campaign_status_ongoing->campaign_status_id,
+                                             'is_all_gender' => 'Y',
+                                             'is_all_age' => 'Y'
+                                            ]
+                                    );
+
+        $promotion3 = Factory::create('News', ['mall_id' => $this->mallB->merchant_id, 
+                                             'object_type' => 'promotion',
+                                             'link_object_type' => 'tenant', 
+                                             'campaign_status_id' => $this->campaign_status_ongoing->campaign_status_id,
+                                             'is_all_gender' => 'Y',
+                                             'is_all_age' => 'Y'
+                                            ]
+                                    );
+
+        $news_merchant1 = Factory::create('NewsMerchant', ['news_id' => $promotion1->news_id, 'merchant_id' => $tenant1->merchant_id, 'object_type' => 'retailer']);
+        $news_merchant2 = Factory::create('NewsMerchant', ['news_id' => $promotion2->news_id, 'merchant_id' => $tenant1->merchant_id, 'object_type' => 'retailer']);
+        $news_merchant3 = Factory::create('NewsMerchant', ['news_id' => $promotion3->news_id, 'merchant_id' => $tenant2->merchant_id, 'object_type' => 'retailer']);
+
+        // tenant1
+        $data = array('mall_id' => $this->mallA->merchant_id, 'tenant_id' => $tenant2->merchant_id);
+
+        $response = $this->makeRequest($data, $apikey);
+
+        $this->assertSame(0, $response->code);
+        $this->assertSame('success', $response->status);
+        $this->assertRegExp('/Request OK/i', $response->message);
+
+        $this->assertSame(1, $response->data->returned_records);
+        $this->assertSame(1, $response->data->total_records);
+        $this->assertSame(1, count($response->data->records));
+
+        // tenant2
+        $data = array('mall_id' => $this->mallB->merchant_id, 'tenant_id' => $tenant1->merchant_id);
+
+        $response = $this->makeRequest($data, $apikey);
+
+        $this->assertSame(0, $response->code);
+        $this->assertSame('success', $response->status);
+        $this->assertRegExp('/Request OK/i', $response->message);
+
+        $this->assertSame(2, $response->data->returned_records);
+        $this->assertSame(2, $response->data->total_records);
+        $this->assertSame(2, count($response->data->records));
+    }
 }

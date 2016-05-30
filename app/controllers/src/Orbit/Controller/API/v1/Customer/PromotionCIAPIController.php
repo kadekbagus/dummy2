@@ -23,11 +23,13 @@ use OrbitShop\API\v1\OrbitShopAPI;
 use Activity;
 use MerchantLanguage;
 use URL;
+use App;
+use Tenant;
 
 class PromotionCIAPIController extends BaseAPIController
 {
 	protected $validRoles = ['super admin', 'consumer', 'guest'];
-    protected $mall_id = NULL;
+    protected $mall_id = null;
 
     public function getPromotionList()
     {
@@ -51,15 +53,21 @@ class PromotionCIAPIController extends BaseAPIController
                 ACL::throwAccessForbidden($message);
             }
 
-            $mallId = OrbitInput::get('mall_id', NULL);
-            $languageId = OrbitInput::get('language_id', NULL);
+            $mallId = OrbitInput::get('mall_id', null);
+            $tenantId = OrbitInput::get('tenant_id', null);
+            $languageId = OrbitInput::get('language_id', null);
+            $objectId = null;
+
+            $this->registerCustomValidation();
 
             $validator = Validator::make(
                 array(
-                    'mall_id' => $mallId,
+                    'mall_id'   => $mallId,
+                    'tenant_id' => $tenantId,
                 ),
                 array(
-                    'mall_id' => 'required',
+                    'mall_id'   => 'required|orbit.empty.mall',
+                    'tenant_id' => 'orbit.empty.tenant',
                 )
             );
             if ($validator->fails()) {
@@ -67,7 +75,7 @@ class PromotionCIAPIController extends BaseAPIController
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $mall = Mall::where('merchant_id', $mallId)->first();
+            $mall = Mall::excludeDeleted('merchants')->where('merchant_id', $mallId)->first();
 
             if (!is_object($mall)) {
                 $errorMessage = "Mall id not found";
@@ -112,10 +120,16 @@ class PromotionCIAPIController extends BaseAPIController
                 }
             }
 
+            if (! empty($tenantId)) {
+                $objectId = $tenantId;
+            } else {
+                $objectId = $mallId;
+            }
+
             $promotions = $promotions->where('news.status', '=', 'active')
-                        ->where(function ($q) use ($mallId) {
-                            $q->where('merchants.parent_id', '=', $mallId)
-                              ->orWhere('merchants.merchant_id', '=', $mallId);
+                        ->where(function ($q) use ($objectId) {
+                            $q->where('merchants.parent_id', '=', $objectId)
+                              ->orWhere('merchants.merchant_id', '=', $objectId);
                         })
                         ->where('news.object_type', 'promotion')
                         ->whereRaw("? between begin_date and end_date", [$mallTime]);
@@ -131,9 +145,9 @@ class PromotionCIAPIController extends BaseAPIController
                             $join->on('news.news_id', '=', 'keyword_object.object_id');
                             $join->where('keyword_object.object_type', '=', 'promotion');
                         })
-                        ->leftJoin('keywords', function($join) use ($retailer) {
+                        ->leftJoin('keywords', function($join) use ($mall) {
                             $join->on('keywords.keyword_id', '=', 'keyword_object.keyword_id');
-                            $join->where('keywords.merchant_id', '=', $retailer->merchant_id);
+                            $join->where('keywords.merchant_id', '=', $mall->merchant_id);
                         })
                         ->where(function($q) use ($keyword) {
                             $q->where('news_translations.news_name', 'like', "%$keyword%")
@@ -220,7 +234,7 @@ class PromotionCIAPIController extends BaseAPIController
                             // back to default image if in the content multilanguage not have image
                             // check the system language
                             $defaultLanguage = $this->getDefaultLanguage($mall);
-                            if ($defaultLanguage !== NULL) {
+                            if ($defaultLanguage !== null) {
                                 $contentDefaultLanguage = \NewsTranslation::excludeDeleted()
                                     ->where('merchant_language_id', '=', $defaultLanguage->language_id)
                                     ->where('news_id', $val->news_id)->first();
@@ -323,7 +337,7 @@ class PromotionCIAPIController extends BaseAPIController
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = [$e->getMessage(), $e->getFile(), $e->getLine()];
+            $this->response->data = null; 
             $httpCode = 500;
 
             // $activityPageNotes = sprintf('Failed to view Page: %s', 'Promotion List');
@@ -361,10 +375,12 @@ class PromotionCIAPIController extends BaseAPIController
                 ACL::throwAccessForbidden($message);
             }
 
-            $mallId = OrbitInput::get('mall_id', NULL);
-            $promotionId = OrbitInput::get('promotion_id', NULL);
-            $languageId = OrbitInput::get('language_id', NULL);
+            $mallId = OrbitInput::get('mall_id', null);
+            $promotionId = OrbitInput::get('promotion_id', null);
+            $languageId = OrbitInput::get('language_id', null);
             $alternateLanguage = null;
+
+            $this->registerCustomValidation();
 
             $validator = Validator::make(
                 array(
@@ -372,8 +388,8 @@ class PromotionCIAPIController extends BaseAPIController
                     'promotion_id' => $promotionId,
                 ),
                 array(
-                    'mall_id' => 'required',
-                    'promotion_id' => 'required',
+                    'mall_id' => 'required|orbit.empty.mall',
+                    'promotion_id' => 'required|orbit.empty.promotion',
                 )
             );
             if ($validator->fails()) {
@@ -389,12 +405,12 @@ class PromotionCIAPIController extends BaseAPIController
             }
 
             $alternateLanguage = $this->getMerchantLanguage($mall, $languageId);
-            
+
             $promotion = News::with(['tenants' => function($q) use($mall) {
                     $q->where('merchants.status', 'active');
                     $q->where('merchants.parent_id', $mall->merchant_id);
                 }])
-                ->select('news.news_id', 'news.news_name','image', 'news.description as description')
+                ->select('news.news_id', 'news.news_name','image', 'news.object_type', 'news.description as description')
                 ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                 ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
                 ->where(function ($q) use ($mall) {
@@ -437,6 +453,7 @@ class PromotionCIAPIController extends BaseAPIController
             $_promotion->news_name = $promotion->news_name;
             $_promotion->description = $promotion->description;
             $_promotion->image = $promotion->image;
+            $_promotion->object_type = $promotion->object_type;
             $_promotion->all_tenant_inactive = $allTenantInactive;
             $_promotion->facebook_share_url = $promotion->facebook_share_url;
 
@@ -463,8 +480,8 @@ class PromotionCIAPIController extends BaseAPIController
                     } else {
                         // back to default image if in the content multilanguage not have image
                         // check the system language
-                        $defaultLanguage = $this->getDefaultLanguage($retailer);
-                        if ($defaultLanguage !== NULL) {
+                        $defaultLanguage = $this->getDefaultLanguage($mall);
+                        if ($defaultLanguage !== null) {
                             $contentDefaultLanguage = \NewsTranslation::excludeDeleted()
                                 ->where('merchant_language_id', '=', $defaultLanguage->language_id)
                                 ->where('news_id', $_promotion->news_id)->first();
@@ -562,7 +579,7 @@ class PromotionCIAPIController extends BaseAPIController
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = [$e->getMessage(), $e->getFile(), $e->getLine()];
+            $this->response->data = null; 
             $httpCode = 500;
 
             // $activityPageNotes = sprintf('Failed to view Page: Promotion Detail, promotion Id: %s', $promotionId);
@@ -652,5 +669,54 @@ class PromotionCIAPIController extends BaseAPIController
         Config::set('orbit.session.availability.query_string', $oldRouteSessionConfigValue);
 
         return $url;
+    }
+
+    protected function registerCustomValidation()
+    {
+        // Check the existance of mall id
+        Validator::extend('orbit.empty.mall', function ($attribute, $value, $parameters) {
+            $mall = Mall::excludeDeleted('merchants')
+                        ->where('merchant_id', $value)
+                        ->first();
+
+            if (empty($mall)) {
+                return false;
+            }
+
+            App::instance('orbit.empty.mall', $mall);
+
+            return true;
+        });
+
+        // Check the existance of tenant id
+        Validator::extend('orbit.empty.tenant', function ($attribute, $value, $parameters) {
+            $tenant = Tenant::excludeDeleted('merchants')
+                        ->where('merchant_id', $value)
+                        ->first();
+
+            if (empty($tenant)) {
+                return false;
+            }
+
+            App::instance('orbit.empty.tenant', $tenant);
+
+            return true;
+        });
+
+        // Check the existance of promotion id
+        Validator::extend('orbit.empty.promotion', function ($attribute, $value, $parameters) {
+            $promotion = News::excludeDeleted('news')
+                        ->where('news_id', $value)
+                        ->where('object_type', 'promotion')
+                        ->first();
+
+            if (empty($promotion)) {
+                return false;
+            }
+
+            App::instance('orbit.empty.promotion', $promotion);
+
+            return true;
+        });
     }
 }
