@@ -1,6 +1,6 @@
 <?php
 /**
- * PHP Unit Test for Category API Controller postUpdateCategory
+ * PHP Unit Test for Category API Controller postDeleteCategory
  *
  * @author: Irianto Pratama <irianto@dominopos.com>
  */
@@ -167,12 +167,45 @@ class postUpdateCategoryTestArtemisVersion extends TestCase
         $_GET = [];
         $_POST = [];
 
+        /*
+        * test delete success
+        */
         $delete_data = ['category_id' => $this->category_restaurant->category_id];
         $response = $this->setRequestPostDeleteCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $delete_data);
         $this->assertSame(0, $response->code);
         $this->assertSame("success", $response->status);
         $this->assertSame("Category has been successfully deleted.", $response->message);
         $this->assertSame(NULL, $response->data);
+
+        /*
+        * test categories was soft delete
+        */
+        $get_delete_categories = Category::where('status', 'deleted')
+                                        ->where('category_id', $this->category_restaurant->category_id)
+                                        ->get();
+
+        foreach ($get_delete_categories as $key => $value) {
+            $this->assertSame($this->category_restaurant->category_id, $value->category_id);
+            $this->assertSame($this->category_restaurant->category_name, $value->category_name);
+            $this->assertSame('deleted', $value->status);
+        }
+
+        /*
+        * test category translations was soft delete
+        */
+        $get_delete_category_translations = CategoryTranslation::where('status', 'deleted')
+                                        ->where('category_id', $this->category_restaurant->category_id)
+                                        ->get();
+
+        foreach ($get_delete_category_translations as $key => $value) {
+            $translation_key_id = 'translation_' . snake_case($value->merchant_language_id);
+            if (ctype_upper(substr($value->merchant_language_id, 0,1))) {
+                $translation_key_id = 'translation__' . snake_case($value->merchant_language_id);
+            }
+            $this->assertSame($this->category_restaurant->$translation_key_id->category_id, $value->category_id);
+            $this->assertSame($this->category_restaurant->$translation_key_id->category_name, $value->category_name);
+            $this->assertSame('deleted', $value->status);
+        }
     }
 
     public function testDeleteCategoryFailed()
@@ -206,7 +239,7 @@ class postUpdateCategoryTestArtemisVersion extends TestCase
         $response = $this->setRequestPostDeleteCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $delete_data);
         $this->assertSame(14, $response->code);
         $this->assertSame("error", $response->status);
-        $this->assertSame('The category '. $category->category_name .' cannot be deleted: because used on Tenant', $response->message);
+        $this->assertSame('Cannot delete a category with tenants', $response->message);
         $this->assertSame(NULL, $response->data);
     }
 }

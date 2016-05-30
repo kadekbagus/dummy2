@@ -37,6 +37,16 @@ $factory('User', 'user_super_admin', [
     'user_role_id'   => 'factory:role_super_admin'
 ]);
 
+$factory('User', 'user_mall_owner', [
+    'username'       => $faker->userName,
+    'user_password'  => "MallOwner",
+    'user_email'     => $faker->email,
+    'user_firstname' => $faker->firstName,
+    'user_lastname'  => $faker->lastName,
+    'status'         => 'active',
+    'user_role_id'   => 'factory:role_mall_owner'
+]);
+
 $factory('User', 'user_guest', [
     'username'       => $faker->userName,
     'user_password'  => "SecretAdmin",
@@ -45,4 +55,14 @@ $factory('User', 'user_guest', [
     'user_lastname'  => $faker->lastName,
     'status'         => 'active',
     'user_role_id'   => 'factory:role_guest'
+]);
+
+$factory('User', 'user_consumer', [
+    'username'       => $faker->userName,
+    'user_password'  => "SecretAdmin",
+    'user_email'     => $faker->email,
+    'user_firstname' => $faker->firstName,
+    'user_lastname'  => $faker->lastName,
+    'status'         => 'active',
+    'user_role_id'   => 'factory:role_consumer'
 ]);

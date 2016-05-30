@@ -593,8 +593,7 @@ class CategoryAPIController extends ControllerAPI
                                 ->where('category_merchant.category_id', $category_id)
                                 ->first();
             if (count($link_category) > 0) {
-                $errorMessage = Lang::get('validation.orbit.exists.link_category', ['attribute' => $link_category->category_name,
-                                                                        'link' => 'Tenant']);
+                $errorMessage = Lang::get('validation.orbit.exists.link_category', ['link' => 'tenants']);
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
@@ -890,9 +889,10 @@ class CategoryAPIController extends ControllerAPI
             OrbitInput::get('language_id', function($language_id) use ($categories) {
                 $prefix = DB::getTablePrefix();
 
-                $categories->selectRaw("{$prefix}categories.*");
-                $categories->leftJoin('category_translations', 'category_translations.category_id', '=', 'categories.category_id');
-                $categories->where('category_translations.merchant_language_id', $language_id);
+                $categories->selectRaw("{$prefix}categories.*")
+                           ->leftJoin('category_translations', 'category_translations.category_id', '=', 'categories.category_id')
+                           ->where('category_translations.merchant_language_id', $language_id)
+                           ->where('category_translations.category_name', '!=', '');
             });
 
             // Filter category by matching category name pattern

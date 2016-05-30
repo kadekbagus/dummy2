@@ -141,7 +141,7 @@ return array(
             'default_language'       => 'The :attribute cannot be deleted: because default language',
             'translation'            => 'The translation :attribute cannot be deleted: because used on :link',
             'link_floor'             => 'The floor :attribute cannot be deleted: because used on :link',
-            'link_category'          => 'The category :attribute cannot be deleted: because used on :link',
+            'link_category'          => 'Cannot delete a category with :link',
             'mall_language'          => 'The :attribute must be an existing language',
         ),
         'access' => array(

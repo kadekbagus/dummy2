@@ -520,7 +520,7 @@ class TenantAPIController extends ControllerAPI
                             'category_id'   => $category_id_check,
                         ),
                         array(
-                            'category_id'   => 'orbit.empty.category:' . $parent_id,
+                            'category_id'   => 'orbit.empty.category',
                         )
                     );
 
@@ -599,16 +599,18 @@ class TenantAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'translations']));
             }
 
-            // Get english tenant description for saving to default language
-            foreach ($dataTranslations as $key => $val) {
-                // Validation language id from translation
-                $language = Language::where('language_id', '=', $key)->first();
-                if (empty($language)) {
-                    OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.merchant_language'));
-                }
+            if (! is_null($dataTranslations)) {
+                // Get english tenant description for saving to default language
+                foreach ($dataTranslations as $key => $val) {
+                    // Validation language id from translation
+                    $language = Language::where('language_id', '=', $key)->first();
+                    if (empty($language)) {
+                        OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.merchant_language'));
+                    }
 
-                if ($key === $idLanguageEnglish->language_id) {
-                    $newtenant->description = $val->description;
+                    if ($key === $idLanguageEnglish->language_id) {
+                        $newtenant->description = $val->description;
+                    }
                 }
             }
 
@@ -1174,16 +1176,18 @@ class TenantAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'translations']));
             }
 
-            // Get english tenant description for saving to default language
-            foreach ($dataTranslations as $key => $val) {
-                // Validation language id from translation
-                $language = Language::where('language_id', '=', $key)->first();
-                if (empty($language)) {
-                    OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.merchant_language'));
-                }
+            if (! is_null($dataTranslations)) {
+                // Get english tenant description for saving to default language
+                foreach ($dataTranslations as $key => $val) {
+                    // Validation language id from translation
+                    $language = Language::where('language_id', '=', $key)->first();
+                    if (empty($language)) {
+                        OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.merchant_language'));
+                    }
 
-                if ($key === $idLanguageEnglish->language_id) {
-                    $updatedtenant->description = $val->description;
+                    if ($key === $idLanguageEnglish->language_id) {
+                        $updatedtenant->description = $val->description;
+                    }
                 }
             }
 
@@ -1191,10 +1195,12 @@ class TenantAPIController extends ControllerAPI
 
             $updatedtenant->save();
 
-            $this->saveSocmedUri('facebook', $retailer_id, OrbitInput::post('facebook_uri'));
+            OrbitInput::post('facebook_uri', function($facebook_uri) use($updatedtenant, $retailer_id) {
+                $this->saveSocmedUri('facebook', $retailer_id, $facebook_uri);
 
-            // For response
-            $updatedtenant->facebook_uri = OrbitInput::post('facebook_uri');
+                // For response
+                $updatedtenant->facebook_uri = $facebook_uri;
+            });
 
             // save CategoryMerchant
             OrbitInput::post('no_category', function($no_category) use ($updatedtenant) {
@@ -1214,7 +1220,7 @@ class TenantAPIController extends ControllerAPI
                             'category_id'   => $category_id_check,
                         ),
                         array(
-                            'category_id'   => 'orbit.empty.category:' . $updatedtenant->parent_id,
+                            'category_id'   => 'orbit.empty.category',
                         )
                     );
 
@@ -2712,10 +2718,7 @@ class TenantAPIController extends ControllerAPI
 
         // Check the existance of category id
         Validator::extend('orbit.empty.category', function ($attribute, $value, $parameters) {
-            $mallId = $parameters[0];
-
             $category = Category::excludeDeleted()
-                                ->where('merchant_id', $mallId)
                                 ->where('category_id', $value)
                                 ->first();
 
