@@ -46,6 +46,8 @@
             <file>./app/tests/api/v1/mall/getMallAreaTest.php</file>
             <file>./app/tests/api/v1/mall/getMallFenceTest.php</file>
             <file>./app/tests/api/v1/tenant/getTenantListAngularCITest.php</file>
+            <file>./app/tests/api/v1/tenant/getTenantItemAngularCITest.php</file>
+            <file>./app/tests/api/v1/category/getCategoryListAngularCITest.php</file>
         </testsuite>
     </testsuites>
 </phpunit>
