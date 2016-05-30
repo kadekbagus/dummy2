@@ -2194,8 +2194,9 @@ class MobileCIAPIController extends BaseCIController
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
 
             $categories = Category::active('categories')
-                ->where('category_level', 1)
-                ->where('merchant_id', $retailer->merchant_id);
+                ->whereHas('tenants', function($q) use($retailer) {
+                    $q->where('merchants.parent_id', $retailer->merchant_id);
+                });
 
             $categories->select('categories.*');
             $this->maybeJoinWithCategoryTranslationsTable($categories, $alternateLanguage);
@@ -2278,7 +2279,6 @@ class MobileCIAPIController extends BaseCIController
                 function ($cid) use ($tenants, $retailer, &$notfound) {
                     if (! empty($cid)) {
                         $category = \Category::active()
-                            ->where('merchant_id', $retailer->merchant_id)
                             ->where('category_id', $cid)
                             ->first();
                         if (!is_object($category)) {
