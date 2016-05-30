@@ -166,7 +166,7 @@ class WidgetAPIController extends ControllerAPI
 
                 $widget->save();
 
-                $widget->retailers()->sync(array($merchantId));
+                $widget->malls()->sync(array($merchantId));
 
                 // // If widget is empty then it should be applied to all retailers
                 // if (empty(OrbitInput::post('retailer_ids', NULL))) {
@@ -486,7 +486,7 @@ class WidgetAPIController extends ControllerAPI
 
                 // Insert attribute values if specified by the caller
                 // if ($retailerIds != NULL) {
-                    $updatedwidget->retailers()->sync(array($merchantId));
+                    $updatedwidget->malls()->sync(array($merchantId));
                 // }
 
                 // If widget is empty then it should be applied to all retailers
