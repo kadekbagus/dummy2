@@ -765,7 +765,7 @@ class getPromotionListMobileCITest extends TestCase
                                             ]
                                     );
 
-        $promotion3 = Factory::create('News', ['mall_id' => $this->mallB->merchant_id, 
+        $promotion3 = Factory::create('News', ['mall_id' => $this->mallA->merchant_id, 
                                              'object_type' => 'promotion',
                                              'link_object_type' => 'tenant', 
                                              'campaign_status_id' => $this->campaign_status_ongoing->campaign_status_id,
