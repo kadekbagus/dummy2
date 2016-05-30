@@ -672,6 +672,42 @@ class getTenantListAngularCITest extends TestCase
         }
     }
 
+    public function testOKGetListingTenantFilteredByObjectType()
+    {
+        $_GET['apikey'] = $this->apikey->api_key;
+        $_GET['apitimestamp'] = time();
+        $_GET['mall_id'] = $this->mall_1->merchant_id;
+        $_GET['object_type'] = $this->tenants_mall_1[0]->object_type;
+
+        $url = $this->apiUrl . '?' . http_build_query($_GET);
+        $secretKey = $this->apikey->api_secret_key;
+
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_SERVER['REQUEST_URI'] = $url;
+        $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
+
+        $json = $this->call('GET', $url)->getContent();
+        $response = json_decode($json);
+
+        $this->assertSame(0, (int) $response->code);
+        $this->assertSame(3, (int) $response->data->returned_records);
+
+        // check all returned records
+        foreach ($response->data->records as $key => $item) {
+            $this->assertSame((string) $item->merchant_id, (string) $this->tenants_mall_1[$key]->merchant_id);
+            $this->assertSame((string) $item->name, (string) $this->tenants_mall_1[$key]->name);
+            $this->assertSame((string) $item->floor, (string) $this->tenants_mall_1[$key]->floor);
+            $this->assertSame((string) $item->unit, (string) $this->tenants_mall_1[$key]->unit);
+            foreach ($item->categories as $key2 => $category) {
+                $this->assertSame((string) $category->category_name, (string) $this->tenants_mall_1[$key]->categories[$key2]->category_name);
+            }
+            $this->assertSame((string) $item->facebook_like_url, (string) $this->tenants_mall_1[$key]->merchantSocialMedia[0]->social_media_uri);
+            $this->assertSame((string) count($this->tenants_mall_1[$key]->news) > 0 ? 'true' : 'false', (string) $item->news_flag);
+            $this->assertSame((string) count($this->tenants_mall_1[$key]->newsPromotions) > 0 ? 'true' : 'false', (string) $item->promotion_flag);
+            $this->assertSame('true', (string) $item->coupon_flag); // all users has coupons
+        }
+    }
+
     public function testOKGetListingTenantWithCampaignAgeBadgesProfiling()
     {
         $_GET['apikey'] = $this->user_profiling_apikey->api_key;
