@@ -2209,10 +2209,9 @@ class MobileCIAPIController extends BaseCIController
                 $maxRecord = Config::get('orbit.pagination.max_record');
             }
 
-            $floorList = Object::whereHas('mall', function ($q) use ($retailer) {
-                    $q->where('merchants.merchant_id', $retailer->merchant_id);
-                })
-                ->active()
+            $floorList = Object::join('merchants', 'objects.object_name', '=', 'merchants.floor')
+                ->active('merchants')
+                ->where('objects.merchant_id', $retailer->merchant_id);
                 ->where('object_type', 'floor')
                 ->orderBy('object_order', 'asc')
                 ->groupBy('object_name')
