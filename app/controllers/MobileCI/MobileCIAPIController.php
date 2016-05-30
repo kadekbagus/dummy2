@@ -3023,16 +3023,6 @@ class MobileCIAPIController extends BaseCIController
             // $this->maybeJoinWithTranslationsTable($tenant, $alternateLanguage);
             $tenant = $tenant->first();
 
-            $category_string = '';
-            foreach ($tenant->categories as $i => $category) {
-                if ($i == (count($tenant->categories) - 1)) {
-                    $category_string .= $category->category_name;
-                } else {
-                    $category_string .= $category->category_name . ', ';
-                }
-            }
-            $tenant->category_string = $category_string;
-
             // Check translation for Merchant Translation
             if (!empty($alternateLanguage) && count($tenant) > 0) {
                 $merchantTranslation = \MerchantTranslation::excludeDeleted()
