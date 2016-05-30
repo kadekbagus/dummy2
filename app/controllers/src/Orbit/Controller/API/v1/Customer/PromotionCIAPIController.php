@@ -29,7 +29,6 @@ use Tenant;
 class PromotionCIAPIController extends BaseAPIController
 {
 	protected $validRoles = ['super admin', 'consumer', 'guest'];
-    protected $mall_id = null;
 
     public function getPromotionList()
     {
