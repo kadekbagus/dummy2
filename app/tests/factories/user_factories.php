@@ -56,3 +56,13 @@ $factory('User', 'user_guest', [
     'status'         => 'active',
     'user_role_id'   => 'factory:role_guest'
 ]);
+
+$factory('User', 'user_consumer', [
+    'username'       => $faker->userName,
+    'user_password'  => "SecretAdmin",
+    'user_email'     => $faker->email,
+    'user_firstname' => $faker->firstName,
+    'user_lastname'  => $faker->lastName,
+    'status'         => 'active',
+    'user_role_id'   => 'factory:role_consumer'
+]);
