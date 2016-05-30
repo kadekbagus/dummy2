@@ -201,6 +201,7 @@ return array(
             'category_status'      => 'The category status you specified is not found',
             'category_sortby'      => 'The sort by argument you specified is not valid, the valid values are: registered_date, category_name, category_level, category_order, description, status',
             'category_ci_sortby'      => 'The sort by argument you specified is not valid, the valid values is: name',
+            'object_ci_sortby'      => 'The sort by argument you specified is not valid, the valid values is: order',
             'promotion_status'     => 'The promotion status you specified is not found',
             'promotion_sortby'     => 'The sort by argument you specified is not valid, the valid values are: registered_date, promotion_name, promotion_type, description, begin_date, end_date, is_permanent, status, rule_type, display_discount_value',
             'promotion_by_retailer_sortby' => 'The sort by argument you specified is not valid, the valid values are: retailer_name, registered_date, promotion_name, promotion_type, description, begin_date, end_date, is_permanent, status',
