@@ -2861,6 +2861,7 @@ class MobileCIAPIController extends BaseCIController
 
             $tenant = Tenant::with( // translated
                 array(
+                    'categories',
                     'media',
                     'mediaLogoOrig',
                     'mediaMapOrig',

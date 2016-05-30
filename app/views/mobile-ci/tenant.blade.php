@@ -291,6 +291,15 @@
             <li><span class="tenant-list-icon"><i class="fa fa-facebook-square fa-lg"></i></span><p class="tenant-list-text">{{{ str_replace('//', '', $tenant->facebook_like_url) }}}</p></li>
             @endif
             <li><span class="tenant-list-icon"><i class="fa fa-phone-square fa-lg"></i></span><p class="tenant-list-text">@if($tenant->phone != '')<a href="tel:{{{ $tenant->phone }}}">{{{ $tenant->phone }}}</a>@else - @endif</p></li>
+            @if(empty($tenant->categories))
+                <li><span class="tenant-list-icon"><i class="fa fa-list-ul"></i></span><p class="tenant-list-text">-</p></li>
+            @else
+                <li><span class="tenant-list-icon"><i class="fa fa-list-ul"></i></span><p class="tenant-list-text">
+                @foreach($tenant->categories as $category)
+                    {{{ $category->category_name }}}, 
+                @endforeach
+                </p></li>
+            @endif
         </ul>
         @if ($urlblock->isLoggedIn())
             @if(! empty($tenant->facebook_like_url))
