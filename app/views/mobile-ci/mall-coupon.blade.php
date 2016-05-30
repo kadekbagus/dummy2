@@ -41,8 +41,8 @@
     <div class="actions-container" style="z-index: 102;">
         <a class="action-btn">
             <span class="fa fa-stack fa-2x">
-                <i class="fa fa-plus fa-inverse fa-stack-2x"> </i>
-                <i class="fa fa-plus-circle fa-stack-2x"> </i>
+                <i class="fa fa-circle fa-stack-2x"> </i>
+                <i class="fa glyphicon-plus fa-inverse fa-stack-2x"> </i>
             </span>
         </a>
         <div class="actions-panel" style="display: none;">
