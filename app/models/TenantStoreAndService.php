@@ -85,7 +85,8 @@ class TenantStoreAndService extends Eloquent
      */
     public function categories()
     {
-        return $this->belongsToMany('Category', 'category_merchant', 'merchant_id', 'category_id');
+        return $this->belongsToMany('Category', 'category_merchant', 'merchant_id', 'category_id')
+                ->orderBy('category_name', 'asc');
     }
 
     /**
