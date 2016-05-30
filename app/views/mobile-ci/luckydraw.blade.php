@@ -20,9 +20,74 @@
 @stop
 
 
+<?php
+$showPrizesAndWinners = false;
+if(!empty($luckydraw)) {
+  if(strtotime($servertime) > strtotime($luckydraw->draw_date)) {
+    if(!empty($luckydraw->prizes)) {
+      if(isset($luckydraw->announcements[0])) {
+        if($luckydraw->announcements[0]->status == 'active') {
+          $showPrizesAndWinners = true;
+        }
+      }
+    }
+  }
+}
+?>
+
 @section('content')
-<div class="row">
-    <div class="col-xs-12 product-detail">
+<div class="row relative-wrapper">
+    <div class="actions-container" style="z-index: 102;">
+        <a class="action-btn">
+            <span class="fa fa-stack fa-2x">
+                <i class="fa fa-circle fa-stack-2x"> </i>
+                <i class="fa glyphicon-plus fa-inverse fa-stack-2x"> </i>
+            </span>
+        </a>
+        <div class="actions-panel" style="display: none;">
+            <ul class="list-unstyled">
+                <li>
+                    @if($showPrizesAndWinners)
+                    <a data-href="{{ route('ci-luckydraw-announcement', ['id' => $luckydraw->lucky_draw_id]) }}" href="{{ $urlblock->blockedRoute('ci-luckydraw-announcement', ['id' => $luckydraw->lucky_draw_id]) }}">
+                        <span class="fa fa-stack icon">
+                            <i class="fa fa-circle fa-stack-2x"></i>
+                            <i class="fa fa-download fa-inverse fa-stack-1x"></i>
+                        </span>
+                        <span class="text">{{ Lang::get('mobileci.lucky_draw.see_prizes_and_winner') }}</span>
+                    </a>
+                    @else
+                        <!-- Not showing prizes and winners -->
+                    <a class="disabled">
+                        <span class="fa fa-stack icon">
+                            <i class="fa fa-circle fa-stack-2x"></i>
+                            <i class="fa fa-trophy fa-inverse fa-stack-1x"></i>
+                        </span>
+                        <span class="text">{{ Lang::get('mobileci.lucky_draw.see_prizes_and_winner') }}</span>
+                    </a>
+                    @endif
+                </li>
+                @if($total_number > 0)
+                <li>
+                    <a data-href="{{ route('ci-luckydrawnumber-download', ['id' => $luckydraw->lucky_draw_id]) }}" href="{{ $urlblock->blockedRoute('ci-luckydrawnumber-download', ['id' => $luckydraw->lucky_draw_id]) }}">
+                        <span class="fa fa-stack icon">
+                            <i class="fa fa-circle fa-stack-2x"></i>
+                            <i class="fa fa-download fa-inverse fa-stack-1x"></i>
+                        </span>
+                        <span class="text">{{ Lang::get('mobileci.lucky_draw.save_numbers') }}</span>
+                    </a>
+                </li>
+                @endif
+                @if ($urlblock->isLoggedIn())
+                    @if(! empty($luckydraw->facebook_share_url))
+                    <li>
+                        <div class="fb-share-button" data-href="{{$luckydraw->facebook_share_url}}" data-layout="button"></div>
+                    </li>
+                    @endif
+                @endif
+            </ul>
+        </div>
+    </div>
+    <div class="col-xs-12 product-detail" style="z-index: 100;">
         @if(! empty($luckydraw->image))
         <a href="{{{ asset($luckydraw->image) }}}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer"><img src="{{ asset($luckydraw->image) }}"></a>
         @else
@@ -30,7 +95,7 @@
         @endif
     </div>
 </div>
-<div class="row product-info padded">
+<div class="row product-info padded" style="z-index: 101;">
     <div class="col-xs-12 text-left">
         <p>
             {{ nl2br(e($luckydraw->description)) }}
@@ -48,53 +113,7 @@
             {{{ date('d M Y', strtotime($luckydraw->draw_date)) }}}
         </p>
     </div>
-    @if ($urlblock->isLoggedIn())
-        @if(! empty($luckydraw->facebook_share_url))
-        <div class="col-xs-12">
-            <div class="fb-share-button" data-href="{{{$luckydraw->facebook_share_url}}}" data-layout="button"></div>
-        </div>
-        @endif
-    @endif
 </div>
-@if(!empty($luckydraw))
-    @if(strtotime($servertime) > strtotime($luckydraw->draw_date))
-        @if(! empty($luckydraw->prizes))
-            @if(isset($luckydraw->announcements[0]))
-                @if($luckydraw->announcements[0]->status == 'active')
-                <div class="row text-center vertically-spaced">
-                    <div class="col-xs-12 padded">
-                        <a data-href="{{ route('ci-luckydraw-announcement', ['id' => $luckydraw->lucky_draw_id]) }}" href="{{ $urlblock->blockedRoute('ci-luckydraw-announcement', ['id' => $luckydraw->lucky_draw_id]) }}" class="btn btn-info btn-block">{{ Lang::get('mobileci.lucky_draw.see_prizes_and_winner') }}</a>
-                    </div>
-                </div>
-                @else
-                <div class="row text-center vertically-spaced">
-                    <div class="col-xs-12 padded">
-                        <button class="btn btn-disabled-ld btn-block">{{ Lang::get('mobileci.lucky_draw.see_prizes_and_winner') }}</button>
-                    </div>
-                </div>
-                @endif
-            @else
-            <div class="row text-center vertically-spaced">
-                <div class="col-xs-12 padded">
-                    <button class="btn btn-disabled-ld btn-block">{{ Lang::get('mobileci.lucky_draw.see_prizes_and_winner') }}</button>
-                </div>
-            </div>
-            @endif
-        @else
-        <div class="row text-center vertically-spaced">
-            <div class="col-xs-12 padded">
-                <button class="btn btn-disabled-ld btn-block">{{ Lang::get('mobileci.lucky_draw.see_prizes_and_winner') }}</button>
-            </div>
-        </div>
-        @endif
-    @else
-        <div class="row text-center vertically-spaced">
-            <div class="col-xs-12 padded">
-                <button class="btn btn-disabled-ld btn-block">{{ Lang::get('mobileci.lucky_draw.see_prizes_and_winner') }}</button>
-            </div>
-        </div>
-    @endif
-@endif
 <div class="row counter">
     <div class="col-xs-12 text-center">
         <div class="countdown @if($luckydraw->status == 'active') @if(strtotime($servertime) < strtotime($luckydraw->end_date)) active-countdown @else inactive-countdown @endif @elseif($luckydraw->status == 'active') inactive-countdown @else inactive-countdown @endif">
@@ -111,7 +130,7 @@
         </div>
 
         <div class="row">
-            <div class="col-xs-12">    
+            <div class="col-xs-12">
                 @if (($total_number === 0) && ($luckydraw->end_date > \Carbon\Carbon::now($retailer->timezone->timezone_name)))
                     <div class="text-center">
                         <img class="img-responsive" src="{{ asset('mobile-ci/images/default_lucky_number.png') }}" style="margin:0 auto" />
@@ -124,11 +143,6 @@
                 <a name="ln-nav" id="ln-nav"></a>
             </div>
         </div>
-
-       <!--  <div class="row">
-            <p>&nbsp;</p>
-        </div> -->
-
         <div class="row">
             <div class="col-xs-12 lucky-number-row">
                 @if(count($numbers) == 1)
@@ -179,15 +193,6 @@
             </div>
         </div>
         @endif
-        @if ($total_number > 0)
-        <div class="row text-center save-btn vertically-spaced">
-            <div class="col-xs-1"></div>
-            <div class="col-xs-10">
-                <a data-href="{{ route('ci-luckydrawnumber-download', ['id' => $luckydraw->lucky_draw_id]) }}" href="{{ $urlblock->blockedRoute('ci-luckydrawnumber-download', ['id' => $luckydraw->lucky_draw_id]) }}" class="btn btn-info btn-block">{{ Lang::get('mobileci.lucky_draw.save_numbers') }}</a>
-            </div>
-            <div class="col-xs-1"></div>
-        </div>
-        @endif
     @endif
 </div>
 @stop
@@ -221,13 +226,13 @@
         if (typeof $().featherlight === 'undefined') {
             document.write('<script src="{{asset('mobile-ci/scripts/featherlight.min.js')}}">\x3C/script>');
         }
-    </script>    
+    </script>
     {{-- End of Script fallback --}}
-    
+
     @if (!empty($luckydraw))
        {{-- we only use moment.js to display countdown timer --}}
-       
-       {{ HTML::script(Config::get('orbit.cdn.moment.2_13_0', 'mobile-ci/scripts/moment.min.js')) }}   
+
+       {{ HTML::script(Config::get('orbit.cdn.moment.2_13_0', 'mobile-ci/scripts/moment.min.js')) }}
        {{-- Script fallback --}}
        <script>
           if ((typeof moment === 'undefined')) {
@@ -235,7 +240,7 @@
           }
        </script>
        {{-- End of Script fallback --}}
-   
+
        {{ HTML::script(Config::get('orbit.cdn.moment_timezone_data.0_5_4', 'mobile-ci/scripts/moment-timezone-with-data.min.js')) }}
        {{-- Script fallback --}}
        <script>
@@ -245,9 +250,18 @@
        </script>
        {{-- End of Script fallback --}}
     @endif
-    
+
     <script type="text/javascript">
         $(document).ready(function(){
+            // Set fromSource in localStorage.
+            localStorage.setItem('fromSource', 'luckydraw');
+
+            // Actions button event handler
+            $('.action-btn').on('click', function() {
+                $('.actions-container').toggleClass('alive');
+                $('.actions-panel').slideToggle();
+            });
+
             $('#ldtitle').click(function(){
                 $('#lddetail').modal();
             });
@@ -255,48 +269,48 @@
         @if(!empty($luckydraw))
            {{-- we only display countdown timer when there is valid lucky draw --}}
 
-           {{-- 
-            
+           {{--
+
              *  Accurate setTimeInterval replacement
-             *  See related issue OM-2009 in Dominopos JIRA 
+             *  See related issue OM-2009 in Dominopos JIRA
              *  Modified version of https://gist.github.com/manast/1185904
-                 
+
              *  Issue with original code:
              *  if user change their device date/time setting for example due
-             *  timezone change, nextTick calculation may cause nextTick to 
+             *  timezone change, nextTick calculation may cause nextTick to
              *  become very large or very small thus interval will break.
              *  (Note: JavaScript Date always use current device date time)
              *
              *  Modified version detect if nextTick is not between threshold value then
              *  we will call syncNeededCallback() and let application handle it.
              *
-            
+
            --}}
-           
+
            function interval(duration, intervalCallback, syncNeededCallback) {
                //5 seconds threshold
                const THRESHOLD_MS = 5000;
                this.baseline = undefined;
                this.ended = false;
-               
+
                var isWithinThreshold = function (tick) {
                    var diff = tick - THRESHOLD_MS;
                    return !((diff < -THRESHOLD_MS) || (diff > THRESHOLD_MS));
                };
-               
+
                this.run = function () {
                    if (this.baseline === undefined) {
                        this.baseline = new Date().getTime()
                    };
-                  
+
                    var end = new Date().getTime();
                    this.baseline += duration;
                    var deltaTime = end - this.baseline;
-                   
+
                    intervalCallback(this, deltaTime);
-           
+
                    var nextTick = duration - deltaTime;
-                   
+
                    if (isWithinThreshold(nextTick)) {
                        if (nextTick < 0) {
                            nextTick = 0;
@@ -308,7 +322,7 @@
                        //trigger next setTimeOut immediately
                        nextTick = 0;
                    };
-                   
+
                    if (this.ended === false) {
                        (function(i){
                            i.timer = setTimeout(function(){
@@ -355,7 +369,7 @@
                 }
                 updateTimerUI(timerInitData, $('#clock'));
             };
-            
+
             var updateTimerUI = function(timerData, clockElem) {
                     var days = timerData.days < 10 ? '0' + timerData.days : timerData.days;
                     var hours = timerData.hours < 10 ? '0' + timerData.hours : timerData.hours;
@@ -366,34 +380,34 @@
                                    '</span><span class="countdown-period">Hours</span></span><span class="countdown-section"><span class="countdown-amount">' + minutes +
                                    '</span><span class="countdown-period">Minutes</span></span><span class="countdown-section"><span class="countdown-amount">' + seconds +
                                    '</span><span class="countdown-period">Seconds</span></span></span>';
-                    
+
                     if ((timerData.days === 0) && (timerData.hours ===0) && (timerData.minutes===0) && (timerData.seconds === 0)) {
                         clockElem.parent().removeClass('active-countdown');
                         clockElem.parent().addClass('inactive-countdown');
                     }
                     clockElem.html(template);
             };
-            
+
             var syncDateTimeWithServer = function () {
                 $.get(apiPath + 'server-time?format=Y-m-d%20H:i:s', function (data, status) {
                     if (data.code === 0) {
-                        //API always return date with UTC timezone so 
+                        //API always return date with UTC timezone so
                         //we need to convert to mall timezone
                         var serverTime = moment.tz(data.data, 'UTC');
                         timerInitData.currentDateTime = serverTime.tz('{{ $retailer->timezone->timezone_name }}');
                     }
                 });
             };
-            
+
             var countdownTimer = new interval(1000, timerCallback, syncDateTimeWithServer);
             countdownTimer.run();
-            
+
           @else
               {{-- if lucky draw is empty we just display static element --}}
               var template = '<span class="countdown-row countdown-show4"><span class="countdown-section"><span class="countdown-amount">0</span><span class="countdown-period">Days</span></span><span class="countdown-section"><span class="countdown-amount">0</span><span class="countdown-period">Hours</span></span><span class="countdown-section"><span class="countdown-amount">0</span><span class="countdown-period">Minutes</span></span><span class="countdown-section"><span class="countdown-amount">0</span><span class="countdown-period">Seconds</span></span></span>';
               $('#clock').html(template);
           @endif
-            
+
 
             $('#datenow').text(new Date().toDateString() + ' ' + new Date().getHours() + ':' + new Date().getMinutes());
 

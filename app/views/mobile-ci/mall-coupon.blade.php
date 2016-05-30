@@ -37,8 +37,67 @@
 @stop
 
 @section('content')
-<div class="row">
-    <div class="col-xs-12 product-detail">
+<div class="row relative-wrapper">
+    <div class="actions-container" style="z-index: 102;">
+        <a class="action-btn">
+            <span class="fa fa-stack fa-2x">
+                <i class="fa fa-circle fa-stack-2x"> </i>
+                <i class="fa glyphicon-plus fa-inverse fa-stack-2x"> </i>
+            </span>
+        </a>
+        <div class="actions-panel" style="display: none;">
+            <ul class="list-unstyled">
+                <li>
+                    @if(count($link_to_tenants) > 0)
+                    <a data-href="{{ route('ci-tenant-list', ['coupon_id' => $coupon->promotion_id]) }}" href="{{{ $urlblock->blockedRoute('ci-tenant-list', ['coupon_id' => $coupon->promotion_id]) }}}">
+                        <span class="fa fa-stack icon">
+                            <i class="fa fa-circle fa-stack-2x"></i>
+                            <i class="fa fa-th-list fa-inverse fa-stack-1x"></i>
+                        </span>
+                        <span class="text">{{{ Lang::get('mobileci.tenant.see_tenants') }}}</span>
+                    </a>
+                    @else
+                        <!-- Tenant not found -->
+                    <a class="disabled">
+                        <span class="fa fa-stack icon">
+                            <i class="fa fa-circle fa-stack-2x"></i>
+                            <i class="fa fa-th-list fa-inverse fa-stack-1x"></i>
+                        </span>
+                        <span class="text">{{{ Lang::get('mobileci.tenant.see_tenants') }}}</span>
+                    </a>
+                    @endif
+                </li>
+                @if(count($issued_coupons) > 0)
+                <li>
+                    <a data-href="{{ route('ci-tenant-list', ['coupon_redeem_id' => $coupon->promotion_id]) }}" href="{{{ $urlblock->blockedRoute('ci-tenant-list', ['coupon_redeem_id' => $coupon->promotion_id]) }}}">
+                        <span class="fa fa-stack icon">
+                            <i class="fa fa-circle fa-stack-2x"></i>
+                            <i class="fa fa-laptop fa-inverse fa-stack-1x"></i>
+                        </span>
+                        <span class="text">{{{ Lang::get('mobileci.tenant.redemption_places') }}}</span>
+                    </a>
+                </li>
+                <li>
+                    <a id="useBtn" class="disabled">
+                        <span class="fa fa-stack icon">
+                            <i class="fa fa-circle fa-stack-2x"></i>
+                            <i class="fa fa-scissors fa-inverse fa-stack-1x"></i>
+                        </span>
+                        <span class="text">{{{ Lang::get('mobileci.coupon.use_coupon') }}}</span>
+                    </a>
+                </li>
+                @endif
+                @if ($urlblock->isLoggedIn())
+                    @if(! empty($coupon->facebook_share_url))
+                    <li>
+                        <div class="fb-share-button" data-href="{{$coupon->facebook_share_url}}" data-layout="button"></div>
+                    </li>
+                    @endif
+                @endif
+            </ul>
+        </div>
+    </div>
+    <div class="col-xs-12 product-detail" style="z-index: 100;">
         @if(($coupon->image!='mobile-ci/images/default_coupon.png'))
         <a href="{{{ asset($coupon->image) }}}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer"><img class="img-responsive" alt="" src="{{{ asset($coupon->image) }}}" ></a>
         @else
@@ -46,7 +105,7 @@
         @endif
     </div>
 </div>
-<div class="row product-info padded">
+<div class="row product-info padded" style="z-index: 101;">
     <div class="col-xs-12">
         <div class="row">
             <div class="col-xs-12">
@@ -59,44 +118,7 @@
                 <h4><strong>{{{ Lang::get('mobileci.coupon_detail.validity_label') }}}</strong></h4>
                 <p>{{{ date('d M Y', strtotime($coupon->begin_date)) }}} - {{{ date('d M Y', strtotime($coupon->end_date)) }}}</p>
             </div>
-            @if ($urlblock->isLoggedIn())
-                @if(! empty($coupon->facebook_share_url))
-                <div class="col-xs-12">
-                    <div class="fb-share-button" data-href="{{{$coupon->facebook_share_url}}}" data-layout="button"></div>
-                </div>
-                @endif
-            @endif
         </div>
-    </div>
-</div>
-
-<div class="row vertically-spaced">
-    <div class="col-xs-12 padded">
-        @if(count($link_to_tenants) > 0)
-        <div class="row vertically-spaced">
-            <div class="col-xs-12 text-center">
-                <a data-href="{{ route('ci-tenant-list', ['coupon_id' => $coupon->promotion_id]) }}" href="{{{ $urlblock->blockedRoute('ci-tenant-list', ['coupon_id' => $coupon->promotion_id]) }}}" class="btn btn-info btn-block">{{{ Lang::get('mobileci.tenant.see_tenants') }}}</a>
-            </div>
-        </div>
-        @else
-        <div class="row vertically-spaced">
-            <div class="col-xs-12 text-center">
-                <button class="btn btn-info btn-block" disabled="disabled">{{{ Lang::get('mobileci.tenant.see_tenants') }}}</button>
-            </div>
-        </div>
-        @endif
-        @if(count($issued_coupons) > 0)
-            <div class="row vertically-spaced">
-                <div class="col-xs-12 text-center">
-                    <a data-href="{{ route('ci-tenant-list', ['coupon_redeem_id' => $coupon->promotion_id]) }}" href="{{{ $urlblock->blockedRoute('ci-tenant-list', ['coupon_redeem_id' => $coupon->promotion_id]) }}}" class="btn btn-info btn-block">{{{ Lang::get('mobileci.tenant.redemption_places') }}}</a>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-xs-12 text-center">
-                    <button class="btn btn-info btn-block" id="useBtn" disabled="disabled">{{{ Lang::get('mobileci.coupon.use_coupon') }}}</button>
-                </div>
-            </div>
-        @endif
     </div>
 </div>
 <!-- end of product -->
@@ -104,7 +126,6 @@
 
 @section('modals')
 <!-- Modal -->
-
 <div class="modal fade" id="hasCouponModal" tabindex="-1" role="dialog" aria-labelledby="hasCouponLabel" aria-hidden="true">
     <div class="modal-spinner text-center">
         <i class="fa fa-circle-o-notch fa-spin"></i>
@@ -199,6 +220,12 @@
             // Set fromSource in localStorage.
             localStorage.setItem('fromSource', 'mall-coupon');
 
+            // Actions button event handler
+            $('.action-btn').on('click', function() {
+                $('.actions-container').toggleClass('alive');
+                $('.actions-panel').slideToggle();
+            });
+
             // check for Geolocation support
             if (navigator.geolocation) {
                 window.onload = function() {
@@ -221,7 +248,7 @@
                             }
                         }).done(function(response) {
                             if (response.data.total_records > 0) {
-                                $('#useBtn').removeAttr('disabled');
+                                $('#useBtn').removeClass('disabled');
                             }
                         })
 
@@ -246,7 +273,9 @@
                 $('.product-detail img').css('-webkit-transform', 'translateY('+(s/3)+'px)');
             });
             $('#useBtn').click(function(){
-                $('#hasCouponModal').modal();
+                if (!$(this).hasClass('disabled')) {
+                    $('#hasCouponModal').modal();
+                }
             });
             @if(count($issued_coupons) > 0)
             $('#applyCoupon').click(function(){
