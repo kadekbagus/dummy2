@@ -1577,7 +1577,7 @@ class TenantAPIController extends ControllerAPI
             $prefix = DB::getTablePrefix();
 
             if ($this->returnBuilder) {
-                $tenants->addSelect(DB::raw("GROUP_CONCAT(`{$prefix}categories`.`category_name` SEPARATOR ', ') as tenant_categories"))
+                $tenants->addSelect(DB::raw("GROUP_CONCAT(`{$prefix}categories`.`category_name` ORDER BY category_name ASC SEPARATOR ', ') as tenant_categories"))
                         ->leftJoin('category_merchant','category_merchant.merchant_id','=','merchants.merchant_id')
                         ->leftJoin('categories','categories.category_id','=','category_merchant.category_id')
                         ->groupBy('merchants.merchant_id');

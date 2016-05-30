@@ -51,7 +51,7 @@ if(!empty($luckydraw)) {
                     <a data-href="{{ route('ci-luckydraw-announcement', ['id' => $luckydraw->lucky_draw_id]) }}" href="{{ $urlblock->blockedRoute('ci-luckydraw-announcement', ['id' => $luckydraw->lucky_draw_id]) }}">
                         <span class="fa fa-stack icon">
                             <i class="fa fa-circle fa-stack-2x"></i>
-                            <i class="fa fa-download fa-inverse fa-stack-1x"></i>
+                            <i class="fa fa-trophy fa-inverse fa-stack-1x"></i>
                         </span>
                         <span class="text">{{ Lang::get('mobileci.lucky_draw.see_prizes_and_winner') }}</span>
                     </a>
@@ -87,12 +87,16 @@ if(!empty($luckydraw)) {
             </ul>
         </div>
     </div>
-    <div class="col-xs-12 product-detail" style="z-index: 100;">
-        @if(! empty($luckydraw->image))
-        <a href="{{{ asset($luckydraw->image) }}}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer"><img src="{{ asset($luckydraw->image) }}"></a>
-        @else
-        <img src="{{ asset('mobile-ci/images/default_lucky_number.png') }}" class="img-responsive" style="width:100%;">
-        @endif
+    <div class="col-xs-12 product-detail img-wrapper" style="z-index: 100;">
+      <div class="vertical-align-middle-outer">
+        <div class="vertical-align-middle-inner">
+          @if(! empty($luckydraw->image))
+          <a href="{{{ asset($luckydraw->image) }}}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer"><img src="{{ asset($luckydraw->image) }}"></a>
+          @else
+          <img src="{{ asset('mobile-ci/images/default_lucky_number.png') }}" class="img-responsive" style="width:100%;">
+          @endif
+        </div>
+      </div>
     </div>
 </div>
 <div class="row product-info padded" style="z-index: 101;">
