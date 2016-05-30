@@ -274,7 +274,7 @@
 
     var loadMoreTenant = function() {
         $.ajax({
-            url: '{{ url("app/v1/tenant/load-more") }}',
+            url: '{{ url("app/v1/service/load-more") }}',
             method: 'GET',
             timeout: 60000,
             async: true,

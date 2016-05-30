@@ -342,12 +342,20 @@ Route::group(
             return MobileCI\MobileCIAPIController::create()->getPowerSearch();
         });
 	
-	/**
+	    /**
          * Tenant load more
          */
         Route::get('/app/v1/tenant/load-more', function()
         {
             return MobileCI\MobileCIAPIController::create()->getSearchTenant();
+        });
+
+        /**
+         * Service load more
+         */
+        Route::get('/app/v1/service/load-more', function()
+        {
+            return MobileCI\MobileCIAPIController::create()->getSearchService();
         });
 
         /**
