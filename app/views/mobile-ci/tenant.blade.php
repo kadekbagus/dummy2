@@ -316,18 +316,30 @@
 </div>
 <div class="row padded" style="z-index: 101;">
     <div class="col-xs-12 font-1-3">
+        <input type="checkbox" class="read-more-state" id="post-2" />
         <p>{{ nl2br(e($tenant->description)) }}</p>
-        <ul class="where-list">
+        <ul class="where-list read-more-wrap">
             <li><span class="tenant-list-icon"><i class="fa fa-map-marker fa-lg" style="padding-left: 11px;"></i></span><p class="tenant-list-text">{{{ !empty($tenant->floor) ? $tenant->floor : '' }}}{{{ !empty($tenant->unit) ? ' - ' . $tenant->unit : '' }}}</p></li>
             <li><span class="tenant-list-icon"><i class="fa fa-globe fa-lg"></i></span><p class="tenant-list-text">{{{ (($tenant->url) != '') ? 'http://'.$tenant->url : '-' }}}</p></li>
             @if(! empty($tenant->facebook_like_url))
             <li><span class="tenant-list-icon"><i class="fa fa-facebook-square fa-lg"></i></span><p class="tenant-list-text">{{{ str_replace('//', '', $tenant->facebook_like_url) }}}</p></li>
             @endif
             <li><span class="tenant-list-icon"><i class="fa fa-phone-square fa-lg"></i></span><p class="tenant-list-text">@if($tenant->phone != '')<a href="tel:{{{ $tenant->phone }}}">{{{ $tenant->phone }}}</a>@else - @endif</p></li>
-            @if(empty($tenant->category_string))
-                <li><span class="tenant-list-icon"><i class="fa fa-list-ul"></i></span><p class="tenant-list-text">-</p></li>
+            @if(count($tenant->categories) > 0)
+                <li><span class="tenant-list-icon"><i class="fa fa-list-ul"></i></span></li>
+                @foreach($tenant->categories as $idx => $category)
+                    @if($idx >= 3)
+                        <li class="read-more-target"><span class="tenant-list-text">{{{ $category->category_name }}}</span></li>
+                    @else
+                        <li><span class="tenant-list-text">{{{ $category->category_name }}}</span></li>
+                    @endif
+                @endforeach
+
+                @if(count($tenant->categories) >= 3)
+                    <li><span class="tenant-list-text"><label for="post-2" class="read-more-trigger"></label></span></li>
+                @endif
             @else
-                <li><span class="tenant-list-icon"><i class="fa fa-list-ul"></i></span><p class="tenant-list-text">{{{ $tenant->category_string }}}</p></li>
+                <li><span class="tenant-list-icon"><i class="fa fa-list-ul"></i></span><p class="tenant-list-text">-</p></li>
             @endif
         </ul>
     </div>
