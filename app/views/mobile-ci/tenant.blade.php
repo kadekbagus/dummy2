@@ -44,7 +44,7 @@
 @stop
 
 @section('content')
-<div class="slide-tab-container">
+<div class="slide-tab-container" style="z-index: 103;">
     <div id="slide-tab-promo-container">
         @if(sizeof($tenant->newsPromotionsProfiling) > 0)
             @foreach($tenant->newsPromotionsProfiling as $promotab)
