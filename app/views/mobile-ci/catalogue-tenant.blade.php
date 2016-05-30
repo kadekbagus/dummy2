@@ -76,8 +76,8 @@
             <div id="catContainer" class="container">
                 <div class="mobile-ci list-item-container">
                     <div class="row">
-                        <div class="catalogue-wrapper">
-                        @if($link_to_coupon_data->linkedToCS)
+                        <div class="catalogue-wrapper clearfix">
+                            @if($link_to_coupon_data->linkedToCS)
                             <div class="col-xs-12 col-sm-12" id="item-cs">
                                 <section class="list-item-single-tenant">
                                     <div class="list-item-info">
@@ -89,64 +89,9 @@
                                     <img class="img-responsive img-fit-tenant" alt="" src="{{ asset('mobile-ci/images/default_cs.png') }}"/>
                                 </section>
                             </div>
-                        @endif
-
-                        @foreach($data->records as $tenant)
-                            <div class="col-xs-12 col-sm-12" id="item-{{$tenant->merchant_id}}">
-                                <section class="list-item-single-tenant">
-                                    <a class="list-item-link" data-href="{{ route('ci-tenant-detail', ['id' => $tenant->merchant_id]) }}" href="{{ $urlblock->blockedRoute('ci-tenant-detail', ['id' => $tenant->merchant_id]) }}">
-                                        <div class="list-item-info">
-                                            <header class="list-item-title">
-                                                <div><strong>{{{ $tenant->name }}}</strong></div>
-                                            </header>
-                                            <header class="list-item-subtitle">
-                                                <div>
-                                                    <i class="fa fa-map-marker" style="padding-left: 5px;padding-right: 8px;"></i>
-                                                    {{{ !empty($tenant->floor) ? ' ' . $tenant->floor : '' }}}{{{ !empty($tenant->unit) ? ' - ' . $tenant->unit : '' }}}
-                                                </div>
-                                                <div>
-                                                    <div class="col-xs-6">
-                                                        <i class="fa fa-list" style="padding-left: 2px;padding-right: 4px;"></i>
-                                                        @if(empty($tenant->category_string))
-                                                            <span>-</span>
-                                                        @else
-                                                            <span>{{{ mb_strlen($tenant->category_string) > 30 ? mb_substr($tenant->category_string, 0, 30, 'UTF-8') . '...' : $tenant->category_string }}}</span>
-                                                        @endif
-                                                    </div>
-                                                </div>
-                                                @if ($urlblock->isLoggedIn())
-                                                    @if(! empty($tenant->facebook_like_url))
-                                                    <div class="fb-like" data-href="{{{$tenant->facebook_like_url}}}" data-layout="button_count" data-action="like" data-show-faces="false" data-share="false"></div>
-                                                    @endif
-                                                @endif
-                                            </header>
-                                            <header class="list-item-badges">
-                                                <div class="col-xs-12 badges-wrapper text-right">
-                                                    @if($tenant->promotion_flag)
-                                                    <span class="badges promo-badges text-center"><i class="fa fa-bullhorn"></i></span>
-                                                    @endif
-                                                    @if($tenant->news_flag)
-                                                    <span class="badges news-badges text-center"><i class="fa fa-newspaper-o"></i></span>
-                                                    @endif
-                                                    @if($tenant->coupon_flag)
-                                                    <span class="badges coupon-badges text-center"><i class="fa fa-ticket"></i></span>
-                                                    @endif
-                                                </div>
-                                            </header>
-                                        </div>
-                                        <div class="list-vignette-non-tenant"></div>
-                                        @if(!count($tenant->mediaLogo) > 0)
-                                        <img class="img-responsive img-fit-tenant" src="{{ asset('mobile-ci/images/default_tenants_directory.png') }}"/>
-                                        @endif
-                                        @foreach($tenant->mediaLogo as $media)
-                                        @if($media->media_name_long == 'retailer_logo_orig')
-                                        <img class="img-responsive img-fit-tenant" alt="" data-original="{{ asset($media->path) }}"/>
-                                        @endif
-                                        @endforeach
-                                    </a>
-                                </section>
-                            </div>
-                        @endforeach
+                            @endif
+                        </div>
+                        <div id="asb" class="btn-group-vertical">
                         </div>
                     </div>
                 </div>
@@ -237,15 +182,14 @@
 <script type="text/javascript">
 
     var take = {{ Config::get('orbit.pagination.per_page', 25) }},
-        skip = {{ Config::get('orbit.pagination.per_page', 25) }},
+        skip = 0; //{{ Config::get('orbit.pagination.per_page', 0) }},
         keyword = '{{{ Input::get('keyword', '') }}}',
         cid = '{{{ Input::get('cid', '') }}}',
         fid = '{{{ Input::get('fid', '') }}}',
         promotion_id = '{{{ Input::get('promotion_id', '')}}}',
         isFromDetail = false,
         defaultTenantLogoUrl = '{{ asset('mobile-ci/images/default_tenants_directory.png') }}',
-        isLoggedIn = Boolean({{ $urlblock->isLoggedIn() }}),
-        canLoadMoreTenant = Boolean({{ $data->returned_records < $data->total_records }});
+        isLoggedIn = Boolean({{ $urlblock->isLoggedIn() }});
 
     var initImageLazyload = function(jImageElems) {
         if (jImageElems instanceof jQuery) {
@@ -256,6 +200,71 @@
             });
         }
     };
+
+    var fixContentWidth = function () {
+        var $content = $('.catalogue-wrapper');
+        $content.css('width', function() {
+            var vw = $(window).width();
+            var cw = $(this).width();
+
+            if (vw <= cw) {
+                return vw - 30;
+            }
+            else {
+                return '';
+            }
+        });
+    };
+
+    var fixContentScroll = function () {
+        var $content = $('.catalogue-wrapper');
+
+        var val = $content.offset().top;
+        var scrollTop = $(window).scrollTop();
+
+        if (scrollTop > 0 && val >= 0) {
+            val -= scrollTop;
+        }
+
+        if (val < 66) val = 66;
+
+        $('#asb').css({
+            'top': val
+        })
+    }
+
+    var initAsb = function () {
+        $(window)
+            .on('resize', fixContentWidth)
+            .on('scroll', function(ev) {
+                fixContentScroll();
+            });
+
+        $('#asb').css({
+            'position': 'fixed',
+            'top': $('.catalogue-wrapper').offset().top,
+            'right': 0
+        });
+
+        var strArr = "#ABCDEFGHIJKLMNOPQRSTUVWXYZ".split('');
+        for (var i = 0; i < strArr.length; i++) {
+            var $btn = $('<button />')
+                .addClass('btn btn-sm btn-default')
+                .data('alphabet', strArr[i])
+                .text(strArr[i]);
+
+            $btn.on('click', function(ev) {
+                ev.preventDefault();
+                ev.stopPropagation();
+                var alphabet = $(this).data('alphabet');
+            })
+
+            $('#asb').append($btn);
+        }
+
+    };
+
+    initAsb();
 
     /**
      * Get Query String from the URL
@@ -364,8 +373,6 @@
         }
         else {
             $tenantLogo = $('<img />').addClass('img-responsive img-fit-tenant').attr('data-original', logoUrl);
-            // Apply lazy load to tenantLogo image.
-            initImageLazyload($tenantLogo);
         }
 
         $itemLink.append($nonTenantDiv);
@@ -401,7 +408,7 @@
         return $.when.apply(undefined, promises).promise();
     }
 
-    var loadMoreTenant = function() {
+    var loadMoreTenant = function(doneCallback) {
         $.ajax({
             url: '{{ url("app/v1/tenant/load-more") }}',
             method: 'GET',
@@ -424,8 +431,11 @@
         .done(function(data) {
             skip = skip + take;
 
-            if(data.records.length > 0) {
-                insertRecords(data.records);
+            if(data && data.records.length > 0) {
+                insertRecords(data.records).done(function () {
+                    // Apply lazy loads to images.
+                    initImageLazyload($('img.img-fit-tenant[data-original]'));
+                });
 
                 // Check if browser supports LocalStorage
                 if(typeof(Storage) !== 'undefined') {
@@ -442,11 +452,16 @@
                     // Set tenantData in localStorage.
                     localStorage.setItem('tenantData', JSON.stringify(dataJson));
                 }
-
-                FB.XFBML.parse();
             }
 
-            canLoadMoreTenant = (skip < data.total_records);
+            if (skip < data.total_records) {
+                // Auto load more tenants
+                loadMoreTenant();
+            }
+            else {
+                // Finished loading tenants..
+                FB.XFBML.parse();
+            }
         });
     };
 
@@ -460,21 +475,9 @@
                 localStorage.setItem('scrollTop', scrollTop);
             }
         }
-
-        // Auto load more implementation.
-        var totalHeight = $(document).height();
-
-        // Check if scroll has reached 75% of total page height.
-        if (canLoadMoreTenant && scrollTop >= (totalHeight * 0.75)) {
-            canLoadMoreTenant = false;
-            loadMoreTenant();
-        }
     });
 
     $(document).ready(function(){
-        // Apply lazy loads to images.
-        initImageLazyload($('img.img-fit-tenant[data-original]'));
-
         // Check if browser supports LocalStorage
         if(typeof(Storage) !== 'undefined') {
             // This feature is implemented for tracking whether this page is loaded from detail page. (Which is back button)
@@ -545,8 +548,6 @@
                         }, 750);
                     }
                 });
-
-                canLoadMoreTenant = (skip < tenants.total_records);
             }
             else {
                 // Just maintain scroll position.
@@ -560,7 +561,7 @@
             }
         }
 
-
+        loadMoreTenant();
     });
 </script>
 @stop

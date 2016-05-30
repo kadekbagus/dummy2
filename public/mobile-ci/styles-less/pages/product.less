@@ -280,9 +280,9 @@ div.relative-wrapper {
     }
 
     background: rgb(181,189,200); /* Old browsers */
-    background: -moz-linear-gradient(bottom,  rgba(181,189,200, .4) 0%, rgba(130,140,149, .4) 36%, rgba(40,52,59, .4) 100%);
-    background: -webkit-linear-gradient(bottom,  rgba(181,189,200, .4) 0%,rgba(130,140,149, .4) 36%,rgba(40,52,59, .4) 100%);
-    background: linear-gradient(to top,  rgba(181,189,200, .4) 0%,rgba(130,140,149, .4) 36%,rgba(40,52,59, .4) 100%);
+    background: -moz-linear-gradient(bottom,  rgba(181,189,200, .1) 0%, rgba(130,140,149, .4) 40%, rgba(40,52,59, .7) 100%);
+    background: -webkit-linear-gradient(bottom,  rgba(181,189,200, .1) 0%,rgba(130,140,149, .4) 40%,rgba(40,52,59, .7) 100%);
+    background: linear-gradient(to top,  rgba(181,189,200, .1) 0%,rgba(130,140,149, .4) 40%,rgba(40,52,59, .7) 100%);
 }
 
 .actions-container {
@@ -307,6 +307,10 @@ div.relative-wrapper {
         -moz-transition: 0.1s ease-in-out;
         -o-transition: 0.1s ease-in-out;
         transition: 0.1s ease-in-out;
+
+        .glyphicon-plus {
+            bottom: 2px;
+        }
     }
 
     .actions-panel {

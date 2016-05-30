@@ -175,9 +175,16 @@
                 <div class="col-xs-12 col-sm-12">
                     <section class="list-item-single-tenant">
                         <a class="list-item-link" data-href="{{ route('ci-coupon-detail', ['id' => $coupontab->promotion_id]) }}" href="{{ $urlblock->blockedRoute('ci-coupon-detail', ['id' => $coupontab->promotion_id]) }}">
+                                <span class="fa-stack fa-2x pull-right couponbadge-container" data-count="{{$coupontab->quantity}}+">
+                                   <i class="fa fa-circle fa-stack-2x color-base"></i>
+                                   <i class="fa fa-ticket fa-stack-1x color-icon"></i>
+                                   <i class="fa fa-certificate fa-stack couponbadge"></i>
+                                </span>
+                            <!--
                             <div class="coupon-new-badge">
-                                <div class="new-number">{{$coupontab->quantity}}</div>
+                                <div class="new-number">{{$coupontab->quantity}}</div> 
                             </div>
+                            -->
                             <div class="list-item-info">
                                 <header class="list-item-title">
                                     <div><strong>{{{ $coupontab->promotion_name }}}</strong></div>
@@ -242,8 +249,8 @@
     <div class="actions-container" style="z-index: 102;">
         <a class="action-btn">
             <span class="fa fa-stack fa-2x">
-                <i class="fa fa-plus fa-inverse fa-stack-2x"> </i>
-                <i class="fa fa-plus-circle fa-stack-2x"> </i>
+                <i class="fa fa-circle fa-stack-2x"> </i>
+                <i class="fa glyphicon-plus fa-inverse fa-stack-2x"> </i>
             </span>
         </a>
         <div class="actions-panel" style="display: none;">
@@ -317,6 +324,19 @@
             <li><span class="tenant-list-icon"><i class="fa fa-facebook-square fa-lg"></i></span><p class="tenant-list-text">{{{ str_replace('//', '', $tenant->facebook_like_url) }}}</p></li>
             @endif
             <li><span class="tenant-list-icon"><i class="fa fa-phone-square fa-lg"></i></span><p class="tenant-list-text">@if($tenant->phone != '')<a href="tel:{{{ $tenant->phone }}}">{{{ $tenant->phone }}}</a>@else - @endif</p></li>
+            @if(empty($tenant->categories))
+                <li><span class="tenant-list-icon"><i class="fa fa-list-ul"></i></span><p class="tenant-list-text">-</p></li>
+            @else
+                <li><span class="tenant-list-icon"><i class="fa fa-list-ul"></i></span><p class="tenant-list-text">
+                @for($idx = 0; $idx < count($tenant->categories); $idx++)
+                    @if($idx === (count($tenant->categories)-1))
+                        {{{ $tenant->categories[$idx]->category_name }}}
+                    @else
+                        {{{ $tenant->categories[$idx]->category_name }}}, 
+                    @endif
+                @endfor
+                </p></li>
+            @endif
         </ul>
     </div>
 </div>

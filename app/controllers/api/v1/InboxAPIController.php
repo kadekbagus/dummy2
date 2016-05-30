@@ -826,6 +826,9 @@ class InboxAPIController extends ControllerAPI
     protected function prepareSession()
     {
         if (! is_object($this->session)) {
+            // set the session strict to FALSE
+            Config::set('orbit.session.strict', FALSE);
+
             // This user assumed are Consumer, which has been checked at login process
             $config = new SessionConfig(Config::get('orbit.session'));
             $config->setConfig('session_origin.header.name', 'X-Orbit-Session');
