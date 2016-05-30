@@ -321,9 +321,13 @@
                 <li><span class="tenant-list-icon"><i class="fa fa-list-ul"></i></span><p class="tenant-list-text">-</p></li>
             @else
                 <li><span class="tenant-list-icon"><i class="fa fa-list-ul"></i></span><p class="tenant-list-text">
-                @foreach($tenant->categories as $category)
-                    {{{ $category->category_name }}}, 
-                @endforeach
+                @for($idx = 0; $idx < count($tenant->categories); $idx++)
+                    @if($idx === (count($tenant->categories)-1))
+                        {{{ $tenant->categories[$idx]->category_name }}}
+                    @else
+                        {{{ $tenant->categories[$idx]->category_name }}}, 
+                    @endif
+                @endfor
                 </p></li>
             @endif
         </ul>
