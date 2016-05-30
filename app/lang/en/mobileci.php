@@ -51,7 +51,7 @@ return array(
         'promotion'          => 'PROMOTIONS',
         'coupon'             => 'MY COUPONS',
         'tenant'             => 'STORES',
-        'service'            => 'SERVICE',
+        'service'            => 'SERVICES',
         'lucky_draw'         => 'LUCKY DRAWS',
         'news'               => 'NEWS',
         'promotions'         => 'Promotions',
