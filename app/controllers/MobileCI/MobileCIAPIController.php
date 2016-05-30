@@ -279,28 +279,24 @@ class MobileCIAPIController extends BaseCIController
                 $widget_template = 'default';
             }
 
-            $widgets = Widget::with('media')
-                ->active()
-                ->where('merchant_id', $retailer->merchant_id)
-                ->whereHas(
-                    'retailers',
-                    function ($q) use ($retailer) {
-                        $q->where('retailer_id', $retailer->merchant_id);
-                    }
-                );
+            $merchantId = $retailer->merchant_id;
+            $prefix = DB::getTablePrefix();
 
-            if ($widget_flags->enable_lucky_draw_widget->setting_value !== 'true') {
-                $widgets->where('widget_type', '<>', 'lucky_draw');
-            }
-
-            if ($widget_flags->enable_coupon_widget->setting_value !== 'true') {
-                $widgets->where('widget_type', '<>', 'coupon');
-            }
-
-            $widgets = $widgets->orderBy('widget_order', 'ASC')
-                ->groupBy('widget_type')
-                ->take(5)
-                ->get();
+            $widgets = Widget::select('widgets.*')
+                            ->with('media')
+                            ->leftJoin(DB::raw("(SELECT setting_id, setting_name, setting_value, object_id
+                                        FROM {$prefix}settings
+                                        WHERE setting_name like '%widget%'
+                                            AND object_id = '{$merchantId}') AS os"),
+                                // On
+                                DB::raw('os.setting_name'), '=', DB::raw("CONCAT('enable_', {$prefix}widgets.widget_type, '_widget')"))
+                            ->join('widget_retailer', 'widget_retailer.widget_id', '=', 'widgets.widget_id')
+                            ->where('widgets.status', '!=', 'deleted')
+                            ->where('widgets.merchant_id', '=', $merchantId)
+                            ->whereRaw("(CASE WHEN os.setting_id IS NULL THEN 'true' ELSE os.setting_value END) = 'true'")
+                            ->groupBy('widgets.widget_type')
+                            ->orderBy('widgets.widget_order', 'ASC')
+                            ->get();
 
             if (CaptivePortalController::isFromCaptive()) {
                 // Inject number of widget on-the-fly
@@ -357,6 +353,50 @@ class MobileCIAPIController extends BaseCIController
                     }
                     $widget->url = $urlblock->blockedRoute('ci-tenant-list');
                     $widget->redirect_url = URL::route('ci-tenant-list');
+                }
+                if ($widget->widget_type == 'service') {
+                    // get all tenant count
+                    $serviceCount = \TenantStoreAndService::where('status', 'active')
+                        ->where('object_type', 'service')
+                        ->where('parent_id', $retailer->merchant_id)
+                        ->count();
+
+                    // get all new tenant after new_date
+                    $newServiceCount = \TenantStoreAndService::where('status', 'active')
+                        ->where('object_type', 'service')
+                        ->where('parent_id', $retailer->merchant_id)
+                        ->whereNotIn('merchants.merchant_id', function($q) use ($user, $retailer) {
+                            $q->select('item_id')
+                                ->from('viewed_item_user')
+                                ->where('user_id', '=', $user->user_id)
+                                ->where('mall_id', '=', $retailer->merchant_id)
+                                ->where('item_type', '=', 'service')
+                                ->get();
+                        })
+                        ->count();
+
+                    $widget->image = 'mobile-ci/images/default_services_directory.png';
+
+                    foreach ($widget->media as $media) {
+                        if ($media->media_name_long === 'home_widget_orig') {
+                            if (empty($media->path)) {
+                                $widget->image = 'mobile-ci/images/default_services_directory.png';
+                            } else {
+                                $widget->image = $media->path;
+                            }
+                        }
+                    }
+
+                    $widget->item_count = $serviceCount;
+                    $widget->new_item_count = $newServiceCount > 9 ? '9+' : $newServiceCount;
+                    $widget->display_title = Lang::get('mobileci.widgets.service');
+                    if ($widget->item_count > 1) {
+                        $widget->display_sub_title = Lang::get('mobileci.widgets.services');
+                    } else {
+                        $widget->display_sub_title = Lang::get('mobileci.widgets.services_single');
+                    }
+                    $widget->url = $urlblock->blockedRoute('ci-service-list');
+                    $widget->redirect_url = URL::route('ci-service-list');
                 }
                 if ($widget->widget_type == 'promotion') {
 
@@ -3680,6 +3720,601 @@ class MobileCIAPIController extends BaseCIController
                 }
             }
 
+            $data = new stdclass();
+            $data->status = 1;
+            $data->total_records = $totalRec;
+            $data->returned_records = count($listOfRec);
+            $data->records = $listOfRec;
+
+            return Response::json($data);
+
+        } catch (Exception $e) {
+            switch ($e->getCode()) {
+                case Session::ERR_UNKNOWN;
+                case Session::ERR_IP_MISS_MATCH;
+                case Session::ERR_UA_MISS_MATCH;
+                case Session::ERR_SESS_NOT_FOUND;
+                case Session::ERR_SESS_EXPIRE;
+                    $data = new stdclass();
+                    $data->total_records = 0;
+                    $data->returned_records = 0;
+                    $data->records = null;
+                    $data->message = 'session_expired';
+                    $data->status = 0;
+
+                    $this->response->data = $data;
+
+                    break;
+
+                default:
+                    $data = new stdclass();
+                    $data->total_records = 0;
+                    $data->returned_records = 0;
+                    $data->records = null;
+                    $data->message = $e->getMessage();
+                    $data->status = 0;
+
+                    $this->response->data = $data;
+            }
+
+            return Response::json($data);
+        }
+    }
+
+    /**
+     * GET - Get service list in mall
+     *
+     * @return Illuminate\View\View
+     *
+     * @author Shelgi Prasetyo <shelgi@dominopos.com>
+     *
+     */
+    public function getServiceView() {
+        $user = null;
+        $keyword = null;
+        $activityPage = Activity::mobileci()
+                        ->setActivityType('view');
+
+        try {
+            // Require authentication
+            $this->registerCustomValidation();
+            $urlblock = new UrlBlock;
+            $user = $urlblock->checkBlockedUrl();
+            $retailer = $this->getRetailerInfo();
+            $this->acquireUser($retailer, $user);
+            Coupon::issueAutoCoupon($retailer, $user, $urlblock->getUserSession());
+
+            $sort_by = OrbitInput::get('sort_by');
+            $keyword = trim(OrbitInput::get('keyword'));
+            $category_id = trim(OrbitInput::get('cid'));
+            $floor_id = trim(OrbitInput::get('fid'));
+            $floor = trim(OrbitInput::get('floor'));
+
+            $pagetitle = Lang::get('mobileci.page_title.service_directory');
+
+            $validator = Validator::make(
+                array(
+                    'sort_by' => $sort_by,
+                ),
+                array(
+                    'sort_by' => 'in:name',
+                ),
+                array(
+                    'in' => Lang::get('validation.orbit.empty.user_sortby'),
+                )
+            );
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+            }
+
+            $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
+
+            $categories = Category::active('categories')
+                ->where('category_level', 1)
+                ->where('merchant_id', $retailer->merchant_id);
+
+            $categories->select('categories.*');
+            $this->maybeJoinWithCategoryTranslationsTable($categories, $alternateLanguage);
+
+            $categories = $categories->get();
+
+            // Get the maximum record
+            $maxRecord = (int) Config::get('orbit.pagination.max_record');
+            if ($maxRecord <= 0) {
+                $maxRecord = 300;
+            }
+
+            $floorList = Object::whereHas('mall', function ($q) use ($retailer) {
+                    $q->where('merchants.merchant_id', $retailer->merchant_id);
+                })
+                ->active()
+                ->where('object_type', 'floor')
+                ->orderBy('object_order', 'asc')
+                ->groupBy('object_name')
+                ->get();
+
+            $mallTime = Carbon::now($retailer->timezone->timezone_name);
+
+            $prefix = DB::getTablePrefix();
+            $mallid = $retailer->merchant_id;
+
+            $service = \TenantStoreAndService::with('mediaLogo', 'merchantSocialMedia.socialMedia');
+            if (!empty($alternateLanguage)) {
+                $service = $service->with(['categories' => function ($q) use ($alternateLanguage) {
+                    $prefix = DB::getTablePrefix();
+                    $q->leftJoin('category_translations', function ($join) use ($alternateLanguage) {
+                        $join->on('categories.category_id', '=', 'category_translations.category_id');
+                        $join->where('category_translations.merchant_language_id', '=', $alternateLanguage->language_id);
+                    });
+                    $q->select('categories.*');
+                    $q->addSelect([
+                        DB::raw("COALESCE(${prefix}category_translations.category_name, ${prefix}categories.category_name) AS category_name"),
+                        DB::raw("COALESCE(${prefix}category_translations.description, ${prefix}categories.description) AS description"),
+                    ]);
+                }]);
+            }
+            else {
+                $service = $service->with('categories');
+            }
+
+            $service = $service->active('merchants')
+                ->where('object_type', 'service')
+                ->where('parent_id', $retailer->merchant_id);
+
+            $service->select('merchants.merchant_id', 'floor', 'unit');
+
+            $mallid = $retailer->merchant_id;
+
+            $this->maybeJoinWithTranslationsTable($service, $alternateLanguage);
+
+            $notfound = FALSE;
+            // Filter product by name pattern
+            OrbitInput::get(
+                'keyword',
+                function ($name) use ($service, $alternateLanguage) {
+                    $name_like = "%$name%";
+                    $service->where(
+                        function ($q) use ($name_like, $alternateLanguage) {
+                            $q->where('merchants.name', 'like', $name_like)
+                                ->orWhere('merchants.description', 'like', $name_like)
+                                ->orWhere('merchants.floor', 'like', $name_like);
+                            $q->orWhereHas('categories', function($q2) use ($name_like) {
+                                $q2->where('category_name', 'like', $name_like);
+                            });
+                            if (!empty($alternateLanguage)) {
+                                $q->orWhereHas('categories', function($q2) use ($name_like) {
+                                    $q2->whereHas('translations', function($q3) use ($name_like) {
+                                        $q3->where('category_translations.category_name', 'like', $name_like);
+                                    });
+                                });
+                                $q->orWhere('merchant_translations.name', 'like', $name_like)
+                                    ->orWhere('merchant_translations.description', 'like', $name_like);
+                            }
+                        }
+                    );
+                }
+            );
+
+            OrbitInput::get(
+                'cid',
+                function ($cid) use ($service, $retailer, &$notfound) {
+                    if (! empty($cid)) {
+                        $category = \Category::active()
+                            ->where('merchant_id', $retailer->merchant_id)
+                            ->where('category_id', $cid)
+                            ->first();
+                        if (!is_object($category)) {
+                            $notfound = TRUE;
+                        }
+                        $service->where(
+                            function ($q) use ($cid) {
+                                $q->whereHas('categories', function ($q2) use ($cid) {
+                                    $q2->where('category_merchant.category_id', $cid);
+                                });
+                            }
+                        );
+                    }
+                }
+            );
+
+            OrbitInput::get(
+                'fid',
+                function ($fid) use ($service) {
+                    if (! empty($fid)) {
+                        $service->where('merchants.floor', $fid);
+                    }
+                }
+            );
+
+            $this->viewItemUserUpdate('service', $user, $retailer);
+
+            $service->groupBy('merchants.merchant_id');
+
+            $_service = clone $service;
+
+            // Get the take args
+            $take = Config::get('orbit.pagination.per_page');
+            OrbitInput::get(
+                'take',
+                function ($_take) use (&$take, $maxRecord) {
+                    if ($_take > $maxRecord) {
+                        $_take = $maxRecord;
+                    }
+                    $take = $_take;
+                }
+            );
+            $service->take($take);
+
+            $skip = 0;
+            OrbitInput::get(
+                'skip',
+                function ($_skip) use (&$skip, $service) {
+                    if ($_skip < 0) {
+                        $_skip = 0;
+                    }
+
+                    $skip = $_skip;
+                }
+            );
+            $service->skip($skip);
+
+            // Default sort by
+            $sortBy = 'merchants.name';
+            // Default sort mode
+            $sortMode = 'asc';
+
+            OrbitInput::get(
+                'sort_by',
+                function ($_sortBy) use (&$sortBy) {
+                    // Map the sortby request to the real column name
+                    $sortByMapping = array(
+                        'name'      => 'merchants.name',
+                    );
+                    if (array_key_exists($_sortBy, $sortByMapping)) {
+                        $sortBy = $sortByMapping[$_sortBy];
+                    }
+                }
+            );
+
+            OrbitInput::get(
+                'sort_mode',
+                function ($_sortMode) use (&$sortMode) {
+                    if (strtolower($_sortMode) !== 'desc') {
+                        $sortMode = 'asc';
+                    } else {
+                        $sortMode = 'desc';
+                    }
+                }
+            );
+
+            if (!empty($alternateLanguage) && $sortBy === 'merchants.name') {
+                $prefix = DB::getTablePrefix();
+                $service->orderByRaw('COALESCE(' . $prefix . 'merchant_translations.name, ' . $prefix . 'merchants.name) ' . $sortMode);
+            }
+            else {
+                $service->orderBy($sortBy, $sortMode);
+            }
+
+            $totalRec = count($_service->get());
+            $listOfRec = $service->get();
+
+            foreach ($listOfRec as $service) {
+                if (empty($service->logo)) {
+                    $service->logo = 'mobile-ci/images/default_services_directory.png';
+                }
+                if (!empty($service->phone)) {
+                    $phone = explode('|#|', $service->phone);
+                    $service->phone = implode(' ', $phone);
+                }
+                $category_string = '';
+                foreach ($service->categories as $i => $category) {
+                    if ($i == (count($service->categories) - 1)) {
+                        $category_string .= $category->category_name;
+                    } else {
+                        $category_string .= $category->category_name . ', ';
+                    }
+                }
+                $service->category_string = $category_string;
+
+                // set service facebook page url
+                $service->facebook_like_url = '';
+                if (count($service->merchantSocialMedia) > 0) {
+                    foreach ($service->merchantSocialMedia as $merchantSocialMedia) {
+                        if ($merchantSocialMedia->socialMedia->social_media_code === 'facebook') {
+                            if (! empty($merchantSocialMedia->social_media_uri)) {
+                                $service->facebook_like_url = '//' . $merchantSocialMedia->socialMedia->social_media_main_url . '/' . $merchantSocialMedia->social_media_uri;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Check searchmode from searching by category and floor
+            $searchMode = false;
+            if ($category_id != '' || $floor_id != '') {
+                $searchMode = true;
+            }
+
+            $data = new stdclass();
+            $data->status = 1;
+            $data->total_records = $totalRec;
+            $data->returned_records = count($listOfRec);
+            $data->records = $listOfRec;
+            $data->search_mode = $searchMode;
+
+            $languages = $this->getListLanguages($retailer);
+
+            return View::make('mobile-ci.catalogue-service', array(
+                'page_title'=>$pagetitle,
+                'user' => $user,
+                'retailer' => $retailer,
+                'data' => $data,
+                'categories' => $categories,
+                'active_user' => ($user->status === 'active'),
+                'floorList' => $floorList,
+                'user_email' => $user->role->role_name !== 'Guest' ? $user->user_email : '',
+                'languages' => $languages,
+                'facebookInfo' => Config::get('orbit.social_login.facebook'),
+                'urlblock' => $urlblock
+            ));
+            
+
+        } catch (Exception $e) {
+            $activityPageNotes = sprintf('Failed to view Page: %s', 'News List');
+            $activityPage->setUser($user)
+                ->setActivityName('view_news_list')
+                ->setActivityNameLong('View News List Failed')
+                ->setObject(null)
+                ->setModuleName('News')
+                ->setNotes($activityPageNotes)
+                ->responseFailed()
+                ->save();
+
+            return $this->redirectIfNotLoggedIn($e);
+        }
+    }
+
+    /**
+     * GET - Get service list in mall
+     *
+     * @return Illuminate\Support\Facades\Response
+     *
+     * @author Shelgi Prasetyo <shelgi@dominopos.com>
+     */
+    public function getSearchService() {
+        $user = null;
+        try {
+            $urlblock = new UrlBlock;
+            $user = $urlblock->checkBlockedUrl();
+
+            $sort_by = OrbitInput::get('sort_by');
+            $keyword = trim(OrbitInput::get('keyword'));
+            $category_id = trim(OrbitInput::get('cid'));
+            $floor = trim(OrbitInput::get('floor'));
+
+            $pagetitle = Lang::get('mobileci.page_title.tenant_directory');
+
+            $validator = Validator::make(
+                array(
+                    'sort_by' => $sort_by,
+                ),
+                array(
+                    'sort_by' => 'in:name',
+                ),
+                array(
+                    'in' => Lang::get('validation.orbit.empty.user_sortby'),
+                )
+            );
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                $data = new stdclass();
+                $data->status = 0;
+                $data->total_records = 0;
+                $data->returned_records = 0;
+                $data->records = null;
+
+                return Response::json($data);
+            }
+
+            $retailer = $this->getRetailerInfo();
+
+            $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
+
+            $prefix = DB::getTablePrefix();
+            $mallid = $retailer->merchant_id;
+
+            $service = \TenantStoreAndService::with('mediaLogo', 'merchantSocialMedia.socialMedia');
+            if (!empty($alternateLanguage)) {
+                $service = $service->with(['categories' => function ($q) use ($alternateLanguage) {
+                    $prefix = DB::getTablePrefix();
+                    $q->leftJoin('category_translations', function ($join) use ($alternateLanguage) {
+                        $join->on('categories.category_id', '=', 'category_translations.category_id');
+                        $join->where('category_translations.merchant_language_id', '=', $alternateLanguage->language_id);
+                    });
+                    $q->select('categories.*');
+                    $q->addSelect([
+                        DB::raw("COALESCE(${prefix}category_translations.category_name, ${prefix}categories.category_name) AS category_name"),
+                        DB::raw("COALESCE(${prefix}category_translations.description, ${prefix}categories.description) AS description"),
+                    ]);
+                }]);
+            }
+            else {
+                $service = $service->with('categories');
+            }
+
+            $service = $service->active('merchants')
+                ->where('object_type', 'service')
+                ->where('parent_id', $retailer->merchant_id);
+
+            $service->select('merchants.merchant_id', 'floor', 'unit');
+
+            $mallid = $retailer->merchant_id;
+
+            $this->maybeJoinWithTranslationsTable($service, $alternateLanguage);
+
+            $notfound = FALSE;
+            // Filter product by name pattern
+            OrbitInput::get(
+                'keyword',
+                function ($name) use ($service, $alternateLanguage) {
+                    $name_like = "%$name%";
+                    $service->where(
+                        function ($q) use ($name_like, $alternateLanguage) {
+                            $q->where('merchants.name', 'like', $name_like)
+                                ->orWhere('merchants.description', 'like', $name_like)
+                                ->orWhere('merchants.floor', 'like', $name_like);
+                            $q->orWhereHas('categories', function($q2) use ($name_like) {
+                                $q2->where('category_name', 'like', $name_like);
+                            });
+                            if (!empty($alternateLanguage)) {
+                                $q->orWhereHas('categories', function($q2) use ($name_like) {
+                                    $q2->whereHas('translations', function($q3) use ($name_like) {
+                                        $q3->where('category_translations.category_name', 'like', $name_like);
+                                    });
+                                });
+                                $q->orWhere('merchant_translations.name', 'like', $name_like)
+                                    ->orWhere('merchant_translations.description', 'like', $name_like);
+                            }
+                        }
+                    );
+                }
+            );
+
+            OrbitInput::get(
+                'cid',
+                function ($cid) use ($service, $retailer, &$notfound) {
+                    if (! empty($cid)) {
+                        $category = \Category::active()
+                            ->where('merchant_id', $retailer->merchant_id)
+                            ->where('category_id', $cid)
+                            ->first();
+                        if (!is_object($category)) {
+                            $notfound = TRUE;
+                        }
+                        $service->where(
+                            function ($q) use ($cid) {
+                                $q->whereHas('categories', function ($q2) use ($cid) {
+                                    $q2->where('category_merchant.category_id', $cid);
+                                });
+                            }
+                        );
+                    }
+                }
+            );
+
+            OrbitInput::get(
+                'fid',
+                function ($fid) use ($service) {
+                    if (! empty($fid)) {
+                        $service->where('merchants.floor', $fid);
+                    }
+                }
+            );
+
+            $this->viewItemUserUpdate('service', $user, $retailer);
+
+            $service->groupBy('merchants.merchant_id');
+
+            $_service = clone $service;
+
+            // Get the take args
+            $take = Config::get('orbit.pagination.per_page');
+            OrbitInput::get(
+                'take',
+                function ($_take) use (&$take, $maxRecord) {
+                    if ($_take > $maxRecord) {
+                        $_take = $maxRecord;
+                    }
+                    $take = $_take;
+                }
+            );
+            $service->take($take);
+
+            $skip = 0;
+            OrbitInput::get(
+                'skip',
+                function ($_skip) use (&$skip, $service) {
+                    if ($_skip < 0) {
+                        $_skip = 0;
+                    }
+
+                    $skip = $_skip;
+                }
+            );
+            $service->skip($skip);
+
+            // Default sort by
+            $sortBy = 'merchants.name';
+            // Default sort mode
+            $sortMode = 'asc';
+
+            OrbitInput::get(
+                'sort_by',
+                function ($_sortBy) use (&$sortBy) {
+                    // Map the sortby request to the real column name
+                    $sortByMapping = array(
+                        'name'      => 'merchants.name',
+                    );
+                    if (array_key_exists($_sortBy, $sortByMapping)) {
+                        $sortBy = $sortByMapping[$_sortBy];
+                    }
+                }
+            );
+
+            OrbitInput::get(
+                'sort_mode',
+                function ($_sortMode) use (&$sortMode) {
+                    if (strtolower($_sortMode) !== 'desc') {
+                        $sortMode = 'asc';
+                    } else {
+                        $sortMode = 'desc';
+                    }
+                }
+            );
+
+            if (!empty($alternateLanguage) && $sortBy === 'merchants.name') {
+                $prefix = DB::getTablePrefix();
+                $service->orderByRaw('COALESCE(' . $prefix . 'merchant_translations.name, ' . $prefix . 'merchants.name) ' . $sortMode);
+            }
+            else {
+                $service->orderBy($sortBy, $sortMode);
+            }
+
+            $totalRec = count($_service->get());
+            $listOfRec = $service->get();
+
+            foreach ($listOfRec as $service) {
+                if (empty($service->logo)) {
+                    $service->logo = 'mobile-ci/images/default_services_directory.png';
+                }
+                if (!empty($service->phone)) {
+                    $phone = explode('|#|', $service->phone);
+                    $service->phone = implode(' ', $phone);
+                }
+                $category_string = '';
+                foreach ($service->categories as $i => $category) {
+                    if ($i == (count($service->categories) - 1)) {
+                        $category_string .= $category->category_name;
+                    } else {
+                        $category_string .= $category->category_name . ', ';
+                    }
+                }
+                $service->category_string = $category_string;
+
+                // set service facebook page url
+                $service->facebook_like_url = '';
+                if (count($service->merchantSocialMedia) > 0) {
+                    foreach ($service->merchantSocialMedia as $merchantSocialMedia) {
+                        if ($merchantSocialMedia->socialMedia->social_media_code === 'facebook') {
+                            if (! empty($merchantSocialMedia->social_media_uri)) {
+                                $service->facebook_like_url = '//' . $merchantSocialMedia->socialMedia->social_media_main_url . '/' . $merchantSocialMedia->social_media_uri;
+                            }
+                        }
+                    }
+                }
+            }
             $data = new stdclass();
             $data->status = 1;
             $data->total_records = $totalRec;
@@ -7467,6 +8102,34 @@ class MobileCIAPIController extends BaseCIController
                         ->orWhere('keyword', '=', $keyword);
                 });
 
+            $service = DB::table('merchants')
+                ->selectRaw("{$prefix}merchants.merchant_id as object_id, {$prefix}merchants.name as object_name, {$prefix}merchants.description as object_description, {$prefix}media.path as object_image, 'service' as object_type, COUNT(DISTINCT {$prefix}merchants.merchant_id) as counter")
+                ->leftJoin('merchant_translations', function($join) use ($language){
+                    $join->on('merchants.merchant_id', '=', 'merchant_translations.merchant_id');
+                    $join->where('merchant_translations.merchant_language_id', '=', $language->language_id);
+                })
+                ->leftJoin('keyword_object', function($join) {
+                    $join->on('merchants.merchant_id', '=', 'keyword_object.object_id');
+                    $join->where('keyword_object.object_type', '=', 'tenant');
+                })
+                ->leftJoin('keywords', function($join) use ($retailer) {
+                    $join->on('keywords.keyword_id', '=', 'keyword_object.keyword_id');
+                    $join->where('keywords.merchant_id', '=', $retailer->merchant_id);
+                })
+                ->leftJoin('media', function($join) {
+                    $join->on('merchants.merchant_id', '=', 'media.object_id')
+                        ->where('media.media_name_id', '=', 'service_logo')
+                        ->where('media.media_name_long', 'like', '%_orig');
+                })
+                ->where('merchants.object_type', '=', 'service')
+                ->where('merchants.status', 'active')
+                ->where('parent_id', $retailer->merchant_id)
+                ->where(function($q) use ($keyword) {
+                    $q->where('merchants.name', 'like', "%$keyword%")
+                        ->orWhere('merchant_translations.description', 'like', "%$keyword%")
+                        ->orWhere('keyword', '=', $keyword);
+                });
+
             $lucky_draw = DB::table('lucky_draws')
                 ->selectRaw("{$prefix}lucky_draws.lucky_draw_id as object_id, {$prefix}lucky_draws.lucky_draw_name as object_name, {$prefix}lucky_draws.description as object_description, {$prefix}lucky_draws.image as object_image, 'lucky_draw' as object_type")
                 ->leftJoin('lucky_draw_translations', function($join) use ($alternateLanguage){
@@ -7509,6 +8172,7 @@ class MobileCIAPIController extends BaseCIController
             $_news = clone($news);
             $_coupon = clone($coupon);
             $_tenant = clone($tenant);
+            $_service = clone($service);
             $_lucky_draw = clone($lucky_draw);
 
             $limit = 0; // <---- Config;
@@ -7516,6 +8180,7 @@ class MobileCIAPIController extends BaseCIController
             $news->groupBy('news.news_id')->orderBy(DB::raw('RAND()'))->limit($limit);
             $coupon->groupBy('promotions.promotion_id')->orderBy(DB::raw('RAND()'))->limit($limit);
             $tenant->groupBy('merchants.merchant_id')->orderBy(DB::raw('RAND()'))->limit($limit);
+            $service->groupBy('merchants.merchant_id')->orderBy(DB::raw('RAND()'))->limit($limit);
             $lucky_draw->groupBy('lucky_draws.lucky_draw_id')->orderBy(DB::raw('RAND()'))->limit($limit);
 
             $search_results = [];
@@ -7532,6 +8197,9 @@ class MobileCIAPIController extends BaseCIController
             foreach ($tenant->get() as $tenant_result) {
                 $search_results[] = $tenant_result;
             }
+            foreach ($service->get() as $service_result) {
+                $search_results[] = $service_result;
+            }
             foreach ($lucky_draw->get() as $lucky_draw_result) {
                 $search_results[] = $lucky_draw_result;
             }
@@ -7541,6 +8209,10 @@ class MobileCIAPIController extends BaseCIController
             $grouped_search_result->tenants_counts = $_tenant->count();
             $grouped_search_result->tenants_url = $urlblock->blockedRoute('ci-tenant-list', ['keyword' => htmlspecialchars($keyword)]);
             $grouped_search_result->tenants_redirect_url = URL::route('ci-tenant-list', ['keyword' => htmlspecialchars($keyword)]);
+            $grouped_search_result->services = [];
+            $grouped_search_result->services_counts = $_service->count();
+            $grouped_search_result->services_url = $urlblock->blockedRoute('ci-service-list', ['keyword' => htmlspecialchars($keyword)]);
+            $grouped_search_result->services_redirect_url = URL::route('ci-service-list', ['keyword' => htmlspecialchars($keyword)]);
             $grouped_search_result->news = [];
             $grouped_search_result->news_counts = $_news->count();
             $grouped_search_result->news_url = $urlblock->blockedRoute('ci-news-list', ['keyword' => htmlspecialchars($keyword)]);
@@ -7579,6 +8251,15 @@ class MobileCIAPIController extends BaseCIController
                     } else {
                         $near_end_result->object_image = URL::asset('mobile-ci/images/default_tenants_directory.png');
                     }
+                } elseif ($near_end_result->object_type === 'service') {
+                    // to do : fix with url service detail
+                    // $near_end_result->object_url = $urlblock->blockedRoute('ci-service-detail', ['id' => $near_end_result->object_id]);
+                    // $near_end_result->object_redirect_url = URL::route('ci-service-detail', ['id' => $near_end_result->object_id]);
+                    if (! is_null($near_end_result->object_image)) {
+                        $near_end_result->object_image = URL::asset($near_end_result->object_image);
+                    } else {
+                        $near_end_result->object_image = URL::asset('mobile-ci/images/default_services_directory.png');
+                    }
                 } elseif ($near_end_result->object_type === 'lucky_draw') {
                     $near_end_result->object_url = $urlblock->blockedRoute('ci-luckydraw-detail', ['id' => $near_end_result->object_id]);
                     $near_end_result->object_redirect_url = URL::route('ci-luckydraw-detail', ['id' => $near_end_result->object_id]);
@@ -7594,7 +8275,7 @@ class MobileCIAPIController extends BaseCIController
                         $objectTranslation = \CouponTranslation::excludeDeleted()
                             ->where('merchant_language_id', '=', $alternateLanguage->language_id)
                             ->where('promotion_id', $near_end_result->object_id)->first();
-                    } elseif ($near_end_result->object_type === 'tenant'){
+                    } elseif ($near_end_result->object_type === 'tenant' || $near_end_result->object_type === 'service'){
                         $objectTranslation = \MerchantTranslation::excludeDeleted()
                             ->where('merchant_language_id', '=', $alternateLanguage->language_id)
                             ->where('merchant_id', $near_end_result->object_id)->first();
@@ -7674,7 +8355,7 @@ class MobileCIAPIController extends BaseCIController
                                     }
                                 }
                             }
-                        } elseif ($near_end_result->object_type === 'tenant') {
+                        } elseif ($near_end_result->object_type === 'tenant' || $near_end_result->object_type === 'service') {
                             //if field translation empty or null, value of field back to english (default)
                             if (isset($objectTranslation->description) && $objectTranslation->description !== '') {
                                 $near_end_result->object_description = $objectTranslation->description;
@@ -7727,6 +8408,8 @@ class MobileCIAPIController extends BaseCIController
                     $grouped_search_result->coupons[] = $near_end_result;
                 } elseif ($near_end_result->object_type === 'tenant') {
                     $grouped_search_result->tenants[] = $near_end_result;
+                } elseif ($near_end_result->object_type === 'service') {
+                    $grouped_search_result->services[] = $near_end_result;
                 } elseif ($near_end_result->object_type === 'lucky_draw') {
                     $grouped_search_result->lucky_draws[] = $near_end_result;
                 }
@@ -8718,6 +9401,23 @@ class MobileCIAPIController extends BaseCIController
                         'user_id' => $user->user_id,
                         'mall_id' => $retailer->merchant_id,
                         'item_type' => 'tenant',
+                        'created_at' => Carbon::now($retailer->timezone->timezone_name),
+                        'updated_at' => NULL
+                    );
+            }
+        }
+        if ($type == 'service') {
+            $newTenantsCount = \TenantStoreAndService::active()
+                ->where('object_type', 'service')
+                ->where('parent_id', $retailer->merchant_id)
+                ->lists('merchant_id');
+
+            foreach ($newTenantsCount as $counter) {
+                $viewedItems[] = array(
+                        'item_id' => $counter,
+                        'user_id' => $user->user_id,
+                        'mall_id' => $retailer->merchant_id,
+                        'item_type' => 'service',
                         'created_at' => Carbon::now($retailer->timezone->timezone_name),
                         'updated_at' => NULL
                     );

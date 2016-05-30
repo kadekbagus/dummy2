@@ -44,7 +44,7 @@
 @stop
 
 @section('content')
-<div class="slide-tab-container">
+<div class="slide-tab-container" style="z-index: 103;">
     <div id="slide-tab-promo-container">
         @if(sizeof($tenant->newsPromotionsProfiling) > 0)
             @foreach($tenant->newsPromotionsProfiling as $promotab)
@@ -175,9 +175,16 @@
                 <div class="col-xs-12 col-sm-12">
                     <section class="list-item-single-tenant">
                         <a class="list-item-link" data-href="{{ route('ci-coupon-detail', ['id' => $coupontab->promotion_id]) }}" href="{{ $urlblock->blockedRoute('ci-coupon-detail', ['id' => $coupontab->promotion_id]) }}">
+                                <span class="fa-stack fa-2x pull-right couponbadge-container" data-count="{{$coupontab->quantity}}+">
+                                   <i class="fa fa-circle fa-stack-2x color-base"></i>
+                                   <i class="fa fa-ticket fa-stack-1x color-icon"></i>
+                                   <i class="fa fa-certificate fa-stack-2x couponbadge"></i>
+                                </span>
+                            <!--
                             <div class="coupon-new-badge">
-                                <div class="new-number">{{$coupontab->quantity}}</div>
+                                <div class="new-number">{{$coupontab->quantity}}</div> 
                             </div>
+                            -->
                             <div class="list-item-info">
                                 <header class="list-item-title">
                                     <div><strong>{{{ $coupontab->promotion_name }}}</strong></div>
@@ -242,8 +249,8 @@
     <div class="actions-container" style="z-index: 102;">
         <a class="action-btn">
             <span class="fa fa-stack fa-2x">
-                <i class="fa fa-plus fa-inverse fa-stack-2x"> </i>
-                <i class="fa fa-plus-circle fa-stack-2x"> </i>
+                <i class="fa fa-circle fa-stack-2x"> </i>
+                <i class="fa glyphicon-plus fa-inverse fa-stack-2x"> </i>
             </span>
         </a>
         <div class="actions-panel" style="display: none;">
