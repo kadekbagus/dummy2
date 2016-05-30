@@ -20,6 +20,9 @@ use \Validator;
 use News;
 use Mall;
 use OrbitShop\API\v1\OrbitShopAPI;
+use Activity;
+use MerchantLanguage;
+use URL;
 
 class PromotionCIAPIController extends BaseAPIController
 {
@@ -30,6 +33,11 @@ class PromotionCIAPIController extends BaseAPIController
     {
         $httpCode = 200;
         $this->response = new ResponseProvider();
+
+        $user = null;
+        $keyword = null;
+        $activityPage = Activity::mobileci()
+                        ->setActivityType('view');
 
         try{
             $this->checkAuth();
@@ -43,11 +51,12 @@ class PromotionCIAPIController extends BaseAPIController
                 ACL::throwAccessForbidden($message);
             }
 
-            $this->mall_id = OrbitInput::get('mall_id', NULL);
+            $mallId = OrbitInput::get('mall_id', NULL);
+            $languageId = OrbitInput::get('language_id', NULL);
 
             $validator = Validator::make(
                 array(
-                    'mall_id' => $this->mall_id,
+                    'mall_id' => $mallId,
                 ),
                 array(
                     'mall_id' => 'required',
@@ -58,7 +67,9 @@ class PromotionCIAPIController extends BaseAPIController
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $mall = Mall::where('merchant_id', $this->mall_id)->first();
+            $mall = Mall::where('merchant_id', $mallId)->first();
+
+            $alternateLanguage = $this->getMerchantLanguage($mall->merchant_id, $languageId);
 
             if (!is_object($mall)) {
                 $errorMessage = "Mall id not found";
@@ -76,14 +87,14 @@ class PromotionCIAPIController extends BaseAPIController
             }
 
             $mallTime = Carbon::now($mall->timezone->timezone_name);
-            $mallid = $this->mall_id;
 
-            $promotions = News::leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'news.news_id')
+            $promotions = News::with('translations')
+                ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'news.news_id')
                 ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
                 ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
                 ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                 ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
-                ->select('news.news_id as promotion_id','news.news_name as name','image', 'news.description as description');
+                ->select('news.news_id', 'news.news_name', 'news.image', 'news.object_type', 'news.description as description');
 
             // filter by age and gender
             if ($userGender !== null) {
@@ -103,35 +114,35 @@ class PromotionCIAPIController extends BaseAPIController
             }
 
             $promotions = $promotions->where('news.status', '=', 'active')
-                        ->where(function ($q) use ($mallid) {
-                            $q->where('merchants.parent_id', '=', $mallid)
-                              ->orWhere('merchants.merchant_id', '=', $mallid);
+                        ->where(function ($q) use ($mallId) {
+                            $q->where('merchants.parent_id', '=', $mallId)
+                              ->orWhere('merchants.merchant_id', '=', $mallId);
                         })
                         ->where('news.object_type', 'promotion')
                         ->whereRaw("? between begin_date and end_date", [$mallTime]);
 
-            // OrbitInput::get(
-            //     'keyword',
-            //     function ($keyword) use ($promotions, $mall, $alternateLanguage) {
-            //         $promotions->leftJoin('news_translations', function($join) use ($alternateLanguage){
-            //                 $join->on('news.news_id', '=', 'news_translations.news_id');
-            //                 $join->where('news_translations.merchant_language_id', '=', $alternateLanguage->language_id);
-            //             })
-            //             ->leftJoin('keyword_object', function($join) {
-            //                 $join->on('news.news_id', '=', 'keyword_object.object_id');
-            //                 $join->where('keyword_object.object_type', '=', 'promotion');
-            //             })
-            //             ->leftJoin('keywords', function($join) use ($retailer) {
-            //                 $join->on('keywords.keyword_id', '=', 'keyword_object.keyword_id');
-            //                 $join->where('keywords.merchant_id', '=', $retailer->merchant_id);
-            //             })
-            //             ->where(function($q) use ($keyword) {
-            //                 $q->where('news_translations.news_name', 'like', "%$keyword%")
-            //                     ->orWhere('news_translations.description', 'like', "%$keyword%")
-            //                     ->orWhere('keyword', '=', $keyword);
-            //             });
-            //     }
-            // );
+            OrbitInput::get(
+                'keyword',
+                function ($keyword) use ($promotions, $mall, $alternateLanguage) {
+                    $promotions->leftJoin('news_translations', function($join) use ($alternateLanguage){
+                            $join->on('news.news_id', '=', 'news_translations.news_id');
+                            $join->where('news_translations.merchant_language_id', '=', $alternateLanguage->language_id);
+                        })
+                        ->leftJoin('keyword_object', function($join) {
+                            $join->on('news.news_id', '=', 'keyword_object.object_id');
+                            $join->where('keyword_object.object_type', '=', 'promotion');
+                        })
+                        ->leftJoin('keywords', function($join) use ($retailer) {
+                            $join->on('keywords.keyword_id', '=', 'keyword_object.keyword_id');
+                            $join->where('keywords.merchant_id', '=', $retailer->merchant_id);
+                        })
+                        ->where(function($q) use ($keyword) {
+                            $q->where('news_translations.news_name', 'like', "%$keyword%")
+                                ->orWhere('news_translations.description', 'like', "%$keyword%")
+                                ->orWhere('keyword', '=', $keyword);
+                        });
+                }
+            );
 
             $promotions = $promotions->groupBy('news.news_id');
 
@@ -209,7 +220,7 @@ class PromotionCIAPIController extends BaseAPIController
                         } else {
                             // back to default image if in the content multilanguage not have image
                             // check the system language
-                            $defaultLanguage = $this->getDefaultLanguage($retailer);
+                            $defaultLanguage = $this->getDefaultLanguage($mall);
                             if ($defaultLanguage !== NULL) {
                                 $contentDefaultLanguage = \NewsTranslation::excludeDeleted()
                                     ->where('merchant_language_id', '=', $defaultLanguage->language_id)
@@ -238,12 +249,34 @@ class PromotionCIAPIController extends BaseAPIController
             $this->response->code = 0;
             $this->response->status = 'success';
             $this->response->message = 'Request Ok';
+
+            $activityPageNotes = sprintf('Page viewed: %s', 'Promotion List Page');
+            $activityPage->setUser($user)
+                ->setActivityName('view_promotion_list')
+                ->setActivityNameLong('View Promotion List')
+                ->setObject(null)
+                ->setModuleName('Promotion')
+                ->setNotes($activityPageNotes)
+                ->responseOK()
+                ->save();
+
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $this->response->data = null;
             $httpCode = 403;
+            
+            $activityPageNotes = sprintf('Failed to view Page: %s', 'Promotion List');
+            $activityPage->setUser($user)
+                ->setActivityName('view_promotion_list')
+                ->setActivityNameLong('View Promotion List Failed')
+                ->setObject(null)
+                ->setModuleName('Promotion')
+                ->setNotes($activityPageNotes)
+                ->responseFailed()
+                ->save();
+
         } catch (InvalidArgsException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -254,6 +287,17 @@ class PromotionCIAPIController extends BaseAPIController
 
             $this->response->data = $result;
             $httpCode = 403;
+
+            $activityPageNotes = sprintf('Failed to view Page: %s', 'Promotion List');
+            $activityPage->setUser($user)
+                ->setActivityName('view_promotion_list')
+                ->setActivityNameLong('View Promotion List Failed')
+                ->setObject(null)
+                ->setModuleName('Promotion')
+                ->setNotes($activityPageNotes)
+                ->responseFailed()
+                ->save();
+
         } catch (QueryException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -265,12 +309,33 @@ class PromotionCIAPIController extends BaseAPIController
             }
             $this->response->data = null;
             $httpCode = 500;
+            
+            $activityPageNotes = sprintf('Failed to view Page: %s', 'Promotion List');
+            $activityPage->setUser($user)
+                ->setActivityName('view_promotion_list')
+                ->setActivityNameLong('View Promotion List Failed')
+                ->setObject(null)
+                ->setModuleName('Promotion')
+                ->setNotes($activityPageNotes)
+                ->responseFailed()
+                ->save();
+
         } catch (Exception $e) {
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = null;
+            $this->response->data = null;//[$e->getMessage(), $e->getFile(), $e->getLine()];
             $httpCode = 500;
+
+            $activityPageNotes = sprintf('Failed to view Page: %s', 'Promotion List');
+            $activityPage->setUser($user)
+                ->setActivityName('view_promotion_list')
+                ->setActivityNameLong('View Promotion List Failed')
+                ->setObject(null)
+                ->setModuleName('Promotion')
+                ->setNotes($activityPageNotes)
+                ->responseFailed()
+                ->save();
         }
 
         return $this->render($httpCode);
@@ -281,6 +346,10 @@ class PromotionCIAPIController extends BaseAPIController
         $httpCode = 200;
         $this->response = new ResponseProvider();
 
+        $user = null;
+        $promotionId = 0;
+        $activityPage = Activity::mobileci()
+                                   ->setActivityType('view');
         try{
             $this->checkAuth();
             $user = $this->api->user;
@@ -295,6 +364,8 @@ class PromotionCIAPIController extends BaseAPIController
 
             $mallId = OrbitInput::get('mall_id', NULL);
             $promotionId = OrbitInput::get('promotion_id', NULL);
+            $languageId = OrbitInput::get('language_id', NULL);
+            $alternateLanguage = null;
 
             $validator = Validator::make(
                 array(
@@ -318,11 +389,17 @@ class PromotionCIAPIController extends BaseAPIController
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
+            $alternateLanguage = $this->getMerchantLanguage($mall->merchant_id, $languageId);
+
+            if (!is_object($alternateLanguage)) {
+                $alternateLanguage = $this->getDefaultLanguage($mall);
+            }
+
             $promotion = News::with(['tenants' => function($q) use($mall) {
                     $q->where('merchants.status', 'active');
                     $q->where('merchants.parent_id', $mall->merchant_id);
                 }])
-                ->select('news.news_id', 'news.news_name', 'news.description as description')
+                ->select('news.news_id', 'news.news_name','image', 'news.description as description')
                 ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                 ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
                 ->where(function ($q) use ($mall) {
@@ -339,12 +416,10 @@ class PromotionCIAPIController extends BaseAPIController
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            if (empty($promotion->image)) {
-                $promotion->image = 'mobile-ci/images/default_promotion.png';
+            if (is_object($alternateLanguage)) {
+                $promotion->facebook_share_url = $this->getFBShareDummyPage('promotion', $promotion->news_id, $alternateLanguage->language_id);
             }
 
-            //$promotion->facebook_share_url = $this->getFBShareDummyPage('promotion', $promotion->news_id, $alternateLanguage->language_id);
-            
             $_tenants = $promotion->tenants;
 
             $allTenantInactive = false;
@@ -363,11 +438,12 @@ class PromotionCIAPIController extends BaseAPIController
             }
 
             $_promotion = new \stdclass();
-            $_promotion->promotion_id = $promotion->news_id;
-            $_promotion->name = $promotion->news_name;
+            $_promotion->news_id = $promotion->news_id;
+            $_promotion->news_name = $promotion->news_name;
             $_promotion->description = $promotion->description;
             $_promotion->image = $promotion->image;
             $_promotion->all_tenant_inactive = $allTenantInactive;
+            $_promotion->facebook_share_url = $promotion->facebook_share_url;
 
 
             if (! empty($alternateLanguage)) {
@@ -379,7 +455,7 @@ class PromotionCIAPIController extends BaseAPIController
                     foreach (['news_name', 'description'] as $field) {
                         //if field translation empty or null, value of field back to english (default)
                         if (isset($promotionTranslation->{$field}) && $promotionTranslation->{$field} !== '') {
-                            $promotion->{$field} = $promotionTranslation->{$field};
+                            $_promotion->{$field} = $promotionTranslation->{$field};
                         }
                     }
 
@@ -388,7 +464,7 @@ class PromotionCIAPIController extends BaseAPIController
                         ->first();
 
                     if (isset($media->path)) {
-                        $promotion->image = $media->path;
+                        $_promotion->image = $media->path;
                     } else {
                         // back to default image if in the content multilanguage not have image
                         // check the system language
@@ -396,7 +472,7 @@ class PromotionCIAPIController extends BaseAPIController
                         if ($defaultLanguage !== NULL) {
                             $contentDefaultLanguage = \NewsTranslation::excludeDeleted()
                                 ->where('merchant_language_id', '=', $defaultLanguage->language_id)
-                                ->where('news_id', $promotion->news_id)->first();
+                                ->where('news_id', $_promotion->news_id)->first();
 
                             // get default image
                             $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->news_translation_id)
@@ -404,7 +480,7 @@ class PromotionCIAPIController extends BaseAPIController
                                 ->first();
 
                             if (isset($mediaDefaultLanguage->path)) {
-                                $promotion->image = $mediaDefaultLanguage->path;
+                                $_promotion->image = $mediaDefaultLanguage->path;
                             }
                         }
                     }
@@ -415,12 +491,35 @@ class PromotionCIAPIController extends BaseAPIController
             $this->response->code = 0;
             $this->response->status = 'success';
             $this->response->message = 'Request Ok';
+
+            $activityPageNotes = sprintf('Page viewed: Promotion Detail, promotion Id: %s', $promotionId);
+            $activityPage->setUser($user)
+                ->setActivityName('view_promotion')
+                ->setActivityNameLong('View Promotion Detail')
+                ->setObject($promotion)
+                ->setNews($promotion)
+                ->setModuleName('Promotion')
+                ->setNotes($activityPageNotes)
+                ->responseOK()
+                ->save();
+
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $this->response->data = null;
             $httpCode = 403;
+
+            $activityPageNotes = sprintf('Failed to view Page: Promotion Detail, promotion Id: %s', $promotionId);
+            $activityPage->setUser($user)
+                ->setActivityName('view_promotion')
+                ->setActivityNameLong('View Promotion Failed')
+                ->setObject(null)
+                ->setModuleName('Promotion')
+                ->setNotes($activityPageNotes)
+                ->responseFailed()
+                ->save();
+
         } catch (InvalidArgsException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -431,6 +530,17 @@ class PromotionCIAPIController extends BaseAPIController
 
             $this->response->data = $result;
             $httpCode = 403;
+
+            $activityPageNotes = sprintf('Failed to view Page: Promotion Detail, promotion Id: %s', $promotionId);
+            $activityPage->setUser($user)
+                ->setActivityName('view_promotion')
+                ->setActivityNameLong('View Promotion Failed')
+                ->setObject(null)
+                ->setModuleName('Promotion')
+                ->setNotes($activityPageNotes)
+                ->responseFailed()
+                ->save();
+
         } catch (QueryException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -442,19 +552,108 @@ class PromotionCIAPIController extends BaseAPIController
             }
             $this->response->data = null;
             $httpCode = 500;
+
+            $activityPageNotes = sprintf('Failed to view Page: Promotion Detail, promotion Id: %s', $promotionId);
+            $activityPage->setUser($user)
+                ->setActivityName('view_promotion')
+                ->setActivityNameLong('View Promotion Failed')
+                ->setObject(null)
+                ->setModuleName('Promotion')
+                ->setNotes($activityPageNotes)
+                ->responseFailed()
+                ->save();
+
         } catch (Exception $e) {
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = null;
+            $this->response->data = [$e->getMessage(), $e->getFile(), $e->getLine()];
             $httpCode = 500;
+
+            $activityPageNotes = sprintf('Failed to view Page: Promotion Detail, promotion Id: %s', $promotionId);
+            $activityPage->setUser($user)
+                ->setActivityName('view_promotion')
+                ->setActivityNameLong('View Promotion Failed')
+                ->setObject(null)
+                ->setModuleName('Promotion')
+                ->setNotes($activityPageNotes)
+                ->responseFailed()
+                ->save();
         }
 
         return $this->render($httpCode);
     }
 
-    public function getPromotionStores()
-    {
 
+
+    private function getMerchantLanguage($mallId, $languageId = null)
+    {
+        $merchantLanguage = MerchantLanguage::where('merchant_languages.merchant_id', '=', $mallId)
+                                            ->where('merchant_languages.language_id', '=', $languageId)
+                                            ->first();
+        return $merchantLanguage;
+    }
+
+
+    /**
+     * Returns an appropriate MerchantLanguage (if any) that the user wants and the mall supports.
+     *
+     * @param \Mall $mall the mall
+     * @return \MerchantLanguage the language or null if a matching one is not found.
+     *
+     * @author Firmansyah <firmansyah@dominopos.com>
+     */
+    private function getDefaultLanguage($mall)
+    {
+        // English is default language
+        $language = \Language::where('name', '=', 'en')->first();
+        if(isset($language) && count($language) > 0){
+            $defaultLanguage = \MerchantLanguage::excludeDeleted()
+                ->where('merchant_id', '=', $mall->merchant_id)
+                ->where('language_id', '=', $language->language_id)
+                ->first();
+
+            if ($defaultLanguage !== null) {
+                return $defaultLanguage;
+            }
+        }
+
+        // above methods did not result in any selected language, use mall default
+        return null;
+    }
+
+    // get the url for Facebook Share dummy page
+    protected function getFBShareDummyPage($type, $id, $lang = null) {
+        $oldRouteSessionConfigValue = Config::get('orbit.session.availability.query_string');
+        Config::set('orbit.session.availability.query_string', false);
+
+        $url = '';
+        switch ($type) {
+            case 'tenant':
+                $url = URL::route('share-tenant', ['id' => $id, 'lang' => $lang]);
+                break;
+            case 'promotion':
+                $url = URL::route('share-promotion', ['id' => $id, 'lang' => $lang]);
+                break;
+            case 'news':
+                $url = URL::route('share-news', ['id' => $id, 'lang' => $lang]);
+                break;
+            case 'coupon':
+                $url = URL::route('share-coupon', ['id' => $id, 'lang' => $lang]);
+                break;
+            case 'lucky-draw':
+                $url = URL::route('share-lucky-draw', ['id' => $id, 'lang' => $lang]);
+                break;
+            case 'home':
+                $url = URL::route('share-home');
+                break;
+
+            default:
+                $url = '';
+                break;
+        }
+        Config::set('orbit.session.availability.query_string', $oldRouteSessionConfigValue);
+
+        return $url;
     }
 }
