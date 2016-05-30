@@ -78,7 +78,7 @@
                     </a>
                 </li>
                 <li>
-                    <a id="useBtn" class="disabled">
+                    <a id="useBtn">
                         <span class="fa fa-stack icon">
                             <i class="fa fa-circle fa-stack-2x"></i>
                             <i class="fa fa-scissors fa-inverse fa-stack-1x"></i>
@@ -187,6 +187,25 @@
     </div>
 </div>
 <!-- Modal -->
+<div class="modal fade" id="invalidLocationModal" tabindex="-1" role="dialog" aria-labelledby="hasCouponLabel" aria-hidden="true">
+    <div class="modal-dialog orbit-modal">
+        <div class="modal-content">
+            <div class="modal-header orbit-modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{{{ Lang::get('mobileci.coupon.close') }}}</span></button>
+                <h4 class="modal-title" id="hasCouponLabel">{{{ Lang::get('mobileci.coupon.use_coupon') }}}</h4>
+            </div>
+            <div class="modal-body">
+                <div class="row ">
+                    <div class="col-xs-12 vertically-spaced text-center">
+                        <h4 style="color:#d9534f" id="errMsg">{{{ Lang::get('mobileci.coupon.invalid_user_location') }}}</h4>
+                        <small>{{{ Lang::get('mobileci.coupon.please_check_tenant') }}}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Modal -->
 <div class="modal fade" id="successCouponModal" tabindex="-1" role="dialog" aria-labelledby="hasCouponLabel" aria-hidden="true">
     <div class="modal-dialog orbit-modal">
         <div class="modal-content">
@@ -220,6 +239,72 @@
     </script>
     {{-- End of Script fallback --}}
     <script type="text/javascript">
+        var redeemCoupon = function (issuedCouponCode) {
+            // check for Geolocation support
+            if (navigator.geolocation) {
+                var startPos;
+                var geoOptions = {
+                   timeout: 10 * 1000
+                }
+                var mall_id = '{{Config::get('orbit.shop.id')}}';
+                var geoSuccess = function(position) {
+                    startPos = position;
+                    console.log(startPos);
+                    // do ajax call
+                    $.ajax({
+                        url: '{{'/app/v1/pub/mall-fence'}}',
+                        method: 'GET',
+                        data: {
+                            latitude: startPos.coords.latitude,
+                            longitude: startPos.coords.longitude,
+                            mall_id: mall_id
+                        }
+                    }).done(function(response) {
+                        if (response.data.total_records > 0) {
+                            // Successful, user is around the mall location.
+                            $('#successCouponModal').modal({
+                                backdrop: 'static',
+                                keyboard: false
+                            });
+                            $('#successCouponModal').on('shown.bs.modal', function($event){
+                                $('#issuecouponno').val(issuedCouponCode);
+                                $('#denyCoupon').html('<i class="fa fa-circle-o-notch fa-spin"></i>');
+                                var y = 5000;
+                                var wait = setInterval(function(){
+                                    if(y == 0) {
+                                        clearInterval(wait);
+                                    }
+                                    $('#denyCoupon').prop("disabled", false);
+                                    $('#denyCoupon').html("OK");
+                                    y--;
+                                }, 1000);
+                            });
+                            $('#successCouponModal').on('hide.bs.modal', function($event){
+                                window.location.replace('{{ $urlblock->blockedRoute('ci-coupon-list') }}');
+                            });
+                        }
+                        else {
+                            // Fail, user is NOT around the mall.
+                            $('#invalidLocationModal').modal();
+                        }
+                    })
+
+                    // document.getElementById('startLat').innerHTML = startPos.coords.latitude;
+                    // document.getElementById('startLon').innerHTML = startPos.coords.longitude;
+                };
+                var geoError = function(error) {
+                    console.log('Error occurred. Error code: ' + error.code);
+                    // error.code can be:
+                    //   0: unknown error
+                    //   1: permission denied
+                    //   2: position unavailable (error response from location provider)
+                    //   3: timed out
+                };
+
+                navigator.geolocation.getCurrentPosition(geoSuccess, geoError, geoOptions);
+            }
+        }
+
         $(document).ready(function(){
             // Set fromSource in localStorage.
             localStorage.setItem('fromSource', 'mall-coupon');
@@ -230,57 +315,15 @@
                 $('.actions-panel').slideToggle();
             });
 
-            // check for Geolocation support
-            if (navigator.geolocation) {
-                window.onload = function() {
-                    var startPos;
-                    var geoOptions = {
-                       timeout: 10 * 1000
-                    }
-                    var mall_id = '{{Config::get('orbit.shop.id')}}';
-                    var geoSuccess = function(position) {
-                        startPos = position;
-                        console.log(startPos);
-                        // do ajax call
-                        $.ajax({
-                            url: '{{'/app/v1/pub/mall-fence'}}',
-                            method: 'GET',
-                            data: {
-                                latitude: startPos.coords.latitude,
-                                longitude: startPos.coords.longitude,
-                                mall_id: mall_id
-                            }
-                        }).done(function(response) {
-                            if (response.data.total_records > 0) {
-                                $('#useBtn').removeClass('disabled');
-                            }
-                        })
-
-                        // document.getElementById('startLat').innerHTML = startPos.coords.latitude;
-                        // document.getElementById('startLon').innerHTML = startPos.coords.longitude;
-                    };
-                    var geoError = function(error) {
-                        console.log('Error occurred. Error code: ' + error.code);
-                        // error.code can be:
-                        //   0: unknown error
-                        //   1: permission denied
-                        //   2: position unavailable (error response from location provider)
-                        //   3: timed out
-                    };
-
-                    navigator.geolocation.getCurrentPosition(geoSuccess, geoError, geoOptions);
-                };
-            }
-
             $(window).scroll(function(){
                 s = $(window).scrollTop();
                 $('.product-detail img').css('-webkit-transform', 'translateY('+(s/3)+'px)');
             });
-            $('#useBtn').click(function(){
-                if (!$(this).hasClass('disabled')) {
-                    $('#hasCouponModal').modal();
-                }
+
+            $('#useBtn').on('click', function() {
+                $('#hasCouponModal').modal();
             });
+
             @if(count($issued_coupons) > 0)
             $('#applyCoupon').click(function(){
                 $('#hasCouponModal .modal-content').css('display', 'none');
@@ -295,27 +338,10 @@
                     }
                 }).done(function(data){
                     if(data.status == 'success'){
-                        $('#successCouponModal').modal({
-                            backdrop: 'static',
-                            keyboard: false
-                        });
-                        $('#successCouponModal').on('shown.bs.modal', function($event){
-                            $('#issuecouponno').val(data.data.issued_coupon_code);
-                            $('#denyCoupon').html('<i class="fa fa-circle-o-notch fa-spin"></i>');
-                            var y = 5000;
-                            var wait = setInterval(function(){
-                                if(y == 0) {
-                                    clearInterval(wait);
-                                }
-                                $('#denyCoupon').prop("disabled", false);
-                                $('#denyCoupon').html("OK");
-                                y--;
-                            }, 1000);
-                        });
-                        $('#successCouponModal').on('hide.bs.modal', function($event){
-                            window.location.replace('{{ $urlblock->blockedRoute('ci-coupon-list') }}');
-                        });
-                    }else{
+                        var issuedCouponCode = data.data.issued_coupon_code;
+                        redeemCoupon(issuedCouponCode);
+                    }
+                    else{
                         $('#wrongCouponModal').modal();
                         $('#errMsg').text("{{Lang::get('mobileci.coupon.wrong_verification_number')}}");
                     }
