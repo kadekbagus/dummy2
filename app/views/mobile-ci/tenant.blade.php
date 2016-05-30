@@ -238,8 +238,34 @@
 <div class="slide-menu-backdrop-tab"></div>
 
 <!-- product -->
-<div class="row header-tenant-tab-present">
-    <div class="col-xs-12">
+<div class="row header-tenant-tab-present relative-wrapper">
+    <div class="actions-container" style="z-index: 102;">
+        <a class="action-btn">
+            <span class="fa fa-stack fa-2x">
+                <i class="fa fa-plus fa-inverse fa-stack-2x"> </i>
+                <i class="fa fa-plus-circle fa-stack-2x"> </i>
+            </span>
+        </a>
+        <div class="actions-panel" style="display: none;">
+            <ul class="list-unstyled">
+                @if ($urlblock->isLoggedIn())
+                    @if(! empty($tenant->facebook_like_url))
+                    <li>
+                        <div class="fb-like" data-href="{{{$tenant->facebook_like_url}}}" data-layout="button_count" data-action="like" data-show-faces="false" data-share="false">
+                        </div>
+                    </li>
+                    @endif
+                    @if(! empty($tenant->facebook_share_url))
+                    <li>
+                        <div class="fb-share-button" data-href="{{{$tenant->facebook_share_url}}}" data-layout="button">
+                        </div>
+                    </li>
+                    @endif
+                @endif
+            </ul>
+        </div>
+    </div>
+    <div class="col-xs-12" style="z-index: 100;">
         @if(count($tenant->mediaLogoOrig) === 0 && count($tenant->mediaImageOrig) === 0)
         <img class="img-responsive img-center" src="{{ asset('mobile-ci/images/default_tenants_directory.png') }}"/>
         @else
@@ -281,7 +307,7 @@
         @endif
     </div>
 </div>
-<div class="row padded">
+<div class="row padded" style="z-index: 101;">
     <div class="col-xs-12 font-1-3">
         <p>{{ nl2br(e($tenant->description)) }}</p>
         <ul class="where-list">
@@ -292,14 +318,6 @@
             @endif
             <li><span class="tenant-list-icon"><i class="fa fa-phone-square fa-lg"></i></span><p class="tenant-list-text">@if($tenant->phone != '')<a href="tel:{{{ $tenant->phone }}}">{{{ $tenant->phone }}}</a>@else - @endif</p></li>
         </ul>
-        @if ($urlblock->isLoggedIn())
-            @if(! empty($tenant->facebook_like_url))
-            <div class="fb-like" data-href="{{{$tenant->facebook_like_url}}}" data-layout="button_count" data-action="like" data-show-faces="false" data-share="false" style="margin-right:25px;"></div>
-            @endif
-            @if(! empty($tenant->facebook_share_url))
-            <div class="fb-share-button" data-href="{{{$tenant->facebook_share_url}}}" data-layout="button"></div>
-            @endif
-        @endif
     </div>
 </div>
 <div class="row padded vertically-spaced">
@@ -368,6 +386,12 @@
             if(typeof(Storage) !== 'undefined') {
                 localStorage.setItem('fromSource', 'detail');
             }
+
+            // Actions button event handler
+            $('.action-btn').on('click', function() {
+                $('.actions-container').toggleClass('alive');
+                $('.actions-panel').slideToggle();
+            });
 
             $('#image-gallery').lightSlider({
                 gallery:false,
