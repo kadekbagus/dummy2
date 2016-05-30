@@ -290,6 +290,14 @@ div.relative-wrapper {
     top: 0;
     width: 100%;
 
+    a {
+        color: #0aa5d5;
+
+        &:hover, &:active {
+            color: #097494;
+        }
+    }
+
     > .action-btn {
         display: inline-block;
         cursor: pointer;
@@ -327,8 +335,8 @@ div.relative-wrapper {
                 }
 
                 a.disabled {
+                    color: #a7c1d3;
                     cursor: default;
-                    text-decoration: line-through;
                 }
 
                 a:focus, a:active, a:visited {

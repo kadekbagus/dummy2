@@ -60,7 +60,7 @@ if(!empty($luckydraw)) {
                     <a class="disabled">
                         <span class="fa fa-stack icon">
                             <i class="fa fa-circle fa-stack-2x"></i>
-                            <i class="fa fa-download fa-inverse fa-stack-1x"></i>
+                            <i class="fa fa-trophy fa-inverse fa-stack-1x"></i>
                         </span>
                         <span class="text">{{ Lang::get('mobileci.lucky_draw.see_prizes_and_winner') }}</span>
                     </a>
@@ -71,7 +71,7 @@ if(!empty($luckydraw)) {
                     <a data-href="{{ route('ci-luckydrawnumber-download', ['id' => $luckydraw->lucky_draw_id]) }}" href="{{ $urlblock->blockedRoute('ci-luckydrawnumber-download', ['id' => $luckydraw->lucky_draw_id]) }}">
                         <span class="fa fa-stack icon">
                             <i class="fa fa-circle fa-stack-2x"></i>
-                            <i class="fa fa-trophy fa-inverse fa-stack-1x"></i>
+                            <i class="fa fa-download fa-inverse fa-stack-1x"></i>
                         </span>
                         <span class="text">{{ Lang::get('mobileci.lucky_draw.save_numbers') }}</span>
                     </a>
