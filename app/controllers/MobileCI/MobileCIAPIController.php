@@ -4025,9 +4025,9 @@ class MobileCIAPIController extends BaseCIController
             $categories = $categories->orderBy('categories.category_name', 'ASC')->get();
 
             // Get the maximum record
-            $maxRecord = (int) Config::get('orbit.pagination.max_record');
+            $maxRecord = (int) Config::get('orbit.pagination.max_record', 50);
             if ($maxRecord <= 0) {
-                $maxRecord = 300;
+                $maxRecord = Config::get('orbit.pagination.max_record');
             }
 
             $floorList = Object::whereHas('mall', function ($q) use ($retailer) {
@@ -4357,6 +4357,12 @@ class MobileCIAPIController extends BaseCIController
 
             $mallid = $retailer->merchant_id;
 
+            // Get the maximum record
+            $maxRecord = (int) Config::get('orbit.pagination.max_record', 50);
+            if ($maxRecord <= 0) {
+                $maxRecord = Config::get('orbit.pagination.max_record');
+            }
+
             $this->maybeJoinWithTranslationsTable($service, $alternateLanguage);
 
             $notfound = FALSE;
@@ -4506,7 +4512,19 @@ class MobileCIAPIController extends BaseCIController
                         $category_string .= $category->category_name . ', ';
                     }
                 }
-                $service->category_string = $category_string;
+                $service->category_string = mb_strlen($category_string) > 30 ? mb_substr($category_string, 0, 30, 'UTF-8') . '...' : $category_string;
+                $service->url = $urlblock->blockedRoute('ci-service-detail' , ['id' => $service->merchant_id]);
+                $service->redirect_url = URL::route('ci-service-detail' , ['id' => $service->merchant_id]);
+                if (count($service->mediaLogo) > 0) {
+                    foreach ($service->mediaLogo as $media) {
+                        if ($media->media_name_long == 'service_logo_orig') {
+                            $service->logo_orig = URL::asset($media->path);
+                        }
+                    }
+                } else {
+                    $service->logo_orig = URL::asset('mobile-ci/images/default_services_directory.png');
+                }
+                $service->name = mb_strlen($service->name) > 64 ? mb_substr($service->name, 0, 64) . '...' : $service->name;
 
                 // set service facebook page url
                 $service->facebook_like_url = '';
