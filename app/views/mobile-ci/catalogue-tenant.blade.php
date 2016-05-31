@@ -385,8 +385,13 @@
                         dataJson.records = jsonObj.records.concat(dataJson.records);
                     }
 
-                    // Set tenantData in localStorage.
-                    localStorage.setItem('tenantData', JSON.stringify(dataJson));
+                    try {
+                        // Set tenantData in localStorage.
+                        localStorage.setItem('tenantData', JSON.stringify(dataJson));
+                    }
+                    catch (err) {
+                        // For safari private mode sake.
+                    }
                 }
             }
         })
