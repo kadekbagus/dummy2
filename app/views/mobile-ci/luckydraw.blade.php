@@ -266,6 +266,10 @@ if(!empty($luckydraw)) {
                 $('.actions-panel').slideToggle();
             });
 
+            setTimeout(function() {
+                $('.actions-container').fadeIn();
+            }, 500);
+
             $('#ldtitle').click(function(){
                 $('#lddetail').modal();
             });

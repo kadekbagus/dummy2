@@ -314,7 +314,6 @@ div.relative-wrapper {
 
 .actions-container.alive {
     > .action-btn {
-
         .circle {
             transform: rotateZ(45deg);
             background-color: #097494;
@@ -328,9 +327,9 @@ div.relative-wrapper {
 }
 
 .actions-container {
-    position: absolute;
-    top: 0;
+    position: fixed;
     width: 100%;
+    display: none;
 
     a {
         color: #0aa5d5;

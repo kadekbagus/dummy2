@@ -105,6 +105,10 @@
                 $('.actions-panel').slideToggle();
             });
 
+            setTimeout(function() {
+                $('.actions-container').fadeIn();
+            }, 500);
+
             $(window).scroll(function(){
                 s = $(window).scrollTop();
                 $('.product-detail img').css('-webkit-transform', 'translateY('+(s/3)+'px)');

@@ -423,6 +423,10 @@ if(sizeof($tenant->newsPromotionsProfiling) > 0 || sizeof($tenant->newsProfiling
                 $('.actions-panel').slideToggle();
             });
 
+            setTimeout(function() {
+                $('.actions-container').fadeIn();
+            }, 500);
+
             $('#image-gallery').lightSlider({
                 gallery:false,
                 item:1,

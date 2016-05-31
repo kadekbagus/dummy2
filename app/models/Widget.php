@@ -36,7 +36,7 @@ class Widget extends Eloquent
      */
     public function malls()
     {
-        return $this->belongsToMany('merchant', 'widget_retailer', 'widget_id', 'retailer_id');
+        return $this->belongsToMany('Mall', 'widget_retailer', 'widget_id', 'retailer_id');
     }
 
     /**
