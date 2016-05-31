@@ -295,6 +295,7 @@ return array(
         'ask_our_tenant_employee'          => '我々のテナント従業員に尋ねてください',
         'validate'                         => '有効にする',
         'wrong_verification_number'        => '間違った確認番号',
+        'invalid_user_location'            => '無効なユーザーの場所',
         'please_check_tenant'              => 'テナントの従業員又はモールのカスタマーサービスを確認してください。',
         'ok'                               => 'はい',
         'successful'                       => '成功した',
