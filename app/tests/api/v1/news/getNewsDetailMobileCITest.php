@@ -1,6 +1,6 @@
 <?php
 /**
- * Test for API /api/v1/cust/promotion/detail
+ * Test for API /api/v1/cust/news/detail
  * @author kadek <kadek@dominopos.com>
  */
 use DominoPOS\OrbitAPI\v10\StatusInterface as Status;
@@ -10,7 +10,7 @@ use Carbon\Carbon as Carbon;
 
 class getPromotionDetailMobileCITest extends TestCase
 {
-    private $baseUrl = '/api/v1/cust/promotions/detail?';
+    private $baseUrl = '/api/v1/cust/news/detail?';
 
     public function setUp()
     {
@@ -26,8 +26,8 @@ class getPromotionDetailMobileCITest extends TestCase
         $this->mallA = Factory::create('Mall', ['timezone_id' => $this->timezone->timezone_id]);
         $this->mallB = Factory::create('Mall', ['timezone_id' => $this->timezone->timezone_id]);
 
-        $this->promotion1 = Factory::create('News', ['mall_id' => $this->mallA->merchant_id, 
-                                                     'object_type' => 'promotion',
+        $this->news1 = Factory::create('News', ['mall_id' => $this->mallA->merchant_id, 
+                                                     'object_type' => 'news',
                                                      'link_object_type' => 'tenant',
                                                      'campaign_status_id' => $this->campaign_status_ongoing->campaign_status_id,
                                                      'is_all_gender' => 'Y',
@@ -35,8 +35,8 @@ class getPromotionDetailMobileCITest extends TestCase
                                                     ]
                                             );
 
-        $this->promotion2 = Factory::create('News', ['mall_id' => $this->mallA->merchant_id, 
-                                                     'object_type' => 'promotion',
+        $this->news2 = Factory::create('News', ['mall_id' => $this->mallA->merchant_id, 
+                                                     'object_type' => 'news',
                                                      'link_object_type' => 'tenant', 
                                                      'campaign_status_id' => $this->campaign_status_ongoing->campaign_status_id,
                                                      'is_all_gender' => 'Y',
@@ -44,8 +44,8 @@ class getPromotionDetailMobileCITest extends TestCase
                                                     ]
                                             );
 
-        $this->news_merchant1 = Factory::create('NewsMerchant', ['news_id' => $this->promotion1->news_id, 'merchant_id' => $this->mallA->merchant_id]);
-        $this->news_merchant2 = Factory::create('NewsMerchant', ['news_id' => $this->promotion2->news_id, 'merchant_id' => $this->mallA->merchant_id]);  
+        $this->news_merchant1 = Factory::create('NewsMerchant', ['news_id' => $this->news1->news_id, 'merchant_id' => $this->mallA->merchant_id]);
+        $this->news_merchant2 = Factory::create('NewsMerchant', ['news_id' => $this->news2->news_id, 'merchant_id' => $this->mallA->merchant_id]);  
 
         $this->user = Factory::create('user_guest');
         $this->userdetail = Factory::create('UserDetail', [
@@ -128,8 +128,8 @@ class getPromotionDetailMobileCITest extends TestCase
     {
         // promotion id given should return data for that promotion
         $data = array('mall_id' => $this->mallA->merchant_id,
-                      'promotion_id' => $this->promotion1->news_id,
-                      'object_type' => 'promotion'
+                      'promotion_id' => $this->news1->news_id,
+                      'object_type' => 'news'
                       );
                 
         $response = $this->makeRequest($data, $this->apikey);
@@ -139,15 +139,15 @@ class getPromotionDetailMobileCITest extends TestCase
         $this->assertRegExp('/Request OK/i', $response->message);
 
         $this->assertSame(1, count($response->data));
-        $this->assertSame($this->promotion1->news_id, $response->data->news_id);
-        $this->assertSame($this->promotion1->news_name, $response->data->news_name);
+        $this->assertSame($this->news1->news_id, $response->data->news_id);
+        $this->assertSame($this->news1->news_name, $response->data->news_name);
     }
 
     public function testGetPromotionFromAnotherMall()
     {
-        // promotions from another mall should not appear
-        $promotion_mallB = Factory::create('News', ['mall_id' => $this->mallB->merchant_id, 
-                                                         'object_type' => 'promotion',
+        // news from another mall should not appear
+        $news_mallB = Factory::create('News', ['mall_id' => $this->mallB->merchant_id, 
+                                                         'object_type' => 'news',
                                                          'link_object_type' => 'tenant',
                                                          'campaign_status_id' => $this->campaign_status_ongoing->campaign_status_id,
                                                          'is_all_gender' => 'Y',
@@ -155,11 +155,11 @@ class getPromotionDetailMobileCITest extends TestCase
                                                         ]
                                                 );
         
-        $news_merchant = Factory::create('NewsMerchant', ['news_id' => $promotion_mallB->news_id, 'merchant_id' => $this->mallB->merchant_id]); 
+        $news_merchant = Factory::create('NewsMerchant', ['news_id' => $news_mallB->news_id, 'merchant_id' => $this->mallB->merchant_id]); 
 
         $data = array('mall_id' => $this->mallA->merchant_id,
-                      'promotion_id' => $promotion_mallB->news_id,
-                      'object_type' => 'promotion'
+                      'promotion_id' => $news_mallB->news_id,
+                      'object_type' => 'news'
                       );
 
         $response = $this->makeRequest($data, $this->apikey);
@@ -171,9 +171,9 @@ class getPromotionDetailMobileCITest extends TestCase
 
     public function testInvalidMallId()
     {
-        // what happend if promotion id is wrong?
-        $promotion1 = Factory::create('News', ['mall_id' => $this->mallB->merchant_id, 
-                                             'object_type' => 'promotion',
+        // what happend if news id is wrong?
+        $news1 = Factory::create('News', ['mall_id' => $this->mallB->merchant_id, 
+                                             'object_type' => 'news',
                                              'link_object_type' => 'tenant', 
                                              'campaign_status_id' => $this->campaign_status_ongoing->campaign_status_id,
                                              'is_all_gender' => 'Y',
@@ -181,8 +181,8 @@ class getPromotionDetailMobileCITest extends TestCase
                                             ]
                                     );
 
-        $promotion2 = Factory::create('News', ['mall_id' => $this->mallB->merchant_id, 
-                                             'object_type' => 'promotion',
+        $news2 = Factory::create('News', ['mall_id' => $this->mallB->merchant_id, 
+                                             'object_type' => 'news',
                                              'link_object_type' => 'tenant', 
                                              'campaign_status_id' => $this->campaign_status_ongoing->campaign_status_id,
                                              'is_all_gender' => 'Y',
@@ -190,12 +190,12 @@ class getPromotionDetailMobileCITest extends TestCase
                                             ]
                                     );
         
-        $news_merchant1 = Factory::create('NewsMerchant', ['news_id' => $promotion1->news_id, 'merchant_id' => $this->mallB->merchant_id]);
-        $news_merchant2 = Factory::create('NewsMerchant', ['news_id' => $promotion2->news_id, 'merchant_id' => $this->mallB->merchant_id]);  
+        $news_merchant1 = Factory::create('NewsMerchant', ['news_id' => $news1->news_id, 'merchant_id' => $this->mallB->merchant_id]);
+        $news_merchant2 = Factory::create('NewsMerchant', ['news_id' => $news2->news_id, 'merchant_id' => $this->mallB->merchant_id]);  
 
         $data = array('mall_id' => '123456',
-                      'promotion_id' => $this->promotion1->news_id,
-                      'object_type' => 'promotion'
+                      'promotion_id' => $this->news1->news_id,
+                      'object_type' => 'news'
                       );
 
         $response = $this->makeRequest($data, $this->apikey);
@@ -208,8 +208,8 @@ class getPromotionDetailMobileCITest extends TestCase
     public function testInvalidPromotionId()
     {
         // test if promotion id is wrong
-        $promotion1 = Factory::create('News', ['mall_id' => $this->mallB->merchant_id, 
-                                             'object_type' => 'promotion',
+        $news1 = Factory::create('News', ['mall_id' => $this->mallB->merchant_id, 
+                                             'object_type' => 'news',
                                              'link_object_type' => 'tenant', 
                                              'campaign_status_id' => $this->campaign_status_ongoing->campaign_status_id,
                                              'is_all_gender' => 'Y',
@@ -217,8 +217,8 @@ class getPromotionDetailMobileCITest extends TestCase
                                             ]
                                     );
 
-        $promotion2 = Factory::create('News', ['mall_id' => $this->mallB->merchant_id, 
-                                             'object_type' => 'promotion',
+        $news2 = Factory::create('News', ['mall_id' => $this->mallB->merchant_id, 
+                                             'object_type' => 'news',
                                              'link_object_type' => 'tenant', 
                                              'campaign_status_id' => $this->campaign_status_ongoing->campaign_status_id,
                                              'is_all_gender' => 'Y',
@@ -226,13 +226,11 @@ class getPromotionDetailMobileCITest extends TestCase
                                             ]
                                     );
         
-        $news_merchant1 = Factory::create('NewsMerchant', ['news_id' => $promotion1->news_id, 'merchant_id' => $this->mallB->merchant_id]);
-        $news_merchant2 = Factory::create('NewsMerchant', ['news_id' => $promotion2->news_id, 'merchant_id' => $this->mallB->merchant_id]);  
+        $news_merchant1 = Factory::create('NewsMerchant', ['news_id' => $news1->news_id, 'merchant_id' => $this->mallB->merchant_id]);
+        $news_merchant2 = Factory::create('NewsMerchant', ['news_id' => $news2->news_id, 'merchant_id' => $this->mallB->merchant_id]);  
 
         $data = array('mall_id' => $this->mallB->merchant_id,
-                      'promotion_id' => '123213',
-                      'object_type' => 'promotion'
-                      );
+                      'promotion_id' => '123213');
 
         $response = $this->makeRequest($data, $this->apikey);
 
@@ -241,16 +239,16 @@ class getPromotionDetailMobileCITest extends TestCase
         $this->assertRegExp('/Promotion ID you specified is not found/i', $response->message);
     }
 
-    public function testGetCorrectDataPromotion()
+    public function testGetCorrectDataNews()
     {
-        // get the correct data promotion based on promotion id
+        // get the correct data news based on promotion id
         $tenant1 = Factory::create('Tenant', ['parent_id' => $this->mallB->merchant_id, 'status' => 'active']);
         $tenant2 = Factory::create('Tenant', ['parent_id' => $this->mallB->merchant_id, 'status' => 'active']);
         $tenant3 = Factory::create('Tenant', ['parent_id' => $this->mallB->merchant_id, 'status' => 'active']);
         $tenant4 = Factory::create('Tenant', ['parent_id' => $this->mallB->merchant_id, 'status' => 'active']);
 
-        $promotion1 = Factory::create('News', ['mall_id' => $this->mallB->merchant_id, 
-                                             'object_type' => 'promotion',
+        $news1 = Factory::create('News', ['mall_id' => $this->mallB->merchant_id, 
+                                             'object_type' => 'news',
                                              'link_object_type' => 'tenant', 
                                              'campaign_status_id' => $this->campaign_status_ongoing->campaign_status_id,
                                              'is_all_gender' => 'Y',
@@ -258,8 +256,8 @@ class getPromotionDetailMobileCITest extends TestCase
                                             ]
                                     );
 
-        $promotion2 = Factory::create('News', ['mall_id' => $this->mallB->merchant_id, 
-                                             'object_type' => 'promotion',
+        $news2 = Factory::create('News', ['mall_id' => $this->mallB->merchant_id, 
+                                             'object_type' => 'news',
                                              'link_object_type' => 'tenant', 
                                              'campaign_status_id' => $this->campaign_status_ongoing->campaign_status_id,
                                              'is_all_gender' => 'Y',
@@ -267,8 +265,8 @@ class getPromotionDetailMobileCITest extends TestCase
                                             ]
                                     );
 
-        $promotion3 = Factory::create('News', ['mall_id' => $this->mallB->merchant_id, 
-                                             'object_type' => 'promotion',
+        $news3 = Factory::create('News', ['mall_id' => $this->mallB->merchant_id, 
+                                             'object_type' => 'news',
                                              'link_object_type' => 'tenant', 
                                              'campaign_status_id' => $this->campaign_status_ongoing->campaign_status_id,
                                              'is_all_gender' => 'Y',
@@ -276,30 +274,17 @@ class getPromotionDetailMobileCITest extends TestCase
                                             ]
                                     );
 
-        $news_merchant_promotion_1 = Factory::create('NewsMerchant', ['news_id' => $promotion1->news_id, 'merchant_id' => $tenant1->merchant_id, 'object_type' => 'retailer']);
-        $news_merchant_promotion_1 = Factory::create('NewsMerchant', ['news_id' => $promotion1->news_id, 'merchant_id' => $tenant3->merchant_id, 'object_type' => 'retailer']);
+        $news_merchant_promotion_1 = Factory::create('NewsMerchant', ['news_id' => $news1->news_id, 'merchant_id' => $tenant1->merchant_id, 'object_type' => 'retailer']);
+        $news_merchant_promotion_1 = Factory::create('NewsMerchant', ['news_id' => $news1->news_id, 'merchant_id' => $tenant3->merchant_id, 'object_type' => 'retailer']);
 
-        $news_merchant_promotion_2 = Factory::create('NewsMerchant', ['news_id' => $promotion2->news_id, 'merchant_id' => $tenant1->merchant_id, 'object_type' => 'retailer']);
-        $news_merchant_promotion_2 = Factory::create('NewsMerchant', ['news_id' => $promotion2->news_id, 'merchant_id' => $tenant2->merchant_id, 'object_type' => 'retailer']);
+        $news_merchant_promotion_2 = Factory::create('NewsMerchant', ['news_id' => $news2->news_id, 'merchant_id' => $tenant1->merchant_id, 'object_type' => 'retailer']);
+        $news_merchant_promotion_2 = Factory::create('NewsMerchant', ['news_id' => $news2->news_id, 'merchant_id' => $tenant2->merchant_id, 'object_type' => 'retailer']);
 
-        $news_merchant_promotion_3 = Factory::create('NewsMerchant', ['news_id' => $promotion3->news_id, 'merchant_id' => $tenant3->merchant_id, 'object_type' => 'retailer']);
-        $news_merchant_promotion_3 = Factory::create('NewsMerchant', ['news_id' => $promotion3->news_id, 'merchant_id' => $tenant4->merchant_id, 'object_type' => 'retailer']);
+        $news_merchant_promotion_3 = Factory::create('NewsMerchant', ['news_id' => $news3->news_id, 'merchant_id' => $tenant3->merchant_id, 'object_type' => 'retailer']);
+        $news_merchant_promotion_3 = Factory::create('NewsMerchant', ['news_id' => $news3->news_id, 'merchant_id' => $tenant4->merchant_id, 'object_type' => 'retailer']);
 
-        // promotion1
-        $data = array('mall_id' => $this->mallB->merchant_id, 'promotion_id' => $promotion1->news_id, 'object_type' => 'promotion');
-
-        $response = $this->makeRequest($data, $this->apikey);
-
-        $this->assertSame(0, $response->code);
-        $this->assertSame('success', $response->status);
-        $this->assertRegExp('/Request OK/i', $response->message);
-
-        $this->assertSame($promotion1->news_id, $response->data->news_id);
-        $this->assertSame($promotion1->news_name, $response->data->news_name);
-        $this->assertSame($promotion1->description, $response->data->description);
-
-        // promotion2
-        $data = array('mall_id' => $this->mallB->merchant_id, 'promotion_id' => $promotion2->news_id, 'object_type' => 'promotion');
+        // news1
+        $data = array('mall_id' => $this->mallB->merchant_id, 'promotion_id' => $news1->news_id, 'object_type' => 'news');
 
         $response = $this->makeRequest($data, $this->apikey);
 
@@ -307,12 +292,12 @@ class getPromotionDetailMobileCITest extends TestCase
         $this->assertSame('success', $response->status);
         $this->assertRegExp('/Request OK/i', $response->message);
 
-        $this->assertSame($promotion2->news_id, $response->data->news_id);
-        $this->assertSame($promotion2->news_name, $response->data->news_name);
-        $this->assertSame($promotion2->description, $response->data->description);
+        $this->assertSame($news1->news_id, $response->data->news_id);
+        $this->assertSame($news1->news_name, $response->data->news_name);
+        $this->assertSame($news1->description, $response->data->description);
 
-        // promotion3
-        $data = array('mall_id' => $this->mallB->merchant_id, 'promotion_id' => $promotion3->news_id, 'object_type' => 'promotion');
+        // news2
+        $data = array('mall_id' => $this->mallB->merchant_id, 'promotion_id' => $news2->news_id, 'object_type' => 'news');
 
         $response = $this->makeRequest($data, $this->apikey);
 
@@ -320,9 +305,22 @@ class getPromotionDetailMobileCITest extends TestCase
         $this->assertSame('success', $response->status);
         $this->assertRegExp('/Request OK/i', $response->message);
 
-        $this->assertSame($promotion3->news_id, $response->data->news_id);
-        $this->assertSame($promotion3->news_name, $response->data->news_name);
-        $this->assertSame($promotion3->description, $response->data->description);
+        $this->assertSame($news2->news_id, $response->data->news_id);
+        $this->assertSame($news2->news_name, $response->data->news_name);
+        $this->assertSame($news2->description, $response->data->description);
+
+        // news3
+        $data = array('mall_id' => $this->mallB->merchant_id, 'promotion_id' => $news3->news_id, 'object_type' => 'news');
+
+        $response = $this->makeRequest($data, $this->apikey);
+
+        $this->assertSame(0, $response->code);
+        $this->assertSame('success', $response->status);
+        $this->assertRegExp('/Request OK/i', $response->message);
+
+        $this->assertSame($news3->news_id, $response->data->news_id);
+        $this->assertSame($news3->news_name, $response->data->news_name);
+        $this->assertSame($news3->description, $response->data->description);
     }
 
     public function testGetAllTenantInactiveOrNot()
@@ -333,8 +331,8 @@ class getPromotionDetailMobileCITest extends TestCase
         $tenant3 = Factory::create('Tenant', ['parent_id' => $this->mallB->merchant_id, 'status' => 'inactive']);
         $tenant4 = Factory::create('Tenant', ['parent_id' => $this->mallB->merchant_id, 'status' => 'inactive']);
 
-        $promotion1 = Factory::create('News', ['mall_id' => $this->mallB->merchant_id, 
-                                             'object_type' => 'promotion',
+        $news1 = Factory::create('News', ['mall_id' => $this->mallB->merchant_id, 
+                                             'object_type' => 'news',
                                              'link_object_type' => 'tenant', 
                                              'campaign_status_id' => $this->campaign_status_ongoing->campaign_status_id,
                                              'is_all_gender' => 'Y',
@@ -342,8 +340,8 @@ class getPromotionDetailMobileCITest extends TestCase
                                             ]
                                     );
 
-        $promotion2 = Factory::create('News', ['mall_id' => $this->mallB->merchant_id, 
-                                             'object_type' => 'promotion',
+        $news2 = Factory::create('News', ['mall_id' => $this->mallB->merchant_id, 
+                                             'object_type' => 'news',
                                              'link_object_type' => 'tenant', 
                                              'campaign_status_id' => $this->campaign_status_ongoing->campaign_status_id,
                                              'is_all_gender' => 'Y',
@@ -351,8 +349,8 @@ class getPromotionDetailMobileCITest extends TestCase
                                             ]
                                     );
 
-        $promotion3 = Factory::create('News', ['mall_id' => $this->mallB->merchant_id, 
-                                             'object_type' => 'promotion',
+        $news3 = Factory::create('News', ['mall_id' => $this->mallB->merchant_id, 
+                                             'object_type' => 'news',
                                              'link_object_type' => 'tenant', 
                                              'campaign_status_id' => $this->campaign_status_ongoing->campaign_status_id,
                                              'is_all_gender' => 'Y',
@@ -360,18 +358,18 @@ class getPromotionDetailMobileCITest extends TestCase
                                             ]
                                     );
 
-        $news_merchant_promotion_1 = Factory::create('NewsMerchant', ['news_id' => $promotion1->news_id, 'merchant_id' => $tenant1->merchant_id, 'object_type' => 'retailer']);
-        $news_merchant_promotion_1 = Factory::create('NewsMerchant', ['news_id' => $promotion1->news_id, 'merchant_id' => $tenant3->merchant_id, 'object_type' => 'retailer']);
+        $news_merchant_promotion_1 = Factory::create('NewsMerchant', ['news_id' => $news1->news_id, 'merchant_id' => $tenant1->merchant_id, 'object_type' => 'retailer']);
+        $news_merchant_promotion_1 = Factory::create('NewsMerchant', ['news_id' => $news1->news_id, 'merchant_id' => $tenant3->merchant_id, 'object_type' => 'retailer']);
 
-        $news_merchant_promotion_2 = Factory::create('NewsMerchant', ['news_id' => $promotion2->news_id, 'merchant_id' => $tenant1->merchant_id, 'object_type' => 'retailer']);
-        $news_merchant_promotion_2 = Factory::create('NewsMerchant', ['news_id' => $promotion2->news_id, 'merchant_id' => $tenant2->merchant_id, 'object_type' => 'retailer']);
+        $news_merchant_promotion_2 = Factory::create('NewsMerchant', ['news_id' => $news2->news_id, 'merchant_id' => $tenant1->merchant_id, 'object_type' => 'retailer']);
+        $news_merchant_promotion_2 = Factory::create('NewsMerchant', ['news_id' => $news2->news_id, 'merchant_id' => $tenant2->merchant_id, 'object_type' => 'retailer']);
 
-        $news_merchant_promotion_3 = Factory::create('NewsMerchant', ['news_id' => $promotion3->news_id, 'merchant_id' => $tenant3->merchant_id, 'object_type' => 'retailer']);
-        $news_merchant_promotion_3 = Factory::create('NewsMerchant', ['news_id' => $promotion3->news_id, 'merchant_id' => $tenant4->merchant_id, 'object_type' => 'retailer']);
+        $news_merchant_promotion_3 = Factory::create('NewsMerchant', ['news_id' => $news3->news_id, 'merchant_id' => $tenant3->merchant_id, 'object_type' => 'retailer']);
+        $news_merchant_promotion_3 = Factory::create('NewsMerchant', ['news_id' => $news3->news_id, 'merchant_id' => $tenant4->merchant_id, 'object_type' => 'retailer']);
 
 
-        // promotion1 should return all_tenant_inactive false
-        $data = array('mall_id' => $this->mallB->merchant_id, 'promotion_id' => $promotion1->news_id, 'object_type' => 'promotion');
+        // news1 should return all_tenant_inactive false
+        $data = array('mall_id' => $this->mallB->merchant_id, 'promotion_id' => $news1->news_id, 'object_type' => 'news');
 
         $response = $this->makeRequest($data, $this->apikey);
 
@@ -379,12 +377,12 @@ class getPromotionDetailMobileCITest extends TestCase
         $this->assertSame('success', $response->status);
         $this->assertRegExp('/Request OK/i', $response->message);
 
-        $this->assertSame($promotion1->news_id, $response->data->news_id);
-        $this->assertSame($promotion1->news_name, $response->data->news_name);
+        $this->assertSame($news1->news_id, $response->data->news_id);
+        $this->assertSame($news1->news_name, $response->data->news_name);
         $this->assertFalse($response->data->all_tenant_inactive);
 
-        // promotion2 should return all_tenant_inactive false
-        $data = array('mall_id' => $this->mallB->merchant_id, 'promotion_id' => $promotion2->news_id, 'object_type' => 'promotion');
+        // news2 should return all_tenant_inactive false
+        $data = array('mall_id' => $this->mallB->merchant_id, 'promotion_id' => $news2->news_id, 'object_type' => 'news');
 
         $response = $this->makeRequest($data, $this->apikey);
 
@@ -392,12 +390,12 @@ class getPromotionDetailMobileCITest extends TestCase
         $this->assertSame('success', $response->status);
         $this->assertRegExp('/Request OK/i', $response->message);
 
-        $this->assertSame($promotion2->news_id, $response->data->news_id);
-        $this->assertSame($promotion2->news_name, $response->data->news_name);
+        $this->assertSame($news2->news_id, $response->data->news_id);
+        $this->assertSame($news2->news_name, $response->data->news_name);
         $this->assertFalse($response->data->all_tenant_inactive);
 
-        // promotion3 should return all_tenant_inactive true
-        $data = array('mall_id' => $this->mallB->merchant_id, 'promotion_id' => $promotion3->news_id, 'object_type' => 'promotion');
+        // news3 should return all_tenant_inactive true
+        $data = array('mall_id' => $this->mallB->merchant_id, 'promotion_id' => $news3->news_id, 'object_type' => 'news');
 
         $response = $this->makeRequest($data, $this->apikey);
 
@@ -405,8 +403,8 @@ class getPromotionDetailMobileCITest extends TestCase
         $this->assertSame('success', $response->status);
         $this->assertRegExp('/Request OK/i', $response->message);
 
-        $this->assertSame($promotion3->news_id, $response->data->news_id);
-        $this->assertSame($promotion3->news_name, $response->data->news_name);
+        $this->assertSame($news3->news_id, $response->data->news_id);
+        $this->assertSame($news3->news_name, $response->data->news_name);
         $this->assertTrue($response->data->all_tenant_inactive);
     }
 
@@ -421,8 +419,8 @@ class getPromotionDetailMobileCITest extends TestCase
         $merchant_language2 = Factory::create('MerchantLanguage', ['language_id' => $language_id->language_id, 'merchant_id' => $this->mallB->merchant_id]);
         $merchant_language3 = Factory::create('MerchantLanguage', ['language_id' => $language_jp->language_id, 'merchant_id' => $this->mallB->merchant_id]);
 
-        $promotion1 = Factory::create('News', ['mall_id' => $this->mallB->merchant_id, 
-                                     'object_type' => 'promotion',
+        $news1 = Factory::create('News', ['mall_id' => $this->mallB->merchant_id, 
+                                     'object_type' => 'news',
                                      'link_object_type' => 'tenant', 
                                      'campaign_status_id' => $this->campaign_status_ongoing->campaign_status_id,
                                      'is_all_gender' => 'Y',
@@ -430,25 +428,25 @@ class getPromotionDetailMobileCITest extends TestCase
                                     ]
                             );
 
-        $promotion_translation_en = Factory::create('NewsTranslation', ['news_id' => $promotion1->news_id, 
+        $news_translation_en = Factory::create('NewsTranslation', ['news_id' => $news1->news_id, 
                                                                         'merchant_id' => $this->mallB->merchant_id, 
                                                                         'merchant_language_id' => $language_en->language_id]
                                                     );      
 
-        $promotion_translation_id = Factory::create('NewsTranslation', ['news_id' => $promotion1->news_id, 
+        $news_translation_id = Factory::create('NewsTranslation', ['news_id' => $news1->news_id, 
                                                                 'merchant_id' => $this->mallB->merchant_id, 
                                                                 'merchant_language_id' => $language_id->language_id]
                                             );  
 
-        $promotion_translation_jp = Factory::create('NewsTranslation', ['news_id' => $promotion1->news_id, 
+        $news_translation_jp = Factory::create('NewsTranslation', ['news_id' => $news1->news_id, 
                                                                 'merchant_id' => $this->mallB->merchant_id, 
                                                                 'merchant_language_id' => $language_jp->language_id]
                                             );  
 
-        $news_merchant_promotion_1 = Factory::create('NewsMerchant', ['news_id' => $promotion1->news_id, 'merchant_id' => $this->mallB->merchant_id, 'object_type' => 'mall']);
+        $news_merchant_promotion_1 = Factory::create('NewsMerchant', ['news_id' => $news1->news_id, 'merchant_id' => $this->mallB->merchant_id, 'object_type' => 'mall']);
 
         // test translation english
-        $data = array('mall_id' => $this->mallB->merchant_id, 'promotion_id' => $promotion1->news_id, 'language_id' => $language_en->language_id, 'object_type' => 'promotion');
+        $data = array('mall_id' => $this->mallB->merchant_id, 'promotion_id' => $news1->news_id, 'language_id' => $language_en->language_id, 'object_type' => 'news');
 
         $response = $this->makeRequest($data, $this->apikey);
 
@@ -456,11 +454,11 @@ class getPromotionDetailMobileCITest extends TestCase
         $this->assertSame('success', $response->status);
         $this->assertRegExp('/Request OK/i', $response->message);
 
-        $this->assertSame($promotion_translation_en->news_id, $response->data->news_id);
-        $this->assertSame($promotion_translation_en->news_name, $response->data->news_name);
+        $this->assertSame($news_translation_en->news_id, $response->data->news_id);
+        $this->assertSame($news_translation_en->news_name, $response->data->news_name);
 
         // test translation indonesia
-        $data = array('mall_id' => $this->mallB->merchant_id, 'promotion_id' => $promotion1->news_id, 'language_id' => $language_id->language_id, 'object_type' => 'promotion');
+        $data = array('mall_id' => $this->mallB->merchant_id, 'promotion_id' => $news1->news_id, 'language_id' => $language_id->language_id, 'object_type' => 'news');
 
         $response = $this->makeRequest($data, $this->apikey);
 
@@ -468,11 +466,11 @@ class getPromotionDetailMobileCITest extends TestCase
         $this->assertSame('success', $response->status);
         $this->assertRegExp('/Request OK/i', $response->message);
 
-        $this->assertSame($promotion_translation_id->news_id, $response->data->news_id);
-        $this->assertSame($promotion_translation_id->news_name, $response->data->news_name);
+        $this->assertSame($news_translation_id->news_id, $response->data->news_id);
+        $this->assertSame($news_translation_id->news_name, $response->data->news_name);
 
         // test translation japan
-        $data = array('mall_id' => $this->mallB->merchant_id, 'promotion_id' => $promotion1->news_id, 'language_id' => $language_jp->language_id, 'object_type' => 'promotion');
+        $data = array('mall_id' => $this->mallB->merchant_id, 'promotion_id' => $news1->news_id, 'language_id' => $language_jp->language_id, 'object_type' => 'news');
 
         $response = $this->makeRequest($data, $this->apikey);
 
@@ -480,7 +478,7 @@ class getPromotionDetailMobileCITest extends TestCase
         $this->assertSame('success', $response->status);
         $this->assertRegExp('/Request OK/i', $response->message);
 
-        $this->assertSame($promotion_translation_jp->news_id, $response->data->news_id);
-        $this->assertSame($promotion_translation_jp->news_name, $response->data->news_name);
+        $this->assertSame($news_translation_jp->news_id, $response->data->news_id);
+        $this->assertSame($news_translation_jp->news_name, $response->data->news_name);
     }
 }

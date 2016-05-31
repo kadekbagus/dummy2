@@ -245,16 +245,16 @@
         ).append(markerText);
 
         var categoryText = category ? category : '-';
-        /*var $divCategory = $('<div />').append(
+        var $divCategory = $('<div />').append(
             $('<div />').addClass('col-xs-6').append(
                 $('<i />').addClass('fa fa-list').attr('style', 'padding-left: 2px;padding-right: 4px;')
             ).append(
                 $('<span />').text(categoryText)
             )
-        );*/
+        );
 
         $subtitleHeader.append($divMarker);
-        //$subtitleHeader.append($divCategory);
+        $subtitleHeader.append($divCategory);
         $itemListInfo.append($titleHeader);
         $itemListInfo.append($subtitleHeader);
         $itemLink.append($itemListInfo);

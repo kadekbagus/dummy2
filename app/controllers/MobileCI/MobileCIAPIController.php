@@ -2281,6 +2281,11 @@ class MobileCIAPIController extends BaseCIController
                 function ($cid) use ($tenants, $retailer, &$notfound) {
                     if (! empty($cid)) {
                         $category = \Category::active()
+                            ->whereHas('tenants', function($q) use($retailer) {
+                                $q->where('merchants.parent_id', $retailer->merchant_id);
+                                $q->where('merchants.object_type', 'tenant');
+                                $q->where('merchants.status', 'active');
+                            })
                             ->where('category_id', $cid)
                             ->first();
                         if (!is_object($category)) {
@@ -3865,7 +3870,7 @@ class MobileCIAPIController extends BaseCIController
 
             foreach ($listOfRec as $tenant) {
                 if (empty($tenant->logo)) {
-                    $tenant->logo = 'mobile-ci/images/default_product.png';
+                    $tenant->logo = 'mobile-ci/images/default_tenants_directory.png';
                 }
                 if (!empty($tenant->phone)) {
                     $phone = explode('|#|', $tenant->phone);
@@ -3889,7 +3894,7 @@ class MobileCIAPIController extends BaseCIController
                         }
                     }
                 } else {
-                    $tenant->logo_orig = URL::asset('mobile-ci/images/default_product.png');
+                    $tenant->logo_orig = URL::asset('mobile-ci/images/default_tenants_directory.png');
                 }
                 $tenant->name = mb_strlen($tenant->name) > 64 ? mb_substr($tenant->name, 0, 64) . '...' : $tenant->name;
 
