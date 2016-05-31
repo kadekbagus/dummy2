@@ -161,8 +161,14 @@ Route::group(
         Route::get(
             '/customer/tenant', ['as' => 'ci-tenant-detail',
             function () {
-
                 return MobileCI\MobileCIAPIController::create()->getTenantDetailView();
+            }]
+        );
+
+        Route::get(
+            '/customer/service', ['as' => 'ci-service-detail',
+            function () {
+                return MobileCI\MobileCIAPIController::create()->getServiceDetailView();
             }]
         );
 
@@ -312,7 +318,7 @@ Route::group(
         /**
          * My Account
          */
-        Route::get('/customer/my-account', ['as' => 'ci-my-account', 
+        Route::get('/customer/my-account', ['as' => 'ci-my-account',
             function() {
                 return MobileCI\MobileCIAPIController::create()->getMyAccountView();
             }]
@@ -341,7 +347,7 @@ Route::group(
         {
             return MobileCI\MobileCIAPIController::create()->getPowerSearch();
         });
-	
+
 	    /**
          * Tenant load more
          */

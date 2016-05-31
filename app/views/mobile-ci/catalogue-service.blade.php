@@ -62,7 +62,7 @@
                         @foreach($data->records as $service)
                             <div class="col-xs-12 col-sm-12" id="item-{{$service->merchant_id}}">
                                 <section class="list-item-single-tenant">
-                                    <a class="list-item-link" data-href="{{ route('ci-tenant-detail', ['id' => $service->merchant_id]) }}" href="{{ $urlblock->blockedRoute('ci-tenant-detail', ['id' => $service->merchant_id]) }}">
+                                    <a class="list-item-link" data-href="{{ route('ci-service-detail', ['id' => $service->merchant_id]) }}" href="{{ $urlblock->blockedRoute('ci-service-detail', ['id' => $service->merchant_id]) }}">
                                         <div class="list-item-info">
                                             <header class="list-item-title">
                                                 <div><strong>{{{ $service->name }}}</strong></div>

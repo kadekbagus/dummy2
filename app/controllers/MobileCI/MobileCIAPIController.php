@@ -3296,6 +3296,180 @@ class MobileCIAPIController extends BaseCIController
         }
     }
 
+
+    /**
+     * GET - Service detail page
+     *
+     * @param integer    `id`        (required) - The tenant ID
+     *
+     * @return Illuminate\View\View
+     *
+     * @author Firmansyah <firmansyah@dominopos.com>
+     */
+    public function getServiceDetailView()
+    {
+        $user = null;
+        $product_id = 0;
+        $activityPage = Activity::mobileci()
+                                   ->setActivityType('view');
+        $service = null;
+        try {
+            $urlblock = new UrlBlock;
+            $user = $urlblock->checkBlockedUrl();
+            $retailer = $this->getRetailerInfo();
+            $this->acquireUser($retailer, $user);
+            Coupon::issueAutoCoupon($retailer, $user, $urlblock->getUserSession());
+
+            $product_id = trim(OrbitInput::get('id'));
+
+            $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
+
+            $categories = Category::active('categories')
+                ->where('category_level', 1)
+                ->where('merchant_id', $retailer->merchant_id);
+
+            $categories->select('categories.*');
+            $this->maybeJoinWithCategoryTranslationsTable($categories, $alternateLanguage);
+
+            $categories = $categories->get();
+
+            $userAge = 0;
+            if ($user->userDetail->birthdate !== '0000-00-00' && $user->userDetail->birthdate !== null) {
+                $userAge =  $this->calculateAge($user->userDetail->birthdate); // 27
+            }
+
+            $userGender = 'U'; // default is Unknown
+            if ($user->userDetail->gender !== '' && $user->userDetail->gender !== null) {
+                $userGender =  $user->userDetail->gender;
+            }
+
+            $mallTime = Carbon::now($retailer->timezone->timezone_name);
+
+            $service = \TenantStoreAndService::with( // translated
+                array(
+                    'media',
+                    'mediaLogoOrig',
+                    'mediaMapOrig',
+                    'mediaImageOrig',
+                ))
+                ->active('merchants')
+                ->where('parent_id', $retailer->merchant_id)
+                ->where('merchants.merchant_id', $product_id);
+
+            if (!empty($alternateLanguage)) {
+                $service = $service->with(['categories' => function ($q) use ($alternateLanguage) {
+                    $prefix = DB::getTablePrefix();
+                    $q->leftJoin('category_translations', function ($join) use ($alternateLanguage) {
+                        $join->on('categories.category_id', '=', 'category_translations.category_id');
+                        $join->where('category_translations.merchant_language_id', '=', $alternateLanguage->language_id);
+                        $join->where('category_translations.category_name', '!=', '');
+                    });
+                    $q->select('categories.*');
+                    $q->addSelect([
+                        DB::raw("COALESCE(${prefix}category_translations.category_name, ${prefix}categories.category_name) AS category_name"),
+                        DB::raw("COALESCE(${prefix}category_translations.description, ${prefix}categories.description) AS description"),
+                    ]);
+                }]);
+            }
+            else {
+                $service = $service->with('categories');
+            }
+
+            $service->select('merchants.*');
+            $service = $service->first();
+
+            // Check translation for Merchant Translation
+            if (!empty($alternateLanguage) && count($service) > 0) {
+                $merchantTranslation = \MerchantTranslation::excludeDeleted()
+                    ->where('merchant_language_id', '=', $alternateLanguage->language_id)
+                    ->where('merchant_id', $service->merchant_id)->first();
+
+                if (count($merchantTranslation) > 0) {
+                    foreach (['description'] as $field) {
+                        //if field translation empty or null, value of field back to english (default)
+                        if (isset($merchantTranslation->{$field}) && $merchantTranslation->{$field} !== '') {
+                            $service->{$field} = $merchantTranslation->{$field};
+                        }
+                    }
+                }
+            }
+
+            if (empty($service)) {
+                return View::make('mobile-ci.404', array('page_title'=>Lang::get('mobileci.page_title.not_found'), 'retailer'=>$retailer));
+            }
+
+            if (empty($service->logo)) {
+                $service->logo = 'mobile-ci/images/default_tenants_directory.png';
+            }
+
+            $languages = $this->getListLanguages($retailer);
+
+            // cek if any language active
+            if (!empty($alternateLanguage) && !empty($service)) {
+                    $merchant_translation = \MerchantTranslation::excludeDeleted()
+                        ->where('merchant_language_id', '=', $alternateLanguage->language_id)
+                        ->where('merchant_id', $service->merchant_id)->first();
+
+                if (!empty($merchant_translation)) {
+                    foreach (['merchant_name', 'description'] as $field) {
+                        //if field translation empty or null, value of field back to english (default)
+                        if (isset($merchant_translation->{$field}) && $merchant_translation->{$field} !== '') {
+                            $service->{$field} = $merchant_translation->{$field};
+                        }
+                    }
+                }
+            }
+
+            if (! empty($promo_id) ) {
+                $activityPageNotes = sprintf('Page viewed: Service Detail Page, service ID: ' . $service->merchant_id);
+                $activityPage->setUser($user)
+                    ->setActivityName('view_service')
+                    ->setActivityNameLong('View Service Detail')
+                    ->setObject($service)
+                    ->setModuleName('Service')
+                    ->setNotes($activityPageNotes)
+                    ->responseOK()
+                    ->save();
+            }
+
+            $box_url = "";
+            if (! empty($service->box_url)) {
+                $box_url = $service->box_url;
+
+                $my_url = url('/customer?email=' . $user->user_email);
+
+                $box_url = $box_url . '?email=' . urlencode($user->user_email) . '&logout_to=' . urlencode($my_url);
+            }
+
+            return View::make('mobile-ci.service', array(
+                'page_title' => strtoupper($service->name),
+                'user' => $user,
+                'retailer' => $retailer,
+                'service' => $service,
+                'languages' => $languages,
+                // 'facebookInfo' => Config::get('orbit.social_login.facebook'),
+                'box_url' => $box_url,
+                'urlblock' => $urlblock,
+                'user_email' => $user->role->role_name !== 'Guest' ? $user->user_email : '',
+            ));
+
+        } catch (Exception $e) {
+            $activityPageNotes = sprintf('Failed to view: Service Detail Page, service ID: ' . $product_id);
+            $activityPage->setUser($user)
+                ->setActivityName('view_service')
+                ->setActivityNameLong('View Service')
+                ->setObject(null)
+                ->setModuleName('Service')
+                ->setNotes($activityPageNotes)
+                ->responseFailed()
+                ->save();
+
+            return $this->redirectIfNotLoggedIn($e);
+                // return $e;
+        }
+    }
+
+
     /**
      * GET - Tenant load more
      *
@@ -4090,7 +4264,7 @@ class MobileCIAPIController extends BaseCIController
                 'facebookInfo' => Config::get('orbit.social_login.facebook'),
                 'urlblock' => $urlblock
             ));
-            
+
 
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: %s', 'News List');
