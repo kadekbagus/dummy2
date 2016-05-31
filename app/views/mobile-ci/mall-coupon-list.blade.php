@@ -13,7 +13,7 @@
                                 <span class="fa-stack fa-2x pull-right couponbadge-container couponbadge-shadow couponbadge-medium" data-count="{{$coupon->quantity}}+">
                                    <i class="fa fa-circle fa-stack-2x color-base"></i>
                                    <i class="fa fa-ticket fa-stack-1x color-icon"></i>
-                                   <i class="fa fa-certificate fa-stack-2x couponbadge color-badge couponbadge-medium"></i>
+                                   <i class="fa fa-certificate fa-stack-2x couponbadge color-badge couponbadge-small"></i>
                                 </span>
                                 <div class="list-item-info">
                                     <header class="list-item-title">
