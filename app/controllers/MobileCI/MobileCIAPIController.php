@@ -2484,8 +2484,17 @@ class MobileCIAPIController extends BaseCIController
                 }
             );
 
+            $languages = $this->getListLanguages($retailer);
+
             if ($notfound) {
-                return View::make('mobile-ci.404', array('page_title'=>Lang::get('mobileci.page_title.not_found'), 'retailer'=>$retailer, 'urlblock' => $urlblock));
+                return View::make('mobile-ci.404', array(
+                    'page_title'=>Lang::get('mobileci.page_title.not_found'), 
+                    'retailer'=>$retailer, 
+                    'urlblock' => $urlblock,
+                    'user' => $user,
+                    'user_email' => $user->role->role_name !== 'Guest' ? $user->user_email : '',
+                    'languages' => $languages
+                ));
             }
 
             OrbitInput::get(
@@ -2826,8 +2835,6 @@ class MobileCIAPIController extends BaseCIController
                     ->responseOK()
                     ->save();
             }
-
-            $languages = $this->getListLanguages($retailer);
 
             return View::make('mobile-ci.catalogue-tenant', array(
                 'page_title'=>$pagetitle,
@@ -3858,7 +3865,7 @@ class MobileCIAPIController extends BaseCIController
 
             foreach ($listOfRec as $tenant) {
                 if (empty($tenant->logo)) {
-                    $tenant->logo = 'mobile-ci/images/default_product.png';
+                    $tenant->logo = 'mobile-ci/images/default_tenants_directory.png';
                 }
                 if (!empty($tenant->phone)) {
                     $phone = explode('|#|', $tenant->phone);
@@ -3882,7 +3889,7 @@ class MobileCIAPIController extends BaseCIController
                         }
                     }
                 } else {
-                    $tenant->logo_orig = URL::asset('mobile-ci/images/default_product.png');
+                    $tenant->logo_orig = URL::asset('mobile-ci/images/default_tenants_directory.png');
                 }
                 $tenant->name = mb_strlen($tenant->name) > 64 ? mb_substr($tenant->name, 0, 64) . '...' : $tenant->name;
 
@@ -4107,7 +4114,6 @@ class MobileCIAPIController extends BaseCIController
                 function ($cid) use ($service, $retailer, &$notfound) {
                     if (! empty($cid)) {
                         $category = \Category::active()
-                            ->where('merchant_id', $retailer->merchant_id)
                             ->where('category_id', $cid)
                             ->first();
                         if (!is_object($category)) {
@@ -4123,6 +4129,19 @@ class MobileCIAPIController extends BaseCIController
                     }
                 }
             );
+
+            $languages = $this->getListLanguages($retailer);
+
+            if ($notfound) {
+                return View::make('mobile-ci.404', array(
+                    'page_title'=>Lang::get('mobileci.page_title.not_found'), 
+                    'retailer'=>$retailer, 
+                    'urlblock' => $urlblock,
+                    'user' => $user,
+                    'user_email' => $user->role->role_name !== 'Guest' ? $user->user_email : '',
+                    'languages' => $languages
+                ));
+            }
 
             OrbitInput::get(
                 'fid',
@@ -4248,8 +4267,6 @@ class MobileCIAPIController extends BaseCIController
             $data->returned_records = count($listOfRec);
             $data->records = $listOfRec;
             $data->search_mode = $searchMode;
-
-            $languages = $this->getListLanguages($retailer);
 
             return View::make('mobile-ci.catalogue-service', array(
                 'page_title'=>$pagetitle,
@@ -4399,7 +4416,6 @@ class MobileCIAPIController extends BaseCIController
                 function ($cid) use ($service, $retailer, &$notfound) {
                     if (! empty($cid)) {
                         $category = \Category::active()
-                            ->where('merchant_id', $retailer->merchant_id)
                             ->where('category_id', $cid)
                             ->first();
                         if (!is_object($category)) {
