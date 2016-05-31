@@ -2202,7 +2202,7 @@ class MobileCIAPIController extends BaseCIController
                 $q->where('merchants.object_type', 'tenant');
                 $q->where('merchants.status', 'active');
             });
-            $categories = $categories->orderBy('categories.category_name', 'ASC')->get();
+            $categories = $categories->get();
 
             // Get the maximum record
             $maxRecord = (int) Config::get('orbit.pagination.max_record', 50);
@@ -3015,6 +3015,7 @@ class MobileCIAPIController extends BaseCIController
                         DB::raw("COALESCE(${prefix}category_translations.category_name, ${prefix}categories.category_name) AS category_name"),
                         DB::raw("COALESCE(${prefix}category_translations.description, ${prefix}categories.description) AS description"),
                     ]);
+                    $q->orderBy(DB::Raw('category_name'), 'asc');
                 }]);
             }
             else {
@@ -4022,7 +4023,7 @@ class MobileCIAPIController extends BaseCIController
                 $q->where('merchants.object_type', 'service');
                 $q->where('merchants.status', 'active');
             });
-            $categories = $categories->orderBy('categories.category_name', 'ASC')->get();
+            $categories = $categories->get();
 
             // Get the maximum record
             $maxRecord = (int) Config::get('orbit.pagination.max_record', 50);
@@ -9121,13 +9122,15 @@ class MobileCIAPIController extends BaseCIController
                     $alternateLanguage->language_id);
                 $join->where('category_translations.category_name', '!=', '');
             });
-            $categories->select('categories.*');
+            $categories->select('categories.*')->orderBy('category_translations.category_name', 'ASC');
             // and overwrite fields with alternate language fields if present
             foreach (['category_name', 'description'] as $field) {
                 $categories->addSelect([
                     DB::raw("COALESCE(${prefix}category_translations.${field}, ${prefix}categories.${field}) as ${field}")
                 ]);
             }
+        } else {
+            $categories->orderBy('categories.category_name', 'ASC');
         }
     }
 
