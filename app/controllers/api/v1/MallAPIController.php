@@ -307,7 +307,7 @@ class MallAPIController extends ControllerAPI
             $geo_point_latitude = OrbitInput::post('geo_point_latitude');
             $geo_point_longitude = OrbitInput::post('geo_point_longitude');
             $geo_area = OrbitInput::post('geo_area');
-            $get_internet_access_status = OrbitInput::post('get_internet_access_status');
+            $get_internet_access_status = OrbitInput::post('get_internet_access_status', 'inactive');
 
             // for a while this declaration with default value
             $widgets = OrbitInput::post('widgets', $this->default['widgets']);
