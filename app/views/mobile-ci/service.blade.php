@@ -19,15 +19,15 @@
 
     <div class="col-xs-12" style="z-index: 100;">
         @if(count($service->mediaLogoOrig) === 0 && count($service->mediaImageOrig) === 0)
-        <img class="img-responsive img-center" src="{{ asset('mobile-ci/images/default_tenants_directory.png') }}"/>
+        <img class="img-responsive img-center" src="{{ asset('mobile-ci/images/default_services_directory.png') }}"/>
         @else
         <ul id="image-gallery" class="gallery list-unstyled cS-hidden">
             @if(!count($service->mediaLogoOrig) > 0)
-            <li data-thumb="{{ asset('mobile-ci/images/default_tenants_directory.png') }}">
+            <li data-thumb="{{ asset('mobile-ci/images/default_services_directory.png') }}">
                 <span class="gallery-helper"></span>
                 <div class="vertical-align-middle-outer">
                     <div class="vertical-align-middle-inner">
-                        <img class="img-responsive" src="{{ asset('mobile-ci/images/default_tenants_directory.png') }}"/>
+                        <img class="img-responsive" src="{{ asset('mobile-ci/images/default_services_directory.png') }}"/>
                     </div>
                 </div>
             </li>
