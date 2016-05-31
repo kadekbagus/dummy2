@@ -2484,6 +2484,8 @@ class MobileCIAPIController extends BaseCIController
                 }
             );
 
+            $languages = $this->getListLanguages($retailer);
+
             if ($notfound) {
                 return View::make('mobile-ci.404', array(
                     'page_title'=>Lang::get('mobileci.page_title.not_found'), 
@@ -2833,8 +2835,6 @@ class MobileCIAPIController extends BaseCIController
                     ->responseOK()
                     ->save();
             }
-
-            $languages = $this->getListLanguages($retailer);
 
             return View::make('mobile-ci.catalogue-tenant', array(
                 'page_title'=>$pagetitle,
@@ -4130,6 +4130,8 @@ class MobileCIAPIController extends BaseCIController
                 }
             );
 
+            $languages = $this->getListLanguages($retailer);
+
             if ($notfound) {
                 return View::make('mobile-ci.404', array(
                     'page_title'=>Lang::get('mobileci.page_title.not_found'), 
@@ -4265,8 +4267,6 @@ class MobileCIAPIController extends BaseCIController
             $data->returned_records = count($listOfRec);
             $data->records = $listOfRec;
             $data->search_mode = $searchMode;
-
-            $languages = $this->getListLanguages($retailer);
 
             return View::make('mobile-ci.catalogue-service', array(
                 'page_title'=>$pagetitle,
