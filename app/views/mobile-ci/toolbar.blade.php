@@ -2,15 +2,15 @@
     <div class="header-buttons-container">
         <div class="col-xs-4 pull-right text-right">
             <ul class="buttons-list">
-                <li id="orbit-tour-search" class="toolbar-btn"><a id="searchBtn"><span><i class="fa fa-search" style="font-size: 26px;font-weight: bold;"></i></span></a></li>
-                <li id="orbit-tour-profile" class="toolbar-btn-right"><a id="slide-trigger"><span><i class="fa fa-bars" style="font-size: 26px;font-weight: bold;"><span class="notification-badge-txt notification-badge">0</span></i></span></a></li>
+                <li id="orbit-tour-search"><a id="searchBtn"><span><i class="fa fa-search" style="font-size: 26px;font-weight: bold;"></i></span></a></li>
+                <li id="orbit-tour-profile"><a id="slide-trigger"><span><i class="fa fa-bars" style="font-size: 26px;font-weight: bold;"><span class="notification-badge-txt notification-badge">0</span></i></span></a></li>
             </ul>
         </div>
 
         <div class="col-xs-4">
             <ul class="buttons-list">
-                <li id="orbit-tour-home" class="toolbar-btn-left"><a href="{{ (new \Orbit\Helper\Net\UrlChecker)->blockedRoute('ci-customer-home') }}"><span><i class="glyphicon glyphicon-home"></i></span></a></li>
-                <li id="orbit-tour-map" class="toolbar-btn"><a href="{{ Config::get('orbit.shop.back_to_map_url') }}"><span><i class="fa fa-map-marker" style="font-size: 26px;font-weight: bold;"></i></span></a></li>
+                <li id="orbit-tour-home"><a href="{{ (new \Orbit\Helper\Net\UrlChecker)->blockedRoute('ci-customer-home') }}"><span><i class="glyphicon glyphicon-home"></i></span></a></li>
+                <li id="orbit-tour-map"><a href="{{ Config::get('orbit.shop.back_to_map_url') }}"><span><i class="fa fa-map-marker" style="font-size: 26px;font-weight: bold;"></i></span></a></li>
             </ul>
         </div>
         <div class="col-xs-4 text-center">
