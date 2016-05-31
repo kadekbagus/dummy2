@@ -258,12 +258,12 @@ if(sizeof($tenant->newsPromotionsProfiling) > 0 || sizeof($tenant->newsProfiling
 <div class="row relative-wrapper">
 @endif
     <div class="actions-container" style="z-index: 102;">
-        <a class="action-btn">
-            <span class="fa fa-stack fa-2x">
-                <i class="fa fa-circle fa-stack-2x"> </i>
-                <i class="fa glyphicon-plus fa-inverse fa-stack-2x"> </i>
-            </span>
-        </a>
+        <div class="circle-plus action-btn">
+            <div class="circle">
+                <div class="horizontal"></div>
+                <div class="vertical"></div>
+            </div>
+        </div>
         <div class="actions-panel" style="display: none;">
             <ul class="list-unstyled">
                 @if ($urlblock->isLoggedIn())
