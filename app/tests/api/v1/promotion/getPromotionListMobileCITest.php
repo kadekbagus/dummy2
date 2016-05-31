@@ -804,4 +804,77 @@ class getPromotionListMobileCITest extends TestCase
         $this->assertSame(2, $response->data->total_records);
         $this->assertSame(2, count($response->data->records));
     }
+
+    public function testTranslationPromotionList() 
+    {
+        $language_en = Factory::create('Language', ['name' => 'en']);
+        $language_id = Factory::create('Language', ['name' => 'id']);
+        $language_jp = Factory::create('Language', ['name' => 'jp']);
+
+        $merchant_language1 = Factory::create('MerchantLanguage', ['language_id' => $language_en->language_id, 'merchant_id' => $this->mallB->merchant_id]);
+        $merchant_language2 = Factory::create('MerchantLanguage', ['language_id' => $language_id->language_id, 'merchant_id' => $this->mallB->merchant_id]);
+        $merchant_language3 = Factory::create('MerchantLanguage', ['language_id' => $language_jp->language_id, 'merchant_id' => $this->mallB->merchant_id]);
+
+        $promotion1 = Factory::create('News', ['mall_id' => $this->mallB->merchant_id, 
+                                     'object_type' => 'promotion',
+                                     'link_object_type' => 'tenant', 
+                                     'campaign_status_id' => $this->campaign_status_ongoing->campaign_status_id,
+                                     'is_all_gender' => 'Y',
+                                     'is_all_age' => 'Y'
+                                    ]
+                            );
+
+        $promotion_translation_en = Factory::create('NewsTranslation', ['news_id' => $promotion1->news_id, 
+                                                                        'merchant_id' => $this->mallB->merchant_id, 
+                                                                        'merchant_language_id' => $language_en->language_id]
+                                                    );      
+
+        $promotion_translation_id = Factory::create('NewsTranslation', ['news_id' => $promotion1->news_id, 
+                                                                'merchant_id' => $this->mallB->merchant_id, 
+                                                                'merchant_language_id' => $language_id->language_id]
+                                            );  
+
+        $promotion_translation_jp = Factory::create('NewsTranslation', ['news_id' => $promotion1->news_id, 
+                                                                'merchant_id' => $this->mallB->merchant_id, 
+                                                                'merchant_language_id' => $language_jp->language_id]
+                                            );  
+
+        $news_merchant_promotion_1 = Factory::create('NewsMerchant', ['news_id' => $promotion1->news_id, 'merchant_id' => $this->mallB->merchant_id, 'object_type' => 'mall']);
+
+        // test translation english
+        $data = array('mall_id' => $this->mallB->merchant_id, 'promotion_id' => $promotion1->news_id, 'language_id' => $language_en->language_id);
+
+        $response = $this->makeRequest($data, $this->apikey);
+
+        $this->assertSame(0, $response->code);
+        $this->assertSame('success', $response->status);
+        $this->assertRegExp('/Request OK/i', $response->message);
+
+        $this->assertSame($promotion_translation_en->news_id, $response->data->records[0]->news_id);
+        $this->assertSame($promotion_translation_en->news_name, $response->data->records[0]->news_name);
+
+        // test translation indonesia
+        $data = array('mall_id' => $this->mallB->merchant_id, 'promotion_id' => $promotion1->news_id, 'language_id' => $language_id->language_id);
+
+        $response = $this->makeRequest($data, $this->apikey);
+
+        $this->assertSame(0, $response->code);
+        $this->assertSame('success', $response->status);
+        $this->assertRegExp('/Request OK/i', $response->message);
+
+        $this->assertSame($promotion_translation_id->news_id, $response->data->records[0]->news_id);
+        $this->assertSame($promotion_translation_id->news_name, $response->data->records[0]->news_name);
+
+        // test translation japan
+        $data = array('mall_id' => $this->mallB->merchant_id, 'promotion_id' => $promotion1->news_id, 'language_id' => $language_jp->language_id);
+
+        $response = $this->makeRequest($data, $this->apikey);
+
+        $this->assertSame(0, $response->code);
+        $this->assertSame('success', $response->status);
+        $this->assertRegExp('/Request OK/i', $response->message);
+
+        $this->assertSame($promotion_translation_jp->news_id, $response->data->records[0]->news_id);
+        $this->assertSame($promotion_translation_jp->news_name, $response->data->records[0]->news_name);
+    }
 }
