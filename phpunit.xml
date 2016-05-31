@@ -57,6 +57,8 @@
             <file>./app/tests/api/v1/category/postUpdateCategoryTestArtemisVersion.php</file>
             <file>./app/tests/api/v1/category/postDeleteCategoryTestArtemisVersion.php</file>
             <file>./app/tests/api/v1/category/postTenantTestLinkToTenantCategoryTestArtemisVersion.php</file>
+            <file>./app/tests/api/v1/promotion/getPromotionListMobileCITest.php</file>
+            <file>./app/tests/api/v1/promotion/getPromotionDetailMobileCITest.php</file>
         </testsuite>
     </testsuites>
 </phpunit>

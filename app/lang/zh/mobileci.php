@@ -295,7 +295,6 @@ return array(
         'ask_our_tenant_employee'          => '联系我们的店铺雇员',
         'validate'                         => '验证',
         'wrong_verification_number'        => '验证码错误',
-        'invalid_user_location'            => '无效的用户位置',
         'please_check_tenant'              => '请检查店雇员或购物场客户服务',
         'ok'                               => '是',
         'successful'                       => '成功',

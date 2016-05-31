@@ -55,6 +55,7 @@ class PromotionCIAPIController extends BaseAPIController
             $mallId = OrbitInput::get('mall_id', null);
             $tenantId = OrbitInput::get('tenant_id', null);
             $languageId = OrbitInput::get('language_id', null);
+            $objectType = OrbitInput::get('object_type', null);
             $objectId = null;
 
             $this->registerCustomValidation();
@@ -125,12 +126,16 @@ class PromotionCIAPIController extends BaseAPIController
                 $objectId = $mallId;
             }
 
+            if (empty($objectType)) {
+                $objectType = 'promotion';
+            }
+
             $promotions = $promotions->where('news.status', '=', 'active')
                         ->where(function ($q) use ($objectId) {
                             $q->where('merchants.parent_id', '=', $objectId)
                               ->orWhere('merchants.merchant_id', '=', $objectId);
                         })
-                        ->where('news.object_type', 'promotion')
+                        ->where('news.object_type', $objectType)
                         ->whereRaw("? between begin_date and end_date", [$mallTime]);
 
             OrbitInput::get(
@@ -377,6 +382,7 @@ class PromotionCIAPIController extends BaseAPIController
             $mallId = OrbitInput::get('mall_id', null);
             $promotionId = OrbitInput::get('promotion_id', null);
             $languageId = OrbitInput::get('language_id', null);
+            $objectType = OrbitInput::get('object_type', null);
             $alternateLanguage = null;
 
             $this->registerCustomValidation();
@@ -405,6 +411,10 @@ class PromotionCIAPIController extends BaseAPIController
 
             $alternateLanguage = $this->getMerchantLanguage($mall, $languageId);
 
+            if (empty($objectType)) {
+                $objectType = 'promotion';
+            }
+
             $promotion = News::with(['tenants' => function($q) use($mall) {
                     $q->where('merchants.status', 'active');
                     $q->where('merchants.parent_id', $mall->merchant_id);
@@ -416,7 +426,7 @@ class PromotionCIAPIController extends BaseAPIController
                     $q->where('merchants.parent_id', '=', $mall->merchant_id)
                       ->orWhere('merchants.merchant_id', '=', $mall->merchant_id);
                 })
-                ->where('news.object_type', 'promotion')
+                ->where('news.object_type', $objectType)
                 ->where('news.news_id', $promotionId)
                 ->where('news.status', 'active')
                 ->first();
@@ -635,41 +645,6 @@ class PromotionCIAPIController extends BaseAPIController
         return null;
     }
 
-    // get the url for Facebook Share dummy page
-    protected function getFBShareDummyPage($type, $id, $lang = null) {
-        $oldRouteSessionConfigValue = Config::get('orbit.session.availability.query_string');
-        Config::set('orbit.session.availability.query_string', false);
-
-        $url = '';
-        switch ($type) {
-            case 'tenant':
-                $url = URL::route('share-tenant', ['id' => $id, 'lang' => $lang]);
-                break;
-            case 'promotion':
-                $url = URL::route('share-promotion', ['id' => $id, 'lang' => $lang]);
-                break;
-            case 'news':
-                $url = URL::route('share-news', ['id' => $id, 'lang' => $lang]);
-                break;
-            case 'coupon':
-                $url = URL::route('share-coupon', ['id' => $id, 'lang' => $lang]);
-                break;
-            case 'lucky-draw':
-                $url = URL::route('share-lucky-draw', ['id' => $id, 'lang' => $lang]);
-                break;
-            case 'home':
-                $url = URL::route('share-home');
-                break;
-
-            default:
-                $url = '';
-                break;
-        }
-        Config::set('orbit.session.availability.query_string', $oldRouteSessionConfigValue);
-
-        return $url;
-    }
-
     protected function registerCustomValidation()
     {
         // Check the existance of mall id
@@ -706,7 +681,6 @@ class PromotionCIAPIController extends BaseAPIController
         Validator::extend('orbit.empty.promotion', function ($attribute, $value, $parameters) {
             $promotion = News::excludeDeleted('news')
                         ->where('news_id', $value)
-                        ->where('object_type', 'promotion')
                         ->first();
 
             if (empty($promotion)) {
