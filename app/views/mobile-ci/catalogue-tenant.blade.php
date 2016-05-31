@@ -104,16 +104,6 @@
                                                     <i class="fa fa-map-marker" style="padding-left: 5px;padding-right: 8px;"></i>
                                                     {{{ !empty($tenant->floor) ? ' ' . $tenant->floor : '' }}}{{{ !empty($tenant->unit) ? ' - ' . $tenant->unit : '' }}}
                                                 </div>
-                                                <div>
-                                                    <div class="col-xs-6">
-                                                        <i class="fa fa-list" style="padding-left: 2px;padding-right: 4px;"></i>
-                                                        @if(empty($tenant->category_string))
-                                                            <span>-</span>
-                                                        @else
-                                                            <span>{{{ mb_strlen($tenant->category_string) > 30 ? mb_substr($tenant->category_string, 0, 30, 'UTF-8') . '...' : $tenant->category_string }}}</span>
-                                                        @endif
-                                                    </div>
-                                                </div>
                                                 @if ($urlblock->isLoggedIn())
                                                     @if(! empty($tenant->facebook_like_url))
                                                     <div class="fb-like" data-href="{{{$tenant->facebook_like_url}}}" data-layout="button_count" data-action="like" data-show-faces="false" data-share="false"></div>
