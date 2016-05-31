@@ -4124,6 +4124,10 @@ class MobileCIAPIController extends BaseCIController
                 }
             );
 
+            if ($notfound) {
+                return View::make('mobile-ci.404', array('page_title'=>Lang::get('mobileci.page_title.not_found'), 'retailer'=>$retailer, 'urlblock' => $urlblock));
+            }
+
             OrbitInput::get(
                 'fid',
                 function ($fid) use ($service) {
@@ -4415,6 +4419,10 @@ class MobileCIAPIController extends BaseCIController
                     }
                 }
             );
+
+            if ($notfound) {
+                return View::make('mobile-ci.404', array('page_title'=>Lang::get('mobileci.page_title.not_found'), 'retailer'=>$retailer, 'urlblock' => $urlblock));
+            }
 
             OrbitInput::get(
                 'fid',
