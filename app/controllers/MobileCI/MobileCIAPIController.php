@@ -2199,9 +2199,10 @@ class MobileCIAPIController extends BaseCIController
             $this->maybeJoinWithCategoryTranslationsTable($categories, $alternateLanguage);
             $categories->whereHas('tenants', function($q) use($retailer) {
                 $q->where('merchants.parent_id', $retailer->merchant_id);
+                $q->where('merchants.object_type', 'tenant');
                 $q->where('merchants.status', 'active');
             });
-            $categories = $categories->get();
+            $categories = $categories->orderBy('categories.category_name', 'ASC')->get();
 
             // Get the maximum record
             $maxRecord = (int) Config::get('orbit.pagination.max_record', 50);
@@ -2212,12 +2213,8 @@ class MobileCIAPIController extends BaseCIController
             $floorList = Object::whereHas('mall', function ($q) use ($retailer) {
                     $q->where('merchants.merchant_id', $retailer->merchant_id);
                 })
-                ->select('objects.*')
-                ->join('merchants', 'objects.object_name', '=', 'merchants.floor')
-                ->where('objects.status', 'active')
-                ->where('merchants.status', 'active')
-                ->where('merchants.parent_id', $retailer->merchant_id)
-                ->where('objects.object_type', 'floor')
+                ->active()
+                ->where('object_type', 'floor')
                 ->orderBy('object_order', 'asc')
                 ->groupBy('object_name')
                 ->get();
@@ -4016,14 +4013,16 @@ class MobileCIAPIController extends BaseCIController
 
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
 
-            $categories = Category::active('categories')
-                ->where('category_level', 1)
-                ->where('merchant_id', $retailer->merchant_id);
+            $categories = Category::active('categories');
 
             $categories->select('categories.*');
             $this->maybeJoinWithCategoryTranslationsTable($categories, $alternateLanguage);
-
-            $categories = $categories->get();
+            $categories->whereHas('services', function($q) use($retailer) {
+                $q->where('merchants.parent_id', $retailer->merchant_id);
+                $q->where('merchants.object_type', 'service');
+                $q->where('merchants.status', 'active');
+            });
+            $categories = $categories->orderBy('categories.category_name', 'ASC')->get();
 
             // Get the maximum record
             $maxRecord = (int) Config::get('orbit.pagination.max_record');
