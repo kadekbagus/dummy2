@@ -179,7 +179,7 @@
 {{ HTML::script('mobile-ci/scripts/jquery.lazyload.min.js') }}
 <script type="text/javascript">
 
-    var take = {{ Config::get('orbit.pagination.per_page', 100) }},
+    var take = {{ Config::get('orbit.pagination.per_page', 25) }},
         skip = 0;//{{ Config::get('orbit.pagination.per_page', 25) }},
         keyword = '{{{ Input::get('keyword', '') }}}',
         cid = '{{{ Input::get('cid', '') }}}',
@@ -245,16 +245,16 @@
         ).append(markerText);
 
         var categoryText = category ? category : '-';
-        var $divCategory = $('<div />').append(
+        /*var $divCategory = $('<div />').append(
             $('<div />').addClass('col-xs-6').append(
                 $('<i />').addClass('fa fa-list').attr('style', 'padding-left: 2px;padding-right: 4px;')
             ).append(
                 $('<span />').text(categoryText)
             )
-        );
+        );*/
 
         $subtitleHeader.append($divMarker);
-        $subtitleHeader.append($divCategory);
+        //$subtitleHeader.append($divCategory);
         $itemListInfo.append($titleHeader);
         $itemListInfo.append($subtitleHeader);
         $itemLink.append($itemListInfo);
@@ -385,8 +385,13 @@
                         dataJson.records = jsonObj.records.concat(dataJson.records);
                     }
 
-                    // Set tenantData in localStorage.
-                    localStorage.setItem('tenantData', JSON.stringify(dataJson));
+                    try {
+                        // Set tenantData in localStorage.
+                        localStorage.setItem('tenantData', JSON.stringify(dataJson));
+                    }
+                    catch (err) {
+                        // For safari private mode sake.
+                    }
                 }
             }
         })
@@ -428,8 +433,13 @@
                 localStorage.removeItem('tenantData');
             }
 
-            // Set fromSource in localStorage.
-            localStorage.setItem('fromSource', 'store');
+            try {
+                // Set fromSource in localStorage.
+                localStorage.setItem('fromSource', 'store');
+            }
+            catch (err) {
+                // Need this for safari private mode !!
+            }
         }
 
         $(document).on('show.bs.modal', '.modal', function (event) {
