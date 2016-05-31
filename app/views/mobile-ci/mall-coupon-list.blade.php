@@ -10,14 +10,11 @@
                     <div class="col-xs-12 col-sm-12 item-x" data-ids="{{$coupon->promotion_id}}"  id="item-{{$coupon->promotion_id}}">
                         <section class="list-item-single-tenant">
                             <a class="list-item-link" data-href="{{ route('ci-coupon-detail', ['id' => $coupon->promotion_id]) }}" href="{{ $urlblock->blockedRoute('ci-coupon-detail', ['id' => $coupon->promotion_id]) }}">
-                                <span class="fa-stack fa-2x pull-right couponbadge-container" data-count="{{$coupon->quantity}}+">
+                                <span class="fa-stack fa-2x pull-right couponbadge-container couponbadge-shadow couponbadge-medium" data-count="{{$coupon->quantity}}+">
                                    <i class="fa fa-circle fa-stack-2x color-base"></i>
                                    <i class="fa fa-ticket fa-stack-1x color-icon"></i>
-                                   <i class="fa fa-certificate fa-stack-2x couponbadge"></i>
+                                   <i class="fa fa-certificate fa-stack-2x couponbadge color-badge couponbadge-medium"></i>
                                 </span>
-                                <!-- <div class="coupon-new-badge">
-                                    <div class="new-number">{{$coupon->quantity}}</div>
-                                </div> -->
                                 <div class="list-item-info">
                                     <header class="list-item-title">
                                         <div><strong>{{{ $coupon->promotion_name }}}</strong></div>

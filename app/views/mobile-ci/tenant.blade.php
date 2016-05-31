@@ -182,16 +182,11 @@ if(sizeof($tenant->newsPromotionsProfiling) > 0 || sizeof($tenant->newsProfiling
                 <div class="col-xs-12 col-sm-12">
                     <section class="list-item-single-tenant">
                         <a class="list-item-link" data-href="{{ route('ci-coupon-detail', ['id' => $coupontab->promotion_id]) }}" href="{{ $urlblock->blockedRoute('ci-coupon-detail', ['id' => $coupontab->promotion_id]) }}">
-                                <span class="fa-stack fa-2x pull-right couponbadge-container" data-count="{{$coupontab->quantity}}+">
+                                <span class="fa-stack fa-2x pull-right couponbadge-container couponbadge-shadow couponbadge-medium" data-count="{{$coupontab->quantity}}+">
                                    <i class="fa fa-circle fa-stack-2x color-base"></i>
                                    <i class="fa fa-ticket fa-stack-1x color-icon"></i>
-                                   <i class="fa fa-certificate fa-stack-2x couponbadge"></i>
+                                   <i class="fa fa-certificate fa-stack-2x couponbadge color-badge couponbadge-small"></i>
                                 </span>
-                            <!--
-                            <div class="coupon-new-badge">
-                                <div class="new-number">{{$coupontab->quantity}}</div>
-                            </div>
-                            -->
                             <div class="list-item-info">
                                 <header class="list-item-title">
                                     <div><strong>{{{ $coupontab->promotion_name }}}</strong></div>
@@ -258,12 +253,12 @@ if(sizeof($tenant->newsPromotionsProfiling) > 0 || sizeof($tenant->newsProfiling
 <div class="row relative-wrapper">
 @endif
     <div class="actions-container" style="z-index: 102;">
-        <a class="action-btn">
-            <span class="fa fa-stack fa-2x">
-                <i class="fa fa-circle fa-stack-2x"> </i>
-                <i class="fa glyphicon-plus fa-inverse fa-stack-2x"> </i>
-            </span>
-        </a>
+        <div class="circle-plus action-btn">
+            <div class="circle">
+                <div class="horizontal"></div>
+                <div class="vertical"></div>
+            </div>
+        </div>
         <div class="actions-panel" style="display: none;">
             <ul class="list-unstyled">
                 @if ($urlblock->isLoggedIn())

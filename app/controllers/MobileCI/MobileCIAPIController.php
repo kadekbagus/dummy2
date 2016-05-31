@@ -3015,6 +3015,7 @@ class MobileCIAPIController extends BaseCIController
                         DB::raw("COALESCE(${prefix}category_translations.category_name, ${prefix}categories.category_name) AS category_name"),
                         DB::raw("COALESCE(${prefix}category_translations.description, ${prefix}categories.description) AS description"),
                     ]);
+                    $q->orderBy(DB::Raw('category_name'), 'asc');
                 }]);
             }
             else {

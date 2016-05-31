@@ -274,14 +274,51 @@ span.attribute-title {
     margin-top: 1.8em;
 }
 
+/*
+    Create Circle Plus Sign
+*/
+.circle-plus {
+    height: 6em;
+    width: 6em;
+    font-size: .75em;
+
+    .circle {
+        position: relative;
+        width: 4.5em;
+        height: 4.5em;
+        border-radius: 100%;
+        border: 0 none;
+
+        .horizontal {
+            position: absolute;
+            width: 3.3em;//2.4em;
+            height: .3em;//.7em;
+            top: 2.1em;//1.9em;
+            left: .6em;//1.05em;
+        }
+
+        .vertical {
+            position: absolute;
+            width: .3em;//.7em;
+            height: 3.3em;//2.4em;
+            top: .6em;//1.05em;
+            left: 2.1em;//1.9em;
+        }
+    }
+}
+/* End of creating Circle Plus Sign */
+
 div.relative-wrapper {
     position: relative;
 }
 
 .actions-container.alive {
     > .action-btn {
-        color: #097494;
-        transform: rotateZ(45deg);
+
+        .circle {
+            transform: rotateZ(45deg);
+            background-color: #097494;
+        }
     }
 
     background: rgb(181,189,200); /* Old browsers */
@@ -297,26 +334,26 @@ div.relative-wrapper {
 
     a {
         color: #0aa5d5;
-    }
 
-    a:not(.action-btn) {
         &:hover {
             color: #097494;
         }
     }
 
     > .action-btn {
-        display: inline-block;
         cursor: pointer;
         padding: 5px;
 
-        -webkit-transition: 0.1s ease-in-out;
-        -moz-transition: 0.1s ease-in-out;
-        -o-transition: 0.1s ease-in-out;
-        transition: 0.1s ease-in-out;
+        .circle {
+            background-color: #0aa5d5;
+            -webkit-transition: 0.1s ease-in-out;
+            -moz-transition: 0.1s ease-in-out;
+            -o-transition: 0.1s ease-in-out;
+            transition: 0.1s ease-in-out;
 
-        .glyphicon-plus {
-            bottom: 2px;
+            .horizontal, .vertical {
+                background-color: #FFF;
+            }
         }
     }
 
