@@ -2281,6 +2281,11 @@ class MobileCIAPIController extends BaseCIController
                 function ($cid) use ($tenants, $retailer, &$notfound) {
                     if (! empty($cid)) {
                         $category = \Category::active()
+                            ->whereHas('tenants', function($q) use($retailer) {
+                                $q->where('merchants.parent_id', $retailer->merchant_id);
+                                $q->where('merchants.object_type', 'tenant');
+                                $q->where('merchants.status', 'active');
+                            })
                             ->where('category_id', $cid)
                             ->first();
                         if (!is_object($category)) {
