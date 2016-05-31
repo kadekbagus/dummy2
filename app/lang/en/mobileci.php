@@ -295,6 +295,7 @@ return array(
         'ask_our_tenant_employee'          => '(Ask our store employee or mall customer service)',
         'validate'                         => 'Enter',
         'wrong_verification_number'        => 'Wrong Verification Number',
+        'invalid_user_location'            => 'Invalid User Location',
         'please_check_tenant'              => 'Please check with the store employee or mall customer service',
         'ok'                               => 'OK',
         'successful'                       => 'Successful',

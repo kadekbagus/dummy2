@@ -49,6 +49,9 @@
             <file>./app/tests/api/v1/tenant/getTenantItemAngularCITest.php</file>
             <file>./app/tests/api/v1/category/getCategoryListAngularCITest.php</file>
             <file>./app/tests/api/v1/widget/getSearchWidgetTest.php</file>
+            <file>./app/tests/api/v1/tenant/getSearchTenantStoreAndServiceTest.php</file>
+            <file>./app/tests/api/v1/tenant/postNewTenantStoreAndServiceTest.php</file>
+            <file>./app/tests/api/v1/tenant/postUpdateTenantStoreAndServiceTest.php</file>
         </testsuite>
     </testsuites>
 </phpunit>
