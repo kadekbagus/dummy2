@@ -2485,7 +2485,14 @@ class MobileCIAPIController extends BaseCIController
             );
 
             if ($notfound) {
-                return View::make('mobile-ci.404', array('page_title'=>Lang::get('mobileci.page_title.not_found'), 'retailer'=>$retailer, 'urlblock' => $urlblock));
+                return View::make('mobile-ci.404', array(
+                    'page_title'=>Lang::get('mobileci.page_title.not_found'), 
+                    'retailer'=>$retailer, 
+                    'urlblock' => $urlblock,
+                    'user' => $user,
+                    'user_email' => $user->role->role_name !== 'Guest' ? $user->user_email : '',
+                    'languages' => $languages
+                ));
             }
 
             OrbitInput::get(
@@ -4107,7 +4114,6 @@ class MobileCIAPIController extends BaseCIController
                 function ($cid) use ($service, $retailer, &$notfound) {
                     if (! empty($cid)) {
                         $category = \Category::active()
-                            ->where('merchant_id', $retailer->merchant_id)
                             ->where('category_id', $cid)
                             ->first();
                         if (!is_object($category)) {
@@ -4125,7 +4131,14 @@ class MobileCIAPIController extends BaseCIController
             );
 
             if ($notfound) {
-                return View::make('mobile-ci.404', array('page_title'=>Lang::get('mobileci.page_title.not_found'), 'retailer'=>$retailer, 'urlblock' => $urlblock));
+                return View::make('mobile-ci.404', array(
+                    'page_title'=>Lang::get('mobileci.page_title.not_found'), 
+                    'retailer'=>$retailer, 
+                    'urlblock' => $urlblock,
+                    'user' => $user,
+                    'user_email' => $user->role->role_name !== 'Guest' ? $user->user_email : '',
+                    'languages' => $languages
+                ));
             }
 
             OrbitInput::get(
@@ -4403,7 +4416,6 @@ class MobileCIAPIController extends BaseCIController
                 function ($cid) use ($service, $retailer, &$notfound) {
                     if (! empty($cid)) {
                         $category = \Category::active()
-                            ->where('merchant_id', $retailer->merchant_id)
                             ->where('category_id', $cid)
                             ->first();
                         if (!is_object($category)) {
@@ -4419,10 +4431,6 @@ class MobileCIAPIController extends BaseCIController
                     }
                 }
             );
-
-            if ($notfound) {
-                return View::make('mobile-ci.404', array('page_title'=>Lang::get('mobileci.page_title.not_found'), 'retailer'=>$retailer, 'urlblock' => $urlblock));
-            }
 
             OrbitInput::get(
                 'fid',
