@@ -39,12 +39,12 @@
 @section('content')
 <div class="row relative-wrapper">
     <div class="actions-container" style="z-index: 102;">
-        <a class="action-btn">
-            <span class="fa fa-stack fa-2x">
-                <i class="fa fa-circle fa-stack-2x"> </i>
-                <i class="fa glyphicon-plus fa-inverse fa-stack-2x"> </i>
-            </span>
-        </a>
+        <div class="circle-plus action-btn">
+            <div class="circle">
+                <div class="horizontal"></div>
+                <div class="vertical"></div>
+            </div>
+        </div>
         <div class="actions-panel" style="display: none;">
             <ul class="list-unstyled">
                 <li>
@@ -78,7 +78,7 @@
                     </a>
                 </li>
                 <li>
-                    <a id="useBtn" class="disabled">
+                    <a id="useBtn">
                         <span class="fa fa-stack icon">
                             <i class="fa fa-circle fa-stack-2x"></i>
                             <i class="fa fa-scissors fa-inverse fa-stack-1x"></i>
@@ -230,76 +230,37 @@
                 $('.actions-panel').slideToggle();
             });
 
-            // check for Geolocation support
-            if (navigator.geolocation) {
-                window.onload = function() {
-                    var startPos;
-                    var geoOptions = {
-                       timeout: 10 * 1000
-                    }
-                    var mall_id = '{{Config::get('orbit.shop.id')}}';
-                    var geoSuccess = function(position) {
-                        startPos = position;
-                        console.log(startPos);
-                        // do ajax call
-                        $.ajax({
-                            url: '{{'/app/v1/pub/mall-fence'}}',
-                            method: 'GET',
-                            data: {
-                                latitude: startPos.coords.latitude,
-                                longitude: startPos.coords.longitude,
-                                mall_id: mall_id
-                            }
-                        }).done(function(response) {
-                            if (response.data.total_records > 0) {
-                                $('#useBtn').removeClass('disabled');
-                            }
-                        })
-
-                        // document.getElementById('startLat').innerHTML = startPos.coords.latitude;
-                        // document.getElementById('startLon').innerHTML = startPos.coords.longitude;
-                    };
-                    var geoError = function(error) {
-                        console.log('Error occurred. Error code: ' + error.code);
-                        // error.code can be:
-                        //   0: unknown error
-                        //   1: permission denied
-                        //   2: position unavailable (error response from location provider)
-                        //   3: timed out
-                    };
-
-                    navigator.geolocation.getCurrentPosition(geoSuccess, geoError, geoOptions);
-                };
-            }
-
             $(window).scroll(function(){
                 s = $(window).scrollTop();
                 $('.product-detail img').css('-webkit-transform', 'translateY('+(s/3)+'px)');
             });
-            $('#useBtn').click(function(){
-                if (!$(this).hasClass('disabled')) {
-                    $('#hasCouponModal').modal();
-                }
+
+            $('#useBtn').on('click', function() {
+                $('#hasCouponModal').modal();
             });
+
             @if(count($issued_coupons) > 0)
-            $('#applyCoupon').click(function(){
+            $('#applyCoupon').click(function (){
                 $('#hasCouponModal .modal-content').css('display', 'none');
                 $('#hasCouponModal .modal-spinner').css('display', 'block');
+
                 $.ajax({
-                    url: apiPath+'issued-coupon/redeem',
+                    url: apiPath + 'issued-coupon/redeem',
                     method: 'POST',
                     data: {
                         issued_coupon_id: '{{$issued_coupons[0]->issued_coupon_id}}',
                         merchant_verification_number: $('#tenantverify').val(),
                         current_mall: '{{$retailer->merchant_id}}'
                     }
-                }).done(function(data){
-                    if(data.status == 'success'){
+                })
+                .done(function(data){
+                    if(data.status == 'success') {
                         $('#successCouponModal').modal({
                             backdrop: 'static',
                             keyboard: false
                         });
-                        $('#successCouponModal').on('shown.bs.modal', function($event){
+
+                        $('#successCouponModal').on('shown.bs.modal', function ($event) {
                             $('#issuecouponno').val(data.data.issued_coupon_code);
                             $('#denyCoupon').html('<i class="fa fa-circle-o-notch fa-spin"></i>');
                             var y = 5000;
@@ -312,17 +273,21 @@
                                 y--;
                             }, 1000);
                         });
-                        $('#successCouponModal').on('hide.bs.modal', function($event){
+
+                        $('#successCouponModal').on('hide.bs.modal', function ($event) {
                             window.location.replace('{{ $urlblock->blockedRoute('ci-coupon-list') }}');
                         });
-                    }else{
+                    }
+                    else{
                         $('#wrongCouponModal').modal();
                         $('#errMsg').text("{{Lang::get('mobileci.coupon.wrong_verification_number')}}");
                     }
-                }).fail(function(data) {
+                })
+                .fail(function (data) {
                     $('#wrongCouponModal').modal();
                     $('#errMsg').text("{{Lang::get('mobileci.coupon.wrong_verification_number')}}");
-                }).always(function(data){
+                })
+                .always(function (data) {
                     $('#hasCouponModal .modal-content').css('display', 'block');
                     $('#hasCouponModal .modal-spinner').css('display', 'none');
                     $('#tenantverify').val('');
