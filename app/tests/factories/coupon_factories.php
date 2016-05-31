@@ -25,6 +25,7 @@
 $factory('Coupon', [
     'promotion_name' => $faker->words(3),
     'promotion_type' => 'product',
+    'description'    => $faker->sentences(3),
     'merchant_id'    => 'factory:Merchant',
     'status'         => 'active',
     'begin_date'     => $faker->dateTimeBetween('-2 months', '-2 weeks'),

@@ -70,6 +70,9 @@ class TenantCIAPIController extends BaseAPIController
 
             $prefix = DB::getTablePrefix();
 
+            $gender_profile_query = '';
+            $age_profile_query = '';
+
             $userAge = 0;
             if ($user->userDetail->birthdate !== '0000-00-00' && $user->userDetail->birthdate !== null) {
                 $userAge =  $this->calculateAge($user->userDetail->birthdate); // 27
@@ -445,6 +448,9 @@ class TenantCIAPIController extends BaseAPIController
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
+            $gender_profile_query = '';
+            $age_profile_query = '';
+
             $userAge = 0;
             if ($user->userDetail->birthdate !== '0000-00-00' && $user->userDetail->birthdate !== null) {
                 $userAge =  $this->calculateAge($user->userDetail->birthdate); // 27
@@ -520,13 +526,17 @@ class TenantCIAPIController extends BaseAPIController
                 ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                 ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
                 ->where('merchants.merchant_id', $store_id)
-                ->whereRaw($gender_profile_query)
-                ->whereRaw($age_profile_query)
                 ->where('news.status', '=', 'active')
                 ->where('news.object_type', 'news')
                 ->where('news.begin_date', '<=', $mallTime)
-                ->where('news.end_date', '>=', $mallTime)
-                ->groupBy('news.news_id');
+                ->where('news.end_date', '>=', $mallTime);
+            if (! empty($gender_profile_query)) {
+                $news_flag->whereRaw($gender_profile_query);
+            }
+            if (! empty($age_profile_query)) {
+                $news_flag->whereRaw($age_profile_query);
+            }
+            $news_flag->groupBy('news.news_id');
             $news_flag = RecordCounter::create($news_flag)->count();
 
             $promotion_flag = News::select('news.news_id')
@@ -536,13 +546,17 @@ class TenantCIAPIController extends BaseAPIController
                 ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                 ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
                 ->where('merchants.merchant_id', $store_id)
-                ->whereRaw($gender_profile_query)
-                ->whereRaw($age_profile_query)
                 ->where('news.status', '=', 'active')
                 ->where('news.object_type', 'promotion')
                 ->where('news.begin_date', '<=', $mallTime)
-                ->where('news.end_date', '>=', $mallTime)
-                ->groupBy('news.news_id');
+                ->where('news.end_date', '>=', $mallTime);
+            if (! empty($gender_profile_query)) {
+                $promotion_flag->whereRaw($gender_profile_query);
+            }
+            if (! empty($age_profile_query)) {
+                $promotion_flag->whereRaw($age_profile_query);
+            }
+            $promotion_flag->groupBy('news.news_id');
             $promotion_flag = RecordCounter::create($promotion_flag)->count();
 
             $coupon_flag = Coupon::select('promotions.promotion_id')
@@ -556,12 +570,16 @@ class TenantCIAPIController extends BaseAPIController
                         ->where('issued_coupons.status', '=', 'active');
                 })
                 ->where('merchants.merchant_id', $store_id)
-                ->whereRaw($gender_profile_query)
-                ->whereRaw($age_profile_query)
                 ->where('promotions.status', '=', 'active')
                 ->where('promotions.coupon_validity_in_date', '>=', $mallTime)
-                ->where('issued_coupons.user_id', $user->user_id)
-                ->groupBy('promotions.promotion_id');
+                ->where('issued_coupons.user_id', $user->user_id);
+            if (! empty($gender_profile_query)) {
+                $coupon_flag->whereRaw($gender_profile_query);
+            }
+            if (! empty($age_profile_query)) {
+                $coupon_flag->whereRaw($age_profile_query);
+            }
+            $coupon_flag->groupBy('promotions.promotion_id');
             $coupon_flag = RecordCounter::create($coupon_flag)->count();
 
             $tenant->news_flag = $news_flag > 0 ? 'true' : 'false';
