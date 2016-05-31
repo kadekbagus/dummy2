@@ -93,6 +93,17 @@ class MallAPIController extends ControllerAPI
                     'default' => 'View All Service',
                     'en'      => 'View All Service'
               ]
+            ],
+            [
+                'type'      => 'get_internet_access',
+                'object_id' => 0,
+                'order'     => 7,
+                'animation' => 'none',
+                'status'    => 'active',
+                'slogan'    => [
+                    'default' => 'View All Get Internet Access',
+                    'en'      => 'View All Get Internet Access'
+              ]
             ]
         ],
         'age_ranges' => [
@@ -296,6 +307,7 @@ class MallAPIController extends ControllerAPI
             $geo_point_latitude = OrbitInput::post('geo_point_latitude');
             $geo_point_longitude = OrbitInput::post('geo_point_longitude');
             $geo_area = OrbitInput::post('geo_area');
+            $get_internet_access_status = OrbitInput::post('get_internet_access_status');
 
             // for a while this declaration with default value
             $widgets = OrbitInput::post('widgets', $this->default['widgets']);
@@ -334,6 +346,7 @@ class MallAPIController extends ControllerAPI
                     'campaign_base_price_coupon'    => $campaign_base_price_coupon,
                     'campaign_base_price_news'      => $campaign_base_price_news,
                     'floors'                        => $floors,
+                    'get_internet_access_status'    => $get_internet_access_status,
                 ),
                 array(
                     'name'                          => 'required|orbit.exists.mall_name',
@@ -367,6 +380,7 @@ class MallAPIController extends ControllerAPI
                     'campaign_base_price_coupon'    => 'required',
                     'campaign_base_price_news'      => 'required',
                     'floors'                        => 'required|array',
+                    'get_internet_access_status'    => 'orbit.empty.mall_status',
                 ),
                 array(
                     'name.required'                     => 'Mall name is required',
@@ -510,35 +524,44 @@ class MallAPIController extends ControllerAPI
 
             // widgets
             // @author irianto <irianto@dominopos.com>
+            $new_widget = new stdClass();
             foreach ($widgets as $data_widget) {
-                $widget = new Widget();
-                $widget->widget_type = $data_widget['type'];
-                $widget->widget_object_id = $data_widget['object_id'];
-                $widget->widget_slogan = $data_widget['slogan']['default'];
-                $widget->widget_order = $data_widget['order'];
-                $widget->merchant_id = $newmall->merchant_id;
-                $widget->animation = $data_widget['animation'];
-                $widget->status = $data_widget['status'];
-                $widget->save();
+                $new_widget = new Widget();
+                $new_widget->widget_type = $data_widget['type'];
+                $new_widget->widget_object_id = $data_widget['object_id'];
+                $new_widget->widget_slogan = $data_widget['slogan']['default'];
+                $new_widget->widget_order = $data_widget['order'];
+                $new_widget->merchant_id = $newmall->merchant_id;
+                $new_widget->animation = $data_widget['animation'];
+                $new_widget->status = $data_widget['status'];
+                if ($data_widget['type'] === 'get_internet_access') {
+                    if ($data_widget['status'] !== $get_internet_access_status) {
+                        $new_widget->status = $get_internet_access_status;
+                    }
+                }
+                $new_widget->save();
 
                 // Sync also to the widget_retailer table
-                $widget->malls()->sync( [$newmall->merchant_id] );
+                $new_widget->malls()->sync( [$newmall->merchant_id] );
 
                 // Insert the translation for the slogan
+                $new_widget_trans = new stdClass();
                 $slogan = $data_widget['slogan'];
                 foreach ($languages as $lang) {
                     if (isset($slogan[$lang])) {
                         // Get the Language ID
                         // The content for this particular language is available
-                        $widgetTrans = new WidgetTranslation();
-                        $widgetTrans->widget_id = $widget->widget_id;
-                        $widgetTrans->merchant_language_id = $languages_by_name[$lang]->language_id;
-                        $widgetTrans->widget_slogan = $slogan[$lang];
-                        $widgetTrans->status = 'active';
-                        $widgetTrans->save();
+                        $new_widget_trans = new WidgetTranslation();
+                        $new_widget_trans->widget_id = $new_widget->widget_id;
+                        $new_widget_trans->merchant_language_id = $languages_by_name[$lang]->language_id;
+                        $new_widget_trans->widget_slogan = $slogan[$lang];
+                        $new_widget_trans->status = 'active';
+                        $new_widget_trans->save();
                     }
                 }
+                // $new_widget->translations = $new_widget_trans;
             }
+            $newmall->get_internet_access_status = $get_internet_access_status;
 
             // floor
             // @author irianto <irianto@dominopos.com>
