@@ -8457,9 +8457,8 @@ class MobileCIAPIController extends BaseCIController
                         $near_end_result->object_image = URL::asset('mobile-ci/images/default_tenants_directory.png');
                     }
                 } elseif ($near_end_result->object_type === 'service') {
-                    // to do : fix with url service detail
-                    // $near_end_result->object_url = $urlblock->blockedRoute('ci-service-detail', ['id' => $near_end_result->object_id]);
-                    // $near_end_result->object_redirect_url = URL::route('ci-service-detail', ['id' => $near_end_result->object_id]);
+                    $near_end_result->object_url = $urlblock->blockedRoute('ci-service-detail', ['id' => $near_end_result->object_id]);
+                    $near_end_result->object_redirect_url = URL::route('ci-service-detail', ['id' => $near_end_result->object_id]);
                     if (! is_null($near_end_result->object_image)) {
                         $near_end_result->object_image = URL::asset($near_end_result->object_image);
                     } else {
