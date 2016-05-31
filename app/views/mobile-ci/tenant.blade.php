@@ -187,11 +187,6 @@ if(sizeof($tenant->newsPromotionsProfiling) > 0 || sizeof($tenant->newsProfiling
                                    <i class="fa fa-ticket fa-stack-1x color-icon"></i>
                                    <i class="fa fa-certificate fa-stack-2x couponbadge color-badge couponbadge-small"></i>
                                 </span>
-                            <!--
-                            <div class="coupon-new-badge">
-                                <div class="new-number">{{$coupontab->quantity}}</div>
-                            </div>
-                            -->
                             <div class="list-item-info">
                                 <header class="list-item-title">
                                     <div><strong>{{{ $coupontab->promotion_name }}}</strong></div>

@@ -15,9 +15,6 @@
                                    <i class="fa fa-ticket fa-stack-1x color-icon"></i>
                                    <i class="fa fa-certificate fa-stack-2x couponbadge color-badge couponbadge-medium"></i>
                                 </span>
-                                <!-- <div class="coupon-new-badge">
-                                    <div class="new-number">{{$coupon->quantity}}</div>
-                                </div> -->
                                 <div class="list-item-info">
                                     <header class="list-item-title">
                                         <div><strong>{{{ $coupon->promotion_name }}}</strong></div>
