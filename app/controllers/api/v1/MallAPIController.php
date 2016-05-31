@@ -1463,6 +1463,7 @@ class MallAPIController extends ControllerAPI
             $campaign_base_price_promotion = OrbitInput::post('campaign_base_price_promotion');
             $campaign_base_price_coupon = OrbitInput::post('campaign_base_price_coupon');
             $campaign_base_price_news = OrbitInput::post('campaign_base_price_news');
+            $get_internet_access_status = OrbitInput::post('get_internet_access_status');
 
             $validator = Validator::make(
                 array(
@@ -1490,7 +1491,8 @@ class MallAPIController extends ControllerAPI
                     // 'campaign_base_price_promotion' => $campaign_base_price_promotion,
                     // 'campaign_base_price_coupon'    => $campaign_base_price_coupon,
                     // 'campaign_base_price_news'      => $campaign_base_price_news,
-                    'floors'                        => $floors
+                    'floors'                        => $floors,
+                    'get_internet_access_status'    => $floors
                 ),
                 array(
                     'merchant_id'                      => 'required|orbit.empty.mall',
@@ -1516,7 +1518,8 @@ class MallAPIController extends ControllerAPI
                     // 'campaign_base_price_promotion' => 'format currency later will be check',
                     // 'campaign_base_price_coupon'    => 'format currency later will be check',
                     // 'campaign_base_price_news'      => 'format currency later will be check',
-                    'floors'                           => 'array'
+                    'floors'                           => 'array',
+                    'get_internet_access_status'       => 'orbit.empty.mall_status'
                 ),
                 array(
                    'mall_name_exists_but_me'    => 'Mall name already exists',
@@ -2125,6 +2128,22 @@ class MallAPIController extends ControllerAPI
                                       ->update(["status" => "deleted"]);
                     }
                 }
+            });
+
+            OrbitInput::post('get_internet_access_status', function($get_internet_access_status) use ($updatedmall){
+                $update_widget_get_internet_access = Widget::excludeDeleted()
+                        ->leftJoin('widget_retailer', 'widget_retailer.widget_id', '=', 'widgets.widget_id')
+                        ->where('widget_type', 'get_internet_access')
+                        ->where('retailer_id', $updatedmall->merchant_id)
+                        ->first();
+
+                if (count($update_widget_get_internet_access) > 0) {
+                    $update_widget_get_internet_access->status = $get_internet_access_status;
+                    $update_widget_get_internet_access->modified_by = $this->api->user->user_id;
+                    $update_widget_get_internet_access->save();
+
+                }
+                $updatedmall->get_internet_access_status = $get_internet_access_status;
             });
 
             // update user status
