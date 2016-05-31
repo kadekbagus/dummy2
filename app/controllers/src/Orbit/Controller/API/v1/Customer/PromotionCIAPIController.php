@@ -635,41 +635,6 @@ class PromotionCIAPIController extends BaseAPIController
         return null;
     }
 
-    // get the url for Facebook Share dummy page
-    protected function getFBShareDummyPage($type, $id, $lang = null) {
-        $oldRouteSessionConfigValue = Config::get('orbit.session.availability.query_string');
-        Config::set('orbit.session.availability.query_string', false);
-
-        $url = '';
-        switch ($type) {
-            case 'tenant':
-                $url = URL::route('share-tenant', ['id' => $id, 'lang' => $lang]);
-                break;
-            case 'promotion':
-                $url = URL::route('share-promotion', ['id' => $id, 'lang' => $lang]);
-                break;
-            case 'news':
-                $url = URL::route('share-news', ['id' => $id, 'lang' => $lang]);
-                break;
-            case 'coupon':
-                $url = URL::route('share-coupon', ['id' => $id, 'lang' => $lang]);
-                break;
-            case 'lucky-draw':
-                $url = URL::route('share-lucky-draw', ['id' => $id, 'lang' => $lang]);
-                break;
-            case 'home':
-                $url = URL::route('share-home');
-                break;
-
-            default:
-                $url = '';
-                break;
-        }
-        Config::set('orbit.session.availability.query_string', $oldRouteSessionConfigValue);
-
-        return $url;
-    }
-
     protected function registerCustomValidation()
     {
         // Check the existance of mall id
