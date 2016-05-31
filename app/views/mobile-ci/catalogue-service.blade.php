@@ -62,7 +62,7 @@
                         @foreach($data->records as $service)
                             <div class="col-xs-12 col-sm-12" id="item-{{$service->merchant_id}}">
                                 <section class="list-item-single-tenant">
-                                    <a class="list-item-link" data-href="{{ route('ci-tenant-detail', ['id' => $service->merchant_id]) }}" href="{{ $urlblock->blockedRoute('ci-tenant-detail', ['id' => $service->merchant_id]) }}">
+                                    <a class="list-item-link" data-href="{{ route('ci-service-detail', ['id' => $service->merchant_id]) }}" href="{{ $urlblock->blockedRoute('ci-service-detail', ['id' => $service->merchant_id]) }}">
                                         <div class="list-item-info">
                                             <header class="list-item-title">
                                                 <div><strong>{{{ $service->name }}}</strong></div>
@@ -71,16 +71,6 @@
                                                 <div>
                                                     <i class="fa fa-map-marker" style="padding-left: 5px;padding-right: 8px;"></i>
                                                     {{{ !empty($service->floor) ? ' ' . $service->floor : '' }}}{{{ !empty($service->unit) ? ' - ' . $service->unit : '' }}}
-                                                </div>
-                                                <div>
-                                                    <div class="col-xs-6">
-                                                        <i class="fa fa-list" style="padding-left: 2px;padding-right: 4px;"></i>
-                                                        @if(empty($service->category_string))
-                                                            <span>-</span>
-                                                        @else
-                                                            <span>{{{ mb_strlen($service->category_string) > 30 ? mb_substr($service->category_string, 0, 30, 'UTF-8') . '...' : $service->category_string }}}</span>
-                                                        @endif
-                                                    </div>
                                                 </div>
                                             </header>
                                         </div>
