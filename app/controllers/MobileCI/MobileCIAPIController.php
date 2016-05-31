@@ -2199,6 +2199,7 @@ class MobileCIAPIController extends BaseCIController
             $this->maybeJoinWithCategoryTranslationsTable($categories, $alternateLanguage);
             $categories->whereHas('tenants', function($q) use($retailer) {
                 $q->where('merchants.parent_id', $retailer->merchant_id);
+                $q->where('merchants.object_type', 'tenant');
                 $q->where('merchants.status', 'active');
             });
             $categories = $categories->get();
@@ -3842,13 +3843,15 @@ class MobileCIAPIController extends BaseCIController
 
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
 
-            $categories = Category::active('categories')
-                ->where('category_level', 1)
-                ->where('merchant_id', $retailer->merchant_id);
+            $categories = Category::active('categories');
 
             $categories->select('categories.*');
             $this->maybeJoinWithCategoryTranslationsTable($categories, $alternateLanguage);
-
+            $categories->whereHas('services', function($q) use($retailer) {
+                $q->where('merchants.parent_id', $retailer->merchant_id);
+                $q->where('merchants.object_type', 'service');
+                $q->where('merchants.status', 'active');
+            });
             $categories = $categories->get();
 
             // Get the maximum record
