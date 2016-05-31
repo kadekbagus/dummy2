@@ -76,7 +76,7 @@
                     @endif
                 @endforeach
 
-                @if(count($service->categories) >= 3)
+                @if(count($service->categories) > 3)
                     <li><span class="tenant-list-text"><label for="post-2" class="read-more-trigger"></label></span></li>
                 @endif
             @else
@@ -91,15 +91,8 @@
             <a href="{{ asset($map->path) }}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer"><img class="img-responsive maps" src="{{ asset($map->path) }}"></a>
         @endforeach
     </div>
+</div>
 
-</div>
-<div class="row padded">
-    <div class="col-xs-12 font-1-3">
-        @if ($box_url)
-        <a style="position:relative;margin-bottom:16px;" class="btn btn-danger btn-block" href="{{ $box_url }}">{{ $enter_shop_text or 'Go to Store' }}</a>
-        @endif
-    </div>
-</div>
 
 <!-- end of product -->
 @stop
