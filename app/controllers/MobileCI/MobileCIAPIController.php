@@ -2202,7 +2202,7 @@ class MobileCIAPIController extends BaseCIController
                 $q->where('merchants.object_type', 'tenant');
                 $q->where('merchants.status', 'active');
             });
-            $categories = $categories->orderBy('categories.category_name', 'ASC')->get();
+            $categories = $categories->get();
 
             // Get the maximum record
             $maxRecord = (int) Config::get('orbit.pagination.max_record', 50);
@@ -2484,8 +2484,17 @@ class MobileCIAPIController extends BaseCIController
                 }
             );
 
+            $languages = $this->getListLanguages($retailer);
+
             if ($notfound) {
-                return View::make('mobile-ci.404', array('page_title'=>Lang::get('mobileci.page_title.not_found'), 'retailer'=>$retailer, 'urlblock' => $urlblock));
+                return View::make('mobile-ci.404', array(
+                    'page_title'=>Lang::get('mobileci.page_title.not_found'), 
+                    'retailer'=>$retailer, 
+                    'urlblock' => $urlblock,
+                    'user' => $user,
+                    'user_email' => $user->role->role_name !== 'Guest' ? $user->user_email : '',
+                    'languages' => $languages
+                ));
             }
 
             OrbitInput::get(
@@ -2826,8 +2835,6 @@ class MobileCIAPIController extends BaseCIController
                     ->responseOK()
                     ->save();
             }
-
-            $languages = $this->getListLanguages($retailer);
 
             return View::make('mobile-ci.catalogue-tenant', array(
                 'page_title'=>$pagetitle,
@@ -4023,7 +4030,7 @@ class MobileCIAPIController extends BaseCIController
                 $q->where('merchants.object_type', 'service');
                 $q->where('merchants.status', 'active');
             });
-            $categories = $categories->orderBy('categories.category_name', 'ASC')->get();
+            $categories = $categories->get();
 
             // Get the maximum record
             $maxRecord = (int) Config::get('orbit.pagination.max_record', 50);
@@ -4107,7 +4114,6 @@ class MobileCIAPIController extends BaseCIController
                 function ($cid) use ($service, $retailer, &$notfound) {
                     if (! empty($cid)) {
                         $category = \Category::active()
-                            ->where('merchant_id', $retailer->merchant_id)
                             ->where('category_id', $cid)
                             ->first();
                         if (!is_object($category)) {
@@ -4123,6 +4129,19 @@ class MobileCIAPIController extends BaseCIController
                     }
                 }
             );
+
+            $languages = $this->getListLanguages($retailer);
+
+            if ($notfound) {
+                return View::make('mobile-ci.404', array(
+                    'page_title'=>Lang::get('mobileci.page_title.not_found'), 
+                    'retailer'=>$retailer, 
+                    'urlblock' => $urlblock,
+                    'user' => $user,
+                    'user_email' => $user->role->role_name !== 'Guest' ? $user->user_email : '',
+                    'languages' => $languages
+                ));
+            }
 
             OrbitInput::get(
                 'fid',
@@ -4248,8 +4267,6 @@ class MobileCIAPIController extends BaseCIController
             $data->returned_records = count($listOfRec);
             $data->records = $listOfRec;
             $data->search_mode = $searchMode;
-
-            $languages = $this->getListLanguages($retailer);
 
             return View::make('mobile-ci.catalogue-service', array(
                 'page_title'=>$pagetitle,
@@ -4399,7 +4416,6 @@ class MobileCIAPIController extends BaseCIController
                 function ($cid) use ($service, $retailer, &$notfound) {
                     if (! empty($cid)) {
                         $category = \Category::active()
-                            ->where('merchant_id', $retailer->merchant_id)
                             ->where('category_id', $cid)
                             ->first();
                         if (!is_object($category)) {
@@ -9122,13 +9138,15 @@ class MobileCIAPIController extends BaseCIController
                     $alternateLanguage->language_id);
                 $join->where('category_translations.category_name', '!=', '');
             });
-            $categories->select('categories.*');
+            $categories->select('categories.*')->orderBy('category_translations.category_name', 'ASC');
             // and overwrite fields with alternate language fields if present
             foreach (['category_name', 'description'] as $field) {
                 $categories->addSelect([
                     DB::raw("COALESCE(${prefix}category_translations.${field}, ${prefix}categories.${field}) as ${field}")
                 ]);
             }
+        } else {
+            $categories->orderBy('categories.category_name', 'ASC');
         }
     }
 

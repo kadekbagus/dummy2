@@ -72,16 +72,6 @@
                                                     <i class="fa fa-map-marker" style="padding-left: 5px;padding-right: 8px;"></i>
                                                     {{{ !empty($service->floor) ? ' ' . $service->floor : '' }}}{{{ !empty($service->unit) ? ' - ' . $service->unit : '' }}}
                                                 </div>
-                                                <div>
-                                                    <div class="col-xs-6">
-                                                        <i class="fa fa-list" style="padding-left: 2px;padding-right: 4px;"></i>
-                                                        @if(empty($service->category_string))
-                                                            <span>-</span>
-                                                        @else
-                                                            <span>{{{ mb_strlen($service->category_string) > 30 ? mb_substr($service->category_string, 0, 30, 'UTF-8') . '...' : $service->category_string }}}</span>
-                                                        @endif
-                                                    </div>
-                                                </div>
                                             </header>
                                         </div>
                                         <div class="list-vignette-non-tenant"></div>
