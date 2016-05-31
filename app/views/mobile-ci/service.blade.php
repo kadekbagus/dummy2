@@ -9,21 +9,6 @@
     </style>
 @stop
 
-@section('fb_scripts')
-    @if(! empty($facebookInfo))
-        @if(! empty($facebookInfo['version']) && ! empty($facebookInfo['app_id']))
-        <div id="fb-root"></div>
-        <script>(function(d, s, id) {
-          var js, fjs = d.getElementsByTagName(s)[0];
-          if (d.getElementById(id)) return;
-          js = d.createElement(s); js.id = id;
-          js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version={{$facebookInfo['version']}}&appId={{$facebookInfo['app_id']}}";
-          fjs.parentNode.insertBefore(js, fjs);
-        }(document, 'script', 'facebook-jssdk'));</script>
-        @endif
-    @endif
-@stop
-
 @section('content')
 <div class="slide-tab-container" style="z-index: 103;">
 </div>
@@ -31,32 +16,7 @@
 
 <!-- product -->
 <div class="row relative-wrapper">
-    <div class="actions-container" style="z-index: 102;">
-        <a class="action-btn">
-            <span class="fa fa-stack fa-2x">
-                <i class="fa fa-circle fa-stack-2x"> </i>
-                <i class="fa glyphicon-plus fa-inverse fa-stack-2x"> </i>
-            </span>
-        </a>
-        <div class="actions-panel" style="display: none;">
-            <ul class="list-unstyled">
-                @if ($urlblock->isLoggedIn())
-                    @if(! empty($service->facebook_like_url))
-                    <li>
-                        <div class="fb-like" data-href="{{{$service->facebook_like_url}}}" data-layout="button_count" data-action="like" data-show-faces="false" data-share="false">
-                        </div>
-                    </li>
-                    @endif
-                    @if(! empty($service->facebook_share_url))
-                    <li>
-                        <div class="fb-share-button" data-href="{{{$service->facebook_share_url}}}" data-layout="button">
-                        </div>
-                    </li>
-                    @endif
-                @endif
-            </ul>
-        </div>
-    </div>
+
     <div class="col-xs-12" style="z-index: 100;">
         @if(count($service->mediaLogoOrig) === 0 && count($service->mediaImageOrig) === 0)
         <img class="img-responsive img-center" src="{{ asset('mobile-ci/images/default_tenants_directory.png') }}"/>
@@ -191,12 +151,6 @@
             if(typeof(Storage) !== 'undefined') {
                 localStorage.setItem('fromSource', 'detail');
             }
-
-            // Actions button event handler
-            $('.action-btn').on('click', function() {
-                $('.actions-container').toggleClass('alive');
-                $('.actions-panel').slideToggle();
-            });
 
             $('#image-gallery').lightSlider({
                 gallery:false,
