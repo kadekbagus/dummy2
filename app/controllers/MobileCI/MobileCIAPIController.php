@@ -2193,14 +2193,14 @@ class MobileCIAPIController extends BaseCIController
 
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
 
-            $categories = Category::active('categories')
-                ->whereHas('tenants', function($q) use($retailer) {
-                    $q->where('merchants.parent_id', $retailer->merchant_id);
-                });
+            $categories = Category::active('categories');
 
             $categories->select('categories.*');
             $this->maybeJoinWithCategoryTranslationsTable($categories, $alternateLanguage);
-
+            $categories->whereHas('tenants', function($q) use($retailer) {
+                $q->where('merchants.parent_id', $retailer->merchant_id);
+                $q->where('merchants.status', 'active');
+            });
             $categories = $categories->get();
 
             // Get the maximum record
@@ -2212,8 +2212,12 @@ class MobileCIAPIController extends BaseCIController
             $floorList = Object::whereHas('mall', function ($q) use ($retailer) {
                     $q->where('merchants.merchant_id', $retailer->merchant_id);
                 })
-                ->active()
-                ->where('object_type', 'floor')
+                ->select('objects.*')
+                ->join('merchants', 'objects.object_name', '=', 'merchants.floor')
+                ->where('objects.status', 'active')
+                ->where('merchants.status', 'active')
+                ->where('merchants.parent_id', $retailer->merchant_id)
+                ->where('objects.object_type', 'floor')
                 ->orderBy('object_order', 'asc')
                 ->groupBy('object_name')
                 ->get();
@@ -2225,6 +2229,7 @@ class MobileCIAPIController extends BaseCIController
                     $q->leftJoin('category_translations', function ($join) use ($alternateLanguage) {
                         $join->on('categories.category_id', '=', 'category_translations.category_id');
                         $join->where('category_translations.merchant_language_id', '=', $alternateLanguage->language_id);
+                        $join->where('category_translations.category_name', '!=', '');
                     });
                     $q->select('categories.*');
                     $q->addSelect([
@@ -3847,9 +3852,9 @@ class MobileCIAPIController extends BaseCIController
             $categories = $categories->get();
 
             // Get the maximum record
-            $maxRecord = (int) Config::get('orbit.pagination.max_record', 50);
+            $maxRecord = (int) Config::get('orbit.pagination.max_record');
             if ($maxRecord <= 0) {
-                $maxRecord = Config::get('orbit.pagination.max_record');
+                $maxRecord = 300;
             }
 
             $floorList = Object::whereHas('mall', function ($q) use ($retailer) {
@@ -4042,19 +4047,7 @@ class MobileCIAPIController extends BaseCIController
                         $category_string .= $category->category_name . ', ';
                     }
                 }
-                $service->category_string = mb_strlen($category_string) > 30 ? mb_substr($category_string, 0, 30, 'UTF-8') . '...' : $category_string;
-                $service->url = $urlblock->blockedRoute('ci-tenant-detail' , ['id' => $service->merchant_id]);
-                $service->redirect_url = URL::route('ci-tenant-detail' , ['id' => $service->merchant_id]);
-                if (count($service->mediaLogo) > 0) {
-                    foreach ($service->mediaLogo as $media) {
-                        if ($media->media_name_long == 'service_logo_orig') {
-                            $service->logo_orig = URL::asset($media->path);
-                        }
-                    }
-                } else {
-                    $service->logo_orig = URL::asset('mobile-ci/images/default_services_directory.png');
-                }
-                $service->name = mb_strlen($service->name) > 64 ? mb_substr($service->name, 0, 64) . '...' : $service->name;
+                $service->category_string = $category_string;
 
                 // set service facebook page url
                 $service->facebook_like_url = '';
@@ -4192,12 +4185,6 @@ class MobileCIAPIController extends BaseCIController
             $mallid = $retailer->merchant_id;
 
             $this->maybeJoinWithTranslationsTable($service, $alternateLanguage);
-
-            // Get the maximum record
-            $maxRecord = (int) Config::get('orbit.pagination.max_record', 50);
-            if ($maxRecord <= 0) {
-                $maxRecord = Config::get('orbit.pagination.max_record');
-            }
 
             $notfound = FALSE;
             // Filter product by name pattern
@@ -4346,19 +4333,7 @@ class MobileCIAPIController extends BaseCIController
                         $category_string .= $category->category_name . ', ';
                     }
                 }
-                $service->category_string = mb_strlen($category_string) > 30 ? mb_substr($category_string, 0, 30, 'UTF-8') . '...' : $category_string;
-                $service->url = $urlblock->blockedRoute('ci-tenant-detail' , ['id' => $service->merchant_id]);
-                $service->redirect_url = URL::route('ci-tenant-detail' , ['id' => $service->merchant_id]);
-                if (count($service->mediaLogo) > 0) {
-                    foreach ($service->mediaLogo as $media) {
-                        if ($media->media_name_long == 'service_logo_orig') {
-                            $service->logo_orig = URL::asset($media->path);
-                        }
-                    }
-                } else {
-                    $service->logo_orig = URL::asset('mobile-ci/images/default_services_directory.png');
-                }
-                $service->name = mb_strlen($service->name) > 64 ? mb_substr($service->name, 0, 64) . '...' : $service->name;
+                $service->category_string = $category_string;
 
                 // set service facebook page url
                 $service->facebook_like_url = '';
@@ -8954,8 +8929,9 @@ class MobileCIAPIController extends BaseCIController
                 $join->on('categories.category_id', '=', 'category_translations.category_id');
                 $join->where('category_translations.merchant_language_id', '=',
                     $alternateLanguage->language_id);
+                $join->where('category_translations.category_name', '!=', '');
             });
-
+            $categories->select('categories.*');
             // and overwrite fields with alternate language fields if present
             foreach (['category_name', 'description'] as $field) {
                 $categories->addSelect([

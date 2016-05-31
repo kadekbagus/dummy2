@@ -295,6 +295,7 @@ return array(
         'ask_our_tenant_employee'          => '(Silakan bertanya kepada pegawai gerai)',
         'validate'                         => 'Validasi',
         'wrong_verification_number'        => 'Nomor Verifikasi Salah',
+        'invalid_user_location'            => 'Lokasi Pengguna Salah',
         'please_check_tenant'              => 'Silakan cek dengan pegawai gerai atau customer service di mall',
         'ok'                               => 'OKE',
         'successful'                       => 'Berhasil',

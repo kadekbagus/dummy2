@@ -24,9 +24,16 @@
 @endif
 @stop
 
+<?php
+$showTenantHeader = false;
+if(sizeof($tenant->newsPromotionsProfiling) > 0 || sizeof($tenant->newsProfiling) > 0 || sizeof($tenant->couponsProfiling) > 0) {
+    $showTenantHeader = true;
+}
+?>
+
 @section('tenant_tab')
     {{-- todo: create flag for this tabs --}}
-    @if(sizeof($tenant->newsPromotionsProfiling) > 0 || sizeof($tenant->newsProfiling) > 0 || sizeof($tenant->couponsProfiling) > 0)
+    @if($showTenantHeader)
     <div class="header-tenant-tab">
         <ul>
             @if(sizeof($tenant->newsPromotionsProfiling) > 0)
@@ -182,7 +189,7 @@
                                 </span>
                             <!--
                             <div class="coupon-new-badge">
-                                <div class="new-number">{{$coupontab->quantity}}</div> 
+                                <div class="new-number">{{$coupontab->quantity}}</div>
                             </div>
                             -->
                             <div class="list-item-info">
@@ -245,7 +252,11 @@
 <div class="slide-menu-backdrop-tab"></div>
 
 <!-- product -->
+@if($showTenantHeader)
 <div class="row header-tenant-tab-present relative-wrapper">
+@else
+<div class="row relative-wrapper">
+@endif
     <div class="actions-container" style="z-index: 102;">
         <a class="action-btn">
             <span class="fa fa-stack fa-2x">
