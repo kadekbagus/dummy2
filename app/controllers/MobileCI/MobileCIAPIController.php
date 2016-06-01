@@ -2281,6 +2281,11 @@ class MobileCIAPIController extends BaseCIController
                 function ($cid) use ($tenants, $retailer, &$notfound) {
                     if (! empty($cid)) {
                         $category = \Category::active()
+                            ->whereHas('tenants', function($q) use($retailer) {
+                                $q->where('merchants.parent_id', $retailer->merchant_id);
+                                $q->where('merchants.object_type', 'tenant');
+                                $q->where('merchants.status', 'active');
+                            })
                             ->where('category_id', $cid)
                             ->first();
                         if (!is_object($category)) {
@@ -2336,7 +2341,7 @@ class MobileCIAPIController extends BaseCIController
             $couponTenantRedeem->linkedToTenant = FALSE;
             $couponTenantRedeem->linkedToCS = FALSE;
 
-            // this is came fron my coupon (or issued coupon) page
+            // this is came fron my coupon (or issued coupon) paeg
             OrbitInput::get(
                 'coupon_redeem_id',
                 function ($pid) use ($tenants, $retailer, &$notfound, &$couponTenantRedeem, $mallid) {
@@ -2488,8 +2493,8 @@ class MobileCIAPIController extends BaseCIController
 
             if ($notfound) {
                 return View::make('mobile-ci.404', array(
-                    'page_title'=>Lang::get('mobileci.page_title.not_found'), 
-                    'retailer'=>$retailer, 
+                    'page_title'=>Lang::get('mobileci.page_title.not_found'),
+                    'retailer'=>$retailer,
                     'urlblock' => $urlblock,
                     'user' => $user,
                     'user_email' => $user->role->role_name !== 'Guest' ? $user->user_email : '',
@@ -3632,6 +3637,109 @@ class MobileCIAPIController extends BaseCIController
                 }
             );
 
+            $couponTenantRedeem = new stdclass();
+            $couponTenantRedeem->linkedToTenant = FALSE;
+            $couponTenantRedeem->linkedToCS = FALSE;
+
+            //this is came fron my coupon (or issued coupon) page
+            OrbitInput::get(
+                'coupon_redeem_id',
+                function ($pid) use ($tenants, $retailer, &$notfound, &$couponTenantRedeem) {
+                    if (! empty($pid)) {
+                        $coupon = \Coupon::with('employee')
+                            ->leftJoin('promotion_retailer_redeem', 'promotion_retailer_redeem.promotion_id', '=', 'promotions.promotion_id')
+                            ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer_redeem.retailer_id')
+                            ->where(function ($q) use ($retailer) {
+                                $q->where(function ($q2) use ($retailer) {
+                                    $q2->where('merchants.parent_id', '=', $retailer->merchant_id)
+                                        ->orWhere('merchants.merchant_id', '=', $retailer->merchant_id);
+                                });
+                                $q->orWhere(function ($q2) use ($retailer) {
+                                    $q2->whereHas('employee', function ($q3) use ($retailer) {
+                                        $q3->whereHas('employee', function ($q4) use ($retailer) {
+                                            $q4->whereHas('retailers', function ($q5) use ($retailer) {
+                                                $q5->where('merchants.merchant_id', $retailer->merchant_id);
+                                            });
+                                        });
+                                    });
+                                });
+                            })
+                            ->where('promotions.status', 'active')
+                            ->where('promotions.promotion_id', $pid)->first();
+                        if (!is_object($coupon)) {
+                            $notfound = TRUE;
+                        }
+
+                        if ($coupon->is_all_retailer === 'Y') {
+                            $couponTenantRedeem->linkedToTenant = TRUE;
+                        } else {
+                            //get link tenant redeem
+                            $retailers = \CouponRetailerRedeem::whereHas('tenant', function($q) use($pid) {
+                                $q->where('promotion_id', $pid);
+                            })->has('coupon')
+                            ->get()
+                            ->lists('retailer_id');
+
+                            if (empty($retailers)) {
+                                $tenants->whereNull('merchants.merchant_id');
+                            } else {
+                                $couponTenantRedeem->linkedToTenant = TRUE;
+                                $tenants->whereIn('merchants.merchant_id', $retailers);
+                            }
+                        }
+                        if ($coupon->is_all_employee === 'Y') {
+                            $couponTenantRedeem->linkedToCS = TRUE;
+                        } else {
+                            $employee = \Employee::byCouponId($pid)
+                                ->whereHas('retailers', function ($q) use($retailer) {
+                                    $q->where('merchants.merchant_id', $retailer->merchant_id);
+                                })
+                                // ->has('userVerificationNumber')
+                                // ->where('employees.status', 'active')
+                                ->get();
+
+                            if (count($employee) > 0) {
+                                $couponTenantRedeem->linkedToCS = TRUE;
+                            }
+                        }
+                    }
+                }
+            );
+
+            // this is came fron coupon campaign page
+            OrbitInput::get(
+                'coupon_id',
+                function ($pid) use ($tenants, $retailer, &$notfound, &$couponTenantRedeem) {
+                    if (! empty($pid)) {
+                        $coupon = \Coupon::leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
+                            ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
+                            ->where(function ($q) use ($retailer) {
+                                    $q->where('merchants.parent_id', '=', $retailer->merchant_id)
+                                      ->orWhere('merchants.merchant_id', '=', $retailer->merchant_id);
+                                })
+                            ->where('promotions.status', 'active')
+                            ->where('promotions.promotion_id', $pid)->first();
+                        if (!is_object($coupon)) {
+                            $notfound = TRUE;
+                        }
+
+                        //get link tenant redeem
+                        $retailers = \CouponRetailer::whereHas('tenant', function($q) use($pid) {
+                            $q->where('promotion_id', $pid);
+                        })->has('coupon')
+                        ->get()
+                        ->lists('retailer_id');
+
+                        if (empty($retailers)) {
+                            $notfound = TRUE;
+                        } else {
+                            $couponTenantRedeem->linkedToTenant = TRUE;
+                            $tenants->whereIn('merchants.merchant_id', $retailers);
+                        }
+                    }
+                }
+            );
+
             OrbitInput::get(
                 'news_id',
                 function ($pid) use ($tenants, $retailer, &$notfound) {
@@ -4114,6 +4222,11 @@ class MobileCIAPIController extends BaseCIController
                 function ($cid) use ($service, $retailer, &$notfound) {
                     if (! empty($cid)) {
                         $category = \Category::active()
+                            ->whereHas('services', function($q) use($retailer) {
+                                $q->where('merchants.parent_id', $retailer->merchant_id);
+                                $q->where('merchants.object_type', 'service');
+                                $q->where('merchants.status', 'active');
+                            })
                             ->where('category_id', $cid)
                             ->first();
                         if (!is_object($category)) {
@@ -4134,8 +4247,8 @@ class MobileCIAPIController extends BaseCIController
 
             if ($notfound) {
                 return View::make('mobile-ci.404', array(
-                    'page_title'=>Lang::get('mobileci.page_title.not_found'), 
-                    'retailer'=>$retailer, 
+                    'page_title'=>Lang::get('mobileci.page_title.not_found'),
+                    'retailer'=>$retailer,
                     'urlblock' => $urlblock,
                     'user' => $user,
                     'user_email' => $user->role->role_name !== 'Guest' ? $user->user_email : '',

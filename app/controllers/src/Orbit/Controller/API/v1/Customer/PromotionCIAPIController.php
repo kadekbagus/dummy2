@@ -130,6 +130,11 @@ class PromotionCIAPIController extends BaseAPIController
                 $objectType = 'promotion';
             }
 
+            OrbitInput::get('ids', function($ids) use ($promotions)
+            {
+                $promotions->whereNotIn('news.news_id', $ids);
+            });
+
             $promotions = $promotions->where('news.status', '=', 'active')
                         ->where(function ($q) use ($objectId) {
                             $q->where('merchants.parent_id', '=', $objectId)
