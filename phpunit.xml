@@ -61,6 +61,9 @@
             <file>./app/tests/api/v1/category/postTenantTestLinkToTenantCategoryTestArtemisVersion.php</file>
             <file>./app/tests/api/v1/promotion/getPromotionListMobileCITest.php</file>
             <file>./app/tests/api/v1/promotion/getPromotionDetailMobileCITest.php</file>
+            <file>./app/tests/api/v1/mall/postNewMallTestArtemisVersion.php</file>
+            <file>./app/tests/api/v1/mall/getSearchMallTestArtemisVersion.php</file>
+            <file>./app/tests/api/v1/mall/postUpdateMallTestArtemisVersion.php</file>
         </testsuite>
     </testsuites>
 </phpunit>
