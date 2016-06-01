@@ -27,6 +27,7 @@ return array(
         'not_found'          => '失误',
         'recognize_me'       => '认识我',
         'tenant_directory'   => '店铺',
+        'service_directory'  => '服务',
         'promotions_tenants' => '促销店铺',
         'coupons_tenants'    => '优惠券店铺',
         'news_tenants'       => '新店铺',
@@ -50,16 +51,19 @@ return array(
         'promotion'     => '促销活动',
         'coupon'        => '我的优惠券',
         'tenant'        => '店铺',
+        'service'       => '服务',
         'lucky_draw'    => '幸运大抽奖',
         'news'          => '消息',
         'promotions'     => '促销活动',
         'coupons'        => '优惠券',
         'tenants'        => '店铺',
+        'services'       => '服务',
         'lucky_draws'    => '幸运大抽奖',
         'newss'          => '消息',
         'promotions_single'      => '促销活动',
         'coupons_single'        => '券',
         'tenants_single'        => '店铺',
+        'services_single'       => '服务',
         'lucky_draws_single'    => '幸运大抽奖',
         'newss_single'          => '消息',
     ),
@@ -76,6 +80,7 @@ return array(
         'no_news_listing'              => '对不起，这儿没有消息目前在这个购物中心。',
         'no_promotions_listing'        => '对不起，这儿没有促销活动目前在这个购物中心。',
         'no_stores_listing'            => '对不起，这儿没有商店目前在这个购物中心。',
+        'no_services_listing'          => '对不起，没有服务目前在这个购物中心。',
     ),
 
     // modal specific lang
@@ -321,6 +326,7 @@ return array(
 
     'search' => array(
         'no_item'            => '无店铺匹配条件。',
+        'no_service'         => '没有服务业条件匹配的',
         'too_much_items'     => '搜索结果的范围太广，请缩小它',
         'no_result'          => '对不起，搜索有没有结果',
         'error'              => '发出请求时有错误',

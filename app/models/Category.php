@@ -59,9 +59,7 @@ class Category extends Eloquent
      */
     public function translations()
     {
-        return $this->hasMany('CategoryTranslation', 'category_id', 'category_id')->excludeDeleted()->whereHas('language', function($has) {
-            $has->where('merchant_languages.status', 'active');
-        });
+        return $this->hasMany('CategoryTranslation', 'category_id', 'category_id')->excludeDeleted();
     }
 
     /**
@@ -98,5 +96,15 @@ class Category extends Eloquent
         });
 
         return $builder;
+    }
+
+    public function tenants()
+    {
+        return $this->belongsToMany('Tenant', 'category_merchant', 'category_id', 'merchant_id');
+    }
+
+    public function services()
+    {
+        return $this->belongsToMany('TenantStoreAndService', 'category_merchant', 'category_id', 'merchant_id');
     }
 }

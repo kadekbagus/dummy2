@@ -90,63 +90,6 @@
                                 </section>
                             </div>
                         @endif
-
-                        @foreach($data->records as $tenant)
-                            <div class="col-xs-12 col-sm-12" id="item-{{$tenant->merchant_id}}">
-                                <section class="list-item-single-tenant">
-                                    <a class="list-item-link" data-href="{{ route('ci-tenant-detail', ['id' => $tenant->merchant_id]) }}" href="{{ $urlblock->blockedRoute('ci-tenant-detail', ['id' => $tenant->merchant_id]) }}">
-                                        <div class="list-item-info">
-                                            <header class="list-item-title">
-                                                <div><strong>{{{ $tenant->name }}}</strong></div>
-                                            </header>
-                                            <header class="list-item-subtitle">
-                                                <div>
-                                                    <i class="fa fa-map-marker" style="padding-left: 5px;padding-right: 8px;"></i>
-                                                    {{{ !empty($tenant->floor) ? ' ' . $tenant->floor : '' }}}{{{ !empty($tenant->unit) ? ' - ' . $tenant->unit : '' }}}
-                                                </div>
-                                                <div>
-                                                    <div class="col-xs-6">
-                                                        <i class="fa fa-list" style="padding-left: 2px;padding-right: 4px;"></i>
-                                                        @if(empty($tenant->category_string))
-                                                            <span>-</span>
-                                                        @else
-                                                            <span>{{{ mb_strlen($tenant->category_string) > 30 ? mb_substr($tenant->category_string, 0, 30, 'UTF-8') . '...' : $tenant->category_string }}}</span>
-                                                        @endif
-                                                    </div>
-                                                </div>
-                                                @if ($urlblock->isLoggedIn())
-                                                    @if(! empty($tenant->facebook_like_url))
-                                                    <div class="fb-like" data-href="{{{$tenant->facebook_like_url}}}" data-layout="button_count" data-action="like" data-show-faces="false" data-share="false"></div>
-                                                    @endif
-                                                @endif
-                                            </header>
-                                            <header class="list-item-badges">
-                                                <div class="col-xs-12 badges-wrapper text-right">
-                                                    @if($tenant->promotion_flag)
-                                                    <span class="badges promo-badges text-center"><i class="fa fa-bullhorn"></i></span>
-                                                    @endif
-                                                    @if($tenant->news_flag)
-                                                    <span class="badges news-badges text-center"><i class="fa fa-newspaper-o"></i></span>
-                                                    @endif
-                                                    @if($tenant->coupon_flag)
-                                                    <span class="badges coupon-badges text-center"><i class="fa fa-ticket"></i></span>
-                                                    @endif
-                                                </div>
-                                            </header>
-                                        </div>
-                                        <div class="list-vignette-non-tenant"></div>
-                                        @if(!count($tenant->mediaLogo) > 0)
-                                        <img class="img-responsive img-fit-tenant" src="{{ asset('mobile-ci/images/default_tenants_directory.png') }}"/>
-                                        @endif
-                                        @foreach($tenant->mediaLogo as $media)
-                                        @if($media->media_name_long == 'retailer_logo_orig')
-                                        <img class="img-responsive img-fit-tenant" alt="" data-original="{{ asset($media->path) }}"/>
-                                        @endif
-                                        @endforeach
-                                    </a>
-                                </section>
-                            </div>
-                        @endforeach
                         </div>
                     </div>
                 </div>
@@ -237,17 +180,19 @@
 <script type="text/javascript">
 
     var take = {{ Config::get('orbit.pagination.per_page', 25) }},
-        skip = {{ Config::get('orbit.pagination.per_page', 25) }},
+        skip = 0;//{{ Config::get('orbit.pagination.per_page', 25) }},
         keyword = '{{{ Input::get('keyword', '') }}}',
         cid = '{{{ Input::get('cid', '') }}}',
         fid = '{{{ Input::get('fid', '') }}}',
         promotion_id = '{{{ Input::get('promotion_id', '')}}}',
+        news_id = '{{{ Input::get('news_id', '')}}}',
+        coupon_id = '{{{ Input::get('coupon_id', '')}}}',
+        coupon_redeem_id = '{{{ Input::get('coupon_redeem_id', '')}}}',
         isFromDetail = false,
         defaultTenantLogoUrl = '{{ asset('mobile-ci/images/default_tenants_directory.png') }}',
-        isLoggedIn = Boolean({{ $urlblock->isLoggedIn() }}),
-        canLoadMoreTenant = Boolean({{ $data->returned_records < $data->total_records }});
+        isLoggedIn = Boolean({{ $urlblock->isLoggedIn() }});
 
-    var initImageLazyload = function(jImageElems) {
+    var applyLazyImage = function(jImageElems) {
         if (jImageElems instanceof jQuery) {
             jImageElems.lazyload({
                 threshold : 100,
@@ -364,8 +309,6 @@
         }
         else {
             $tenantLogo = $('<img />').addClass('img-responsive img-fit-tenant').attr('data-original', logoUrl);
-            // Apply lazy load to tenantLogo image.
-            initImageLazyload($tenantLogo);
         }
 
         $itemLink.append($nonTenantDiv);
@@ -395,13 +338,19 @@
             var $listDiv = generateListItem(merchantId, redirectUrl, url, name, floor, unit, category, facebook_like_url, promotion_flag, news_flag, coupon_flag, logoUrl);
 
             $('.catalogue-wrapper').append($listDiv);
+
+            var $lazyImage = $listDiv.find('img[data-original]');
+            if ($lazyImage) {
+                applyLazyImage($lazyImage);
+            }
+
             deferred.resolve();
             promises.push(deferred);
         };
         return $.when.apply(undefined, promises).promise();
     }
 
-    var loadMoreTenant = function() {
+    var loadMoreTenant = function () {
         $.ajax({
             url: '{{ url("app/v1/tenant/load-more") }}',
             method: 'GET',
@@ -413,7 +362,10 @@
                 keyword: keyword,
                 cid: cid,
                 fid: fid,
-                promotion_id: promotion_id
+                promotion_id: promotion_id,
+                news_id: news_id,
+                coupon_id: coupon_id,
+                coupon_redeem_id: coupon_redeem_id
             },
             error: function(xhr, textStatus, errorThrown) {
                 if (textStatus === 'timeout') {
@@ -421,7 +373,7 @@
                 }
             }
         })
-        .done(function(data) {
+        .done(function (data) {
             skip = skip + take;
 
             if(data.records.length > 0) {
@@ -439,17 +391,28 @@
                         dataJson.records = jsonObj.records.concat(dataJson.records);
                     }
 
-                    // Set tenantData in localStorage.
-                    localStorage.setItem('tenantData', JSON.stringify(dataJson));
+                    try {
+                        // Set tenantData in localStorage.
+                        localStorage.setItem('tenantData', JSON.stringify(dataJson));
+                    }
+                    catch (err) {
+                        // For safari private mode sake.
+                    }
                 }
+            }
+        })
+        .then(function (data) {
+            var totalRecords = data.total_records;
 
+            // Load more if there's still unloaded tenants
+            if (skip < totalRecords) {
+                loadMoreTenant();
+            }
+            else {
                 FB.XFBML.parse();
             }
-
-            canLoadMoreTenant = (skip < data.total_records);
         });
     };
-
 
     $(window).on('scroll', function() {
         var scrollTop = $(window).scrollTop();
@@ -460,21 +423,9 @@
                 localStorage.setItem('scrollTop', scrollTop);
             }
         }
-
-        // Auto load more implementation.
-        var totalHeight = $(document).height();
-
-        // Check if scroll has reached 75% of total page height.
-        if (canLoadMoreTenant && scrollTop >= (totalHeight * 0.75)) {
-            canLoadMoreTenant = false;
-            loadMoreTenant();
-        }
     });
 
     $(document).ready(function(){
-        // Apply lazy loads to images.
-        initImageLazyload($('img.img-fit-tenant[data-original]'));
-
         // Check if browser supports LocalStorage
         if(typeof(Storage) !== 'undefined') {
             // This feature is implemented for tracking whether this page is loaded from detail page. (Which is back button)
@@ -488,8 +439,13 @@
                 localStorage.removeItem('tenantData');
             }
 
-            // Set fromSource in localStorage.
-            localStorage.setItem('fromSource', 'store');
+            try {
+                // Set fromSource in localStorage.
+                localStorage.setItem('fromSource', 'store');
+            }
+            catch (err) {
+                // Need this for safari private mode !!
+            }
         }
 
         $(document).on('show.bs.modal', '.modal', function (event) {
@@ -545,8 +501,6 @@
                         }, 750);
                     }
                 });
-
-                canLoadMoreTenant = (skip < tenants.total_records);
             }
             else {
                 // Just maintain scroll position.
@@ -560,6 +514,7 @@
             }
         }
 
+        loadMoreTenant();
 
     });
 </script>

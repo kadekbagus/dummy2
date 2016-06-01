@@ -27,6 +27,7 @@ return array(
         'not_found'          => 'エラー ',
         'recognize_me'       => '私を認識」',
         'tenant_directory'   => 'テナント',
+        'service_directory'  => 'サービス',
         'promotions_tenants' => 'テナントの販促',
         'coupons_tenants'    => 'クーポンのテナント',
         'news_tenants'       => 'テナントのニュース',
@@ -50,16 +51,19 @@ return array(
         'promotion'          => '販促',
         'coupon'             => '私のクーポン',
         'tenant'             => 'テナント',
+        'service'            => 'サービス',
         'lucky_draw'         => '抽選',
         'news'               => 'ニュース',
         'promotions'         => '販促',
         'coupons'            => '券',
         'tenants'            => 'テナント',
+        'services'           => 'サービス',
         'lucky_draws'        => '抽選',
         'newss'              => 'ニュース',
         'promotions_single'  => '販促',
         'coupons_single'     => '券',
         'tenants_single'     => 'テナント',
+        'services_single'    => 'テナント',
         'lucky_draws_single' => '抽選',
         'newss_single'       => 'ニュース',
     ),
@@ -76,6 +80,7 @@ return array(
         'no_news_listing'              => '申し訳ありませんが、このモールで現時点ではニュースはありません。',
         'no_promotions_listing'        => '申し訳ありませんが、このモールで現時点でのプロモーションはありません。',
         'no_stores_listing'            => '申し訳ありませんが、このモールで現時点で店舗はありません。',
+        'no_services_listing'          => '申し訳ありません、 がこのモールで現時点でサービスはありません。',
     ),
 
     // modal specific lang
@@ -321,6 +326,7 @@ return array(
 
     'search' => array(
         'no_item'            => '基準にマッチしているテナントがありません。',
+        'no_service'         => '条件に一致するサービスはありません。',
         'too_much_items'     => '検索結果が広すぎる、それを絞り込むください.',
         'no_result'          => '申し訳ありませんが、検索結果がないです',
         'error'              => '要求の発行中にエラーがあります',

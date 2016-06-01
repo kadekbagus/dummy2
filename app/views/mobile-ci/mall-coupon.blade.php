@@ -37,16 +37,79 @@
 @stop
 
 @section('content')
-<div class="row">
-    <div class="col-xs-12 product-detail">
-        @if(($coupon->image!='mobile-ci/images/default_coupon.png'))
-        <a href="{{{ asset($coupon->image) }}}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer"><img class="img-responsive" alt="" src="{{{ asset($coupon->image) }}}" ></a>
-        @else
-        <img class="img-responsive" alt="" src="{{{ asset($coupon->image) }}}" >
-        @endif
+<div class="row relative-wrapper">
+    <div class="actions-container" style="z-index: 102;">
+        <div class="circle-plus action-btn">
+            <div class="circle">
+                <div class="horizontal"></div>
+                <div class="vertical"></div>
+            </div>
+        </div>
+        <div class="actions-panel" style="display: none;">
+            <ul class="list-unstyled">
+                <li>
+                    @if(count($link_to_tenants) > 0)
+                    <a data-href="{{ route('ci-tenant-list', ['coupon_id' => $coupon->promotion_id]) }}" href="{{{ $urlblock->blockedRoute('ci-tenant-list', ['coupon_id' => $coupon->promotion_id]) }}}">
+                        <span class="fa fa-stack icon">
+                            <i class="fa fa-circle fa-stack-2x"></i>
+                            <i class="fa fa-th-list fa-inverse fa-stack-1x"></i>
+                        </span>
+                        <span class="text">{{{ Lang::get('mobileci.tenant.see_tenants') }}}</span>
+                    </a>
+                    @else
+                        <!-- Tenant not found -->
+                    <a class="disabled">
+                        <span class="fa fa-stack icon">
+                            <i class="fa fa-circle fa-stack-2x"></i>
+                            <i class="fa fa-th-list fa-inverse fa-stack-1x"></i>
+                        </span>
+                        <span class="text">{{{ Lang::get('mobileci.tenant.see_tenants') }}}</span>
+                    </a>
+                    @endif
+                </li>
+                @if(count($issued_coupons) > 0)
+                <li>
+                    <a data-href="{{ route('ci-tenant-list', ['coupon_redeem_id' => $coupon->promotion_id]) }}" href="{{{ $urlblock->blockedRoute('ci-tenant-list', ['coupon_redeem_id' => $coupon->promotion_id]) }}}">
+                        <span class="fa fa-stack icon">
+                            <i class="fa fa-circle fa-stack-2x"></i>
+                            <i class="fa fa-laptop fa-inverse fa-stack-1x"></i>
+                        </span>
+                        <span class="text">{{{ Lang::get('mobileci.tenant.redemption_places') }}}</span>
+                    </a>
+                </li>
+                <li>
+                    <a id="useBtn">
+                        <span class="fa fa-stack icon">
+                            <i class="fa fa-circle fa-stack-2x"></i>
+                            <i class="fa fa-scissors fa-inverse fa-stack-1x"></i>
+                        </span>
+                        <span class="text">{{{ Lang::get('mobileci.coupon.use_coupon') }}}</span>
+                    </a>
+                </li>
+                @endif
+                @if ($urlblock->isLoggedIn())
+                    @if(! empty($coupon->facebook_share_url))
+                    <li>
+                        <div class="fb-share-button" data-href="{{$coupon->facebook_share_url}}" data-layout="button"></div>
+                    </li>
+                    @endif
+                @endif
+            </ul>
+        </div>
+    </div>
+    <div class="col-xs-12 product-detail img-wrapper" style="z-index: 100;">
+      <div class="vertical-align-middle-outer">
+        <div class="vertical-align-middle-inner">
+            @if(($coupon->image!='mobile-ci/images/default_coupon.png'))
+            <a href="{{{ asset($coupon->image) }}}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer"><img class="img-responsive" alt="" src="{{{ asset($coupon->image) }}}" ></a>
+            @else
+            <img class="img-responsive" alt="" src="{{{ asset($coupon->image) }}}" >
+            @endif
+        </div>
+      </div>
     </div>
 </div>
-<div class="row product-info padded">
+<div class="row product-info padded" style="z-index: 101;">
     <div class="col-xs-12">
         <div class="row">
             <div class="col-xs-12">
@@ -59,44 +122,7 @@
                 <h4><strong>{{{ Lang::get('mobileci.coupon_detail.validity_label') }}}</strong></h4>
                 <p>{{{ date('d M Y', strtotime($coupon->begin_date)) }}} - {{{ date('d M Y', strtotime($coupon->end_date)) }}}</p>
             </div>
-            @if ($urlblock->isLoggedIn())
-                @if(! empty($coupon->facebook_share_url))
-                <div class="col-xs-12">
-                    <div class="fb-share-button" data-href="{{{$coupon->facebook_share_url}}}" data-layout="button"></div>
-                </div>
-                @endif
-            @endif
         </div>
-    </div>
-</div>
-
-<div class="row vertically-spaced">
-    <div class="col-xs-12 padded">
-        @if(count($link_to_tenants) > 0)
-        <div class="row vertically-spaced">
-            <div class="col-xs-12 text-center">
-                <a data-href="{{ route('ci-tenant-list', ['coupon_id' => $coupon->promotion_id]) }}" href="{{{ $urlblock->blockedRoute('ci-tenant-list', ['coupon_id' => $coupon->promotion_id]) }}}" class="btn btn-info btn-block">{{{ Lang::get('mobileci.tenant.see_tenants') }}}</a>
-            </div>
-        </div>
-        @else
-        <div class="row vertically-spaced">
-            <div class="col-xs-12 text-center">
-                <button class="btn btn-info btn-block" disabled="disabled">{{{ Lang::get('mobileci.tenant.see_tenants') }}}</button>
-            </div>
-        </div>
-        @endif
-        @if(count($issued_coupons) > 0)
-            <div class="row vertically-spaced">
-                <div class="col-xs-12 text-center">
-                    <a data-href="{{ route('ci-tenant-list', ['coupon_redeem_id' => $coupon->promotion_id]) }}" href="{{{ $urlblock->blockedRoute('ci-tenant-list', ['coupon_redeem_id' => $coupon->promotion_id]) }}}" class="btn btn-info btn-block">{{{ Lang::get('mobileci.tenant.redemption_places') }}}</a>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-xs-12 text-center">
-                    <button class="btn btn-info btn-block" id="useBtn" disabled="disabled">{{{ Lang::get('mobileci.coupon.use_coupon') }}}</button>
-                </div>
-            </div>
-        @endif
     </div>
 </div>
 <!-- end of product -->
@@ -104,7 +130,6 @@
 
 @section('modals')
 <!-- Modal -->
-
 <div class="modal fade" id="hasCouponModal" tabindex="-1" role="dialog" aria-labelledby="hasCouponLabel" aria-hidden="true">
     <div class="modal-spinner text-center">
         <i class="fa fa-circle-o-notch fa-spin"></i>
@@ -199,74 +224,47 @@
             // Set fromSource in localStorage.
             localStorage.setItem('fromSource', 'mall-coupon');
 
-            // check for Geolocation support
-            if (navigator.geolocation) {
-                window.onload = function() {
-                    var startPos;
-                    var geoOptions = {
-                       timeout: 10 * 1000
-                    }
-                    var mall_id = '{{Config::get('orbit.shop.id')}}';
-                    var geoSuccess = function(position) {
-                        startPos = position;
-                        console.log(startPos);
-                        // do ajax call
-                        $.ajax({
-                            url: '{{'/app/v1/pub/mall-fence'}}',
-                            method: 'GET',
-                            data: {
-                                latitude: startPos.coords.latitude,
-                                longitude: startPos.coords.longitude,
-                                mall_id: mall_id
-                            }
-                        }).done(function(response) {
-                            if (response.data.total_records > 0) {
-                                $('#useBtn').removeAttr('disabled');
-                            }
-                        })
+            // Actions button event handler
+            $('.action-btn').on('click', function() {
+                $('.actions-container').toggleClass('alive');
+                $('.actions-panel').slideToggle();
+            });
 
-                        // document.getElementById('startLat').innerHTML = startPos.coords.latitude;
-                        // document.getElementById('startLon').innerHTML = startPos.coords.longitude;
-                    };
-                    var geoError = function(error) {
-                        console.log('Error occurred. Error code: ' + error.code);
-                        // error.code can be:
-                        //   0: unknown error
-                        //   1: permission denied
-                        //   2: position unavailable (error response from location provider)
-                        //   3: timed out
-                    };
-
-                    navigator.geolocation.getCurrentPosition(geoSuccess, geoError, geoOptions);
-                };
-            }
+            setTimeout(function() {
+                $('.actions-container').fadeIn();
+            }, 500);
 
             $(window).scroll(function(){
                 s = $(window).scrollTop();
                 $('.product-detail img').css('-webkit-transform', 'translateY('+(s/3)+'px)');
             });
-            $('#useBtn').click(function(){
+
+            $('#useBtn').on('click', function() {
                 $('#hasCouponModal').modal();
             });
+
             @if(count($issued_coupons) > 0)
-            $('#applyCoupon').click(function(){
+            $('#applyCoupon').click(function (){
                 $('#hasCouponModal .modal-content').css('display', 'none');
                 $('#hasCouponModal .modal-spinner').css('display', 'block');
+
                 $.ajax({
-                    url: apiPath+'issued-coupon/redeem',
+                    url: apiPath + 'issued-coupon/redeem',
                     method: 'POST',
                     data: {
                         issued_coupon_id: '{{$issued_coupons[0]->issued_coupon_id}}',
                         merchant_verification_number: $('#tenantverify').val(),
                         current_mall: '{{$retailer->merchant_id}}'
                     }
-                }).done(function(data){
-                    if(data.status == 'success'){
+                })
+                .done(function(data){
+                    if(data.status == 'success') {
                         $('#successCouponModal').modal({
                             backdrop: 'static',
                             keyboard: false
                         });
-                        $('#successCouponModal').on('shown.bs.modal', function($event){
+
+                        $('#successCouponModal').on('shown.bs.modal', function ($event) {
                             $('#issuecouponno').val(data.data.issued_coupon_code);
                             $('#denyCoupon').html('<i class="fa fa-circle-o-notch fa-spin"></i>');
                             var y = 5000;
@@ -279,17 +277,21 @@
                                 y--;
                             }, 1000);
                         });
-                        $('#successCouponModal').on('hide.bs.modal', function($event){
+
+                        $('#successCouponModal').on('hide.bs.modal', function ($event) {
                             window.location.replace('{{ $urlblock->blockedRoute('ci-coupon-list') }}');
                         });
-                    }else{
+                    }
+                    else{
                         $('#wrongCouponModal').modal();
                         $('#errMsg').text("{{Lang::get('mobileci.coupon.wrong_verification_number')}}");
                     }
-                }).fail(function(data) {
+                })
+                .fail(function (data) {
                     $('#wrongCouponModal').modal();
                     $('#errMsg').text("{{Lang::get('mobileci.coupon.wrong_verification_number')}}");
-                }).always(function(data){
+                })
+                .always(function (data) {
                     $('#hasCouponModal .modal-content').css('display', 'block');
                     $('#hasCouponModal .modal-spinner').css('display', 'none');
                     $('#tenantverify').val('');

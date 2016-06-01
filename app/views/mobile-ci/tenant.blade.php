@@ -24,9 +24,16 @@
 @endif
 @stop
 
+<?php
+$showTenantHeader = false;
+if(sizeof($tenant->newsPromotionsProfiling) > 0 || sizeof($tenant->newsProfiling) > 0 || sizeof($tenant->couponsProfiling) > 0) {
+    $showTenantHeader = true;
+}
+?>
+
 @section('tenant_tab')
     {{-- todo: create flag for this tabs --}}
-    @if(sizeof($tenant->newsPromotionsProfiling) > 0 || sizeof($tenant->newsProfiling) > 0 || sizeof($tenant->couponsProfiling) > 0)
+    @if($showTenantHeader)
     <div class="header-tenant-tab">
         <ul>
             @if(sizeof($tenant->newsPromotionsProfiling) > 0)
@@ -44,7 +51,7 @@
 @stop
 
 @section('content')
-<div class="slide-tab-container">
+<div class="slide-tab-container" style="z-index: 103;">
     <div id="slide-tab-promo-container">
         @if(sizeof($tenant->newsPromotionsProfiling) > 0)
             @foreach($tenant->newsPromotionsProfiling as $promotab)
@@ -175,9 +182,11 @@
                 <div class="col-xs-12 col-sm-12">
                     <section class="list-item-single-tenant">
                         <a class="list-item-link" data-href="{{ route('ci-coupon-detail', ['id' => $coupontab->promotion_id]) }}" href="{{ $urlblock->blockedRoute('ci-coupon-detail', ['id' => $coupontab->promotion_id]) }}">
-                            <div class="coupon-new-badge">
-                                <div class="new-number">{{$coupontab->quantity}}</div>
-                            </div>
+                                <span class="fa-stack fa-2x pull-right couponbadge-container couponbadge-shadow couponbadge-medium" data-count="{{ ($coupontab->quantity > 99) ? '99+' : $coupontab->quantity }}">
+                                   <i class="fa fa-circle fa-stack-2x color-base"></i>
+                                   <i class="fa fa-ticket fa-stack-1x color-icon couponbadge-ticket-small"></i>
+                                   <i class="fa fa-certificate fa-stack-2x couponbadge color-badge couponbadge-small"></i>
+                                </span>
                             <div class="list-item-info">
                                 <header class="list-item-title">
                                     <div><strong>{{{ $coupontab->promotion_name }}}</strong></div>
@@ -238,8 +247,38 @@
 <div class="slide-menu-backdrop-tab"></div>
 
 <!-- product -->
-<div class="row header-tenant-tab-present">
-    <div class="col-xs-12">
+@if($showTenantHeader)
+<div class="row header-tenant-tab-present relative-wrapper">
+@else
+<div class="row relative-wrapper">
+@endif
+    <div class="actions-container" style="z-index: 102;">
+        <div class="circle-plus action-btn">
+            <div class="circle">
+                <div class="horizontal"></div>
+                <div class="vertical"></div>
+            </div>
+        </div>
+        <div class="actions-panel" style="display: none;">
+            <ul class="list-unstyled">
+                @if ($urlblock->isLoggedIn())
+                    @if(! empty($tenant->facebook_like_url))
+                    <li>
+                        <div class="fb-like" data-href="{{{$tenant->facebook_like_url}}}" data-layout="button_count" data-action="like" data-show-faces="false" data-share="false">
+                        </div>
+                    </li>
+                    @endif
+                    @if(! empty($tenant->facebook_share_url))
+                    <li>
+                        <div class="fb-share-button" data-href="{{{$tenant->facebook_share_url}}}" data-layout="button">
+                        </div>
+                    </li>
+                    @endif
+                @endif
+            </ul>
+        </div>
+    </div>
+    <div class="col-xs-12" style="z-index: 100;">
         @if(count($tenant->mediaLogoOrig) === 0 && count($tenant->mediaImageOrig) === 0)
         <img class="img-responsive img-center" src="{{ asset('mobile-ci/images/default_tenants_directory.png') }}"/>
         @else
@@ -281,25 +320,34 @@
         @endif
     </div>
 </div>
-<div class="row padded">
+<div class="row padded" style="z-index: 101;">
     <div class="col-xs-12 font-1-3">
+        <input type="checkbox" class="read-more-state" id="post-2" />
         <p>{{ nl2br(e($tenant->description)) }}</p>
-        <ul class="where-list">
+        <ul class="where-list read-more-wrap">
             <li><span class="tenant-list-icon"><i class="fa fa-map-marker fa-lg" style="padding-left: 11px;"></i></span><p class="tenant-list-text">{{{ !empty($tenant->floor) ? $tenant->floor : '' }}}{{{ !empty($tenant->unit) ? ' - ' . $tenant->unit : '' }}}</p></li>
             <li><span class="tenant-list-icon"><i class="fa fa-globe fa-lg"></i></span><p class="tenant-list-text">{{{ (($tenant->url) != '') ? 'http://'.$tenant->url : '-' }}}</p></li>
             @if(! empty($tenant->facebook_like_url))
             <li><span class="tenant-list-icon"><i class="fa fa-facebook-square fa-lg"></i></span><p class="tenant-list-text">{{{ str_replace('//', '', $tenant->facebook_like_url) }}}</p></li>
             @endif
             <li><span class="tenant-list-icon"><i class="fa fa-phone-square fa-lg"></i></span><p class="tenant-list-text">@if($tenant->phone != '')<a href="tel:{{{ $tenant->phone }}}">{{{ $tenant->phone }}}</a>@else - @endif</p></li>
+            @if(count($tenant->categories) > 0)
+                <li><span class="tenant-list-icon"><i class="fa fa-list-ul"></i></span></li>
+                @foreach($tenant->categories as $idx => $category)
+                    @if($idx >= 3)
+                        <li class="read-more-target"><span class="tenant-list-text">{{{ $category->category_name }}}</span></li>
+                    @else
+                        <li><span class="tenant-list-text">{{{ $category->category_name }}}</span></li>
+                    @endif
+                @endforeach
+
+                @if(count($tenant->categories) >= 3)
+                    <li><span class="tenant-list-text"><label for="post-2" class="read-more-trigger"></label></span></li>
+                @endif
+            @else
+                <li><span class="tenant-list-icon"><i class="fa fa-list-ul"></i></span><p class="tenant-list-text">-</p></li>
+            @endif
         </ul>
-        @if ($urlblock->isLoggedIn())
-            @if(! empty($tenant->facebook_like_url))
-            <div class="fb-like" data-href="{{{$tenant->facebook_like_url}}}" data-layout="button_count" data-action="like" data-show-faces="false" data-share="false" style="margin-right:25px;"></div>
-            @endif
-            @if(! empty($tenant->facebook_share_url))
-            <div class="fb-share-button" data-href="{{{$tenant->facebook_share_url}}}" data-layout="button"></div>
-            @endif
-        @endif
     </div>
 </div>
 <div class="row padded vertically-spaced">
@@ -368,6 +416,16 @@
             if(typeof(Storage) !== 'undefined') {
                 localStorage.setItem('fromSource', 'detail');
             }
+
+            // Actions button event handler
+            $('.action-btn').on('click', function() {
+                $('.actions-container').toggleClass('alive');
+                $('.actions-panel').slideToggle();
+            });
+
+            setTimeout(function() {
+                $('.actions-container').fadeIn();
+            }, 500);
 
             $('#image-gallery').lightSlider({
                 gallery:false,

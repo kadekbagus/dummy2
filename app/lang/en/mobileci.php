@@ -27,6 +27,7 @@ return array(
         'not_found'         => 'ERROR',
         'recognize_me'      => 'RECOGNIZE ME',
         'tenant_directory'  => 'STORES',
+        'service_directory' => 'SERVICES',
         'promotions_tenants'=> 'PROMOTION STORES',
         'coupons_tenants'   => 'COUPON STORES',
         'news_tenants'      => 'NEWS STORES',
@@ -50,16 +51,19 @@ return array(
         'promotion'          => 'PROMOTIONS',
         'coupon'             => 'MY COUPONS',
         'tenant'             => 'STORES',
+        'service'            => 'SERVICES',
         'lucky_draw'         => 'LUCKY DRAWS',
         'news'               => 'NEWS',
         'promotions'         => 'Promotions',
         'coupons'            => 'Coupons',
         'tenants'            => 'Stores',
+        'services'           => 'Services',
         'lucky_draws'        => 'Lucky Draws',
         'newss'              => 'News',
         'promotions_single'  => 'Promotion',
         'coupons_single'     => 'Coupon',
         'tenants_single'     => 'Store',
+        'services_single'    => 'Service',
         'lucky_draws_single' => 'Lucky Draw',
         'newss_single'       => 'News',
     ),
@@ -76,6 +80,7 @@ return array(
         'no_news_listing'              => 'Sorry, there is no news at the moment in this mall.',
         'no_promotions_listing'        => 'Sorry, there is no promotion at the moment in this mall.',
         'no_stores_listing'            => 'Sorry, there is no store at the moment in this mall.',
+        'no_services_listing'          => 'Sorry, there is no service at the moment in this mall.',
     ),
 
     // modal specific lang
@@ -321,6 +326,7 @@ return array(
 
     'search' => array(
         'no_item'               => 'There is no store matching the criteria.',
+        'no_service'            => 'There is no service matching the criteria.',
         'too_much_items'        => 'Search result is too broad, please narrow it down.',
         'no_result'             => 'Sorry, search has no results.',
         'error'                 => 'There is an error while making the request.',

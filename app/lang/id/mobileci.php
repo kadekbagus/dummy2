@@ -27,6 +27,7 @@ return array(
         'not_found'         => 'ERROR',
         'recognize_me'      => 'KENALI SAYA',
         'tenant_directory'  => 'GERAI',
+        'service_directory' => 'LAYANAN',
         'promotions_tenants'=> 'PROMOSI GERAI',
         'coupons_tenants'   => 'KUPON GERAI',
         'news_tenants'      => 'INFORMASI GERAI',
@@ -50,16 +51,19 @@ return array(
         'promotion'             => 'PROMOSI',
         'coupon'                => 'KUPON SAYA',
         'tenant'                => 'GERAI',
+        'service'               => 'LAYANAN',
         'lucky_draw'            => 'Undian Berhadiah',
         'news'                  => 'BERITA',
         'promotions'            => 'Promosi',
         'coupons'               => 'Kupon',
         'tenants'               => 'Gerai',
+        'services'              => 'Layanan',
         'lucky_draws'           => 'Undian Berhadiah',
         'newss'                 => 'Berita',
         'promotions_single'     => 'Promosi',
         'coupons_single'        => 'Kupon',
         'tenants_single'        => 'Gerai',
+        'services_single'       => 'Layanan',
         'lucky_draws_single'    => 'Undian Berhadiah',
         'newss_single'          => 'Berita',
     ),
@@ -76,6 +80,7 @@ return array(
         'no_news_listing'              => 'Maaf, tidak ada berita pada saat ini di mall ini.',
         'no_promotions_listing'        => 'Maaf, tidak ada promosi pada saat ini di mall ini.',
         'no_stores_listing'            => 'Maaf, tidak ada gerai pada saat ini di mall ini.',
+        'no_services_listing'          => 'Maaf, tidak ada layanan pada saat ini di mall ini.',
     ),
 
     // modal specific lang
@@ -321,6 +326,7 @@ return array(
 
     'search'                => array(
         'no_item'            => 'Tidak ada gerai yang sesuai kriteria.',
+        'no_service'         => 'Tidak ada layanan yang sesuai kriteria.',
         'too_much_items'     => 'Hasil pencarian terlalu banyak, tolong persempit pencarian Anda.',
         'no_result'          => 'Maaf, tidak ada hasil pencarian.',
         'error'              => 'Ada error pada waktu melakukan request.',
