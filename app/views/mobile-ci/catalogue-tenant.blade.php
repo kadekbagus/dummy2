@@ -411,7 +411,7 @@
 
                 $btn.data('pos', topOffset)
                 .removeAttr('disabled')
-                .on('click', function (ev) {
+                .on('click mouseover', function (ev) {
                     ev.preventDefault();
                     ev.stopPropagation();
 
