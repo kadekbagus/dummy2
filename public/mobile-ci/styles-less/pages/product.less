@@ -319,18 +319,44 @@ span.attribute-title {
 }
 /* End of creating Circle Plus Sign */
 
+/* Alphabetical Scrolling Bar */
 .asb-content-support {
     width: calc(~"100% - 20.55px");
+    overflow-x: hidden;
+    z-index: 210;
 }
 
 .asb-content {
     height: calc(~"100% - 67px");
     position: fixed;
     right: 0;
-    width: 20.55px;
+    width: 40px;
     overflow: hidden;
     overflow-y: auto;
+    z-index: 220;
+
+    a.asb-btn {
+        position: relative;
+
+        &.disabled {
+            pointer-events: none;
+            cursor: default;
+            opacity: 0.6;
+            color: #adadad;
+        }
+
+        &:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -30px;
+            right: 0;
+            bottom: 0;
+        }
+    }
 }
+
+/* End of Alphabetical Scrolling Bar */
 
 div.relative-wrapper {
     position: relative;
