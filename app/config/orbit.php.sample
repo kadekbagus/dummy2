@@ -3,6 +3,9 @@
  * Orbit specific configuraiton.
  */
 return array(
+    // Demo environtment
+    'is_demo' => FALSE,
+
     // route names that need authentication to be accessed
     'blocked_routes' => [
         // all route names
@@ -53,6 +56,12 @@ return array(
         // this is for countdown above
         'jquery_plugin' => array(
             '2_0_2' => 'https://cdnjs.cloudflare.com/ajax/libs/jquery-countdown/2.0.2/jquery.plugin.min.js'
+        ),
+        'moment' => array(
+            '2_13_0' => 'https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.13.0/moment.min.js'
+        ),
+        'moment_timezone_data' => array(
+            '0_5_4' => 'https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.4/moment-timezone-with-data.min.js'
         ),
         //font
         'fonts' => array(
@@ -135,6 +144,12 @@ return array(
 
         // after sign in social url
         'after_social_sign_in' => 'http://gotomalls.cool',
+
+        // enable or disable the google analytics tracking
+        'enable_google_analytics' => FALSE,
+
+        // the google analytics ID, eg: UA-XXXXXXX-X
+        'google_analytics_id' => '',
     ),
 
     // General contact data

@@ -196,6 +196,9 @@
     {{-- End of Script fallback --}}
     <script type="text/javascript">
         $(document).ready(function(){
+            // Set fromSource in localStorage.
+            localStorage.setItem('fromSource', 'mall-coupon');
+
             // check for Geolocation support
             if (navigator.geolocation) {
                 window.onload = function() {

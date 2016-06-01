@@ -191,3 +191,13 @@ Route::post(
         return Orbit\Controller\API\v1\Pub\ActivationAPIController::create()->postActivateAccount();
     }]
 )->where('prefix', '(api|app)');
+
+/**
+ * Route for updating password which coming from reset password link request
+ */
+Route::get(
+    '/{prefix}/v1/pub/user/check-token', ['as' => 'pub-user-check-token', function()
+    {
+        return Orbit\Controller\API\v1\Pub\ResetPasswordAPIController::create()->getCheckResetPasswordToken();
+    }]
+)->where('prefix', '(api|app)');

@@ -85,6 +85,6 @@
         @yield('ext_script_bot')
         @include('mobile-ci.push-notification-script')
         {{-- @include('mobile-ci.orbit-tour') --}}
-
+        @include('mobile-ci.google-analytics')
     </body>
 </html>
