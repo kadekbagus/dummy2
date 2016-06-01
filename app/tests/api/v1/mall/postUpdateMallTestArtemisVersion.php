@@ -65,12 +65,14 @@ class postUpdateMallTestArtemisVersion extends TestCase
     public function setDataMall()
     {
         $this->mall_a = $mall_a = Factory::create('Mall', ['name' => 'mall antok']);
-        $this->widget_a = $widget_a = Factory::create('Widget', ['widget_type' => 'get_internet_access', 'status' => 'active']);
+        $this->widget_a = $widget_a = Factory::create('Widget', ['widget_type' => 'free_wifi', 'status' => 'active']);
         Factory::create('WidgetRetailer', ['retailer_id' => $mall_a->merchant_id, 'widget_id' => $widget_a->widget_id]);
 
         $this->mall_b = $mall_b = Factory::create('Mall', ['name' => 'mall kadek']);
-        $this->widget_b = $widget_b = Factory::create('Widget', ['widget_type' => 'get_internet_access', 'status' => 'inactive']);
+        $this->widget_b = $widget_b = Factory::create('Widget', ['widget_type' => 'free_wifi', 'status' => 'inactive']);
         Factory::create('WidgetRetailer', ['retailer_id' => $mall_b->merchant_id, 'widget_id' => $widget_b->widget_id]);
+
+        $this->mall_c = $mall_c = Factory::create('Mall', ['name' => 'mall firman']);
     }
 
     public function testRequiredMerchantId()
@@ -104,36 +106,70 @@ class postUpdateMallTestArtemisVersion extends TestCase
         $this->assertSame(NULL, $response->data);
     }
 
-    public function testUpdateWidgetGetInternetAccessToActive()
+    public function testUpdateWidgetFreeWifiToActive()
     {
         $this->setDataMall();
 
         /*
-        * test update get internet access to active
+        * test update free wifi to active
         */
         $data = ['merchant_id' => $this->mall_b->merchant_id,
-            'get_internet_access_status'    => 'active'
+            'free_wifi_status'    => 'active'
         ];
 
         $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
         $this->assertSame(0, $response->code);
         $this->assertSame("success", $response->status);
-        $this->assertSame("active", $response->data->get_internet_access_status);
+        $this->assertSame("active", $response->data->free_wifi_status);
     }
 
-    public function testUpdateWidgetGetInternetAccessToInactive()
+    public function testUpdateWidgetFreeWifiToInactive()
     {
         $this->setDataMall();
         /*
-        * test update get internet access to active
+        * test update free wifi to active
         */
         $data = ['merchant_id' => $this->mall_a->merchant_id,
-            'get_internet_access_status'    => 'inactive'
+            'free_wifi_status'    => 'inactive'
         ];
 
         $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
         $this->assertSame(0, $response->code);
         $this->assertSame("success", $response->status);
-        $this->assertSame("inactive", $response->data->get_internet_access_status);
+        $this->assertSame("inactive", $response->data->free_wifi_status);
+    }
+
+    public function testUpdateWidgetFreeWifiWhenMallDoesNotHaveWidgetFreeWifiOnDB()
+    {
+        $this->setDataMall();
+        /*
+        * test update free wifi when mall doesn have widget free wifi on database
+        */
+        $data = ['merchant_id' => $this->mall_c->merchant_id,
+            'free_wifi_status' => 'active',
+            'languages'        => ['en']
+        ];
+
+        $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
+
+        $widget = Widget::excludeDeleted()
+                    ->leftJoin('widget_retailer', 'widget_retailer.widget_id', '=', 'widgets.widget_id')
+                    ->where('widget_type', 'free_wifi')
+                    ->where('retailer_id', $this->mall_c->merchant_id)
+                    ->first();
+        $this->assertSame('active', $widget->status);
+
+        $widget_translations = WidgetTranslation::excludeDeleted('widget_translations')
+                ->leftJoin('widgets', 'widgets.widget_id', '=', 'widget_translations.widget_id')
+                ->leftJoin('widget_retailer', 'widget_retailer.widget_id', '=', 'widget_translations.widget_id')
+                ->where('widget_type', 'free_wifi')
+                ->where('retailer_id', $this->mall_c->merchant_id)
+                ->get();
+        foreach ($widget_translations as $idx => $translation) {
+            $this->assertSame($this->mall_c->merchant_id, $translation->retailer_id);
+            $this->assertSame($widget->widget_id, $translation->widget_id);
+        }
     }
 }
