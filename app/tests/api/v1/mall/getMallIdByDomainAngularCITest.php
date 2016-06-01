@@ -11,7 +11,7 @@ use DominoPOS\OrbitAPI\v10\StatusInterface as Status;
 use Laracasts\TestDummy\Factory;
 use Faker\Factory as Faker;
 
-class getObjectListAngularCITest extends TestCase
+class getMallIdByDomainAngularCITest extends TestCase
 {
     protected $apiUrl = '/api/v1/cust/malls';
 
