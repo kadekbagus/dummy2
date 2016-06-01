@@ -2,6 +2,8 @@
 
 @section('content')
     @if($data->status === 1)
+    <div class="clearfix">
+        <div class="pull-left asb-content-support">
             <div id="search-tool">
                 <div class="row">
                     <div class="col-xs-5 search-tool-col">
@@ -54,69 +56,37 @@
                     </div>
                 </div>
             </div>
-        @if(sizeof($data->records) > 0)
+
+            @if(sizeof($data->records) > 0)
             <div id="catContainer" class="container">
                 <div class="mobile-ci list-item-container">
                     <div class="row">
                         <div class="catalogue-wrapper">
-                        @foreach($data->records as $service)
-                            <div class="col-xs-12 col-sm-12" id="item-{{$service->merchant_id}}">
-                                <section class="list-item-single-tenant">
-                                    <a class="list-item-link" data-href="{{ route('ci-service-detail', ['id' => $service->merchant_id]) }}" href="{{ $urlblock->blockedRoute('ci-service-detail', ['id' => $service->merchant_id]) }}">
-                                        <div class="list-item-info">
-                                            <header class="list-item-title">
-                                                <div><strong>{{{ $service->name }}}</strong></div>
-                                            </header>
-                                            <header class="list-item-subtitle">
-                                                <div>
-                                                    <i class="fa fa-map-marker" style="padding-left: 5px;padding-right: 8px;"></i>
-                                                    {{{ !empty($service->floor) ? ' ' . $service->floor : '' }}}{{{ !empty($service->unit) ? ' - ' . $service->unit : '' }}}
-                                                </div>
-                                                <div>
-                                                    <div class="col-xs-6">
-                                                        <i class="fa fa-list" style="padding-left: 2px;padding-right: 4px;"></i>
-                                                        @if(empty($service->category_string))
-                                                            <span>-</span>
-                                                        @else
-                                                            <span>{{{ mb_strlen($service->category_string) > 30 ? mb_substr($service->category_string, 0, 30, 'UTF-8') . '...' : $service->category_string }}}</span>
-                                                        @endif
-                                                    </div>
-                                                </div>
-                                            </header>
-                                        </div>
-                                        <div class="list-vignette-non-tenant"></div>
-                                        @if(!count($service->mediaLogo) > 0)
-                                        <img class="img-responsive img-fit-tenant" src="{{ asset('mobile-ci/images/default_services_directory.png') }}"/>
-                                        @endif
-                                        @foreach($service->mediaLogo as $media)
-                                        @if($media->media_name_long == 'service_logo_orig')
-                                        <img class="img-responsive img-fit-tenant" alt="" data-original="{{ asset($media->path) }}"/>
-                                        @endif
-                                        @endforeach
-                                    </a>
-                                </section>
-                            </div>
-                        @endforeach
                         </div>
                     </div>
                 </div>
             </div>
-        @else
-            @if($data->search_mode)
+            @else
+                @if($data->search_mode)
                 <div class="row padded">
                     <div class="col-xs-12">
                         <h4>{{ Lang::get('mobileci.search.no_service') }}</h4>
                     </div>
                 </div>
-            @else
-                {{-- Showing info for there is no stores when search mode is false --}}
+                @else
+                    {{-- Showing info for there is no stores when search mode is false --}}
                 <div class="row padded">
                     <div class="col-xs-12">
                         <h4>{{ Lang::get('mobileci.greetings.no_services_listing') }}</h4>
                     </div>
                 </div>
+                @endif
             @endif
-        @endif
+        </div>
+        <div class="asb-content pull-right">
+            <div id="asb" class="btn-group-vertical pull-right"></div>
+        </div>
+    </div>
     @else
         <div class="row padded">
             <div class="col-xs-12">
@@ -131,16 +101,15 @@
 <script type="text/javascript">
 
     var take = {{ Config::get('orbit.pagination.per_page', 25) }},
-        skip = {{ Config::get('orbit.pagination.per_page', 25) }},
+        skip = 0; //{{ Config::get('orbit.pagination.per_page', 25) }},
         keyword = '{{{ Input::get('keyword', '') }}}',
         cid = '{{{ Input::get('cid', '') }}}',
         fid = '{{{ Input::get('fid', '') }}}',
         isFromDetail = false,
         defaultServiceLogoUrl = '{{ asset('mobile-ci/images/default_services_directory.png') }}',
-        isLoggedIn = Boolean({{ $urlblock->isLoggedIn() }}),
-        canLoadMoreService = Boolean({{ $data->returned_records < $data->total_records }});
+        isLoggedIn = Boolean({{ $urlblock->isLoggedIn() }});
 
-    var initImageLazyload = function(jImageElems) {
+    var applyLazyImage = function (jImageElems) {
         if (jImageElems instanceof jQuery) {
             jImageElems.lazyload({
                 threshold : 100,
@@ -161,7 +130,7 @@
         return half !== undefined ? decodeURIComponent(half.split('&')[0]) : null;
     }
 
-    function updateQueryStringParameter(uri, key, value) {
+    function updateQueryStringParameter (uri, key, value) {
         var re = new RegExp("([?&])" + key + "=.*?(&|$)", "i");
         var separator = uri.indexOf('?') !== -1 ? "&" : "?";
         if (uri.match(re)) {
@@ -171,10 +140,10 @@
         }
     }
 
-    var generateListItem = function(merchantId, redirectUrl, url, name, floor, unit, category, facebook_like_url, logoUrl) {
+    var generateListItem = function (merchantId, redirectUrl, url, name, floor, unit, category, facebook_like_url, logoUrl) {
         var $listDiv = $('<div />').addClass('col-xs-12 col-sm-12').attr({
             'id': 'item-' + merchantId
-        });
+        }).data('name', name);
         var $listSection = $('<section />').addClass('list-item-single-tenant');
 
         var $itemLink = $('<a />').addClass('list-item-link').attr({
@@ -238,8 +207,6 @@
         }
         else {
             $tenantLogo = $('<img />').addClass('img-responsive img-fit-tenant').attr('data-original', logoUrl);
-            // Apply lazy load to tenantLogo image.
-            initImageLazyload($tenantLogo);
         }
 
         $itemLink.append($nonTenantDiv);
@@ -248,7 +215,7 @@
         return $listDiv;
     };
 
-    var insertRecords = function(records) {
+    var insertRecords = function (records) {
         var promises = [];
         for(var i = 0; i < records.length; i++) {
             var deferred = new $.Deferred();
@@ -266,13 +233,19 @@
             var $listDiv = generateListItem(merchantId, redirectUrl, url, name, floor, unit, category, facebook_like_url, logoUrl);
 
             $('.catalogue-wrapper').append($listDiv);
+
+            var $lazyImage = $listDiv.find('img[data-original]');
+            if ($lazyImage) {
+                applyLazyImage($lazyImage);
+            }
+
             deferred.resolve();
             promises.push(deferred);
         };
         return $.when.apply(undefined, promises).promise();
     }
 
-    var loadMoreTenant = function() {
+    var loadMoreTenant = function () {
         $.ajax({
             url: '{{ url("app/v1/service/load-more") }}',
             method: 'GET',
@@ -309,14 +282,83 @@
                         dataJson.records = jsonObj.records.concat(dataJson.records);
                     }
 
-                    // Set serviceData in localStorage.
-                    localStorage.setItem('serviceData', JSON.stringify(dataJson));
+                    try {
+                        // Set serviceData in localStorage.
+                        localStorage.setItem('serviceData', JSON.stringify(dataJson));
+                    }
+                    catch (err) {
+                        // For safari private mode sake.
+                    }
                 }
-
-                //FB.XFBML.parse();
             }
+        })
+        .then(function (data) {
+            var totalRecords = data.total_records;
 
-            canLoadMoreService = (skip < data.total_records);
+            // Load more if there's still unloaded tenants
+            if (skip < totalRecords) {
+                loadMoreTenant();
+            }
+            else {
+                bindAsbEvents();
+            }
+        });
+    };
+
+    var initializeAsb,
+        asbBtns = [];
+
+    (initializeAsb = function () {
+        var strArr = "#abcdefghijklmnopqrstuvwxyz".split('');
+        for (var i = 0; i < strArr.length; i++) {
+            var $btn = $('<a />').attr({
+                'class': 'btn asb-btn disabled',
+                'href': '#'
+            })
+            .text(strArr[i].toUpperCase());
+
+            asbBtns.push($btn);
+
+            $('#asb').append($btn);
+        }
+    }).call();
+
+    var getDisabledAsbButton = function (text) {
+        for (var i = 0; i < asbBtns.length; i++) {
+            var $btn = asbBtns[i];
+            if (/[a-z]/i.test(text)) {
+                // Letter
+                if ($btn.hasClass('disabled') && $btn.text().trim().toLowerCase() === text.trim().toLowerCase()) {
+                    return $btn;
+                }
+            }
+            else {
+                // Non letter
+                if ($btn.hasClass('disabled') && $btn.text() === '#') {
+                    return $btn;
+                }
+            }
+        }
+    };
+
+    var bindAsbEvents = function () {
+        $('.catalogue-wrapper > div').each(function () {
+            var tenantName = $(this).data('name');
+            var initial = tenantName[0].toLowerCase();
+            var $btn = getDisabledAsbButton(initial);
+
+            if ($btn) {
+                var topOffset = $(this).offset().top - 70;
+
+                $btn.data('pos', topOffset)
+                .removeClass('disabled')
+                .on('click', function (ev) {
+                    ev.preventDefault();
+                    ev.stopPropagation();
+
+                    $(window).scrollTop(topOffset);
+                });
+            }
         });
     };
 
@@ -330,21 +372,9 @@
                 localStorage.setItem('scrollTop', scrollTop);
             }
         }
-
-        // Auto load more implementation.
-        var totalHeight = $(document).height();
-
-        // Check if scroll has reached 75% of total page height.
-        if (canLoadMoreService && scrollTop >= (totalHeight * 0.75)) {
-            canLoadMoreService = false;
-            loadMoreTenant();
-        }
     });
 
     $(document).ready(function(){
-        // Apply lazy loads to images.
-        initImageLazyload($('img.img-fit-tenant[data-original]'));
-
         // Check if browser supports LocalStorage
         if(typeof(Storage) !== 'undefined') {
             // This feature is implemented for tracking whether this page is loaded from detail page. (Which is back button)
@@ -358,8 +388,13 @@
                 localStorage.removeItem('serviceData');
             }
 
-            // Set fromSource in localStorage.
-            localStorage.setItem('fromSource', 'store');
+            try {
+                // Set fromSource in localStorage.
+                localStorage.setItem('fromSource', 'service');
+            }
+            catch (err) {
+                // Need this for safari private mode !!
+            }
         }
 
         $(document).on('show.bs.modal', '.modal', function (event) {
@@ -371,25 +406,20 @@
         });
 
         var path = '{{$urlblock->blockedRoute('ci-service-list', ['keyword' => e(Input::get('keyword')), 'sort_by' => 'name', 'sort_mode' => 'asc', 'cid' => e(Input::get('cid')), 'fid' => e(Input::get('fid'))])}}';
-        $('#dLabel').dropdown();
-        $('#dLabel2').dropdown();
 
-        $('#category').change(function(){
-            var val = '';
-            if($('#category > option:selected').attr('value')) {
-                val = $('#category > option:selected').attr('value');
-            }
-            path = updateQueryStringParameter(path, 'cid', val);
+        $('#category').on('change', function () {
+            var selectedValue = $(this).val();
+            selectedValue = selectedValue.toLowerCase() === 'all' ? '' : selectedValue;
+            path = updateQueryStringParameter(path, 'cid', selectedValue);
             window.location.replace(path);
         });
-        $('#floor').change(function(){
-            var val = '';
-            if($('#floor > option:selected').attr('value')) {
-                val = $('#floor > option:selected').attr('value');
-            }
-            path = updateQueryStringParameter(path, 'fid', val);
+
+        $('#floor').on('change', function () {
+            var selectedValue = $(this).val();
+            selectedValue = selectedValue.toLowerCase() === 'all' ? '' : selectedValue;
+            path = updateQueryStringParameter(path, 'fid', selectedValue);
             window.location.replace(path);
-        });
+        })
 
         // Check if page is from back button.
         if (isFromDetail) {
@@ -426,7 +456,7 @@
             }
         }
 
-
+        loadMoreTenant();
     });
 </script>
 @stop

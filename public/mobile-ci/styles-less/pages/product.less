@@ -337,6 +337,15 @@ span.attribute-title {
 
     a.asb-btn {
         position: relative;
+        outline: 0 none;
+        font-size: 12px;
+        line-height: 1.5;
+        padding: 1px 5px;
+        color: #333;
+        background-color: #fff;
+        border-color: #ccc;
+        border-left: none;
+        border-right: none;
 
         &.disabled {
             pointer-events: none;
@@ -352,6 +361,12 @@ span.attribute-title {
             left: -30px;
             right: 0;
             bottom: 0;
+            outline: 0 none;
+        }
+
+        &:focus, &:hover,  &:active, &:visited {
+            outline: 0 none;
+            outline-offset: 0;
         }
     }
 }

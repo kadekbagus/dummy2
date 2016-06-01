@@ -18,103 +18,105 @@
 
 @section('content')
     @if($data->status === 1)
-    <div class="pull-left asb-content-support">
-        @if(Input::get('coupon_redeem_id') === null && Input::get('coupon_id') === null && Input::get('promotion_id') == null && Input::get('news_id') === null)
-        <div id="search-tool">
-            <div class="row">
-                <div class="col-xs-5 search-tool-col">
-                    <div class="dropdown">
-                        <label class="select-label">
-                            <select class="select" id="category">
-                                @if(empty(Input::get('cid')))
-                                    <option>{{ Lang::get('mobileci.tenant.category') }}</option>
-                                @else
-                                    <option>{{ Lang::get('mobileci.tenant.all') }}</option>
-                                @endif
-                                @foreach($categories as $category)
-                                @if($category->category_id == Input::get('cid'))
-                                <option value="{{ $category->category_id }}" selected="selected">{{{ $category->category_name }}}</option>
-                                @else
-                                <option value="{{ $category->category_id }}">{{{ $category->category_name }}}</option>
-                                @endif
-                                @endforeach
-                            </select>
-                        </label>
-                    </div>
-                </div>
-                <div class="col-xs-5 search-tool-col">
-                    <div class="dropdown">
-                        <label class="select-label">
-                            <select class="select" id="floor">
-                                @if(empty(Input::get('fid')))
-                                    <option>{{ Lang::get('mobileci.tenant.floor') }}</option>
-                                @else
-                                    <option>{{ Lang::get('mobileci.tenant.all') }}</option>
-                                @endif
-                                @foreach($floorList as $floor)
-                                @if($floor->object_name == Input::get('fid'))
-                                <option value="{{{ $floor->object_name }}}" selected="selected">{{{ $floor->object_name }}}</option>
-                                @else
-                                <option value="{{{ $floor->object_name }}}">{{{ $floor->object_name }}}</option>
-                                @endif
-                                @endforeach
-                            </select>
-                        </label>
-                    </div>
-                </div>
-                <div class="col-xs-2 search-tool-col text-right">
-                    <a data-href="{{{ route('ci-tenant-list', ['keyword' => Input::get('keyword')]) }}}" href="{{{ $urlblock->blockedRoute('ci-tenant-list', ['keyword' => Input::get('keyword')]) }}}" class="btn btn-info btn-block reset-btn">
-                        <span class="fa-stack fa-lg">
-                            <i class="fa fa-filter fa-stack-2x"></i>
-                            <i class="fa fa-times fa-stack-1x"></i>
-                        </span>
-                    </a>
-                </div>
-            </div>
-        </div>
-        @endif
-
-        @if(sizeof($data->records) > 0 || $link_to_coupon_data->linkedToCS)
-        <div id="catContainer" class="container">
-            <div class="mobile-ci list-item-container">
+    <div class="clearfix">
+        <div class="pull-left asb-content-support">
+            @if(Input::get('coupon_redeem_id') === null && Input::get('coupon_id') === null && Input::get('promotion_id') == null && Input::get('news_id') === null)
+            <div id="search-tool">
                 <div class="row">
-                    <div class="catalogue-wrapper">
-                    @if($link_to_coupon_data->linkedToCS)
-                        <div class="col-xs-12 col-sm-12" id="item-cs">
-                            <section class="list-item-single-tenant">
-                                <div class="list-item-info">
-                                    <header class="list-item-title">
-                                        <div><strong>{{ Lang::get('mobileci.coupon.all_cs') }}</strong></div>
-                                    </header>
-                                </div>
-                                <div class="list-vignette-non-tenant"></div>
-                                <img class="img-responsive img-fit-tenant" alt="" src="{{ asset('mobile-ci/images/default_cs.png') }}"/>
-                            </section>
+                    <div class="col-xs-5 search-tool-col">
+                        <div class="dropdown">
+                            <label class="select-label">
+                                <select class="select" id="category">
+                                    @if(empty(Input::get('cid')))
+                                        <option>{{ Lang::get('mobileci.tenant.category') }}</option>
+                                    @else
+                                        <option>{{ Lang::get('mobileci.tenant.all') }}</option>
+                                    @endif
+                                    @foreach($categories as $category)
+                                    @if($category->category_id == Input::get('cid'))
+                                    <option value="{{ $category->category_id }}" selected="selected">{{{ $category->category_name }}}</option>
+                                    @else
+                                    <option value="{{ $category->category_id }}">{{{ $category->category_name }}}</option>
+                                    @endif
+                                    @endforeach
+                                </select>
+                            </label>
                         </div>
-                    @endif
                     </div>
-                </div>
-            </div>
-        </div>
-        @else
-            @if($data->search_mode)
-            <div class="row padded">
-                <div class="col-xs-12">
-                    <h4>{{ Lang::get('mobileci.search.no_item') }}</h4>
-                </div>
-            </div>
-            @else
-            {{-- Showing info for there is no stores when search mode is false --}}
-            <div class="row padded">
-                <div class="col-xs-12">
-                    <h4>{{ Lang::get('mobileci.greetings.no_stores_listing') }}</h4>
+                    <div class="col-xs-5 search-tool-col">
+                        <div class="dropdown">
+                            <label class="select-label">
+                                <select class="select" id="floor">
+                                    @if(empty(Input::get('fid')))
+                                        <option>{{ Lang::get('mobileci.tenant.floor') }}</option>
+                                    @else
+                                        <option>{{ Lang::get('mobileci.tenant.all') }}</option>
+                                    @endif
+                                    @foreach($floorList as $floor)
+                                    @if($floor->object_name == Input::get('fid'))
+                                    <option value="{{{ $floor->object_name }}}" selected="selected">{{{ $floor->object_name }}}</option>
+                                    @else
+                                    <option value="{{{ $floor->object_name }}}">{{{ $floor->object_name }}}</option>
+                                    @endif
+                                    @endforeach
+                                </select>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-xs-2 search-tool-col text-right">
+                        <a data-href="{{{ route('ci-tenant-list', ['keyword' => Input::get('keyword')]) }}}" href="{{{ $urlblock->blockedRoute('ci-tenant-list', ['keyword' => Input::get('keyword')]) }}}" class="btn btn-info btn-block reset-btn">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-filter fa-stack-2x"></i>
+                                <i class="fa fa-times fa-stack-1x"></i>
+                            </span>
+                        </a>
+                    </div>
                 </div>
             </div>
             @endif
-        @endif
-    </div>
-    <div class="asb-content pull-right">
-        <div id="asb" class="btn-group-vertical pull-right"></div>
+
+            @if(sizeof($data->records) > 0 || $link_to_coupon_data->linkedToCS)
+            <div id="catContainer" class="container">
+                <div class="mobile-ci list-item-container">
+                    <div class="row">
+                        <div class="catalogue-wrapper">
+                        @if($link_to_coupon_data->linkedToCS)
+                            <div class="col-xs-12 col-sm-12" id="item-cs">
+                                <section class="list-item-single-tenant">
+                                    <div class="list-item-info">
+                                        <header class="list-item-title">
+                                            <div><strong>{{ Lang::get('mobileci.coupon.all_cs') }}</strong></div>
+                                        </header>
+                                    </div>
+                                    <div class="list-vignette-non-tenant"></div>
+                                    <img class="img-responsive img-fit-tenant" alt="" src="{{ asset('mobile-ci/images/default_cs.png') }}"/>
+                                </section>
+                            </div>
+                        @endif
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @else
+                @if($data->search_mode)
+                <div class="row padded">
+                    <div class="col-xs-12">
+                        <h4>{{ Lang::get('mobileci.search.no_item') }}</h4>
+                    </div>
+                </div>
+                @else
+                {{-- Showing info for there is no stores when search mode is false --}}
+                <div class="row padded">
+                    <div class="col-xs-12">
+                        <h4>{{ Lang::get('mobileci.greetings.no_stores_listing') }}</h4>
+                    </div>
+                </div>
+                @endif
+            @endif
+        </div>
+        <div class="asb-content pull-right">
+            <div id="asb" class="btn-group-vertical pull-right"></div>
+        </div>
     </div>
     @else
         <div class="row padded">
@@ -372,7 +374,7 @@
         var strArr = "#abcdefghijklmnopqrstuvwxyz".split('');
         for (var i = 0; i < strArr.length; i++) {
             var $btn = $('<a />').attr({
-                'class': 'btn btn-xs btn-default asb-btn disabled',
+                'class': 'btn asb-btn disabled',
                 'href': '#'
             })
             .text(strArr[i].toUpperCase());
@@ -404,22 +406,20 @@
     var bindAsbEvents = function () {
         $('.catalogue-wrapper > div').each(function () {
             var tenantName = $(this).data('name');
-            var tenantId = $(this).attr('id');
             var initial = tenantName[0].toLowerCase();
             var $btn = getDisabledAsbButton(initial);
 
             if ($btn) {
                 var topOffset = $(this).offset().top - 70;
 
-                $btn.attr('href', '#'+tenantId)
-                .data('pos', topOffset)
-                .removeClass('disabled');
-                // .on('click mouseover', function (ev) {
-                //     ev.preventDefault();
-                //     ev.stopPropagation();
+                $btn.data('pos', topOffset)
+                .removeClass('disabled')
+                .on('click', function (ev) {
+                    ev.preventDefault();
+                    ev.stopPropagation();
 
-                //     $(window).scrollTop(topOffset);
-                // });
+                    $(window).scrollTop(topOffset);
+                });
             }
         });
     };
@@ -430,7 +430,14 @@
         if(typeof(Storage) !== 'undefined') {
             // Prevent Safari to set scrollTop position to 0 on page load.
             if (scrollTop) {
-                localStorage.setItem('scrollTop', scrollTop);
+
+                try {
+                    // Set scrollTop in localStorage.
+                    localStorage.setItem('scrollTop', scrollTop);
+                }
+                catch (err) {
+                    // Need this for safari private mode !!
+                }
             }
         }
     });
