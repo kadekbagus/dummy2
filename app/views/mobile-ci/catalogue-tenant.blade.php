@@ -18,6 +18,7 @@
 
 @section('content')
     @if($data->status === 1)
+    <div class="pull-left asb-content-support">
         @if(Input::get('coupon_redeem_id') === null && Input::get('coupon_id') === null && Input::get('promotion_id') == null && Input::get('news_id') === null)
         <div id="search-tool">
             <div class="row">
@@ -74,44 +75,47 @@
         @endif
 
         @if(sizeof($data->records) > 0 || $link_to_coupon_data->linkedToCS)
-            <div id="catContainer" class="container">
-                <div class="mobile-ci list-item-container">
-                    <div class="row">
-                        <div class="catalogue-wrapper">
-                        @if($link_to_coupon_data->linkedToCS)
-                            <div class="col-xs-12 col-sm-12" id="item-cs">
-                                <section class="list-item-single-tenant">
-                                    <div class="list-item-info">
-                                        <header class="list-item-title">
-                                            <div><strong>{{ Lang::get('mobileci.coupon.all_cs') }}</strong></div>
-                                        </header>
-                                    </div>
-                                    <div class="list-vignette-non-tenant"></div>
-                                    <img class="img-responsive img-fit-tenant" alt="" src="{{ asset('mobile-ci/images/default_cs.png') }}"/>
-                                </section>
-                            </div>
-                        @endif
+        <div id="catContainer" class="container">
+            <div class="mobile-ci list-item-container">
+                <div class="row">
+                    <div class="catalogue-wrapper">
+                    @if($link_to_coupon_data->linkedToCS)
+                        <div class="col-xs-12 col-sm-12" id="item-cs">
+                            <section class="list-item-single-tenant">
+                                <div class="list-item-info">
+                                    <header class="list-item-title">
+                                        <div><strong>{{ Lang::get('mobileci.coupon.all_cs') }}</strong></div>
+                                    </header>
+                                </div>
+                                <div class="list-vignette-non-tenant"></div>
+                                <img class="img-responsive img-fit-tenant" alt="" src="{{ asset('mobile-ci/images/default_cs.png') }}"/>
+                            </section>
                         </div>
+                    @endif
                     </div>
                 </div>
             </div>
+        </div>
         @else
             @if($data->search_mode)
-                <div class="row padded">
-                    <div class="col-xs-12">
-                        <h4>{{ Lang::get('mobileci.search.no_item') }}</h4>
-                    </div>
+            <div class="row padded">
+                <div class="col-xs-12">
+                    <h4>{{ Lang::get('mobileci.search.no_item') }}</h4>
                 </div>
+            </div>
             @else
-                {{-- Showing info for there is no stores when search mode is false --}}
-                <div class="row padded">
-                    <div class="col-xs-12">
-                        <h4>{{ Lang::get('mobileci.greetings.no_stores_listing') }}</h4>
-                    </div>
+            {{-- Showing info for there is no stores when search mode is false --}}
+            <div class="row padded">
+                <div class="col-xs-12">
+                    <h4>{{ Lang::get('mobileci.greetings.no_stores_listing') }}</h4>
                 </div>
+            </div>
             @endif
         @endif
-
+    </div>
+    <div class="pull-right asb-content">
+        <div id="asb" class="btn-group-vertical"></div>
+    </div>
     @else
         <div class="row padded">
             <div class="col-xs-12">
@@ -137,7 +141,7 @@
         defaultTenantLogoUrl = '{{ asset('mobile-ci/images/default_tenants_directory.png') }}',
         isLoggedIn = Boolean({{ $urlblock->isLoggedIn() }});
 
-    var applyLazyImage = function(jImageElems) {
+    var applyLazyImage = function (jImageElems) {
         if (jImageElems instanceof jQuery) {
             jImageElems.lazyload({
                 threshold : 100,
@@ -158,7 +162,7 @@
         return half !== undefined ? decodeURIComponent(half.split('&')[0]) : null;
     }
 
-    function updateQueryStringParameter(uri, key, value) {
+    function updateQueryStringParameter (uri, key, value) {
         var re = new RegExp("([?&])" + key + "=.*?(&|$)", "i");
         var separator = uri.indexOf('?') !== -1 ? "&" : "?";
         if (uri.match(re)) {
@@ -168,10 +172,10 @@
         }
     }
 
-    var generateListItem = function(merchantId, redirectUrl, url, name, floor, unit, category, facebook_like_url, promotion_flag, news_flag, coupon_flag, logoUrl) {
+    var generateListItem = function (merchantId, redirectUrl, url, name, floor, unit, category, facebook_like_url, promotion_flag, news_flag, coupon_flag, logoUrl) {
         var $listDiv = $('<div />').addClass('col-xs-12 col-sm-12').attr({
             'id': 'item-' + merchantId
-        });
+        }).data('name', name);
         var $listSection = $('<section />').addClass('list-item-single-tenant');
 
         var $itemLink = $('<a />').addClass('list-item-link').attr({
@@ -262,7 +266,7 @@
         return $listDiv;
     };
 
-    var insertRecords = function(records) {
+    var insertRecords = function (records) {
         var promises = [];
         for(var i = 0; i < records.length; i++) {
             var deferred = new $.Deferred();
@@ -354,12 +358,70 @@
                 loadMoreTenant();
             }
             else {
+                bindAsbEvents();
+
                 FB.XFBML.parse();
             }
         });
     };
 
-    $(window).on('scroll', function() {
+    var initializeAsb,
+        asbBtns = [];
+
+    (initializeAsb = function () {
+        var strArr = "#abcdefghijklmnopqrstuvwxyz".split('');
+        for (var i = 0; i < strArr.length; i++) {
+            var $btn = $('<button />')
+            .addClass('btn btn-xs btn-default asb-btn')
+            .attr('disabled', 'disabled')
+            .text(strArr[i].toUpperCase());
+
+            asbBtns.push($btn);
+
+            $('#asb').append($btn);
+        }
+    }).call();
+
+    var getDisabledAsbButton = function (text) {
+        for (var i = 0; i < asbBtns.length; i++) {
+            var $btn = asbBtns[i];
+            if (/[a-z]/i.test(text)) {
+                // Letter
+                if ($btn.is(':disabled') && $btn.text().trim().toLowerCase() === text.trim().toLowerCase()) {
+                    return $btn;
+                }
+            }
+            else {
+                // Non letter
+                if ($btn.is(':disabled') && $btn.text() === '#') {
+                    return $btn;
+                }
+            }
+        }
+    };
+
+    var bindAsbEvents = function () {
+        $('.catalogue-wrapper > div').each(function () {
+            var tenantName = $(this).data('name');
+            var initial = tenantName[0].toLowerCase();
+            var $btn = getDisabledAsbButton(initial);
+
+            if ($btn) {
+                var topOffset = $(this).offset().top - 70;
+
+                $btn.data('pos', topOffset)
+                .removeAttr('disabled')
+                .on('click', function (ev) {
+                    ev.preventDefault();
+                    ev.stopPropagation();
+
+                    $(window).scrollTop(topOffset);
+                });
+            }
+        });
+    };
+
+    $(window).on('scroll', function () {
         var scrollTop = $(window).scrollTop();
         // Check if browser supports LocalStorage
         if(typeof(Storage) !== 'undefined') {
@@ -370,7 +432,7 @@
         }
     });
 
-    $(document).ready(function(){
+    $(document).ready(function () {
         // Check if browser supports LocalStorage
         if(typeof(Storage) !== 'undefined') {
             // This feature is implemented for tracking whether this page is loaded from detail page. (Which is back button)
