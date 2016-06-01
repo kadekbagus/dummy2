@@ -110,8 +110,7 @@ class getObjectListAngularCITest extends TestCase
         $response = json_decode($json);
 
         $this->assertSame(0, (int) $response->code);
-        // will only return object that attached to tenants of mall 1 (3)
-        $this->assertSame(3, (int) $response->data->returned_records);
+        $this->assertSame(6, (int) $response->data->returned_records);
 
         // check all returned records
         foreach ($response->data->records as $key => $object) {
@@ -136,8 +135,7 @@ class getObjectListAngularCITest extends TestCase
         $response = json_decode($json);
 
         $this->assertSame(0, (int) $response->code);
-        // will only return object that attached to tenants of mall 2 (1)
-        $this->assertSame(1, (int) $response->data->returned_records);
+        $this->assertSame(4, (int) $response->data->returned_records);
 
         // check all returned records
         foreach ($response->data->records as $key => $object) {
