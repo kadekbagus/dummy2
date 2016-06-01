@@ -59,6 +59,7 @@ return array(
         'tenants'        => '店铺',
         'services'       => '服务',
         'lucky_draws'    => '幸运大抽奖',
+        'free_wifi'      => '免费的互联网',
         'newss'          => '消息',
         'promotions_single'      => '促销活动',
         'coupons_single'        => '券',
