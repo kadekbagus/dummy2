@@ -79,21 +79,25 @@ class Setting extends Eloquent
         $settingName = sprintf('dom:%s', $domainName);
 
         $setting = static::where('setting_name', $settingName)->first();
-        Log::info( sprintf('-- SETTING MODEL -- Mall ID from setting: %s', $setting->setting_value) );
+        if (is_object($setting)) {
+            Log::info( sprintf('-- SETTING MODEL -- Mall ID from setting: %s', $setting->setting_value) );
 
-        if (! is_object($setting)) {
-            Log::info( sprintf('-- SETTING MODEL -- Setting not found: %s', $setting->setting_value) );
-            return NULL;
+            if (! is_object($setting)) {
+                Log::info( sprintf('-- SETTING MODEL -- Setting not found: %s', $setting->setting_value) );
+                return NULL;
+            }
+
+            $mall = Mall::where('merchant_id', $setting->setting_value)->first();
+            if (! is_object($mall)) {
+                Log::info( sprintf('-- SETTING MODEL -- Can not find mall with ID: %s', $setting->setting_value) );
+                return NULL;
+            }
+
+            Log::info( sprintf('-- SETTING MODEL -- Mall found with name: %s', $mall->name) );
+
+            return $mall;
         }
 
-        $mall = Mall::where('merchant_id', $setting->setting_value)->first();
-        if (! is_object($mall)) {
-            Log::info( sprintf('-- SETTING MODEL -- Can not find mall with ID: %s', $setting->setting_value) );
-            return NULL;
-        }
-
-        Log::info( sprintf('-- SETTING MODEL -- Mall found with name: %s', $mall->name) );
-
-        return $mall;
+        return null;
     }
 }
