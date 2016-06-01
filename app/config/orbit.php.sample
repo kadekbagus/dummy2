@@ -166,6 +166,9 @@ return array(
 
         // the google analytics ID, eg: UA-XXXXXXX-X
         'google_analytics_id' => '',
+
+        // will be used to determine the domain in angular ci
+        'main_domain' => 'gotomalls.cool',
     ),
 
     // General contact data

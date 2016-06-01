@@ -185,6 +185,9 @@
         cid = '{{{ Input::get('cid', '') }}}',
         fid = '{{{ Input::get('fid', '') }}}',
         promotion_id = '{{{ Input::get('promotion_id', '')}}}',
+        news_id = '{{{ Input::get('news_id', '')}}}',
+        coupon_id = '{{{ Input::get('coupon_id', '')}}}',
+        coupon_redeem_id = '{{{ Input::get('coupon_redeem_id', '')}}}',
         isFromDetail = false,
         defaultTenantLogoUrl = '{{ asset('mobile-ci/images/default_tenants_directory.png') }}',
         isLoggedIn = Boolean({{ $urlblock->isLoggedIn() }});
@@ -359,7 +362,10 @@
                 keyword: keyword,
                 cid: cid,
                 fid: fid,
-                promotion_id: promotion_id
+                promotion_id: promotion_id,
+                news_id: news_id,
+                coupon_id: coupon_id,
+                coupon_redeem_id: coupon_redeem_id
             },
             error: function(xhr, textStatus, errorThrown) {
                 if (textStatus === 'timeout') {
