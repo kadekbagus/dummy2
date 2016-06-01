@@ -80,7 +80,7 @@ return array(
         'no_news_listing'              => '对不起，这儿没有消息目前在这个购物中心。',
         'no_promotions_listing'        => '对不起，这儿没有促销活动目前在这个购物中心。',
         'no_stores_listing'            => '对不起，这儿没有商店目前在这个购物中心。',
-        'no_services_listing'            => '对不起，在这家商场的那一刻没有服务。',
+        'no_services_listing'          => '对不起，没有服务目前在这个购物中心',
     ),
 
     // modal specific lang
