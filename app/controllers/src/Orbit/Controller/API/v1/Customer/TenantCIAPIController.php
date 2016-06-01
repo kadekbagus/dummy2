@@ -197,7 +197,7 @@ class TenantCIAPIController extends BaseAPIController
                     WHERE {$prefix}promotion_retailer.object_type = 'tenant'
                     AND {$prefix}promotions.is_coupon = 'Y'
                     AND {$prefix}promotions.status = 'active'
-                    AND {$prefix}merchants.parent_id = '{$this->mall_id}'
+                    AND {$prefix}merchants.parent_id = {$quoted_mall_id}
 
                     AND {$prefix}issued_coupons.status = 'active'
                     AND {$prefix}promotions.coupon_validity_in_date >= {$quoted_mall_id}
@@ -587,7 +587,6 @@ class TenantCIAPIController extends BaseAPIController
             $tenant->news_flag = $news_flag > 0 ? 'true' : 'false';
             $tenant->promotion_flag = $promotion_flag > 0 ? 'true' : 'false';
             $tenant->coupon_flag = $coupon_flag > 0 ? 'true' : 'false';
-            $tenant->facebook_share_url = $this->getFBShareDummyPage('tenant', $tenant->merchant_id);
 
             $this->response->data = $tenant;
             $this->response->code = 0;
