@@ -210,10 +210,10 @@ class postNewMallTestArtemisVersion extends TestCase
         $this->assertSame("success", $response->status);
     }
 
-    public function testWidgetGetAccessInternetActive()
+    public function testWidgetGetInternetAccessActive()
     {
         /*
-        * test Category is not more required
+        * test widget get internet access set to active
         */
         $data = ['name' => 'antok mall',
             'email'                         => 'antokmall@bumi.com',
@@ -251,10 +251,10 @@ class postNewMallTestArtemisVersion extends TestCase
         $this->assertSame("active", $response->data->get_internet_access_status);
     }
 
-    public function testWidgetGetAccessInternetInactive()
+    public function testWidgetGetInternetAccessInactive()
     {
         /*
-        * test Category is not more required
+        * test widget get internet access set to inactive
         */
         $data = ['name' => 'antok mall',
             'email'                         => 'antokmall@bumi.com',
