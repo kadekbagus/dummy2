@@ -80,7 +80,7 @@ return array(
         'no_news_listing'              => '申し訳ありませんが、このモールで現時点ではニュースはありません。',
         'no_promotions_listing'        => '申し訳ありませんが、このモールで現時点でのプロモーションはありません。',
         'no_stores_listing'            => '申し訳ありませんが、このモールで現時点で店舗はありません。',
-        'no_services_listing'            => '申し訳ありませんが、このモール内現時点で何のサービスがありません。',
+        'no_services_listing'          => '申し訳ありません、 がこのモールで現時点でサービスはありません',
     ),
 
     // modal specific lang
