@@ -80,6 +80,7 @@ return array(
         'no_news_listing'              => '申し訳ありませんが、このモールで現時点ではニュースはありません。',
         'no_promotions_listing'        => '申し訳ありませんが、このモールで現時点でのプロモーションはありません。',
         'no_stores_listing'            => '申し訳ありませんが、このモールで現時点で店舗はありません。',
+        'no_services_listing'          => '申し訳ありません、 がこのモールで現時点でサービスはありません',
     ),
 
     // modal specific lang
@@ -325,6 +326,7 @@ return array(
 
     'search' => array(
         'no_item'            => '基準にマッチしているテナントがありません。',
+        'no_service'         => '条件に一致するサービスはありません。',
         'too_much_items'     => '検索結果が広すぎる、それを絞り込むください.',
         'no_result'          => '申し訳ありませんが、検索結果がないです',
         'error'              => '要求の発行中にエラーがあります',
