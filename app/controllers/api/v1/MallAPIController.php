@@ -2145,11 +2145,15 @@ class MallAPIController extends ControllerAPI
                         ->where('retailer_id', $updatedmall->merchant_id)
                         ->first();
 
+                $widget_status = $free_wifi_status;
                 if (count($update_free_wifi) > 0) {
                     $update_free_wifi->status = $free_wifi_status;
                     $update_free_wifi->modified_by = $this->api->user->user_id;
                     $update_free_wifi->save();
+
+                    $widget_status = $update_free_wifi->status;
                 } else {
+                    $new_widget = new stdClass();
                     foreach ($this->default['widgets'] as $data_widget) {
                         if ($data_widget['type'] === 'free_wifi') {
                             $new_widget = new Widget();
@@ -2161,6 +2165,8 @@ class MallAPIController extends ControllerAPI
                             $new_widget->animation = $data_widget['animation'];
                             $new_widget->status = $free_wifi_status;
                             $new_widget->save();
+
+                            $widget_status = $new_widget->status;
 
                             // Sync also to the widget_retailer table
                             $new_widget->malls()->sync( [$updatedmall->merchant_id] );
@@ -2183,7 +2189,7 @@ class MallAPIController extends ControllerAPI
                         }
                     }
                 }
-                $updatedmall->free_wifi_status = $free_wifi_status;
+                $updatedmall->free_wifi_status = $widget_status;
             });
 
             // update user status
