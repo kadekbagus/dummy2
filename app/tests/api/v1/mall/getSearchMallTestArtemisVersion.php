@@ -58,28 +58,28 @@ class getSearchMallTestArtemisVersion extends TestCase
         return $response;
     }
 
-    public function testGetSearchMallWithWidgetGetInternetAccess()
+    public function testGetSearchMallWithWidgetFreeWifi()
     {
         $mall_a = Factory::create('Mall');
-        $widget_a = Factory::create('Widget', ['widget_type' => 'get_internet_access', 'status' => 'active']);
+        $widget_a = Factory::create('Widget', ['widget_type' => 'free_wifi', 'status' => 'active']);
         Factory::create('WidgetRetailer', ['retailer_id' => $mall_a->merchant_id, 'widget_id' => $widget_a->widget_id]);
 
         $mall_b = Factory::create('Mall');
-        $widget_b = Factory::create('Widget', ['widget_type' => 'get_internet_access', 'status' => 'inactive']);
+        $widget_b = Factory::create('Widget', ['widget_type' => 'free_wifi', 'status' => 'inactive']);
         Factory::create('WidgetRetailer', ['retailer_id' => $mall_b->merchant_id, 'widget_id' => $widget_b->widget_id]);
 
-        $filter = ['with' => ['widget_get_intenet_access']];
+        $filter = ['with' => ['widget_free_wifi']];
 
         /*
-        * test get widget get internet access status
+        * test get widget free wifi status
         */
         $response_search = $this->setRequestGetSearchMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $filter);
         $this->assertSame(0, $response_search->code);
         foreach ($response_search->data->records as $idx => $data) {
             if($mall_b->merchant_id  === $data->merchant_id)
-                $this->assertSame('inactive', $data->widget_get_intenet_access[0]->status);
+                $this->assertSame('inactive', $data->widget_free_wifi[0]->status);
             if($mall_a->merchant_id  === $data->merchant_id)
-                $this->assertSame('active', $data->widget_get_intenet_access[0]->status);
+                $this->assertSame('active', $data->widget_free_wifi[0]->status);
         }
     }
 }
