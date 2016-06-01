@@ -95,7 +95,7 @@ class MallAPIController extends ControllerAPI
               ]
             ],
             [
-                'type'      => 'get_internet_access',
+                'type'      => 'free_wifi',
                 'object_id' => 0,
                 'order'     => 7,
                 'animation' => 'none',
@@ -307,7 +307,7 @@ class MallAPIController extends ControllerAPI
             $geo_point_latitude = OrbitInput::post('geo_point_latitude');
             $geo_point_longitude = OrbitInput::post('geo_point_longitude');
             $geo_area = OrbitInput::post('geo_area');
-            $get_internet_access_status = OrbitInput::post('get_internet_access_status', 'inactive');
+            $free_wifi_status = OrbitInput::post('free_wifi_status', 'inactive');
 
             // for a while this declaration with default value
             $widgets = OrbitInput::post('widgets', $this->default['widgets']);
@@ -346,7 +346,7 @@ class MallAPIController extends ControllerAPI
                     'campaign_base_price_coupon'    => $campaign_base_price_coupon,
                     'campaign_base_price_news'      => $campaign_base_price_news,
                     'floors'                        => $floors,
-                    'get_internet_access_status'    => $get_internet_access_status,
+                    'free_wifi_status'              => $free_wifi_status,
                 ),
                 array(
                     'name'                          => 'required|orbit.exists.mall_name',
@@ -380,7 +380,7 @@ class MallAPIController extends ControllerAPI
                     'campaign_base_price_coupon'    => 'required',
                     'campaign_base_price_news'      => 'required',
                     'floors'                        => 'required|array',
-                    'get_internet_access_status'    => 'orbit.empty.mall_status',
+                    'free_wifi_status'              => 'in:active,inactive',
                 ),
                 array(
                     'name.required'                     => 'Mall name is required',
@@ -534,9 +534,9 @@ class MallAPIController extends ControllerAPI
                 $new_widget->merchant_id = $newmall->merchant_id;
                 $new_widget->animation = $data_widget['animation'];
                 $new_widget->status = $data_widget['status'];
-                if ($data_widget['type'] === 'get_internet_access') {
-                    if ($data_widget['status'] !== $get_internet_access_status) {
-                        $new_widget->status = $get_internet_access_status;
+                if ($data_widget['type'] === 'free_wifi') {
+                    if ($data_widget['status'] !== $free_wifi_status) {
+                        $new_widget->status = $free_wifi_status;
                     }
                 }
                 $new_widget->save();
@@ -561,7 +561,7 @@ class MallAPIController extends ControllerAPI
                 }
                 // $new_widget->translations = $new_widget_trans;
             }
-            $newmall->get_internet_access_status = $get_internet_access_status;
+            $newmall->free_wifi_status = $new_widget->status;
 
             // floor
             // @author irianto <irianto@dominopos.com>
@@ -589,6 +589,8 @@ class MallAPIController extends ControllerAPI
                 'enable_coupon_widget'          => 'true',
                 'enable_lucky_draw'             => 'true',
                 'enable_lucky_draw_widget'      => 'true',
+                'enable_free_wifi'              => 'true',
+                'enable_free_wifi_widget'       => 'true',
                 'enable_membership_card'        => 'false',
                 'landing_page'                  => 'widget',
                 'agreement_accepted'            => 'false',
@@ -1463,7 +1465,7 @@ class MallAPIController extends ControllerAPI
             $campaign_base_price_promotion = OrbitInput::post('campaign_base_price_promotion');
             $campaign_base_price_coupon = OrbitInput::post('campaign_base_price_coupon');
             $campaign_base_price_news = OrbitInput::post('campaign_base_price_news');
-            $get_internet_access_status = OrbitInput::post('get_internet_access_status');
+            $free_wifi_status = OrbitInput::post('free_wifi_status');
 
             $validator = Validator::make(
                 array(
@@ -1492,7 +1494,7 @@ class MallAPIController extends ControllerAPI
                     // 'campaign_base_price_coupon'    => $campaign_base_price_coupon,
                     // 'campaign_base_price_news'      => $campaign_base_price_news,
                     'floors'                        => $floors,
-                    'get_internet_access_status'    => $floors
+                    'free_wifi_status'              => $free_wifi_status
                 ),
                 array(
                     'merchant_id'                      => 'required|orbit.empty.mall',
@@ -1519,7 +1521,7 @@ class MallAPIController extends ControllerAPI
                     // 'campaign_base_price_coupon'    => 'format currency later will be check',
                     // 'campaign_base_price_news'      => 'format currency later will be check',
                     'floors'                           => 'array',
-                    'get_internet_access_status'       => 'orbit.empty.mall_status'
+                    'free_wifi_status'                 => 'in:active,inactive'
                 ),
                 array(
                    'mall_name_exists_but_me'    => 'Mall name already exists',
@@ -2130,20 +2132,64 @@ class MallAPIController extends ControllerAPI
                 }
             });
 
-            OrbitInput::post('get_internet_access_status', function($get_internet_access_status) use ($updatedmall){
-                $update_widget_get_internet_access = Widget::excludeDeleted()
+            OrbitInput::post('free_wifi_status', function($free_wifi_status) use ($updatedmall, $languages){
+                $languages_by_name = [];
+                foreach ($updatedmall->languages as $language) {
+                    $name_lang = $language->language->name;
+                    $languages_by_name[$name_lang] = $language;
+                }
+
+                $update_free_wifi = Widget::excludeDeleted()
                         ->leftJoin('widget_retailer', 'widget_retailer.widget_id', '=', 'widgets.widget_id')
-                        ->where('widget_type', 'get_internet_access')
+                        ->where('widget_type', 'free_wifi')
                         ->where('retailer_id', $updatedmall->merchant_id)
                         ->first();
 
-                if (count($update_widget_get_internet_access) > 0) {
-                    $update_widget_get_internet_access->status = $get_internet_access_status;
-                    $update_widget_get_internet_access->modified_by = $this->api->user->user_id;
-                    $update_widget_get_internet_access->save();
+                $widget_status = $free_wifi_status;
+                if (count($update_free_wifi) > 0) {
+                    $update_free_wifi->status = $free_wifi_status;
+                    $update_free_wifi->modified_by = $this->api->user->user_id;
+                    $update_free_wifi->save();
 
+                    $widget_status = $update_free_wifi->status;
+                } else {
+                    $new_widget = new stdClass();
+                    foreach ($this->default['widgets'] as $data_widget) {
+                        if ($data_widget['type'] === 'free_wifi') {
+                            $new_widget = new Widget();
+                            $new_widget->widget_type = $data_widget['type'];
+                            $new_widget->widget_object_id = $data_widget['object_id'];
+                            $new_widget->widget_slogan = $data_widget['slogan']['default'];
+                            $new_widget->widget_order = $data_widget['order'];
+                            $new_widget->merchant_id = $updatedmall->merchant_id;
+                            $new_widget->animation = $data_widget['animation'];
+                            $new_widget->status = $free_wifi_status;
+                            $new_widget->save();
+
+                            $widget_status = $new_widget->status;
+
+                            // Sync also to the widget_retailer table
+                            $new_widget->malls()->sync( [$updatedmall->merchant_id] );
+
+                            // Insert the translation for the slogan
+                            $new_widget_trans = new stdClass();
+                            $slogan = $data_widget['slogan'];
+                            foreach ($languages as $lang) {
+                                if (isset($slogan[$lang])) {
+                                    // Get the Language ID
+                                    // The content for this particular language is available
+                                    $new_widget_trans = new WidgetTranslation();
+                                    $new_widget_trans->widget_id = $new_widget->widget_id;
+                                    $new_widget_trans->merchant_language_id = $languages_by_name[$lang]->language_id;
+                                    $new_widget_trans->widget_slogan = $slogan[$lang];
+                                    $new_widget_trans->status = 'active';
+                                    $new_widget_trans->save();
+                                }
+                            }
+                        }
+                    }
                 }
-                $updatedmall->get_internet_access_status = $get_internet_access_status;
+                $updatedmall->free_wifi_status = $widget_status;
             });
 
             // update user status

@@ -96,12 +96,12 @@ class Mall extends Eloquent
     }
 
     /**
-     * Merchant belongs to and has many widgets.
+     * Specific widget free wifi.
      */
-    public function widget_get_intenet_access()
+    public function widget_free_wifi()
     {
         return $this->widgets()
-            ->where('widget_type', 'get_internet_access');
+            ->where('widget_type', 'free_wifi');
     }
 
     /**
