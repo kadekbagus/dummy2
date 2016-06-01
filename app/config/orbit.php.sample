@@ -102,7 +102,7 @@ return array(
 
         // After the external captive portal grant internet, user should be
         // redirected to this URL. Leave empty for default Orbit behavior
-        'user_continue_url' => ''
+        'user_continue_url' => '',
 
         // URL to check for internet connection
         'ping_url' => 'http://tools.pingdom.com/fpt/favicon.icox',
