@@ -80,6 +80,7 @@ return array(
         'no_news_listing'              => 'Sorry, there is no news at the moment in this mall.',
         'no_promotions_listing'        => 'Sorry, there is no promotion at the moment in this mall.',
         'no_stores_listing'            => 'Sorry, there is no store at the moment in this mall.',
+        'no_services_listing'          => 'Sorry, there is no service at the moment in this mall.',
     ),
 
     // modal specific lang
@@ -325,6 +326,7 @@ return array(
 
     'search' => array(
         'no_item'               => 'There is no store matching the criteria.',
+        'no_service'            => 'There is no service matching the criteria.',
         'too_much_items'        => 'Search result is too broad, please narrow it down.',
         'no_result'             => 'Sorry, search has no results.',
         'error'                 => 'There is an error while making the request.',

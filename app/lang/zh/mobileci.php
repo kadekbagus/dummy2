@@ -80,6 +80,7 @@ return array(
         'no_news_listing'              => '对不起，这儿没有消息目前在这个购物中心。',
         'no_promotions_listing'        => '对不起，这儿没有促销活动目前在这个购物中心。',
         'no_stores_listing'            => '对不起，这儿没有商店目前在这个购物中心。',
+        'no_services_listing'            => '对不起，在这家商场的那一刻没有服务。',
     ),
 
     // modal specific lang
@@ -325,6 +326,7 @@ return array(
 
     'search' => array(
         'no_item'            => '无店铺匹配条件。',
+        'no_service'         => '没有服务符合标准。',
         'too_much_items'     => '搜索结果的范围太广，请缩小它',
         'no_result'          => '对不起，搜索有没有结果',
         'error'              => '发出请求时有错误',
