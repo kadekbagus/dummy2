@@ -98,20 +98,20 @@ class getCouponListAngularCITest extends TestCase
 
         $this->number_of_tenants_mall_1 = 3;
         $this->tenants_mall_1 = array();
-        $this->coupons_mall_1 = array();
+        $this->coupons_mall_1_ids = array();
         for($x = 0; $x < $this->number_of_tenants_mall_1; $x++) {
             list($tenant, $coupon) = $this->createTenant($this->mall_1->merchant_id, FALSE);
             $this->tenants_mall_1[] = $tenant;
-            $this->coupons_mall_1[] = $coupon;
+            $this->coupons_mall_1_ids[] = $coupon->promotion_id;
         }
 
         $this->number_of_tenants_mall_2 = 2;
         $this->tenants_mall_2 = array();
-        $this->coupons_mall_2 = array();
+        $this->coupons_mall_2_ids = array();
         for($x = 0; $x < $this->number_of_tenants_mall_2; $x++) {
             list($tenant, $coupon) = $this->createTenant($this->mall_2->merchant_id, TRUE);
             $this->tenants_mall_2[] = $tenant;
-            $this->coupons_mall_2[] = $coupon;
+            $this->coupons_mall_2_ids[] = $coupon->promotion_id;
         }
 
         $_GET = [];
@@ -231,13 +231,11 @@ class getCouponListAngularCITest extends TestCase
         $response = json_decode($json);
 
         $this->assertSame(0, (int) $response->code);
-        $this->assertSame(count($this->coupons_mall_1), (int) $response->data->returned_records);
+        $this->assertSame(count($this->coupons_mall_1_ids), (int) $response->data->returned_records);
 
         // check all returned records
         foreach ($response->data->records as $key => $item) {
-            $this->assertSame((string) $this->coupons_mall_1[$key]->promotion_id, (string) $item->promotion_id);
-            $this->assertSame((string) $this->coupons_mall_1[$key]->promotion_name, (string) $item->promotion_name);
-            $this->assertSame((string) $this->coupons_mall_1[$key]->description, (string) $item->description);
+            $this->assertTrue(in_array((string) $item->promotion_id, $this->coupons_mall_1_ids));
         }
     }
 
@@ -260,5 +258,30 @@ class getCouponListAngularCITest extends TestCase
 
         $this->assertSame(0, (int) $response->code);
         $this->assertSame(0, (int) $response->data->returned_records);
+    }
+
+    public function testOKGetListingCouponObtainedOnlyOnMall2()
+    {
+        $_GET['apikey'] = $this->user_profiling_apikey->api_key;
+        $_GET['apitimestamp'] = time();
+        $_GET['mall_id'] = $this->mall_2->merchant_id;
+
+        $url = $this->apiUrl . '?' . http_build_query($_GET);
+        $secretKey = $this->user_profiling_apikey->api_secret_key;
+
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_SERVER['REQUEST_URI'] = $url;
+        $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
+
+        $json = $this->call('GET', $url)->getContent();
+        $response = json_decode($json);
+
+        $this->assertSame(0, (int) $response->code);
+        $this->assertSame(count($this->coupons_mall_2_ids), (int) $response->data->returned_records);
+
+        // check all returned records
+        foreach ($response->data->records as $key => $item) {
+            $this->assertTrue(in_array((string) $item->promotion_id, $this->coupons_mall_2_ids));
+        }
     }
 }
