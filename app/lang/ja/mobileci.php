@@ -59,6 +59,7 @@ return array(
         'tenants'            => 'テナント',
         'services'           => 'サービス',
         'lucky_draws'        => '抽選',
+        'free_wifi'          => '無料インタネット',
         'newss'              => 'ニュース',
         'promotions_single'  => '販促',
         'coupons_single'     => '券',
@@ -80,7 +81,7 @@ return array(
         'no_news_listing'              => '申し訳ありませんが、このモールで現時点ではニュースはありません。',
         'no_promotions_listing'        => '申し訳ありませんが、このモールで現時点でのプロモーションはありません。',
         'no_stores_listing'            => '申し訳ありませんが、このモールで現時点で店舗はありません。',
-        'no_services_listing'          => '申し訳ありません、 がこのモールで現時点でサービスはありません',
+        'no_services_listing'          => '申し訳ありません、 がこのモールで現時点でサービスはありません。',
     ),
 
     // modal specific lang

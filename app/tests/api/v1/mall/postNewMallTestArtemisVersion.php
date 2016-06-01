@@ -210,10 +210,10 @@ class postNewMallTestArtemisVersion extends TestCase
         $this->assertSame("success", $response->status);
     }
 
-    public function testWidgetGetAccessInternetActive()
+    public function testWidgetFreeWifiActive()
     {
         /*
-        * test Category is not more required
+        * test widget free wifi set to active
         */
         $data = ['name' => 'antok mall',
             'email'                         => 'antokmall@bumi.com',
@@ -242,19 +242,19 @@ class postNewMallTestArtemisVersion extends TestCase
             'campaign_base_price_coupon'    => 200,
             'campaign_base_price_news'      => 300,
             'floors'                        => ["{\"name\":\"B3\",\"order\":\"1\"}"],
-            'get_internet_access_status'    => 'active',
+            'free_wifi_status'              => 'active',
         ];
 
         $response = $this->setRequestPostNewMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
         $this->assertSame(0, $response->code);
         $this->assertSame("success", $response->status);
-        $this->assertSame("active", $response->data->get_internet_access_status);
+        $this->assertSame("active", $response->data->free_wifi_status);
     }
 
-    public function testWidgetGetAccessInternetInactive()
+    public function testWidgetFreeWifiInactive()
     {
         /*
-        * test Category is not more required
+        * test widget get internet access set to inactive
         */
         $data = ['name' => 'antok mall',
             'email'                         => 'antokmall@bumi.com',
@@ -283,12 +283,12 @@ class postNewMallTestArtemisVersion extends TestCase
             'campaign_base_price_coupon'    => 200,
             'campaign_base_price_news'      => 300,
             'floors'                        => ["{\"name\":\"B3\",\"order\":\"1\"}"],
-            'get_internet_access_status'    => 'inactive',
+            'free_wifi_status'              => 'inactive',
         ];
 
         $response = $this->setRequestPostNewMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
         $this->assertSame(0, $response->code);
         $this->assertSame("success", $response->status);
-        $this->assertSame("inactive", $response->data->get_internet_access_status);
+        $this->assertSame("inactive", $response->data->free_wifi_status);
     }
 }

@@ -33,33 +33,54 @@ class MallByDomainCIAPIController extends BaseAPIController
         try{
             $this->checkAuth();
             $user = $this->api->user;
-            $dom = $_SERVER['HTTP_HOST'];
-            $mall = Setting::getMallByDomain($dom);
-            $mall = $mall->load('mediaLogoOrig');
-            $mall = $mall->load('merchantSocialMedia.socialMedia');
 
-            $facebook_like_url = '';
-            foreach ($mall->merchantSocialMedia as $merchantSocialMedia) {
-                if (is_object($merchantSocialMedia->socialMedia)) {
-                    if ($merchantSocialMedia->socialMedia->social_media_code === 'facebook') {
-                        $facebook_like_url = $merchantSocialMedia->social_media_uri;
+            $subDom = OrbitInput::get('sub_domain', NULL);
+            $validator = Validator::make(
+                array(
+                    'sub_domain' => $subDom,
+                ),
+                array(
+                    'sub_domain' => 'required',
+                )
+            );
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $dom = $subDom . '.' . Config::get('orbit.shop.main_domain');
+
+            $data = NULL;
+
+            $mall = Setting::getMallByDomain($dom);
+
+            if (is_object($mall)) {
+                $mall = $mall->load('mediaLogoOrig');
+                $mall = $mall->load('merchantSocialMedia.socialMedia');
+
+                $facebook_like_url = '';
+                foreach ($mall->merchantSocialMedia as $merchantSocialMedia) {
+                    if (is_object($merchantSocialMedia->socialMedia)) {
+                        if ($merchantSocialMedia->socialMedia->social_media_code === 'facebook') {
+                            $facebook_like_url = $merchantSocialMedia->social_media_uri;
+                        }
                     }
                 }
-            }
-            $mallLogo = '';
-            if (isset($mall->mediaLogoOrig[0])) {
-                $mallLogo = $mall->mediaLogoOrig[0]->path;
-            }
+                $mallLogo = '';
+                if (isset($mall->mediaLogoOrig[0])) {
+                    $mallLogo = $mall->mediaLogoOrig[0]->path;
+                }
 
-            $mallLanguages = $this->getListLanguages($mall);
+                $mallLanguages = $this->getListLanguages($mall);
 
-            $data = new \stdclass();
-            $data->merchant_id = $mall->merchant_id;
-            $data->name = $mall->name;
-            $data->mobile_default_language = $mall->mobile_default_language;
-            $data->logo = $mallLogo;
-            $data->facebook_like_url = $facebook_like_url;
-            $data->supported_languages = $mallLanguages;
+                $data = new \stdclass();
+                $data->merchant_id = $mall->merchant_id;
+                $data->name = $mall->name;
+                $data->mobile_default_language = $mall->mobile_default_language;
+                $data->logo = $mallLogo;
+                $data->facebook_like_url = $facebook_like_url;
+                $data->supported_languages = $mallLanguages;
+            }
 
             $this->response->data = $data;
             $this->response->code = 0;
