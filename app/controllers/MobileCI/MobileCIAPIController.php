@@ -4121,7 +4121,7 @@ class MobileCIAPIController extends BaseCIController
                         $category = \Category::active()
                             ->whereHas('services', function($q) use($retailer) {
                                 $q->where('merchants.parent_id', $retailer->merchant_id);
-                                $q->where('merchants.object_type', 'tenant');
+                                $q->where('merchants.object_type', 'service');
                                 $q->where('merchants.status', 'active');
                             })
                             ->where('category_id', $cid)

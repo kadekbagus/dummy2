@@ -274,9 +274,20 @@ span.attribute-title {
     margin-top: 1.8em;
 }
 
-/*
-    Create Circle Plus Sign
-*/
+/* Fix Facebook buttons on firefox */
+.fb_iframe_widget {
+    > span {
+        width: 58px !important;
+        height: 20px !important;
+
+         > iframe {
+            width: 100px !important;
+            height: 100px !important;
+        }
+    }
+}
+
+/* Create Circle Plus Sign */
 .circle-plus {
     height: 6em;
     width: 6em;
@@ -307,6 +318,19 @@ span.attribute-title {
     }
 }
 /* End of creating Circle Plus Sign */
+
+.asb-content-support {
+    width: calc(~"100% - 20.55px");
+}
+
+.asb-content {
+    height: calc(~"100% - 67px");
+    position: fixed;
+    right: 0;
+    width: 20.55px;
+    overflow: hidden;
+    overflow-y: auto;
+}
 
 div.relative-wrapper {
     position: relative;
