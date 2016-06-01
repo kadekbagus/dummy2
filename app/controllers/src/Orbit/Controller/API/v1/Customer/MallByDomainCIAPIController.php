@@ -50,7 +50,7 @@ class MallByDomainCIAPIController extends BaseAPIController
 
             $dom = $subDom . '.' . Config::get('orbit.shop.main_domain');
 
-            $data = new \stdclass();
+            $data = NULL;
 
             $mall = Setting::getMallByDomain($dom);
 
@@ -73,6 +73,7 @@ class MallByDomainCIAPIController extends BaseAPIController
 
                 $mallLanguages = $this->getListLanguages($mall);
 
+                $data = new \stdclass();
                 $data->merchant_id = $mall->merchant_id;
                 $data->name = $mall->name;
                 $data->mobile_default_language = $mall->mobile_default_language;
