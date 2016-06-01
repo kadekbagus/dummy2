@@ -57,7 +57,7 @@ class getSearchWidgetTest extends TestCase
             'widget_order'  => 6,
         ]);
         $this->widgets[] = Factory::create('Widget', [
-            'widget_type' => 'free_internet',
+            'widget_type' => 'free_wifi',
             'merchant_id' => $this->mall_1->merchant_id,
             'widget_order'  => 7,
         ]);
@@ -79,7 +79,7 @@ class getSearchWidgetTest extends TestCase
     {
         $coupon_widget = Factory::create('Setting', ['setting_name' => 'enable_coupon_widget', 'object_id' => $this->mall_1->merchant_id]);
         $lucky_draw_widget = Factory::create('Setting', ['setting_name' => 'enable_lucky_draw_widget', 'object_id' => $this->mall_1->merchant_id]);
-        $free_internet_widget = Factory::create('Setting', ['setting_name' => 'enable_free_internet_widget', 'object_id' => $this->mall_1->merchant_id]);
+        $free_wifi_widget = Factory::create('Setting', ['setting_name' => 'enable_free_wifi_widget', 'object_id' => $this->mall_1->merchant_id]);
 
         $_GET['apikey'] = $this->apikey_user_1->api_key;
         $_GET['apitimestamp'] = time();
@@ -100,11 +100,11 @@ class getSearchWidgetTest extends TestCase
         $this->assertSame(7, $response->data->returned_records);
     }
 
-    public function testOK_found_six_widget_disable_free_internet_widget()
+    public function testOK_found_six_widget_disable_free_wifi_widget()
     {
         $coupon_widget = Factory::create('Setting', ['setting_name' => 'enable_coupon_widget', 'object_id' => $this->mall_1->merchant_id]);
         $lucky_draw_widget = Factory::create('Setting', ['setting_name' => 'enable_lucky_draw_widget', 'object_id' => $this->mall_1->merchant_id]);
-        $free_internet_widget = Factory::create('Setting', ['setting_name' => 'enable_free_internet_widget', 'object_id' => $this->mall_1->merchant_id, 'setting_value' => 'false']);
+        $free_wifi_widget = Factory::create('Setting', ['setting_name' => 'enable_free_wifi_widget', 'object_id' => $this->mall_1->merchant_id, 'setting_value' => 'false']);
 
         $_GET['apikey'] = $this->apikey_user_1->api_key;
         $_GET['apitimestamp'] = time();
@@ -120,7 +120,6 @@ class getSearchWidgetTest extends TestCase
 
         $json = $this->call('GET', $url)->getContent();
         $response = json_decode($json);
-        // print_r($response); die();
 
         // test number of returned records
         $this->assertSame(6, $response->data->returned_records);
@@ -130,7 +129,7 @@ class getSearchWidgetTest extends TestCase
     {
         $coupon_widget = Factory::create('Setting', ['setting_name' => 'enable_coupon_widget', 'object_id' => $this->mall_1->merchant_id]);
         $lucky_draw_widget = Factory::create('Setting', ['setting_name' => 'enable_lucky_draw_widget', 'object_id' => $this->mall_1->merchant_id, 'setting_value' => 'false']);
-        $free_internet_widget = Factory::create('Setting', ['setting_name' => 'enable_free_internet_widget', 'object_id' => $this->mall_1->merchant_id]);
+        $free_wifi_widget = Factory::create('Setting', ['setting_name' => 'enable_free_wifi_widget', 'object_id' => $this->mall_1->merchant_id]);
 
         $_GET['apikey'] = $this->apikey_user_1->api_key;
         $_GET['apitimestamp'] = time();
@@ -146,17 +145,16 @@ class getSearchWidgetTest extends TestCase
 
         $json = $this->call('GET', $url)->getContent();
         $response = json_decode($json);
-        // print_r($response); die();
 
         // test number of returned records
         $this->assertSame(6, $response->data->returned_records);
     }
 
-    public function testOK_found_six_widget_disable_lucky_draw_and_free_internet_widget()
+    public function testOK_found_six_widget_disable_lucky_draw_and_free_wifi_widget()
     {
         $coupon_widget = Factory::create('Setting', ['setting_name' => 'enable_coupon_widget', 'object_id' => $this->mall_1->merchant_id]);
         $lucky_draw_widget = Factory::create('Setting', ['setting_name' => 'enable_lucky_draw_widget', 'object_id' => $this->mall_1->merchant_id, 'setting_value' => 'false']);
-        $free_internet_widget = Factory::create('Setting', ['setting_name' => 'enable_free_internet_widget', 'object_id' => $this->mall_1->merchant_id, 'setting_value' => 'false']);
+        $free_wifi_widget = Factory::create('Setting', ['setting_name' => 'enable_free_wifi_widget', 'object_id' => $this->mall_1->merchant_id, 'setting_value' => 'false']);
 
         $_GET['apikey'] = $this->apikey_user_1->api_key;
         $_GET['apitimestamp'] = time();
@@ -172,7 +170,6 @@ class getSearchWidgetTest extends TestCase
 
         $json = $this->call('GET', $url)->getContent();
         $response = json_decode($json);
-        // print_r($response); die();
 
         // test number of returned records
         $this->assertSame(5, $response->data->returned_records);
