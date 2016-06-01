@@ -80,6 +80,7 @@ return array(
         'no_news_listing'              => 'Maaf, tidak ada berita pada saat ini di mall ini.',
         'no_promotions_listing'        => 'Maaf, tidak ada promosi pada saat ini di mall ini.',
         'no_stores_listing'            => 'Maaf, tidak ada gerai pada saat ini di mall ini.',
+        'no_services_listing'          => 'Maaf, tidak ada layanan pada saat ini di mall ini.',
     ),
 
     // modal specific lang
@@ -325,6 +326,7 @@ return array(
 
     'search'                => array(
         'no_item'            => 'Tidak ada gerai yang sesuai kriteria.',
+        'no_service'         => 'Tidak ada layanan yang sesuai kriteria.',
         'too_much_items'     => 'Hasil pencarian terlalu banyak, tolong persempit pencarian Anda.',
         'no_result'          => 'Maaf, tidak ada hasil pencarian.',
         'error'              => 'Ada error pada waktu melakukan request.',

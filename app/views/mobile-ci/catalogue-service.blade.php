@@ -105,14 +105,14 @@
             @if($data->search_mode)
                 <div class="row padded">
                     <div class="col-xs-12">
-                        <h4>{{ Lang::get('mobileci.search.no_item') }}</h4>
+                        <h4>{{ Lang::get('mobileci.search.no_service') }}</h4>
                     </div>
                 </div>
             @else
                 {{-- Showing info for there is no stores when search mode is false --}}
                 <div class="row padded">
                     <div class="col-xs-12">
-                        <h4>{{ Lang::get('mobileci.greetings.no_stores_listing') }}</h4>
+                        <h4>{{ Lang::get('mobileci.greetings.no_services_listing') }}</h4>
                     </div>
                 </div>
             @endif
