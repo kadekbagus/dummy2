@@ -70,6 +70,7 @@ class ObjectCIAPIController extends BaseAPIController
                 ->whereHas('mall', function($q) {
                     $q->where('merchants.merchant_id', $this->mall_id);
                 })
+                ->where('objects.object_type', 'floor')
                 ->groupBy('objects.object_name');
 
             $_objects = clone($objects);

@@ -18,61 +18,62 @@
 
 @section('content')
     @if($data->status === 1)
-        @if(sizeof($data->records) > 0 || $link_to_coupon_data->linkedToCS)
-            @if(Input::get('coupon_redeem_id') === null && Input::get('coupon_id') === null && Input::get('promotion_id') == null && Input::get('news_id') === null)
-            <div id="search-tool">
-                <div class="row">
-                    <div class="col-xs-5 search-tool-col">
-                        <div class="dropdown">
-                            <label class="select-label">
-                                <select class="select" id="category">
-                                    @if(empty(Input::get('cid')))
-                                        <option>{{ Lang::get('mobileci.tenant.category') }}</option>
-                                    @else
-                                        <option>{{ Lang::get('mobileci.tenant.all') }}</option>
-                                    @endif
-                                    @foreach($categories as $category)
-                                    @if($category->category_id == Input::get('cid'))
-                                    <option value="{{ $category->category_id }}" selected="selected">{{{ $category->category_name }}}</option>
-                                    @else
-                                    <option value="{{ $category->category_id }}">{{{ $category->category_name }}}</option>
-                                    @endif
-                                    @endforeach
-                                </select>
-                            </label>
-                        </div>
-                    </div>
-                    <div class="col-xs-5 search-tool-col">
-                        <div class="dropdown">
-                            <label class="select-label">
-                                <select class="select" id="floor">
-                                    @if(empty(Input::get('fid')))
-                                        <option>{{ Lang::get('mobileci.tenant.floor') }}</option>
-                                    @else
-                                        <option>{{ Lang::get('mobileci.tenant.all') }}</option>
-                                    @endif
-                                    @foreach($floorList as $floor)
-                                    @if($floor->object_name == Input::get('fid'))
-                                    <option value="{{{ $floor->object_name }}}" selected="selected">{{{ $floor->object_name }}}</option>
-                                    @else
-                                    <option value="{{{ $floor->object_name }}}">{{{ $floor->object_name }}}</option>
-                                    @endif
-                                    @endforeach
-                                </select>
-                            </label>
-                        </div>
-                    </div>
-                    <div class="col-xs-2 search-tool-col text-right">
-                        <a data-href="{{{ route('ci-tenant-list', ['keyword' => Input::get('keyword')]) }}}" href="{{{ $urlblock->blockedRoute('ci-tenant-list', ['keyword' => Input::get('keyword')]) }}}" class="btn btn-info btn-block reset-btn">
-                            <span class="fa-stack fa-lg">
-                                <i class="fa fa-filter fa-stack-2x"></i>
-                                <i class="fa fa-times fa-stack-1x"></i>
-                            </span>
-                        </a>
+        @if(Input::get('coupon_redeem_id') === null && Input::get('coupon_id') === null && Input::get('promotion_id') == null && Input::get('news_id') === null)
+        <div id="search-tool">
+            <div class="row">
+                <div class="col-xs-5 search-tool-col">
+                    <div class="dropdown">
+                        <label class="select-label">
+                            <select class="select" id="category">
+                                @if(empty(Input::get('cid')))
+                                    <option>{{ Lang::get('mobileci.tenant.category') }}</option>
+                                @else
+                                    <option>{{ Lang::get('mobileci.tenant.all') }}</option>
+                                @endif
+                                @foreach($categories as $category)
+                                @if($category->category_id == Input::get('cid'))
+                                <option value="{{ $category->category_id }}" selected="selected">{{{ $category->category_name }}}</option>
+                                @else
+                                <option value="{{ $category->category_id }}">{{{ $category->category_name }}}</option>
+                                @endif
+                                @endforeach
+                            </select>
+                        </label>
                     </div>
                 </div>
+                <div class="col-xs-5 search-tool-col">
+                    <div class="dropdown">
+                        <label class="select-label">
+                            <select class="select" id="floor">
+                                @if(empty(Input::get('fid')))
+                                    <option>{{ Lang::get('mobileci.tenant.floor') }}</option>
+                                @else
+                                    <option>{{ Lang::get('mobileci.tenant.all') }}</option>
+                                @endif
+                                @foreach($floorList as $floor)
+                                @if($floor->object_name == Input::get('fid'))
+                                <option value="{{{ $floor->object_name }}}" selected="selected">{{{ $floor->object_name }}}</option>
+                                @else
+                                <option value="{{{ $floor->object_name }}}">{{{ $floor->object_name }}}</option>
+                                @endif
+                                @endforeach
+                            </select>
+                        </label>
+                    </div>
+                </div>
+                <div class="col-xs-2 search-tool-col text-right">
+                    <a data-href="{{{ route('ci-tenant-list', ['keyword' => Input::get('keyword')]) }}}" href="{{{ $urlblock->blockedRoute('ci-tenant-list', ['keyword' => Input::get('keyword')]) }}}" class="btn btn-info btn-block reset-btn">
+                        <span class="fa-stack fa-lg">
+                            <i class="fa fa-filter fa-stack-2x"></i>
+                            <i class="fa fa-times fa-stack-1x"></i>
+                        </span>
+                    </a>
+                </div>
             </div>
-            @endif
+        </div>
+        @endif
+
+        @if(sizeof($data->records) > 0 || $link_to_coupon_data->linkedToCS)
             <div id="catContainer" class="container">
                 <div class="mobile-ci list-item-container">
                     <div class="row">
@@ -95,61 +96,6 @@
                 </div>
             </div>
         @else
-            @if(Input::get('coupon_redeem_id') === null && Input::get('coupon_id') === null && Input::get('promotion_id') == null && Input::get('news_id') === null)
-            <div id="search-tool">
-                <div class="row">
-                    <div class="col-xs-5 search-tool-col">
-                        <div class="dropdown">
-                            <label class="select-label">
-                                <select class="select" id="category">
-                                    @if(empty(Input::get('cid')))
-                                        <option>{{ Lang::get('mobileci.tenant.category') }}</option>
-                                    @else
-                                        <option>{{ Lang::get('mobileci.tenant.all') }}</option>
-                                    @endif
-                                    @foreach($categories as $category)
-                                    @if($category->category_id == Input::get('cid'))
-                                    <option value="{{ $category->category_id }}" selected="selected">{{{ $category->category_name }}}</option>
-                                    @else
-                                    <option value="{{ $category->category_id }}">{{{ $category->category_name }}}</option>
-                                    @endif
-                                    @endforeach
-                                </select>
-                            </label>
-                        </div>
-                    </div>
-                    <div class="col-xs-5 search-tool-col">
-                        <div class="dropdown">
-                            <label class="select-label">
-                                <select class="select" id="floor">
-                                    @if(empty(Input::get('fid')))
-                                        <option>{{ Lang::get('mobileci.tenant.floor') }}</option>
-                                    @else
-                                        <option>{{ Lang::get('mobileci.tenant.all') }}</option>
-                                    @endif
-                                    @foreach($floorList as $floor)
-                                    @if($floor->object_name == Input::get('fid'))
-                                    <option value="{{{ $floor->object_name }}}" selected="selected">{{{ $floor->object_name }}}</option>
-                                    @else
-                                    <option value="{{{ $floor->object_name }}}">{{{ $floor->object_name }}}</option>
-                                    @endif
-                                    @endforeach
-                                </select>
-                            </label>
-                        </div>
-                    </div>
-                    <div class="col-xs-2 search-tool-col text-right">
-                        <a data-href="{{{ route('ci-tenant-list', ['keyword' => Input::get('keyword')]) }}}" href="{{{ $urlblock->blockedRoute('ci-tenant-list', ['keyword' => Input::get('keyword')]) }}}" class="btn btn-info btn-block reset-btn">
-                            <span class="fa-stack fa-lg">
-                                <i class="fa fa-filter fa-stack-2x"></i>
-                                <i class="fa fa-times fa-stack-1x"></i>
-                            </span>
-                        </a>
-                    </div>
-                </div>
-            </div>
-            @endif
-
             @if($data->search_mode)
                 <div class="row padded">
                     <div class="col-xs-12">
@@ -164,8 +110,8 @@
                     </div>
                 </div>
             @endif
-
         @endif
+
     @else
         <div class="row padded">
             <div class="col-xs-12">
@@ -178,13 +124,15 @@
 @section('ext_script_bot')
 {{ HTML::script('mobile-ci/scripts/jquery.lazyload.min.js') }}
 <script type="text/javascript">
-
     var take = {{ Config::get('orbit.pagination.per_page', 25) }},
         skip = 0;//{{ Config::get('orbit.pagination.per_page', 25) }},
         keyword = '{{{ Input::get('keyword', '') }}}',
         cid = '{{{ Input::get('cid', '') }}}',
         fid = '{{{ Input::get('fid', '') }}}',
         promotion_id = '{{{ Input::get('promotion_id', '')}}}',
+        news_id = '{{{ Input::get('news_id', '')}}}',
+        coupon_id = '{{{ Input::get('coupon_id', '')}}}',
+        coupon_redeem_id = '{{{ Input::get('coupon_redeem_id', '')}}}',
         isFromDetail = false,
         defaultTenantLogoUrl = '{{ asset('mobile-ci/images/default_tenants_directory.png') }}',
         isLoggedIn = Boolean({{ $urlblock->isLoggedIn() }});
@@ -359,7 +307,10 @@
                 keyword: keyword,
                 cid: cid,
                 fid: fid,
-                promotion_id: promotion_id
+                promotion_id: promotion_id,
+                news_id: news_id,
+                coupon_id: coupon_id,
+                coupon_redeem_id: coupon_redeem_id
             },
             error: function(xhr, textStatus, errorThrown) {
                 if (textStatus === 'timeout') {
@@ -455,25 +406,20 @@
             promo = '&promotion_id='+'{{{Input::get('promotion_id')}}}';
         @endif
         var path = '{{$urlblock->blockedRoute('ci-tenant-list', ['keyword' => e(Input::get('keyword')), 'sort_by' => 'name', 'sort_mode' => 'asc', 'cid' => e(Input::get('cid')), 'fid' => e(Input::get('fid'))])}}'+promo;
-        $('#dLabel').dropdown();
-        $('#dLabel2').dropdown();
 
-        $('#category').change(function(){
-            var val = '';
-            if($('#category > option:selected').attr('value')) {
-                val = $('#category > option:selected').attr('value');
-            }
-            path = updateQueryStringParameter(path, 'cid', val);
+        $('#category').on('change', function () {
+            var selectedValue = $(this).val();
+            selectedValue = selectedValue.toLowerCase() === 'all' ? '' : selectedValue;
+            path = updateQueryStringParameter(path, 'cid', selectedValue);
             window.location.replace(path);
         });
-        $('#floor').change(function(){
-            var val = '';
-            if($('#floor > option:selected').attr('value')) {
-                val = $('#floor > option:selected').attr('value');
-            }
-            path = updateQueryStringParameter(path, 'fid', val);
+
+        $('#floor').on('change', function () {
+            var selectedValue = $(this).val();
+            selectedValue = selectedValue.toLowerCase() === 'all' ? '' : selectedValue;
+            path = updateQueryStringParameter(path, 'fid', selectedValue);
             window.location.replace(path);
-        });
+        })
 
         // Check if page is from back button.
         if (isFromDetail) {
