@@ -113,8 +113,8 @@
             @endif
         @endif
     </div>
-    <div class="pull-right asb-content">
-        <div id="asb" class="btn-group-vertical"></div>
+    <div class="asb-content pull-right">
+        <div id="asb" class="btn-group-vertical pull-right"></div>
     </div>
     @else
         <div class="row padded">
@@ -371,9 +371,10 @@
     (initializeAsb = function () {
         var strArr = "#abcdefghijklmnopqrstuvwxyz".split('');
         for (var i = 0; i < strArr.length; i++) {
-            var $btn = $('<button />')
-            .addClass('btn btn-xs btn-default asb-btn')
-            .attr('disabled', 'disabled')
+            var $btn = $('<a />').attr({
+                'class': 'btn btn-xs btn-default asb-btn disabled',
+                'href': '#'
+            })
             .text(strArr[i].toUpperCase());
 
             asbBtns.push($btn);
@@ -387,13 +388,13 @@
             var $btn = asbBtns[i];
             if (/[a-z]/i.test(text)) {
                 // Letter
-                if ($btn.is(':disabled') && $btn.text().trim().toLowerCase() === text.trim().toLowerCase()) {
+                if ($btn.hasClass('disabled') && $btn.text().trim().toLowerCase() === text.trim().toLowerCase()) {
                     return $btn;
                 }
             }
             else {
                 // Non letter
-                if ($btn.is(':disabled') && $btn.text() === '#') {
+                if ($btn.hasClass('disabled') && $btn.text() === '#') {
                     return $btn;
                 }
             }
@@ -403,20 +404,22 @@
     var bindAsbEvents = function () {
         $('.catalogue-wrapper > div').each(function () {
             var tenantName = $(this).data('name');
+            var tenantId = $(this).attr('id');
             var initial = tenantName[0].toLowerCase();
             var $btn = getDisabledAsbButton(initial);
 
             if ($btn) {
                 var topOffset = $(this).offset().top - 70;
 
-                $btn.data('pos', topOffset)
-                .removeAttr('disabled')
-                .on('click mouseover', function (ev) {
-                    ev.preventDefault();
-                    ev.stopPropagation();
+                $btn.attr('href', '#'+tenantId)
+                .data('pos', topOffset)
+                .removeClass('disabled');
+                // .on('click mouseover', function (ev) {
+                //     ev.preventDefault();
+                //     ev.stopPropagation();
 
-                    $(window).scrollTop(topOffset);
-                });
+                //     $(window).scrollTop(topOffset);
+                // });
             }
         });
     };
