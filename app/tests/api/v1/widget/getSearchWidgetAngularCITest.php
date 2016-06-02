@@ -9,17 +9,21 @@ use Laracasts\TestDummy\Factory;
 use Faker\Factory as Faker;
 use OrbitShop\API\v1\Helper\Generator;
 
-class getSearchWidgetTest extends TestCase
+class getSearchWidgetAngularCITest extends TestCase
 {
-    private $baseUrl = '/api/v1/widget/list';
+    private $baseUrl = '/api/v1/cust/widgets';
 
     public function setUp()
     {
         parent::setUp();
 
-        $role = Factory::create('role_mall_owner');
+        $this->user_1 = Factory::create('user_guest');
 
-        $this->user_1 = Factory::create('User', ['user_role_id' => $role->role_id]);
+        $this->userdetail = Factory::create('UserDetail', [
+            'user_id' => $this->user_1->user_id,
+            'gender'  => null,
+        ]);
+
         $this->apikey_user_1 = Factory::create('Apikey', ['user_id' => $this->user_1->user_id]);
 
         $this->mall_1 = Factory::create('Mall');
@@ -84,7 +88,7 @@ class getSearchWidgetTest extends TestCase
         $_GET['apikey'] = $this->apikey_user_1->api_key;
         $_GET['apitimestamp'] = time();
         $_GET['status'] = 'active';
-        $_GET['merchant_id'] = (array) $this->mall_1->merchant_id;
+        $_GET['mall_id'] = $this->mall_1->merchant_id;
 
         $url = $this->baseUrl . '?' . http_build_query($_GET);
 
@@ -109,7 +113,7 @@ class getSearchWidgetTest extends TestCase
         $_GET['apikey'] = $this->apikey_user_1->api_key;
         $_GET['apitimestamp'] = time();
         $_GET['status'] = 'active';
-        $_GET['merchant_id'] = (array) $this->mall_1->merchant_id;
+        $_GET['mall_id'] = $this->mall_1->merchant_id;
 
         $url = $this->baseUrl . '?' . http_build_query($_GET);
 
@@ -134,7 +138,7 @@ class getSearchWidgetTest extends TestCase
         $_GET['apikey'] = $this->apikey_user_1->api_key;
         $_GET['apitimestamp'] = time();
         $_GET['status'] = 'active';
-        $_GET['merchant_id'] = (array) $this->mall_1->merchant_id;
+        $_GET['mall_id'] = $this->mall_1->merchant_id;
 
         $url = $this->baseUrl . '?' . http_build_query($_GET);
 
@@ -159,7 +163,7 @@ class getSearchWidgetTest extends TestCase
         $_GET['apikey'] = $this->apikey_user_1->api_key;
         $_GET['apitimestamp'] = time();
         $_GET['status'] = 'active';
-        $_GET['merchant_id'] = (array) $this->mall_1->merchant_id;
+        $_GET['mall_id'] = $this->mall_1->merchant_id;
 
         $url = $this->baseUrl . '?' . http_build_query($_GET);
 

@@ -803,6 +803,24 @@ class MobileCIAPIController extends BaseCIController
                     $widget->url = $urlblock->blockedRoute('ci-luckydraw-list');
                     $widget->redirect_url = URL::route('ci-luckydraw-list');
                 }
+                if ($widget->widget_type == 'free_wifi') {
+                    $widget->image = 'mobile-ci/images/default_free_wifi_directory.png';
+
+                    foreach ($widget->media as $media) {
+                        if ($media->media_name_long === 'home_widget_orig') {
+                            if (empty($media->path)) {
+                                $widget->image = 'mobile-ci/images/default_free_wifi_directory.png';
+                            } else {
+                                $widget->image = $media->path;
+                            }
+                        }
+                    }
+
+                    $widget->display_title = Lang::get('mobileci.widgets.free_wifi');
+                    $widget->display_sub_title = Lang::get('mobileci.widgets.free_wifi');
+                    // $widget->url = $urlblock->blockedRoute('ci-luckydraw-list');
+                    // $widget->redirect_url = URL::route('ci-luckydraw-list');
+                }
             }
 
             $languages = $this->getListLanguages($retailer);

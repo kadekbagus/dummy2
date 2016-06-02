@@ -70,34 +70,6 @@ class CouponCIAPIController extends BaseAPIController
 
             $prefix = DB::getTablePrefix();
 
-            $gender_profile_query = '';
-            $age_profile_query = '';
-
-            $userAge = 0;
-            if ($user->userDetail->birthdate !== '0000-00-00' && $user->userDetail->birthdate !== null) {
-                $userAge =  $this->calculateAge($user->userDetail->birthdate); // 27
-            }
-
-            $userGender = 'U'; // default is Unknown
-            if ($user->userDetail->gender !== '' && $user->userDetail->gender !== null) {
-                $userGender =  $user->userDetail->gender;
-            }
-
-            if ($userAge !== null) {
-                if ($userAge === 0){
-                    $age_profile_query = " ( (min_value = {$userAge} and max_value = {$userAge} ) or is_all_age = 'Y' ) ";
-                } else {
-                    if ($userAge >= 55) {
-                        $age_profile_query = " ( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ";
-                    } else {
-                        $age_profile_query = " ( (min_value <= {$userAge} and max_value >= {$userAge} ) or is_all_age = 'Y' ) ";
-                    }
-                }
-            }
-            if ($userGender !== null) {
-                $gender_profile_query = " ( gender_value = '{$userGender}' OR is_all_gender = 'Y' ) ";
-            }
-
             $mall = Mall::excludeDeleted()->where('merchant_id', $this->mall_id)->first();
             $mallTime = Carbon::now($mall->timezone->timezone_name);
 
@@ -115,9 +87,6 @@ class CouponCIAPIController extends BaseAPIController
                         AND {$prefix}issued_coupons.promotion_id = {$prefix}promotions.promotion_id
                     ) as quantity")
                 )
-                ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'promotions.promotion_id')
-                ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'promotions.promotion_id')
-                ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
                 ->join('issued_coupons', function ($join) {
                     $join->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
                     $join->where('issued_coupons.status', '=', 'active');
@@ -146,13 +115,10 @@ class CouponCIAPIController extends BaseAPIController
                 ->where('issued_coupons.user_id', $user->user_id)
                 ->where('promotions.coupon_validity_in_date', '>=', $mallTime);
 
-
-            if (! empty($gender_profile_query)) {
-                $coupons->whereRaw($gender_profile_query);
-            }
-            if (! empty($age_profile_query)) {
-                $coupons->whereRaw($age_profile_query);
-            }
+            OrbitInput::get('ids', function($ids) use ($coupons)
+            {
+                $coupons->whereNotIn('promotions.promotion_id', $ids);
+            });
 
             OrbitInput::get(
                 'keyword', // todo: add alternateLanguage
@@ -224,31 +190,7 @@ class CouponCIAPIController extends BaseAPIController
             });
             $coupons->skip($skip);
 
-            $sortBy = '';
-            $sortMode = 'asc';
-
-            OrbitInput::get('sortby', function($_sortBy) use (&$sortBy)
-            {
-                // Map the sortby request to the real column name
-                $sortByMapping = array(
-                    '_name' => 'merchants.name',
-                );
-
-                if (array_key_exists($_sortBy, $sortByMapping)) {
-                    $sortBy = $sortByMapping[$_sortBy];
-                }
-            });
-
-            OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
-            {
-                if (strtolower($_sortMode) !== 'asc') {
-                    $sortMode = 'desc';
-                }
-            });
-
-            if (! empty($sortBy)) {
-                $coupons->orderBy($sortBy, $sortMode);
-            }
+            $coupons->orderBy(DB::raw('RAND()'));
 
             $coupons = $coupons->get();
 
@@ -293,7 +235,201 @@ class CouponCIAPIController extends BaseAPIController
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = [$e->getFile(), $e->getLine(), $e->getMessage()];
+            $this->response->data = null;
+            $httpCode = 500;
+        }
+
+        return $this->render($httpCode);
+    }
+
+    public function getCouponItem()
+    {
+        $httpCode = 200;
+        $this->response = new ResponseProvider();
+
+        try{
+            $this->checkAuth();
+            $user = $this->api->user;
+
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = $this->validRoles;
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            $this->mall_id = OrbitInput::get('mall_id', NULL);
+            $coupon_id = OrbitInput::get('coupon_id', NULL);
+
+            $this->registerCustomValidation();
+            $validator = Validator::make(
+                array(
+                    'mall_id' => $this->mall_id,
+                    'coupon_id' => $coupon_id,
+                ),
+                array(
+                    'mall_id' => 'required|orbit.empty.mall',
+                    'coupon_id' => 'required|orbit.empty.coupon',
+                )
+            );
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $prefix = DB::getTablePrefix();
+
+            $mall = Mall::excludeDeleted()->where('merchant_id', $this->mall_id)->first();
+            $mallTime = Carbon::now($mall->timezone->timezone_name);
+            $quoted_mall_id = $this->quoteStr($this->mall_id);
+            $quoted_coupon_id = $this->quoteStr($coupon_id);
+
+            $coupon = Coupon::select(
+                    'promotions.promotion_id',
+                    'promotions.promotion_name',
+                    'promotions.description',
+                    'promotions.long_description',
+                    'media.path as image',
+                    DB::raw("(CONCAT(DATE_FORMAT({$prefix}promotions.begin_date, '%d %b %Y'), ' - ', DATE_FORMAT({$prefix}promotions.end_date, '%d %b %Y'))) as validity"),
+                    DB::raw("
+                        (SELECT COUNT({$prefix}issued_coupons.issued_coupon_id)
+                        FROM {$prefix}issued_coupons
+                        WHERE user_id = '{$user->user_id}'
+                        AND {$prefix}issued_coupons.status = 'active'
+                        AND {$prefix}issued_coupons.promotion_id = {$prefix}promotions.promotion_id
+                    ) as quantity"),
+                    DB::raw("
+                        (SELECT COUNT(m.merchant_id)
+                        FROM {$prefix}merchants m
+                        JOIN {$prefix}promotion_retailer_redeem prr ON prr.retailer_id = m.merchant_id
+                        JOIN {$prefix}promotions p on prr.promotion_id = p.promotion_id
+                        LEFT JOIN {$prefix}promotion_employee pe on p.promotion_id = pe.promotion_id
+                        LEFT JOIN {$prefix}users u on u.user_id = pe.user_id
+                        LEFT JOIN {$prefix}employees e on e.user_id = u.user_id
+                        LEFT JOIN {$prefix}employee_retailer er on er.employee_id = e.employee_id
+                        WHERE p.promotion_id = {$quoted_coupon_id}
+                        AND prr.object_type = 'tenant'
+                        AND m.status = 'active'
+                        AND p.status = 'active'
+                        AND
+                        (
+                            (
+                                m.parent_id = {$quoted_mall_id}
+                                OR
+                                m.merchant_id = {$quoted_mall_id}
+                            )
+                            OR
+                            (
+                                e.status = 'active'
+                                AND
+                                er.retailer_id = {$quoted_mall_id}
+                            )
+                        )
+                    ) as redeemed_to_tenant"),
+                    DB::raw("
+                        (SELECT COUNT(m.merchant_id)
+                        FROM {$prefix}merchants m
+                        JOIN {$prefix}promotion_retailer prr ON prr.retailer_id = m.merchant_id
+                        JOIN {$prefix}promotions p on prr.promotion_id = p.promotion_id
+                        WHERE p.promotion_id = {$quoted_coupon_id}
+                        AND m.parent_id = {$quoted_mall_id}
+                        AND m.status = 'active'
+                        AND prr.object_type = 'tenant'
+                        AND p.status = 'active'
+                    ) as linked_to_tenant")
+                )
+                ->join('issued_coupons', function ($join) {
+                    $join->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
+                    $join->where('issued_coupons.status', '=', 'active');
+                })
+                ->leftJoin('promotion_retailer_redeem', 'promotion_retailer_redeem.promotion_id', '=', 'promotions.promotion_id')
+                ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer_redeem.retailer_id')
+                ->leftJoin('media', function ($join) {
+                    $join->on('media.object_id', '=', 'merchants.merchant_id')
+                        ->where('media_name_long', '=', 'retailer_logo_orig');
+                })
+                ->where(function ($q) {
+                    $q->where(function ($q2) {
+                        $q2->where('merchants.parent_id', '=', $this->mall_id)
+                            ->orWhere('merchants.merchant_id', '=', $this->mall_id);
+                    });
+                    $q->orWhere(function ($q2) {
+                        $q2->whereHas('employee', function ($q3) {
+                            $q3->whereHas('employee', function ($q4) {
+                                $q4->whereHas('retailers', function ($q5) {
+                                    $q5->where('merchants.merchant_id', $this->mall_id);
+                                });
+                            });
+                        });
+                    });
+                })
+                ->where('issued_coupons.user_id', $user->user_id)
+                ->where('promotions.coupon_validity_in_date', '>=', $mallTime);
+
+            OrbitInput::get(
+                'keyword', // todo: add alternateLanguage
+                function ($keyword) use ($coupon) {
+                    $coupon->leftJoin('coupon_translations', function($join) {
+                            $join->on('promotions.promotion_id', '=', 'coupon_translations.promotion_id');
+                        })
+                        ->leftJoin('keyword_object', function($join) {
+                            $join->on('promotions.promotion_id', '=', 'keyword_object.object_id');
+                            $join->where('keyword_object.object_type', '=', 'coupon');
+                        })
+                        ->leftJoin('keywords', function($join) {
+                            $join->on('keywords.keyword_id', '=', 'keyword_object.keyword_id');
+                            $join->where('keywords.merchant_id', '=', $this->mall_id);
+                        })
+                        ->where(function($q) use ($keyword) {
+                            $q->where('coupon_translations.promotion_name', 'like', "%$keyword%")
+                                ->orWhere('coupon_translations.description', 'like', "%$keyword%")
+                                ->orWhere('coupon_translations.long_description', 'like', "%$keyword%")
+                                ->orWhere('keyword', '=', $keyword);
+                        });
+                }
+            );
+
+            $coupon->groupBy('promotions.promotion_id');
+
+            $coupon = $coupon->first();
+
+            $this->response->data = $coupon;
+            $this->response->code = 0;
+            $this->response->status = 'success';
+            $this->response->message = 'Success';
+        } catch (ACLForbiddenException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (InvalidArgsException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $result['total_records'] = 0;
+            $result['returned_records'] = 0;
+            $result['records'] = null;
+
+            $this->response->data = $result;
+            $httpCode = 403;
+        } catch (QueryException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+        } catch (Exception $e) {
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
             $httpCode = 500;
         }
 
@@ -313,6 +449,21 @@ class CouponCIAPIController extends BaseAPIController
             }
 
             App::instance('orbit.empty.mall', $mall);
+
+            return TRUE;
+        });
+
+        // Check the existance of coupon id
+        Validator::extend('orbit.empty.coupon', function ($attribute, $value, $parameters) {
+            $coupon = Coupon::active()
+                        ->where('promotion_id', $value)
+                        ->first();
+
+            if (empty($coupon)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.empty.coupon', $coupon);
 
             return TRUE;
         });
