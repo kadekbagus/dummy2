@@ -398,7 +398,13 @@
         var supportedAmount = Math.floor($('.asb-content').height() / 22),
             strArr;
 
-        if (supportedAmount <= 14) {
+        if (supportedAmount <= 10) {
+            strArr = "#,a,bcd,e,fghi,jklmn,o,pqrst,uvwxy,z".split(','); // 10
+        }
+        else if (supportedAmount <= 12) {
+            strArr = "#,a,b,cd,e,fghi,jklmn,o,pqrst,uvwx,y,z".split(','); // 12
+        }
+        else if (supportedAmount <= 14) {
             strArr = "#,a,b,cdefg,h,i,j,klmn,o,p,qrstuvw,x,y,z".split(','); // 14
         }
         else if (supportedAmount <= 17) {
