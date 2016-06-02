@@ -2132,12 +2132,16 @@ class MallAPIController extends ControllerAPI
                 }
             });
 
-            OrbitInput::post('free_wifi_status', function($free_wifi_status) use ($updatedmall, $languages){
+            OrbitInput::post('free_wifi_status', function($free_wifi_status) use ($updatedmall){
                 $languages_by_name = [];
+                $languages_name = [];
                 foreach ($updatedmall->languages as $language) {
                     $name_lang = $language->language->name;
                     $languages_by_name[$name_lang] = $language;
+                    $languages_name[] = $name_lang;
                 }
+                // hide response about languages - remove this code to display languages response
+                unset($updatedmall->languages);
 
                 $update_free_wifi = Widget::excludeDeleted()
                         ->leftJoin('widget_retailer', 'widget_retailer.widget_id', '=', 'widgets.widget_id')
@@ -2174,7 +2178,7 @@ class MallAPIController extends ControllerAPI
                             // Insert the translation for the slogan
                             $new_widget_trans = new stdClass();
                             $slogan = $data_widget['slogan'];
-                            foreach ($languages as $lang) {
+                            foreach ($languages_name as $lang) {
                                 if (isset($slogan[$lang])) {
                                     // Get the Language ID
                                     // The content for this particular language is available
