@@ -1431,6 +1431,12 @@ class WidgetAPIController extends ControllerAPI
             $totalWidgets = RecordCounter::create($_widgets)->count();
             $listOfWidgets = $widgets->get();
 
+            $counter = 1;
+            foreach ($listOfWidgets as $widget) {
+                $widget->widget_order = $counter;
+                $counter += 1;
+            }
+
             $data = new stdclass();
             $data->total_records = $totalWidgets;
             $data->returned_records = count($listOfWidgets);
