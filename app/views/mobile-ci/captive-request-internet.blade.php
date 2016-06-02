@@ -67,4 +67,72 @@
 
         <img id="pingdom-icon" class="hide" src="{{ $ping_url }}" onerror="OrbitInternetChecker.down()" onload="OrbitInternetChecker.up()">
     </div>
+    
+@stop
+
+@section('ext_script_bot')
+    {{----------------------------------------------------------- 
+      Note config 'orbit.cdn.modernizr' is not defined.
+      we do not include CDN for Modernizr config in orbit.php 
+      because we only need subset of its functionalities       
+    --------------------------------------------------------------}} 
+    {{ HTML::script(Config::get('orbit.cdn.modernizr', 'mobile-ci/scripts/modernizr-custom.min.js')) }}
+    {{-- Script fallback --}}
+    <script>
+        if ((typeof Modernizr === 'undefined')) {
+          document.write('<script src="{{asset('mobile-ci/scripts/modernizr-custom.min.js')}}">\x3C/script>');
+        }
+    </script>
+    {{-- End of Script fallback --}}
+
+    {{ HTML::script(Config::get('orbit.cdn.clipboard.1_5_10', 'mobile-ci/scripts/clipboard.min.js')) }}
+    {{-- Script fallback --}}
+    <script>
+        if ((typeof Modernizr === 'undefined')) {
+          document.write('<script src="{{asset('mobile-ci/scripts/clipboard.min.js')}}">\x3C/script>');
+        }
+    </script>
+    {{-- End of Script fallback --}}
+    
+    <script type="text/javascript">
+        var AndroidCaptivePortalBrowserDetector = {};
+        /**---------------------------------------------------------------
+         * Detect if current browser is captive portal browser in Android.
+         * ---------------------------------------------------------------
+         * Note:
+         * Captive portal browser in Android is application that responsible 
+         * for handle captive portal login. It is implemented in activity 
+         * named CaptivePortalLoginActivity.java         * 
+         * This activity using WebView component with minimum functionalities
+         * i.e only enable Javascript but not advanced feature such as HTML5 Local Storage
+         * functionality. So we check availability of LocalStorage functionality
+         * 
+         * User-Agent for default WebView is as explained in
+         * https://developer.chrome.com/multidevice/user-agent#webview_user_agent
+         * 
+         * This detection however have weakness. For example, someone can build 
+         * Android application using default WebView. Then this script will result
+         * in false detection.
+         */
+        AndroidCaptivePortalBrowserDetector.isAndroidCaptivePortal = function() {
+            var ua = navigator.userAgent;
+            return  (!Modernizr.localstorage) &&
+                    (ua.indexOf('Android 6') > -1) &&
+                    (ua.indexOf('Chrome/') > -1) &&
+                    (ua.indexOf('wv)') > -1);                    
+        };    
+
+
+        if (AndroidCaptivePortalBrowserDetector.isAndroidCaptivePortal() === true) {
+            //assume that we are accessed from captive portal of Android 5+
+            //we provide different way to grant user internet access
+            $('#in-any-os').hide();
+            $('#in-android-5-or-newer').show();
+        } else {            
+            $('#in-any-os').show();
+            $('#in-android-5-or-newer').hide();
+        }    
+    
+        var clipboard = new Clipboard('.btn');
+    </script>
 @stop
