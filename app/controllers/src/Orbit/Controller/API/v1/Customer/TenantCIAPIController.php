@@ -102,6 +102,8 @@ class TenantCIAPIController extends BaseAPIController
             $mallTime = Carbon::now($mall->timezone->timezone_name);
             $redeemToCSFlag = 'false';
 
+            $quoted_mall_id = $this->quoteStr($this->mall_id);
+
             $tenants = Tenant::
             with(
             [
@@ -154,7 +156,7 @@ class TenantCIAPIController extends BaseAPIController
                     WHERE {$prefix}news_merchant.object_type = 'retailer'
                     AND {$prefix}news.object_type = 'news'
                     AND {$prefix}news.status = 'active'
-                    AND {$prefix}merchants.parent_id = '{$this->mall_id}'
+                    AND {$prefix}merchants.parent_id = {$quoted_mall_id}
                     AND '{$mallTime}' >= {$prefix}news.begin_date
                     AND '{$mallTime}' <= {$prefix}news.end_date
                     {$age_profile_query}
@@ -176,7 +178,7 @@ class TenantCIAPIController extends BaseAPIController
                     WHERE {$prefix}news_merchant.object_type = 'retailer'
                     AND {$prefix}news.object_type = 'promotion'
                     AND {$prefix}news.status = 'active'
-                    AND {$prefix}merchants.parent_id = '{$this->mall_id}'
+                    AND {$prefix}merchants.parent_id = {$quoted_mall_id}
                     AND '{$mallTime}' >= {$prefix}news.begin_date
                     AND '{$mallTime}' <= {$prefix}news.end_date
                     {$age_profile_query}
@@ -195,10 +197,10 @@ class TenantCIAPIController extends BaseAPIController
                     WHERE {$prefix}promotion_retailer.object_type = 'tenant'
                     AND {$prefix}promotions.is_coupon = 'Y'
                     AND {$prefix}promotions.status = 'active'
-                    AND {$prefix}merchants.parent_id = '{$this->mall_id}'
+                    AND {$prefix}merchants.parent_id = {$quoted_mall_id}
 
                     AND {$prefix}issued_coupons.status = 'active'
-                    AND {$prefix}promotions.coupon_validity_in_date >= '{$mallTime}'
+                    AND {$prefix}promotions.coupon_validity_in_date >= {$quoted_mall_id}
                     AND {$prefix}issued_coupons.user_id = '{$user->user_id}'
                     GROUP BY {$prefix}merchants.merchant_id
             ) as coupon_merch"), DB::raw('coupon_merch.merchant_id'), '=', 'merchants.merchant_id')
@@ -405,7 +407,7 @@ class TenantCIAPIController extends BaseAPIController
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = [$e->getFile(), $e->getLine(), $e->getMessage()];
+            $this->response->data = null;
             $httpCode = 500;
         }
 
@@ -585,7 +587,6 @@ class TenantCIAPIController extends BaseAPIController
             $tenant->news_flag = $news_flag > 0 ? 'true' : 'false';
             $tenant->promotion_flag = $promotion_flag > 0 ? 'true' : 'false';
             $tenant->coupon_flag = $coupon_flag > 0 ? 'true' : 'false';
-            $tenant->facebook_share_url = $this->getFBShareDummyPage('tenant', $tenant->merchant_id);
 
             $this->response->data = $tenant;
             $this->response->code = 0;
@@ -622,7 +623,7 @@ class TenantCIAPIController extends BaseAPIController
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = [$e->getFile(), $e->getLine(), $e->getMessage()];
+            $this->response->data = null;
             $httpCode = 500;
         }
 
