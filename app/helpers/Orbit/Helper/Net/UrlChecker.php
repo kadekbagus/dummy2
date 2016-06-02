@@ -16,22 +16,27 @@ use \UserDetail;
 use \Exception;
 use \Request;
 use \App;
+use Orbit\Helper\Net\GenerateGuestUser;
 
 class UrlChecker
 {
 	const APPLICATION_ID = 1;
 	protected $session = null;
     protected $retailer = null;
+    protected $user = null;
     protected $customHeaders = array();
 
-    public function __construct($caller = null) {
-        if (empty($caller)) {
-            $this->prepareSession();
-        } else {
-            $this->prepareSession('IntermediateCIAuthController');
-        }
+    public function __construct($session = NULL, $user = NULL, $caller = null) {
+        $this->session = $session;
+        $this->user = $user;
+		if (empty($caller)) {
+		    $this->prepareSession();
+		} else {
+		    $this->prepareSession('IntermediateCIAuthController');
+		}
     }
-	/**
+
+    /**
      * Prepare session.
      *
      * @return void
@@ -107,16 +112,18 @@ class UrlChecker
      */
     public function checkBlockedUrl()
     {
+        $user = $this->user;
         if (in_array(\Route::currentRouteName(), Config::get('orbit.blocked_routes', []))) {
-            $user = $this->getLoggedInUser();
-
             if (! $user) {
                 throw new Exception('Session error: user not found.');
             }
         } else {
-            $user = $this->getLoggedInUser();
             if (! is_object($user)) {
-                $user = $this->generateGuestUser();
+                $user = GenerateGuestUser::generateGuestUser($this->session);
+
+                if (! $user) {
+                    throw new Exception($user);
+                }
             }
         }
 
@@ -126,6 +133,7 @@ class UrlChecker
 	/**
      * Check if the route is blocked by the config or not
      * @param string route name
+     * @param array query string parameter
      * @return string full url or #
      */
     public function blockedRoute($url, $param = [])
@@ -165,7 +173,6 @@ class UrlChecker
                     'fullname'  => $user->getFullName(),
                 );
                 $this->session->enableForceNew()->start($data);
-                // todo: add login_ok activity
 
                 // Send the session id via HTTP header
                 $sessionHeader = $this->session->getSessionConfig()->getConfig('session_origin.header.name');
