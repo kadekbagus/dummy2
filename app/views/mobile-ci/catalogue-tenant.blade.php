@@ -20,6 +20,7 @@
     @if($data->status === 1)
     <div class="clearfix">
         <div class="pull-left asb-content-support">
+            <div class="scroll-info" style="display: none"></div>
             @if(Input::get('coupon_redeem_id') === null && Input::get('coupon_id') === null && Input::get('promotion_id') == null && Input::get('news_id') === null)
             <div id="search-tool">
                 <div class="row">
@@ -141,7 +142,8 @@
         coupon_redeem_id = '{{{ Input::get('coupon_redeem_id', '')}}}',
         isFromDetail = false,
         defaultTenantLogoUrl = '{{ asset('mobile-ci/images/default_tenants_directory.png') }}',
-        isLoggedIn = Boolean({{ $urlblock->isLoggedIn() }});
+        isLoggedIn = Boolean({{ $urlblock->isLoggedIn() }}),
+        scrollCatalogue = {};
 
     var applyLazyImage = function (jImageElems) {
         if (jImageElems instanceof jQuery) {
@@ -268,7 +270,8 @@
         return $listDiv;
     };
 
-    var insertRecords = function (records) {
+    var indexCatalogues = "#abcdefghijklmnopqrstuvwxyz".split(''),
+        insertRecords = function (records) {
         var promises = [];
         for(var i = 0; i < records.length; i++) {
             var deferred = new $.Deferred();
@@ -290,6 +293,25 @@
 
             $('.catalogue-wrapper').append($listDiv);
 
+            // Fill scrollCatalogue for ASB feature
+            var initial = $listDiv.data('name')[0].toLowerCase();
+            var topOffset = Math.floor($listDiv.offset().top - 70);
+            if (/[a-z]/i.test(initial)) {
+                // Letter
+                if (indexCatalogues.indexOf(initial) !== -1) {
+                    scrollCatalogue[initial] = topOffset;
+                    indexCatalogues.shift();
+                }
+            }
+            else {
+                // Non-Letter
+                if (indexCatalogues.indexOf('#') !== -1) {
+                    scrollCatalogue['#'] = topOffset;
+                    indexCatalogues.shift();
+                }
+            }
+
+            // Apply image lazyload on the div that's just generated..
             var $lazyImage = $listDiv.find('img[data-original]');
             if ($lazyImage) {
                 applyLazyImage($lazyImage);
@@ -371,13 +393,43 @@
         asbBtns = [];
 
     (initializeAsb = function () {
-        var strArr = "#abcdefghijklmnopqrstuvwxyz".split('');
+        $('#asb').empty();
+
+        var supportedAmount = Math.floor($('.asb-content').height() / 22),
+            strArr;
+
+        if (supportedAmount <= 14) {
+            strArr = "#,a,b,cdefg,h,i,j,klmn,o,p,qrstuvw,x,y,z".split(','); // 14
+        }
+        else if (supportedAmount <= 17) {
+            strArr = "#,a,b,cdefg,h,i,j,klmn,o,p,qrst,u,v,w,x,y,z".split(','); // 17
+        }
+        else if (supportedAmount <= 19) {
+            strArr = "#,a,b,c,def,g,h,i,j,klmn,o,p,qrst,u,v,w,x,y,z".split(','); // 19
+        }
+        else if (supportedAmount <= 21) {
+            strArr = "#,a,b,c,def,g,h,i,j,k,lmn,o,p,qrs,t,u,v,w,x,y,z".split(','); // 21
+        }
+        else if (supportedAmount <= 23) {
+            strArr = "#,a,b,c,de,f,g,h,i,j,k,lmn,o,p,qr,s,t,u,v,w,x,y,z".split(','); // 23
+        }
+        else if (supportedAmount <= 25) {
+            strArr = "#,a,b,c,d,ef,g,h,i,j,k,l,m,n,o,p,qr,s,t,u,v,w,x,y,z".split(','); // 25
+        }
+        else {
+            strArr = "#abcdefghijklmnopqrstuvwxyz".split(''); // 27
+        }
+
         for (var i = 0; i < strArr.length; i++) {
+            var text = strArr[i].length > 1 ? '-' : strArr[i].toUpperCase();
+            var data = strArr[i].toUpperCase();
+
             var $btn = $('<a />').attr({
-                'class': 'btn asb-btn disabled',
-                'href': '#'
+                'class': 'btn asb-btn',
+                'href': '#',
+                'data-index': data
             })
-            .text(strArr[i].toUpperCase());
+            .text(text);
 
             asbBtns.push($btn);
 
@@ -385,44 +437,96 @@
         }
     }).call();
 
-    var getDisabledAsbButton = function (text) {
-        for (var i = 0; i < asbBtns.length; i++) {
-            var $btn = asbBtns[i];
-            if (/[a-z]/i.test(text)) {
-                // Letter
-                if ($btn.hasClass('disabled') && $btn.text().trim().toLowerCase() === text.trim().toLowerCase()) {
-                    return $btn;
+    var lastNoNullPosition = 0,
+        getScrollTopDataIndex = function (str) {
+            var result = null;
+            if (str.length === 1) {
+                var char = str[0].toLowerCase();
+                result = scrollCatalogue[char];
+            }
+            else if (str.length > 1) {
+                for (var i = 0; i < str.length; i++) {
+                    var char = str[i].toLowerCase();
+                    if (scrollCatalogue[char]) {
+                        result = scrollCatalogue[char];
+                        break;
+                    }
                 }
+            }
+
+            if (result){
+                lastNoNullPosition = result;
             }
             else {
-                // Non letter
-                if ($btn.hasClass('disabled') && $btn.text() === '#') {
-                    return $btn;
+                result = lastNoNullPosition;
+            }
+
+            return result;
+        },
+        scrollToChar = function (char) {
+            var toScrollPos = scrollCatalogue[char.toLowerCase()];
+
+            var $info = $('.scroll-info');
+            $info.html(char.toUpperCase());
+            $info.stop(true, true).show().delay(300).fadeOut();
+
+            $(window).scrollTop(toScrollPos);
+        };
+
+    var startChar,
+        startClientY;
+        getCharByScrollTop = function (scrollTop) {
+            for (var i in scrollCatalogue) {
+                if (scrollCatalogue[i] === scrollTop) {
+                    return i;
                 }
             }
-        }
-    };
+            return '#';
+        },
+        bindAsbEvents = function () {
+            var supportedHeight = $('.asb-content').height();
+            var scrollArr = Object.keys(scrollCatalogue);
 
-    var bindAsbEvents = function () {
-        $('.catalogue-wrapper > div').each(function () {
-            var tenantName = $(this).data('name');
-            var initial = tenantName[0].toLowerCase();
-            var $btn = getDisabledAsbButton(initial);
+            $('#asb > .btn[data-index]').each(function () {
+                var $btn = $(this);
+                var dataIndex = $btn.data('index');
+                var scrollTop = getScrollTopDataIndex(dataIndex);
 
-            if ($btn) {
-                var topOffset = $(this).offset().top - 70;
+                if (scrollTop) {
+                    $btn.on('click mouseover', function (ev) {
+                        ev.preventDefault();
+                        ev.stopPropagation();
+                        scrollToChar(getCharByScrollTop(scrollTop));
+                    })
+                    .on('touchstart', function (ev) {
+                        var touch = ev.originalEvent.changedTouches[0];
+                        startChar = getCharByScrollTop(scrollTop);
+                        startClientY = touch.clientY;
+                    })
+                    .on('touchend', function (ev) {
+                        startChar = null;
+                        startClientY = null;
+                    })
+                    .on('touchmove', function (ev) {
+                        var touch = ev.originalEvent.changedTouches[0];
+                        var clientY = touch.clientY;
 
-                $btn.data('pos', topOffset)
-                .removeClass('disabled')
-                .on('click', function (ev) {
-                    ev.preventDefault();
-                    ev.stopPropagation();
+                        if (startChar && startClientY) {
+                            var totalVerticalOffset = clientY - startClientY;
+                            var proximity = Math.floor(supportedHeight / scrollArr.length);
+                            var indexOffset = Math.floor(totalVerticalOffset / proximity);
 
-                    $(window).scrollTop(topOffset);
-                });
-            }
-        });
-    };
+                            var targetIndex = scrollArr.indexOf(startChar) + indexOffset;
+                            var targetChar = scrollArr[targetIndex];
+
+                            if (targetChar) {
+                                scrollToChar(targetChar);
+                            }
+                        }
+                    });
+                }
+            });
+        };
 
     $(window).on('scroll', function () {
         var scrollTop = $(window).scrollTop();

@@ -324,6 +324,24 @@ span.attribute-title {
     width: calc(~"100% - 20.55px");
     overflow-x: hidden;
     z-index: 210;
+
+    .scroll-info {
+        color: #fff;
+        position: fixed;
+        width: 100px;
+        height: 100px;
+        top: 50%;
+        left: 50%;
+        margin-top: -50px;
+        margin-left: -50px;
+        z-index: 1000;
+        text-align: center;
+        font-size: 60px;
+        line-height: 100px;
+        background: rgba(9, 116, 148, .6);
+        display: none;
+        border-radius: 10%;
+    }
 }
 
 .asb-content {
@@ -332,7 +350,6 @@ span.attribute-title {
     right: 0;
     width: 40px;
     overflow: hidden;
-    overflow-y: auto;
     z-index: 220;
 
     a.asb-btn {
