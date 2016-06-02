@@ -95,14 +95,14 @@ return array(
     // Captive Portal related configuration
     'captive' => array(
         // All unregistered traffic should be redirected to this domain
-        'blackhole_domain'  => 'orbit.mall'
+        'blackhole_domain'  => 'orbit.mall',
 
         // The URL which we redirect user to grant them internet access
         'base_grant_url' => 'https://n69.network-auth.com/splash/grant',
 
         // After the external captive portal grant internet, user should be
         // redirected to this URL. Leave empty for default Orbit behavior
-        'user_continue_url' => ''
+        'user_continue_url' => '',
 
         // URL to check for internet connection
         'ping_url' => 'http://tools.pingdom.com/fpt/favicon.icox',
@@ -568,6 +568,26 @@ return array(
                 // Expire time, should be set equals or higher than
                 // SessionConifg.expire
                 'expire' => 62208000,   // two years
+
+                // Path of the cookie
+                'path'      => '/',
+
+                // domain
+                'domain'    => NULL,
+
+                // secure transfer via HTTPS only
+                'secure'    => FALSE,
+
+                // Deny access from client side script
+                'httponly'  => TRUE
+            ),
+            // Cookie for From Wifi
+            'from_wifi'    => array(
+                'name'      => 'from_wifi',
+
+                // Expire time, should be set equals or higher than
+                // SessionConifg.expire
+                'expire' => 600,   // 60 is mean 1 second
 
                 // Path of the cookie
                 'path'      => '/',
