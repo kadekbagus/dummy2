@@ -47,7 +47,8 @@
     }
     </script>
 
-    <div class="row padded">
+    <!-- show when browser run in OS !== Android 5+ -->     
+    <div class="row padded" id="in-any-os" style="display:none">
         <div class="col-xs-12 hide" id="captive-no-internet">
             <h3>{{ Lang::get('mobileci.captive.request_internet.heading') }}</h3>
             <img style="width:100px;float:left;margin: 0 1em 1em 0; position:relative; top:-1em;" src="{{ asset('mobile-ci/images/signal-wifi-128x128.png') }}">
@@ -66,6 +67,21 @@
         </div>
 
         <img id="pingdom-icon" class="hide" src="{{ $ping_url }}" onerror="OrbitInternetChecker.down()" onload="OrbitInternetChecker.up()">
+    </div>
+
+    <!-- show when browser run in OS === Android 5+ -->     
+    <div class="row padded" id="in-android-5-or-newer"  style="display:none">
+        <div class="col-xs-12" id="workaround-captive-no-internet">
+           <h3>{{ Lang::get('mobileci.captive.request_internet.message_ex.title') }}</h3>
+           <img style="width:100px;float:left;margin: 0 1em 1em 0; position:relative; top:-1em;" src="{{ asset('mobile-ci/images/signal-wifi-128x128.png') }}">
+           <p>{{ Lang::get('mobileci.captive.request_internet.message_ex.instruction_heading') }}</p>
+           <ul>
+               @foreach(Lang::get('mobileci.captive.request_internet.message_ex.instructions') as $instruction)
+               <li>{{ $instruction }}</li>
+               @endforeach
+           </ul>
+           <button id="copy-url" class="btn btn-block btn-primary" data-clipboard-target="{{ URL::route('captive-request-internet').'?from_captive_hack=1' }}">Copy URL to Clipboard</button>                 
+        </div>        
     </div>
     
 @stop
@@ -133,6 +149,6 @@
             $('#in-android-5-or-newer').hide();
         }    
     
-        var clipboard = new Clipboard('.btn');
+        var clipboard = new Clipboard('#copy-url');
     </script>
 @stop
