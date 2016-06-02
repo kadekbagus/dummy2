@@ -63,7 +63,7 @@
                             </label>
                         </div>
                     </div>
-                    <div class="col-xs-2 search-tool-col text-right">
+                    <div class="col-xs-2 search-tool-col">
                         <a data-href="{{{ route('ci-tenant-list', ['keyword' => Input::get('keyword')]) }}}" href="{{{ $urlblock->blockedRoute('ci-tenant-list', ['keyword' => Input::get('keyword')]) }}}" class="btn btn-info btn-block reset-btn">
                             <span class="fa-stack fa-lg">
                                 <i class="fa fa-filter fa-stack-2x"></i>
