@@ -73,7 +73,7 @@
                 </li>
                 @if(count($issued_coupons) > 0)
                 <li>
-                    @if(count($tenants) === 1)
+                    @if(count($tenants) === 1 && ! $cs_reedem)
                     <a data-href="{{ route('ci-tenant-detail', ['id' => $tenants[0]->retailer_id]) }}" href="{{{ $urlblock->blockedRoute('ci-tenant-detail', ['id' => $tenants[0]->retailer_id]) }}}">
                     @else
                     <a data-href="{{ route('ci-tenant-list', ['coupon_redeem_id' => $coupon->promotion_id]) }}" href="{{{ $urlblock->blockedRoute('ci-tenant-list', ['coupon_redeem_id' => $coupon->promotion_id]) }}}">
