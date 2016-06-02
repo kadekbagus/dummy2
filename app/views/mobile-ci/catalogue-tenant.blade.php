@@ -18,103 +18,106 @@
 
 @section('content')
     @if($data->status === 1)
-    <div class="pull-left asb-content-support">
-        @if(Input::get('coupon_redeem_id') === null && Input::get('coupon_id') === null && Input::get('promotion_id') == null && Input::get('news_id') === null)
-        <div id="search-tool">
-            <div class="row">
-                <div class="col-xs-5 search-tool-col">
-                    <div class="dropdown">
-                        <label class="select-label">
-                            <select class="select" id="category">
-                                @if(empty(Input::get('cid')))
-                                    <option>{{ Lang::get('mobileci.tenant.category') }}</option>
-                                @else
-                                    <option>{{ Lang::get('mobileci.tenant.all') }}</option>
-                                @endif
-                                @foreach($categories as $category)
-                                @if($category->category_id == Input::get('cid'))
-                                <option value="{{ $category->category_id }}" selected="selected">{{{ $category->category_name }}}</option>
-                                @else
-                                <option value="{{ $category->category_id }}">{{{ $category->category_name }}}</option>
-                                @endif
-                                @endforeach
-                            </select>
-                        </label>
-                    </div>
-                </div>
-                <div class="col-xs-5 search-tool-col">
-                    <div class="dropdown">
-                        <label class="select-label">
-                            <select class="select" id="floor">
-                                @if(empty(Input::get('fid')))
-                                    <option>{{ Lang::get('mobileci.tenant.floor') }}</option>
-                                @else
-                                    <option>{{ Lang::get('mobileci.tenant.all') }}</option>
-                                @endif
-                                @foreach($floorList as $floor)
-                                @if($floor->object_name == Input::get('fid'))
-                                <option value="{{{ $floor->object_name }}}" selected="selected">{{{ $floor->object_name }}}</option>
-                                @else
-                                <option value="{{{ $floor->object_name }}}">{{{ $floor->object_name }}}</option>
-                                @endif
-                                @endforeach
-                            </select>
-                        </label>
-                    </div>
-                </div>
-                <div class="col-xs-2 search-tool-col text-right">
-                    <a data-href="{{{ route('ci-tenant-list', ['keyword' => Input::get('keyword')]) }}}" href="{{{ $urlblock->blockedRoute('ci-tenant-list', ['keyword' => Input::get('keyword')]) }}}" class="btn btn-info btn-block reset-btn">
-                        <span class="fa-stack fa-lg">
-                            <i class="fa fa-filter fa-stack-2x"></i>
-                            <i class="fa fa-times fa-stack-1x"></i>
-                        </span>
-                    </a>
-                </div>
-            </div>
-        </div>
-        @endif
-
-        @if(sizeof($data->records) > 0 || $link_to_coupon_data->linkedToCS)
-        <div id="catContainer" class="container">
-            <div class="mobile-ci list-item-container">
+    <div class="clearfix">
+        <div class="pull-left asb-content-support">
+            <div class="scroll-info" style="display: none"></div>
+            @if(Input::get('coupon_redeem_id') === null && Input::get('coupon_id') === null && Input::get('promotion_id') == null && Input::get('news_id') === null)
+            <div id="search-tool">
                 <div class="row">
-                    <div class="catalogue-wrapper">
-                    @if($link_to_coupon_data->linkedToCS)
-                        <div class="col-xs-12 col-sm-12" id="item-cs">
-                            <section class="list-item-single-tenant">
-                                <div class="list-item-info">
-                                    <header class="list-item-title">
-                                        <div><strong>{{ Lang::get('mobileci.coupon.all_cs') }}</strong></div>
-                                    </header>
-                                </div>
-                                <div class="list-vignette-non-tenant"></div>
-                                <img class="img-responsive img-fit-tenant" alt="" src="{{ asset('mobile-ci/images/default_cs.png') }}"/>
-                            </section>
+                    <div class="col-xs-5 search-tool-col">
+                        <div class="dropdown">
+                            <label class="select-label">
+                                <select class="select" id="category">
+                                    @if(empty(Input::get('cid')))
+                                        <option>{{ Lang::get('mobileci.tenant.category') }}</option>
+                                    @else
+                                        <option>{{ Lang::get('mobileci.tenant.all') }}</option>
+                                    @endif
+                                    @foreach($categories as $category)
+                                    @if($category->category_id == Input::get('cid'))
+                                    <option value="{{ $category->category_id }}" selected="selected">{{{ $category->category_name }}}</option>
+                                    @else
+                                    <option value="{{ $category->category_id }}">{{{ $category->category_name }}}</option>
+                                    @endif
+                                    @endforeach
+                                </select>
+                            </label>
                         </div>
-                    @endif
                     </div>
-                </div>
-            </div>
-        </div>
-        @else
-            @if($data->search_mode)
-            <div class="row padded">
-                <div class="col-xs-12">
-                    <h4>{{ Lang::get('mobileci.search.no_item') }}</h4>
-                </div>
-            </div>
-            @else
-            {{-- Showing info for there is no stores when search mode is false --}}
-            <div class="row padded">
-                <div class="col-xs-12">
-                    <h4>{{ Lang::get('mobileci.greetings.no_stores_listing') }}</h4>
+                    <div class="col-xs-5 search-tool-col">
+                        <div class="dropdown">
+                            <label class="select-label">
+                                <select class="select" id="floor">
+                                    @if(empty(Input::get('fid')))
+                                        <option>{{ Lang::get('mobileci.tenant.floor') }}</option>
+                                    @else
+                                        <option>{{ Lang::get('mobileci.tenant.all') }}</option>
+                                    @endif
+                                    @foreach($floorList as $floor)
+                                    @if($floor->object_name == Input::get('fid'))
+                                    <option value="{{{ $floor->object_name }}}" selected="selected">{{{ $floor->object_name }}}</option>
+                                    @else
+                                    <option value="{{{ $floor->object_name }}}">{{{ $floor->object_name }}}</option>
+                                    @endif
+                                    @endforeach
+                                </select>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-xs-2 search-tool-col">
+                        <a data-href="{{{ route('ci-tenant-list', ['keyword' => Input::get('keyword')]) }}}" href="{{{ $urlblock->blockedRoute('ci-tenant-list', ['keyword' => Input::get('keyword')]) }}}" class="btn btn-info btn-block reset-btn">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-filter fa-stack-2x"></i>
+                                <i class="fa fa-times fa-stack-1x"></i>
+                            </span>
+                        </a>
+                    </div>
                 </div>
             </div>
             @endif
-        @endif
-    </div>
-    <div class="asb-content pull-right">
-        <div id="asb" class="btn-group-vertical pull-right"></div>
+
+            @if(sizeof($data->records) > 0 || $link_to_coupon_data->linkedToCS)
+            <div id="catContainer" class="container">
+                <div class="mobile-ci list-item-container">
+                    <div class="row">
+                        <div class="catalogue-wrapper">
+                        @if($link_to_coupon_data->linkedToCS)
+                            <div class="col-xs-12 col-sm-12" id="item-cs">
+                                <section class="list-item-single-tenant">
+                                    <div class="list-item-info">
+                                        <header class="list-item-title">
+                                            <div><strong>{{ Lang::get('mobileci.coupon.all_cs') }}</strong></div>
+                                        </header>
+                                    </div>
+                                    <div class="list-vignette-non-tenant"></div>
+                                    <img class="img-responsive img-fit-tenant" alt="" src="{{ asset('mobile-ci/images/default_cs.png') }}"/>
+                                </section>
+                            </div>
+                        @endif
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @else
+                @if($data->search_mode)
+                <div class="row padded">
+                    <div class="col-xs-12">
+                        <h4>{{ Lang::get('mobileci.search.no_item') }}</h4>
+                    </div>
+                </div>
+                @else
+                {{-- Showing info for there is no stores when search mode is false --}}
+                <div class="row padded">
+                    <div class="col-xs-12">
+                        <h4>{{ Lang::get('mobileci.greetings.no_stores_listing') }}</h4>
+                    </div>
+                </div>
+                @endif
+            @endif
+        </div>
+        <div class="asb-content pull-right">
+            <div id="asb" class="btn-group-vertical pull-right"></div>
+        </div>
     </div>
     @else
         <div class="row padded">
@@ -139,7 +142,8 @@
         coupon_redeem_id = '{{{ Input::get('coupon_redeem_id', '')}}}',
         isFromDetail = false,
         defaultTenantLogoUrl = '{{ asset('mobile-ci/images/default_tenants_directory.png') }}',
-        isLoggedIn = Boolean({{ $urlblock->isLoggedIn() }});
+        isLoggedIn = Boolean({{ $urlblock->isLoggedIn() }}),
+        scrollCatalogue = {};
 
     var applyLazyImage = function (jImageElems) {
         if (jImageElems instanceof jQuery) {
@@ -266,7 +270,8 @@
         return $listDiv;
     };
 
-    var insertRecords = function (records) {
+    var indexCatalogues = "#abcdefghijklmnopqrstuvwxyz".split(''),
+        insertRecords = function (records) {
         var promises = [];
         for(var i = 0; i < records.length; i++) {
             var deferred = new $.Deferred();
@@ -288,6 +293,25 @@
 
             $('.catalogue-wrapper').append($listDiv);
 
+            // Fill scrollCatalogue for ASB feature
+            var initial = $listDiv.data('name')[0].toLowerCase();
+            var topOffset = Math.floor($listDiv.offset().top - 70);
+            if (/[a-z]/i.test(initial)) {
+                // Letter
+                if (indexCatalogues.indexOf(initial) !== -1) {
+                    scrollCatalogue[initial] = topOffset;
+                    indexCatalogues.shift();
+                }
+            }
+            else {
+                // Non-Letter
+                if (indexCatalogues.indexOf('#') !== -1) {
+                    scrollCatalogue['#'] = topOffset;
+                    indexCatalogues.shift();
+                }
+            }
+
+            // Apply image lazyload on the div that's just generated..
             var $lazyImage = $listDiv.find('img[data-original]');
             if ($lazyImage) {
                 applyLazyImage($lazyImage);
@@ -369,13 +393,49 @@
         asbBtns = [];
 
     (initializeAsb = function () {
-        var strArr = "#abcdefghijklmnopqrstuvwxyz".split('');
+        $('#asb').empty();
+
+        var supportedAmount = Math.floor($('.asb-content').height() / 22),
+            strArr;
+
+        if (supportedAmount <= 10) {
+            strArr = "#,a,bcd,e,fghi,jklmn,o,pqrst,uvwxy,z".split(','); // 10
+        }
+        else if (supportedAmount <= 12) {
+            strArr = "#,a,b,cd,e,fghi,jklmn,o,pqrst,uvwx,y,z".split(','); // 12
+        }
+        else if (supportedAmount <= 14) {
+            strArr = "#,a,b,cdefg,h,i,j,klmn,o,p,qrstuvw,x,y,z".split(','); // 14
+        }
+        else if (supportedAmount <= 17) {
+            strArr = "#,a,b,cdefg,h,i,j,klmn,o,p,qrst,u,v,w,x,y,z".split(','); // 17
+        }
+        else if (supportedAmount <= 19) {
+            strArr = "#,a,b,c,def,g,h,i,j,klmn,o,p,qrst,u,v,w,x,y,z".split(','); // 19
+        }
+        else if (supportedAmount <= 21) {
+            strArr = "#,a,b,c,def,g,h,i,j,k,lmn,o,p,qrs,t,u,v,w,x,y,z".split(','); // 21
+        }
+        else if (supportedAmount <= 23) {
+            strArr = "#,a,b,c,de,f,g,h,i,j,k,lmn,o,p,qr,s,t,u,v,w,x,y,z".split(','); // 23
+        }
+        else if (supportedAmount <= 25) {
+            strArr = "#,a,b,c,d,ef,g,h,i,j,k,l,m,n,o,p,qr,s,t,u,v,w,x,y,z".split(','); // 25
+        }
+        else {
+            strArr = "#abcdefghijklmnopqrstuvwxyz".split(''); // 27
+        }
+
         for (var i = 0; i < strArr.length; i++) {
+            var text = strArr[i].length > 1 ? '-' : strArr[i].toUpperCase();
+            var data = strArr[i].toUpperCase();
+
             var $btn = $('<a />').attr({
-                'class': 'btn btn-xs btn-default asb-btn disabled',
-                'href': '#'
+                'class': 'btn asb-btn',
+                'href': '#',
+                'data-index': data
             })
-            .text(strArr[i].toUpperCase());
+            .text(text);
 
             asbBtns.push($btn);
 
@@ -383,46 +443,96 @@
         }
     }).call();
 
-    var getDisabledAsbButton = function (text) {
-        for (var i = 0; i < asbBtns.length; i++) {
-            var $btn = asbBtns[i];
-            if (/[a-z]/i.test(text)) {
-                // Letter
-                if ($btn.hasClass('disabled') && $btn.text().trim().toLowerCase() === text.trim().toLowerCase()) {
-                    return $btn;
+    var lastNoNullPosition = 0,
+        getScrollTopDataIndex = function (str) {
+            var result = null;
+            if (str.length === 1) {
+                var char = str[0].toLowerCase();
+                result = scrollCatalogue[char];
+            }
+            else if (str.length > 1) {
+                for (var i = 0; i < str.length; i++) {
+                    var char = str[i].toLowerCase();
+                    if (scrollCatalogue[char]) {
+                        result = scrollCatalogue[char];
+                        break;
+                    }
                 }
+            }
+
+            if (result){
+                lastNoNullPosition = result;
             }
             else {
-                // Non letter
-                if ($btn.hasClass('disabled') && $btn.text() === '#') {
-                    return $btn;
+                result = lastNoNullPosition;
+            }
+
+            return result;
+        },
+        scrollToChar = function (char) {
+            var toScrollPos = scrollCatalogue[char.toLowerCase()];
+
+            var $info = $('.scroll-info');
+            $info.html(char.toUpperCase());
+            $info.stop(true, true).show().delay(300).fadeOut();
+
+            $(window).scrollTop(toScrollPos);
+        };
+
+    var startChar,
+        startClientY;
+        getCharByScrollTop = function (scrollTop) {
+            for (var i in scrollCatalogue) {
+                if (scrollCatalogue[i] === scrollTop) {
+                    return i;
                 }
             }
-        }
-    };
+            return '#';
+        },
+        bindAsbEvents = function () {
+            var supportedHeight = $('.asb-content').height();
+            var scrollArr = Object.keys(scrollCatalogue);
 
-    var bindAsbEvents = function () {
-        $('.catalogue-wrapper > div').each(function () {
-            var tenantName = $(this).data('name');
-            var tenantId = $(this).attr('id');
-            var initial = tenantName[0].toLowerCase();
-            var $btn = getDisabledAsbButton(initial);
+            $('#asb > .btn[data-index]').each(function () {
+                var $btn = $(this);
+                var dataIndex = $btn.data('index');
+                var scrollTop = getScrollTopDataIndex(dataIndex);
 
-            if ($btn) {
-                var topOffset = $(this).offset().top - 70;
+                if (scrollTop) {
+                    $btn.on('click mouseover', function (ev) {
+                        ev.preventDefault();
+                        ev.stopPropagation();
+                        scrollToChar(getCharByScrollTop(scrollTop));
+                    })
+                    .on('touchstart', function (ev) {
+                        var touch = ev.originalEvent.changedTouches[0];
+                        startChar = getCharByScrollTop(scrollTop);
+                        startClientY = touch.clientY;
+                    })
+                    .on('touchend', function (ev) {
+                        startChar = null;
+                        startClientY = null;
+                    })
+                    .on('touchmove', function (ev) {
+                        var touch = ev.originalEvent.changedTouches[0];
+                        var clientY = touch.clientY;
 
-                $btn.attr('href', '#'+tenantId)
-                .data('pos', topOffset)
-                .removeClass('disabled');
-                // .on('click mouseover', function (ev) {
-                //     ev.preventDefault();
-                //     ev.stopPropagation();
+                        if (startChar && startClientY) {
+                            var totalVerticalOffset = clientY - startClientY;
+                            var proximity = Math.floor(supportedHeight / scrollArr.length);
+                            var indexOffset = Math.floor(totalVerticalOffset / proximity);
 
-                //     $(window).scrollTop(topOffset);
-                // });
-            }
-        });
-    };
+                            var targetIndex = scrollArr.indexOf(startChar) + indexOffset;
+                            var targetChar = scrollArr[targetIndex];
+
+                            if (targetChar) {
+                                scrollToChar(targetChar);
+                            }
+                        }
+                    });
+                }
+            });
+        };
 
     $(window).on('scroll', function () {
         var scrollTop = $(window).scrollTop();
@@ -430,7 +540,14 @@
         if(typeof(Storage) !== 'undefined') {
             // Prevent Safari to set scrollTop position to 0 on page load.
             if (scrollTop) {
-                localStorage.setItem('scrollTop', scrollTop);
+
+                try {
+                    // Set scrollTop in localStorage.
+                    localStorage.setItem('scrollTop', scrollTop);
+                }
+                catch (err) {
+                    // Need this for safari private mode !!
+                }
             }
         }
     });
