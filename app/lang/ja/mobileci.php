@@ -59,6 +59,7 @@ return array(
         'tenants'            => 'テナント',
         'services'           => 'サービス',
         'lucky_draws'        => '抽選',
+        'free_wifi'          => '無料インタネット',
         'newss'              => 'ニュース',
         'promotions_single'  => '販促',
         'coupons_single'     => '券',
