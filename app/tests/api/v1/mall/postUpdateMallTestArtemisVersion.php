@@ -146,8 +146,7 @@ class postUpdateMallTestArtemisVersion extends TestCase
         * test update free wifi when mall doesn have widget free wifi on database
         */
         $data = ['merchant_id' => $this->mall_c->merchant_id,
-            'free_wifi_status' => 'active',
-            'languages'        => ['en']
+            'free_wifi_status' => 'active'
         ];
 
         $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
