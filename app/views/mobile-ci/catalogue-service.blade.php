@@ -382,7 +382,7 @@
     }).call();
 
     var lastNoNullPosition = 0,
-        getScrollTopDataIndex = function (str) {
+        getScrollTopByIndex = function (str) {
             var result = null;
             if (str.length === 1) {
                 var char = str[0].toLowerCase();
@@ -434,7 +434,7 @@
             $('#asb > .btn[data-index]').each(function () {
                 var $btn = $(this);
                 var dataIndex = $btn.data('index');
-                var scrollTop = getScrollTopDataIndex(dataIndex);
+                var scrollTop = getScrollTopByIndex(dataIndex);
 
                 if (scrollTop) {
                     $btn.on('click mouseover', function (ev) {

@@ -444,7 +444,7 @@
     }).call();
 
     var lastNoNullPosition = 0,
-        getScrollTopDataIndex = function (str) {
+        getScrollTopByIndex = function (str) {
             var result = null;
             if (str.length === 1) {
                 var char = str[0].toLowerCase();
@@ -462,6 +462,13 @@
 
             if (result){
                 lastNoNullPosition = result;
+            }
+            else if (!result && !lastNoNullPosition) {
+                for (var i in scrollCatalogue) {
+                    lastNoNullPosition = scrollCatalogue[i];
+                    result = scrollCatalogue[i];
+                    break;
+                }
             }
             else {
                 result = lastNoNullPosition;
@@ -496,7 +503,7 @@
             $('#asb > .btn[data-index]').each(function () {
                 var $btn = $(this);
                 var dataIndex = $btn.data('index');
-                var scrollTop = getScrollTopDataIndex(dataIndex);
+                var scrollTop = getScrollTopByIndex(dataIndex);
 
                 if (scrollTop) {
                     $btn.on('click mouseover', function (ev) {
