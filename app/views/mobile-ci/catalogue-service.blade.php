@@ -337,19 +337,19 @@
             strArr;
 
         if (supportedAmount <= 10) {
-            strArr = "#,a,bcd,e,fghi,jklmn,o,pqrst,uvwxy,z".split(','); // 10
+            strArr = "#,a,b,cdefghi,j,klmnopqr,s,tuvwx,y,z".split(','); // 10
         }
         else if (supportedAmount <= 12) {
-            strArr = "#,a,b,cd,e,fghi,jklmn,o,pqrst,uvwx,y,z".split(','); // 12
+            strArr = "#,a,b,cdefgh,i,j,klmnopq,r,s,tuvwx,y,z".split(','); // 12
         }
         else if (supportedAmount <= 14) {
-            strArr = "#,a,b,cdefg,h,i,j,klmn,o,p,qrstuvw,x,y,z".split(','); // 14
+            strArr = "#,a,b,c,defghi,j,k,lmnopqr,s,tuvwx,y,z".split(','); // 14
         }
         else if (supportedAmount <= 17) {
-            strArr = "#,a,b,cdefg,h,i,j,klmn,o,p,qrst,u,v,w,x,y,z".split(','); // 17
+            strArr = "#,a,b,c,d,efghi,j,k,l,mnopqr,s,t,uvwx,y,z".split(','); // 17
         }
         else if (supportedAmount <= 19) {
-            strArr = "#,a,b,c,def,g,h,i,j,klmn,o,p,qrst,u,v,w,x,y,z".split(','); // 19
+            strArr = "#,a,b,c,d,efgh,i,j,k,l,mnopq,r,s,t,uvwx,y,z".split(','); // 19
         }
         else if (supportedAmount <= 21) {
             strArr = "#,a,b,c,def,g,h,i,j,k,lmn,o,p,qrs,t,u,v,w,x,y,z".split(','); // 21
@@ -382,7 +382,7 @@
     }).call();
 
     var lastNoNullPosition = 0,
-        getScrollTopDataIndex = function (str) {
+        getScrollTopByIndex = function (str) {
             var result = null;
             if (str.length === 1) {
                 var char = str[0].toLowerCase();
@@ -434,7 +434,7 @@
             $('#asb > .btn[data-index]').each(function () {
                 var $btn = $(this);
                 var dataIndex = $btn.data('index');
-                var scrollTop = getScrollTopDataIndex(dataIndex);
+                var scrollTop = getScrollTopByIndex(dataIndex);
 
                 if (scrollTop) {
                     $btn.on('click mouseover', function (ev) {
