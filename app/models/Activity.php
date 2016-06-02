@@ -80,6 +80,20 @@ class Activity extends Eloquent
             $this->location_id = Config::get('orbit.shop.id');
         }
 
+        if ($this->group === 'mobile-ci') {
+            if (isset($_COOKIE['from_wifi'])) {
+                $domain = Config::get('orbit.session.session_origin.from_wifi.domain', NULL);
+                $path = Config::get('orbit.session.session_origin.from_wifi.path', '/');
+                $expire = time() + Config::get('orbit.session.session_origin.from_wifi.expire', 60); // default expired if doesnt exist is 60 (60 is mean 1 second)
+
+                setcookie(Config::get('orbit.session.session_origin.from_wifi.name', 'from_wifi'), 'Y', $expire, $path, $domain, FALSE);
+
+                $this->from_wifi = 'Y';
+            } else {
+                $this->from_wifi = 'N';
+            }
+        }
+
         return $this;
     }
 
