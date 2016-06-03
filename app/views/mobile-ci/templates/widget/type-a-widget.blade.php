@@ -17,7 +17,7 @@
                                             @if($widget->always_show_subtitle)
                                             <div>{{ $widget->display_sub_title }}</div>
                                             @else
-                                            <div>&nbsp; hei</div>
+                                            <div>&nbsp;</div>
                                             @endif
                                         @endif
                                     </header>
