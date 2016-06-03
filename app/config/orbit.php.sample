@@ -109,7 +109,28 @@ return array(
 
         // Delay for setTimeout before displaying the button for
         // getting internet connection, in seconds
-        'delay_button' => 1.5
+        'delay_button' => 1.5,
+
+        // Cookie for From Wifi
+        'from_wifi'    => array(
+            'name'      => 'from_wifi',
+
+            // Expire time, should be set equals or higher than
+            // SessionConifg.expire
+            'expire' => 600,   // on second
+
+            // Path of the cookie
+            'path'      => '/',
+
+            // domain
+            'domain'    => NULL,
+
+            // secure transfer via HTTPS only
+            'secure'    => FALSE,
+
+            // Deny access from client side script
+            'httponly'  => TRUE
+        ),
     ),
 
     // agreement configuration
@@ -568,26 +589,6 @@ return array(
                 // Expire time, should be set equals or higher than
                 // SessionConifg.expire
                 'expire' => 62208000,   // two years
-
-                // Path of the cookie
-                'path'      => '/',
-
-                // domain
-                'domain'    => NULL,
-
-                // secure transfer via HTTPS only
-                'secure'    => FALSE,
-
-                // Deny access from client side script
-                'httponly'  => TRUE
-            ),
-            // Cookie for From Wifi
-            'from_wifi'    => array(
-                'name'      => 'from_wifi',
-
-                // Expire time, should be set equals or higher than
-                // SessionConifg.expire
-                'expire' => 600,   // 60 is mean 1 second
 
                 // Path of the cookie
                 'path'      => '/',

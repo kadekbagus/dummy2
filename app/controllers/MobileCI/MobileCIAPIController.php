@@ -10474,11 +10474,11 @@ class MobileCIAPIController extends BaseCIController
     public function setCookieFromWifi()
     {
         if (! isset($_COOKIE['from_wifi'])) {
-            $domain = Config::get('orbit.session.session_origin.from_wifi.domain', NULL);
-            $path = Config::get('orbit.session.session_origin.from_wifi.path', '/');
-            $expire = time() + Config::get('orbit.session.session_origin.from_wifi.expire', 60); // default expired if doesnt exist is 60 (60 is mean 1 second)
+            $domain = Config::get('orbit.captive.from_wifi.domain', NULL);
+            $path = Config::get('orbit.captive.from_wifi.path', '/');
+            $expire = time() + Config::get('orbit.captive.from_wifi.expire', 60); // default expired if doesnt exist is 60 second (1 minute)
 
-            setcookie(Config::get('orbit.session.session_origin.from_wifi.name', 'from_wifi'), 'Y', $expire, $path, $domain, FALSE);
+            setcookie(Config::get('orbit.captive.from_wifi.name', 'from_wifi'), 'Y', $expire, $path, $domain, FALSE);
         }
     }
 }
