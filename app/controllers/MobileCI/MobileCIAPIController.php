@@ -739,7 +739,7 @@ class MobileCIAPIController extends BaseCIController
     
     private function prepareWidgetFreeWifiData($widget, $user, $retailer, $mallid, $now, $urlblock)
     {
-        $widget->image = 'mobile-ci/images/default_free_wifi_directory.png';
+        $widget->image = 'mobile-ci/images/free-wifi.png';
 
         foreach ($widget->media as $media) {
             if ($media->media_name_long === 'home_widget_orig') {
@@ -751,10 +751,13 @@ class MobileCIAPIController extends BaseCIController
             }
         }
 
-        $widget->display_title = Lang::get('mobileci.widgets.free_wifi');
-        $widget->display_sub_title = Lang::get('mobileci.widgets.free_wifi');
-        // $widget->url = $urlblock->blockedRoute('ci-luckydraw-list');
-        // $widget->redirect_url = URL::route('ci-luckydraw-list');
+        $widget->always_show_subtitle = true;
+        //$widget->display_title = Lang::get('mobileci.widgets.free_wifi');
+        //$widget->display_sub_title = Lang::get('mobileci.widgets.free_wifi');
+        $widget->display_title = Lang::get('mobileci.captive.widget_slogan');
+        $widget->display_sub_title = Lang::get('mobileci.captive.widget_tagline');
+        $widget->url = $urlblock->blockedRoute('captive-request-internet');
+        $widget->redirect_url = URL::route('captive-request-internet');
         
         return $widget;    
     }
@@ -862,12 +865,20 @@ class MobileCIAPIController extends BaseCIController
                             ->get();
 
             if (CaptivePortalController::isFromCaptive()) {
+                //not used anymore because it is shown
+                //based on availability of free wifi in a mall
                 // Inject number of widget on-the-fly
-                $captiveWidget = CaptivePortalController::generateDummyWidget($retailer, $urlblock);
-                $widgets->push($captiveWidget);
+                //$captiveWidget = CaptivePortalController::generateDummyWidget($retailer, $urlblock);
+                //$widgets->push($captiveWidget);
 
                 // Push the from_captive cookie
                 CaptivePortalController::setCookieForCaptive();
+
+                $from_captive_flag = OrbitInput::get('from_captive', 'no');
+
+                if ($from_captive_flag === 'yes') {
+                    $this->setCookieFromWifi();
+                }
             }
 
             $now = Carbon::now($retailer->timezone->timezone_name);
@@ -10463,5 +10474,16 @@ class MobileCIAPIController extends BaseCIController
     public function getOrbitSessionQueryStringName()
     {
         return Config::get('orbit.session.session_origin.query_string.name');
+    }
+
+    public function setCookieFromWifi()
+    {
+        if (! isset($_COOKIE['from_wifi'])) {
+            $domain = Config::get('orbit.captive.from_wifi.domain', NULL);
+            $path = Config::get('orbit.captive.from_wifi.path', '/');
+            $expire = time() + Config::get('orbit.captive.from_wifi.expire', 60); // default expired if doesnt exist is 60 second (1 minute)
+
+            setcookie(Config::get('orbit.captive.from_wifi.name', 'from_wifi'), 'Y', $expire, $path, $domain, FALSE);
+        }
     }
 }
