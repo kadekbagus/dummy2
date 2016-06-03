@@ -65,8 +65,8 @@
             <h4>{{ Lang::get('mobileci.captive.request_internet.check_connection') }}</h4>
             <p>{{ Lang::get('mobileci.captive.request_internet.too_long') }}</p>
         </div>
-
-        <img id="pingdom-icon" class="hide" src="{{ $ping_url }}" onerror="OrbitInternetChecker.down()" onload="OrbitInternetChecker.up()">
+        {{-- Add some random string to force browser to not cache this image otherwise we will get false detection --}} 
+        <img id="pingdom-icon" class="hide" src="{{ $ping_url.'?rnd='.str_random(10) }}" onerror="OrbitInternetChecker.down()" onload="OrbitInternetChecker.up()">
     </div>
 
     <!-- show when browser run in OS === Android 5+ -->     
