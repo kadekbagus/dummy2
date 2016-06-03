@@ -566,8 +566,8 @@ return array(
         'granted' => array(
             'title'     => 'Terkoneksi ke WiFi',
             'heading'   => 'Anda Telah Terkoneksi',
-            'message'   => 'Halo,<br>Anda telah mendapatkan akses internet gratis. Apakah anda tertarik untuk melihat promosi hari ini?',
-            'button'    => 'OK, Tunjukkan!'
+            'message'   => 'Anda tersambung Internet gratis',
+            'button'    => 'OK'
         ),
         'widget_slogan' => 'Internet GRATIS!',
         'widget_tagline' => 'Dapatkan akses gratismu SEKARANG!'
