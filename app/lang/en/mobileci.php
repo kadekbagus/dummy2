@@ -546,7 +546,19 @@ return array(
             'message'   => 'By connecting to our Wi-Fi you agree with our terms and conditions. Click the button below to get free internet access.',
             'button'    => 'Get FREE Internet Access!',
             'check_connection' => 'Checking internet connection please wait...',
-            'too_long' => 'If it takes too long try to refresh your browser.'
+            'too_long' => 'If it takes too long try to refresh your browser.',
+            'instruction' => 'Copy and paste URL above to your browser to request free internet connection.',
+            'message_ex' => array(
+                'title' => 'Free internet access is here',
+                'instruction_heading' => 'These are the steps to get free internet access:',
+                'instructions' => array(
+                    'Connect to mall Wi-Fi network',
+                    'Access this page',
+                    'Tap on Get Free Internet Access button below',
+                    'Open internet browser and type this URL http://gotomalls.com to see connection status'
+                ),
+                'button_caption' => 'Get Free Internet Access'
+            ),
         ),
         'granted' => array(
             'title'     => 'Connected to WiFi',
@@ -554,6 +566,7 @@ return array(
             'message'   => 'Hey,<br>You are now connected to Internet for free. Do you know what are the promotions here today?',
             'button'    => 'Yes, Please!'
         ),
-        'widget_slogan' => 'FREE Internet!'
+        'widget_slogan' => 'Get Free Internet',
+        'widget_tagline' => 'Get your free access NOW!'
     )
 );
