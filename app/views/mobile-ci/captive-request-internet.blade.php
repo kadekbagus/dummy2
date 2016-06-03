@@ -2,6 +2,26 @@
 
 @section('ext_style')
     {{ HTML::style('mobile-ci/stylesheet/featherlight.min.css') }}
+    <style>
+        .clipboard-success {
+            width:200px;
+            height:20px;
+            height:auto;
+            position:absolute;
+            left:50%;
+            margin-left:-100px;
+            bottom:10px;
+            background-color: #383838;
+            color: #F0F0F0;
+            font-family: Calibri;
+            padding:10px;
+            text-align:center;
+            border-radius: 2px;
+            -webkit-box-shadow: 0px 0px 24px -1px rgba(56, 56, 56, 1);
+            -moz-box-shadow: 0px 0px 24px -1px rgba(56, 56, 56, 1);
+            box-shadow: 0px 0px 24px -1px rgba(56, 56, 56, 1);
+        }        
+    </style>
 @stop
 
 @section('content')
@@ -80,7 +100,8 @@
                <li>{{ $instruction }}</li>
                @endforeach
            </ul>
-           <button id="copy-url" class="btn btn-block btn-primary" data-clipboard-target="{{ URL::route('captive-request-internet').'?from_captive_hack=1' }}">Copy URL to Clipboard</button>                 
+           <button id="copy-url" class="btn btn-block btn-primary" data-clipboard-text="{{ URL::route('captive-request-internet') }}">{{ Lang::get('mobileci.captive.request_internet.message_ex.clipboard_caption') }}</button>
+           <div class='clipboard-success' style='display:none'>{{ Lang::get('mobileci.captive.request_internet.message_ex.clipboard_success') }}</div>
         </div>        
     </div>
     
@@ -153,5 +174,8 @@
         }    
     
         var clipboard = new Clipboard('#copy-url');
+        clipboard.on('success', function(e) {
+            $('.clipboard-success').fadeIn(400).delay(3000).fadeOut(400);
+        });
     </script>
 @stop
