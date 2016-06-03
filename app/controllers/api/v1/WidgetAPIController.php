@@ -1431,6 +1431,149 @@ class WidgetAPIController extends ControllerAPI
             $totalWidgets = RecordCounter::create($_widgets)->count();
             $listOfWidgets = $widgets->get();
 
+            $counter = 1;
+            foreach ($listOfWidgets as $widget) {
+                $widget->widget_order = $counter;
+                $counter += 1;
+
+                if ($widget->widget_type == 'tenant') {
+                    $widget->image = 'mobile-ci/images/default_tenants_directory.png';
+
+                    foreach ($widget->media as $media) {
+                        if ($media->media_name_long === 'home_widget_orig') {
+                            if (empty($media->path)) {
+                                $widget->image = 'mobile-ci/images/default_tenants_directory.png';
+                            } else {
+                                $widget->image = $media->path;
+                            }
+                        }
+                    }
+
+                    $widget->display_title = Lang::get('mobileci.widgets.tenant');
+                    if ($widget->item_count > 1) {
+                        $widget->display_sub_title = Lang::get('mobileci.widgets.tenants');
+                    } else {
+                        $widget->display_sub_title = Lang::get('mobileci.widgets.tenants_single');
+                    }
+                }
+                if ($widget->widget_type == 'service') {
+                    $widget->image = 'mobile-ci/images/default_services_directory.png';
+
+                    foreach ($widget->media as $media) {
+                        if ($media->media_name_long === 'home_widget_orig') {
+                            if (empty($media->path)) {
+                                $widget->image = 'mobile-ci/images/default_services_directory.png';
+                            } else {
+                                $widget->image = $media->path;
+                            }
+                        }
+                    }
+
+                    $widget->display_title = Lang::get('mobileci.widgets.service');
+                    if ($widget->item_count > 1) {
+                        $widget->display_sub_title = Lang::get('mobileci.widgets.services');
+                    } else {
+                        $widget->display_sub_title = Lang::get('mobileci.widgets.services_single');
+                    }
+                }
+                if ($widget->widget_type == 'promotion') {
+                    $widget->image = 'mobile-ci/images/default_promotion.png';
+
+                    foreach ($widget->media as $media) {
+                        if ($media->media_name_long === 'home_widget_orig') {
+                            if (empty($media->path)) {
+                                $widget->image = 'mobile-ci/images/default_promotion.png';
+                            } else {
+                                $widget->image = $media->path;
+                            }
+                        }
+                    }
+
+                    $widget->display_title = Lang::get('mobileci.widgets.promotion');
+                    if ($widget->item_count > 1) {
+                        $widget->display_sub_title = Lang::get('mobileci.widgets.promotions');
+                    } else {
+                        $widget->display_sub_title = Lang::get('mobileci.widgets.promotions_single');
+                    }
+                }
+                if ($widget->widget_type == 'news') {
+                    $widget->image = 'mobile-ci/images/default_news.png';
+
+                    foreach ($widget->media as $media) {
+                        if ($media->media_name_long === 'home_widget_orig') {
+                            if (empty($media->path)) {
+                                $widget->image = 'mobile-ci/images/default_news.png';
+                            } else {
+                                $widget->image = $media->path;
+                            }
+                        }
+                    }
+
+                    $widget->display_title = Lang::get('mobileci.widgets.news');
+                    if ($widget->item_count > 1) {
+                        $widget->display_sub_title = Lang::get('mobileci.widgets.newss');
+                    } else {
+                        $widget->display_sub_title = Lang::get('mobileci.widgets.newss_single');
+                    }
+                }
+                if ($widget->widget_type == 'coupon') {
+                    $widget->image = 'mobile-ci/images/default_coupon.png';
+
+                    foreach ($widget->media as $media) {
+                        if ($media->media_name_long === 'home_widget_orig') {
+                            if (empty($media->path)) {
+                                $widget->image = 'mobile-ci/images/default_coupon.png';
+                            } else {
+                                $widget->image = $media->path;
+                            }
+                        }
+                    }
+
+                    $widget->display_title = Lang::get('mobileci.widgets.coupon');
+                    if ($widget->item_count > 1) {
+                        $widget->display_sub_title = Lang::get('mobileci.widgets.coupons');
+                    } else {
+                        $widget->display_sub_title = Lang::get('mobileci.widgets.coupons_single');
+                    }
+                }
+                if ($widget->widget_type == 'lucky_draw') {
+                    $widget->image = 'mobile-ci/images/default_lucky_number.png';
+
+                    foreach ($widget->media as $media) {
+                        if ($media->media_name_long === 'home_widget_orig') {
+                            if (empty($media->path)) {
+                                $widget->image = 'mobile-ci/images/default_lucky_number.png';
+                            } else {
+                                $widget->image = $media->path;
+                            }
+                        }
+                    }
+
+                    $widget->display_title = Lang::get('mobileci.widgets.lucky_draw');
+                    if ($widget->item_count > 1) {
+                        $widget->display_sub_title = Lang::get('mobileci.widgets.lucky_draws');
+                    } else {
+                        $widget->display_sub_title = Lang::get('mobileci.widgets.lucky_draws_single');
+                    }
+                }
+                if ($widget->widget_type == 'free_wifi') {
+                    $widget->image = 'mobile-ci/images/default_free_wifi_directory.png';
+
+                    foreach ($widget->media as $media) {
+                        if ($media->media_name_long === 'home_widget_orig') {
+                            if (empty($media->path)) {
+                                $widget->image = 'mobile-ci/images/default_free_wifi_directory.png';
+                            } else {
+                                $widget->image = $media->path;
+                            }
+                        }
+                    }
+
+                    $widget->display_title = Lang::get('mobileci.widgets.free_wifi');
+                    $widget->display_sub_title = Lang::get('mobileci.widgets.free_wifi');
+                }
+            }
+
             $data = new stdclass();
             $data->total_records = $totalWidgets;
             $data->returned_records = count($listOfWidgets);

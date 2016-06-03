@@ -476,6 +476,7 @@ class PromotionCIAPIController extends BaseAPIController
             $_promotion->all_tenant_inactive = $allTenantInactive;
             $_promotion->facebook_share_url = $promotion->facebook_share_url;
             $_promotion->validity_date = $promotion->validity_date;
+            $_promotion->link_to_tenants = $promotion->tenants;
 
 
             if (! empty($alternateLanguage)) {

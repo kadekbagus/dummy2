@@ -23,6 +23,7 @@ use Employee;
 use Coupon;
 use News;
 use Lang;
+use User;
 
 class CouponCIAPIController extends BaseAPIController
 {
@@ -68,6 +69,18 @@ class CouponCIAPIController extends BaseAPIController
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
+            // temporary parameter, should be removed when user authentication is present
+            OrbitInput::get('user_email', function($user_email) use(&$user) {
+                $user = User::excludeDeleted()
+                    ->where('user_email', $user_email)
+                    ->first();
+
+                if (! is_object($user)) {
+                    $errorMessage = 'User with given email not found.';
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+            });
+
             $prefix = DB::getTablePrefix();
 
             $mall = Mall::excludeDeleted()->where('merchant_id', $this->mall_id)->first();
@@ -77,7 +90,6 @@ class CouponCIAPIController extends BaseAPIController
                     'promotions.promotion_id',
                     'promotions.promotion_name',
                     'promotions.description',
-                    'promotions.long_description',
                     'media.path as image',
                     DB::raw("
                         (SELECT COUNT({$prefix}issued_coupons.issued_coupon_id)
@@ -278,6 +290,18 @@ class CouponCIAPIController extends BaseAPIController
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
+            // temporary parameter, should be removed when user authentication is present
+            OrbitInput::get('user_email', function($user_email) use(&$user) {
+                $user = User::excludeDeleted()
+                    ->where('user_email', $user_email)
+                    ->first();
+
+                if (! is_object($user)) {
+                    $errorMessage = 'User with given email not found.';
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+            });
+
             $prefix = DB::getTablePrefix();
 
             $mall = Mall::excludeDeleted()->where('merchant_id', $this->mall_id)->first();
@@ -285,7 +309,19 @@ class CouponCIAPIController extends BaseAPIController
             $quoted_mall_id = $this->quoteStr($this->mall_id);
             $quoted_coupon_id = $this->quoteStr($coupon_id);
 
-            $coupon = Coupon::select(
+            $coupon = Coupon::with([
+                    'tenants' => function($q) {
+                        $q->select('merchants.merchant_id')
+                            ->where('merchants.status', 'active')
+                            ->where('merchants.parent_id', $this->mall_id);
+                    },
+                    'linkToTenants' => function($q) {
+                        $q->select('merchants.merchant_id')
+                            ->where('merchants.status', 'active')
+                            ->where('merchants.parent_id', $this->mall_id);
+                    }
+                ])
+                ->select(
                     'promotions.promotion_id',
                     'promotions.promotion_name',
                     'promotions.description',
@@ -298,46 +334,7 @@ class CouponCIAPIController extends BaseAPIController
                         WHERE user_id = '{$user->user_id}'
                         AND {$prefix}issued_coupons.status = 'active'
                         AND {$prefix}issued_coupons.promotion_id = {$prefix}promotions.promotion_id
-                    ) as quantity"),
-                    DB::raw("
-                        (SELECT COUNT(m.merchant_id)
-                        FROM {$prefix}merchants m
-                        JOIN {$prefix}promotion_retailer_redeem prr ON prr.retailer_id = m.merchant_id
-                        JOIN {$prefix}promotions p on prr.promotion_id = p.promotion_id
-                        LEFT JOIN {$prefix}promotion_employee pe on p.promotion_id = pe.promotion_id
-                        LEFT JOIN {$prefix}users u on u.user_id = pe.user_id
-                        LEFT JOIN {$prefix}employees e on e.user_id = u.user_id
-                        LEFT JOIN {$prefix}employee_retailer er on er.employee_id = e.employee_id
-                        WHERE p.promotion_id = {$quoted_coupon_id}
-                        AND prr.object_type = 'tenant'
-                        AND m.status = 'active'
-                        AND p.status = 'active'
-                        AND
-                        (
-                            (
-                                m.parent_id = {$quoted_mall_id}
-                                OR
-                                m.merchant_id = {$quoted_mall_id}
-                            )
-                            OR
-                            (
-                                e.status = 'active'
-                                AND
-                                er.retailer_id = {$quoted_mall_id}
-                            )
-                        )
-                    ) as redeemed_to_tenant"),
-                    DB::raw("
-                        (SELECT COUNT(m.merchant_id)
-                        FROM {$prefix}merchants m
-                        JOIN {$prefix}promotion_retailer prr ON prr.retailer_id = m.merchant_id
-                        JOIN {$prefix}promotions p on prr.promotion_id = p.promotion_id
-                        WHERE p.promotion_id = {$quoted_coupon_id}
-                        AND m.parent_id = {$quoted_mall_id}
-                        AND m.status = 'active'
-                        AND prr.object_type = 'tenant'
-                        AND p.status = 'active'
-                    ) as linked_to_tenant")
+                    ) as quantity")
                 )
                 ->join('issued_coupons', function ($join) {
                     $join->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
@@ -393,6 +390,33 @@ class CouponCIAPIController extends BaseAPIController
             $coupon->groupBy('promotions.promotion_id');
 
             $coupon = $coupon->first();
+
+            // Check coupon have condition cs reedem
+            $cs_reedem = false;
+
+            // Check exist customer verification number per mall
+            $employeeVerNumbersActive = \UserVerificationNumber::join('users', 'users.user_id', '=', 'user_verification_numbers.user_id')
+                ->where('users.status', 'active')
+                ->where('merchant_id', $this->mall_id)
+                ->count('users.user_id');
+
+            if ($coupon->is_all_employee === 'Y') {
+                if ($employeeVerNumbersActive > 0) {
+                    $cs_reedem = true;
+                }
+            } elseif ($coupon->is_all_employee === 'N') {
+                // Check exist link to cs, and cs must have active status
+                $promotionEmployee = \CouponEmployee::join('users', 'users.user_id', '=', 'promotion_employee.user_id')
+                    ->where('users.status', 'active')
+                    ->where('promotion_employee.promotion_id', $coupon->promotion_id)
+                    ->count('promotion_employee_id');
+
+                if ($promotionEmployee > 0) {
+                    $cs_reedem = true;
+                }
+            }            
+
+            $coupon->linked_to_cs = $cs_reedem;
 
             $this->response->data = $coupon;
             $this->response->code = 0;

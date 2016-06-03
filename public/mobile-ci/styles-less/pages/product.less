@@ -324,6 +324,24 @@ span.attribute-title {
     width: calc(~"100% - 20.55px");
     overflow-x: hidden;
     z-index: 210;
+
+    .scroll-info {
+        color: #fff;
+        position: fixed;
+        width: 100px;
+        height: 100px;
+        top: 50%;
+        left: 50%;
+        margin-top: -50px;
+        margin-left: -50px;
+        z-index: 1000;
+        text-align: center;
+        font-size: 60px;
+        line-height: 100px;
+        background: rgba(9, 116, 148, .6);
+        display: none;
+        border-radius: 10%;
+    }
 }
 
 .asb-content {
@@ -332,11 +350,19 @@ span.attribute-title {
     right: 0;
     width: 40px;
     overflow: hidden;
-    overflow-y: auto;
     z-index: 220;
 
     a.asb-btn {
         position: relative;
+        outline: 0 none;
+        font-size: 12px;
+        line-height: 1.5;
+        padding: 1px 5px;
+        color: #333;
+        background-color: #fff;
+        border-color: #ccc;
+        border-left: none;
+        border-right: none;
 
         &.disabled {
             pointer-events: none;
@@ -352,6 +378,12 @@ span.attribute-title {
             left: -30px;
             right: 0;
             bottom: 0;
+            outline: 0 none;
+        }
+
+        &:focus, &:hover,  &:active, &:visited {
+            outline: 0 none;
+            outline-offset: 0;
         }
     }
 }

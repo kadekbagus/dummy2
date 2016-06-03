@@ -89,119 +89,28 @@
     <div class="mobile-ci home-widget widget-container">
         <div class="row">
             @foreach($widgets as $i => $widget)
-                @if($i % 3 === 0)
-                    @if($i === count($widgets) - 1)
-                    <div class="col-xs-12 col-sm-12 widget-col" style="z-index:{{count($widgets)-$i}};">
-                        <div id="particles-js{{$i+1}}"></div>
-                        <section class="widget-single">
-                            <a class="widget-link" data-widget="{{ $widget->widget_id }}" data-href="{{$widget->redirect_url}}" href="{{ $widget->url }}">
-                                @if(! empty($widget->new_item_count))
-                                <div class="widget-new-badge">
-                                    <div class="new-number">{{$widget->new_item_count}}</div>
-                                    <div class="new-number-label">new</div>
-                                </div>
-                                @endif
-                                <div class="widget-info">
-                                    <header class="widget-title">
-                                        <div><strong>{{{ucwords(strtolower($widget->display_title))}}}</strong></div>
-                                    </header>
-                                    <header class="widget-subtitle">
-                                        @if($widget->item_count > 0)
-                                        <div>{{$widget->item_count}} {{$widget->display_sub_title}}</div>
-                                        @else
-                                        <div>&nbsp;</div>
-                                        @endif
-                                    </header>
-                                </div>
-                                <div class="list-vignette"></div>
-                                <img class="img-responsive img-fit" src="{{ asset($widget->image) }}" />
-                            </a>
-                        </section>
-                    </div>
-                    @else
+                @if($i === 0 || $i === count($widgets) - 2)
                     <div class="col-xs-6 col-sm-6 widget-col" style="z-index:{{count($widgets)-$i}};">
-                        <div id="particles-js{{$i+1}}"></div>
-                        <section class="widget-single">
-                            <a class="widget-link" data-widget="{{ $widget->widget_id }}" data-href="{{$widget->redirect_url}}" href="{{ $widget->url }}">
-                                @if(! empty($widget->new_item_count))
-                                <div class="widget-new-badge">
-                                    <div class="new-number">{{$widget->new_item_count}}</div>
-                                    <div class="new-number-label">new</div>
-                                </div>
-                                @endif
-                                <div class="widget-info">
-                                    <header class="widget-title">
-                                        <div><strong>{{{ucwords(strtolower($widget->display_title))}}}</strong></div>
-                                    </header>
-                                    <header class="widget-subtitle">
-                                        @if($widget->item_count > 0)
-                                        <div>{{$widget->item_count}} {{$widget->display_sub_title}}</div>
-                                        @else
-                                        <div>&nbsp;</div>
-                                        @endif
-                                    </header>
-                                </div>
-                                <div class="list-vignette"></div>
-                                <img class="img-responsive img-fit" src="{{ asset($widget->image) }}" />
-                            </a>
-                        </section>
+                        @if($i === 0)
+                            <div id="particles-js1"></div>
+                        @else
+                            <div id="particles-js4"></div>
+                        @endif
+                        @include('mobile-ci.templates.widget.type-a-widget', array('widget'=>$widget))
                     </div>
-                    @endif
-                @elseif($i % 3 === 1)
-                        <div class="col-xs-6 col-sm-6 widget-col" style="z-index:{{count($widgets)-$i}};">
-                            <div id="particles-js{{$i+1}}"></div>
-                            <section class="widget-single">
-                                <a class="widget-link" data-widget="{{ $widget->widget_id }}" data-href="{{$widget->redirect_url}}" href="{{ $widget->url }}">
-                                    @if(! empty($widget->new_item_count))
-                                    <div class="widget-new-badge">
-                                        <div class="new-number">{{$widget->new_item_count}}</div>
-                                        <div class="new-number-label">new</div>
-                                    </div>
-                                    @endif
-                                    <div class="widget-info">
-                                        <header class="widget-title">
-                                            <div><strong>{{{ucwords(strtolower($widget->display_title))}}}</strong></div>
-                                        </header>
-                                        <header class="widget-subtitle">
-                                            @if($widget->item_count > 0)
-                                            <div>{{$widget->item_count}} {{$widget->display_sub_title}}</div>
-                                            @else
-                                            <div>&nbsp;</div>
-                                            @endif
-                                        </header>
-                                    </div>
-                                    <div class="list-vignette"></div>
-                                    <img class="img-responsive img-fit" src="{{ asset($widget->image) }}" />
-                                </a>
-                            </section>
-                        </div>
+                @elseif($i === 1 || $i === count($widgets) - 1)
+                    <div class="col-xs-6 col-sm-6 widget-col" style="z-index:{{count($widgets)-$i}};">
+                        @if($i === 1)
+                            <div id="particles-js2"></div>
+                        @else
+                            <div id="particles-js5"></div>
+                        @endif
+                        @include('mobile-ci.templates.widget.type-a-widget', array('widget'=>$widget))
+                    </div>
                 @else
                     <div class="col-xs-12 col-sm-12 widget-col" style="z-index:{{count($widgets)-$i}};">
                         <!-- <div id="particles-js{{$i+1}}"></div> -->
-                        <section class="widget-single">
-                            <a class="widget-link" data-widget="{{ $widget->widget_id }}" data-href="{{$widget->redirect_url}}" href="{{ $widget->url }}">
-                                @if(! empty($widget->new_item_count))
-                                <div class="widget-new-badge">
-                                    <div class="new-number">{{$widget->new_item_count}}</div>
-                                    <div class="new-number-label">new</div>
-                                </div>
-                                @endif
-                                <div class="widget-info">
-                                    <header class="widget-title">
-                                        <div><strong>{{{ucwords(strtolower($widget->display_title))}}}</strong></div>
-                                    </header>
-                                    <header class="widget-subtitle">
-                                        @if($widget->item_count > 0)
-                                        <div>{{$widget->item_count}} {{$widget->display_sub_title}}</div>
-                                        @else
-                                        <div>&nbsp;</div>
-                                        @endif
-                                    </header>
-                                </div>
-                                <div class="list-vignette"></div>
-                                <img class="img-responsive img-fit" src="{{ asset($widget->image) }}" />
-                            </a>
-                        </section>
+                        @include('mobile-ci.templates.widget.type-a-widget', array('widget'=>$widget))
                     </div>
                 @endif
             @endforeach

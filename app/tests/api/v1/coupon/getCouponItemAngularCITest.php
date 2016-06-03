@@ -189,7 +189,7 @@ class getCouponItemAngularCITest extends TestCase
 
         $json = $this->call('GET', $url)->getContent();
         $response = json_decode($json);
-dd($response);
+
         $this->assertSame(0, (int) $response->code);
 
         // check all returned records
