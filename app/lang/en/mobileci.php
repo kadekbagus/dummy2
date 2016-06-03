@@ -565,8 +565,8 @@ return array(
         'granted' => array(
             'title'     => 'Connected to WiFi',
             'heading'   => 'You\'re Already Connected',
-            'message'   => 'Hey,<br>You are now connected to Internet for free. Do you know what are the promotions here today?',
-            'button'    => 'Yes, Please!'
+            'message'   => 'You are connected to Internet for free.',
+            'button'    => 'OK'
         ),
         'widget_slogan' => 'Get Free Internet',
         'widget_tagline' => 'Get your free access NOW!'
