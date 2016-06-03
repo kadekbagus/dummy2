@@ -557,7 +557,9 @@ return array(
                     'Tap on Get Free Internet Access button below',
                     'Open internet browser and type this URL http://gotomalls.com to see connection status'
                 ),
-                'button_caption' => 'Get Free Internet Access'
+                'button_caption' => 'Get Free Internet Access',
+                'clipboard_caption' => 'Salin URL ke clipboard',
+                'clipboard_success' => 'URL disalin'
             ),
 
         ),
