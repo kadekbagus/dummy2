@@ -27,6 +27,7 @@ return array(
     'AlterTableConnectionTimesChangeSessionId' => $baseDir . '/app/database/migrations/2016_04_14_122919_alter_table_connection_times_change_session_id.php',
     'AlterTableInboxesAddColumnMerchantId' => $baseDir . '/app/database/migrations/2015_10_30_062500_alter_table_inboxes_add_column_merchant_id.php',
     'AlterTableInboxesAddIsNotifiedColumn' => $baseDir . '/app/database/migrations/2016_02_10_022959_alter_table_inboxes_add_is_notified_column.php',
+    'AlterTableIndoormapElementsModifySomeDataType' => $baseDir . '/app/database/migrations/2016_06_03_040204_alter_table_indoormap_elements_modify_some_data_type.php',
     'AlterTableIssuedCouponsAddColumnIssuerUserId' => $baseDir . '/app/database/migrations/2015_12_04_080436_alter_table_issued_coupons_add_column_issuer_user_id.php',
     'AlterTableIssuedCouponsChangeRedeemRetailerIdToUuid' => $baseDir . '/app/database/migrations/2015_10_29_114000_alter_table_issued_coupons_change_redeem_retailer_id_to_uuid.php',
     'AlterTableLanguageAddLanguageOrder' => $baseDir . '/app/database/migrations/2016_04_08_031955_alter_table_language_add_language_order.php',
