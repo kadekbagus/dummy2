@@ -126,6 +126,9 @@
          * User-Agent for default WebView is as explained in
          * https://developer.chrome.com/multidevice/user-agent#webview_user_agent
          * 
+         * wv string in user-agent only available in WebView since Android 5+,
+         * lower version Android will not have this string
+         * 
          * This detection however have weakness. For example, someone can build 
          * Android application using default WebView. Then this script will result
          * in false detection.
@@ -133,8 +136,8 @@
         AndroidCaptivePortalBrowserDetector.isAndroidCaptivePortal = function() {
             var ua = navigator.userAgent;
             return  (!Modernizr.localstorage) &&
-                    (ua.indexOf('Android 6') > -1) &&
-                    (ua.indexOf('Chrome/') > -1) &&
+                    (ua.indexOf('Android') > -1) &&
+                    (ua.indexOf('Chrome/') > -1) &&                    
                     (ua.indexOf('wv)') > -1);                    
         };    
 
