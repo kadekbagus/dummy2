@@ -53,26 +53,38 @@ class GenerateGuestUser
 
             // todo: add login_ok activity
             $mall_id = App::make('orbitSetting')->getSetting('current_retailer');
-            $mall = Mall::excludeDeleted()->where('merchant_id', $mall_id)->first();
-            DB::beginTransaction();
-            $activity = Activity::mobileci()
-                    ->setLocation($mall)
-                    ->setUser($user)
-                    ->setActivityName('login_ok')
-                    ->setActivityNameLong('Sign In')
-                    ->setActivityType('login')
-                    ->setObject($user)
-                    ->setModuleName('Application')
-                    ->responseOK();
+            $mall = Mall::with('timezone')->excludeDeleted()->where('merchant_id', $mall_id)->first();
+            dd($mall);
 
-            $activity->save();
+            $start_date = '2016-06-01 17:00:00';
+            $end_date = '2016-06-02 16:59:59';
+            $userSignin = UserSignin::where('user_id', '=', $user->user_id)
+                                    ->where('location_id', $mall_id)
+                                    ->whereBetween('user_signin.created_at', [$start_date, $end_date])
+                                    ->first();
 
-            $newUserSignin = new UserSignin();
-            $newUserSignin->user_id = $user->user_id;
-            $newUserSignin->signin_via = 'guest';
-            $newUserSignin->location_id = $mall_id;
-            $newUserSignin->activity_id = $activity->activity_id;
-            $newUserSignin->save();
+            if (!is_object($userSignin)) {
+                DB::beginTransaction();
+                $activity = Activity::mobileci()
+                        ->setLocation($mall)
+                        ->setUser($user)
+                        ->setActivityName('login_ok')
+                        ->setActivityNameLong('Sign In')
+                        ->setActivityType('login')
+                        ->setObject($user)
+                        ->setModuleName('Application')
+                        ->responseOK();
+
+                $activity->save();
+
+                $newUserSignin = new UserSignin();
+                $newUserSignin->user_id = $user->user_id;
+                $newUserSignin->signin_via = 'guest';
+                $newUserSignin->location_id = $mall_id;
+                $newUserSignin->activity_id = $activity->activity_id;
+                $newUserSignin->save();
+            }
+
             DB::commit();
 
             return $user;

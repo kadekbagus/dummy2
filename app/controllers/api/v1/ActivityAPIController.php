@@ -1923,6 +1923,7 @@ class ActivityAPIController extends ControllerAPI
                     $returning_sign_ins = DB::table('user_signin')->select(DB::raw('count(distinct user_id) as count'))
                                             ->whereIn('user_signin.location_id', $locationIds)
                                             ->whereBetween('user_signin.created_at', [$start_date, $end_date])
+                                            ->where('user_signin.signin_via', '!=', 'guest')
                                             ->whereNotIn('user_signin.user_id', function($q) use ($locationIds, $start_date, $end_date) {
                                                 $q->select('user_acquisitions.user_id')
                                                     ->from('user_acquisitions')
