@@ -868,6 +868,12 @@ class MobileCIAPIController extends BaseCIController
 
                 // Push the from_captive cookie
                 CaptivePortalController::setCookieForCaptive();
+
+                $from_captive_flag = OrbitInput::get('from_captive', 'no');
+
+                if ($from_captive_flag === 'yes') {
+                    $this->setCookieFromWifi();
+                }
             }
 
             $now = Carbon::now($retailer->timezone->timezone_name);
@@ -10463,5 +10469,16 @@ class MobileCIAPIController extends BaseCIController
     public function getOrbitSessionQueryStringName()
     {
         return Config::get('orbit.session.session_origin.query_string.name');
+    }
+
+    public function setCookieFromWifi()
+    {
+        if (! isset($_COOKIE['from_wifi'])) {
+            $domain = Config::get('orbit.captive.from_wifi.domain', NULL);
+            $path = Config::get('orbit.captive.from_wifi.path', '/');
+            $expire = time() + Config::get('orbit.captive.from_wifi.expire', 60); // default expired if doesnt exist is 60 second (1 minute)
+
+            setcookie(Config::get('orbit.captive.from_wifi.name', 'from_wifi'), 'Y', $expire, $path, $domain, FALSE);
+        }
     }
 }
