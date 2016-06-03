@@ -739,7 +739,7 @@ class MobileCIAPIController extends BaseCIController
     
     private function prepareWidgetFreeWifiData($widget, $user, $retailer, $mallid, $now, $urlblock)
     {
-        $widget->image = 'mobile-ci/images/default_free_wifi_directory.png';
+        $widget->image = 'mobile-ci/images/free-wifi.png';
 
         foreach ($widget->media as $media) {
             if ($media->media_name_long === 'home_widget_orig') {
@@ -751,10 +751,13 @@ class MobileCIAPIController extends BaseCIController
             }
         }
 
-        $widget->display_title = Lang::get('mobileci.widgets.free_wifi');
-        $widget->display_sub_title = Lang::get('mobileci.widgets.free_wifi');
-        // $widget->url = $urlblock->blockedRoute('ci-luckydraw-list');
-        // $widget->redirect_url = URL::route('ci-luckydraw-list');
+        $widget->always_show_subtitle = true;
+        //$widget->display_title = Lang::get('mobileci.widgets.free_wifi');
+        //$widget->display_sub_title = Lang::get('mobileci.widgets.free_wifi');
+        $widget->display_title = Lang::get('mobileci.captive.widget_slogan');
+        $widget->display_sub_title = Lang::get('mobileci.captive.widget_tagline');
+        $widget->url = $urlblock->blockedRoute('captive-request-internet');
+        $widget->redirect_url = URL::route('captive-request-internet');
         
         return $widget;    
     }
@@ -862,9 +865,11 @@ class MobileCIAPIController extends BaseCIController
                             ->get();
 
             if (CaptivePortalController::isFromCaptive()) {
+                //not used anymore because it is shown
+                //based on availability of free wifi in a mall
                 // Inject number of widget on-the-fly
-                $captiveWidget = CaptivePortalController::generateDummyWidget($retailer, $urlblock);
-                $widgets->push($captiveWidget);
+                //$captiveWidget = CaptivePortalController::generateDummyWidget($retailer, $urlblock);
+                //$widgets->push($captiveWidget);
 
                 // Push the from_captive cookie
                 CaptivePortalController::setCookieForCaptive();
