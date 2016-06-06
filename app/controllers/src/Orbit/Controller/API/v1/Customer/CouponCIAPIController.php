@@ -107,7 +107,7 @@ class CouponCIAPIController extends BaseAPIController
                 ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer_redeem.retailer_id')
                 ->leftJoin('media', function ($join) {
                     $join->on('media.object_id', '=', 'merchants.merchant_id')
-                        ->where('media_name_long', '=', 'retailer_logo_orig');
+                        ->where('media_name_long', '=', 'coupon_translation_image_orig');
                 })
                 ->where(function ($q) {
                     $q->where(function ($q2) {
@@ -349,7 +349,7 @@ class CouponCIAPIController extends BaseAPIController
                 ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer_redeem.retailer_id')
                 ->leftJoin('media', function ($join) {
                     $join->on('media.object_id', '=', 'merchants.merchant_id')
-                        ->where('media_name_long', '=', 'retailer_logo_orig');
+                        ->where('media_name_long', '=', 'coupon_translation_image_orig');
                 })
                 ->where('promotions.promotion_id', $coupon_id)
                 ->where(function ($q) {
