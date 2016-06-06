@@ -430,7 +430,7 @@ class CouponCIAPIController extends BaseAPIController
                     if ($employeeVerNumbersActive > 0) {
                         $cs_reedem = true;
                     }
-                } elseif ($coupon->is_all_employee === 'N') {
+                } else {
                     // Check exist link to cs, and cs must have active status
                     $promotionEmployee = \CouponEmployee::join('users', 'users.user_id', '=', 'promotion_employee.user_id')
                         ->where('users.status', 'active')
@@ -443,7 +443,6 @@ class CouponCIAPIController extends BaseAPIController
                 }
                 $coupon->linked_to_cs = $cs_reedem;
             }
-
 
             $this->response->data = $coupon;
             $this->response->code = 0;
