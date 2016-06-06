@@ -9,6 +9,8 @@ use URL;
 use Validator;
 use Setting;
 use DB;
+use MerchantLanguage;
+use Language;
 
 class BaseAPIController extends ControllerAPI
 {
@@ -70,5 +72,43 @@ class BaseAPIController extends ControllerAPI
     protected function quoteStr($str)
     {
         return DB::connection()->getPdo()->quote($str);
+    }
+
+    protected function getMerchantLanguage($mall, $languageId = null)
+    {
+        $merchantLanguage = MerchantLanguage::where('merchant_languages.merchant_id', '=', $mall->merchant_id)
+                                            ->where('merchant_languages.language_id', '=', $languageId)
+                                            ->first();
+        if (!is_object($merchantLanguage)) {
+            $merchantLanguage = $this->getDefaultLanguage($mall);
+        }
+        return $merchantLanguage;
+    }
+
+
+    /**
+     * Returns an appropriate MerchantLanguage (if any) that the user wants and the mall supports.
+     *
+     * @param \Mall $mall the mall
+     * @return \MerchantLanguage the language or null if a matching one is not found.
+     *
+     * @author Firmansyah <firmansyah@dominopos.com>
+     */
+    protected function getDefaultLanguage($mall)
+    {
+        // English is default language
+        $language = \Language::where('name', '=', 'en')->first();
+        if(isset($language) && count($language) > 0){
+            $defaultLanguage = MerchantLanguage::
+                where('merchant_id', '=', $mall->merchant_id)
+                ->where('language_id', '=', $language->language_id)
+                ->first();
+            if ($defaultLanguage !== null) {
+                return $defaultLanguage;
+            }
+        }
+
+        // above methods did not result in any selected language, use mall default
+        return null;
     }
 }
