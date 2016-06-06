@@ -26,18 +26,66 @@
 
 @section('content')
     <script>
+    /**
+     * Read cookie value by name
+     */
+    var getCookie = function(cookieName) {
+        var name = cookieName + "=";
+        var ca = document.cookie.split(';');
+        for(var i = 0; i <ca.length; i++) {
+            var c = ca[i];
+            while (c.charAt(0)==' ') {
+                c = c.substring(1);
+            }
+            if (c.indexOf(name) == 0) {
+                return c.substring(name.length,c.length);
+            }
+        }
+        return '';
+    };
+    
     var OrbitInternetChecker = {};
 
     /**
-     * Callback to handle if internet is up
+     * Callback to handle if internet is connected from
+     * captive portal
      */
-    OrbitInternetChecker.up = function()
+    OrbitInternetChecker.connectedFromCaptivePortal = function()
     {
         $('#captive-check-internet').addClass('hide');
 
         // The user is already connected to the internet, no need to grant.
         // Redirect to our granted page.
         window.location.href = '{{ $granted_url }}';
+    };
+    
+    /**
+     * Callback to handle if internet is connected from
+     * any non mall captive portal (i.e 3G, any Wifi etc).
+     * 
+     * We display Free Internet Access dialog but with 
+     * Get Free Internet Access button disabled
+     * to indicate that they cannot get free internet access if they are not 
+     * connected to mall captive portal.
+     */
+    OrbitInternetChecker.connectedFromNonCaptivePortal = function()
+    {
+        $('#captive-check-internet').addClass('hide');
+        $('#captive-no-internet').removeClass('hide');
+        $('#btn-grant-internet').attr('disabled', 'disabled');
+    };
+    
+    /**
+     * Callback to handle if internet is up
+     */
+    OrbitInternetChecker.up = function()
+    {
+        var fromCaptivePortal = getCookie('{{ Config::get('orbit.captive.from_wifi.name') }}');
+        if (fromCaptivePortal === 'Y') {
+            this.connectedFromCaptivePortal();
+        } else {
+            this.connectedFromNonCaptivePortal();            
+        }
     };
 
     /**
@@ -89,7 +137,18 @@
         <img id="pingdom-icon" class="hide" src="{{ $ping_url.'?rnd='.str_random(10) }}" onerror="OrbitInternetChecker.down()" onload="OrbitInternetChecker.up()">
     </div>
 
-    <!-- show when browser run in OS === Android 5+ -->     
+    <!-- show when browser run in OS === Android 5+ -->    
+    <?php  
+        //transform $params array into request string to pass to
+        //URL to be copied to clipboard
+        $parameters = [];
+        foreach ($params as $name=>$value) {
+            $parameters[] = $name.'='.$value;
+            
+        }
+        $parameters[] = 'android5captiveportalhack=1';
+        $get_parameters = implode($parameters, '&');
+    ?>
     <div class="row padded" id="in-android-5-or-newer"  style="display:none">
         <div class="col-xs-12" id="workaround-captive-no-internet">
            <h3>{{ Lang::get('mobileci.captive.request_internet.message_ex.title') }}</h3>
@@ -100,7 +159,8 @@
                <li>{{ $instruction }}</li>
                @endforeach
            </ul>
-           <button id="copy-url" class="btn btn-block btn-primary" data-clipboard-text="{{ URL::route('captive-request-internet') }}">{{ Lang::get('mobileci.captive.request_internet.message_ex.clipboard_caption') }}</button>
+           <button id="copy-url" class="btn btn-block btn-primary" data-clipboard-text="{{ URL::route('captive-request-internet').'?'.$get_parameters }}">{{ Lang::get('mobileci.captive.request_internet.message_ex.clipboard_caption') }}</button>
+           <a  href="{{ $base_grant_url .'?'.$get_parameters }}" class="btn btn-block btn-primary" >{{ Lang::get('mobileci.captive.request_internet.button') }}</a>
            <div class='clipboard-success' style='display:none'>{{ Lang::get('mobileci.captive.request_internet.message_ex.clipboard_success') }}</div>
         </div>        
     </div>
@@ -177,5 +237,34 @@
         clipboard.on('success', function(e) {
             $('.clipboard-success').fadeIn(400).delay(3000).fadeOut(400);
         });
+        
+        /**
+         * Check if user connect from their own 3G/wifi Internet connection
+         * This class reads cookies for key name 'from_wifi'. If it exists
+         * and its value equal 'Y' it is assumed that user is connecting
+         * through mall captive portal otherwise they're connnected
+         * to any other connection.
+         * 
+         * This  code is necessary to make visual indication when user is trying
+         * to connect to mall captive portal but already connected to other internet 
+         * connection by disabling Get FREE Internet Access button.
+         */
+        var WifiCookieChecker = function() {
+            
+            this.isConnectFromWifi = function() {
+                fromWifi = getCookie('{{ Config::get('orbit.captive.from_wifi.name') }}');
+                if (fromWifi==='Y') {
+                   $('#btn-grant-internet').removeAttr('disabled');
+                } else {
+                   $('#btn-grant-internet').attr('disabled', 'disabled');
+                }    
+            };            
+        };
+        
+        var wifiChecker = new WifiCookieChecker();
+        
+        window.setInterval(function() {
+            wifiChecker.isConnectFromWifi(); 
+        }, 30000);
     </script>
 @stop
