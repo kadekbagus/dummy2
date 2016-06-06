@@ -554,8 +554,9 @@ return array(
                 'instructions' => array(
                     'Connect to mall Wi-Fi network',
                     'Access this page',
+                    'Tap on Copy URL to clipboard',
                     'Tap on Get Free Internet Access button below',
-                    'Open internet browser and type this URL http://gotomalls.com to see connection status'
+                    'Open internet browser and paste the URL to see connection status'
                 ),
                 'button_caption' => 'Get Free Internet Access',
                 'clipboard_caption' => 'Salin URL ke clipboard',
