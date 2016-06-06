@@ -539,6 +539,11 @@ class TenantCIAPIController extends BaseAPIController
                 $news_flag->whereRaw($age_profile_query);
             }
             $news_flag->groupBy('news.news_id');
+            // filter by news id
+            $news_id = OrbitInput::get('news_id');
+            OrbitInput::get('news_id', function ($news_id) use ($news_flag) {
+                $news_flag->where('news.news_id', $news_id);
+            });
             $news_flag = RecordCounter::create($news_flag)->count();
 
             $promotion_flag = News::select('news.news_id')
@@ -558,6 +563,11 @@ class TenantCIAPIController extends BaseAPIController
             if (! empty($age_profile_query)) {
                 $promotion_flag->whereRaw($age_profile_query);
             }
+            // filter by promotion id
+            $promotion_id = OrbitInput::get('promotion_id');
+            OrbitInput::get('promotion_id', function ($promotion_id) use ($promotion_flag) {
+                $promotion_flag->where('news.news_id', $promotion_id);
+            });
             $promotion_flag->groupBy('news.news_id');
             $promotion_flag = RecordCounter::create($promotion_flag)->count();
 
@@ -581,6 +591,11 @@ class TenantCIAPIController extends BaseAPIController
             if (! empty($age_profile_query)) {
                 $coupon_flag->whereRaw($age_profile_query);
             }
+            // filter by coupon id
+            $coupon_id = OrbitInput::get('coupon_id');
+            OrbitInput::get('coupon_id', function ($coupon_id) use ($coupon_flag) {
+                $coupon_flag->where('promotions.promotion_id', $coupon_id);
+            });
             $coupon_flag->groupBy('promotions.promotion_id');
             $coupon_flag = RecordCounter::create($coupon_flag)->count();
 
@@ -588,7 +603,22 @@ class TenantCIAPIController extends BaseAPIController
             $tenant->promotion_flag = $promotion_flag > 0 ? 'true' : 'false';
             $tenant->coupon_flag = $coupon_flag > 0 ? 'true' : 'false';
 
+            // default data without filter data id
             $this->response->data = $tenant;
+
+            // overide data if filter doesn't exist
+            if (!is_null($news_id) && $tenant->news_flag === 'false') {
+                $this->response->data = [];
+            }
+
+            if (!is_null($promotion_id) && $tenant->promotion_flag === 'false') {
+                $this->response->data = [];
+            }
+
+            if (!is_null($coupon_id) && $tenant->coupon_flag === 'false') {
+                $this->response->data = [];
+            }
+
             $this->response->code = 0;
             $this->response->status = 'success';
             $this->response->message = 'Success';
