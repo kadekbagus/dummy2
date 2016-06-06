@@ -24,6 +24,7 @@ use Coupon;
 use News;
 use Lang;
 use User;
+use IssuedCoupon;
 
 class CouponCIAPIController extends BaseAPIController
 {
@@ -415,6 +416,17 @@ class CouponCIAPIController extends BaseAPIController
             $coupon->groupBy('promotions.promotion_id');
 
             $coupon = $coupon->first();
+
+            $issued_coupon = IssuedCoupon::active()
+                ->where('promotion_id', $coupon->promotion_id)
+                ->where('user_id', $user->user_id)
+                ->orderBy('expired_date', 'DESC')
+                ->first();
+
+            $coupon->issued_coupon_id = null;
+            if (is_object($issued_coupon)) {
+                $coupon->issued_coupon_id = $issued_coupon->issued_coupon_id;
+            }
 
             // Check coupon have condition cs reedem
             $cs_reedem = false;
