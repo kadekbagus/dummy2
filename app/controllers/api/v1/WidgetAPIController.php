@@ -1438,6 +1438,7 @@ class WidgetAPIController extends ControllerAPI
 
                 if ($widget->widget_type == 'tenant') {
                     $widget->image = 'mobile-ci/images/default_tenants_directory.png';
+                    $widget->default_image = 'mobile-ci/images/default_tenants_directory.png';
 
                     foreach ($widget->media as $media) {
                         if ($media->media_name_long === 'home_widget_orig') {
@@ -1458,6 +1459,7 @@ class WidgetAPIController extends ControllerAPI
                 }
                 if ($widget->widget_type == 'service') {
                     $widget->image = 'mobile-ci/images/default_services_directory.png';
+                    $widget->default_image = 'mobile-ci/images/default_services_directory.png';
 
                     foreach ($widget->media as $media) {
                         if ($media->media_name_long === 'home_widget_orig') {
@@ -1478,6 +1480,7 @@ class WidgetAPIController extends ControllerAPI
                 }
                 if ($widget->widget_type == 'promotion') {
                     $widget->image = 'mobile-ci/images/default_promotion.png';
+                    $widget->default_image = 'mobile-ci/images/default_promotion.png';
 
                     foreach ($widget->media as $media) {
                         if ($media->media_name_long === 'home_widget_orig') {
@@ -1498,6 +1501,7 @@ class WidgetAPIController extends ControllerAPI
                 }
                 if ($widget->widget_type == 'news') {
                     $widget->image = 'mobile-ci/images/default_news.png';
+                    $widget->default_image = 'mobile-ci/images/default_news.png';
 
                     foreach ($widget->media as $media) {
                         if ($media->media_name_long === 'home_widget_orig') {
@@ -1518,6 +1522,7 @@ class WidgetAPIController extends ControllerAPI
                 }
                 if ($widget->widget_type == 'coupon') {
                     $widget->image = 'mobile-ci/images/default_coupon.png';
+                    $widget->default_image = 'mobile-ci/images/default_coupon.png';
 
                     foreach ($widget->media as $media) {
                         if ($media->media_name_long === 'home_widget_orig') {
@@ -1538,6 +1543,7 @@ class WidgetAPIController extends ControllerAPI
                 }
                 if ($widget->widget_type == 'lucky_draw') {
                     $widget->image = 'mobile-ci/images/default_lucky_number.png';
+                    $widget->default_image = 'mobile-ci/images/default_lucky_number.png';
 
                     foreach ($widget->media as $media) {
                         if ($media->media_name_long === 'home_widget_orig') {
@@ -1558,6 +1564,7 @@ class WidgetAPIController extends ControllerAPI
                 }
                 if ($widget->widget_type == 'free_wifi') {
                     $widget->image = 'mobile-ci/images/default_free_wifi_directory.png';
+                    $widget->default_image = 'mobile-ci/images/default_free_wifi_directory.png';
 
                     foreach ($widget->media as $media) {
                         if ($media->media_name_long === 'home_widget_orig') {
