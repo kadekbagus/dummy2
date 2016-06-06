@@ -59,6 +59,7 @@ return array(
         'tenants'        => '店铺',
         'services'       => '服务',
         'lucky_draws'    => '幸运大抽奖',
+        'free_wifi'      => '免费的互联网',
         'newss'          => '消息',
         'promotions_single'      => '促销活动',
         'coupons_single'        => '券',
@@ -326,7 +327,7 @@ return array(
 
     'search' => array(
         'no_item'            => '无店铺匹配条件。',
-        'no_service'         => '没有服务业条件匹配的',
+        'no_service'         => '没有服务业条件匹配的。',
         'too_much_items'     => '搜索结果的范围太广，请缩小它',
         'no_result'          => '对不起，搜索有没有结果',
         'error'              => '发出请求时有错误',

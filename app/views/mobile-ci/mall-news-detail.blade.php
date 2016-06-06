@@ -33,10 +33,14 @@
             <ul class="list-unstyled">
                 <li>
                     @if(count($news->tenants) > 0)
-                    <a data-href="{{ route('ci-tenant-list', ['news_id' => $news->news_id]) }}" href="{{{ $urlblock->blockedRoute('ci-tenant-list', ['news_id' => $news->news_id]) }}}">
+                        @if(count($news->tenants) === 1)
+                        <a data-href="{{ route('ci-tenant-detail', ['id' => $news->tenants[0]->merchant_id]) }}" href="{{{ $urlblock->blockedRoute('ci-tenant-detail', ['id' => $news->tenants[0]->merchant_id]) }}}">
+                        @else
+                        <a data-href="{{ route('ci-tenant-list', ['news_id' => $news->news_id]) }}" href="{{{ $urlblock->blockedRoute('ci-tenant-list', ['news_id' => $news->news_id]) }}}">
+                        @endif
                         <span class="fa fa-stack icon">
                             <i class="fa fa-circle fa-stack-2x"></i>
-                            <i class="fa fa-th-list fa-inverse fa-stack-1x"></i>
+                            <i class="fa fa-shopping-cart fa-inverse fa-stack-1x"></i>
                         </span>
                         <span class="text">{{{ Lang::get('mobileci.tenant.see_tenants') }}}</span>
                     </a>
@@ -45,7 +49,7 @@
                     <a class="disabled">
                         <span class="fa fa-stack icon">
                             <i class="fa fa-circle fa-stack-2x"></i>
-                            <i class="fa fa-th-list fa-inverse fa-stack-1x"></i>
+                            <i class="fa fa-shopping-cart fa-inverse fa-stack-1x"></i>
                         </span>
                         <span class="text">{{{ Lang::get('mobileci.tenant.see_tenants') }}}</span>
                     </a>

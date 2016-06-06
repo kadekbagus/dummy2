@@ -223,6 +223,569 @@ class MobileCIAPIController extends BaseCIController
         $after_logout_url = Config::get('orbit.shop.after_logout_url', '/customer');
         return \Redirect::to($after_logout_url);
     }
+    
+    private function prepareWidgetTenantData($widget, $user, $retailer, $mallid, $now, $urlblock)
+    {
+        // get all tenant count
+        $tenantsCount = Tenant::active()
+            ->where('parent_id', $retailer->merchant_id)
+            ->count();
+
+        // get all new tenant after new_date
+        $newTenantsCount = Tenant::active()
+            ->where('parent_id', $retailer->merchant_id)
+            ->whereNotIn('merchants.merchant_id', function($q) use ($user, $retailer) {
+                $q->select('item_id')
+                    ->from('viewed_item_user')
+                    ->where('user_id', '=', $user->user_id)
+                    ->where('mall_id', '=', $retailer->merchant_id)
+                    ->where('item_type', '=', 'tenant')
+                    ->get();
+            })
+            ->count();
+
+        $widget->image = 'mobile-ci/images/default_tenants_directory.png';
+
+        foreach ($widget->media as $media) {
+            if ($media->media_name_long === 'home_widget_orig') {
+                if (empty($media->path)) {
+                    $widget->image = 'mobile-ci/images/default_tenants_directory.png';
+                } else {
+                    $widget->image = $media->path;
+                }
+            }
+        }
+
+        $widget->item_count = $tenantsCount;
+        $widget->new_item_count = $newTenantsCount > 9 ? '9+' : $newTenantsCount;
+        $widget->display_title = Lang::get('mobileci.widgets.tenant');
+        if ($widget->item_count > 1) {
+            $widget->display_sub_title = Lang::get('mobileci.widgets.tenants');
+        } else {
+            $widget->display_sub_title = Lang::get('mobileci.widgets.tenants_single');
+        }
+        $widget->url = $urlblock->blockedRoute('ci-tenant-list');
+        $widget->redirect_url = URL::route('ci-tenant-list');
+        
+        return $widget;
+    }
+    
+    private function prepareWidgetServiceData($widget, $user, $retailer, $mallid, $now, $urlblock)
+    {
+        // get all tenant count
+        $serviceCount = \TenantStoreAndService::where('status', 'active')
+            ->where('object_type', 'service')
+            ->where('parent_id', $retailer->merchant_id)
+            ->count();
+
+        // get all new tenant after new_date
+        $newServiceCount = \TenantStoreAndService::where('status', 'active')
+            ->where('object_type', 'service')
+            ->where('parent_id', $retailer->merchant_id)
+            ->whereNotIn('merchants.merchant_id', function($q) use ($user, $retailer) {
+                $q->select('item_id')
+                    ->from('viewed_item_user')
+                    ->where('user_id', '=', $user->user_id)
+                    ->where('mall_id', '=', $retailer->merchant_id)
+                    ->where('item_type', '=', 'service')
+                    ->get();
+            })
+            ->count();
+
+        $widget->image = 'mobile-ci/images/default_services_directory.png';
+
+        foreach ($widget->media as $media) {
+            if ($media->media_name_long === 'home_widget_orig') {
+                if (empty($media->path)) {
+                    $widget->image = 'mobile-ci/images/default_services_directory.png';
+                } else {
+                    $widget->image = $media->path;
+                }
+            }
+        }
+
+        $widget->item_count = $serviceCount;
+        $widget->new_item_count = $newServiceCount > 9 ? '9+' : $newServiceCount;
+        $widget->display_title = Lang::get('mobileci.widgets.service');
+        if ($widget->item_count > 1) {
+            $widget->display_sub_title = Lang::get('mobileci.widgets.services');
+        } else {
+            $widget->display_sub_title = Lang::get('mobileci.widgets.services_single');
+        }
+        $widget->url = $urlblock->blockedRoute('ci-service-list');
+        $widget->redirect_url = URL::route('ci-service-list');
+
+        return $widget;        
+    }
+    
+    private function prepareWidgetPromotionData($widget, $user, $retailer, $mallid, $now, $urlblock)
+    {
+        $userAge = 0;
+        if ($user->userDetail->birthdate !== '0000-00-00' && $user->userDetail->birthdate !== null) {
+            $userAge =  $this->calculateAge($user->userDetail->birthdate); // 27
+        }
+
+        $userGender = 'U'; // default is Unknown
+        if ($user->userDetail->gender !== '' && $user->userDetail->gender !== null) {
+            $userGender =  $user->userDetail->gender;
+        }
+
+        // get all news count filter by age range and gender
+        $promotionsCount = \News::select('news.news_id')->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'news.news_id')
+                        ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
+                        ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
+                        ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
+                        ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
+                        ->where(function ($q) use ($mallid) {
+                            $q->where('merchants.parent_id', '=', $mallid)
+                              ->orWhere('merchants.merchant_id', '=', $mallid);
+                        });
+
+        if ($userGender !== null) {
+            $promotionsCount = $promotionsCount->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
+        }
+
+        if ($userAge !== null) {
+            if ($userAge === 0){
+                $promotionsCount = $promotionsCount->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+            } else {
+                if ($userAge >= 55) {
+                    $promotionsCount = $promotionsCount->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
+                } else {
+                    $promotionsCount = $promotionsCount->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                }
+            }
+        }
+
+        $promotionsCount->where('news.status', '=', 'active')
+                    ->where('news.object_type', 'promotion')
+                    ->groupBy('news.news_id')
+                    ->whereRaw("? between begin_date and end_date", [$now]);
+        $promotionsCount = RecordCounter::create($promotionsCount)->count();
+
+        // get all new news after new_date filter by age range and gender
+        $newPromotionsCount = \News::select('news.news_id')->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'news.news_id')
+                        ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
+                        ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
+                        ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
+                        ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
+                        ->where(function ($q) use ($mallid) {
+                            $q->where('merchants.parent_id', '=', $mallid)
+                              ->orWhere('merchants.merchant_id', '=', $mallid);
+                        })
+                        ->whereNotIn('news.news_id', function($q) use ($user, $retailer) {
+                            $q->select('item_id')
+                                ->from('viewed_item_user')
+                                ->where('user_id', '=', $user->user_id)
+                                ->where('item_type', '=', 'promotion')
+                                ->get();
+                        });
+
+        if ($userGender !== null) {
+            $newPromotionsCount = $newPromotionsCount->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
+        }
+
+        if ($userAge !== null) {
+            if ($userAge === 0){
+                $newPromotionsCount = $newPromotionsCount->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+            } else {
+                if ($userAge >= 55) {
+                    $newPromotionsCount = $newPromotionsCount->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
+                } else {
+                    $newPromotionsCount = $newPromotionsCount->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                }
+            }
+        }
+
+        $newPromotionsCount->where('news.status', '=', 'active')
+                    ->where('news.object_type', 'promotion')
+                    ->whereRaw("? between begin_date and end_date", [$now])
+                    ->groupBy('news.news_id');
+        $newPromotionsCount = RecordCounter::create($newPromotionsCount)->count();
+
+        $widget->image = 'mobile-ci/images/default_promotion.png';
+
+        foreach ($widget->media as $media) {
+            if ($media->media_name_long === 'home_widget_orig') {
+                if (empty($media->path)) {
+                    $widget->image = 'mobile-ci/images/default_promotion.png';
+                } else {
+                    $widget->image = $media->path;
+                }
+            }
+        }
+
+        $widget->item_count = $promotionsCount;
+        $widget->new_item_count = $newPromotionsCount > 9 ? '9+' : $newPromotionsCount;
+        $widget->display_title = Lang::get('mobileci.widgets.promotion');
+        if ($widget->item_count > 1) {
+            $widget->display_sub_title = Lang::get('mobileci.widgets.promotions');
+        } else {
+            $widget->display_sub_title = Lang::get('mobileci.widgets.promotions_single');
+        }
+        $widget->url = $urlblock->blockedRoute('ci-promotion-list');
+        $widget->redirect_url = URL::route('ci-promotion-list');
+        
+        return $widget;    
+    }
+    
+    private function prepareWidgetNewsData($widget, $user, $retailer, $mallid, $now, $urlblock)
+    {
+        $userAge = 0;
+        if ($user->userDetail->birthdate !== '0000-00-00' && $user->userDetail->birthdate !== null) {
+            $userAge =  $this->calculateAge($user->userDetail->birthdate); // 27
+        }
+
+        $userGender = 'U'; // default is Unknown
+        if ($user->userDetail->gender !== '' && $user->userDetail->gender !== null) {
+            $userGender =  $user->userDetail->gender;
+        }
+
+        // get all news count filter by age range and gender
+        $newsCount = \News::select('news.news_id')->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'news.news_id')
+                        ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
+                        ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
+                        ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
+                        ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
+                        ->where(function ($q) use ($mallid) {
+                            $q->where('merchants.parent_id', '=', $mallid)
+                              ->orWhere('merchants.merchant_id', '=', $mallid);
+                        });
+
+        if ($userGender !== null) {
+            $newsCount = $newsCount->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
+        }
+
+        if ($userAge !== null) {
+            if ($userAge === 0){
+                $newsCount = $newsCount->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+            } else {
+                if ($userAge >= 55) {
+                    $newsCount = $newsCount->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
+                } else {
+                    $newsCount = $newsCount->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                }
+            }
+        }
+
+        $newsCount->where('news.status', '=', 'active')
+                    ->where('news.object_type', 'news')
+                    ->where('news.status', 'active')
+                    ->whereRaw("? between begin_date and end_date", [$now])
+                    ->groupBy('news.news_id');
+        $newsCount = RecordCounter::create($newsCount)->count();
+
+        // get all new news after new_date filter by age range and gender
+        $newNewsCount = \News::select('news.news_id')->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'news.news_id')
+                        ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
+                        ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
+                        ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
+                        ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
+                        ->where(function ($q) use ($mallid) {
+                            $q->where('merchants.parent_id', '=', $mallid)
+                              ->orWhere('merchants.merchant_id', '=', $mallid);
+                        })
+                        ->whereNotIn('news.news_id', function($q) use ($user, $retailer) {
+                            $q->select('item_id')
+                                ->from('viewed_item_user')
+                                ->where('user_id', '=', $user->user_id)
+                                ->where('item_type', '=', 'news')
+                                ->get();
+                        });
+
+        if ($userGender !== null) {
+            $newNewsCount = $newNewsCount->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
+        }
+
+        if ($userAge !== null) {
+            if ($userAge === 0){
+                $newNewsCount = $newNewsCount->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+            } else {
+                if ($userAge >= 55) {
+                    $newNewsCount = $newNewsCount->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
+                } else {
+                    $newNewsCount = $newNewsCount->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                }
+            }
+        }
+
+        $newNewsCount->where('news.status', '=', 'active')
+                    ->where('news.object_type', 'news')
+                    ->whereRaw("? between begin_date and end_date", [$now])
+                    ->groupBy('news.news_id');
+
+        $newNewsCount = RecordCounter::create($newNewsCount)->count();
+
+        $widget->image = 'mobile-ci/images/default_news.png';
+
+        foreach ($widget->media as $media) {
+            if ($media->media_name_long === 'home_widget_orig') {
+                if (empty($media->path)) {
+                    $widget->image = 'mobile-ci/images/default_news.png';
+                } else {
+                    $widget->image = $media->path;
+                }
+            }
+        }
+
+        $widget->item_count = $newsCount;
+        $widget->new_item_count = $newNewsCount > 9 ? '9+' : $newNewsCount;
+        $widget->display_title = Lang::get('mobileci.widgets.news');
+        if ($widget->item_count > 1) {
+            $widget->display_sub_title = Lang::get('mobileci.widgets.newss');
+        } else {
+            $widget->display_sub_title = Lang::get('mobileci.widgets.newss_single');
+        }
+        $widget->url = $urlblock->blockedRoute('ci-news-list');
+        $widget->redirect_url = URL::route('ci-news-list');
+            
+        return $widget;    
+    }
+    
+    private function prepareWidgetCouponData($widget, $user, $retailer, $mallid, $now, $urlblock)
+    {
+        $userAge = 0;
+        if ($user->userDetail->birthdate !== '0000-00-00' && $user->userDetail->birthdate !== null) {
+            $userAge =  $this->calculateAge($user->userDetail->birthdate); // 27
+        }
+
+        $userGender = 'U'; // default is Unknown
+        if ($user->userDetail->gender !== '' && $user->userDetail->gender !== null) {
+            $userGender =  $user->userDetail->gender;
+        }
+
+        $couponsCount = Coupon::select('promotions.promotion_id')->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'promotions.promotion_id')
+                        ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'promotions.promotion_id')
+                        ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
+                        ->leftJoin('promotion_retailer_redeem', 'promotion_retailer_redeem.promotion_id', '=', 'promotions.promotion_id')
+                        ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer_redeem.retailer_id')
+                        ->where(function ($q) use ($mallid) {
+                            $q->where(function ($q2) use ($mallid) {
+                                $q2->where('merchants.parent_id', '=', $mallid)
+                                    ->orWhere('merchants.merchant_id', '=', $mallid);
+                            });
+                            $q->orWhere(function ($q2) use ($mallid) {
+                                $q2->whereHas('employee', function ($q3) use ($mallid) {
+                                    $q3->whereHas('employee', function ($q4) use ($mallid) {
+                                        $q4->whereHas('retailers', function ($q5) use ($mallid) {
+                                            $q5->where('merchants.merchant_id', $mallid);
+                                        });
+                                    });
+                                });
+                            });
+                        });
+
+        if ($userGender !== null) {
+            $couponsCount = $couponsCount->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
+        }
+
+        if ($userAge !== null) {
+            if ($userAge === 0){
+                $couponsCount = $couponsCount->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+            } else {
+                if ($userAge >= 55) {
+                    $couponsCount = $couponsCount->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
+                } else {
+                    $couponsCount = $couponsCount->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                }
+            }
+        }
+
+        $couponsCount->join('promotion_rules', function($join) {
+                $join->on('promotions.promotion_id', '=', 'promotion_rules.promotion_id')
+                    ->where('promotions.is_coupon', '=', 'Y');
+            })->join('issued_coupons', function($join) {
+                $join->on('promotions.promotion_id', '=', 'issued_coupons.promotion_id')
+                    ->where('issued_coupons.status', '=', 'active');
+            })
+            ->where('promotions.status', '=', 'active')
+            ->where('promotions.coupon_validity_in_date', '>=', $now)
+            ->where('issued_coupons.user_id', $user->user_id)
+            ->groupBy('promotions.promotion_id');
+        $couponsCount = RecordCounter::create($couponsCount)->count();
+
+        $newCouponsCount = Coupon::select('promotions.promotion_id')->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'promotions.promotion_id')
+                        ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'promotions.promotion_id')
+                        ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id');
+
+        if ($userGender !== null) {
+            $newCouponsCount = $newCouponsCount->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
+        }
+
+        if ($userAge !== null) {
+            if ($userAge === 0){
+                $newCouponsCount = $newCouponsCount->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+            } else {
+                if ($userAge >= 55) {
+                    $newCouponsCount = $newCouponsCount->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
+                } else {
+                    $newCouponsCount = $newCouponsCount->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                }
+            }
+        }
+        $prefix = DB::getTablePrefix();
+        $merchant_id = $retailer->merchant_id;
+        $user_id = $user->user_id;
+        $quote = function ($arg) {
+            return DB::connection()->getPdo()->quote($arg);
+        };
+        $newCouponsCount->join('promotion_rules', function($join) {
+                $join->on('promotions.promotion_id', '=', 'promotion_rules.promotion_id')
+                    ->where('promotions.is_coupon', '=', 'Y');
+            })->join('issued_coupons', function($join) {
+                $join->on('promotions.promotion_id', '=', 'issued_coupons.promotion_id')
+                    ->where('issued_coupons.status', '=', 'active');
+            })
+            ->whereRaw("
+                {$prefix}promotions.promotion_id NOT IN (
+                SELECT item_id FROM {$prefix}viewed_item_user
+                WHERE user_id = {$quote($user_id)}
+                AND item_type = 'coupon'
+            )")
+            ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
+            ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
+            ->where(function ($q) use ($mallid) {
+                $q->where(function ($q2) use ($mallid) {
+                    $q2->where('merchants.parent_id', '=', $mallid)
+                        ->orWhere('merchants.merchant_id', '=', $mallid);
+                });
+                $q->orWhere(function ($q2) use ($mallid) {
+                    $q2->whereHas('employee', function ($q3) use ($mallid) {
+                        $q3->whereHas('employee', function ($q4) use ($mallid) {
+                            $q4->whereHas('retailers', function ($q5) use ($mallid) {
+                                $q5->where('merchants.merchant_id', $mallid);
+                            });
+                        });
+                    });
+                });
+            })
+            ->where('promotions.status', '=', 'active')
+            ->where('promotions.coupon_validity_in_date', '>=', $now)
+            ->where('issued_coupons.user_id', $user->user_id)
+            ->groupBy('promotions.promotion_id');
+        $newCouponsCount = RecordCounter::create($newCouponsCount)->count();
+
+        $widget->image = 'mobile-ci/images/default_coupon.png';
+
+        foreach ($widget->media as $media) {
+            if ($media->media_name_long === 'home_widget_orig') {
+                if (empty($media->path)) {
+                    $widget->image = 'mobile-ci/images/default_coupon.png';
+                } else {
+                    $widget->image = $media->path;
+                }
+            }
+        }
+
+        $widget->item_count = $couponsCount;
+        $widget->new_item_count = $newCouponsCount > 9 ? '9+' : $newCouponsCount;
+        $widget->display_title = Lang::get('mobileci.widgets.coupon');
+        if ($widget->item_count > 1) {
+            $widget->display_sub_title = Lang::get('mobileci.widgets.coupons');
+        } else {
+            $widget->display_sub_title = Lang::get('mobileci.widgets.coupons_single');
+        }
+        $widget->url = $urlblock->blockedRoute('ci-coupon-list');
+        $widget->redirect_url = URL::route('ci-coupon-list');
+        
+        return $widget;    
+    }
+    
+    private function prepareWidgetLuckyDrawData($widget, $user, $retailer, $mallid, $now, $urlblock)
+    {
+        $luckydrawsCount = LuckyDraw::active()
+            ->where('mall_id', $retailer->merchant_id)
+            ->whereRaw("? between start_date and grace_period_date", [$now])
+            ->count();
+
+        $newLuckydrawsCount = LuckyDraw::active()
+            ->where('mall_id', $retailer->merchant_id)
+            ->whereRaw("? between start_date and grace_period_date", [$now])
+            ->whereNotIn('lucky_draws.lucky_draw_id', function($q) use ($user, $retailer) {
+                $q->select('item_id')
+                    ->from('viewed_item_user')
+                    ->where('user_id', '=', $user->user_id)
+                    ->where('mall_id', '=', $retailer->merchant_id)
+                    ->where('item_type', '=', 'lucky_draw')
+                    ->get();
+            })
+            ->count();
+
+        $widget->image = 'mobile-ci/images/default_lucky_number.png';
+
+        foreach ($widget->media as $media) {
+            if ($media->media_name_long === 'home_widget_orig') {
+                if (empty($media->path)) {
+                    $widget->image = 'mobile-ci/images/default_lucky_number.png';
+                } else {
+                    $widget->image = $media->path;
+                }
+            }
+        }
+
+        $widget->item_count = $luckydrawsCount;
+        $widget->new_item_count = $newLuckydrawsCount > 9 ? '9+' : $newLuckydrawsCount;
+        $widget->display_title = Lang::get('mobileci.widgets.lucky_draw');
+        if ($widget->item_count > 1) {
+            $widget->display_sub_title = Lang::get('mobileci.widgets.lucky_draws');
+        } else {
+            $widget->display_sub_title = Lang::get('mobileci.widgets.lucky_draws_single');
+        }
+        $widget->url = $urlblock->blockedRoute('ci-luckydraw-list');
+        $widget->redirect_url = URL::route('ci-luckydraw-list');
+        
+        return $widget;    
+    }
+    
+    private function prepareWidgetFreeWifiData($widget, $user, $retailer, $mallid, $now, $urlblock)
+    {
+        $widget->image = 'mobile-ci/images/default_free_wifi_directory.png';
+
+        foreach ($widget->media as $media) {
+            if ($media->media_name_long === 'home_widget_orig') {
+                if (empty($media->path)) {
+                    $widget->image = 'mobile-ci/images/default_free_wifi_directory.png';
+                } else {
+                    $widget->image = $media->path;
+                }
+            }
+        }
+
+        $widget->display_title = Lang::get('mobileci.widgets.free_wifi');
+        //$widget->display_sub_title = Lang::get('mobileci.widgets.free_wifi');
+        $widget->url = $urlblock->blockedRoute('captive-request-internet');
+        $widget->redirect_url = URL::route('captive-request-internet');
+        
+        return $widget;    
+    }
+    
+    private function prepareWidgetData($widget, $user, $retailer, $mallid, $now, $urlblock)
+    {
+        switch ($widget->widget_type) {
+            case 'tenant':
+                return $this->prepareWidgetTenantData($widget, $user, $retailer, $mallid, $now, $urlblock);
+                break;
+            case 'service':
+                return $this->prepareWidgetServiceData($widget, $user, $retailer, $mallid, $now, $urlblock);
+                break;
+            case 'promotion':
+                return $this->prepareWidgetPromotionData($widget, $user, $retailer, $mallid, $now, $urlblock);
+                break;
+            case 'news':
+                return $this->prepareWidgetNewsData($widget, $user, $retailer, $mallid, $now, $urlblock);
+                break;
+            case 'coupon':
+                return $this->prepareWidgetCouponData($widget, $user, $retailer, $mallid, $now, $urlblock);
+                break;
+            case 'lucky_draw':
+                return $this->prepareWidgetLuckyDrawData($widget, $user, $retailer, $mallid, $now, $urlblock);
+                break;
+            case 'free_wifi':
+                return $this->prepareWidgetFreeWifiData($widget, $user, $retailer, $mallid, $now, $urlblock);
+                break;            
+        }
+        return $widget;
+    }
 
     /**
      * GET - Home page
@@ -291,7 +854,7 @@ class MobileCIAPIController extends BaseCIController
                                 // On
                                 DB::raw('os.setting_name'), '=', DB::raw("CONCAT('enable_', {$prefix}widgets.widget_type, '_widget')"))
                             ->join('widget_retailer', 'widget_retailer.widget_id', '=', 'widgets.widget_id')
-                            ->where('widgets.status', '!=', 'deleted')
+                            ->where('widgets.status', '=', 'active')
                             ->where('widgets.merchant_id', '=', $merchantId)
                             ->whereRaw("(CASE WHEN os.setting_id IS NULL THEN 'true' ELSE os.setting_value END) = 'true'")
                             ->groupBy('widgets.widget_type')
@@ -299,12 +862,20 @@ class MobileCIAPIController extends BaseCIController
                             ->get();
 
             if (CaptivePortalController::isFromCaptive()) {
+                //not used anymore because it is shown
+                //based on availability of free wifi in a mall
                 // Inject number of widget on-the-fly
-                $captiveWidget = CaptivePortalController::generateDummyWidget($retailer, $urlblock);
-                $widgets->push($captiveWidget);
+                //$captiveWidget = CaptivePortalController::generateDummyWidget($retailer, $urlblock);
+                //$widgets->push($captiveWidget);
 
                 // Push the from_captive cookie
                 CaptivePortalController::setCookieForCaptive();
+
+                $from_captive_flag = OrbitInput::get('from_captive', 'no');
+
+                if ($from_captive_flag === 'yes') {
+                    $this->setCookieFromWifi();
+                }
             }
 
             $now = Carbon::now($retailer->timezone->timezone_name);
@@ -312,497 +883,7 @@ class MobileCIAPIController extends BaseCIController
             $mallid = $retailer->merchant_id;
 
             foreach ($widgets as $widget) {
-                if ($widget->widget_type == 'tenant') {
-                    // get all tenant count
-                    $tenantsCount = Tenant::active()
-                        ->where('parent_id', $retailer->merchant_id)
-                        ->count();
-
-                    // get all new tenant after new_date
-                    $newTenantsCount = Tenant::active()
-                        ->where('parent_id', $retailer->merchant_id)
-                        ->whereNotIn('merchants.merchant_id', function($q) use ($user, $retailer) {
-                            $q->select('item_id')
-                                ->from('viewed_item_user')
-                                ->where('user_id', '=', $user->user_id)
-                                ->where('mall_id', '=', $retailer->merchant_id)
-                                ->where('item_type', '=', 'tenant')
-                                ->get();
-                        })
-                        ->count();
-
-                    $widget->image = 'mobile-ci/images/default_tenants_directory.png';
-
-                    foreach ($widget->media as $media) {
-                        if ($media->media_name_long === 'home_widget_orig') {
-                            if (empty($media->path)) {
-                                $widget->image = 'mobile-ci/images/default_tenants_directory.png';
-                            } else {
-                                $widget->image = $media->path;
-                            }
-                        }
-                    }
-
-                    $widget->item_count = $tenantsCount;
-                    $widget->new_item_count = $newTenantsCount > 9 ? '9+' : $newTenantsCount;
-                    $widget->display_title = Lang::get('mobileci.widgets.tenant');
-                    if ($widget->item_count > 1) {
-                        $widget->display_sub_title = Lang::get('mobileci.widgets.tenants');
-                    } else {
-                        $widget->display_sub_title = Lang::get('mobileci.widgets.tenants_single');
-                    }
-                    $widget->url = $urlblock->blockedRoute('ci-tenant-list');
-                    $widget->redirect_url = URL::route('ci-tenant-list');
-                }
-                if ($widget->widget_type == 'service') {
-                    // get all tenant count
-                    $serviceCount = \TenantStoreAndService::where('status', 'active')
-                        ->where('object_type', 'service')
-                        ->where('parent_id', $retailer->merchant_id)
-                        ->count();
-
-                    // get all new tenant after new_date
-                    $newServiceCount = \TenantStoreAndService::where('status', 'active')
-                        ->where('object_type', 'service')
-                        ->where('parent_id', $retailer->merchant_id)
-                        ->whereNotIn('merchants.merchant_id', function($q) use ($user, $retailer) {
-                            $q->select('item_id')
-                                ->from('viewed_item_user')
-                                ->where('user_id', '=', $user->user_id)
-                                ->where('mall_id', '=', $retailer->merchant_id)
-                                ->where('item_type', '=', 'service')
-                                ->get();
-                        })
-                        ->count();
-
-                    $widget->image = 'mobile-ci/images/default_services_directory.png';
-
-                    foreach ($widget->media as $media) {
-                        if ($media->media_name_long === 'home_widget_orig') {
-                            if (empty($media->path)) {
-                                $widget->image = 'mobile-ci/images/default_services_directory.png';
-                            } else {
-                                $widget->image = $media->path;
-                            }
-                        }
-                    }
-
-                    $widget->item_count = $serviceCount;
-                    $widget->new_item_count = $newServiceCount > 9 ? '9+' : $newServiceCount;
-                    $widget->display_title = Lang::get('mobileci.widgets.service');
-                    if ($widget->item_count > 1) {
-                        $widget->display_sub_title = Lang::get('mobileci.widgets.services');
-                    } else {
-                        $widget->display_sub_title = Lang::get('mobileci.widgets.services_single');
-                    }
-                    $widget->url = $urlblock->blockedRoute('ci-service-list');
-                    $widget->redirect_url = URL::route('ci-service-list');
-                }
-                if ($widget->widget_type == 'promotion') {
-
-                    $userAge = 0;
-                    if ($user->userDetail->birthdate !== '0000-00-00' && $user->userDetail->birthdate !== null) {
-                        $userAge =  $this->calculateAge($user->userDetail->birthdate); // 27
-                    }
-
-                    $userGender = 'U'; // default is Unknown
-                    if ($user->userDetail->gender !== '' && $user->userDetail->gender !== null) {
-                        $userGender =  $user->userDetail->gender;
-                    }
-
-                    // get all news count filter by age range and gender
-                    $promotionsCount = \News::select('news.news_id')->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'news.news_id')
-                                    ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
-                                    ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
-                                    ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
-                                    ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
-                                    ->where(function ($q) use ($mallid) {
-                                        $q->where('merchants.parent_id', '=', $mallid)
-                                          ->orWhere('merchants.merchant_id', '=', $mallid);
-                                    });
-
-                    if ($userGender !== null) {
-                        $promotionsCount = $promotionsCount->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
-                    }
-
-                    if ($userAge !== null) {
-                        if ($userAge === 0){
-                            $promotionsCount = $promotionsCount->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
-                        } else {
-                            if ($userAge >= 55) {
-                                $promotionsCount = $promotionsCount->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
-                            } else {
-                                $promotionsCount = $promotionsCount->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
-                            }
-                        }
-                    }
-
-                    $promotionsCount->where('news.status', '=', 'active')
-                                ->where('news.object_type', 'promotion')
-                                ->groupBy('news.news_id')
-                                ->whereRaw("? between begin_date and end_date", [$now]);
-                    $promotionsCount = RecordCounter::create($promotionsCount)->count();
-
-                    // get all new news after new_date filter by age range and gender
-                    $newPromotionsCount = \News::select('news.news_id')->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'news.news_id')
-                                    ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
-                                    ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
-                                    ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
-                                    ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
-                                    ->where(function ($q) use ($mallid) {
-                                        $q->where('merchants.parent_id', '=', $mallid)
-                                          ->orWhere('merchants.merchant_id', '=', $mallid);
-                                    })
-                                    ->whereNotIn('news.news_id', function($q) use ($user, $retailer) {
-                                        $q->select('item_id')
-                                            ->from('viewed_item_user')
-                                            ->where('user_id', '=', $user->user_id)
-                                            ->where('item_type', '=', 'promotion')
-                                            ->get();
-                                    });
-
-                    if ($userGender !== null) {
-                        $newPromotionsCount = $newPromotionsCount->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
-                    }
-
-                    if ($userAge !== null) {
-                        if ($userAge === 0){
-                            $newPromotionsCount = $newPromotionsCount->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
-                        } else {
-                            if ($userAge >= 55) {
-                                $newPromotionsCount = $newPromotionsCount->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
-                            } else {
-                                $newPromotionsCount = $newPromotionsCount->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
-                            }
-                        }
-                    }
-
-                    $newPromotionsCount->where('news.status', '=', 'active')
-                                ->where('news.object_type', 'promotion')
-                                ->whereRaw("? between begin_date and end_date", [$now])
-                                ->groupBy('news.news_id');
-                    $newPromotionsCount = RecordCounter::create($newPromotionsCount)->count();
-
-                    $widget->image = 'mobile-ci/images/default_promotion.png';
-
-                    foreach ($widget->media as $media) {
-                        if ($media->media_name_long === 'home_widget_orig') {
-                            if (empty($media->path)) {
-                                $widget->image = 'mobile-ci/images/default_promotion.png';
-                            } else {
-                                $widget->image = $media->path;
-                            }
-                        }
-                    }
-
-                    $widget->item_count = $promotionsCount;
-                    $widget->new_item_count = $newPromotionsCount > 9 ? '9+' : $newPromotionsCount;
-                    $widget->display_title = Lang::get('mobileci.widgets.promotion');
-                    if ($widget->item_count > 1) {
-                        $widget->display_sub_title = Lang::get('mobileci.widgets.promotions');
-                    } else {
-                        $widget->display_sub_title = Lang::get('mobileci.widgets.promotions_single');
-                    }
-                    $widget->url = $urlblock->blockedRoute('ci-promotion-list');
-                    $widget->redirect_url = URL::route('ci-promotion-list');
-                }
-                if ($widget->widget_type == 'news') {
-
-                    $userAge = 0;
-                    if ($user->userDetail->birthdate !== '0000-00-00' && $user->userDetail->birthdate !== null) {
-                        $userAge =  $this->calculateAge($user->userDetail->birthdate); // 27
-                    }
-
-                    $userGender = 'U'; // default is Unknown
-                    if ($user->userDetail->gender !== '' && $user->userDetail->gender !== null) {
-                        $userGender =  $user->userDetail->gender;
-                    }
-
-                    // get all news count filter by age range and gender
-                    $newsCount = \News::select('news.news_id')->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'news.news_id')
-                                    ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
-                                    ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
-                                    ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
-                                    ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
-                                    ->where(function ($q) use ($mallid) {
-                                        $q->where('merchants.parent_id', '=', $mallid)
-                                          ->orWhere('merchants.merchant_id', '=', $mallid);
-                                    });
-
-                    if ($userGender !== null) {
-                        $newsCount = $newsCount->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
-                    }
-
-                    if ($userAge !== null) {
-                        if ($userAge === 0){
-                            $newsCount = $newsCount->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
-                        } else {
-                            if ($userAge >= 55) {
-                                $newsCount = $newsCount->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
-                            } else {
-                                $newsCount = $newsCount->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
-                            }
-                        }
-                    }
-
-                    $newsCount->where('news.status', '=', 'active')
-                                ->where('news.object_type', 'news')
-                                ->where('news.status', 'active')
-                                ->whereRaw("? between begin_date and end_date", [$now])
-                                ->groupBy('news.news_id');
-                    $newsCount = RecordCounter::create($newsCount)->count();
-
-                    // get all new news after new_date filter by age range and gender
-                    $newNewsCount = \News::select('news.news_id')->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'news.news_id')
-                                    ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
-                                    ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
-                                    ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
-                                    ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
-                                    ->where(function ($q) use ($mallid) {
-                                        $q->where('merchants.parent_id', '=', $mallid)
-                                          ->orWhere('merchants.merchant_id', '=', $mallid);
-                                    })
-                                    ->whereNotIn('news.news_id', function($q) use ($user, $retailer) {
-                                        $q->select('item_id')
-                                            ->from('viewed_item_user')
-                                            ->where('user_id', '=', $user->user_id)
-                                            ->where('item_type', '=', 'news')
-                                            ->get();
-                                    });
-
-                    if ($userGender !== null) {
-                        $newNewsCount = $newNewsCount->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
-                    }
-
-                    if ($userAge !== null) {
-                        if ($userAge === 0){
-                            $newNewsCount = $newNewsCount->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
-                        } else {
-                            if ($userAge >= 55) {
-                                $newNewsCount = $newNewsCount->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
-                            } else {
-                                $newNewsCount = $newNewsCount->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
-                            }
-                        }
-                    }
-
-                    $newNewsCount->where('news.status', '=', 'active')
-                                ->where('news.object_type', 'news')
-                                ->whereRaw("? between begin_date and end_date", [$now])
-                                ->groupBy('news.news_id');
-
-                    $newNewsCount = RecordCounter::create($newNewsCount)->count();
-
-                    $widget->image = 'mobile-ci/images/default_news.png';
-
-                    foreach ($widget->media as $media) {
-                        if ($media->media_name_long === 'home_widget_orig') {
-                            if (empty($media->path)) {
-                                $widget->image = 'mobile-ci/images/default_news.png';
-                            } else {
-                                $widget->image = $media->path;
-                            }
-                        }
-                    }
-
-                    $widget->item_count = $newsCount;
-                    $widget->new_item_count = $newNewsCount > 9 ? '9+' : $newNewsCount;
-                    $widget->display_title = Lang::get('mobileci.widgets.news');
-                    if ($widget->item_count > 1) {
-                        $widget->display_sub_title = Lang::get('mobileci.widgets.newss');
-                    } else {
-                        $widget->display_sub_title = Lang::get('mobileci.widgets.newss_single');
-                    }
-                    $widget->url = $urlblock->blockedRoute('ci-news-list');
-                    $widget->redirect_url = URL::route('ci-news-list');
-                }
-                if ($widget->widget_type == 'coupon') {
-                    $userAge = 0;
-                    if ($user->userDetail->birthdate !== '0000-00-00' && $user->userDetail->birthdate !== null) {
-                        $userAge =  $this->calculateAge($user->userDetail->birthdate); // 27
-                    }
-
-                    $userGender = 'U'; // default is Unknown
-                    if ($user->userDetail->gender !== '' && $user->userDetail->gender !== null) {
-                        $userGender =  $user->userDetail->gender;
-                    }
-
-                    $couponsCount = Coupon::select('promotions.promotion_id')->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'promotions.promotion_id')
-                                    ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'promotions.promotion_id')
-                                    ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
-                                    ->leftJoin('promotion_retailer_redeem', 'promotion_retailer_redeem.promotion_id', '=', 'promotions.promotion_id')
-                                    ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer_redeem.retailer_id')
-                                    ->where(function ($q) use ($mallid) {
-                                        $q->where(function ($q2) use ($mallid) {
-                                            $q2->where('merchants.parent_id', '=', $mallid)
-                                                ->orWhere('merchants.merchant_id', '=', $mallid);
-                                        });
-                                        $q->orWhere(function ($q2) use ($mallid) {
-                                            $q2->whereHas('employee', function ($q3) use ($mallid) {
-                                                $q3->whereHas('employee', function ($q4) use ($mallid) {
-                                                    $q4->whereHas('retailers', function ($q5) use ($mallid) {
-                                                        $q5->where('merchants.merchant_id', $mallid);
-                                                    });
-                                                });
-                                            });
-                                        });
-                                    });
-
-                    if ($userGender !== null) {
-                        $couponsCount = $couponsCount->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
-                    }
-
-                    if ($userAge !== null) {
-                        if ($userAge === 0){
-                            $couponsCount = $couponsCount->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
-                        } else {
-                            if ($userAge >= 55) {
-                                $couponsCount = $couponsCount->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
-                            } else {
-                                $couponsCount = $couponsCount->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
-                            }
-                        }
-                    }
-
-                    $couponsCount->join('promotion_rules', function($join) {
-                            $join->on('promotions.promotion_id', '=', 'promotion_rules.promotion_id')
-                                ->where('promotions.is_coupon', '=', 'Y');
-                        })->join('issued_coupons', function($join) {
-                            $join->on('promotions.promotion_id', '=', 'issued_coupons.promotion_id')
-                                ->where('issued_coupons.status', '=', 'active');
-                        })
-                        ->where('promotions.status', '=', 'active')
-                        ->where('promotions.coupon_validity_in_date', '>=', $now)
-                        ->where('issued_coupons.user_id', $user->user_id)
-                        ->groupBy('promotions.promotion_id');
-                    $couponsCount = RecordCounter::create($couponsCount)->count();
-
-                    $newCouponsCount = Coupon::select('promotions.promotion_id')->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'promotions.promotion_id')
-                                    ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'promotions.promotion_id')
-                                    ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id');
-
-                    if ($userGender !== null) {
-                        $newCouponsCount = $newCouponsCount->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
-                    }
-
-                    if ($userAge !== null) {
-                        if ($userAge === 0){
-                            $newCouponsCount = $newCouponsCount->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
-                        } else {
-                            if ($userAge >= 55) {
-                                $newCouponsCount = $newCouponsCount->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
-                            } else {
-                                $newCouponsCount = $newCouponsCount->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
-                            }
-                        }
-                    }
-                    $prefix = DB::getTablePrefix();
-                    $merchant_id = $retailer->merchant_id;
-                    $user_id = $user->user_id;
-                    $quote = function ($arg) {
-                        return DB::connection()->getPdo()->quote($arg);
-                    };
-                    $newCouponsCount->join('promotion_rules', function($join) {
-                            $join->on('promotions.promotion_id', '=', 'promotion_rules.promotion_id')
-                                ->where('promotions.is_coupon', '=', 'Y');
-                        })->join('issued_coupons', function($join) {
-                            $join->on('promotions.promotion_id', '=', 'issued_coupons.promotion_id')
-                                ->where('issued_coupons.status', '=', 'active');
-                        })
-                        ->whereRaw("
-                            {$prefix}promotions.promotion_id NOT IN (
-                            SELECT item_id FROM {$prefix}viewed_item_user
-                            WHERE user_id = {$quote($user_id)}
-                            AND item_type = 'coupon'
-                        )")
-                        ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
-                        ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
-                        ->where(function ($q) use ($mallid) {
-                            $q->where(function ($q2) use ($mallid) {
-                                $q2->where('merchants.parent_id', '=', $mallid)
-                                    ->orWhere('merchants.merchant_id', '=', $mallid);
-                            });
-                            $q->orWhere(function ($q2) use ($mallid) {
-                                $q2->whereHas('employee', function ($q3) use ($mallid) {
-                                    $q3->whereHas('employee', function ($q4) use ($mallid) {
-                                        $q4->whereHas('retailers', function ($q5) use ($mallid) {
-                                            $q5->where('merchants.merchant_id', $mallid);
-                                        });
-                                    });
-                                });
-                            });
-                        })
-                        ->where('promotions.status', '=', 'active')
-                        ->where('promotions.coupon_validity_in_date', '>=', $now)
-                        ->where('issued_coupons.user_id', $user->user_id)
-                        ->groupBy('promotions.promotion_id');
-                    $newCouponsCount = RecordCounter::create($newCouponsCount)->count();
-
-                    $widget->image = 'mobile-ci/images/default_coupon.png';
-
-                    foreach ($widget->media as $media) {
-                        if ($media->media_name_long === 'home_widget_orig') {
-                            if (empty($media->path)) {
-                                $widget->image = 'mobile-ci/images/default_coupon.png';
-                            } else {
-                                $widget->image = $media->path;
-                            }
-                        }
-                    }
-
-                    $widget->item_count = $couponsCount;
-                    $widget->new_item_count = $newCouponsCount > 9 ? '9+' : $newCouponsCount;
-                    $widget->display_title = Lang::get('mobileci.widgets.coupon');
-                    if ($widget->item_count > 1) {
-                        $widget->display_sub_title = Lang::get('mobileci.widgets.coupons');
-                    } else {
-                        $widget->display_sub_title = Lang::get('mobileci.widgets.coupons_single');
-                    }
-                    $widget->url = $urlblock->blockedRoute('ci-coupon-list');
-                    $widget->redirect_url = URL::route('ci-coupon-list');
-                }
-                if ($widget->widget_type == 'lucky_draw') {
-                    $luckydrawsCount = LuckyDraw::active()
-                        ->where('mall_id', $retailer->merchant_id)
-                        ->whereRaw("? between start_date and grace_period_date", [$now])
-                        ->count();
-
-                    $newLuckydrawsCount = LuckyDraw::active()
-                        ->where('mall_id', $retailer->merchant_id)
-                        ->whereRaw("? between start_date and grace_period_date", [$now])
-                        ->whereNotIn('lucky_draws.lucky_draw_id', function($q) use ($user, $retailer) {
-                            $q->select('item_id')
-                                ->from('viewed_item_user')
-                                ->where('user_id', '=', $user->user_id)
-                                ->where('mall_id', '=', $retailer->merchant_id)
-                                ->where('item_type', '=', 'lucky_draw')
-                                ->get();
-                        })
-                        ->count();
-
-                    $widget->image = 'mobile-ci/images/default_lucky_number.png';
-
-                    foreach ($widget->media as $media) {
-                        if ($media->media_name_long === 'home_widget_orig') {
-                            if (empty($media->path)) {
-                                $widget->image = 'mobile-ci/images/default_lucky_number.png';
-                            } else {
-                                $widget->image = $media->path;
-                            }
-                        }
-                    }
-
-                    $widget->item_count = $luckydrawsCount;
-                    $widget->new_item_count = $newLuckydrawsCount > 9 ? '9+' : $newLuckydrawsCount;
-                    $widget->display_title = Lang::get('mobileci.widgets.lucky_draw');
-                    if ($widget->item_count > 1) {
-                        $widget->display_sub_title = Lang::get('mobileci.widgets.lucky_draws');
-                    } else {
-                        $widget->display_sub_title = Lang::get('mobileci.widgets.lucky_draws_single');
-                    }
-                    $widget->url = $urlblock->blockedRoute('ci-luckydraw-list');
-                    $widget->redirect_url = URL::route('ci-luckydraw-list');
-                }
+                $widget = $this->prepareWidgetData($widget, $user, $retailer, $mallid, $now, $urlblock);
             }
 
             $languages = $this->getListLanguages($retailer);
@@ -10390,5 +10471,16 @@ class MobileCIAPIController extends BaseCIController
     public function getOrbitSessionQueryStringName()
     {
         return Config::get('orbit.session.session_origin.query_string.name');
+    }
+
+    public function setCookieFromWifi()
+    {
+        if (! isset($_COOKIE['from_wifi'])) {
+            $domain = Config::get('orbit.captive.from_wifi.domain', NULL);
+            $path = Config::get('orbit.captive.from_wifi.path', '/');
+            $expire = time() + Config::get('orbit.captive.from_wifi.expire', 60); // default expired if doesnt exist is 60 second (1 minute)
+
+            setcookie(Config::get('orbit.captive.from_wifi.name', 'from_wifi'), 'Y', $expire, $path, $domain, FALSE);
+        }
     }
 }

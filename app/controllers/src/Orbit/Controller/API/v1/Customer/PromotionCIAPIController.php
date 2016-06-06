@@ -96,6 +96,7 @@ class PromotionCIAPIController extends BaseAPIController
 
             $mallTime = Carbon::now($mall->timezone->timezone_name);
 
+
             $promotions = News::leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'news.news_id')
                 ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
                 ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
@@ -420,11 +421,15 @@ class PromotionCIAPIController extends BaseAPIController
                 $objectType = 'promotion';
             }
 
+            $prefix = DB::getTablePrefix();
+
             $promotion = News::with(['tenants' => function($q) use($mall) {
                     $q->where('merchants.status', 'active');
                     $q->where('merchants.parent_id', $mall->merchant_id);
                 }])
-                ->select('news.news_id', 'news.news_name','image', 'news.object_type', 'news.description as description')
+                ->select('news.news_id', 'news.news_name','image', 'news.object_type', 
+                    DB::raw("CONCAT(DATE_FORMAT({$prefix}news.begin_date, '%d %M %Y'),' - ', DATE_FORMAT({$prefix}news.end_date, '%d %M %Y')) AS validity_date"), 
+                    'news.description as description')
                 ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                 ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
                 ->where(function ($q) use ($mall) {
@@ -470,6 +475,8 @@ class PromotionCIAPIController extends BaseAPIController
             $_promotion->object_type = $promotion->object_type;
             $_promotion->all_tenant_inactive = $allTenantInactive;
             $_promotion->facebook_share_url = $promotion->facebook_share_url;
+            $_promotion->validity_date = $promotion->validity_date;
+            $_promotion->link_to_tenants = $promotion->tenants;
 
 
             if (! empty($alternateLanguage)) {

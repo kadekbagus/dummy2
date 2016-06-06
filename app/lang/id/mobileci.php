@@ -59,6 +59,7 @@ return array(
         'tenants'               => 'Gerai',
         'services'              => 'Layanan',
         'lucky_draws'           => 'Undian Berhadiah',
+        'free_wifi'             => 'INTERNET GRATIS',
         'newss'                 => 'Berita',
         'promotions_single'     => 'Promosi',
         'coupons_single'        => 'Kupon',
@@ -541,19 +542,35 @@ return array(
     'captive'   => array(
         'request_internet' => array(
             'title'     => 'GRATIS Internet',
-            'heading'   => 'GRANTIS Akses Internet!',
+            'heading'   => 'GRATIS Akses Internet!',
             'message'   => 'By connecting to our Wi-Fi you are agree to our terms and conditions. Click button below to get free internet access.',
             'button'    => 'Get FREE Internet Access!',
             'check_connection' => 'Checking internet connection please wait...',
-            'too_long' => 'If it takes too long try to refresh your browser.'
+            'too_long' => 'If it takes too long try to refresh your browser.',
+            'instruction' => 'Salin alamat URL di atas ke browser untuk meminta akses internet gratis.',
+            'message_ex' => array(
+                'title' => 'Free internet access is here',
+                'instruction_heading' => 'These are the steps to get free internet access:',
+                'instructions' => array(
+                    'Connect to mall Wi-Fi network',
+                    'Access this page',
+                    'Tap on Get Free Internet Access button below',
+                    'Open internet browser and type this URL http://gotomalls.com to see connection status'
+                ),
+                'button_caption' => 'Get Free Internet Access',
+                'clipboard_caption' => 'Salin URL ke clipboard',
+                'clipboard_success' => 'URL disalin'
+            ),
+
         ),
         'granted' => array(
             'title'     => 'Terkoneksi ke WiFi',
             'heading'   => 'Anda Telah Terkoneksi',
-            'message'   => 'Halo,<br>Anda telah mendapatkan akses internet gratis. Apakah anda tertarik untuk melihat promosi hari ini?',
-            'button'    => 'OK, Tunjukkan!'
+            'message'   => 'Anda tersambung Internet gratis',
+            'button'    => 'OK'
         ),
-        'widget_slogan' => 'Internet GRATIS!'
+        'widget_slogan' => 'Internet GRATIS!',
+        'widget_tagline' => 'Dapatkan akses gratismu SEKARANG!'
     )
 );
 

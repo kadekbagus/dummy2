@@ -88,6 +88,23 @@ class Mall extends Eloquent
     }
 
     /**
+     * Merchant belongs to and has many widgets.
+     */
+    public function widgets()
+    {
+        return $this->belongsToMany('Widget', 'widget_retailer', 'retailer_id', 'widget_id');
+    }
+
+    /**
+     * Specific widget free wifi.
+     */
+    public function widget_free_wifi()
+    {
+        return $this->widgets()
+            ->where('widget_type', 'free_wifi');
+    }
+
+    /**
      * Merchant has many category.
      */
     public function mallCategories()

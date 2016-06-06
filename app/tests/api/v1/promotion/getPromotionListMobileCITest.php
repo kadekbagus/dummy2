@@ -842,7 +842,7 @@ class getPromotionListMobileCITest extends TestCase
         $news_merchant_promotion_1 = Factory::create('NewsMerchant', ['news_id' => $promotion1->news_id, 'merchant_id' => $this->mallB->merchant_id, 'object_type' => 'mall']);
 
         // test translation english
-        $data = array('mall_id' => $this->mallB->merchant_id, 'promotion_id' => $promotion1->news_id, 'language_id' => $language_en->language_id);
+        $data = array('mall_id' => $this->mallB->merchant_id, 'language_id' => $language_en->language_id);
 
         $response = $this->makeRequest($data, $this->apikey);
 
@@ -854,7 +854,7 @@ class getPromotionListMobileCITest extends TestCase
         $this->assertSame($promotion_translation_en->news_name, $response->data->records[0]->news_name);
 
         // test translation indonesia
-        $data = array('mall_id' => $this->mallB->merchant_id, 'promotion_id' => $promotion1->news_id, 'language_id' => $language_id->language_id);
+        $data = array('mall_id' => $this->mallB->merchant_id, 'language_id' => $language_id->language_id);
 
         $response = $this->makeRequest($data, $this->apikey);
 
@@ -866,7 +866,7 @@ class getPromotionListMobileCITest extends TestCase
         $this->assertSame($promotion_translation_id->news_name, $response->data->records[0]->news_name);
 
         // test translation japan
-        $data = array('mall_id' => $this->mallB->merchant_id, 'promotion_id' => $promotion1->news_id, 'language_id' => $language_jp->language_id);
+        $data = array('mall_id' => $this->mallB->merchant_id, 'language_id' => $language_jp->language_id);
 
         $response = $this->makeRequest($data, $this->apikey);
 
@@ -876,5 +876,195 @@ class getPromotionListMobileCITest extends TestCase
 
         $this->assertSame($promotion_translation_jp->news_id, $response->data->records[0]->news_id);
         $this->assertSame($promotion_translation_jp->news_name, $response->data->records[0]->news_name);
+    }
+
+
+    public function testExcludePromotions()
+    {
+        // test exclude promotion by sending array of promotion id (ids)
+        $user = Factory::create('user_consumer');
+        $user_detail = Factory::create('UserDetail', [
+            'user_id' => $user->user_id,
+            'gender' => 'm'
+        ]);
+
+        $apikey = Factory::create('Apikey', ['user_id' => $user->user_id]);
+
+        $tenant = Factory::create('Tenant', ['parent_id' => $this->mallB->merchant_id]);
+
+        $promotion1 = Factory::create('News', ['mall_id' => $this->mallB->merchant_id, 
+                                             'object_type' => 'promotion',
+                                             'link_object_type' => 'tenant', 
+                                             'campaign_status_id' => $this->campaign_status_ongoing->campaign_status_id,
+                                             'is_all_gender' => 'Y',
+                                             'is_all_age' => 'Y'
+                                            ]
+                                    );
+
+        $promotion2 = Factory::create('News', ['mall_id' => $this->mallB->merchant_id, 
+                                             'object_type' => 'promotion',
+                                             'link_object_type' => 'tenant', 
+                                             'campaign_status_id' => $this->campaign_status_ongoing->campaign_status_id,
+                                             'is_all_gender' => 'Y',
+                                             'is_all_age' => 'Y'
+                                            ]
+                                    );
+
+        $promotion3 = Factory::create('News', ['mall_id' => $this->mallB->merchant_id, 
+                                             'object_type' => 'promotion',
+                                             'link_object_type' => 'tenant', 
+                                             'campaign_status_id' => $this->campaign_status_ongoing->campaign_status_id,
+                                             'is_all_gender' => 'Y',
+                                             'is_all_age' => 'Y'
+                                            ]
+                                    );
+
+        $promotion4 = Factory::create('News', ['mall_id' => $this->mallB->merchant_id, 
+                                             'object_type' => 'promotion',
+                                             'link_object_type' => 'tenant', 
+                                             'campaign_status_id' => $this->campaign_status_ongoing->campaign_status_id,
+                                             'is_all_gender' => 'Y',
+                                             'is_all_age' => 'Y'
+                                            ]
+                                    );
+
+        $promotion5 = Factory::create('News', ['mall_id' => $this->mallB->merchant_id, 
+                                             'object_type' => 'promotion',
+                                             'link_object_type' => 'tenant', 
+                                             'campaign_status_id' => $this->campaign_status_ongoing->campaign_status_id,
+                                             'is_all_gender' => 'Y',
+                                             'is_all_age' => 'Y'
+                                            ]
+                                    );
+
+        $news_merchant1 = Factory::create('NewsMerchant', ['news_id' => $promotion1->news_id, 'merchant_id' => $tenant->merchant_id, 'object_type' => 'retailer']);
+        $news_merchant2 = Factory::create('NewsMerchant', ['news_id' => $promotion2->news_id, 'merchant_id' => $tenant->merchant_id, 'object_type' => 'retailer']);
+        $news_merchant3 = Factory::create('NewsMerchant', ['news_id' => $promotion3->news_id, 'merchant_id' => $tenant->merchant_id, 'object_type' => 'retailer']);
+        $news_merchant4 = Factory::create('NewsMerchant', ['news_id' => $promotion4->news_id, 'merchant_id' => $tenant->merchant_id, 'object_type' => 'retailer']);
+        $news_merchant5 = Factory::create('NewsMerchant', ['news_id' => $promotion5->news_id, 'merchant_id' => $tenant->merchant_id, 'object_type' => 'retailer']);
+
+        // no exclude
+        $data = array('mall_id' => $this->mallB->merchant_id);
+        $response = $this->makeRequest($data, $this->apikey);
+        $this->assertSame(0, $response->code);
+        $this->assertSame('success', $response->status);
+        $this->assertRegExp('/Request OK/i', $response->message);
+        $this->assertSame(5, count($response->data->records));
+        
+        // exclude promotion1
+        $data = array('mall_id' => $this->mallB->merchant_id, 'ids' => array($promotion1->news_id));
+        $response = $this->makeRequest($data, $this->apikey);
+        $this->assertSame(4, count($response->data->records));
+
+        // exclude promotion1, promotion2
+        $data = array('mall_id' => $this->mallB->merchant_id, 'ids' => array($promotion1->news_id, $promotion2->news_id));
+        $response = $this->makeRequest($data, $this->apikey);
+        $this->assertSame(3, count($response->data->records));
+
+        // exclude promotion1, promotion2, promotion3
+        $data = array('mall_id' => $this->mallB->merchant_id, 'ids' => array($promotion1->news_id, $promotion2->news_id, $promotion3->news_id));
+        $response = $this->makeRequest($data, $this->apikey);
+        $this->assertSame(2, count($response->data->records));
+
+        // exclude promotion1, promotion2, promotion3, promotion4
+        $data = array('mall_id' => $this->mallB->merchant_id, 'ids' => array($promotion1->news_id, $promotion2->news_id, $promotion3->news_id, $promotion4->news_id));
+        $response = $this->makeRequest($data, $this->apikey);
+        $this->assertSame(1, count($response->data->records));
+
+        // exclude promotion1, promotion2, promotion3, promotion4, promotion5
+        $data = array('mall_id' => $this->mallB->merchant_id, 'ids' => array($promotion1->news_id, $promotion2->news_id, $promotion3->news_id, $promotion4->news_id, $promotion5->news_id));
+        $response = $this->makeRequest($data, $this->apikey);
+        $this->assertSame(0, count($response->data->records));
+    }
+
+    public function testRandomResult()
+    {
+        // test random result (can't really test random just checking the content)
+        $user = Factory::create('user_consumer');
+        $user_detail = Factory::create('UserDetail', [
+            'user_id' => $user->user_id,
+            'gender' => 'm'
+        ]);
+
+        $apikey = Factory::create('Apikey', ['user_id' => $user->user_id]);
+
+        $tenant = Factory::create('Tenant', ['parent_id' => $this->mallB->merchant_id]);
+
+        $promotion1 = Factory::create('News', ['mall_id' => $this->mallB->merchant_id, 
+                                             'object_type' => 'promotion',
+                                             'link_object_type' => 'tenant', 
+                                             'campaign_status_id' => $this->campaign_status_ongoing->campaign_status_id,
+                                             'is_all_gender' => 'Y',
+                                             'is_all_age' => 'Y'
+                                            ]
+                                    );
+
+        $promotion2 = Factory::create('News', ['mall_id' => $this->mallB->merchant_id, 
+                                             'object_type' => 'promotion',
+                                             'link_object_type' => 'tenant', 
+                                             'campaign_status_id' => $this->campaign_status_ongoing->campaign_status_id,
+                                             'is_all_gender' => 'Y',
+                                             'is_all_age' => 'Y'
+                                            ]
+                                    );
+
+        $promotion3 = Factory::create('News', ['mall_id' => $this->mallB->merchant_id, 
+                                             'object_type' => 'promotion',
+                                             'link_object_type' => 'tenant', 
+                                             'campaign_status_id' => $this->campaign_status_ongoing->campaign_status_id,
+                                             'is_all_gender' => 'Y',
+                                             'is_all_age' => 'Y'
+                                            ]
+                                    );
+
+        $promotion4 = Factory::create('News', ['mall_id' => $this->mallB->merchant_id, 
+                                             'object_type' => 'promotion',
+                                             'link_object_type' => 'tenant', 
+                                             'campaign_status_id' => $this->campaign_status_ongoing->campaign_status_id,
+                                             'is_all_gender' => 'Y',
+                                             'is_all_age' => 'Y'
+                                            ]
+                                    );
+
+        $promotion5 = Factory::create('News', ['mall_id' => $this->mallB->merchant_id, 
+                                             'object_type' => 'promotion',
+                                             'link_object_type' => 'tenant', 
+                                             'campaign_status_id' => $this->campaign_status_ongoing->campaign_status_id,
+                                             'is_all_gender' => 'Y',
+                                             'is_all_age' => 'Y'
+                                            ]
+                                    );
+
+        $news_merchant1 = Factory::create('NewsMerchant', ['news_id' => $promotion1->news_id, 'merchant_id' => $tenant->merchant_id, 'object_type' => 'retailer']);
+        $news_merchant2 = Factory::create('NewsMerchant', ['news_id' => $promotion2->news_id, 'merchant_id' => $tenant->merchant_id, 'object_type' => 'retailer']);
+        $news_merchant3 = Factory::create('NewsMerchant', ['news_id' => $promotion3->news_id, 'merchant_id' => $tenant->merchant_id, 'object_type' => 'retailer']);
+        $news_merchant4 = Factory::create('NewsMerchant', ['news_id' => $promotion4->news_id, 'merchant_id' => $tenant->merchant_id, 'object_type' => 'retailer']);
+        $news_merchant5 = Factory::create('NewsMerchant', ['news_id' => $promotion5->news_id, 'merchant_id' => $tenant->merchant_id, 'object_type' => 'retailer']);
+
+        $data = array('mall_id' => $this->mallB->merchant_id);
+
+        $response = $this->makeRequest($data, $this->apikey);
+
+        $this->assertSame(0, $response->code);
+        $this->assertSame('success', $response->status);
+        $this->assertRegExp('/Request OK/i', $response->message);
+        $this->assertSame(5, count($response->data->records));
+
+        $result = [];
+        foreach($response->data->records as $value) {
+            $result[] = $value->news_name;
+        }
+
+        $promotion1_name = (in_array($promotion1->news_name, $result)) ? true : false;
+        $promotion2_name = (in_array($promotion2->news_name, $result)) ? true : false;
+        $promotion3_name = (in_array($promotion3->news_name, $result)) ? true : false;
+        $promotion4_name = (in_array($promotion4->news_name, $result)) ? true : false;
+        $promotion5_name = (in_array($promotion5->news_name, $result)) ? true : false;
+
+        $this->assertTrue($promotion1_name);
+        $this->assertTrue($promotion2_name);
+        $this->assertTrue($promotion3_name);
+        $this->assertTrue($promotion4_name);
+        $this->assertTrue($promotion5_name);
     }
 }

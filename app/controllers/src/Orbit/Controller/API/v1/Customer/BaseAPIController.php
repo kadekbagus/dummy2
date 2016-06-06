@@ -6,6 +6,9 @@
 use OrbitShop\API\v1\ControllerAPI;
 use Config;
 use URL;
+use Validator;
+use Setting;
+use DB;
 
 class BaseAPIController extends ControllerAPI
 {
@@ -62,5 +65,10 @@ class BaseAPIController extends ControllerAPI
         Config::set('orbit.session.availability.query_string', $oldRouteSessionConfigValue);
 
         return $url;
+    }
+
+    protected function quoteStr($str)
+    {
+        return DB::connection()->getPdo()->quote($str);
     }
 }

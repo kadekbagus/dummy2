@@ -70,6 +70,7 @@ class ObjectCIAPIController extends BaseAPIController
                 ->whereHas('mall', function($q) {
                     $q->where('merchants.merchant_id', $this->mall_id);
                 })
+                ->where('objects.object_type', 'floor')
                 ->groupBy('objects.object_name');
 
             $_objects = clone($objects);
@@ -186,7 +187,7 @@ class ObjectCIAPIController extends BaseAPIController
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = [$e->getFile(), $e->getLine(), $e->getMessage()];
+            $this->response->data = null;
             $httpCode = 500;
         }
 

@@ -49,19 +49,23 @@
             <ul class="list-unstyled">
                 <li>
                     @if(count($link_to_tenants) > 0)
-                    <a data-href="{{ route('ci-tenant-list', ['coupon_id' => $coupon->promotion_id]) }}" href="{{{ $urlblock->blockedRoute('ci-tenant-list', ['coupon_id' => $coupon->promotion_id]) }}}">
-                        <span class="fa fa-stack icon">
-                            <i class="fa fa-circle fa-stack-2x"></i>
-                            <i class="fa fa-th-list fa-inverse fa-stack-1x"></i>
-                        </span>
-                        <span class="text">{{{ Lang::get('mobileci.tenant.see_tenants') }}}</span>
-                    </a>
+                        @if(count($link_to_tenants) === 1)
+                        <a data-href="{{ route('ci-tenant-detail', ['id' => $link_to_tenants[0]->retailer_id]) }}" href="{{{ $urlblock->blockedRoute('ci-tenant-detail', ['id' => $link_to_tenants[0]->retailer_id]) }}}">
+                        @else
+                        <a data-href="{{ route('ci-tenant-list', ['coupon_id' => $coupon->promotion_id]) }}" href="{{{ $urlblock->blockedRoute('ci-tenant-list', ['coupon_id' => $coupon->promotion_id]) }}}">
+                        @endif
+                            <span class="fa fa-stack icon">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-shopping-cart fa-inverse fa-stack-1x"></i>
+                            </span>
+                            <span class="text">{{{ Lang::get('mobileci.tenant.see_tenants') }}}</span>
+                        </a>
                     @else
                         <!-- Tenant not found -->
                     <a class="disabled">
                         <span class="fa fa-stack icon">
                             <i class="fa fa-circle fa-stack-2x"></i>
-                            <i class="fa fa-th-list fa-inverse fa-stack-1x"></i>
+                            <i class="fa fa-shopping-cart fa-inverse fa-stack-1x"></i>
                         </span>
                         <span class="text">{{{ Lang::get('mobileci.tenant.see_tenants') }}}</span>
                     </a>
@@ -69,7 +73,11 @@
                 </li>
                 @if(count($issued_coupons) > 0)
                 <li>
+                    @if(count($tenants) === 1 && ! $cs_reedem)
+                    <a data-href="{{ route('ci-tenant-detail', ['id' => $tenants[0]->retailer_id]) }}" href="{{{ $urlblock->blockedRoute('ci-tenant-detail', ['id' => $tenants[0]->retailer_id]) }}}">
+                    @else
                     <a data-href="{{ route('ci-tenant-list', ['coupon_redeem_id' => $coupon->promotion_id]) }}" href="{{{ $urlblock->blockedRoute('ci-tenant-list', ['coupon_redeem_id' => $coupon->promotion_id]) }}}">
+                    @endif
                         <span class="fa fa-stack icon">
                             <i class="fa fa-circle fa-stack-2x"></i>
                             <i class="fa fa-laptop fa-inverse fa-stack-1x"></i>
