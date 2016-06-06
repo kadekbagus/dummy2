@@ -536,7 +536,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
             $issued_lucky_draw_numbers_obj = array();
             $receipts_lucky_draw = array();
             $receipts_count_lucky_draw = array();
-
+            $lucky_draw_number_code = array();
 
             // save for each every ammounts
             foreach ($numberOfLuckyDrawArray as $key => $numberOfLuckyDraw) {
@@ -734,20 +734,25 @@ class LuckyDrawCSAPIController extends ControllerAPI
                         ->limit($numberOfLuckyDraw)
                         ->get();
 
-            // end foreach for numberOfLuckyDrawArray
-            }
+                // Get lucky draw number
+                foreach ($issued_lucky_draw_numbers_obj[$key] as $key => $value) {
+                    $lucky_draw_number_code[] = $value->lucky_draw_number_code;
+                }
+
+            } // end foreach for numberOfLuckyDrawArray
 
             $data = new stdclass();
             $data->total_records = count($issued_lucky_draw_numbers);
             $data->returned_records = count($issued_lucky_draw_numbers);
-            $data->expected_issued_numbers = $numberOfLuckyDraw;
+            $data->expected_issued_numbers = count($lucky_draw_number_code);
             $data->records = $issued_lucky_draw_numbers_obj;
+            $data->lucky_draw_number_code = $lucky_draw_number_code;
 
             $this->response->data = $data;
 
             // Insert to alert system
             $inbox = new Inbox();
-            // $inbox->addToInbox($userId, $data, $mallId, 'lucky_draw_issuance');
+            $inbox->addToInbox($userId, $data, $mallId, 'lucky_draw_issuance');
 
             // Commit the changes
             $this->commit();
