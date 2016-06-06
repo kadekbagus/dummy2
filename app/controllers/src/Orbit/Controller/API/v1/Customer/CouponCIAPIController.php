@@ -346,6 +346,7 @@ class CouponCIAPIController extends BaseAPIController
                     $join->on('media.object_id', '=', 'merchants.merchant_id')
                         ->where('media_name_long', '=', 'retailer_logo_orig');
                 })
+                ->where('promotions.promotion_id', $coupon_id)
                 ->where(function ($q) {
                     $q->where(function ($q2) {
                         $q2->where('merchants.parent_id', '=', $this->mall_id)
@@ -400,23 +401,25 @@ class CouponCIAPIController extends BaseAPIController
                 ->where('merchant_id', $this->mall_id)
                 ->count('users.user_id');
 
-            if ($coupon->is_all_employee === 'Y') {
-                if ($employeeVerNumbersActive > 0) {
-                    $cs_reedem = true;
-                }
-            } elseif ($coupon->is_all_employee === 'N') {
-                // Check exist link to cs, and cs must have active status
-                $promotionEmployee = \CouponEmployee::join('users', 'users.user_id', '=', 'promotion_employee.user_id')
-                    ->where('users.status', 'active')
-                    ->where('promotion_employee.promotion_id', $coupon->promotion_id)
-                    ->count('promotion_employee_id');
+            if (is_object($coupon)) {
+                if ($coupon->is_all_employee === 'Y') {
+                    if ($employeeVerNumbersActive > 0) {
+                        $cs_reedem = true;
+                    }
+                } elseif ($coupon->is_all_employee === 'N') {
+                    // Check exist link to cs, and cs must have active status
+                    $promotionEmployee = \CouponEmployee::join('users', 'users.user_id', '=', 'promotion_employee.user_id')
+                        ->where('users.status', 'active')
+                        ->where('promotion_employee.promotion_id', $coupon->promotion_id)
+                        ->count('promotion_employee_id');
 
-                if ($promotionEmployee > 0) {
-                    $cs_reedem = true;
+                    if ($promotionEmployee > 0) {
+                        $cs_reedem = true;
+                    }
                 }
-            }            
+                $coupon->linked_to_cs = $cs_reedem;
+            }
 
-            $coupon->linked_to_cs = $cs_reedem;
 
             $this->response->data = $coupon;
             $this->response->code = 0;
