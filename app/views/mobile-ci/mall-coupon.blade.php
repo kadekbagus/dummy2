@@ -56,7 +56,7 @@
                         @endif
                             <span class="fa fa-stack icon">
                                 <i class="fa fa-circle fa-stack-2x"></i>
-                                <i class="fa fa-th-list fa-inverse fa-stack-1x"></i>
+                                <i class="fa fa-shopping-cart fa-inverse fa-stack-1x"></i>
                             </span>
                             <span class="text">{{{ Lang::get('mobileci.tenant.see_tenants') }}}</span>
                         </a>
@@ -65,7 +65,7 @@
                     <a class="disabled">
                         <span class="fa fa-stack icon">
                             <i class="fa fa-circle fa-stack-2x"></i>
-                            <i class="fa fa-th-list fa-inverse fa-stack-1x"></i>
+                            <i class="fa fa-shopping-cart fa-inverse fa-stack-1x"></i>
                         </span>
                         <span class="text">{{{ Lang::get('mobileci.tenant.see_tenants') }}}</span>
                     </a>

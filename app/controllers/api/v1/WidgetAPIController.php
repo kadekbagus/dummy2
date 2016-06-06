@@ -127,7 +127,7 @@ class WidgetAPIController extends ControllerAPI
                     array(
                         'object_id'             => 'required',
                         'merchant_id'           => 'required|orbit.empty.merchant',
-                        'widget_type'           => 'required|in:tenant,lucky_draw,promotion,coupon,news,service,free_internet|orbit.exists.widget_type:' . $merchantId,
+                        'widget_type'           => 'required|in:tenant,lucky_draw,promotion,coupon,news,service,free_wifi|orbit.exists.widget_type:' . $merchantId,
                         // 'slogan'                => 'required',
                         'animation'             => 'in:none,horizontal,vertical',
                         'widget_order'          => 'required|numeric',
@@ -412,7 +412,7 @@ class WidgetAPIController extends ControllerAPI
                         'widget_id'           => 'required|orbit.empty.widget',
                         'object_id'           => '',
                         'merchant_id'         => 'orbit.empty.merchant',
-                        'widget_type'         => 'required|in:tenant,lucky_draw,promotion,coupon,news,service,free_internet|orbit.exists.widget_type_but_me:' . $merchantId . ', ' . $widgetId,
+                        'widget_type'         => 'required|in:tenant,lucky_draw,promotion,coupon,news,service,free_wifi|orbit.exists.widget_type_but_me:' . $merchantId . ', ' . $widgetId,
                         'animation'           => 'in:none,horizontal,vertical',
                         'widget_order'        => 'numeric',
                         'widget_image_type'   => 'in:image/jpg,image/png,image/jpeg,image/gif',

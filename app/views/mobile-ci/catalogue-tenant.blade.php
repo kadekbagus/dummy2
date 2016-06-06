@@ -130,6 +130,7 @@
 
 @section('ext_script_bot')
 {{ HTML::script('mobile-ci/scripts/jquery.lazyload.min.js') }}
+{{ HTML::script('mobile-ci/scripts/asb.js') }}
 <script type="text/javascript">
     var take = {{ Config::get('orbit.pagination.per_page', 25) }},
         skip = 0;//{{ Config::get('orbit.pagination.per_page', 25) }},
@@ -270,8 +271,7 @@
         return $listDiv;
     };
 
-    var indexCatalogues = "#abcdefghijklmnopqrstuvwxyz".split(''),
-        insertRecords = function (records) {
+    var insertRecords = function (records) {
         var promises = [];
         for(var i = 0; i < records.length; i++) {
             var deferred = new $.Deferred();
@@ -298,16 +298,14 @@
             var topOffset = Math.floor($listDiv.offset().top - 70);
             if (/[a-z]/i.test(initial)) {
                 // Letter
-                if (indexCatalogues.indexOf(initial) !== -1) {
+                if (Object.keys(scrollCatalogue).indexOf(initial) === -1) {
                     scrollCatalogue[initial] = topOffset;
-                    indexCatalogues.shift();
                 }
             }
             else {
                 // Non-Letter
-                if (indexCatalogues.indexOf('#') !== -1) {
+                if (Object.keys(scrollCatalogue).indexOf('#') === -1) {
                     scrollCatalogue['#'] = topOffset;
-                    indexCatalogues.shift();
                 }
             }
 
@@ -382,157 +380,15 @@
                 loadMoreTenant();
             }
             else {
-                bindAsbEvents();
+                bindAsbEvents().done(function () {
+                    if (data.total_records !== 0)
+                        enableAsb();
+                });
 
                 FB.XFBML.parse();
             }
         });
     };
-
-    var initializeAsb,
-        asbBtns = [];
-
-    (initializeAsb = function () {
-        $('#asb').empty();
-
-        var supportedAmount = Math.floor($('.asb-content').height() / 22),
-            strArr;
-
-        if (supportedAmount <= 10) {
-            strArr = "#,a,b,cdefghi,j,klmnopqr,s,tuvwx,y,z".split(','); // 10
-        }
-        else if (supportedAmount <= 12) {
-            strArr = "#,a,b,cdefgh,i,j,klmnopq,r,s,tuvwx,y,z".split(','); // 12
-        }
-        else if (supportedAmount <= 14) {
-            strArr = "#,a,b,c,defghi,j,k,lmnopqr,s,tuvwx,y,z".split(','); // 14
-        }
-        else if (supportedAmount <= 17) {
-            strArr = "#,a,b,c,d,efghi,j,k,l,mnopqr,s,t,uvwx,y,z".split(','); // 17
-        }
-        else if (supportedAmount <= 19) {
-            strArr = "#,a,b,c,d,efgh,i,j,k,l,mnopq,r,s,t,uvwx,y,z".split(','); // 19
-        }
-        else if (supportedAmount <= 21) {
-            strArr = "#,a,b,c,def,g,h,i,j,k,lmn,o,p,qrs,t,u,v,w,x,y,z".split(','); // 21
-        }
-        else if (supportedAmount <= 23) {
-            strArr = "#,a,b,c,de,f,g,h,i,j,k,lmn,o,p,qr,s,t,u,v,w,x,y,z".split(','); // 23
-        }
-        else if (supportedAmount <= 25) {
-            strArr = "#,a,b,c,d,ef,g,h,i,j,k,l,m,n,o,p,qr,s,t,u,v,w,x,y,z".split(','); // 25
-        }
-        else {
-            strArr = "#abcdefghijklmnopqrstuvwxyz".split(''); // 27
-        }
-
-        for (var i = 0; i < strArr.length; i++) {
-            var text = strArr[i].length > 1 ? '-' : strArr[i].toUpperCase();
-            var data = strArr[i].toUpperCase();
-
-            var $btn = $('<a />').attr({
-                'class': 'btn asb-btn',
-                'href': '#',
-                'data-index': data
-            })
-            .text(text);
-
-            asbBtns.push($btn);
-
-            $('#asb').append($btn);
-        }
-    }).call();
-
-    var lastNoNullPosition = 0,
-        getScrollTopDataIndex = function (str) {
-            var result = null;
-            if (str.length === 1) {
-                var char = str[0].toLowerCase();
-                result = scrollCatalogue[char];
-            }
-            else if (str.length > 1) {
-                for (var i = 0; i < str.length; i++) {
-                    var char = str[i].toLowerCase();
-                    if (scrollCatalogue[char]) {
-                        result = scrollCatalogue[char];
-                        break;
-                    }
-                }
-            }
-
-            if (result){
-                lastNoNullPosition = result;
-            }
-            else {
-                result = lastNoNullPosition;
-            }
-
-            return result;
-        },
-        scrollToChar = function (char) {
-            var toScrollPos = scrollCatalogue[char.toLowerCase()];
-
-            var $info = $('.scroll-info');
-            $info.html(char.toUpperCase());
-            $info.stop(true, true).show().delay(300).fadeOut();
-
-            $(window).scrollTop(toScrollPos);
-        };
-
-    var startChar,
-        startClientY;
-        getCharByScrollTop = function (scrollTop) {
-            for (var i in scrollCatalogue) {
-                if (scrollCatalogue[i] === scrollTop) {
-                    return i;
-                }
-            }
-            return '#';
-        },
-        bindAsbEvents = function () {
-            var supportedHeight = $('.asb-content').height();
-            var scrollArr = Object.keys(scrollCatalogue);
-
-            $('#asb > .btn[data-index]').each(function () {
-                var $btn = $(this);
-                var dataIndex = $btn.data('index');
-                var scrollTop = getScrollTopDataIndex(dataIndex);
-
-                if (scrollTop) {
-                    $btn.on('click mouseover', function (ev) {
-                        ev.preventDefault();
-                        ev.stopPropagation();
-                        scrollToChar(getCharByScrollTop(scrollTop));
-                    })
-                    .on('touchstart', function (ev) {
-                        var touch = ev.originalEvent.changedTouches[0];
-                        startChar = getCharByScrollTop(scrollTop);
-                        startClientY = touch.clientY;
-                    })
-                    .on('touchend', function (ev) {
-                        startChar = null;
-                        startClientY = null;
-                    })
-                    .on('touchmove', function (ev) {
-                        var touch = ev.originalEvent.changedTouches[0];
-                        var clientY = touch.clientY;
-
-                        if (startChar && startClientY) {
-                            var totalVerticalOffset = clientY - startClientY;
-                            var proximity = Math.floor(supportedHeight / scrollArr.length);
-                            var indexOffset = Math.floor(totalVerticalOffset / proximity);
-
-                            var targetIndex = scrollArr.indexOf(startChar) + indexOffset;
-                            var targetChar = scrollArr[targetIndex];
-
-                            if (targetChar) {
-                                scrollToChar(targetChar);
-                            }
-                        }
-                    });
-                }
-            });
-        };
 
     $(window).on('scroll', function () {
         var scrollTop = $(window).scrollTop();
