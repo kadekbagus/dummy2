@@ -2,7 +2,7 @@
 
 
 /**
- * Unit testing for Orbit\Controller\API\v1\Customer\CouponAPIController::getCouponList() method.
+ * Unit testing for Orbit\Controller\API\v1\Customer\CouponAPIController::getCouponItem() method.
  *
  * @author Ahmad <ahmad@dominopos.com>
  */
@@ -12,9 +12,9 @@ use DominoPOS\OrbitAPI\v10\StatusInterface as Status;
 use Laracasts\TestDummy\Factory;
 use Faker\Factory as Faker;
 
-class getCouponListAngularCITest extends TestCase
+class getCouponItemAngularCITest extends TestCase
 {
-    protected $apiUrl = '/api/v1/cust/coupons';
+    protected $apiUrl = '/api/v1/cust/coupons/detail';
 
     public function setUp()
     {
@@ -98,27 +98,27 @@ class getCouponListAngularCITest extends TestCase
 
         $this->number_of_tenants_mall_1 = 3;
         $this->tenants_mall_1 = array();
-        $this->coupons_mall_1_ids = array();
+        $this->coupons_mall_1 = array();
         for($x = 0; $x < $this->number_of_tenants_mall_1; $x++) {
-            list($tenant, $coupon) = $this->createTenant($this->mall_1->merchant_id, FALSE);
+            list($tenant, $coupon) = $this->createTenant($this->mall_1->merchant_id);
             $this->tenants_mall_1[] = $tenant;
-            $this->coupons_mall_1_ids[] = $coupon->promotion_id;
+            $this->coupons_mall_1[] = $coupon;
         }
 
         $this->number_of_tenants_mall_2 = 2;
         $this->tenants_mall_2 = array();
-        $this->coupons_mall_2_ids = array();
+        $this->coupons_mall_2 = array();
         for($x = 0; $x < $this->number_of_tenants_mall_2; $x++) {
-            list($tenant, $coupon) = $this->createTenant($this->mall_2->merchant_id, TRUE);
+            list($tenant, $coupon) = $this->createTenant($this->mall_2->merchant_id);
             $this->tenants_mall_2[] = $tenant;
-            $this->coupons_mall_2_ids[] = $coupon->promotion_id;
+            $this->coupons_mall_2[] = $coupon;
         }
 
         $_GET = [];
         $_POST = [];
     }
 
-    private function createTenant($merchant_id, $withProfilingBadge)
+    private function createTenant($merchant_id)
     {
         $faker = Faker::create();
         $tenant = Factory::create('tenant_angular_ci', [
@@ -133,76 +133,35 @@ class getCouponListAngularCITest extends TestCase
         
         $begin_date = date('Y-m-d H:i:s', strtotime('-1 minute'));
         $end_date = date('Y-m-d H:i:s', strtotime('+1 month'));
-        if ($withProfilingBadge) {
-            $coupon = Factory::create('Coupon', [
-                'begin_date' => $begin_date,
-                'end_date' => $end_date,
-                'promotion_type' => 'mall',
-                'is_all_gender' => 'N',
-                'is_all_age' => 'N',
-                'is_all_employee' => 'Y', // set all employee to mall 2
-                'coupon_validity_in_date' => $end_date,
-            ]);
-            $couponMerchant = Factory::create('coupon_link_tenant', [
-                'promotion_id' => $coupon->promotion_id,
-                'retailer_id' => $tenant->merchant_id,
-                'object_type' => 'tenant'
-            ]);
-            $couponMerchantRedeem = Factory::create('coupon_link_redeem_tenant', [ // self redeem link to self
-                'promotion_id' => $coupon->promotion_id,
-                'retailer_id' => $tenant->merchant_id,
-                'object_type' => 'tenant'
-            ]);
-            $couponAgeProfile = Factory::create('CampaignAge', [
-                'campaign_type' => 'coupon',
-                'campaign_id'   => $coupon->promotion_id,
-                'age_range_id'  => $this->mall_2_age_profiles[3]->age_range_id // select this range to have it displayed
-            ]);
-            $couponGenderProfile = Factory::create('CampaignGender', [
-                'campaign_type' => 'coupon',
-                'campaign_id'   => $coupon->promotion_id,
-                'gender_value'  => 'M' // select this gender to have it displayed
-            ]);
-            $issuedCoupon_user_profiling = Factory::create('IssuedCoupon', [
-                'promotion_id' => $coupon->promotion_id,
-                'user_id' => $this->user_profiling->user_id,
-                'issued_coupon_code' => $tenant->merchant_id . $this->user_profiling->user_id . time()
-            ]);
-            $issuedCoupon_user_profiling_gender = Factory::create('IssuedCoupon', [
-                'promotion_id' => $coupon->promotion_id,
-                'user_id' => $this->user_profiling_gender->user_id,
-                'issued_coupon_code' => $tenant->merchant_id . $this->user_profiling_gender->user_id . time()
-            ]);
-        } else {
-            $coupon = Factory::create('Coupon', [
-                'begin_date' => $begin_date,
-                'end_date' => $end_date,
-                'promotion_type' => 'mall',
-                'is_all_gender' => 'Y',
-                'is_all_age' => 'Y',
-                'coupon_validity_in_date' => $end_date,
-            ]);
-            $couponMerchant = Factory::create('coupon_link_tenant', [
-                'promotion_id' => $coupon->promotion_id,
-                'retailer_id' => $tenant->merchant_id,
-                'object_type' => 'tenant'
-            ]);
-            $couponMerchantRedeem = Factory::create('coupon_link_redeem_tenant', [ // self redeem link to self
-                'promotion_id' => $coupon->promotion_id,
-                'retailer_id' => $tenant->merchant_id,
-                'object_type' => 'tenant'
-            ]);
-            $issuedCoupon_user_profiling = Factory::create('IssuedCoupon', [
-                'promotion_id' => $coupon->promotion_id,
-                'user_id' => $this->user_profiling->user_id,
-                'issued_coupon_code' => $tenant->merchant_id . $this->user_profiling->user_id . time()
-            ]);
-            $issuedCoupon_user_profiling_gender = Factory::create('IssuedCoupon', [
-                'promotion_id' => $coupon->promotion_id,
-                'user_id' => $this->user_profiling_gender->user_id,
-                'issued_coupon_code' => $tenant->merchant_id . $this->user_profiling_gender->user_id . time()
-            ]);
-        }
+
+        $coupon = Factory::create('Coupon', [
+            'begin_date' => $begin_date,
+            'end_date' => $end_date,
+            'promotion_type' => 'mall',
+            'is_all_gender' => 'Y',
+            'is_all_age' => 'Y',
+            'coupon_validity_in_date' => $end_date,
+        ]);
+        $couponMerchant = Factory::create('coupon_link_tenant', [
+            'promotion_id' => $coupon->promotion_id,
+            'retailer_id' => $tenant->merchant_id,
+            'object_type' => 'tenant'
+        ]);
+        $couponMerchantRedeem = Factory::create('coupon_link_redeem_tenant', [ // self redeem link to self
+            'promotion_id' => $coupon->promotion_id,
+            'retailer_id' => $tenant->merchant_id,
+            'object_type' => 'tenant'
+        ]);
+        $issuedCoupon_user_profiling = Factory::create('IssuedCoupon', [
+            'promotion_id' => $coupon->promotion_id,
+            'user_id' => $this->user_profiling->user_id,
+            'issued_coupon_code' => $tenant->merchant_id . $this->user_profiling->user_id . time()
+        ]);
+        $issuedCoupon_user_profiling_gender = Factory::create('IssuedCoupon', [
+            'promotion_id' => $coupon->promotion_id,
+            'user_id' => $this->user_profiling_gender->user_id,
+            'issued_coupon_code' => $tenant->merchant_id . $this->user_profiling_gender->user_id . time()
+        ]);
 
         $tenant->categories()->save($category);
         $tenant->coupons()->save($coupon);
@@ -214,11 +173,12 @@ class getCouponListAngularCITest extends TestCase
         return [$tenant, $coupon];
     }
 
-    public function testOKGetListingCouponObtainedOnly()
+    public function testOKGetItemCouponObtainedOnly()
     {
         $_GET['apikey'] = $this->user_profiling_apikey->api_key;
         $_GET['apitimestamp'] = time();
         $_GET['mall_id'] = $this->mall_1->merchant_id;
+        $_GET['coupon_id'] = $this->coupons_mall_1[0]->promotion_id;
 
         $url = $this->apiUrl . '?' . http_build_query($_GET);
         $secretKey = $this->user_profiling_apikey->api_secret_key;
@@ -231,40 +191,19 @@ class getCouponListAngularCITest extends TestCase
         $response = json_decode($json);
 
         $this->assertSame(0, (int) $response->code);
-        $this->assertSame(count($this->coupons_mall_1_ids), (int) $response->data->returned_records);
 
         // check all returned records
-        foreach ($response->data->records as $key => $item) {
-            $this->assertTrue(in_array((string) $item->promotion_id, $this->coupons_mall_1_ids));
-        }
+        $this->assertSame($this->coupons_mall_1[0]->promotion_id, (string) $response->data->promotion_id);
+        $this->assertSame($this->coupons_mall_1[0]->promotion_name, (string) $response->data->promotion_name);
+        $this->assertSame($this->coupons_mall_1[0]->description, (string) $response->data->description);
     }
 
-    public function testFAILGetListingCouponObtainedOnly()
-    {
-        // use $this->user that have no coupon owned
-        $_GET['apikey'] = $this->apikey->api_key;
-        $_GET['apitimestamp'] = time();
-        $_GET['mall_id'] = $this->mall_1->merchant_id;
-
-        $url = $this->apiUrl . '?' . http_build_query($_GET);
-        $secretKey = $this->apikey->api_secret_key;
-
-        $_SERVER['REQUEST_METHOD'] = 'GET';
-        $_SERVER['REQUEST_URI'] = $url;
-        $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
-
-        $json = $this->call('GET', $url)->getContent();
-        $response = json_decode($json);
-
-        $this->assertSame(0, (int) $response->code);
-        $this->assertSame(0, (int) $response->data->returned_records);
-    }
-
-    public function testOKGetListingCouponObtainedOnlyOnMall2()
+    public function testOKGetItemCouponObtainedOnlyMall2()
     {
         $_GET['apikey'] = $this->user_profiling_apikey->api_key;
         $_GET['apitimestamp'] = time();
         $_GET['mall_id'] = $this->mall_2->merchant_id;
+        $_GET['coupon_id'] = $this->coupons_mall_2[0]->promotion_id;
 
         $url = $this->apiUrl . '?' . http_build_query($_GET);
         $secretKey = $this->user_profiling_apikey->api_secret_key;
@@ -277,11 +216,10 @@ class getCouponListAngularCITest extends TestCase
         $response = json_decode($json);
 
         $this->assertSame(0, (int) $response->code);
-        $this->assertSame(count($this->coupons_mall_2_ids), (int) $response->data->returned_records);
 
         // check all returned records
-        foreach ($response->data->records as $key => $item) {
-            $this->assertTrue(in_array((string) $item->promotion_id, $this->coupons_mall_2_ids));
-        }
+        $this->assertSame($this->coupons_mall_2[0]->promotion_id, (string) $response->data->promotion_id);
+        $this->assertSame($this->coupons_mall_2[0]->promotion_name, (string) $response->data->promotion_name);
+        $this->assertSame($this->coupons_mall_2[0]->description, (string) $response->data->description);
     }
 }

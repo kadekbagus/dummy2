@@ -23,6 +23,7 @@ use Employee;
 use Coupon;
 use News;
 use Lang;
+use User;
 
 class TenantCIAPIController extends BaseAPIController
 {
@@ -68,6 +69,18 @@ class TenantCIAPIController extends BaseAPIController
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
+            // temporary parameter, should be removed when user authentication is present
+            OrbitInput::get('user_email', function($user_email) use(&$user) {
+                $user = User::excludeDeleted()
+                    ->where('user_email', $user_email)
+                    ->first();
+
+                if (! is_object($user)) {
+                    $errorMessage = 'User with given email not found.';
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+            });
+
             $prefix = DB::getTablePrefix();
 
             $gender_profile_query = '';
@@ -101,6 +114,8 @@ class TenantCIAPIController extends BaseAPIController
             $mall = Mall::excludeDeleted()->where('merchant_id', $this->mall_id)->first();
             $mallTime = Carbon::now($mall->timezone->timezone_name);
             $redeemToCSFlag = 'false';
+
+            $quoted_mall_id = $this->quoteStr($this->mall_id);
 
             $tenants = Tenant::
             with(
@@ -154,7 +169,8 @@ class TenantCIAPIController extends BaseAPIController
                     WHERE {$prefix}news_merchant.object_type = 'retailer'
                     AND {$prefix}news.object_type = 'news'
                     AND {$prefix}news.status = 'active'
-                    AND {$prefix}merchants.parent_id = '{$this->mall_id}'
+                    AND {$prefix}merchants.status = 'active'
+                    AND {$prefix}merchants.parent_id = {$quoted_mall_id}
                     AND '{$mallTime}' >= {$prefix}news.begin_date
                     AND '{$mallTime}' <= {$prefix}news.end_date
                     {$age_profile_query}
@@ -176,7 +192,8 @@ class TenantCIAPIController extends BaseAPIController
                     WHERE {$prefix}news_merchant.object_type = 'retailer'
                     AND {$prefix}news.object_type = 'promotion'
                     AND {$prefix}news.status = 'active'
-                    AND {$prefix}merchants.parent_id = '{$this->mall_id}'
+                    AND {$prefix}merchants.status = 'active'
+                    AND {$prefix}merchants.parent_id = {$quoted_mall_id}
                     AND '{$mallTime}' >= {$prefix}news.begin_date
                     AND '{$mallTime}' <= {$prefix}news.end_date
                     {$age_profile_query}
@@ -187,16 +204,18 @@ class TenantCIAPIController extends BaseAPIController
             ->leftJoin(DB::raw("(
                     SELECT {$prefix}merchants.merchant_id, count({$prefix}promotions.promotion_id) as coupon_counter
                     from {$prefix}promotions
-                    LEFT JOIN {$prefix}promotion_retailer on {$prefix}promotion_retailer.promotion_id = {$prefix}promotions.promotion_id
-                    LEFT JOIN {$prefix}merchants on {$prefix}promotion_retailer.retailer_id = {$prefix}merchants.merchant_id
+                    LEFT JOIN {$prefix}promotion_retailer_redeem on {$prefix}promotion_retailer_redeem.promotion_id = {$prefix}promotions.promotion_id
+                    LEFT JOIN {$prefix}merchants on {$prefix}promotion_retailer_redeem.retailer_id = {$prefix}merchants.merchant_id
 
                     JOIN {$prefix}issued_coupons ON {$prefix}issued_coupons.promotion_id = {$prefix}promotions.promotion_id
 
-                    WHERE {$prefix}promotion_retailer.object_type = 'tenant'
+                    WHERE {$prefix}promotion_retailer_redeem.object_type = 'tenant'
                     AND {$prefix}promotions.is_coupon = 'Y'
                     AND {$prefix}promotions.status = 'active'
-                    AND {$prefix}merchants.parent_id = '{$this->mall_id}'
-
+                    AND {$prefix}merchants.parent_id = {$quoted_mall_id}
+                    AND {$prefix}merchants.status = 'active'
+                    AND {$prefix}promotions.begin_date <= '{$mallTime}'
+                    AND {$prefix}promotions.end_date >= '{$mallTime}'
                     AND {$prefix}issued_coupons.status = 'active'
                     AND {$prefix}promotions.coupon_validity_in_date >= '{$mallTime}'
                     AND {$prefix}issued_coupons.user_id = '{$user->user_id}'
@@ -405,7 +424,7 @@ class TenantCIAPIController extends BaseAPIController
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = [$e->getFile(), $e->getLine(), $e->getMessage()];
+            $this->response->data = null;
             $httpCode = 500;
         }
 
@@ -447,6 +466,18 @@ class TenantCIAPIController extends BaseAPIController
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
+
+            // temporary parameter, should be removed when user authentication is present
+            OrbitInput::get('user_email', function($user_email) use(&$user) {
+                $user = User::excludeDeleted()
+                    ->where('user_email', $user_email)
+                    ->first();
+
+                if (! is_object($user)) {
+                    $errorMessage = 'User with given email not found.';
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+            });
 
             $gender_profile_query = '';
             $age_profile_query = '';
@@ -537,6 +568,11 @@ class TenantCIAPIController extends BaseAPIController
                 $news_flag->whereRaw($age_profile_query);
             }
             $news_flag->groupBy('news.news_id');
+            // filter by news id
+            $news_id = OrbitInput::get('news_id');
+            OrbitInput::get('news_id', function ($news_id) use ($news_flag) {
+                $news_flag->where('news.news_id', $news_id);
+            });
             $news_flag = RecordCounter::create($news_flag)->count();
 
             $promotion_flag = News::select('news.news_id')
@@ -556,6 +592,11 @@ class TenantCIAPIController extends BaseAPIController
             if (! empty($age_profile_query)) {
                 $promotion_flag->whereRaw($age_profile_query);
             }
+            // filter by promotion id
+            $promotion_id = OrbitInput::get('promotion_id');
+            OrbitInput::get('promotion_id', function ($promotion_id) use ($promotion_flag) {
+                $promotion_flag->where('news.news_id', $promotion_id);
+            });
             $promotion_flag->groupBy('news.news_id');
             $promotion_flag = RecordCounter::create($promotion_flag)->count();
 
@@ -579,15 +620,34 @@ class TenantCIAPIController extends BaseAPIController
             if (! empty($age_profile_query)) {
                 $coupon_flag->whereRaw($age_profile_query);
             }
+            // filter by coupon id
+            $coupon_id = OrbitInput::get('coupon_id');
+            OrbitInput::get('coupon_id', function ($coupon_id) use ($coupon_flag) {
+                $coupon_flag->where('promotions.promotion_id', $coupon_id);
+            });
             $coupon_flag->groupBy('promotions.promotion_id');
             $coupon_flag = RecordCounter::create($coupon_flag)->count();
 
             $tenant->news_flag = $news_flag > 0 ? 'true' : 'false';
             $tenant->promotion_flag = $promotion_flag > 0 ? 'true' : 'false';
             $tenant->coupon_flag = $coupon_flag > 0 ? 'true' : 'false';
-            $tenant->facebook_share_url = $this->getFBShareDummyPage('tenant', $tenant->merchant_id);
 
+            // default data without filter data id
             $this->response->data = $tenant;
+
+            // overide data if filter doesn't exist
+            if (!is_null($news_id) && $tenant->news_flag === 'false') {
+                $this->response->data = [];
+            }
+
+            if (!is_null($promotion_id) && $tenant->promotion_flag === 'false') {
+                $this->response->data = [];
+            }
+
+            if (!is_null($coupon_id) && $tenant->coupon_flag === 'false') {
+                $this->response->data = [];
+            }
+
             $this->response->code = 0;
             $this->response->status = 'success';
             $this->response->message = 'Success';
@@ -622,7 +682,7 @@ class TenantCIAPIController extends BaseAPIController
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = [$e->getFile(), $e->getLine(), $e->getMessage()];
+            $this->response->data = null;
             $httpCode = 500;
         }
 

@@ -33,19 +33,23 @@
             <ul class="list-unstyled">
                 <li>
                     @if(count($promotion->tenants) > 0)
-                    <a data-href="{{ route('ci-tenant-list', ['promotion_id' => $promotion->news_id]) }}" href="{{{ $urlblock->blockedRoute('ci-tenant-list', ['promotion_id' => $promotion->news_id]) }}}">
-                        <span class="fa fa-stack icon">
-                            <i class="fa fa-circle fa-stack-2x"></i>
-                            <i class="fa fa-th-list fa-inverse fa-stack-1x"></i>
-                        </span>
-                        <span class="text">{{{ Lang::get('mobileci.tenant.see_tenants') }}} </span>
-                    </a>
+                        @if(count($promotion->tenants) === 1)
+                        <a data-href="{{ route('ci-tenant-detail', ['id' => $promotion->tenants[0]->merchant_id]) }}" href="{{{ $urlblock->blockedRoute('ci-tenant-detail', ['id' => $promotion->tenants[0]->merchant_id]) }}}">
+                        @else
+                        <a data-href="{{ route('ci-tenant-list', ['promotion_id' => $promotion->news_id]) }}" href="{{{ $urlblock->blockedRoute('ci-tenant-list', ['promotion_id' => $promotion->news_id]) }}}">
+                        @endif
+                            <span class="fa fa-stack icon">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-shopping-cart fa-inverse fa-stack-1x"></i>
+                            </span>
+                            <span class="text">{{{ Lang::get('mobileci.tenant.see_tenants') }}} </span>
+                        </a>
                     @else
                         <!-- No promotions on tenants -->
                     <a class="disabled">
                         <span class="fa fa-stack icon">
                             <i class="fa fa-circle fa-stack-2x"></i>
-                            <i class="fa fa-th-list fa-inverse fa-stack-1x"></i>
+                            <i class="fa fa-shopping-cart fa-inverse fa-stack-1x"></i>
                         </span>
                         <span class="text">{{{ Lang::get('mobileci.tenant.see_tenants') }}} </span>
                     </a>

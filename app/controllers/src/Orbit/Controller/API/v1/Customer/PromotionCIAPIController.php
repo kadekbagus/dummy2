@@ -476,6 +476,7 @@ class PromotionCIAPIController extends BaseAPIController
             $_promotion->all_tenant_inactive = $allTenantInactive;
             $_promotion->facebook_share_url = $promotion->facebook_share_url;
             $_promotion->validity_date = $promotion->validity_date;
+            $_promotion->link_to_tenants = $promotion->tenants;
 
 
             if (! empty($alternateLanguage)) {
@@ -614,46 +615,6 @@ class PromotionCIAPIController extends BaseAPIController
         }
 
         return $this->render($httpCode);
-    }
-
-
-
-    private function getMerchantLanguage($mall, $languageId = null)
-    {
-        $merchantLanguage = MerchantLanguage::where('merchant_languages.merchant_id', '=', $mall->merchant_id)
-                                            ->where('merchant_languages.language_id', '=', $languageId)
-                                            ->first();
-        if (!is_object($merchantLanguage)) {
-            $merchantLanguage = $this->getDefaultLanguage($mall);
-        }
-        return $merchantLanguage;
-    }
-
-
-    /**
-     * Returns an appropriate MerchantLanguage (if any) that the user wants and the mall supports.
-     *
-     * @param \Mall $mall the mall
-     * @return \MerchantLanguage the language or null if a matching one is not found.
-     *
-     * @author Firmansyah <firmansyah@dominopos.com>
-     */
-    private function getDefaultLanguage($mall)
-    {
-        // English is default language
-        $language = \Language::where('name', '=', 'en')->first();
-        if(isset($language) && count($language) > 0){
-            $defaultLanguage = MerchantLanguage::
-                where('merchant_id', '=', $mall->merchant_id)
-                ->where('language_id', '=', $language->language_id)
-                ->first();
-            if ($defaultLanguage !== null) {
-                return $defaultLanguage;
-            }
-        }
-
-        // above methods did not result in any selected language, use mall default
-        return null;
     }
 
     protected function registerCustomValidation()

@@ -126,7 +126,7 @@ class Inbox extends Eloquent
 
             case 'lucky_draw_issuance':
                 $inbox->subject = "You've got lucky number(s)";
-                $listItem = $response->records;
+                $listItem = $response->lucky_draw_number_code;
                 break;
 
             case 'lucky_draw_blast':

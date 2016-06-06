@@ -21,6 +21,8 @@ use Widget;
 use News;
 use Coupon;
 use LuckyDraw;
+use Setting;
+use WidgetTemplate;
 use TenantStoreAndService;
 use App;
 use Lang;
@@ -70,6 +72,22 @@ class WidgetCIAPIController extends BaseAPIController
             $mall = Mall::excludeDeleted()->where('merchant_id', $mallid)->first();
             $now = Carbon::now($mall->timezone->timezone_name);
 
+            $widget_template_id = Setting::select('setting_value')
+                                ->where('setting_name', 'widget_template')
+                                ->where('object_id', $mallid)
+                                ->first();
+
+            if($widget_template_id) {
+                $template = WidgetTemplate::active()->where('widget_template_id', $widget_template_id->setting_value)->first();
+                if (! is_object($template)) {
+                    $widget_template = 'default';
+                } else {
+                    $widget_template = $template->template_file_name;
+                }
+            } else {
+                $widget_template = 'default';
+            }
+
             $widgets = Widget::select('widgets.widget_id', 'widgets.widget_type', 'widgets.widget_order')
                             ->with('media')
                             ->leftJoin(DB::raw("(SELECT setting_id, setting_name, setting_value, object_id
@@ -79,7 +97,7 @@ class WidgetCIAPIController extends BaseAPIController
                                 // On
                                 DB::raw('os.setting_name'), '=', DB::raw("CONCAT('enable_', {$prefix}widgets.widget_type, '_widget')"))
                             ->join('widget_retailer', 'widget_retailer.widget_id', '=', 'widgets.widget_id')
-                            ->where('widgets.status', '!=', 'deleted')
+                            ->where('widgets.status', '=', 'active')
                             ->where('widgets.merchant_id', '=', $mallid)
                             ->whereRaw("(CASE WHEN os.setting_id IS NULL THEN 'true' ELSE os.setting_value END) = 'true'")
                             ->groupBy('widgets.widget_type')
@@ -88,7 +106,7 @@ class WidgetCIAPIController extends BaseAPIController
             $_widgets = clone($widgets);
 
             $widgets = $widgets->get();
-            
+
             foreach ($widgets as $widget) {
                 if ($widget->widget_type == 'tenant') {
                     // get all tenant count
@@ -587,9 +605,10 @@ class WidgetCIAPIController extends BaseAPIController
             }
 
             $data = new \stdclass();
-            $data->records = $widgets;
             $data->returned_records = count($widgets);
             $data->total_records = RecordCounter::create($_widgets)->count();
+            $data->widget_template = $widget_template;
+            $data->records = $widgets;
             $data->extras = new \stdclass();
 
             $this->response->data = $data;
