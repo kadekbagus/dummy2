@@ -15,6 +15,7 @@ use App;
 use Mall;
 use Activity;
 use UserSignin;
+use Carbon\Carbon;
 
 class GenerateGuestUser
 {   
@@ -55,8 +56,8 @@ class GenerateGuestUser
             $mall_id = App::make('orbitSetting')->getSetting('current_retailer');
             $mall = Mall::with('timezone')->excludeDeleted()->where('merchant_id', $mall_id)->first();
 
-            $start_date = '2016-06-02 17:00:00';
-            $end_date = '2016-06-03 16:59:59';
+            $start_date = Carbon::now($mall->timezone->timezone_name)->format('Y-m-d 00:00:00');
+            $end_date = Carbon::now($mall->timezone->timezone_name)->format('Y-m-d 23:59:59');
             $userSignin = UserSignin::where('user_id', '=', $user->user_id)
                                     ->where('location_id', $mall_id)
                                     ->whereBetween('user_signin.created_at', [$start_date, $end_date])
@@ -82,9 +83,9 @@ class GenerateGuestUser
                 $newUserSignin->location_id = $mall_id;
                 $newUserSignin->activity_id = $activity->activity_id;
                 $newUserSignin->save();
+                DB::commit();
             }
 
-            DB::commit();
 
             return $user;
 
