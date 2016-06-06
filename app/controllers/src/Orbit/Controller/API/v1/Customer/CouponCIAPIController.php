@@ -132,6 +132,11 @@ class CouponCIAPIController extends BaseAPIController
                 $coupons->whereNotIn('promotions.promotion_id', $ids);
             });
 
+            OrbitInput::get('tenant_id', function($id) use ($coupons)
+            {
+                $coupons->where('merchants.merchant_id', $id);
+            });
+
             OrbitInput::get(
                 'keyword', // todo: add alternateLanguage
                 function ($keyword) use ($coupons) {
