@@ -550,12 +550,13 @@ return array(
             'instruction' => 'Copy and paste URL above to your browser to request free internet connection.',
             'message_ex' => array(
                 'title' => 'Free internet access is here',
-                'instruction_heading' => 'These are the steps to get free internet access:',
+                'instruction_heading' => 'These are the steps to get free internet:',
                 'instructions' => array(
                     'Connect to mall Wi-Fi network',
                     'Access this page',
+                    'Tap on Copy URL to clipboard',
                     'Tap on Get Free Internet Access button below',
-                    'Open internet browser and type this URL http://gotomalls.com to see connection status'
+                    'Open internet browser and paste the URL to see connection status'
                 ),
                 'button_caption' => 'Get Free Internet Access',
                 'clipboard_caption' => 'Copy URL to clipboard',

@@ -11,7 +11,7 @@ use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Helper\EloquentRecordCounter as RecordCounter;
 use Carbon\Carbon as Carbon;
-use Queue;
+use \Queue;
 
 class CouponAPIController extends ControllerAPI
 {
@@ -25,6 +25,8 @@ class CouponAPIController extends ControllerAPI
     protected $couponViewRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee', 'campaign admin'];
     protected $couponModifiyRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign admin', 'campaign employee'];
     protected $couponModifiyRolesWithConsumer = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign admin', 'consumer'];
+    // this line should be removed when angular ci have user auth
+    protected $couponModifiyRolesWithConsumerTestOnly = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign admin', 'consumer', 'guest'];
 
     /**
      * POST - Create New Coupon
@@ -2768,6 +2770,13 @@ class CouponAPIController extends ControllerAPI
         $activity = Activity::mobileci()
                           ->setActivityType('coupon');
 
+        // temporary parameter, should be removed when user authentication on angular ci is present
+        OrbitInput::post('from_angular_ci', function($from_angular_ci) use(&$activity) {
+            if ($from_angular_ci === 'yes') {
+                $activity = null;
+            }
+        });
+
         $user = NULL;
         $mall = NULL;
         $mall_id = NULL;
@@ -2795,9 +2804,21 @@ class CouponAPIController extends ControllerAPI
                 ACL::throwAccessForbidden($message);
             }
 */
+            // temporary parameter, should be removed when user authentication on angular ci is present
+            OrbitInput::post('user_email', function($user_email) use(&$user) {
+                $user = User::excludeDeleted()
+                    ->where('user_email', $user_email)
+                    ->first();
+
+                if (! is_object($user)) {
+                    $errorMessage = 'User with given email not found.';
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+            });
+
             // @Todo: Use ACL authentication instead
             $role = $user->role;
-            $validRoles = $this->couponModifiyRolesWithConsumer;
+            $validRoles = $this->couponModifiyRolesWithConsumerTestOnly;
             if (! in_array( strtolower($role->role_name), $validRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
@@ -2887,20 +2908,22 @@ class CouponAPIController extends ControllerAPI
             $this->response->message = 'Coupon has been successfully redeemed.';
             $this->response->data = $issuedcoupon;
 
-            // Successfull Creation
-            $activityNotes = sprintf('Coupon Redeemed: %s', $issuedcoupon->coupon->promotion_name);
-            $activity->setUser($user)
-                    ->setActivityName('redeem_coupon')
-                    ->setActivityNameLong('Coupon Redemption (Successful)')
-                    ->setObject($coupon)
-                    ->setNotes($activityNotes)
-                    ->setLocation($mall)
-                    ->setModuleName('Coupon')
-                    ->responseOK();
+            // temporary line, should be removed when user authentication on angular ci is present
+            if (! is_null($activity)) {
+                // Successfull Creation
+                $activityNotes = sprintf('Coupon Redeemed: %s', $issuedcoupon->coupon->promotion_name);
+                $activity->setUser($user)
+                        ->setActivityName('redeem_coupon')
+                        ->setActivityNameLong('Coupon Redemption (Successful)')
+                        ->setObject($coupon)
+                        ->setNotes($activityNotes)
+                        ->setLocation($mall)
+                        ->setModuleName('Coupon')
+                        ->responseOK();
 
-            $activity->coupon_id = $issuedcoupon->promotion_id;
-            $activity->coupon_name = $issuedcoupon->coupon->promotion_name;
-
+                $activity->coupon_id = $issuedcoupon->promotion_id;
+                $activity->coupon_name = $issuedcoupon->coupon->promotion_name;
+            }
             Event::fire('orbit.coupon.postissuedcoupon.after.commit', array($this, $issuedcoupon));
         } catch (ACLForbiddenException $e) {
             Event::fire('orbit.coupon.redeemcoupon.access.forbidden', array($this, $e));
@@ -2914,15 +2937,18 @@ class CouponAPIController extends ControllerAPI
             // Rollback the changes
             $this->rollBack();
 
-            // Deletion failed Activity log
-            $activity->setUser($user)
-                    ->setActivityName('redeem_coupon')
-                    ->setActivityNameLong('Coupon Redemption (Failed)')
-                    ->setObject($issuedcoupon)
-                    ->setNotes($e->getMessage())
-                    ->setLocation($mall)
-                    ->setModuleName('Coupon')
-                    ->responseFailed();
+            // temporary line, should be removed when user authentication on angular ci is present
+            if (! is_null($activity)) {
+                // Deletion failed Activity log
+                $activity->setUser($user)
+                        ->setActivityName('redeem_coupon')
+                        ->setActivityNameLong('Coupon Redemption (Failed)')
+                        ->setObject($issuedcoupon)
+                        ->setNotes($e->getMessage())
+                        ->setLocation($mall)
+                        ->setModuleName('Coupon')
+                        ->responseFailed();
+            }
         } catch (InvalidArgsException $e) {
             Event::fire('orbit.coupon.redeemcoupon.invalid.arguments', array($this, $e));
 
@@ -2935,15 +2961,18 @@ class CouponAPIController extends ControllerAPI
             // Rollback the changes
             $this->rollBack();
 
-            // Deletion failed Activity log
-            $activity->setUser($user)
-                    ->setActivityName('redeem_coupon')
-                    ->setActivityNameLong('Coupon Redemption (Failed)')
-                    ->setObject($issuedcoupon)
-                    ->setNotes($e->getMessage())
-                    ->setLocation($mall)
-                    ->setModuleName('Coupon')
-                    ->responseFailed();
+            // temporary line, should be removed when user authentication on angular ci is present
+            if (! is_null($activity)) {
+                // Deletion failed Activity log
+                $activity->setUser($user)
+                        ->setActivityName('redeem_coupon')
+                        ->setActivityNameLong('Coupon Redemption (Failed)')
+                        ->setObject($issuedcoupon)
+                        ->setNotes($e->getMessage())
+                        ->setLocation($mall)
+                        ->setModuleName('Coupon')
+                        ->responseFailed();
+            }
         } catch (QueryException $e) {
             Event::fire('orbit.coupon.redeemcoupon.query.error', array($this, $e));
 
@@ -2962,15 +2991,18 @@ class CouponAPIController extends ControllerAPI
             // Rollback the changes
             $this->rollBack();
 
-            // Deletion failed Activity log
-            $activity->setUser($user)
-                    ->setActivityName('redeem_coupon')
-                    ->setActivityNameLong('Coupon Redemption (Failed)')
-                    ->setObject($issuedcoupon)
-                    ->setNotes($e->getMessage())
-                    ->setLocation($mall)
-                    ->setModuleName('Coupon')
-                    ->responseFailed();
+            // temporary line, should be removed when user authentication on angular ci is present
+            if (! is_null($activity)) {
+                // Deletion failed Activity log
+                $activity->setUser($user)
+                        ->setActivityName('redeem_coupon')
+                        ->setActivityNameLong('Coupon Redemption (Failed)')
+                        ->setObject($issuedcoupon)
+                        ->setNotes($e->getMessage())
+                        ->setLocation($mall)
+                        ->setModuleName('Coupon')
+                        ->responseFailed();
+            }
         } catch (Exception $e) {
             Event::fire('orbit.coupon.redeemcoupon.general.exception', array($this, $e));
 
@@ -2982,21 +3014,27 @@ class CouponAPIController extends ControllerAPI
             // Rollback the changes
             $this->rollBack();
 
-            // Deletion failed Activity log
-            $activity->setUser($user)
-                    ->setActivityName('delete_coupon')
-                    ->setActivityNameLong('Delete Coupon Failed')
-                    ->setObject($issuedcoupon)
-                    ->setNotes($e->getMessage())
-                    ->setLocation($mall)
-                    ->setModuleName('Coupon')
-                    ->responseFailed();
+            // temporary line, should be removed when user authentication on angular ci is present
+            if (! is_null($activity)) {
+                // Deletion failed Activity log
+                $activity->setUser($user)
+                        ->setActivityName('delete_coupon')
+                        ->setActivityNameLong('Delete Coupon Failed')
+                        ->setObject($issuedcoupon)
+                        ->setNotes($e->getMessage())
+                        ->setLocation($mall)
+                        ->setModuleName('Coupon')
+                        ->responseFailed();
+            }
         }
 
         $output = $this->render($httpCode);
 
-        // Save the activity
-        $activity->save();
+        // temporary line, should be removed when user authentication on angular ci is present
+        if (! is_null($activity)) {
+            // Save the activity
+            $activity->save();
+        }
 
         return $output;
     }
@@ -3427,6 +3465,19 @@ class CouponAPIController extends ControllerAPI
 
         // Check the existance of issued coupon id
         $user = $this->api->user;
+
+        // temporary parameter, should be removed when user authentication on angular ci is present
+        OrbitInput::post('user_email', function($user_email) use(&$user) {
+            $user = User::excludeDeleted()
+                ->where('user_email', $user_email)
+                ->first();
+
+            if (! is_object($user)) {
+                $errorMessage = 'User with given email not found.';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+        });
+
         Validator::extend('orbit.empty.issuedcoupon', function ($attribute, $value, $parameters) use ($user) {
             $now = date('Y-m-d H:i:s');
             $number = OrbitInput::post('merchant_verification_number');

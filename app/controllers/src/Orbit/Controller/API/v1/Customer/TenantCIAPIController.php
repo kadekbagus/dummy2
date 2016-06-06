@@ -23,6 +23,7 @@ use Employee;
 use Coupon;
 use News;
 use Lang;
+use User;
 
 class TenantCIAPIController extends BaseAPIController
 {
@@ -67,6 +68,18 @@ class TenantCIAPIController extends BaseAPIController
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
+
+            // temporary parameter, should be removed when user authentication is present
+            OrbitInput::get('user_email', function($user_email) use(&$user) {
+                $user = User::excludeDeleted()
+                    ->where('user_email', $user_email)
+                    ->first();
+
+                if (! is_object($user)) {
+                    $errorMessage = 'User with given email not found.';
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+            });
 
             $prefix = DB::getTablePrefix();
 
@@ -156,6 +169,7 @@ class TenantCIAPIController extends BaseAPIController
                     WHERE {$prefix}news_merchant.object_type = 'retailer'
                     AND {$prefix}news.object_type = 'news'
                     AND {$prefix}news.status = 'active'
+                    AND {$prefix}merchants.status = 'active'
                     AND {$prefix}merchants.parent_id = {$quoted_mall_id}
                     AND '{$mallTime}' >= {$prefix}news.begin_date
                     AND '{$mallTime}' <= {$prefix}news.end_date
@@ -178,6 +192,7 @@ class TenantCIAPIController extends BaseAPIController
                     WHERE {$prefix}news_merchant.object_type = 'retailer'
                     AND {$prefix}news.object_type = 'promotion'
                     AND {$prefix}news.status = 'active'
+                    AND {$prefix}merchants.status = 'active'
                     AND {$prefix}merchants.parent_id = {$quoted_mall_id}
                     AND '{$mallTime}' >= {$prefix}news.begin_date
                     AND '{$mallTime}' <= {$prefix}news.end_date
@@ -189,18 +204,20 @@ class TenantCIAPIController extends BaseAPIController
             ->leftJoin(DB::raw("(
                     SELECT {$prefix}merchants.merchant_id, count({$prefix}promotions.promotion_id) as coupon_counter
                     from {$prefix}promotions
-                    LEFT JOIN {$prefix}promotion_retailer on {$prefix}promotion_retailer.promotion_id = {$prefix}promotions.promotion_id
-                    LEFT JOIN {$prefix}merchants on {$prefix}promotion_retailer.retailer_id = {$prefix}merchants.merchant_id
+                    LEFT JOIN {$prefix}promotion_retailer_redeem on {$prefix}promotion_retailer_redeem.promotion_id = {$prefix}promotions.promotion_id
+                    LEFT JOIN {$prefix}merchants on {$prefix}promotion_retailer_redeem.retailer_id = {$prefix}merchants.merchant_id
 
                     JOIN {$prefix}issued_coupons ON {$prefix}issued_coupons.promotion_id = {$prefix}promotions.promotion_id
 
-                    WHERE {$prefix}promotion_retailer.object_type = 'tenant'
+                    WHERE {$prefix}promotion_retailer_redeem.object_type = 'tenant'
                     AND {$prefix}promotions.is_coupon = 'Y'
                     AND {$prefix}promotions.status = 'active'
                     AND {$prefix}merchants.parent_id = {$quoted_mall_id}
-
+                    AND {$prefix}merchants.status = 'active'
+                    AND {$prefix}promotions.begin_date <= '{$mallTime}'
+                    AND {$prefix}promotions.end_date >= '{$mallTime}'
                     AND {$prefix}issued_coupons.status = 'active'
-                    AND {$prefix}promotions.coupon_validity_in_date >= {$quoted_mall_id}
+                    AND {$prefix}promotions.coupon_validity_in_date >= '{$mallTime}'
                     AND {$prefix}issued_coupons.user_id = '{$user->user_id}'
                     GROUP BY {$prefix}merchants.merchant_id
             ) as coupon_merch"), DB::raw('coupon_merch.merchant_id'), '=', 'merchants.merchant_id')
@@ -449,6 +466,18 @@ class TenantCIAPIController extends BaseAPIController
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
+
+            // temporary parameter, should be removed when user authentication is present
+            OrbitInput::get('user_email', function($user_email) use(&$user) {
+                $user = User::excludeDeleted()
+                    ->where('user_email', $user_email)
+                    ->first();
+
+                if (! is_object($user)) {
+                    $errorMessage = 'User with given email not found.';
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+            });
 
             $gender_profile_query = '';
             $age_profile_query = '';
