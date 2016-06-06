@@ -20,7 +20,7 @@
             -webkit-box-shadow: 0px 0px 24px -1px rgba(56, 56, 56, 1);
             -moz-box-shadow: 0px 0px 24px -1px rgba(56, 56, 56, 1);
             box-shadow: 0px 0px 24px -1px rgba(56, 56, 56, 1);
-        }        
+        }
     </style>
 @stop
 
@@ -67,7 +67,7 @@
     }
     </script>
 
-    <!-- show when browser run in OS !== Android 5+ -->     
+    <!-- show when browser run in OS !== Android 5+ -->
     <div class="row padded" id="in-any-os" style="display:none">
         <div class="col-xs-12 hide" id="captive-no-internet">
             <h3>{{ Lang::get('mobileci.captive.request_internet.heading') }}</h3>
@@ -85,11 +85,11 @@
             <h4>{{ Lang::get('mobileci.captive.request_internet.check_connection') }}</h4>
             <p>{{ Lang::get('mobileci.captive.request_internet.too_long') }}</p>
         </div>
-        {{-- Add some random string to force browser to not cache this image otherwise we will get false detection --}} 
+        {{-- Add some random string to force browser to not cache this image otherwise we will get false detection --}}
         <img id="pingdom-icon" class="hide" src="{{ $ping_url.'?rnd='.str_random(10) }}" onerror="OrbitInternetChecker.down()" onload="OrbitInternetChecker.up()">
     </div>
 
-    <!-- show when browser run in OS === Android 5+ -->     
+    <!-- show when browser run in OS === Android 5+ -->
     <div class="row padded" id="in-android-5-or-newer"  style="display:none">
         <div class="col-xs-12" id="workaround-captive-no-internet">
            <h3>{{ Lang::get('mobileci.captive.request_internet.message_ex.title') }}</h3>
@@ -100,19 +100,19 @@
                <li>{{ $instruction }}</li>
                @endforeach
            </ul>
-           <button id="copy-url" class="btn btn-block btn-primary" data-clipboard-text="{{ URL::route('captive-request-internet') }}">{{ Lang::get('mobileci.captive.request_internet.message_ex.clipboard_caption') }}</button>
+           <button id="copy-url" class="btn btn-block btn-primary" data-clipboard-text="{{ URL::route('captive-request-internet', [$qs_name => $qs_value]) }}">{{ Lang::get('mobileci.captive.request_internet.message_ex.clipboard_caption') }}</button>
            <div class='clipboard-success' style='display:none'>{{ Lang::get('mobileci.captive.request_internet.message_ex.clipboard_success') }}</div>
-        </div>        
+        </div>
     </div>
-    
+
 @stop
 
 @section('ext_script_bot')
-    {{----------------------------------------------------------- 
+    {{-----------------------------------------------------------
       Note config 'orbit.cdn.modernizr' is not defined.
-      we do not include CDN for Modernizr config in orbit.php 
-      because we only need subset of its functionalities       
-    --------------------------------------------------------------}} 
+      we do not include CDN for Modernizr config in orbit.php
+      because we only need subset of its functionalities
+    --------------------------------------------------------------}}
     {{ HTML::script(Config::get('orbit.cdn.modernizr', 'mobile-ci/scripts/modernizr-custom.min.js')) }}
     {{-- Script fallback --}}
     <script>
@@ -130,27 +130,27 @@
         }
     </script>
     {{-- End of Script fallback --}}
-    
+
     <script type="text/javascript">
         var AndroidCaptivePortalBrowserDetector = {};
         /**---------------------------------------------------------------
          * Detect if current browser is captive portal browser in Android.
          * ---------------------------------------------------------------
          * Note:
-         * Captive portal browser in Android is application that responsible 
-         * for handle captive portal login. It is implemented in activity 
-         * named CaptivePortalLoginActivity.java         * 
+         * Captive portal browser in Android is application that responsible
+         * for handle captive portal login. It is implemented in activity
+         * named CaptivePortalLoginActivity.java         *
          * This activity using WebView component with minimum functionalities
          * i.e only enable Javascript but not advanced feature such as HTML5 Local Storage
          * functionality. So we check availability of LocalStorage functionality
-         * 
+         *
          * User-Agent for default WebView is as explained in
          * https://developer.chrome.com/multidevice/user-agent#webview_user_agent
-         * 
+         *
          * wv string in user-agent only available in WebView since Android 5+,
          * lower version Android will not have this string
-         * 
-         * This detection however have weakness. For example, someone can build 
+         *
+         * This detection however have weakness. For example, someone can build
          * Android application using default WebView. Then this script will result
          * in false detection.
          */
@@ -158,9 +158,9 @@
             var ua = navigator.userAgent;
             return  (!Modernizr.localstorage) &&
                     (ua.indexOf('Android') > -1) &&
-                    (ua.indexOf('Chrome/') > -1) &&                    
-                    (ua.indexOf('wv)') > -1);                    
-        };    
+                    (ua.indexOf('Chrome/') > -1) &&
+                    (ua.indexOf('wv)') > -1);
+        };
 
 
         if (AndroidCaptivePortalBrowserDetector.isAndroidCaptivePortal() === true) {
@@ -168,11 +168,11 @@
             //we provide different way to grant user internet access
             $('#in-any-os').hide();
             $('#in-android-5-or-newer').show();
-        } else {            
+        } else {
             $('#in-any-os').show();
             $('#in-android-5-or-newer').hide();
-        }    
-    
+        }
+
         var clipboard = new Clipboard('#copy-url');
         clipboard.on('success', function(e) {
             $('.clipboard-success').fadeIn(400).delay(3000).fadeOut(400);
