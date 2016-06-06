@@ -2153,6 +2153,14 @@ class MallAPIController extends ControllerAPI
                 if (count($update_free_wifi) > 0) {
                     $update_free_wifi->status = $free_wifi_status;
                     $update_free_wifi->modified_by = $this->api->user->user_id;
+                    if ($update_free_wifi->status === 'inactive') {
+                        $count_wiget = Widget::excludeDeleted()
+                                ->leftJoin('widget_retailer', 'widget_retailer.widget_id', '=', 'widgets.widget_id')
+                                ->where('retailer_id', $updatedmall->merchant_id)
+                                ->count();
+
+                        $update_free_wifi->widget_order = $count_wiget;
+                    }
                     $update_free_wifi->save();
 
                     $widget_status = $update_free_wifi->status;
