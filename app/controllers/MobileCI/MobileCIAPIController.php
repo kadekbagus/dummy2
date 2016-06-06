@@ -10159,6 +10159,12 @@ class MobileCIAPIController extends BaseCIController
             $userguest->status = 'active';
             $userguest->save();
 
+            $userSignin = UserSignin::where('user_id', '=', $guest_id)->first();
+
+            if (is_object($userSignin)) {
+                $userSignin->delete(true);
+            }
+            
             $this->commit();
 
             $this->response->code = 0;
@@ -10340,6 +10346,7 @@ class MobileCIAPIController extends BaseCIController
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             $user = $login_response_data->data;
+            $this->linkGuestToUser($user);
             // fill the user sign in table
             // $this->setSignInActivity($user, 'form', $retailer, $user->activity);
             // acquire user
