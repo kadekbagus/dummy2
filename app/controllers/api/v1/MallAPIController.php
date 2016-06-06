@@ -2159,7 +2159,7 @@ class MallAPIController extends ControllerAPI
                                 ->where('retailer_id', $updatedmall->merchant_id)
                                 ->count();
 
-                        $update_free_wifi->widget_order = $count_wiget;
+                        $update_free_wifi->widget_order = $count_wiget + 1;
                     }
                     $update_free_wifi->save();
 
