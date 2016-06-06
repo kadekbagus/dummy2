@@ -739,7 +739,7 @@ class MobileCIAPIController extends BaseCIController
     
     private function prepareWidgetFreeWifiData($widget, $user, $retailer, $mallid, $now, $urlblock)
     {
-        $widget->image = 'mobile-ci/images/free-wifi.png';
+        $widget->image = 'mobile-ci/images/default_free_wifi_directory.png';
 
         foreach ($widget->media as $media) {
             if ($media->media_name_long === 'home_widget_orig') {
@@ -751,11 +751,8 @@ class MobileCIAPIController extends BaseCIController
             }
         }
 
-        $widget->always_show_subtitle = true;
-        //$widget->display_title = Lang::get('mobileci.widgets.free_wifi');
+        $widget->display_title = Lang::get('mobileci.widgets.free_wifi');
         //$widget->display_sub_title = Lang::get('mobileci.widgets.free_wifi');
-        $widget->display_title = Lang::get('mobileci.captive.widget_slogan');
-        $widget->display_sub_title = Lang::get('mobileci.captive.widget_tagline');
         $widget->url = $urlblock->blockedRoute('captive-request-internet');
         $widget->redirect_url = URL::route('captive-request-internet');
         
@@ -857,7 +854,7 @@ class MobileCIAPIController extends BaseCIController
                                 // On
                                 DB::raw('os.setting_name'), '=', DB::raw("CONCAT('enable_', {$prefix}widgets.widget_type, '_widget')"))
                             ->join('widget_retailer', 'widget_retailer.widget_id', '=', 'widgets.widget_id')
-                            ->where('widgets.status', '!=', 'deleted')
+                            ->where('widgets.status', '=', 'active')
                             ->where('widgets.merchant_id', '=', $merchantId)
                             ->whereRaw("(CASE WHEN os.setting_id IS NULL THEN 'true' ELSE os.setting_value END) = 'true'")
                             ->groupBy('widgets.widget_type')

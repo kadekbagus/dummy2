@@ -85,11 +85,14 @@ class CouponCIAPIController extends BaseAPIController
 
             $mall = Mall::excludeDeleted()->where('merchant_id', $this->mall_id)->first();
             $mallTime = Carbon::now($mall->timezone->timezone_name);
+            $mallDefaultLanguage = $this->getDefaultLanguage($mall);
+            $mallDefaultLanguageId = ! is_null($mallDefaultLanguage) ? $mallDefaultLanguage->language_id : null;
+            $language_id = OrbitInput::get('language_id', $mallDefaultLanguageId);
 
             $coupons = Coupon::select(
                     'promotions.promotion_id',
-                    'promotions.promotion_name',
-                    'promotions.description',
+                    'coupon_translations.promotion_name',
+                    'coupon_translations.description',
                     'media.path as image',
                     DB::raw("
                         (SELECT COUNT({$prefix}issued_coupons.issued_coupon_id)
@@ -105,9 +108,15 @@ class CouponCIAPIController extends BaseAPIController
                 })
                 ->leftJoin('promotion_retailer_redeem', 'promotion_retailer_redeem.promotion_id', '=', 'promotions.promotion_id')
                 ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer_redeem.retailer_id')
+                ->leftJoin('coupon_translations', function ($join) use ($language_id) {
+                    $join->on('promotions.promotion_id', '=', 'coupon_translations.promotion_id');
+                    if (! is_null($language_id)) {
+                        $join->where('coupon_translations.merchant_language_id', '=', $language_id);
+                    }
+                })
                 ->leftJoin('media', function ($join) {
-                    $join->on('media.object_id', '=', 'merchants.merchant_id')
-                        ->where('media_name_long', '=', 'retailer_logo_orig');
+                    $join->on('media.object_id', '=', 'coupon_translations.coupon_translation_id')
+                        ->where('media_name_long', '=', 'coupon_translation_image_orig');
                 })
                 ->where(function ($q) {
                     $q->where(function ($q2) {
@@ -130,6 +139,11 @@ class CouponCIAPIController extends BaseAPIController
             OrbitInput::get('ids', function($ids) use ($coupons)
             {
                 $coupons->whereNotIn('promotions.promotion_id', $ids);
+            });
+
+            OrbitInput::get('tenant_id', function($id) use ($coupons)
+            {
+                $coupons->where('merchants.merchant_id', $id);
             });
 
             OrbitInput::get(
@@ -306,6 +320,10 @@ class CouponCIAPIController extends BaseAPIController
 
             $mall = Mall::excludeDeleted()->where('merchant_id', $this->mall_id)->first();
             $mallTime = Carbon::now($mall->timezone->timezone_name);
+            $mallDefaultLanguage = $this->getDefaultLanguage($mall);
+            $mallDefaultLanguageId = ! is_null($mallDefaultLanguage) ? $mallDefaultLanguage->language_id : null;
+            $language_id = OrbitInput::get('language_id', $mallDefaultLanguageId);
+
             $quoted_mall_id = $this->quoteStr($this->mall_id);
             $quoted_coupon_id = $this->quoteStr($coupon_id);
 
@@ -342,10 +360,17 @@ class CouponCIAPIController extends BaseAPIController
                 })
                 ->leftJoin('promotion_retailer_redeem', 'promotion_retailer_redeem.promotion_id', '=', 'promotions.promotion_id')
                 ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer_redeem.retailer_id')
-                ->leftJoin('media', function ($join) {
-                    $join->on('media.object_id', '=', 'merchants.merchant_id')
-                        ->where('media_name_long', '=', 'retailer_logo_orig');
+                ->leftJoin('coupon_translations', function ($join) use ($language_id) {
+                    $join->on('promotions.promotion_id', '=', 'coupon_translations.promotion_id');
+                    if (! is_null($language_id)) {
+                        $join->where('coupon_translations.merchant_language_id', '=', $language_id);
+                    }
                 })
+                ->leftJoin('media', function ($join) {
+                    $join->on('media.object_id', '=', 'coupon_translations.coupon_translation_id')
+                        ->where('media_name_long', '=', 'coupon_translation_image_orig');
+                })
+                ->where('promotions.promotion_id', $coupon_id)
                 ->where(function ($q) {
                     $q->where(function ($q2) {
                         $q2->where('merchants.parent_id', '=', $this->mall_id)
@@ -400,23 +425,24 @@ class CouponCIAPIController extends BaseAPIController
                 ->where('merchant_id', $this->mall_id)
                 ->count('users.user_id');
 
-            if ($coupon->is_all_employee === 'Y') {
-                if ($employeeVerNumbersActive > 0) {
-                    $cs_reedem = true;
-                }
-            } elseif ($coupon->is_all_employee === 'N') {
-                // Check exist link to cs, and cs must have active status
-                $promotionEmployee = \CouponEmployee::join('users', 'users.user_id', '=', 'promotion_employee.user_id')
-                    ->where('users.status', 'active')
-                    ->where('promotion_employee.promotion_id', $coupon->promotion_id)
-                    ->count('promotion_employee_id');
+            if (is_object($coupon)) {
+                if ($coupon->is_all_employee === 'Y') {
+                    if ($employeeVerNumbersActive > 0) {
+                        $cs_reedem = true;
+                    }
+                } else {
+                    // Check exist link to cs, and cs must have active status
+                    $promotionEmployee = \CouponEmployee::join('users', 'users.user_id', '=', 'promotion_employee.user_id')
+                        ->where('users.status', 'active')
+                        ->where('promotion_employee.promotion_id', $coupon->promotion_id)
+                        ->count('promotion_employee_id');
 
-                if ($promotionEmployee > 0) {
-                    $cs_reedem = true;
+                    if ($promotionEmployee > 0) {
+                        $cs_reedem = true;
+                    }
                 }
-            }            
-
-            $coupon->linked_to_cs = $cs_reedem;
+                $coupon->linked_to_cs = $cs_reedem;
+            }
 
             $this->response->data = $coupon;
             $this->response->code = 0;

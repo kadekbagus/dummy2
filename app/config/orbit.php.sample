@@ -2147,7 +2147,7 @@ return array(
                 'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
-                'file_size'     => 150000,
+                'file_size'     => 90000,
 
                 // The target path which file to be stored
                 'path'          => 'uploads/widgets',
