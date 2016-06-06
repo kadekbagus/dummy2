@@ -1312,7 +1312,7 @@ class WidgetAPIController extends ControllerAPI
                                 // On
                                 DB::raw('os.setting_name'), '=', DB::raw("CONCAT('enable_', {$tablePrefix}widgets.widget_type, '_widget')"))
                             ->join('widget_retailer', 'widget_retailer.widget_id', '=', 'widgets.widget_id')
-                            ->where('widgets.status', '!=', 'deleted')
+                            ->where('widgets.status', '=', 'active')
                             ->whereRaw("(CASE WHEN os.setting_id IS NULL THEN 'true' ELSE os.setting_value END) = 'true'");
 
             // Include other relationship

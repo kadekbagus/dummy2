@@ -59,7 +59,7 @@ return array(
         'tenants'            => 'Stores',
         'services'           => 'Services',
         'lucky_draws'        => 'Lucky Draws',
-        'free_wifi'          => 'Free Internet',
+        'free_wifi'          => 'FREE INTERNET',
         'newss'              => 'News',
         'promotions_single'  => 'Promotion',
         'coupons_single'     => 'Coupon',
