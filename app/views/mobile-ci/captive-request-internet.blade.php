@@ -26,18 +26,66 @@
 
 @section('content')
     <script>
+    /**
+     * Read cookie value by name
+     */
+    var getCookie = function(cookieName) {
+        var name = cookieName + "=";
+        var ca = document.cookie.split(';');
+        for(var i = 0; i <ca.length; i++) {
+            var c = ca[i];
+            while (c.charAt(0)==' ') {
+                c = c.substring(1);
+            }
+            if (c.indexOf(name) == 0) {
+                return c.substring(name.length,c.length);
+            }
+        }
+        return '';
+    };
+    
     var OrbitInternetChecker = {};
 
     /**
-     * Callback to handle if internet is up
+     * Callback to handle if internet is connected from
+     * captive portal
      */
-    OrbitInternetChecker.up = function()
+    OrbitInternetChecker.connectedFromCaptivePortal = function()
     {
         $('#captive-check-internet').addClass('hide');
 
         // The user is already connected to the internet, no need to grant.
         // Redirect to our granted page.
         window.location.href = '{{ $granted_url }}';
+    };
+    
+    /**
+     * Callback to handle if internet is connected from
+     * any non mall captive portal (i.e 3G, any Wifi etc).
+     * 
+     * We display Free Internet Access dialog but with 
+     * Get Free Internet Access button disabled
+     * to indicate that they cannot get free internet access if they are not 
+     * connected to mall captive portal.
+     */
+    OrbitInternetChecker.connectedFromNonCaptivePortal = function()
+    {
+        $('#captive-check-internet').addClass('hide');
+        $('#captive-no-internet').removeClass('hide');
+        $('#btn-grant-internet').attr('disabled', 'disabled');
+    };
+    
+    /**
+     * Callback to handle if internet is up
+     */
+    OrbitInternetChecker.up = function()
+    {
+        var fromCaptivePortal = getCookie('{{ Config::get('orbit.captive.from_wifi.name') }}');
+        if (fromCaptivePortal === 'Y') {
+            this.connectedFromCaptivePortal();
+        } else {
+            this.connectedFromNonCaptivePortal();            
+        }
     };
 
     /**
@@ -67,7 +115,7 @@
     }
     </script>
 
-    <!-- show when browser run in OS !== Android 5+ -->
+    <!-- show when browser run in OS !== Android 5+ -->     
     <div class="row padded" id="in-any-os" style="display:none">
         <div class="col-xs-12 hide" id="captive-no-internet">
             <h3>{{ Lang::get('mobileci.captive.request_internet.heading') }}</h3>
