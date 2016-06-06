@@ -59,7 +59,7 @@ return array(
         'tenants'               => 'Gerai',
         'services'              => 'Layanan',
         'lucky_draws'           => 'Undian Berhadiah',
-        'free_wifi'             => 'Internet Gratis',
+        'free_wifi'             => 'INTERNET GRATIS',
         'newss'                 => 'Berita',
         'promotions_single'     => 'Promosi',
         'coupons_single'        => 'Kupon',
