@@ -753,7 +753,7 @@ class MobileCIAPIController extends BaseCIController
 
         $widget->always_show_subtitle = true;
         $widget->display_title = Lang::get('mobileci.widgets.free_wifi');
-        //$widget->display_sub_title = Lang::get('mobileci.widgets.free_wifi');
+        $widget->display_sub_title = Lang::get('mobileci.widgets.free_wifi');
         $widget->url = $urlblock->blockedRoute('captive-request-internet');
         $widget->redirect_url = URL::route('captive-request-internet');
         
