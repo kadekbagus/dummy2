@@ -77,6 +77,7 @@ use \WidgetClick;
 use \WidgetGroupName;
 use \Hash;
 use \UserGuest;
+use ListConnectedUser;
 use Helper\EloquentRecordCounter as RecordCounter;
 use MobileCI\ExCaptivePortalController as CaptivePortalController;
 
@@ -10729,6 +10730,12 @@ class MobileCIAPIController extends BaseCIController
 
             if (is_object($userSignin)) {
                 $userSignin->delete(true);
+            }
+
+            $listConnectedUser = listConnectedUser::where('user_id', '=', $guest_id)->first();
+
+            if (is_object($listConnectedUser)) {
+                $listConnectedUser->delete(true);
             }
             
             $this->commit();
