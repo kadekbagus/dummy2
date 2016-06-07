@@ -13,3 +13,5 @@ Route::get('/api/v1/cust/coupons/detail', function()
 Route::get('/app/v1/cust/coupons', ['as' => 'customer-api-coupon-list', 'uses' => 'IntermediateCIAuthController@CouponCI_getCouponList']);
 
 Route::get('/app/v1/cust/coupons/detail', ['as' => 'customer-api-coupon-detail', 'uses' => 'IntermediateCIAuthController@CouponCI_getCouponItem']);
+
+Route::post('/app/v1/cust/coupons/redeem', 'IntermediateCIAuthController@Coupon_postRedeemCoupon');
