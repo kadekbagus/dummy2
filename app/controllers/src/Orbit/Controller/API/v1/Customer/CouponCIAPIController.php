@@ -675,7 +675,7 @@ class CouponCIAPIController extends BaseAPIController
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = $e->getLine();
+            $this->response->data = null;
             $httpCode = 500;
         }
 

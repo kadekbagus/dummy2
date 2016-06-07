@@ -30,6 +30,7 @@ return array(
         // 'ci-home', // -> /
         // 'ci-customer-home', // -> /customer/home
         // 'mobile-ci-home', // -> /customer
+        // 'captive-request-internet', // -> /free internet
     ],
 
     // cdn path

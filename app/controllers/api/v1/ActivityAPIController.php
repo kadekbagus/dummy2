@@ -1207,7 +1207,9 @@ class ActivityAPIController extends ControllerAPI
             $activities = DB::table('user_signin')
                 ->select(
                     DB::raw("DATE({$tablePrefix}user_signin.created_at) as date"),
-                    DB::raw("COUNT(DISTINCT {$tablePrefix}user_signin.user_id) as count")
+                    DB::raw("COUNT(DISTINCT {$tablePrefix}user_signin.user_id) as count"),
+                    DB::raw("COUNT(DISTINCT CASE WHEN {$tablePrefix}user_signin.signin_via <> 'guest' THEN {$tablePrefix}user_signin.user_id END) as customer_count"),
+                    DB::raw("COUNT(DISTINCT CASE WHEN {$tablePrefix}user_signin.signin_via = 'guest' THEN {$tablePrefix}user_signin.user_id END) as guest_count")
                 )
                 ->whereBetween('user_signin.created_at', [$start_date, $end_date])
                 ->groupBy(DB::raw('1'))
@@ -1225,11 +1227,12 @@ class ActivityAPIController extends ControllerAPI
                     $activities->whereIn('user_signin.location_id', $locationIds);
                 });
             }
+            $activities = $activities->get();
 
             $this->response->data = [
                 'start_date' => $start_date,
                 'end_date'   => $end_date,
-                'today'      => $activities->get()
+                'today'      => $activities,
             ];
         } catch (ACLForbiddenException $e) {
             Event::fire('orbit.activity.getactivity.access.forbidden', array($this, $e));
@@ -1335,7 +1338,7 @@ class ActivityAPIController extends ControllerAPI
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
-                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.activity.getactivity.after.validation', array($this, $validator));
 
@@ -1345,26 +1348,28 @@ class ActivityAPIController extends ControllerAPI
                 // Filter by user location id
                 $locationIds = $this->getLocationIdsForUser($user);
             }
-
+            $tablePrefix = DB::getTablePrefix();
             $end_time = Carbon::now();
             $start_time = DB::select("select DATE_ADD('$end_time', INTERVAL -60 MINUTE) as start_time");
-
-            $connected_now = ConnectedNow::select('connected_now.*', 'list_connected_user.user_id')->leftJoin('list_connected_user', function ($join) {
+            $guest_role_id = Role::roleIdsByName(['guest']);
+            $connected_now = ConnectedNow::select(
+                                DB::raw("COUNT(DISTINCT {$tablePrefix}list_connected_user.user_id) as count"),
+                                DB::raw("COUNT(DISTINCT CASE WHEN {$tablePrefix}users.user_role_id <> '{$guest_role_id[0]}' THEN {$tablePrefix}list_connected_user.user_id END) as customer_count"),
+                                DB::raw("COUNT(DISTINCT CASE WHEN {$tablePrefix}users.user_role_id = '{$guest_role_id[0]}' THEN {$tablePrefix}list_connected_user.user_id END) as guest_count")
+                            )
+                            ->leftJoin('list_connected_user', function ($join) {
                                 $join->on('connected_now.connected_now_id', '=', 'list_connected_user.connected_now_id');
+                            })
+                            ->leftJoin('users', function ($join) {
+                                $join->on('users.user_id', '=', 'list_connected_user.user_id');
                             })
                             ->whereIn('merchant_id', $locationIds)
                             ->whereBetween('connected_now.created_at', [$start_time[0]->start_time, $end_time])
-                            ->groupBy('list_connected_user.user_id')
-                            ->get();
-
-            $users_count = 0;
-            if (! empty($connected_now)) {
-                $users_count = $connected_now->count();
-            }
+                            ->first();
 
             $this->response->data = [
                 'active_minutes' => (int)$active_minutes,
-                'connected_now' => $users_count,
+                'connected_now' => $connected_now,
             ];
         } catch (ACLForbiddenException $e) {
             Event::fire('orbit.activity.getactivity.access.forbidden', array($this, $e));
@@ -1923,6 +1928,7 @@ class ActivityAPIController extends ControllerAPI
                     $returning_sign_ins = DB::table('user_signin')->select(DB::raw('count(distinct user_id) as count'))
                                             ->whereIn('user_signin.location_id', $locationIds)
                                             ->whereBetween('user_signin.created_at', [$start_date, $end_date])
+                                            ->where('user_signin.signin_via', '!=', 'guest')
                                             ->whereNotIn('user_signin.user_id', function($q) use ($locationIds, $start_date, $end_date) {
                                                 $q->select('user_acquisitions.user_id')
                                                     ->from('user_acquisitions')
@@ -2763,7 +2769,11 @@ class ActivityAPIController extends ControllerAPI
                 SELECT
                     q_hours.comp_hours AS start_time,
                     DATE_FORMAT(DATE_ADD(q_hours.comp_hours, INTERVAL 1 HOUR),'%H:00') AS end_time,
-                    IFNULL(ppp2.score, 0) AS score
+                    (CASE
+                        WHEN ppp2.score <= 0 THEN 0
+                        WHEN ppp2.score is NULL THEN 0
+                        ELSE ppp2.score
+                    END) as score
                 FROM
                     (
                         SELECT
@@ -3159,10 +3169,11 @@ class ActivityAPIController extends ControllerAPI
                                     os.sequence_number <= ((DATEDIFF(DATE_FORMAT({$quote($mallenddate)}, '%Y-%m-%d'), DATE_FORMAT({$quote($mallbegindate)}, '%Y-%m-%d'))))
                                     ) AS mydate
                                 LEFT JOIN
-                                    (select activity_id, activity_name_long, date_format(convert_tz(created_at, '+00:00', {$quote($timezoneOffset)}), '%Y-%m-%d') as createdat from {$tablePrefix}activities
+                                    (select activity_id, activity_name_long, role, date_format(convert_tz(created_at, '+00:00', {$quote($timezoneOffset)}), '%Y-%m-%d') as createdat from {$tablePrefix}activities
                                     where (`group` = 'mobile-ci'
                                             or (`group` = 'portal' and activity_type in ('activation','create'))
                                             or (`group` = 'cs-portal' and activity_type in ('registration')))
+                                            and role != 'Guest'
                                             and response_status = 'OK' and location_id = {$quote($current_mall)}
                                             and created_at between {$quote($start_date)} and {$quote($end_date)}) as oa
                                 ON mydate.comp_date = oa.createdat

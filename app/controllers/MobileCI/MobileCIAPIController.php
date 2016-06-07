@@ -4,9 +4,11 @@
  * An API controller for managing Mobile CI.
  */
 use Log;
+use Net\MacAddr;
 use Orbit\Helper\Email\MXEmailChecker;
 use Orbit\Helper\Net\Domain;
 use Orbit\Helper\Net\UrlChecker as UrlBlock;
+use Orbit\Helper\Net\GenerateGuestUser;
 use Orbit\CloudMAC;
 use OrbitShop\API\v1\ControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
@@ -75,6 +77,7 @@ use \WidgetClick;
 use \WidgetGroupName;
 use \Hash;
 use \UserGuest;
+use ListConnectedUser;
 use Helper\EloquentRecordCounter as RecordCounter;
 use MobileCI\ExCaptivePortalController as CaptivePortalController;
 
@@ -854,7 +857,7 @@ class MobileCIAPIController extends BaseCIController
                                 // On
                                 DB::raw('os.setting_name'), '=', DB::raw("CONCAT('enable_', {$prefix}widgets.widget_type, '_widget')"))
                             ->join('widget_retailer', 'widget_retailer.widget_id', '=', 'widgets.widget_id')
-                            ->where('widgets.status', '=', 'active')
+                            ->where('widgets.status', '!=', 'deleted')
                             ->where('widgets.merchant_id', '=', $merchantId)
                             ->whereRaw("(CASE WHEN os.setting_id IS NULL THEN 'true' ELSE os.setting_value END) = 'true'")
                             ->groupBy('widgets.widget_type')
@@ -862,20 +865,14 @@ class MobileCIAPIController extends BaseCIController
                             ->get();
 
             if (CaptivePortalController::isFromCaptive()) {
-                //not used anymore because it is shown
-                //based on availability of free wifi in a mall
+                //not needed because free wifi internet widget is configurable in
+                //mall setting
                 // Inject number of widget on-the-fly
                 //$captiveWidget = CaptivePortalController::generateDummyWidget($retailer, $urlblock);
                 //$widgets->push($captiveWidget);
 
                 // Push the from_captive cookie
                 CaptivePortalController::setCookieForCaptive();
-
-                $from_captive_flag = OrbitInput::get('from_captive', 'no');
-
-                if ($from_captive_flag === 'yes') {
-                    $this->setCookieFromWifi();
-                }
             }
 
             $now = Carbon::now($retailer->timezone->timezone_name);
@@ -883,7 +880,7 @@ class MobileCIAPIController extends BaseCIController
             $mallid = $retailer->merchant_id;
 
             foreach ($widgets as $widget) {
-                $widget = $this->prepareWidgetData($widget, $user, $retailer, $mallid, $now, $urlblock);
+                $this->prepareWidgetData($widget, $user, $retailer, $mallid, $now, $urlblock);
             }
 
             $languages = $this->getListLanguages($retailer);
@@ -978,7 +975,8 @@ class MobileCIAPIController extends BaseCIController
             }
         }
 
-        $urlblock = new UrlBlock;
+        $user = $this->getLoggedInUser();
+            $urlblock = new UrlBlock($this->session, $user);
         $landing_url = $urlblock->blockedRoute('ci-customer-home');
         $socmed_redirect_to = \Input::get('socmed_redirect_to', '');
         if (! empty($socmed_redirect_to)) {
@@ -1249,8 +1247,7 @@ class MobileCIAPIController extends BaseCIController
                     $this->setSignInActivity($loggedInUser, 'google', $retailer);
 
                     // special session value for visited malls within single session
-                    $urlblock = new UrlBlock;
-                    $session = $urlblock->getUserSession();
+                    $session = $this->session;
                     $session->write('visited_location', [$retailer->merchant_id]);
 
                     $redirect_to_url_from_state = $this->remove_querystring_var(json_decode($this->base64UrlDecode($state))->redirect_to_url, $this->getOrbitSessionQueryStringName());
@@ -1283,7 +1280,8 @@ class MobileCIAPIController extends BaseCIController
 
                     $this->acquireUser($retailer, $loggedInUser, 'google');
 
-                    $urlblock = new UrlBlock;
+                    $user = $this->getLoggedInUser();
+                    $urlblock = new UrlBlock($this->session, $user);
                     $redirect_to_url_from_state = $this->remove_querystring_var(json_decode($this->base64UrlDecode($state))->redirect_to_url, $this->getOrbitSessionQueryStringName());
                     // $redirect_to_url_from_state = $this->add_querystring_var($redirect_to_url_from_state, $this->getOrbitSessionQueryStringName(), $urlblock->getUserSession()->getSessionId());
                     return Redirect::to($redirect_to_url_from_state);
@@ -1410,8 +1408,7 @@ class MobileCIAPIController extends BaseCIController
             $this->setSignInActivity($loggedInUser, 'facebook', $retailer);
 
             // special session value for visited malls within single session
-            $urlblock = new UrlBlock;
-            $session = $urlblock->getUserSession();
+            $session = $this->session;
             $session->write('visited_location', [$retailer->merchant_id]);
 
             $redirect_to_url = $this->remove_querystring_var($redirect_to_url, $this->getOrbitSessionQueryStringName());
@@ -1441,7 +1438,8 @@ class MobileCIAPIController extends BaseCIController
 
             $this->acquireUser($retailer, $loggedInUser, 'facebook');
 
-            $urlblock = new UrlBlock;
+            $user = $this->getLoggedInUser();
+            $urlblock = new UrlBlock($this->session, $user);
             $redirect_to_url = $this->remove_querystring_var($redirect_to_url, $this->getOrbitSessionQueryStringName());
             // $redirect_to_url = $this->add_querystring_var($redirect_to_url, $this->getOrbitSessionQueryStringName(), $urlblock->getUserSession()->getSessionId());
 
@@ -1590,7 +1588,8 @@ class MobileCIAPIController extends BaseCIController
         $widget_id = null;
         $widget = null;
         try {
-            $urlblock = new UrlBlock;
+            $user = $this->getLoggedInUser();
+            $urlblock = new UrlBlock($this->session, $user);
             $user = $urlblock->checkBlockedUrl();
 
             $retailer = $this->getRetailerInfo();
@@ -1683,7 +1682,8 @@ class MobileCIAPIController extends BaseCIController
         $activityPage = Activity::mobileci()
                                    ->setActivityType('view');
         try {
-            $urlblock = new UrlBlock;
+            $user = $this->getLoggedInUser();
+            $urlblock = new UrlBlock($this->session, $user);
             $user = $urlblock->checkBlockedUrl();
 
             $retailer = $this->getRetailerInfo();
@@ -1757,7 +1757,8 @@ class MobileCIAPIController extends BaseCIController
         $activity_type = null;
 
         try {
-            $urlblock = new UrlBlock;
+            $user = $this->getLoggedInUser();
+            $urlblock = new UrlBlock($this->session, $user);
             $user = $urlblock->checkBlockedUrl();
 
             $retailer = $this->getRetailerInfo();
@@ -2070,7 +2071,8 @@ class MobileCIAPIController extends BaseCIController
      */
     public function getLandingUrl($mall)
     {
-        $urlblock = new UrlBlock;
+        $user = $this->getLoggedInUser();
+        $urlblock = new UrlBlock($this->session, $user);
         $landing = Setting::getFromList($mall->settings, 'landing_page');
 
         // Get the landing page URL based on settings
@@ -2242,7 +2244,8 @@ class MobileCIAPIController extends BaseCIController
         try {
             // Require authentication
             $this->registerCustomValidation();
-            $urlblock = new UrlBlock;
+            $user = $this->getLoggedInUser();
+            $urlblock = new UrlBlock($this->session, $user);
             $user = $urlblock->checkBlockedUrl();
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
@@ -2422,7 +2425,7 @@ class MobileCIAPIController extends BaseCIController
             $couponTenantRedeem->linkedToTenant = FALSE;
             $couponTenantRedeem->linkedToCS = FALSE;
 
-            // this is came fron my coupon (or issued coupon) paeg
+            // this is came fron my coupon (or issued coupon) page
             OrbitInput::get(
                 'coupon_redeem_id',
                 function ($pid) use ($tenants, $retailer, &$notfound, &$couponTenantRedeem, $mallid) {
@@ -2970,7 +2973,8 @@ class MobileCIAPIController extends BaseCIController
                                    ->setActivityType('view');
         $tenant = null;
         try {
-            $urlblock = new UrlBlock;
+            $user = $this->getLoggedInUser();
+            $urlblock = new UrlBlock($this->session, $user);
             $user = $urlblock->checkBlockedUrl();
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
@@ -3405,7 +3409,8 @@ class MobileCIAPIController extends BaseCIController
                                    ->setActivityType('view');
         $service = null;
         try {
-            $urlblock = new UrlBlock;
+            $user = $this->getLoggedInUser();
+            $urlblock = new UrlBlock($this->session, $user);
             $user = $urlblock->checkBlockedUrl();
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
@@ -3583,7 +3588,8 @@ class MobileCIAPIController extends BaseCIController
     {
         $user = null;
         try {
-            $urlblock = new UrlBlock;
+            $user = $this->getLoggedInUser();
+            $urlblock = new UrlBlock($this->session, $user);
             $user = $urlblock->checkBlockedUrl();
 
             $sort_by = OrbitInput::get('sort_by');
@@ -4178,7 +4184,8 @@ class MobileCIAPIController extends BaseCIController
         try {
             // Require authentication
             $this->registerCustomValidation();
-            $urlblock = new UrlBlock;
+            $user = $this->getLoggedInUser();
+            $urlblock = new UrlBlock($this->session, $user);
             $user = $urlblock->checkBlockedUrl();
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
@@ -4502,7 +4509,8 @@ class MobileCIAPIController extends BaseCIController
     public function getSearchService() {
         $user = null;
         try {
-            $urlblock = new UrlBlock;
+            $user = $this->getLoggedInUser();
+            $urlblock = new UrlBlock($this->session, $user);
             $user = $urlblock->checkBlockedUrl();
 
             $sort_by = OrbitInput::get('sort_by');
@@ -4805,7 +4813,8 @@ class MobileCIAPIController extends BaseCIController
         $activityPage = Activity::mobileci()
             ->setActivityType('view');
         try {
-            $urlblock = new UrlBlock;
+            $user = $this->getLoggedInUser();
+            $urlblock = new UrlBlock($this->session, $user);
             $user = $urlblock->checkBlockedUrl();
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
@@ -4985,7 +4994,8 @@ class MobileCIAPIController extends BaseCIController
         try {
             // Require authentication
             $this->registerCustomValidation();
-            $urlblock = new UrlBlock;
+            $user = $this->getLoggedInUser();
+            $urlblock = new UrlBlock($this->session, $user);
             $user = $urlblock->checkBlockedUrl();
             $retailer = $this->getRetailerInfo();
 
@@ -5166,7 +5176,8 @@ class MobileCIAPIController extends BaseCIController
                                    ->setActivityType('view');
         $product = null;
         try {
-            $urlblock = new UrlBlock;
+            $user = $this->getLoggedInUser();
+            $urlblock = new UrlBlock($this->session, $user);
             $user = $urlblock->checkBlockedUrl();
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
@@ -5381,7 +5392,8 @@ class MobileCIAPIController extends BaseCIController
                                    ->setActivityType('view');
 
         try {
-            $urlblock = new UrlBlock;
+            $user = $this->getLoggedInUser();
+            $urlblock = new UrlBlock($this->session, $user);
             $user = $urlblock->checkBlockedUrl();
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
@@ -5612,7 +5624,8 @@ class MobileCIAPIController extends BaseCIController
         try {
             // Require authentication
             $this->registerCustomValidation();
-            $urlblock = new UrlBlock;
+            $user = $this->getLoggedInUser();
+            $urlblock = new UrlBlock($this->session, $user);
             $user = $urlblock->checkBlockedUrl();
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
@@ -5871,7 +5884,8 @@ class MobileCIAPIController extends BaseCIController
         try {
             // Require authentication
             $this->registerCustomValidation();
-            $urlblock = new UrlBlock;
+            $user = $this->getLoggedInUser();
+            $urlblock = new UrlBlock($this->session, $user);
             $user = $urlblock->checkBlockedUrl();
             $retailer = $this->getRetailerInfo();
 
@@ -6117,7 +6131,8 @@ class MobileCIAPIController extends BaseCIController
         $activityPage = Activity::mobileci()
                                    ->setActivityType('view');
         try {
-            $urlblock = new UrlBlock;
+            $user = $this->getLoggedInUser();
+            $urlblock = new UrlBlock($this->session, $user);
             $user = $urlblock->checkBlockedUrl();
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
@@ -6390,7 +6405,8 @@ class MobileCIAPIController extends BaseCIController
         $activityPage = Activity::mobileci()
                                    ->setActivityType('view');
         try {
-            $urlblock = new UrlBlock;
+            $user = $this->getLoggedInUser();
+            $urlblock = new UrlBlock($this->session, $user);
             $user = $urlblock->checkBlockedUrl();
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
@@ -6546,7 +6562,8 @@ class MobileCIAPIController extends BaseCIController
         try {
             // Require authentication
             $this->registerCustomValidation();
-            $urlblock = new UrlBlock;
+            $user = $this->getLoggedInUser();
+            $urlblock = new UrlBlock($this->session, $user);
             $user = $urlblock->checkBlockedUrl();
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
@@ -6774,7 +6791,8 @@ class MobileCIAPIController extends BaseCIController
         try {
             // Require authentication
             $this->registerCustomValidation();
-            $urlblock = new UrlBlock;
+            $user = $this->getLoggedInUser();
+            $urlblock = new UrlBlock($this->session, $user);
             $user = $urlblock->checkBlockedUrl();
             $retailer = $this->getRetailerInfo();
 
@@ -7004,7 +7022,8 @@ class MobileCIAPIController extends BaseCIController
                                    ->setActivityType('view');
         $promotion = null;
         try {
-            $urlblock = new UrlBlock;
+            $user = $this->getLoggedInUser();
+            $urlblock = new UrlBlock($this->session, $user);
             $user = $urlblock->checkBlockedUrl();
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
@@ -7163,7 +7182,8 @@ class MobileCIAPIController extends BaseCIController
         try {
             // Require authentication
             $this->registerCustomValidation();
-            $urlblock = new UrlBlock;
+            $user = $this->getLoggedInUser();
+            $urlblock = new UrlBlock($this->session, $user);
             $user = $urlblock->checkBlockedUrl();
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
@@ -7392,7 +7412,8 @@ class MobileCIAPIController extends BaseCIController
         try {
             // Require authentication
             $this->registerCustomValidation();
-            $urlblock = new UrlBlock;
+            $user = $this->getLoggedInUser();
+            $urlblock = new UrlBlock($this->session, $user);
             $user = $urlblock->checkBlockedUrl();
             $retailer = $this->getRetailerInfo();
 
@@ -7623,7 +7644,8 @@ class MobileCIAPIController extends BaseCIController
                                    ->setActivityType('view');
         $product = null;
         try {
-            $urlblock = new UrlBlock;
+            $user = $this->getLoggedInUser();
+            $urlblock = new UrlBlock($this->session, $user);
             $user = $urlblock->checkBlockedUrl();
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
@@ -7784,7 +7806,8 @@ class MobileCIAPIController extends BaseCIController
         try {
             // Require authentication
             $this->registerCustomValidation();
-            $urlblock = new UrlBlock;
+            $user = $this->getLoggedInUser();
+            $urlblock = new UrlBlock($this->session, $user);
             $user = $urlblock->checkBlockedUrl();
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
@@ -7848,7 +7871,8 @@ class MobileCIAPIController extends BaseCIController
         try {
             // Require authentication
             $this->registerCustomValidation();
-            $urlblock = new UrlBlock;
+            $user = $this->getLoggedInUser();
+            $urlblock = new UrlBlock($this->session, $user);
             $user = $urlblock->checkBlockedUrl();
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
@@ -7970,7 +7994,8 @@ class MobileCIAPIController extends BaseCIController
     public function getMallLuckyDrawDownloadList()
     {
         try {
-            $urlblock = new UrlBlock;
+            $user = $this->getLoggedInUser();
+            $urlblock = new UrlBlock($this->session, $user);
             $user = $urlblock->checkBlockedUrl();
             $retailer = $this->getRetailerInfo();
             $lucky_draw_id = OrbitInput::get('id');
@@ -8055,7 +8080,8 @@ class MobileCIAPIController extends BaseCIController
             $httpCode = 200;
             // Require authentication
             $this->registerCustomValidation();
-            $urlblock = new UrlBlock;
+            $user = $this->getLoggedInUser();
+            $urlblock = new UrlBlock($this->session, $user);
             $user = $urlblock->checkBlockedUrl();
             $retailer = $this->getRetailerInfo();
 
@@ -8378,7 +8404,8 @@ class MobileCIAPIController extends BaseCIController
 
             // Require authentication
             $this->registerCustomValidation();
-            $urlblock = new UrlBlock;
+            $user = $this->getLoggedInUser();
+            $urlblock = new UrlBlock($this->session, $user);
             $user = $urlblock->checkBlockedUrl();
             $retailer = $this->getRetailerInfo();
 
@@ -9412,7 +9439,8 @@ class MobileCIAPIController extends BaseCIController
 
             $user->setHidden(array('user_password', 'apikey'));
 
-            // $urlblock = new UrlBlock;
+            // $user = $this->getLoggedInUser();
+            $urlblock = new UrlBlock($this->session, $user);
             // Coupon::issueAutoCoupon($retailer, $user, $urlblock->getUserSession());
 
             $this->response->data = $user;
@@ -10132,7 +10160,18 @@ class MobileCIAPIController extends BaseCIController
                 'role'      => $user->role->role_name,
                 'fullname'  => $user->getFullName(),
             );
-            $this->session->enableForceNew()->start($data);
+
+            $this->session->start(array(), 'no-session-creation');
+            // get the session data
+            $sessionData = $this->session->read(NULL);
+            $sessionData['logged_in'] = TRUE;
+            $sessionData['user_id'] = $user->user_id;
+            $sessionData['email'] = $user->user_email;
+            $sessionData['role'] = $user->role->role_name;
+            $sessionData['fullname'] = $user->getFullName();
+
+            // update the guest session data, append user data to it so the user will be recognized
+            $this->session->update($sessionData);
 
             // Send the session id via HTTP header
             $sessionHeader = $this->session->getSessionConfig()->getConfig('session_origin.header.name');
@@ -10163,11 +10202,12 @@ class MobileCIAPIController extends BaseCIController
                 $this->session->start(array(), 'no-session-creation');
             }
 
-            $guest_id = $this->session->read('user_id');
+            $guest_id = $this->session->read('guest_user_id');
 
             // check guest user id on session if empty create new one
             if (empty($guest_id)) {
-                $guest = (new UrlBlock())->generateGuestUser();
+                $urlblock = new UrlBlock($this->session, NULL);
+                $guest = $urlblock->generateGuestUser();
 
                 $guest_id = $guest->user_id;
             }
@@ -10180,6 +10220,10 @@ class MobileCIAPIController extends BaseCIController
             $userguest->status = 'active';
             $userguest->save();
 
+            $userSignin = DB::table('user_signin')->where('user_id', '=', $guest_id)->delete();
+
+            $listConnectedUser = DB::table('list_connected_user')->where('user_id', '=', $guest_id)->delete(); 
+            
             $this->commit();
 
             $this->response->code = 0;
@@ -10229,7 +10273,8 @@ class MobileCIAPIController extends BaseCIController
 
         // if the user is viewing the mall for the 1st time in this session
         // then set also the sign in activity
-        $urlblock = new UrlBlock;
+        $this->prepareSession();
+        $urlblock = new UrlBlock($this->session, $user);
         $session = $urlblock->getUserSession();
         $visited_locations = [];
         if (! empty($session->read('visited_location'))) {
@@ -10360,13 +10405,14 @@ class MobileCIAPIController extends BaseCIController
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             $user = $login_response_data->data;
+            $this->linkGuestToUser($user);
             // fill the user sign in table
             // $this->setSignInActivity($user, 'form', $retailer, $user->activity);
             // acquire user
             $user_obj = User::where('user_id', $user->user_id)->first();
             $this->acquireUser($retailer, $user_obj, 'form');
 
-            $urlblock = new UrlBlock;
+            $urlblock = new UrlBlock($this->session, $user_obj);
             // append the redirect url to user object
             // remove the orbit_session from query string for this redirect url
             $user->redirect_to = $this->remove_querystring_var($to_url, $this->getOrbitSessionQueryStringName());
@@ -10471,6 +10517,13 @@ class MobileCIAPIController extends BaseCIController
     public function getOrbitSessionQueryStringName()
     {
         return Config::get('orbit.session.session_origin.query_string.name');
+    }
+
+    public function setSession($session)
+    {
+        $this->session = $session;
+
+        return $this;
     }
 
     public function setCookieFromWifi()

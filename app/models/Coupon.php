@@ -259,21 +259,6 @@ class Coupon extends Eloquent
                     ->where('object_name', 'coupon');
     }
 
-    /**
-     * Accessor for empty product image
-     *
-     * @author Ahmad Anshori <ahmad@dominopos.com>
-     * @param string $value - image path
-     * @return string $value
-     */
-    public function getImageAttribute($value)
-    {
-        if (empty($value)) {
-            return 'mobile-ci/images/default_coupon.png';
-        }
-        return ($value);
-    }
-
     public function scopeOfMerchantId($query, $merchantId)
     {
         return $query->where('merchant_id', $merchantId);
