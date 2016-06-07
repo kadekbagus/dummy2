@@ -11,6 +11,7 @@ use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\ACL\Exception\ACLForbiddenException;
 use DominoPOS\OrbitSession\Session as OrbitSession;
 use DominoPOS\OrbitSession\SessionConfig;
+use Orbit\Helper\Util\CorsHeader;
 
 class IntermediateBaseController extends Controller
 {
@@ -116,27 +117,18 @@ class IntermediateBaseController extends Controller
      */
     protected function getCORSHeaders()
     {
+        $cors = CorsHeader::create(Config::get('orbit.security.cors', []));
+
         // Allow Cross-Domain Request
         // http://enable-cors.org/index.html
         $headers = [];
-        $headers['Access-Control-Allow-Origin'] = '*';
-        $headers['Access-Control-Allow-Methods'] = 'GET, POST';
-        $headers['Access-Control-Allow-Credentials'] = 'true';
+        $headers['Access-Control-Allow-Origin'] = $cors->getAllowOrigin();
+        $headers['Access-Control-Allow-Methods'] = $cors->getAllowMethods();
+        $headers['Access-Control-Allow-Credentials'] = $cors->getAllowCredentials();
 
         $angularTokenName = Config::get('orbit.security.csrf.angularjs.header_name');
         $sessionHeader = $this->session->getSessionConfig()->getConfig('session_origin.header.name');
-        $allowHeaders = array(
-            'Origin',
-            'Content-Type',
-            'Accept',
-            'Authorization',
-            'X-Request-With',
-            'X-Orbit-Signature',
-            'Cookie',
-            'Set-Cookie',
-            $sessionHeader,
-            'Set-' . $sessionHeader
-        );
+        $allowHeaders = $cors->getAllowHeaders();
         if (! empty($angularTokenName)) {
             $allowHeaders[] = $angularTokenName;
         }
