@@ -66,6 +66,8 @@ class PaginationNumber
     {
         $this->name = $name;
         $this->configList = $config + $this->configList;
+        $this->setPerPage();
+        $this->setMaxRecord();
     }
 
     /**
