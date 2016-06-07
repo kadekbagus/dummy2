@@ -220,10 +220,12 @@ class BaseCIController extends ControllerAPI
      */
     protected function fillCommonViewsData()
     {
-        $urlblock = new UrlBlock();
         $retailer = $this->getRetailerInfo();
         $languages = $this->getListLanguages($retailer);
         $user = $this->getLoggedInUser();
+
+        $urlblock = new UrlBlock('no-prepare-session');
+        $urlblock->setUserSession($this->session);
 
         return [
             'user' => $user,

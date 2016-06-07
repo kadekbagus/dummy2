@@ -25,14 +25,19 @@ class UrlChecker
     protected $retailer = null;
     protected $user = null;
     protected $customHeaders = array();
+    protected $noPrepareSession = FALSE;
 
     public function __construct($session = NULL, $user = NULL, $caller = null) {
         $this->session = $session;
         $this->user = $user;
-		if (empty($caller)) {
-		    $this->prepareSession();
-		} else {
-		    $this->prepareSession('IntermediateCIAuthController');
+		if ($caller === 'no-prepare-session') {
+            $this->noPrepareSession = TRUE;
+        } else {
+			if (empty($caller)) {
+				$this->prepareSession();
+			} else {
+				$this->prepareSession('IntermediateCIAuthController');
+			}
 		}
     }
 
@@ -43,6 +48,10 @@ class UrlChecker
      */
     protected function prepareSession($caller = null)
     {
+        if ($this->noPrepareSession) {
+            return;
+        }
+
         if (! is_object($this->session)) {
             // set the session strict to FALSE
             Config::set('orbit.session.strict', FALSE);
@@ -71,7 +80,11 @@ class UrlChecker
         return $this->session;
     }
 
-	/**
+    public function setUserSession($session) {
+        $this->session = $session;
+    }
+
+    /**
      * Check user if logged in or not
      *
      * @return boolean
