@@ -47,7 +47,7 @@ class CorsHeader
     public function getAllowOrigin($currentOrigin=NULL)
     {
         if (! $currentOrigin) {
-            $currentOrigin = $_SERVER['HTTP_ORIGIN'];
+            $currentOrigin = isset($_SERVER['HTTP_ORIGIN']) ? $_SERVER['HTTP_ORIGIN'] : 'http://localhost';
         }
 
         if (! is_array($this->config['allow_origin']) && $this->config['allow_origin'] === '*') {
