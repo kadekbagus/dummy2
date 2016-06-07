@@ -3,6 +3,7 @@
  * An API controller for managing user sign in.
  */
 use \IntermediateBaseController;
+use DominoPOS\OrbitAPI\v10\StatusInterface as Status;
 use OrbitShop\API\v1\ResponseProvider;
 use OrbitShop\API\v1\ControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
@@ -109,16 +110,18 @@ class LoginAPIController extends IntermediateBaseController
                 ]);
                 OrbitShopAPI::throwInvalidArgument($message);
             }
-            
-            // Start the orbit session
-            $data = array(
-                'logged_in' => TRUE,
-                'user_id'   => $user->user_id,
-                'email'     => $user->user_email,
-                'role'      => $user->role->role_name,
-                'fullname'  => $user->getFullName(),
-            );
-            $this->session->enableForceNew()->start($data);
+
+            $this->session->start(array(), 'no-session-creation');
+            // get the session data
+            $sessionData = $this->session->read(NULL);
+            $sessionData['logged_in'] = TRUE;
+            $sessionData['user_id'] = $user->user_id;
+            $sessionData['email'] = $user->user_email;
+            $sessionData['role'] = $user->role->role_name;
+            $sessionData['fullname'] = $user->getFullName();
+
+            // update the guest session data, append user data to it so the user will be recognized
+            $this->session->update($sessionData);
 
             // Send the session id via HTTP header
             $sessionHeader = $this->session->getSessionConfig()->getConfig('session_origin.header.name');
@@ -138,6 +141,9 @@ class LoginAPIController extends IntermediateBaseController
                          ->responseOK()->setModuleName('Application')->save();
                 
                 $user->activity = $activity;
+            } else {
+                // set \MobileCI\MobileCIAPIController->session using $this->session
+                $CIsession = \MobileCI\MobileCIAPIController::create()->setSession($this->session);
             }
 
             $this->response->data = $user;
