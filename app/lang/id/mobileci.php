@@ -549,16 +549,16 @@ return array(
             'too_long' => 'If it takes too long try to refresh your browser.',
             'instruction' => 'Salin alamat URL di atas ke browser untuk meminta akses internet gratis.',
             'message_ex' => array(
-                'title' => 'Free internet access is here',
-                'instruction_heading' => 'These are the steps to get free internet access:',
+                'title' => 'Akses INternet gratis disini',
+                'instruction_heading' => 'Langkah untuk mendapatkan Internet gratis:',
                 'instructions' => array(
-                    'Connect to mall Wi-Fi network',
-                    'Access this page',
-                    'Tap on Copy URL to clipboard',
-                    'Tap on Get Free Internet Access button below',
-                    'Open internet browser and paste the URL to see connection status'
+                    'Hubungkan piranti dengan jaringan Wifi mall',
+                    'BUka halaman ini',
+                    'Klik Salin URL ke clipboard',
+                    'Klik tombol Dapatkan Akses Internet Gratis di bawah',
+                    'Buka browser internet dengan URL untuk melihat status koneksi'
                 ),
-                'button_caption' => 'Get Free Internet Access',
+                'button_caption' => 'Dapatkan Akses Internet Gratis',
                 'clipboard_caption' => 'Salin URL ke clipboard',
                 'clipboard_success' => 'URL disalin'
             ),
