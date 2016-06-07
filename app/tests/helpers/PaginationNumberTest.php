@@ -76,11 +76,11 @@ class PaginationTest extends OrbitTestCase
 
     public function testSetMaxRecordValueConfigNotExists()
     {
-        $pg = Pagination::create($this->config)
+        $pg = Pagination::create('mytest', $this->config)
                         ->setDefaultMaxRecordConfig($this->fallbackConfig['max_record']);
 
         $defaultMaxRecord = $pg->maxRecord;
-        $maxRecord = $pg->setMaxRecord('mytest')->maxRecord;
+        $maxRecord = $pg->setMaxRecord()->maxRecord;
 
         $this->assertSame($defaultMaxRecord, $maxRecord);
     }
@@ -92,9 +92,9 @@ class PaginationTest extends OrbitTestCase
         $maxRecordConfig = $this->fallbackConfig['max_record'];
         Config::set($maxRecordConfig, $expect);
 
-        $pg = Pagination::create($this->config)
+        $pg = Pagination::create($listname, $this->config)
                         ->setDefaultMaxRecordConfig($maxRecordConfig);
-        $maxRecord = $pg->setMaxRecord($listname)->maxRecord;
+        $maxRecord = $pg->setMaxRecord()->maxRecord;
         $this->assertSame($expect, $maxRecord);
     }
 
@@ -105,9 +105,9 @@ class PaginationTest extends OrbitTestCase
         $maxRecordConfig = $this->fallbackConfig['max_record'];
         Config::set($maxRecordConfig, $expect);
 
-        $pg = Pagination::create($this->config)
+        $pg = Pagination::create($listname, $this->config)
                         ->setDefaultMaxRecordConfig($maxRecordConfig);
-        $maxRecord = $pg->setMaxRecord($listname)->maxRecord;
+        $maxRecord = $pg->setMaxRecord()->maxRecord;
         $this->assertSame($expect, $maxRecord);
     }
 }
