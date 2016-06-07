@@ -2769,7 +2769,11 @@ class ActivityAPIController extends ControllerAPI
                 SELECT
                     q_hours.comp_hours AS start_time,
                     DATE_FORMAT(DATE_ADD(q_hours.comp_hours, INTERVAL 1 HOUR),'%H:00') AS end_time,
-                    IFNULL(ppp2.score, 0) AS score
+                    (CASE
+                        WHEN ppp2.score <= 0 THEN 0
+                        WHEN ppp2.score is NULL THEN 0
+                        ELSE ppp2.score
+                    END) as score
                 FROM
                     (
                         SELECT
