@@ -204,7 +204,7 @@ class IntermediateBaseController extends Controller
                 $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = $signature;
             }
         } elseif ($theClass === 'IntermediateCIAuthController') {
-            if ($userId = $this->authCheck()) {
+            if ($userId = $this->authCheckFromAngularCI()) {
                 $user = User::find($userId);
                 $namespace = 'Orbit\Controller\API\v1\Customer\\';
                 // This will query the database if the apikey has not been set up yet
@@ -214,7 +214,6 @@ class IntermediateBaseController extends Controller
                     // Create new one
                     $apikey = $user->createAPiKey();
                 }
-
                 // Generate the signature
                 $_GET['apikey'] = $apikey->api_key;
                 $_GET['apitimestamp'] = time();
@@ -288,6 +287,26 @@ class IntermediateBaseController extends Controller
         $userId = $this->session->read('user_id');
         if ($this->session->read('logged_in') !== TRUE || ! $userId) {
             return FALSE;
+        }
+
+        return $userId;
+    }
+
+    /**
+     * Check the authentication status from angular CI.
+     *
+     * @author Ahmad <ahmad@dominopos.com>
+     * @return int - User ID
+     */
+    protected function authCheckFromAngularCI()
+    {
+        $userId = $this->session->read('user_id');
+
+        if (empty($userId)) {
+            $userId = $this->session->read('guest_user_id');
+            if (empty($userId)) {
+                return FALSE;
+            }
         }
 
         return $userId;
