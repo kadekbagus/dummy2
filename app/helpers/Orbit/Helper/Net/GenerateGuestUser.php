@@ -7,6 +7,7 @@
 
 use DominoPOS\OrbitSession\Session;
 use DominoPOS\OrbitSession\SessionConfig;
+use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use \DB;
 use \Config;
 use \User;
@@ -54,6 +55,15 @@ class GenerateGuestUser
 
             // todo: add login_ok activity
             $mall_id = App::make('orbitSetting')->getSetting('current_retailer');
+
+            OrbitInput::get('mall_id', function($mid) use (&$mall_id) {
+                $mall_id = $mid;
+            });
+
+            OrbitInput::post('mall_id', function($mid) use (&$mall_id) {
+                $mall_id = $mid;
+            });
+
             $mall = Mall::with('timezone')->excludeDeleted()->where('merchant_id', $mall_id)->first();
 
             $start_date = Carbon::now($mall->timezone->timezone_name)->format('Y-m-d 00:00:00');
@@ -92,7 +102,7 @@ class GenerateGuestUser
         } catch (Exception $e) {
             DB::rollback();
             if(Config::get('app.debug')) {
-                return print_r([$e->getMessage(), $e->getLine()]);
+                return $e->getMessage() . ' | '  . $e->getLine();
             }
 
             return $e->getMessage();
