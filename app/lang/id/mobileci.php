@@ -541,33 +541,33 @@ return array(
 
     'captive'   => array(
         'request_internet' => array(
-            'title'     => 'GRATIS Internet',
-            'heading'   => 'GRATIS Akses Internet!',
-            'message'   => 'Dengan menggunakan koneksi Wi-Fi kami, berarti Anda setuju dengan syarat dan ketentuan kami. Klik tombol di bawah untuk mendapatkan akses Internet gratis.',
-            'button'    => 'Dapatkan Akses Internet Gratis!',
-            'check_connection' => 'Menguji koneksi internet mohon tunggu...',
-            'too_long' => 'Jika terlalu lama coba refresh browser Anda.',
+            'title'     => 'INTERNET GRATIS',
+            'heading'   => 'Akses Internet GRATIS',
+            'message'   => 'Dengan terhubung ke jaringan Wi-FI kami Anda setuju dengan syarat dan ketentuan kami. Klik tombol di bawah untuk mendapatkan akses internet gratis.',
+            'button'    => 'Dapatkan akses internet GRATIS!',
+            'check_connection' => 'Memeriksa koneksi internet harap tunggu...',
+            'too_long' => 'Jika terlalu lama, silakan me-refresh browser Anda.',
             'instruction' => 'Salin alamat URL di atas ke browser untuk meminta akses internet gratis.',
             'message_ex' => array(
-                'title' => 'Akses Internet gratis disini',
-                'instruction_heading' => 'Langkah untuk mendapatkan Internet gratis:',
+                'title' => 'Akses Internet GRATIS',
+                'instruction_heading' => 'Berikut adalah langkah-langkah untuk mendapatkan internet gratis:',
                 'instructions' => array(
-                    'Hubungkan piranti dengan jaringan Wifi mall',
-                    'BUka halaman ini',
-                    'Klik Salin URL ke clipboard',
-                    'Klik tombol Dapatkan Akses Internet Gratis di bawah',
-                    'Buka browser internet dengan URL untuk melihat status koneksi'
+                    'Menyambung ke jaringan Wi-Fi mall',
+                    'Akses halaman ini',
+                    'Tekan  Copy URL ke Clipboard',
+                    'Tekan pada tombol  Dapatkan akses internet GRATIS! di bawah ini',
+                    'Buka internet browser dan paste URL untuk melihat status sambungan'
                 ),
-                'button_caption' => 'Dapatkan Akses Internet Gratis',
-                'clipboard_caption' => 'Salin URL ke clipboard',
+                'button_caption' => 'Dapatkan akses internet GRATIS!',
+                'clipboard_caption' => 'Copy URL ke clipboard',
                 'clipboard_success' => 'URL disalin'
             ),
 
         ),
         'granted' => array(
-            'title'     => 'Terkoneksi ke WiFi',
-            'heading'   => 'Anda Telah Terkoneksi',
-            'message'   => 'Anda tersambung Internet gratis',
+            'title'     => 'INTERNET GRATIS',
+            'heading'   => 'Anda sudah terhubung',
+            'message'   => 'Anda sudah terhubung ke internet secara gratis',
             'button'    => 'OK'
         ),
         'widget_slogan' => 'Internet GRATIS!',

@@ -757,9 +757,9 @@ class LuckyDrawCSAPIController extends ControllerAPI
             } // end foreach for numberOfLuckyDrawArray
 
             $data = new stdclass();
-            $data->total_records = count($issued_lucky_draw_numbers);
-            $data->returned_records = count($issued_lucky_draw_numbers);
-            $data->expected_issued_numbers = count($lucky_draw_number_code);
+            $data->total_records = count($lucky_draw_number_code);
+            $data->returned_records = count($lucky_draw_number_code);
+            $data->expected_issued_numbers = count($totalNumberOfLuckyDraw);
             $data->records = $issued_lucky_draw_numbers_obj;
             $data->lucky_draw_number_code = $lucky_draw_number_code;
             $data->lucky_draw_name = $lucky_draw_name;
