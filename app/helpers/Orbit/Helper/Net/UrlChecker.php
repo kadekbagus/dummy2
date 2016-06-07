@@ -16,26 +16,31 @@ use \UserDetail;
 use \Exception;
 use \Request;
 use \App;
+use Orbit\Helper\Net\GenerateGuestUser;
 
 class UrlChecker
 {
-    const APPLICATION_ID = 1;
-    protected $session = null;
+	const APPLICATION_ID = 1;
+	protected $session = null;
     protected $retailer = null;
+    protected $user = null;
     protected $customHeaders = array();
     protected $noPrepareSession = FALSE;
 
-    public function __construct($caller = null) {
-        if ($caller === 'no-prepare-session') {
+    public function __construct($session = NULL, $user = NULL, $caller = null) {
+        $this->session = $session;
+        $this->user = $user;
+		if ($caller === 'no-prepare-session') {
             $this->noPrepareSession = TRUE;
         } else {
-            if (empty($caller)) {
-                $this->prepareSession();
-            } else {
-                $this->prepareSession('IntermediateCIAuthController');
-            }
-        }
+			if (empty($caller)) {
+				$this->prepareSession();
+			} else {
+				$this->prepareSession('IntermediateCIAuthController');
+			}
+		}
     }
+
     /**
      * Prepare session.
      *
@@ -86,10 +91,10 @@ class UrlChecker
      */
     public function isLoggedIn()
     {
-        $this->prepareSession();
+    	$this->prepareSession();
         $userRole = strtolower($this->session->read('role'));
 
-        if ($this->session->read('logged_in') !== true || $userRole !== 'consumer') {
+	    if ($this->session->read('logged_in') !== true || $userRole !== 'consumer') {
             return FALSE;
         }
 
@@ -104,9 +109,9 @@ class UrlChecker
      */
     public function isGuest($user = NULL)
     {
-        if (is_null($user) || strtolower($user->role()->first()->role_name) !== 'guest') {
-            return FALSE;
-        }
+    	if (is_null($user) || strtolower($user->role()->first()->role_name) !== 'guest') {
+    		return FALSE;
+    	}
 
         return TRUE;
     }
@@ -120,38 +125,41 @@ class UrlChecker
      */
     public function checkBlockedUrl()
     {
+        $user = $this->user;
         if (in_array(\Route::currentRouteName(), Config::get('orbit.blocked_routes', []))) {
-            $user = $this->getLoggedInUser();
-
             if (! $user) {
                 throw new Exception('Session error: user not found.');
             }
         } else {
-            $user = $this->getLoggedInUser();
             if (! is_object($user)) {
-                $user = $this->generateGuestUser();
+                $user = GenerateGuestUser::generateGuestUser($this->session);
+
+                if (! $user) {
+                    throw new Exception($user);
+                }
             }
         }
 
         return $user;
     }
 
-    /**
+	/**
      * Check if the route is blocked by the config or not
      * @param string route name
+     * @param array query string parameter
      * @return string full url or #
      */
     public function blockedRoute($url, $param = [])
     {
-        $this->prepareSession();
+    	$this->prepareSession();
 
-        if (in_array($url, Config::get('orbit.blocked_routes', []))) {
-            $userRole = strtolower($this->session->read('role'));
+       	if (in_array($url, Config::get('orbit.blocked_routes', []))) {
+       		$userRole = strtolower($this->session->read('role'));
 
-            if ($this->session->read('logged_in') !== true || $userRole !== 'consumer') {
-                return '#';
-            }
-        }
+	        if ($this->session->read('logged_in') !== true || $userRole !== 'consumer') {
+	            return '#';
+	        }
+       	}
 
         return URL::route($url, $param);
     }
@@ -166,7 +174,7 @@ class UrlChecker
         try{
             $guest_email = $this->session->read('email');
             if (empty($guest_email)) {
-                DB::beginTransaction();
+            	DB::beginTransaction();
                 $user = (new User)->generateGuestUser();
                 DB::commit();
                 // Start the orbit session
@@ -178,7 +186,6 @@ class UrlChecker
                     'fullname'  => $user->getFullName(),
                 );
                 $this->session->enableForceNew()->start($data);
-                // todo: add login_ok activity
 
                 // Send the session id via HTTP header
                 $sessionHeader = $this->session->getSessionConfig()->getConfig('session_origin.header.name');

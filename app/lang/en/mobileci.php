@@ -543,7 +543,7 @@ return array(
         'request_internet' => array(
             'title'     => 'FREE Internet',
             'heading'   => 'FREE Internet Access!',
-            'message'   => 'By connecting to our Wi-Fi  you agree with our terms and conditions. Click the button below to get free internet access.',
+            'message'   => 'By connecting to our Wi-Fi you agree with our terms and conditions. Click the button below to get free internet access.',
             'button'    => 'Get FREE Internet Access!',
             'check_connection' => 'Checking internet connection please wait...',
             'too_long' => 'If it takes too long try to refresh your browser.',
