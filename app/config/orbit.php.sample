@@ -776,6 +776,32 @@ return array(
             ),
         ),
 
+        // CORS
+        'cors' => [
+            'allow_headers' => [
+                'Origin',
+                'Content-Type',
+                'Accept',
+                'Authorization',
+                'X-Request-With',
+                'X-Orbit-Signature',
+                'Cookie',
+                'Set-Cookie',
+                'Set-X-Orbit-Session',
+                'Orbit-Session'
+            ],
+
+            // No need protocol, just enter domain name
+            // e.g: 'example.com' or 'sub.example.com'
+            'allow_origin' => [
+                'localhost',
+                'gotomalls.cool',
+                'thebreeze.v21.orbit-mall.rio'
+            ],
+            'allow_methods' => 'GET, POST',
+            'allow_credentials' => 'true'
+        ],
+
         // Firewall on Orbit Box
         'firewall'  => array(
             // Fake call means, no real call to the router

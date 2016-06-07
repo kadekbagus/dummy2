@@ -11,6 +11,7 @@ use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\ACL\Exception\ACLForbiddenException;
 use DominoPOS\OrbitSession\Session as OrbitSession;
 use DominoPOS\OrbitSession\SessionConfig;
+use Orbit\Helper\Util\CorsHeader;
 
 class IntermediateBaseController extends Controller
 {
@@ -116,27 +117,18 @@ class IntermediateBaseController extends Controller
      */
     protected function getCORSHeaders()
     {
+        $cors = CorsHeader::create(Config::get('orbit.security.cors', []));
+
         // Allow Cross-Domain Request
         // http://enable-cors.org/index.html
         $headers = [];
-        $headers['Access-Control-Allow-Origin'] = '*';
-        $headers['Access-Control-Allow-Methods'] = 'GET, POST';
-        $headers['Access-Control-Allow-Credentials'] = 'true';
+        $headers['Access-Control-Allow-Origin'] = $cors->getAllowOrigin();
+        $headers['Access-Control-Allow-Methods'] = $cors->getAllowMethods();
+        $headers['Access-Control-Allow-Credentials'] = $cors->getAllowCredentials();
 
         $angularTokenName = Config::get('orbit.security.csrf.angularjs.header_name');
         $sessionHeader = $this->session->getSessionConfig()->getConfig('session_origin.header.name');
-        $allowHeaders = array(
-            'Origin',
-            'Content-Type',
-            'Accept',
-            'Authorization',
-            'X-Request-With',
-            'X-Orbit-Signature',
-            'Cookie',
-            'Set-Cookie',
-            $sessionHeader,
-            'Set-' . $sessionHeader
-        );
+        $allowHeaders = $cors->getAllowHeaders();
         if (! empty($angularTokenName)) {
             $allowHeaders[] = $angularTokenName;
         }
@@ -212,7 +204,7 @@ class IntermediateBaseController extends Controller
                 $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = $signature;
             }
         } elseif ($theClass === 'IntermediateCIAuthController') {
-            if ($userId = $this->authCheck()) {
+            if ($userId = $this->authCheckFromAngularCI()) {
                 $user = User::find($userId);
                 $namespace = 'Orbit\Controller\API\v1\Customer\\';
                 // This will query the database if the apikey has not been set up yet
@@ -222,7 +214,6 @@ class IntermediateBaseController extends Controller
                     // Create new one
                     $apikey = $user->createAPiKey();
                 }
-
                 // Generate the signature
                 $_GET['apikey'] = $apikey->api_key;
                 $_GET['apitimestamp'] = time();
@@ -296,6 +287,26 @@ class IntermediateBaseController extends Controller
         $userId = $this->session->read('user_id');
         if ($this->session->read('logged_in') !== TRUE || ! $userId) {
             return FALSE;
+        }
+
+        return $userId;
+    }
+
+    /**
+     * Check the authentication status from angular CI.
+     *
+     * @author Ahmad <ahmad@dominopos.com>
+     * @return int - User ID
+     */
+    protected function authCheckFromAngularCI()
+    {
+        $userId = $this->session->read('user_id');
+
+        if (empty($userId)) {
+            $userId = $this->session->read('guest_user_id');
+            if (empty($userId)) {
+                return FALSE;
+            }
         }
 
         return $userId;
