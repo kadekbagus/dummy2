@@ -23,7 +23,7 @@
 <div class="row vertically-spaced">
 	<div class="col-xs-12 padded">
 		<h4>Hello {{{$fullName}}},</h4>
-        <p>{{Lang::get('mobileci.lucky_draw.congratulation')}} {{count($listItem)}} {{Lang::get('mobileci.lucky_draw.no_lucky_draw')}} <strong>{{{$item->records[0][0]->lucky_draw_name}}}</strong></p>
+        <p>{{Lang::get('mobileci.lucky_draw.congratulation')}} {{count($listItem)}} {{Lang::get('mobileci.lucky_draw.no_lucky_draw')}} <strong>{{{$item->lucky_draw_name}}}</strong></p>
         @if (isset($listItem))
 	        @if (count($listItem) > 10)
 				<p>{{reset($listItem)}} - {{end($listItem)}}</p>

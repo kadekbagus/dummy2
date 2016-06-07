@@ -35,9 +35,12 @@ class ExCaptivePortalController extends BaseCIController
     {
         $user = null;
         $media = null;
-        $user_full_name = null;
+        $sessionQueryName = Config::get('orbit.session.session_origin.query_string.name', 'orbit_session');
 
         try {
+            $this->prepareSession();
+            static::forceOverrideCookie($this->session->getSessionId());
+
             $this->pageTitle = Lang::get('mobileci.captive.request_internet.title');
 
             $params = [
@@ -53,7 +56,9 @@ class ExCaptivePortalController extends BaseCIController
                     'granted_url' => $grantedUrl,
                     'ping_url' => $pingUrl,
                     'timeout' => $timeout,
-                    'params' => $params
+                    'params' => $params,
+                    'qs_name' => $sessionQueryName,
+                    'qs_value' => static::getSessionIdFromCookie()
             ];
             $data = $data + $this->fillCommonViewsData();
 
@@ -67,16 +72,12 @@ class ExCaptivePortalController extends BaseCIController
     {
         $user = null;
         $media = null;
-        $user_full_name = null;
-        $cookieName = Config::get('orbit.session.session_origin.cookie.name', 'orbit_sessionx');
         $sessionQueryName = Config::get('orbit.session.session_origin.query_string.name', 'orbit_session');
 
         try {
             $this->pageTitle = Lang::get('mobileci.captive.granted.title');
 
-            $sessionId = isset($_COOKIE[$cookieName]) ? $_COOKIE[$cookieName] : NULL;
-            Log::info(sprintf('-- CAPTIVE PORTAL -> INTERNET GRANTED SID: %s', $sessionId));
-
+            $sessionId = static::getSessionIdFromCookie();
             $params = [
                 'from_captive' => 'yes'
             ];
@@ -124,6 +125,15 @@ class ExCaptivePortalController extends BaseCIController
         $widget->image = asset('mobile-ci/images/balloon-internet.jpg');
 
         return $widget;
+    }
+
+    public static function getSessionIdFromCookie()
+    {
+        $cookieName = Config::get('orbit.session.session_origin.cookie.name', 'orbit_sessionx');
+        $sessionId = isset($_COOKIE[$cookieName]) ? $_COOKIE[$cookieName] : NULL;
+        Log::info(sprintf('-- CAPTIVE PORTAL COOKIE SID: %s', $sessionId));
+
+        return $sessionId;
     }
 
     public static function isFromCaptive()

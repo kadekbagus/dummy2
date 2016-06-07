@@ -569,7 +569,7 @@ return array(
             'message'   => 'You are connected to Internet for free.',
             'button'    => 'OK'
         ),
-        'widget_slogan' => 'Get Free Internet',
+        'widget_slogan' => 'Free Internet',
         'widget_tagline' => 'Get your free access NOW!'
     )
 );
