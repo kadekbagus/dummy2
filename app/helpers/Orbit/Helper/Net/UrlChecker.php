@@ -19,25 +19,34 @@ use \App;
 
 class UrlChecker
 {
-	const APPLICATION_ID = 1;
-	protected $session = null;
+    const APPLICATION_ID = 1;
+    protected $session = null;
     protected $retailer = null;
     protected $customHeaders = array();
+    protected $noPrepareSession = FALSE;
 
     public function __construct($caller = null) {
-        if (empty($caller)) {
-            $this->prepareSession();
+        if ($caller === 'no-prepare-session') {
+            $this->noPrepareSession = TRUE;
         } else {
-            $this->prepareSession('IntermediateCIAuthController');
+            if (empty($caller)) {
+                $this->prepareSession();
+            } else {
+                $this->prepareSession('IntermediateCIAuthController');
+            }
         }
     }
-	/**
+    /**
      * Prepare session.
      *
      * @return void
      */
     protected function prepareSession($caller = null)
     {
+        if ($this->noPrepareSession) {
+            return;
+        }
+
         if (! is_object($this->session)) {
             // set the session strict to FALSE
             Config::set('orbit.session.strict', FALSE);
@@ -66,17 +75,21 @@ class UrlChecker
         return $this->session;
     }
 
-	/**
+    public function setUserSession($session) {
+        $this->session = $session;
+    }
+
+    /**
      * Check user if logged in or not
      *
      * @return boolean
      */
     public function isLoggedIn()
     {
-    	$this->prepareSession();
+        $this->prepareSession();
         $userRole = strtolower($this->session->read('role'));
 
-	    if ($this->session->read('logged_in') !== true || $userRole !== 'consumer') {
+        if ($this->session->read('logged_in') !== true || $userRole !== 'consumer') {
             return FALSE;
         }
 
@@ -91,9 +104,9 @@ class UrlChecker
      */
     public function isGuest($user = NULL)
     {
-    	if (is_null($user) || strtolower($user->role()->first()->role_name) !== 'guest') {
-    		return FALSE;
-    	}
+        if (is_null($user) || strtolower($user->role()->first()->role_name) !== 'guest') {
+            return FALSE;
+        }
 
         return TRUE;
     }
@@ -123,22 +136,22 @@ class UrlChecker
         return $user;
     }
 
-	/**
+    /**
      * Check if the route is blocked by the config or not
      * @param string route name
      * @return string full url or #
      */
     public function blockedRoute($url, $param = [])
     {
-    	$this->prepareSession();
+        $this->prepareSession();
 
-       	if (in_array($url, Config::get('orbit.blocked_routes', []))) {
-       		$userRole = strtolower($this->session->read('role'));
+        if (in_array($url, Config::get('orbit.blocked_routes', []))) {
+            $userRole = strtolower($this->session->read('role'));
 
-	        if ($this->session->read('logged_in') !== true || $userRole !== 'consumer') {
-	            return '#';
-	        }
-       	}
+            if ($this->session->read('logged_in') !== true || $userRole !== 'consumer') {
+                return '#';
+            }
+        }
 
         return URL::route($url, $param);
     }
@@ -153,7 +166,7 @@ class UrlChecker
         try{
             $guest_email = $this->session->read('email');
             if (empty($guest_email)) {
-            	DB::beginTransaction();
+                DB::beginTransaction();
                 $user = (new User)->generateGuestUser();
                 DB::commit();
                 // Start the orbit session

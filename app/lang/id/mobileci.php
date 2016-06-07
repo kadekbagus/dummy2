@@ -543,21 +543,22 @@ return array(
         'request_internet' => array(
             'title'     => 'GRATIS Internet',
             'heading'   => 'GRATIS Akses Internet!',
-            'message'   => 'By connecting to our Wi-Fi you are agree to our terms and conditions. Click button below to get free internet access.',
-            'button'    => 'Get FREE Internet Access!',
-            'check_connection' => 'Checking internet connection please wait...',
-            'too_long' => 'If it takes too long try to refresh your browser.',
+            'message'   => 'Dengan menggunakan koneksi Wi-Fi kami, berarti Anda setuju dengan syarat dan ketentuan kami. Klik tombol di bawah untuk mendapatkan akses Internet gratis.',
+            'button'    => 'Dapatkan Akses Internet Gratis!',
+            'check_connection' => 'Menguji koneksi internet mohon tunggu...',
+            'too_long' => 'Jika terlalu lama coba refresh browser Anda.',
             'instruction' => 'Salin alamat URL di atas ke browser untuk meminta akses internet gratis.',
             'message_ex' => array(
-                'title' => 'Free internet access is here',
-                'instruction_heading' => 'These are the steps to get free internet access:',
+                'title' => 'Akses Internet gratis disini',
+                'instruction_heading' => 'Langkah untuk mendapatkan Internet gratis:',
                 'instructions' => array(
-                    'Connect to mall Wi-Fi network',
-                    'Access this page',
-                    'Tap on Get Free Internet Access button below',
-                    'Open internet browser and type this URL http://gotomalls.com to see connection status'
+                    'Hubungkan piranti dengan jaringan Wifi mall',
+                    'BUka halaman ini',
+                    'Klik Salin URL ke clipboard',
+                    'Klik tombol Dapatkan Akses Internet Gratis di bawah',
+                    'Buka browser internet dengan URL untuk melihat status koneksi'
                 ),
-                'button_caption' => 'Get Free Internet Access',
+                'button_caption' => 'Dapatkan Akses Internet Gratis',
                 'clipboard_caption' => 'Salin URL ke clipboard',
                 'clipboard_success' => 'URL disalin'
             ),
