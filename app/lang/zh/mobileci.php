@@ -537,4 +537,38 @@ return array(
     'campaign_cards' => array(
         'go_to_page' => '转到页面',
     ),
+    'captive'   => array(
+        'request_internet' => array(
+            'title'     => '免费的互联网',
+            'heading'   => '免费上网',
+            'message'   => '通过连接到我们的 Wi-Fi 你同意我们的条款和条件。请单击下面的按钮以获得免费上网。',
+            'button'    => ' 得到免费的互联网接入',
+            'check_connection' => '正在检查互联网连接，请稍候...',
+            'too_long' => '如果时间太长尝试刷新您的浏览器',
+            'instruction' => 'Salin alamat URL di atas ke browser untuk meminta akses internet gratis.',
+            'message_ex' => array(
+                'title' => '免费上网',
+                'instruction_heading' => '这些都是获得免费上网的步骤:',
+                'instructions' => array(
+                    '连接到 Wi-fi 网络化 商城',
+                    '访问此页',
+                    '点击复制 URL 到剪贴板',
+                    '点击获取免费上网 ！下面的按钮',
+                    '打开互联网浏览器和粘贴 URL 来查看连接状态'
+                ),
+                'button_caption' => '得到免费的互联网接入',
+                'clipboard_caption' => '将 URL 复制到剪贴板',
+                'clipboard_success' => 'URL copied'
+            ),
+
+        ),
+        'granted' => array(
+            'title'     => '免费的互联网',
+            'heading'   => '你已经连接',
+            'message'   => '您连接免费互联网',
+            'button'    => ' 还行'
+        ),
+        'widget_slogan' => 'Internet GRATIS!',
+        'widget_tagline' => 'Dapatkan akses gratismu SEKARANG!'
+    )
 );
