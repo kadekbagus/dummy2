@@ -543,13 +543,13 @@ return array(
         'request_internet' => array(
             'title'     => 'GRATIS Internet',
             'heading'   => 'GRATIS Akses Internet!',
-            'message'   => 'By connecting to our Wi-Fi you are agree to our terms and conditions. Click button below to get free internet access.',
-            'button'    => 'Get FREE Internet Access!',
-            'check_connection' => 'Checking internet connection please wait...',
-            'too_long' => 'If it takes too long try to refresh your browser.',
+            'message'   => 'Dengan menggunakan koneksi Wi-Fi kami, berarti Anda setuju dengan syarat dan ketentuan kami. Klik tombol di bawah untuk mendapatkan akses Internet gratis.',
+            'button'    => 'Dapatkan Akses Internet Gratis!',
+            'check_connection' => 'Menguji koneksi internet mohon tunggu...',
+            'too_long' => 'Jika terlalu lama coba refresh browser Anda.',
             'instruction' => 'Salin alamat URL di atas ke browser untuk meminta akses internet gratis.',
             'message_ex' => array(
-                'title' => 'Akses INternet gratis disini',
+                'title' => 'Akses Internet gratis disini',
                 'instruction_heading' => 'Langkah untuk mendapatkan Internet gratis:',
                 'instructions' => array(
                     'Hubungkan piranti dengan jaringan Wifi mall',
