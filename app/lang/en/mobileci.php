@@ -549,22 +549,22 @@ return array(
             'too_long' => 'If it takes too long try to refresh your browser.',
             'instruction' => 'Copy and paste URL above to your browser to request free internet connection.',
             'message_ex' => array(
-                'title' => 'Free internet access is here',
+                'title' => 'FREE Internet Access!',
                 'instruction_heading' => 'These are the steps to get free internet:',
                 'instructions' => array(
                     'Connect to mall Wi-Fi network',
                     'Access this page',
                     'Tap on Copy URL to clipboard',
-                    'Tap on Get Free Internet Access button below',
-                    'Open internet browser and paste the URL to see connection status'
+                    'Tap on Get FREE Internet Access! button below',
+                    ' Open internet browser and paste the URL to see connection status'
                 ),
-                'button_caption' => 'Get Free Internet Access',
+                'button_caption' => 'Get FREE Internet Access!',
                 'clipboard_caption' => 'Copy URL to clipboard',
                 'clipboard_success' => 'URL copied'
             ),
         ),
         'granted' => array(
-            'title'     => 'Connected to WiFi',
+            'title'     => 'FREE INTERNET',
             'heading'   => 'You\'re Already Connected',
             'message'   => 'You are connected to Internet for free.',
             'button'    => 'OK'
