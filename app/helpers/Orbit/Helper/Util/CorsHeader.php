@@ -16,10 +16,10 @@ class CorsHeader
 
     public function __construct($optionalConfig=[])
     {
-        $this->config['allow-methods'] = 'GET, POST';
-        $this->config['allow-origin'] = ['example.com'];
-        $this->config['allow-credentials'] = 'true';
-        $this->config['allow-headers'] = [
+        $this->config['allow_methods'] = 'GET, POST';
+        $this->config['allow_origin'] = ['example.com'];
+        $this->config['allow_credentials'] = 'true';
+        $this->config['allow_headers'] = [
             'Origin',
             'Content-Type',
             'Accept',
@@ -47,15 +47,15 @@ class CorsHeader
     public function getAllowOrigin($currentOrigin=NULL)
     {
         if (! $currentOrigin) {
-            $currentOrigin = $_SERVER['HTTP_ORIGIN'];
+            $currentOrigin = isset($_SERVER['HTTP_ORIGIN']) ? $_SERVER['HTTP_ORIGIN'] : 'http://localhost';
         }
 
-        if (! is_array($this->config['allow-origin']) && $this->config['allow-origin'] === '*') {
+        if (! is_array($this->config['allow_origin']) && $this->config['allow_origin'] === '*') {
             return '*';
         }
 
         // Compare current origin with list of allowed origin
-        foreach ($this->config['allow-origin'] as $allowed) {
+        foreach ($this->config['allow_origin'] as $allowed) {
             if (preg_match('/' . $allowed . '$/i', $currentOrigin)) {
                 return $currentOrigin;
             }
@@ -65,14 +65,14 @@ class CorsHeader
     }
 
     public function getAllowMethods() {
-        return $this->config['allow-methods'];
+        return $this->config['allow_methods'];
     }
 
     public function getAllowCredentials() {
-        return $this->config['allow-credentials'];
+        return $this->config['allow_credentials'];
     }
 
     public function getAllowHeaders() {
-        return $this->config['allow-headers'];
+        return $this->config['allow_headers'];
     }
 }

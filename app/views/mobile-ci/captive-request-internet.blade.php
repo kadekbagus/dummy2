@@ -150,6 +150,13 @@
                @endforeach
            </ul>
            <button id="copy-url" class="btn btn-block btn-primary" data-clipboard-text="{{ URL::route('captive-request-internet', [$qs_name => $qs_value]) }}">{{ Lang::get('mobileci.captive.request_internet.message_ex.clipboard_caption') }}</button>
+           <br/>
+            <form id="frm-grant-internet" method="get" action="{{ $base_grant_url }}">
+                <input onclick="return OrbitInternetChecker.submit(this)" id="btn-grant-internet" type="submit" class="btn btn-block btn-primary" value="{{ Lang::get('mobileci.captive.request_internet.button') }}">
+                @foreach ($params as $name=>$value)
+                <input type="hidden" name="{{ $name }}" value="{{ $value }}">
+                @endforeach
+            </form>
            <div class='clipboard-success' style='display:none'>{{ Lang::get('mobileci.captive.request_internet.message_ex.clipboard_success') }}</div>
         </div>
     </div>
