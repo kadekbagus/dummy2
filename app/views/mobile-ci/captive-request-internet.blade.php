@@ -120,7 +120,7 @@
     <div class="row padded" id="in-any-os" style="display:none">
         <div class="col-xs-12 hide" id="captive-no-internet">
             <h3>{{ Lang::get('mobileci.captive.request_internet.heading') }}</h3>
-            <img id="connection-status" style="width:100px;float:left;margin: 0 1em 1em 0; position:relative; top:-1em;" src="{{ asset('mobile-ci/images/free-internet-disconnected.png') }}">
+            <img id="connection-status" style="width:100px;float:left;margin: 0 1em 1em 0; position:relative; top:-1em;" src="{{ asset('mobile-ci/images/free-internet-connected.png') }}">
             <p>{{ Lang::get('mobileci.captive.request_internet.message') }}
             <form id="frm-grant-internet" method="get" action="{{ $base_grant_url }}">
                 <input onclick="return OrbitInternetChecker.submit(this)" id="btn-grant-internet" type="submit" class="btn btn-block btn-primary" value="{{ Lang::get('mobileci.captive.request_internet.button') }}">
