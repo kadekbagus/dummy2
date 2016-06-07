@@ -73,6 +73,7 @@
         $('#captive-check-internet').addClass('hide');
         $('#captive-no-internet').removeClass('hide');
         $('#btn-grant-internet').attr('disabled', 'disabled');
+        $('#connection-status').attr('src','{{ asset('mobile-ci/images/free-internet-disconnected.png') }}')
     };
     
     /**
@@ -80,11 +81,11 @@
      */
     OrbitInternetChecker.up = function()
     {
-        var fromCaptivePortal = getCookie('{{ Config::get('orbit.captive.from_wifi.name') }}');
-        if (fromCaptivePortal === 'Y') {
+        var fromCaptivePortal = getCookie('from_captive');
+        if (fromCaptivePortal === 'yes') {
             this.connectedFromCaptivePortal();
         } else {
-            this.connectedFromNonCaptivePortal();            
+            this.connectedFromNonCaptivePortal();
         }
     };
 
@@ -119,7 +120,7 @@
     <div class="row padded" id="in-any-os" style="display:none">
         <div class="col-xs-12 hide" id="captive-no-internet">
             <h3>{{ Lang::get('mobileci.captive.request_internet.heading') }}</h3>
-            <img style="width:100px;float:left;margin: 0 1em 1em 0; position:relative; top:-1em;" src="{{ asset('mobile-ci/images/signal-wifi-128x128.png') }}">
+            <img id="connection-status" style="width:100px;float:left;margin: 0 1em 1em 0; position:relative; top:-1em;" src="{{ asset('mobile-ci/images/free-internet-disconnected.png') }}">
             <p>{{ Lang::get('mobileci.captive.request_internet.message') }}
             <form id="frm-grant-internet" method="get" action="{{ $base_grant_url }}">
                 <input onclick="return OrbitInternetChecker.submit(this)" id="btn-grant-internet" type="submit" class="btn btn-block btn-primary" value="{{ Lang::get('mobileci.captive.request_internet.button') }}">
@@ -225,5 +226,24 @@
         clipboard.on('success', function(e) {
             $('.clipboard-success').fadeIn(400).delay(3000).fadeOut(400);
         });
+        
+        var WifiCookieChecker = function() {
+            this.updateUI = function() {
+                if (getCookie('from_captive') === 'yes') {
+                    $('#btn-grant-internet').removeAttr('disabled');
+                    $('#connection-status').attr('src','{{ asset('mobile-ci/images/free-internet-connected.png') }}')
+                } else {
+                    $('#btn-grant-internet').attr('disabled', 'disabled');
+                    $('#connection-status').attr('src','{{ asset('mobile-ci/images/free-internet-disconnected.png') }}')
+                }
+            }
+        }
+        
+        var wifiChecker = new WifiCookieChecker();
+        
+        window.setInterval(function() {
+            wifiChecker.updateUI();   
+        }, 30000);
+        
     </script>
 @stop

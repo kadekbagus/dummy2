@@ -537,4 +537,38 @@ return array(
     'campaign_cards' => array(
         'go_to_page' => 'ページに移動',
     ),
+    'captive'   => array(
+        'request_internet' => array(
+            'title'     => '無料インターネット',
+            'heading'   => '無料インター ネット アクセス',
+            'message'   => '私たちの Wi-Fi に接続することによりあなたは利用規約に同意します。無料のインター ネット アクセスを取得するには下のボタンをクリックします。',
+            'button'    => '無料のインターネット アクセスを取得します',
+            'check_connection' => 'インターネット接続を確認してお待ちください...',
+            'too_long' => ' 時間がかかる場合、お使いのブラウザーさっぱりしてみてください。',
+            'instruction' => 'Salin alamat URL di atas ke browser untuk meminta akses internet gratis.',
+            'message_ex' => array(
+                'title' => '無料インター ネット アクセス',
+                'instruction_heading' => 'これらは、無料のインターネットを取得する手順:',
+                'instructions' => array(
+                    'モールの Wi-Fi ネットワークへの接続します',
+                    'このページにアクセスします',
+                    'クリップボードに URL をコピーをタップします',
+                    '無料のインター ネット アクセスを取得するをタップ!',
+                    'インターネット ブラウザーを開き、接続の状態を表示する URL を貼り付ける'
+                ),
+                'button_caption' => '無料のインターネット アクセスを取得します',
+                'clipboard_caption' => 'URL をクリップボードにコピーします',
+                'clipboard_success' => 'URL copied'
+            ),
+
+        ),
+        'granted' => array(
+            'title'     => '無料インターネット',
+            'heading'   => 'あなたはすでに接続されています',
+            'message'   => '無料でインターネットに接続しています。',
+            'button'    => 'OK'
+        ),
+        'widget_slogan' => '無料インターネット',
+        'widget_tagline' => '無料インター ネット アクセス'
+    )
 );
