@@ -977,16 +977,20 @@ class Activity extends Eloquent
             $newConnected->minute = $minute;
             $newConnected->save();
 
-            $newListConnectedUser = new ListConnectedUser();
-            $newListConnectedUser->connected_now_id = $newConnected->connected_now_id;
-            $newListConnectedUser->user_id = $this->user_id;
-            $newListConnectedUser->save();
-        } else {
-            if (is_null($activity->user_id)) {
+            if (! empty($this->user_id)) {
                 $newListConnectedUser = new ListConnectedUser();
-                $newListConnectedUser->connected_now_id = $activity->connected_now_id;
+                $newListConnectedUser->connected_now_id = $newConnected->connected_now_id;
                 $newListConnectedUser->user_id = $this->user_id;
                 $newListConnectedUser->save();
+            }
+        } else {
+            if (is_null($activity->user_id)) {
+                if (! empty($this->user_id)) {
+                    $newListConnectedUser = new ListConnectedUser();
+                    $newListConnectedUser->connected_now_id = $activity->connected_now_id;
+                    $newListConnectedUser->user_id = $this->user_id;
+                    $newListConnectedUser->save();
+                }
 
                 $activity->customer_connected += 1;
                 $activity->save();
