@@ -489,7 +489,12 @@ class LuckyDrawCSAPIController extends ControllerAPI
 
             // Loop through tenants to get the amounts
             $totalAmount = 0.0;
-            foreach ($amounts as $amount) {
+
+            // For store data for numberOfLuckyDraw
+            $lucky_draw_list = array();
+
+            // Validation for amount
+            foreach ($amounts as $key => $amount) {
                 if (! is_numeric($amount)) {
                     $errorMessage = 'Amount of spent must be numerical value only.';
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
@@ -500,22 +505,29 @@ class LuckyDrawCSAPIController extends ControllerAPI
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
 
-                $totalAmount += $amount;
-            }
-
-            if ((int)$totalAmount === 0) {
-                if ($amount < 0) {
-                    $errorMessage = 'Total amount of spent must be greater than zero.';
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                if ((int)$amount === 0) {
+                    if ($amount < 0) {
+                        $errorMessage = 'Total amount of spent must be greater than zero.';
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
                 }
             }
 
-            if ((int)$totalAmount < $luckyDraw->minimum_amount) {
-                $errorMessage = 'Amount spent cannot be less than minimum spend requirement.';
-                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            $numberOfLuckyDrawArray = array();
+
+            // Get number of lucky draw per ammount
+            $totalNumberOfLuckyDraw = 0;
+            foreach ($amounts as $key => $amount) {
+                $numberOfLuckDraw = floor($amount / $luckyDraw->minimum_amount);
+                $numberOfLuckyDrawArray[$key] = $numberOfLuckDraw;
+                $totalNumberOfLuckyDraw += $numberOfLuckDraw;
             }
 
-            $numberOfLuckyDraw = floor($totalAmount / $luckyDraw->minimum_amount);
+            // Validated total number of lucky draw
+            if ($totalNumberOfLuckyDraw == 0) {
+                $errorMessage = sprintf('Total amount of spent must be greater than minimum amount.');
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
 
             foreach ($receiptDates as $i=>$receiptDate) {
                 $result = date_parse_from_format('Y-m-d', $receiptDate);
@@ -530,192 +542,227 @@ class LuckyDrawCSAPIController extends ControllerAPI
 
             $mall = Mall::with('timezone')->active()->where('merchant_id', $mallId)->first();
 
-            $activeluckydraw = DB::table('lucky_draws')
-                ->where('status', 'active')
-                ->where('start_date', '<=', Carbon::now($mall->timezone->timezone_name))
-                ->where('end_date', '>=', Carbon::now($mall->timezone->timezone_name))
-                ->where('lucky_draw_id', $luckyDrawId)
-                ->lockForUpdate()
-                ->first();
+            $issued_lucky_draw_numbers_obj = array();
+            $receipts_lucky_draw = array();
+            $receipts_count_lucky_draw = array();
+            $lucky_draw_number_code = array();
+            $lucky_draw_number_name = '';
 
-            if (! is_object($activeluckydraw)) {
-                $this->rollBack();
-                $errorMessage = Lang::get('validation.orbit.empty.lucky_draw');
-                OrbitShopAPI::throwInvalidArgument($errorMessage);
-            }
+            // save for each every ammounts
+            foreach ($numberOfLuckyDrawArray as $key => $numberOfLuckyDraw) {
 
-            if ((($activeluckydraw->max_number - $activeluckydraw->min_number + 1) == $activeluckydraw->generated_numbers) && ($activeluckydraw->free_number_batch === '0')) {
-                $this->rollBack();
-                $errorMessage = Lang::get('validation.orbit.exceed.lucky_draw.max_issuance', ['max_number' => $activeluckydraw->generated_numbers]);
-                OrbitShopAPI::throwInvalidArgument($errorMessage);
-            }
+                if ($numberOfLuckyDraw != 0) {
 
-            // set batch
-            $batch = Config::get('orbit.lucky_draw.batch', 5);
+                    $activeluckydraw = DB::table('lucky_draws')
+                        ->where('status', 'active')
+                        ->where('start_date', '<=', Carbon::now($mall->timezone->timezone_name))
+                        ->where('end_date', '>=', Carbon::now($mall->timezone->timezone_name))
+                        ->where('lucky_draw_id', $luckyDrawId)
+                        ->lockForUpdate()
+                        ->first();
 
-            // determine the starting number
-            $starting_number_code = DB::table('lucky_draw_numbers')
-                ->where('lucky_draw_id', $luckyDrawId)
-                ->max(DB::raw('CAST(lucky_draw_number_code AS UNSIGNED)'));
+                    if (! is_object($activeluckydraw)) {
+                        $this->rollBack();
+                        $errorMessage = Lang::get('validation.orbit.empty.lucky_draw');
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
 
-            if (empty ($starting_number_code)) {
-                $starting_number_code = $activeluckydraw->min_number;
-            } else {
-                $starting_number_code = $starting_number_code + 1;
-            }
+                    if ((($activeluckydraw->max_number - $activeluckydraw->min_number + 1) == $activeluckydraw->generated_numbers) && ($activeluckydraw->free_number_batch === '0')) {
+                        $this->rollBack();
+                        $errorMessage = Lang::get('validation.orbit.exceed.lucky_draw.max_issuance', ['max_number' => $activeluckydraw->generated_numbers]);
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
 
-            $_numberOfLuckyDraw = $numberOfLuckyDraw;
-            $_free_number_batch = $activeluckydraw->free_number_batch;
-            $_generated_numbers = $activeluckydraw->generated_numbers;
+                    // set batch
+                    $batch = Config::get('orbit.lucky_draw.batch', 5);
 
-            // batch inserting lucky draw numbers
-            while ($_numberOfLuckyDraw > $_free_number_batch) {
-                if ($batch >= ($activeluckydraw->max_number - $activeluckydraw->min_number - $_generated_numbers + 1)) {
-                    // insert difference as new numbers
-                    $batch = ($activeluckydraw->max_number - $activeluckydraw->min_number) - $_generated_numbers + 1;
-                    $_numberOfLuckyDraw = $_free_number_batch;
-                }
+                    // determine the starting number
+                    $starting_number_code = DB::table('lucky_draw_numbers')
+                        ->where('lucky_draw_id', $luckyDrawId)
+                        ->max(DB::raw('CAST(lucky_draw_number_code AS UNSIGNED)'));
 
-                for ($i = 0; $i < $batch; $i++) {
-                    $lucky_draw_number = new LuckyDrawNumber;
-                    $lucky_draw_number->lucky_draw_id = $luckyDrawId;
-                    $lucky_draw_number->lucky_draw_number_code = $starting_number_code;
-                    $lucky_draw_number->created_by = $user->user_id;
-                    $lucky_draw_number->modified_by = $user->user_id;
-                    $lucky_draw_number->save();
-                    $starting_number_code++;
-                }
+                    if (empty ($starting_number_code)) {
+                        $starting_number_code = $activeluckydraw->min_number;
+                    } else {
+                        $starting_number_code = $starting_number_code + 1;
+                    }
 
-                $_free_number_batch = $_free_number_batch + $batch;
-                $_generated_numbers = $_generated_numbers + $batch;
-            }
+                    $_numberOfLuckyDraw = $numberOfLuckyDraw;
+                    $_free_number_batch = $activeluckydraw->free_number_batch;
+                    $_generated_numbers = $activeluckydraw->generated_numbers;
 
-            // update free_number_batch and generated_numbers
-            $updated_luckydraw = LuckyDraw::where('lucky_draw_id', $luckyDrawId)->first();
-            $updated_luckydraw->free_number_batch = $_free_number_batch;
-            $updated_luckydraw->generated_numbers = $_generated_numbers;
-            $updated_luckydraw->save();
+                    // batch inserting lucky draw numbers
+                    while ($_numberOfLuckyDraw > $_free_number_batch) {
+                        if ($batch >= ($activeluckydraw->max_number - $activeluckydraw->min_number - $_generated_numbers + 1)) {
+                            // insert difference as new numbers
+                            $batch = ($activeluckydraw->max_number - $activeluckydraw->min_number) - $_generated_numbers + 1;
+                            $_numberOfLuckyDraw = $_free_number_batch;
+                        }
 
-            // get the blank lucky draw numbers
-            $issued_lucky_draw_numbers = DB::table('lucky_draw_numbers')
-                ->where('lucky_draw_id', $luckyDrawId)
-                ->whereNull('user_id')
-                ->orderBy('lucky_draw_number_code')
-                ->limit($numberOfLuckyDraw)
-                ->lockForUpdate()
-                ->lists('lucky_draw_number_id');
+                        for ($i = 0; $i < $batch; $i++) {
+                            $lucky_draw_number = new LuckyDrawNumber;
+                            $lucky_draw_number->lucky_draw_id = $luckyDrawId;
+                            $lucky_draw_number->lucky_draw_number_code = $starting_number_code;
+                            $lucky_draw_number->created_by = $user->user_id;
+                            $lucky_draw_number->modified_by = $user->user_id;
+                            $lucky_draw_number->save();
+                            $starting_number_code++;
+                        }
 
-            // hash for receipt group
-            $hash = LuckyDrawReceipt::genReceiptGroup($mallId);
+                        $_free_number_batch = $_free_number_batch + $batch;
+                        $_generated_numbers = $_generated_numbers + $batch;
+                    }
 
-            // assign the user_id to the blank lucky draw numbers
-            $assigned_lucky_draw_number = DB::table('lucky_draw_numbers')
-                ->whereIn('lucky_draw_number_id', $issued_lucky_draw_numbers)
-                ->update(array(
-                    'user_id'       => $userId,
-                    'issued_date'   => Carbon::now($mall->timezone->timezone_name),
-                    'modified_by'   => $user->user_id,
-                    'status'        => 'active',
-                    'hash'          => $hash
-                ));
+                    // update free_number_batch and generated_numbers
+                    $updated_luckydraw = LuckyDraw::where('lucky_draw_id', $luckyDrawId)->first();
+                    $updated_luckydraw->free_number_batch = $_free_number_batch;
+                    $updated_luckydraw->generated_numbers = $_generated_numbers;
+                    $updated_luckydraw->save();
 
-            // update free_number_batch
-            DB::table('lucky_draws')
-                ->where('status', 'active')
-                ->where('start_date', '<=', Carbon::now($mall->timezone->timezone_name))
-                ->where('end_date', '>=', Carbon::now($mall->timezone->timezone_name))
-                ->where('lucky_draw_id', $luckyDrawId)
-                ->update(array('free_number_batch' => ($_free_number_batch - count($issued_lucky_draw_numbers))));
 
-            Event::fire('orbit.luckydrawnumbercs.postnewluckydrawnumbercs.before.save', array($this, $luckyDraw, $customer));
+                    // get the blank lucky draw numbers
+                    $issued_lucky_draw_numbers = DB::table('lucky_draw_numbers')
+                        ->where('lucky_draw_id', $luckyDrawId)
+                        ->whereNull('user_id')
+                        ->orderBy('lucky_draw_number_code')
+                        ->limit($numberOfLuckyDraw)
+                        ->lockForUpdate()
+                        ->lists('lucky_draw_number_id');
 
-            // Save each receipt numbers
-            // @Todo: remove query inside loop
+                    // hash for receipt group
+                    $hash = LuckyDrawReceipt::genReceiptGroup($mallId);
 
-            foreach ($receipts as $i=>$receipt) {
-                $luckyDrawReceipt = new LuckyDrawReceipt();
-                $luckyDrawReceipt->mall_id = $mallId;
-                $luckyDrawReceipt->user_id = $userId;
+                    // assign the user_id to the blank lucky draw numbers
+                    $assigned_lucky_draw_number = DB::table('lucky_draw_numbers')
+                        ->whereIn('lucky_draw_number_id', $issued_lucky_draw_numbers)
+                        ->update(array(
+                            'user_id'       => $userId,
+                            'issued_date'   => Carbon::now($mall->timezone->timezone_name),
+                            'modified_by'   => $user->user_id,
+                            'status'        => 'active',
+                            'hash'          => $hash
+                        ));
 
-                if (! isset($tenants[$i])) {
-                    $errorMessage = sprintf('Tenant for receipt line %s is empty.', $i);
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-                }
-                $luckyDrawReceipt->receipt_retailer_id = $tenants[$i];
-                $luckyDrawReceipt->receipt_number = $receipt;
+                    // update free_number_batch
+                    DB::table('lucky_draws')
+                        ->where('status', 'active')
+                        ->where('start_date', '<=', Carbon::now($mall->timezone->timezone_name))
+                        ->where('end_date', '>=', Carbon::now($mall->timezone->timezone_name))
+                        ->where('lucky_draw_id', $luckyDrawId)
+                        ->update(array('free_number_batch' => ($_free_number_batch - count($issued_lucky_draw_numbers))));
 
-                // Check if the receipt is not exists yet on this mall and particular tenants
-                $prevLuckyDrawReceipt = LuckyDrawReceipt::active()
-                                                        ->where('receipt_retailer_id', $tenants[$i])
-                                                        ->where('mall_id', $mallId)
-                                                        ->where('receipt_number', $receipt)
-                                                        ->where(function($query) {
-                                                            $query->where('object_type', 'lucky_draw');
-                                                            $query->orwhereNull('object_type');
-                                                        })
-                                                        ->first();
+                    Event::fire('orbit.luckydrawnumbercs.postnewluckydrawnumbercs.before.save', array($this, $luckyDraw, $customer));
 
-                if (is_object($prevLuckyDrawReceipt)) {
-                    // The customer wants to cheat us huh?
-                    $receiptIssueDate = date('d/m/Y', strtotime($prevLuckyDrawReceipt->created_at));
-                    $message = sprintf('Receipt number %s was already used on %s.', $receipt, $receiptIssueDate);
-                    ACL::throwAccessForbidden(htmlentities($message));
-                }
+                    // Save each receipt numbers
+                    // @Todo: remove query inside loop
 
-                if (! isset($receiptDates[$i])) {
-                    $errorMessage = sprintf('Receipt date for receipt line %s is empty.', $i);
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-                }
-                $luckyDrawReceipt->receipt_date = $receiptDates[$i];
+                    $luckyDrawReceipt = new LuckyDrawReceipt();
+                    $luckyDrawReceipt->mall_id = $mallId;
+                    $luckyDrawReceipt->user_id = $userId;
 
-                if (! isset($amounts[$i])) {
-                    $errorMessage = sprintf('Receipt date for receipt line %s is empty.', $i);
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-                }
-                $luckyDrawReceipt->receipt_amount = $amounts[$i];
-                $luckyDrawReceipt->receipt_payment_type = $paymentTypes[$i];
-                $luckyDrawReceipt->status = 'active';
-                $luckyDrawReceipt->created_by = $user->user_id;
-                $luckyDrawReceipt->object_type = 'lucky_draw';
-                $luckyDrawReceipt->receipt_group = $hash;
+                    $tenant = $tenants[$key];
+                    $receipt = $receipts[$key];
+                    $amount = $amounts[$key];
+                    $receiptDate = $receiptDates[$key];
+                    $paymentType = $paymentTypes[$key];
 
-                $luckyDrawReceipt->save();
+                    if (! isset($tenant)) {
+                        $errorMessage = sprintf('Tenant for receipt line %s is empty.', $key);
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
 
-                // LuckyDrawNumberReceipt::syncUsingHashNumber($luckyDrawReceipt->lucky_draw_receipt_id, $hash);
-                $luckyDrawReceipt->numbers()->sync($issued_lucky_draw_numbers);
-            }
+                    if (! isset($receipt)) {
+                        $errorMessage = sprintf('Receipts line %s is empty.', $key);
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
 
-            Event::fire('orbit.luckydrawnumbercs.postnewluckydrawnumbercs.after.save', array($this, $hash, $luckyDraw, $customer, $mallId));
+                    $luckyDrawReceipt->receipt_retailer_id = $tenant;
+                    $luckyDrawReceipt->receipt_number = $receipt;
 
-            $receipts = LuckyDrawReceipt::excludeDeleted()
-                                        ->where('receipt_group', $hash)
-                                        ->where('user_id', $customer->user_id)
-                                        ->take(50)
-                                        ->get();
-            $receiptsCount = LuckyDrawReceipt::excludeDeleted()
-                                        ->where('receipt_group', $hash)
-                                        ->where('user_id', $customer->user_id)
-                                        ->count();
+                    // Check if the receipt is not exists yet on this mall and particular tenants
+                    $prevLuckyDrawReceipt = LuckyDrawReceipt::active()
+                                                            ->where('receipt_retailer_id', $tenant)
+                                                            ->where('mall_id', $mallId)
+                                                            ->where('receipt_number', $receipt)
+                                                            ->where(function($query) {
+                                                                $query->where('object_type', 'lucky_draw');
+                                                                $query->orwhereNull('object_type');
+                                                            })
+                                                            ->first();
 
-            $issued_lucky_draw_numbers_obj = DB::table('lucky_draw_numbers')
-                    ->select('lucky_draw_numbers.*', 'lucky_draws.lucky_draw_name', 'lucky_draw_number_receipt.lucky_draw_receipt_id')
-                    ->leftJoin('lucky_draws', function($q) {
-                        $q->on('lucky_draws.lucky_draw_id', '=', 'lucky_draw_numbers.lucky_draw_id');
-                    })
-                    ->leftJoin('lucky_draw_number_receipt', function($q) {
-                        $q->on('lucky_draw_numbers.lucky_draw_number_id', '=', 'lucky_draw_number_receipt.lucky_draw_number_id');
-                    })
-                    ->where('lucky_draw_numbers.lucky_draw_id', $luckyDrawId)
-                    ->where('user_id', $customer->user_id)
-                    ->orderByRaw('CAST(lucky_draw_number_code as UNSIGNED) DESC')
-                    ->limit($numberOfLuckyDraw)
-                    ->get();
+                    if (is_object($prevLuckyDrawReceipt)) {
+                        // The customer wants to cheat us huh?
+                        $receiptIssueDate = date('d/m/Y', strtotime($prevLuckyDrawReceipt->created_at));
+                        $message = sprintf('Receipt number %s was already used on %s.', $receipt, $receiptIssueDate);
+                        ACL::throwAccessForbidden(htmlentities($message));
+                    }
+
+                    if (! isset($receiptDate)) {
+                        $errorMessage = sprintf('Receipt date for receipt line %s is empty.', $key);
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
+                    $luckyDrawReceipt->receipt_date = $receiptDate;
+
+                    if (! isset($amount)) {
+                        $errorMessage = sprintf('Receipt date for receipt line %s is empty.', $key);
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
+                    $luckyDrawReceipt->receipt_amount = $amount;
+                    $luckyDrawReceipt->receipt_payment_type = $paymentType;
+                    $luckyDrawReceipt->status = 'active';
+                    $luckyDrawReceipt->created_by = $user->user_id;
+                    $luckyDrawReceipt->object_type = 'lucky_draw';
+                    $luckyDrawReceipt->receipt_group = $hash;
+
+                    $luckyDrawReceipt->save();
+
+                    // LuckyDrawNumberReceipt::syncUsingHashNumber($luckyDrawReceipt->lucky_draw_receipt_id, $hash);
+                    $luckyDrawReceipt->numbers()->sync($issued_lucky_draw_numbers);
+
+
+                    Event::fire('orbit.luckydrawnumbercs.postnewluckydrawnumbercs.after.save', array($this, $hash, $luckyDraw, $customer, $mallId));
+
+                    $receipts_lucky_draw[$key] = LuckyDrawReceipt::excludeDeleted()
+                                                ->where('receipt_group', $hash)
+                                                ->where('user_id', $customer->user_id)
+                                                ->take(50)
+                                                ->get();
+                    $receipts_count_lucky_draw[$key] = LuckyDrawReceipt::excludeDeleted()
+                                                ->where('receipt_group', $hash)
+                                                ->where('user_id', $customer->user_id)
+                                                ->count();
+
+                    $issued_lucky_draw_numbers_obj[$key] = DB::table('lucky_draw_numbers')
+                            ->select('lucky_draw_numbers.*', 'lucky_draws.lucky_draw_name', 'lucky_draw_number_receipt.lucky_draw_receipt_id')
+                            ->leftJoin('lucky_draws', function($q) {
+                                $q->on('lucky_draws.lucky_draw_id', '=', 'lucky_draw_numbers.lucky_draw_id');
+                            })
+                            ->leftJoin('lucky_draw_number_receipt', function($q) {
+                                $q->on('lucky_draw_numbers.lucky_draw_number_id', '=', 'lucky_draw_number_receipt.lucky_draw_number_id');
+                            })
+                            ->where('lucky_draw_numbers.lucky_draw_id', $luckyDrawId)
+                            ->where('user_id', $customer->user_id)
+                            ->orderByRaw('CAST(lucky_draw_number_code as UNSIGNED) DESC')
+                            ->limit($numberOfLuckyDraw)
+                            ->get();
+
+                    // Get lucky draw number
+                    foreach ($issued_lucky_draw_numbers_obj[$key] as $index => $value) {
+                        $lucky_draw_number_code[] = $value->lucky_draw_number_code;
+                        $lucky_draw_name = $value->lucky_draw_name;
+                    }
+
+                } // end if, check numberoftenant 0
+
+            } // end foreach for numberOfLuckyDrawArray
 
             $data = new stdclass();
             $data->total_records = count($issued_lucky_draw_numbers);
             $data->returned_records = count($issued_lucky_draw_numbers);
-            $data->expected_issued_numbers = $numberOfLuckyDraw;
+            $data->expected_issued_numbers = count($lucky_draw_number_code);
             $data->records = $issued_lucky_draw_numbers_obj;
+            $data->lucky_draw_number_code = $lucky_draw_number_code;
+            $data->lucky_draw_name = $lucky_draw_name;
 
             $this->response->data = $data;
 
@@ -746,6 +793,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $this->response->data = null;
+
             $httpCode = 403;
 
             // Creation failed Activity log

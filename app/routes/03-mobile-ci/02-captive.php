@@ -7,7 +7,7 @@
 | Routes related with Captive Portal
 |
 */
-Route::group( ['before' => ['orbit-settings', 'turn-off-query-string-session']], function ()
+Route::group( ['before' => ['orbit-settings']], function ()
 {
     Route::get('/captive-session', ['as' => 'captive-portal', function()
     {

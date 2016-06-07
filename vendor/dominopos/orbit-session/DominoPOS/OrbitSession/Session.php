@@ -359,7 +359,7 @@ class Session
     {
         $availabilities = $this->config->getConfig('availability');
 
-        if (array_key_exists('cookie', $availabilities)) {
+        if (array_key_exists('cookie', $availabilities) && $availabilities['cookie'] === TRUE) {
             $cookieConfig = $this->config->getConfig('session_origin.cookie');
             $expire = $cookieConfig['expire'] + time();
 

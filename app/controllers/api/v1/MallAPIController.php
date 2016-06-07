@@ -2153,6 +2153,14 @@ class MallAPIController extends ControllerAPI
                 if (count($update_free_wifi) > 0) {
                     $update_free_wifi->status = $free_wifi_status;
                     $update_free_wifi->modified_by = $this->api->user->user_id;
+                    if ($update_free_wifi->status === 'inactive') {
+                        $count_wiget = Widget::excludeDeleted()
+                                ->leftJoin('widget_retailer', 'widget_retailer.widget_id', '=', 'widgets.widget_id')
+                                ->where('retailer_id', $updatedmall->merchant_id)
+                                ->count();
+
+                        $update_free_wifi->widget_order = $count_wiget + 1;
+                    }
                     $update_free_wifi->save();
 
                     $widget_status = $update_free_wifi->status;
@@ -2191,6 +2199,38 @@ class MallAPIController extends ControllerAPI
                                 }
                             }
                         }
+                    }
+                }
+
+                $setting_items = [
+                    'enable_free_wifi'              => 'true',
+                    'enable_free_wifi_widget'       => 'true',
+                ];
+
+                foreach ($setting_items as $setting_name => $setting_value) {
+                    if ($free_wifi_status === 'inactive') {
+                        $setting_value = 'false';
+                    }
+
+                    $setting = Setting::excludeDeleted()
+                                ->where('setting_name', $setting_name)
+                                ->where('object_id', $updatedmall->merchant_id)
+                                ->where('object_type', 'merchant')
+                                ->first();
+
+                    if (count($setting) > 0 ) {
+                        $setting->setting_value = $setting_value;
+                        $setting->save();
+                    } else {
+                        $settings = new Setting();
+                        $settings->setting_name = $setting_name;
+                        $settings->setting_value = $setting_value;
+                        $settings->object_id = $updatedmall->merchant_id;
+                        $settings->object_type = 'merchant';
+                        $settings->status = 'active';
+                        $settings->modified_by = $this->api->user->user_id;
+
+                        $settings->save();
                     }
                 }
                 $updatedmall->free_wifi_status = $widget_status;
