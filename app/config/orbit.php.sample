@@ -793,13 +793,13 @@ return array(
 
             // No need protocol, just enter domain name
             // e.g: 'example.com' or 'sub.example.com'
-            'allow-origin' => [
+            'allow_origin' => [
                 'localhost',
                 'gotomalls.cool',
                 'thebreeze.v21.orbit-mall.rio'
             ],
-            'allow-methods' => 'GET, POST',
-            'allow-credentials' => 'true'
+            'allow_methods' => 'GET, POST',
+            'allow_credentials' => 'true'
         ],
 
         // Firewall on Orbit Box
