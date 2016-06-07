@@ -568,7 +568,7 @@ return array(
             'message'   => '您连接免费互联网',
             'button'    => ' 还行'
         ),
-        'widget_slogan' => 'Internet GRATIS!',
-        'widget_tagline' => 'Dapatkan akses gratismu SEKARANG!'
+        'widget_slogan' => '免费的互联网',
+        'widget_tagline' => '免费上网'
     )
 );

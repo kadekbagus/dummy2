@@ -568,7 +568,7 @@ return array(
             'message'   => '無料でインターネットに接続しています。',
             'button'    => 'OK'
         ),
-        'widget_slogan' => 'Internet GRATIS!',
-        'widget_tagline' => 'Dapatkan akses gratismu SEKARANG!'
+        'widget_slogan' => '無料インターネット',
+        'widget_tagline' => '無料インター ネット アクセス'
     )
 );

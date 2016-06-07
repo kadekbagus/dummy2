@@ -85,7 +85,7 @@
         if (fromCaptivePortal === 'yes') {
             this.connectedFromCaptivePortal();
         } else {
-            this.connectedFromNonCaptivePortal();            
+            this.connectedFromNonCaptivePortal();
         }
     };
 
@@ -228,18 +228,13 @@
         });
         
         var WifiCookieChecker = function() {
-            var isCookieAvailable = function() {
-                var fromCaptivePortal = getCookie('from_captive');
-                return (fromCaptivePortal === 'yes');
-            }
-            
             this.updateUI = function() {
-                if (isCookieAvailable()) {
+                if (getCookie('from_captive') === 'yes') {
                     $('#btn-grant-internet').removeAttr('disabled');
                     $('#connection-status').attr('src','{{ asset('mobile-ci/images/free-internet-connected.png') }}')
                 } else {
                     $('#btn-grant-internet').attr('disabled', 'disabled');
-                    $('#connection-status').attr('src','{{ asset('mobile-ci/images/free-internet-disconnected.png') }}')                    
+                    $('#connection-status').attr('src','{{ asset('mobile-ci/images/free-internet-disconnected.png') }}')
                 }
             }
         }
