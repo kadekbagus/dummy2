@@ -541,7 +541,7 @@ return array(
 
     'captive'   => array(
         'request_internet' => array(
-            'title'     => 'FREE Internet',
+            'title'     => 'FREE INTERNET',
             'heading'   => 'FREE Internet Access!',
             'message'   => 'By connecting to our Wi-Fi you agree with our terms and conditions. Click the button below to get free internet access.',
             'button'    => 'Get FREE Internet Access!',
