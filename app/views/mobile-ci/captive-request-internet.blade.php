@@ -149,12 +149,12 @@
                <li>{{ $instruction }}</li>
                @endforeach
            </ul>
-           {{-------------------------------------------------
-               Current behavior required by QA is allowing
-               We include from_captive=yes into query string
-               because when users copy URL click and paste the URL
-
-            -----------------------------------------------------}}
+           {{------------------------------------------------------------
+               We include url_from_clipboard=yes into query string
+               to indicate that user is browsing from copied URL.
+               See ExCaptivePortalController.getECaptiveRequestInternet()
+               method
+            -------------------------------------------------------------}}
            <button id="copy-url" class="btn btn-block btn-primary" data-clipboard-text="{{ URL::route('captive-request-internet', ['url_from_clipboard' => 'yes', $qs_name => $qs_value]) }}">{{ Lang::get('mobileci.captive.request_internet.message_ex.clipboard_caption') }}</button>
            <br/>
             <form id="frm-grant-internet" method="get" action="{{ $base_grant_url }}">
