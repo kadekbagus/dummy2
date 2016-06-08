@@ -38,6 +38,7 @@ return array(
         'membership'         => '会员',
         'orbit_tour'         => 'ORBIT巡视',
         'lucky_draws'        => '幸运大抽奖',
+        'free_wifi'          => '免费的互联网',
         'my_messages'        => '我的消息',
         'my_message'         => '我的消息',
         'redemption_places'  => '赎回位置',

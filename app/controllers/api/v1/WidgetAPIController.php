@@ -1576,8 +1576,8 @@ class WidgetAPIController extends ControllerAPI
                         }
                     }
 
-                    $widget->display_title = Lang::get('mobileci.widgets.free_wifi');
-                    $widget->display_sub_title = Lang::get('mobileci.widgets.free_wifi');
+                    $widget->display_title = Lang::get('mobileci.page_title.free_wifi');
+                    $widget->display_sub_title = Lang::get('mobileci.page_title.free_wifi');
                 }
             }
 
