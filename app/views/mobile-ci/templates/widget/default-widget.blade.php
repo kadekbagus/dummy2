@@ -8,7 +8,11 @@
                             @endif
                             <div class="widget-info">
                                 <header class="widget-title">
+                                    @if($widget->widget_type != 'free_wifi')
                                     <div><strong>{{{ucwords(strtolower($widget->display_title))}}}</strong></div>
+                                    @else
+                                    <div><strong>{{{$widget->display_title}}}</strong></div>
+                                    @endif
                                 </header>
                                 <header class="widget-subtitle">
                                     @if($widget->item_count > 0)
