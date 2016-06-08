@@ -119,6 +119,8 @@ class LoginAPIController extends IntermediateBaseController
             $sessionData['email'] = $user->user_email;
             $sessionData['role'] = $user->role->role_name;
             $sessionData['fullname'] = $user->getFullName();
+            $this->session->remove('visited_location');
+            $this->session->remove('coupon_location');
 
             // update the guest session data, append user data to it so the user will be recognized
             $this->session->update($sessionData);
