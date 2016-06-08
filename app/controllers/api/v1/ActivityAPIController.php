@@ -2609,7 +2609,7 @@ class ActivityAPIController extends ControllerAPI
             };
 
             $activities = DB::select( DB::raw("
-                    select tmp.*, IFNULL(ct.connect_time, 0) total_minutes from (
+                    select tmp.*, (CASE WHEN ct.connect_time < 0 THEN 0 ELSE IFNULL(ct.connect_time, 0) END) total_minutes from (
                       select date_add({$quote($start_date)}, interval n.sequence_number - 1 DAY) `date` from (
                         select sequence_number from {$tablePrefix}sequence
                       ) n where date_add({$quote($start_date)}, interval n.sequence_number - 1 day) <= {$quote($end_date)}

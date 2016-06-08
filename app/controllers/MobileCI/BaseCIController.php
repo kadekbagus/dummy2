@@ -169,7 +169,7 @@ class BaseCIController extends ControllerAPI
                 $this->session = new Session($config);
                 $this->session->start(array(), 'no-session-creation');
             } catch (Exception $e) {
-                $this->session->start();   
+                $this->session->start();
             }
         }
     }
@@ -214,6 +214,21 @@ class BaseCIController extends ControllerAPI
     }
 
     /**
+     * $user is from getLoggedInUser() and it may returns
+     * NULL user. This method is safety net to make sure
+     * that email otherwise valid or empty
+     * @param type $user
+     * @return user email or empty if not valid
+     */
+    private function getUserEmail($user) {
+        $user_email = '';
+        if (isset($user) && isset($user->role)) {
+            $user_email = $user->role->role_name !== 'Guest' ? $user->user_email : '';
+        }
+        return $user_email;
+    }
+
+    /**
      * This method return list of data which mostly needed by views.
      *
      * @return array
@@ -233,7 +248,7 @@ class BaseCIController extends ControllerAPI
             'urlblock' => $urlblock,
             'languages' => $languages,
             'page_title' => $this->pageTitle,
-            'user_email' => $user->role->role_name !== 'Guest' ? $user->user_email : '',
+            'user_email' => $this->getUserEmail($user)
         ];
     }
 }
