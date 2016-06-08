@@ -865,9 +865,11 @@ class MobileCIAPIController extends BaseCIController
                             ->get();
 
             if (CaptivePortalController::isFromCaptive()) {
+                //not needed because free wifi internet widget is configurable in
+                //mall setting
                 // Inject number of widget on-the-fly
-                $captiveWidget = CaptivePortalController::generateDummyWidget($retailer, $urlblock);
-                $widgets->push($captiveWidget);
+                //$captiveWidget = CaptivePortalController::generateDummyWidget($retailer, $urlblock);
+                //$widgets->push($captiveWidget);
 
                 // Push the from_captive cookie
                 CaptivePortalController::setCookieForCaptive();
