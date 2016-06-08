@@ -865,9 +865,11 @@ class MobileCIAPIController extends BaseCIController
                             ->get();
 
             if (CaptivePortalController::isFromCaptive()) {
+                //not needed because free wifi internet widget is configurable in
+                //mall setting
                 // Inject number of widget on-the-fly
-                $captiveWidget = CaptivePortalController::generateDummyWidget($retailer, $urlblock);
-                $widgets->push($captiveWidget);
+                //$captiveWidget = CaptivePortalController::generateDummyWidget($retailer, $urlblock);
+                //$widgets->push($captiveWidget);
 
                 // Push the from_captive cookie
                 CaptivePortalController::setCookieForCaptive();
@@ -10218,17 +10220,9 @@ class MobileCIAPIController extends BaseCIController
             $userguest->status = 'active';
             $userguest->save();
 
-            $userSignin = UserSignin::where('user_id', '=', $guest_id)->first();
+            $userSignin = DB::table('user_signin')->where('user_id', '=', $guest_id)->delete();
 
-            if (is_object($userSignin)) {
-                $userSignin->delete(true);
-            }
-
-            $listConnectedUser = listConnectedUser::where('user_id', '=', $guest_id)->first();
-
-            if (is_object($listConnectedUser)) {
-                $listConnectedUser->delete(true);
-            }
+            $listConnectedUser = DB::table('list_connected_user')->where('user_id', '=', $guest_id)->delete(); 
             
             $this->commit();
 
