@@ -1229,6 +1229,14 @@ class ActivityAPIController extends ControllerAPI
             }
             $activities = $activities->get();
 
+            if (empty($activities)) {
+                $activities = new stdclass();
+                $activities->date = date("Y-m-d", strtotime($end_date));
+                $activities->count = 0;
+                $activities->customer_count = 0;
+                $activities->guest_count = 0;
+            }
+
             $this->response->data = [
                 'start_date' => $start_date,
                 'end_date'   => $end_date,
