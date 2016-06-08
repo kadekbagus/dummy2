@@ -418,17 +418,6 @@ class CouponCIAPIController extends BaseAPIController
 
             $coupon = $coupon->first();
 
-            $issued_coupon = IssuedCoupon::active()
-                ->where('promotion_id', $coupon->promotion_id)
-                ->where('user_id', $user->user_id)
-                ->orderBy('expired_date', 'DESC')
-                ->first();
-
-            $coupon->issued_coupon_id = null;
-            if (is_object($issued_coupon)) {
-                $coupon->issued_coupon_id = $issued_coupon->issued_coupon_id;
-            }
-
             // Check coupon have condition cs reedem
             $cs_reedem = false;
 
@@ -439,6 +428,18 @@ class CouponCIAPIController extends BaseAPIController
                 ->count('users.user_id');
 
             if (is_object($coupon)) {
+
+                $issued_coupon = IssuedCoupon::active()
+                    ->where('promotion_id', $coupon->promotion_id)
+                    ->where('user_id', $user->user_id)
+                    ->orderBy('expired_date', 'DESC')
+                    ->first();
+
+                $coupon->issued_coupon_id = null;
+                if (is_object($issued_coupon)) {
+                    $coupon->issued_coupon_id = $issued_coupon->issued_coupon_id;
+                }
+
                 if ($coupon->is_all_employee === 'Y') {
                     if ($employeeVerNumbersActive > 0) {
                         $cs_reedem = true;
