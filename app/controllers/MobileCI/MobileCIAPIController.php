@@ -820,7 +820,8 @@ class MobileCIAPIController extends BaseCIController
             /*Log::info(sprintf('-- CAPTIVE PORTAL -> SID: %s, Cookie: %s',
                     $this->session->getSessionId(), print_r($_COOKIE, TRUE)));*/
 
-            $urlblock = new UrlBlock;
+            $user = $this->getLoggedInUser();
+            $urlblock = new UrlBlock($this->session, $user);
             $user = $urlblock->checkBlockedUrl();
             $this->acquireUser($retailer, $user);
             Coupon::issueAutoCoupon($retailer, $user, $urlblock->getUserSession());
@@ -976,7 +977,7 @@ class MobileCIAPIController extends BaseCIController
         }
 
         $user = $this->getLoggedInUser();
-            $urlblock = new UrlBlock($this->session, $user);
+        $urlblock = new UrlBlock($this->session, $user);
         $landing_url = $urlblock->blockedRoute('ci-customer-home');
         $socmed_redirect_to = \Input::get('socmed_redirect_to', '');
         if (! empty($socmed_redirect_to)) {
