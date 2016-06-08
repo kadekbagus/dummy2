@@ -414,7 +414,7 @@ class CouponCIAPIController extends BaseAPIController
                     'promotions.description',
                     'promotions.long_description',
                     'media.path as image',
-                    DB::raw("(CONCAT(DATE_FORMAT({$prefix}promotions.begin_date, '%d %b %Y'), ' - ', DATE_FORMAT({$prefix}promotions.end_date, '%d %b %Y'))) as validity"),
+                    DB::raw("(CONCAT(DATE_FORMAT({$prefix}promotions.begin_date, '%d %b %Y'), ' - ', DATE_FORMAT({$prefix}promotions.end_date, '%d %M %Y'))) as validity"),
                     DB::raw("
                         (SELECT COUNT({$prefix}issued_coupons.issued_coupon_id)
                         FROM {$prefix}issued_coupons
