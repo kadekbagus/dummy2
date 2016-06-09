@@ -1105,6 +1105,7 @@ class Activity extends Eloquent
         $now = date('Y-m-d H:i:s');
         if ($this->activity_name === 'login_ok') {
             $connection->login_at = $now;
+            $connection->logout_at = NULL;
         }
         if ($this->activity_name === 'logout_ok') {
             $connection->logout_at = $now;

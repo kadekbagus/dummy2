@@ -43,7 +43,7 @@
         }
         return '';
     };
-    
+
     var OrbitInternetChecker = {};
 
     /**
@@ -58,14 +58,14 @@
         // Redirect to our granted page.
         window.location.href = '{{ $granted_url }}';
     };
-    
+
     /**
      * Callback to handle if internet is connected from
      * any non mall captive portal (i.e 3G, any Wifi etc).
-     * 
-     * We display Free Internet Access dialog but with 
+     *
+     * We display Free Internet Access dialog but with
      * Get Free Internet Access button disabled
-     * to indicate that they cannot get free internet access if they are not 
+     * to indicate that they cannot get free internet access if they are not
      * connected to mall captive portal.
      */
     OrbitInternetChecker.connectedFromNonCaptivePortal = function()
@@ -75,7 +75,7 @@
         $('#btn-grant-internet').attr('disabled', 'disabled');
         $('#connection-status').attr('src','{{ asset('mobile-ci/images/free-internet-disconnected.png') }}')
     };
-    
+
     /**
      * Callback to handle if internet is up
      */
@@ -116,11 +116,11 @@
     }
     </script>
 
-    <!-- show when browser run in OS !== Android 5+ -->     
+    <!-- show when browser run in OS !== Android 5+ -->
     <div class="row padded" id="in-any-os" style="display:none">
         <div class="col-xs-12 hide" id="captive-no-internet">
             <h3>{{ Lang::get('mobileci.captive.request_internet.heading') }}</h3>
-            <img id="connection-status" style="width:100px;float:left;margin: 0 1em 1em 0; position:relative; top:-1em;" src="{{ asset('mobile-ci/images/free-internet-connected.png') }}">
+            <img id="connection-status" style="width:100px;float:left;margin: 0 1em 1em 0; position:relative; top:-1em;" src="{{ asset('mobile-ci/images/free-internet-disconnected.png') }}">
             <p>{{ Lang::get('mobileci.captive.request_internet.message') }}
             <form id="frm-grant-internet" method="get" action="{{ $base_grant_url }}">
                 <input onclick="return OrbitInternetChecker.submit(this)" id="btn-grant-internet" type="submit" class="btn btn-block btn-primary" value="{{ Lang::get('mobileci.captive.request_internet.button') }}">
@@ -149,7 +149,13 @@
                <li>{{ $instruction }}</li>
                @endforeach
            </ul>
-           <button id="copy-url" class="btn btn-block btn-primary" data-clipboard-text="{{ URL::route('captive-request-internet', [$qs_name => $qs_value]) }}">{{ Lang::get('mobileci.captive.request_internet.message_ex.clipboard_caption') }}</button>
+           {{------------------------------------------------------------
+               We include url_from_clipboard=yes into query string
+               to indicate that user is browsing from copied URL.
+               See ExCaptivePortalController.getECaptiveRequestInternet()
+               method
+            -------------------------------------------------------------}}
+           <button id="copy-url" class="btn btn-block btn-primary" data-clipboard-text="{{ URL::route('captive-request-internet', ['url_from_clipboard' => 'yes', $qs_name => $qs_value]) }}">{{ Lang::get('mobileci.captive.request_internet.message_ex.clipboard_caption') }}</button>
            <br/>
             <form id="frm-grant-internet" method="get" action="{{ $base_grant_url }}">
                 <input onclick="return OrbitInternetChecker.submit(this)" id="btn-grant-internet" type="submit" class="btn btn-block btn-primary" value="{{ Lang::get('mobileci.captive.request_internet.button') }}">
@@ -233,7 +239,7 @@
         clipboard.on('success', function(e) {
             $('.clipboard-success').fadeIn(400).delay(3000).fadeOut(400);
         });
-        
+
         var WifiCookieChecker = function() {
             this.updateUI = function() {
                 if (getCookie('from_captive') === 'yes') {
@@ -245,12 +251,12 @@
                 }
             }
         }
-        
+
         var wifiChecker = new WifiCookieChecker();
-        
+
         window.setInterval(function() {
-            wifiChecker.updateUI();   
+            wifiChecker.updateUI();
         }, 30000);
-        
+
     </script>
 @stop

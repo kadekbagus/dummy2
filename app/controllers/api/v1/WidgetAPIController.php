@@ -1450,11 +1450,11 @@ class WidgetAPIController extends ControllerAPI
                         }
                     }
 
-                    $widget->display_title = Lang::get('mobileci.widgets.tenant');
+                    $widget->display_title = Lang::get('mobileci.page_title.tenant');
                     if ($widget->item_count > 1) {
-                        $widget->display_sub_title = Lang::get('mobileci.widgets.tenants');
+                        $widget->display_sub_title = Lang::get('mobileci.page_title.tenants');
                     } else {
-                        $widget->display_sub_title = Lang::get('mobileci.widgets.tenants_single');
+                        $widget->display_sub_title = Lang::get('mobileci.page_title.tenants_single');
                     }
                 }
                 if ($widget->widget_type == 'service') {
@@ -1471,11 +1471,11 @@ class WidgetAPIController extends ControllerAPI
                         }
                     }
 
-                    $widget->display_title = Lang::get('mobileci.widgets.service');
+                    $widget->display_title = Lang::get('mobileci.page_title.service');
                     if ($widget->item_count > 1) {
-                        $widget->display_sub_title = Lang::get('mobileci.widgets.services');
+                        $widget->display_sub_title = Lang::get('mobileci.page_title.services');
                     } else {
-                        $widget->display_sub_title = Lang::get('mobileci.widgets.services_single');
+                        $widget->display_sub_title = Lang::get('mobileci.page_title.services_single');
                     }
                 }
                 if ($widget->widget_type == 'promotion') {
@@ -1492,11 +1492,11 @@ class WidgetAPIController extends ControllerAPI
                         }
                     }
 
-                    $widget->display_title = Lang::get('mobileci.widgets.promotion');
+                    $widget->display_title = Lang::get('mobileci.page_title.promotion');
                     if ($widget->item_count > 1) {
-                        $widget->display_sub_title = Lang::get('mobileci.widgets.promotions');
+                        $widget->display_sub_title = Lang::get('mobileci.page_title.promotions');
                     } else {
-                        $widget->display_sub_title = Lang::get('mobileci.widgets.promotions_single');
+                        $widget->display_sub_title = Lang::get('mobileci.page_title.promotions_single');
                     }
                 }
                 if ($widget->widget_type == 'news') {
@@ -1513,11 +1513,11 @@ class WidgetAPIController extends ControllerAPI
                         }
                     }
 
-                    $widget->display_title = Lang::get('mobileci.widgets.news');
+                    $widget->display_title = Lang::get('mobileci.page_title.news');
                     if ($widget->item_count > 1) {
-                        $widget->display_sub_title = Lang::get('mobileci.widgets.newss');
+                        $widget->display_sub_title = Lang::get('mobileci.page_title.newss');
                     } else {
-                        $widget->display_sub_title = Lang::get('mobileci.widgets.newss_single');
+                        $widget->display_sub_title = Lang::get('mobileci.page_title.newss_single');
                     }
                 }
                 if ($widget->widget_type == 'coupon') {
@@ -1534,11 +1534,11 @@ class WidgetAPIController extends ControllerAPI
                         }
                     }
 
-                    $widget->display_title = Lang::get('mobileci.widgets.coupon');
+                    $widget->display_title = Lang::get('mobileci.page_title.coupons');
                     if ($widget->item_count > 1) {
-                        $widget->display_sub_title = Lang::get('mobileci.widgets.coupons');
+                        $widget->display_sub_title = Lang::get('mobileci.page_title.coupons');
                     } else {
-                        $widget->display_sub_title = Lang::get('mobileci.widgets.coupons_single');
+                        $widget->display_sub_title = Lang::get('mobileci.page_title.coupons_single');
                     }
                 }
                 if ($widget->widget_type == 'lucky_draw') {
@@ -1555,11 +1555,11 @@ class WidgetAPIController extends ControllerAPI
                         }
                     }
 
-                    $widget->display_title = Lang::get('mobileci.widgets.lucky_draw');
+                    $widget->display_title = Lang::get('mobileci.page_title.lucky_draws');
                     if ($widget->item_count > 1) {
-                        $widget->display_sub_title = Lang::get('mobileci.widgets.lucky_draws');
+                        $widget->display_sub_title = Lang::get('mobileci.page_title.lucky_draws');
                     } else {
-                        $widget->display_sub_title = Lang::get('mobileci.widgets.lucky_draws_single');
+                        $widget->display_sub_title = Lang::get('mobileci.page_title.lucky_draws_single');
                     }
                 }
                 if ($widget->widget_type == 'free_wifi') {
@@ -1576,8 +1576,8 @@ class WidgetAPIController extends ControllerAPI
                         }
                     }
 
-                    $widget->display_title = Lang::get('mobileci.widgets.free_wifi');
-                    $widget->display_sub_title = Lang::get('mobileci.widgets.free_wifi');
+                    $widget->display_title = Lang::get('mobileci.page_title.free_wifi');
+                    $widget->display_sub_title = Lang::get('mobileci.page_title.free_wifi');
                 }
             }
 
