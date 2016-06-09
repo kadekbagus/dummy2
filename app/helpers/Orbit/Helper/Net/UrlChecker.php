@@ -165,47 +165,6 @@ class UrlChecker
     }
 
     /**
-     * Generate the guest user
-     * If there are already guest_email on the cookie use that email instead
-     *
-     */
-    public function generateGuestUser()
-    {
-        try{
-            $guest_email = $this->session->read('email');
-            if (empty($guest_email)) {
-            	DB::beginTransaction();
-                $user = (new User)->generateGuestUser();
-                DB::commit();
-                // Start the orbit session
-                $data = array(
-                    'logged_in' => TRUE,
-                    'user_id'   => $user->user_id,
-                    'email'     => $user->user_email,
-                    'role'      => $user->role->role_name,
-                    'fullname'  => $user->getFullName(),
-                );
-                $this->session->enableForceNew()->start($data);
-
-                // Send the session id via HTTP header
-                $sessionHeader = $this->session->getSessionConfig()->getConfig('session_origin.header.name');
-                $sessionHeader = 'Set-' . $sessionHeader;
-                $this->customHeaders[$sessionHeader] = $this->session->getSessionId();
-
-            } else {
-                $guest = User::excludeDeleted()->where('user_email', $guest_email)->first();
-                $user = $guest;
-            }
-
-            return $user;
-
-        } catch (Exception $e) {
-            DB::rollback();
-            print_r([$e->getMessage(), $e->getLine()]);
-        }
-    }
-
-    /**
      * Get current logged in user used in view related page.
      *
      * @return User $user
