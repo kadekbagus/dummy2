@@ -28,6 +28,10 @@ class GenerateGuestUser
     public static function generateGuestUser($session)
     {
         try{
+            if (is_null($session)) {
+                throw new Exception("Session not found.", 1);
+            }
+
             $guest_email = $session->read('guest_email');
             $guest = User::excludeDeleted()->where('user_email', $guest_email)->first();
             if (! is_object($guest)) {
