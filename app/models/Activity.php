@@ -977,16 +977,20 @@ class Activity extends Eloquent
             $newConnected->minute = $minute;
             $newConnected->save();
 
-            $newListConnectedUser = new ListConnectedUser();
-            $newListConnectedUser->connected_now_id = $newConnected->connected_now_id;
-            $newListConnectedUser->user_id = $this->user_id;
-            $newListConnectedUser->save();
-        } else {
-            if (is_null($activity->user_id)) {
+            if (! empty($this->user_id)) {
                 $newListConnectedUser = new ListConnectedUser();
-                $newListConnectedUser->connected_now_id = $activity->connected_now_id;
+                $newListConnectedUser->connected_now_id = $newConnected->connected_now_id;
                 $newListConnectedUser->user_id = $this->user_id;
                 $newListConnectedUser->save();
+            }
+        } else {
+            if (is_null($activity->user_id)) {
+                if (! empty($this->user_id)) {
+                    $newListConnectedUser = new ListConnectedUser();
+                    $newListConnectedUser->connected_now_id = $activity->connected_now_id;
+                    $newListConnectedUser->user_id = $this->user_id;
+                    $newListConnectedUser->save();
+                }
 
                 $activity->customer_connected += 1;
                 $activity->save();
@@ -1089,7 +1093,7 @@ class Activity extends Eloquent
         }
 
         // Save also the activity to particular `campaign_xyz` table
-        $connection = ConnectionTime::where('session_id', $this->session_id)->first();
+        $connection = ConnectionTime::where('session_id', $this->session_id)->where('location_id', $this->location_id)->first();
         if (! is_object($connection)) {
             $connection = new ConnectionTime();
         }
@@ -1101,6 +1105,7 @@ class Activity extends Eloquent
         $now = date('Y-m-d H:i:s');
         if ($this->activity_name === 'login_ok') {
             $connection->login_at = $now;
+            $connection->logout_at = NULL;
         }
         if ($this->activity_name === 'logout_ok') {
             $connection->logout_at = $now;

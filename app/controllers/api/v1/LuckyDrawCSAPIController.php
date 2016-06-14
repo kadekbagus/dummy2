@@ -542,6 +542,27 @@ class LuckyDrawCSAPIController extends ControllerAPI
 
             $mall = Mall::with('timezone')->active()->where('merchant_id', $mallId)->first();
 
+            // Validation for max check max issuance
+            $checkMaxIssuance = DB::table('lucky_draws')
+                ->where('status', 'active')
+                ->where('start_date', '<=', Carbon::now($mall->timezone->timezone_name))
+                ->where('end_date', '>=', Carbon::now($mall->timezone->timezone_name))
+                ->where('lucky_draw_id', $luckyDrawId)
+                ->lockForUpdate()
+                ->first();
+
+            if (! is_object($checkMaxIssuance)) {
+                $this->rollBack();
+                $errorMessage = Lang::get('validation.orbit.empty.lucky_draw');
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            if ((($checkMaxIssuance->max_number - $checkMaxIssuance->min_number + 1) == $checkMaxIssuance->generated_numbers) && ($checkMaxIssuance->free_number_batch === 0)) {
+                $this->rollBack();
+                $errorMessage = Lang::get('validation.orbit.exceed.lucky_draw.max_issuance', ['max_number' => $checkMaxIssuance->generated_numbers]);
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
             $issued_lucky_draw_numbers_obj = array();
             $receipts_lucky_draw = array();
             $receipts_count_lucky_draw = array();
@@ -564,12 +585,6 @@ class LuckyDrawCSAPIController extends ControllerAPI
                     if (! is_object($activeluckydraw)) {
                         $this->rollBack();
                         $errorMessage = Lang::get('validation.orbit.empty.lucky_draw');
-                        OrbitShopAPI::throwInvalidArgument($errorMessage);
-                    }
-
-                    if ((($activeluckydraw->max_number - $activeluckydraw->min_number + 1) == $activeluckydraw->generated_numbers) && ($activeluckydraw->free_number_batch === '0')) {
-                        $this->rollBack();
-                        $errorMessage = Lang::get('validation.orbit.exceed.lucky_draw.max_issuance', ['max_number' => $activeluckydraw->generated_numbers]);
                         OrbitShopAPI::throwInvalidArgument($errorMessage);
                     }
 
@@ -757,9 +772,9 @@ class LuckyDrawCSAPIController extends ControllerAPI
             } // end foreach for numberOfLuckyDrawArray
 
             $data = new stdclass();
-            $data->total_records = count($issued_lucky_draw_numbers);
-            $data->returned_records = count($issued_lucky_draw_numbers);
-            $data->expected_issued_numbers = count($lucky_draw_number_code);
+            $data->total_records = count($lucky_draw_number_code);
+            $data->returned_records = count($lucky_draw_number_code);
+            $data->expected_issued_numbers = $totalNumberOfLuckyDraw;
             $data->records = $issued_lucky_draw_numbers_obj;
             $data->lucky_draw_number_code = $lucky_draw_number_code;
             $data->lucky_draw_name = $lucky_draw_name;

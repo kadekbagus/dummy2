@@ -61,7 +61,7 @@ class CorsHeader
             }
         }
 
-        return 'localhost';
+        return 'http://localhost';
     }
 
     public function getAllowMethods() {

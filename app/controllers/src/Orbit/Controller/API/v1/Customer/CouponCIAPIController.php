@@ -85,6 +85,34 @@ class CouponCIAPIController extends BaseAPIController
 
             $prefix = DB::getTablePrefix();
 
+            $gender_profile_query = '';
+            $age_profile_query = '';
+
+            $userAge = 0;
+            if ($user->userDetail->birthdate !== '0000-00-00' && $user->userDetail->birthdate !== null) {
+                $userAge =  $this->calculateAge($user->userDetail->birthdate); // 27
+            }
+
+            $userGender = 'U'; // default is Unknown
+            if ($user->userDetail->gender !== '' && $user->userDetail->gender !== null) {
+                $userGender =  $user->userDetail->gender;
+            }
+
+            if ($userAge !== null) {
+                if ($userAge === 0){
+                    $age_profile_query = " ( (min_value = {$userAge} and max_value = {$userAge} ) or is_all_age = 'Y' ) ";
+                } else {
+                    if ($userAge >= 55) {
+                        $age_profile_query = " ( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ";
+                    } else {
+                        $age_profile_query = " ( (min_value <= {$userAge} and max_value >= {$userAge} ) or is_all_age = 'Y' ) ";
+                    }
+                }
+            }
+            if ($userGender !== null) {
+                $gender_profile_query = " ( gender_value = '{$userGender}' OR is_all_gender = 'Y' ) ";
+            }
+
             $mall = Mall::excludeDeleted()->where('merchant_id', $this->mall_id)->first();
             $mallTime = Carbon::now($mall->timezone->timezone_name);
             $mallDefaultLanguage = $this->getDefaultLanguage($mall);
@@ -104,6 +132,9 @@ class CouponCIAPIController extends BaseAPIController
                         AND {$prefix}issued_coupons.promotion_id = {$prefix}promotions.promotion_id
                     ) as quantity")
                 )
+                ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'promotions.promotion_id')
+                ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'promotions.promotion_id')
+                ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
                 ->join('issued_coupons', function ($join) {
                     $join->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
                     $join->where('issued_coupons.status', '=', 'active');
@@ -136,7 +167,15 @@ class CouponCIAPIController extends BaseAPIController
                     });
                 })
                 ->where('issued_coupons.user_id', $user->user_id)
+                ->where('promotions.status', 'active')
                 ->where('promotions.coupon_validity_in_date', '>=', $mallTime);
+
+            if (! empty($gender_profile_query)) {
+                $coupons->whereRaw($gender_profile_query);
+            }
+            if (! empty($age_profile_query)) {
+                $coupons->whereRaw($age_profile_query);
+            }
 
             OrbitInput::get('ids', function($ids) use ($coupons)
             {
@@ -320,6 +359,34 @@ class CouponCIAPIController extends BaseAPIController
 
             $prefix = DB::getTablePrefix();
 
+            $gender_profile_query = '';
+            $age_profile_query = '';
+
+            $userAge = 0;
+            if ($user->userDetail->birthdate !== '0000-00-00' && $user->userDetail->birthdate !== null) {
+                $userAge =  $this->calculateAge($user->userDetail->birthdate); // 27
+            }
+
+            $userGender = 'U'; // default is Unknown
+            if ($user->userDetail->gender !== '' && $user->userDetail->gender !== null) {
+                $userGender =  $user->userDetail->gender;
+            }
+
+            if ($userAge !== null) {
+                if ($userAge === 0){
+                    $age_profile_query = " ( (min_value = {$userAge} and max_value = {$userAge} ) or is_all_age = 'Y' ) ";
+                } else {
+                    if ($userAge >= 55) {
+                        $age_profile_query = " ( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ";
+                    } else {
+                        $age_profile_query = " ( (min_value <= {$userAge} and max_value >= {$userAge} ) or is_all_age = 'Y' ) ";
+                    }
+                }
+            }
+            if ($userGender !== null) {
+                $gender_profile_query = " ( gender_value = '{$userGender}' OR is_all_gender = 'Y' ) ";
+            }
+
             $mall = Mall::excludeDeleted()->where('merchant_id', $this->mall_id)->first();
             $mallTime = Carbon::now($mall->timezone->timezone_name);
             $mallDefaultLanguage = $this->getDefaultLanguage($mall);
@@ -347,7 +414,7 @@ class CouponCIAPIController extends BaseAPIController
                     'promotions.description',
                     'promotions.long_description',
                     'media.path as image',
-                    DB::raw("(CONCAT(DATE_FORMAT({$prefix}promotions.begin_date, '%d %b %Y'), ' - ', DATE_FORMAT({$prefix}promotions.end_date, '%d %b %Y'))) as validity"),
+                    DB::raw("(CONCAT(DATE_FORMAT({$prefix}promotions.begin_date, '%d %M %Y'), ' - ', DATE_FORMAT({$prefix}promotions.end_date, '%d %M %Y'))) as validity"),
                     DB::raw("
                         (SELECT COUNT({$prefix}issued_coupons.issued_coupon_id)
                         FROM {$prefix}issued_coupons
@@ -356,6 +423,9 @@ class CouponCIAPIController extends BaseAPIController
                         AND {$prefix}issued_coupons.promotion_id = {$prefix}promotions.promotion_id
                     ) as quantity")
                 )
+                ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'promotions.promotion_id')
+                ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'promotions.promotion_id')
+                ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
                 ->join('issued_coupons', function ($join) {
                     $join->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
                     $join->where('issued_coupons.status', '=', 'active');
@@ -389,7 +459,15 @@ class CouponCIAPIController extends BaseAPIController
                     });
                 })
                 ->where('issued_coupons.user_id', $user->user_id)
+                ->where('promotions.status', 'active')
                 ->where('promotions.coupon_validity_in_date', '>=', $mallTime);
+
+            if (! empty($gender_profile_query)) {
+                $coupon->whereRaw($gender_profile_query);
+            }
+            if (! empty($age_profile_query)) {
+                $coupon->whereRaw($age_profile_query);
+            }
 
             OrbitInput::get(
                 'keyword', // todo: add alternateLanguage
@@ -418,17 +496,6 @@ class CouponCIAPIController extends BaseAPIController
 
             $coupon = $coupon->first();
 
-            $issued_coupon = IssuedCoupon::active()
-                ->where('promotion_id', $coupon->promotion_id)
-                ->where('user_id', $user->user_id)
-                ->orderBy('expired_date', 'DESC')
-                ->first();
-
-            $coupon->issued_coupon_id = null;
-            if (is_object($issued_coupon)) {
-                $coupon->issued_coupon_id = $issued_coupon->issued_coupon_id;
-            }
-
             // Check coupon have condition cs reedem
             $cs_reedem = false;
 
@@ -439,6 +506,18 @@ class CouponCIAPIController extends BaseAPIController
                 ->count('users.user_id');
 
             if (is_object($coupon)) {
+
+                $issued_coupon = IssuedCoupon::active()
+                    ->where('promotion_id', $coupon->promotion_id)
+                    ->where('user_id', $user->user_id)
+                    ->orderBy('expired_date', 'DESC')
+                    ->first();
+
+                $coupon->issued_coupon_id = null;
+                if (is_object($issued_coupon)) {
+                    $coupon->issued_coupon_id = $issued_coupon->issued_coupon_id;
+                }
+
                 if ($coupon->is_all_employee === 'Y') {
                     if ($employeeVerNumbersActive > 0) {
                         $cs_reedem = true;
@@ -675,7 +754,7 @@ class CouponCIAPIController extends BaseAPIController
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = $e->getLine();
+            $this->response->data = null;
             $httpCode = 500;
         }
 
