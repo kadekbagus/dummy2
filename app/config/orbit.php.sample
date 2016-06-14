@@ -838,7 +838,7 @@ return array(
                 'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
-                'file_size'     => 150000,
+                'file_size'     => 90000,
 
                 // The target path which file to be stored
                 'path'          => 'uploads/merchants/logo',
@@ -906,7 +906,7 @@ return array(
                 'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
-                'file_size'     => 150000,
+                'file_size'     => 90000,
 
                 // The target path which file to be stored
                 'path'          => 'uploads/merchants/pictures',
@@ -974,7 +974,7 @@ return array(
                 'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
-                'file_size'     => 150000,
+                'file_size'     => 90000,
 
                 // The target path which file to be stored
                 'path'          => 'uploads/merchants/maps',
@@ -1042,7 +1042,7 @@ return array(
                 'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
-                'file_size'     => 150000,
+                'file_size'     => 90000,
 
                 // The target path which file to be stored
                 'path'          => 'uploads/merchants/backgrounds',
@@ -1112,7 +1112,7 @@ return array(
                 'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
-                'file_size'     => 150000,
+                'file_size'     => 90000,
 
                 // The target path which file to be stored
                 'path'          => 'uploads/mallgroups/logo',
@@ -1183,7 +1183,7 @@ return array(
                 'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
-                'file_size'     => 150000,
+                'file_size'     => 90000,
 
                 // The target path which file to be stored
                 'path'          => 'uploads/retailers/logo',
@@ -1251,7 +1251,7 @@ return array(
                 'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
-                'file_size'     => 150000,
+                'file_size'     => 90000,
 
                 // The target path which file to be stored
                 'path'          => 'uploads/retailers/pictures',
@@ -1319,7 +1319,7 @@ return array(
                 'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
-                'file_size'     => 150000,
+                'file_size'     => 90000,
 
                 // The target path which file to be stored
                 'path'          => 'uploads/retailers/maps',
@@ -1387,7 +1387,7 @@ return array(
                 'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
-                'file_size'     => 150000,
+                'file_size'     => 90000,
 
                 // The target path which file to be stored
                 'path'          => 'uploads/retailers/backgrounds',
@@ -1457,7 +1457,7 @@ return array(
                 'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
-                'file_size'     => 150000,
+                'file_size'     => 90000,
 
                 // The target path which file to be stored
                 'path'          => 'uploads/malls/logo',
@@ -1531,7 +1531,7 @@ return array(
                 'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
-                'file_size'     => 150000,
+                'file_size'     => 90000,
 
                 // The target path which file to be stored
                 'path'          => 'uploads/product',
@@ -1599,7 +1599,7 @@ return array(
                 'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
-                'file_size'     => 150000,
+                'file_size'     => 90000,
 
                 // The target path which file to be stored
                 'path'          => 'uploads/product/translation',
@@ -1673,7 +1673,7 @@ return array(
                 'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
-                'file_size'     => 150000,
+                'file_size'     => 90000,
 
                 // The target path which file to be stored
                 'path'          => 'uploads/promotion',
@@ -1741,7 +1741,7 @@ return array(
                 'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
-                'file_size'     => 150000,
+                'file_size'     => 90000,
 
                 // The target path which file to be stored
                 'path'          => 'uploads/promotion/translation',
@@ -1814,7 +1814,7 @@ return array(
                 'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
-                'file_size'     => 150000,
+                'file_size'     => 90000,
 
                 // The target path which file to be stored
                 'path'          => 'uploads/users',
@@ -1891,7 +1891,7 @@ return array(
                 'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
-                'file_size'     => 150000,
+                'file_size'     => 90000,
 
                 // The target path which file to be stored
                 'path'          => 'uploads/coupon',
@@ -1959,7 +1959,7 @@ return array(
                 'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
-                'file_size'     => 150000,
+                'file_size'     => 90000,
 
                 // The target path which file to be stored
                 'path'          => 'uploads/coupon/translation',
@@ -2032,7 +2032,7 @@ return array(
                 'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
-                'file_size'     => 150000,
+                'file_size'     => 90000,
 
                 // The target path which file to be stored
                 'path'          => 'uploads/event',
@@ -2100,7 +2100,7 @@ return array(
                 'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
-                'file_size'     => 150000,
+                'file_size'     => 90000,
 
                 // The target path which file to be stored
                 'path'          => 'uploads/event/translation',
@@ -2241,7 +2241,7 @@ return array(
                 'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
-                'file_size'     => 150000,
+                'file_size'     => 90000,
 
                 // The target path which file to be stored
                 'path'          => 'uploads/widgets/translation',
@@ -2315,7 +2315,7 @@ return array(
                 'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
-                'file_size'     => 150000,
+                'file_size'     => 90000,
 
                 // The target path which file to be stored
                 'path'          => 'uploads/news',
@@ -2383,7 +2383,7 @@ return array(
                 'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
-                'file_size'     => 150000,
+                'file_size'     => 90000,
 
                 // The target path which file to be stored
                 'path'          => 'uploads/news/translation',
@@ -2457,7 +2457,7 @@ return array(
                 'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
-                'file_size'     => 150000,
+                'file_size'     => 90000,
 
                 // The target path which file to be stored
                 'path'          => 'uploads/lucky-draws',
@@ -2525,7 +2525,7 @@ return array(
                 'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
-                'file_size'     => 150000,
+                'file_size'     => 90000,
 
                 // The target path which file to be stored
                 'path'          => 'uploads/lucky-draws/translation',
@@ -2593,7 +2593,7 @@ return array(
                 'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
-                'file_size'     => 150000,
+                'file_size'     => 90000,
 
                 // The target path which file to be stored
                 'path'          => 'uploads/lucky-draws/announcements',
@@ -2661,7 +2661,7 @@ return array(
                 'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
-                'file_size'     => 150000,
+                'file_size'     => 90000,
 
                 // The target path which file to be stored
                 'path'          => 'uploads/lucky-draws/announcements/translation',
@@ -2735,7 +2735,7 @@ return array(
                 'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
-                'file_size'     => 150000,
+                'file_size'     => 90000,
 
                 // The target path which file to be stored
                 'path'          => 'uploads/membership',
@@ -2803,7 +2803,7 @@ return array(
                 'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
-                'file_size'     => 150000,
+                'file_size'     => 90000,
 
                 // The target path which file to be stored
                 'path'          => 'uploads/membership/translation',
