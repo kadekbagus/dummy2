@@ -11,7 +11,6 @@ use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Helper\EloquentRecordCounter as RecordCounter;
 use Carbon\Carbon as Carbon;
-use Queue;
 
 class NewsAPIController extends ControllerAPI
 {
