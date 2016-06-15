@@ -1,6 +1,6 @@
 <?php namespace Orbit\Helper\Net;
 /**
- * Helper for checking url if it is blocked by the config or not
+ * Helper for generating guest user
  *
  * @author Ahmad <ahmad@dominopos.com>
  */
@@ -37,7 +37,7 @@ class GenerateGuestUser
             if (! is_object($guest)) {
                 DB::beginTransaction();
                 $user = (new User)->generateGuestUser();
-                DB::commit();
+
                 // Start the orbit session
                 $data = array(
                     'logged_in' => TRUE,
@@ -47,7 +47,7 @@ class GenerateGuestUser
                     'fullname'  => '',
                 );
                 $session->enableForceNew()->start($data);
-
+                DB::commit();
                 // Send the session id via HTTP header
                 $sessionHeader = $session->getSessionConfig()->getConfig('session_origin.header.name');
                 $sessionHeader = 'Set-' . $sessionHeader;
