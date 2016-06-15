@@ -1235,6 +1235,7 @@ class ActivityAPIController extends ControllerAPI
                 $activities->count = 0;
                 $activities->customer_count = 0;
                 $activities->guest_count = 0;
+                $activities = array('0' => $activities);
             }
 
             $this->response->data = [
