@@ -20,8 +20,7 @@ use Orbit\Helper\Net\GenerateGuestUser;
 
 class UrlChecker
 {
-	const APPLICATION_ID = 1;
-	protected $session = null;
+    protected $session = null;
     protected $retailer = null;
     protected $user = null;
     protected $customHeaders = array();
@@ -46,14 +45,18 @@ class UrlChecker
      *
      * @return boolean
      */
-    public function isLoggedIn()
+    public static function isLoggedIn($session = NULL)
     {
-        $sessionId = $this->session->getSessionId();
+        if (empty($session)) {
+            throw new Exception('Session error: user not found.');
+        }
+
+        $sessionId = $session->getSessionId();
 
         if (! empty($sessionId)) {
-            $userRole = strtolower($this->session->read('role'));
+            $userRole = strtolower($session->read('role'));
 
-    	    if ($this->session->read('logged_in') !== true || $userRole !== 'consumer') {
+            if ($session->read('logged_in') !== true || $userRole !== 'consumer') {
                 return FALSE;
             } else {
                 return TRUE;
@@ -69,11 +72,11 @@ class UrlChecker
      * @param $user User
      * @return boolean
      */
-    public function isGuest($user = NULL)
+    public static function isGuest($user = NULL)
     {
-    	if (is_null($user) || strtolower($user->role()->first()->role_name) !== 'guest') {
-    		return FALSE;
-    	}
+        if (is_null($user) || strtolower($user->role()->first()->role_name) !== 'guest') {
+            return FALSE;
+        }
 
         return TRUE;
     }
@@ -85,22 +88,22 @@ class UrlChecker
      *
      * @return boolean
      */
-    public static function checkBlockedUrl($user)
+    public static function checkBlockedUrl($user = null)
     {
         if (in_array(\Route::currentRouteName(), Config::get('orbit.blocked_routes', []))) {
             if (! is_object($user)) {
-                return FALSE;
-            }
-        } else {
-            if (! is_object($user)) {
-                return FALSE;
+                throw new Exception('Session error: user not found.');
             } else {
-                return TRUE;
+                if (strtolower($user->role()->first()->role_name) !== 'consumer') {
+                    throw new Exception('You need to log in to view this page.');
+                }
             }
         }
+
+        return TRUE;
     }
 
-	/**
+    /**
      * Check if the route is blocked by the config or not
      * @param string route name
      * @param array query string parameter
@@ -112,13 +115,13 @@ class UrlChecker
             throw new Exception('Session error: user not found.');
         }
 
-       	if (in_array($url, Config::get('orbit.blocked_routes', []))) {
-       		$userRole = strtolower($session->read('role'));
+        if (in_array($url, Config::get('orbit.blocked_routes', []))) {
+            $userRole = strtolower($session->read('role'));
 
-	        if ($session->read('logged_in') !== true || $userRole !== 'consumer') {
-	            return '#';
-	        }
-       	}
+            if ($session->read('logged_in') !== true || $userRole !== 'consumer') {
+                return '#';
+            }
+        }
 
         return URL::route($url, $param);
     }
