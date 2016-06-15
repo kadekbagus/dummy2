@@ -48,7 +48,7 @@
                         </div>
                     </div>
                     <div class="col-xs-2 search-tool-col text-right">
-                        <a data-href="{{{ route('ci-service-list', ['keyword' => Input::get('keyword')]) }}}" href="{{{ $urlblock->blockedRoute('ci-service-list', ['keyword' => Input::get('keyword')]) }}}" class="btn btn-info btn-block reset-btn">
+                        <a data-href="{{{ route('ci-service-list', ['keyword' => Input::get('keyword')]) }}}" href="{{{ \Orbit\Helper\Net\UrlChecker::blockedRoute('ci-service-list', ['keyword' => Input::get('keyword')], $session) }}}" class="btn btn-info btn-block reset-btn">
                             <span class="fa-stack fa-lg">
                                 <i class="fa fa-filter fa-stack-2x"></i>
                                 <i class="fa fa-times fa-stack-1x"></i>
@@ -109,7 +109,7 @@
         fid = '{{{ Input::get('fid', '') }}}',
         isFromDetail = false,
         defaultServiceLogoUrl = '{{ asset('mobile-ci/images/default_services_directory.png') }}',
-        isLoggedIn = Boolean({{ $urlblock->isLoggedIn() }}),
+        isLoggedIn = Boolean({{ $is_logged_in }}),
         scrollCatalogue = {};
 
     var applyLazyImage = function (jImageElems) {
@@ -359,7 +359,7 @@
             }, 0);
         });
 
-        var path = '{{$urlblock->blockedRoute('ci-service-list', ['keyword' => e(Input::get('keyword')), 'sort_by' => 'name', 'sort_mode' => 'asc', 'cid' => e(Input::get('cid')), 'fid' => e(Input::get('fid'))])}}';
+        var path = '{{\Orbit\Helper\Net\UrlChecker::blockedRoute('ci-service-list', ['keyword' => e(Input::get('keyword')), 'sort_by' => 'name', 'sort_mode' => 'asc', 'cid' => e(Input::get('cid')), 'fid' => e(Input::get('fid'))], $session)}}';
 
         $('#category').on('change', function () {
             var selectedValue = $(this).val();

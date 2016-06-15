@@ -87,7 +87,7 @@
 </div>
 <div class="row back-drop campaign-cards-back-drop"></div>
 
-@if (! $urlblock->isLoggedIn())
+@if (! $is_logged_in)
 <div class="sign-in-popup" style="display:none;">
     <div class="row sign-in-popup-wrapper">
         <div class="col-xs-12 text-center content-signin content-signin-popup">
@@ -1172,7 +1172,7 @@
                     // @Todo: Replace the hardcoded name
                     session_id = xhr.getResponseHeader('Set-X-Orbit-Session');
                     {{-- var landing_url = '{{ $landing_url }}'; --}}
-                    var landing_url = '{{ $urlblock->blockedRoute('ci-customer-home') }}';
+                    var landing_url = '{{ \Orbit\Helper\Net\UrlChecker::blockedRoute('ci-customer-home', [], $session) }}';
 
                     if (session_id) {
                         if (landing_url.indexOf('orbit_session=') < 0) {
@@ -1278,7 +1278,7 @@
                     // @Todo: Replace the hardcoded name
                     session_id = xhr.getResponseHeader('Set-X-Orbit-Session');
                     {{-- var landing_url = '{{ $landing_url }}'; --}}
-                    var landing_url = '{{ $urlblock->blockedRoute('ci-customer-home') }}';
+                    var landing_url = '{{ \Orbit\Helper\Net\UrlChecker::blockedRoute('ci-customer-home', [], $session) }}';
 
                     if (session_id) {
                         if (landing_url.indexOf('orbit_session=') < 0) {

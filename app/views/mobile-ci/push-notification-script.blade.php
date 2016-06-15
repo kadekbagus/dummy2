@@ -54,7 +54,7 @@
             });
         };
 
-        @if ($urlblock->isLoggedIn())
+        @if ($is_logged_in)
         // Callback function to get the notification
         var getNotif = function() {
             // No need to poll if one is viewing
