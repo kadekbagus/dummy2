@@ -47,13 +47,6 @@ class getMyAccountInfoCIAngularTest extends TestCase
 
         Config::set('orbit.shop.main_domain', 'gotomalls.cool');
 
-        $this->mall_1_setting = Factory::create('Setting', [
-            'setting_name' => 'dom:mall1.gotomalls.cool',
-            'setting_value' => $this->mall_1->merchant_id,
-            'object_id' => null,
-            'object_type' => null,
-        ]);
-
         $_GET = [];
         $_POST = [];
     }
