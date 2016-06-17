@@ -73,6 +73,11 @@ class postUpdateMallTestArtemisVersion extends TestCase
         Factory::create('WidgetRetailer', ['retailer_id' => $mall_b->merchant_id, 'widget_id' => $widget_b->widget_id]);
 
         $this->mall_c = $mall_c = Factory::create('Mall', ['name' => 'mall firman']);
+        Factory::create('Object', ['merchant_id' => $mall_c->merchant_id, 'object_name' => 'B3', 'object_type' => 'floor', 'object_order' => 0]);
+        Factory::create('Object', ['merchant_id' => $mall_c->merchant_id, 'object_name' => 'B2', 'object_type' => 'floor', 'object_order' => 1]);
+        Factory::create('Object', ['merchant_id' => $mall_c->merchant_id, 'object_name' => 'B1', 'object_type' => 'floor', 'object_order' => 2]);
+
+        Factory::create('Tenant', ['name' => 'tenant firman', 'floor' => 'B1', 'parent_id' => $mall_c->merchant_id]);
     }
 
     public function testRequiredMerchantId()
@@ -169,6 +174,216 @@ class postUpdateMallTestArtemisVersion extends TestCase
         foreach ($widget_translations as $idx => $translation) {
             $this->assertSame($this->mall_c->merchant_id, $translation->retailer_id);
             $this->assertSame($widget->widget_id, $translation->widget_id);
+        }
+    }
+
+    public function testUpdateFloorOrder()
+    {
+        $this->setDataMall();
+
+        $floor_array = ["{\"name\":\"B3\",\"order\":\"1\"}","{\"name\":\"B2\",\"order\":\"2\"}","{\"name\":\"B1\",\"order\":\"0\"}"];
+
+        /*
+        * test update floor order
+        */
+        $data = ['merchant_id' => $this->mall_c->merchant_id,
+            'floors'    => $floor_array
+        ];
+
+        $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
+
+        $floor_on_db = Object::excludeDeleted()
+                        ->where('merchant_id', $response->data->merchant_id)
+                        ->where('object_type', 'floor')
+                        ->get();
+
+        $this->assertSame(3, count($floor_on_db));
+
+        foreach ($floor_on_db as $floor_db) {
+            foreach ($floor_array as $floor_json) {
+                $floor = @json_decode($floor_json);
+                if ($floor_db->object_order === $floor->order) {
+                    $this->assertSame($floor_db->object_name, $floor->name);
+                }
+            }
+        }
+    }
+
+    public function testDeleteFloor()
+    {
+        $this->setDataMall();
+
+        $floor_array = ["{\"name\":\"B3\",\"order\":\"0\"}","{\"name\":\"B2\",\"order\":\"1\"}"];
+
+        /*
+        * test delete floor not link on tenant
+        */
+        $data = ['merchant_id' => $this->mall_c->merchant_id,
+            'floors'    => $floor_array
+        ];
+
+        $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
+
+        $floor_on_db = Object::excludeDeleted()
+                        ->where('merchant_id', $response->data->merchant_id)
+                        ->where('object_type', 'floor')
+                        ->get();
+
+        $this->assertSame(2, count($floor_on_db));
+
+        foreach ($floor_on_db as $floor_db) {
+            foreach ($floor_array as $floor_json) {
+                $floor = @json_decode($floor_json);
+                if ($floor_db->object_order === $floor->order) {
+                    $this->assertSame($floor_db->object_name, $floor->name);
+                }
+            }
+        }
+    }
+
+    public function testInsertNewFloor()
+    {
+        $this->setDataMall();
+
+        $floor_array = ["{\"name\":\"B3\",\"order\":\"0\"}","{\"name\":\"B2\",\"order\":\"1\"}","{\"name\":\"B1\",\"order\":\"2\"}","{\"name\":\"L1\",\"order\":\"3\"}"];
+
+        /*
+        * test insert new floor
+        */
+        $data = ['merchant_id' => $this->mall_c->merchant_id,
+            'floors'    => $floor_array
+        ];
+
+        $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
+
+        $floor_on_db = Object::excludeDeleted()
+                        ->where('merchant_id', $response->data->merchant_id)
+                        ->where('object_type', 'floor')
+                        ->get();
+
+        $this->assertSame(4, count($floor_on_db));
+
+        foreach ($floor_on_db as $floor_db) {
+            foreach ($floor_array as $floor_json) {
+                $floor = @json_decode($floor_json);
+                if ($floor_db->object_order === $floor->order) {
+                    $this->assertSame($floor_db->object_name, $floor->name);
+                }
+            }
+        }
+    }
+
+    public function testDeleteAndInsertNewFloor()
+    {
+        $this->setDataMall();
+
+        $floor_array = ["{\"name\":\"B3\",\"order\":\"0\"}","{\"name\":\"B2\",\"order\":\"1\"}","{\"name\":\"L1\",\"order\":\"3\"}"];
+
+        /*
+        * test delete and insert new floor
+        */
+        $data = ['merchant_id' => $this->mall_c->merchant_id,
+            'floors'    => $floor_array
+        ];
+
+        $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
+
+        $floor_on_db = Object::excludeDeleted()
+                        ->where('merchant_id', $response->data->merchant_id)
+                        ->where('object_type', 'floor')
+                        ->get();
+
+        $this->assertSame(3, count($floor_on_db));
+
+        foreach ($floor_on_db as $floor_db) {
+            foreach ($floor_array as $floor_json) {
+                $floor = @json_decode($floor_json);
+                if ($floor_db->object_order === $floor->order) {
+                    $this->assertSame($floor_db->object_name, $floor->name);
+                }
+            }
+        }
+    }
+
+    public function testInsertDuplicateFloorName()
+    {
+        $this->setDataMall();
+
+        $floor_array = ["{\"name\":\"B3\",\"order\":\"0\"}","{\"name\":\"B2\",\"order\":\"1\"}","{\"name\":\"B3\",\"order\":\"2\"}","{\"name\":\"L1\",\"order\":\"3\"}"];
+
+        /*
+        * test insert duplicate floor name
+        */
+        $data = ['merchant_id' => $this->mall_c->merchant_id,
+            'floors'    => $floor_array
+        ];
+
+        $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("The floor name has already been taken", $response->message);
+
+        $floor_array_db = ["{\"name\":\"B3\",\"order\":\"0\"}","{\"name\":\"B2\",\"order\":\"1\"}","{\"name\":\"B1\",\"order\":\"2\"}"];
+
+        $floor_on_db = Object::excludeDeleted()
+                        ->where('merchant_id', $this->mall_c->merchant_id)
+                        ->where('object_type', 'floor')
+                        ->get();
+
+        $this->assertSame(3, count($floor_on_db));
+
+        foreach ($floor_on_db as $floor_db) {
+            foreach ($floor_array_db as $floor_json) {
+                $floor = @json_decode($floor_json);
+                if ($floor_db->object_order === $floor->order) {
+                    $this->assertSame($floor_db->object_name, $floor->name);
+                }
+            }
+        }
+    }
+
+    public function testDeleteFloorErrorWhenLinkToTenant()
+    {
+        $this->setDataMall();
+
+        $floor_array = ["{\"name\":\"B3\",\"order\":\"0\"}","{\"name\":\"B2\",\"order\":\"1\"}"];
+
+        /*
+        * test delete floor will error when link to tenant
+        */
+        $data = ['merchant_id' => $this->mall_c->merchant_id,
+            'floors'    => $floor_array
+        ];
+
+        $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("The floor B1 cannot be deleted: because used on Tenant", $response->message);
+
+        $floor_array_db = ["{\"name\":\"B3\",\"order\":\"0\"}","{\"name\":\"B2\",\"order\":\"1\"}","{\"name\":\"B1\",\"order\":\"2\"}"];
+
+        $floor_on_db = Object::excludeDeleted()
+                        ->where('merchant_id', $this->mall_c->merchant_id)
+                        ->where('object_type', 'floor')
+                        ->get();
+
+        $this->assertSame(3, count($floor_on_db));
+
+        foreach ($floor_on_db as $floor_db) {
+            foreach ($floor_array_db as $floor_json) {
+                $floor = @json_decode($floor_json);
+                if ($floor_db->object_order === $floor->order) {
+                    $this->assertSame($floor_db->object_name, $floor->name);
+                }
+            }
         }
     }
 }
