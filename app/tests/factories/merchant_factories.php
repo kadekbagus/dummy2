@@ -108,6 +108,7 @@ $factory('Tenant', [
     'contact_person_firstname' => $faker->firstName,
     'contact_person_lastname'  => $faker->lastName,
     'contact_person_phone'     => $faker->phoneNumber,
+    'floor'     => $faker->bothify('##?'),
     'mobile_default_language'  => 'en'
 ]);
 
