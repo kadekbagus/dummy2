@@ -204,9 +204,9 @@ class IntermediateBaseController extends Controller
                 $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = $signature;
             }
         } elseif ($theClass === 'IntermediateCIAuthController') {
+            $namespace = 'Orbit\Controller\API\v1\Customer\\';
             if ($userId = $this->authCheckFromAngularCI()) {
                 $user = User::find($userId);
-                $namespace = 'Orbit\Controller\API\v1\Customer\\';
                 // This will query the database if the apikey has not been set up yet
                 $apikey = $user->apikey;
 
