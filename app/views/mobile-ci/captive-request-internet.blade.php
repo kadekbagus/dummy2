@@ -142,7 +142,7 @@
     <div class="row padded" id="in-android-5-or-newer"  style="display:none">
         <div class="col-xs-12" id="workaround-captive-no-internet">
            <h3>{{ Lang::get('mobileci.captive.request_internet.message_ex.title') }}</h3>
-           <img style="width:100px;float:left;margin: 0 1em 1em 0; position:relative; top:-1em;" src="{{ asset('mobile-ci/images/signal-wifi-128x128.png') }}">
+           <img style="width:100px;float:left;margin: 0 1em 1em 0; position:relative; top:-1em;" src="{{ asset('mobile-ci/images/free-internet-disconnected.png') }}">
            <p>{{ Lang::get('mobileci.captive.request_internet.message_ex.instruction_heading') }}</p>
            <ul>
                @foreach(Lang::get('mobileci.captive.request_internet.message_ex.instructions') as $instruction)
