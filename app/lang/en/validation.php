@@ -143,6 +143,7 @@ return array(
             'link_floor'             => 'The floor :attribute cannot be deleted: because used on :link',
             'link_category'          => 'Cannot delete a category with :link',
             'mall_language'          => 'The :attribute must be an existing language',
+            'floor'                  => 'The floor name has already been taken',
         ),
         'access' => array(
             'forbidden'              => 'You do not have permission to :action',

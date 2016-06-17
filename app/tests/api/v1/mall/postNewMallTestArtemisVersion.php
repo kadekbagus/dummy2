@@ -291,4 +291,90 @@ class postNewMallTestArtemisVersion extends TestCase
         $this->assertSame("success", $response->status);
         $this->assertSame("inactive", $response->data->free_wifi_status);
     }
+
+    public function testInsertFloor()
+    {
+        /*
+        * test insert floor when create mall
+        */
+        $data = ['name' => 'antok mall',
+            'email'                         => 'antokmall@bumi.com',
+            'password'                      => '123456',
+            'address_line1'                 => 'jalan sudirman no 1',
+            'city'                          => 'badung',
+            'country'                       => $this->country->country_id,
+            'phone'                         => 123465,
+            'contact_person_firstname'      => 'antok',
+            'contact_person_lastname'       => 'mall',
+            'contact_person_phone'          => 321654,
+            'contact_person_email'          => 'antok@adminmall.com',
+            'status'                        => 'active',
+            'timezone'                      => $this->timezone->timezone_name,
+            'currency'                      => 'IDR',
+            'currency_symbol'               => 'Rp',
+            'vat_included'                  => 'yes',
+            'sector_of_activity'            => 'Mall',
+            'languages'                     => ['en'],
+            'mobile_default_language'       => 'en',
+            'domain'                        => 'orbit-mall.mall.irianto',
+            'geo_point_latitude'            => '-8.663937',
+            'geo_point_longitude'           => '115.174142',
+            'geo_area'                      => '-8.663007 115.174527,-8.662275 115.176930,-8.664174 115.177735,-8.665669 115.175836,-8.664842 115.174227,-8.663007 115.174527',
+            'campaign_base_price_promotion' => 100,
+            'campaign_base_price_coupon'    => 200,
+            'campaign_base_price_news'      => 300,
+            'floors'                        => ["{\"name\":\"B3\",\"order\":\"0\"}","{\"name\":\"B2\",\"order\":\"1\"}","{\"name\":\"B1\",\"order\":\"2\"}"]
+        ];
+
+        $response = $this->setRequestPostNewMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
+
+        $floor_on_db = Object::excludeDeleted()
+                        ->where('merchant_id', $response->data->merchant_id)
+                        ->where('object_type', 'floor')
+                        ->get();
+
+        $this->assertSame(3, count($floor_on_db));
+    }
+
+    public function testInsertFloorErrorWhenDuplicateFloorName()
+    {
+        /*
+        * test insert floor when create mall
+        */
+        $data = ['name' => 'antok mall',
+            'email'                         => 'antokmall@bumi.com',
+            'password'                      => '123456',
+            'address_line1'                 => 'jalan sudirman no 1',
+            'city'                          => 'badung',
+            'country'                       => $this->country->country_id,
+            'phone'                         => 123465,
+            'contact_person_firstname'      => 'antok',
+            'contact_person_lastname'       => 'mall',
+            'contact_person_phone'          => 321654,
+            'contact_person_email'          => 'antok@adminmall.com',
+            'status'                        => 'active',
+            'timezone'                      => $this->timezone->timezone_name,
+            'currency'                      => 'IDR',
+            'currency_symbol'               => 'Rp',
+            'vat_included'                  => 'yes',
+            'sector_of_activity'            => 'Mall',
+            'languages'                     => ['en'],
+            'mobile_default_language'       => 'en',
+            'domain'                        => 'orbit-mall.mall.irianto',
+            'geo_point_latitude'            => '-8.663937',
+            'geo_point_longitude'           => '115.174142',
+            'geo_area'                      => '-8.663007 115.174527,-8.662275 115.176930,-8.664174 115.177735,-8.665669 115.175836,-8.664842 115.174227,-8.663007 115.174527',
+            'campaign_base_price_promotion' => 100,
+            'campaign_base_price_coupon'    => 200,
+            'campaign_base_price_news'      => 300,
+            'floors'                        => ["{\"name\":\"B3\",\"order\":\"0\"}","{\"name\":\"B2\",\"order\":\"1\"}","{\"name\":\"B3\",\"order\":\"2\"}"]
+        ];
+
+        $response = $this->setRequestPostNewMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("The floor name has already been taken", $response->message);
+    }
 }
