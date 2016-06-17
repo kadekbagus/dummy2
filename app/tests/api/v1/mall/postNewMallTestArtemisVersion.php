@@ -354,6 +354,8 @@ class postNewMallTestArtemisVersion extends TestCase
         /*
         * test insert floor when create mall
         */
+        $floor_array = ["{\"name\":\"B3\",\"order\":\"0\"}","{\"name\":\"B2\",\"order\":\"1\"}","{\"name\":\"B3\",\"order\":\"2\"}"];
+
         $data = ['name' => 'antok mall',
             'email'                         => 'antokmall@bumi.com',
             'password'                      => '123456',
@@ -380,7 +382,7 @@ class postNewMallTestArtemisVersion extends TestCase
             'campaign_base_price_promotion' => 100,
             'campaign_base_price_coupon'    => 200,
             'campaign_base_price_news'      => 300,
-            'floors'                        => ["{\"name\":\"B3\",\"order\":\"0\"}","{\"name\":\"B2\",\"order\":\"1\"}","{\"name\":\"B3\",\"order\":\"2\"}"]
+            'floors'                        => $floor_array
         ];
 
         $response = $this->setRequestPostNewMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);

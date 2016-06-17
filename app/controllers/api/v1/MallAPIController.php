@@ -2094,12 +2094,25 @@ class MallAPIController extends ControllerAPI
                             OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.format'));
                         }
 
+                        // check exists floor name but not me
+                        if (in_array($floor->name, $colect_floor)) {
+                            OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.exists.floor'));
+                        }
+
+                        // for update order
                         $exist_floor = Object::excludeDeleted()
                                             ->where('object_type', 'floor')
                                             ->where('merchant_id', $updatedmall->merchant_id)
                                             ->where('object_name', $floor->name)
                                             ->first();
-                        if (empty($exist_floor)) {
+
+                        if (count($exist_floor) > 0) {
+                            // update order
+                            $exist_floor->object_order = $floor->order;
+                            $exist_floor->save();
+
+                        } else {
+                            // create new floor
                             $newfloor = new Object();
                             $newfloor->merchant_id = $updatedmall->merchant_id;
                             $newfloor->object_name = $floor->name;
