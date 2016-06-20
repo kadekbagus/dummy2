@@ -78,6 +78,9 @@ class postUpdateMallTestArtemisVersion extends TestCase
         Factory::create('Object', ['merchant_id' => $mall_c->merchant_id, 'object_name' => 'B1', 'object_type' => 'floor', 'object_order' => 2]);
 
         Factory::create('Tenant', ['name' => 'tenant firman', 'floor' => 'B1', 'parent_id' => $mall_c->merchant_id]);
+
+        $this->mall_d = Factory::create('Mall', ['ci_domain' => 'lippomall.gotomalls.com']);
+        Factory::create('Setting', ['setting_name' => 'dom:lippomall.gotomalls.com', 'setting_value' => $this->mall_d->merchant_id]);
     }
 
     public function testRequiredMerchantId()
@@ -385,5 +388,69 @@ class postUpdateMallTestArtemisVersion extends TestCase
                 }
             }
         }
+    }
+
+    public function testUpdateSubdomainAlphaNumericDash()
+    {
+        $this->setDataMall();
+
+        $subdomain = 'seminyak-village23';
+
+        /*
+        * test update subdomain
+        */
+        $data = ['merchant_id' => $this->mall_d->merchant_id,
+            'domain'    => $subdomain
+        ];
+
+        $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
+        $this->assertSame($subdomain . Config::get('orbit.shop.ci_domain'), $response->data->ci_domain);
+
+        // check domain setting
+        $dom_setting = Setting::where('setting_value', $this->mall_d->merchant_id)
+                            ->where('setting_name', 'like', '%dom%')
+                            ->first();
+
+        $this->assertSame('dom:' . $subdomain . Config::get('orbit.shop.ci_domain'), $dom_setting->setting_name);
+    }
+
+    public function testUpdateSubdomainAlphaNumericDashDot()
+    {
+        $this->setDataMall();
+
+        $subdomain = 'seminyak-village23.mall';
+
+        /*
+        * test update subdomain
+        */
+        $data = ['merchant_id' => $this->mall_d->merchant_id,
+            'domain'    => $subdomain
+        ];
+
+        $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("The domain may only contain letters, numbers, and dashes", $response->message);
+    }
+
+    public function testUpdateSubdomainAlphaNumericDashOtherChar()
+    {
+        $this->setDataMall();
+
+        $subdomain = 'seminyak-villa#$@%^&ge23';
+
+        /*
+        * test update subdomain
+        */
+        $data = ['merchant_id' => $this->mall_d->merchant_id,
+            'domain'    => $subdomain
+        ];
+
+        $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("The domain may only contain letters, numbers, and dashes", $response->message);
     }
 }
