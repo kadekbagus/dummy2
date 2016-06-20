@@ -220,8 +220,9 @@ class postUpdateMallTestArtemisVersion extends TestCase
     {
         $this->setDataMall();
 
-        $floor_array = ["{\"id\":\"{$this->fl_b1->object_id}\",\"name\":\"{$this->fl_b1->object_name}\",\"order\":\"1\"}",
-            "{\"id\":\"{$this->fl_b2->object_id}\",\"name\":\"{$this->fl_b2->object_name}\",\"order\":\"2\"}"];
+        $floor_array = [
+                "{\"id\":\"{$this->fl_b3->object_id}\",\"name\":\"{$this->fl_b3->object_name}\",\"order\":\"3\", \"floor_delete\":\"yes\"}"
+            ];
 
         /*
         * test delete floor not link on tenant
@@ -240,15 +241,6 @@ class postUpdateMallTestArtemisVersion extends TestCase
                         ->get();
 
         $this->assertSame(2, count($floor_on_db));
-
-        foreach ($floor_on_db as $floor_db) {
-            foreach ($floor_array as $floor_json) {
-                $floor = @json_decode($floor_json);
-                if ($floor_db->object_order === $floor->order) {
-                    $this->assertSame($floor_db->object_name, $floor->name);
-                }
-            }
-        }
     }
 
     public function testInsertNewFloor()
@@ -293,9 +285,12 @@ class postUpdateMallTestArtemisVersion extends TestCase
     {
         $this->setDataMall();
 
-        $floor_array = ["{\"id\":\"{$this->fl_b2->object_id}\",\"name\":\"{$this->fl_b2->object_name}\",\"order\":\"2\"}",
-            "{\"name\":\"L1\",\"order\":\"3\"}",
-            "{\"id\":\"{$this->fl_b1->object_id}\",\"name\":\"{$this->fl_b1->object_name}\",\"order\":\"0\"}"];
+        $floor_array = [
+                "{\"id\":\"{$this->fl_b2->object_id}\",\"name\":\"{$this->fl_b2->object_name}\",\"order\":\"2\"}",
+                "{\"name\":\"L1\",\"order\":\"3\"}",
+                "{\"id\":\"{$this->fl_b3->object_id}\",\"name\":\"{$this->fl_b3->object_name}\",\"order\":\"3\", \"floor_delete\":\"yes\"}",
+                "{\"id\":\"{$this->fl_b1->object_id}\",\"name\":\"{$this->fl_b1->object_name}\",\"order\":\"0\"}"
+            ];
         /*
         * test delete and insert new floor
         */
@@ -313,15 +308,6 @@ class postUpdateMallTestArtemisVersion extends TestCase
                         ->get();
 
         $this->assertSame(3, count($floor_on_db));
-
-        foreach ($floor_on_db as $floor_db) {
-            foreach ($floor_array as $floor_json) {
-                $floor = @json_decode($floor_json);
-                if ($floor_db->object_order === $floor->order) {
-                    $this->assertSame($floor_db->object_name, $floor->name);
-                }
-            }
-        }
     }
 
     public function testInsertDuplicateFloorName()
@@ -371,8 +357,7 @@ class postUpdateMallTestArtemisVersion extends TestCase
         $this->setDataMall();
 
         $floor_array = [
-                "{\"id\":\"{$this->fl_b3->object_id}\",\"name\":\"{$this->fl_b3->object_name}\",\"order\":\"0\"}",
-                "{\"id\":\"{$this->fl_b2->object_id}\",\"name\":\"{$this->fl_b2->object_name}\",\"order\":\"1\"}",
+                "{\"id\":\"{$this->fl_b1->object_id}\",\"name\":\"{$this->fl_b1->object_name}\",\"order\":\"3\", \"floor_delete\":\"yes\"}"
             ];
         /*
         * test delete floor will error when link to tenant
@@ -384,9 +369,7 @@ class postUpdateMallTestArtemisVersion extends TestCase
         $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
         $this->assertSame(14, $response->code);
         $this->assertSame("error", $response->status);
-        $this->assertSame("The floor B1 cannot be deleted: because used on Tenant", $response->message);
-
-        $floor_array_db = ["{\"name\":\"B3\",\"order\":\"0\"}","{\"name\":\"B2\",\"order\":\"1\"}","{\"name\":\"B1\",\"order\":\"2\"}"];
+        $this->assertSame("One or more active tenants are located on this floor", $response->message);
 
         $floor_on_db = Object::excludeDeleted()
                         ->where('merchant_id', $this->mall_c->merchant_id)
@@ -394,15 +377,6 @@ class postUpdateMallTestArtemisVersion extends TestCase
                         ->get();
 
         $this->assertSame(3, count($floor_on_db));
-
-        foreach ($floor_on_db as $floor_db) {
-            foreach ($floor_array_db as $floor_json) {
-                $floor = @json_decode($floor_json);
-                if ($floor_db->object_order === $floor->order) {
-                    $this->assertSame($floor_db->object_name, $floor->name);
-                }
-            }
-        }
     }
 
     public function testUpdateSubdomainAlphaNumericDash()

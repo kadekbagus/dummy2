@@ -140,7 +140,7 @@ return array(
             'timezone'               => 'The :attribute must be an existing timezone',
             'default_language'       => 'The :attribute cannot be deleted: because default language',
             'translation'            => 'The translation :attribute cannot be deleted: because used on :link',
-            'link_floor'             => 'The floor :attribute cannot be deleted: because used on :link',
+            'link_floor'             => 'One or more active tenants are located on this floor',
             'link_category'          => 'Cannot delete a category with :link',
             'mall_language'          => 'The :attribute must be an existing language',
             'floor'                  => 'The floor name has already been taken',
