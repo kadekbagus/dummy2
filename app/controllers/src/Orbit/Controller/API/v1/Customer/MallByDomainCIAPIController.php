@@ -80,6 +80,7 @@ class MallByDomainCIAPIController extends BaseAPIController
                 $data->logo = $mallLogo;
                 $data->facebook_like_url = $facebook_like_url;
                 $data->supported_languages = $mallLanguages;
+                $data->auth_pages = Config::get('orbit.blocked_routes');
             }
 
             $this->response->data = $data;
