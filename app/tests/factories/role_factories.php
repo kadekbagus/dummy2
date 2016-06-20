@@ -43,3 +43,8 @@ $factory('Role',  'role_consumer', [
     'role_name' => 'Consumer',
     'role_order' => 1
 ]);
+
+$factory('Role',  'role_campaign_owner', [
+    'role_name' => 'Campaign Owner',
+    'role_order' => 1
+]);

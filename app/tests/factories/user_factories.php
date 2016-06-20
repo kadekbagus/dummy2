@@ -66,3 +66,13 @@ $factory('User', 'user_consumer', [
     'status'         => 'active',
     'user_role_id'   => 'factory:role_consumer'
 ]);
+
+$factory('User', 'campaign_owner', [
+    'username'       => $faker->userName,
+    'user_password'  => "SecretAdmin",
+    'user_email'     => $faker->email,
+    'user_firstname' => $faker->firstName,
+    'user_lastname'  => $faker->lastName,
+    'status'         => 'active',
+    'user_role_id'   => 'factory:role_campaign_owner'
+]);
