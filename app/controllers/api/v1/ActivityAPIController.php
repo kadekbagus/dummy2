@@ -1042,6 +1042,7 @@ class ActivityAPIController extends ControllerAPI
                             ->select('user_details.gender', DB::raw("count(distinct {$tablePrefix}user_signin.user_id) as count"))
                             ->leftJoin('user_details', 'user_details.user_id', '=', 'user_signin.user_id')
                             ->whereBetween('user_signin.created_at', [$start_date, $end_date])
+                            ->where('user_signin.signin_via', '!=', 'guest')
                             ->groupBy( DB::raw('1') );
 
             // Only shows activities which belongs to this merchant
@@ -1512,6 +1513,7 @@ class ActivityAPIController extends ControllerAPI
                 )
                 ->leftJoin('user_details', 'user_details.user_id', '=', 'user_signin.user_id')
                 ->whereBetween('user_signin.created_at', [$start_date, $end_date])
+                ->where('user_signin.signin_via', '!=', 'guest')
                 ->groupBy( DB::raw('1') );
 
             // Only shows activities which belongs to this merchant
