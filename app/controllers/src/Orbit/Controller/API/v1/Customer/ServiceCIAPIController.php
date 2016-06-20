@@ -106,7 +106,7 @@ class ServiceCIAPIController extends BaseAPIController
             )
             ->leftJoin('media', function ($join) {
                 $join->on('media.object_id', '=', 'merchants.merchant_id')
-                    ->where('media_name_long', '=', 'retailer_logo_orig');
+                    ->where('media_name_long', '=', 'service_logo_orig');
             })
             ->leftJoin('category_merchant', function ($join) {
                 $join->on('category_merchant.merchant_id', '=', 'merchants.merchant_id');
