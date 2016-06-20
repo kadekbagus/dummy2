@@ -202,8 +202,8 @@ return array(
             'fax'   => '+62123456789',
             'office_hour'   => '9am - 6pm'
         ),
-        'privacy_policy_url' => '',
-        'terms_of_service_url' => '',
+        'privacy_policy_url' => 'http://dominopos.com/privacy-policy.html',
+        'terms_of_service_url' => 'http://dominopos.com/terms-and-conditions.html',
     ),
 
     // Lucky Draw
