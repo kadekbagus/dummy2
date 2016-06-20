@@ -47,6 +47,20 @@ class MallAreaAPIController extends ControllerAPI
                 $malls->where('merchants.merchant_id', $mallid);
             });
 
+            // Filter
+            OrbitInput::get('keyword_search', function ($keyword) use ($malls) {
+                $mainKeyword = explode(" ", $keyword);
+
+                $malls->where(function($q) use ($mainKeyword) {
+                    foreach ($mainKeyword as $key => $value) {
+                        $q->orWhere(function($r) use ($value) {
+                            $r->where('merchants.name', 'like', "%$value%")
+                                ->orWhere('merchants.city', 'like', "%$value%");
+                        });
+                    }
+                });
+            });
+
             if ($usingDemo) {
                 $malls->excludeDeleted();
             } else {

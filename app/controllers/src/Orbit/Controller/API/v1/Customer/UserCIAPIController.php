@@ -2,14 +2,13 @@
 
 /**
  * @author Ahmad <ahmad@dominopos.com>
- * @desc Controller for Getting Mall Object by Domain
+ * @desc Controller for User specific requests for Mobile CI Angular
  */
 use Orbit\Controller\API\v1\Customer\BaseAPIController;
 use OrbitShop\API\v1\ResponseProvider;
 use OrbitShop\API\v1\OrbitShopAPI;
 use Helper\EloquentRecordCounter as RecordCounter;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
-use Setting;
 use \Config;
 use \Exception;
 use DominoPOS\OrbitACL\ACL;
@@ -19,13 +18,19 @@ use \Carbon\Carbon as Carbon;
 use \Validator;
 use Tenant;
 use Mall;
-use MerchantLanguage;
 use App;
+use Employee;
+use Coupon;
+use News;
 use Lang;
+use User;
 
-class MallByDomainCIAPIController extends BaseAPIController
+class UserCIAPIController extends BaseAPIController
 {
-    public function getMallIdByDomain()
+    protected $validRoles = ['super admin', 'consumer', 'guest'];
+    protected $mall_id = NULL;
+
+    public function getMyAccountInfo()
     {
         $httpCode = 200;
         $this->response = new ResponseProvider();
@@ -34,13 +39,35 @@ class MallByDomainCIAPIController extends BaseAPIController
             $this->checkAuth();
             $user = $this->api->user;
 
-            $subDom = OrbitInput::get('sub_domain', NULL);
+            // temporary parameter, should be removed when user authentication is present
+            OrbitInput::get('user_email', function($user_email) use(&$user) {
+                $user = User::excludeDeleted()
+                    ->where('user_email', $user_email)
+                    ->first();
+
+                if (! is_object($user)) {
+                    $errorMessage = 'User with given email not found.';
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+            });
+
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = $this->validRoles;
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            $this->mall_id = OrbitInput::get('mall_id', NULL);
+
+            $this->registerCustomValidation();
             $validator = Validator::make(
                 array(
-                    'sub_domain' => $subDom,
+                    'mall_id' => $this->mall_id,
                 ),
                 array(
-                    'sub_domain' => 'required',
+                    'mall_id' => 'required|orbit.empty.mall',
                 )
             );
             if ($validator->fails()) {
@@ -48,40 +75,22 @@ class MallByDomainCIAPIController extends BaseAPIController
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $dom = $subDom . '.' . Config::get('orbit.shop.main_domain');
+            $image = NULL;
+            $media = $user->profilePicture()
+                ->where('media_name_long', 'user_profile_picture_orig')
+                ->get();
 
-            $data = NULL;
-
-            $mall = Setting::getMallByDomain($dom);
-
-            if (is_object($mall)) {
-                $mall = $mall->load('mediaLogoOrig');
-                $mall = $mall->load('merchantSocialMedia.socialMedia');
-
-                $facebook_like_url = '';
-                foreach ($mall->merchantSocialMedia as $merchantSocialMedia) {
-                    if (is_object($merchantSocialMedia->socialMedia)) {
-                        if ($merchantSocialMedia->socialMedia->social_media_code === 'facebook') {
-                            $facebook_like_url = $merchantSocialMedia->social_media_uri;
-                        }
-                    }
+            if (count($media) > 0) {
+                if (! empty($media[0]->path)) {
+                    $image = $media[0]->path;
                 }
-                $mallLogo = '';
-                if (isset($mall->mediaLogoOrig[0])) {
-                    $mallLogo = $mall->mediaLogoOrig[0]->path;
-                }
-
-                $mallLanguages = $this->getListLanguages($mall);
-
-                $data = new \stdclass();
-                $data->merchant_id = $mall->merchant_id;
-                $data->name = $mall->name;
-                $data->mobile_default_language = $mall->mobile_default_language;
-                $data->logo = $mallLogo;
-                $data->facebook_like_url = $facebook_like_url;
-                $data->supported_languages = $mallLanguages;
-                $data->auth_pages = Config::get('orbit.blocked_routes');
             }
+
+            $data = new \stdclass();
+            $data->email = $user->user_email;
+            $data->firstname = $user->user_firstname;
+            $data->lastname = $user->user_lastname;
+            $data->image = $image;
 
             $this->response->data = $data;
             $this->response->code = 0;
@@ -125,30 +134,21 @@ class MallByDomainCIAPIController extends BaseAPIController
         return $this->render($httpCode);
     }
 
-    /**
-    * Get list language from current merchant or mall
-    *
-    * @param mall     `mall`    mall object
-    *
-    * @author Firmansyah <firmansyah@dominopos.com>
-    * @author Irianto Pratama <irianto@dominopos.com>
-    *
-    * @return array or collection
-    */
-    protected function getListLanguages($mall)
+    protected function registerCustomValidation()
     {
-        $languages = MerchantLanguage::select(
-                'languages.language_id',
-                'languages.name',
-                'languages.name_long'
-            )
-            ->join('languages', 'languages.language_id', '=','merchant_languages.language_id')
-            ->where('merchant_languages.status', '!=', 'deleted')
-            ->where('merchant_id', $mall->merchant_id)
-            ->where('languages.status', 'active')
-            ->orderBy('languages.name_long', 'ASC')
-            ->get();
+        // Check the existance of merchant id
+        Validator::extend('orbit.empty.mall', function ($attribute, $value, $parameters) {
+            $mall = Mall::excludeDeleted()
+                        ->where('merchant_id', $value)
+                        ->first();
 
-        return $languages;
+            if (empty($mall)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.empty.mall', $mall);
+
+            return TRUE;
+        });
     }
 }

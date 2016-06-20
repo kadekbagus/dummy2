@@ -41,6 +41,26 @@ class ExCaptivePortalController extends BaseCIController
             $this->prepareSession();
             static::forceOverrideCookie($this->session->getSessionId());
 
+            /**
+             * Issue: when we get here the second time after user browse with copied URL, 'from_captive'
+             * cookie is not set thus causing false detection of internet connection
+             *
+             * Note: current behavior as required by QA, on Android 5+,
+             * captive portal browser is allowed to close after internet connection is available
+             * however we instruct user to copy URL to clipboard BEFORE
+             * they click Get Free Internet button
+             * and after that user open new browser and paste URL and browse this route again.
+             *
+             * To indicate that this action is from copy URL to clipboard of captive-request-internet
+             * We include variable 'url_from_clipboard=yes' (See views/captive-request-internet.blade.php)
+             *
+             * Thus when we get here with this variable set, we assume users have visit captive-request-internet before
+             * so we need to set from_captive cookie just to make sure.
+             */
+            if (OrbitInput::get('url_from_clipboard', 'no') === 'yes') {
+                $this->setCookieForCaptive();
+            }
+
             $this->pageTitle = Lang::get('mobileci.captive.request_internet.title');
 
             $params = [
