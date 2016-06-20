@@ -321,7 +321,9 @@ return array(
                 'email' => 'Email missmatch'
             ),
             'forgot_email' => 'We couldn\'t find an account associated with :email_addr',
-            'default_language' => 'Campaign content in mall default language is required',
+            'default_language_desc' => 'Default description is required',
+            'default_language_name' => ':type default name is required',
+            'default_language_both' => ':type default name and description is required',
             'english_language' => 'Campaign content in English language is required',
             'mall_status' => 'Mall status you specified is not found',
             'tenant_type' => 'Tenant type you specified is not found : the valid values are: tenant, service',

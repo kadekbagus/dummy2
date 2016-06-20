@@ -4471,6 +4471,16 @@ class MobileCIAPIController extends BaseCIController
             $data->records = $listOfRec;
             $data->search_mode = $searchMode;
 
+            $activityPageNotes = sprintf('Page viewed: %s', 'Service List Page');
+            $activityPage->setUser($user)
+                ->setActivityName('view_service_list')
+                ->setActivityNameLong('View Service List')
+                ->setObject(null)
+                ->setModuleName('service')
+                ->setNotes($activityPageNotes)
+                ->responseOK()
+                ->save();
+
             return View::make('mobile-ci.catalogue-service', array(
                 'page_title'=>$pagetitle,
                 'user' => $user,
@@ -4487,12 +4497,12 @@ class MobileCIAPIController extends BaseCIController
 
 
         } catch (Exception $e) {
-            $activityPageNotes = sprintf('Failed to view Page: %s', 'News List');
+            $activityPageNotes = sprintf('Failed to view Page: %s', 'Service List');
             $activityPage->setUser($user)
-                ->setActivityName('view_news_list')
-                ->setActivityNameLong('View News List Failed')
+                ->setActivityName('view_service_list')
+                ->setActivityNameLong('View service List Failed')
                 ->setObject(null)
-                ->setModuleName('News')
+                ->setModuleName('Service')
                 ->setNotes($activityPageNotes)
                 ->responseFailed()
                 ->save();
