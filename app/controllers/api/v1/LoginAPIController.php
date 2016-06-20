@@ -1406,6 +1406,10 @@ class LoginAPIController extends ControllerAPI
 
             $this->response->data = $user;
 
+            if ($user->isSuperAdmin()) {
+                $this->response->data->subdomain = Config::get('orbit.shop.ci_domain');
+            }
+
             if (!empty($mall) && $from === 'mall') {
                 // @author Irianto Pratama <irianto@dominopos.com>
                 $agreement_accepted = $mall->settings()
