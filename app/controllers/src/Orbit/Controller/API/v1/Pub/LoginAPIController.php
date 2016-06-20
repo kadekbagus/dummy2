@@ -237,8 +237,10 @@ class LoginAPIController extends IntermediateBaseController
         $state = \Input::get('state', NULL);
         $caller_url = OrbitInput::get('from_url', NULL);
         $caller_url = ! is_null($caller_url) ? URL::route($caller_url) : Config::get('orbit.shop.after_social_sign_in');
-        $redirect_to_url = OrbitInput::get('to_url', URL::route('ci-customer-home'));
+        $encoded_caller_url_full = OrbitInput::get('from_url_full', NULL);
+        $encoded_redirect_to_url = OrbitInput::get('to_url', NULL);
         $mall_id = OrbitInput::get('mid', NULL);
+        $angular_ci = OrbitInput::get('aci', NULL);
 
         $googleService = OAuth::consumer( 'Google' );
         if ( !empty( $code ) ) {
@@ -255,6 +257,8 @@ class LoginAPIController extends IntermediateBaseController
                 $socialid = isset($user['id']) ? $user['id'] : '';
 
                 $mall_id_from_state = json_decode($this->base64UrlDecode($state))->mid;
+                $angular_ci_from_state = json_decode($this->base64UrlDecode($state))->aci;
+                $redirect_to_url_from_state = json_decode($this->base64UrlDecode($state))->redirect_to_url;
                 // from mall = yes, indicate the request coming from Mall CI, then use MobileCIAPIController::getGoogleCallbackView
                 // to set the session and other things
                 if (! empty($mall_id_from_state)) {
@@ -289,6 +293,9 @@ class LoginAPIController extends IntermediateBaseController
                     // There is a chance that user not 'grant' his email while approving our app
                     // so we double check it here
                     if (empty($userEmail)) {
+                        if (! empty($angular_ci_from_state)) {
+                            $caller_url = urldecode($encoded_caller_url_full);
+                        }
                         $parsed_caller_url = parse_url((string)$caller_url);
                         if (isset($parsed_caller_url['query'])) {
                             $caller_url .= '&error=no_email';
@@ -296,7 +303,7 @@ class LoginAPIController extends IntermediateBaseController
                             $caller_url .= '?error=no_email';
                         }
 
-                        return Redirect::to($caller_url);
+                        return Redirect::to(urldecode($encoded_caller_url_full));
                     }
 
                     $loggedInUser = $this->doAutoLogin($userEmail);
@@ -317,9 +324,17 @@ class LoginAPIController extends IntermediateBaseController
                     setcookie('orbit_firstname', $firstName, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
                     setcookie('login_from', 'Google', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
 
-                    return Redirect::to(Config::get('orbit.shop.after_social_sign_in'));
+                    if (empty($angular_ci_from_state)) {
+                        return Redirect::to(Config::get('orbit.shop.after_social_sign_in'));
+                    }
+                    // request coming from angular-ci
+
+                    return Redirect::to(urldecode($redirect_to_url_from_state));
                 }
             } catch (Exception $e) {
+                if (! empty($angular_ci)) {
+                    $caller_url = urldecode($encoded_caller_url_full);
+                }
                 $errorMessage = 'Error: ' . $e->getMessage();
                 $parsed_caller_url = parse_url((string)$caller_url);
                 if (isset($parsed_caller_url['query'])) {
@@ -335,7 +350,7 @@ class LoginAPIController extends IntermediateBaseController
                 // get googleService authorization
                 $url = $googleService->getAuthorizationUri();
                 // override state param to have our destination url inside
-                $state_array = array('redirect_to_url' => $redirect_to_url, 'mid' => $mall_id);
+                $state_array = array('redirect_to_url' => $encoded_redirect_to_url, 'mid' => $mall_id, 'aci' => $angular_ci);
                 $state = json_encode($state_array);
                 $stateString = $this->base64UrlEncode($state);
                 $parsed_url = parse_url((string)$url);
@@ -348,6 +363,9 @@ class LoginAPIController extends IntermediateBaseController
 
                 return Redirect::to((string)$new_url);
             } catch (Exception $e) {
+                if (! empty($angular_ci)) {
+                    $caller_url = urldecode($encoded_caller_url_full);
+                }
                 $errorMessage = 'Error: ' . $e->getMessage();
                 $parsed_caller_url = parse_url((string)$caller_url);
                 if (isset($parsed_caller_url['query'])) {
