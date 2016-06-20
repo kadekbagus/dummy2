@@ -29,7 +29,7 @@ class ServiceCIAPIController extends BaseAPIController
     protected $validRoles = ['super admin', 'consumer', 'guest'];
     protected $mall_id = NULL;
 
-    public function getServiceList ()
+    public function getServiceList()
     {
         $httpCode = 200;
         $this->response = new ResponseProvider();
@@ -88,7 +88,7 @@ class ServiceCIAPIController extends BaseAPIController
 
             $quoted_mall_id = $this->quoteStr($this->mall_id);
 
-            $service = TenantStoreAndService::where('object_type', 'service')
+            $service = TenantStoreAndService::where('merchants.object_type', 'service')
             ->with(
             [
                 'categories' => function($q) {
@@ -280,7 +280,7 @@ class ServiceCIAPIController extends BaseAPIController
         return $this->render($httpCode);
     }
 
-    public function getServiceItem ()
+    public function getServiceItem()
     {
         $httpCode = 200;
         $this->response = new ResponseProvider();
