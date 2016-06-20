@@ -1,6 +1,6 @@
 <?php
 /**
- * Test for API /api/v1/activity/today-statistics
+ * Test for API /api/v1/activity/age-statistics
  * @author kadek <kadek@dominopos.com>
  */
 use DominoPOS\OrbitAPI\v10\StatusInterface as Status;
@@ -8,9 +8,9 @@ use OrbitShop\API\v1\Helper\Generator;
 use Laracasts\TestDummy\Factory;
 use Carbon\Carbon as Carbon;
 
-class getCustomerTodayDashboardTest extends TestCase
+class getCustomerGenderDashboardTest extends TestCase
 {
-    private $baseUrl = '/api/v1/activity/today-statistics?';
+    private $baseUrl = '/api/v1/activity/age-statistics?';
 
     public function setUp()
     {
@@ -120,16 +120,24 @@ class getCustomerTodayDashboardTest extends TestCase
         $this->assertSame(0, $response->code);
         $this->assertSame('success', $response->status);
         $this->assertRegExp('/Ok/i', $response->message);
-        
+
         $this->assertSame($data['start_date'], $response->data->start_date);
         $this->assertSame($data['end_date'], $response->data->end_date);
-        $this->assertSame(0, $response->data->today[0]->count);
-        $this->assertSame(0, $response->data->today[0]->customer_count);
-        $this->assertSame(0, $response->data->today[0]->guest_count);
+        foreach ($response->data->ages as $key => $value){
+            if($key == '0 - 14') { $this->assertSame(0, $value); }
+            if($key == '15 - 24'){ $this->assertSame(0, $value); }
+            if($key == '25 - 34'){ $this->assertSame(0, $value); }
+            if($key == '35 - 44'){ $this->assertSame(0, $value); }
+            if($key == '45 - 54'){ $this->assertSame(0, $value); }
+            if($key == '55 - 64'){ $this->assertSame(0, $value); }
+            if($key == '65+')    { $this->assertSame(0, $value); }
+            if($key == 'unknown'){ $this->assertSame(0, $value); }
+        }
     }
 
     public function testOneGuestSignIn()
     {
+        // guest should not appear
         $role = Factory::create('role_mall_owner');
         $user = Factory::create('User', ['user_role_id' => $role->role_id]);
         $apikey = Factory::create('Apikey', ['user_id' => $user->user_id]);
@@ -147,16 +155,24 @@ class getCustomerTodayDashboardTest extends TestCase
         $this->assertSame(0, $response->code);
         $this->assertSame('success', $response->status);
         $this->assertRegExp('/Ok/i', $response->message);
-        
+
         $this->assertSame($data['start_date'], $response->data->start_date);
         $this->assertSame($data['end_date'], $response->data->end_date);
-        $this->assertSame('1', $response->data->today[0]->count);
-        $this->assertSame('0', $response->data->today[0]->customer_count);
-        $this->assertSame('1', $response->data->today[0]->guest_count);
+        foreach ($response->data->ages as $key => $value){
+            if($key == '0 - 14') { $this->assertSame(0, $value); }
+            if($key == '15 - 24'){ $this->assertSame(0, $value); }
+            if($key == '25 - 34'){ $this->assertSame(0, $value); }
+            if($key == '35 - 44'){ $this->assertSame(0, $value); }
+            if($key == '45 - 54'){ $this->assertSame(0, $value); }
+            if($key == '55 - 64'){ $this->assertSame(0, $value); }
+            if($key == '65+')    { $this->assertSame(0, $value); }
+            if($key == 'unknown'){ $this->assertSame(0, $value); }
+        }
     }
 
     public function testTwoGuestSignIn()
     {
+        // guest should not appear
         $role = Factory::create('role_mall_owner');
         $user = Factory::create('User', ['user_role_id' => $role->role_id]);
         $apikey = Factory::create('Apikey', ['user_id' => $user->user_id]);
@@ -179,19 +195,28 @@ class getCustomerTodayDashboardTest extends TestCase
         
         $this->assertSame($data['start_date'], $response->data->start_date);
         $this->assertSame($data['end_date'], $response->data->end_date);
-        $this->assertSame('2', $response->data->today[0]->count);
-        $this->assertSame('0', $response->data->today[0]->customer_count);
-        $this->assertSame('2', $response->data->today[0]->guest_count);
+        foreach ($response->data->ages as $key => $value){
+            if($key == '0 - 14') { $this->assertSame(0, $value); }
+            if($key == '15 - 24'){ $this->assertSame(0, $value); }
+            if($key == '25 - 34'){ $this->assertSame(0, $value); }
+            if($key == '35 - 44'){ $this->assertSame(0, $value); }
+            if($key == '45 - 54'){ $this->assertSame(0, $value); }
+            if($key == '55 - 64'){ $this->assertSame(0, $value); }
+            if($key == '65+')    { $this->assertSame(0, $value); }
+            if($key == 'unknown'){ $this->assertSame(0, $value); }
+        }
     }
 
     public function testOneCustomerSignIn()
     {
+        // customer with age 38 signin
         $role = Factory::create('role_mall_owner');
         $user = Factory::create('User', ['user_role_id' => $role->role_id]);
         $apikey = Factory::create('Apikey', ['user_id' => $user->user_id]);
         $mall = Factory::create('Mall', ['timezone_id' => $this->timezone->timezone_id, 'user_id' => $user->user_id]);
 
         $customer1 = Factory::create('user_consumer');
+        $customer1UserDetail = Factory::create('UserDetail', ['user_id' => $customer1->user_id, 'birthdate' => '1978-01-01']);
 
         $userSignin1 = Factory::create('UserSignin', ['user_id' => $customer1->user_id, 'signin_via' => 'form', 'location_id' => $mall->merchant_id]);
 
@@ -206,13 +231,21 @@ class getCustomerTodayDashboardTest extends TestCase
         
         $this->assertSame($data['start_date'], $response->data->start_date);
         $this->assertSame($data['end_date'], $response->data->end_date);
-        $this->assertSame('1', $response->data->today[0]->count);
-        $this->assertSame('1', $response->data->today[0]->customer_count);
-        $this->assertSame('0', $response->data->today[0]->guest_count);
+        foreach ($response->data->ages as $key => $value){
+            if($key == '0 - 14') { $this->assertSame(0, $value); }
+            if($key == '15 - 24'){ $this->assertSame(0, $value); }
+            if($key == '25 - 34'){ $this->assertSame(0, $value); }
+            if($key == '35 - 44'){ $this->assertSame(1, $value); }
+            if($key == '45 - 54'){ $this->assertSame(0, $value); }
+            if($key == '55 - 64'){ $this->assertSame(0, $value); }
+            if($key == '65+')    { $this->assertSame(0, $value); }
+            if($key == 'unknown'){ $this->assertSame(0, $value); }
+        }
     }
 
     public function testTwoCustomerSignIn()
     {
+        // customer with age 26 and age 13 signin
         $role = Factory::create('role_mall_owner');
         $user = Factory::create('User', ['user_role_id' => $role->role_id]);
         $apikey = Factory::create('Apikey', ['user_id' => $user->user_id]);
@@ -220,6 +253,8 @@ class getCustomerTodayDashboardTest extends TestCase
 
         $customer1 = Factory::create('user_consumer');
         $customer2 = Factory::create('user_consumer');
+        $customer1UserDetail = Factory::create('UserDetail', ['user_id' => $customer1->user_id, 'birthdate' => '1990-01-03']);
+        $customer2UserDetail = Factory::create('UserDetail', ['user_id' => $customer2->user_id, 'birthdate' => '2003-02-03']);
 
         $userSignin1 = Factory::create('UserSignin', ['user_id' => $customer1->user_id, 'signin_via' => 'form', 'location_id' => $mall->merchant_id]);
         $userSignin2 = Factory::create('UserSignin', ['user_id' => $customer2->user_id, 'signin_via' => 'form', 'location_id' => $mall->merchant_id]);
@@ -235,13 +270,21 @@ class getCustomerTodayDashboardTest extends TestCase
         
         $this->assertSame($data['start_date'], $response->data->start_date);
         $this->assertSame($data['end_date'], $response->data->end_date);
-        $this->assertSame('2', $response->data->today[0]->count);
-        $this->assertSame('2', $response->data->today[0]->customer_count);
-        $this->assertSame('0', $response->data->today[0]->guest_count);
+        foreach ($response->data->ages as $key => $value){
+            if($key == '0 - 14') { $this->assertSame(1, $value); }
+            if($key == '15 - 24'){ $this->assertSame(0, $value); }
+            if($key == '25 - 34'){ $this->assertSame(1, $value); }
+            if($key == '35 - 44'){ $this->assertSame(0, $value); }
+            if($key == '45 - 54'){ $this->assertSame(0, $value); }
+            if($key == '55 - 64'){ $this->assertSame(0, $value); }
+            if($key == '65+')    { $this->assertSame(0, $value); }
+            if($key == 'unknown'){ $this->assertSame(0, $value); }
+        }
     }
 
     public function testTwoCustomerAndOneGuestSignIn()
     {
+        // customer with age 41 and age 16 signin and also 1 guest signin
         $role = Factory::create('role_mall_owner');
         $user = Factory::create('User', ['user_role_id' => $role->role_id]);
         $apikey = Factory::create('Apikey', ['user_id' => $user->user_id]);
@@ -249,6 +292,8 @@ class getCustomerTodayDashboardTest extends TestCase
 
         $customer1 = Factory::create('user_consumer');
         $customer2 = Factory::create('user_consumer');
+        $customer1UserDetail = Factory::create('UserDetail', ['user_id' => $customer1->user_id, 'birthdate' => '1975-03-03']);
+        $customer2UserDetail = Factory::create('UserDetail', ['user_id' => $customer2->user_id, 'birthdate' => '2000-01-01']);
         $guest1 = Factory::create('user_guest');
 
         $userSignin1 = Factory::create('UserSignin', ['user_id' => $customer1->user_id, 'signin_via' => 'form', 'location_id' => $mall->merchant_id]);
@@ -263,11 +308,18 @@ class getCustomerTodayDashboardTest extends TestCase
         $this->assertSame(0, $response->code);
         $this->assertSame('success', $response->status);
         $this->assertRegExp('/Ok/i', $response->message);
-        
+
         $this->assertSame($data['start_date'], $response->data->start_date);
         $this->assertSame($data['end_date'], $response->data->end_date);
-        $this->assertSame('3', $response->data->today[0]->count);
-        $this->assertSame('2', $response->data->today[0]->customer_count);
-        $this->assertSame('1', $response->data->today[0]->guest_count);
+        foreach ($response->data->ages as $key => $value){
+            if($key == '0 - 14') { $this->assertSame(0, $value); }
+            if($key == '15 - 24'){ $this->assertSame(1, $value); }
+            if($key == '25 - 34'){ $this->assertSame(0, $value); }
+            if($key == '35 - 44'){ $this->assertSame(1, $value); }
+            if($key == '45 - 54'){ $this->assertSame(0, $value); }
+            if($key == '55 - 64'){ $this->assertSame(0, $value); }
+            if($key == '65+')    { $this->assertSame(0, $value); }
+            if($key == 'unknown'){ $this->assertSame(0, $value); }
+        }
     }
 }
