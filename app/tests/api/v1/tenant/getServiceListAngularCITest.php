@@ -274,34 +274,34 @@ class getServiceListAngularCITest extends TestCase
 
     public function testOKGetListingTenantFilteredByKeywordString()
     {
-        // $_GET['apikey'] = $this->apikey_user_super_admin->api_key;
-        // $_GET['apitimestamp'] = time();
-        // $_GET['mall_id'] = $this->mall_1->merchant_id;
-        // $_GET['keyword'] = substr($this->tenants_service_mall_1[0]->name, 0, -1);
+        $_GET['apikey'] = $this->apikey_user_super_admin->api_key;
+        $_GET['apitimestamp'] = time();
+        $_GET['mall_id'] = $this->mall_1->merchant_id;
+        $_GET['keyword'] = substr($this->tenants_service_mall_1[0]->name, 0, -1);
 
-        // $url = $this->apiUrl . '?' . http_build_query($_GET);
-        // $secretKey = $this->apikey_user_super_admin->api_secret_key;
+        $url = $this->apiUrl . '?' . http_build_query($_GET);
+        $secretKey = $this->apikey_user_super_admin->api_secret_key;
 
-        // $_SERVER['REQUEST_METHOD'] = 'GET';
-        // $_SERVER['REQUEST_URI'] = $url;
-        // $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_SERVER['REQUEST_URI'] = $url;
+        $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
 
-        // $json = $this->call('GET', $url)->getContent();
-        // $response = json_decode($json);
+        $json = $this->call('GET', $url)->getContent();
+        $response = json_decode($json);
 
-        // $this->assertSame(0, (int) $response->code);
-        // $this->assertSame(1, (int) $response->data->returned_records);
+        $this->assertSame(0, (int) $response->code);
+        $this->assertSame(1, (int) $response->data->returned_records);
 
-        // // check all returned records
-        // foreach ($response->data->records as $key => $item) {
-        //     $this->assertSame((string) $this->tenants_service_mall_1[0]->merchant_id, (string) $item->merchant_id);
-        //     $this->assertSame((string) $this->tenants_service_mall_1[0]->name,(string) $item->name);
-        //     $this->assertSame((string) $this->tenants_service_mall_1[0]->floor, (string) $item->floor);
-        //     $this->assertSame((string) $this->tenants_service_mall_1[0]->unit, (string) $item->unit);
-        //     foreach ($item->categories as $key2 => $category) {
-        //         $this->assertSame((string) $this->tenants_service_mall_1[0]->categories[$key2]->category_name, (string) $category->category_name);
-        //     }
-        // }
+        // check all returned records
+        foreach ($response->data->records as $key => $item) {
+            $this->assertSame((string) $this->tenants_service_mall_1[0]->merchant_id, (string) $item->merchant_id);
+            $this->assertSame((string) $this->tenants_service_mall_1[0]->name,(string) $item->name);
+            $this->assertSame((string) $this->tenants_service_mall_1[0]->floor, (string) $item->floor);
+            $this->assertSame((string) $this->tenants_service_mall_1[0]->unit, (string) $item->unit);
+            foreach ($item->categories as $key2 => $category) {
+                $this->assertSame((string) $this->tenants_service_mall_1[0]->categories[$key2]->category_name, (string) $category->category_name);
+            }
+        }
     }
 
 }

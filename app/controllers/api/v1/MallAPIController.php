@@ -372,7 +372,7 @@ class MallAPIController extends ControllerAPI
                     'sector_of_activity'            => 'required',
                     'languages'                     => 'required|array',
                     'mobile_default_language'       => 'required|size:2|orbit.formaterror.language',
-                    'domain'                        => 'required',
+                    'domain'                        => 'required|alpha_dash',
                     'geo_point_latitude'            => 'required',
                     'geo_point_longitude'           => 'required',
                     'geo_area'                      => 'required',
@@ -479,7 +479,7 @@ class MallAPIController extends ControllerAPI
             }
             $newmall->is_mall = 'yes';
             $newmall->url = $url;
-            $newmall->ci_domain = $domain;
+            $newmall->ci_domain = $domain . Config::get('orbit.shop.ci_domain');
             $newmall->masterbox_number = $masterbox_number;
             $newmall->slavebox_number = $slavebox_number;
             $newmall->mobile_default_language = $mobile_default_language;
@@ -597,18 +597,18 @@ class MallAPIController extends ControllerAPI
             // settings
             // @author irianto <irianto@dominopos.com>
             $setting_items = [
-                'enable_coupon'                 => 'true',
-                'enable_coupon_widget'          => 'true',
-                'enable_lucky_draw'             => 'true',
-                'enable_lucky_draw_widget'      => 'true',
-                'enable_free_wifi'              => 'true',
-                'enable_free_wifi_widget'       => 'true',
-                'enable_membership_card'        => 'false',
-                'landing_page'                  => 'widget',
-                'agreement_accepted'            => 'false',
-                'agreement_acceptor_first_name' => '',
-                'agreement_acceptor_last_name'  => '',
-                'dom:' . $domain                => $newmall->merchant_id
+                'enable_coupon'                                        => 'true',
+                'enable_coupon_widget'                                 => 'true',
+                'enable_lucky_draw'                                    => 'true',
+                'enable_lucky_draw_widget'                             => 'true',
+                'enable_free_wifi'                                     => 'true',
+                'enable_free_wifi_widget'                              => 'true',
+                'enable_membership_card'                               => 'false',
+                'landing_page'                                         => 'widget',
+                'agreement_accepted'                                   => 'false',
+                'agreement_acceptor_first_name'                        => '',
+                'agreement_acceptor_last_name'                         => '',
+                'dom:' . $domain . Config::get('orbit.shop.ci_domain') => $newmall->merchant_id
             ];
 
             foreach ($setting_items as $setting_name => $setting_value) {
@@ -918,7 +918,7 @@ class MallAPIController extends ControllerAPI
 
             $malls = Mall::excludeDeleted('merchants')
                                 ->select(
-                                        'merchants.*',
+                                        'merchants.*', DB::raw("LEFT({$prefix}merchants.ci_domain, instr({$prefix}merchants.ci_domain, '.') - 1) as subdomain"),
                                         DB::raw('count(tenant.merchant_id) AS total_tenant'),
                                         DB::raw('mall_group.name AS mall_group_name'),
                                         'merchant_social_media.social_media_uri as facebook_uri',
@@ -1474,6 +1474,7 @@ class MallAPIController extends ControllerAPI
             $mobile_default_language = OrbitInput::post('mobile_default_language');
             $languages = OrbitInput::post('languages');
             $floors = OrbitInput::post('floors');
+            $domain = OrbitInput::post('domain');
             $campaign_base_price_promotion = OrbitInput::post('campaign_base_price_promotion');
             $campaign_base_price_coupon = OrbitInput::post('campaign_base_price_coupon');
             $campaign_base_price_news = OrbitInput::post('campaign_base_price_news');
@@ -1501,6 +1502,7 @@ class MallAPIController extends ControllerAPI
                     'currency_symbol'               => $currency_symbol,
                     'sector_of_activity'            => $sector_of_activity,
                     'languages'                     => $languages,
+                    'domain'                        => $domain,
                     'mobile_default_language'       => $mobile_default_language,
                     // 'campaign_base_price_promotion' => $campaign_base_price_promotion,
                     // 'campaign_base_price_coupon'    => $campaign_base_price_coupon,
@@ -1528,6 +1530,7 @@ class MallAPIController extends ControllerAPI
                     'currency'                         => 'size:3',
                     'vat_included'                     => 'in:yes,no',
                     'languages'                        => 'array',
+                    'domain'                           => 'alpha_dash',
                     'mobile_default_language'          => 'size:2|orbit.formaterror.language',
                     // 'campaign_base_price_promotion' => 'format currency later will be check',
                     // 'campaign_base_price_coupon'    => 'format currency later will be check',
@@ -1740,15 +1743,15 @@ class MallAPIController extends ControllerAPI
                 $updatedmall->url = $url;
             });
 
-            OrbitInput::post('domain', function($domain) use ($updatedmall, $merchant_id) {
-                $updatedmall->ci_domain = $domain;
+            OrbitInput::post('domain', function($domain) use ($updatedmall) {
+                $updatedmall->ci_domain = $domain . Config::get('orbit.shop.ci_domain');
 
-                $setting_domain = Setting::excludeDeleted()
-                                        ->where('setting_value', $merchant_id)
+                $setting_domain = Setting::where('setting_value', $updatedmall->merchant_id)
+                                        ->where('setting_name', 'like', '%dom%')
                                         ->first();
                 if (count($setting_domain) > 0) {
-                    $setting_domain->setting_name = 'dom:' . $domain;
-                    $setting_domain->save;
+                    $setting_domain->setting_name = 'dom:' . $domain . Config::get('orbit.shop.ci_domain');
+                    $setting_domain->save();
                 }
             });
 
@@ -1806,8 +1809,8 @@ class MallAPIController extends ControllerAPI
 
             $updatedmall->save();
 
-            OrbitInput::post('facebook_uri', function ($fb_uri) use ($merchant_id, $updatedmall) {
-                $this->saveSocmedUri('facebook', $merchant_id, $fb_uri);
+            OrbitInput::post('facebook_uri', function ($fb_uri) use ($updatedmall) {
+                $this->saveSocmedUri('facebook', $updatedmall->merchant_id, $fb_uri);
 
                 // For response
                 $updatedmall->facebook_uri = $fb_uri;
@@ -2099,19 +2102,7 @@ class MallAPIController extends ControllerAPI
                             OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.exists.floor'));
                         }
 
-                        // for update order
-                        $exist_floor = Object::excludeDeleted()
-                                            ->where('object_type', 'floor')
-                                            ->where('merchant_id', $updatedmall->merchant_id)
-                                            ->where('object_name', $floor->name)
-                                            ->first();
-
-                        if (count($exist_floor) > 0) {
-                            // update order
-                            $exist_floor->object_order = $floor->order;
-                            $exist_floor->save();
-
-                        } else {
+                        if (empty($floor->id)) { // if floor doesn't have id that's mean is a new floor
                             // create new floor
                             $newfloor = new Object();
                             $newfloor->merchant_id = $updatedmall->merchant_id;
@@ -2120,6 +2111,19 @@ class MallAPIController extends ControllerAPI
                             $newfloor->object_order = $floor->order;
                             $newfloor->status = 'active';
                             $newfloor->save();
+                        } else {
+                            // for update order
+                            $exist_floor = Object::excludeDeleted()
+                                                ->where('object_type', 'floor')
+                                                ->where('merchant_id', $updatedmall->merchant_id)
+                                                ->where('object_id', $floor->id)
+                                                ->first();
+
+                            if (count($exist_floor) > 0) {
+                                // update order
+                                $exist_floor->object_order = $floor->order;
+                                $exist_floor->save();
+                            }
                         }
 
                         $colect_floor[] = $floor->name;

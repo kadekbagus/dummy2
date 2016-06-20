@@ -72,6 +72,8 @@
             <file>./app/tests/api/v1/news/getNewsListMobileCITest.php</file>
             <file>./app/tests/api/v1/news/getNewsDetailMobileCITest.php</file>
             <file>./app/tests/api/v1/user/getConsumerListingTestArtemisVersion.php</file>
+            <file>./app/tests/api/v1/tenant/getServiceListAngularCITest.php</file>
+            <file>./app/tests/api/v1/tenant/getServiceDetailAngularCITest.php</file>
         </testsuite>
     </testsuites>
 </phpunit>
