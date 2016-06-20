@@ -71,6 +71,7 @@
             <file>./app/tests/api/v1/mall/postUpdateMallTestArtemisVersion.php</file>
             <file>./app/tests/api/v1/news/getNewsListMobileCITest.php</file>
             <file>./app/tests/api/v1/news/getNewsDetailMobileCITest.php</file>
+            <file>./app/tests/api/v1/user/getConsumerListingTestArtemisVersion.php</file>
         </testsuite>
     </testsuites>
 </phpunit>
