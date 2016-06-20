@@ -82,4 +82,26 @@ class getSearchMallTestArtemisVersion extends TestCase
                 $this->assertSame('active', $data->widget_free_wifi[0]->status);
         }
     }
+
+    public function testGetSubdomain()
+    {
+        $mall_a = Factory::create('Mall', ['ci_domain' => 'lippomall.gotomalls.com']);
+
+        $mall_b = Factory::create('Mall', ['ci_domain' => 'seminyakvillage.gotomalls.com']);
+
+        $filter = [];
+
+        /*
+        * test get widget free wifi status
+        */
+        $response_search = $this->setRequestGetSearchMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $filter);
+        $this->assertSame(0, $response_search->code);
+        $this->assertSame('success', $response_search->status);
+        foreach ($response_search->data->records as $idx => $data) {
+            if($mall_b->merchant_id  === $data->merchant_id)
+                $this->assertSame('seminyakvillage', $data->subdomain);
+            if($mall_a->merchant_id  === $data->merchant_id)
+                $this->assertSame('lippomall', $data->subdomain);
+        }
+    }
 }

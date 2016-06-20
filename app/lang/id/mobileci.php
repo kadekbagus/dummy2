@@ -52,7 +52,7 @@ return array(
         'catalogue'             => 'KATALOG',
         'new_product'           => 'PRODUK TERBARU',
         'promotion'             => 'Promosi',
-        'coupon'                => 'KUPON SAYA',
+        'coupon'                => 'Kupon Saya',
         'tenant'                => 'Gerai',
         'service'               => 'Layanan',
         'lucky_draw'            => 'Undian Berhadiah',
