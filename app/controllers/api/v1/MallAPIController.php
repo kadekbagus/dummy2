@@ -2102,19 +2102,7 @@ class MallAPIController extends ControllerAPI
                             OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.exists.floor'));
                         }
 
-                        // for update order
-                        $exist_floor = Object::excludeDeleted()
-                                            ->where('object_type', 'floor')
-                                            ->where('merchant_id', $updatedmall->merchant_id)
-                                            ->where('object_name', $floor->name)
-                                            ->first();
-
-                        if (count($exist_floor) > 0) {
-                            // update order
-                            $exist_floor->object_order = $floor->order;
-                            $exist_floor->save();
-
-                        } else {
+                        if (empty($floor->id)) { // if floor doesn't have id that's mean is a new floor
                             // create new floor
                             $newfloor = new Object();
                             $newfloor->merchant_id = $updatedmall->merchant_id;
@@ -2123,6 +2111,19 @@ class MallAPIController extends ControllerAPI
                             $newfloor->object_order = $floor->order;
                             $newfloor->status = 'active';
                             $newfloor->save();
+                        } else {
+                            // for update order
+                            $exist_floor = Object::excludeDeleted()
+                                                ->where('object_type', 'floor')
+                                                ->where('merchant_id', $updatedmall->merchant_id)
+                                                ->where('object_id', $floor->id)
+                                                ->first();
+
+                            if (count($exist_floor) > 0) {
+                                // update order
+                                $exist_floor->object_order = $floor->order;
+                                $exist_floor->save();
+                            }
                         }
 
                         $colect_floor[] = $floor->name;

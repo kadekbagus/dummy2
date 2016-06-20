@@ -73,9 +73,9 @@ class postUpdateMallTestArtemisVersion extends TestCase
         Factory::create('WidgetRetailer', ['retailer_id' => $mall_b->merchant_id, 'widget_id' => $widget_b->widget_id]);
 
         $this->mall_c = $mall_c = Factory::create('Mall', ['name' => 'mall firman']);
-        Factory::create('Object', ['merchant_id' => $mall_c->merchant_id, 'object_name' => 'B3', 'object_type' => 'floor', 'object_order' => 0]);
-        Factory::create('Object', ['merchant_id' => $mall_c->merchant_id, 'object_name' => 'B2', 'object_type' => 'floor', 'object_order' => 1]);
-        Factory::create('Object', ['merchant_id' => $mall_c->merchant_id, 'object_name' => 'B1', 'object_type' => 'floor', 'object_order' => 2]);
+        $this->fl_b3 = Factory::create('Object', ['merchant_id' => $mall_c->merchant_id, 'object_name' => 'B3', 'object_type' => 'floor', 'object_order' => 0]);
+        $this->fl_b2 = Factory::create('Object', ['merchant_id' => $mall_c->merchant_id, 'object_name' => 'B2', 'object_type' => 'floor', 'object_order' => 1]);
+        $this->fl_b1 = Factory::create('Object', ['merchant_id' => $mall_c->merchant_id, 'object_name' => 'B1', 'object_type' => 'floor', 'object_order' => 2]);
 
         Factory::create('Tenant', ['name' => 'tenant firman', 'floor' => 'B1', 'parent_id' => $mall_c->merchant_id]);
 
@@ -184,7 +184,9 @@ class postUpdateMallTestArtemisVersion extends TestCase
     {
         $this->setDataMall();
 
-        $floor_array = ["{\"name\":\"B3\",\"order\":\"1\"}","{\"name\":\"B2\",\"order\":\"2\"}","{\"name\":\"B1\",\"order\":\"0\"}"];
+        $floor_array = ["{\"id\":\"{$this->fl_b3->object_id}\",\"name\":\"{$this->fl_b3->object_name}\",\"order\":\"1\"}",
+            "{\"id\":\"{$this->fl_b2->object_id}\",\"name\":\"{$this->fl_b2->object_name}\",\"order\":\"2\"}",
+            "{\"id\":\"{$this->fl_b1->object_id}\",\"name\":\"{$this->fl_b1->object_name}\",\"order\":\"0\"}"];
 
         /*
         * test update floor order
@@ -218,7 +220,8 @@ class postUpdateMallTestArtemisVersion extends TestCase
     {
         $this->setDataMall();
 
-        $floor_array = ["{\"name\":\"B3\",\"order\":\"0\"}","{\"name\":\"B2\",\"order\":\"1\"}"];
+        $floor_array = ["{\"id\":\"{$this->fl_b1->object_id}\",\"name\":\"{$this->fl_b1->object_name}\",\"order\":\"1\"}",
+            "{\"id\":\"{$this->fl_b2->object_id}\",\"name\":\"{$this->fl_b2->object_name}\",\"order\":\"2\"}"];
 
         /*
         * test delete floor not link on tenant
@@ -254,6 +257,10 @@ class postUpdateMallTestArtemisVersion extends TestCase
 
         $floor_array = ["{\"name\":\"B3\",\"order\":\"0\"}","{\"name\":\"B2\",\"order\":\"1\"}","{\"name\":\"B1\",\"order\":\"2\"}","{\"name\":\"L1\",\"order\":\"3\"}"];
 
+        $floor_array = ["{\"id\":\"{$this->fl_b3->object_id}\",\"name\":\"{$this->fl_b3->object_name}\",\"order\":\"1\"}",
+            "{\"id\":\"{$this->fl_b2->object_id}\",\"name\":\"{$this->fl_b2->object_name}\",\"order\":\"2\"}",
+            "{\"name\":\"L1\",\"order\":\"3\"}",
+            "{\"id\":\"{$this->fl_b1->object_id}\",\"name\":\"{$this->fl_b1->object_name}\",\"order\":\"0\"}"];
         /*
         * test insert new floor
         */
@@ -286,8 +293,9 @@ class postUpdateMallTestArtemisVersion extends TestCase
     {
         $this->setDataMall();
 
-        $floor_array = ["{\"name\":\"B3\",\"order\":\"0\"}","{\"name\":\"B2\",\"order\":\"1\"}","{\"name\":\"L1\",\"order\":\"3\"}"];
-
+        $floor_array = ["{\"id\":\"{$this->fl_b2->object_id}\",\"name\":\"{$this->fl_b2->object_name}\",\"order\":\"2\"}",
+            "{\"name\":\"L1\",\"order\":\"3\"}",
+            "{\"id\":\"{$this->fl_b1->object_id}\",\"name\":\"{$this->fl_b1->object_name}\",\"order\":\"0\"}"];
         /*
         * test delete and insert new floor
         */
@@ -320,7 +328,12 @@ class postUpdateMallTestArtemisVersion extends TestCase
     {
         $this->setDataMall();
 
-        $floor_array = ["{\"name\":\"B3\",\"order\":\"0\"}","{\"name\":\"B2\",\"order\":\"1\"}","{\"name\":\"B3\",\"order\":\"2\"}","{\"name\":\"L1\",\"order\":\"3\"}"];
+        $floor_array = [
+                "{\"id\":\"{$this->fl_b3->object_id}\",\"name\":\"{$this->fl_b3->object_name}\",\"order\":\"0\"}",
+                "{\"id\":\"{$this->fl_b2->object_id}\",\"name\":\"{$this->fl_b2->object_name}\",\"order\":\"1\"}",
+                "{\"name\":\"B3\",\"order\":\"2\"}",
+                "{\"name\":\"L1\",\"order\":\"3\"}",
+            ];
 
         /*
         * test insert duplicate floor name
@@ -357,8 +370,10 @@ class postUpdateMallTestArtemisVersion extends TestCase
     {
         $this->setDataMall();
 
-        $floor_array = ["{\"name\":\"B3\",\"order\":\"0\"}","{\"name\":\"B2\",\"order\":\"1\"}"];
-
+        $floor_array = [
+                "{\"id\":\"{$this->fl_b3->object_id}\",\"name\":\"{$this->fl_b3->object_name}\",\"order\":\"0\"}",
+                "{\"id\":\"{$this->fl_b2->object_id}\",\"name\":\"{$this->fl_b2->object_name}\",\"order\":\"1\"}",
+            ];
         /*
         * test delete floor will error when link to tenant
         */
