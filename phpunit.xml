@@ -52,6 +52,8 @@
             <file>./app/tests/api/v1/coupon/getCouponListAngularCITest.php</file>
             <file>./app/tests/api/v1/coupon/getCouponItemAngularCITest.php</file>
             <file>./app/tests/api/v1/mall/getMallIdByDomainAngularCITest.php</file>
+            <file>./app/tests/api/v1/user/getMyAccountInfoCIAngularTest.php</file>
+            <file>./app/tests/api/v1/campaign/getCampaignPopupAngularCITest.php</file>
             <file>./app/tests/api/v1/widget/getSearchWidgetTest.php</file>
             <file>./app/tests/api/v1/widget/getSearchWidgetAngularCITest.php</file>
             <file>./app/tests/api/v1/tenant/getSearchTenantStoreAndServiceTest.php</file>
@@ -69,6 +71,7 @@
             <file>./app/tests/api/v1/mall/postUpdateMallTestArtemisVersion.php</file>
             <file>./app/tests/api/v1/news/getNewsListMobileCITest.php</file>
             <file>./app/tests/api/v1/news/getNewsDetailMobileCITest.php</file>
+            <file>./app/tests/api/v1/user/getConsumerListingTestArtemisVersion.php</file>
         </testsuite>
     </testsuites>
 </phpunit>
