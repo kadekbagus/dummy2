@@ -40,6 +40,7 @@ return array(
     'AlterTableMerchantsAddCiDomain' => $baseDir . '/app/database/migrations/2016_03_29_091528_alter_table_merchants_add_ci_domain.php',
     'AlterTableMerchantsAddColumnOperatingHours' => $baseDir . '/app/database/migrations/2016_06_21_042057_alter_table_merchants_add_column_operating_hours.php',
     'AlterTableMerchantsAddColumnTimezoneId' => $baseDir . '/app/database/migrations/2015_10_18_043247_alter_table_merchants_add_column_timezone_id.php',
+    'AlterTableMerchantsAddFieldFloorId' => $baseDir . '/app/database/migrations/2016_06_21_040114_alter_table_merchants_add_field_floor_id.php',
     'AlterTableNewsAddFieldCampaignStatusId' => $baseDir . '/app/database/migrations/2016_02_25_060119_alter_table_news_add_field_campaign_status_id.php',
     'AlterTableNewsAddFieldIsAllGenderIsAllAgeIsPopup' => $baseDir . '/app/database/migrations/2015_12_29_042349_alter_table_news_add_field_is_all_gender_is_all_age_is_popup.php',
     'AlterTableObjectsAddColumnObjectOrder' => $baseDir . '/app/database/migrations/2015_10_20_100000_alter_table_objects_add_column_object_order.php',
