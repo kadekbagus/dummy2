@@ -9,7 +9,7 @@ use OrbitShop\API\v1\ControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
-use DominoPOS\OrbitSession\Session as OrbitSession;
+use DominoPOS\OrbitSession\Session;
 use DominoPOS\OrbitSession\SessionConfig;
 use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\ACL\Exception\ACLForbiddenException;
@@ -227,6 +227,13 @@ class LoginAPIController extends IntermediateBaseController
         return $users;
     }
 
+    /**
+     * Handle Google SignIn
+     *
+     * Every google sign in goes here (MobileCI, Gotomalls.com, DesktopCI(AngularCI))
+     * @author Ahmad <ahmad@dominopos.com>
+     *
+     */
     public function getGoogleCallbackView()
     {
         $oldRouteSessionConfigValue = Config::get('orbit.session.availability.query_string');
@@ -235,10 +242,10 @@ class LoginAPIController extends IntermediateBaseController
         $recognized = \Input::get('recognized', 'none');
         $code = \Input::get('code', NULL);
         $state = \Input::get('state', NULL);
-        $caller_url = OrbitInput::get('from_url', NULL);
+        $caller_url = OrbitInput::get('from_url', NULL); // this input using route-name
         $caller_url = ! is_null($caller_url) ? URL::route($caller_url) : Config::get('orbit.shop.after_social_sign_in');
-        $encoded_caller_url_full = OrbitInput::get('from_url_full', NULL);
-        $encoded_redirect_to_url = OrbitInput::get('to_url', NULL);
+        $encoded_caller_url_full = OrbitInput::get('from_url_full', NULL); // this input using full-url
+        $encoded_redirect_to_url = OrbitInput::get('to_url', NULL); // this input using full-url
         $mall_id = OrbitInput::get('mid', NULL);
         $angular_ci = OrbitInput::get('aci', NULL);
 
@@ -263,7 +270,7 @@ class LoginAPIController extends IntermediateBaseController
                 // to set the session and other things
                 if (! empty($mall_id_from_state)) {
                     $_GET['caller_url'] = $caller_url;
-                    $_GET['redirect_to_url'] = $redirect_to_url;
+                    $_GET['redirect_to_url'] = $encoded_redirect_to_url;
                     $_GET['state'] = $state;
                     $_GET['code'] = $code;
                     $_GET['mall_id'] = $mall_id_from_state;
@@ -328,7 +335,6 @@ class LoginAPIController extends IntermediateBaseController
                         return Redirect::to(Config::get('orbit.shop.after_social_sign_in'));
                     }
                     // request coming from angular-ci
-
                     return Redirect::to(urldecode($redirect_to_url_from_state));
                 }
             } catch (Exception $e) {
@@ -378,9 +384,40 @@ class LoginAPIController extends IntermediateBaseController
         }   
     }
 
+    protected function getFacebookError($encoded_caller_url = NULL)
+    {
+        // error=access_denied&
+        // error_code=200&
+        // error_description=Permissions+error
+        // &error_reason=user_denied
+        // &state=28d0463ac4dc53131ae19826476bff74#_=_
+        $fbError = 'Unknown Error';
+
+        $errorDesc = \Input::get('error_description', NULL);
+        if (! is_null($errorDesc)) {
+            $fbError = $errorDesc;
+        }
+        $caller_url = Config::get('orbit.shop.after_social_sign_in');
+        if (! empty($encoded_caller_url)) {
+            $caller_url = urldecode($encoded_caller_url);
+        }
+        $errorMessage = 'Facebook Error: ' . $fbError;
+        $parsed_caller_url = parse_url((string)$caller_url);
+        if (isset($parsed_caller_url['query'])) {
+            $caller_url .= '&error=' . $errorMessage;
+        } else {
+            $caller_url .= '?error=' . $errorMessage;
+        }
+        return Redirect::to($caller_url);
+    }
+
     public function getSocialLoginCallbackView()
     {
         $recognized = \Input::get('recognized', 'none');
+        $encoded_caller_url = \Input::get('caller_url', NULL);
+        $encoded_redirect_to_url = \Input::get('redirect_to_url', NULL);
+        $angular_ci = \Input::get('aci', FALSE);
+
         // error=access_denied&
         // error_code=200&
         // error_description=Permissions+error
@@ -392,18 +429,25 @@ class LoginAPIController extends IntermediateBaseController
         $country = '';
 
         if (! is_null($error)) {
+            if ($angular_ci) {
+                return $this->getFacebookError($encoded_caller_url);
+            }
             return $this->getFacebookError();
         }
 
         $orbit_origin = \Input::get('orbit_origin', 'facebook');
+
+        // set the query session string to FALSE, so the CI will depend on session cookie
+        Config::set('orbit.session.availability.query_string', FALSE);
+
         $config = new SessionConfig(Config::get('orbit.session'));
         $config->setConfig('application_id', static::APPLICATION_ID);
 
         try {
-            $this->session = new OrbitSession($config);
-            $this->session->start();
+            $this->session = new Session($config);
+            $this->session->start(array(), 'no-session-creation');
         } catch (Exception $e) {
-            
+            $this->session->start();
         }
 
         $fb = new \Facebook\Facebook([
@@ -470,6 +514,9 @@ class LoginAPIController extends IntermediateBaseController
         // There is a chance that user not 'grant' his email while approving our app
         // so we double check it here
         if (empty($userEmail)) {
+            if ($angular_ci) {
+                return Redirect::to(urldecode($encoded_caller_url) . '/#/?error=no_email');
+            }
             return Redirect::to(Config::get('orbit.shop.after_social_sign_in') . '/#/?error=no_email');
         }
 
@@ -491,20 +538,30 @@ class LoginAPIController extends IntermediateBaseController
         setcookie('orbit_firstname', $firstName, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
         setcookie('login_from', 'Facebook', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
 
-        // todo can we not do this directly
+        if ($angular_ci) {
+            return Redirect::to(urldecode($encoded_redirect_to_url));
+        }
         return Redirect::to(Config::get('orbit.shop.after_social_sign_in'));
     }
 
     /**
-     * Handles social login POST
+     * Handle Facebook SignIn
+     *
+     * Some facebook sign in goes here (Gotomalls.com and DesktopCI(AngularCI), MobileCI is on MobileCIAPIController)
+     * @author Ahmad <ahmad@dominopos.com>
+     *
      */
     public function postSocialLoginView()
     {
+        $encoded_caller_url_full = OrbitInput::post('from_url_full', NULL);
+        $encoded_redirect_to_url = OrbitInput::post('to_url', NULL);
+        $angular_ci = OrbitInput::post('aci', FALSE);
+
         $config = new SessionConfig(Config::get('orbit.session'));
         $config->setConfig('application_id', static::APPLICATION_ID);
 
         try {
-            $this->session = new OrbitSession($config);
+            $this->session = new Session($config);
             $this->session->start();
         } catch (Exception $e) {
 
@@ -519,7 +576,14 @@ class LoginAPIController extends IntermediateBaseController
 
         $helper = $fb->getRedirectLoginHelper();
         $permissions = Config::get('orbit.social.facebook.scope', ['email', 'public_profile']);
-        $facebookCallbackUrl = URL::route('pub.social_login_callback', ['orbit_origin' => 'facebook', 'from_captive' => OrbitInput::post('from_captive'), 'mac_address' => \Input::get('mac_address', '')]);
+        $facebookCallbackUrl = URL::route('pub.social_login_callback', [
+            'orbit_origin' => 'facebook',
+            'from_captive' => OrbitInput::post('from_captive'),
+            'mac_address' => \Input::get('mac_address', ''),
+            'caller_url' => $encoded_caller_url_full,
+            'redirect_to_url' => $encoded_redirect_to_url,
+            'aci' => $angular_ci,
+        ]);
 
         // This is to re-popup the permission on login in case some of the permissions revoked by user
         $rerequest = '&auth_type=rerequest';
