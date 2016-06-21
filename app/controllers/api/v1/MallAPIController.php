@@ -222,6 +222,7 @@ class MallAPIController extends ControllerAPI
      * @param string     `slavebox_number`         (optional) - Slavebox number
      * @param string     `mobile_default_language` (optional) - Mobile default language
      * @param string     `pos_language`            (optional) - POS language
+     * @param string     `operating_hours`         (optional) - Mall operating hours
      * @param file       `images`                  (optional) - Merchant logo
      *
      * @return Illuminate\Support\Facades\Response
@@ -308,6 +309,7 @@ class MallAPIController extends ControllerAPI
             $geo_point_longitude = OrbitInput::post('geo_point_longitude');
             $geo_area = OrbitInput::post('geo_area');
             $free_wifi_status = OrbitInput::post('free_wifi_status', 'inactive');
+            $operating_hours = OrbitInput::post('operating_hours');
 
             // for a while this declaration with default value
             $widgets = OrbitInput::post('widgets', $this->default['widgets']);
@@ -471,6 +473,7 @@ class MallAPIController extends ControllerAPI
             $newmall->contact_person_phone2 = $contact_person_phone2;
             $newmall->contact_person_email = $contact_person_email;
             $newmall->sector_of_activity = $sector_of_activity;
+            $newmall->operating_hours = $operating_hours;
             $newmall->object_type = $object_type;
             if (empty($parent_id)) {
                 $newmall->parent_id = null;
@@ -1417,6 +1420,7 @@ class MallAPIController extends ControllerAPI
      * @param string     `is_delete`                (optional) - Soft delete flag. Valid value: Y.
      * @param string     `ticket_header`            (optional) - Ticket header
      * @param string     `ticket_footer`            (optional) - Ticket footer
+     * @param string     `operating_hours`          (optional) - Mall operating hours
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -1602,6 +1606,10 @@ class MallAPIController extends ControllerAPI
 
             OrbitInput::post('description', function($description) use ($updatedmall) {
                 $updatedmall->description = $description;
+            });
+
+            OrbitInput::post('operating_hours', function($operating_hours) use ($updatedmall) {
+                $updatedmall->operating_hours = $operating_hours;
             });
 
             OrbitInput::post('address_line1', function($address_line1) use ($updatedmall) {
