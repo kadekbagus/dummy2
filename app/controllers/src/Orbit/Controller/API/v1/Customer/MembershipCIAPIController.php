@@ -101,20 +101,6 @@ class MembershipCIAPIController extends BaseAPIController
                 if(count($_membership->membership_numbers) <= 0) {
                     $membership = null;
                 }
-
-                if ($membership !== null) {
-                    if (count($_membership->membership_numbers[0]->membership->media) <= 0) {
-                        $membership->membership_numbers[0]->membership->media = null;
-
-                        if(count($_membership->membership_numbers) > 1) {
-                            foreach($_membership->membership_numbers as $key => $value) {
-                                if($key != 0) {
-                                   unset($membership->membership_numbers[$key]); 
-                                }
-                            }
-                        }
-                    }
-                }
             }
 
             $data = new \stdclass();
