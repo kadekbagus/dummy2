@@ -1564,6 +1564,8 @@ class TenantAPIController extends ControllerAPI
                 }
             }
 
+            $prefix = DB::getTablePrefix();
+
             // Builder object
             // if flag limit is true then show only merchant_id and name to make the frontend life easier
             // TODO : remove this with something like is_all_retailer just like on orbit-shop
@@ -1577,17 +1579,15 @@ class TenantAPIController extends ControllerAPI
                 $facebookSocmedId = SocialMedia::whereSocialMediaCode('facebook')->first()->social_media_id;
 
                 $tenants = TenantStoreAndService::with('link_to_tenant')
-                                 ->select('merchants.*', DB::raw('CONCAT(floor, " - ", unit) AS location'), 'merchant_social_media.social_media_uri as facebook_uri')
+                                 ->select('merchants.*', DB::raw("CONCAT({$prefix}objects.object_name, \" - \", unit) AS location"), 'merchant_social_media.social_media_uri as facebook_uri')
                                  // A left join to get tenants' Facebook URIs
                                  ->leftJoin('merchant_social_media', function ($join) use ($facebookSocmedId) {
                                     $join->on('merchants.merchant_id', '=', 'merchant_social_media.merchant_id')
                                         ->where('social_media_id', '=', $facebookSocmedId);
                                     })
-
+                                 ->leftJoin('objects', 'objects.object_id', '=', 'merchants.floor_id')
                                  ->excludeDeleted('merchants');
             }
-
-            $prefix = DB::getTablePrefix();
 
             if ($this->returnBuilder) {
                 $tenants->addSelect(DB::raw("GROUP_CONCAT(`{$prefix}categories`.`category_name` ORDER BY category_name ASC SEPARATOR ', ') as tenant_categories"))
@@ -1859,7 +1859,7 @@ class TenantAPIController extends ControllerAPI
             // Filter tenant by floor
             OrbitInput::get('floor_like', function($floor) use ($tenants)
             {
-                $tenants->where('merchants.floor', 'like', "%$floor%");
+                $tenants->where('objects.object_name', 'like', "%$floor%");
             });
 
             // Filter tenant by unit
