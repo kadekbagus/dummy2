@@ -191,6 +191,9 @@ return array(
 
         // will be used to determine the domain in angular ci
         'main_domain' => 'gotomalls.cool',
+
+        // will be used to determine the domain in mobile ci
+        'ci_domain' => 'gotomalls.cool',
     ),
 
     // General contact data
@@ -202,8 +205,8 @@ return array(
             'fax'   => '+62123456789',
             'office_hour'   => '9am - 6pm'
         ),
-        'privacy_policy_url' => '',
-        'terms_of_service_url' => '',
+        'privacy_policy_url' => 'http://dominopos.com/privacy-policy.html',
+        'terms_of_service_url' => 'http://dominopos.com/terms-and-conditions.html',
     ),
 
     // Lucky Draw

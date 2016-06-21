@@ -52,7 +52,10 @@ class News extends Eloquent
 
     public function campaignLocations()
     {
+        $prefix = DB::getTablePrefix();
         return $this->belongsToMany('CampaignLocation', 'news_merchant', 'news_id', 'merchant_id')
+                ->select('merchants.*', DB::raw("IF({$prefix}merchants.object_type = 'tenant', (select language_id from {$prefix}languages where name = pm.mobile_default_language), (select language_id from {$prefix}languages where name = {$prefix}merchants.mobile_default_language)) as default_language"))
+                ->leftjoin('merchants as pm', DB::raw("pm.merchant_id"), '=', 'merchants.parent_id')
             ->withPivot('object_type');
     }
 
