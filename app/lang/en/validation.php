@@ -330,6 +330,7 @@ return array(
             'english_language' => 'Campaign content in English language is required',
             'mall_status' => 'Mall status you specified is not found',
             'tenant_type' => 'Tenant type you specified is not found : the valid values are: tenant, service',
+            'floor' => 'The Floor you specified is not found',
         ),
         'queryerror' => 'Database query error, turn on debug mode to see the full query',
         'jsonerror'  => array(
