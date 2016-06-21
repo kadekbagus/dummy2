@@ -75,11 +75,11 @@ class postUpdateTenantTestArtemisVersion extends TestCase
         * test set Tenant Floor
         */
         $data = [
-            'retailer_id'            => $this->tenant->merchant_id, // tenant_id
-            'current_mall'           => $this->mall_a->merchant_id, // parent_id
-            'parent_id'              => $this->mall_a->merchant_id, // parent_id
+            'retailer_id'         => $this->tenant->merchant_id, // tenant_id
+            'current_mall'        => $this->mall_a->merchant_id, // parent_id
+            'parent_id'           => $this->mall_a->merchant_id, // parent_id
             'id_language_default' => $this->enLang->language_id,
-            'floor_id'               => $this->floor_b2->object_id,
+            'floor_id'            => $this->floor_b2->object_id,
         ];
 
         $response = $this->setRequestPostUpdateTenant($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
@@ -87,5 +87,24 @@ class postUpdateTenantTestArtemisVersion extends TestCase
         $this->assertSame("success", $response->status);
         $this->assertSame($this->floor_b2->object_name, $response->data->floor);
         $this->assertSame($this->floor_b2->object_id, $response->data->floor_id);
+    }
+
+    public function testErrorUpdateFloor()
+    {
+        /*
+        * test set Tenant Floor
+        */
+        $data = [
+            'retailer_id'         => $this->tenant->merchant_id, // tenant_id
+            'current_mall'        => $this->mall_a->merchant_id, // parent_id
+            'parent_id'           => $this->mall_a->merchant_id, // parent_id
+            'id_language_default' => $this->enLang->language_id,
+            'floor_id'            => 'dsfa4474',
+        ];
+
+        $response = $this->setRequestPostUpdateTenant($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("The Floor you specified is not found", $response->message);
     }
 }

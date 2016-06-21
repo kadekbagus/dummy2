@@ -77,4 +77,25 @@ class postNewTenantTestArtemisVersion extends TestCase
         $this->assertSame($this->floor->object_name, $response->data->floor);
         $this->assertSame($this->floor->object_id, $response->data->floor_id);
     }
+
+    public function testErrorSetTenantFloor()
+    {
+        /*
+        * test set Tenant Floor
+        */
+        $data = [
+            'merchant_id'         => $this->mall_a->merchant_id,
+            'id_language_default' => $this->enLang->language_id,
+            'name'                => 'tenant 1',
+            'external_object_id'  => 0,
+            'object_type'         => 'tenant',
+            'floor_id'            => '35sdf',
+            'status'              => 'active'
+        ];
+
+        $response = $this->setRequestPostNewTenant($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("The Floor you specified is not found", $response->message);
+    }
 }
