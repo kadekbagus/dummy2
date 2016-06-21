@@ -20,3 +20,10 @@ $factory('Setting', [
     'status' => 'active',
 ]);
 
+$factory('Setting', 'enable_membership_card', [
+	'setting_name' => 'enable_membership_card',
+    'setting_value' => 'true',
+    'object_id' => 'factory:Mall',
+    'object_type' => 'merchant',
+    'status' => 'active',
+]);
