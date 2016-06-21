@@ -458,7 +458,7 @@ class TenantAPIController extends ControllerAPI
             $box_url = OrbitInput::post('box_url');
             $masterbox_number = OrbitInput::post('masterbox_number');
             $slavebox_number = OrbitInput::post('slavebox_number');
-            $floor = OrbitInput::post('floor');
+            $floor_id = OrbitInput::post('floor_id');
             $unit = OrbitInput::post('unit');
             $external_object_id = OrbitInput::post('external_object_id');
             $category_ids = OrbitInput::post('category_ids');
@@ -479,6 +479,7 @@ class TenantAPIController extends ControllerAPI
                     'url'                 => $url,
                     'phone'               => $phone,
                     'masterbox_number'    => $masterbox_number,
+                    'floor_id'            => $floor_id,
                 ),
                 array(
                     'name'                => 'required',
@@ -492,6 +493,7 @@ class TenantAPIController extends ControllerAPI
                     'url'                 => 'orbit.empty.for_tenant_only:' . $object_type . '|orbit.formaterror.url.web',
                     'phone'               => array('orbit.empty.for_tenant_only:' . $object_type,'regex:/^\+?\d+$/'),
                     'masterbox_number'    => 'orbit.empty.for_tenant_only:' . $object_type . '|alpha_num|orbit_unique_verification_number:' . $parent_id . ',' . '',
+                    'floor_id'           => 'orbit.empty.floor:' . $parent_id,
                 ),
                 array(
                     //ACL::throwAccessForbidden($message);
@@ -549,6 +551,8 @@ class TenantAPIController extends ControllerAPI
                                 ->where('name', '=', 'en')
                                 ->first();
 
+            $floor_db = App::make('orbit.empty.floor');
+
             $newtenant = new TenantStoreAndService();
             $newtenant->omid = '';
             $newtenant->orid = '';
@@ -587,7 +591,10 @@ class TenantAPIController extends ControllerAPI
             $newtenant->masterbox_number = $masterbox_number;
             $newtenant->slavebox_number = $slavebox_number;
             $newtenant->modified_by = $this->api->user->user_id;
-            $newtenant->floor = $floor;
+            if (count($floor_db) > 0) {
+                $newtenant->floor = $floor_db->object_name;
+                $newtenant->floor_id = $floor_db->object_id;
+            }
             $newtenant->unit = $unit;
             $newtenant->external_object_id = $external_object_id;
             $newtenant->box_url = $box_url;
@@ -926,7 +933,7 @@ class TenantAPIController extends ControllerAPI
             $default_merchant_language_id = MerchantLanguage::getLanguageIdByMerchant($mall_id, static::DEFAULT_LANG);
             $id_language_default = OrbitInput::post('id_language_default', $default_merchant_language_id);
 
-            $floor = OrbitInput::post('floor');
+            $floor_id = OrbitInput::post('floor_id');
             $unit = OrbitInput::post('unit');
             $phone = OrbitInput::post('phone');
             $object_type = OrbitInput::post('object_type');
@@ -948,6 +955,7 @@ class TenantAPIController extends ControllerAPI
                     'box_url'             => $box_url,
                     'id_language_default' => $id_language_default,
                     'phone'               => $phone,
+                    'floor_id'            => $floor_id,
                 ),
                 array(
                     'current_mall'     => 'orbit.empty.mall',
@@ -960,6 +968,7 @@ class TenantAPIController extends ControllerAPI
                     'masterbox_number' => 'orbit.empty.for_tenant_only:' . $object_type . '|alpha_num|orbit_unique_verification_number:' . $mall_id . ',' . $retailer_id,
                     'category_ids'     => 'array',
                     'phone'            => array('regex:/^\+?\d+$/','orbit.empty.for_tenant_only:' . $object_type),
+                    'floor_id'     => 'orbit.empty.floor:' . $parent_id,
                 ),
                 array(
                     'email_exists_but_me' => Lang::get('validation.orbit.exists.email'),
@@ -1129,8 +1138,12 @@ class TenantAPIController extends ControllerAPI
                 $updatedtenant->masterbox_number = $masterbox_number;
             });
 
-            OrbitInput::post('floor', function($floor) use ($updatedtenant) {
-                $updatedtenant->floor = $floor;
+            OrbitInput::post('floor_id', function($floor_id) use ($updatedtenant) {
+                $floor_db = App::make('orbit.empty.floor');
+                if (count($floor_db) > 0) {
+                    $updatedtenant->floor = $floor_db->object_name;
+                    $updatedtenant->floor_id = $floor_db->object_id;
+                }
             });
 
             OrbitInput::post('unit', function($unit) use ($updatedtenant) {
@@ -2831,6 +2844,24 @@ class TenantAPIController extends ControllerAPI
             }
 
             App::instance('orbit.exists.tenant_id', $retailertenant);
+
+            return TRUE;
+        });
+
+        Validator::extend('orbit.empty.floor', function ($attribute, $value, $parameters) {
+            $merchant_id = $parameters[0];
+
+            $floor = Object::excludeDeleted()
+                        ->where('object_id', $value)
+                        ->where('object_type', 'floor')
+                        ->where('merchant_id', $merchant_id)
+                        ->first();
+
+            if (! count($floor) > 0) {
+                return FALSE;
+            }
+
+            App::instance('orbit.empty.floor', $floor);
 
             return TRUE;
         });
