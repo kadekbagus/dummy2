@@ -2107,7 +2107,7 @@ class MallAPIController extends ControllerAPI
 
                                 if (count($will_del_floor) > 0) {
                                     $tenant = Tenant::excludeDeleted()
-                                                ->where('floor', $floor->name)
+                                                ->where('floor_id', $will_del_floor->object_id)
                                                 ->where('parent_id', $updatedmall->merchant_id)
                                                 ->first();
                                     if (count($tenant) > 0) {
@@ -2118,7 +2118,7 @@ class MallAPIController extends ControllerAPI
                                     $delete_floor = Object::excludeDeleted()
                                                   ->where('object_type', 'floor')
                                                   ->where('merchant_id', $updatedmall->merchant_id)
-                                                  ->where('object_id', $floor->id)
+                                                  ->where('object_id', $will_del_floor->object_id)
                                                   ->update(["status" => "deleted"]);
                                 }
                             }
@@ -2146,7 +2146,8 @@ class MallAPIController extends ControllerAPI
                                                     ->first();
 
                                 if (count($exist_floor) > 0) {
-                                    // update order
+                                    // update name and order
+                                    $exist_floor->object_name = $floor->name;
                                     $exist_floor->object_order = $floor->order;
                                     $exist_floor->save();
                                 }
