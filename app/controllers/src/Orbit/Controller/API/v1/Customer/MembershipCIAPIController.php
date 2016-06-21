@@ -77,31 +77,17 @@ class MembershipCIAPIController extends BaseAPIController
                 $setting->setting_value = 'false';
             } 
 
-            if ($setting->setting_value === 'true') {
-                $membership = User::with([
-                'membershipNumbers' => function($q) use ($mallId) {
-                    $q->select('membership_numbers.*')
-                        ->with('membership.media')
-                        ->join('memberships', 'memberships.membership_id', '=', 'membership_numbers.membership_id')
-                        ->excludeDeleted('membership_numbers')
-                        ->excludeDeleted('memberships')
-                        ->where('memberships.merchant_id', $mallId);
-                }])
-                ->where('user_id', $user->user_id)
-                ->whereHas('role', function($q) {
-                    $q->where('role_name', 'Consumer');
-                })
-                ->first();
-            } else {
-                $membership = null;
-            }
-
-            if ($membership !== null) {
-                $_membership = clone($membership);
-                if(count($_membership->membership_numbers) <= 0) {
-                    $membership = null;
-                }
-            }
+            $membership =  User::select('users.user_id', 'user_firstname', 'user_lastname', 'membership_numbers.membership_number', 'memberships.membership_name', 'media.path')
+                           ->leftJoin('membership_numbers','membership_numbers.user_id','=','users.user_id')
+                           ->leftJoin('memberships', 'memberships.membership_id', '=', 'membership_numbers.membership_id')
+                            ->leftJoin('media', function ($join) {
+                                     $join->on('media.object_id', '=', 'memberships.membership_id')
+                                          ->where('media.object_name', '=', 'membership')
+                                          ->where('media.media_name_long', '=', 'membership_image_orig');
+                              })
+                           ->where('memberships.merchant_id', '=', $mallId)
+                           ->where('users.user_id', '=', $user->user_id)
+                           ->first();
 
             $data = new \stdclass();
             $data->membership_enable = $setting->setting_value;
