@@ -106,6 +106,24 @@ class getMembershipCITest extends TestCase
         $this->assertRegExp('/Mall ID you specified is not found/i', $response->message);
     }
 
+    public function testMembershipDisabled()
+    {
+        // test membership disabled 
+        $mall = Factory::create('Mall');
+        $setting = Factory::create('enable_membership_card', ['object_id' => $mall->merchant_id, 'setting_value' => 'false']);
+        $data = array('mall_id' => $mall->merchant_id);
+
+        $authData = Factory::create('Apikey');
+        $response = $this->makeRequest($data, $authData);
+
+        $this->assertSame(0, $response->code);
+        $this->assertSame('success', $response->status);
+        $this->assertRegExp('/ok/i', $response->message);
+
+        $this->assertSame('false', $response->data->membership_enable);
+        $this->assertSame(null, $response->data->membership_data);
+    }
+
     public function testMembershipEnabledUserGuest()
     {
         // test membership enabled with user guest login
@@ -164,8 +182,7 @@ class getMembershipCITest extends TestCase
         $this->assertSame($customer1->user_id, $response->data->membership_data->user_id);
         $this->assertSame($customer1->user_firstname, $response->data->membership_data->user_firstname);
         $this->assertSame($customer1->user_lastname, $response->data->membership_data->user_lastname);
-        $this->assertSame($membershipNumber->membership_number, (int)$response->data->membership_data->membership_numbers[0]->membership_number);
-        $this->assertSame($membership->membership_id, $response->data->membership_data->membership_numbers[0]->membership->membership_id);
+        $this->assertSame($membershipNumber->membership_number, (int)$response->data->membership_data->membership_number);
     }
 
     public function testGetMembershipWithMedia()
@@ -177,7 +194,11 @@ class getMembershipCITest extends TestCase
         $apikey = Factory::create('Apikey', ['user_id' => $customer1->user_id]);
         $membership = Factory::create('Membership', ['merchant_id' => $mall->merchant_id]);
         $membershipNumber = Factory::create('MembershipNumber', ['user_id' => $customer1->user_id, 'membership_id' => $membership->membership_id]);
-        $media = Factory::create('Media', ['media_name_id' => 'membership_image', 'object_id' => $membership->membership_id, 'object_name' => 'membership']);
+        $media = Factory::create('Media', ['media_name_id' => 'membership_image', 
+                                           'object_id' => $membership->membership_id, 
+                                           'object_name' => 'membership', 
+                                           'media_name_long' => 'membership_image_orig', 
+                                           'path' => '/uploads/membership/2123.png']);
 
         $data = array('mall_id' => $mall->merchant_id);
         $response = $this->makeRequest($data, $apikey);
@@ -190,11 +211,69 @@ class getMembershipCITest extends TestCase
         $this->assertSame($customer1->user_id, $response->data->membership_data->user_id);
         $this->assertSame($customer1->user_firstname, $response->data->membership_data->user_firstname);
         $this->assertSame($customer1->user_lastname, $response->data->membership_data->user_lastname);
-        $this->assertSame($membershipNumber->membership_number, (int)$response->data->membership_data->membership_numbers[0]->membership_number);
-        $this->assertSame($membership->membership_id, $response->data->membership_data->membership_numbers[0]->membership->membership_id);
+        $this->assertSame($membershipNumber->membership_number, (int)$response->data->membership_data->membership_number);
+        $this->assertSame($membership->membership_name, $response->data->membership_data->membership_name);
+        $this->assertSame($media->path, $response->data->membership_data->path);
+    }
 
-        $this->assertSame($media->media_id, $response->data->membership_data->membership_numbers[0]->membership->media[0]->media_id);
-        $this->assertSame($media->object_id, $response->data->membership_data->membership_numbers[0]->membership->media[0]->object_id);
-        $this->assertSame($media->path, $response->data->membership_data->membership_numbers[0]->membership->media[0]->path);
+    public function testMembershipMoreThanOne()
+    {
+        // right now one user have one membership on the same mall
+        // this test is for user with more than one membership but on different mall
+        $mall1 = Factory::create('Mall');
+        $mall2 = Factory::create('Mall');
+
+        $setting1 = Factory::create('enable_membership_card', ['object_id' => $mall1->merchant_id]);
+        $setting2 = Factory::create('enable_membership_card', ['object_id' => $mall2->merchant_id]);
+
+        $customer1 = Factory::create('user_consumer');
+        $apikey = Factory::create('Apikey', ['user_id' => $customer1->user_id]);
+        $membership1 = Factory::create('Membership', ['merchant_id' => $mall1->merchant_id]);
+        $membership2 = Factory::create('Membership', ['merchant_id' => $mall2->merchant_id]);
+
+        $membershipNumber1 = Factory::create('MembershipNumber', ['user_id' => $customer1->user_id, 'membership_id' => $membership1->membership_id]);
+        $membershipNumber2 = Factory::create('MembershipNumber', ['user_id' => $customer1->user_id, 'membership_id' => $membership2->membership_id]);
+
+        $media1 = Factory::create('Media', ['media_name_id' => 'membership_image', 
+                                            'object_id' => $membership1->membership_id, 
+                                            'object_name' => 'membership', 
+                                            'media_name_long' => 'membership_image_orig', 
+                                            'path' => '/uploads/membership/mall1.png']);
+
+        $media2 = Factory::create('Media', ['media_name_id' => 'membership_image', 
+                                            'object_id' => $membership2->membership_id, 
+                                            'object_name' => 'membership', 
+                                            'media_name_long' => 'membership_image_orig', 
+                                            'path' => '/uploads/membership/mall2.png']);
+
+        // should return membership from mall1
+        $data = array('mall_id' => $mall1->merchant_id);
+        $response = $this->makeRequest($data, $apikey);
+
+        $this->assertSame(0, $response->code);
+        $this->assertSame('success', $response->status);
+        $this->assertRegExp('/ok/i', $response->message);
+
+        $this->assertSame('true', $response->data->membership_enable);
+        $this->assertSame($customer1->user_id, $response->data->membership_data->user_id);
+        $this->assertSame($customer1->user_firstname, $response->data->membership_data->user_firstname);
+        $this->assertSame($customer1->user_lastname, $response->data->membership_data->user_lastname);
+        $this->assertSame($membershipNumber1->membership_number, (int)$response->data->membership_data->membership_number);
+        $this->assertSame($media1->path, $response->data->membership_data->path);
+
+        // should return membership from mall2
+        $data = array('mall_id' => $mall2->merchant_id);
+        $response = $this->makeRequest($data, $apikey);
+
+        $this->assertSame(0, $response->code);
+        $this->assertSame('success', $response->status);
+        $this->assertRegExp('/ok/i', $response->message);
+
+        $this->assertSame('true', $response->data->membership_enable);
+        $this->assertSame($customer1->user_id, $response->data->membership_data->user_id);
+        $this->assertSame($customer1->user_firstname, $response->data->membership_data->user_firstname);
+        $this->assertSame($customer1->user_lastname, $response->data->membership_data->user_lastname);
+        $this->assertSame($membershipNumber2->membership_number, (int)$response->data->membership_data->membership_number);
+        $this->assertSame($media2->path, $response->data->membership_data->path);
     }
 }
