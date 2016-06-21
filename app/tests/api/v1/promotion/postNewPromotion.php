@@ -2,7 +2,7 @@
 /**
  * PHP Unit Test for PromotionApiController#postNewPromotion
  *
- * @author: Yudi Rahono <yudi.rahono@dominopos.com>
+ * @author: Shelgi Prasetyo <shelgi@dominopos.com>
  */
 use DominoPOS\OrbitAPI\v10\StatusInterface as Status;
 use OrbitShop\API\v1\Helper\Generator;
