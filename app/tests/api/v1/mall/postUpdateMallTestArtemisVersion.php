@@ -73,7 +73,7 @@ class postUpdateMallTestArtemisVersion extends TestCase
 
         Factory::create('Tenant', ['name' => 'tenant firman', 'floor_id' => $this->fl_b1->object_id, 'parent_id' => $mall_c->merchant_id]);
 
-        $this->mall_d = Factory::create('Mall', ['ci_domain' => 'lippomall.gotomalls.com']);
+        $this->mall_d = Factory::create('Mall', ['ci_domain' => 'lippomall.gotomalls.cool']);
         Factory::create('Setting', ['setting_name' => 'dom:lippomall.gotomalls.com', 'setting_value' => $this->mall_d->merchant_id]);
     }
 
@@ -473,5 +473,47 @@ class postUpdateMallTestArtemisVersion extends TestCase
         $this->assertSame(14, $response->code);
         $this->assertSame("error", $response->status);
         $this->assertSame("The domain may only contain letters, numbers, and dashes", $response->message);
+    }
+
+    public function testUpdateDuplicateSubdomain()
+    {
+        $this->setDataMall();
+
+        $mall_xx = Factory::create('Mall', ['ci_domain' => 'seminyak.gotomalls.cool']);
+
+        $subdomain = 'seminyak';
+
+        /*
+        * test update duplicate subdomain
+        */
+        $data = ['merchant_id' => $this->mall_d->merchant_id,
+            'domain'    => $subdomain
+        ];
+
+        $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("Mall URL Application Domain name has already been taken", $response->message);
+    }
+
+    public function testUpdateDuplicateSubdomainButNotMe()
+    {
+        $this->setDataMall();
+
+        $mall_xx = Factory::create('Mall', ['ci_domain' => 'seminyak.gotomalls.cool']);
+
+        $subdomain = 'lippomall';
+
+        /*
+        * test update duplicate subdomain
+        */
+        $data = ['merchant_id' => $this->mall_d->merchant_id,
+            'domain'    => $subdomain
+        ];
+
+        $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
+        $this->assertSame($subdomain . Config::get('orbit.shop.ci_domain'), $response->data->ci_domain);
     }
 }

@@ -2913,14 +2913,6 @@ class UserAPIController extends ControllerAPI
                                                             ->where('object_type', 'category')
                                                             ->join('categories', 'categories.category_id', '=', 'user_personal_interest.personal_interest_id');
 
-                if (empty($listOfMallIds)) { // invalid mall id
-                    $deleted_category_ids->whereRaw('0');
-                } elseif ($listOfMallIds[0] === 1) { // if super admin
-                    // show all users
-                } else { // valid mall id
-                    $deleted_category_ids->whereIn('categories.merchant_id', $listOfMallIds);
-                }
-
                 $deleted_category_ids = $deleted_category_ids->get(array('personal_interest_id'))
                                                              ->toArray();
 

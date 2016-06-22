@@ -144,6 +144,7 @@ return array(
             'link_category'          => 'Cannot delete a category with :link',
             'mall_language'          => 'The :attribute must be an existing language',
             'floor'                  => 'The floor name has already been taken',
+            'domain'                 => 'Mall URL Application Domain name has already been taken',
         ),
         'access' => array(
             'forbidden'              => 'You do not have permission to :action',
