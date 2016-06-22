@@ -146,7 +146,7 @@
                 </div>
                 <br/><br/>
                 <div class="row">
-                    <div class="col-xs-12 text-center">v 2.2 <a target="_blank" href="http://dominopos.com/privacy-policy.html">Privacy Policy</a>. <a target="_blank" href="http://dominopos.com/terms-and-conditions.html">Terms and Conditions</a></div>
+                    <div class="col-xs-12 text-center">v 2.2 <a target="_blank" href="{{ Config::get('orbit.contact_information.privacy_policy_url') }}">Privacy Policy</a>. <a target="_blank" href="{{ Config::get('orbit.contact_information.terms_of_service_url') }}">Terms and Conditions</a></div>
                 </div>
             </div>
         </div>
