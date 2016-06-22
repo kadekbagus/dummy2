@@ -1642,6 +1642,8 @@ class MobileCIAPIController extends BaseCIController
                 }
             }
 
+            $newWidget->save();
+
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';

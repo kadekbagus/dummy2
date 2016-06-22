@@ -53,6 +53,12 @@ class MallByDomainCIAPIController extends BaseAPIController
             $data = NULL;
 
             $mall = Setting::getMallByDomain($dom);
+            $membership_card = Setting::where('setting_name','enable_membership_card')->where('object_id',$mall->merchant_id)->first();
+
+            $enable_membership='false';
+            if (is_object($membership_card)){
+                $enable_membership=$membership_card->setting_value;
+            }
 
             if (is_object($mall)) {
                 $mall = $mall->load('mediaLogoOrig');
@@ -82,6 +88,7 @@ class MallByDomainCIAPIController extends BaseAPIController
                 $data->supported_languages = $mallLanguages;
                 $data->auth_pages = Config::get('orbit.blocked_routes', []);
                 $data->pop_up_delay = Config::get('orbit.shop.event_delay', 2.5);
+                $data->enable_membership = $enable_membership;
             }
 
             $this->response->data = $data;

@@ -47,7 +47,6 @@ class MallNearbyAPIController extends ControllerAPI
 
             $malls = Mall::select('merchants.*')
                          ->includeLatLong()
-                         ->includeDummyOpeningHours()   // @Todo: Remove this in the future
                          ->join('merchant_geofences', 'merchant_geofences.merchant_id', '=', 'merchants.merchant_id');
 
             if ($usingDemo) {
@@ -128,7 +127,7 @@ class MallNearbyAPIController extends ControllerAPI
             $malls->orderBy($sortBy, $sortMode);
 
             $listmalls = $malls->get();
-            $count = $_malls->count();
+            $count = RecordCounter::create($_malls)->count();
 
             $this->response->data = new stdClass();
             $this->response->data->total_records = $count;
