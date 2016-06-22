@@ -793,6 +793,7 @@ class MallAPIController extends ControllerAPI
      * @author Ahmad Anshori <ahmad@dominopos.com>
      * @author Rio Astamal <me@rioastamal.net>
      * @author kadek <kadek@dominopos.com>
+     * @author firmansyah <firmansyah@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -1372,6 +1373,7 @@ class MallAPIController extends ControllerAPI
      * @author Tian <tian@dominopos.com>
      * @author Rio Astamal <me@rioastamal.net>
      * @author Irianto <irianto@dominopos.com>
+     * @author Firmansyah <firmansyah@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -1421,7 +1423,9 @@ class MallAPIController extends ControllerAPI
      * @param string     `ticket_header`            (optional) - Ticket header
      * @param string     `ticket_footer`            (optional) - Ticket footer
      * @param string     `operating_hours`          (optional) - Mall operating hours
-     *
+     * @param string     `geo_point_latitude`       (optional) - Point of latitude
+     * @param string     `geo_point_longitude`      (optional) - Point of longitude
+     * @param string     `geo_area`                 (optional) - Geo fence of the mall
      * @return Illuminate\Support\Facades\Response
      */
     public function postUpdateMall()
@@ -1483,6 +1487,10 @@ class MallAPIController extends ControllerAPI
             $campaign_base_price_coupon = OrbitInput::post('campaign_base_price_coupon');
             $campaign_base_price_news = OrbitInput::post('campaign_base_price_news');
             $free_wifi_status = OrbitInput::post('free_wifi_status');
+            $geo_point_latitude = OrbitInput::post('geo_point_latitude');
+            $geo_point_longitude = OrbitInput::post('geo_point_longitude');
+            $geo_area = OrbitInput::post('geo_area');
+
 
             $validator = Validator::make(
                 array(
@@ -2270,6 +2278,21 @@ class MallAPIController extends ControllerAPI
                 }
                 $updatedmall->free_wifi_status = $widget_status;
             });
+
+            // Update map geo fences
+            if ($geo_point_latitude != '' || $geo_point_longitude != '' || $geo_area != '') {
+                $latitude = (double)$geo_point_latitude;
+                $longitude = (double)$geo_point_longitude;
+                $area = preg_replace('/[^0-9\s,\-\.]/', '',  $geo_area);
+
+                $fence = MerchantGeofence::where('merchant_id', $merchant_id)->first();
+
+                if (count($fence) > 0) {
+                    $fence->area = DB::raw("GEOMFROMTEXT(\"POLYGON(({$area}))\")");
+                    $fence->position = DB::raw("POINT($latitude, $longitude)");
+                    $fence->save();
+                }
+            }
 
             // update user status
             OrbitInput::post('status', function($status) use ($updatedmall) {
