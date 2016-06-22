@@ -2,45 +2,120 @@
 /**
  * PHP Unit Test for PromotionApiController#postNewPromotion
  *
- * @author: Yudi Rahono <yudi.rahono@dominopos.com>
+ * @author: Shelgi Prasetyo <shelgi@dominopos.com>
  */
 use DominoPOS\OrbitAPI\v10\StatusInterface as Status;
 use OrbitShop\API\v1\Helper\Generator;
 use Laracasts\TestDummy\Factory;
+use Faker\Factory as Faker;
 
 class postNewPromotion extends TestCase {
-    private $baseUrl  = '/api/v1/promotion/new';
+    private $baseUrl  = '/api/v1/news/new';
 
     public function setUp()
     {
         parent::setUp();
+        $faker = Faker::create();
+        $english = Factory::create('Language', ['name' => 'English', 'name' => 'en']);
+        $chinese = Factory::create('Language', ['name' => 'Chinese', 'name' => 'ch']);
+        $indonesia = Factory::create('Language', ['name' => 'Indonesia', 'name' => 'id']);
+        $japanese = Factory::create('Language', ['name' => 'Japanese', 'name' => 'jp']);
 
-        $this->authData = Factory::create('apikey_super_admin');
-        $this->promotions = Factory::times(3)->create('Promotion');
-        $this->merchant   = Factory::create('Merchant');
-        $this->retailer   = Factory::create('Retailer', ['parent_id' => $this->merchant->merchant_id]);
+        $role = Factory::create('role_campaign_owner');
+
+        $this->user_1 = Factory::create('User', ['user_role_id' => $role->role_id]);
+        $this->apikey_user_1 = Factory::create('Apikey', ['user_id' => $this->user_1->user_id]);
+
+        $this->mall_1 = Factory::create('Mall', ['mobile_default_language' => 'en']);
+        $this->mall_2 = Factory::create('Mall', ['mobile_default_language' => 'jp']);
+
+        $this->tenant_1 = Factory::create('tenant_store', [
+            'parent_id' => $this->mall_1->merchant_id,
+            'email' => $faker->email,
+            'external_object_id' => $faker->uuid,
+            'is_mall' => 'no',
+        ]);
+
+        $this->tenant_2 = Factory::create('tenant_store', [
+            'parent_id' => $this->mall_2->merchant_id,
+            'email' => $faker->email,
+            'external_object_id' => $faker->uuid,
+            'is_mall' => 'no',
+        ]);
+
+        Factory::create('UserMerchant', ['user_id' => $this->user_1->user_id, 'merchant_id' => $this->tenant_1->merchant_id, 'object_type' => 'tenant']);
+        Factory::create('UserMerchant', ['user_id' => $this->user_1->user_id, 'merchant_id' => $this->tenant_2->merchant_id, 'object_type' => 'tenant']);
+
+        $combos = [
+            [$this->mall_1, $english, 'english'],
+            [$this->mall_1, $chinese, 'chinese'],
+            [$this->mall_2, $indonesia, 'indonesia'],
+            [$this->mall_2, $japanese, 'japanese']
+        ];
+        $merchant_languages = [];
+        foreach ($combos as $combo) {
+            $lang = new MerchantLanguage();
+            $lang->merchant_id = $combo[0]->merchant_id;
+            $lang->language_id = $combo[1]->language_id;
+            $lang->save();
+            $merchant_languages[$combo[2]] = $lang;
+        }
+        $this->merchantLanguages = $merchant_languages;
+
+        $campaignStatus = [
+            ['not started', 2],
+            ['ongoing', 3],
+            ['paused', 4],
+            ['stopped', 5],
+            ['expired', 1],
+        ];
+        $campaign_status = [];
+        foreach ($campaignStatus as $status) {
+            $cs = new CampaignStatus();
+            $cs->campaign_status_name = $status[0];
+            $cs->order = $status[0];
+            $cs->save();
+        }
+
+        $_GET = [];
+        $_POST = [];
     }
 
-    public function testOK_post_new_promotion_for_product()
+    private function makeRequest($tenants, $translations)
     {
-        $product = Factory::create('Product');
+        $_GET = [
+            'apikey' => $this->apikey_user_1->api_key,
+            'apitimestamp' => time(),
+        ];
 
-        $_GET['apikey']       = $this->authData->api_key;
-        $_GET['apitimestamp'] = time();
+        $_POST['sticky_order'] = 'false';
+        $_POST['is_popup'] = 'N';
+        $_POST['begin_date_hour'] = '00';
+        $_POST['begin_date_minute'] = '00';
+        $_POST['end_date_hour'] = '23';
+        $_POST['end_date_minute'] = '59';
+        $_POST['id_language_default'] = $this->merchantLanguages['english']->language_id;
+        $_POST['begin_date'] = '2017-01-01 00:00:00';
+        $_POST['status'] = 'active';
+        $_POST['end_date'] = '2017-01-31 23:59:00';
+        $_POST['news_name'] = Faker::create()->sentence(3);
+        $_POST['description'] = Faker::create()->sentence(3);
+        $_POST['rule_value'] = '0';
+        $_POST['object_type'] = 'promotion';
+        $_POST['link_object_type'] = 'tenant';
+        $_POST['mall_id'] = $this->mall_1->merchant_id;
+        $_POST['is_all_gender'] = 'Y';
+        $_POST['is_all_age'] = 'Y';
+        $_POST['current_mall'] = $this->mall_1->merchant_id;
+        $_POST['translations'] = json_encode($translations);
 
-
-        $_POST['merchant_id'] = $this->merchant->merchant_id;
-        $_POST['promotion_name']  = 'Christmas\'s Discount';
-        $_POST['promotion_type']  = 'product';
-        $_POST['status']          = 'active';
-        $_POST['description']     = 'Discount for random product selected';
-        $_POST['discount_object_type'] = 'product';
-        $_POST['discount_object_id1']  = $product->product_id;
-        $_POST['retailer_ids']         = [$this->retailer->merchant_id];
+        foreach ($tenants as $tenant) {
+            $_POST['retailer_ids'][] = json_encode($tenant);
+        }
 
         $url = $this->baseUrl . '?' . http_build_query($_GET);
 
-        $secretKey = $this->authData->api_secret_key;
+        $secretKey = $this->apikey_user_1->api_secret_key;
         $_SERVER['REQUEST_METHOD']         = 'POST';
         $_SERVER['REQUEST_URI']            = $url;
         $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
@@ -48,225 +123,280 @@ class postNewPromotion extends TestCase {
         $response = $this->call('POST', $url, $_POST)->getContent();
         $response = json_decode($response);
 
-        // Should be OK
-        $this->assertResponseOk();
-
-        // should say OK
-        $this->assertSame(Status::OK, $response->code);
-        $this->assertSame(Status::OK_MSG, $response->message);
-
-        // should increment number of promotion
-        $this->assertSame(4, Promotion::count());
+        return $response;
     }
 
-    public function testOK_post_new_promotion_for_family()
+    public function testOK_new_promotions_with_one_tenant()
     {
-        $category = Factory::create('Category');
+        $translations_detil = [
+            'news_name' => Faker::create()->sentence(3),
+            'description' => Faker::create()->sentence(3),
+        ];
+        $translations = [
+            $this->merchantLanguages['english']->language_id => $translations_detil,
+        ];
 
-        $_GET['apikey']       = $this->authData->api_key;
-        $_GET['apitimestamp'] = time();
+        $linkTo1 = [
+            'tenant_id' => $this->tenant_1->merchant_id,
+            'mall_id' => $this->tenant_1->parent_id,
+        ];
+        $tenants = array($linkTo1);
 
+        $response = $this->makeRequest($tenants, $translations);
 
-        $_POST['merchant_id'] = $this->merchant->merchant_id;
-        $_POST['promotion_name']  = 'Christmas\'s Discount';
-        $_POST['promotion_type']  = 'product';
-        $_POST['status']          = 'active';
-        $_POST['description']     = 'Discount for random family selected';
-        $_POST['discount_object_type'] = 'family';
-        $_POST['discount_object_id1']  = $category->category_id;
-        $_POST['retailer_ids']         = [$this->retailer->merchant_id];
-
-        $url = $this->baseUrl . '?' . http_build_query($_GET);
-
-        $secretKey = $this->authData->api_secret_key;
-        $_SERVER['REQUEST_METHOD']         = 'POST';
-        $_SERVER['REQUEST_URI']            = $url;
-        $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
-
-        $response = $this->call('POST', $url, $_POST)->getContent();
-        $response = json_decode($response);
-
-        // Should be OK
-        $this->assertResponseOk();
-
-        // should say OK
-        $this->assertSame(Status::OK, $response->code);
-        $this->assertSame(Status::OK_MSG, $response->message);
-
-        // should increment number of promotion
-        $this->assertSame(4, Promotion::count());
+        $this->assertSame(1, count($response->data));
     }
 
-
-    public function testOK_post_new_cart_based_promotion()
+    public function testOK_new_promotions_with_one_tenant_input_desc_default_language()
     {
-        $_GET['apikey']       = $this->authData->api_key;
-        $_GET['apitimestamp'] = time();
+        $translations_detil_1 = [
+            'news_name' => '',
+            'description' => Faker::create()->sentence(3),
+        ];
+        $translations_detil_2 = [
+            'news_name' => Faker::create()->sentence(3),
+            'description' => Faker::create()->sentence(3),
+        ];
+        $translations = [
+            $this->merchantLanguages['english']->language_id => $translations_detil_1,
+            $this->merchantLanguages['indonesia']->language_id => $translations_detil_2,
+        ];
 
-        $_POST['merchant_id'] = $this->merchant->merchant_id;
-        $_POST['promotion_name']  = 'Christmas\'s Discount';
-        $_POST['promotion_type']  = 'cart';
-        $_POST['status']          = 'active';
-        $_POST['description']     = 'Discount for random product selected';
-        $_POST['retailer_ids']         = [$this->retailer->merchant_id];
+        $linkTo1 = [
+            'tenant_id' => $this->tenant_1->merchant_id,
+            'mall_id' => $this->tenant_1->parent_id,
+        ];
+        $tenants = array($linkTo1);
+        $response = $this->makeRequest($tenants, $translations);
 
-        $url = $this->baseUrl . '?' . http_build_query($_GET);
-
-        $secretKey = $this->authData->api_secret_key;
-        $_SERVER['REQUEST_METHOD']         = 'POST';
-        $_SERVER['REQUEST_URI']            = $url;
-        $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
-
-        $response = $this->call('POST', $url, $_POST)->getContent();
-        $response = json_decode($response);
-
-        // Should be OK
-        $this->assertResponseOk();
-
-        // should say OK
-        $this->assertSame(Status::OK, $response->code);
-        $this->assertSame(Status::OK_MSG, $response->message);
-
-        // should increment number of promotion
-        $this->assertSame(4, Promotion::count());
+        $this->assertSame(14, $response->code);
+        $this->assertSame('promotion default name is required', strtolower($response->message));
     }
 
-    public function testACL_post_new_promotion()
+    public function testOK_new_promotions_with_one_tenant_input_name_default_language()
     {
-        $makeRequest = function ($authData, $merchant) {
-            $product = Factory::create('Product');
+        $translations_detil_1 = [
+            'news_name' => Faker::create()->sentence(3),
+            'description' => '',
+        ];
+        $translations_detil_2 = [
+            'news_name' => Faker::create()->sentence(3),
+            'description' => Faker::create()->sentence(3),
+        ];
+        $translations = [
+            $this->merchantLanguages['english']->language_id => $translations_detil_1,
+            $this->merchantLanguages['indonesia']->language_id => $translations_detil_2,
+        ];
 
-            $_GET['apikey']       = $authData->api_key;
-            $_GET['apitimestamp'] = time();
+        $linkTo1 = [
+            'tenant_id' => $this->tenant_1->merchant_id,
+            'mall_id' => $this->tenant_1->parent_id,
+        ];
+        $tenants = array($linkTo1);
+        $response = $this->makeRequest($tenants, $translations);
 
-            $_POST['merchant_id'] = $merchant->merchant_id;
-            $_POST['promotion_name']  = "Christmas's Discount {$product->product_name}";
-            $_POST['promotion_type']  = 'cart';
-            $_POST['status']          = 'active';
-            $_POST['description']     = 'Discount for random product selected';
-
-            $url = $this->baseUrl . '?' . http_build_query($_GET);
-
-            $secretKey = $authData->api_secret_key;
-            $_SERVER['REQUEST_METHOD']         = 'POST';
-            $_SERVER['REQUEST_URI']            = $url;
-            $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
-
-            $response = $this->call('POST', $url, $_POST)->getContent();
-            $response = json_decode($response);
-
-            return $response;
-        };
-
-        $response = call_user_func($makeRequest, $this->authData, $this->merchant);
-
-        // Should be OK
-        $this->assertResponseOk();
-
-        // should say OK
-        $this->assertSame(Status::OK, $response->code);
-        $this->assertSame(Status::OK_MSG, $response->message);
-
-        $user       = Factory::create('User');
-        $authData   = Factory::create('Apikey', ['user_id' => $user->user_id]);
-        $permission = Factory::create('Permission', ['permission_name' => 'create_promotion']);
-        $merchant   = Factory::create('Merchant', ['user_id' => $user->user_id]);
-
-        Factory::create('PermissionRole', ['role_id' => $user->user_role_id, 'permission_id' => $permission->permission_id]);
-
-        $response = call_user_func($makeRequest,  $authData, $merchant);
-
-        // Should be OK
-        $this->assertResponseOk();
-
-        // should say OK
-        $this->assertSame(Status::OK, $response->code);
-        $this->assertSame(Status::OK_MSG, $response->message);
-
-        $user       = Factory::create('User');
-        $authData   = Factory::create('Apikey', ['user_id' => $user->user_id]);
-        $merchant   = Factory::create('Merchant', ['user_id' => $user->user_id]);
-
-        $response   = call_user_func($makeRequest, $authData, $merchant);
-
-        // should be failed
-        $this->assertResponseStatus(403);
-
-        // should be access denied
-        $this->assertSame(Status::ACCESS_DENIED, $response->code);
-        $this->assertRegExp('/you.do.not.have.permission.to/i', $response->message);
+        $this->assertSame(14, $response->code);
+        $this->assertSame('default description is required', strtolower($response->message));
     }
 
-    public function testError_parameters_post_new_promotion()
+    public function testOK_new_promotions_with_one_tenant_input_name_and_desc_other_language()
     {
-        $makeRequest = function ($postData) {
-            $_GET['apikey']       = $this->authData->api_key;
-            $_GET['apitimestamp'] = time();
+        $translations_detil_1 = [
+            'news_name' => '',
+            'description' => '',
+        ];
+        $translations_detil_2 = [
+            'news_name' => Faker::create()->sentence(3),
+            'description' => Faker::create()->sentence(3),
+        ];
+        $translations = [
+            $this->merchantLanguages['english']->language_id => $translations_detil_1,
+            $this->merchantLanguages['indonesia']->language_id => $translations_detil_2,
+        ];
 
-            $_POST = $postData;
+        $linkTo1 = [
+            'tenant_id' => $this->tenant_1->merchant_id,
+            'mall_id' => $this->tenant_1->parent_id,
+        ];
+        $tenants = array($linkTo1);
+        $response = $this->makeRequest($tenants, $translations);
 
-            $url = $this->baseUrl . '?' . http_build_query($_GET);
+        $this->assertSame(14, $response->code);
+        $this->assertSame('promotion default name and description is required', strtolower($response->message));
+    }
 
-            $secretKey = $this->authData->api_secret_key;
-            $_SERVER['REQUEST_METHOD']         = 'POST';
-            $_SERVER['REQUEST_URI']            = $url;
-            $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
+    public function testOK_new_promotions_with_two_tenant()
+    {
+        $translations_detil_1 = [
+            'news_name' => Faker::create()->sentence(3),
+            'description' => Faker::create()->sentence(3),
+        ];
+        $translations_detil_2 = [
+            'news_name' => Faker::create()->sentence(3),
+            'description' => Faker::create()->sentence(3),
+        ];
+        $translations = [
+            $this->merchantLanguages['english']->language_id => $translations_detil_1,
+            $this->merchantLanguages['japanese']->language_id => $translations_detil_2,
+        ];
 
-            $response = $this->call('POST', $url, $_POST)->getContent();
-            $response = json_decode($response);
+        $linkTo1 = [
+            'tenant_id' => $this->tenant_1->merchant_id,
+            'mall_id' => $this->tenant_1->parent_id,
+        ];
+        $linkTo2 = [
+            'tenant_id' => $this->tenant_2->merchant_id,
+            'mall_id' => $this->tenant_2->parent_id,
+        ];
+        $tenants = array($linkTo1, $linkTo2);
 
-            return $response;
-        };
+        $response = $this->makeRequest($tenants, $translations);
 
-        $postData = array(
-            'merchant_id'    => $this->merchant->merchant_id,
-            'promotion_name' => 'Christmas\'s Discount',
-            'promotion_type' => 'cart',
-            'status'         => 'active',
-            'description'    => 'Discount for random selected product'
-        );
+        $this->assertSame(1, count($response->data));
+    }
 
-        $reqData = $postData;
-        unset($reqData['merchant_id']);
-        $response = call_user_func($makeRequest, $reqData);
+    public function testOK_new_promotions_with_two_tenant_input_desc_default_language()
+    {
+        $translations_detil_1 = [
+            'news_name' => '',
+            'description' => Faker::create()->sentence(3),
+        ];
+        $translations_detil_2 = [
+            'news_name' => Faker::create()->sentence(3),
+            'description' => Faker::create()->sentence(3),
+        ];
+        $translations_detil_3 = [
+            'news_name' => '',
+            'description' => Faker::create()->sentence(3),
+        ];
+        $translations_detil_4 = [
+            'news_name' => Faker::create()->sentence(3),
+            'description' => Faker::create()->sentence(3),
+        ];
+        $translations = [
+            $this->merchantLanguages['english']->language_id => $translations_detil_1,
+            $this->merchantLanguages['indonesia']->language_id => $translations_detil_2,
+        ];
 
-        $this->assertResponseStatus(403);
-        $this->assertSame(Status::INVALID_ARGUMENT, $response->code);
-        $this->assertRegExp('/merchant.*is.required/', $response->message);
+        $linkTo1 = [
+            'tenant_id' => $this->tenant_1->merchant_id,
+            'mall_id' => $this->tenant_1->parent_id,
+        ];
+        $linkTo2 = [
+            'tenant_id' => $this->tenant_2->merchant_id,
+            'mall_id' => $this->tenant_2->parent_id,
+        ];
+        $tenants = array($linkTo1, $linkTo2);
+        $response = $this->makeRequest($tenants, $translations);
 
-        $reqData = $postData;
-        unset($reqData['promotion_name']);
-        $response  = call_user_func($makeRequest, $reqData);
+        $this->assertSame(14, $response->code);
+        $this->assertSame('promotion default name is required', strtolower($response->message));
 
-        $this->assertResponseStatus(403);
-        $this->assertSame(Status::INVALID_ARGUMENT, $response->code);
-        $this->assertRegExp('/promotion.name.*is.required/', $response->message);
+        $translations = [
+            $this->merchantLanguages['english']->language_id => $translations_detil_4,
+            $this->merchantLanguages['japanese']->language_id => $translations_detil_3,
+        ];
 
-        $reqData = $postData;
-        unset($reqData['promotion_type']);
-        $response  = call_user_func($makeRequest, $reqData);
+        $response = $this->makeRequest($tenants, $translations);
 
-        $this->assertResponseStatus(403);
-        $this->assertSame(Status::INVALID_ARGUMENT, $response->code);
-        $this->assertRegExp('/promotion.type.*is.required/', $response->message);
+        $this->assertSame(14, $response->code);
+        $this->assertSame('promotion default name is required', strtolower($response->message));
+    }
 
-        $reqData = $postData;
-        unset($reqData['status']);
-        $response  = call_user_func($makeRequest, $reqData);
+    public function testOK_new_promotions_with_two_tenant_input_name_default_language()
+    {
+        $translations_detil_1 = [
+            'news_name' => Faker::create()->sentence(3),
+            'description' => '',
+        ];
+        $translations_detil_2 = [
+            'news_name' => Faker::create()->sentence(3),
+            'description' => Faker::create()->sentence(3),
+        ];
+        $translations_detil_3 = [
+            'news_name' => Faker::create()->sentence(3),
+            'description' => '',
+        ];
+        $translations_detil_4 = [
+            'news_name' => Faker::create()->sentence(3),
+            'description' => Faker::create()->sentence(3),
+        ];
+        $translations = [
+            $this->merchantLanguages['english']->language_id => $translations_detil_1,
+            $this->merchantLanguages['indonesia']->language_id => $translations_detil_2,
+        ];
 
-        $this->assertResponseStatus(403);
-        $this->assertSame(Status::INVALID_ARGUMENT, $response->code);
-        $this->assertRegExp('/status.*is.required/', $response->message);
+        $linkTo1 = [
+            'tenant_id' => $this->tenant_1->merchant_id,
+            'mall_id' => $this->tenant_1->parent_id,
+        ];
+        $linkTo2 = [
+            'tenant_id' => $this->tenant_2->merchant_id,
+            'mall_id' => $this->tenant_2->parent_id,
+        ];
+        $tenants = array($linkTo1, $linkTo2);
+        $response = $this->makeRequest($tenants, $translations);
 
-        $reqData = $postData;
-        $reqData['promotion_name'] = Promotion::first()->promotion_name;
-        $response  = call_user_func($makeRequest, $reqData);
+        $this->assertSame(14, $response->code);
+        $this->assertSame('default description is required', strtolower($response->message));
 
-        $this->assertResponseStatus(403);
-        $this->assertSame(Status::INVALID_ARGUMENT, $response->code);
-        $this->assertRegExp('/promotion.name.*already.*used/', $response->message);
+        $translations = [
+            $this->merchantLanguages['english']->language_id => $translations_detil_4,
+            $this->merchantLanguages['japanese']->language_id => $translations_detil_3,
+        ];
 
-        // should not change the number of persisted promotion
-        $this->assertSame(3, Promotion::count());
+        $response = $this->makeRequest($tenants, $translations);
+
+        $this->assertSame(14, $response->code);
+        $this->assertSame('default description is required', strtolower($response->message));
+    }
+
+    public function testOK_new_promotions_with_two_tenant_input_name_and_desc_other_language()
+    {
+        $translations_detil_1 = [
+            'news_name' => '',
+            'description' => '',
+        ];
+        $translations_detil_2 = [
+            'news_name' => Faker::create()->sentence(3),
+            'description' => Faker::create()->sentence(3),
+        ];
+        $translations_detil_3 = [
+            'news_name' => '',
+            'description' => '',
+        ];
+        $translations_detil_4 = [
+            'news_name' => Faker::create()->sentence(3),
+            'description' => Faker::create()->sentence(3),
+        ];
+        $translations = [
+            $this->merchantLanguages['english']->language_id => $translations_detil_1,
+            $this->merchantLanguages['indonesia']->language_id => $translations_detil_2,
+        ];
+
+        $linkTo1 = [
+            'tenant_id' => $this->tenant_1->merchant_id,
+            'mall_id' => $this->tenant_1->parent_id,
+        ];
+        $linkTo2 = [
+            'tenant_id' => $this->tenant_2->merchant_id,
+            'mall_id' => $this->tenant_2->parent_id,
+        ];
+        $tenants = array($linkTo1, $linkTo2);
+        $response = $this->makeRequest($tenants, $translations);
+
+        $this->assertSame(14, $response->code);
+        $this->assertSame('promotion default name and description is required', strtolower($response->message));
+
+        $translations = [
+            $this->merchantLanguages['english']->language_id => $translations_detil_4,
+            $this->merchantLanguages['japanese']->language_id => $translations_detil_3,
+        ];
+
+        $response = $this->makeRequest($tenants, $translations);
+
+        $this->assertSame(14, $response->code);
+        $this->assertSame('promotion default name and description is required', strtolower($response->message));
+    
     }
 }

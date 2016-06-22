@@ -1642,6 +1642,8 @@ class MobileCIAPIController extends BaseCIController
                 }
             }
 
+            $newWidget->save();
+
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -3650,7 +3652,9 @@ class MobileCIAPIController extends BaseCIController
             $tenants = $tenants->active('merchants')
                 ->where('parent_id', $retailer->merchant_id);
 
-            $tenants->select('merchants.merchant_id', 'floor', 'unit');
+            $prefix = DB::getTablePrefix();
+            $tenants->select('merchants.merchant_id', 'floor', 'unit', DB::raw("CONCAT({$prefix}objects.object_name, \" - \", unit) AS location"))
+                    ->leftJoin('objects', 'objects.object_id', '=', 'merchants.floor_id');
 
             $this->maybeJoinWithTranslationsTable($tenants, $alternateLanguage);
 
@@ -4471,6 +4475,16 @@ class MobileCIAPIController extends BaseCIController
             $data->records = $listOfRec;
             $data->search_mode = $searchMode;
 
+            $activityPageNotes = sprintf('Page viewed: %s', 'Service List Page');
+            $activityPage->setUser($user)
+                ->setActivityName('view_service_list')
+                ->setActivityNameLong('View Service List')
+                ->setObject(null)
+                ->setModuleName('service')
+                ->setNotes($activityPageNotes)
+                ->responseOK()
+                ->save();
+
             return View::make('mobile-ci.catalogue-service', array(
                 'page_title'=>$pagetitle,
                 'user' => $user,
@@ -4487,12 +4501,12 @@ class MobileCIAPIController extends BaseCIController
 
 
         } catch (Exception $e) {
-            $activityPageNotes = sprintf('Failed to view Page: %s', 'News List');
+            $activityPageNotes = sprintf('Failed to view Page: %s', 'Service List');
             $activityPage->setUser($user)
-                ->setActivityName('view_news_list')
-                ->setActivityNameLong('View News List Failed')
+                ->setActivityName('view_service_list')
+                ->setActivityNameLong('View service List Failed')
                 ->setObject(null)
-                ->setModuleName('News')
+                ->setModuleName('Service')
                 ->setNotes($activityPageNotes)
                 ->responseFailed()
                 ->save();

@@ -1,76 +1,168 @@
 <?php
 /**
- * PHP Unit Test for PromotionApiController#getSearchPromotion
+ * Unit test for NewsAPIController::getSearchNews(). Call to this
  *
- * @author: Yudi Rahono <yudi.rahono@dominopos.com>
+ * @author Shelgi Prasetyo <shelgi@dominopos.com>
  */
 use DominoPOS\OrbitAPI\v10\StatusInterface as Status;
-use OrbitShop\API\v1\Helper\Generator;
 use Laracasts\TestDummy\Factory;
+use Faker\Factory as Faker;
+use OrbitShop\API\v1\Helper\Generator;
 
-class getSearchPromotion extends TestCase {
-    private $baseUrl  = '/api/v1/promotion/search';
+class getSearchPromotion extends TestCase
+{
+	private $baseUrl = '/api/v1/news/search';
 
     public function setUp()
     {
-        parent::setUp();
+    	parent::setUp();
 
-        DB::beginTransaction();
+    	$faker = Faker::create();
+        $english = Factory::create('Language', ['name' => 'English', 'name' => 'en']);
+        $chinese = Factory::create('Language', ['name' => 'Chinese', 'name' => 'ch']);
+        $indonesia = Factory::create('Language', ['name' => 'Indonesia', 'name' => 'id']);
+        $japanese = Factory::create('Language', ['name' => 'Japanese', 'name' => 'jp']);
 
-        $this->authData = Factory::create('apikey_super_admin');
-        $this->promotions = Factory::times(3)->create('Promotion');
-        $this->merchant   = Factory::create('Merchant');
-        $this->retailer   = Factory::create('Retailer', ['parent_id' => $this->merchant->merchant_id]);
+        $role = Factory::create('role_campaign_owner');
+
+        $this->user_1 = Factory::create('User', ['user_role_id' => $role->role_id]);
+        $this->apikey_user_1 = Factory::create('Apikey', ['user_id' => $this->user_1->user_id]);
+
+        $this->mall_1 = Factory::create('Mall', ['mobile_default_language' => 'en']);
+        $this->mall_2 = Factory::create('Mall', ['mobile_default_language' => 'jp']);
+
+        $this->tenant_1 = Factory::create('tenant_store', [
+            'parent_id' => $this->mall_1->merchant_id,
+            'email' => $faker->email,
+            'external_object_id' => $faker->uuid,
+            'is_mall' => 'no',
+        ]);
+
+        $this->tenant_2 = Factory::create('tenant_store', [
+            'parent_id' => $this->mall_2->merchant_id,
+            'email' => $faker->email,
+            'external_object_id' => $faker->uuid,
+            'is_mall' => 'no',
+        ]);
+
+        Factory::create('UserMerchant', ['user_id' => $this->user_1->user_id, 'merchant_id' => $this->tenant_1->merchant_id, 'object_type' => 'tenant']);
+        Factory::create('UserMerchant', ['user_id' => $this->user_1->user_id, 'merchant_id' => $this->tenant_2->merchant_id, 'object_type' => 'tenant']);
+
+        $this->campaing_status = Factory::create('CampaignStatus', ['campaign_status_name' => 'not started']);
+        $this->promotion_1 = Factory::create('News', [
+            'mall_id' => $this->mall_1->merchant_id,
+            'object_type' => 'promotion',
+            'campaign_status_id' => $this->campaing_status->campaign_status_id,
+        ]);
+
+        Factory::create('user_campaign_news', ['user_id' => $this->user_1->user_id, 'campaign_id' => $this->promotion_1->news_id]);
+        Factory::create('CampaignAccount', ['user_id' => $this->user_1->user_id, 'parent_user_id' => NULL]);
+        Factory::create('NewsMerchant', ['news_id' => $this->promotion_1->news_id, 'merchant_id' => $this->tenant_1->merchant_id]);
+        Factory::create('NewsMerchant', ['news_id' => $this->promotion_1->news_id, 'merchant_id' => $this->tenant_2->merchant_id]);
+
+        $this->promotion_2 = Factory::create('News', [
+            'mall_id' => $this->mall_1->merchant_id,
+            'object_type' => 'promotion',
+            'campaign_status_id' => $this->campaing_status->campaign_status_id,
+        ]);
+
+        Factory::create('user_campaign_news', ['user_id' => $this->user_1->user_id, 'campaign_id' => $this->promotion_2->news_id]);
+        Factory::create('NewsMerchant', ['news_id' => $this->promotion_2->news_id, 'merchant_id' => $this->tenant_2->merchant_id]);
+        Factory::create('NewsMerchant', ['news_id' => $this->promotion_2->news_id, 'merchant_id' => $this->tenant_1->merchant_id]);
+
+        $combos = [
+            [$this->mall_1, $english, 'english'],
+            [$this->mall_1, $chinese, 'chinese'],
+            [$this->mall_2, $indonesia, 'indonesia'],
+            [$this->mall_2, $japanese, 'japanese']
+        ];
+        $merchant_languages = [];
+        foreach ($combos as $combo) {
+            $lang = new MerchantLanguage();
+            $lang->merchant_id = $combo[0]->merchant_id;
+            $lang->language_id = $combo[1]->language_id;
+            $lang->save();
+            $merchant_languages[$combo[2]] = $lang;
+        }
+        $this->merchantLanguages = $merchant_languages;
+
+        Factory::create('NewsTranslation', [
+            'news_id' => $this->promotion_1->news_id, 
+            'merchant_id' => $this->mall_1->merchant_id,
+            'merchant_language_id' => $this->merchantLanguages['english']->language_id,
+            'news_name' => 'english name promotion 1',
+            'description' => 'english description promotion 1'
+        ]);
+        Factory::create('NewsTranslation', [
+            'news_id' => $this->promotion_1->news_id, 
+            'merchant_id' => $this->mall_2->merchant_id,
+            'merchant_language_id' => $this->merchantLanguages['japanese']->language_id,
+            'news_name' => 'japanese name promotion 1',
+            'description' => 'japanese description promotion 1'
+        ]);
+
+        Factory::create('NewsTranslation', [
+            'news_id' => $this->promotion_2->news_id, 
+            'merchant_id' => $this->mall_1->merchant_id,
+            'merchant_language_id' => $this->merchantLanguages['english']->language_id,
+            'news_name' => 'english name promotion 2',
+            'description' => 'english description promotion 2'
+        ]);
+        Factory::create('NewsTranslation', [
+            'news_id' => $this->promotion_2->news_id, 
+            'merchant_id' => $this->mall_2->merchant_id,
+            'merchant_language_id' => $this->merchantLanguages['japanese']->language_id,
+            'news_name' => 'japanese name promotion 2',
+            'description' => 'japanese description promotion 2'
+        ]);
+
+    	$_GET = [];
+        $_POST = [];
     }
 
-    public function tearDown()
+    private function makeRequest($nameLike = '')
     {
-        DB::rollback();
+        $_GET = [
+        	'news_name_like' => $nameLike,
+            'apikey' => $this->apikey_user_1->api_key,
+            'apitimestamp' => time()
+        ];
+        $_GET['object_type'][] = 'promotion';
 
-        $this->useTruncate = false;
+        $url = $this->baseUrl . '?' . http_build_query($_GET);
 
-        parent::tearDown();
+        $secretKey = $this->apikey_user_1->api_secret_key;
+        $_SERVER['REQUEST_METHOD']         = 'POST';
+        $_SERVER['REQUEST_URI']            = $url;
+        $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
+
+        $response = $this->call('GET', $url, $_POST)->getContent();
+        $response = json_decode($response);
+
+        return $response;
     }
 
-
-    public function testOK_get_search_with_valid_data()
+    public function testOK_promotion_list()
     {
-        $makeRequest = function ($getData) {
-            $_GET                 = $getData;
-            $_GET['apikey']       = $this->authData->api_key;
-            $_GET['apitimestamp'] = time();
-
-            $url = $this->baseUrl . '?' . http_build_query($_GET);
-
-            $secretKey = $this->authData->api_secret_key;
-            $_SERVER['REQUEST_METHOD']         = 'POST';
-            $_SERVER['REQUEST_URI']            = $url;
-            $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
-
-            $response = $this->call('GET', $url)->getContent();
-            $response = json_decode($response);
-
-            return $response;
-        };
-
-
-        $response = call_user_func($makeRequest, []);
-
-        $this->assertResponseOk();
-
-        $this->assertSame(Status::OK, $response->code);
-
-
-        $merchant = Factory::create('Merchant', ['user_id' => $this->authData->user_id]);
-        $promotions = Factory::times(6)->create('Promotion', ['merchant_id' => $merchant->merchant_id]);
-
-
-        $response = call_user_func($makeRequest, []);
-
-        $this->assertResponseOk();
-
-        $this->assertSame(Status::OK, $response->code);
-        $this->assertSame(Status::OK_MSG, $response->message);
+        $response = $this->makeRequest();
+        $this->assertSame(2, $response->data->total_records);
+        $this->assertSame('english name promotion 1', $response->data->records[0]->display_name);
+        $this->assertSame('japanese name promotion 2', $response->data->records[1]->display_name);
     }
 
+    public function testOK_promotion_list_filter_name()
+    {
+        $response = $this->makeRequest('japanese');
+        $this->assertSame(2, $response->data->total_records);
+        $this->assertSame('japanese name promotion 1', $response->data->records[0]->display_name);
+        $this->assertSame('japanese name promotion 2', $response->data->records[1]->display_name);
+    }
+
+    public function testOK_promotion_list_filter_name_same_in_two_translation()
+    {
+        $response = $this->makeRequest('name');
+        $this->assertSame(2, $response->data->total_records);
+        $this->assertContains($response->data->records[0]->display_name, ['english name promotion 1', 'japanese name promotion 1']);
+        $this->assertContains($response->data->records[1]->display_name, ['english name promotion 2', 'japanese name promotion 2']);
+    }
 }

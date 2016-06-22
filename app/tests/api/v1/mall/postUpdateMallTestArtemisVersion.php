@@ -35,9 +35,6 @@ class postUpdateMallTestArtemisVersion extends TestCase
 
     public function setRequestPostUpdateMall($api_key, $api_secret_key, $update)
     {
-        $_GET = [];
-        $_POST = [];
-
         // Set the client API Keys
         $_GET['apikey'] = $api_key;
         $_GET['apitimestamp'] = time();
@@ -56,9 +53,6 @@ class postUpdateMallTestArtemisVersion extends TestCase
         $json = $this->call('POST', $url)->getContent();
         $response = json_decode($json);
 
-        unset($_POST);
-        unset($_GET);
-
         return $response;
     }
 
@@ -73,11 +67,14 @@ class postUpdateMallTestArtemisVersion extends TestCase
         Factory::create('WidgetRetailer', ['retailer_id' => $mall_b->merchant_id, 'widget_id' => $widget_b->widget_id]);
 
         $this->mall_c = $mall_c = Factory::create('Mall', ['name' => 'mall firman']);
-        Factory::create('Object', ['merchant_id' => $mall_c->merchant_id, 'object_name' => 'B3', 'object_type' => 'floor', 'object_order' => 0]);
-        Factory::create('Object', ['merchant_id' => $mall_c->merchant_id, 'object_name' => 'B2', 'object_type' => 'floor', 'object_order' => 1]);
-        Factory::create('Object', ['merchant_id' => $mall_c->merchant_id, 'object_name' => 'B1', 'object_type' => 'floor', 'object_order' => 2]);
+        $this->fl_b3 = Factory::create('Object', ['merchant_id' => $mall_c->merchant_id, 'object_name' => 'B3', 'object_type' => 'floor', 'object_order' => 0]);
+        $this->fl_b2 = Factory::create('Object', ['merchant_id' => $mall_c->merchant_id, 'object_name' => 'B2', 'object_type' => 'floor', 'object_order' => 1]);
+        $this->fl_b1 = Factory::create('Object', ['merchant_id' => $mall_c->merchant_id, 'object_name' => 'B1', 'object_type' => 'floor', 'object_order' => 2]);
 
-        Factory::create('Tenant', ['name' => 'tenant firman', 'floor' => 'B1', 'parent_id' => $mall_c->merchant_id]);
+        Factory::create('Tenant', ['name' => 'tenant firman', 'floor_id' => $this->fl_b1->object_id, 'parent_id' => $mall_c->merchant_id]);
+
+        $this->mall_d = Factory::create('Mall', ['ci_domain' => 'lippomall.gotomalls.cool']);
+        Factory::create('Setting', ['setting_name' => 'dom:lippomall.gotomalls.com', 'setting_value' => $this->mall_d->merchant_id]);
     }
 
     public function testRequiredMerchantId()
@@ -181,10 +178,50 @@ class postUpdateMallTestArtemisVersion extends TestCase
     {
         $this->setDataMall();
 
-        $floor_array = ["{\"name\":\"B3\",\"order\":\"1\"}","{\"name\":\"B2\",\"order\":\"2\"}","{\"name\":\"B1\",\"order\":\"0\"}"];
+        $floor_array = ["{\"id\":\"{$this->fl_b3->object_id}\",\"name\":\"{$this->fl_b3->object_name}\",\"order\":\"1\"}",
+            "{\"id\":\"{$this->fl_b2->object_id}\",\"name\":\"{$this->fl_b2->object_name}\",\"order\":\"2\"}",
+            "{\"id\":\"{$this->fl_b1->object_id}\",\"name\":\"{$this->fl_b1->object_name}\",\"order\":\"0\"}"];
 
         /*
         * test update floor order
+        */
+        $data = ['merchant_id' => $this->mall_c->merchant_id,
+            'floors'    => $floor_array
+        ];
+
+        $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
+
+        $floor_on_db = Object::excludeDeleted()
+                        ->where('merchant_id', $response->data->merchant_id)
+                        ->where('object_type', 'floor')
+                        ->get();
+
+        $this->assertSame(3, count($floor_on_db));
+
+        foreach ($floor_on_db as $floor_db) {
+            foreach ($floor_array as $floor_json) {
+                $floor = @json_decode($floor_json);
+                if ($floor_db->object_order === $floor->order) {
+                    $this->assertSame($floor_db->object_name, $floor->name);
+                }
+            }
+        }
+    }
+
+    public function testUpdateFloorName()
+    {
+        $this->setDataMall();
+
+        $floor_array = [
+            "{\"id\":\"{$this->fl_b3->object_id}\",\"name\":\"{$this->fl_b3->object_name}\",\"order\":\"0\"}",
+            "{\"id\":\"{$this->fl_b2->object_id}\",\"name\":\"{$this->fl_b2->object_name}\",\"order\":\"1\"}",
+            "{\"id\":\"{$this->fl_b1->object_id}\",\"name\":\"L1\",\"order\":\"2\"}"
+        ];
+
+        /*
+        * test update floor name
         */
         $data = ['merchant_id' => $this->mall_c->merchant_id,
             'floors'    => $floor_array
@@ -215,7 +252,9 @@ class postUpdateMallTestArtemisVersion extends TestCase
     {
         $this->setDataMall();
 
-        $floor_array = ["{\"name\":\"B3\",\"order\":\"0\"}","{\"name\":\"B2\",\"order\":\"1\"}"];
+        $floor_array = [
+                "{\"id\":\"{$this->fl_b3->object_id}\",\"name\":\"{$this->fl_b3->object_name}\",\"order\":\"3\", \"floor_delete\":\"yes\"}"
+            ];
 
         /*
         * test delete floor not link on tenant
@@ -234,15 +273,6 @@ class postUpdateMallTestArtemisVersion extends TestCase
                         ->get();
 
         $this->assertSame(2, count($floor_on_db));
-
-        foreach ($floor_on_db as $floor_db) {
-            foreach ($floor_array as $floor_json) {
-                $floor = @json_decode($floor_json);
-                if ($floor_db->object_order === $floor->order) {
-                    $this->assertSame($floor_db->object_name, $floor->name);
-                }
-            }
-        }
     }
 
     public function testInsertNewFloor()
@@ -251,6 +281,10 @@ class postUpdateMallTestArtemisVersion extends TestCase
 
         $floor_array = ["{\"name\":\"B3\",\"order\":\"0\"}","{\"name\":\"B2\",\"order\":\"1\"}","{\"name\":\"B1\",\"order\":\"2\"}","{\"name\":\"L1\",\"order\":\"3\"}"];
 
+        $floor_array = ["{\"id\":\"{$this->fl_b3->object_id}\",\"name\":\"{$this->fl_b3->object_name}\",\"order\":\"1\"}",
+            "{\"id\":\"{$this->fl_b2->object_id}\",\"name\":\"{$this->fl_b2->object_name}\",\"order\":\"2\"}",
+            "{\"name\":\"L1\",\"order\":\"3\"}",
+            "{\"id\":\"{$this->fl_b1->object_id}\",\"name\":\"{$this->fl_b1->object_name}\",\"order\":\"0\"}"];
         /*
         * test insert new floor
         */
@@ -283,8 +317,12 @@ class postUpdateMallTestArtemisVersion extends TestCase
     {
         $this->setDataMall();
 
-        $floor_array = ["{\"name\":\"B3\",\"order\":\"0\"}","{\"name\":\"B2\",\"order\":\"1\"}","{\"name\":\"L1\",\"order\":\"3\"}"];
-
+        $floor_array = [
+                "{\"id\":\"{$this->fl_b2->object_id}\",\"name\":\"{$this->fl_b2->object_name}\",\"order\":\"2\"}",
+                "{\"name\":\"L1\",\"order\":\"3\"}",
+                "{\"id\":\"{$this->fl_b3->object_id}\",\"name\":\"{$this->fl_b3->object_name}\",\"order\":\"3\", \"floor_delete\":\"yes\"}",
+                "{\"id\":\"{$this->fl_b1->object_id}\",\"name\":\"{$this->fl_b1->object_name}\",\"order\":\"0\"}"
+            ];
         /*
         * test delete and insert new floor
         */
@@ -302,22 +340,18 @@ class postUpdateMallTestArtemisVersion extends TestCase
                         ->get();
 
         $this->assertSame(3, count($floor_on_db));
-
-        foreach ($floor_on_db as $floor_db) {
-            foreach ($floor_array as $floor_json) {
-                $floor = @json_decode($floor_json);
-                if ($floor_db->object_order === $floor->order) {
-                    $this->assertSame($floor_db->object_name, $floor->name);
-                }
-            }
-        }
     }
 
     public function testInsertDuplicateFloorName()
     {
         $this->setDataMall();
 
-        $floor_array = ["{\"name\":\"B3\",\"order\":\"0\"}","{\"name\":\"B2\",\"order\":\"1\"}","{\"name\":\"B3\",\"order\":\"2\"}","{\"name\":\"L1\",\"order\":\"3\"}"];
+        $floor_array = [
+                "{\"id\":\"{$this->fl_b3->object_id}\",\"name\":\"{$this->fl_b3->object_name}\",\"order\":\"0\"}",
+                "{\"id\":\"{$this->fl_b2->object_id}\",\"name\":\"{$this->fl_b2->object_name}\",\"order\":\"1\"}",
+                "{\"name\":\"B3\",\"order\":\"2\"}",
+                "{\"name\":\"L1\",\"order\":\"3\"}",
+            ];
 
         /*
         * test insert duplicate floor name
@@ -354,8 +388,9 @@ class postUpdateMallTestArtemisVersion extends TestCase
     {
         $this->setDataMall();
 
-        $floor_array = ["{\"name\":\"B3\",\"order\":\"0\"}","{\"name\":\"B2\",\"order\":\"1\"}"];
-
+        $floor_array = [
+                "{\"id\":\"{$this->fl_b1->object_id}\",\"name\":\"{$this->fl_b1->object_name}\",\"order\":\"3\", \"floor_delete\":\"yes\"}"
+            ];
         /*
         * test delete floor will error when link to tenant
         */
@@ -366,9 +401,7 @@ class postUpdateMallTestArtemisVersion extends TestCase
         $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
         $this->assertSame(14, $response->code);
         $this->assertSame("error", $response->status);
-        $this->assertSame("The floor B1 cannot be deleted: because used on Tenant", $response->message);
-
-        $floor_array_db = ["{\"name\":\"B3\",\"order\":\"0\"}","{\"name\":\"B2\",\"order\":\"1\"}","{\"name\":\"B1\",\"order\":\"2\"}"];
+        $this->assertSame("One or more active tenants are located on this floor", $response->message);
 
         $floor_on_db = Object::excludeDeleted()
                         ->where('merchant_id', $this->mall_c->merchant_id)
@@ -376,14 +409,111 @@ class postUpdateMallTestArtemisVersion extends TestCase
                         ->get();
 
         $this->assertSame(3, count($floor_on_db));
+    }
 
-        foreach ($floor_on_db as $floor_db) {
-            foreach ($floor_array_db as $floor_json) {
-                $floor = @json_decode($floor_json);
-                if ($floor_db->object_order === $floor->order) {
-                    $this->assertSame($floor_db->object_name, $floor->name);
-                }
-            }
-        }
+    public function testUpdateSubdomainAlphaNumericDash()
+    {
+        $this->setDataMall();
+
+        $subdomain = 'seminyak-village23';
+
+        /*
+        * test update subdomain
+        */
+        $data = ['merchant_id' => $this->mall_d->merchant_id,
+            'domain'    => $subdomain
+        ];
+
+        $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
+        $this->assertSame($subdomain . Config::get('orbit.shop.ci_domain'), $response->data->ci_domain);
+
+        // check domain setting
+        $dom_setting = Setting::where('setting_value', $this->mall_d->merchant_id)
+                            ->where('setting_name', 'like', '%dom%')
+                            ->first();
+
+        $this->assertSame('dom:' . $subdomain . Config::get('orbit.shop.ci_domain'), $dom_setting->setting_name);
+    }
+
+    public function testUpdateSubdomainAlphaNumericDashDot()
+    {
+        $this->setDataMall();
+
+        $subdomain = 'seminyak-village23.mall';
+
+        /*
+        * test update subdomain
+        */
+        $data = ['merchant_id' => $this->mall_d->merchant_id,
+            'domain'    => $subdomain
+        ];
+
+        $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("The domain may only contain letters, numbers, and dashes", $response->message);
+    }
+
+    public function testUpdateSubdomainAlphaNumericDashOtherChar()
+    {
+        $this->setDataMall();
+
+        $subdomain = 'seminyak-villa#$@%^&ge23';
+
+        /*
+        * test update subdomain
+        */
+        $data = ['merchant_id' => $this->mall_d->merchant_id,
+            'domain'    => $subdomain
+        ];
+
+        $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("The domain may only contain letters, numbers, and dashes", $response->message);
+    }
+
+    public function testUpdateDuplicateSubdomain()
+    {
+        $this->setDataMall();
+
+        $mall_xx = Factory::create('Mall', ['ci_domain' => 'seminyak.gotomalls.cool']);
+
+        $subdomain = 'seminyak';
+
+        /*
+        * test update duplicate subdomain
+        */
+        $data = ['merchant_id' => $this->mall_d->merchant_id,
+            'domain'    => $subdomain
+        ];
+
+        $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("Mall URL Application Domain name has already been taken", $response->message);
+    }
+
+    public function testUpdateDuplicateSubdomainButNotMe()
+    {
+        $this->setDataMall();
+
+        $mall_xx = Factory::create('Mall', ['ci_domain' => 'seminyak.gotomalls.cool']);
+
+        $subdomain = 'lippomall';
+
+        /*
+        * test update duplicate subdomain
+        */
+        $data = ['merchant_id' => $this->mall_d->merchant_id,
+            'domain'    => $subdomain
+        ];
+
+        $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
+        $this->assertSame($subdomain . Config::get('orbit.shop.ci_domain'), $response->data->ci_domain);
     }
 }

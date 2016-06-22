@@ -144,6 +144,10 @@
                         <button type="button" class="btn btn-info icon-button form text-center" data-toggle="modal" data-target="#formModal"><i class="fa fa-pencil fa-3x"></i></button>
                     </div>
                 </div>
+                <br/><br/>
+                <div class="row">
+                    <div class="col-xs-12 text-center">v 2.2 <a target="_blank" href="{{ Config::get('orbit.contact_information.privacy_policy_url') }}">Privacy Policy</a>. <a target="_blank" href="{{ Config::get('orbit.contact_information.terms_of_service_url') }}">Terms and Conditions</a></div>
+                </div>
             </div>
         </div>
     </div>

@@ -111,7 +111,10 @@ class getCustomerTodayDashboardTest extends TestCase
         $user = Factory::create('User', ['user_role_id' => $role->role_id]);
         $apikey = Factory::create('Apikey', ['user_id' => $user->user_id]);
         $mall = Factory::create('Mall', ['timezone_id' => $this->timezone->timezone_id, 'user_id' => $user->user_id]);
-        $data = array('start_date' => '2016-06-07 17:00:00', 'end_date' => '2016-06-08 16:59:59', 'current_mall' => $mall->merchant_id);
+
+        $dateNowStart = Carbon::now()->format('Y-m-d 00:00:00');
+        $dateNowEnd = Carbon::now()->format('Y-m-d 23:59:59');
+        $data = array('start_date' => $dateNowStart, 'end_date' => $dateNowEnd, 'current_mall' => $mall->merchant_id);
 
         $response = $this->makeRequest($data, $apikey);
         $this->assertSame(0, $response->code);
@@ -135,7 +138,10 @@ class getCustomerTodayDashboardTest extends TestCase
         $guest1 = Factory::create('user_guest');
 
         $userSignin = Factory::create('UserSignin', ['user_id' => $guest1->user_id, 'signin_via' => 'guest', 'location_id' => $mall->merchant_id]);
-        $data = array('start_date' => '2016-06-06 00:00:00', 'end_date' => '2016-06-09 23:59:59', 'current_mall' => $mall->merchant_id);
+
+        $dateNowStart = Carbon::now()->format('Y-m-d 00:00:00');
+        $dateNowEnd = Carbon::now()->format('Y-m-d 23:59:59');
+        $data = array('start_date' => $dateNowStart, 'end_date' => $dateNowEnd, 'current_mall' => $mall->merchant_id);
 
         $response = $this->makeRequest($data, $apikey);
         $this->assertSame(0, $response->code);
@@ -162,7 +168,9 @@ class getCustomerTodayDashboardTest extends TestCase
         $userSignin1 = Factory::create('UserSignin', ['user_id' => $guest1->user_id, 'signin_via' => 'guest', 'location_id' => $mall->merchant_id]);
         $userSignin2 = Factory::create('UserSignin', ['user_id' => $guest2->user_id, 'signin_via' => 'guest', 'location_id' => $mall->merchant_id]);
 
-        $data = array('start_date' => '2016-06-06 00:00:00', 'end_date' => '2016-06-09 23:59:59', 'current_mall' => $mall->merchant_id);
+        $dateNowStart = Carbon::now()->format('Y-m-d 00:00:00');
+        $dateNowEnd = Carbon::now()->format('Y-m-d 23:59:59');
+        $data = array('start_date' => $dateNowStart, 'end_date' => $dateNowEnd, 'current_mall' => $mall->merchant_id);
 
         $response = $this->makeRequest($data, $apikey);
         $this->assertSame(0, $response->code);
@@ -187,7 +195,9 @@ class getCustomerTodayDashboardTest extends TestCase
 
         $userSignin1 = Factory::create('UserSignin', ['user_id' => $customer1->user_id, 'signin_via' => 'form', 'location_id' => $mall->merchant_id]);
 
-        $data = array('start_date' => '2016-06-06 00:00:00', 'end_date' => '2016-06-09 23:59:59', 'current_mall' => $mall->merchant_id);
+        $dateNowStart = Carbon::now()->format('Y-m-d 00:00:00');
+        $dateNowEnd = Carbon::now()->format('Y-m-d 23:59:59');
+        $data = array('start_date' => $dateNowStart, 'end_date' => $dateNowEnd, 'current_mall' => $mall->merchant_id);
 
         $response = $this->makeRequest($data, $apikey);
         $this->assertSame(0, $response->code);
@@ -214,7 +224,9 @@ class getCustomerTodayDashboardTest extends TestCase
         $userSignin1 = Factory::create('UserSignin', ['user_id' => $customer1->user_id, 'signin_via' => 'form', 'location_id' => $mall->merchant_id]);
         $userSignin2 = Factory::create('UserSignin', ['user_id' => $customer2->user_id, 'signin_via' => 'form', 'location_id' => $mall->merchant_id]);
 
-        $data = array('start_date' => '2016-06-06 00:00:00', 'end_date' => '2016-06-09 23:59:59', 'current_mall' => $mall->merchant_id);
+        $dateNowStart = Carbon::now()->format('Y-m-d 00:00:00');
+        $dateNowEnd = Carbon::now()->format('Y-m-d 23:59:59');
+        $data = array('start_date' => $dateNowStart, 'end_date' => $dateNowEnd, 'current_mall' => $mall->merchant_id);
 
         $response = $this->makeRequest($data, $apikey);
         $this->assertSame(0, $response->code);
@@ -243,7 +255,9 @@ class getCustomerTodayDashboardTest extends TestCase
         $userSignin2 = Factory::create('UserSignin', ['user_id' => $customer2->user_id, 'signin_via' => 'form', 'location_id' => $mall->merchant_id]);
         $userSignin3 = Factory::create('UserSignin', ['user_id' => $guest1->user_id, 'signin_via' => 'guest', 'location_id' => $mall->merchant_id]);
 
-        $data = array('start_date' => '2016-06-06 00:00:00', 'end_date' => '2016-06-09 23:59:59', 'current_mall' => $mall->merchant_id);
+        $dateNowStart = Carbon::now()->format('Y-m-d 00:00:00');
+        $dateNowEnd = Carbon::now()->format('Y-m-d 23:59:59');
+        $data = array('start_date' => $dateNowStart, 'end_date' => $dateNowEnd, 'current_mall' => $mall->merchant_id);
 
         $response = $this->makeRequest($data, $apikey);
         $this->assertSame(0, $response->code);

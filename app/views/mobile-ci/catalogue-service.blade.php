@@ -143,7 +143,7 @@
         }
     }
 
-    var generateListItem = function (merchantId, redirectUrl, url, name, floor, unit, category, facebook_like_url, logoUrl) {
+    var generateListItem = function (merchantId, redirectUrl, url, name, floor, unit, location, category, facebook_like_url, logoUrl) {
         var $listDiv = $('<div />').addClass('col-xs-12 col-sm-12').attr({
             'id': 'item-' + merchantId
         }).data('name', name);
@@ -162,7 +162,8 @@
         );
 
         var $subtitleHeader = $('<header />').addClass('list-item-subtitle');
-        var markerText = (floor ? ' ' + floor : '') + (unit ? '- ' + unit : '');
+        //var markerText = (floor ? ' ' + floor : '') + (unit ? '- ' + unit : '');
+        var markerText = location;
         var $divMarker = $('<div />').append(
             $('<i />').addClass('fa fa-map-marker').attr('style', 'padding-left: 5px;padding-right: 8px;')
         ).append(markerText);
@@ -229,11 +230,12 @@
             var name = records[i].name;
             var floor = records[i].floor;
             var unit = records[i].unit;
+            var location = records[i].location;
             var category = records[i].category_string;
             var facebook_like_url = records[i].facebook_like_url;
             var logoUrl = records[i].logo_orig;
 
-            var $listDiv = generateListItem(merchantId, redirectUrl, url, name, floor, unit, category, facebook_like_url, logoUrl);
+            var $listDiv = generateListItem(merchantId, redirectUrl, url, name, floor, unit, location, category, facebook_like_url, logoUrl);
 
             $('.catalogue-wrapper').append($listDiv);
 
