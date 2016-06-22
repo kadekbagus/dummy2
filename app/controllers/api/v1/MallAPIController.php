@@ -491,7 +491,11 @@ class MallAPIController extends ControllerAPI
             $newmall->ci_domain = $domain . Config::get('orbit.shop.ci_domain');
             $newmall->masterbox_number = $masterbox_number;
             $newmall->slavebox_number = $slavebox_number;
-            $newmall->mobile_default_language = $mobile_default_language;
+            if (in_array($mobile_default_language, $languages)) {
+                $newmall->mobile_default_language = $mobile_default_language;
+            } else {
+                OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.mobile_default_lang'));
+            }
             $newmall->pos_language = $pos_language;
             $newmall->modified_by = $this->api->user->user_id;
 
@@ -1784,8 +1788,12 @@ class MallAPIController extends ControllerAPI
                 $updatedmall->slavebox_number = $slavebox_number;
             });
 
-            OrbitInput::post('mobile_default_language', function($mobile_default_language) use ($updatedmall) {
-                $updatedmall->mobile_default_language = $mobile_default_language;
+            OrbitInput::post('mobile_default_language', function($mobile_default_language) use ($updatedmall, $languages) {
+                if (in_array($mobile_default_language, $languages)) {
+                    $updatedmall->mobile_default_language = $mobile_default_language;
+                } else {
+                    OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.mobile_default_lang'));
+                }
             });
 
             OrbitInput::post('pos_language', function($pos_language) use ($updatedmall) {
@@ -1807,10 +1815,6 @@ class MallAPIController extends ControllerAPI
             //     $timezone = $this->valid_timezone;
             //     $updatedmall->timezone_id = $timezone->timezone_id;
             // });
-
-            OrbitInput::post('mobile_default_language', function($mobile_default_language) use ($updatedmall) {
-                $updatedmall->mobile_default_language = $mobile_default_language;
-            });
 
             $updatedmall->modified_by = $this->api->user->user_id;
 
@@ -1858,11 +1862,11 @@ class MallAPIController extends ControllerAPI
             //     }
             // });
 
-            OrbitInput::post('languages', function($languages) use ($updatedmall) {
-                if (! in_array('en', $languages)) {
-                    $errorMessage = Lang::get('validation.orbit.exists.default_language', ['attribute' => 'English']);
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-                }
+            OrbitInput::post('languages', function($languages) use ($updatedmall, $mobile_default_language) {
+                // if (! in_array('en', $languages)) {
+                //     $errorMessage = Lang::get('validation.orbit.exists.default_language', ['attribute' => 'English']);
+                //     OrbitShopAPI::throwInvalidArgument($errorMessage);
+                // }
 
                 // new languages
                 $all_mall_languages = [];
@@ -1915,6 +1919,10 @@ class MallAPIController extends ControllerAPI
                 if (count($languages_will_be_delete) > 0) {
                     $del_lang = [];
                     foreach ($languages_will_be_delete as $check_lang) {
+                        if ($check_lang->name === $mobile_default_language) {
+                            OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.exists.mobile_default_lang'));
+                        }
+
                         // news translation
                         $news_translations = NewsTranslation::excludeDeleted('news_translations')
                                                 ->excludeDeleted('merchant_languages')

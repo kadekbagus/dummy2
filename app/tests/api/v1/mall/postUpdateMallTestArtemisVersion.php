@@ -20,6 +20,9 @@ class postUpdateMallTestArtemisVersion extends TestCase
         $this->apiKey = Factory::create('apikey_super_admin');
 
         $this->enLang = Factory::create('Language', ['name' => 'en']);
+        $this->idLang = Factory::create('Language', ['name' => 'id']);
+        $this->zhLang = Factory::create('Language', ['name' => 'zh']);
+        $this->jpLang = Factory::create('Language', ['name' => 'jp']);
 
         $this->country = Factory::create('Country');
 
@@ -76,7 +79,10 @@ class postUpdateMallTestArtemisVersion extends TestCase
         $this->mall_d = Factory::create('Mall', ['ci_domain' => 'lippomall.gotomalls.cool']);
         Factory::create('Setting', ['setting_name' => 'dom:lippomall.gotomalls.com', 'setting_value' => $this->mall_d->merchant_id]);
 
-        $this->mall_e = Factory::create('Mall', ['description' => 'antok mall oke']);
+        $this->mall_e = Factory::create('Mall', ['description' => 'antok mall oke', 'mobile_default_language' => 'id']);
+        Factory::create('MerchantLanguage', ['language_id' => $this->idLang, 'merchant_id' => $this->mall_e->merchant_id]);
+        Factory::create('MerchantLanguage', ['language_id' => $this->zhLang, 'merchant_id' => $this->mall_e->merchant_id]);
+        Factory::create('MerchantLanguage', ['language_id' => $this->jpLang, 'merchant_id' => $this->mall_e->merchant_id]);
     }
 
     public function testRequiredMerchantId()
@@ -555,5 +561,98 @@ class postUpdateMallTestArtemisVersion extends TestCase
         $this->assertSame(14, $response->code);
         $this->assertSame("error", $response->status);
         $this->assertSame("The description may not be greater than 25 characters", $response->message);
+    }
+
+    public function testUpdateMobileLanguages()
+    {
+        $this->setDataMall();
+
+        $languages               = ['jp','zh','id'];
+        $mobile_default_language = 'zh';
+
+        /*
+        * test update description
+        */
+        $data = [
+            'merchant_id'             => $this->mall_e->merchant_id,
+            'languages'               => $languages,
+            'mobile_default_language' => $mobile_default_language
+        ];
+
+        $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
+        $this->assertSame($mobile_default_language, $response->data->mobile_default_language);
+    }
+
+    public function testUpdateMobileLanguagesNotOnListLanguages()
+    {
+        /*
+        * test update mobile or language not same for default language
+        */
+        $this->setDataMall();
+
+        $languages               = ['jp','zh','id'];
+        $mobile_default_language = 'en';
+
+        /*
+        * test update description
+        */
+        $data = [
+            'merchant_id'             => $this->mall_e->merchant_id,
+            'languages'               => $languages,
+            'mobile_default_language' => $mobile_default_language
+        ];
+
+        $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("Mobile default language must on list languages", $response->message);
+    }
+
+    public function testUpdateAddLanguage()
+    {
+        $this->setDataMall();
+
+        // add english
+        $languages               = ['jp','zh','id', 'en'];
+        $mobile_default_language = 'en';
+
+        /*
+        * test update description
+        */
+        $data = [
+            'merchant_id'             => $this->mall_e->merchant_id,
+            'languages'               => $languages,
+            'mobile_default_language' => $mobile_default_language
+        ];
+
+        $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
+        // check mall languages on database
+    }
+
+    public function testUpdateRemoveLanguage()
+    {
+        $this->setDataMall();
+
+        // add english
+        $languages               = ['jp','en'];
+        $mobile_default_language = 'en';
+
+        /*
+        * test update description
+        */
+        $data = [
+            'merchant_id'             => $this->mall_e->merchant_id,
+            'languages'               => $languages,
+            'mobile_default_language' => $mobile_default_language
+        ];
+
+        $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
+        // check mall languages on database
     }
 }
