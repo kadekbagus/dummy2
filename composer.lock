@@ -4,21 +4,21 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "b818a12eb536100ce70f5c66aebfd98e",
-    "content-hash": "ea9ba4a1c8fc5a51d811eb57e5b9f9a2",
+    "hash": "96dd5f523043b2b6ea9b6d5cb4964a9d",
+    "content-hash": "31c814e3c181d831493d426a86fa04fd",
     "packages": [
         {
             "name": "artdarek/oauth-4-laravel",
-            "version": "dev-master",
+            "version": "1.0.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/artdarek/oauth-4-laravel.git",
-                "reference": "d7226ea17932ee31143bb33b499e6f0aeb7d8ce2"
+                "reference": "3415ad8bc558d2969b700e05f694f3adeb8eb543"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/artdarek/oauth-4-laravel/zipball/d7226ea17932ee31143bb33b499e6f0aeb7d8ce2",
-                "reference": "d7226ea17932ee31143bb33b499e6f0aeb7d8ce2",
+                "url": "https://api.github.com/repos/artdarek/oauth-4-laravel/zipball/3415ad8bc558d2969b700e05f694f3adeb8eb543",
+                "reference": "3415ad8bc558d2969b700e05f694f3adeb8eb543",
                 "shasum": ""
             },
             "require": {
@@ -53,7 +53,7 @@
                 "oauth",
                 "php"
             ],
-            "time": "2015-01-08 16:40:21"
+            "time": "2014-08-06 12:45:48"
         },
         {
             "name": "barryvdh/laravel-debugbar",
@@ -1858,12 +1858,12 @@
             "target-dir": "Symfony/Component/Routing",
             "source": {
                 "type": "git",
-                "url": "https://github.com/symfony/Routing.git",
+                "url": "https://github.com/symfony/routing.git",
                 "reference": "f3f5f31d5e227c51eed7ba8b1ed809a97ebaa341"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/Routing/zipball/f3f5f31d5e227c51eed7ba8b1ed809a97ebaa341",
+                "url": "https://api.github.com/repos/symfony/routing/zipball/f3f5f31d5e227c51eed7ba8b1ed809a97ebaa341",
                 "reference": "f3f5f31d5e227c51eed7ba8b1ed809a97ebaa341",
                 "shasum": ""
             },
@@ -2085,8 +2085,7 @@
     "aliases": [],
     "minimum-stability": "stable",
     "stability-flags": {
-        "laraeval/laraeval": 20,
-        "artdarek/oauth-4-laravel": 20
+        "laraeval/laraeval": 20
     },
     "prefer-stable": false,
     "prefer-lowest": false,

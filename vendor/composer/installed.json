@@ -1656,12 +1656,12 @@
         "target-dir": "Symfony/Component/Routing",
         "source": {
             "type": "git",
-            "url": "https://github.com/symfony/Routing.git",
+            "url": "https://github.com/symfony/routing.git",
             "reference": "f3f5f31d5e227c51eed7ba8b1ed809a97ebaa341"
         },
         "dist": {
             "type": "zip",
-            "url": "https://api.github.com/repos/symfony/Routing/zipball/f3f5f31d5e227c51eed7ba8b1ed809a97ebaa341",
+            "url": "https://api.github.com/repos/symfony/routing/zipball/f3f5f31d5e227c51eed7ba8b1ed809a97ebaa341",
             "reference": "f3f5f31d5e227c51eed7ba8b1ed809a97ebaa341",
             "shasum": ""
         },
@@ -2100,17 +2100,17 @@
     },
     {
         "name": "artdarek/oauth-4-laravel",
-        "version": "dev-master",
-        "version_normalized": "9999999-dev",
+        "version": "1.0.5",
+        "version_normalized": "1.0.5.0",
         "source": {
             "type": "git",
             "url": "https://github.com/artdarek/oauth-4-laravel.git",
-            "reference": "d7226ea17932ee31143bb33b499e6f0aeb7d8ce2"
+            "reference": "3415ad8bc558d2969b700e05f694f3adeb8eb543"
         },
         "dist": {
             "type": "zip",
-            "url": "https://api.github.com/repos/artdarek/oauth-4-laravel/zipball/d7226ea17932ee31143bb33b499e6f0aeb7d8ce2",
-            "reference": "d7226ea17932ee31143bb33b499e6f0aeb7d8ce2",
+            "url": "https://api.github.com/repos/artdarek/oauth-4-laravel/zipball/3415ad8bc558d2969b700e05f694f3adeb8eb543",
+            "reference": "3415ad8bc558d2969b700e05f694f3adeb8eb543",
             "shasum": ""
         },
         "require": {
@@ -2120,7 +2120,7 @@
         "require-dev": {
             "illuminate/support": "~4"
         },
-        "time": "2015-01-08 16:40:21",
+        "time": "2014-08-06 12:45:48",
         "type": "library",
         "installation-source": "source",
         "autoload": {
