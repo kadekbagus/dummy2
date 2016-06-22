@@ -1489,6 +1489,9 @@ class MallAPIController extends ControllerAPI
             $campaign_base_price_coupon = OrbitInput::post('campaign_base_price_coupon');
             $campaign_base_price_news = OrbitInput::post('campaign_base_price_news');
             $free_wifi_status = OrbitInput::post('free_wifi_status');
+            $geo_point_latitude = OrbitInput::post('geo_point_latitude');
+            $geo_point_longitude = OrbitInput::post('geo_point_longitude');
+            $geo_area = OrbitInput::post('geo_area');
             $description = OrbitInput::post('description');
 
             $validator = Validator::make(
