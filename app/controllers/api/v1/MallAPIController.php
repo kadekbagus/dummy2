@@ -2117,10 +2117,25 @@ class MallAPIController extends ControllerAPI
                             OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.format'));
                         }
 
-                        if (! empty($floor->id) && ! empty($floor->floor_delete)) {
+                        $floor_id = Null;
+                        if (empty($floor->id)) {
+                            // handle a floor object without floor id but exist
+                            $exist_floor = Object::excludeDeleted()
+                                                ->where('object_type', 'floor')
+                                                ->where('merchant_id', $updatedmall->merchant_id)
+                                                ->where('object_name', $floor->name)
+                                                ->first();
+                            if (count($exist_floor) > 0) {
+                                $floor_id = $exist_floor->object_id;
+                            }
+                        } else {
+                            $floor_id = $floor->id;
+                        }
+
+                        if (! is_null($floor_id) && ! empty($floor->floor_delete)) {
                             if ($floor->floor_delete === 'yes') {
                                 $will_del_floor = Object::excludeDeleted()
-                                                    ->where('object_id', $floor->id)
+                                                    ->where('object_id', $floor_id)
                                                     ->where('object_type', 'floor')
                                                     ->where('merchant_id', $updatedmall->merchant_id)
                                                     ->first();
@@ -2143,29 +2158,7 @@ class MallAPIController extends ControllerAPI
                                 }
                             }
                         } else {
-                            // check exists floor name but not me
-                            $exist_floor = Null;
-                            if (empty($floor->id)) {
-                                $exist_floor = Object::excludeDeleted()
-                                                    ->where('object_type', 'floor')
-                                                    ->where('merchant_id', $updatedmall->merchant_id)
-                                                    ->where('object_name', $floor->name)
-                                                    ->first();
-                            } else {
-                                $exist_floor = Object::excludeDeleted()
-                                                    ->where('object_type', 'floor')
-                                                    ->where('merchant_id', $updatedmall->merchant_id)
-                                                    ->where('object_name', $floor->name)
-                                                    ->where('object_id', '!=', $floor->id)
-                                                    ->first();
-                            }
-
-                            if (count($exist_floor) > 0)
-                            {
-                                OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.exists.floor'));
-                            }
-
-                            if (empty($floor->id) && ! count($exist_floor) > 0) { // if floor doesn't have id that's mean is a new floor
+                            if (is_null($floor_id)) { // if floor doesn't have id that's mean is a new floor
                                 // create new floor
                                 $newfloor = new Object();
                                 $newfloor->merchant_id = $updatedmall->merchant_id;
@@ -2175,11 +2168,23 @@ class MallAPIController extends ControllerAPI
                                 $newfloor->status = 'active';
                                 $newfloor->save();
                             } else {
+                                // check exists floor name but not me
+                                // $duplicate_floor = Object::excludeDeleted()
+                                //                     ->where('object_type', 'floor')
+                                //                     ->where('merchant_id', $updatedmall->merchant_id)
+                                //                     ->where('object_name', $floor->name)
+                                //                     ->where('object_id', '!=', $floor_id)
+                                //                     ->first();
+
+                                if (in_array($floor->name, $colect_floor)) // if (count($duplicate_floor) > 0)
+                                {
+                                    OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.exists.floor'));
+                                }
                                 // update name and order
                                 $update_floor = Object::excludeDeleted()
                                                     ->where('object_type', 'floor')
                                                     ->where('merchant_id', $updatedmall->merchant_id)
-                                                    ->where('object_id', $floor->id)
+                                                    ->where('object_id', $floor_id)
                                                     ->first();
 
                                 if (count($update_floor) > 0) {

@@ -292,8 +292,6 @@ class postUpdateMallTestArtemisVersion extends TestCase
     {
         $this->setDataMall();
 
-        $floor_array = ["{\"name\":\"B3\",\"order\":\"0\"}","{\"name\":\"B2\",\"order\":\"1\"}","{\"name\":\"B1\",\"order\":\"2\"}","{\"name\":\"L1\",\"order\":\"3\"}"];
-
         $floor_array = ["{\"id\":\"{$this->fl_b3->object_id}\",\"name\":\"{$this->fl_b3->object_name}\",\"order\":\"1\"}",
             "{\"id\":\"{$this->fl_b2->object_id}\",\"name\":\"{$this->fl_b2->object_name}\",\"order\":\"2\"}",
             "{\"name\":\"L1\",\"order\":\"3\"}",
@@ -326,11 +324,9 @@ class postUpdateMallTestArtemisVersion extends TestCase
         }
     }
 
-    public function testInsertNewFloorWithoutFloorId()
+    public function testInsertExistFloorWithoutFloorId()
     {
         $this->setDataMall();
-
-        $floor_array = ["{\"name\":\"B3\",\"order\":\"0\"}","{\"name\":\"B2\",\"order\":\"1\"}","{\"name\":\"B1\",\"order\":\"2\"}","{\"name\":\"L1\",\"order\":\"3\"}"];
 
         $floor_array = [
             "{\"name\":\"B3\",\"order\":\"3\"}",
@@ -343,9 +339,8 @@ class postUpdateMallTestArtemisVersion extends TestCase
         ];
 
         $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
-        $this->assertSame(14, $response->code);
-        $this->assertSame("error", $response->status);
-        $this->assertSame("The floor name has already been taken", $response->message);
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
     }
 
     public function testDeleteAndInsertNewFloor()
