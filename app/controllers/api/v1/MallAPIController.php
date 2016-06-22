@@ -2144,11 +2144,28 @@ class MallAPIController extends ControllerAPI
                             }
                         } else {
                             // check exists floor name but not me
-                            if (in_array($floor->name, $colect_floor)) {
+                            $exist_floor = Null;
+                            if (empty($floor->id)) {
+                                $exist_floor = Object::excludeDeleted()
+                                                    ->where('object_type', 'floor')
+                                                    ->where('merchant_id', $updatedmall->merchant_id)
+                                                    ->where('object_name', $floor->name)
+                                                    ->first();
+                            } else {
+                                $exist_floor = Object::excludeDeleted()
+                                                    ->where('object_type', 'floor')
+                                                    ->where('merchant_id', $updatedmall->merchant_id)
+                                                    ->where('object_name', $floor->name)
+                                                    ->where('object_id', '!=', $floor->id)
+                                                    ->first();
+                            }
+
+                            if (count($exist_floor) > 0)
+                            {
                                 OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.exists.floor'));
                             }
 
-                            if (empty($floor->id)) { // if floor doesn't have id that's mean is a new floor
+                            if (empty($floor->id) && ! count($exist_floor) > 0) { // if floor doesn't have id that's mean is a new floor
                                 // create new floor
                                 $newfloor = new Object();
                                 $newfloor->merchant_id = $updatedmall->merchant_id;
@@ -2158,18 +2175,18 @@ class MallAPIController extends ControllerAPI
                                 $newfloor->status = 'active';
                                 $newfloor->save();
                             } else {
-                                // for update order
-                                $exist_floor = Object::excludeDeleted()
+                                // update name and order
+                                $update_floor = Object::excludeDeleted()
                                                     ->where('object_type', 'floor')
                                                     ->where('merchant_id', $updatedmall->merchant_id)
                                                     ->where('object_id', $floor->id)
                                                     ->first();
 
-                                if (count($exist_floor) > 0) {
+                                if (count($update_floor) > 0) {
                                     // update name and order
-                                    $exist_floor->object_name = $floor->name;
-                                    $exist_floor->object_order = $floor->order;
-                                    $exist_floor->save();
+                                    $update_floor->object_name = $floor->name;
+                                    $update_floor->object_order = $floor->order;
+                                    $update_floor->save();
                                 }
                             }
 

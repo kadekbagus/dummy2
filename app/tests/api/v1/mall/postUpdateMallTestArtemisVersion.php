@@ -202,6 +202,7 @@ class postUpdateMallTestArtemisVersion extends TestCase
         ];
 
         $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame('Request OK', $response->message);
         $this->assertSame(0, $response->code);
         $this->assertSame("success", $response->status);
 
@@ -323,6 +324,28 @@ class postUpdateMallTestArtemisVersion extends TestCase
                 }
             }
         }
+    }
+
+    public function testInsertNewFloorWithoutFloorId()
+    {
+        $this->setDataMall();
+
+        $floor_array = ["{\"name\":\"B3\",\"order\":\"0\"}","{\"name\":\"B2\",\"order\":\"1\"}","{\"name\":\"B1\",\"order\":\"2\"}","{\"name\":\"L1\",\"order\":\"3\"}"];
+
+        $floor_array = [
+            "{\"name\":\"B3\",\"order\":\"3\"}",
+        ];
+        /*
+        * test insert new floor
+        */
+        $data = ['merchant_id' => $this->mall_c->merchant_id,
+            'floors'    => $floor_array
+        ];
+
+        $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("The floor name has already been taken", $response->message);
     }
 
     public function testDeleteAndInsertNewFloor()
