@@ -409,7 +409,7 @@ class LoginAPIController extends IntermediateBaseController
         $encoded_caller_url = \Input::get('caller_url', NULL);
         $encoded_redirect_to_url = \Input::get('redirect_to_url', NULL);
         $angular_ci = \Input::get('aci', FALSE);
-dd($angular_ci);
+
         // error=access_denied&
         // error_code=200&
         // error_description=Permissions+error
