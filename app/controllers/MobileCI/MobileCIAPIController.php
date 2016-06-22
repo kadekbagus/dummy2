@@ -10205,7 +10205,7 @@ class MobileCIAPIController extends BaseCIController
      * @param User $user (User object from registration/sign in process)
      * @return \OrbitShop\API\v1\ResponseProvider
      */
-    public function linkGuestToUser($user)
+    public function linkGuestToUser($user, $transaction = TRUE)
     {
         try {
             if (! is_object($this->session)) {
@@ -10221,12 +10221,14 @@ class MobileCIAPIController extends BaseCIController
             // check guest user id on session if empty create new one
             if (empty($guest_id)) {
                 $urlblock = new UrlBlock($this->session, NULL);
-                $guest = $urlblock->generateGuestUser();
+                $guest = GenerateGuestUser::generateGuestUser();
 
                 $guest_id = $guest->user_id;
             }
 
-            $this->beginTransaction();
+            if ($transaction) {
+                $this->beginTransaction();
+            }
 
             $userguest = new UserGuest();
             $userguest->user_id = $user->user_id;
@@ -10238,14 +10240,18 @@ class MobileCIAPIController extends BaseCIController
 
             $listConnectedUser = DB::table('list_connected_user')->where('user_id', '=', $guest_id)->delete(); 
             
-            $this->commit();
+            if ($transaction) {
+                $this->commit();
+            }
 
             $this->response->code = 0;
             $this->response->status = 'success';
             $this->response->data = $user;
             $this->response->message = 'Success';
         } catch (Exception $e) {
-            $this->rollback();
+            if ($transaction) {
+                $this->rollback();
+            }
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
