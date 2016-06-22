@@ -1513,7 +1513,9 @@ class UserAPIController extends ControllerAPI
                          ->join('user_details', 'user_details.user_id', '=', 'users.user_id')
                          ->leftJoin('merchants', 'merchants.merchant_id', '=', 'user_details.last_visit_shop_id')
                          ->with(array('userDetail', 'userDetail.lastVisitedShop'))
-                         ->with('categories')
+                         ->with(array('categories' => function ($q) use ($listOfMallIds) {
+                                $q->where('status', '!=', 'deleted');
+                         }))
                          ->with(array('banks' => function ($q) use ($listOfMallIds) {
                             if (empty($listOfMallIds)) { // invalid mall id
                                 $q->whereRaw('0');
