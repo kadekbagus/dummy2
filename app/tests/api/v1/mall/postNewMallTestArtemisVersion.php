@@ -179,6 +179,7 @@ class postNewMallTestArtemisVersion extends TestCase
         $data = ['name' => 'antok mall',
             'email'                         => 'antokmall@bumi.com',
             'password'                      => '123456',
+            'description'                   => 'antok mall baru',
             'address_line1'                 => 'jalan sudirman no 1',
             'city'                          => 'badung',
             'country'                       => $this->country->country_id,
@@ -195,7 +196,7 @@ class postNewMallTestArtemisVersion extends TestCase
             'sector_of_activity'            => 'Mall',
             'languages'                     => ['en'],
             'mobile_default_language'       => 'en',
-            'domain'                        => 'orbit-mall.mall.irianto',
+            'domain'                        => 'orbit',
             'geo_point_latitude'            => '-8.663937',
             'geo_point_longitude'           => '115.174142',
             'geo_area'                      => '-8.663007 115.174527,-8.662275 115.176930,-8.664174 115.177735,-8.665669 115.175836,-8.664842 115.174227,-8.663007 115.174527',
@@ -218,6 +219,7 @@ class postNewMallTestArtemisVersion extends TestCase
         $data = ['name' => 'antok mall',
             'email'                         => 'antokmall@bumi.com',
             'password'                      => '123456',
+            'description'                   => 'antok mall baru',
             'address_line1'                 => 'jalan sudirman no 1',
             'city'                          => 'badung',
             'country'                       => $this->country->country_id,
@@ -234,7 +236,7 @@ class postNewMallTestArtemisVersion extends TestCase
             'sector_of_activity'            => 'Mall',
             'languages'                     => ['en'],
             'mobile_default_language'       => 'en',
-            'domain'                        => 'orbit-mall.mall.irianto',
+            'domain'                        => 'orbit-mall',
             'geo_point_latitude'            => '-8.663937',
             'geo_point_longitude'           => '115.174142',
             'geo_area'                      => '-8.663007 115.174527,-8.662275 115.176930,-8.664174 115.177735,-8.665669 115.175836,-8.664842 115.174227,-8.663007 115.174527',
@@ -259,6 +261,7 @@ class postNewMallTestArtemisVersion extends TestCase
         $data = ['name' => 'antok mall',
             'email'                         => 'antokmall@bumi.com',
             'password'                      => '123456',
+            'description'                   => 'antok mall baru',
             'address_line1'                 => 'jalan sudirman no 1',
             'city'                          => 'badung',
             'country'                       => $this->country->country_id,
@@ -275,7 +278,7 @@ class postNewMallTestArtemisVersion extends TestCase
             'sector_of_activity'            => 'Mall',
             'languages'                     => ['en'],
             'mobile_default_language'       => 'en',
-            'domain'                        => 'orbit-mall.mall.irianto',
+            'domain'                        => 'orbit-mall',
             'geo_point_latitude'            => '-8.663937',
             'geo_point_longitude'           => '115.174142',
             'geo_area'                      => '-8.663007 115.174527,-8.662275 115.176930,-8.664174 115.177735,-8.665669 115.175836,-8.664842 115.174227,-8.663007 115.174527',
@@ -302,6 +305,7 @@ class postNewMallTestArtemisVersion extends TestCase
         $data = ['name' => 'antok mall',
             'email'                         => 'antokmall@bumi.com',
             'password'                      => '123456',
+            'description'                   => 'antok mall baru',
             'address_line1'                 => 'jalan sudirman no 1',
             'city'                          => 'badung',
             'country'                       => $this->country->country_id,
@@ -359,6 +363,7 @@ class postNewMallTestArtemisVersion extends TestCase
         $data = ['name' => 'antok mall',
             'email'                         => 'antokmall@bumi.com',
             'password'                      => '123456',
+            'description'                   => 'antok mall baru',
             'address_line1'                 => 'jalan sudirman no 1',
             'city'                          => 'badung',
             'country'                       => $this->country->country_id,
@@ -401,6 +406,7 @@ class postNewMallTestArtemisVersion extends TestCase
         $data = ['name' => 'antok mall',
             'email'                         => 'antokmall@bumi.com',
             'password'                      => '123456',
+            'description'                   => 'antok mall baru',
             'address_line1'                 => 'jalan sudirman no 1',
             'city'                          => 'badung',
             'country'                       => $this->country->country_id,
@@ -450,6 +456,7 @@ class postNewMallTestArtemisVersion extends TestCase
         $data = ['name' => 'antok mall',
             'email'                         => 'antokmall@bumi.com',
             'password'                      => '123456',
+            'description'                   => 'antok mall baru',
             'address_line1'                 => 'jalan sudirman no 1',
             'city'                          => 'badung',
             'country'                       => $this->country->country_id,
@@ -499,6 +506,7 @@ class postNewMallTestArtemisVersion extends TestCase
         $data = ['name' => 'antok mall',
             'email'                         => 'antokmall@bumi.com',
             'password'                      => '123456',
+            'description'                   => 'antok mall baru',
             'address_line1'                 => 'jalan sudirman no 1',
             'city'                          => 'badung',
             'country'                       => $this->country->country_id,
@@ -541,6 +549,7 @@ class postNewMallTestArtemisVersion extends TestCase
         $data = ['name' => 'antok mall',
             'email'                         => 'antokmall@bumi.com',
             'password'                      => '123456',
+            'description'                   => 'antok mall baru',
             'address_line1'                 => 'jalan sudirman no 1',
             'city'                          => 'badung',
             'country'                       => $this->country->country_id,
@@ -585,6 +594,7 @@ class postNewMallTestArtemisVersion extends TestCase
         $data = ['name' => 'antok mall',
             'email'                         => 'antokmall@bumi.com',
             'password'                      => '123456',
+            'description'                   => 'antok mall baru',
             'address_line1'                 => 'jalan sudirman no 1',
             'city'                          => 'badung',
             'country'                       => $this->country->country_id,
@@ -615,5 +625,90 @@ class postNewMallTestArtemisVersion extends TestCase
         $this->assertSame(14, $response->code);
         $this->assertSame("error", $response->status);
         $this->assertSame("Mall URL Application Domain name has already been taken", $response->message);
+    }
+
+    public function testInsertDescriptionRequired()
+    {
+        /*
+        * test insert description when create mall
+        */
+        $description = 'lippomall';
+
+        $data = ['name' => 'antok mall',
+            'email'                         => 'antokmall@bumi.com',
+            'password'                      => '123456',
+            'address_line1'                 => 'jalan sudirman no 1',
+            'city'                          => 'badung',
+            'country'                       => $this->country->country_id,
+            'phone'                         => 123465,
+            'contact_person_firstname'      => 'antok',
+            'contact_person_lastname'       => 'mall',
+            'contact_person_phone'          => 321654,
+            'contact_person_email'          => 'antok@adminmall.com',
+            'status'                        => 'active',
+            'timezone'                      => $this->timezone->timezone_name,
+            'currency'                      => 'IDR',
+            'currency_symbol'               => 'Rp',
+            'vat_included'                  => 'yes',
+            'sector_of_activity'            => 'Mall',
+            'languages'                     => ['en'],
+            'mobile_default_language'       => 'en',
+            'domain'                        => 'lippomall',
+            'geo_point_latitude'            => '-8.663937',
+            'geo_point_longitude'           => '115.174142',
+            'geo_area'                      => '-8.663007 115.174527,-8.662275 115.176930,-8.664174 115.177735,-8.665669 115.175836,-8.664842 115.174227,-8.663007 115.174527',
+            'campaign_base_price_promotion' => 100,
+            'campaign_base_price_coupon'    => 200,
+            'campaign_base_price_news'      => 300,
+            'floors'                        => ["{\"name\":\"B3\",\"order\":\"0\"}","{\"name\":\"B2\",\"order\":\"1\"}","{\"name\":\"B1\",\"order\":\"2\"}"]
+        ];
+
+        $response = $this->setRequestPostNewMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("The description field is required", $response->message);
+    }
+
+    public function testInsertDescriptionMaxChar()
+    {
+        /*
+        * test insert description when create mall
+        */
+        $description = 'lippomall';
+
+        $data = ['name' => 'antok mall',
+            'email'                         => 'antokmall@bumi.com',
+            'password'                      => '123456',
+            'description'                   => 'mall antok bagus banget ss',
+            'address_line1'                 => 'jalan sudirman no 1',
+            'city'                          => 'badung',
+            'country'                       => $this->country->country_id,
+            'phone'                         => 123465,
+            'contact_person_firstname'      => 'antok',
+            'contact_person_lastname'       => 'mall',
+            'contact_person_phone'          => 321654,
+            'contact_person_email'          => 'antok@adminmall.com',
+            'status'                        => 'active',
+            'timezone'                      => $this->timezone->timezone_name,
+            'currency'                      => 'IDR',
+            'currency_symbol'               => 'Rp',
+            'vat_included'                  => 'yes',
+            'sector_of_activity'            => 'Mall',
+            'languages'                     => ['en'],
+            'mobile_default_language'       => 'en',
+            'domain'                        => 'lippomall',
+            'geo_point_latitude'            => '-8.663937',
+            'geo_point_longitude'           => '115.174142',
+            'geo_area'                      => '-8.663007 115.174527,-8.662275 115.176930,-8.664174 115.177735,-8.665669 115.175836,-8.664842 115.174227,-8.663007 115.174527',
+            'campaign_base_price_promotion' => 100,
+            'campaign_base_price_coupon'    => 200,
+            'campaign_base_price_news'      => 300,
+            'floors'                        => ["{\"name\":\"B3\",\"order\":\"0\"}","{\"name\":\"B2\",\"order\":\"1\"}","{\"name\":\"B1\",\"order\":\"2\"}"]
+        ];
+
+        $response = $this->setRequestPostNewMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("The description may not be greater than 25 characters", $response->message);
     }
 }

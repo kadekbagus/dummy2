@@ -349,6 +349,7 @@ class MallAPIController extends ControllerAPI
                     'campaign_base_price_news'      => $campaign_base_price_news,
                     'floors'                        => $floors,
                     'free_wifi_status'              => $free_wifi_status,
+                    'description'                   => $description,
                 ),
                 array(
                     'name'                          => 'required|orbit.exists.mall_name',
@@ -383,6 +384,7 @@ class MallAPIController extends ControllerAPI
                     'campaign_base_price_news'      => 'required',
                     'floors'                        => 'required|array',
                     'free_wifi_status'              => 'in:active,inactive',
+                    'description'                   => 'required|max:25',
                 ),
                 array(
                     'name.required'                     => 'Mall name is required',
