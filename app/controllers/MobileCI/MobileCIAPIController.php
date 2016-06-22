@@ -3653,7 +3653,11 @@ class MobileCIAPIController extends BaseCIController
                 ->where('parent_id', $retailer->merchant_id);
 
             $prefix = DB::getTablePrefix();
-            $tenants->select('merchants.merchant_id', 'floor', 'unit', DB::raw("CONCAT({$prefix}objects.object_name, \" - \", unit) AS location"))
+            $tenants->select('merchants.merchant_id',
+                        'objects.object_name as floor',
+                        'unit',
+                        DB::raw("(CASE WHEN unit = '' THEN {$prefix}objects.object_name ELSE CONCAT({$prefix}objects.object_name, \" - \", unit) END) AS location")
+                      )
                     ->leftJoin('objects', 'objects.object_id', '=', 'merchants.floor_id');
 
             $this->maybeJoinWithTranslationsTable($tenants, $alternateLanguage);
@@ -4586,10 +4590,15 @@ class MobileCIAPIController extends BaseCIController
             }
 
             $service = $service->active('merchants')
-                ->where('object_type', 'service')
+                ->where('merchants.object_type', 'service')
                 ->where('parent_id', $retailer->merchant_id);
 
-            $service->select('merchants.merchant_id', 'floor', 'unit');
+            $service->select('merchants.merchant_id',
+                        'objects.object_name as floor',
+                        'unit',
+                        DB::raw("(CASE WHEN unit = '' THEN {$prefix}objects.object_name ELSE CONCAT({$prefix}objects.object_name, \" - \", unit) END) AS location")
+                      )
+                    ->leftJoin('objects', 'objects.object_id', '=', 'merchants.floor_id');
 
             $mallid = $retailer->merchant_id;
 
