@@ -82,6 +82,7 @@
             <file>./app/tests/api/v1/promotion/getSearchPromotion.php</file>
             <file>./app/tests/api/v1/promotion/postNewPromotion.php</file>
             <file>./app/tests/api/v1/promotion/postUpdatePromotion.php</file>
+			<file>./app/tests/api/v1/user/postUpdateMembershipTestArtemisVersion.php</file>
         </testsuite>
     </testsuites>
 </phpunit>
