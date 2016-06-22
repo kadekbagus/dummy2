@@ -1579,7 +1579,10 @@ class TenantAPIController extends ControllerAPI
                 $facebookSocmedId = SocialMedia::whereSocialMediaCode('facebook')->first()->social_media_id;
 
                 $tenants = TenantStoreAndService::with('link_to_tenant')
-                                 ->select('merchants.*', DB::raw("CONCAT({$prefix}objects.object_name, \" - \", unit) AS location"), 'merchant_social_media.social_media_uri as facebook_uri')
+                                 ->select('merchants.*',
+                                    DB::raw("(CASE WHEN unit = '' THEN {$prefix}objects.object_name ELSE CONCAT({$prefix}objects.object_name, \" - \", unit) END) AS location"),
+                                    'merchant_social_media.social_media_uri as facebook_uri'
+                                  )
                                  // A left join to get tenants' Facebook URIs
                                  ->leftJoin('merchant_social_media', function ($join) use ($facebookSocmedId) {
                                     $join->on('merchants.merchant_id', '=', 'merchant_social_media.merchant_id')

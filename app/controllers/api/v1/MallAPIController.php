@@ -349,6 +349,7 @@ class MallAPIController extends ControllerAPI
                     'campaign_base_price_news'      => $campaign_base_price_news,
                     'floors'                        => $floors,
                     'free_wifi_status'              => $free_wifi_status,
+                    'description'                   => $description,
                 ),
                 array(
                     'name'                          => 'required|orbit.exists.mall_name',
@@ -374,7 +375,7 @@ class MallAPIController extends ControllerAPI
                     'sector_of_activity'            => 'required',
                     'languages'                     => 'required|array',
                     'mobile_default_language'       => 'required|size:2|orbit.formaterror.language',
-                    'domain'                        => 'required|alpha_dash',
+                    'domain'                        => 'required|alpha_dash|orbit.exists.domain',
                     'geo_point_latitude'            => 'required',
                     'geo_point_longitude'           => 'required',
                     'geo_area'                      => 'required',
@@ -383,6 +384,7 @@ class MallAPIController extends ControllerAPI
                     'campaign_base_price_news'      => 'required',
                     'floors'                        => 'required|array',
                     'free_wifi_status'              => 'in:active,inactive',
+                    'description'                   => 'required|max:25',
                 ),
                 array(
                     'name.required'                     => 'Mall name is required',
@@ -1483,6 +1485,10 @@ class MallAPIController extends ControllerAPI
             $campaign_base_price_coupon = OrbitInput::post('campaign_base_price_coupon');
             $campaign_base_price_news = OrbitInput::post('campaign_base_price_news');
             $free_wifi_status = OrbitInput::post('free_wifi_status');
+            $geo_point_latitude = OrbitInput::post('geo_point_latitude');
+            $geo_point_longitude = OrbitInput::post('geo_point_longitude');
+            $geo_area = OrbitInput::post('geo_area');
+            $description = OrbitInput::post('description');
 
             $validator = Validator::make(
                 array(
@@ -1512,6 +1518,7 @@ class MallAPIController extends ControllerAPI
                     // 'campaign_base_price_coupon'    => $campaign_base_price_coupon,
                     // 'campaign_base_price_news'      => $campaign_base_price_news,
                     'floors'                        => $floors,
+                    'description'                   => $description,
                     'free_wifi_status'              => $free_wifi_status
                 ),
                 array(
@@ -1534,15 +1541,17 @@ class MallAPIController extends ControllerAPI
                     'currency'                         => 'size:3',
                     'vat_included'                     => 'in:yes,no',
                     'languages'                        => 'array',
-                    'domain'                           => 'alpha_dash',
+                    'domain'                           => 'alpha_dash|domain_exist_but_not_me:' . $merchant_id,
                     'mobile_default_language'          => 'size:2|orbit.formaterror.language',
                     // 'campaign_base_price_promotion' => 'format currency later will be check',
                     // 'campaign_base_price_coupon'    => 'format currency later will be check',
                     // 'campaign_base_price_news'      => 'format currency later will be check',
                     'floors'                           => 'array',
+                    'description'                      => 'max:25',
                     'free_wifi_status'                 => 'in:active,inactive'
                 ),
                 array(
+                   'domain_exist_but_not_me'    => Lang::get('validation.orbit.exists.domain'),
                    'mall_name_exists_but_me'    => 'Mall name already exists',
                    'email_exists_but_me'        => Lang::get('validation.orbit.exists.email'),
                    'contact_person_email.email' => 'Email must be a valid email address',
@@ -3102,6 +3111,36 @@ class MallAPIController extends ControllerAPI
             }
 
             $this->valid_mall_lang = $lang;
+            return TRUE;
+        });
+
+        Validator::extend('orbit.exists.domain', function($attribute, $value, $parameters)
+        {
+            $ci_domain_config = Config::get('orbit.shop.ci_domain');
+            $domain = Mall::excludeDeleted()
+                        ->where('ci_domain', $value . $ci_domain_config)
+                        ->first();
+
+            if (count($domain) > 0) {
+                return FALSE;
+            }
+
+            return TRUE;
+        });
+
+        Validator::extend('domain_exist_but_not_me', function($attribute, $value, $parameters)
+        {
+            $merchant_id = $parameters[0];
+            $ci_domain_config = Config::get('orbit.shop.ci_domain');
+            $domain = Mall::excludeDeleted()
+                        ->where('ci_domain', $value . $ci_domain_config)
+                        ->where('merchant_id', '!=', $merchant_id)
+                        ->first();
+
+            if (count($domain) > 0) {
+                return FALSE;
+            }
+
             return TRUE;
         });
     }
