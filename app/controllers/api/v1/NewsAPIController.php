@@ -1617,10 +1617,12 @@ class NewsAPIController extends ControllerAPI
 
             $object_type = OrbitInput::get('object_type');
 
+            $filterName = OrbitInput::get('news_name_like', '');
+
             // Builder object
             $prefix = DB::getTablePrefix();
             $news = News::allowedForPMPUser($user, $object_type[0])
-                        ->select('news.*', 'news.news_id as campaign_id', 'news.object_type as campaign_type', 'campaign_status.order', 'campaign_price.campaign_price_id', 'news_translations.news_name as name_english', DB::raw('media.path as image_path'),
+                        ->select('news.*', 'news.news_id as campaign_id', 'news.object_type as campaign_type', 'campaign_status.order', 'campaign_price.campaign_price_id', 'news_translations.news_name as display_name', DB::raw('media.path as image_path'),
                             DB::raw("COUNT(DISTINCT {$prefix}news_merchant.news_merchant_id) as total_location"),
                             DB::raw("(select GROUP_CONCAT(IF({$prefix}merchants.object_type = 'tenant', CONCAT({$prefix}merchants.name,' at ', pm.name), CONCAT('Mall at ',{$prefix}merchants.name) ) separator ', ')
                                 from {$prefix}news_merchant
@@ -1641,10 +1643,15 @@ class NewsAPIController extends ControllerAPI
                         ->leftJoin('news_translations', 'news_translations.news_id', '=', 'news.news_id')
                         ->leftJoin('languages', 'languages.language_id', '=', 'news_translations.merchant_language_id')
                         ->leftJoin(DB::raw("( SELECT * FROM {$prefix}media WHERE media_name_long = 'news_translation_image_resized_default' ) as media"), DB::raw('media.object_id'), '=', 'news_translations.news_translation_id')
-                        ->where('languages.name', '=', 'en')
                         ->excludeDeleted('news')
                         ->groupBy('news.news_id');
 
+            if ($filterName === '') {
+                $news->where('languages.name', '=', DB::raw("(SELECT IF({$prefix}merchants.object_type = 'tenant', pm.mobile_default_language, {$prefix}merchants.mobile_default_language)
+                                FROM {$prefix}merchants
+                                LEFT JOIN {$prefix}merchants pm ON pm.merchant_id = {$prefix}merchants.parent_id
+                                WHERE {$prefix}merchants.merchant_id = (SELECT nm.merchant_id FROM {$prefix}news_merchant nm WHERE nm.news_id = {$prefix}news.news_id LIMIT 1))"));
+            } 
 
             // Filter news by Ids
             OrbitInput::get('news_id', function($newsIds) use ($news)

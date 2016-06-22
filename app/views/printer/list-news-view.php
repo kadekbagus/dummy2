@@ -226,7 +226,7 @@
             <?php $count = 1; while ($row = $statement->fetch(PDO::FETCH_OBJ)) : ?>
                 <tr class="{{ $rowCounter % 2 === 0 ? 'zebra' : '' }}">
                     <td><?php echo $count++; ?></td>
-                    <td><?php echo $me->printUtf8($row->name_english); ?></td>
+                    <td><?php echo $me->printUtf8($row->display_name); ?></td>
                     <td><?php echo date('d F Y H:i', strtotime($row->begin_date)); ?></td>
                     <td><?php echo date('d F Y H:i', strtotime($row->end_date)); ?></td>
                     <td>
