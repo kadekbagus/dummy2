@@ -83,6 +83,10 @@ class postUpdateMallTestArtemisVersion extends TestCase
         Factory::create('MerchantLanguage', ['language_id' => $this->idLang, 'merchant_id' => $this->mall_e->merchant_id]);
         Factory::create('MerchantLanguage', ['language_id' => $this->zhLang, 'merchant_id' => $this->mall_e->merchant_id]);
         Factory::create('MerchantLanguage', ['language_id' => $this->jpLang, 'merchant_id' => $this->mall_e->merchant_id]);
+
+        $news = Factory::create('News');
+        $news_translation = Factory::create('NewsTranslation', ['news_id' => $news->news_id, 'merchant_language_id' => $this->idLang->language_id]);
+        $new_merchant = Factory::create('NewsMerchant', ['news_id' => $news->news_id, 'merchant_id' => $this->mall_e->merchant_id, 'object_type' => 'mall']);
     }
 
     public function testRequiredMerchantId()
@@ -655,4 +659,27 @@ class postUpdateMallTestArtemisVersion extends TestCase
         $this->assertSame("success", $response->status);
         // check mall languages on database
     }
+
+    // public function testUpdateRemoveLanguageHasLink()
+    // {
+    //     $this->setDataMall();
+
+    //     // add english
+    //     $languages               = ['jp','en'];
+    //     $mobile_default_language = 'en';
+
+    //     /*
+    //     * test update description
+    //     */
+    //     $data = [
+    //         'merchant_id'             => $this->mall_e->merchant_id,
+    //         'languages'               => $languages,
+    //         'mobile_default_language' => $mobile_default_language
+    //     ];
+
+    //     $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+    //     $this->assertSame(14, $response->code);
+    //     $this->assertSame("error", $response->status);
+    //     $this->assertSame("error", $response->message);
+    // }
 }
