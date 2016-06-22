@@ -349,6 +349,7 @@ class MallAPIController extends ControllerAPI
                     'campaign_base_price_news'      => $campaign_base_price_news,
                     'floors'                        => $floors,
                     'free_wifi_status'              => $free_wifi_status,
+                    'description'                   => $description,
                 ),
                 array(
                     'name'                          => 'required|orbit.exists.mall_name',
@@ -383,6 +384,7 @@ class MallAPIController extends ControllerAPI
                     'campaign_base_price_news'      => 'required',
                     'floors'                        => 'required|array',
                     'free_wifi_status'              => 'in:active,inactive',
+                    'description'                   => 'required|max:25',
                 ),
                 array(
                     'name.required'                     => 'Mall name is required',
@@ -1483,6 +1485,10 @@ class MallAPIController extends ControllerAPI
             $campaign_base_price_coupon = OrbitInput::post('campaign_base_price_coupon');
             $campaign_base_price_news = OrbitInput::post('campaign_base_price_news');
             $free_wifi_status = OrbitInput::post('free_wifi_status');
+            $geo_point_latitude = OrbitInput::post('geo_point_latitude');
+            $geo_point_longitude = OrbitInput::post('geo_point_longitude');
+            $geo_area = OrbitInput::post('geo_area');
+            $description = OrbitInput::post('description');
 
             $validator = Validator::make(
                 array(
@@ -1512,6 +1518,7 @@ class MallAPIController extends ControllerAPI
                     // 'campaign_base_price_coupon'    => $campaign_base_price_coupon,
                     // 'campaign_base_price_news'      => $campaign_base_price_news,
                     'floors'                        => $floors,
+                    'description'                   => $description,
                     'free_wifi_status'              => $free_wifi_status
                 ),
                 array(
@@ -1540,6 +1547,7 @@ class MallAPIController extends ControllerAPI
                     // 'campaign_base_price_coupon'    => 'format currency later will be check',
                     // 'campaign_base_price_news'      => 'format currency later will be check',
                     'floors'                           => 'array',
+                    'description'                      => 'max:25',
                     'free_wifi_status'                 => 'in:active,inactive'
                 ),
                 array(

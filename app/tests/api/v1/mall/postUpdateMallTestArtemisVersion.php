@@ -75,6 +75,8 @@ class postUpdateMallTestArtemisVersion extends TestCase
 
         $this->mall_d = Factory::create('Mall', ['ci_domain' => 'lippomall.gotomalls.cool']);
         Factory::create('Setting', ['setting_name' => 'dom:lippomall.gotomalls.com', 'setting_value' => $this->mall_d->merchant_id]);
+
+        $this->mall_e = Factory::create('Mall', ['description' => 'antok mall oke']);
     }
 
     public function testRequiredMerchantId()
@@ -515,5 +517,43 @@ class postUpdateMallTestArtemisVersion extends TestCase
         $this->assertSame(0, $response->code);
         $this->assertSame("success", $response->status);
         $this->assertSame($subdomain . Config::get('orbit.shop.ci_domain'), $response->data->ci_domain);
+    }
+
+    public function testUpdateDescription()
+    {
+        $this->setDataMall();
+
+        $description = 'antok mall bagus';
+
+        /*
+        * test update description
+        */
+        $data = ['merchant_id' => $this->mall_e->merchant_id,
+            'description'    => $description
+        ];
+
+        $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
+        $this->assertSame($description, $response->data->description);
+    }
+
+    public function testUpdateDescriptionMaxChar()
+    {
+        $this->setDataMall();
+
+        $description = 'antok mall bagus banget beneran';
+
+        /*
+        * test update description
+        */
+        $data = ['merchant_id' => $this->mall_e->merchant_id,
+            'description'    => $description
+        ];
+
+        $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("The description may not be greater than 25 characters", $response->message);
     }
 }
