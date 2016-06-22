@@ -179,7 +179,6 @@ class postNewMallTestArtemisVersion extends TestCase
         $data = ['name' => 'antok mall',
             'email'                         => 'antokmall@bumi.com',
             'password'                      => '123456',
-            'description'                   => 'antok mall baru',
             'address_line1'                 => 'jalan sudirman no 1',
             'city'                          => 'badung',
             'country'                       => $this->country->country_id,
@@ -209,7 +208,6 @@ class postNewMallTestArtemisVersion extends TestCase
         $data = ['name' => 'antok mall',
             'email'                         => 'antokmall@bumi.com',
             'password'                      => '123456',
-            'description'                   => 'antok mall baru',
             'address_line1'                 => 'jalan sudirman no 1',
             'city'                          => 'badung',
             'country'                       => $this->country->country_id,
@@ -241,7 +239,6 @@ class postNewMallTestArtemisVersion extends TestCase
         $data = ['name' => 'antok mall',
             'email'                         => 'antokmall@bumi.com',
             'password'                      => '123456',
-            'description'                   => 'antok mall baru',
             'address_line1'                 => 'jalan sudirman no 1',
             'city'                          => 'badung',
             'country'                       => $this->country->country_id,
@@ -275,7 +272,6 @@ class postNewMallTestArtemisVersion extends TestCase
         $data = ['name' => 'antok mall',
             'email'                         => 'antokmall@bumi.com',
             'password'                      => '123456',
-            'description'                   => 'antok mall baru',
             'address_line1'                 => 'jalan sudirman no 1',
             'city'                          => 'badung',
             'country'                       => $this->country->country_id,
@@ -323,7 +319,6 @@ class postNewMallTestArtemisVersion extends TestCase
         $data = ['name' => 'antok mall',
             'email'                         => 'antokmall@bumi.com',
             'password'                      => '123456',
-            'description'                   => 'antok mall baru',
             'address_line1'                 => 'jalan sudirman no 1',
             'city'                          => 'badung',
             'country'                       => $this->country->country_id,
@@ -356,7 +351,6 @@ class postNewMallTestArtemisVersion extends TestCase
         $data = ['name' => 'antok mall',
             'email'                         => 'antokmall@bumi.com',
             'password'                      => '123456',
-            'description'                   => 'antok mall baru',
             'address_line1'                 => 'jalan sudirman no 1',
             'city'                          => 'badung',
             'country'                       => $this->country->country_id,
@@ -396,7 +390,6 @@ class postNewMallTestArtemisVersion extends TestCase
         $data = ['name' => 'antok mall',
             'email'                         => 'antokmall@bumi.com',
             'password'                      => '123456',
-            'description'                   => 'antok mall baru',
             'address_line1'                 => 'jalan sudirman no 1',
             'city'                          => 'badung',
             'country'                       => $this->country->country_id,
@@ -436,7 +429,6 @@ class postNewMallTestArtemisVersion extends TestCase
         $data = ['name' => 'antok mall',
             'email'                         => 'antokmall@bumi.com',
             'password'                      => '123456',
-            'description'                   => 'antok mall baru',
             'address_line1'                 => 'jalan sudirman no 1',
             'city'                          => 'badung',
             'country'                       => $this->country->country_id,
@@ -469,7 +461,6 @@ class postNewMallTestArtemisVersion extends TestCase
         $data = ['name' => 'antok mall',
             'email'                         => 'antokmall@bumi.com',
             'password'                      => '123456',
-            'description'                   => 'antok mall baru',
             'address_line1'                 => 'jalan sudirman no 1',
             'city'                          => 'badung',
             'country'                       => $this->country->country_id,
@@ -504,7 +495,6 @@ class postNewMallTestArtemisVersion extends TestCase
         $data = ['name' => 'antok mall',
             'email'                         => 'antokmall@bumi.com',
             'password'                      => '123456',
-            'description'                   => 'antok mall baru',
             'address_line1'                 => 'jalan sudirman no 1',
             'city'                          => 'badung',
             'country'                       => $this->country->country_id,
@@ -527,7 +517,7 @@ class postNewMallTestArtemisVersion extends TestCase
         $this->assertSame("Mall URL Application Domain name has already been taken", $response->message);
     }
 
-    public function testInsertDescriptionRequired()
+    public function testInsertDescriptionNotRequired()
     {
         /*
         * test insert description when create mall
@@ -554,9 +544,8 @@ class postNewMallTestArtemisVersion extends TestCase
         ];
 
         $response = $this->setRequestPostNewMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
-        $this->assertSame(14, $response->code);
-        $this->assertSame("error", $response->status);
-        $this->assertSame("The description field is required", $response->message);
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
     }
 
     public function testInsertDescriptionMaxChar()
