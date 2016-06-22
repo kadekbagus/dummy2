@@ -2714,7 +2714,6 @@ class CouponAPIController extends ControllerAPI
 
             $totalCoupons = RecordCounter::create($_coupons)->count();
             $listOfCoupons = $coupons->get();
-            print_r($listOfCoupons); die();
             // Return the instance of Query Builder
             if ($this->returnBuilder) {
                 return ['builder' => $coupons, 'count' => $totalCoupons];
