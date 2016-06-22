@@ -35,9 +35,6 @@ class postUpdateMallTestArtemisVersion extends TestCase
 
     public function setRequestPostUpdateMall($api_key, $api_secret_key, $update)
     {
-        $_GET = [];
-        $_POST = [];
-
         // Set the client API Keys
         $_GET['apikey'] = $api_key;
         $_GET['apitimestamp'] = time();
@@ -55,9 +52,6 @@ class postUpdateMallTestArtemisVersion extends TestCase
 
         $json = $this->call('POST', $url)->getContent();
         $response = json_decode($json);
-
-        unset($_POST);
-        unset($_GET);
 
         return $response;
     }
@@ -77,7 +71,7 @@ class postUpdateMallTestArtemisVersion extends TestCase
         $this->fl_b2 = Factory::create('Object', ['merchant_id' => $mall_c->merchant_id, 'object_name' => 'B2', 'object_type' => 'floor', 'object_order' => 1]);
         $this->fl_b1 = Factory::create('Object', ['merchant_id' => $mall_c->merchant_id, 'object_name' => 'B1', 'object_type' => 'floor', 'object_order' => 2]);
 
-        Factory::create('Tenant', ['name' => 'tenant firman', 'floor' => 'B1', 'parent_id' => $mall_c->merchant_id]);
+        Factory::create('Tenant', ['name' => 'tenant firman', 'floor_id' => $this->fl_b1->object_id, 'parent_id' => $mall_c->merchant_id]);
 
         $this->mall_d = Factory::create('Mall', ['ci_domain' => 'lippomall.gotomalls.com']);
         Factory::create('Setting', ['setting_name' => 'dom:lippomall.gotomalls.com', 'setting_value' => $this->mall_d->merchant_id]);
@@ -190,6 +184,44 @@ class postUpdateMallTestArtemisVersion extends TestCase
 
         /*
         * test update floor order
+        */
+        $data = ['merchant_id' => $this->mall_c->merchant_id,
+            'floors'    => $floor_array
+        ];
+
+        $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
+
+        $floor_on_db = Object::excludeDeleted()
+                        ->where('merchant_id', $response->data->merchant_id)
+                        ->where('object_type', 'floor')
+                        ->get();
+
+        $this->assertSame(3, count($floor_on_db));
+
+        foreach ($floor_on_db as $floor_db) {
+            foreach ($floor_array as $floor_json) {
+                $floor = @json_decode($floor_json);
+                if ($floor_db->object_order === $floor->order) {
+                    $this->assertSame($floor_db->object_name, $floor->name);
+                }
+            }
+        }
+    }
+
+    public function testUpdateFloorName()
+    {
+        $this->setDataMall();
+
+        $floor_array = [
+            "{\"id\":\"{$this->fl_b3->object_id}\",\"name\":\"{$this->fl_b3->object_name}\",\"order\":\"0\"}",
+            "{\"id\":\"{$this->fl_b2->object_id}\",\"name\":\"{$this->fl_b2->object_name}\",\"order\":\"1\"}",
+            "{\"id\":\"{$this->fl_b1->object_id}\",\"name\":\"L1\",\"order\":\"2\"}"
+        ];
+
+        /*
+        * test update floor name
         */
         $data = ['merchant_id' => $this->mall_c->merchant_id,
             'floors'    => $floor_array
