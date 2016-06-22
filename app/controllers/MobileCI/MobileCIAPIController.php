@@ -1642,6 +1642,8 @@ class MobileCIAPIController extends BaseCIController
                 }
             }
 
+            $newWidget->save();
+
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -3650,7 +3652,9 @@ class MobileCIAPIController extends BaseCIController
             $tenants = $tenants->active('merchants')
                 ->where('parent_id', $retailer->merchant_id);
 
-            $tenants->select('merchants.merchant_id', 'floor', 'unit');
+            $prefix = DB::getTablePrefix();
+            $tenants->select('merchants.merchant_id', 'floor', 'unit', DB::raw("CONCAT({$prefix}objects.object_name, \" - \", unit) AS location"))
+                    ->leftJoin('objects', 'objects.object_id', '=', 'merchants.floor_id');
 
             $this->maybeJoinWithTranslationsTable($tenants, $alternateLanguage);
 
