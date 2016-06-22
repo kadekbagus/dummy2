@@ -144,6 +144,10 @@
                         <button type="button" class="btn btn-info icon-button form text-center" data-toggle="modal" data-target="#formModal"><i class="fa fa-pencil fa-3x"></i></button>
                     </div>
                 </div>
+                <br/><br/>
+                <div class="row">
+                    <div class="col-xs-12 text-center">v 2.2 <a target="_blank" href="http://dominopos.com/privacy-policy.html">Privacy Policy</a>. <a target="_blank" href="http://dominopos.com/terms-and-conditions.html">Terms and Conditions</a></div>
+                </div>
             </div>
         </div>
     </div>
