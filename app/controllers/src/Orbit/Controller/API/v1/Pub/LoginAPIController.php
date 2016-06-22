@@ -545,9 +545,9 @@ class LoginAPIController extends IntermediateBaseController
      */
     public function postSocialLoginView()
     {
-        $encoded_caller_url_full = OrbitInput::post('from_url_full', NULL);
-        $encoded_redirect_to_url = OrbitInput::post('to_url', NULL);
-        $angular_ci = OrbitInput::post('aci', FALSE);
+        $encoded_caller_url_full = OrbitInput::get('from_url_full', NULL);
+        $encoded_redirect_to_url = OrbitInput::get('to_url', NULL);
+        $angular_ci = OrbitInput::get('aci', FALSE);
 
         $config = new SessionConfig(Config::get('orbit.session'));
         $config->setConfig('application_id', static::APPLICATION_ID);

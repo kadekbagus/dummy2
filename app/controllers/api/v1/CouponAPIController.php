@@ -11,7 +11,7 @@ use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Helper\EloquentRecordCounter as RecordCounter;
 use Carbon\Carbon as Carbon;
-use Queue;
+use \Queue;
 
 class CouponAPIController extends ControllerAPI
 {
@@ -1027,7 +1027,7 @@ class CouponAPIController extends ControllerAPI
                 $data,
                 array(
                     'promotion_id'            => 'required|orbit.update.coupon',
-                    'promotion_name'          => 'sometimes|required|min:5|max:255|coupon_name_exists_but_me',
+                    'promotion_name'          => 'sometimes|required|max:255|coupon_name_exists_but_me',
                     'promotion_type'          => 'orbit.empty.coupon_type',
                     'status'                  => 'orbit.empty.coupon_status',
                     'begin_date'              => 'date_format:Y-m-d H:i:s',
@@ -2714,7 +2714,6 @@ class CouponAPIController extends ControllerAPI
 
             $totalCoupons = RecordCounter::create($_coupons)->count();
             $listOfCoupons = $coupons->get();
-
             // Return the instance of Query Builder
             if ($this->returnBuilder) {
                 return ['builder' => $coupons, 'count' => $totalCoupons];
