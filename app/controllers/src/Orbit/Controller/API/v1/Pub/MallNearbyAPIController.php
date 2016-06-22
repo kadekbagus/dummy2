@@ -56,7 +56,7 @@ class MallNearbyAPIController extends ControllerAPI
                 // Production
                 $malls->active();
             }
-                         
+
             $callNearBy = TRUE;
 
             // Filter
@@ -128,7 +128,7 @@ class MallNearbyAPIController extends ControllerAPI
             $malls->orderBy($sortBy, $sortMode);
 
             $listmalls = $malls->get();
-            $count = RecordCounter::create($_malls)->count();
+            $count = $_malls->count();
 
             $this->response->data = new stdClass();
             $this->response->data->total_records = $count;
