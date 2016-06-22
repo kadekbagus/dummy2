@@ -3,6 +3,24 @@
  * Orbit specific configuraiton.
  */
 return array(
+    // Elasticsearch server configuration
+    'elasticsearch' => [
+        // Can be multiple hosts
+        'hosts' => [
+            // Without HTTP authentication
+            'http://localhost:9200'
+
+            // With HTTP authentication
+            // 'http://username:password@localhost:9200'
+        ],
+
+        // Number of retry when it fails
+        'retries' => 2,
+
+        // Path to CA Certificate, used when serving via HTTPS
+        'cacert' => '/path/to/cacert.crt'
+    ],
+
     // Demo environtment
     'is_demo' => FALSE,
 
