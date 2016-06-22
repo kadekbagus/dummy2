@@ -106,4 +106,48 @@ class getConsumerListingTestArtemisVersion extends TestCase
             }
         }
     }
+
+    public function testGetConsumerListingWithExcludeDeletedCategories()
+    {
+        // create user_a
+        $user_a = Factory::Create('user_consumer');
+        $user_detail_a = Factory::Create('UserDetail', ['user_id' => $user_a->user_id, 'retailer_id' => $this->mall_a->merchant_id, 'merchant_id' => $this->mall_a->merchant_id]);
+
+        Factory::Create('UserAcquisition', ['user_id' => $user_a->user_id, 'acquirer_id' => $this->mall_a->merchant_id]);
+
+        // create category
+        $categorty_a = Factory::Create('Category', ['category_name' => 'home']);
+        $categorty_b = Factory::Create('Category', ['category_name' => 'ball']);
+        $categorty_c = Factory::Create('Category', ['category_name' => 'phone', 'status' => 'deleted']);
+        $categorty_d = Factory::Create('Category', ['category_name' => 'computer']);
+
+        // link category to user
+        Factory::Create('user_category_interest', ['user_id' => $user_a->user_id, 'personal_interest_id' => $categorty_a->category_id]);
+        Factory::Create('user_category_interest', ['user_id' => $user_a->user_id, 'personal_interest_id' => $categorty_b->category_id]);
+        Factory::Create('user_category_interest', ['user_id' => $user_a->user_id, 'personal_interest_id' => $categorty_c->category_id]);
+
+        // search user with link category
+        $apiKeyCs = $this->apiKeyCs;
+
+        $filter = [
+            'from_cs' => 'yes',
+            'merchant_id' => [$this->mall_a->merchant_id],
+            'with' => ['categories']
+        ];
+
+        $response_search = $this->setRequestgetConsumerListing($apiKeyCs->api_key, $apiKeyCs->api_secret_key, $filter);
+
+        $this->assertSame(0, $response_search->code);
+        $this->assertSame("success", $response_search->status);
+        $this->assertSame(2, count($response_search->data->records[0]->categories));
+
+        $list_category_link_to_user = ['home', 'ball'];
+        foreach ($response_search->data->records[0]->categories as $idx => $category) {
+            foreach ($list_category_link_to_user as $_idx => $_category) {
+                if ($idx === $_idx) {
+                    $this->assertSame($category->category_name, $_category);
+                }
+            }
+        }
+    }
 }
