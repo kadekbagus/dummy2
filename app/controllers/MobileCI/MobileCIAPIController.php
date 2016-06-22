@@ -3653,7 +3653,11 @@ class MobileCIAPIController extends BaseCIController
                 ->where('parent_id', $retailer->merchant_id);
 
             $prefix = DB::getTablePrefix();
-            $tenants->select('merchants.merchant_id', 'floor', 'unit', DB::raw("CONCAT({$prefix}objects.object_name, \" - \", unit) AS location"))
+            $tenants->select('merchants.merchant_id',
+                        'objects.object_name as floor',
+                        'unit',
+                        DB::raw("(CASE WHEN unit = '' THEN {$prefix}objects.object_name ELSE CONCAT({$prefix}objects.object_name, \" - \", unit) END) AS location")
+                      )
                     ->leftJoin('objects', 'objects.object_id', '=', 'merchants.floor_id');
 
             $this->maybeJoinWithTranslationsTable($tenants, $alternateLanguage);
@@ -4586,10 +4590,15 @@ class MobileCIAPIController extends BaseCIController
             }
 
             $service = $service->active('merchants')
-                ->where('object_type', 'service')
+                ->where('merchants.object_type', 'service')
                 ->where('parent_id', $retailer->merchant_id);
 
-            $service->select('merchants.merchant_id', 'floor', 'unit');
+            $service->select('merchants.merchant_id',
+                        'objects.object_name as floor',
+                        'unit',
+                        DB::raw("(CASE WHEN unit = '' THEN {$prefix}objects.object_name ELSE CONCAT({$prefix}objects.object_name, \" - \", unit) END) AS location")
+                      )
+                    ->leftJoin('objects', 'objects.object_id', '=', 'merchants.floor_id');
 
             $mallid = $retailer->merchant_id;
 
@@ -10207,7 +10216,7 @@ class MobileCIAPIController extends BaseCIController
      * @param User $user (User object from registration/sign in process)
      * @return \OrbitShop\API\v1\ResponseProvider
      */
-    public function linkGuestToUser($user)
+    public function linkGuestToUser($user, $transaction = TRUE)
     {
         try {
             if (! is_object($this->session)) {
@@ -10223,12 +10232,14 @@ class MobileCIAPIController extends BaseCIController
             // check guest user id on session if empty create new one
             if (empty($guest_id)) {
                 $urlblock = new UrlBlock($this->session, NULL);
-                $guest = $urlblock->generateGuestUser();
+                $guest = GenerateGuestUser::generateGuestUser();
 
                 $guest_id = $guest->user_id;
             }
 
-            $this->beginTransaction();
+            if ($transaction) {
+                $this->beginTransaction();
+            }
 
             $userguest = new UserGuest();
             $userguest->user_id = $user->user_id;
@@ -10240,14 +10251,18 @@ class MobileCIAPIController extends BaseCIController
 
             $listConnectedUser = DB::table('list_connected_user')->where('user_id', '=', $guest_id)->delete(); 
             
-            $this->commit();
+            if ($transaction) {
+                $this->commit();
+            }
 
             $this->response->code = 0;
             $this->response->status = 'success';
             $this->response->data = $user;
             $this->response->message = 'Success';
         } catch (Exception $e) {
-            $this->rollback();
+            if ($transaction) {
+                $this->rollback();
+            }
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();

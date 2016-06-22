@@ -26,7 +26,13 @@ class MallAPIController extends ControllerAPI
     protected $valid_timezone = NULL;
 
     protected $default = [
-        'vat_included'            => 'no',
+        'timezone'                      => 'Asia/Jakarta',
+        'currency'                      => 'IDR',
+        'currency_symbol'               => 'Rp',
+        'vat_included'                  => 'no',
+        'campaign_base_price_promotion' => 200000,
+        'campaign_base_price_coupon'    => 200000,
+        'campaign_base_price_news'      => 200000,
         'widgets'                 => [
             [
                 'type'      => 'tenant',
@@ -277,8 +283,8 @@ class MallAPIController extends ControllerAPI
             $end_date_activity = OrbitInput::post('end_date_activity');
             $status = OrbitInput::post('status');
             // $logo = OrbitInput::post('logo');
-            $currency = OrbitInput::post('currency');
-            $currency_symbol = OrbitInput::post('currency_symbol');
+            $currency = OrbitInput::post('currency', $this->default['currency']);
+            $currency_symbol = OrbitInput::post('currency_symbol', $this->default['currency_symbol']);
             $tax_code1 = OrbitInput::post('tax_code1');
             $tax_code2 = OrbitInput::post('tax_code2');
             $tax_code3 = OrbitInput::post('tax_code3');
@@ -290,7 +296,7 @@ class MallAPIController extends ControllerAPI
             $contact_person_phone = OrbitInput::post('contact_person_phone');
             $contact_person_phone2 = OrbitInput::post('contact_person_phone2');
             $contact_person_email = OrbitInput::post('contact_person_email');
-            $sector_of_activity = OrbitInput::post('sector_of_activity');
+            $sector_of_activity = OrbitInput::post('sector_of_activity', 'Mall');
             $object_type = OrbitInput::post('object_type');
             $parent_id = OrbitInput::post('parent_id');
             $url = OrbitInput::post('url');
@@ -298,13 +304,13 @@ class MallAPIController extends ControllerAPI
             $slavebox_number = OrbitInput::post('slavebox_number');
             $mobile_default_language = OrbitInput::post('mobile_default_language');
             $pos_language = OrbitInput::post('pos_language');
-            $timezoneName = OrbitInput::post('timezone');
+            $timezoneName = OrbitInput::post('timezone', $this->default['timezone']);
             $domain = OrbitInput::post('domain');
             $languages = OrbitInput::post('languages');
             $floors = OrbitInput::post('floors');
-            $campaign_base_price_promotion = OrbitInput::post('campaign_base_price_promotion');
-            $campaign_base_price_coupon = OrbitInput::post('campaign_base_price_coupon');
-            $campaign_base_price_news = OrbitInput::post('campaign_base_price_news');
+            $campaign_base_price_promotion = OrbitInput::post('campaign_base_price_promotion', $this->default['campaign_base_price_promotion']);
+            $campaign_base_price_coupon = OrbitInput::post('campaign_base_price_coupon', $this->default['campaign_base_price_coupon']);
+            $campaign_base_price_news = OrbitInput::post('campaign_base_price_news', $this->default['campaign_base_price_news']);
             $geo_point_latitude = OrbitInput::post('geo_point_latitude');
             $geo_point_longitude = OrbitInput::post('geo_point_longitude');
             $geo_area = OrbitInput::post('geo_area');
@@ -327,7 +333,6 @@ class MallAPIController extends ControllerAPI
                     'url'                           => $url,
                     'contact_person_firstname'      => $contact_person_firstname,
                     'contact_person_lastname'       => $contact_person_lastname,
-                    'contact_person_phone'          => $contact_person_phone,
                     'contact_person_email'          => $contact_person_email,
                     'status'                        => $status,
                     'parent_id'                     => $parent_id,
@@ -349,6 +354,7 @@ class MallAPIController extends ControllerAPI
                     'campaign_base_price_news'      => $campaign_base_price_news,
                     'floors'                        => $floors,
                     'free_wifi_status'              => $free_wifi_status,
+                    'description'                   => $description,
                 ),
                 array(
                     'name'                          => 'required|orbit.exists.mall_name',
@@ -361,8 +367,7 @@ class MallAPIController extends ControllerAPI
                     'url'                           => 'orbit.formaterror.url.web',
                     'contact_person_firstname'      => 'required',
                     'contact_person_lastname'       => 'required',
-                    'contact_person_phone'          => 'required',
-                    'contact_person_email'          => 'required|email',
+                    'contact_person_email'          => 'email',
                     'status'                        => 'required|orbit.empty.mall_status',
                     'parent_id'                     => 'orbit.empty.mallgroup',
                     'start_date_activity'           => 'date_format:Y-m-d H:i:s',
@@ -383,6 +388,7 @@ class MallAPIController extends ControllerAPI
                     'campaign_base_price_news'      => 'required',
                     'floors'                        => 'required|array',
                     'free_wifi_status'              => 'in:active,inactive',
+                    'description'                   => 'max:25',
                 ),
                 array(
                     'name.required'                     => 'Mall name is required',
@@ -1421,6 +1427,9 @@ class MallAPIController extends ControllerAPI
      * @param string     `ticket_header`            (optional) - Ticket header
      * @param string     `ticket_footer`            (optional) - Ticket footer
      * @param string     `operating_hours`          (optional) - Mall operating hours
+     * @param string     `geo_point_latitude`       (optional) - Point of latitude
+     * @param string     `geo_point_longitude`      (optional) - Point of longitude
+     * @param string     `geo_area`                 (optional) - Geo fence of the mall
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -1471,18 +1480,22 @@ class MallAPIController extends ControllerAPI
             $ticket_footer = OrbitInput::post('ticket_footer');
             $start_date_activity = OrbitInput::post('start_date_activity');
             $end_date_activity = OrbitInput::post('end_date_activity');
-            $timezoneName = OrbitInput::post('timezone');
-            $currency = OrbitInput::post('currency');
-            $currency_symbol = OrbitInput::post('currency_symbol');
-            $sector_of_activity = OrbitInput::post('sector_of_activity');
+            // $timezoneName = OrbitInput::post('timezone');
+            // $currency = OrbitInput::post('currency');
+            // $currency_symbol = OrbitInput::post('currency_symbol');
+            // $sector_of_activity = OrbitInput::post('sector_of_activity');
             $mobile_default_language = OrbitInput::post('mobile_default_language');
             $languages = OrbitInput::post('languages');
             $floors = OrbitInput::post('floors');
             $domain = OrbitInput::post('domain');
-            $campaign_base_price_promotion = OrbitInput::post('campaign_base_price_promotion');
-            $campaign_base_price_coupon = OrbitInput::post('campaign_base_price_coupon');
-            $campaign_base_price_news = OrbitInput::post('campaign_base_price_news');
+            // $campaign_base_price_promotion = OrbitInput::post('campaign_base_price_promotion');
+            // $campaign_base_price_coupon = OrbitInput::post('campaign_base_price_coupon');
+            // $campaign_base_price_news = OrbitInput::post('campaign_base_price_news');
             $free_wifi_status = OrbitInput::post('free_wifi_status');
+            $geo_point_latitude = OrbitInput::post('geo_point_latitude');
+            $geo_point_longitude = OrbitInput::post('geo_point_longitude');
+            $geo_area = OrbitInput::post('geo_area');
+            $description = OrbitInput::post('description');
 
             $validator = Validator::make(
                 array(
@@ -1501,10 +1514,10 @@ class MallAPIController extends ControllerAPI
                     'ticket_footer'                 => $ticket_footer,
                     'start_date_activity'           => $start_date_activity,
                     'end_date_activity'             => $end_date_activity,
-                    'timezone'                      => $timezoneName,
-                    'currency'                      => $currency,
-                    'currency_symbol'               => $currency_symbol,
-                    'sector_of_activity'            => $sector_of_activity,
+                    // 'timezone'                      => $timezoneName,
+                    // 'currency'                      => $currency,
+                    // 'currency_symbol'               => $currency_symbol,
+                    // 'sector_of_activity'            => $sector_of_activity,
                     'languages'                     => $languages,
                     'domain'                        => $domain,
                     'mobile_default_language'       => $mobile_default_language,
@@ -1512,6 +1525,7 @@ class MallAPIController extends ControllerAPI
                     // 'campaign_base_price_coupon'    => $campaign_base_price_coupon,
                     // 'campaign_base_price_news'      => $campaign_base_price_news,
                     'floors'                        => $floors,
+                    'description'                   => $description,
                     'free_wifi_status'              => $free_wifi_status
                 ),
                 array(
@@ -1530,8 +1544,8 @@ class MallAPIController extends ControllerAPI
                     'ticket_footer'                    => 'ticket_footer_max_length',
                     'start_date_activity'              => 'date_format:Y-m-d H:i:s',
                     'end_date_activity'                => 'date_format:Y-m-d H:i:s',
-                    'timezone'                         => 'orbit.exists.timezone',
-                    'currency'                         => 'size:3',
+                    // 'timezone'                         => 'orbit.exists.timezone',
+                    // 'currency'                         => 'size:3',
                     'vat_included'                     => 'in:yes,no',
                     'languages'                        => 'array',
                     'domain'                           => 'alpha_dash|domain_exist_but_not_me:' . $merchant_id,
@@ -1540,6 +1554,7 @@ class MallAPIController extends ControllerAPI
                     // 'campaign_base_price_coupon'    => 'format currency later will be check',
                     // 'campaign_base_price_news'      => 'format currency later will be check',
                     'floors'                           => 'array',
+                    'description'                      => 'max:25',
                     'free_wifi_status'                 => 'in:active,inactive'
                 ),
                 array(
@@ -1684,13 +1699,13 @@ class MallAPIController extends ControllerAPI
                 $updatedmall->logo = $logo;
             });
 
-            OrbitInput::post('currency', function($currency) use ($updatedmall) {
-                $updatedmall->currency = $currency;
-            });
+            // OrbitInput::post('currency', function($currency) use ($updatedmall) {
+            //     $updatedmall->currency = $currency;
+            // });
 
-            OrbitInput::post('currency_symbol', function($currency_symbol) use ($updatedmall) {
-                $updatedmall->currency_symbol = $currency_symbol;
-            });
+            // OrbitInput::post('currency_symbol', function($currency_symbol) use ($updatedmall) {
+            //     $updatedmall->currency_symbol = $currency_symbol;
+            // });
 
             OrbitInput::post('tax_code1', function($tax_code1) use ($updatedmall) {
                 $updatedmall->tax_code1 = $tax_code1;
@@ -1736,9 +1751,9 @@ class MallAPIController extends ControllerAPI
                 $updatedmall->contact_person_email = $contact_person_email;
             });
 
-            OrbitInput::post('sector_of_activity', function($sector_of_activity) use ($updatedmall) {
-                $updatedmall->sector_of_activity = $sector_of_activity;
-            });
+            // OrbitInput::post('sector_of_activity', function($sector_of_activity) use ($updatedmall) {
+            //     $updatedmall->sector_of_activity = $sector_of_activity;
+            // });
 
             OrbitInput::post('parent_id', function($parent_id) use ($updatedmall) {
                 if (empty(trim($parent_id))) {
@@ -1791,22 +1806,10 @@ class MallAPIController extends ControllerAPI
                 $updatedmall->ticket_footer = $ticket_footer;
             });
 
-            OrbitInput::post('timezone', function($timezoneName) use ($updatedmall) {
-                $timezone = $this->valid_timezone;
-                $updatedmall->timezone_id = $timezone->timezone_id;
-            });
-
-            OrbitInput::post('currency', function($currency) use ($updatedmall) {
-                $updatedmall->currency = $currency;
-            });
-
-            OrbitInput::post('currency_symbol', function($currency_symbol) use ($updatedmall) {
-                $updatedmall->currency_symbol = $currency_symbol;
-            });
-
-            OrbitInput::post('sector_of_activity', function($sector_of_activity) use ($updatedmall) {
-                $updatedmall->sector_of_activity = $sector_of_activity;
-            });
+            // OrbitInput::post('timezone', function($timezoneName) use ($updatedmall) {
+            //     $timezone = $this->valid_timezone;
+            //     $updatedmall->timezone_id = $timezone->timezone_id;
+            // });
 
             OrbitInput::post('mobile_default_language', function($mobile_default_language) use ($updatedmall) {
                 $updatedmall->mobile_default_language = $mobile_default_language;
@@ -1825,38 +1828,38 @@ class MallAPIController extends ControllerAPI
                 $updatedmall->facebook_uri = $fb_uri;
             });
 
-            OrbitInput::post('campaign_base_price_promotion', function($campaign_base_price_promotion) use ($updatedmall) {
-                $campaign_base_price = CampaignBasePrice::where('status', '=', 'active')
-                                                        ->where('merchant_id', '=', $updatedmall->merchant_id)
-                                                        ->where('campaign_type', '=', 'promotion')
-                                                        ->first();
-                if (! empty($campaign_base_price)) {
-                    $campaign_base_price->price = $campaign_base_price_promotion;
-                    $campaign_base_price->save();
-                }
-            });
+            // OrbitInput::post('campaign_base_price_promotion', function($campaign_base_price_promotion) use ($updatedmall) {
+            //     $campaign_base_price = CampaignBasePrice::where('status', '=', 'active')
+            //                                             ->where('merchant_id', '=', $updatedmall->merchant_id)
+            //                                             ->where('campaign_type', '=', 'promotion')
+            //                                             ->first();
+            //     if (! empty($campaign_base_price)) {
+            //         $campaign_base_price->price = $campaign_base_price_promotion;
+            //         $campaign_base_price->save();
+            //     }
+            // });
 
-            OrbitInput::post('campaign_base_price_coupon', function($campaign_base_price_coupon) use ($updatedmall) {
-                $campaign_base_price = CampaignBasePrice::where('status', '=', 'active')
-                                                        ->where('merchant_id', '=', $updatedmall->merchant_id)
-                                                        ->where('campaign_type', '=', 'coupon')
-                                                        ->first();
-                if (! empty($campaign_base_price)) {
-                    $campaign_base_price->price = $campaign_base_price_coupon;
-                    $campaign_base_price->save();
-                }
-            });
+            // OrbitInput::post('campaign_base_price_coupon', function($campaign_base_price_coupon) use ($updatedmall) {
+            //     $campaign_base_price = CampaignBasePrice::where('status', '=', 'active')
+            //                                             ->where('merchant_id', '=', $updatedmall->merchant_id)
+            //                                             ->where('campaign_type', '=', 'coupon')
+            //                                             ->first();
+            //     if (! empty($campaign_base_price)) {
+            //         $campaign_base_price->price = $campaign_base_price_coupon;
+            //         $campaign_base_price->save();
+            //     }
+            // });
 
-            OrbitInput::post('campaign_base_price_news', function($campaign_base_price_news) use ($updatedmall) {
-                $campaign_base_price = CampaignBasePrice::where('status', '=', 'active')
-                                                        ->where('merchant_id', '=', $updatedmall->merchant_id)
-                                                        ->where('campaign_type', '=', 'news')
-                                                        ->first();
-                if (! empty($campaign_base_price)) {
-                    $campaign_base_price->price = $campaign_base_price_news;
-                    $campaign_base_price->save();
-                }
-            });
+            // OrbitInput::post('campaign_base_price_news', function($campaign_base_price_news) use ($updatedmall) {
+            //     $campaign_base_price = CampaignBasePrice::where('status', '=', 'active')
+            //                                             ->where('merchant_id', '=', $updatedmall->merchant_id)
+            //                                             ->where('campaign_type', '=', 'news')
+            //                                             ->first();
+            //     if (! empty($campaign_base_price)) {
+            //         $campaign_base_price->price = $campaign_base_price_news;
+            //         $campaign_base_price->save();
+            //     }
+            // });
 
             OrbitInput::post('languages', function($languages) use ($updatedmall) {
                 if (! in_array('en', $languages)) {
@@ -2271,6 +2274,21 @@ class MallAPIController extends ControllerAPI
                 }
                 $updatedmall->free_wifi_status = $widget_status;
             });
+
+            // Update map geo fences
+            if ($geo_point_latitude != '' || $geo_point_longitude != '' || $geo_area != '') {
+                $latitude = (double)$geo_point_latitude;
+                $longitude = (double)$geo_point_longitude;
+                $area = preg_replace('/[^0-9\s,\-\.]/', '',  $geo_area);
+
+                $fence = MerchantGeofence::where('merchant_id', $merchant_id)->first();
+
+                if (count($fence) > 0) {
+                    $fence->area = DB::raw("GEOMFROMTEXT(\"POLYGON(({$area}))\")");
+                    $fence->position = DB::raw("POINT($latitude, $longitude)");
+                    $fence->save();
+                }
+            }
 
             // update user status
             OrbitInput::post('status', function($status) use ($updatedmall) {

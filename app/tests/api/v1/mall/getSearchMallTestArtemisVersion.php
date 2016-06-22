@@ -104,4 +104,26 @@ class getSearchMallTestArtemisVersion extends TestCase
                 $this->assertSame('lippomall', $data->subdomain);
         }
     }
+
+    public function testGetDescription()
+    {
+        $mall_a = Factory::create('Mall', ['description' => 'mall antok bagus']);
+
+        $mall_b = Factory::create('Mall', ['description' => 'mall irianto oke']);
+
+        $filter = [];
+
+        /*
+        * test get widget free wifi status
+        */
+        $response_search = $this->setRequestGetSearchMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $filter);
+        $this->assertSame(0, $response_search->code);
+        $this->assertSame('success', $response_search->status);
+        foreach ($response_search->data->records as $idx => $data) {
+            if($mall_b->merchant_id  === $data->merchant_id)
+                $this->assertSame('mall irianto oke', $data->description);
+            if($mall_a->merchant_id  === $data->merchant_id)
+                $this->assertSame('mall antok bagus', $data->description);
+        }
+    }
 }

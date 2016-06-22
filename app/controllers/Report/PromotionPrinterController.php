@@ -125,7 +125,7 @@ class PromotionPrinterController extends DataPrinterController
                     $lastUpdateDate = $this->printDateTime($row->updated_at, null, 'd F Y H:i:s');
 
                     printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
-                        $count, $this->printUtf8($row->display_name), $startDateTime, $endDateTime, str_replace(', ', "\n", $this->printUtf8($row->campaign_location_names)), $this->printUtf8($row->campaign_status), $lastUpdateDate);
+                        $count, $row->display_name, $startDateTime, $endDateTime, str_replace(', ', "\n", $row->campaign_location_names), $row->campaign_status, $lastUpdateDate);
                     $count++;
                 }
                 exit;
