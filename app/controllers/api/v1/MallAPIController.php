@@ -374,7 +374,7 @@ class MallAPIController extends ControllerAPI
                     'sector_of_activity'            => 'required',
                     'languages'                     => 'required|array',
                     'mobile_default_language'       => 'required|size:2|orbit.formaterror.language',
-                    'domain'                        => 'required|alpha_dash',
+                    'domain'                        => 'required|alpha_dash|orbit.exists.domain',
                     'geo_point_latitude'            => 'required',
                     'geo_point_longitude'           => 'required',
                     'geo_area'                      => 'required',
@@ -3102,6 +3102,20 @@ class MallAPIController extends ControllerAPI
             }
 
             $this->valid_mall_lang = $lang;
+            return TRUE;
+        });
+
+        Validator::extend('orbit.exists.domain', function($attribute, $value, $parameters)
+        {
+            $ci_domain_config = Config::get('orbit.shop.ci_domain');
+            $domain = Mall::excludeDeleted()
+                        ->where('ci_domain', $value . $ci_domain_config)
+                        ->first();
+
+            if (count($domain) > 0) {
+                return FALSE;
+            }
+
             return TRUE;
         });
     }
