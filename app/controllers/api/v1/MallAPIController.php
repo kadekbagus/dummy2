@@ -1427,6 +1427,9 @@ class MallAPIController extends ControllerAPI
      * @param string     `ticket_header`            (optional) - Ticket header
      * @param string     `ticket_footer`            (optional) - Ticket footer
      * @param string     `operating_hours`          (optional) - Mall operating hours
+     * @param string     `geo_point_latitude`       (optional) - Point of latitude
+     * @param string     `geo_point_longitude`      (optional) - Point of longitude
+     * @param string     `geo_area`                 (optional) - Geo fence of the mall
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -2271,6 +2274,21 @@ class MallAPIController extends ControllerAPI
                 }
                 $updatedmall->free_wifi_status = $widget_status;
             });
+
+            // Update map geo fences
+            if ($geo_point_latitude != '' || $geo_point_longitude != '' || $geo_area != '') {
+                $latitude = (double)$geo_point_latitude;
+                $longitude = (double)$geo_point_longitude;
+                $area = preg_replace('/[^0-9\s,\-\.]/', '',  $geo_area);
+
+                $fence = MerchantGeofence::where('merchant_id', $merchant_id)->first();
+
+                if (count($fence) > 0) {
+                    $fence->area = DB::raw("GEOMFROMTEXT(\"POLYGON(({$area}))\")");
+                    $fence->position = DB::raw("POINT($latitude, $longitude)");
+                    $fence->save();
+                }
+            }
 
             // update user status
             OrbitInput::post('status', function($status) use ($updatedmall) {
