@@ -76,6 +76,7 @@
             <file>./app/tests/api/v1/tenant/getServiceDetailAngularCITest.php</file>
             <file>./app/tests/api/v1/tenant/postNewTenantTestArtemisVersion.php</file>
             <file>./app/tests/api/v1/tenant/postUpdateTenantTestArtemisVersion.php</file>
+            <file>./app/tests/api/v1/user/postUpdateMembershipTestArtemisVersion.php</file>
         </testsuite>
     </testsuites>
 </phpunit>

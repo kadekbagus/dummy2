@@ -36,10 +36,9 @@ class MallAreaAPIController extends ControllerAPI
             $area = OrbitInput::get('area', null);
 
             $usingDemo = Config::get('orbit.is_demo', FALSE);
-            
+
             $malls = Mall::select('merchants.*')
                         ->includeLatLong()
-                        ->includeDummyOpeningHours()
                         ->InsideMapArea($area);
 
             // Filter by mall_id
@@ -100,7 +99,7 @@ class MallAreaAPIController extends ControllerAPI
                     $sortMode = 'desc';
                 }
             });
-            
+
             $malls->orderBy($sortBy, $sortMode);
 
             $listmalls = $malls->get();
