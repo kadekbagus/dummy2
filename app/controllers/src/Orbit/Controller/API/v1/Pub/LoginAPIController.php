@@ -2,6 +2,7 @@
 /**
  * An API controller for managing user sign in.
  */
+use Net\MacAddr;
 use \IntermediateBaseController;
 use DominoPOS\OrbitAPI\v10\StatusInterface as Status;
 use OrbitShop\API\v1\ResponseProvider;
@@ -32,6 +33,7 @@ use Redirect;
 use URL;
 use Orbit\Controller\API\v1\Pub\RegistrationAPIController as Regs;
 use Orbit\Helper\Net\Domain;
+use \Carbon\Carbon;
 use \Exception;
 
 class LoginAPIController extends IntermediateBaseController
@@ -61,7 +63,7 @@ class LoginAPIController extends IntermediateBaseController
         try {
             $email = trim(OrbitInput::post('email'));
             $password = trim(OrbitInput::post('password'));
-            $from_mall = OrbitInput::post('from_mall', 'no');
+            $mall_id = OrbitInput::post('mall_id', null);
             // $mode = OrbitInput::post('mode', 'login');
 
             if (trim($email) === '') {
@@ -73,16 +75,6 @@ class LoginAPIController extends IntermediateBaseController
                 $errorMessage = Lang::get('validation.required', array('attribute' => 'password'));
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
-
-            // if (! in_array($mode, $modes)) {
-            //     $mode = 'login';
-            // }
-
-            // Return the current mall object if this login process coming from the mobileci
-            // todo: check later for login from mall
-            $from_mall = $from_mall === 'yes' ? TRUE : FALSE;
-            $mall_id = NULL;
-            $mall = NULL;
 
             $user = User::with('role')
                         ->excludeDeleted()
@@ -553,9 +545,9 @@ class LoginAPIController extends IntermediateBaseController
      */
     public function postSocialLoginView()
     {
-        $encoded_caller_url_full = OrbitInput::post('from_url_full', NULL);
-        $encoded_redirect_to_url = OrbitInput::post('to_url', NULL);
-        $angular_ci = OrbitInput::post('aci', FALSE);
+        $encoded_caller_url_full = OrbitInput::get('from_url_full', NULL);
+        $encoded_redirect_to_url = OrbitInput::get('to_url', NULL);
+        $angular_ci = OrbitInput::get('aci', FALSE);
 
         $config = new SessionConfig(Config::get('orbit.session'));
         $config->setConfig('application_id', static::APPLICATION_ID);
@@ -644,5 +636,222 @@ class LoginAPIController extends IntermediateBaseController
     public function base64UrlDecode($inputStr)
     {
         return base64_decode(strtr($inputStr, '-_,', '+/='));
+    }
+
+    public function postDesktopCILogin()
+    {
+        $this->response = new ResponseProvider();
+        $roles = ['Consumer'];
+        $activity = Activity::mobileci()->setActivityType('mobileci');
+        try {
+            $email = trim(OrbitInput::post('email'));
+            $password = trim(OrbitInput::post('password'));
+            $password_confirmation = OrbitInput::post('password_confirmation');
+            $mall_id = OrbitInput::post('mall_id', null);
+            $mode = OrbitInput::post('mode', 'login');
+
+            $this->registerCustomValidation();
+            $validator = Validator::make(
+                array(
+                    'mall_id' => $mall_id,
+                    'email' => $email,
+                    'password' => $password,
+                ),
+                array(
+                    'mall_id' => 'required|orbit.empty.mall',
+                    'email' => 'required|email',
+                    'password' => 'required',
+                )
+            );
+
+            DB::beginTransaction();
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            if ($mode === 'registration') {
+                // do the registration
+                $_POST['activity_name_long'] = 'Sign Up via Mobile (Email Address)';
+                $_POST['activity_origin'] = 'mobileci';
+                $_POST['use_transaction'] = FALSE;
+                $registration = \Orbit\Controller\API\v1\Pub\RegistrationAPIController::create('raw');
+                $response = $registration->setMallId($mall_id)->postRegisterCustomer();
+                $response_data = json_decode($response->getOriginalContent());
+
+                unset($_POST['activity_name_long']);
+                unset($_POST['activity_origin']);
+                if($response_data->code !== 0) {
+                    $errorMessage = $response_data->message;
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+
+                // set activation notification
+                $inbox = new Inbox();
+                $inbox->addToInbox($response_data->data->user_id, $response_data->data, $mall_id, 'activation');
+            }
+
+            $mall = Mall::excludeDeleted()->where('merchant_id', $mall_id)->first();
+
+            // do the login
+            $user = User::with('role')
+                        ->excludeDeleted()
+                        ->whereHas('role', function($q) {
+                            $q->where('role_name', 'Consumer');
+                        })
+                        ->where('user_email', $email);
+
+            $user = $user->first();
+
+            if (! is_object($user)) {
+                $message = 'User with the specified email is not found';
+                OrbitShopAPI::throwInvalidArgument($message);
+            }
+
+            if (! Hash::check($password, $user->user_password)) {
+                $message = Lang::get('validation.orbit.access.loginfailed');
+                OrbitShopAPI::throwInvalidArgument($message);
+            }
+
+            $roleIds = Role::roleIdsByName($roles);
+            if (! in_array($user->user_role_id, $roleIds)) {
+                $message = Lang::get('validation.orbit.access.forbidden', [
+                    'action' => 'Login (Role Denied)'
+                ]);
+                OrbitShopAPI::throwInvalidArgument($message);
+            }
+
+            // prevent inactive user to access
+            $notAllowedStatus = ['inactive'];
+            $lowerCasedStatus = strtolower($user->status);
+            if (in_array($lowerCasedStatus, $notAllowedStatus)) {
+                OrbitShopAPI::throwInvalidArgument('You are not allowed to login. Please check with Customer Service.');
+            }
+
+            // This user assumed are Consumer, which has been checked at login process
+            $config = new SessionConfig(Config::get('orbit.session'));
+            $config->setConfig('application_id', static::APPLICATION_ID);
+            try {
+                $this->session = new Session($config);
+                $this->session->start(array(), 'no-session-creation');
+            } catch (Exception $e) {
+                // get the session data
+                $sessionData = array();
+                $sessionData['logged_in'] = TRUE;
+                $sessionData['user_id'] = $user->user_id;
+                $sessionData['email'] = $user->user_email;
+                $sessionData['role'] = $user->role->role_name;
+                $sessionData['fullname'] = $user->getFullName();
+                $this->session->enableForceNew()->start($sessionData);
+            }
+
+            // Send the session id via HTTP header
+            $sessionHeader = $this->session->getSessionConfig()->getConfig('session_origin.header.name');
+            $sessionHeader = 'Set-' . $sessionHeader;
+            $this->customHeaders[$sessionHeader] = $this->session->getSessionId();
+
+            // link guest to user
+            \MobileCI\MobileCIAPIController::create()->setSession($this->session)->linkGuestToUser($user, FALSE);
+
+            // acquire user
+            $firstAcquired = $mall->acquireUser($user, 'form');
+
+            // if the user is viewing the mall for the 1st time then set the signup activity
+            if ($firstAcquired) {
+                \MobileCI\MobileCIAPIController::create()->setSession($this->session)->setSignUpActivity($user, 'form', $mall);
+            }
+
+            // if the user is viewing the mall for the 1st time in this session
+            // then set also the sign in activity
+            $visited_locations = [];
+            if (! empty($this->session->read('visited_location'))) {
+                $visited_locations = $this->session->read('visited_location');
+            }
+            if (! in_array($mall->merchant_id, $visited_locations)) {
+                \MobileCI\MobileCIAPIController::create()->setSession($this->session)->setSignInActivity($user, 'form', $mall, null);
+                $this->session->write('visited_location', array_merge($visited_locations, [$mall->merchant_id]));
+            }
+
+            // update last visited records
+            $user_detail = UserDetail::where('user_id', $user->user_id)->first();
+            $user_detail->last_visit_shop_id = $mall->merchant_id;
+            $user_detail->last_visit_any_shop = Carbon::now($mall->timezone->timezone_name);
+            $user_detail->save();
+
+            // auto coupon issuance checkwill happen on each page after the login success
+            \Coupon::issueAutoCoupon($mall, $user, $this->session);
+
+            DB::commit();
+            $data = new stdClass();
+            $data->user_id = $user->user_id;
+            $data->user_firstname = $user->user_firstname;
+            $data->user_lastname = $user->user_lastname;
+            $data->user_email = $user->user_email;
+
+            $this->response->data = $data;
+            $this->response->code = 0;
+            $this->response->status = 'success';
+            $this->response->message = 'Login Success';
+
+        } catch (ACLForbiddenException $e) {
+            DB::rollback();
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            $activity->setUser('guest')
+                     ->setActivityName('login_failed')
+                     ->setActivityNameLong('Login Failed')
+                     ->setNotes($e->getMessage())
+                     ->responseFailed()
+                     ->setModuleName('Application')->save();
+        } catch (InvalidArgsException $e) {
+            DB::rollback();
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            $activity->setUser('guest')
+                     ->setActivityName('login_failed')
+                     ->setActivityNameLong('Login Failed')
+                     ->setNotes($e->getMessage())
+                     ->responseFailed()
+                     ->setModuleName('Application')->save();
+        } catch (Exception $e) {
+            DB::rollback();
+            $this->response->code = Status::UNKNOWN_ERROR;
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = [$e->getFile(), $e->getLine()];
+
+            $activity->setUser('guest')
+                     ->setActivityName('login_failed')
+                     ->setActivityNameLong('Login Failed')
+                     ->setNotes($e->getMessage())
+                     ->responseFailed()
+                     ->setModuleName('Application')->save();
+        }
+
+        return $this->render($this->response);
+    }
+
+    protected function registerCustomValidation()
+    {
+        // Check the existance of merchant id
+        Validator::extend('orbit.empty.mall', function ($attribute, $value, $parameters) {
+            $mall = Mall::excludeDeleted()
+                        ->where('merchant_id', $value)
+                        ->first();
+
+            if (empty($mall)) {
+                return FALSE;
+            }
+
+            \App::instance('orbit.empty.mall', $mall);
+
+            return TRUE;
+        });
     }
 }

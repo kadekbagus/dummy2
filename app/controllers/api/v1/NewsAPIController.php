@@ -695,7 +695,7 @@ class NewsAPIController extends ControllerAPI
                 $data,
                 array(
                     'news_id'             => 'required|orbit.update.news:' . $object_type,
-                    'news_name'           => 'sometimes|required|min:5|max:255|news_name_exists_but_me',
+                    'news_name'           => 'sometimes|required|max:255|news_name_exists_but_me',
                     'object_type'         => 'required|orbit.empty.news_object_type',
                     'status'              => 'orbit.empty.news_status',
                     'link_object_type'    => 'orbit.empty.link_object_type',
