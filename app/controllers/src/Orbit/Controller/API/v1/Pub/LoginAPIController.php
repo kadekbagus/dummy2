@@ -409,7 +409,7 @@ class LoginAPIController extends IntermediateBaseController
         $encoded_caller_url = \Input::get('caller_url', NULL);
         $encoded_redirect_to_url = \Input::get('redirect_to_url', NULL);
         $angular_ci = \Input::get('aci', FALSE);
-dd($angular_ci);
+
         // error=access_denied&
         // error_code=200&
         // error_description=Permissions+error
@@ -787,6 +787,7 @@ dd($angular_ci);
             $data->user_firstname = $user->user_firstname;
             $data->user_lastname = $user->user_lastname;
             $data->user_email = $user->user_email;
+            $data->orbit_session = $this->session->getSessionId();
 
             $this->response->data = $data;
             $this->response->code = 0;

@@ -2,6 +2,6 @@
 
 $factory('NewsMerchant', [
     'news_id' => 'factory:News',
-    'merchant_id'  => 'factory:Merchant',
-    'object_type'  => 'retailer',
+    'merchant_id' => 'factory:Merchant',
+    'object_type'  => $faker->randomElement(['mall', 'retailer']),
 ]);
