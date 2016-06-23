@@ -2104,7 +2104,7 @@ class MobileCIAPIController extends BaseCIController
                 break;
 
             case 'service':
-                $landing_url = $urlblock->blockedRoute('ci-service');
+                $landing_url = $urlblock->blockedRoute('ci-service-list');
                 break;
 
             case 'widget':
