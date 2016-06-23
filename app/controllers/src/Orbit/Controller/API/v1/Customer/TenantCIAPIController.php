@@ -129,14 +129,16 @@ class TenantCIAPIController extends BaseAPIController
             ->select(
                 'merchants.merchant_id',
                 'name',
-                'floor',
+                'objects.object_name as floor',
                 'unit',
+                DB::raw("(CASE WHEN unit = '' THEN {$prefix}objects.object_name ELSE CONCAT({$prefix}objects.object_name, \" unit \", unit) END) AS location"),
                 'media.path as logo',
                 'merchant_social_media.social_media_uri as facebook_like_url',
                 DB::raw('CASE WHEN news_merch.news_counter > 0 THEN "true" ELSE "false" END as news_flag'),
                 DB::raw('CASE WHEN promo_merch.promotion_counter > 0 THEN "true" ELSE "false" END as promotion_flag'),
                 DB::raw('CASE WHEN coupon_merch.coupon_counter > 0 THEN "true" ELSE "false" END as coupon_flag')
             )
+            ->leftJoin('objects', 'objects.object_id', '=', 'merchants.floor_id')
             ->leftJoin('media', function ($join) {
                 $join->on('media.object_id', '=', 'merchants.merchant_id')
                     ->where('media_name_long', '=', 'retailer_logo_orig');

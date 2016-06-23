@@ -100,10 +100,12 @@ class ServiceCIAPIController extends BaseAPIController
             ->select(
                 'merchants.merchant_id',
                 'name',
-                'floor',
+                'objects.object_name as floor',
                 'unit',
+                DB::raw("(CASE WHEN unit = '' THEN {$prefix}objects.object_name ELSE CONCAT({$prefix}objects.object_name, \" unit \", unit) END) AS location"),
                 'media.path as logo'
             )
+            ->leftJoin('objects', 'objects.object_id', '=', 'merchants.floor_id')
             ->leftJoin('media', function ($join) {
                 $join->on('media.object_id', '=', 'merchants.merchant_id')
                     ->where('media_name_long', '=', 'service_logo_orig');
