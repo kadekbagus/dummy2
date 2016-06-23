@@ -466,14 +466,14 @@
         var browser = navigator.getBrowser[0];
         $.fn.addBlur = function(){
             if(browser.indexOf('Firefox') < 0) {
-                $(this).removeClass('unblurred');
-                $(this).addClass('blurred');
+                //$(this).removeClass('unblurred');
+                //$(this).addClass('blurred');
             }
         }
         $.fn.removeBlur = function(){
             if(browser.indexOf('Firefox') < 0) {
-                $(this).removeClass('blurred');
-                $(this).addClass('unblurred');
+                //$(this).removeClass('blurred');
+                //$(this).addClass('unblurred');
             }
         }
         function isInArray(value, str) {
