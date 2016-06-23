@@ -158,6 +158,94 @@ class postNewMallTestArtemisVersion extends TestCase
         $this->assertSame(NULL, $response->data);
     }
 
+    public function testRequiredFloor()
+    {
+        /*
+        * test required floor
+        */
+        $data = ['name' => 'antok mall',
+            'email'                         => 'antokmall@bumi.com',
+            'password'                      => '123456',
+            'address_line1'                 => 'jalan sudirman no 1',
+            'city'                          => 'badung',
+            'country'                       => $this->country->country_id,
+            'phone'                         => 123465,
+            'contact_person_firstname'      => 'antok',
+            'contact_person_lastname'       => 'mall',
+            'status'                        => 'active',
+            'languages'                     => ['jp','zh','id'],
+            'mobile_default_language'       => 'id',
+            'domain'                        => 'orbit',
+            'geo_point_latitude'            => '-8.663937',
+            'geo_point_longitude'           => '115.174142',
+            'geo_area'                      => '-8.663007 115.174527,-8.662275 115.176930,-8.664174 115.177735,-8.665669 115.175836,-8.664842 115.174227,-8.663007 115.174527',
+        ];
+
+        $response = $this->setRequestPostNewMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("The floors field is required", $response->message);
+    }
+
+    public function testFloorMustAnArray()
+    {
+        /*
+        * test floor must an array
+        */
+        $data = ['name' => 'antok mall',
+            'email'                         => 'antokmall@bumi.com',
+            'password'                      => '123456',
+            'address_line1'                 => 'jalan sudirman no 1',
+            'city'                          => 'badung',
+            'country'                       => $this->country->country_id,
+            'phone'                         => 123465,
+            'contact_person_firstname'      => 'antok',
+            'contact_person_lastname'       => 'mall',
+            'status'                        => 'active',
+            'languages'                     => ['jp','zh','id'],
+            'mobile_default_language'       => 'id',
+            'domain'                        => 'orbit',
+            'geo_point_latitude'            => '-8.663937',
+            'geo_point_longitude'           => '115.174142',
+            'floors'                         => 'L1',
+            'geo_area'                      => '-8.663007 115.174527,-8.662275 115.176930,-8.664174 115.177735,-8.665669 115.175836,-8.664842 115.174227,-8.663007 115.174527',
+        ];
+
+        $response = $this->setRequestPostNewMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("The floors must be an array", $response->message);
+    }
+
+    public function testRequiredSubdomain()
+    {
+        /*
+        * test floor must an array
+        */
+        $data = ['name' => 'antok mall',
+            'email'                         => 'antokmall@bumi.com',
+            'password'                      => '123456',
+            'address_line1'                 => 'jalan sudirman no 1',
+            'city'                          => 'badung',
+            'country'                       => $this->country->country_id,
+            'phone'                         => 123465,
+            'contact_person_firstname'      => 'antok',
+            'contact_person_lastname'       => 'mall',
+            'status'                        => 'active',
+            'languages'                     => ['jp','zh','id'],
+            'mobile_default_language'       => 'id',
+            'geo_point_latitude'            => '-8.663937',
+            'geo_point_longitude'           => '115.174142',
+            'floors'                         => 'L1',
+            'geo_area'                      => '-8.663007 115.174527,-8.662275 115.176930,-8.664174 115.177735,-8.665669 115.175836,-8.664842 115.174227,-8.663007 115.174527',
+        ];
+
+        $response = $this->setRequestPostNewMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("The domain field is required", $response->message); // was handle on frontend 'Mall URL Application Domain is required'
+    }
+
     public function testExistMallName()
     {
         /*
