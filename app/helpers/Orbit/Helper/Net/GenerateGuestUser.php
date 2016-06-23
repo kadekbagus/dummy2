@@ -28,8 +28,8 @@ class GenerateGuestUser
     public static function generateGuestUser($session)
     {
         try{
-            if (is_null($session->getSessionId())) {
-                $session->enableForceNew()->start();
+            if (is_null($session)) {
+                throw new Exception("Session not found.", 1);
             }
 
             $guest_email = $session->read('guest_email');

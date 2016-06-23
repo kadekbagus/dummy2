@@ -1,8 +1,8 @@
 <?php
 /**
- * Base Intermediate Controller for all controller which need authentication.
+ * Intermediate Controller for all angular CI controller which need authentication.
  *
- * @author Rio Astamal <me@rioastamal.net>
+ * @author Ahmad <ahmad@dominopos.com>
  */
 use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\ACL\Exception\ACLForbiddenException;
@@ -10,13 +10,17 @@ use OrbitShop\API\v1\ResponseProvider;
 use DominoPOS\OrbitSession\Session;
 use DominoPOS\OrbitSession\SessionConfig;
 use Orbit\Helper\Net\UrlChecker;
+use Orbit\Helper\Net\SessionPreparer;
+use Orbit\Helper\Net\GenerateGuestUser;
+use \Config;
 
 class IntermediateCIAuthController extends IntermediateBaseController
 {
+    const APPLICATION_ID = 1;
     /**
      * Check the authenticated user on constructor
      *
-     * @author Rio Astamal <me@rioastamal.net>
+     * @author Ahmad <ahnad@dominopos.com>
      */
     public function __construct()
     {
@@ -26,10 +30,13 @@ class IntermediateCIAuthController extends IntermediateBaseController
         {
             try
             {
-                $urlchecker = new UrlChecker('IntermediateCIAuthController');
-                $user = $urlchecker->checkBlockedUrl();
-
-                $this->session = $urlchecker->getUserSession();
+                $this->session = SessionPreparer::prepareSession(FALSE);
+                $user = $this->getLoggedInUser($this->session);
+                $guest = $this->getLoggedInGuest($this->session);
+                if (! is_object($user)) {
+                    $user = $guest;
+                }
+                UrlChecker::checkBlockedUrl($user);
             } catch (ACLForbiddenException $e) {
                 $response = new ResponseProvider();
                 $response->code = $e->getCode();
@@ -46,5 +53,64 @@ class IntermediateCIAuthController extends IntermediateBaseController
                 return $this->render($response);
             }
         });
+    }
+
+    /**
+     * Get current logged in user used in view related page.
+     *
+     * @author Ahmad <ahmad@dominopos.com>
+     * @return User $user
+     */
+    protected function getLoggedInUser($session)
+    {
+        $userId = $session->read('user_id');
+
+        if ($session->read('logged_in') !== true || ! $userId) {
+            // throw new Exception('Invalid session data.');
+        }
+
+        // @todo: Why we query membership also? do we need it on every page?
+        $user = User::with('userDetail')
+            ->where('user_id', $userId)
+            ->whereHas('role', function($q) {
+                $q->where('role_name', 'Consumer');
+            })
+            ->first();
+
+        if (! is_object($user)) {
+            $user = NULL;
+            // throw new Exception('Session error: user not found.');
+        }
+
+        return $user;
+    }
+
+    /**
+     * Get current logged in guest used in view related page.
+     *
+     * @author Ahmad <ahmad@dominopos.com>
+     * @return User $user
+     */
+    protected function getLoggedInGuest($session)
+    {
+        $userId = $session->read('guest_user_id');
+
+        if (! empty($userId)) {
+            $user = User::with('userDetail')
+                ->where('user_id', $userId)
+                ->whereHas('role', function($q) {
+                    $q->where('role_name', 'guest');
+                })
+                ->first();
+
+            if (! is_object($user)) {
+                $user = NULL;
+                // throw new Exception('Session error: user not found.');
+            }
+        } else {
+            $user = GenerateGuestUser::generateGuestUser($session);
+        }
+
+        return $user;
     }
 }

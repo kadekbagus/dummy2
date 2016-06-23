@@ -50,9 +50,9 @@
                 <li>
                     @if(count($link_to_tenants) > 0)
                         @if(count($link_to_tenants) === 1)
-                        <a data-href="{{ route('ci-tenant-detail', ['id' => $link_to_tenants[0]->retailer_id]) }}" href="{{{ $urlblock->blockedRoute('ci-tenant-detail', ['id' => $link_to_tenants[0]->retailer_id]) }}}">
+                        <a data-href="{{ route('ci-tenant-detail', ['id' => $link_to_tenants[0]->retailer_id]) }}" href="{{{ \Orbit\Helper\Net\UrlChecker::blockedRoute('ci-tenant-detail', ['id' => $link_to_tenants[0]->retailer_id], $session) }}}">
                         @else
-                        <a data-href="{{ route('ci-tenant-list', ['coupon_id' => $coupon->promotion_id]) }}" href="{{{ $urlblock->blockedRoute('ci-tenant-list', ['coupon_id' => $coupon->promotion_id]) }}}">
+                        <a data-href="{{ route('ci-tenant-list', ['coupon_id' => $coupon->promotion_id]) }}" href="{{{ \Orbit\Helper\Net\UrlChecker::blockedRoute('ci-tenant-list', ['coupon_id' => $coupon->promotion_id], $session) }}}">
                         @endif
                             <span class="fa fa-stack icon">
                                 <i class="fa fa-circle fa-stack-2x"></i>
@@ -74,9 +74,9 @@
                 @if(count($issued_coupons) > 0)
                 <li>
                     @if(count($tenants) === 1 && ! $cs_reedem)
-                    <a data-href="{{ route('ci-tenant-detail', ['id' => $tenants[0]->retailer_id]) }}" href="{{{ $urlblock->blockedRoute('ci-tenant-detail', ['id' => $tenants[0]->retailer_id]) }}}">
+                    <a data-href="{{ route('ci-tenant-detail', ['id' => $tenants[0]->retailer_id]) }}" href="{{{ \Orbit\Helper\Net\UrlChecker::blockedRoute('ci-tenant-detail', ['id' => $tenants[0]->retailer_id], $session) }}}">
                     @else
-                    <a data-href="{{ route('ci-tenant-list', ['coupon_redeem_id' => $coupon->promotion_id]) }}" href="{{{ $urlblock->blockedRoute('ci-tenant-list', ['coupon_redeem_id' => $coupon->promotion_id]) }}}">
+                    <a data-href="{{ route('ci-tenant-list', ['coupon_redeem_id' => $coupon->promotion_id]) }}" href="{{{ \Orbit\Helper\Net\UrlChecker::blockedRoute('ci-tenant-list', ['coupon_redeem_id' => $coupon->promotion_id], $session) }}}">
                     @endif
                         <span class="fa fa-stack icon">
                             <i class="fa fa-circle fa-stack-2x"></i>
@@ -95,7 +95,7 @@
                     </a>
                 </li>
                 @endif
-                @if ($urlblock->isLoggedIn())
+                @if ($is_logged_in)
                     @if(! empty($coupon->facebook_share_url))
                     <li>
                         <div class="fb-share-button" data-href="{{$coupon->facebook_share_url}}" data-layout="button"></div>
@@ -287,7 +287,7 @@
                         });
 
                         $('#successCouponModal').on('hide.bs.modal', function ($event) {
-                            window.location.replace('{{ $urlblock->blockedRoute('ci-coupon-list') }}');
+                            window.location.replace('{{ \Orbit\Helper\Net\UrlChecker::blockedRoute('ci-coupon-list', [], $session) }}');
                         });
                     }
                     else{
