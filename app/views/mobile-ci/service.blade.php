@@ -64,8 +64,7 @@
         <input type="checkbox" class="read-more-state" id="post-2" />
         <p>{{ nl2br(e($service->description)) }}</p>
         <ul class="where-list read-more-wrap">
-            <!-- <li><span class="tenant-list-icon"><i class="fa fa-map-marker fa-lg" style="padding-left: 11px;"></i></span><p class="tenant-list-text">{{{ !empty($service->floor) ? $service->floor : '' }}}{{{ !empty($service->unit) ? ' - ' . $service->unit : '' }}}</p></li> -->
-            <li><span class="tenant-list-icon"><i class="fa fa-map-marker fa-lg" style="padding-left: 11px;"></i></span><p class="tenant-list-text">{{{ !empty($service->location) ? $service->location : '' }}}</p></li>
+            <li><span class="tenant-list-icon"><i class="fa fa-map-marker fa-lg" style="padding-left: 11px;"></i></span><p class="tenant-list-text">{{{ !empty($service->location) ? $service->location : '-' }}}</p></li>
 
             @if(count($service->categories) > 0)
                 <li><span class="tenant-list-icon"><i class="fa fa-list-ul"></i></span></li>
