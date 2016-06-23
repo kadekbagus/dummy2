@@ -18,7 +18,20 @@ return array(
         'retries' => 2,
 
         // Path to CA Certificate, used when serving via HTTPS
-        'cacert' => '/path/to/cacert.crt'
+        'cacert' => '/path/to/cacert.crt',
+
+        // List of indices that we have in Elasticsearch
+        'indices' => [
+            'malldata' => [
+                'index' => 'malls',
+                'type'  => 'mall'
+            ],
+
+            'activities' => [
+                'index' => 'activities',
+                'type'  => 'activity'
+            ]
+        ]
     ],
 
     // Demo environtment

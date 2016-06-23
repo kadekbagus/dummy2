@@ -42,6 +42,7 @@
             "app/database/seeds",
             "app/tests/TestCase.php",
             "app/tests/OrbitTestCase.php",
+            "app/tests/ElasticsearchTestCase.php",
             "app/helpers"
         ]
     },
