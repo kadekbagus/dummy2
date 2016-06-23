@@ -10212,6 +10212,14 @@ class MobileCIAPIController extends BaseCIController
             if (empty($guest_id)) {
                 $guest = GenerateGuestUser::generateGuestUser();
                 $guest_id = $guest->user_id;
+                $sessionData = $this->session->read(NULL);
+                $sessionData['logged_in'] = TRUE;
+                $sessionData['guest_user_id'] = $user->user_id;
+                $sessionData['guest_email'] = $user->user_email;
+                $sessionData['role'] = $user->role->role_name;
+                $sessionData['fullname'] = '';
+
+                $this->session->update($sessionData);
             }
 
             if ($transaction) {
