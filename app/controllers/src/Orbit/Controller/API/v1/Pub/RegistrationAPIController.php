@@ -3,6 +3,7 @@
  * An API controller for managing user registration
  */
 use \IntermediateBaseController;
+use DominoPOS\OrbitAPI\v10\StatusInterface as Status;
 use OrbitShop\API\v1\ResponseProvider;
 use OrbitShop\API\v1\OrbitShopAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
@@ -25,6 +26,7 @@ use Artdarek\OAuth\Facade\OAuth;
 use Redirect;
 use URL;
 use Queue;
+use \Exception;
 
 class RegistrationAPIController extends IntermediateBaseController
 {

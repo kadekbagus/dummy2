@@ -1027,7 +1027,7 @@ class CouponAPIController extends ControllerAPI
                 $data,
                 array(
                     'promotion_id'            => 'required|orbit.update.coupon',
-                    'promotion_name'          => 'sometimes|required|min:5|max:255|coupon_name_exists_but_me',
+                    'promotion_name'          => 'sometimes|required|max:255|coupon_name_exists_but_me',
                     'promotion_type'          => 'orbit.empty.coupon_type',
                     'status'                  => 'orbit.empty.coupon_status',
                     'begin_date'              => 'date_format:Y-m-d H:i:s',
@@ -2214,12 +2214,13 @@ class CouponAPIController extends ControllerAPI
             }
 
             $table_prefix = DB::getTablePrefix();
+            $filterName = OrbitInput::get('promotion_name_like', '');
 
             // Builder object
             // Addition select case and join for sorting by discount_value.
             $coupons = Coupon::allowedForPMPUser($user, 'coupon')
                 ->with('couponRule')
-                ->select(DB::raw("{$table_prefix}promotions.*, {$table_prefix}promotions.promotion_id as campaign_id, 'coupon' as campaign_type, {$table_prefix}campaign_price.campaign_price_id, {$table_prefix}coupon_translations.promotion_name AS name_english, media.path as image_path,
+                ->select(DB::raw("{$table_prefix}promotions.*, {$table_prefix}promotions.promotion_id as campaign_id, 'coupon' as campaign_type, {$table_prefix}campaign_price.campaign_price_id, {$table_prefix}coupon_translations.promotion_name AS display_name, media.path as image_path,
                     CASE WHEN {$table_prefix}campaign_status.campaign_status_name = 'expired' THEN {$table_prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$table_prefix}promotions.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
                                                                                 FROM {$table_prefix}merchants om
                                                                                 LEFT JOIN {$table_prefix}timezones ot on ot.timezone_id = om.timezone_id
@@ -2273,9 +2274,15 @@ class CouponAPIController extends ControllerAPI
                 //->leftJoin('merchant_languages', 'merchant_languages.merchant_language_id', '=', 'coupon_translations.merchant_language_id')
                 ->leftJoin('languages', 'languages.language_id', '=', 'coupon_translations.merchant_language_id')
                 ->leftJoin(DB::raw("( SELECT * FROM {$table_prefix}media WHERE media_name_long = 'coupon_translation_image_resized_default' ) as media"), DB::raw('media.object_id'), '=', 'coupon_translations.coupon_translation_id')
-                ->where('languages.name', '=', 'en')
                 ->joinPromotionRules()
                 ->groupBy('promotions.promotion_id');
+
+            if($filterName === '') {
+                $coupons->where('languages.name', '=', DB::raw("(SELECT IF({$table_prefix}merchants.object_type = 'tenant', pm.mobile_default_language, {$table_prefix}merchants.mobile_default_language)
+                                FROM {$table_prefix}merchants
+                                LEFT JOIN {$table_prefix}merchants pm ON pm.merchant_id = {$table_prefix}merchants.parent_id
+                                WHERE {$table_prefix}merchants.merchant_id = (SELECT nm.retailer_id FROM {$table_prefix}promotion_retailer nm WHERE nm.promotion_id = {$table_prefix}promotions.promotion_id LIMIT 1))"));
+            }
 
             if (strtolower($user->role->role_name) === 'mall customer service') {
                 $now = date('Y-m-d H:i:s');
@@ -2707,7 +2714,6 @@ class CouponAPIController extends ControllerAPI
 
             $totalCoupons = RecordCounter::create($_coupons)->count();
             $listOfCoupons = $coupons->get();
-
             // Return the instance of Query Builder
             if ($this->returnBuilder) {
                 return ['builder' => $coupons, 'count' => $totalCoupons];

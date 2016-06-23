@@ -20,6 +20,9 @@ class postUpdateMallTestArtemisVersion extends TestCase
         $this->apiKey = Factory::create('apikey_super_admin');
 
         $this->enLang = Factory::create('Language', ['name' => 'en']);
+        $this->idLang = Factory::create('Language', ['name' => 'id']);
+        $this->zhLang = Factory::create('Language', ['name' => 'zh']);
+        $this->jpLang = Factory::create('Language', ['name' => 'jp']);
 
         $this->country = Factory::create('Country');
 
@@ -35,9 +38,6 @@ class postUpdateMallTestArtemisVersion extends TestCase
 
     public function setRequestPostUpdateMall($api_key, $api_secret_key, $update)
     {
-        $_GET = [];
-        $_POST = [];
-
         // Set the client API Keys
         $_GET['apikey'] = $api_key;
         $_GET['apitimestamp'] = time();
@@ -55,9 +55,6 @@ class postUpdateMallTestArtemisVersion extends TestCase
 
         $json = $this->call('POST', $url)->getContent();
         $response = json_decode($json);
-
-        unset($_POST);
-        unset($_GET);
 
         return $response;
     }
@@ -77,10 +74,19 @@ class postUpdateMallTestArtemisVersion extends TestCase
         $this->fl_b2 = Factory::create('Object', ['merchant_id' => $mall_c->merchant_id, 'object_name' => 'B2', 'object_type' => 'floor', 'object_order' => 1]);
         $this->fl_b1 = Factory::create('Object', ['merchant_id' => $mall_c->merchant_id, 'object_name' => 'B1', 'object_type' => 'floor', 'object_order' => 2]);
 
-        Factory::create('Tenant', ['name' => 'tenant firman', 'floor' => 'B1', 'parent_id' => $mall_c->merchant_id]);
+        Factory::create('Tenant', ['name' => 'tenant firman', 'floor_id' => $this->fl_b1->object_id, 'parent_id' => $mall_c->merchant_id]);
 
-        $this->mall_d = Factory::create('Mall', ['ci_domain' => 'lippomall.gotomalls.com']);
+        $this->mall_d = Factory::create('Mall', ['ci_domain' => 'lippomall.gotomalls.cool']);
         Factory::create('Setting', ['setting_name' => 'dom:lippomall.gotomalls.com', 'setting_value' => $this->mall_d->merchant_id]);
+
+        $this->mall_e = Factory::create('Mall', ['description' => 'antok mall oke', 'mobile_default_language' => 'id']);
+        Factory::create('MerchantLanguage', ['language_id' => $this->idLang, 'merchant_id' => $this->mall_e->merchant_id]);
+        Factory::create('MerchantLanguage', ['language_id' => $this->zhLang, 'merchant_id' => $this->mall_e->merchant_id]);
+        Factory::create('MerchantLanguage', ['language_id' => $this->jpLang, 'merchant_id' => $this->mall_e->merchant_id]);
+
+        $news = Factory::create('News');
+        $news_translation = Factory::create('NewsTranslation', ['news_id' => $news->news_id, 'merchant_language_id' => $this->idLang->language_id]);
+        $new_merchant = Factory::create('NewsMerchant', ['news_id' => $news->news_id, 'merchant_id' => $this->mall_e->merchant_id, 'object_type' => 'mall']);
     }
 
     public function testRequiredMerchantId()
@@ -196,6 +202,45 @@ class postUpdateMallTestArtemisVersion extends TestCase
         ];
 
         $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame('Request OK', $response->message);
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
+
+        $floor_on_db = Object::excludeDeleted()
+                        ->where('merchant_id', $response->data->merchant_id)
+                        ->where('object_type', 'floor')
+                        ->get();
+
+        $this->assertSame(3, count($floor_on_db));
+
+        foreach ($floor_on_db as $floor_db) {
+            foreach ($floor_array as $floor_json) {
+                $floor = @json_decode($floor_json);
+                if ($floor_db->object_order === $floor->order) {
+                    $this->assertSame($floor_db->object_name, $floor->name);
+                }
+            }
+        }
+    }
+
+    public function testUpdateFloorName()
+    {
+        $this->setDataMall();
+
+        $floor_array = [
+            "{\"id\":\"{$this->fl_b3->object_id}\",\"name\":\"{$this->fl_b3->object_name}\",\"order\":\"0\"}",
+            "{\"id\":\"{$this->fl_b2->object_id}\",\"name\":\"{$this->fl_b2->object_name}\",\"order\":\"1\"}",
+            "{\"id\":\"{$this->fl_b1->object_id}\",\"name\":\"L1\",\"order\":\"2\"}"
+        ];
+
+        /*
+        * test update floor name
+        */
+        $data = ['merchant_id' => $this->mall_c->merchant_id,
+            'floors'    => $floor_array
+        ];
+
+        $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
         $this->assertSame(0, $response->code);
         $this->assertSame("success", $response->status);
 
@@ -247,8 +292,6 @@ class postUpdateMallTestArtemisVersion extends TestCase
     {
         $this->setDataMall();
 
-        $floor_array = ["{\"name\":\"B3\",\"order\":\"0\"}","{\"name\":\"B2\",\"order\":\"1\"}","{\"name\":\"B1\",\"order\":\"2\"}","{\"name\":\"L1\",\"order\":\"3\"}"];
-
         $floor_array = ["{\"id\":\"{$this->fl_b3->object_id}\",\"name\":\"{$this->fl_b3->object_name}\",\"order\":\"1\"}",
             "{\"id\":\"{$this->fl_b2->object_id}\",\"name\":\"{$this->fl_b2->object_name}\",\"order\":\"2\"}",
             "{\"name\":\"L1\",\"order\":\"3\"}",
@@ -279,6 +322,25 @@ class postUpdateMallTestArtemisVersion extends TestCase
                 }
             }
         }
+    }
+
+    public function testInsertExistFloorWithoutFloorId()
+    {
+        $this->setDataMall();
+
+        $floor_array = [
+            "{\"name\":\"B3\",\"order\":\"3\"}",
+        ];
+        /*
+        * test insert new floor
+        */
+        $data = ['merchant_id' => $this->mall_c->merchant_id,
+            'floors'    => $floor_array
+        ];
+
+        $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
     }
 
     public function testDeleteAndInsertNewFloor()
@@ -442,4 +504,200 @@ class postUpdateMallTestArtemisVersion extends TestCase
         $this->assertSame("error", $response->status);
         $this->assertSame("The domain may only contain letters, numbers, and dashes", $response->message);
     }
+
+    public function testUpdateDuplicateSubdomain()
+    {
+        $this->setDataMall();
+
+        $mall_xx = Factory::create('Mall', ['ci_domain' => 'seminyak.gotomalls.cool']);
+
+        $subdomain = 'seminyak';
+
+        /*
+        * test update duplicate subdomain
+        */
+        $data = ['merchant_id' => $this->mall_d->merchant_id,
+            'domain'    => $subdomain
+        ];
+
+        $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("Mall URL Application Domain name has already been taken", $response->message);
+    }
+
+    public function testUpdateDuplicateSubdomainButNotMe()
+    {
+        $this->setDataMall();
+
+        $mall_xx = Factory::create('Mall', ['ci_domain' => 'seminyak.gotomalls.cool']);
+
+        $subdomain = 'lippomall';
+
+        /*
+        * test update duplicate subdomain
+        */
+        $data = ['merchant_id' => $this->mall_d->merchant_id,
+            'domain'    => $subdomain
+        ];
+
+        $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
+        $this->assertSame($subdomain . Config::get('orbit.shop.ci_domain'), $response->data->ci_domain);
+    }
+
+    public function testUpdateDescription()
+    {
+        $this->setDataMall();
+
+        $description = 'antok mall bagus';
+
+        /*
+        * test update description
+        */
+        $data = ['merchant_id' => $this->mall_e->merchant_id,
+            'description'    => $description
+        ];
+
+        $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
+        $this->assertSame($description, $response->data->description);
+    }
+
+    public function testUpdateDescriptionMaxChar()
+    {
+        $this->setDataMall();
+
+        $description = 'antok mall bagus banget beneran';
+
+        /*
+        * test update description
+        */
+        $data = ['merchant_id' => $this->mall_e->merchant_id,
+            'description'    => $description
+        ];
+
+        $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("The description may not be greater than 25 characters", $response->message);
+    }
+
+    public function testUpdateMobileLanguages()
+    {
+        $this->setDataMall();
+
+        $languages               = ['jp','zh','id'];
+        $mobile_default_language = 'zh';
+
+        /*
+        * test update description
+        */
+        $data = [
+            'merchant_id'             => $this->mall_e->merchant_id,
+            'languages'               => $languages,
+            'mobile_default_language' => $mobile_default_language
+        ];
+
+        $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
+        $this->assertSame($mobile_default_language, $response->data->mobile_default_language);
+    }
+
+    public function testUpdateMobileLanguagesNotOnListLanguages()
+    {
+        /*
+        * test update mobile or language not same for default language
+        */
+        $this->setDataMall();
+
+        $languages               = ['jp','zh','id'];
+        $mobile_default_language = 'en';
+
+        /*
+        * test update description
+        */
+        $data = [
+            'merchant_id'             => $this->mall_e->merchant_id,
+            'languages'               => $languages,
+            'mobile_default_language' => $mobile_default_language
+        ];
+
+        $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("Mobile default language must on list languages", $response->message);
+    }
+
+    public function testUpdateAddLanguage()
+    {
+        $this->setDataMall();
+
+        // add english
+        $languages               = ['jp','zh','id', 'en'];
+        $mobile_default_language = 'en';
+
+        /*
+        * test update description
+        */
+        $data = [
+            'merchant_id'             => $this->mall_e->merchant_id,
+            'languages'               => $languages,
+            'mobile_default_language' => $mobile_default_language
+        ];
+
+        $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
+        // check mall languages on database
+    }
+
+    public function testUpdateRemoveLanguage()
+    {
+        $this->setDataMall();
+
+        // add english
+        $languages               = ['jp','en'];
+        $mobile_default_language = 'en';
+
+        /*
+        * test update description
+        */
+        $data = [
+            'merchant_id'             => $this->mall_e->merchant_id,
+            'languages'               => $languages,
+            'mobile_default_language' => $mobile_default_language
+        ];
+
+        $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
+        // check mall languages on database
+    }
+
+    // public function testUpdateRemoveLanguageHasLink()
+    // {
+    //     $this->setDataMall();
+
+    //     // add english
+    //     $languages               = ['jp','en'];
+    //     $mobile_default_language = 'en';
+
+    //     /*
+    //     * test update description
+    //     */
+    //     $data = [
+    //         'merchant_id'             => $this->mall_e->merchant_id,
+    //         'languages'               => $languages,
+    //         'mobile_default_language' => $mobile_default_language
+    //     ];
+
+    //     $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+    //     $this->assertSame(14, $response->code);
+    //     $this->assertSame("error", $response->status);
+    //     $this->assertSame("error", $response->message);
+    // }
 }

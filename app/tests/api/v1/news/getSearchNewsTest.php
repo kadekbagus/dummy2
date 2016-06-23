@@ -9,7 +9,7 @@ use Laracasts\TestDummy\Factory;
 use Faker\Factory as Faker;
 use OrbitShop\API\v1\Helper\Generator;
 
-class getSearchPromotion extends TestCase
+class getSearchNewsTest extends TestCase
 {
 	private $baseUrl = '/api/v1/news/search';
 
@@ -49,26 +49,26 @@ class getSearchPromotion extends TestCase
         Factory::create('UserMerchant', ['user_id' => $this->user_1->user_id, 'merchant_id' => $this->tenant_2->merchant_id, 'object_type' => 'tenant']);
 
         $this->campaing_status = Factory::create('CampaignStatus', ['campaign_status_name' => 'not started']);
-        $this->promotion_1 = Factory::create('News', [
+        $this->news_1 = Factory::create('News', [
             'mall_id' => $this->mall_1->merchant_id,
-            'object_type' => 'promotion',
+            'object_type' => 'news',
             'campaign_status_id' => $this->campaing_status->campaign_status_id,
         ]);
 
-        Factory::create('user_campaign_news', ['user_id' => $this->user_1->user_id, 'campaign_id' => $this->promotion_1->news_id]);
+        Factory::create('user_campaign_news', ['user_id' => $this->user_1->user_id, 'campaign_id' => $this->news_1->news_id]);
         Factory::create('CampaignAccount', ['user_id' => $this->user_1->user_id, 'parent_user_id' => NULL]);
-        Factory::create('NewsMerchant', ['news_id' => $this->promotion_1->news_id, 'merchant_id' => $this->tenant_1->merchant_id]);
-        Factory::create('NewsMerchant', ['news_id' => $this->promotion_1->news_id, 'merchant_id' => $this->tenant_2->merchant_id]);
+        Factory::create('NewsMerchant', ['news_id' => $this->news_1->news_id, 'merchant_id' => $this->tenant_1->merchant_id]);
+        Factory::create('NewsMerchant', ['news_id' => $this->news_1->news_id, 'merchant_id' => $this->tenant_2->merchant_id]);
 
-        $this->promotion_2 = Factory::create('News', [
+        $this->news_2 = Factory::create('News', [
             'mall_id' => $this->mall_1->merchant_id,
-            'object_type' => 'promotion',
+            'object_type' => 'news',
             'campaign_status_id' => $this->campaing_status->campaign_status_id,
         ]);
 
-        Factory::create('user_campaign_news', ['user_id' => $this->user_1->user_id, 'campaign_id' => $this->promotion_2->news_id]);
-        Factory::create('NewsMerchant', ['news_id' => $this->promotion_2->news_id, 'merchant_id' => $this->tenant_2->merchant_id]);
-        Factory::create('NewsMerchant', ['news_id' => $this->promotion_2->news_id, 'merchant_id' => $this->tenant_1->merchant_id]);
+        Factory::create('user_campaign_news', ['user_id' => $this->user_1->user_id, 'campaign_id' => $this->news_2->news_id]);
+        Factory::create('NewsMerchant', ['news_id' => $this->news_2->news_id, 'merchant_id' => $this->tenant_2->merchant_id]);
+        Factory::create('NewsMerchant', ['news_id' => $this->news_2->news_id, 'merchant_id' => $this->tenant_1->merchant_id]);
 
         $combos = [
             [$this->mall_1, $english, 'english'],
@@ -87,33 +87,33 @@ class getSearchPromotion extends TestCase
         $this->merchantLanguages = $merchant_languages;
 
         Factory::create('NewsTranslation', [
-            'news_id' => $this->promotion_1->news_id, 
+            'news_id' => $this->news_1->news_id, 
             'merchant_id' => $this->mall_1->merchant_id,
             'merchant_language_id' => $this->merchantLanguages['english']->language_id,
-            'news_name' => 'english name promotion 1',
-            'description' => 'english description promotion 1'
+            'news_name' => 'english name news 1',
+            'description' => 'english description news 1'
         ]);
         Factory::create('NewsTranslation', [
-            'news_id' => $this->promotion_1->news_id, 
+            'news_id' => $this->news_1->news_id, 
             'merchant_id' => $this->mall_2->merchant_id,
             'merchant_language_id' => $this->merchantLanguages['japanese']->language_id,
-            'news_name' => 'japanese name promotion 1',
-            'description' => 'japanese description promotion 1'
+            'news_name' => 'japanese name news 1',
+            'description' => 'japanese description news 1'
         ]);
 
         Factory::create('NewsTranslation', [
-            'news_id' => $this->promotion_2->news_id, 
+            'news_id' => $this->news_2->news_id, 
             'merchant_id' => $this->mall_1->merchant_id,
             'merchant_language_id' => $this->merchantLanguages['english']->language_id,
-            'news_name' => 'english name promotion 2',
-            'description' => 'english description promotion 2'
+            'news_name' => 'english name news 2',
+            'description' => 'english description news 2'
         ]);
         Factory::create('NewsTranslation', [
-            'news_id' => $this->promotion_2->news_id, 
+            'news_id' => $this->news_2->news_id, 
             'merchant_id' => $this->mall_2->merchant_id,
             'merchant_language_id' => $this->merchantLanguages['japanese']->language_id,
-            'news_name' => 'japanese name promotion 2',
-            'description' => 'japanese description promotion 2'
+            'news_name' => 'japanese name news 2',
+            'description' => 'japanese description news 2'
         ]);
 
     	$_GET = [];
@@ -127,7 +127,7 @@ class getSearchPromotion extends TestCase
             'apikey' => $this->apikey_user_1->api_key,
             'apitimestamp' => time()
         ];
-        $_GET['object_type'][] = 'promotion';
+        $_GET['object_type'][] = 'news';
 
         $url = $this->baseUrl . '?' . http_build_query($_GET);
 
@@ -142,27 +142,27 @@ class getSearchPromotion extends TestCase
         return $response;
     }
 
-    public function testOK_promotion_list()
+    public function testOK_news_list()
     {
         $response = $this->makeRequest();
         $this->assertSame(2, $response->data->total_records);
-        $this->assertSame('english name promotion 1', $response->data->records[0]->display_name);
-        $this->assertSame('japanese name promotion 2', $response->data->records[1]->display_name);
+        $this->assertSame('english name news 1', $response->data->records[0]->display_name);
+        $this->assertSame('japanese name news 2', $response->data->records[1]->display_name);
     }
 
-    public function testOK_promotion_list_filter_name()
+    public function testOK_news_list_filter_name()
     {
         $response = $this->makeRequest('japanese');
         $this->assertSame(2, $response->data->total_records);
-        $this->assertSame('japanese name promotion 1', $response->data->records[0]->display_name);
-        $this->assertSame('japanese name promotion 2', $response->data->records[1]->display_name);
+        $this->assertSame('japanese name news 1', $response->data->records[0]->display_name);
+        $this->assertSame('japanese name news 2', $response->data->records[1]->display_name);
     }
 
-    public function testOK_promotion_list_filter_name_same_in_two_translation()
+    public function testOK_news_list_filter_name_same_in_two_translation()
     {
         $response = $this->makeRequest('name');
         $this->assertSame(2, $response->data->total_records);
-        $this->assertContains($response->data->records[0]->display_name, ['english name promotion 1', 'japanese name promotion 1']);
-        $this->assertContains($response->data->records[1]->display_name, ['english name promotion 2', 'japanese name promotion 2']);
+        $this->assertContains($response->data->records[0]->display_name, ['english name news 1', 'japanese name news 1']);
+        $this->assertContains($response->data->records[1]->display_name, ['english name news 2', 'japanese name news 2']);
     }
 }

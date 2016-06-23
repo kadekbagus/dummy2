@@ -47,7 +47,6 @@ class MallNearbyAPIController extends ControllerAPI
 
             $malls = Mall::select('merchants.*')
                          ->includeLatLong()
-                         ->includeDummyOpeningHours()   // @Todo: Remove this in the future
                          ->join('merchant_geofences', 'merchant_geofences.merchant_id', '=', 'merchants.merchant_id');
 
             if ($usingDemo) {
@@ -56,7 +55,7 @@ class MallNearbyAPIController extends ControllerAPI
                 // Production
                 $malls->active();
             }
-                         
+
             $callNearBy = TRUE;
 
             // Filter

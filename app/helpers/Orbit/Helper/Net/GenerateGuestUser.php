@@ -46,7 +46,12 @@ class GenerateGuestUser
                     'role'      => $user->role->role_name,
                     'fullname'  => '',
                 );
-                $session->enableForceNew()->start($data);
+                $session->write('logged_in', TRUE);
+                $session->write('guest_user_id', $user->user_id);
+                $session->write('guest_email', $user->user_email);
+                $session->write('role', $user->role->role_name);
+                $session->write('fullname', '');
+
                 DB::commit();
                 // Send the session id via HTTP header
                 $sessionHeader = $session->getSessionConfig()->getConfig('session_origin.header.name');

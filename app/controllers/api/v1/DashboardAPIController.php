@@ -1665,12 +1665,13 @@ class DashboardAPIController extends ControllerAPI
             $user = $this->api->user;
             Event::fire('orbit.dashboard.gettopwidgetclick.before.authz', array($this, $user));
 
-            if (! ACL::create($user)->isAllowed('view_product')) {
-                Event::fire('orbit.dashboard.gettopwidgetclick.authz.notallowed', array($this, $user));
-                $viewCouponLang = Lang::get('validation.orbit.actionlist.view_product');
-                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $viewCouponLang));
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            if (! in_array( strtolower($role->role_name), $this->newsViewRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
             }
+
             Event::fire('orbit.dashboard.gettopwidgetclick.after.authz', array($this, $user));
 
             $take = OrbitInput::get('take');

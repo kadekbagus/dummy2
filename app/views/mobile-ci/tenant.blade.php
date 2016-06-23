@@ -325,7 +325,8 @@ if(sizeof($tenant->newsPromotionsProfiling) > 0 || sizeof($tenant->newsProfiling
         <input type="checkbox" class="read-more-state" id="post-2" />
         <p>{{ nl2br(e($tenant->description)) }}</p>
         <ul class="where-list read-more-wrap">
-            <li><span class="tenant-list-icon"><i class="fa fa-map-marker fa-lg" style="padding-left: 11px;"></i></span><p class="tenant-list-text">{{{ !empty($tenant->floor) ? $tenant->floor : '' }}}{{{ !empty($tenant->unit) ? ' - ' . $tenant->unit : '' }}}</p></li>
+            <!-- <li><span class="tenant-list-icon"><i class="fa fa-map-marker fa-lg" style="padding-left: 11px;"></i></span><p class="tenant-list-text">{{{ !empty($tenant->floor) ? $tenant->floor : '' }}}{{{ !empty($tenant->unit) ? ' - ' . $tenant->unit : '' }}}</p></li> -->
+            <li><span class="tenant-list-icon"><i class="fa fa-map-marker fa-lg" style="padding-left: 11px;"></i></span><p class="tenant-list-text">{{{ !empty($service->location) ? $tenant->location : '-' }}}</p></li>
             <li><span class="tenant-list-icon"><i class="fa fa-globe fa-lg"></i></span><p class="tenant-list-text">{{{ (($tenant->url) != '') ? 'http://'.$tenant->url : '-' }}}</p></li>
             @if(! empty($tenant->facebook_like_url))
             <li><span class="tenant-list-icon"><i class="fa fa-facebook-square fa-lg"></i></span><p class="tenant-list-text">{{{ str_replace('//', '', $tenant->facebook_like_url) }}}</p></li>
