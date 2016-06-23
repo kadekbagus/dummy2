@@ -511,6 +511,7 @@ class TenantCIAPIController extends BaseAPIController
 
             $mall = Mall::excludeDeleted()->where('merchant_id', $this->mall_id)->first();
             $mallTime = Carbon::now($mall->timezone->timezone_name);
+            $prefix = DB::getTablePrefix();
 
             $tenant = Tenant::with(
                 [
@@ -534,12 +535,14 @@ class TenantCIAPIController extends BaseAPIController
                 'merchants.merchant_id',
                 'merchants.name',
                 'merchants.description',
-                'merchants.floor',
+                'objects.object_name as floor',
                 'merchants.unit',
+                DB::raw("(CASE WHEN unit = '' THEN {$prefix}objects.object_name ELSE CONCAT({$prefix}objects.object_name, \" unit \", unit) END) AS location"),
                 'merchants.url',
                 'merchants.phone',
                 'merchant_social_media.social_media_uri as facebook_like_url'
             )
+            ->leftJoin('objects', 'objects.object_id', '=', 'merchants.floor_id')
             ->leftJoin('merchant_social_media', function ($join) {
                 $join->on('merchant_social_media.merchant_id', '=', 'merchants.merchant_id');
             })

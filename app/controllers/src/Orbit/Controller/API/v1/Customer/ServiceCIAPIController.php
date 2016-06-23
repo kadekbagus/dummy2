@@ -332,6 +332,7 @@ class ServiceCIAPIController extends BaseAPIController
 
             $mall = Mall::excludeDeleted()->where('merchant_id', $this->mall_id)->first();
             $mallTime = Carbon::now($mall->timezone->timezone_name);
+            $prefix = DB::getTablePrefix();
 
             $service = TenantStoreAndService::with(
                 [
@@ -355,9 +356,11 @@ class ServiceCIAPIController extends BaseAPIController
                 'merchants.merchant_id',
                 'merchants.name',
                 'merchants.description',
-                'merchants.floor',
-                'merchants.unit'
+                'objects.object_name as floor',
+                'merchants.unit',
+                DB::raw("(CASE WHEN unit = '' THEN {$prefix}objects.object_name ELSE CONCAT({$prefix}objects.object_name, \" unit \", unit) END) AS location")
             )
+            ->leftJoin('objects', 'objects.object_id', '=', 'merchants.floor_id')
             ->active('merchants')
             ->where('parent_id', $this->mall_id)
             ->where('merchants.merchant_id', $service_id)
