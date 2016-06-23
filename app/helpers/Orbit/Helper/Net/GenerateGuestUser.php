@@ -17,6 +17,7 @@ use Mall;
 use Activity;
 use UserSignin;
 use Carbon\Carbon;
+use Orbit\Helper\Net\SessionPreparer;
 
 class GenerateGuestUser
 {   
@@ -25,41 +26,26 @@ class GenerateGuestUser
      * If there are already guest_email on the cookie use that email instead
      *
      */
-    public static function generateGuestUser($session)
+    public static function generateGuestUser($session = NULL)
     {
         try{
-            if (is_null($session)) {
-                throw new Exception("Session not found.", 1);
+            $guest_email = NULL;
+            if (! is_null($session)) {
+                $guest_email = $session->read('guest_email');
             }
-
-            $guest_email = $session->read('guest_email');
-            $guest = User::excludeDeleted()->where('user_email', $guest_email)->first();
-            if (! is_object($guest)) {
+            if (! empty($guest_email)) {
+                $guest = User::excludeDeleted()->where('user_email', $guest_email)->first();
+                if (! is_object($guest)) {
+                    DB::beginTransaction();
+                    $user = (new User)->generateGuestUser();
+                    DB::commit();
+                } else {
+                    $user = $guest;
+                }
+            } else {
                 DB::beginTransaction();
                 $user = (new User)->generateGuestUser();
-
-                // Start the orbit session
-                $data = array(
-                    'logged_in' => TRUE,
-                    'guest_user_id' => $user->user_id,
-                    'guest_email' => $user->user_email,
-                    'role'      => $user->role->role_name,
-                    'fullname'  => '',
-                );
-                $session->write('logged_in', TRUE);
-                $session->write('guest_user_id', $user->user_id);
-                $session->write('guest_email', $user->user_email);
-                $session->write('role', $user->role->role_name);
-                $session->write('fullname', '');
-
                 DB::commit();
-                // Send the session id via HTTP header
-                $sessionHeader = $session->getSessionConfig()->getConfig('session_origin.header.name');
-                $sessionHeader = 'Set-' . $sessionHeader;
-                $customHeaders = array();
-                $customHeaders[$sessionHeader] = $session->getSessionId();
-            } else {
-                $user = $guest;
             }
 
             // todo: add login_ok activity
