@@ -1140,7 +1140,7 @@ class TenantAPIController extends ControllerAPI
             });
 
             OrbitInput::post('floor_id', function($floor_id) use ($updatedtenant) {
-                $floor_db = App::make('orbit.empty.floor');
+                $floor_db = $this->valid_floor;
                 if (count($floor_db) > 0) {
                     $updatedtenant->floor = $floor_db->object_name;
                     $updatedtenant->floor_id = $floor_db->object_id;

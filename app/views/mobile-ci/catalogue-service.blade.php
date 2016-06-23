@@ -230,7 +230,7 @@
             var name = records[i].name;
             var floor = records[i].floor;
             var unit = records[i].unit;
-            var location = records[i].location;
+            var location = records[i].location != null ? records[i].location : '-';
             var category = records[i].category_string;
             var facebook_like_url = records[i].facebook_like_url;
             var logoUrl = records[i].logo_orig;
