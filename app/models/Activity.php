@@ -969,19 +969,21 @@ class Activity extends Eloquent
             ->first();
 
         if (empty($activity)) {
-            $newConnected = new ConnectedNow();
-            $newConnected->merchant_id = $this->location_id;
-            $newConnected->customer_connected = 1;
-            $newConnected->date = $date;
-            $newConnected->hour = $hour;
-            $newConnected->minute = $minute;
-            $newConnected->save();
+            if (! empty($this->location_id)) {
+                $newConnected = new ConnectedNow();
+                $newConnected->merchant_id = $this->location_id;
+                $newConnected->customer_connected = 1;
+                $newConnected->date = $date;
+                $newConnected->hour = $hour;
+                $newConnected->minute = $minute;
+                $newConnected->save();
 
-            if (! empty($this->user_id)) {
-                $newListConnectedUser = new ListConnectedUser();
-                $newListConnectedUser->connected_now_id = $newConnected->connected_now_id;
-                $newListConnectedUser->user_id = $this->user_id;
-                $newListConnectedUser->save();
+                if (! empty($this->user_id)) {
+                    $newListConnectedUser = new ListConnectedUser();
+                    $newListConnectedUser->connected_now_id = $newConnected->connected_now_id;
+                    $newListConnectedUser->user_id = $this->user_id;
+                    $newListConnectedUser->save();
+                }
             }
         } else {
             if (is_null($activity->user_id)) {

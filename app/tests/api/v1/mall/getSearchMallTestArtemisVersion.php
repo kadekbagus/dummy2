@@ -20,6 +20,9 @@ class getSearchMallTestArtemisVersion extends TestCase
         $this->apiKey = Factory::create('apikey_super_admin');
 
         $this->enLang = Factory::create('Language', ['name' => 'en']);
+        $this->idLang = Factory::create('Language', ['name' => 'id']);
+        $this->zhLang = Factory::create('Language', ['name' => 'zh']);
+        $this->jpLang = Factory::create('Language', ['name' => 'jp']);
 
         $this->country = Factory::create('Country');
 
@@ -102,6 +105,160 @@ class getSearchMallTestArtemisVersion extends TestCase
                 $this->assertSame('seminyakvillage', $data->subdomain);
             if($mall_a->merchant_id  === $data->merchant_id)
                 $this->assertSame('lippomall', $data->subdomain);
+        }
+    }
+
+    public function testGetDescription()
+    {
+        $mall_a = Factory::create('Mall', ['description' => 'mall antok bagus']);
+
+        $mall_b = Factory::create('Mall', ['description' => 'mall irianto oke']);
+
+        $filter = [];
+
+        /*
+        * test get widget free wifi status
+        */
+        $response_search = $this->setRequestGetSearchMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $filter);
+        $this->assertSame(0, $response_search->code);
+        $this->assertSame('success', $response_search->status);
+        foreach ($response_search->data->records as $idx => $data) {
+            if($mall_b->merchant_id  === $data->merchant_id)
+                $this->assertSame('mall irianto oke', $data->description);
+            if($mall_a->merchant_id  === $data->merchant_id)
+                $this->assertSame('mall antok bagus', $data->description);
+        }
+    }
+
+    public function testGetFloor()
+    {
+        $mall_a = Factory::create('Mall', ['description' => 'mall antok bagus']);
+
+        $mall_b = Factory::create('Mall', ['description' => 'mall irianto oke']);
+
+        $floor_B1 = Factory::create('floor', ['object_name' => 'B1', 'merchant_id' => $mall_a->merchant_id]);
+        $floor_L1 = Factory::create('floor', ['object_name' => 'L1', 'merchant_id' => $mall_a->merchant_id]);
+        $floor_L2 = Factory::create('floor', ['object_name' => 'L2', 'merchant_id' => $mall_b->merchant_id]);
+
+        $floor_mall_a = [$floor_B1->object_id, $floor_L1->object_id];
+        $floor_mall_b = [$floor_L2->object_id];
+
+        $filter = [
+            'with' => ['mallFloors']
+        ];
+
+        /*
+        * test get floor
+        */
+        $response_search = $this->setRequestGetSearchMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $filter);
+        $this->assertSame(0, $response_search->code);
+        $this->assertSame('success', $response_search->status);
+        foreach ($response_search->data->records as $idx => $data) {
+            if($mall_b->merchant_id  === $data->merchant_id) {
+                $this->assertSame('mall irianto oke', $data->description);
+                foreach ($data->mall_floors as $floor) {
+                    $this->assertContains($floor->object_id, $floor_mall_b);
+                }
+            }
+            if($mall_a->merchant_id  === $data->merchant_id) {
+                $this->assertSame('mall antok bagus', $data->description);
+                foreach ($data->mall_floors as $floor) {
+                    $this->assertContains($floor->object_id, $floor_mall_a);
+                }
+            }
+        }
+    }
+
+    public function testGetLanguage() {
+        $mall_a = Factory::create('Mall', ['description' => 'mall antok bagus', 'mobile_default_language' => 'en']);
+        Factory::create('MerchantLanguage', ['language_id' => $this->enLang->language_id, 'merchant_id' => $mall_a->merchant_id]);
+        Factory::create('MerchantLanguage', ['language_id' => $this->zhLang->language_id, 'merchant_id' => $mall_a->merchant_id]);
+        Factory::create('MerchantLanguage', ['language_id' => $this->idLang->language_id, 'merchant_id' => $mall_a->merchant_id]);
+        $language_mall_a = [$this->enLang->language_id,$this->zhLang->language_id,$this->idLang->language_id];
+
+        $mall_b = Factory::create('Mall', ['description' => 'mall irianto oke', 'mobile_default_language' => 'id']);
+        Factory::create('MerchantLanguage', ['language_id' => $this->idLang->language_id, 'merchant_id' => $mall_b->merchant_id]);
+        Factory::create('MerchantLanguage', ['language_id' => $this->zhLang->language_id, 'merchant_id' => $mall_b->merchant_id]);
+        Factory::create('MerchantLanguage', ['language_id' => $this->jpLang->language_id, 'merchant_id' => $mall_b->merchant_id]);
+        $language_mall_b = [$this->idLang->language_id,$this->zhLang->language_id,$this->jpLang->language_id];
+
+        $filter = [
+            'with' => ['mallLanguages']
+        ];
+
+        /*
+        * test get languages
+        */
+        $response_search = $this->setRequestGetSearchMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $filter);
+        $this->assertSame(0, $response_search->code);
+        $this->assertSame('success', $response_search->status);
+        foreach ($response_search->data->records as $idx => $data) {
+            if($mall_b->merchant_id  === $data->merchant_id) {
+                $this->assertSame('mall irianto oke', $data->description);
+                foreach ($data->mall_languages as $language) {
+                    $this->assertContains($language->language_id, $language_mall_b);
+                }
+            }
+            if($mall_a->merchant_id  === $data->merchant_id) {
+                $this->assertSame('mall antok bagus', $data->description);
+                foreach ($data->mall_languages as $language) {
+                    $this->assertContains($language->language_id, $language_mall_a);
+                }
+            }
+        }
+    }
+
+    public function testGetMobileDefaultLanguageLinkStatus() {
+        $mall_a = Factory::create('Mall', ['description' => 'mall antok bagus', 'mobile_default_language' => 'en']);
+        Factory::create('MerchantLanguage', ['language_id' => $this->enLang->language_id, 'merchant_id' => $mall_a->merchant_id]);
+        Factory::create('MerchantLanguage', ['language_id' => $this->zhLang->language_id, 'merchant_id' => $mall_a->merchant_id]);
+        Factory::create('MerchantLanguage', ['language_id' => $this->idLang->language_id, 'merchant_id' => $mall_a->merchant_id]);
+        $language_mall_a = [$this->enLang->language_id,$this->zhLang->language_id,$this->idLang->language_id];
+
+        $mall_b = Factory::create('Mall', ['description' => 'mall irianto oke', 'mobile_default_language' => 'id']);
+        Factory::create('MerchantLanguage', ['language_id' => $this->idLang->language_id, 'merchant_id' => $mall_b->merchant_id]);
+        Factory::create('MerchantLanguage', ['language_id' => $this->zhLang->language_id, 'merchant_id' => $mall_b->merchant_id]);
+        Factory::create('MerchantLanguage', ['language_id' => $this->jpLang->language_id, 'merchant_id' => $mall_b->merchant_id]);
+        $language_mall_b = [$this->idLang->language_id,$this->zhLang->language_id,$this->jpLang->language_id];
+
+        // create campaign translation with mobile default language
+        $news = Factory::create('News');
+        $news_translation = Factory::create('NewsTranslation', [
+                'news_id' => $news->news_id,
+                'merchant_language_id' => $this->idLang->language_id
+            ]);
+        $tenant = Factory::create('Tenant', ['parent_id' => $mall_b->merchant_id]);
+        $new_merchant = Factory::create('NewsMerchant', [
+                    'news_id' => $news->news_id,
+                    'merchant_id' => $tenant->merchant_id,
+                    'object_type' => 'tenant'
+                ]);
+
+        $filter = [
+            'with' => ['mallLanguages']
+        ];
+
+        /*
+        * test get language and mobile default language link status
+        */
+        $response_search = $this->setRequestGetSearchMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $filter);
+        $this->assertSame(0, $response_search->code);
+        $this->assertSame('success', $response_search->status);
+        foreach ($response_search->data->records as $idx => $data) {
+            if($mall_b->merchant_id  === $data->merchant_id) {
+                $this->assertSame('mall irianto oke', $data->description);
+                foreach ($data->mall_languages as $language) {
+                    $this->assertContains($language->language_id, $language_mall_b);
+                }
+                $this->assertSame('true', $data->disable_mobile_default_language);
+            }
+            if($mall_a->merchant_id  === $data->merchant_id) {
+                $this->assertSame('mall antok bagus', $data->description);
+                foreach ($data->mall_languages as $language) {
+                    $this->assertContains($language->language_id, $language_mall_a);
+                }
+                $this->assertSame('false', $data->disable_mobile_default_language);
+            }
         }
     }
 }

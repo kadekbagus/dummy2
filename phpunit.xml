@@ -54,6 +54,7 @@
             <file>./app/tests/api/v1/mall/getMallIdByDomainAngularCITest.php</file>
             <file>./app/tests/api/v1/user/getMyAccountInfoCIAngularTest.php</file>
             <file>./app/tests/api/v1/campaign/getCampaignPopupAngularCITest.php</file>
+            <file>./app/tests/api/v1/login/postDesktopCILoginTest.php</file>
             <file>./app/tests/api/v1/widget/getSearchWidgetTest.php</file>
             <file>./app/tests/api/v1/widget/getSearchWidgetAngularCITest.php</file>
             <file>./app/tests/api/v1/tenant/getSearchTenantStoreAndServiceTest.php</file>
@@ -83,6 +84,13 @@
             <file>./app/tests/api/v1/promotion/postNewPromotion.php</file>
             <file>./app/tests/api/v1/promotion/postUpdatePromotion.php</file>
 			<file>./app/tests/api/v1/user/postUpdateMembershipTestArtemisVersion.php</file>
+            <file>./app/tests/api/v1/dashboard/getCustomerTodayDashboardTest.php</file>
+            <file>./app/tests/api/v1/dashboard/getCustomerGenderDashboardTest.php</file>
+            <file>./app/tests/api/v1/dashboard/getCustomerAgeRangeDashboardTest.php</file>
+            <file>./app/tests/api/v1/dashboard/getWidgetClickDashboardTest.php</file>
+            <file>./app/tests/api/v1/membership/getMembershipMobileCiTest.php</file>
+            <file>./app/tests/api/v1/user/postResetPasswordTest.php</file>
+            <file>./app/tests/api/v1/user/postResetPasswordLinkTest.php</file>
         </testsuite>
     </testsuites>
 </phpunit>
