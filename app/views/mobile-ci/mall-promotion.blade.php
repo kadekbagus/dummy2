@@ -34,9 +34,9 @@
                 <li>
                     @if(count($promotion->tenants) > 0)
                         @if(count($promotion->tenants) === 1)
-                        <a data-href="{{ route('ci-tenant-detail', ['id' => $promotion->tenants[0]->merchant_id]) }}" href="{{{ $urlblock->blockedRoute('ci-tenant-detail', ['id' => $promotion->tenants[0]->merchant_id]) }}}">
+                        <a data-href="{{ route('ci-tenant-detail', ['id' => $promotion->tenants[0]->merchant_id]) }}" href="{{{ \Orbit\Helper\Net\UrlChecker::blockedRoute('ci-tenant-detail', ['id' => $promotion->tenants[0]->merchant_id], $session) }}}">
                         @else
-                        <a data-href="{{ route('ci-tenant-list', ['promotion_id' => $promotion->news_id]) }}" href="{{{ $urlblock->blockedRoute('ci-tenant-list', ['promotion_id' => $promotion->news_id]) }}}">
+                        <a data-href="{{ route('ci-tenant-list', ['promotion_id' => $promotion->news_id]) }}" href="{{{ \Orbit\Helper\Net\UrlChecker::blockedRoute('ci-tenant-list', ['promotion_id' => $promotion->news_id], $session) }}}">
                         @endif
                             <span class="fa fa-stack icon">
                                 <i class="fa fa-circle fa-stack-2x"></i>
@@ -55,7 +55,7 @@
                     </a>
                     @endif
                 </li>
-                @if ($urlblock->isLoggedIn())
+                @if ($is_logged_in)
                     @if(! empty($promotion->facebook_share_url))
                     <li>
                         <div class="fb-share-button" data-href="{{$promotion->facebook_share_url}}" data-layout="button"></div>

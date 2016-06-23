@@ -74,7 +74,7 @@
         @if(count($tenants) > 0)
         <div class="row vertically-spaced">
             <div class="col-xs-12 text-center">
-                <a href="{{{ $urlblock->blockedRoute('ci-tenant-list', ['coupon_id' => $coupon->promotion_id]) }}}" class="btn btn-info btn-block">{{{ Lang::get('mobileci.tenant.see_tenants') }}}</a>
+                <a href="{{{ \Orbit\Helper\Net\UrlChecker::blockedRoute('ci-tenant-list', ['coupon_id' => $coupon->promotion_id], $session) }}}" class="btn btn-info btn-block">{{{ Lang::get('mobileci.tenant.see_tenants') }}}</a>
             </div>
         </div>
         @endif
