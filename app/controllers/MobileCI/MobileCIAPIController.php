@@ -226,7 +226,7 @@ class MobileCIAPIController extends BaseCIController
         $after_logout_url = Config::get('orbit.shop.after_logout_url', '/customer');
         return \Redirect::to($after_logout_url);
     }
-    
+
     private function prepareWidgetTenantData($widget, $user, $retailer, $mallid, $now, $urlblock)
     {
         // get all tenant count
@@ -269,10 +269,10 @@ class MobileCIAPIController extends BaseCIController
         }
         $widget->url = $urlblock->blockedRoute('ci-tenant-list');
         $widget->redirect_url = URL::route('ci-tenant-list');
-        
+
         return $widget;
     }
-    
+
     private function prepareWidgetServiceData($widget, $user, $retailer, $mallid, $now, $urlblock)
     {
         // get all tenant count
@@ -318,9 +318,9 @@ class MobileCIAPIController extends BaseCIController
         $widget->url = $urlblock->blockedRoute('ci-service-list');
         $widget->redirect_url = URL::route('ci-service-list');
 
-        return $widget;        
+        return $widget;
     }
-    
+
     private function prepareWidgetPromotionData($widget, $user, $retailer, $mallid, $now, $urlblock)
     {
         $userAge = 0;
@@ -428,10 +428,10 @@ class MobileCIAPIController extends BaseCIController
         }
         $widget->url = $urlblock->blockedRoute('ci-promotion-list');
         $widget->redirect_url = URL::route('ci-promotion-list');
-        
-        return $widget;    
+
+        return $widget;
     }
-    
+
     private function prepareWidgetNewsData($widget, $user, $retailer, $mallid, $now, $urlblock)
     {
         $userAge = 0;
@@ -541,10 +541,10 @@ class MobileCIAPIController extends BaseCIController
         }
         $widget->url = $urlblock->blockedRoute('ci-news-list');
         $widget->redirect_url = URL::route('ci-news-list');
-            
-        return $widget;    
+
+        return $widget;
     }
-    
+
     private function prepareWidgetCouponData($widget, $user, $retailer, $mallid, $now, $urlblock)
     {
         $userAge = 0;
@@ -690,10 +690,10 @@ class MobileCIAPIController extends BaseCIController
         }
         $widget->url = $urlblock->blockedRoute('ci-coupon-list');
         $widget->redirect_url = URL::route('ci-coupon-list');
-        
-        return $widget;    
+
+        return $widget;
     }
-    
+
     private function prepareWidgetLuckyDrawData($widget, $user, $retailer, $mallid, $now, $urlblock)
     {
         $luckydrawsCount = LuckyDraw::active()
@@ -736,10 +736,10 @@ class MobileCIAPIController extends BaseCIController
         }
         $widget->url = $urlblock->blockedRoute('ci-luckydraw-list');
         $widget->redirect_url = URL::route('ci-luckydraw-list');
-        
-        return $widget;    
+
+        return $widget;
     }
-    
+
     private function prepareWidgetFreeWifiData($widget, $user, $retailer, $mallid, $now, $urlblock)
     {
         $widget->image = 'mobile-ci/images/default_free_wifi_directory.png';
@@ -759,10 +759,10 @@ class MobileCIAPIController extends BaseCIController
         //$widget->display_sub_title = Lang::get('mobileci.widgets.free_wifi');
         $widget->url = $urlblock->blockedRoute('captive-request-internet');
         $widget->redirect_url = URL::route('captive-request-internet');
-        
-        return $widget;    
+
+        return $widget;
     }
-    
+
     private function prepareWidgetData($widget, $user, $retailer, $mallid, $now, $urlblock)
     {
         switch ($widget->widget_type) {
@@ -786,7 +786,7 @@ class MobileCIAPIController extends BaseCIController
                 break;
             case 'free_wifi':
                 return $this->prepareWidgetFreeWifiData($widget, $user, $retailer, $mallid, $now, $urlblock);
-                break;            
+                break;
         }
         return $widget;
     }
@@ -2101,6 +2101,10 @@ class MobileCIAPIController extends BaseCIController
 
             case 'lucky-draw':
                 $landing_url = $urlblock->blockedRoute('ci-luckydraw-list');
+                break;
+
+            case 'service':
+                $landing_url = $urlblock->blockedRoute('ci-service-list');
                 break;
 
             case 'widget':
@@ -3653,7 +3657,11 @@ class MobileCIAPIController extends BaseCIController
                 ->where('parent_id', $retailer->merchant_id);
 
             $prefix = DB::getTablePrefix();
-            $tenants->select('merchants.merchant_id', 'floor', 'unit', DB::raw("CONCAT({$prefix}objects.object_name, \" - \", unit) AS location"))
+            $tenants->select('merchants.merchant_id',
+                        'objects.object_name as floor',
+                        'unit',
+                        DB::raw("(CASE WHEN unit = '' THEN {$prefix}objects.object_name ELSE CONCAT({$prefix}objects.object_name, \" - \", unit) END) AS location")
+                      )
                     ->leftJoin('objects', 'objects.object_id', '=', 'merchants.floor_id');
 
             $this->maybeJoinWithTranslationsTable($tenants, $alternateLanguage);
@@ -4586,10 +4594,15 @@ class MobileCIAPIController extends BaseCIController
             }
 
             $service = $service->active('merchants')
-                ->where('object_type', 'service')
+                ->where('merchants.object_type', 'service')
                 ->where('parent_id', $retailer->merchant_id);
 
-            $service->select('merchants.merchant_id', 'floor', 'unit');
+            $service->select('merchants.merchant_id',
+                        'objects.object_name as floor',
+                        'unit',
+                        DB::raw("(CASE WHEN unit = '' THEN {$prefix}objects.object_name ELSE CONCAT({$prefix}objects.object_name, \" - \", unit) END) AS location")
+                      )
+                    ->leftJoin('objects', 'objects.object_id', '=', 'merchants.floor_id');
 
             $mallid = $retailer->merchant_id;
 
@@ -10207,7 +10220,7 @@ class MobileCIAPIController extends BaseCIController
      * @param User $user (User object from registration/sign in process)
      * @return \OrbitShop\API\v1\ResponseProvider
      */
-    public function linkGuestToUser($user)
+    public function linkGuestToUser($user, $transaction = TRUE)
     {
         try {
             if (! is_object($this->session)) {
@@ -10223,12 +10236,14 @@ class MobileCIAPIController extends BaseCIController
             // check guest user id on session if empty create new one
             if (empty($guest_id)) {
                 $urlblock = new UrlBlock($this->session, NULL);
-                $guest = $urlblock->generateGuestUser();
+                $guest = GenerateGuestUser::generateGuestUser();
 
                 $guest_id = $guest->user_id;
             }
 
-            $this->beginTransaction();
+            if ($transaction) {
+                $this->beginTransaction();
+            }
 
             $userguest = new UserGuest();
             $userguest->user_id = $user->user_id;
@@ -10238,16 +10253,20 @@ class MobileCIAPIController extends BaseCIController
 
             $userSignin = DB::table('user_signin')->where('user_id', '=', $guest_id)->delete();
 
-            $listConnectedUser = DB::table('list_connected_user')->where('user_id', '=', $guest_id)->delete(); 
-            
-            $this->commit();
+            $listConnectedUser = DB::table('list_connected_user')->where('user_id', '=', $guest_id)->delete();
+
+            if ($transaction) {
+                $this->commit();
+            }
 
             $this->response->code = 0;
             $this->response->status = 'success';
             $this->response->data = $user;
             $this->response->message = 'Success';
         } catch (Exception $e) {
-            $this->rollback();
+            if ($transaction) {
+                $this->rollback();
+            }
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
