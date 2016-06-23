@@ -341,7 +341,7 @@ class postNewMallTestArtemisVersion extends TestCase
         $response = $this->setRequestPostNewMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
         $this->assertSame(14, $response->code);
         $this->assertSame("error", $response->status);
-        $this->assertSame("The floor name has already been taken", $response->message);
+        $this->assertSame("Floor name has already been used", $response->message);
     }
 
     public function testInsertSubDomain()
@@ -590,7 +590,7 @@ class postNewMallTestArtemisVersion extends TestCase
         * test insert languages and mobile default languages
         */
         $languages               = ['jp','zh','id'];
-        $mobile_default_language = 'en';
+        $mobile_default_language = 'id';
         $data = ['name' => 'antok mall',
             'email'                         => 'antokmall@bumi.com',
             'password'                      => '123456',
