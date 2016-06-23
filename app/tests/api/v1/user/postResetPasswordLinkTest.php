@@ -106,7 +106,7 @@ class postResetPasswordLinkTest extends TestCase
         $this->assertSame(null, $response->data);
 
         // should be only one token on the database, right?
-        $token = Token::where('email', '=', $user->user_email)->first();
+        $token = Token::first();
 
         $this->assertSame(1, count($token));
         $this->assertSame('reset_password', $token->token_name);
