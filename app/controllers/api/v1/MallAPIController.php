@@ -1845,6 +1845,10 @@ class MallAPIController extends ControllerAPI
 
                 $old_mobile_default_language = $updatedmall->mobile_default_language;
                 if ($old_mobile_default_language !== $mobile_default_language) {
+                    $check_lang = Language::excludeDeleted()
+                                    ->where('name', $old_mobile_default_language)
+                                    ->first();
+
                     // news translation
                     $news_translations = NewsTranslation::excludeDeleted('news_translations')
                                             ->excludeDeleted('merchant_languages')
