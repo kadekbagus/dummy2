@@ -747,7 +747,7 @@ class postNewMallTestArtemisVersion extends TestCase
     public function testMobileDefaultLangIsNotOnLanguages()
     {
         /*
-        * test insert languages and mobile default languages
+        * test mobile default language not on language list
         */
         $languages               = ['jp','zh','id'];
         $mobile_default_language = 'en';
