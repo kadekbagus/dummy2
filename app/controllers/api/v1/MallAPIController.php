@@ -1837,12 +1837,6 @@ class MallAPIController extends ControllerAPI
             });
 
             OrbitInput::post('mobile_default_language', function($mobile_default_language) use ($updatedmall, $languages) {
-                if (in_array($mobile_default_language, $languages)) {
-                    $updatedmall->mobile_default_language = $mobile_default_language;
-                } else {
-                    OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.mobile_default_lang'));
-                }
-
                 $old_mobile_default_language = $updatedmall->mobile_default_language;
                 if ($old_mobile_default_language !== $mobile_default_language) {
                     $check_lang = Language::excludeDeleted()
@@ -1865,8 +1859,7 @@ class MallAPIController extends ControllerAPI
                                             ->where('news.object_type', '=', 'news')
                                             ->first();
                     if (count($news_translations) > 0) {
-                        $errorMessage = Lang::get('validation.orbit.exists.translation', ['attribute' => $check_lang->name_long,
-                                                                                'link' => 'News']);
+                        $errorMessage = Lang::get('validation.orbit.exists.link_mobile_default_lang');
                         OrbitShopAPI::throwInvalidArgument($errorMessage);
                     }
 
@@ -1886,8 +1879,7 @@ class MallAPIController extends ControllerAPI
                                             ->where('news.object_type', '=', 'promotion')
                                             ->first();
                     if (count($promotion_translations) > 0) {
-                        $errorMessage = Lang::get('validation.orbit.exists.translation', ['attribute' => $check_lang->name_long,
-                                                                                'link' => 'Promotions']);
+                        $errorMessage = Lang::get('validation.orbit.exists.link_mobile_default_lang');
                         OrbitShopAPI::throwInvalidArgument($errorMessage);
                     }
 
@@ -1905,10 +1897,15 @@ class MallAPIController extends ControllerAPI
                                             ->where('coupon_translations.merchant_language_id', '=', $check_lang->language_id)
                                             ->first();
                     if (count($coupon_translations) > 0) {
-                        $errorMessage = Lang::get('validation.orbit.exists.translation', ['attribute' => $check_lang->name_long,
-                                                                                'link' => 'Coupons']);
+                        $errorMessage = Lang::get('validation.orbit.exists.link_mobile_default_lang');
                         OrbitShopAPI::throwInvalidArgument($errorMessage);
                     }
+                }
+
+                if (in_array($mobile_default_language, $languages)) {
+                    $updatedmall->mobile_default_language = $mobile_default_language;
+                } else {
+                    OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.mobile_default_lang'));
                 }
             });
 
