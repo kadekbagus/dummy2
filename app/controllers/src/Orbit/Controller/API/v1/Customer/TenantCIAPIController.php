@@ -69,18 +69,6 @@ class TenantCIAPIController extends BaseAPIController
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            // temporary parameter, should be removed when user authentication is present
-            OrbitInput::get('user_email', function($user_email) use(&$user) {
-                $user = User::excludeDeleted()
-                    ->where('user_email', $user_email)
-                    ->first();
-
-                if (! is_object($user)) {
-                    $errorMessage = 'User with given email not found.';
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-                }
-            });
-
             $prefix = DB::getTablePrefix();
 
             $gender_profile_query = '';
@@ -466,18 +454,6 @@ class TenantCIAPIController extends BaseAPIController
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
-
-            // temporary parameter, should be removed when user authentication is present
-            OrbitInput::get('user_email', function($user_email) use(&$user) {
-                $user = User::excludeDeleted()
-                    ->where('user_email', $user_email)
-                    ->first();
-
-                if (! is_object($user)) {
-                    $errorMessage = 'User with given email not found.';
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-                }
-            });
 
             $gender_profile_query = '';
             $age_profile_query = '';
