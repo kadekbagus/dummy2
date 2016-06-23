@@ -117,7 +117,15 @@ class BaseCIController extends ControllerAPI
                 $user = NULL;
             }
         } else {
-            $user = GenerateGuestUser::generateGuestUser($session);
+            $user = GenerateGuestUser::generateGuestUser();
+            $sessionData = $session->read(NULL);
+            $sessionData['logged_in'] = TRUE;
+            $sessionData['guest_user_id'] = $user->user_id;
+            $sessionData['guest_email'] = $user->user_email;
+            $sessionData['role'] = $user->role->role_name;
+            $sessionData['fullname'] = '';
+
+            $session->update($sessionData);
         }
 
         return $user;
