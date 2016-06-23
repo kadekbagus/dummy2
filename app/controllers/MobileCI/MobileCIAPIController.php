@@ -3114,7 +3114,12 @@ class MobileCIAPIController extends BaseCIController
                 $tenant = $tenant->with('categories');
             }
 
-            $tenant->select('merchants.*');
+            $prefix = DB::getTablePrefix();
+            $tenant->select(
+                    'merchants.*',
+                    DB::raw("(CASE WHEN unit = '' THEN {$prefix}objects.object_name ELSE CONCAT({$prefix}objects.object_name, \" - \", unit) END) AS location")
+                )
+                ->leftJoin('objects', 'objects.object_id', '=', 'merchants.floor_id');
             // $this->maybeJoinWithTranslationsTable($tenant, $alternateLanguage);
             $tenant = $tenant->first();
 
@@ -3466,7 +3471,12 @@ class MobileCIAPIController extends BaseCIController
                 $service = $service->with('categories');
             }
 
-            $service->select('merchants.*');
+            $prefix = DB::getTablePrefix();
+            $service->select(
+                    'merchants.*',
+                    DB::raw("(CASE WHEN unit = '' THEN {$prefix}objects.object_name ELSE CONCAT({$prefix}objects.object_name, \" - \", unit) END) AS location")
+                )
+                ->leftJoin('objects', 'objects.object_id', '=', 'merchants.floor_id');
             $service = $service->first();
 
             // Check translation for Merchant Translation
