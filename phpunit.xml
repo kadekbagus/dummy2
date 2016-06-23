@@ -84,6 +84,11 @@
             <file>./app/tests/api/v1/promotion/postNewPromotion.php</file>
             <file>./app/tests/api/v1/promotion/postUpdatePromotion.php</file>
 			<file>./app/tests/api/v1/user/postUpdateMembershipTestArtemisVersion.php</file>
+            <file>./app/tests/api/v1/dashboard/getCustomerTodayDashboardTest.php</file>
+            <file>./app/tests/api/v1/dashboard/getCustomerGenderDashboardTest.php</file>
+            <file>./app/tests/api/v1/dashboard/getCustomerAgeRangeDashboardTest.php</file>
+            <file>./app/tests/api/v1/dashboard/getWidgetClickDashboardTest.php</file>
+            <file>./app/tests/api/v1/membership/getMembershipMobileCiTest.php</file>
         </testsuite>
     </testsuites>
 </phpunit>

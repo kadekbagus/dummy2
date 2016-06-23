@@ -20,6 +20,9 @@ class postNewMallTestArtemisVersion extends TestCase
         $this->apiKey = Factory::create('apikey_super_admin');
 
         $this->enLang = Factory::create('Language', ['name' => 'en']);
+        $this->idLang = Factory::create('Language', ['name' => 'id']);
+        $this->zhLang = Factory::create('Language', ['name' => 'zh']);
+        $this->jpLang = Factory::create('Language', ['name' => 'jp']);
 
         $this->country = Factory::create('Country');
 
@@ -153,6 +156,94 @@ class postNewMallTestArtemisVersion extends TestCase
         $this->assertSame("error", $response->status);
         $this->assertSame("The country field is required", $response->message);
         $this->assertSame(NULL, $response->data);
+    }
+
+    public function testRequiredFloor()
+    {
+        /*
+        * test required floor
+        */
+        $data = ['name' => 'antok mall',
+            'email'                         => 'antokmall@bumi.com',
+            'password'                      => '123456',
+            'address_line1'                 => 'jalan sudirman no 1',
+            'city'                          => 'badung',
+            'country'                       => $this->country->country_id,
+            'phone'                         => 123465,
+            'contact_person_firstname'      => 'antok',
+            'contact_person_lastname'       => 'mall',
+            'status'                        => 'active',
+            'languages'                     => ['jp','zh','id'],
+            'mobile_default_language'       => 'id',
+            'domain'                        => 'orbit',
+            'geo_point_latitude'            => '-8.663937',
+            'geo_point_longitude'           => '115.174142',
+            'geo_area'                      => '-8.663007 115.174527,-8.662275 115.176930,-8.664174 115.177735,-8.665669 115.175836,-8.664842 115.174227,-8.663007 115.174527',
+        ];
+
+        $response = $this->setRequestPostNewMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("The floors field is required", $response->message);
+    }
+
+    public function testFloorMustAnArray()
+    {
+        /*
+        * test floor must an array
+        */
+        $data = ['name' => 'antok mall',
+            'email'                         => 'antokmall@bumi.com',
+            'password'                      => '123456',
+            'address_line1'                 => 'jalan sudirman no 1',
+            'city'                          => 'badung',
+            'country'                       => $this->country->country_id,
+            'phone'                         => 123465,
+            'contact_person_firstname'      => 'antok',
+            'contact_person_lastname'       => 'mall',
+            'status'                        => 'active',
+            'languages'                     => ['jp','zh','id'],
+            'mobile_default_language'       => 'id',
+            'domain'                        => 'orbit',
+            'geo_point_latitude'            => '-8.663937',
+            'geo_point_longitude'           => '115.174142',
+            'floors'                         => 'L1',
+            'geo_area'                      => '-8.663007 115.174527,-8.662275 115.176930,-8.664174 115.177735,-8.665669 115.175836,-8.664842 115.174227,-8.663007 115.174527',
+        ];
+
+        $response = $this->setRequestPostNewMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("The floors must be an array", $response->message);
+    }
+
+    public function testRequiredSubdomain()
+    {
+        /*
+        * test floor must an array
+        */
+        $data = ['name' => 'antok mall',
+            'email'                         => 'antokmall@bumi.com',
+            'password'                      => '123456',
+            'address_line1'                 => 'jalan sudirman no 1',
+            'city'                          => 'badung',
+            'country'                       => $this->country->country_id,
+            'phone'                         => 123465,
+            'contact_person_firstname'      => 'antok',
+            'contact_person_lastname'       => 'mall',
+            'status'                        => 'active',
+            'languages'                     => ['jp','zh','id'],
+            'mobile_default_language'       => 'id',
+            'geo_point_latitude'            => '-8.663937',
+            'geo_point_longitude'           => '115.174142',
+            'floors'                         => 'L1',
+            'geo_area'                      => '-8.663007 115.174527,-8.662275 115.176930,-8.664174 115.177735,-8.665669 115.175836,-8.664842 115.174227,-8.663007 115.174527',
+        ];
+
+        $response = $this->setRequestPostNewMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("The domain field is required", $response->message); // was handle on frontend 'Mall URL Application Domain is required'
     }
 
     public function testExistMallName()
@@ -338,7 +429,7 @@ class postNewMallTestArtemisVersion extends TestCase
         $response = $this->setRequestPostNewMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
         $this->assertSame(14, $response->code);
         $this->assertSame("error", $response->status);
-        $this->assertSame("The floor name has already been taken", $response->message);
+        $this->assertSame("Floor name has already been used", $response->message);
     }
 
     public function testInsertSubDomain()
@@ -386,6 +477,45 @@ class postNewMallTestArtemisVersion extends TestCase
         * test insert sub domain when create mall
         */
         $subdomain = 'lippomall-23';
+
+        $data = ['name' => 'antok mall',
+            'email'                         => 'antokmall@bumi.com',
+            'password'                      => '123456',
+            'address_line1'                 => 'jalan sudirman no 1',
+            'city'                          => 'badung',
+            'country'                       => $this->country->country_id,
+            'phone'                         => 123465,
+            'contact_person_firstname'      => 'antok',
+            'contact_person_lastname'       => 'mall',
+            'status'                        => 'active',
+            'languages'                     => ['en'],
+            'mobile_default_language'       => 'en',
+            'domain'                        => $subdomain,
+            'geo_point_latitude'            => '-8.663937',
+            'geo_point_longitude'           => '115.174142',
+            'geo_area'                      => '-8.663007 115.174527,-8.662275 115.176930,-8.664174 115.177735,-8.665669 115.175836,-8.664842 115.174227,-8.663007 115.174527',
+            'floors'                        => ["{\"name\":\"B3\",\"order\":\"0\"}","{\"name\":\"B2\",\"order\":\"1\"}","{\"name\":\"B1\",\"order\":\"2\"}"]
+        ];
+
+        $response = $this->setRequestPostNewMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
+        $this->assertSame($subdomain . Config::get('orbit.shop.ci_domain'), $response->data->ci_domain);
+
+        // check domain setting
+        $dom_setting = Setting::where('setting_value', $response->data->merchant_id)
+                            ->where('setting_name', 'like', '%dom%')
+                            ->first();
+
+        $this->assertSame('dom:' . $subdomain . Config::get('orbit.shop.ci_domain'), $dom_setting->setting_name);
+    }
+
+    public function testInsertSubDomainAlphaNumericDashUnderscore()
+    {
+        /*
+        * test insert sub domain when create mall
+        */
+        $subdomain = 'lippomall-2_3';
 
         $data = ['name' => 'antok mall',
             'email'                         => 'antokmall@bumi.com',
@@ -579,5 +709,70 @@ class postNewMallTestArtemisVersion extends TestCase
         $this->assertSame(14, $response->code);
         $this->assertSame("error", $response->status);
         $this->assertSame("The description may not be greater than 25 characters", $response->message);
+    }
+
+    public function testInsertLanguagesAndMobileLanguagesNotEnglish()
+    {
+        /*
+        * test insert languages and mobile default languages
+        */
+        $languages               = ['jp','zh','id'];
+        $mobile_default_language = 'id';
+        $data = ['name' => 'antok mall',
+            'email'                         => 'antokmall@bumi.com',
+            'password'                      => '123456',
+            'address_line1'                 => 'jalan sudirman no 1',
+            'city'                          => 'badung',
+            'country'                       => $this->country->country_id,
+            'phone'                         => 123465,
+            'contact_person_firstname'      => 'antok',
+            'contact_person_lastname'       => 'mall',
+            'status'                        => 'active',
+            'languages'                     => $languages,
+            'mobile_default_language'       => $mobile_default_language,
+            'domain'                        => 'orbit',
+            'geo_point_latitude'            => '-8.663937',
+            'geo_point_longitude'           => '115.174142',
+            'geo_area'                      => '-8.663007 115.174527,-8.662275 115.176930,-8.664174 115.177735,-8.665669 115.175836,-8.664842 115.174227,-8.663007 115.174527',
+            'floors'                        => ["{\"name\":\"B3\",\"order\":\"1\"}"]
+        ];
+
+        $response = $this->setRequestPostNewMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
+        // check data is on database
+
+    }
+
+    public function testMobileDefaultLangIsNotOnLanguages()
+    {
+        /*
+        * test insert languages and mobile default languages
+        */
+        $languages               = ['jp','zh','id'];
+        $mobile_default_language = 'en';
+        $data = ['name' => 'antok mall',
+            'email'                         => 'antokmall@bumi.com',
+            'password'                      => '123456',
+            'address_line1'                 => 'jalan sudirman no 1',
+            'city'                          => 'badung',
+            'country'                       => $this->country->country_id,
+            'phone'                         => 123465,
+            'contact_person_firstname'      => 'antok',
+            'contact_person_lastname'       => 'mall',
+            'status'                        => 'active',
+            'languages'                     => $languages,
+            'mobile_default_language'       => $mobile_default_language,
+            'domain'                        => 'orbit',
+            'geo_point_latitude'            => '-8.663937',
+            'geo_point_longitude'           => '115.174142',
+            'geo_area'                      => '-8.663007 115.174527,-8.662275 115.176930,-8.664174 115.177735,-8.665669 115.175836,-8.664842 115.174227,-8.663007 115.174527',
+            'floors'                        => ["{\"name\":\"B3\",\"order\":\"1\"}"]
+        ];
+
+        $response = $this->setRequestPostNewMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("Mobile default language must on list languages", $response->message);
     }
 }

@@ -787,6 +787,7 @@ class LoginAPIController extends IntermediateBaseController
             $data->user_firstname = $user->user_firstname;
             $data->user_lastname = $user->user_lastname;
             $data->user_email = $user->user_email;
+            $data->orbit_session = $this->session->getSessionId();
 
             $this->response->data = $data;
             $this->response->code = 0;

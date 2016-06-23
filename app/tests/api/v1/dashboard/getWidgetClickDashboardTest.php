@@ -1,6 +1,6 @@
 <?php
 /**
- * Test for API /api/v1/activity/age-statistics
+ * Test for API /api/v1/dashboard/top-widget
  * @author kadek <kadek@dominopos.com>
  */
 use DominoPOS\OrbitAPI\v10\StatusInterface as Status;
