@@ -491,7 +491,11 @@ class MallAPIController extends ControllerAPI
             $newmall->ci_domain = $domain . Config::get('orbit.shop.ci_domain');
             $newmall->masterbox_number = $masterbox_number;
             $newmall->slavebox_number = $slavebox_number;
-            $newmall->mobile_default_language = $mobile_default_language;
+            if (in_array($mobile_default_language, $languages)) {
+                $newmall->mobile_default_language = $mobile_default_language;
+            } else {
+                OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.mobile_default_lang'));
+            }
             $newmall->pos_language = $pos_language;
             $newmall->modified_by = $this->api->user->user_id;
 
@@ -1787,8 +1791,12 @@ class MallAPIController extends ControllerAPI
                 $updatedmall->slavebox_number = $slavebox_number;
             });
 
-            OrbitInput::post('mobile_default_language', function($mobile_default_language) use ($updatedmall) {
-                $updatedmall->mobile_default_language = $mobile_default_language;
+            OrbitInput::post('mobile_default_language', function($mobile_default_language) use ($updatedmall, $languages) {
+                if (in_array($mobile_default_language, $languages)) {
+                    $updatedmall->mobile_default_language = $mobile_default_language;
+                } else {
+                    OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.mobile_default_lang'));
+                }
             });
 
             OrbitInput::post('pos_language', function($pos_language) use ($updatedmall) {
@@ -1810,10 +1818,6 @@ class MallAPIController extends ControllerAPI
             //     $timezone = $this->valid_timezone;
             //     $updatedmall->timezone_id = $timezone->timezone_id;
             // });
-
-            OrbitInput::post('mobile_default_language', function($mobile_default_language) use ($updatedmall) {
-                $updatedmall->mobile_default_language = $mobile_default_language;
-            });
 
             $updatedmall->modified_by = $this->api->user->user_id;
 
@@ -1861,11 +1865,11 @@ class MallAPIController extends ControllerAPI
             //     }
             // });
 
-            OrbitInput::post('languages', function($languages) use ($updatedmall) {
-                if (! in_array('en', $languages)) {
-                    $errorMessage = Lang::get('validation.orbit.exists.default_language', ['attribute' => 'English']);
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-                }
+            OrbitInput::post('languages', function($languages) use ($updatedmall, $mobile_default_language) {
+                // if (! in_array('en', $languages)) {
+                //     $errorMessage = Lang::get('validation.orbit.exists.default_language', ['attribute' => 'English']);
+                //     OrbitShopAPI::throwInvalidArgument($errorMessage);
+                // }
 
                 // new languages
                 $all_mall_languages = [];
@@ -1918,6 +1922,10 @@ class MallAPIController extends ControllerAPI
                 if (count($languages_will_be_delete) > 0) {
                     $del_lang = [];
                     foreach ($languages_will_be_delete as $check_lang) {
+                        if ($check_lang->name === $mobile_default_language) {
+                            OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.exists.mobile_default_lang'));
+                        }
+
                         // news translation
                         $news_translations = NewsTranslation::excludeDeleted('news_translations')
                                                 ->excludeDeleted('merchant_languages')
@@ -2109,10 +2117,25 @@ class MallAPIController extends ControllerAPI
                             OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.format'));
                         }
 
-                        if (! empty($floor->id) && ! empty($floor->floor_delete)) {
+                        $floor_id = Null;
+                        if (empty($floor->id)) {
+                            // handle a floor object without floor id but exist
+                            $exist_floor = Object::excludeDeleted()
+                                                ->where('object_type', 'floor')
+                                                ->where('merchant_id', $updatedmall->merchant_id)
+                                                ->where('object_name', $floor->name)
+                                                ->first();
+                            if (count($exist_floor) > 0) {
+                                $floor_id = $exist_floor->object_id;
+                            }
+                        } else {
+                            $floor_id = $floor->id;
+                        }
+
+                        if (! is_null($floor_id) && ! empty($floor->floor_delete)) {
                             if ($floor->floor_delete === 'yes') {
                                 $will_del_floor = Object::excludeDeleted()
-                                                    ->where('object_id', $floor->id)
+                                                    ->where('object_id', $floor_id)
                                                     ->where('object_type', 'floor')
                                                     ->where('merchant_id', $updatedmall->merchant_id)
                                                     ->first();
@@ -2135,12 +2158,7 @@ class MallAPIController extends ControllerAPI
                                 }
                             }
                         } else {
-                            // check exists floor name but not me
-                            if (in_array($floor->name, $colect_floor)) {
-                                OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.exists.floor'));
-                            }
-
-                            if (empty($floor->id)) { // if floor doesn't have id that's mean is a new floor
+                            if (is_null($floor_id)) { // if floor doesn't have id that's mean is a new floor
                                 // create new floor
                                 $newfloor = new Object();
                                 $newfloor->merchant_id = $updatedmall->merchant_id;
@@ -2150,18 +2168,30 @@ class MallAPIController extends ControllerAPI
                                 $newfloor->status = 'active';
                                 $newfloor->save();
                             } else {
-                                // for update order
-                                $exist_floor = Object::excludeDeleted()
+                                // check exists floor name but not me
+                                // $duplicate_floor = Object::excludeDeleted()
+                                //                     ->where('object_type', 'floor')
+                                //                     ->where('merchant_id', $updatedmall->merchant_id)
+                                //                     ->where('object_name', $floor->name)
+                                //                     ->where('object_id', '!=', $floor_id)
+                                //                     ->first();
+
+                                if (in_array($floor->name, $colect_floor)) // if (count($duplicate_floor) > 0)
+                                {
+                                    OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.exists.floor'));
+                                }
+                                // update name and order
+                                $update_floor = Object::excludeDeleted()
                                                     ->where('object_type', 'floor')
                                                     ->where('merchant_id', $updatedmall->merchant_id)
-                                                    ->where('object_id', $floor->id)
+                                                    ->where('object_id', $floor_id)
                                                     ->first();
 
-                                if (count($exist_floor) > 0) {
+                                if (count($update_floor) > 0) {
                                     // update name and order
-                                    $exist_floor->object_name = $floor->name;
-                                    $exist_floor->object_order = $floor->order;
-                                    $exist_floor->save();
+                                    $update_floor->object_name = $floor->name;
+                                    $update_floor->object_order = $floor->order;
+                                    $update_floor->save();
                                 }
                             }
 

@@ -19,6 +19,7 @@ class TenantAPIController extends ControllerAPI
     protected $tenantViewRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee', 'mall customer service'];
     protected $tenantModifiyRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee'];
     protected $campaignRole = ['campaign owner', 'campaign employee'];
+    protected $valid_floor = Null;
 
     /**
      * Flag to return the query builder.
@@ -551,7 +552,7 @@ class TenantAPIController extends ControllerAPI
                                 ->where('name', '=', 'en')
                                 ->first();
 
-            $floor_db = App::make('orbit.empty.floor');
+            $floor_db = $this->valid_floor;
 
             $newtenant = new TenantStoreAndService();
             $newtenant->omid = '';
@@ -1139,7 +1140,7 @@ class TenantAPIController extends ControllerAPI
             });
 
             OrbitInput::post('floor_id', function($floor_id) use ($updatedtenant) {
-                $floor_db = App::make('orbit.empty.floor');
+                $floor_db = $this->valid_floor;
                 if (count($floor_db) > 0) {
                     $updatedtenant->floor = $floor_db->object_name;
                     $updatedtenant->floor_id = $floor_db->object_id;
@@ -2864,7 +2865,7 @@ class TenantAPIController extends ControllerAPI
                 return FALSE;
             }
 
-            App::instance('orbit.empty.floor', $floor);
+            $this->valid_floor = $floor;
 
             return TRUE;
         });

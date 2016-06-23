@@ -340,7 +340,7 @@ class SettingAPIController extends ControllerAPI
                 array(
                     'current_mall'        => 'required|orbit.empty.mall',
                     'language'            => 'required',
-                    'landing_page'        => 'required|in:widget,news,promotion,tenant,my-coupon,lucky-draw',
+                    'landing_page'        => 'required|in:widget,news,promotion,tenant,my-coupon,lucky-draw,service',
                     'password'            => 'min:5|confirmed',
                     'id_language_default' => 'required|orbit.empty.language_default',
                     'background_type'     => 'in:image/jpg,image/png,image/jpeg,image/gif',
