@@ -35,6 +35,7 @@ use Orbit\Controller\API\v1\Pub\RegistrationAPIController as Regs;
 use Orbit\Helper\Net\Domain;
 use \Carbon\Carbon;
 use \Exception;
+use \Inbox;
 
 class LoginAPIController extends IntermediateBaseController
 {
