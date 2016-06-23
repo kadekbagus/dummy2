@@ -68,18 +68,6 @@ class ServiceCIAPIController extends BaseAPIController
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            // temporary parameter, should be removed when user authentication is present
-            OrbitInput::get('user_email', function($user_email) use(&$user) {
-                $user = User::excludeDeleted()
-                    ->where('user_email', $user_email)
-                    ->first();
-
-                if (! is_object($user)) {
-                    $errorMessage = 'User with given email not found.';
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-                }
-            });
-
             $prefix = DB::getTablePrefix();
 
             $mall = Mall::excludeDeleted()->where('merchant_id', $this->mall_id)->first();
@@ -317,18 +305,6 @@ class ServiceCIAPIController extends BaseAPIController
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
-
-            // temporary parameter, should be removed when user authentication is present
-            OrbitInput::get('user_email', function($user_email) use(&$user) {
-                $user = User::excludeDeleted()
-                    ->where('user_email', $user_email)
-                    ->first();
-
-                if (! is_object($user)) {
-                    $errorMessage = 'User with given email not found.';
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-                }
-            });
 
             $mall = Mall::excludeDeleted()->where('merchant_id', $this->mall_id)->first();
             $mallTime = Carbon::now($mall->timezone->timezone_name);

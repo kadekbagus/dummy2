@@ -66,18 +66,6 @@ class CampaignCIAPIController extends BaseAPIController
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            // temporary parameter, should be removed when user authentication is present
-            OrbitInput::get('user_email', function($user_email) use(&$user) {
-                $user = User::excludeDeleted()
-                    ->where('user_email', $user_email)
-                    ->first();
-
-                if (! is_object($user)) {
-                    $errorMessage = 'User with given email not found.';
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-                }
-            });
-
             $mall = Mall::excludeDeleted()->where('merchant_id', $this->mall_id)->first();
 
             $alternateLanguage = null;
