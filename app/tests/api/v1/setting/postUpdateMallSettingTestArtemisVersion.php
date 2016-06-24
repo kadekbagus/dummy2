@@ -277,6 +277,59 @@ class postUpdateMallSettingTestArtemisVersion extends TestCase
         $this->assertSame($news_translation->news_name, $check_news_translation->news_name);
     }
 
+    public function testDeleteLanguageThenAddThatLanguage()
+    {
+        /*
+        * test remove language when use on mobile default language
+        */
+        $remove_zhLang = MerchantLanguage::excludeDeleted()
+                        ->where('language_id', $this->zhLang->language_id)
+                        ->where('merchant_id', $this->mall->merchant_id)
+                        ->first();
+
+        $remove_zhLang->status = 'deleted';
+        $remove_zhLang->save();
+
+        $languages               = [
+                $this->jpLang->language_id,
+                $this->idLang->language_id,
+                $this->zhLang->language_id,
+            ];
+        $mobile_default_language = 'id';
+
+        $data = [
+            'current_mall'                => $this->mall->merchant_id,
+            'merchant_id'                 => $this->mall->merchant_id,
+            'id_language_default'         => Language::excludeDeleted()->where('name', $mobile_default_language)->first()->language_id,
+            'language'                    => $mobile_default_language,
+            'mall_supported_language_ids' => $languages,
+            'landing_page'                => 'service'
+        ];
+
+        $response = $this->setRequestPostUpdateMallSetting($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame("Request OK", $response->message);
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
+
+        // check doesn't happen duplicate old data, except zh
+        $mall_language_db = MerchantLanguage::where('merchant_id', $this->mall->merchant_id)
+                            ->get();
+
+        $this->assertSame(4, count($mall_language_db));
+
+        // check zh lang status
+        $zh_on_db = MerchantLanguage::where('language_id', $this->zhLang->language_id)
+                            ->where('merchant_id', $this->mall->merchant_id)
+                            ->get();
+        $this->assertSame(2, count($zh_on_db));
+        foreach ($zh_on_db as $_zhLang) {
+            if ($_zhLang->merchant_language_id === $this->zhMallLang->merchant_language_id)
+                $this->assertSame('deleted', $_zhLang->status);
+            if ($_zhLang->merchant_language_id !== $this->zhMallLang->merchant_language_id)
+                $this->assertSame('active', $_zhLang->status);
+        }
+    }
+
     public function testUpdateMobileLanguages()
     {
         /*
