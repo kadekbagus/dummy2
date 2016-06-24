@@ -729,12 +729,19 @@ class LoginAPIController extends IntermediateBaseController
                 OrbitShopAPI::throwInvalidArgument('You are not allowed to login. Please check with Customer Service.');
             }
 
-            // This user assumed are Consumer, which has been checked at login process
             $config = new SessionConfig(Config::get('orbit.session'));
             $config->setConfig('application_id', static::APPLICATION_ID);
             try {
                 $this->session = new Session($config);
                 $this->session->start(array(), 'no-session-creation');
+                $sessionData = $this->session->read(NULL);
+                $sessionData['logged_in'] = TRUE;
+                $sessionData['user_id'] = $user->user_id;
+                $sessionData['email'] = $user->user_email;
+                $sessionData['role'] = $user->role->role_name;
+                $sessionData['fullname'] = $user->getFullName();
+
+                $this->session->update($sessionData);
             } catch (Exception $e) {
                 // get the session data
                 $sessionData = array();
