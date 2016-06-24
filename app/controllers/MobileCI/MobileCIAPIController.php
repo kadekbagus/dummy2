@@ -1636,7 +1636,10 @@ class MobileCIAPIController extends BaseCIController
                 }
             }
 
-            $newWidget->save();
+            $specialWidget  = array('service', 'free_wifi');
+            if (in_array( strtolower($widget->widget_type), $specialWidget)) {
+                $newWidget->save();
+            }
 
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();

@@ -8,6 +8,7 @@ use Widget;
 use Log;
 use Lang;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
+use Orbit\Helper\Net\UrlChecker as UrlBlock;
 
 class ExCaptivePortalController extends BaseCIController
 {
@@ -78,6 +79,8 @@ class ExCaptivePortalController extends BaseCIController
                     'timeout' => $timeout,
                     'params' => $params,
                     'qs_name' => $sessionQueryName,
+                    'session' => $this->session,
+                    'is_logged_in' => UrlBlock::isLoggedIn($this->session),
                     'qs_value' => static::getSessionIdFromCookie()
             ];
             $data = $data + $this->fillCommonViewsData();

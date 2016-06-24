@@ -3184,7 +3184,6 @@ class ActivityAPIController extends ControllerAPI
                                     where (`group` = 'mobile-ci'
                                             or (`group` = 'portal' and activity_type in ('activation','create'))
                                             or (`group` = 'cs-portal' and activity_type in ('registration')))
-                                            and role != 'Guest'
                                             and response_status = 'OK' and location_id = {$quote($current_mall)}
                                             and created_at between {$quote($start_date)} and {$quote($end_date)}) as oa
                                 ON mydate.comp_date = oa.createdat
