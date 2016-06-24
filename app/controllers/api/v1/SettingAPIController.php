@@ -434,9 +434,82 @@ class SettingAPIController extends ControllerAPI
                 $landingPageSetting->save();
             });
 
-            OrbitInput::post('language', function($lang) use ($mall) {
-                $mall->mobile_default_language = $lang;
-                $mall->save();
+            // mobile default language
+            OrbitInput::post('language', function($lang) use ($mall, $supportedMallLanguageIds) {
+                $old_mobile_default_language = $mall->mobile_default_language;
+
+                $check_lang = Language::excludeDeleted()
+                                ->where('name', $old_mobile_default_language)
+                                ->first();
+
+                if ($old_mobile_default_language !== $lang) {
+
+                    // news translation
+                    $news_translations = NewsTranslation::excludeDeleted('news_translations')
+                                            ->excludeDeleted('merchant_languages')
+                                            ->join('news', 'news.news_id', '=', 'news_translations.news_id')
+                                            ->join('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
+                                            ->join('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
+                                            ->join('merchant_languages', function($q) {
+                                                $q->on('merchant_languages.language_id', '=', 'news_translations.merchant_language_id')
+                                                    ->on('merchant_languages.merchant_id', '=', 'merchants.parent_id');
+                                            })
+                                            ->where('merchants.object_type', 'tenant')
+                                            ->where('merchants.parent_id', $mall->merchant_id)
+                                            ->where('news_translations.merchant_language_id', '=', $check_lang->language_id)
+                                            ->where('news.object_type', '=', 'news')
+                                            ->first();
+                    if (count($news_translations) > 0) {
+                        $errorMessage = Lang::get('validation.orbit.exists.link_mobile_default_lang');
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
+
+                    // promotion translation
+                    $promotion_translations = NewsTranslation::excludeDeleted('news_translations')
+                                            ->excludeDeleted('merchant_languages')
+                                            ->join('news', 'news.news_id', '=', 'news_translations.news_id')
+                                            ->join('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
+                                            ->join('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
+                                            ->join('merchant_languages', function($q) {
+                                                $q->on('merchant_languages.language_id', '=', 'news_translations.merchant_language_id')
+                                                    ->on('merchant_languages.merchant_id', '=', 'merchants.parent_id');
+                                            })
+                                            ->where('merchants.object_type', 'tenant')
+                                            ->where('merchants.parent_id', $mall->merchant_id)
+                                            ->where('news_translations.merchant_language_id', '=', $check_lang->language_id)
+                                            ->where('news.object_type', '=', 'promotion')
+                                            ->first();
+                    if (count($promotion_translations) > 0) {
+                        $errorMessage = Lang::get('validation.orbit.exists.link_mobile_default_lang');
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
+
+                    // coupon translation
+                    $coupon_translations = CouponTranslation::excludeDeleted('coupon_translations')
+                                            ->excludeDeleted('merchant_languages')
+                                            ->join('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'coupon_translations.promotion_id')
+                                            ->join('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
+                                            ->join('merchant_languages', function ($q) {
+                                                $q->on('merchant_languages.language_id', '=', 'coupon_translations.merchant_language_id')
+                                                    ->on('merchant_languages.merchant_id', '=', 'merchants.parent_id');
+                                            })
+                                            ->where('merchants.object_type', 'tenant')
+                                            ->where('merchants.parent_id', $mall->merchant_id)
+                                            ->where('coupon_translations.merchant_language_id', '=', $check_lang->language_id)
+                                            ->first();
+                    if (count($coupon_translations) > 0) {
+                        $errorMessage = Lang::get('validation.orbit.exists.link_mobile_default_lang');
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
+                }
+
+                $new_lang = Language::excludeDeleted()->where('name', $lang)->first();
+                if (in_array($new_lang->language_id, $supportedMallLanguageIds)) {
+                    $mall->mobile_default_language = $lang;
+                    $mall->save();
+                } else {
+                    OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.mobile_default_lang'));
+                }
             });
 
             OrbitInput::files('backgrounds', function($files) use ($mall, $user, &$backgroundSetting) {
@@ -545,7 +618,7 @@ class SettingAPIController extends ControllerAPI
                 $this->validateAndSaveTranslations($startButtonSetting, $translation_json_string, 'create');
             });
 
-
+            // mall languages
             $validator = Validator::make(
                 array(
                     'merchant_id'   => $mall->merchant_id,
@@ -583,12 +656,13 @@ class SettingAPIController extends ControllerAPI
 
             // @Todo optimize the code
             // Check old merchant language
-            $oldMallLanguage = MerchantLanguage::where('merchant_id','=', $mall->merchant_id)->get();
+            $oldMallLanguage = MerchantLanguage::excludeDeleted()
+                                    ->where('merchant_id','=', $mall->merchant_id)->get();
 
             // Compare  old and new data of merchant language
             foreach ($oldMallLanguage as $key => $valDeleted) {
                 if (!in_array($valDeleted->language_id, $supportedMallLanguageIds, TRUE)) {
-                    // inactive merchant language
+                    // soft deleted merchant language
                     $merchantLanguage = MerchantLanguage::find($valDeleted->merchant_language_id);
                     $merchantLanguage->status = 'deleted';
                     // $merchantLanguage->status = 'inactive';
@@ -600,23 +674,11 @@ class SettingAPIController extends ControllerAPI
                 }
             }
 
-            // Re-activate merchant lamguage
-            $oldMallLanguageInactive = MerchantLanguage::where('merchant_id','=', $mall->merchant_id)->where('status','=', 'deleted')->get();
-            foreach ($oldMallLanguageInactive as $key => $valInactive) {
-                if (in_array($valInactive->language_id, $supportedMallLanguageIds_copy, TRUE)) {
-                    // active merchant language
-                    $merchantLanguage = MerchantLanguage::find($valInactive->merchant_language_id);
-                    $merchantLanguage->status = 'active';
-                    $merchantLanguage->save();
-                }
-            }
-
             // Insert new merchant language
             if (count($supportedMallLanguageIds) > 0) {
                 foreach ($supportedMallLanguageIds as $key => $value) {
                     $merchantLanguage = new MerchantLanguage();
                     $merchantLanguage->merchant_id = $mall->merchant_id;
-                    $merchantLanguage->language_id = $value;
                     $merchantLanguage->language_id = $value;
                     $merchantLanguage->save();
                 }
