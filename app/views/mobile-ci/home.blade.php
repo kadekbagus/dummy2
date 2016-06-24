@@ -86,7 +86,7 @@
         }
 
         $('a.widget-link').click(function(event){
-          event.preventDefault();
+          var x = false;
 
           if ($(this).attr('href') !== '#') {
               var link = $(this).attr('href');
@@ -99,10 +99,25 @@
                 method: 'POST'
               }).always(function(){
                 window.location.assign(link);
+                x = true;
               });
               return false; //for good measure
           }
+
+              if (!x) {
+                var widgetdata = $(this).data('widget');
+                $.ajax({
+                  url: '{{ route('click-widget-activity') }}',
+                  data: {
+                    widgetdata: widgetdata
+                  },
+                  method: 'POST'
+                }).always(function(){
+
+                });
+            }
         });
+
     });
 </script>
 @stop
