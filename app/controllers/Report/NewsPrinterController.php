@@ -124,10 +124,10 @@ class NewsPrinterController extends DataPrinterController
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
                         printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
                             $count,
-                            $this->printUtf8($row->display_name),
+                            $row->display_name,
                             date('d F Y H:i', strtotime($row->begin_date)),
                             date('d F Y H:i', strtotime($row->end_date)),
-                            str_replace(', ', "\n", $this->printUtf8($row->campaign_location_names)),
+                            str_replace(', ', "\n", $row->campaign_location_names),
                             $row->campaign_status,
                             $this->printDateTime($row->updated_at, null, 'd F Y H:i:s')
                     );

@@ -65,7 +65,7 @@
                         </div>
                     </div>
                     <div class="col-xs-2 search-tool-col">
-                        <a data-href="{{{ route('ci-tenant-list', ['keyword' => Input::get('keyword')]) }}}" href="{{{ $urlblock->blockedRoute('ci-tenant-list', ['keyword' => Input::get('keyword')]) }}}" class="btn btn-info btn-block reset-btn">
+                        <a data-href="{{{ route('ci-tenant-list', ['keyword' => Input::get('keyword')]) }}}" href="{{{ \Orbit\Helper\Net\UrlChecker::blockedRoute('ci-tenant-list', ['keyword' => Input::get('keyword')], $session) }}}" class="btn btn-info btn-block reset-btn">
                             <span class="fa-stack fa-lg">
                                 <i class="fa fa-filter fa-stack-2x"></i>
                                 <i class="fa fa-times fa-stack-1x"></i>
@@ -143,7 +143,7 @@
         coupon_redeem_id = '{{{ Input::get('coupon_redeem_id', '')}}}',
         isFromDetail = false,
         defaultTenantLogoUrl = '{{ asset('mobile-ci/images/default_tenants_directory.png') }}',
-        isLoggedIn = Boolean({{ $urlblock->isLoggedIn() }}),
+        isLoggedIn = Boolean({{ $is_logged_in }}),
         scrollCatalogue = {};
 
     var applyLazyImage = function (jImageElems) {
@@ -283,7 +283,7 @@
             var name = records[i].name;
             var floor = records[i].floor;
             var unit = records[i].unit;
-            var location = records[i].location;
+            var location = records[i].location != null ? records[i].location : '-';
             var category = records[i].category_string;
             var facebook_like_url = records[i].facebook_like_url;
             var promotion_flag = records[i].promotion_flag;
@@ -445,7 +445,7 @@
         @if(!empty(Input::get('promotion_id')))
             promo = '&promotion_id='+'{{{Input::get('promotion_id')}}}';
         @endif
-        var path = '{{$urlblock->blockedRoute('ci-tenant-list', ['keyword' => e(Input::get('keyword')), 'sort_by' => 'name', 'sort_mode' => 'asc', 'cid' => e(Input::get('cid')), 'fid' => e(Input::get('fid'))])}}'+promo;
+        var path = '{{\Orbit\Helper\Net\UrlChecker::blockedRoute('ci-tenant-list', ['keyword' => e(Input::get('keyword')), 'sort_by' => 'name', 'sort_mode' => 'asc', 'cid' => e(Input::get('cid')), 'fid' => e(Input::get('fid'))], $session)}}'+promo;
 
         $('#category').on('change', function () {
             var selectedValue = $(this).val();

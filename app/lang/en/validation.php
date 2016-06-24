@@ -143,8 +143,10 @@ return array(
             'link_floor'             => 'One or more active tenants are located on this floor',
             'link_category'          => 'Cannot delete a category with :link',
             'mall_language'          => 'The :attribute must be an existing language',
-            'floor'                  => 'The floor name has already been taken',
+            'floor'                  => 'Floor name has already been used',
             'domain'                 => 'Mall URL Application Domain name has already been taken',
+            'mobile_default_lang'    => 'Cannot remove default supported language',
+            'link_mobile_default_lang'=> 'Cannot change default supported language has campaign translation',
         ),
         'access' => array(
             'forbidden'              => 'You do not have permission to :action',
@@ -332,6 +334,7 @@ return array(
             'mall_status' => 'Mall status you specified is not found',
             'tenant_type' => 'Tenant type you specified is not found : the valid values are: tenant, service',
             'floor' => 'The Floor you specified is not found',
+            'mobile_default_lang' => 'Mobile default language must on list languages',
         ),
         'queryerror' => 'Database query error, turn on debug mode to see the full query',
         'jsonerror'  => array(

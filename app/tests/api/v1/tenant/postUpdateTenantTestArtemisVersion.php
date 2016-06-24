@@ -107,4 +107,23 @@ class postUpdateTenantTestArtemisVersion extends TestCase
         $this->assertSame("error", $response->status);
         $this->assertSame("The Floor you specified is not found", $response->message);
     }
+
+    public function testUpdateFloorWithEmpyString()
+    {
+        /*
+        * test set Tenant Floor
+        */
+        $data = [
+            'retailer_id'         => $this->tenant->merchant_id, // tenant_id
+            'current_mall'        => $this->mall_a->merchant_id, // parent_id
+            'parent_id'           => $this->mall_a->merchant_id, // parent_id
+            'id_language_default' => $this->enLang->language_id,
+            'floor_id'            => '',
+        ];
+
+        $response = $this->setRequestPostUpdateTenant($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame('Request OK', $response->message);
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
+    }
 }

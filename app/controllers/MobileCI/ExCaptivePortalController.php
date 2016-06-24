@@ -121,7 +121,7 @@ class ExCaptivePortalController extends BaseCIController
         }
     }
 
-    public static function generateDummyWidget($merchant, UrlChecker $urblock)
+    public static function generateDummyWidget($merchant, $session)
     {
         $widget = new Widget();
         $widget->widget_id = 'XXXX';
@@ -140,7 +140,7 @@ class ExCaptivePortalController extends BaseCIController
         $widget->new_item_count = 0;
         $widget->display_title = Lang::get('mobileci.captive.widget_slogan');
         $widget->display_sub_title = '';
-        $widget->url = $urblock->blockedRoute('captive-request-internet');
+        $widget->url = UrlChecker::blockedRoute('captive-request-internet', [], $session);
         $widget->redirect_url = URL::route('captive-request-internet');
         $widget->image = asset('mobile-ci/images/balloon-internet.jpg');
 

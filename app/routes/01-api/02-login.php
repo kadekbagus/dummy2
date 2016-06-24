@@ -126,6 +126,26 @@ Route::post(
 )->where('app', '(api|app)');
 
 /**
+ * Public customer login desktop CI (Angular CI)
+ */
+Route::post(
+    '/{app}/v1/pub/login/customer/desktop', ['as' => 'pub-customer-login-desktop', function()
+    {
+        return Orbit\Controller\API\v1\Pub\LoginAPIController::create()->postDesktopCILogin();
+    }]
+)->where('app', '(api|app)');
+
+/**
+ * Public customer logout desktop CI (Angular CI)
+ */
+Route::post(
+    '/{app}/v1/pub/logout/customer/desktop', [
+        'as' => 'pub-customer-logout-desktop',
+        'uses' => 'IntermediateLoginController@getLogout'
+    ]
+)->where('app', '(api|app)');
+
+/**
  * Public customer signup
  */
 Route::post(

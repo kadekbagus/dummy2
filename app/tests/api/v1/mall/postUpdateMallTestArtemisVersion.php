@@ -20,6 +20,9 @@ class postUpdateMallTestArtemisVersion extends TestCase
         $this->apiKey = Factory::create('apikey_super_admin');
 
         $this->enLang = Factory::create('Language', ['name' => 'en']);
+        $this->idLang = Factory::create('Language', ['name' => 'id']);
+        $this->zhLang = Factory::create('Language', ['name' => 'zh']);
+        $this->jpLang = Factory::create('Language', ['name' => 'jp']);
 
         $this->country = Factory::create('Country');
 
@@ -75,6 +78,11 @@ class postUpdateMallTestArtemisVersion extends TestCase
 
         $this->mall_d = Factory::create('Mall', ['ci_domain' => 'lippomall.gotomalls.cool']);
         Factory::create('Setting', ['setting_name' => 'dom:lippomall.gotomalls.com', 'setting_value' => $this->mall_d->merchant_id]);
+
+        $this->mall_e = Factory::create('Mall', ['description' => 'antok mall oke', 'mobile_default_language' => 'id']);
+        Factory::create('MerchantLanguage', ['language_id' => $this->idLang->language_id, 'merchant_id' => $this->mall_e->merchant_id]);
+        $this->oldZhLang = Factory::create('MerchantLanguage', ['language_id' => $this->zhLang->language_id, 'merchant_id' => $this->mall_e->merchant_id]);
+        Factory::create('MerchantLanguage', ['language_id' => $this->jpLang->language_id, 'merchant_id' => $this->mall_e->merchant_id]);
     }
 
     public function testRequiredMerchantId()
@@ -190,6 +198,7 @@ class postUpdateMallTestArtemisVersion extends TestCase
         ];
 
         $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame('Request OK', $response->message);
         $this->assertSame(0, $response->code);
         $this->assertSame("success", $response->status);
 
@@ -279,8 +288,6 @@ class postUpdateMallTestArtemisVersion extends TestCase
     {
         $this->setDataMall();
 
-        $floor_array = ["{\"name\":\"B3\",\"order\":\"0\"}","{\"name\":\"B2\",\"order\":\"1\"}","{\"name\":\"B1\",\"order\":\"2\"}","{\"name\":\"L1\",\"order\":\"3\"}"];
-
         $floor_array = ["{\"id\":\"{$this->fl_b3->object_id}\",\"name\":\"{$this->fl_b3->object_name}\",\"order\":\"1\"}",
             "{\"id\":\"{$this->fl_b2->object_id}\",\"name\":\"{$this->fl_b2->object_name}\",\"order\":\"2\"}",
             "{\"name\":\"L1\",\"order\":\"3\"}",
@@ -311,6 +318,25 @@ class postUpdateMallTestArtemisVersion extends TestCase
                 }
             }
         }
+    }
+
+    public function testInsertExistFloorWithoutFloorId()
+    {
+        $this->setDataMall();
+
+        $floor_array = [
+            "{\"name\":\"B3\",\"order\":\"3\"}",
+        ];
+        /*
+        * test insert new floor
+        */
+        $data = ['merchant_id' => $this->mall_c->merchant_id,
+            'floors'    => $floor_array
+        ];
+
+        $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
     }
 
     public function testDeleteAndInsertNewFloor()
@@ -515,5 +541,315 @@ class postUpdateMallTestArtemisVersion extends TestCase
         $this->assertSame(0, $response->code);
         $this->assertSame("success", $response->status);
         $this->assertSame($subdomain . Config::get('orbit.shop.ci_domain'), $response->data->ci_domain);
+    }
+
+    public function testUpdateDescription()
+    {
+        $this->setDataMall();
+
+        $description = 'antok mall bagus';
+
+        /*
+        * test update description
+        */
+        $data = ['merchant_id' => $this->mall_e->merchant_id,
+            'description'    => $description
+        ];
+
+        $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
+        $this->assertSame($description, $response->data->description);
+    }
+
+    public function testUpdateDescriptionMaxChar()
+    {
+        $this->setDataMall();
+
+        $description = 'antok mall bagus banget beneran';
+
+        /*
+        * test update description
+        */
+        $data = ['merchant_id' => $this->mall_e->merchant_id,
+            'description'    => $description
+        ];
+
+        $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("The description may not be greater than 25 characters", $response->message);
+    }
+
+    public function testUpdateAddLanguage()
+    {
+        $this->setDataMall();
+
+        // add english
+        $languages               = ['jp','zh','id', 'en'];
+        $mobile_default_language = 'id';
+
+        $data = [
+            'merchant_id'             => $this->mall_e->merchant_id,
+            'languages'               => $languages,
+            'mobile_default_language' => $mobile_default_language
+        ];
+
+        $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
+        $this->assertSame($mobile_default_language, $response->data->mobile_default_language);
+        // check mall languages on database
+        $lang_db = MerchantLanguage::excludeDeleted('merchant_languages')
+                    ->leftJoin('languages', 'languages.language_id', '=', 'merchant_languages.language_id')
+                    ->where('merchant_id', $this->mall_e->merchant_id)
+                    ->get();
+        foreach ($lang_db as $idx => $lang) {
+            $this->assertContains($lang->name, $languages);
+        }
+    }
+
+    public function testUpdateRemoveLanguage()
+    {
+        $this->setDataMall();
+
+        // remove zh
+        $languages               = ['jp','id'];
+        $mobile_default_language = 'id';
+
+        $data = [
+            'merchant_id'             => $this->mall_e->merchant_id,
+            'languages'               => $languages,
+            'mobile_default_language' => $mobile_default_language
+        ];
+
+        $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
+        $this->assertSame($mobile_default_language, $response->data->mobile_default_language);
+        // check mall languages on database
+        $lang_db = MerchantLanguage::excludeDeleted('merchant_languages')
+                    ->leftJoin('languages', 'languages.language_id', '=', 'merchant_languages.language_id')
+                    ->where('merchant_id', $this->mall_e->merchant_id)
+                    ->get();
+        foreach ($lang_db as $idx => $lang) {
+            $this->assertContains($lang->name, $languages);
+        }
+    }
+
+    public function testUpdateRemoveLanguageWhenUseOnMobileLanguage()
+    {
+        /*
+        * test remove language when use on mobile default language
+        */
+        $this->setDataMall();
+
+        $languages               = ['jp','zh'];
+        $mobile_default_language = 'id';
+
+        $data = [
+            'merchant_id'             => $this->mall_e->merchant_id,
+            'languages'               => $languages,
+            'mobile_default_language' => $mobile_default_language
+        ];
+
+        $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("Mobile default language must on list languages", $response->message);
+    }
+
+    public function testRemoveLanguagesHasLink()
+    {
+        /*
+        * when language has link its allowed to delete
+        */
+        $this->setDataMall();
+
+        // link to campaign
+        // create campaign translation with mobile default language
+        $news = Factory::create('News');
+        $news_translation = Factory::create('NewsTranslation', [
+                'news_id' => $news->news_id,
+                'merchant_language_id' => $this->zhLang->language_id
+            ]);
+        $tenant = Factory::create('Tenant', ['parent_id' => $this->mall_e->merchant_id]);
+        $new_merchant = Factory::create('NewsMerchant', [
+                    'news_id' => $news->news_id,
+                    'merchant_id' => $tenant->merchant_id,
+                    'object_type' => 'tenant'
+                ]);
+
+        $languages               = ['jp', 'id'];
+        $mobile_default_language = 'id';
+
+        $data = [
+            'merchant_id'             => $this->mall_e->merchant_id,
+            'languages'               => $languages,
+            'mobile_default_language' => $mobile_default_language
+        ];
+
+        $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame('Request OK', $response->message);
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
+        // check merchant language is deleted
+        $del_mall_lang = MerchantLanguage::where('language_id', $this->zhLang->language_id)
+                            ->where('merchant_id', $this->mall_e->merchant_id)
+                            ->first();
+
+        $this->assertSame("deleted", $del_mall_lang->status);
+
+        // check link campaign translation is still active
+        $_news_translation = NewsTranslation::where('news_id', $news->news_id)
+                                ->first();
+
+        $this->assertSame("active", $_news_translation->status);
+    }
+
+    public function testRemoveLanguagesHasLinkThenAddThatLanguage()
+    {
+        /*
+        * when language has link its allowed to delete
+        */
+        $this->setDataMall();
+
+        // link to campaign
+        $news = Factory::create('News');
+        $news_translation = Factory::create('NewsTranslation', [
+                'news_id' => $news->news_id,
+                'merchant_language_id' => $this->zhLang->language_id
+            ]);
+        $tenant = Factory::create('Tenant', ['parent_id' => $this->mall_e->merchant_id]);
+        $new_merchant = Factory::create('NewsMerchant', [
+                    'news_id' => $news->news_id,
+                    'merchant_id' => $tenant->merchant_id,
+                    'object_type' => 'tenant'
+                ]);
+
+        $languages               = ['jp', 'id'];
+        $mobile_default_language = 'id';
+
+        $data = [
+            'merchant_id'             => $this->mall_e->merchant_id,
+            'languages'               => $languages,
+            'mobile_default_language' => $mobile_default_language
+        ];
+
+        $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame('Request OK', $response->message);
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
+        // check merchant language is deleted
+        $del_mall_lang = MerchantLanguage::where('language_id', $this->zhLang->language_id)
+                            ->where('merchant_id', $this->mall_e->merchant_id)
+                            ->first();
+        $this->assertSame("deleted", $del_mall_lang->status);
+
+        // check link campaign translation is still active
+        $_news_translation = NewsTranslation::where('news_id', $news->news_id)
+                                ->first();
+        $this->assertSame("active", $_news_translation->status);
+
+        // add mall language zh
+        $new_zhLang = Factory::Create('MerchantLanguage', ['language_id' => $this->zhLang->language_id, 'merchant_id' => $this->mall_e->merchant_id]);
+
+        // check database has two zh and one of data is active
+        $zh_on_db = MerchantLanguage::where('language_id', $this->zhLang->language_id)
+                            ->where('merchant_id', $this->mall_e->merchant_id)
+                            ->get();
+        $this->assertSame(2, count($zh_on_db));
+        foreach ($zh_on_db as $_zhLang) {
+            if ($_zhLang->merchant_language_id === $this->oldZhLang->merchant_language_id)
+                $this->assertSame('deleted', $_zhLang->status);
+            if ($_zhLang->merchant_language_id === $new_zhLang->merchant_language_id)
+                $this->assertSame('active', $_zhLang->status);
+        }
+
+        // check language is still link to old campaign zh translation
+        $check_news_translation = NewsTranslation::join('news_merchant', 'news_merchant.news_id', '=', 'news_translations.news_id')
+                                    ->where('merchant_language_id', $new_zhLang->language_id)
+                                    ->where('news_merchant.merchant_id', $tenant->merchant_id)
+                                    ->first();
+        $this->assertSame($news_translation->news_name, $check_news_translation->news_name);
+    }
+
+    public function testUpdateMobileLanguages()
+    {
+        /*
+        * when update mobile default language doesnt has link is allowed to change
+        */
+        $this->setDataMall();
+
+        $languages               = ['jp','zh','id'];
+        $mobile_default_language = 'zh';
+
+        $data = [
+            'merchant_id'             => $this->mall_e->merchant_id,
+            'languages'               => $languages,
+            'mobile_default_language' => $mobile_default_language
+        ];
+
+        $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
+        $this->assertSame($mobile_default_language, $response->data->mobile_default_language);
+    }
+
+    public function testUpdateMobileLanguagesHasLink()
+    {
+        /*
+        * when update mobile default language has link is doesnt allowed to change
+        */
+        $this->setDataMall();
+
+        // create campaign translation with mobile default language
+        $news = Factory::create('News');
+        $news_translation = Factory::create('NewsTranslation', [
+                'news_id' => $news->news_id,
+                'merchant_language_id' => $this->idLang->language_id
+            ]);
+        $tenant = Factory::create('Tenant', ['parent_id' => $this->mall_e->merchant_id]);
+        $new_merchant = Factory::create('NewsMerchant', [
+                    'news_id' => $news->news_id,
+                    'merchant_id' => $tenant->merchant_id,
+                    'object_type' => 'tenant'
+                ]);
+
+        $languages               = ['jp','zh','id'];
+        $mobile_default_language = 'zh';
+
+        $data = [
+            'merchant_id'             => $this->mall_e->merchant_id,
+            'languages'               => $languages,
+            'mobile_default_language' => $mobile_default_language
+        ];
+
+        $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("Cannot change default supported language has campaign translation", $response->message);
+    }
+
+    public function testUpdateMobileLanguagesNotOnListLanguages()
+    {
+        /*
+        * test update mobile default language not on list language
+        */
+        $this->setDataMall();
+
+        $languages               = ['jp','zh','id'];
+        $mobile_default_language = 'en';
+
+        $data = [
+            'merchant_id'             => $this->mall_e->merchant_id,
+            'languages'               => $languages,
+            'mobile_default_language' => $mobile_default_language
+        ];
+
+        $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("Mobile default language must on list languages", $response->message);
     }
 }
