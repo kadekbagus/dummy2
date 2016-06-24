@@ -422,6 +422,7 @@ class MallAPIController extends ControllerAPI
 
             $newuser = new User();
             $newuser->username = $email;
+            $newuser->user_firstname = $mall_name;
             $newuser->user_email = $email;
             $newuser->user_password = Hash::make($password);
             $newuser->status = $status;

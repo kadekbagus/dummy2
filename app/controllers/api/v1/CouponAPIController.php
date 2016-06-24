@@ -353,6 +353,8 @@ class CouponAPIController extends ControllerAPI
 
             $newcoupon = new Coupon();
             $newcoupon->merchant_id = $merchant_id;
+            $newcoupon->promotion_name = $promotion_name;
+            $newcoupon->description = $description;
             $newcoupon->promotion_type = $promotion_type;
             $newcoupon->status = $status;
             $newcoupon->campaign_status_id = $idStatus->campaign_status_id;
@@ -371,33 +373,6 @@ class CouponAPIController extends ControllerAPI
             $newcoupon->is_all_age = $is_all_age;
             $newcoupon->is_all_gender = $is_all_gender;
             $newcoupon->is_popup = $is_popup;
-
-            // Get english language id
-            $idLanguageEnglish = Language::select('language_id')
-                                ->where('name', '=', 'en')
-                                ->first();
-
-            // Check for english content
-            $dataTranslations = @json_decode($translations);
-            if (json_last_error() != JSON_ERROR_NONE) {
-                OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'translations']));
-            }
-
-            // Get english news name and description
-            foreach ($dataTranslations as $key => $val) {
-
-                // Validation language id from translation
-                $language = Language::where('language_id', '=', $key)->first();
-                if (empty($language)) {
-                    OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.merchant_language'));
-                }
-
-                if ($key === $idLanguageEnglish->language_id) {
-                    $newcoupon->promotion_name = $val->promotion_name;
-                    $newcoupon->description = $val->description;
-                }
-            }
-
 
             Event::fire('orbit.coupon.postnewcoupon.before.save', array($this, $newcoupon));
 
@@ -728,7 +703,7 @@ class CouponAPIController extends ControllerAPI
             foreach ($isAvailable as $val) {
                 if ($val->promotion_name === '' || empty($val->promotion_name)) {
                     $required_name = true;
-                } 
+                }
                 if ($val->description === '' || empty($val->description)) {
                     $required_desc = true;
                 }
@@ -1208,31 +1183,6 @@ class CouponAPIController extends ControllerAPI
                 $updatedcoupon->merchant_id = $merchant_id;
             });
 
-            $idLanguageEnglish = Language::select('language_id')
-                                ->where('name', '=', 'en')
-                                ->first();
-
-            // Check for english content
-            $dataTranslations = @json_decode($translations);
-            if (json_last_error() != JSON_ERROR_NONE) {
-                OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'translations']));
-            }
-
-            // Get english coupon name and description
-            foreach ($dataTranslations as $key => $val) {
-
-                // Validation language id from translation
-                $language = Language::where('language_id', '=', $key)->first();
-                if (empty($language)) {
-                    OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.merchant_language'));
-                }
-
-                if ($key == $idLanguageEnglish->language_id) {
-                    $updatedcoupon->promotion_name = $val->promotion_name;
-                    $updatedcoupon->description = $val->description;
-                }
-            }
-
             OrbitInput::post('promotion_type', function($promotion_type) use ($updatedcoupon) {
                 $updatedcoupon->promotion_type = $promotion_type;
             });
@@ -1240,6 +1190,14 @@ class CouponAPIController extends ControllerAPI
             OrbitInput::post('campaign_status', function($campaignStatus) use ($updatedcoupon, $idStatus, $status) {
                 $updatedcoupon->status = $status;
                 $updatedcoupon->campaign_status_id = $idStatus->campaign_status_id;
+            });
+
+            OrbitInput::post('promotion_name', function($promotion_name) use ($updatedcoupon) {
+                $updatedcoupon->promotion_name = $promotion_name;
+            });
+
+            OrbitInput::post('description', function($description) use ($updatedcoupon) {
+                $updatedcoupon->description = $description;
             });
 
             OrbitInput::post('long_description', function($long_description) use ($updatedcoupon) {
@@ -1737,14 +1695,14 @@ class CouponAPIController extends ControllerAPI
                                                       ->orWhereNull('description');
                                               })
                                             ->get();
-            
+
             $required_name = false;
             $required_desc = false;
 
             foreach ($isAvailable as $val) {
                 if ($val->promotion_name === '' || empty($val->promotion_name)) {
                     $required_name = true;
-                } 
+                }
                 if ($val->description === '' || empty($val->description)) {
                     $required_desc = true;
                 }
