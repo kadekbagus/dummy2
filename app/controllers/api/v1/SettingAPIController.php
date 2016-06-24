@@ -553,10 +553,7 @@ class SettingAPIController extends ControllerAPI
                 ),
                 array(
                     'merchant_id'   => 'required|orbit.empty.merchant',
-                    'language_id'   => 'required|orbit_empty_default_en',
-                ),
-                array(
-                    'orbit_empty_default_en' => 'English can not be dropped because it is the system language.'
+                    'language_id'   => 'required',
                 )
             );
 
