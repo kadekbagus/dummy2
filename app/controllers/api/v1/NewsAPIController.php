@@ -222,8 +222,8 @@ class NewsAPIController extends ControllerAPI
 
             $newnews = new News();
             $newnews->mall_id = $mall_id;
-            $newnews->news_name = $val->news_name;
-            $newnews->description = $val->description;
+            $newnews->news_name = $news_name;
+            $newnews->description = $description;
             $newnews->object_type = $object_type;
             $newnews->status = $status;
             $newnews->campaign_status_id = $idStatus->campaign_status_id;
