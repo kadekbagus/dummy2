@@ -30,7 +30,7 @@ class IntermediateCIAuthController extends IntermediateBaseController
         {
             try
             {
-                $this->session = SessionPreparer::prepareSession(FALSE);
+                $this->session = SessionPreparer::prepareSession();
                 $user = $this->getLoggedInUser($this->session);
                 $guest = $this->getLoggedInGuest($this->session);
                 if (! is_object($user)) {

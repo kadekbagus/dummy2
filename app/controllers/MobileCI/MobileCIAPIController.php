@@ -1218,7 +1218,7 @@ class MobileCIAPIController extends BaseCIController
                 ];
 
                 $orbit_origin = \Input::get('orbit_origin', 'google');
-                $this->session = SessionPreparer::prepareSession(FALSE);
+                $this->session = SessionPreparer::prepareSession();
 
                 // There is a chance that user not 'grant' his email while approving our app
                 // so we double check it here
