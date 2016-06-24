@@ -136,6 +136,16 @@ Route::post(
 )->where('app', '(api|app)');
 
 /**
+ * Public customer logout desktop CI (Angular CI)
+ */
+Route::post(
+    '/{app}/v1/pub/logout/customer/desktop', [
+        'as' => 'pub-customer-logout-desktop',
+        'uses' => 'IntermediateLoginController@getLogout'
+    ]
+)->where('app', '(api|app)');
+
+/**
  * Public customer signup
  */
 Route::post(

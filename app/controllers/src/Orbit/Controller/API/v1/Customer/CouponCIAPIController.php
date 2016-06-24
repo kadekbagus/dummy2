@@ -71,18 +71,6 @@ class CouponCIAPIController extends BaseAPIController
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            // temporary parameter, should be removed when user authentication is present
-            OrbitInput::get('user_email', function($user_email) use(&$user) {
-                $user = User::excludeDeleted()
-                    ->where('user_email', $user_email)
-                    ->first();
-
-                if (! is_object($user)) {
-                    $errorMessage = 'User with given email not found.';
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-                }
-            });
-
             $prefix = DB::getTablePrefix();
 
             $gender_profile_query = '';
@@ -345,18 +333,6 @@ class CouponCIAPIController extends BaseAPIController
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            // temporary parameter, should be removed when user authentication is present
-            OrbitInput::get('user_email', function($user_email) use(&$user) {
-                $user = User::excludeDeleted()
-                    ->where('user_email', $user_email)
-                    ->first();
-
-                if (! is_object($user)) {
-                    $errorMessage = 'User with given email not found.';
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-                }
-            });
-
             $prefix = DB::getTablePrefix();
 
             $gender_profile_query = '';
@@ -600,18 +576,6 @@ class CouponCIAPIController extends BaseAPIController
             $verificationNumber = OrbitInput::post('merchant_verification_number');
 
             $this->registerCustomValidation();
-
-            // temporary parameter, should be removed when user authentication is present
-            OrbitInput::post('user_email', function($user_email) use(&$user) {
-                $user = User::excludeDeleted()
-                    ->where('user_email', $user_email)
-                    ->first();
-
-                if (! is_object($user)) {
-                    $errorMessage = 'User with given email not found.';
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-                }
-            });
 
             $validator = Validator::make(
                 array(

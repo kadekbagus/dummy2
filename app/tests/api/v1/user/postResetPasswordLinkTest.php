@@ -106,7 +106,7 @@ class postResetPasswordLinkTest extends TestCase
         $this->assertSame(null, $response->data);
 
         // should be only one token on the database, right?
-        $token = Token::where('email', '=', $user->user_email)->first();
+        $token = Token::first();
 
         $this->assertSame(1, count($token));
         $this->assertSame('reset_password', $token->token_name);
@@ -114,5 +114,33 @@ class postResetPasswordLinkTest extends TestCase
         $this->assertSame('active', $token->status);
         $this->assertSame($user->user_email, $token->email);
         $this->assertSame($user->user_id, $token->user_id);
+    }
+
+    public function testTokenExpire()
+    {
+        // test email that exist on the database
+        $role = Factory::create('role_consumer');
+        $user = Factory::create('User', ['user_role_id' => $role->role_id]);
+        $apikey = Factory::create('Apikey', ['user_id' => $user->user_id]);
+        $data = array('email' => $user->user_email);
+
+        $response = $this->makeRequest($data, $apikey);
+
+        $this->assertSame(0, $response->code);
+        $this->assertSame('success', $response->status);
+        $this->assertRegExp('/ok/i', $response->message);
+        $this->assertSame(null, $response->data);
+
+        $token = Token::first();
+
+        $ConfigExpireInDays = Config::get('orbit.reset_password.reset_expire', 0);
+
+        $tokenDate = explode(" ", $token->expire);
+        $now = time();
+        $tokenExpireDate = strtotime($tokenDate[0]);
+        $dateDiff = $now - $tokenExpireDate;
+        $tokenExpireDays = (int)abs(floor($dateDiff/(60*60*24)));
+
+        $this->assertSame(($ConfigExpireInDays), $tokenExpireDays);
     }
 }
