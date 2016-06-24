@@ -65,7 +65,7 @@
 @stop
 
 @section('mall-fb-footer')
-    @if ($urlblock->isLoggedIn())
+    @if ($is_logged_in)
     <div class="text-center" style="padding-bottom: 20px;">
         @if(! empty($retailer->facebook_like_url))
         <div class="fb-like" data-href="{{{$retailer->facebook_like_url}}}" data-layout="button_count" data-action="like" data-show-faces="false" data-share="false" style="margin-right:25px;"></div>

@@ -48,7 +48,7 @@ if(!empty($luckydraw)) {
             <ul class="list-unstyled">
                 <li>
                     @if($showPrizesAndWinners)
-                    <a data-href="{{ route('ci-luckydraw-announcement', ['id' => $luckydraw->lucky_draw_id]) }}" href="{{ $urlblock->blockedRoute('ci-luckydraw-announcement', ['id' => $luckydraw->lucky_draw_id]) }}">
+                    <a data-href="{{ route('ci-luckydraw-announcement', ['id' => $luckydraw->lucky_draw_id]) }}" href="{{ \Orbit\Helper\Net\UrlChecker::blockedRoute('ci-luckydraw-announcement', ['id' => $luckydraw->lucky_draw_id], $session) }}">
                         <span class="fa fa-stack icon">
                             <i class="fa fa-circle fa-stack-2x"></i>
                             <i class="fa fa-trophy fa-inverse fa-stack-1x"></i>
@@ -68,7 +68,7 @@ if(!empty($luckydraw)) {
                 </li>
                 @if($total_number > 0)
                 <li>
-                    <a data-href="{{ route('ci-luckydrawnumber-download', ['id' => $luckydraw->lucky_draw_id]) }}" href="{{ $urlblock->blockedRoute('ci-luckydrawnumber-download', ['id' => $luckydraw->lucky_draw_id]) }}">
+                    <a data-href="{{ route('ci-luckydrawnumber-download', ['id' => $luckydraw->lucky_draw_id]) }}" href="{{ \Orbit\Helper\Net\UrlChecker::blockedRoute('ci-luckydrawnumber-download', ['id' => $luckydraw->lucky_draw_id], $session) }}">
                         <span class="fa fa-stack icon">
                             <i class="fa fa-circle fa-stack-2x"></i>
                             <i class="fa fa-download fa-inverse fa-stack-1x"></i>
@@ -77,7 +77,7 @@ if(!empty($luckydraw)) {
                     </a>
                 </li>
                 @endif
-                @if ($urlblock->isLoggedIn())
+                @if ($is_logged_in)
                     @if(! empty($luckydraw->facebook_share_url))
                     <li>
                         <div class="fb-share-button" data-href="{{$luckydraw->facebook_share_url}}" data-layout="button"></div>
@@ -174,7 +174,7 @@ if(!empty($luckydraw)) {
                 <div class="col-xs-12">
                     <ul class="ld-pagination">
                         @if($current_page != '1')
-                        <li><a data-href="{{ route('ci-luckydraw-detail', ['id' => $luckydraw->lucky_draw_id, 'page' => 1]) }}" href="{{$urlblock->blockedRoute('ci-luckydraw-detail', ['id' => $luckydraw->lucky_draw_id, 'page' => 1])}}#ln-nav" class="{{ ($prev_url === '#1' ? 'disabled' : ''); }}"><i class="fa fa-angle-double-left"></i></a></li>
+                        <li><a data-href="{{ route('ci-luckydraw-detail', ['id' => $luckydraw->lucky_draw_id, 'page' => 1]) }}" href="{{\Orbit\Helper\Net\UrlChecker::blockedRoute('ci-luckydraw-detail', ['id' => $luckydraw->lucky_draw_id, 'page' => 1], $session)}}#ln-nav" class="{{ ($prev_url === '#1' ? 'disabled' : ''); }}"><i class="fa fa-angle-double-left"></i></a></li>
                         @else
                         <li><a class="disabled" style="color:#dedede;"><i class="fa fa-angle-double-left"></i></a></li>
                         @endif
@@ -182,13 +182,13 @@ if(!empty($luckydraw)) {
                         <li class="ld-pagination-ellipsis">...</li>
                         @endif
                         @foreach($paginationPage as $p)
-                        <li @if($current_page == $p) class="ld-pagination-active" @endif><a data-href="{{ route('ci-luckydraw-detail', ['id' => $luckydraw->lucky_draw_id, 'page' => $p]) }}" href="{{$urlblock->blockedRoute('ci-luckydraw-detail', ['id' => $luckydraw->lucky_draw_id, 'page' => $p])}}#ln-nav" class="{{ ($prev_url === '#1' ? 'disabled' : ''); }}">{{ $p }}</a></li>
+                        <li @if($current_page == $p) class="ld-pagination-active" @endif><a data-href="{{ route('ci-luckydraw-detail', ['id' => $luckydraw->lucky_draw_id, 'page' => $p]) }}" href="{{\Orbit\Helper\Net\UrlChecker::blockedRoute('ci-luckydraw-detail', ['id' => $luckydraw->lucky_draw_id, 'page' => $p], $session)}}#ln-nav" class="{{ ($prev_url === '#1' ? 'disabled' : ''); }}">{{ $p }}</a></li>
                         @endforeach
                         @if(! in_array($total_pages, $paginationPage))
                         <li class="ld-pagination-ellipsis">...</li>
                         @endif
                         @if($current_page != $total_pages)
-                        <li><a data-href="{{ route('ci-luckydraw-detail', ['id' => $luckydraw->lucky_draw_id, 'page' => $total_pages]) }}" href="{{$urlblock->blockedRoute('ci-luckydraw-detail', ['id' => $luckydraw->lucky_draw_id, 'page' => $total_pages])}}#ln-nav" class="{{ ($prev_url === '#1' ? 'disabled' : ''); }}"><i class="fa fa-angle-double-right"></i></a></li>
+                        <li><a data-href="{{ route('ci-luckydraw-detail', ['id' => $luckydraw->lucky_draw_id, 'page' => $total_pages]) }}" href="{{\Orbit\Helper\Net\UrlChecker::blockedRoute('ci-luckydraw-detail', ['id' => $luckydraw->lucky_draw_id, 'page' => $total_pages], $session)}}#ln-nav" class="{{ ($prev_url === '#1' ? 'disabled' : ''); }}"><i class="fa fa-angle-double-right"></i></a></li>
                         @else
                         <li><a class="disabled" style="color:#dedede;"><i class="fa fa-angle-double-right"></i></a></li>
                         @endif
@@ -289,6 +289,7 @@ if(!empty($luckydraw)) {
              *  become very large or very small thus interval will break.
              *  (Note: JavaScript Date always use current device date time)
              *
+          --}}{{--
              *  Modified version detect if nextTick is not between threshold value then
              *  we will call syncNeededCallback() and let application handle it.
              *
