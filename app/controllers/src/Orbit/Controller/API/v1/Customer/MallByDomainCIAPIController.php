@@ -31,9 +31,6 @@ class MallByDomainCIAPIController extends BaseAPIController
         $this->response = new ResponseProvider();
 
         try{
-            $this->checkAuth();
-            $user = $this->api->user;
-
             $subDom = OrbitInput::get('sub_domain', NULL);
             $validator = Validator::make(
                 array(
