@@ -220,13 +220,10 @@ class NewsAPIController extends ControllerAPI
             // Get data status like ongoing, stopped etc
             $idStatus = CampaignStatus::select('campaign_status_id','campaign_status_name')->where('campaign_status_name', $campaignStatus)->first();
 
-            // Get english language_id
-            $idLanguageEnglish = Language::select('language_id')
-                                ->where('name', '=', 'en')
-                                ->first();
-
             $newnews = new News();
             $newnews->mall_id = $mall_id;
+            $newnews->news_name = $news_name;
+            $newnews->description = $description;
             $newnews->object_type = $object_type;
             $newnews->status = $status;
             $newnews->campaign_status_id = $idStatus->campaign_status_id;
@@ -243,21 +240,6 @@ class NewsAPIController extends ControllerAPI
             $dataTranslations = @json_decode($translations);
             if (json_last_error() != JSON_ERROR_NONE) {
                 OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'translations']));
-            }
-
-            // Get english news name and description
-            foreach ($dataTranslations as $key => $val) {
-
-                // Validation language id from translation
-                $language = Language::where('language_id', '=', $key)->first();
-                if (empty($language)) {
-                    OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.merchant_language'));
-                }
-
-                if ($key === $idLanguageEnglish->language_id) {
-                    $newnews->news_name = $val->news_name;
-                    $newnews->description = $val->description;
-                }
             }
 
             Event::fire('orbit.news.postnewnews.before.save', array($this, $newnews));
@@ -460,7 +442,7 @@ class NewsAPIController extends ControllerAPI
             foreach ($isAvailable as $val) {
                 if ($val->news_name === '' || empty($val->news_name)) {
                     $required_name = true;
-                } 
+                }
                 if ($val->description === '' || empty($val->description)) {
                     $required_desc = true;
                 }
@@ -747,32 +729,11 @@ class NewsAPIController extends ControllerAPI
                 $merchantdb[] = $merchantdbid['merchant_id'];
             }
 
-            // Get english language_id
-            $idLanguageEnglish = Language::select('language_id')
-                                ->where('name', '=', 'en')
-                                ->first();
-
             // Check for english content
             $jsonTranslations = @json_decode($translations);
             if (json_last_error() != JSON_ERROR_NONE) {
                 OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'translations']));
             }
-
-            // Get english news name and description
-            foreach ($jsonTranslations as $key => $val) {
-
-                // Validation language id from translation
-                $language = Language::where('language_id', '=', $key)->first();
-                if (empty($language)) {
-                    OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.merchant_language'));
-                }
-
-                if ($key === $idLanguageEnglish->language_id) {
-                    $updatednews->news_name = $val->news_name;
-                    $updatednews->description = $val->description;
-                }
-            }
-
 
             // save News
             OrbitInput::post('mall_id', function($mall_id) use ($updatednews) {
@@ -781,6 +742,14 @@ class NewsAPIController extends ControllerAPI
 
             OrbitInput::post('object_type', function($object_type) use ($updatednews) {
                 $updatednews->object_type = $object_type;
+            });
+
+            OrbitInput::post('news_name', function($news_name) use ($updatednews) {
+                $updatednews->news_name = $news_name;
+            });
+
+            OrbitInput::post('description', function($description) use ($updatednews) {
+                $updatednews->description = $description;
             });
 
             OrbitInput::post('campaign_status', function($campaignStatus) use ($updatednews, $status, $idStatus) {
@@ -851,12 +820,12 @@ class NewsAPIController extends ControllerAPI
             foreach ($isAvailable as $val) {
                 if ($val->news_name === '' || empty($val->news_name)) {
                     $required_name = true;
-                } 
+                }
                 if ($val->description === '' || empty($val->description)) {
                     $required_desc = true;
                 }
             }
-            
+
             if ($required_name === true && $required_desc === true) {
                 $errorMessage = Lang::get('validation.orbit.empty.default_language_both', ['type' => $object_type]);
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
@@ -1651,7 +1620,7 @@ class NewsAPIController extends ControllerAPI
                                 FROM {$prefix}merchants
                                 LEFT JOIN {$prefix}merchants pm ON pm.merchant_id = {$prefix}merchants.parent_id
                                 WHERE {$prefix}merchants.merchant_id = (SELECT nm.merchant_id FROM {$prefix}news_merchant nm WHERE nm.news_id = {$prefix}news.news_id LIMIT 1))"));
-            } 
+            }
 
             // Filter news by Ids
             OrbitInput::get('news_id', function($newsIds) use ($news)
