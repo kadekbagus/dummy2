@@ -180,7 +180,7 @@ class ElasticsearchMigrationCommand extends Command
         };
 
         if ($mode === 'rollback') {
-            return array_map($onlyName, glob($this->elasticDataDir . '/migrated/*.esm'));
+            return rsort(array_map($onlyName, glob($this->elasticDataDir . '/migrated/*.esm')));
         }
 
         $migrationsDir = array_map($onlyName, glob($this->elasticDataDir . '/migrations/*.esm'));
