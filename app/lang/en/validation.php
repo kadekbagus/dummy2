@@ -146,6 +146,7 @@ return array(
             'floor'                  => 'Floor name has already been used',
             'domain'                 => 'Mall URL Application Domain name has already been taken',
             'mobile_default_lang'    => 'Cannot remove default supported language',
+            'link_mobile_default_lang'=> 'Cannot change default supported language has campaign translation',
         ),
         'access' => array(
             'forbidden'              => 'You do not have permission to :action',
