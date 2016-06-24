@@ -180,7 +180,12 @@ class ElasticsearchMigrationCommand extends Command
         };
 
         if ($mode === 'rollback') {
-            return rsort(array_map($onlyName, glob($this->elasticDataDir . '/migrated/*.esm')));
+            $rolledbackFiles = array_map($onlyName, glob($this->elasticDataDir . '/migrated/*.esm'));
+
+            // Reverse the order, because rollback should happens from newest to oldest
+            rsort($rolledbackFiles);
+
+            return $rolledbackFiles;
         }
 
         $migrationsDir = array_map($onlyName, glob($this->elasticDataDir . '/migrations/*.esm'));
