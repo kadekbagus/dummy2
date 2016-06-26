@@ -115,4 +115,41 @@ class ESMallCreateQueueTest extends ElasticsearchTestCase
         $this->assertSame('fail', $response['status']);
         $this->assertSame($message, $response['message']);
     }
+
+    public function test_should_not_indexed_to_elasticsearch_because_successful_is_zero()
+    {
+        // Create mall in antartica
+        $geofence = Factory::create('MerchantGeofence');
+        $mall = $geofence->mall;
+
+        $elasticQueue = new ESMallCreateQueue($this->es);
+        $data = ['mall_id' => $mall->merchant_id];
+
+        // Mock the response of ES->index($params)
+        $mockResponse = [
+            '_index' => $this->esIndex,
+            '_type' => $this->esIndexType,
+            '_id' => $mall->merchant_id,
+            'created' => 1,
+            '_shards' => [
+                'total' => 2,
+                'successful' => 0,
+                'failed' => 0
+            ]
+        ];
+        $this->es->method('index')->willReturn($mockResponse);
+
+        // Fire the event
+        $response = $elasticQueue->fire($this->job, $data);
+
+        $message = sprintf('[Job ID: `%s`] Elasticsearch Create Index; Status: FAIL; ES Index Name: %s; ES Index Type: %s; Code: %s; Message: %s',
+            $this->job->getJobId(),
+            $this->esIndex,
+            $this->esIndexType,
+            1,
+            'The document indexing seems fail because the successful value is less than 1.'
+        );
+        $this->assertSame('fail', $response['status']);
+        $this->assertSame($message, $response['message']);
+    }
 }

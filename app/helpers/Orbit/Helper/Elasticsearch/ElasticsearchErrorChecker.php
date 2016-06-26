@@ -27,8 +27,8 @@ class ElasticsearchErrorChecker
         }
 
         $_shards = $response['_shards'];
-        if (isset($_shards['successful']) < 1) {
-            throw new Exception('The document indexing seems fail because the value is less than 1.');
+        if (isset($_shards['successful']) && $_shards['successful'] < 1) {
+            throw new Exception('The document indexing seems fail because the successful value is less than 1.', 1);
         }
     }
 }

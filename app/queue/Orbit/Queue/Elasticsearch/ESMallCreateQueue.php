@@ -87,6 +87,7 @@ class ESMallCreateQueue
                     'operating_hours' => $mall->operating_hours,
                     'object_type' => $mall->object_type,
                     'status' => $mall->status,
+                    'ci_domain' => $mall->ci_domain,
                     'position' => [
                         'lat' => $geofence->latitude,
                         'long' => $geofence->longitude
