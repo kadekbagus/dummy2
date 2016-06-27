@@ -27,6 +27,8 @@ use TenantStoreAndService;
 use App;
 use Lang;
 use Carbon\Carbon as Carbon;
+use WidgetClick;
+use WidgetGroupName;
 
 class WidgetCIAPIController extends BaseAPIController
 {
@@ -653,6 +655,114 @@ class WidgetCIAPIController extends BaseAPIController
         return $this->render($httpCode);
     }
 
+    public function postClickWidgetActivity()
+    {
+        $httpCode = 200;
+        $this->response = new ResponseProvider();
+
+        try{
+            $this->checkAuth();
+            $user = $this->api->user;
+
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = $this->validRoles;
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            $this->mall_id = OrbitInput::post('mall_id', null);
+            $this->widget_id = OrbitInput::post('widget_id', null);
+
+            $this->registerCustomValidation();
+            $validator = Validator::make(
+                array(
+                    'mall_id' => $this->mall_id,
+                    'widget_id' => $this->widget_id,
+                ),
+                array(
+                    'mall_id' => 'required|orbit.empty.mall',
+                    'widget_id' => 'required|orbit.empty.widget',
+                )
+            );
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $widget = Widget::active()->where('widget_id', $this->widget_id)->first();
+            $widget_type = ucwords(str_replace('_', ' ', $widget->widget_type));
+
+            // Begin database transaction
+            $this->beginTransaction();
+
+            //save to table widget click
+            $newWidget = new WidgetClick();
+            $newWidget->widget_id = $this->widget_id;
+            $newWidget->user_id = $user->user_id;
+            $newWidget->location_id = $this->mall_id;
+            $newWidget->activity_id = 0;
+
+            $widgetGroupNames = WidgetGroupName::get();
+
+            foreach ($widgetGroupNames as $group_name) {
+                if ($widget_type === $group_name->widget_group_name) {
+                    $newWidget->widget_group_name_id = $group_name->widget_group_name_id;
+                }
+            }
+
+            $newWidget->save();
+
+            // Commit the changes
+            $this->commit();
+
+            $this->response->data = null;
+            $this->response->code = 0;
+            $this->response->status = 'success';
+            $this->response->message = 'Request Ok';
+        } catch (ACLForbiddenException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+            $this->rollback();
+        } catch (InvalidArgsException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $result['total_records'] = 0;
+            $result['returned_records'] = 0;
+            $result['records'] = null;
+
+            $this->response->data = $result;
+            $httpCode = 403;
+            $this->rollback();
+        } catch (QueryException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+            $this->rollback();
+        } catch (Exception $e) {
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 500;
+            $this->rollback();
+        }
+
+        return $this->render($httpCode);
+    }
+
     protected function registerCustomValidation()
     {
         // Check the existance of merchant id
@@ -666,6 +776,21 @@ class WidgetCIAPIController extends BaseAPIController
             }
 
             App::instance('orbit.empty.mall', $mall);
+
+            return TRUE;
+        });
+
+        // Check the existance of widget id
+        Validator::extend('orbit.empty.widget', function ($attribute, $value, $parameters) {
+            $widget = Widget::excludeDeleted()
+                        ->where('widget_id', $value)
+                        ->first();
+
+            if (empty($widget)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.empty.widget', $widget);
 
             return TRUE;
         });

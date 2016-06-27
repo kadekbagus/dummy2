@@ -87,6 +87,7 @@ class MallByDomainCIAPIController extends BaseAPIController
                 $data->pop_up_delay = Config::get('orbit.shop.event_delay', 2.5);
                 $data->enable_membership = $enable_membership;
                 $data->cookie_domain = Config::get('orbit.session.session_origin.cookie.domain');
+                $data->after_logout_url = Config::get('orbit.shop.after_logout_url');
             }
 
             $this->response->data = $data;

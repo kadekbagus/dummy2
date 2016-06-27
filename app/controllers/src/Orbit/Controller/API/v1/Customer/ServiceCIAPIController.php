@@ -145,6 +145,8 @@ class ServiceCIAPIController extends BaseAPIController
             OrbitInput::get('object_type', function ($object_type) use ($service) {
                 $service->where('merchants.object_type', $object_type);
             });
+            
+            $this->viewItemUserUpdate('service', $user, $mall);
 
             $service->groupBy('merchants.merchant_id');
 

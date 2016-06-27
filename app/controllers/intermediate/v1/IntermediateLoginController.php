@@ -826,23 +826,8 @@ class IntermediateLoginController extends IntermediateBaseController
     public function getSession()
     {
         $response = new ResponseProvider();
-        $request_for_guest = OrbitInput::get('desktop_ci', NULL);
         try {
             $this->session->start(array(), 'no-session-creation');
-            if (! empty($request_for_guest)) {
-                // check guest user inside session, if empty create one
-                if (empty($this->session->read('guest_user_id'))) {
-                    $guest = GenerateGuestUser::generateGuestUser();
-                    $sessionData = $this->session->read(NULL);
-                    $sessionData['logged_in'] = TRUE;
-                    $sessionData['guest_user_id'] = $guest->user_id;
-                    $sessionData['guest_email'] = $guest->user_email;
-                    $sessionData['role'] = $guest->role->role_name;
-                    $sessionData['fullname'] = '';
-
-                    $this->session->update($sessionData);
-                }
-            }
             $response->data = $this->session->getSession();
 
             unset($response->data->userAgent);
@@ -851,7 +836,9 @@ class IntermediateLoginController extends IntermediateBaseController
             $request_for_guest = OrbitInput::get('desktop_ci', NULL);
             if (! empty($request_for_guest)) {
                 // if the request comes from desktop_ci, return the guest session
-                $guest = GenerateGuestUser::generateGuestUser();
+                // if this goes live then we should remove the TRUE param in generateGuestUser()
+                // to be able to record guest in Dashboard
+                $guest = GenerateGuestUser::generateGuestUser(TRUE);
                 if (empty($this->session->getSessionId())) {
                     // Start the orbit session
                     $this->session = SessionPreparer::prepareSession();

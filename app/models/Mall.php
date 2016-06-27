@@ -79,6 +79,11 @@ class Mall extends Eloquent
         return $this->hasOne('MerchantGeofence', 'merchant_id', 'merchant_id');
     }
 
+    public function country()
+    {
+        return $this->belongsTo('Country', 'country_id', 'country_id');
+    }
+
     /**
      * Merchant belongs to and has many category.
      */
