@@ -836,7 +836,9 @@ class IntermediateLoginController extends IntermediateBaseController
             $request_for_guest = OrbitInput::get('desktop_ci', NULL);
             if (! empty($request_for_guest)) {
                 // if the request comes from desktop_ci, return the guest session
-                $guest = GenerateGuestUser::generateGuestUser();
+                // if this goes live then we should remove the TRUE param in generateGuestUser()
+                // to be able to record guest in Dashboard
+                $guest = GenerateGuestUser::generateGuestUser(TRUE);
                 if (empty($this->session->getSessionId())) {
                     // Start the orbit session
                     $this->session = SessionPreparer::prepareSession();
