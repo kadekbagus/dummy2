@@ -1,6 +1,6 @@
 <?php
 /**
- * Test for API /api/v1/pub/user/reset-password-link
+ * Test for API /api/v1/pub/user/reset-password
  * @author kadek <kadek@dominopos.com>
  */
 use DominoPOS\OrbitAPI\v10\StatusInterface as Status;
@@ -8,7 +8,7 @@ use OrbitShop\API\v1\Helper\Generator;
 use Laracasts\TestDummy\Factory;
 use Carbon\Carbon as Carbon;
 
-class postResetPassword extends TestCase
+class postResetPasswordTest extends TestCase
 {
     private $baseUrl  = '/api/v1/pub/user/reset-password?';
     private $baseUrl2 = '/api/v1/pub/user/reset-password-link?';
