@@ -113,7 +113,7 @@ class ESMallCreateQueue
             //   "created": true
             // }
             //
-            // The indexing considered successful is attribute `successful` on `_shard` is more than 1.
+            // The indexing considered successful is attribute `successful` on `_shard` is more than 0.
             ElasticsearchErrorChecker::throwExceptionOnDocumentError($response);
 
             // Safely delete the object
