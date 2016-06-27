@@ -55,6 +55,7 @@
             <file>./app/tests/api/v1/user/getMyAccountInfoCIAngularTest.php</file>
             <file>./app/tests/api/v1/campaign/getCampaignPopupAngularCITest.php</file>
             <file>./app/tests/api/v1/login/postDesktopCILoginTest.php</file>
+            <file>./app/tests/api/v1/login/postDesktopCISignUpTest.php</file>
             <file>./app/tests/api/v1/widget/getSearchWidgetTest.php</file>
             <file>./app/tests/api/v1/widget/getSearchWidgetAngularCITest.php</file>
             <file>./app/tests/api/v1/tenant/getSearchTenantStoreAndServiceTest.php</file>
