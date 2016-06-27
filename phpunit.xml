@@ -91,6 +91,7 @@
             <file>./app/tests/api/v1/membership/getMembershipMobileCiTest.php</file>
             <file>./app/tests/api/v1/user/postResetPasswordTest.php</file>
             <file>./app/tests/api/v1/user/postResetPasswordLinkTest.php</file>
+            <file>./app/tests/api/v1/widget/postClickWidgetActivityTest.php</file>
         </testsuite>
     </testsuites>
 </phpunit>
