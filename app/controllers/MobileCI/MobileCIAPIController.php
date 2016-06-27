@@ -80,6 +80,7 @@ use \UserGuest;
 use ListConnectedUser;
 use Helper\EloquentRecordCounter as RecordCounter;
 use MobileCI\ExCaptivePortalController as CaptivePortalController;
+use Orbit\Helper\Net\SessionPreparer;
 
 class MobileCIAPIController extends BaseCIController
 {
@@ -227,7 +228,7 @@ class MobileCIAPIController extends BaseCIController
         return \Redirect::to($after_logout_url);
     }
     
-    private function prepareWidgetTenantData($widget, $user, $retailer, $mallid, $now, $urlblock)
+    private function prepareWidgetTenantData($widget, $user, $retailer, $mallid, $now)
     {
         // get all tenant count
         $tenantsCount = Tenant::active()
@@ -267,13 +268,13 @@ class MobileCIAPIController extends BaseCIController
         } else {
             $widget->display_sub_title = Lang::get('mobileci.widgets.tenants_single');
         }
-        $widget->url = $urlblock->blockedRoute('ci-tenant-list');
+        $widget->url = UrlBlock::blockedRoute('ci-tenant-list', [], $this->session);
         $widget->redirect_url = URL::route('ci-tenant-list');
-        
+
         return $widget;
     }
     
-    private function prepareWidgetServiceData($widget, $user, $retailer, $mallid, $now, $urlblock)
+    private function prepareWidgetServiceData($widget, $user, $retailer, $mallid, $now)
     {
         // get all tenant count
         $serviceCount = \TenantStoreAndService::where('status', 'active')
@@ -315,13 +316,13 @@ class MobileCIAPIController extends BaseCIController
         } else {
             $widget->display_sub_title = Lang::get('mobileci.widgets.services_single');
         }
-        $widget->url = $urlblock->blockedRoute('ci-service-list');
+        $widget->url = UrlBlock::blockedRoute('ci-service-list', [], $this->session);
         $widget->redirect_url = URL::route('ci-service-list');
 
-        return $widget;        
+        return $widget;
     }
     
-    private function prepareWidgetPromotionData($widget, $user, $retailer, $mallid, $now, $urlblock)
+    private function prepareWidgetPromotionData($widget, $user, $retailer, $mallid, $now)
     {
         $userAge = 0;
         if ($user->userDetail->birthdate !== '0000-00-00' && $user->userDetail->birthdate !== null) {
@@ -426,13 +427,13 @@ class MobileCIAPIController extends BaseCIController
         } else {
             $widget->display_sub_title = Lang::get('mobileci.widgets.promotions_single');
         }
-        $widget->url = $urlblock->blockedRoute('ci-promotion-list');
+        $widget->url = UrlBlock::blockedRoute('ci-promotion-list', [], $this->session);
         $widget->redirect_url = URL::route('ci-promotion-list');
-        
-        return $widget;    
+
+        return $widget;
     }
     
-    private function prepareWidgetNewsData($widget, $user, $retailer, $mallid, $now, $urlblock)
+    private function prepareWidgetNewsData($widget, $user, $retailer, $mallid, $now)
     {
         $userAge = 0;
         if ($user->userDetail->birthdate !== '0000-00-00' && $user->userDetail->birthdate !== null) {
@@ -539,13 +540,13 @@ class MobileCIAPIController extends BaseCIController
         } else {
             $widget->display_sub_title = Lang::get('mobileci.widgets.newss_single');
         }
-        $widget->url = $urlblock->blockedRoute('ci-news-list');
+        $widget->url = UrlBlock::blockedRoute('ci-news-list', [], $this->session);
         $widget->redirect_url = URL::route('ci-news-list');
-            
-        return $widget;    
+
+        return $widget;
     }
     
-    private function prepareWidgetCouponData($widget, $user, $retailer, $mallid, $now, $urlblock)
+    private function prepareWidgetCouponData($widget, $user, $retailer, $mallid, $now)
     {
         $userAge = 0;
         if ($user->userDetail->birthdate !== '0000-00-00' && $user->userDetail->birthdate !== null) {
@@ -688,13 +689,13 @@ class MobileCIAPIController extends BaseCIController
         } else {
             $widget->display_sub_title = Lang::get('mobileci.widgets.coupons_single');
         }
-        $widget->url = $urlblock->blockedRoute('ci-coupon-list');
+        $widget->url = UrlBlock::blockedRoute('ci-coupon-list', [], $this->session);
         $widget->redirect_url = URL::route('ci-coupon-list');
-        
-        return $widget;    
+
+        return $widget;
     }
     
-    private function prepareWidgetLuckyDrawData($widget, $user, $retailer, $mallid, $now, $urlblock)
+    private function prepareWidgetLuckyDrawData($widget, $user, $retailer, $mallid, $now)
     {
         $luckydrawsCount = LuckyDraw::active()
             ->where('mall_id', $retailer->merchant_id)
@@ -734,13 +735,13 @@ class MobileCIAPIController extends BaseCIController
         } else {
             $widget->display_sub_title = Lang::get('mobileci.widgets.lucky_draws_single');
         }
-        $widget->url = $urlblock->blockedRoute('ci-luckydraw-list');
+        $widget->url = UrlBlock::blockedRoute('ci-luckydraw-list', [], $this->session);
         $widget->redirect_url = URL::route('ci-luckydraw-list');
-        
-        return $widget;    
+
+        return $widget;
     }
     
-    private function prepareWidgetFreeWifiData($widget, $user, $retailer, $mallid, $now, $urlblock)
+    private function prepareWidgetFreeWifiData($widget, $user, $retailer, $mallid, $now)
     {
         $widget->image = 'mobile-ci/images/default_free_wifi_directory.png';
 
@@ -757,35 +758,35 @@ class MobileCIAPIController extends BaseCIController
         //$widget->always_show_subtitle = true;
         $widget->display_title = Lang::get('mobileci.widgets.free_wifi');
         //$widget->display_sub_title = Lang::get('mobileci.widgets.free_wifi');
-        $widget->url = $urlblock->blockedRoute('captive-request-internet');
+        $widget->url = UrlBlock::blockedRoute('captive-request-internet', [], $this->session);
         $widget->redirect_url = URL::route('captive-request-internet');
-        
-        return $widget;    
+
+        return $widget;
     }
     
-    private function prepareWidgetData($widget, $user, $retailer, $mallid, $now, $urlblock)
+    private function prepareWidgetData($widget, $user, $retailer, $mallid, $now)
     {
         switch ($widget->widget_type) {
             case 'tenant':
-                return $this->prepareWidgetTenantData($widget, $user, $retailer, $mallid, $now, $urlblock);
+                return $this->prepareWidgetTenantData($widget, $user, $retailer, $mallid, $now);
                 break;
             case 'service':
-                return $this->prepareWidgetServiceData($widget, $user, $retailer, $mallid, $now, $urlblock);
+                return $this->prepareWidgetServiceData($widget, $user, $retailer, $mallid, $now);
                 break;
             case 'promotion':
-                return $this->prepareWidgetPromotionData($widget, $user, $retailer, $mallid, $now, $urlblock);
+                return $this->prepareWidgetPromotionData($widget, $user, $retailer, $mallid, $now);
                 break;
             case 'news':
-                return $this->prepareWidgetNewsData($widget, $user, $retailer, $mallid, $now, $urlblock);
+                return $this->prepareWidgetNewsData($widget, $user, $retailer, $mallid, $now);
                 break;
             case 'coupon':
-                return $this->prepareWidgetCouponData($widget, $user, $retailer, $mallid, $now, $urlblock);
+                return $this->prepareWidgetCouponData($widget, $user, $retailer, $mallid, $now);
                 break;
             case 'lucky_draw':
-                return $this->prepareWidgetLuckyDrawData($widget, $user, $retailer, $mallid, $now, $urlblock);
+                return $this->prepareWidgetLuckyDrawData($widget, $user, $retailer, $mallid, $now);
                 break;
             case 'free_wifi':
-                return $this->prepareWidgetFreeWifiData($widget, $user, $retailer, $mallid, $now, $urlblock);
+                return $this->prepareWidgetFreeWifiData($widget, $user, $retailer, $mallid, $now);
                 break;            
         }
         return $widget;
@@ -822,10 +823,10 @@ class MobileCIAPIController extends BaseCIController
                     $this->session->getSessionId(), print_r($_COOKIE, TRUE)));*/
 
             $user = $this->getLoggedInUser();
-            $urlblock = new UrlBlock($this->session, $user);
-            $user = $urlblock->checkBlockedUrl();
+            // check url, is it blocked or not
+            UrlBlock::checkBlockedUrl($user);
             $this->acquireUser($retailer, $user);
-            Coupon::issueAutoCoupon($retailer, $user, $urlblock->getUserSession());
+            Coupon::issueAutoCoupon($retailer, $user, $this->session);
 
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
 
@@ -870,7 +871,7 @@ class MobileCIAPIController extends BaseCIController
                 //not needed because free wifi internet widget is configurable in
                 //mall setting
                 // Inject number of widget on-the-fly
-                //$captiveWidget = CaptivePortalController::generateDummyWidget($retailer, $urlblock);
+                //$captiveWidget = CaptivePortalController::generateDummyWidget($retailer, $session);
                 //$widgets->push($captiveWidget);
 
                 // Push the from_captive cookie
@@ -882,7 +883,7 @@ class MobileCIAPIController extends BaseCIController
             $mallid = $retailer->merchant_id;
 
             foreach ($widgets as $widget) {
-                $this->prepareWidgetData($widget, $user, $retailer, $mallid, $now, $urlblock);
+                $this->prepareWidgetData($widget, $user, $retailer, $mallid, $now);
             }
 
             $languages = $this->getListLanguages($retailer);
@@ -921,7 +922,8 @@ class MobileCIAPIController extends BaseCIController
                 'user_email' => $user->role->role_name !== 'Guest' ? $user->user_email : '',
                 'user' => $user,
                 'facebookInfo' => Config::get('orbit.social_login.facebook'),
-                'urlblock' => $urlblock
+                'session' => $this->session,
+                'is_logged_in' => UrlBlock::isLoggedIn($this->session),
             );
 
             // check view file existance, if not fallback to default
@@ -978,8 +980,7 @@ class MobileCIAPIController extends BaseCIController
         }
 
         $user = $this->getLoggedInUser();
-        $urlblock = new UrlBlock($this->session, $user);
-        $landing_url = $urlblock->blockedRoute('ci-customer-home');
+        $landing_url = UrlBlock::blockedRoute('ci-customer-home', [], $this->session);
         $socmed_redirect_to = \Input::get('socmed_redirect_to', '');
         if (! empty($socmed_redirect_to)) {
             $landing_url = $socmed_redirect_to;
@@ -1217,7 +1218,7 @@ class MobileCIAPIController extends BaseCIController
                 ];
 
                 $orbit_origin = \Input::get('orbit_origin', 'google');
-                $this->prepareSession();
+                $this->session = SessionPreparer::prepareSession();
 
                 // There is a chance that user not 'grant' his email while approving our app
                 // so we double check it here
@@ -1253,7 +1254,7 @@ class MobileCIAPIController extends BaseCIController
                     $session->write('visited_location', [$retailer->merchant_id]);
 
                     $redirect_to_url_from_state = $this->remove_querystring_var(json_decode($this->base64UrlDecode($state))->redirect_to_url, $this->getOrbitSessionQueryStringName());
-                    // $redirect_to_url_from_state = $this->add_querystring_var($redirect_to_url_from_state, $this->getOrbitSessionQueryStringName(), $urlblock->getUserSession()->getSessionId());
+                    // $redirect_to_url_from_state = $this->add_querystring_var($redirect_to_url_from_state, $this->getOrbitSessionQueryStringName(), $this->session->getSessionId());
 
                     return Redirect::to($redirect_to_url_from_state);
                 } else {
@@ -1282,10 +1283,8 @@ class MobileCIAPIController extends BaseCIController
 
                     $this->acquireUser($retailer, $loggedInUser, 'google');
 
-                    $user = $this->getLoggedInUser();
-                    $urlblock = new UrlBlock($this->session, $user);
                     $redirect_to_url_from_state = $this->remove_querystring_var(json_decode($this->base64UrlDecode($state))->redirect_to_url, $this->getOrbitSessionQueryStringName());
-                    // $redirect_to_url_from_state = $this->add_querystring_var($redirect_to_url_from_state, $this->getOrbitSessionQueryStringName(), $urlblock->getUserSession()->getSessionId());
+
                     return Redirect::to($redirect_to_url_from_state);
                 }
 
@@ -1414,7 +1413,6 @@ class MobileCIAPIController extends BaseCIController
             $session->write('visited_location', [$retailer->merchant_id]);
 
             $redirect_to_url = $this->remove_querystring_var($redirect_to_url, $this->getOrbitSessionQueryStringName());
-            // $redirect_to_url = $this->add_querystring_var($redirect_to_url, $this->getOrbitSessionQueryStringName(), $urlblock->getUserSession()->getSessionId());
 
             return Redirect::to($redirect_to_url);
         } else {
@@ -1440,10 +1438,7 @@ class MobileCIAPIController extends BaseCIController
 
             $this->acquireUser($retailer, $loggedInUser, 'facebook');
 
-            $user = $this->getLoggedInUser();
-            $urlblock = new UrlBlock($this->session, $user);
             $redirect_to_url = $this->remove_querystring_var($redirect_to_url, $this->getOrbitSessionQueryStringName());
-            // $redirect_to_url = $this->add_querystring_var($redirect_to_url, $this->getOrbitSessionQueryStringName(), $urlblock->getUserSession()->getSessionId());
 
             return Redirect::to($redirect_to_url);
         }
@@ -1591,8 +1586,7 @@ class MobileCIAPIController extends BaseCIController
         $widget = null;
         try {
             $user = $this->getLoggedInUser();
-            $urlblock = new UrlBlock($this->session, $user);
-            $user = $urlblock->checkBlockedUrl();
+            UrlBlock::checkBlockedUrl($user);
 
             $retailer = $this->getRetailerInfo();
 
@@ -1642,7 +1636,10 @@ class MobileCIAPIController extends BaseCIController
                 }
             }
 
-            $newWidget->save();
+            $specialWidget  = array('service', 'free_wifi');
+            if (in_array( strtolower($widget->widget_type), $specialWidget)) {
+                $newWidget->save();
+            }
 
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
@@ -1687,12 +1684,11 @@ class MobileCIAPIController extends BaseCIController
                                    ->setActivityType('view');
         try {
             $user = $this->getLoggedInUser();
-            $urlblock = new UrlBlock($this->session, $user);
-            $user = $urlblock->checkBlockedUrl();
+            UrlBlock::checkBlockedUrl($user);
 
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
-            Coupon::issueAutoCoupon($retailer, $user, $urlblock->getUserSession());
+            Coupon::issueAutoCoupon($retailer, $user, $this->session);
             $languages = $this->getListLanguages($retailer);
             $pageTitle = Lang::get('mobileci.page_title.my_account');
 
@@ -1723,7 +1719,8 @@ class MobileCIAPIController extends BaseCIController
                     'user' => $user,
                     'retailer' => $retailer,
                     'languages' => $languages,
-                    'urlblock' => $urlblock,
+                    'session' => $this->session,
+                    'is_logged_in' => UrlBlock::isLoggedIn($this->session),
                     'user_email' => $user->role->role_name !== 'Guest' ? $user->user_email : '',
                 ));
         } catch (Exception $e) {
@@ -1762,8 +1759,7 @@ class MobileCIAPIController extends BaseCIController
 
         try {
             $user = $this->getLoggedInUser();
-            $urlblock = new UrlBlock($this->session, $user);
-            $user = $urlblock->checkBlockedUrl();
+            UrlBlock::checkBlockedUrl($user);
 
             $retailer = $this->getRetailerInfo();
 
@@ -2076,7 +2072,6 @@ class MobileCIAPIController extends BaseCIController
     public function getLandingUrl($mall)
     {
         $user = $this->getLoggedInUser();
-        $urlblock = new UrlBlock($this->session, $user);
         $landing = Setting::getFromList($mall->settings, 'landing_page');
 
         // Get the landing page URL based on settings
@@ -2084,28 +2079,28 @@ class MobileCIAPIController extends BaseCIController
 
         switch ($landing[0]) {
             case 'tenant':
-                $landing_url = $urlblock->blockedRoute('ci-tenant-list');
+                $landing_url = UrlBlock::blockedRoute('ci-tenant-list', [], $this->session);
                 break;
 
             case 'promotion':
-                $landing_url = $urlblock->blockedRoute('ci-promotion-list');
+                $landing_url = UrlBlock::blockedRoute('ci-promotion-list', [], $this->session);
                 break;
 
             case 'news':
-                $landing_url = $urlblock->blockedRoute('ci-news-list');
+                $landing_url = UrlBlock::blockedRoute('ci-news-list', [], $this->session);
                 break;
 
             case 'my-coupon':
-                $landing_url = $urlblock->blockedRoute('ci-coupon-list');
+                $landing_url = UrlBlock::blockedRoute('ci-coupon-list', [], $this->session);
                 break;
 
             case 'lucky-draw':
-                $landing_url = $urlblock->blockedRoute('ci-luckydraw-list');
+                $landing_url = UrlBlock::blockedRoute('ci-luckydraw-list', [], $this->session);
                 break;
 
             case 'widget':
             default:
-                $landing_url = $urlblock->blockedRoute('ci-customer-home');
+                $landing_url = UrlBlock::blockedRoute('ci-customer-home', [], $this->session);
                 break;
         }
         return $landing_url;
@@ -2249,11 +2244,10 @@ class MobileCIAPIController extends BaseCIController
             // Require authentication
             $this->registerCustomValidation();
             $user = $this->getLoggedInUser();
-            $urlblock = new UrlBlock($this->session, $user);
-            $user = $urlblock->checkBlockedUrl();
+            UrlBlock::checkBlockedUrl($user);
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
-            Coupon::issueAutoCoupon($retailer, $user, $urlblock->getUserSession());
+            Coupon::issueAutoCoupon($retailer, $user, $this->session);
 
             $sort_by = OrbitInput::get('sort_by');
             $keyword = trim(OrbitInput::get('keyword'));
@@ -2583,7 +2577,7 @@ class MobileCIAPIController extends BaseCIController
                 return View::make('mobile-ci.404', array(
                     'page_title'=>Lang::get('mobileci.page_title.not_found'),
                     'retailer'=>$retailer,
-                    'urlblock' => $urlblock,
+                    'urlblock' => null,
                     'user' => $user,
                     'user_email' => $user->role->role_name !== 'Guest' ? $user->user_email : '',
                     'languages' => $languages
@@ -2941,7 +2935,8 @@ class MobileCIAPIController extends BaseCIController
                 'languages' => $languages,
                 'link_to_coupon_data' => $couponTenantRedeem,
                 'facebookInfo' => Config::get('orbit.social_login.facebook'),
-                'urlblock' => $urlblock
+                'session' => $this->session,
+                'is_logged_in' => UrlBlock::isLoggedIn($this->session),
             ));
 
         } catch (Exception $e) {
@@ -2978,11 +2973,10 @@ class MobileCIAPIController extends BaseCIController
         $tenant = null;
         try {
             $user = $this->getLoggedInUser();
-            $urlblock = new UrlBlock($this->session, $user);
-            $user = $urlblock->checkBlockedUrl();
+            UrlBlock::checkBlockedUrl($user);
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
-            Coupon::issueAutoCoupon($retailer, $user, $urlblock->getUserSession());
+            Coupon::issueAutoCoupon($retailer, $user, $this->session);
 
             $product_id = trim(OrbitInput::get('id'));
             $promo_id = trim(OrbitInput::get('pid'));
@@ -3123,7 +3117,12 @@ class MobileCIAPIController extends BaseCIController
                 $tenant = $tenant->with('categories');
             }
 
-            $tenant->select('merchants.*');
+            $prefix = DB::getTablePrefix();
+            $tenant->select(
+                    'merchants.*',
+                    DB::raw("(CASE WHEN unit = '' THEN {$prefix}objects.object_name ELSE CONCAT({$prefix}objects.object_name, \" - \", unit) END) AS location")
+                )
+                ->leftJoin('objects', 'objects.object_id', '=', 'merchants.floor_id');
             // $this->maybeJoinWithTranslationsTable($tenant, $alternateLanguage);
             $tenant = $tenant->first();
 
@@ -3375,7 +3374,8 @@ class MobileCIAPIController extends BaseCIController
                 'languages' => $languages,
                 'facebookInfo' => Config::get('orbit.social_login.facebook'),
                 'box_url' => $box_url,
-                'urlblock' => $urlblock,
+                'session' => $this->session,
+                'is_logged_in' => UrlBlock::isLoggedIn($this->session),
                 'user_email' => $user->role->role_name !== 'Guest' ? $user->user_email : '',
             ));
 
@@ -3414,11 +3414,10 @@ class MobileCIAPIController extends BaseCIController
         $service = null;
         try {
             $user = $this->getLoggedInUser();
-            $urlblock = new UrlBlock($this->session, $user);
-            $user = $urlblock->checkBlockedUrl();
+            UrlBlock::checkBlockedUrl($user);
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
-            Coupon::issueAutoCoupon($retailer, $user, $urlblock->getUserSession());
+            Coupon::issueAutoCoupon($retailer, $user, $this->session);
 
             $product_id = trim(OrbitInput::get('id'));
 
@@ -3475,7 +3474,12 @@ class MobileCIAPIController extends BaseCIController
                 $service = $service->with('categories');
             }
 
-            $service->select('merchants.*');
+            $prefix = DB::getTablePrefix();
+            $service->select(
+                    'merchants.*',
+                    DB::raw("(CASE WHEN unit = '' THEN {$prefix}objects.object_name ELSE CONCAT({$prefix}objects.object_name, \" - \", unit) END) AS location")
+                )
+                ->leftJoin('objects', 'objects.object_id', '=', 'merchants.floor_id');
             $service = $service->first();
 
             // Check translation for Merchant Translation
@@ -3549,7 +3553,8 @@ class MobileCIAPIController extends BaseCIController
                 'languages' => $languages,
                 // 'facebookInfo' => Config::get('orbit.social_login.facebook'),
                 'box_url' => $box_url,
-                'urlblock' => $urlblock,
+                'session' => $this->session,
+                'is_logged_in' => UrlBlock::isLoggedIn($this->session),
                 'user_email' => $user->role->role_name !== 'Guest' ? $user->user_email : '',
             ));
 
@@ -3593,8 +3598,7 @@ class MobileCIAPIController extends BaseCIController
         $user = null;
         try {
             $user = $this->getLoggedInUser();
-            $urlblock = new UrlBlock($this->session, $user);
-            $user = $urlblock->checkBlockedUrl();
+            UrlBlock::checkBlockedUrl($user);
 
             $sort_by = OrbitInput::get('sort_by');
             $keyword = trim(OrbitInput::get('keyword'));
@@ -3653,7 +3657,8 @@ class MobileCIAPIController extends BaseCIController
                 ->where('parent_id', $retailer->merchant_id);
 
             $prefix = DB::getTablePrefix();
-            $tenants->select('merchants.merchant_id',
+            $tenants->select(
+                        'merchants.merchant_id',
                         'objects.object_name as floor',
                         'unit',
                         DB::raw("(CASE WHEN unit = '' THEN {$prefix}objects.object_name ELSE CONCAT({$prefix}objects.object_name, \" - \", unit) END) AS location")
@@ -4085,7 +4090,7 @@ class MobileCIAPIController extends BaseCIController
                     }
                 }
                 $tenant->category_string = mb_strlen($category_string) > 30 ? mb_substr($category_string, 0, 30, 'UTF-8') . '...' : $category_string;
-                $tenant->url = $urlblock->blockedRoute('ci-tenant-detail' , ['id' => $tenant->merchant_id]);
+                $tenant->url = UrlBlock::blockedRoute('ci-tenant-detail' , ['id' => $tenant->merchant_id], $this->session);
                 $tenant->redirect_url = URL::route('ci-tenant-detail' , ['id' => $tenant->merchant_id]);
                 if (count($tenant->mediaLogo) > 0) {
                     foreach ($tenant->mediaLogo as $media) {
@@ -4195,11 +4200,10 @@ class MobileCIAPIController extends BaseCIController
             // Require authentication
             $this->registerCustomValidation();
             $user = $this->getLoggedInUser();
-            $urlblock = new UrlBlock($this->session, $user);
-            $user = $urlblock->checkBlockedUrl();
+            UrlBlock::checkBlockedUrl($user);
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
-            Coupon::issueAutoCoupon($retailer, $user, $urlblock->getUserSession());
+            Coupon::issueAutoCoupon($retailer, $user, $this->session);
 
             $sort_by = OrbitInput::get('sort_by');
             $keyword = trim(OrbitInput::get('keyword'));
@@ -4347,7 +4351,8 @@ class MobileCIAPIController extends BaseCIController
                 return View::make('mobile-ci.404', array(
                     'page_title'=>Lang::get('mobileci.page_title.not_found'),
                     'retailer'=>$retailer,
-                    'urlblock' => $urlblock,
+                    'session' => $this->session,
+                    'is_logged_in' => UrlBlock::isLoggedIn($this->session),
                     'user' => $user,
                     'user_email' => $user->role->role_name !== 'Guest' ? $user->user_email : '',
                     'languages' => $languages
@@ -4500,7 +4505,8 @@ class MobileCIAPIController extends BaseCIController
                 'user_email' => $user->role->role_name !== 'Guest' ? $user->user_email : '',
                 'languages' => $languages,
                 'facebookInfo' => Config::get('orbit.social_login.facebook'),
-                'urlblock' => $urlblock
+                'session' => $this->session,
+                'is_logged_in' => UrlBlock::isLoggedIn($this->session),
             ));
 
 
@@ -4530,8 +4536,7 @@ class MobileCIAPIController extends BaseCIController
         $user = null;
         try {
             $user = $this->getLoggedInUser();
-            $urlblock = new UrlBlock($this->session, $user);
-            $user = $urlblock->checkBlockedUrl();
+            UrlBlock::checkBlockedUrl($user);
 
             $sort_by = OrbitInput::get('sort_by');
             $keyword = trim(OrbitInput::get('keyword'));
@@ -4593,7 +4598,9 @@ class MobileCIAPIController extends BaseCIController
                 ->where('merchants.object_type', 'service')
                 ->where('parent_id', $retailer->merchant_id);
 
-            $service->select('merchants.merchant_id',
+            $prefix = DB::getTablePrefix();
+            $service->select(
+                        'merchants.merchant_id',
                         'objects.object_name as floor',
                         'unit',
                         DB::raw("(CASE WHEN unit = '' THEN {$prefix}objects.object_name ELSE CONCAT({$prefix}objects.object_name, \" - \", unit) END) AS location")
@@ -4757,7 +4764,7 @@ class MobileCIAPIController extends BaseCIController
                     }
                 }
                 $service->category_string = mb_strlen($category_string) > 30 ? mb_substr($category_string, 0, 30, 'UTF-8') . '...' : $category_string;
-                $service->url = $urlblock->blockedRoute('ci-service-detail' , ['id' => $service->merchant_id]);
+                $service->url = UrlBlock::blockedRoute('ci-service-detail' , ['id' => $service->merchant_id], $this->session);
                 $service->redirect_url = URL::route('ci-service-detail' , ['id' => $service->merchant_id]);
                 if (count($service->mediaLogo) > 0) {
                     foreach ($service->mediaLogo as $media) {
@@ -4839,11 +4846,10 @@ class MobileCIAPIController extends BaseCIController
             ->setActivityType('view');
         try {
             $user = $this->getLoggedInUser();
-            $urlblock = new UrlBlock($this->session, $user);
-            $user = $urlblock->checkBlockedUrl();
+            UrlBlock::checkBlockedUrl($user);
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
-            Coupon::issueAutoCoupon($retailer, $user, $urlblock->getUserSession());
+            Coupon::issueAutoCoupon($retailer, $user, $this->session);
 
             $languages = $this->getListLanguages($retailer);
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
@@ -4987,7 +4993,8 @@ class MobileCIAPIController extends BaseCIController
                 'languages' => $languages,
                 'user_email' => $user->role->role_name !== 'Guest' ? $user->user_email : '',
                 'user' => $user,
-                'urlblock' => $urlblock
+                'session' => $this->session,
+                'is_logged_in' => UrlBlock::isLoggedIn($this->session),
             );
 
             return View::make('mobile-ci.luckydraws', $view_data);
@@ -5020,8 +5027,7 @@ class MobileCIAPIController extends BaseCIController
             // Require authentication
             $this->registerCustomValidation();
             $user = $this->getLoggedInUser();
-            $urlblock = new UrlBlock($this->session, $user);
-            $user = $urlblock->checkBlockedUrl();
+            UrlBlock::checkBlockedUrl($user);
             $retailer = $this->getRetailerInfo();
 
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
@@ -5137,7 +5143,7 @@ class MobileCIAPIController extends BaseCIController
 
             foreach ($listOfRec as $item) {
                 $item->image = empty($item->image) ? URL::asset('mobile-ci/images/default_lucky_number.png') : URL::asset($item->image);
-                $item->url = $urlblock->blockedRoute('ci-luckydraw-detail', ['id' => $item->lucky_draw_id]);
+                $item->url = UrlBlock::blockedRoute('ci-luckydraw-detail', ['id' => $item->lucky_draw_id], $this->session);
                 $item->redirect_url = URL::route('ci-luckydraw-detail', ['id' => $item->lucky_draw_id]);
                 $item->name = mb_strlen($item->lucky_draw_name) > 64 ? mb_substr($item->lucky_draw_name, 0, 64) . '...' : $item->lucky_draw_name;
                 $item->item_id = $item->lucky_draw_id;
@@ -5202,11 +5208,10 @@ class MobileCIAPIController extends BaseCIController
         $product = null;
         try {
             $user = $this->getLoggedInUser();
-            $urlblock = new UrlBlock($this->session, $user);
-            $user = $urlblock->checkBlockedUrl();
+            UrlBlock::checkBlockedUrl($user);
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
-            Coupon::issueAutoCoupon($retailer, $user, $urlblock->getUserSession());
+            Coupon::issueAutoCoupon($retailer, $user, $this->session);
 
             $lucky_draw_id = OrbitInput::get('id');
 
@@ -5231,6 +5236,8 @@ class MobileCIAPIController extends BaseCIController
                                 'current_page'  => null,
                                 'per_page'      => null,
                                 'servertime'    => null,
+                                'session' => $this->session,
+                                'is_logged_in' => UrlBlock::isLoggedIn($this->session),
                 ]);
             }
 
@@ -5280,7 +5287,7 @@ class MobileCIAPIController extends BaseCIController
                 }
             }
 
-            if (! $urlblock->isGuest($user)) {
+            if (! UrlBlock::isGuest($user)) {
                 // Pass information to the API
                 $_GET['user_id'] = $user->user_id;
                 $_GET['apikey'] = $user->apikey->api_key;
@@ -5382,7 +5389,8 @@ class MobileCIAPIController extends BaseCIController
                                 'languages'     => $languages,
                                 'paginationPage'=> $paginationPage,
                                 'facebookInfo' => Config::get('orbit.social_login.facebook'),
-                                'urlblock' => $urlblock,
+                                'session' => $this->session,
+                                'is_logged_in' => UrlBlock::isLoggedIn($this->session),
                                 'user_email' => $user->role->role_name !== 'Guest' ? $user->user_email : '',
             ]);
         } catch (Exception $e) {
@@ -5418,11 +5426,10 @@ class MobileCIAPIController extends BaseCIController
 
         try {
             $user = $this->getLoggedInUser();
-            $urlblock = new UrlBlock($this->session, $user);
-            $user = $urlblock->checkBlockedUrl();
+            UrlBlock::checkBlockedUrl($user);
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
-            Coupon::issueAutoCoupon($retailer, $user, $urlblock->getUserSession());
+            Coupon::issueAutoCoupon($retailer, $user, $this->session);
 
             $lucky_draw_id = OrbitInput::get('id');
 
@@ -5574,7 +5581,8 @@ class MobileCIAPIController extends BaseCIController
                                 'luckydraw'     => $luckydraw,
                                 'languages'     => $languages,
                                 'ongoing'       => $ongoing,
-                                'urlblock' => $urlblock,
+                                'session' => $this->session,
+                                'is_logged_in' => UrlBlock::isLoggedIn($this->session),
                                 'user_email' => $user->role->role_name !== 'Guest' ? $user->user_email : '',
             ]);
         } catch (Exception $e) {
@@ -5650,11 +5658,10 @@ class MobileCIAPIController extends BaseCIController
             // Require authentication
             $this->registerCustomValidation();
             $user = $this->getLoggedInUser();
-            $urlblock = new UrlBlock($this->session, $user);
-            $user = $urlblock->checkBlockedUrl();
+            UrlBlock::checkBlockedUrl($user);
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
-            Coupon::issueAutoCoupon($retailer, $user, $urlblock->getUserSession());
+            Coupon::issueAutoCoupon($retailer, $user, $this->session);
 
             $pagetitle = Lang::get('mobileci.page_title.coupons');
 
@@ -5873,7 +5880,8 @@ class MobileCIAPIController extends BaseCIController
                 'active_user' => ($user->status === 'active'),
                 'languages' => $languages,
                 'user' => $user,
-                'urlblock' => $urlblock,
+                'session' => $this->session,
+                'is_logged_in' => UrlBlock::isLoggedIn($this->session),
                 'user_email' => $user->role->role_name !== 'Guest' ? $user->user_email : '',
             );
             return View::make('mobile-ci.mall-coupon-list', $view_data);
@@ -5910,8 +5918,7 @@ class MobileCIAPIController extends BaseCIController
             // Require authentication
             $this->registerCustomValidation();
             $user = $this->getLoggedInUser();
-            $urlblock = new UrlBlock($this->session, $user);
-            $user = $urlblock->checkBlockedUrl();
+            UrlBlock::checkBlockedUrl($user);
             $retailer = $this->getRetailerInfo();
 
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
@@ -6092,7 +6099,7 @@ class MobileCIAPIController extends BaseCIController
 
             foreach ($listOfRec as $item) {
                 $item->image = empty($item->image) ? URL::asset('mobile-ci/images/default_news.png') : URL::asset($item->image);
-                $item->url = $urlblock->blockedRoute('ci-coupon-detail', ['id' => $item->issued_coupon_id]);
+                $item->url = UrlBlock::blockedRoute('ci-coupon-detail', ['id' => $item->issued_coupon_id], $this->session);
                 $item->redirect_url = URL::route('ci-coupon-detail', ['id' => $item->issued_coupon_id]);
                 $item->name = mb_strlen($item->promotion_name) > 64 ? mb_substr($item->promotion_name, 0, 64) . '...' : $item->promotion_name;
                 $item->item_id = $item->promotion_id;
@@ -6157,11 +6164,10 @@ class MobileCIAPIController extends BaseCIController
                                    ->setActivityType('view');
         try {
             $user = $this->getLoggedInUser();
-            $urlblock = new UrlBlock($this->session, $user);
-            $user = $urlblock->checkBlockedUrl();
+            UrlBlock::checkBlockedUrl($user);
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
-            Coupon::issueAutoCoupon($retailer, $user, $urlblock->getUserSession());
+            Coupon::issueAutoCoupon($retailer, $user, $this->session);
 
             $promotion_id = trim(OrbitInput::get('id'));
 
@@ -6394,7 +6400,8 @@ class MobileCIAPIController extends BaseCIController
                 'cs_reedem' => $cs_reedem,
                 'link_to_all_tenant' => $linkToAllTenant,
                 'facebookInfo' => Config::get('orbit.social_login.facebook'),
-                'urlblock' => $urlblock,
+                'session' => $this->session,
+                'is_logged_in' => UrlBlock::isLoggedIn($this->session),
                 'user_email' => $user->role->role_name !== 'Guest' ? $user->user_email : '',
             ));
 
@@ -6431,11 +6438,10 @@ class MobileCIAPIController extends BaseCIController
                                    ->setActivityType('view');
         try {
             $user = $this->getLoggedInUser();
-            $urlblock = new UrlBlock($this->session, $user);
-            $user = $urlblock->checkBlockedUrl();
+            UrlBlock::checkBlockedUrl($user);
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
-            Coupon::issueAutoCoupon($retailer, $user, $urlblock->getUserSession());
+            Coupon::issueAutoCoupon($retailer, $user, $this->session);
 
             $coupon_id = trim(OrbitInput::get('id'));
             $languages = $this->getListLanguages($retailer);
@@ -6537,7 +6543,8 @@ class MobileCIAPIController extends BaseCIController
                 'cs_reedem' => $cs_reedem,
                 'link_to_all_tenant' => $linkToAllTenant,
                 'facebookInfo' => Config::get('orbit.social_login.facebook'),
-                'urlblock' => $urlblock,
+                'session' => $this->session,
+                'is_logged_in' => UrlBlock::isLoggedIn($this->session),
                 'user_email' => $user->role->role_name !== 'Guest' ? $user->user_email : '',
             ));
 
@@ -6588,11 +6595,10 @@ class MobileCIAPIController extends BaseCIController
             // Require authentication
             $this->registerCustomValidation();
             $user = $this->getLoggedInUser();
-            $urlblock = new UrlBlock($this->session, $user);
-            $user = $urlblock->checkBlockedUrl();
+            UrlBlock::checkBlockedUrl($user);
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
-            Coupon::issueAutoCoupon($retailer, $user, $urlblock->getUserSession());
+            Coupon::issueAutoCoupon($retailer, $user, $this->session);
 
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
 
@@ -6784,7 +6790,8 @@ class MobileCIAPIController extends BaseCIController
                 'languages' => $languages,
                 'user_email' => $user->role->role_name !== 'Guest' ? $user->user_email : '',
                 'user' => $user,
-                'urlblock' => $urlblock
+                'session' => $this->session,
+                'is_logged_in' => UrlBlock::isLoggedIn($this->session),
             );
             return View::make('mobile-ci.mall-promotion-list', $view_data);
 
@@ -6817,8 +6824,7 @@ class MobileCIAPIController extends BaseCIController
             // Require authentication
             $this->registerCustomValidation();
             $user = $this->getLoggedInUser();
-            $urlblock = new UrlBlock($this->session, $user);
-            $user = $urlblock->checkBlockedUrl();
+            UrlBlock::checkBlockedUrl($user);
             $retailer = $this->getRetailerInfo();
 
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
@@ -6982,7 +6988,7 @@ class MobileCIAPIController extends BaseCIController
 
             foreach ($listOfRec as $item) {
                 $item->image = empty($item->image) ? URL::asset('mobile-ci/images/default_promotion.png') : URL::asset($item->image);
-                $item->url = $urlblock->blockedRoute('ci-promotion-detail', ['id' => $item->news_id]);
+                $item->url = UrlBlock::blockedRoute('ci-promotion-detail', ['id' => $item->news_id], $this->session);
                 $item->redirect_url = URL::route('ci-promotion-detail', ['id' => $item->news_id]);
                 $item->name = mb_strlen($item->news_name) > 64 ? mb_substr($item->news_name, 0, 64) . '...' : $item->news_name;
                 $item->item_id = $item->news_id;
@@ -7048,11 +7054,10 @@ class MobileCIAPIController extends BaseCIController
         $promotion = null;
         try {
             $user = $this->getLoggedInUser();
-            $urlblock = new UrlBlock($this->session, $user);
-            $user = $urlblock->checkBlockedUrl();
+            UrlBlock::checkBlockedUrl($user);
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
-            Coupon::issueAutoCoupon($retailer, $user, $urlblock->getUserSession());
+            Coupon::issueAutoCoupon($retailer, $user, $this->session);
 
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
 
@@ -7208,11 +7213,10 @@ class MobileCIAPIController extends BaseCIController
             // Require authentication
             $this->registerCustomValidation();
             $user = $this->getLoggedInUser();
-            $urlblock = new UrlBlock($this->session, $user);
-            $user = $urlblock->checkBlockedUrl();
+            UrlBlock::checkBlockedUrl($user);
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
-            Coupon::issueAutoCoupon($retailer, $user, $urlblock->getUserSession());
+            Coupon::issueAutoCoupon($retailer, $user, $this->session);
 
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
 
@@ -7406,7 +7410,8 @@ class MobileCIAPIController extends BaseCIController
                 'languages' => $languages,
                 'user_email' => $user->role->role_name !== 'Guest' ? $user->user_email : '',
                 'user' => $user,
-                'urlblock' => $urlblock
+                'session' => $this->session,
+                'is_logged_in' => UrlBlock::isLoggedIn($this->session),
             );
             return View::make('mobile-ci.mall-news-list', $view_data);
 
@@ -7438,8 +7443,7 @@ class MobileCIAPIController extends BaseCIController
             // Require authentication
             $this->registerCustomValidation();
             $user = $this->getLoggedInUser();
-            $urlblock = new UrlBlock($this->session, $user);
-            $user = $urlblock->checkBlockedUrl();
+            UrlBlock::checkBlockedUrl($user);
             $retailer = $this->getRetailerInfo();
 
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
@@ -7604,7 +7608,7 @@ class MobileCIAPIController extends BaseCIController
 
             foreach ($listOfRec as $item) {
                 $item->image = empty($item->image) ? URL::asset('mobile-ci/images/default_news.png') : URL::asset($item->image);
-                $item->url = $urlblock->blockedRoute('ci-promotion-detail', ['id' => $item->news_id]);
+                $item->url = UrlBlock::blockedRoute('ci-promotion-detail', ['id' => $item->news_id], $this->session);
                 $item->redirect_url = URL::route('ci-promotion-detail', ['id' => $item->news_id]);
                 $item->name = mb_strlen($item->news_name) > 64 ? mb_substr($item->news_name, 0, 64) . '...' : $item->news_name;
                 $item->item_id = $item->news_id;
@@ -7670,11 +7674,10 @@ class MobileCIAPIController extends BaseCIController
         $product = null;
         try {
             $user = $this->getLoggedInUser();
-            $urlblock = new UrlBlock($this->session, $user);
-            $user = $urlblock->checkBlockedUrl();
+            UrlBlock::checkBlockedUrl($user);
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
-            Coupon::issueAutoCoupon($retailer, $user, $urlblock->getUserSession());
+            Coupon::issueAutoCoupon($retailer, $user, $this->session);
 
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
 
@@ -7793,7 +7796,8 @@ class MobileCIAPIController extends BaseCIController
                 'languages' => $languages,
                 'all_tenant_inactive' => $allTenantInactive,
                 'facebookInfo' => Config::get('orbit.social_login.facebook'),
-                'urlblock' => $urlblock,
+                'session' => $this->session,
+                'is_logged_in' => UrlBlock::isLoggedIn($this->session),
                 'user_email' => $user->role->role_name !== 'Guest' ? $user->user_email : '',
             ));
 
@@ -7832,11 +7836,10 @@ class MobileCIAPIController extends BaseCIController
             // Require authentication
             $this->registerCustomValidation();
             $user = $this->getLoggedInUser();
-            $urlblock = new UrlBlock($this->session, $user);
-            $user = $urlblock->checkBlockedUrl();
+            UrlBlock::checkBlockedUrl($user);
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
-            Coupon::issueAutoCoupon($retailer, $user, $urlblock->getUserSession());
+            Coupon::issueAutoCoupon($retailer, $user, $this->session);
 
             $languages = $this->getListLanguages($retailer);
 
@@ -7857,7 +7860,8 @@ class MobileCIAPIController extends BaseCIController
                 'languages' => $languages,
                 'user_email' => $user->role->role_name !== 'Guest' ? $user->user_email : '',
                 'user' => $user,
-                'urlblock' => $urlblock
+                'session' => $this->session,
+                'is_logged_in' => UrlBlock::isLoggedIn($this->session),
             );
             return View::make('mobile-ci.mall-notifications-list', $view_data);
 
@@ -7897,11 +7901,10 @@ class MobileCIAPIController extends BaseCIController
             // Require authentication
             $this->registerCustomValidation();
             $user = $this->getLoggedInUser();
-            $urlblock = new UrlBlock($this->session, $user);
-            $user = $urlblock->checkBlockedUrl();
+            UrlBlock::checkBlockedUrl($user);
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
-            Coupon::issueAutoCoupon($retailer, $user, $urlblock->getUserSession());
+            Coupon::issueAutoCoupon($retailer, $user, $this->session);
 
             $languages = $this->getListLanguages($retailer);
 
@@ -7988,7 +7991,8 @@ class MobileCIAPIController extends BaseCIController
                 'user_email' => $user->role->role_name !== 'Guest' ? $user->user_email : '',
                 'user' => $user,
                 'inbox' => $inbox,
-                'urlblock' => $urlblock
+                'session' => $this->session,
+                'is_logged_in' => UrlBlock::isLoggedIn($this->session),
             );
             return View::make('mobile-ci.mall-notification-detail', $view_data);
 
@@ -8020,8 +8024,7 @@ class MobileCIAPIController extends BaseCIController
     {
         try {
             $user = $this->getLoggedInUser();
-            $urlblock = new UrlBlock($this->session, $user);
-            $user = $urlblock->checkBlockedUrl();
+            UrlBlock::checkBlockedUrl($user);
             $retailer = $this->getRetailerInfo();
             $lucky_draw_id = OrbitInput::get('id');
             $languages = $this->getListLanguages($retailer);
@@ -8080,7 +8083,8 @@ class MobileCIAPIController extends BaseCIController
                                      'number_per_image'  => $totalPerImage,
                                      'languages' => $languages,
                                      'lucky_draw_id' => $lucky_draw_id,
-                                     'urlblock' => $urlblock
+                                     'session' => $this->session,
+                                     'is_logged_in' => UrlBlock::isLoggedIn($this->session),
                     ]);
             }
         } catch (Exception $e) {
@@ -8106,8 +8110,7 @@ class MobileCIAPIController extends BaseCIController
             // Require authentication
             $this->registerCustomValidation();
             $user = $this->getLoggedInUser();
-            $urlblock = new UrlBlock($this->session, $user);
-            $user = $urlblock->checkBlockedUrl();
+            UrlBlock::checkBlockedUrl($user);
             $retailer = $this->getRetailerInfo();
 
             $alternateLanguage = null;
@@ -8239,15 +8242,15 @@ class MobileCIAPIController extends BaseCIController
             foreach($end_results as $near_end_result) {
                 $near_end_result->campaign_link = Lang::get('mobileci.campaign_cards.go_to_page');
                 if ($near_end_result->campaign_type === 'promotion') {
-                    $near_end_result->campaign_url = $urlblock->blockedRoute('ci-promotion-detail', ['id' => $near_end_result->campaign_id]);
+                    $near_end_result->campaign_url = UrlBlock::blockedRoute('ci-promotion-detail', ['id' => $near_end_result->campaign_id], $this->session);
                     $near_end_result->redirect_campaign_url = URL::route('ci-promotion-detail', ['id' => $near_end_result->campaign_id]);
                     $near_end_result->campaign_image = URL::asset('mobile-ci/images/default_promotion.png');
                 } elseif ($near_end_result->campaign_type === 'news') {
-                    $near_end_result->campaign_url = $urlblock->blockedRoute('ci-news-detail', ['id' => $near_end_result->campaign_id]);
+                    $near_end_result->campaign_url = UrlBlock::blockedRoute('ci-news-detail', ['id' => $near_end_result->campaign_id], $this->session);
                     $near_end_result->redirect_campaign_url = URL::route('ci-news-detail', ['id' => $near_end_result->campaign_id]);
                     $near_end_result->campaign_image = URL::asset('mobile-ci/images/default_news.png');
                 } elseif ($near_end_result->campaign_type === 'coupon') {
-                    $near_end_result->campaign_url = $urlblock->blockedRoute('ci-coupon-detail', ['id' => $near_end_result->campaign_id]);
+                    $near_end_result->campaign_url = UrlBlock::blockedRoute('ci-coupon-detail', ['id' => $near_end_result->campaign_id], $this->session);
                     $near_end_result->redirect_campaign_url = URL::route('ci-coupon-detail', ['id' => $near_end_result->campaign_id]);
                     $near_end_result->campaign_image = URL::asset('mobile-ci/images/default_coupon.png');
                 }
@@ -8430,8 +8433,7 @@ class MobileCIAPIController extends BaseCIController
             // Require authentication
             $this->registerCustomValidation();
             $user = $this->getLoggedInUser();
-            $urlblock = new UrlBlock($this->session, $user);
-            $user = $urlblock->checkBlockedUrl();
+            UrlBlock::checkBlockedUrl($user);
             $retailer = $this->getRetailerInfo();
 
             $alternateLanguage = null;
@@ -8693,44 +8695,44 @@ class MobileCIAPIController extends BaseCIController
             $grouped_search_result = new stdclass();
             $grouped_search_result->tenants = [];
             $grouped_search_result->tenants_counts = $_tenant->count();
-            $grouped_search_result->tenants_url = $urlblock->blockedRoute('ci-tenant-list', ['keyword' => htmlspecialchars($keyword)]);
+            $grouped_search_result->tenants_url = UrlBlock::blockedRoute('ci-tenant-list', ['keyword' => htmlspecialchars($keyword)], $this->session);
             $grouped_search_result->tenants_redirect_url = URL::route('ci-tenant-list', ['keyword' => htmlspecialchars($keyword)]);
             $grouped_search_result->services = [];
             $grouped_search_result->services_counts = $_service->count();
-            $grouped_search_result->services_url = $urlblock->blockedRoute('ci-service-list', ['keyword' => htmlspecialchars($keyword)]);
+            $grouped_search_result->services_url = UrlBlock::blockedRoute('ci-service-list', ['keyword' => htmlspecialchars($keyword)], $this->session);
             $grouped_search_result->services_redirect_url = URL::route('ci-service-list', ['keyword' => htmlspecialchars($keyword)]);
             $grouped_search_result->news = [];
             $grouped_search_result->news_counts = $_news->count();
-            $grouped_search_result->news_url = $urlblock->blockedRoute('ci-news-list', ['keyword' => htmlspecialchars($keyword)]);
+            $grouped_search_result->news_url = UrlBlock::blockedRoute('ci-news-list', ['keyword' => htmlspecialchars($keyword)], $this->session);
             $grouped_search_result->news_redirect_url = URL::route('ci-news-list', ['keyword' => htmlspecialchars($keyword)]);
             $grouped_search_result->promotions = [];
             $grouped_search_result->promotions_counts = $_promo->count();
-            $grouped_search_result->promotions_url = $urlblock->blockedRoute('ci-promotion-list', ['keyword' => htmlspecialchars($keyword)]);
+            $grouped_search_result->promotions_url = UrlBlock::blockedRoute('ci-promotion-list', ['keyword' => htmlspecialchars($keyword)], $this->session);
             $grouped_search_result->promotions_redirect_url = URL::route('ci-promotion-list', ['keyword' => htmlspecialchars($keyword)]);
             $grouped_search_result->coupons = [];
             $grouped_search_result->coupons_counts = count($_coupon->groupBy('promotions.promotion_id')->get());
-            $grouped_search_result->coupons_url = $urlblock->blockedRoute('ci-coupon-list', ['keyword' => htmlspecialchars($keyword)]);
+            $grouped_search_result->coupons_url = UrlBlock::blockedRoute('ci-coupon-list', ['keyword' => htmlspecialchars($keyword)], $this->session);
             $grouped_search_result->coupons_redirect_url = URL::route('ci-coupon-list', ['keyword' => htmlspecialchars($keyword)]);
             $grouped_search_result->lucky_draws = [];
             $grouped_search_result->lucky_draws_counts = $_lucky_draw->count();
-            $grouped_search_result->lucky_draws_url = $urlblock->blockedRoute('ci-luckydraw-list', ['keyword' => htmlspecialchars($keyword)]);
+            $grouped_search_result->lucky_draws_url = UrlBlock::blockedRoute('ci-luckydraw-list', ['keyword' => htmlspecialchars($keyword)], $this->session);
             $grouped_search_result->lucky_draws_redirect_url = URL::route('ci-luckydraw-list', ['keyword' => htmlspecialchars($keyword)]);
 
             foreach($search_results as $near_end_result) {
                 if ($near_end_result->object_type === 'promotion') {
-                    $near_end_result->object_url = $urlblock->blockedRoute('ci-promotion-detail', ['id' => $near_end_result->object_id]);
+                    $near_end_result->object_url = UrlBlock::blockedRoute('ci-promotion-detail', ['id' => $near_end_result->object_id], $this->session);
                     $near_end_result->object_redirect_url = URL::route('ci-promotion-detail', ['id' => $near_end_result->object_id]);
                     $near_end_result->object_image = URL::asset('mobile-ci/images/default_promotion.png');
                 } elseif ($near_end_result->object_type === 'news') {
-                    $near_end_result->object_url = $urlblock->blockedRoute('ci-news-detail', ['id' => $near_end_result->object_id]);
+                    $near_end_result->object_url = UrlBlock::blockedRoute('ci-news-detail', ['id' => $near_end_result->object_id], $this->session);
                     $near_end_result->object_redirect_url = URL::route('ci-news-detail', ['id' => $near_end_result->object_id]);
                     $near_end_result->object_image = URL::asset('mobile-ci/images/default_news.png');
                 } elseif ($near_end_result->object_type === 'coupon') {
-                    $near_end_result->object_url = $urlblock->blockedRoute('ci-coupon-detail', ['id' => $near_end_result->object_id]);
+                    $near_end_result->object_url = UrlBlock::blockedRoute('ci-coupon-detail', ['id' => $near_end_result->object_id], $this->session);
                     $near_end_result->object_redirect_url = URL::route('ci-coupon-detail', ['id' => $near_end_result->object_id]);
                     $near_end_result->object_image = URL::asset('mobile-ci/images/default_coupon.png');
                 } elseif ($near_end_result->object_type === 'tenant') {
-                    $near_end_result->object_url = $urlblock->blockedRoute('ci-tenant-detail', ['id' => $near_end_result->object_id]);
+                    $near_end_result->object_url = UrlBlock::blockedRoute('ci-tenant-detail', ['id' => $near_end_result->object_id], $this->session);
                     $near_end_result->object_redirect_url = URL::route('ci-tenant-detail', ['id' => $near_end_result->object_id]);
                     if (! is_null($near_end_result->object_image)) {
                         $near_end_result->object_image = URL::asset($near_end_result->object_image);
@@ -8738,7 +8740,7 @@ class MobileCIAPIController extends BaseCIController
                         $near_end_result->object_image = URL::asset('mobile-ci/images/default_tenants_directory.png');
                     }
                 } elseif ($near_end_result->object_type === 'service') {
-                    $near_end_result->object_url = $urlblock->blockedRoute('ci-service-detail', ['id' => $near_end_result->object_id]);
+                    $near_end_result->object_url = UrlBlock::blockedRoute('ci-service-detail', ['id' => $near_end_result->object_id], $this->session);
                     $near_end_result->object_redirect_url = URL::route('ci-service-detail', ['id' => $near_end_result->object_id]);
                     if (! is_null($near_end_result->object_image)) {
                         $near_end_result->object_image = URL::asset($near_end_result->object_image);
@@ -8746,7 +8748,7 @@ class MobileCIAPIController extends BaseCIController
                         $near_end_result->object_image = URL::asset('mobile-ci/images/default_services_directory.png');
                     }
                 } elseif ($near_end_result->object_type === 'lucky_draw') {
-                    $near_end_result->object_url = $urlblock->blockedRoute('ci-luckydraw-detail', ['id' => $near_end_result->object_id]);
+                    $near_end_result->object_url = UrlBlock::blockedRoute('ci-luckydraw-detail', ['id' => $near_end_result->object_id], $this->session);
                     $near_end_result->object_redirect_url = URL::route('ci-luckydraw-detail', ['id' => $near_end_result->object_id]);
                     $near_end_result->object_image = URL::asset('mobile-ci/images/default_lucky_number.png');
                 }
@@ -9465,8 +9467,8 @@ class MobileCIAPIController extends BaseCIController
             $user->setHidden(array('user_password', 'apikey'));
 
             // $user = $this->getLoggedInUser();
-            $urlblock = new UrlBlock($this->session, $user);
-            // Coupon::issueAutoCoupon($retailer, $user, $urlblock->getUserSession());
+            
+            // Coupon::issueAutoCoupon($retailer, $user, $this->session);
 
             $this->response->data = $user;
 
@@ -10177,15 +10179,6 @@ class MobileCIAPIController extends BaseCIController
             // link previous guest user to the real user
             $this->linkGuestToUser($user);
 
-            // Start the orbit session
-            $data = array(
-                'logged_in' => TRUE,
-                'user_id'   => $user->user_id,
-                'email'     => $user->user_email,
-                'role'      => $user->role->role_name,
-                'fullname'  => $user->getFullName(),
-            );
-
             $this->session->start(array(), 'no-session-creation');
             // get the session data
             $sessionData = $this->session->read(NULL);
@@ -10194,10 +10187,13 @@ class MobileCIAPIController extends BaseCIController
             $sessionData['email'] = $user->user_email;
             $sessionData['role'] = $user->role->role_name;
             $sessionData['fullname'] = $user->getFullName();
+            $sessionData['visited_location'] = [];
+            $sessionData['coupon_location'] = [];
 
+            $this->beginTransaction();
             // update the guest session data, append user data to it so the user will be recognized
             $this->session->update($sessionData);
-
+            $this->commit();
             // Send the session id via HTTP header
             $sessionHeader = $this->session->getSessionConfig()->getConfig('session_origin.header.name');
             $sessionHeader = 'Set-' . $sessionHeader;
@@ -10231,10 +10227,16 @@ class MobileCIAPIController extends BaseCIController
 
             // check guest user id on session if empty create new one
             if (empty($guest_id)) {
-                $urlblock = new UrlBlock($this->session, NULL);
                 $guest = GenerateGuestUser::generateGuestUser();
-
                 $guest_id = $guest->user_id;
+                $sessionData = $this->session->read(NULL);
+                $sessionData['logged_in'] = TRUE;
+                $sessionData['guest_user_id'] = $user->user_id;
+                $sessionData['guest_email'] = $user->user_email;
+                $sessionData['role'] = $user->role->role_name;
+                $sessionData['fullname'] = '';
+
+                $this->session->update($sessionData);
             }
 
             if ($transaction) {
@@ -10249,8 +10251,8 @@ class MobileCIAPIController extends BaseCIController
 
             $userSignin = DB::table('user_signin')->where('user_id', '=', $guest_id)->delete();
 
-            $listConnectedUser = DB::table('list_connected_user')->where('user_id', '=', $guest_id)->delete(); 
-            
+            $listConnectedUser = DB::table('list_connected_user')->where('user_id', '=', $guest_id)->delete();
+
             if ($transaction) {
                 $this->commit();
             }
@@ -10302,11 +10304,7 @@ class MobileCIAPIController extends BaseCIController
             $this->setSignUpActivity($user, $signUpVia, $retailer);
         }
 
-        // if the user is viewing the mall for the 1st time in this session
-        // then set also the sign in activity
-        $this->prepareSession();
-        $urlblock = new UrlBlock($this->session, $user);
-        $session = $urlblock->getUserSession();
+        $session = $this->session;
         $visited_locations = [];
         if (! empty($session->read('visited_location'))) {
             $visited_locations = $session->read('visited_location');
@@ -10443,11 +10441,10 @@ class MobileCIAPIController extends BaseCIController
             $user_obj = User::where('user_id', $user->user_id)->first();
             $this->acquireUser($retailer, $user_obj, 'form');
 
-            $urlblock = new UrlBlock($this->session, $user_obj);
             // append the redirect url to user object
             // remove the orbit_session from query string for this redirect url
             $user->redirect_to = $this->remove_querystring_var($to_url, $this->getOrbitSessionQueryStringName());
-            // $user->redirect_to = $this->add_querystring_var($user->redirect_to, $this->getOrbitSessionQueryStringName(), $urlblock->getUserSession()->getSessionId());
+            // $user->redirect_to = $this->add_querystring_var($user->redirect_to, $this->getOrbitSessionQueryStringName(), $this->session->getSessionId());
 
             // do the stage 2
             $notAllowedStatus = ['inactive'];
@@ -10477,7 +10474,7 @@ class MobileCIAPIController extends BaseCIController
             $user_detail->save();
 
             // auto coupon issuance checkwill happen on each page after the login success
-            Coupon::issueAutoCoupon($retailer, $user_obj, $urlblock->getUserSession());
+            Coupon::issueAutoCoupon($retailer, $user_obj, $this->session);
 
             DB::commit();
 

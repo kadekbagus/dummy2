@@ -15,6 +15,8 @@ use Setting;
 use MerchantLanguage;
 use \Redirect;
 use Orbit\Helper\Net\UrlChecker as UrlBlock;
+use Orbit\Helper\Net\GenerateGuestUser;
+use Orbit\Helper\Net\SessionPreparer;
 
 class BaseCIController extends ControllerAPI
 {
@@ -56,13 +58,9 @@ class BaseCIController extends ControllerAPI
      */
     protected function getLoggedInUser()
     {
-        $this->prepareSession();
+        $this->session = SessionPreparer::prepareSession();
 
         $userId = $this->session->read('user_id');
-
-        if ($this->session->read('logged_in') !== true || ! $userId) {
-            // throw new Exception('Invalid session data.');
-        }
 
         if (empty($this->retailer)) {
             $this->retailer = $this->getRetailerInfo();
@@ -86,13 +84,48 @@ class BaseCIController extends ControllerAPI
             ->first();
 
         if (! $user) {
-            $user = NULL;
-            // throw new Exception('Session error: user not found.');
+            $user = $this->getLoggedInGuest($this->session);
         } else {
             $_user = clone($user);
             if (count($_user->membershipNumbers)) {
                $user->membership_number = $_user->membershipNumbers[0]->membership_number;
             }
+        }
+
+        return $user;
+    }
+
+    /**
+     * Get current guest user from session.
+     *
+     * @author Ahmad <ahmad@dominopos.com>
+     * @return User $user
+     */
+    protected function getLoggedInGuest($session)
+    {
+        $userId = $session->read('guest_user_id');
+
+        if (! empty($userId)) {
+            $user = User::with('userDetail')
+                ->where('user_id', $userId)
+                ->whereHas('role', function($q) {
+                    $q->where('role_name', 'guest');
+                })
+                ->first();
+
+            if (! is_object($user)) {
+                $user = NULL;
+            }
+        } else {
+            $user = GenerateGuestUser::generateGuestUser();
+            $sessionData = $session->read(NULL);
+            $sessionData['logged_in'] = TRUE;
+            $sessionData['guest_user_id'] = $user->user_id;
+            $sessionData['guest_email'] = $user->user_email;
+            $sessionData['role'] = $user->role->role_name;
+            $sessionData['fullname'] = '';
+
+            $session->update($sessionData);
         }
 
         return $user;
@@ -239,13 +272,9 @@ class BaseCIController extends ControllerAPI
         $languages = $this->getListLanguages($retailer);
         $user = $this->getLoggedInUser();
 
-        $urlblock = new UrlBlock('no-prepare-session');
-        $urlblock->setUserSession($this->session);
-
         return [
             'user' => $user,
             'retailer' => $retailer,
-            'urlblock' => $urlblock,
             'languages' => $languages,
             'page_title' => $this->pageTitle,
             'user_email' => $this->getUserEmail($user)

@@ -69,18 +69,6 @@ class TenantCIAPIController extends BaseAPIController
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            // temporary parameter, should be removed when user authentication is present
-            OrbitInput::get('user_email', function($user_email) use(&$user) {
-                $user = User::excludeDeleted()
-                    ->where('user_email', $user_email)
-                    ->first();
-
-                if (! is_object($user)) {
-                    $errorMessage = 'User with given email not found.';
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-                }
-            });
-
             $prefix = DB::getTablePrefix();
 
             $gender_profile_query = '';
@@ -129,14 +117,16 @@ class TenantCIAPIController extends BaseAPIController
             ->select(
                 'merchants.merchant_id',
                 'name',
-                'floor',
+                'objects.object_name as floor',
                 'unit',
+                DB::raw("(CASE WHEN unit = '' THEN {$prefix}objects.object_name ELSE CONCAT({$prefix}objects.object_name, \" unit \", unit) END) AS location"),
                 'media.path as logo',
                 'merchant_social_media.social_media_uri as facebook_like_url',
                 DB::raw('CASE WHEN news_merch.news_counter > 0 THEN "true" ELSE "false" END as news_flag'),
                 DB::raw('CASE WHEN promo_merch.promotion_counter > 0 THEN "true" ELSE "false" END as promotion_flag'),
                 DB::raw('CASE WHEN coupon_merch.coupon_counter > 0 THEN "true" ELSE "false" END as coupon_flag')
             )
+            ->leftJoin('objects', 'objects.object_id', '=', 'merchants.floor_id')
             ->leftJoin('media', function ($join) {
                 $join->on('media.object_id', '=', 'merchants.merchant_id')
                     ->where('media_name_long', '=', 'retailer_logo_orig');
@@ -467,18 +457,6 @@ class TenantCIAPIController extends BaseAPIController
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            // temporary parameter, should be removed when user authentication is present
-            OrbitInput::get('user_email', function($user_email) use(&$user) {
-                $user = User::excludeDeleted()
-                    ->where('user_email', $user_email)
-                    ->first();
-
-                if (! is_object($user)) {
-                    $errorMessage = 'User with given email not found.';
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-                }
-            });
-
             $gender_profile_query = '';
             $age_profile_query = '';
 
@@ -509,6 +487,7 @@ class TenantCIAPIController extends BaseAPIController
 
             $mall = Mall::excludeDeleted()->where('merchant_id', $this->mall_id)->first();
             $mallTime = Carbon::now($mall->timezone->timezone_name);
+            $prefix = DB::getTablePrefix();
 
             $tenant = Tenant::with(
                 [
@@ -532,12 +511,14 @@ class TenantCIAPIController extends BaseAPIController
                 'merchants.merchant_id',
                 'merchants.name',
                 'merchants.description',
-                'merchants.floor',
+                'objects.object_name as floor',
                 'merchants.unit',
+                DB::raw("(CASE WHEN unit = '' THEN {$prefix}objects.object_name ELSE CONCAT({$prefix}objects.object_name, \" unit \", unit) END) AS location"),
                 'merchants.url',
                 'merchants.phone',
                 'merchant_social_media.social_media_uri as facebook_like_url'
             )
+            ->leftJoin('objects', 'objects.object_id', '=', 'merchants.floor_id')
             ->leftJoin('merchant_social_media', function ($join) {
                 $join->on('merchant_social_media.merchant_id', '=', 'merchants.merchant_id');
             })

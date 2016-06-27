@@ -56,6 +56,9 @@ Artisan::add(new MerchantGeolocation);
 // Tenant Import
 Artisan::add(new TenantImport);
 
+// Elasticsearch Migration
+Artisan::add(new ElasticsearchMigrationCommand);
+
 // Insert or update data on settings table
 // @Todo investigate why its error
 // Artisan::add(new MerchantSetting);
