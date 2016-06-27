@@ -763,12 +763,14 @@ class LoginAPIController extends IntermediateBaseController
             \MobileCI\MobileCIAPIController::create()->setSession($this->session)->linkGuestToUser($user, FALSE);
 
             // acquire user
-            $firstAcquired = $mall->acquireUser($user, 'form');
+            // todo: remove comment if the QA ok'ed this implementation, so it not affect dashboard
+            // $firstAcquired = $mall->acquireUser($user, 'form');
 
             // if the user is viewing the mall for the 1st time then set the signup activity
-            if ($firstAcquired) {
-                \MobileCI\MobileCIAPIController::create()->setSession($this->session)->setSignUpActivity($user, 'form', $mall);
-            }
+            // todo: remove comment if the QA ok'ed this implementation, so it not affect dashboard
+            // if ($firstAcquired) {
+                // \MobileCI\MobileCIAPIController::create()->setSession($this->session)->setSignUpActivity($user, 'form', $mall);
+            // }
 
             // if the user is viewing the mall for the 1st time in this session
             // then set also the sign in activity
@@ -777,7 +779,8 @@ class LoginAPIController extends IntermediateBaseController
                 $visited_locations = $this->session->read('visited_location');
             }
             if (! in_array($mall->merchant_id, $visited_locations)) {
-                \MobileCI\MobileCIAPIController::create()->setSession($this->session)->setSignInActivity($user, 'form', $mall, null);
+                // todo: remove comment if the QA ok'ed this implementation, so it not affect dashboard
+                // \MobileCI\MobileCIAPIController::create()->setSession($this->session)->setSignInActivity($user, 'form', $mall, null);
                 $this->session->write('visited_location', array_merge($visited_locations, [$mall->merchant_id]));
             }
 
@@ -788,7 +791,8 @@ class LoginAPIController extends IntermediateBaseController
             $user_detail->save();
 
             // auto coupon issuance checkwill happen on each page after the login success
-            \Coupon::issueAutoCoupon($mall, $user, $this->session);
+            // todo: remove comment if the QA ok'ed this implementation, so it not affect dashboard
+            // \Coupon::issueAutoCoupon($mall, $user, $this->session);
 
             DB::commit();
             $data = new stdClass();
