@@ -167,6 +167,8 @@ class PromotionCIAPIController extends BaseAPIController
                 }
             );
 
+            $this->viewItemUserUpdate('promotion', $user, $mall);
+
             $promotions = $promotions->groupBy('news.news_id');
 
             $_promotions = clone($promotions);
