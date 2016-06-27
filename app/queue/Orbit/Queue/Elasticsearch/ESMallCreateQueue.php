@@ -67,10 +67,8 @@ class ESMallCreateQueue
             ];
         }
 
-        $geofence = MerchantGeofence::latLong()->areaAsText()
-                                    ->where('merchant_id', $mallId)
-                                    ->first();
         $esConfig = Config::get('orbit.elasticsearch');
+        $geofence = MerchantGeofence::getDefaultValueForAreaAndPosition($mallId);
 
         try {
             $params = [
@@ -94,9 +92,7 @@ class ESMallCreateQueue
                     ],
                     'area' => [
                         'type' => 'polygon',
-                        'coordinates' => [
-                            MerchantGeofence::transformPolygonToElasticsearch($geofence->area)
-                        ]
+                        'coordinates' => $geofence->area
                     ]
                 ]
             ];

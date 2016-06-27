@@ -82,6 +82,104 @@ class ESMallCreateQueueTest extends ElasticsearchTestCase
         $this->assertSame($message, $response['message']);
     }
 
+    public function test_should_create_mall_and_indexed_to_elasticsearch_even_mall_does_not_have_geofence()
+    {
+        // Create mall in antartica
+        $mall = Factory::create('Mall');
+
+        $elasticQueue = new ESMallCreateQueue($this->es);
+        $data = ['mall_id' => $mall->merchant_id];
+
+        // Mock the response of ES->index($params)
+        $this->es->method('index')->willReturn([
+            '_index' => $this->esIndex,
+            '_type' => $this->esIndexType,
+            '_id' => $mall->merchant_id,
+            'created' => 1,
+            '_shards' => [
+                'total' => 2,
+                'successful' => 1,
+                'failed' => 0
+            ]
+        ]);
+
+        // Fire the event
+        $response = $elasticQueue->fire($this->job, $data);
+
+        $message = sprintf('[Job ID: `%s`] Elasticsearch Create Index; Status: OK; ES Index Name: %s; ES Index Type: %s',
+            $this->job->getJobId(), $this->esIndex, $this->esIndexType, $mall->merchant_id
+        );
+
+        $this->assertSame('ok', $response['status']);
+        $this->assertSame($message, $response['message']);
+    }
+
+    public function test_should_create_mall_and_indexed_to_elasticsearch_even_mall_does_not_have_area()
+    {
+        // Create mall in antartica
+        $geofence = Factory::create('MerchantGeofence', ['area' => NULL]);
+        $mall = $geofence->mall;
+
+        $elasticQueue = new ESMallCreateQueue($this->es);
+        $data = ['mall_id' => $mall->merchant_id];
+
+        // Mock the response of ES->index($params)
+        $this->es->method('index')->willReturn([
+            '_index' => $this->esIndex,
+            '_type' => $this->esIndexType,
+            '_id' => $mall->merchant_id,
+            'created' => 1,
+            '_shards' => [
+                'total' => 2,
+                'successful' => 1,
+                'failed' => 0
+            ]
+        ]);
+
+        // Fire the event
+        $response = $elasticQueue->fire($this->job, $data);
+
+        $message = sprintf('[Job ID: `%s`] Elasticsearch Create Index; Status: OK; ES Index Name: %s; ES Index Type: %s',
+            $this->job->getJobId(), $this->esIndex, $this->esIndexType, $mall->merchant_id
+        );
+
+        $this->assertSame('ok', $response['status']);
+        $this->assertSame($message, $response['message']);
+    }
+
+    public function test_should_create_mall_and_indexed_to_elasticsearch_even_mall_does_not_have_position()
+    {
+        // Create mall in antartica
+        $geofence = Factory::create('MerchantGeofence', ['position' => NULL]);
+        $mall = $geofence->mall;
+
+        $elasticQueue = new ESMallCreateQueue($this->es);
+        $data = ['mall_id' => $mall->merchant_id];
+
+        // Mock the response of ES->index($params)
+        $this->es->method('index')->willReturn([
+            '_index' => $this->esIndex,
+            '_type' => $this->esIndexType,
+            '_id' => $mall->merchant_id,
+            'created' => 1,
+            '_shards' => [
+                'total' => 2,
+                'successful' => 1,
+                'failed' => 0
+            ]
+        ]);
+
+        // Fire the event
+        $response = $elasticQueue->fire($this->job, $data);
+
+        $message = sprintf('[Job ID: `%s`] Elasticsearch Create Index; Status: OK; ES Index Name: %s; ES Index Type: %s',
+            $this->job->getJobId(), $this->esIndex, $this->esIndexType, $mall->merchant_id
+        );
+
+        $this->assertSame('ok', $response['status']);
+        $this->assertSame($message, $response['message']);
+    }
+
     public function test_should_not_indexed_to_elasticsearch_because_json_error()
     {
         // Create mall in antartica
