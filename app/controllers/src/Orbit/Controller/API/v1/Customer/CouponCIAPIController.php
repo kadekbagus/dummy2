@@ -197,6 +197,8 @@ class CouponCIAPIController extends BaseAPIController
                         });
                 }
             );
+            
+            $this->viewItemUserUpdate('coupon', $user, $mall);
 
             $coupons->groupBy('promotions.promotion_id');
 
