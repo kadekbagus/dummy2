@@ -96,8 +96,12 @@ class BaseAPIController extends ControllerAPI
      */
     protected function getDefaultLanguage($mall)
     {
-        // English is default language
-        $language = \Language::where('name', '=', 'en')->first();
+        $defaultLanguageStr = 'en';
+        $mallDefaultLanguageStr = $mall->mobile_default_language;
+        if (! empty($mallDefaultLanguageStr)) {
+            $defaultLanguageStr = $mallDefaultLanguageStr;
+        }
+        $language = \Language::where('name', '=', $defaultLanguageStr)->first();
         if(isset($language) && count($language) > 0){
             $defaultLanguage = MerchantLanguage::
                 where('merchant_id', '=', $mall->merchant_id)
