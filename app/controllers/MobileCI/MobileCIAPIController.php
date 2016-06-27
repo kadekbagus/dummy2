@@ -1218,7 +1218,7 @@ class MobileCIAPIController extends BaseCIController
                 ];
 
                 $orbit_origin = \Input::get('orbit_origin', 'google');
-                $this->session = SessionPreparer::prepareSession(FALSE);
+                $this->session = SessionPreparer::prepareSession();
 
                 // There is a chance that user not 'grant' his email while approving our app
                 // so we double check it here
@@ -3656,7 +3656,14 @@ class MobileCIAPIController extends BaseCIController
             $tenants = $tenants->active('merchants')
                 ->where('parent_id', $retailer->merchant_id);
 
-            $tenants->select('merchants.merchant_id', 'floor', 'unit');
+            $prefix = DB::getTablePrefix();
+            $tenants->select(
+                        'merchants.merchant_id',
+                        'objects.object_name as floor',
+                        'unit',
+                        DB::raw("(CASE WHEN unit = '' THEN {$prefix}objects.object_name ELSE CONCAT({$prefix}objects.object_name, \" - \", unit) END) AS location")
+                      )
+                    ->leftJoin('objects', 'objects.object_id', '=', 'merchants.floor_id');
 
             $this->maybeJoinWithTranslationsTable($tenants, $alternateLanguage);
 
@@ -4588,10 +4595,17 @@ class MobileCIAPIController extends BaseCIController
             }
 
             $service = $service->active('merchants')
-                ->where('object_type', 'service')
+                ->where('merchants.object_type', 'service')
                 ->where('parent_id', $retailer->merchant_id);
 
-            $service->select('merchants.merchant_id', 'floor', 'unit');
+            $prefix = DB::getTablePrefix();
+            $service->select(
+                        'merchants.merchant_id',
+                        'objects.object_name as floor',
+                        'unit',
+                        DB::raw("(CASE WHEN unit = '' THEN {$prefix}objects.object_name ELSE CONCAT({$prefix}objects.object_name, \" - \", unit) END) AS location")
+                      )
+                    ->leftJoin('objects', 'objects.object_id', '=', 'merchants.floor_id');
 
             $mallid = $retailer->merchant_id;
 
