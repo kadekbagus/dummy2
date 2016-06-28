@@ -99,3 +99,20 @@ Event::listen('orbit.mall.postnewmall.after.commit', function($controller, $mall
         'mall_id' => $mall->merchant_id
     ]);
 });
+
+/**
+ * Listen on:    `orbit.mall.postupdatemall.after.commit`
+ * Purpose:      Post actions after the data has been successfully commited
+ *
+ * @author Irianto <irianto@dominopos.com>
+ *
+ * @param EventAPIController $controller - The instance of the EventAPIController or its subclass
+ * @param Event $mall - Instance of object Event
+ */
+Event::listen('orbit.mall.postupdatemall.after.commit', function($controller, $mall)
+{
+    // Notify the queueing system to update Elasticsearch document
+    Queue::push('Orbit\\Queue\\Notifier\\ESMallUpdateQueue', [
+        'mall_id' => $mall->merchant_id
+    ]);
+});
