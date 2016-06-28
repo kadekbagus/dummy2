@@ -72,8 +72,8 @@ class ESMallCreateQueue
 
         try {
             $params = [
-                'index' => 'malls',
-                'type' => 'basic',
+                'index' => Config::get('orbit.elasticsearch.indices.malldata.index'),
+                'type' => Config::get('orbit.elasticsearch.indices.malldata.type'),
                 'id' => $mall->merchant_id,
                 'body' => [
                     'name' => $mall->name,
