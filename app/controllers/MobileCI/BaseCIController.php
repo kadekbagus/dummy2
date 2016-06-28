@@ -15,7 +15,7 @@ use Setting;
 use MerchantLanguage;
 use \Redirect;
 use Orbit\Helper\Net\UrlChecker as UrlBlock;
-use Orbit\Helper\Net\GenerateGuestUser;
+use Orbit\Helper\Net\GuestUserGenerator;
 use Orbit\Helper\Net\SessionPreparer;
 
 class BaseCIController extends ControllerAPI
@@ -117,7 +117,7 @@ class BaseCIController extends ControllerAPI
                 $user = NULL;
             }
         } else {
-            $user = GenerateGuestUser::generateGuestUser();
+            $user = GuestUserGenerator::create()->generate();
             $sessionData = $session->read(NULL);
             $sessionData['logged_in'] = TRUE;
             $sessionData['guest_user_id'] = $user->user_id;

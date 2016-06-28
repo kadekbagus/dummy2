@@ -11,7 +11,7 @@ use DominoPOS\OrbitSession\Session;
 use DominoPOS\OrbitSession\SessionConfig;
 use Orbit\Helper\Net\UrlChecker;
 use Orbit\Helper\Net\SessionPreparer;
-use Orbit\Helper\Net\GenerateGuestUser;
+use Orbit\Helper\Net\GuestUserGenerator;
 use \Config;
 
 class IntermediateCIAuthController extends IntermediateBaseController
@@ -108,7 +108,11 @@ class IntermediateCIAuthController extends IntermediateBaseController
                 // throw new Exception('Session error: user not found.');
             }
         } else {
-            $user = GenerateGuestUser::generateGuestUser();
+            // if this goes live then we should remove the TRUE param in generateGuestUser()
+            // to be able to record guest in Dashboard
+            $user = GenerateGuestUser::create(['record_signin_activity' => FALSE])
+                                     ->generate();
+
             $sessionData = $session->read(NULL);
             $sessionData['logged_in'] = TRUE;
             $sessionData['guest_user_id'] = $user->user_id;
