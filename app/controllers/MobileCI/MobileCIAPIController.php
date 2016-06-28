@@ -7175,8 +7175,9 @@ class MobileCIAPIController extends BaseCIController
                 'languages' => $languages,
                 'all_tenant_inactive' => $allTenantInactive,
                 'facebookInfo' => Config::get('orbit.social_login.facebook'),
-                'urlblock' => $urlblock,
                 'user_email' => $user->role->role_name !== 'Guest' ? $user->user_email : '',
+                'session' => $this->session,
+                'is_logged_in' => UrlBlock::isLoggedIn($this->session),
             ));
 
         } catch (Exception $e) {

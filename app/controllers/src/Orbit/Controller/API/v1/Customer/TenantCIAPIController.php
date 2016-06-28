@@ -297,6 +297,8 @@ class TenantCIAPIController extends BaseAPIController
                 $tenants->where('merchants.object_type', $object_type);
             });
 
+            $this->viewItemUserUpdate('tenant', $user, $mall);
+
             $tenants->groupBy('merchants.merchant_id');
 
             $_tenants = clone($tenants);
