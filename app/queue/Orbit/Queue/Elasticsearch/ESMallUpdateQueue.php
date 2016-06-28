@@ -1,8 +1,8 @@
 <?php namespace Orbit\Queue\ElasticSearch;
 /**
- * Update Elasticsearch index when new mall has been created.
+ * Update Elasticsearch index when mall has been updated.
  *
- * @author Rio Astamal <rio@dominopos.com>
+ * @author Irianto <irianto@dominopos.com>
  */
 use Elasticsearch\ClientBuilder as ESBuilder;
 use Config;
@@ -13,7 +13,7 @@ use Orbit\Helper\Elasticsearch\ElasticsearchErrorChecker;
 use Orbit\Helper\Util\JobBurier;
 use Exception;
 
-class ESMallCreateQueue
+class ESMallUpdateQueue
 {
     /**
      * Poster. The object which post the data to external system.
@@ -97,7 +97,7 @@ class ESMallCreateQueue
                 ]
             ];
 
-            $response = $this->poster->index($params);
+            $response = $this->poster->update($params);
 
             // Example response when document created:
             // {
@@ -110,7 +110,7 @@ class ESMallCreateQueue
             //     "successful": 1,
             //     "failed": 0
             //   },
-            //   "created": true
+            //   "created": false
             // }
             //
             // The indexing considered successful is attribute `successful` on `_shard` is more than 0.
@@ -121,7 +121,7 @@ class ESMallCreateQueue
 
             return [
                 'status' => 'ok',
-                'message' => sprintf('[Job ID: `%s`] Elasticsearch Create Index; Status: OK; ES Index Name: %s; ES Index Type: %s',
+                'message' => sprintf('[Job ID: `%s`] Elasticsearch Update Index; Status: OK; ES Index Name: %s; ES Index Type: %s',
                                 $job->getJobId(),
                                 $esConfig['indices']['malldata']['index'],
                                 $esConfig['indices']['malldata']['type'])
@@ -135,7 +135,7 @@ class ESMallCreateQueue
 
             return [
                 'status' => 'fail',
-                'message' => sprintf('[Job ID: `%s`] Elasticsearch Create Index; Status: FAIL; ES Index Name: %s; ES Index Type: %s; Code: %s; Message: %s',
+                'message' => sprintf('[Job ID: `%s`] Elasticsearch Update Index; Status: FAIL; ES Index Name: %s; ES Index Type: %s; Code: %s; Message: %s',
                                 $job->getJobId(),
                                 $esConfig['indices']['malldata']['index'],
                                 $esConfig['indices']['malldata']['type'],
