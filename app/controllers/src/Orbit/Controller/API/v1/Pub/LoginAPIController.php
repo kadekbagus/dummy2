@@ -608,20 +608,21 @@ class LoginAPIController extends IntermediateBaseController
             ->first();
 
         if (is_object($user)) {
-            // Start the orbit session
-            $data = array(
-                'logged_in' => TRUE,
-                'user_id'   => $user->user_id,
-                'email'     => $user->user_email,
-                'role'      => $user->role->role_name,
-                'fullname'  => $user->getFullName(),
-            );
-            $this->session->enableForceNew()->start($data);
+            $this->session->start(array(), 'no-session-creation');
 
-            // Send the session id via HTTP header
-            $sessionHeader = $this->session->getSessionConfig()->getConfig('session_origin.header.name');
-            $sessionHeader = 'Set-' . $sessionHeader;
-            $this->customHeaders[$sessionHeader] = $this->session->getSessionId();
+            \MobileCI\MobileCIAPIController::create()->setSession($this->session)->linkGuestToUser($user, FALSE);
+            // get the session data
+            $sessionData = $this->session->read(NULL);
+            $sessionData['logged_in'] = TRUE;
+            $sessionData['user_id'] = $user->user_id;
+            $sessionData['email'] = $user->user_email;
+            $sessionData['role'] = $user->role->role_name;
+            $sessionData['fullname'] = $user->getFullName();
+            $sessionData['visited_location'] = [];
+            $sessionData['coupon_location'] = [];
+
+            // update the guest session data, append user data to it so the user will be recognized
+            $this->session->update($sessionData);
 
             return $user;
         }
@@ -729,12 +730,19 @@ class LoginAPIController extends IntermediateBaseController
                 OrbitShopAPI::throwInvalidArgument('You are not allowed to login. Please check with Customer Service.');
             }
 
-            // This user assumed are Consumer, which has been checked at login process
             $config = new SessionConfig(Config::get('orbit.session'));
             $config->setConfig('application_id', static::APPLICATION_ID);
             try {
                 $this->session = new Session($config);
                 $this->session->start(array(), 'no-session-creation');
+                $sessionData = $this->session->read(NULL);
+                $sessionData['logged_in'] = TRUE;
+                $sessionData['user_id'] = $user->user_id;
+                $sessionData['email'] = $user->user_email;
+                $sessionData['role'] = $user->role->role_name;
+                $sessionData['fullname'] = $user->getFullName();
+
+                $this->session->update($sessionData);
             } catch (Exception $e) {
                 // get the session data
                 $sessionData = array();
@@ -755,12 +763,14 @@ class LoginAPIController extends IntermediateBaseController
             \MobileCI\MobileCIAPIController::create()->setSession($this->session)->linkGuestToUser($user, FALSE);
 
             // acquire user
-            $firstAcquired = $mall->acquireUser($user, 'form');
+            // todo: remove comment if the QA ok'ed this implementation, so it not affect dashboard
+            // $firstAcquired = $mall->acquireUser($user, 'form');
 
             // if the user is viewing the mall for the 1st time then set the signup activity
-            if ($firstAcquired) {
-                \MobileCI\MobileCIAPIController::create()->setSession($this->session)->setSignUpActivity($user, 'form', $mall);
-            }
+            // todo: remove comment if the QA ok'ed this implementation, so it not affect dashboard
+            // if ($firstAcquired) {
+                // \MobileCI\MobileCIAPIController::create()->setSession($this->session)->setSignUpActivity($user, 'form', $mall);
+            // }
 
             // if the user is viewing the mall for the 1st time in this session
             // then set also the sign in activity
@@ -769,7 +779,8 @@ class LoginAPIController extends IntermediateBaseController
                 $visited_locations = $this->session->read('visited_location');
             }
             if (! in_array($mall->merchant_id, $visited_locations)) {
-                \MobileCI\MobileCIAPIController::create()->setSession($this->session)->setSignInActivity($user, 'form', $mall, null);
+                // todo: remove comment if the QA ok'ed this implementation, so it not affect dashboard
+                // \MobileCI\MobileCIAPIController::create()->setSession($this->session)->setSignInActivity($user, 'form', $mall, null);
                 $this->session->write('visited_location', array_merge($visited_locations, [$mall->merchant_id]));
             }
 
@@ -780,7 +791,8 @@ class LoginAPIController extends IntermediateBaseController
             $user_detail->save();
 
             // auto coupon issuance checkwill happen on each page after the login success
-            \Coupon::issueAutoCoupon($mall, $user, $this->session);
+            // todo: remove comment if the QA ok'ed this implementation, so it not affect dashboard
+            // \Coupon::issueAutoCoupon($mall, $user, $this->session);
 
             DB::commit();
             $data = new stdClass();

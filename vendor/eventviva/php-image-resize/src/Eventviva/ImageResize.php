@@ -6,7 +6,7 @@ class ImageResize
 {
 
     public $quality_jpg = 75;
-    public $quality_png = 0;
+    public $quality_png = 5;
 
     public $source_type;
 

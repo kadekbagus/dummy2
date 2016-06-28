@@ -97,6 +97,7 @@ $factory('Mall', [
     'contact_person_firstname' => $faker->firstName,
     'contact_person_lastname'  => $faker->lastName,
     'contact_person_phone'     => $faker->phoneNumber,
+    'country_id' => 'factory:Country',
     'timezone_id'     => 'factory:Timezone',
     'mobile_default_language'  => 'en'
 ]);

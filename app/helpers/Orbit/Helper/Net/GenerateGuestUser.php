@@ -25,8 +25,10 @@ class GenerateGuestUser
      * Generate the guest user
      * If there are already guest_email on the cookie use that email instead
      *
+     * todo: remove the $temp_flag, and the condition on line 66
+     *  this flag is used for not recording guest sign in activity from Desktop CI
      */
-    public static function generateGuestUser($session = NULL)
+    public static function generateGuestUser($session = NULL, $temp_flag = FALSE)
     {
         try{
             $guest_email = NULL;
@@ -61,6 +63,11 @@ class GenerateGuestUser
 
             $mall = Mall::with('timezone')->excludeDeleted()->where('merchant_id', $mall_id)->first();
 
+            // todo: remove this if the guest user from Desktop CI wanted to be recorded
+            if ($temp_flag) {
+                return $user;
+            }
+
             $start_date = Carbon::now($mall->timezone->timezone_name)->format('Y-m-d 00:00:00');
             $end_date = Carbon::now($mall->timezone->timezone_name)->format('Y-m-d 23:59:59');
             $userSignin = UserSignin::where('user_id', '=', $user->user_id)
@@ -90,7 +97,6 @@ class GenerateGuestUser
                 $newUserSignin->save();
                 DB::commit();
             }
-
 
             return $user;
 

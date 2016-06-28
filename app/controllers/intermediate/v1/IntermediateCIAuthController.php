@@ -30,7 +30,7 @@ class IntermediateCIAuthController extends IntermediateBaseController
         {
             try
             {
-                $this->session = SessionPreparer::prepareSession(FALSE);
+                $this->session = SessionPreparer::prepareSession();
                 $user = $this->getLoggedInUser($this->session);
                 $guest = $this->getLoggedInGuest($this->session);
                 if (! is_object($user)) {
@@ -108,7 +108,9 @@ class IntermediateCIAuthController extends IntermediateBaseController
                 // throw new Exception('Session error: user not found.');
             }
         } else {
-            $user = GenerateGuestUser::generateGuestUser();
+            // if this goes live then we should remove the TRUE param in generateGuestUser()
+            // to be able to record guest in Dashboard
+            $user = GenerateGuestUser::generateGuestUser(TRUE);
             $sessionData = $session->read(NULL);
             $sessionData['logged_in'] = TRUE;
             $sessionData['guest_user_id'] = $user->user_id;

@@ -58,7 +58,7 @@ class BaseCIController extends ControllerAPI
      */
     protected function getLoggedInUser()
     {
-        $this->session = SessionPreparer::prepareSession(FALSE);
+        $this->session = SessionPreparer::prepareSession();
 
         $userId = $this->session->read('user_id');
 
