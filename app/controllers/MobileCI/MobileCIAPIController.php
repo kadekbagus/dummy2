@@ -8,7 +8,7 @@ use Net\MacAddr;
 use Orbit\Helper\Email\MXEmailChecker;
 use Orbit\Helper\Net\Domain;
 use Orbit\Helper\Net\UrlChecker as UrlBlock;
-use Orbit\Helper\Net\GenerateGuestUser;
+use Orbit\Helper\Net\GuestUserGenerator;
 use Orbit\CloudMAC;
 use OrbitShop\API\v1\ControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
@@ -227,7 +227,7 @@ class MobileCIAPIController extends BaseCIController
         $after_logout_url = Config::get('orbit.shop.after_logout_url', '/customer');
         return \Redirect::to($after_logout_url);
     }
-    
+
     private function prepareWidgetTenantData($widget, $user, $retailer, $mallid, $now)
     {
         // get all tenant count
@@ -273,7 +273,7 @@ class MobileCIAPIController extends BaseCIController
 
         return $widget;
     }
-    
+
     private function prepareWidgetServiceData($widget, $user, $retailer, $mallid, $now)
     {
         // get all tenant count
@@ -321,7 +321,7 @@ class MobileCIAPIController extends BaseCIController
 
         return $widget;
     }
-    
+
     private function prepareWidgetPromotionData($widget, $user, $retailer, $mallid, $now)
     {
         $userAge = 0;
@@ -432,7 +432,7 @@ class MobileCIAPIController extends BaseCIController
 
         return $widget;
     }
-    
+
     private function prepareWidgetNewsData($widget, $user, $retailer, $mallid, $now)
     {
         $userAge = 0;
@@ -545,7 +545,7 @@ class MobileCIAPIController extends BaseCIController
 
         return $widget;
     }
-    
+
     private function prepareWidgetCouponData($widget, $user, $retailer, $mallid, $now)
     {
         $userAge = 0;
@@ -694,7 +694,7 @@ class MobileCIAPIController extends BaseCIController
 
         return $widget;
     }
-    
+
     private function prepareWidgetLuckyDrawData($widget, $user, $retailer, $mallid, $now)
     {
         $luckydrawsCount = LuckyDraw::active()
@@ -740,7 +740,7 @@ class MobileCIAPIController extends BaseCIController
 
         return $widget;
     }
-    
+
     private function prepareWidgetFreeWifiData($widget, $user, $retailer, $mallid, $now)
     {
         $widget->image = 'mobile-ci/images/default_free_wifi_directory.png';
@@ -763,7 +763,7 @@ class MobileCIAPIController extends BaseCIController
 
         return $widget;
     }
-    
+
     private function prepareWidgetData($widget, $user, $retailer, $mallid, $now)
     {
         switch ($widget->widget_type) {
@@ -787,7 +787,7 @@ class MobileCIAPIController extends BaseCIController
                 break;
             case 'free_wifi':
                 return $this->prepareWidgetFreeWifiData($widget, $user, $retailer, $mallid, $now);
-                break;            
+                break;
         }
         return $widget;
     }
@@ -9468,7 +9468,7 @@ class MobileCIAPIController extends BaseCIController
             $user->setHidden(array('user_password', 'apikey'));
 
             // $user = $this->getLoggedInUser();
-            
+
             // Coupon::issueAutoCoupon($retailer, $user, $this->session);
 
             $this->response->data = $user;
@@ -10228,7 +10228,7 @@ class MobileCIAPIController extends BaseCIController
 
             // check guest user id on session if empty create new one
             if (empty($guest_id)) {
-                $guest = GenerateGuestUser::generateGuestUser();
+                $guest = GuestUserGenerator::create()->generate();
                 $guest_id = $guest->user_id;
                 $sessionData = $this->session->read(NULL);
                 $sessionData['logged_in'] = TRUE;
