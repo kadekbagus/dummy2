@@ -1,13 +1,13 @@
 <?php
+/**
+ * Merchant_Geofences Model. Contains relaration and some helpful methods.
+ *
+ * @author shelgi <shelgi@dominopos.com>
+ * @author Rio Astamal <rio@dominopos.com>
+ */
 
 class MerchantGeofence extends Eloquent
 {
-    /**
-     * UserSignin Model
-     *
-     * @author shelgi <shelgi@dominopos.com>
-     */
-
     protected $table = 'merchant_geofences';
 
     protected $primaryKey = 'merchant_geofence_id';
@@ -86,5 +86,51 @@ class MerchantGeofence extends Eloquent
     public static function transformPointToElasticSearch($geodata)
     {
         return trim(str_ireplace('point(', '', substr($geodata, 0, -1)));
+    }
+
+    /**
+     * Fill the default value of area and position with NULL if there
+     * is something wrong.
+     *
+     * @param $string $merchantId
+     * @return object
+     */
+    public static function getDefaultValueForAreaAndPosition($merchantId)
+    {
+        $_geofence = new \stdClass();
+        $_geofence->area = NULL;
+        $_geofence->latitude = NULL;
+        $_geofence->longitude = NULL;
+
+        $geofence = MerchantGeofence::latLong()->areaAsText()
+                                    ->where('merchant_id', $merchantId)
+                                    ->first();
+
+        if (! is_object($geofence)) {
+            return $_geofence;
+        }
+
+        if (empty($geofence->area)) {
+            $geofence->area = $_geofence->area;
+        } else {
+            // Make sure the data return POLYGON((...))
+            if (preg_match('/^polygon\(\((.*)\)\)$/i', $geofence->area)) {
+                // Everything is fine
+                $geofence->area = [ static::transformPolygonToElasticsearch($geofence->area) ];
+            } else {
+                $geofence->area = $_geofence->area;
+
+            }
+        }
+
+        if (empty($geofence->latidude)) {
+            $geofence->latidue = $_geofence->latitude;
+        }
+
+        if (empty($geofence)) {
+            $geofence->longitude = $_geofence->longitude;
+        }
+
+        return $geofence;
     }
 }

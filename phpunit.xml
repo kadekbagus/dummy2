@@ -42,6 +42,7 @@
             <directory>./app/tests/acl</directory>
             <directory>./app/tests/uploader</directory>
             <directory>./app/test/api/v1/end-to-end</directory>
+            <directory>./app/tests/notifier/elasticsearch</directory>
             <file>./app/tests/api/v1/mall/getSearchMallNearbyTest.php</file>
             <file>./app/tests/api/v1/mall/getMallAreaTest.php</file>
             <file>./app/tests/api/v1/mall/getMallFenceTest.php</file>
@@ -55,6 +56,7 @@
             <file>./app/tests/api/v1/user/getMyAccountInfoCIAngularTest.php</file>
             <file>./app/tests/api/v1/campaign/getCampaignPopupAngularCITest.php</file>
             <file>./app/tests/api/v1/login/postDesktopCILoginTest.php</file>
+            <file>./app/tests/api/v1/login/postDesktopCISignUpTest.php</file>
             <file>./app/tests/api/v1/widget/getSearchWidgetTest.php</file>
             <file>./app/tests/api/v1/widget/getSearchWidgetAngularCITest.php</file>
             <file>./app/tests/api/v1/tenant/getSearchTenantStoreAndServiceTest.php</file>
@@ -91,6 +93,7 @@
             <file>./app/tests/api/v1/membership/getMembershipMobileCiTest.php</file>
             <file>./app/tests/api/v1/user/postResetPasswordTest.php</file>
             <file>./app/tests/api/v1/user/postResetPasswordLinkTest.php</file>
+            <file>./app/tests/api/v1/widget/postClickWidgetActivityTest.php</file>
         </testsuite>
     </testsuites>
 </phpunit>

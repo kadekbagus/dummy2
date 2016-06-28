@@ -67,10 +67,8 @@ class ESMallCreateQueue
             ];
         }
 
-        $geofence = MerchantGeofence::latLong()->areaAsText()
-                                    ->where('merchant_id', $mallId)
-                                    ->first();
         $esConfig = Config::get('orbit.elasticsearch');
+        $geofence = MerchantGeofence::getDefaultValueForAreaAndPosition($mallId);
 
         try {
             $params = [
@@ -87,15 +85,14 @@ class ESMallCreateQueue
                     'operating_hours' => $mall->operating_hours,
                     'object_type' => $mall->object_type,
                     'status' => $mall->status,
+                    'ci_domain' => $mall->ci_domain,
                     'position' => [
                         'lat' => $geofence->latitude,
                         'long' => $geofence->longitude
                     ],
                     'area' => [
                         'type' => 'polygon',
-                        'coordinates' => [
-                            MerchantGeofence::transformPolygonToElasticsearch($geofence->area)
-                        ]
+                        'coordinates' => $geofence->area
                     ]
                 ]
             ];
@@ -116,7 +113,7 @@ class ESMallCreateQueue
             //   "created": true
             // }
             //
-            // The indexing considered successful is attribute `successful` on `_shard` is more than 1.
+            // The indexing considered successful is attribute `successful` on `_shard` is more than 0.
             ElasticsearchErrorChecker::throwExceptionOnDocumentError($response);
 
             // Safely delete the object
