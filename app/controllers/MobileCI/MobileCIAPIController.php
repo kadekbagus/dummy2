@@ -10277,12 +10277,8 @@ class MobileCIAPIController extends BaseCIController
 
     protected function acquireUser($retailer, $user, $signUpVia = null)
     {
-        if (! $user->isConsumer()) {
-            return;
-        }
-
         if (is_null($signUpVia)) {
-            $signUpVia ='form';
+            $signUpVia = 'form';
             if (isset($_COOKIE['login_from'])) {
                 switch (strtolower($_COOKIE['login_from'])) {
                     case 'google':
@@ -10296,13 +10292,17 @@ class MobileCIAPIController extends BaseCIController
                         break;
                 }
             }
+
+            $signUpVia = $user->isGuest() ? 'guest' : $signUpVia;
         }
 
-        $firstAcquired = $retailer->acquireUser($user, $signUpVia);
+        if ($user->isConsumer()) {
+            $firstAcquired = $retailer->acquireUser($user, $signUpVia);
 
-        // if the user is viewing the mall for the 1st time then set the signup activity
-        if ($firstAcquired) {
-            $this->setSignUpActivity($user, $signUpVia, $retailer);
+            // if the user is viewing the mall for the 1st time then set the signup activity
+            if ($firstAcquired) {
+                $this->setSignUpActivity($user, $signUpVia, $retailer);
+            }
         }
 
         $session = $this->session;
