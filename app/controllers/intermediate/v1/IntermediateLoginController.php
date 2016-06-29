@@ -14,7 +14,7 @@ use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
 use DominoPOS\OrbitSession\Session as OrbitSession;
 use DominoPOS\OrbitAPI\v10\StatusInterface as Status;
-use Orbit\Helper\Net\GenerateGuestUser;
+use Orbit\Helper\Net\GuestUserGenerator;
 use Orbit\Helper\Net\SessionPreparer;
 
 class IntermediateLoginController extends IntermediateBaseController
@@ -834,15 +834,18 @@ class IntermediateLoginController extends IntermediateBaseController
             unset($response->data->ipAddress);
         } catch (Exception $e) {
             $request_for_guest = OrbitInput::get('desktop_ci', NULL);
+
             if (! empty($request_for_guest)) {
-                // if the request comes from desktop_ci, return the guest session
-                // if this goes live then we should remove the TRUE param in generateGuestUser()
-                // to be able to record guest in Dashboard
-                $guest = GenerateGuestUser::generateGuestUser(TRUE);
                 if (empty($this->session->getSessionId())) {
                     // Start the orbit session
                     $this->session = SessionPreparer::prepareSession();
                 }
+
+                // if the request comes from desktop_ci, return the guest session
+                // if this goes live then we should remove the TRUE param in generateGuestUser()
+                // to be able to record guest in Dashboard
+                $guest = GuestUserGenerator::create()->generate();
+
                 $sessionData = $this->session->read(NULL);
                 $sessionData['logged_in'] = TRUE;
                 $sessionData['guest_user_id'] = $guest->user_id;
