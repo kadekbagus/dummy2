@@ -67,6 +67,21 @@ return array(
         // 'ci-customer-home', // -> /customer/home
         // 'mobile-ci-home', // -> /customer
         // 'captive-request-internet', // -> /free internet
+
+        // angular CI routes
+        // 'customer-api-store-list',
+        // 'customer-api-store-detail',
+        // 'customer-api-promotion-list',
+        // 'customer-api-promotion-detail',
+        // 'customer-api-coupon-list',
+        // 'customer-api-coupon-detail',
+        // 'customer-api-news-list',
+        // 'customer-api-news-detail',
+        // 'customer-api-widget-list',
+        // 'customer-api-service-list',
+        // 'customer-api-service-detail',
+        // 'customer-api-my-account',
+        // 'customer-api-membership',
     ],
 
     // cdn path
