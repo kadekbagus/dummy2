@@ -49,7 +49,26 @@ class MallNearestAPIController extends ControllerAPI
                     ->setHosts($host['hosts']) // Set the hosts
                     ->build();
 
+            $filterStatus = '';
+            if ($usingDemo) {
+                $filterStatus = '"filter" : {
+                    "not" : {
+                        "term" : {
+                            "status" : "deleted"
+                        }
+                    }
+                }';
+            } else {
+                // Production
+                $filterStatus = '"query": {
+                    "match" : {
+                        "status" : "active"
+                    }
+                }';
+            }
+
             $json_nearest = '{
+                    ' . $filterStatus . ',
                     "sort": [
                        {
                       "_geo_distance": {
@@ -70,13 +89,15 @@ class MallNearestAPIController extends ControllerAPI
                 'type'  => Config::get('orbit.elasticsearch.indices.malldata.type'),
                 'body' => $json_nearest
             ];
+
             $response = $client->search($param_nearest);
-            
             $nearest = $response['hits']['hits'][0]['_source']['position'];
+            
+            $maxtry = Config::get('orbit.elasticsearch.nearest.max_try', 10);
+            $multiple = Config::get('orbit.elasticsearch.nearest.multiple', 5);
 
-            $dist = [2, 10];
+            for ($i=0; $i<$maxtry; $i++) { 
 
-            foreach ($dist as $a) {
                 $area = array();
                 $topLeft = array();
                 $bottomRight = array();
@@ -84,7 +105,7 @@ class MallNearestAPIController extends ControllerAPI
                 $cx = $nearest['lon'];
                 $width = $width_ratio;
                 $height = $height_ratio;
-                $radius = $a * 1000;
+                $radius = $multiple * 1000;
                 $dy = $dx = $radius * 2;
                 $rad_lat = ($cy * M_PI / 180);
 
@@ -149,13 +170,17 @@ class MallNearestAPIController extends ControllerAPI
                     'type'   => Config::get('orbit.elasticsearch.indices.malldata.type'),
                     'body' => $json_area
                 ];
+
                 $response = $client->search($param_area);
                 $area = $response['hits']['hits'];
+
                 if (! empty($area)){
                     break;
                 }
+
+                $multiple += $multiple;
             }
-            // print_r($response['hits']); die();
+            
             $take = PaginationNumber::parseTakeFromGet('geo_location');
             $skip = PaginationNumber::parseSkipFromGet();
             
