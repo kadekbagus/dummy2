@@ -167,8 +167,13 @@ class PromotionCIAPIController extends BaseAPIController
                 }
             );
 
-            $this->viewItemUserUpdate('promotion', $user, $mall);
-
+            if ($objectType == 'promotion') {
+                $this->viewItemUserUpdate('promotion', $user, $mall);
+            }
+            if ($objectType == 'news') {
+                $this->viewItemUserUpdate('news', $user, $mall);
+            }
+            
             $promotions = $promotions->groupBy('news.news_id');
 
             $_promotions = clone($promotions);

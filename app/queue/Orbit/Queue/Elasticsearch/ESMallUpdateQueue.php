@@ -9,12 +9,11 @@ use Config;
 use Mall;
 use DB;
 use MerchantGeofence;
-use Orbit\Queue\Elasticsearch\ESMallCreateQueue as ESMallCreateQueue;
 use Orbit\Helper\Elasticsearch\ElasticsearchErrorChecker;
 use Orbit\Helper\Util\JobBurier;
 use Exception;
 
-class ESMallUpdateQueue extends ESMallCreateQueue
+class ESMallUpdateQueue
 {
     /**
      * Poster. The object which post the data to external system.
@@ -22,7 +21,6 @@ class ESMallUpdateQueue extends ESMallCreateQueue
      * @var poster.
      */
     protected $poster = NULL;
-    protected $object = NULL;
 
     /**
      * Class constructor.
@@ -32,8 +30,13 @@ class ESMallUpdateQueue extends ESMallCreateQueue
      */
     public function __construct($poster = 'default')
     {
-        $this->object = new ESMallCreateQueue($poster);
-        $this->poster = $this->object->poster;
+        if ($poster === 'default') {
+            $this->poster = ESBuilder::create()
+                                     ->setHosts(Config::get('orbit.elasticsearch.hosts'))
+                                     ->build();
+        } else {
+            $this->poster = $poster;
+        }
     }
 
     /**
@@ -49,17 +52,96 @@ class ESMallUpdateQueue extends ESMallCreateQueue
      */
     public function fire($job, $data)
     {
-        $response = $this->object->fire($job,$data);
+        $mallId = $data['mall_id'];
+        $mall = Mall::with('country')
+                    ->excludeDeleted()
+                    ->where('merchant_id', $mallId)
+                    ->first();
 
-        if ($response['status'] === 'ok') {
-            $response['message'] = str_replace("Create", "Update", $response['message']);
-        } else {
-            $response['message'] = str_replace("Create", "Update", $response['message']);
+        if (! is_object($mall)) {
+            $job->delete();
+
+            return [
+                'status' => 'fail',
+                'message' => sprintf('[Job ID: `%s`] Mall ID %s is not found.', $job->getJobId(), $mallId)
+            ];
         }
 
-        return [
-            'status' => $response['status'],
-            'message' => $response['message']
-        ];
+        $esConfig = Config::get('orbit.elasticsearch');
+        $geofence = MerchantGeofence::getDefaultValueForAreaAndPosition($mallId);
+
+        try {
+            $params = [
+                'index' => Config::get('orbit.elasticsearch.indices.malldata.index'),
+                'type' => Config::get('orbit.elasticsearch.indices.malldata.type'),
+                'id' => $mall->merchant_id,
+                'body' => [
+                    'name' => $mall->name,
+                    'description' => $mall->description,
+                    'address_line' => trim(implode("\n", [$mall->address_line1, $mall->address_line2, $mall->address_line2])),
+                    'city' => $mall->city,
+                    'country' => $mall->Country->name,
+                    'phone' => $mall->phone,
+                    'operating_hours' => $mall->operating_hours,
+                    'object_type' => $mall->object_type,
+                    'status' => $mall->status,
+                    'ci_domain' => $mall->ci_domain,
+                    'position' => [
+                        'lat' => $geofence->latitude,
+                        'long' => $geofence->longitude
+                    ],
+                    'area' => [
+                        'type' => 'polygon',
+                        'coordinates' => $geofence->area
+                    ]
+                ]
+            ];
+
+            $response = $this->poster->update($params);
+
+            // Example response when document created:
+            // {
+            //   "_index": "malls",
+            //   "_type": "basic",
+            //   "_id": "abc123",
+            //   "_version": 1,
+            //   "_shards": {
+            //     "total": 2,
+            //     "successful": 1,
+            //     "failed": 0
+            //   },
+            //   "created": false
+            // }
+            //
+            // The indexing considered successful is attribute `successful` on `_shard` is more than 0.
+            ElasticsearchErrorChecker::throwExceptionOnDocumentError($response);
+
+            // Safely delete the object
+            $job->delete();
+
+            return [
+                'status' => 'ok',
+                'message' => sprintf('[Job ID: `%s`] Elasticsearch Update Index; Status: OK; ES Index Name: %s; ES Index Type: %s',
+                                $job->getJobId(),
+                                $esConfig['indices']['malldata']['index'],
+                                $esConfig['indices']['malldata']['type'])
+            ];
+        } catch (Exception $e) {
+            // Bury the job for later inspection
+            JobBurier::create($job, function($theJob) {
+                // The queue driver does not support bury.
+                $theJob->delete();
+            })->bury();
+
+            return [
+                'status' => 'fail',
+                'message' => sprintf('[Job ID: `%s`] Elasticsearch Update Index; Status: FAIL; ES Index Name: %s; ES Index Type: %s; Code: %s; Message: %s',
+                                $job->getJobId(),
+                                $esConfig['indices']['malldata']['index'],
+                                $esConfig['indices']['malldata']['type'],
+                                $e->getCode(),
+                                $e->getMessage())
+            ];
+        }
     }
 }

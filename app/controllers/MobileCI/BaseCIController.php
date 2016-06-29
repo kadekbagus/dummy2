@@ -118,6 +118,7 @@ class BaseCIController extends ControllerAPI
             }
         } else {
             $user = GuestUserGenerator::create()->generate();
+
             $sessionData = $session->read(NULL);
             $sessionData['logged_in'] = TRUE;
             $sessionData['guest_user_id'] = $user->user_id;

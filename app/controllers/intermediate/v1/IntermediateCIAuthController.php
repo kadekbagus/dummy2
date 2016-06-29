@@ -110,8 +110,10 @@ class IntermediateCIAuthController extends IntermediateBaseController
         } else {
             // if this goes live then we should remove the TRUE param in generateGuestUser()
             // to be able to record guest in Dashboard
-            $user = GenerateGuestUser::create(['record_signin_activity' => FALSE])
-                                     ->generate();
+            $guestConfig = [
+                'record_signin_activity' => FALSE
+            ];
+            $user = GuestUserGenerator::create($guestConfig)->generate();
 
             $sessionData = $session->read(NULL);
             $sessionData['logged_in'] = TRUE;

@@ -5,6 +5,7 @@
  * @author Rio Astamal <me@rioastamal.net>
  */
 use Orbit\CloudMAC;
+use OrbitShop\API\v1\OrbitShopAPI;
 use OrbitShop\API\v1\ResponseProvider;
 use MobileCI\MobileCIAPIController;
 use Net\Security\Firewall;
@@ -754,13 +755,13 @@ class IntermediateLoginController extends IntermediateBaseController
             $userId = $this->session->read('user_id');
 
             if ($this->session->read('logged_in') !== TRUE || ! $userId) {
-                throw new Exception ('Invalid session data.');
+                OrbitShopAPI::throwInvalidArgument('Invalid session data.');
             }
 
             $user = User::excludeDeleted()->find($userId);
 
             if (! $user) {
-                throw new Exception ('Session error: user not found.');
+                OrbitShopAPI::throwInvalidArgument('Session error: user not found.');
             }
 
             $response->data = NULL;
@@ -834,16 +835,18 @@ class IntermediateLoginController extends IntermediateBaseController
             unset($response->data->ipAddress);
         } catch (Exception $e) {
             $request_for_guest = OrbitInput::get('desktop_ci', NULL);
+
             if (! empty($request_for_guest)) {
+                if (empty($this->session->getSessionId())) {
+                    // Start the orbit session
+                    $this->session = SessionPreparer::prepareSession();
+                }
+
                 // if the request comes from desktop_ci, return the guest session
                 // if this goes live then we should remove the TRUE param in generateGuestUser()
                 // to be able to record guest in Dashboard
                 $guest = GuestUserGenerator::create()->generate();
 
-                if (empty($this->session->getSessionId())) {
-                    // Start the orbit session
-                    $this->session = SessionPreparer::prepareSession();
-                }
                 $sessionData = $this->session->read(NULL);
                 $sessionData['logged_in'] = TRUE;
                 $sessionData['guest_user_id'] = $guest->user_id;
