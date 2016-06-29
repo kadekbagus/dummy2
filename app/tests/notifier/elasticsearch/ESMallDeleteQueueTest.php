@@ -1,28 +1,28 @@
 <?php
 /**
  * Unit testing for notifier to send to the Elasticsearch when mall
- * gets updated.
+ * gets deleted.
  *
  * Example response when document created:
  * {
+ *   "found": true,
  *   "_index": "malls",
- *   "_type": "basic",
- *   "_id": "abc123",
- *   "_version": 1,
+ *   "_type": "mall",
+ *   "_id": "abcs23",
+ *   "_version": 2,
  *   "_shards": {
  *     "total": 2,
  *     "successful": 1,
  *     "failed": 0
- *   },
- *   "created": false
+ *   }
  * }
  *
  * @author Irianto <irianto@dominopos.com>
  */
 use Laracasts\TestDummy\Factory;
-use Orbit\Queue\Elasticsearch\ESMallUpdateQueue;
+use Orbit\Queue\Elasticsearch\ESMallDeleteQueue;
 
-class ESMallUpdateQueueTest extends ElasticsearchTestCase
+class ESMallDeleteQueueTest extends ElasticsearchTestCase
 {
     public function setUp()
     {
@@ -45,29 +45,29 @@ class ESMallUpdateQueueTest extends ElasticsearchTestCase
 
     public function test_should_return_object_instance()
     {
-        $object = new ESMallUpdateQueue();
-        $this->assertInstanceOf('Orbit\Queue\Elasticsearch\ESMallUpdateQueue', $object);
+        $object = new ESMallDeleteQueue();
+        $this->assertInstanceOf('Orbit\Queue\Elasticsearch\ESMallDeleteQueue', $object);
     }
 
-    public function test_should_update_mall_and_indexed_to_elasticsearch()
+    public function test_should_delete_mall_and_indexed_to_elasticsearch()
     {
         // Create mall in antartica
         $geofence = Factory::create('MerchantGeofence');
         $mall = $geofence->mall;
 
-        // update mall name
-        $mall->name = 'irianto';
+        // delete mall
+        $mall->status = 'deleted';
         $mall->save();
 
-        $elasticQueueUpdate = new ESMallUpdateQueue($this->es);
+        $elasticQueueDelete = new ESMallDeleteQueue($this->es);
         $data = ['mall_id' => $mall->merchant_id];
 
         // Mock the response of ES->index($params)
-        $this->es->method('update')->willReturn([
+        $this->es->method('delete')->willReturn([
             '_index'  => $this->esIndex,
             '_type'   => $this->esIndexType,
             '_id'     => $mall->merchant_id,
-            'created' => 0,
+            'found'   => 1,
             '_shards' => [
                 'total'      => 2,
                 'successful' => 1,
@@ -76,9 +76,9 @@ class ESMallUpdateQueueTest extends ElasticsearchTestCase
         ]);
 
         // Fire the event
-        $response = $elasticQueueUpdate->fire($this->job, $data);
+        $response = $elasticQueueDelete->fire($this->job, $data);
 
-        $message = sprintf('[Job ID: `%s`] Elasticsearch Update Index; Status: OK; ES Index Name: %s; ES Index Type: %s',
+        $message = sprintf('[Job ID: `%s`] Elasticsearch Delete Index; Status: OK; ES Index Name: %s; ES Index Type: %s',
             $this->job->getJobId(), $this->esIndex, $this->esIndexType, $mall->merchant_id
         );
 
@@ -86,24 +86,24 @@ class ESMallUpdateQueueTest extends ElasticsearchTestCase
         $this->assertSame($message, $response['message']);
     }
 
-    public function test_should_update_mall_and_indexed_to_elasticsearch_even_mall_does_not_have_geofence()
+    public function test_should_delete_mall_and_indexed_to_elasticsearch_even_mall_does_not_have_geofence()
     {
         // Create mall in antartica
         $mall = Factory::create('Mall');
 
-        // update mall name
-        $mall->name = 'sudirman';
+        // delete mall
+        $mall->status = 'deleted';
         $mall->save();
 
-        $elasticQueueUpdate = new ESMallUpdateQueue($this->es);
+        $elasticQueueDelete = new ESMallDeleteQueue($this->es);
         $data = ['mall_id' => $mall->merchant_id];
 
         // Mock the response of ES->index($params)
-        $this->es->method('update')->willReturn([
+        $this->es->method('delete')->willReturn([
             '_index'  => $this->esIndex,
             '_type'   => $this->esIndexType,
             '_id'     => $mall->merchant_id,
-            'created' => 0,
+            'found'   => 1,
             '_shards' => [
                 'total'      => 2,
                 'successful' => 1,
@@ -112,9 +112,9 @@ class ESMallUpdateQueueTest extends ElasticsearchTestCase
         ]);
 
         // Fire the event
-        $response = $elasticQueueUpdate->fire($this->job, $data);
+        $response = $elasticQueueDelete->fire($this->job, $data);
 
-        $message = sprintf('[Job ID: `%s`] Elasticsearch Update Index; Status: OK; ES Index Name: %s; ES Index Type: %s',
+        $message = sprintf('[Job ID: `%s`] Elasticsearch Delete Index; Status: OK; ES Index Name: %s; ES Index Type: %s',
             $this->job->getJobId(), $this->esIndex, $this->esIndexType, $mall->merchant_id
         );
 
@@ -122,36 +122,36 @@ class ESMallUpdateQueueTest extends ElasticsearchTestCase
         $this->assertSame($message, $response['message']);
     }
 
-    public function test_should_update_mall_and_indexed_to_elasticsearch_even_mall_does_not_have_area()
+    public function test_should_delete_mall_and_indexed_to_elasticsearch_even_mall_does_not_have_area()
     {
         // Create mall in antartica
         $geofence = Factory::create('MerchantGeofence', ['area' => NULL]);
         $mall = $geofence->mall;
 
-        // Update mall name
-        $mall->name = 'budiana';
+        // Delete mall name
+        $mall->status = 'deleted';
         $mall->save();
 
-        $elasticQueueUpdate = new ESMallUpdateQueue($this->es);
+        $elasticQueueDelete = new ESMallDeleteQueue($this->es);
         $data = ['mall_id' => $mall->merchant_id];
 
         // Mock the response of ES->index($params)
-        $this->es->method('update')->willReturn([
-            '_index'  => $this->esIndex,
-            '_type'   => $this->esIndexType,
-            '_id'     => $mall->merchant_id,
-            'created' => 0,
+        $this->es->method('delete')->willReturn([
+            '_index' => $this->esIndex,
+            '_type' => $this->esIndexType,
+            '_id' => $mall->merchant_id,
+            'found' => 1,
             '_shards' => [
-                'total'      => 2,
+                'total' => 2,
                 'successful' => 1,
-                'failed'     => 0
+                'failed' => 0
             ]
         ]);
 
         // Fire the event
-        $response = $elasticQueueUpdate->fire($this->job, $data);
+        $response = $elasticQueueDelete->fire($this->job, $data);
 
-        $message = sprintf('[Job ID: `%s`] Elasticsearch Update Index; Status: OK; ES Index Name: %s; ES Index Type: %s',
+        $message = sprintf('[Job ID: `%s`] Elasticsearch Delete Index; Status: OK; ES Index Name: %s; ES Index Type: %s',
             $this->job->getJobId(), $this->esIndex, $this->esIndexType, $mall->merchant_id
         );
 
@@ -159,25 +159,25 @@ class ESMallUpdateQueueTest extends ElasticsearchTestCase
         $this->assertSame($message, $response['message']);
     }
 
-    public function test_should_update_mall_and_indexed_to_elasticsearch_even_mall_does_not_have_position()
+    public function test_should_delete_mall_and_indexed_to_elasticsearch_even_mall_does_not_have_position()
     {
         // Create mall in antartica
         $geofence = Factory::create('MerchantGeofence', ['position' => NULL]);
         $mall = $geofence->mall;
 
-        // update mall name
-        $mall->name = 'sutiana';
+        // delete mall
+        $mall->status = 'deleted';
         $mall->save();
 
-        $elasticQueueUpdate = new ESMallUpdateQueue($this->es);
+        $elasticQueueDelete = new ESMallDeleteQueue($this->es);
         $data = ['mall_id' => $mall->merchant_id];
 
         // Mock the response of ES->index($params)
-        $this->es->method('update')->willReturn([
+        $this->es->method('delete')->willReturn([
             '_index'  => $this->esIndex,
             '_type'   => $this->esIndexType,
             '_id'     => $mall->merchant_id,
-            'created' => 0,
+            'found'   => 1,
             '_shards' => [
                 'total'      => 2,
                 'successful' => 1,
@@ -186,9 +186,9 @@ class ESMallUpdateQueueTest extends ElasticsearchTestCase
         ]);
 
         // Fire the event
-        $response = $elasticQueueUpdate->fire($this->job, $data);
+        $response = $elasticQueueDelete->fire($this->job, $data);
 
-        $message = sprintf('[Job ID: `%s`] Elasticsearch Update Index; Status: OK; ES Index Name: %s; ES Index Type: %s',
+        $message = sprintf('[Job ID: `%s`] Elasticsearch Delete Index; Status: OK; ES Index Name: %s; ES Index Type: %s',
             $this->job->getJobId(), $this->esIndex, $this->esIndexType, $mall->merchant_id
         );
 
@@ -202,11 +202,11 @@ class ESMallUpdateQueueTest extends ElasticsearchTestCase
         $geofence = Factory::create('MerchantGeofence');
         $mall = $geofence->mall;
 
-        // update mall name
-        $mall->name = 'satuasa';
+        // delete mall
+        $mall->status = 'deleted';
         $mall->save();
 
-        $elasticQueueUpdate = new ESMallUpdateQueue($this->es);
+        $elasticQueueDelete = new ESMallDeleteQueue($this->es);
         $data = ['mall_id' => $mall->merchant_id];
 
         // Mock the response of ES->index($params)
@@ -217,12 +217,12 @@ class ESMallUpdateQueueTest extends ElasticsearchTestCase
             ],
             'status' => 400
         ];
-        $this->es->method('update')->willReturn($mockResponse);
+        $this->es->method('delete')->willReturn($mockResponse);
 
         // Fire the event
-        $response = $elasticQueueUpdate->fire($this->job, $data);
+        $response = $elasticQueueDelete->fire($this->job, $data);
 
-        $message = sprintf('[Job ID: `%s`] Elasticsearch Update Index; Status: FAIL; ES Index Name: %s; ES Index Type: %s; Code: %s; Message: %s',
+        $message = sprintf('[Job ID: `%s`] Elasticsearch Delete Index; Status: FAIL; ES Index Name: %s; ES Index Type: %s; Code: %s; Message: %s',
             $this->job->getJobId(),
             $this->esIndex,
             $this->esIndexType,
@@ -240,11 +240,11 @@ class ESMallUpdateQueueTest extends ElasticsearchTestCase
         $geofence = Factory::create('MerchantGeofence');
         $mall = $geofence->mall;
 
-        // update mall name
-        $mall->name = 'sulastro';
+        // delete mall
+        $mall->status = 'deleted';
         $mall->save();
 
-        $elasticQueueUpdate = new ESMallUpdateQueue($this->es);
+        $elasticQueueDelete = new ESMallDeleteQueue($this->es);
         $data = ['mall_id' => $mall->merchant_id];
 
         // Mock the response of ES->index($params)
@@ -252,19 +252,19 @@ class ESMallUpdateQueueTest extends ElasticsearchTestCase
             '_index'  => $this->esIndex,
             '_type'   => $this->esIndexType,
             '_id'     => $mall->merchant_id,
-            'created' => 0,
+            'found'   => 1,
             '_shards' => [
                 'total'      => 2,
                 'successful' => 0,
                 'failed'     => 0
             ]
         ];
-        $this->es->method('update')->willReturn($mockResponse);
+        $this->es->method('delete')->willReturn($mockResponse);
 
         // Fire the event
-        $response = $elasticQueueUpdate->fire($this->job, $data);
+        $response = $elasticQueueDelete->fire($this->job, $data);
 
-        $message = sprintf('[Job ID: `%s`] Elasticsearch Update Index; Status: FAIL; ES Index Name: %s; ES Index Type: %s; Code: %s; Message: %s',
+        $message = sprintf('[Job ID: `%s`] Elasticsearch Delete Index; Status: FAIL; ES Index Name: %s; ES Index Type: %s; Code: %s; Message: %s',
             $this->job->getJobId(),
             $this->esIndex,
             $this->esIndexType,

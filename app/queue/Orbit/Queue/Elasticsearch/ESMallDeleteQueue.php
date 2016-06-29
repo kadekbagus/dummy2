@@ -1,8 +1,8 @@
 <?php namespace Orbit\Queue\ElasticSearch;
 /**
- * Update Elasticsearch index when new mall has been created.
+ * Delete Elasticsearch index when mall has been deleted.
  *
- * @author Rio Astamal <rio@dominopos.com>
+ * @author Irianto <irianto@dominopos.com>
  */
 use Elasticsearch\ClientBuilder as ESBuilder;
 use Config;
@@ -13,7 +13,7 @@ use Orbit\Helper\Elasticsearch\ElasticsearchErrorChecker;
 use Orbit\Helper\Util\JobBurier;
 use Exception;
 
-class ESMallCreateQueue
+class ESMallDeleteQueue
 {
     /**
      * Poster. The object which post the data to external system.
@@ -42,7 +42,7 @@ class ESMallCreateQueue
     /**
      * Laravel main method to fire a job on a queue.
      *
-     * @author Rio Astamal <me@rioastamal.net>
+     * @author Irianto <irianto@dominopos.com>
      * @param Job $job
      * @param array $data[
      *                    'merchant_id' => NUM // Mall ID
@@ -54,7 +54,7 @@ class ESMallCreateQueue
     {
         $mallId = $data['mall_id'];
         $mall = Mall::with('country')
-                    ->excludeDeleted()
+                    ->where('status', 'deleted')
                     ->where('merchant_id', $mallId)
                     ->first();
 
@@ -74,43 +74,23 @@ class ESMallCreateQueue
             $params = [
                 'index' => Config::get('orbit.elasticsearch.indices.malldata.index'),
                 'type' => Config::get('orbit.elasticsearch.indices.malldata.type'),
-                'id' => $mall->merchant_id,
-                'body' => [
-                    'name' => $mall->name,
-                    'description' => $mall->description,
-                    'address_line' => trim(implode("\n", [$mall->address_line1, $mall->address_line2, $mall->address_line2])),
-                    'city' => $mall->city,
-                    'country' => $mall->Country->name,
-                    'phone' => $mall->phone,
-                    'operating_hours' => $mall->operating_hours,
-                    'object_type' => $mall->object_type,
-                    'status' => $mall->status,
-                    'ci_domain' => $mall->ci_domain,
-                    'position' => [
-                        'lat' => $geofence->latitude,
-                        'long' => $geofence->longitude
-                    ],
-                    'area' => [
-                        'type' => 'polygon',
-                        'coordinates' => $geofence->area
-                    ]
-                ]
+                'id' => $mall->merchant_id
             ];
 
-            $response = $this->poster->index($params);
+            $response = $this->poster->delete($params);
 
             // Example response when document created:
             // {
+            //   "found": true,
             //   "_index": "malls",
-            //   "_type": "basic",
-            //   "_id": "abc123",
-            //   "_version": 1,
+            //   "_type": "mall",
+            //   "_id": "abcs23",
+            //   "_version": 2,
             //   "_shards": {
             //     "total": 2,
             //     "successful": 1,
             //     "failed": 0
-            //   },
-            //   "created": true
+            //   }
             // }
             //
             // The indexing considered successful is attribute `successful` on `_shard` is more than 0.
@@ -121,7 +101,7 @@ class ESMallCreateQueue
 
             return [
                 'status' => 'ok',
-                'message' => sprintf('[Job ID: `%s`] Elasticsearch Create Index; Status: OK; ES Index Name: %s; ES Index Type: %s',
+                'message' => sprintf('[Job ID: `%s`] Elasticsearch Delete Index; Status: OK; ES Index Name: %s; ES Index Type: %s',
                                 $job->getJobId(),
                                 $esConfig['indices']['malldata']['index'],
                                 $esConfig['indices']['malldata']['type'])
@@ -135,7 +115,7 @@ class ESMallCreateQueue
 
             return [
                 'status' => 'fail',
-                'message' => sprintf('[Job ID: `%s`] Elasticsearch Create Index; Status: FAIL; ES Index Name: %s; ES Index Type: %s; Code: %s; Message: %s',
+                'message' => sprintf('[Job ID: `%s`] Elasticsearch Delete Index; Status: FAIL; ES Index Name: %s; ES Index Type: %s; Code: %s; Message: %s',
                                 $job->getJobId(),
                                 $esConfig['indices']['malldata']['index'],
                                 $esConfig['indices']['malldata']['type'],
