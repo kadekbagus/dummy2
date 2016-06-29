@@ -16,6 +16,8 @@ use Mall;
 use stdClass;
 use Orbit\Helper\Util\PaginationNumber;
 
+use Elasticsearch\ClientBuilder;
+
 class MallNearbyAPIController extends ControllerAPI
 {
     /**
@@ -177,4 +179,153 @@ class MallNearbyAPIController extends ControllerAPI
 
         return $output;
     }
+
+
+    /**
+     * GET - Search mall keyword by Elasticsearch
+     *
+     * Priority : name, city, country, position, address_line, description
+     *
+     * @author Firmansyah <firmansyah@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param string latitude
+     * @param string longitude
+     * @param string distance
+     * @param string keyword_search
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function getSearchMallKeyword()
+    {
+        $httpCode = 200;
+        try {
+
+            $latitude = OrbitInput::get('latitude',null);
+            $longitude = OrbitInput::get('longitude',null);
+            $distance = OrbitInput::get('distance',null);
+            $keyword_search = OrbitInput::get('keyword_search',null);
+
+            // Default distance as a mention in SRS
+            $distance = "1000km";
+
+            $usingDemo = Config::get('orbit.is_demo', FALSE);
+            $host = Config::get('orbit.elasticsearch');
+
+            $client = ClientBuilder::create() // Instantiate a new ClientBuilder
+                    ->setHosts($host['hosts']) // Set the hosts
+                    ->build();
+
+            $json_search = '{
+                                "query" :{
+                                    "multi_match" : {
+                                        "query": "' . $keyword_search . '",
+                                        "fields": [ "name^4", "city^3", "country^3", "position^2", "address_line", "description"],
+                                        "zero_terms_query" : "all"
+                                    }
+                                },
+                                "filter": {
+                                    "geo_distance": {
+                                        "distance": "' . $distance . '",
+                                        "position": [ ' . $longitude . ' , ' . $latitude . ']
+                                    }
+                                }
+                            }';
+
+            $param_nearest = [
+                'index'  => Config::get('orbit.elasticsearch.indices.malldata.index'),
+                'type'  => Config::get('orbit.elasticsearch.indices.malldata.type'),
+                'body' => $json_search
+            ];
+            $response = $client->search($param_nearest);
+
+            $take = PaginationNumber::parseTakeFromGet('geo_location');
+            $skip = PaginationNumber::parseSkipFromGet();
+
+            $area_data = $response['hits'];
+
+            $listmall = array();
+            $loop = 0;
+            $loopfirst = 0;
+            $loopinside = 1;
+            foreach ($area_data['hits'] as $key => $dt) {
+
+                // first data is mall nearest - center point, so it's cannot take/skip
+                if ($loop == 0) {
+                    $areadata = array();
+                    $areadata['id'] = $dt['_id'];
+                    foreach ($dt['_source'] as $source => $val) {
+                        $areadata[$source] = $val;
+                    }
+
+                    $listmall[] = $areadata;
+                } else {
+                    if ($loop >= $skip) {
+                        $areadata['id'] = $dt['_id'];
+                        foreach ($dt['_source'] as $source => $val) {
+                            $areadata[$source] = $val;
+                        }
+
+                        $listmall[] = $areadata;
+                        if ($loopinside == $take) {
+                            break;
+                        }
+                        $loopinside += 1;
+                    }
+                }
+                $loop += 1;
+            }
+
+            $this->response->data = new stdClass();
+            $this->response->data->total_records = $area_data['total'];
+            $this->response->data->returned_records = count($listmall);
+            $this->response->data->records = $listmall;
+        } catch (ACLForbiddenException $e) {
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (InvalidArgsException $e) {
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $result['total_records'] = 0;
+            $result['returned_records'] = 0;
+            $result['records'] = null;
+
+            $this->response->data = $result;
+            $httpCode = 403;
+        } catch (QueryException $e) {
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+        } catch (Exception $e) {
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 500;
+        }
+
+        $output = $this->render($httpCode);
+
+        return $output;
+    }
+
+
+
 }
