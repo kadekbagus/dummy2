@@ -356,6 +356,18 @@ trait UserRoleTrait
     }
 
     /**
+     * Guest check.
+     *
+     * @return boolean
+     */
+    public function isGuest()
+    {
+        $role = 'guest';
+
+        return strtolower($this->role->role_name) === $role;
+    }
+
+    /**
      * Super admin check.
      *
      * @Todo: Prevent query.
