@@ -842,10 +842,13 @@ class IntermediateLoginController extends IntermediateBaseController
                     $this->session = SessionPreparer::prepareSession();
                 }
 
-                // if the request comes from desktop_ci, return the guest session
-                // if this goes live then we should remove the TRUE param in generateGuestUser()
+                // if this goes live then we should remove the $guestConfig param in GuestUserGenerator::create()
+                // or change the record_signin_activity to TRUE
                 // to be able to record guest in Dashboard
-                $guest = GuestUserGenerator::create()->generate();
+                $guestConfig = [
+                    'record_signin_activity' => FALSE
+                ];
+                $guest = GuestUserGenerator::create($guestConfig)->generate();
 
                 $sessionData = $this->session->read(NULL);
                 $sessionData['logged_in'] = TRUE;
