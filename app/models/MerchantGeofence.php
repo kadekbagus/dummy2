@@ -27,7 +27,7 @@ class MerchantGeofence extends Eloquent
     {
         $prefix = DB::getTablePrefix();
         return $query->addSelect(DB::raw(
-                        "X(${prefix}merchant_geofences.position) as latidude,
+                        "X(${prefix}merchant_geofences.position) as latitude,
                         Y(${prefix}merchant_geofences.position) as longitude"
         ));
     }
