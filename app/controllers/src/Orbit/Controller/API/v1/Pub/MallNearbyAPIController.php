@@ -208,7 +208,7 @@ class MallNearbyAPIController extends ControllerAPI
             $keyword_search = OrbitInput::get('keyword_search',null);
 
             // Default distance as a mention in SRS
-            $distance = "1000km";
+            $distance = "200km";
 
             $usingDemo = Config::get('orbit.is_demo', FALSE);
             $host = Config::get('orbit.elasticsearch');
@@ -223,12 +223,6 @@ class MallNearbyAPIController extends ControllerAPI
                                         "query": "' . $keyword_search . '",
                                         "fields": [ "name^4", "city^3", "country^3", "position^2", "address_line", "description"],
                                         "zero_terms_query" : "all"
-                                    }
-                                },
-                                "filter": {
-                                    "geo_distance": {
-                                        "distance": "' . $distance . '",
-                                        "position": [ ' . $longitude . ' , ' . $latitude . ']
                                     }
                                 }
                             }';
