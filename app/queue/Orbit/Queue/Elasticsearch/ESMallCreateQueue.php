@@ -88,7 +88,7 @@ class ESMallCreateQueue
                     'ci_domain' => $mall->ci_domain,
                     'position' => [
                         'lat' => $geofence->latitude,
-                        'long' => $geofence->longitude
+                        'lon' => $geofence->longitude
                     ],
                     'area' => [
                         'type' => 'polygon',

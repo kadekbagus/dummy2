@@ -67,7 +67,7 @@ class MerchantGeofence extends Eloquent
             return [$long, $lat];
         };
 
-        $geodata = str_ireplace('POLYGON((', '', substr($geodata, 0, -4));
+        $geodata = str_ireplace('POLYGON((', '', substr($geodata, 0, -2));
         $area = explode(',', $geodata);
         $esGeo = array_map($transform, $area);
 
