@@ -76,22 +76,22 @@ class ESMallCreateQueue
                 'type' => Config::get('orbit.elasticsearch.indices.malldata.type'),
                 'id' => $mall->merchant_id,
                 'body' => [
-                    'name' => $mall->name,
-                    'description' => $mall->description,
-                    'address_line' => trim(implode("\n", [$mall->address_line1, $mall->address_line2, $mall->address_line2])),
-                    'city' => $mall->city,
-                    'country' => $mall->Country->name,
-                    'phone' => $mall->phone,
+                    'name'            => $mall->name,
+                    'description'     => $mall->description,
+                    'address_line'    => trim(implode("\n", [$mall->address_line1, $mall->address_line2, $mall->address_line2])),
+                    'city'            => $mall->city,
+                    'country'         => $mall->Country->name,
+                    'phone'           => $mall->phone,
                     'operating_hours' => $mall->operating_hours,
-                    'object_type' => $mall->object_type,
-                    'status' => $mall->status,
-                    'ci_domain' => $mall->ci_domain,
-                    'position' => [
-                        'lat' => $geofence->latitude,
-                        'long' => $geofence->longitude
+                    'object_type'     => $mall->object_type,
+                    'status'          => $mall->status,
+                    'ci_domain'       => $mall->ci_domain,
+                    'position'        => [
+                        'lon' => $geofence->longitude,
+                        'lat' => $geofence->latitude
                     ],
                     'area' => [
-                        'type' => 'polygon',
+                        'type'        => 'polygon',
                         'coordinates' => $geofence->area
                     ]
                 ]

@@ -24,7 +24,7 @@ return array(
         'indices' => [
             'malldata' => [
                 'index' => 'malls',
-                'type'  => 'mall'
+                'type'  => 'basic'
             ],
 
             'activities' => [

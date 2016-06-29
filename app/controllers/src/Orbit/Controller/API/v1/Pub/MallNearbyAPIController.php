@@ -208,7 +208,7 @@ class MallNearbyAPIController extends ControllerAPI
             $keyword_search = OrbitInput::get('keyword_search',null);
 
             // Default distance as a mention in SRS
-            $distance = "1000km";
+            $distance = "200km";
 
             $usingDemo = Config::get('orbit.is_demo', FALSE);
             $host = Config::get('orbit.elasticsearch');
@@ -217,21 +217,20 @@ class MallNearbyAPIController extends ControllerAPI
                     ->setHosts($host['hosts']) // Set the hosts
                     ->build();
 
+            $take = PaginationNumber::parseTakeFromGet('geo_location');
+            $skip = PaginationNumber::parseSkipFromGet();
+
             $json_search = '{
+                                "from" : ' . $skip . ', "size" : ' . $take . ',
                                 "query" :{
                                     "multi_match" : {
                                         "query": "' . $keyword_search . '",
                                         "fields": [ "name^4", "city^3", "country^3", "position^2", "address_line", "description"],
                                         "zero_terms_query" : "all"
                                     }
-                                },
-                                "filter": {
-                                    "geo_distance": {
-                                        "distance": "' . $distance . '",
-                                        "position": [ ' . $longitude . ' , ' . $latitude . ']
-                                    }
                                 }
                             }';
+
 
             $param_nearest = [
                 'index'  => Config::get('orbit.elasticsearch.indices.malldata.index'),
@@ -240,41 +239,19 @@ class MallNearbyAPIController extends ControllerAPI
             ];
             $response = $client->search($param_nearest);
 
-            $take = PaginationNumber::parseTakeFromGet('geo_location');
-            $skip = PaginationNumber::parseSkipFromGet();
-
             $area_data = $response['hits'];
 
             $listmall = array();
-            $loop = 0;
-            $loopfirst = 0;
-            $loopinside = 1;
+
+            // Reformat return data
             foreach ($area_data['hits'] as $key => $dt) {
-
-                // first data is mall nearest - center point, so it's cannot take/skip
-                if ($loop == 0) {
-                    $areadata = array();
-                    $areadata['id'] = $dt['_id'];
-                    foreach ($dt['_source'] as $source => $val) {
-                        $areadata[$source] = $val;
-                    }
-
-                    $listmall[] = $areadata;
-                } else {
-                    if ($loop >= $skip) {
-                        $areadata['id'] = $dt['_id'];
-                        foreach ($dt['_source'] as $source => $val) {
-                            $areadata[$source] = $val;
-                        }
-
-                        $listmall[] = $areadata;
-                        if ($loopinside == $take) {
-                            break;
-                        }
-                        $loopinside += 1;
-                    }
+                $areadata = array();
+                $areadata['id'] = $dt['_id'];
+                foreach ($dt['_source'] as $source => $val) {
+                    $areadata[$source] = $val;
                 }
-                $loop += 1;
+
+                $listmall[] = $areadata;
             }
 
             $this->response->data = new stdClass();

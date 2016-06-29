@@ -27,7 +27,7 @@ class MerchantGeofence extends Eloquent
     {
         $prefix = DB::getTablePrefix();
         return $query->addSelect(DB::raw(
-                        "X(${prefix}merchant_geofences.position) as latidude,
+                        "X(${prefix}merchant_geofences.position) as latitude,
                         Y(${prefix}merchant_geofences.position) as longitude"
         ));
     }
@@ -64,10 +64,10 @@ class MerchantGeofence extends Eloquent
         {
             list($lat, $long) = explode(' ', trim($latlong));
 
-            return sprintf('%s %s', $long, $lat);
+            return [$long, $lat];
         };
 
-        $geodata = str_ireplace('GeomFromText("POLYGON((', '', substr($geodata, 0, -4));
+        $geodata = str_ireplace('POLYGON((', '', substr($geodata, 0, -2));
         $area = explode(',', $geodata);
         $esGeo = array_map($transform, $area);
 
