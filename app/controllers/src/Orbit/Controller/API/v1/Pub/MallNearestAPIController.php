@@ -49,7 +49,26 @@ class MallNearestAPIController extends ControllerAPI
                     ->setHosts($host['hosts']) // Set the hosts
                     ->build();
 
+            $filterStatus = '';
+            if ($usingDemo) {
+                $filterStatus = '"filter" : {
+                    "not" : {
+                        "term" : {
+                            "status" : "deleted"
+                        }
+                    }
+                }';
+            } else {
+                // Production
+                $filterStatus = '"query": {
+                    "match" : {
+                        "status" : "active"
+                    }
+                }';
+            }
+
             $json_nearest = '{
+                    ' . $filterStatus . ',
                     "sort": [
                        {
                       "_geo_distance": {

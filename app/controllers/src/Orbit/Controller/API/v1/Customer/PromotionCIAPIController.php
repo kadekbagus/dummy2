@@ -37,8 +37,6 @@ class PromotionCIAPIController extends BaseAPIController
 
         $user = null;
         $keyword = null;
-        // $activityPage = Activity::mobileci()
-        //                 ->setActivityType('view');
 
         try{
             $this->checkAuth();
@@ -280,32 +278,12 @@ class PromotionCIAPIController extends BaseAPIController
             $this->response->status = 'success';
             $this->response->message = 'Request Ok';
 
-            // $activityPageNotes = sprintf('Page viewed: %s', 'Promotion List Page');
-            // $activityPage->setUser($user)
-            //     ->setActivityName('view_promotion_list')
-            //     ->setActivityNameLong('View Promotion List')
-            //     ->setObject(null)
-            //     ->setModuleName('Promotion')
-            //     ->setNotes($activityPageNotes)
-            //     ->responseOK()
-            //     ->save();
-
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $this->response->data = null;
             $httpCode = 403;
-            
-            // $activityPageNotes = sprintf('Failed to view Page: %s', 'Promotion List');
-            // $activityPage->setUser($user)
-            //     ->setActivityName('view_promotion_list')
-            //     ->setActivityNameLong('View Promotion List Failed')
-            //     ->setObject(null)
-            //     ->setModuleName('Promotion')
-            //     ->setNotes($activityPageNotes)
-            //     ->responseFailed()
-            //     ->save();
 
         } catch (InvalidArgsException $e) {
             $this->response->code = $e->getCode();
@@ -318,16 +296,6 @@ class PromotionCIAPIController extends BaseAPIController
             $this->response->data = $result;
             $httpCode = 403;
 
-            // $activityPageNotes = sprintf('Failed to view Page: %s', 'Promotion List');
-            // $activityPage->setUser($user)
-            //     ->setActivityName('view_promotion_list')
-            //     ->setActivityNameLong('View Promotion List Failed')
-            //     ->setObject(null)
-            //     ->setModuleName('Promotion')
-            //     ->setNotes($activityPageNotes)
-            //     ->responseFailed()
-            //     ->save();
-
         } catch (QueryException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -339,16 +307,6 @@ class PromotionCIAPIController extends BaseAPIController
             }
             $this->response->data = null;
             $httpCode = 500;
-            
-            // $activityPageNotes = sprintf('Failed to view Page: %s', 'Promotion List');
-            // $activityPage->setUser($user)
-            //     ->setActivityName('view_promotion_list')
-            //     ->setActivityNameLong('View Promotion List Failed')
-            //     ->setObject(null)
-            //     ->setModuleName('Promotion')
-            //     ->setNotes($activityPageNotes)
-            //     ->responseFailed()
-            //     ->save();
 
         } catch (Exception $e) {
             $this->response->code = $this->getNonZeroCode($e->getCode());
@@ -357,15 +315,6 @@ class PromotionCIAPIController extends BaseAPIController
             $this->response->data = null; 
             $httpCode = 500;
 
-            // $activityPageNotes = sprintf('Failed to view Page: %s', 'Promotion List');
-            // $activityPage->setUser($user)
-            //     ->setActivityName('view_promotion_list')
-            //     ->setActivityNameLong('View Promotion List Failed')
-            //     ->setObject(null)
-            //     ->setModuleName('Promotion')
-            //     ->setNotes($activityPageNotes)
-            //     ->responseFailed()
-            //     ->save();
         }
 
         return $this->render($httpCode);
@@ -378,8 +327,7 @@ class PromotionCIAPIController extends BaseAPIController
 
         $user = null;
         $promotionId = 0;
-        // $activityPage = Activity::mobileci()
-        //                            ->setActivityType('view');
+
         try{
             $this->checkAuth();
             $user = $this->api->user;
@@ -532,33 +480,12 @@ class PromotionCIAPIController extends BaseAPIController
             $this->response->status = 'success';
             $this->response->message = 'Request Ok';
 
-            // $activityPageNotes = sprintf('Page viewed: Promotion Detail, promotion Id: %s', $promotionId);
-            // $activityPage->setUser($user)
-            //     ->setActivityName('view_promotion')
-            //     ->setActivityNameLong('View Promotion Detail')
-            //     ->setObject($promotion)
-            //     ->setNews($promotion)
-            //     ->setModuleName('Promotion')
-            //     ->setNotes($activityPageNotes)
-            //     ->responseOK()
-            //     ->save();
-
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $this->response->data = null;
             $httpCode = 403;
-
-            // $activityPageNotes = sprintf('Failed to view Page: Promotion Detail, promotion Id: %s', $promotionId);
-            // $activityPage->setUser($user)
-            //     ->setActivityName('view_promotion')
-            //     ->setActivityNameLong('View Promotion Failed')
-            //     ->setObject(null)
-            //     ->setModuleName('Promotion')
-            //     ->setNotes($activityPageNotes)
-            //     ->responseFailed()
-            //     ->save();
 
         } catch (InvalidArgsException $e) {
             $this->response->code = $e->getCode();
@@ -570,16 +497,6 @@ class PromotionCIAPIController extends BaseAPIController
 
             $this->response->data = $result;
             $httpCode = 403;
-
-            // $activityPageNotes = sprintf('Failed to view Page: Promotion Detail, promotion Id: %s', $promotionId);
-            // $activityPage->setUser($user)
-            //     ->setActivityName('view_promotion')
-            //     ->setActivityNameLong('View Promotion Failed')
-            //     ->setObject(null)
-            //     ->setModuleName('Promotion')
-            //     ->setNotes($activityPageNotes)
-            //     ->responseFailed()
-            //     ->save();
 
         } catch (QueryException $e) {
             $this->response->code = $e->getCode();
@@ -593,32 +510,13 @@ class PromotionCIAPIController extends BaseAPIController
             $this->response->data = null;
             $httpCode = 500;
 
-            // $activityPageNotes = sprintf('Failed to view Page: Promotion Detail, promotion Id: %s', $promotionId);
-            // $activityPage->setUser($user)
-            //     ->setActivityName('view_promotion')
-            //     ->setActivityNameLong('View Promotion Failed')
-            //     ->setObject(null)
-            //     ->setModuleName('Promotion')
-            //     ->setNotes($activityPageNotes)
-            //     ->responseFailed()
-            //     ->save();
-
         } catch (Exception $e) {
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $this->response->data = null; 
             $httpCode = 500;
-
-            // $activityPageNotes = sprintf('Failed to view Page: Promotion Detail, promotion Id: %s', $promotionId);
-            // $activityPage->setUser($user)
-            //     ->setActivityName('view_promotion')
-            //     ->setActivityNameLong('View Promotion Failed')
-            //     ->setObject(null)
-            //     ->setModuleName('Promotion')
-            //     ->setNotes($activityPageNotes)
-            //     ->responseFailed()
-            //     ->save();
+            
         }
 
         return $this->render($httpCode);

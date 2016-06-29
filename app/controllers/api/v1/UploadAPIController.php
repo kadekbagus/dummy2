@@ -5126,7 +5126,7 @@ class UploadAPIController extends ControllerAPI
 
             $custom_message = array(
                     'errors' => array(
-                        'file_too_big'          => 'Mobile Toolbar Logo Image size is too big, maximum size allowed is :size :unit.',
+                        'file_too_big'          => 'Mall Logo size is too big, maximum size allowed is :size :unit.',
                     ),
                 );
 

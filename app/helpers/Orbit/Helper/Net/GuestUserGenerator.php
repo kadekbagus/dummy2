@@ -23,7 +23,7 @@ class GuestUserGenerator
      *
      * @var boolean
      */
-    protected $recordSignInActivity = FALSE;
+    protected $recordSignInActivity = TRUE;
 
     /**
      * Guest email address.
@@ -41,7 +41,7 @@ class GuestUserGenerator
     public function __construct($config=[])
     {
         $this->guestEmail = isset($config['guest_email']) ? $config['guest_email'] : $this->guestEmail;
-        $this->recordSignInActivity = isset($config['record_signin_activity']) ? $config['record_signin_activity'] : $this->guestEmail;
+        $this->recordSignInActivity = isset($config['record_signin_activity']) ? $config['record_signin_activity'] : $this->recordSignInActivity;
     }
 
     /**
@@ -61,9 +61,9 @@ class GuestUserGenerator
      */
     public function generate()
     {
-        if (! empty($guest_email)) {
+        if (! empty($this->guestEmail)) {
             $user = User::excludeDeleted()
-                         ->where('user_email', $guest_email)
+                         ->where('user_email', $this->guestEmail)
                          ->first();
 
             if (! is_object($user)) {

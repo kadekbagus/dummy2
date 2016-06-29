@@ -108,7 +108,8 @@ class IntermediateCIAuthController extends IntermediateBaseController
                 // throw new Exception('Session error: user not found.');
             }
         } else {
-            // if this goes live then we should remove the TRUE param in generateGuestUser()
+            // if this goes live then we should remove the $guestConfig param in GuestUserGenerator::create()
+            // or change the record_signin_activity to TRUE
             // to be able to record guest in Dashboard
             $guestConfig = [
                 'record_signin_activity' => FALSE
