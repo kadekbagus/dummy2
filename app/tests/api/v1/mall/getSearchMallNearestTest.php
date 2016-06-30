@@ -10,7 +10,7 @@ use Laracasts\TestDummy\Factory;
 use Elasticsearch\ClientBuilder;
 use Faker\Factory as Faker;
 
-class getSearchMallNearBy extends TestCase
+class getSearchMallNearest extends TestCase
 {
     private $baseUrl = '/api/v1/pub/mall-nearest';
     private $myAntarticaLocation = [-66.287162, 110.527896];
@@ -64,9 +64,9 @@ class getSearchMallNearBy extends TestCase
         $client->indices()->create($createParam);
 
         $position = [ 
-            array("lon" => 110.529684, "lat" => -66.305388),
-            array("lon" => 110.529677, "lat" => -66.326166), 
-            array("lon" => 110.531458, "lat" => -66.360110)
+            array("lon" => 110.529684, "lat" => -66.305388, "status" => 'active'),
+            array("lon" => 110.529677, "lat" => -66.326166, "status" => 'active'), 
+            array("lon" => 110.531458, "lat" => -66.360110, "status" => 'active')
         ];
         $this->position = $position;
 
@@ -80,6 +80,7 @@ class getSearchMallNearBy extends TestCase
 
             $params['body'][] = [
                 'name' => Faker::create()->sentence(3),
+                'status' => $pos['status'],
                 'position' => ["lon" => $pos['lon'], "lat" => $pos['lat']]
             ];
         }

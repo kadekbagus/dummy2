@@ -12,6 +12,7 @@ use MerchantGeofence;
 use Orbit\Helper\Elasticsearch\ElasticsearchErrorChecker;
 use Orbit\Helper\Util\JobBurier;
 use Exception;
+use Log;
 
 class ESMallUpdateQueue
 {
@@ -71,33 +72,81 @@ class ESMallUpdateQueue
         $geofence = MerchantGeofence::getDefaultValueForAreaAndPosition($mallId);
 
         try {
-            $params = [
+            // check exist elasticsearch index
+            $params_search = [
                 'index' => Config::get('orbit.elasticsearch.indices.malldata.index'),
                 'type' => Config::get('orbit.elasticsearch.indices.malldata.type'),
-                'id' => $mall->merchant_id,
                 'body' => [
-                    'name' => $mall->name,
-                    'description' => $mall->description,
-                    'address_line' => trim(implode("\n", [$mall->address_line1, $mall->address_line2, $mall->address_line2])),
-                    'city' => $mall->city,
-                    'country' => $mall->Country->name,
-                    'phone' => $mall->phone,
-                    'operating_hours' => $mall->operating_hours,
-                    'object_type' => $mall->object_type,
-                    'status' => $mall->status,
-                    'ci_domain' => $mall->ci_domain,
-                    'position' => [
-                        'lat' => $geofence->latitude,
-                        'long' => $geofence->longitude
-                    ],
-                    'area' => [
-                        'type' => 'polygon',
-                        'coordinates' => $geofence->area
+                    'query' => [
+                        'match' => [
+                            '_id' => $mall->merchant_id
+                        ]
                     ]
                 ]
             ];
 
-            $response = $this->poster->update($params);
+            $response_search = $this->poster->search($params_search);
+
+            $response = NULL;
+            if ($response_search['hits']['total'] > 0) {
+                $params = [
+                    'index' => Config::get('orbit.elasticsearch.indices.malldata.index'),
+                    'type' => Config::get('orbit.elasticsearch.indices.malldata.type'),
+                    'id' => $mall->merchant_id,
+                    'body' => [
+                        'doc' => [
+                            'name'            => $mall->name,
+                            'description'     => $mall->description,
+                            'address_line'    => trim(implode("\n", [$mall->address_line1, $mall->address_line2, $mall->address_line2])),
+                            'city'            => $mall->city,
+                            'country'         => $mall->Country->name,
+                            'phone'           => $mall->phone,
+                            'operating_hours' => $mall->operating_hours,
+                            'object_type'     => $mall->object_type,
+                            'status'          => $mall->status,
+                            'ci_domain'       => $mall->ci_domain,
+                            'position'        => [
+                                'lon' => $geofence->longitude,
+                                'lat' => $geofence->latitude
+                            ],
+                            'area' => [
+                                'type'        => 'polygon',
+                                'coordinates' => $geofence->area
+                            ]
+                        ]
+                    ]
+                ];
+
+                $response = $this->poster->update($params);
+            } else {
+                $params = [
+                    'index' => Config::get('orbit.elasticsearch.indices.malldata.index'),
+                    'type' => Config::get('orbit.elasticsearch.indices.malldata.type'),
+                    'id' => $mall->merchant_id,
+                    'body' => [
+                        'name'            => $mall->name,
+                        'description'     => $mall->description,
+                        'address_line'    => trim(implode("\n", [$mall->address_line1, $mall->address_line2, $mall->address_line2])),
+                        'city'            => $mall->city,
+                        'country'         => $mall->Country->name,
+                        'phone'           => $mall->phone,
+                        'operating_hours' => $mall->operating_hours,
+                        'object_type'     => $mall->object_type,
+                        'status'          => $mall->status,
+                        'ci_domain'       => $mall->ci_domain,
+                        'position'        => [
+                            'lon' => $geofence->longitude,
+                            'lat' => $geofence->latitude
+                        ],
+                        'area' => [
+                            'type'        => 'polygon',
+                            'coordinates' => $geofence->area
+                        ]
+                    ]
+                ];
+
+                $response = $this->poster->index($params);
+            }
 
             // Example response when document created:
             // {
@@ -119,12 +168,15 @@ class ESMallUpdateQueue
             // Safely delete the object
             $job->delete();
 
-            return [
-                'status' => 'ok',
-                'message' => sprintf('[Job ID: `%s`] Elasticsearch Update Index; Status: OK; ES Index Name: %s; ES Index Type: %s',
+            $message = sprintf('[Job ID: `%s`] Elasticsearch Update Index; Status: OK; ES Index Name: %s; ES Index Type: %s',
                                 $job->getJobId(),
                                 $esConfig['indices']['malldata']['index'],
-                                $esConfig['indices']['malldata']['type'])
+                                $esConfig['indices']['malldata']['type']);
+            Log::info($message);
+
+            return [
+                'status' => 'ok',
+                'message' => $message
             ];
         } catch (Exception $e) {
             // Bury the job for later inspection
@@ -133,14 +185,17 @@ class ESMallUpdateQueue
                 $theJob->delete();
             })->bury();
 
-            return [
-                'status' => 'fail',
-                'message' => sprintf('[Job ID: `%s`] Elasticsearch Update Index; Status: FAIL; ES Index Name: %s; ES Index Type: %s; Code: %s; Message: %s',
+            $message = sprintf('[Job ID: `%s`] Elasticsearch Update Index; Status: FAIL; ES Index Name: %s; ES Index Type: %s; Code: %s; Message: %s',
                                 $job->getJobId(),
                                 $esConfig['indices']['malldata']['index'],
                                 $esConfig['indices']['malldata']['type'],
                                 $e->getCode(),
-                                $e->getMessage())
+                                $e->getMessage());
+            Log::info($message);
+
+            return [
+                'status' => 'fail',
+                'message' => $message
             ];
         }
     }
