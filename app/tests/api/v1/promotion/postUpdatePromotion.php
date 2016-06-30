@@ -9,7 +9,7 @@ use OrbitShop\API\v1\Helper\Generator;
 use Laracasts\TestDummy\Factory;
 use Faker\Factory as Faker;
 
-class postNewNewsTest extends TestCase {
+class postNewPromotionTest extends TestCase {
 
     private $baseUrl = '/api/v1/news/update';
 
