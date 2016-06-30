@@ -8,7 +8,7 @@ use OrbitShop\API\v1\Helper\Generator;
 use Laracasts\TestDummy\Factory;
 use Faker\Factory as Faker;
 
-class postDesktopCILoginTest extends TestCase
+class postDesktopCISignUpTest extends TestCase
 {
     protected $sessionId = 1;
     protected $sessData = NULL;

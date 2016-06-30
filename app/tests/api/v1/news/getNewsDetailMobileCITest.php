@@ -8,7 +8,7 @@ use OrbitShop\API\v1\Helper\Generator;
 use Laracasts\TestDummy\Factory;
 use Carbon\Carbon as Carbon;
 
-class getPromotionDetailMobileCITest extends TestCase
+class getNewsDetailMobileCITest extends TestCase
 {
     private $baseUrl = '/api/v1/cust/news/detail?';
 
