@@ -117,6 +117,12 @@ class ESMallUpdateQueue
                     ]
                 ];
 
+                // validation geofence
+                if (empty($geofence->area) || empty($geofence->latitude) || empty($geofence->longitude)) {
+                    unset($params['body']['doc']['position']);
+                    unset($params['body']['doc']['area']);
+                }
+
                 $response = $this->poster->update($params);
             } else {
                 $params = [
@@ -144,6 +150,12 @@ class ESMallUpdateQueue
                         ]
                     ]
                 ];
+
+                // validation geofence
+                if (empty($geofence->area) || empty($geofence->latitude) || empty($geofence->longitude)) {
+                    unset($params['body']['position']);
+                    unset($params['body']['area']);
+                }
 
                 $response = $this->poster->index($params);
             }
