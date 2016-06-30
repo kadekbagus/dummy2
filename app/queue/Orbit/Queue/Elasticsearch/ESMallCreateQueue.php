@@ -12,6 +12,7 @@ use MerchantGeofence;
 use Orbit\Helper\Elasticsearch\ElasticsearchErrorChecker;
 use Orbit\Helper\Util\JobBurier;
 use Exception;
+use Log;
 
 class ESMallCreateQueue
 {
@@ -119,12 +120,15 @@ class ESMallCreateQueue
             // Safely delete the object
             $job->delete();
 
-            return [
-                'status' => 'ok',
-                'message' => sprintf('[Job ID: `%s`] Elasticsearch Create Index; Status: OK; ES Index Name: %s; ES Index Type: %s',
+            $message = sprintf('[Job ID: `%s`] Elasticsearch Create Index; Status: OK; ES Index Name: %s; ES Index Type: %s',
                                 $job->getJobId(),
                                 $esConfig['indices']['malldata']['index'],
-                                $esConfig['indices']['malldata']['type'])
+                                $esConfig['indices']['malldata']['type']);
+            Log::info($message);
+
+            return [
+                'status' => 'ok',
+                'message' => $message
             ];
         } catch (Exception $e) {
             // Bury the job for later inspection
@@ -133,14 +137,17 @@ class ESMallCreateQueue
                 $theJob->delete();
             })->bury();
 
-            return [
-                'status' => 'fail',
-                'message' => sprintf('[Job ID: `%s`] Elasticsearch Create Index; Status: FAIL; ES Index Name: %s; ES Index Type: %s; Code: %s; Message: %s',
+            $message = sprintf('[Job ID: `%s`] Elasticsearch Create Index; Status: FAIL; ES Index Name: %s; ES Index Type: %s; Code: %s; Message: %s',
                                 $job->getJobId(),
                                 $esConfig['indices']['malldata']['index'],
                                 $esConfig['indices']['malldata']['type'],
                                 $e->getCode(),
-                                $e->getMessage())
+                                $e->getMessage());
+            Log::info($message);
+
+            return [
+                'status' => 'fail',
+                'message' => $message
             ];
         }
     }
