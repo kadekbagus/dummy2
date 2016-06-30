@@ -10,7 +10,7 @@ use Laracasts\TestDummy\Factory;
 use Elasticsearch\ClientBuilder;
 use Faker\Factory as Faker;
 
-class getSearchMallNearBy extends TestCase
+class getSearchMallNearest extends TestCase
 {
     private $baseUrl = '/api/v1/pub/mall-nearest';
     private $myAntarticaLocation = [-66.287162, 110.527896];

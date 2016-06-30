@@ -12,7 +12,7 @@ use DominoPOS\OrbitAPI\v10\StatusInterface as Status;
 use Laracasts\TestDummy\Factory;
 use Faker\Factory as Faker;
 
-class getTenantListAngularCITest extends TestCase
+class getTenantItemAngularCITest extends TestCase
 {
     protected $apiUrl = '/api/v1/cust/stores/detail';
 
@@ -120,6 +120,9 @@ class getTenantListAngularCITest extends TestCase
     private function createTenant($merchant_id, $withProfilingBadge)
     {
         $faker = Faker::create();
+        $floor = Factory::create('floor', [
+            'merchant_id' => $merchant_id
+        ]);
         $tenant = Factory::create('tenant_angular_ci', [
             'parent_id' => $merchant_id,
             'email' => $faker->email,
@@ -128,6 +131,8 @@ class getTenantListAngularCITest extends TestCase
             'description' => $faker->paragraph,
             'phone' => $faker->phoneNumber,
             'url' => $faker->domainName,
+            'floor_id' => $floor->object_id,
+            'floor' => $floor->object_name,
         ]);
         $category = Factory::create('Category', [
             'merchant_id' => $merchant_id

@@ -8,7 +8,7 @@ use OrbitShop\API\v1\Helper\Generator;
 use Laracasts\TestDummy\Factory;
 use Carbon\Carbon as Carbon;
 
-class getCustomerGenderDashboardTest extends TestCase
+class getCustomerAgeRangeDashboardTest extends TestCase
 {
     private $baseUrl = '/api/v1/activity/age-statistics?';
 
