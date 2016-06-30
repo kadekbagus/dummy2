@@ -109,7 +109,7 @@ $factory('Tenant', [
     'contact_person_firstname' => $faker->firstName,
     'contact_person_lastname'  => $faker->lastName,
     'contact_person_phone'     => $faker->phoneNumber,
-    'floor'     => $faker->bothify('##?'),
+    'floor_id'     => 'factory:floor',
     'mobile_default_language'  => 'en'
 ]);
 
@@ -120,6 +120,6 @@ $factory('Tenant',  'tenant_angular_ci', [
     'contact_person_firstname' => $faker->firstName,
     'contact_person_lastname'  => $faker->lastName,
     'contact_person_phone'     => $faker->phoneNumber,
-    'floor'     => $faker->randomDigitNotNull,
+    'floor_id'     => 'factory:floor',
     'unit'      => $faker->buildingNumber
 ]);
