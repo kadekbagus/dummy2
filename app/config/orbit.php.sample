@@ -548,6 +548,21 @@ return array(
         'expire' => 3600,
 
         /**
+         * Application list mapping for session
+         */
+        'app_list' => [
+            'mobile_ci' => 'X-OMS-Mobile',
+            'desktop_ci' => 'X-OMS-Mobile',
+            'landing_page' => 'X-OMS-Mobile',
+
+            // Non Customer
+            'mall_portal' => 'X-OMS-Mall',
+            'cs_portal' => 'X-OMS-CS',
+            'pmp_portal' => 'X-OMS-PMP',
+            'admin_portal' => 'X-OMS-Admin'
+        ],
+
+        /**
          * Path to write the session data
          *
          * - usage
@@ -664,7 +679,79 @@ return array(
          * @Todo: use this config instead
          */
         'origin' => array(
-            'mobile' => array(
+            'mobile_ci' => array(
+                'expire' => 62208000,   // two years
+
+                // From HTTP Headers
+                'header'  => array(
+                    'name'      => 'X-OMS-Mobile'
+                ),
+
+                // From Query String
+                'query_string' => array(
+                    'name'      => 'X-OMS-Mobile'
+                ),
+
+                // From Cookie
+                'cookie'    => array(
+                    'name'      => 'X-OMS-Mobile',
+
+                    // Expire time, should be set equals or higher than
+                    // SessionConifg.expire
+                    'expire' => 62208000,   // two years
+
+                    // Path of the cookie
+                    'path'      => '/',
+
+                    // domain
+                    'domain'    => NULL,
+
+                    // secure transfer via HTTPS only
+                    'secure'    => FALSE,
+
+                    // Deny access from client side script
+                    'httponly'  => TRUE
+                ),
+            ),
+
+            'desktop_ci' => array(
+                'expire' => 62208000,   // two years
+
+                // From HTTP Headers
+                'header'  => array(
+                    'name'      => 'X-OMS-Mobile'
+                ),
+
+                // From Query String
+                'query_string' => array(
+                    'name'      => 'X-OMS-Mobile'
+                ),
+
+                // From Cookie
+                'cookie'    => array(
+                    'name'      => 'X-OMS-Mobile',
+
+                    // Expire time, should be set equals or higher than
+                    // SessionConifg.expire
+                    'expire' => 62208000,   // two years
+
+                    // Path of the cookie
+                    'path'      => '/',
+
+                    // domain
+                    'domain'    => NULL,
+
+                    // secure transfer via HTTPS only
+                    'secure'    => FALSE,
+
+                    // Deny access from client side script
+                    'httponly'  => TRUE
+                ),
+            ),
+
+            'landing_page' => array(
+                'expire' => 62208000,   // two years
+
                 // From HTTP Headers
                 'header'  => array(
                     'name'      => 'X-OMS-Mobile'
@@ -698,6 +785,8 @@ return array(
             ),
 
             'admin_portal' => array(
+                'expire' => 3600,   // 1 hour
+
                 // From HTTP Headers
                 'header'  => array(
                     'name'      => 'X-OMS-Admin'
@@ -731,6 +820,8 @@ return array(
             ),
 
             'mall_portal' => array(
+                'expire' => 3600,   // 1 hour
+
                 // From HTTP Headers
                 'header'  => array(
                     'name'      => 'X-OMS-Mall'
@@ -764,6 +855,8 @@ return array(
             ),
 
             'cs_portal' => array(
+                'expire' => 3600,   // 1 hour
+
                 // From HTTP Headers
                 'header'  => array(
                     'name'      => 'X-OMS-CS'
@@ -777,6 +870,41 @@ return array(
                 // From Cookie
                 'cookie'    => array(
                     'name'      => 'X-OMS-CS',
+
+                    // Expire time, should be set equals or higher than
+                    // SessionConifg.expire
+                    'expire' => 62208000,   // two years
+
+                    // Path of the cookie
+                    'path'      => '/',
+
+                    // domain
+                    'domain'    => NULL,
+
+                    // secure transfer via HTTPS only
+                    'secure'    => FALSE,
+
+                    // Deny access from client side script
+                    'httponly'  => TRUE
+                ),
+            ),
+
+            'pmp_portal' => array(
+                'expire' => 3600,   // 1 hour
+
+                // From HTTP Headers
+                'header'  => array(
+                    'name'      => 'X-OMS-PMP'
+                ),
+
+                // From Query String
+                'query_string' => array(
+                    'name'      => 'X-OMS-PMP'
+                ),
+
+                // From Cookie
+                'cookie'    => array(
+                    'name'      => 'X-OMS-PMP',
 
                     // Expire time, should be set equals or higher than
                     // SessionConifg.expire
