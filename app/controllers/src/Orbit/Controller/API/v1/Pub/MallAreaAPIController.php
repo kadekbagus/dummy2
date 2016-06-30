@@ -15,6 +15,7 @@ use Config;
 use Mall;
 use stdClass;
 use Orbit\Helper\Util\PaginationNumber;
+use Elasticsearch\ClientBuilder;
 
 class MallAreaAPIController extends ControllerAPI
 {
@@ -34,81 +35,80 @@ class MallAreaAPIController extends ControllerAPI
         $httpCode = 200;
         try {
             $area = OrbitInput::get('area', null);
+            $keyword = OrbitInput::get('keyword_search');
 
             $usingDemo = Config::get('orbit.is_demo', FALSE);
+            $host = Config::get('orbit.elasticsearch');
 
-            $malls = Mall::select('merchants.*')
-                        ->includeLatLong()
-                        ->InsideMapArea($area);
+            $client = ClientBuilder::create() // Instantiate a new ClientBuilder
+                    ->setHosts($host['hosts']) // Set the hosts
+                    ->build();
 
-            // Filter by mall_id
-            OrbitInput::get('mall_id', function ($mallid) use ($malls) {
-                $malls->where('merchants.merchant_id', $mallid);
-            });
+            $getArea = explode(", ", $area);
+            $topLeft = explode(" ", $getArea[1]);
+            $bottomRight = explode(" ", $getArea[3]);
 
             // Filter
-            OrbitInput::get('keyword_search', function ($keyword) use ($malls) {
-                $mainKeyword = explode(" ", $keyword);
-
-                $malls->where(function($q) use ($mainKeyword) {
-                    foreach ($mainKeyword as $key => $value) {
-                        $q->orWhere(function($r) use ($value) {
-                            $r->where('merchants.name', 'like', "%$value%")
-                                ->orWhere('merchants.city', 'like', "%$value%");
-                        });
-                    }
-                });
-            });
-
-            if ($usingDemo) {
-                $malls->excludeDeleted();
-            } else {
-                // Production
-                $malls->active();
+            $filterKeyword = '';
+            
+            if ($keyword != '') {
+                $filterKeyword = '"query": {
+                                    "multi_match" : {
+                                        "query": "' . $keyword . '",
+                                        "fields": [ "name^4", "city^3", "country^3", "position^2", "address_line", "description"]
+                                    }
+                                  },';
             }
 
-            $_malls = clone $malls;
-
             $take = PaginationNumber::parseTakeFromGet('geo_location');
-            $malls->take($take);
-
             $skip = PaginationNumber::parseSkipFromGet();
-            $malls->skip($skip);
 
-            // Default sort by
-            $sortBy = 'merchants.name';
-            // Default sort mode
-            $sortMode = 'asc';
+            $json_area = '{
+                         "from" : ' . $skip . ', "size" : ' . $take . ',
+                          "query": {       
+                            "filtered": {
+                                ' . $filterKeyword . '
+                                  "filter": {
+                                     "geo_bounding_box": {
+                                  "type": "indexed",
+                                  "position": {
+                                    "top_left": {
+                                      "lat": ' . $topLeft[0] . ',
+                                      "lon": ' . $topLeft[1] . '
+                                    },
+                                    "bottom_right": {
+                                      "lat": ' . $bottomRight[0] . ',
+                                      "lon": ' . $bottomRight[1] . '
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }';
+            
+            $param_area = [
+                'index'  => Config::get('orbit.elasticsearch.indices.malldata.index'),
+                'type'   => Config::get('orbit.elasticsearch.indices.malldata.type'),
+                'body' => $json_area
+            ];
 
-            OrbitInput::get('sortby', function($_sortBy) use (&$sortBy)
-            {
-                // Map the sortby request to the real column name
-                $sortByMapping = array(
-                    'mall_name'         => 'merchants.name',
-                    'city'              => 'merchants.city',
-                    'created_at'        => 'merchants.created_at',
-                    'updated_at'        => 'merchants.updated_at'
-                );
+            $response = $client->search($param_area);
 
-                $sortBy = $sortByMapping[$_sortBy];
-            });
-
-            OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
-            {
-                if (strtolower($_sortMode) !== 'asc') {
-                    $sortMode = 'desc';
+            $area_data = $response['hits'];
+            $listmall = array();
+            foreach ($area_data['hits'] as $dt) {
+                $areadata['id'] = $dt['_id'];
+                foreach ($dt['_source'] as $source => $val) {
+                    $areadata[$source] = $val;
                 }
-            });
-
-            $malls->orderBy($sortBy, $sortMode);
-
-            $listmalls = $malls->get();
-            $count = RecordCounter::create($_malls)->count();
+                $listmall[] = $areadata;
+            }
 
             $this->response->data = new stdClass();
-            $this->response->data->total_records = $count;
-            $this->response->data->returned_records = count($listmalls);
-            $this->response->data->records = $listmalls;
+            $this->response->data->total_records = $area_data['total'];
+            $this->response->data->returned_records = count($listmall);
+            $this->response->data->records = $listmall;
         } catch (ACLForbiddenException $e) {
 
             $this->response->code = $e->getCode();

@@ -14,13 +14,12 @@
  *     "successful": 1,
  *     "failed": 0
  *   },
- *   "created": true
+ *   "created": false
  * }
  *
  * @author Irianto <irianto@dominopos.com>
  */
 use Laracasts\TestDummy\Factory;
-use Orbit\Queue\Elasticsearch\ESMallCreateQueue;
 use Orbit\Queue\Elasticsearch\ESMallUpdateQueue;
 
 class ESMallUpdateQueueTest extends ElasticsearchTestCase
@@ -47,40 +46,14 @@ class ESMallUpdateQueueTest extends ElasticsearchTestCase
     public function test_should_return_object_instance()
     {
         $object = new ESMallUpdateQueue();
-        $this->assertInstanceOf('Orbit\Queue\Elasticsearch\ESMallCreateQueue', $object);
+        $this->assertInstanceOf('Orbit\Queue\Elasticsearch\ESMallUpdateQueue', $object);
     }
 
-    public function test_should_update_mall_and_indexed_to_elasticsearch()
+    public function test_should_update_mall_and_indexed_to_elasticsearch_when_not_found_id()
     {
         // Create mall in antartica
         $geofence = Factory::create('MerchantGeofence');
         $mall = $geofence->mall;
-
-        $elasticQueue = new ESMallCreateQueue($this->es);
-        $data = ['mall_id' => $mall->merchant_id];
-
-        // Mock the response of ES->index($params)
-        $this->es->method('index')->willReturn([
-            '_index' => $this->esIndex,
-            '_type' => $this->esIndexType,
-            '_id' => $mall->merchant_id,
-            'created' => 1,
-            '_shards' => [
-                'total' => 2,
-                'successful' => 1,
-                'failed' => 0
-            ]
-        ]);
-
-        // Fire the event
-        $response = $elasticQueue->fire($this->job, $data);
-
-        $message = sprintf('[Job ID: `%s`] Elasticsearch Create Index; Status: OK; ES Index Name: %s; ES Index Type: %s',
-            $this->job->getJobId(), $this->esIndex, $this->esIndexType, $mall->merchant_id
-        );
-
-        $this->assertSame('ok', $response['status']);
-        $this->assertSame($message, $response['message']);
 
         // update mall name
         $mall->name = 'irianto';
@@ -91,14 +64,81 @@ class ESMallUpdateQueueTest extends ElasticsearchTestCase
 
         // Mock the response of ES->index($params)
         $this->es->method('index')->willReturn([
-            '_index' => $this->esIndex,
-            '_type' => $this->esIndexType,
-            '_id' => $mall->merchant_id,
+            '_index'  => $this->esIndex,
+            '_type'   => $this->esIndexType,
+            '_id'     => $mall->merchant_id,
             'created' => 1,
             '_shards' => [
-                'total' => 2,
+                'total'      => 2,
                 'successful' => 1,
-                'failed' => 0
+                'failed'     => 0
+            ]
+        ]);
+
+        // Fire the event
+        $response = $elasticQueueUpdate->fire($this->job, $data);
+
+        $message = sprintf('[Job ID: `%s`] Elasticsearch Update Index; Status: OK; ES Index Name: %s; ES Index Type: %s',
+            $this->job->getJobId(), $this->esIndex, $this->esIndexType, $mall->merchant_id
+        );
+
+        $this->assertSame('ok', $response['status']);
+        $this->assertSame($message, $response['message']);
+    }
+
+    public function test_should_update_mall_and_indexed_to_elasticsearch_when_found_id()
+    {
+        // Create mall in antartica
+        $geofence = Factory::create('MerchantGeofence');
+        $mall = $geofence->mall;
+
+        // update mall name when doesnt exist elasticsearch index
+        $mall->name = 'irianto';
+        $mall->save();
+
+        $elasticQueueUpdate = new ESMallUpdateQueue($this->es);
+        $data = ['mall_id' => $mall->merchant_id];
+
+        // Mock the response of ES->index($params)
+        $this->es->method('index')->willReturn([
+            '_index'  => $this->esIndex,
+            '_type'   => $this->esIndexType,
+            '_id'     => $mall->merchant_id,
+            'created' => 1,
+            '_shards' => [
+                'total'      => 2,
+                'successful' => 1,
+                'failed'     => 0
+            ]
+        ]);
+
+        // Fire the event
+        $response = $elasticQueueUpdate->fire($this->job, $data);
+
+        $message = sprintf('[Job ID: `%s`] Elasticsearch Update Index; Status: OK; ES Index Name: %s; ES Index Type: %s',
+            $this->job->getJobId(), $this->esIndex, $this->esIndexType, $mall->merchant_id
+        );
+
+        $this->assertSame('ok', $response['status']);
+        $this->assertSame($message, $response['message']);
+
+        // update mall name when exist elasticsearch index
+        $mall->name = 'antok';
+        $mall->save();
+
+        $elasticQueueUpdate = new ESMallUpdateQueue($this->es);
+        $data = ['mall_id' => $mall->merchant_id];
+
+        // Mock the response of ES->index($params)
+        $this->es->method('update')->willReturn([
+            '_index'  => $this->esIndex,
+            '_type'   => $this->esIndexType,
+            '_id'     => $mall->merchant_id,
+            'created' => 0,
+            '_shards' => [
+                'total'      => 2,
+                'successful' => 1,
+                'failed'     => 0
             ]
         ]);
 
@@ -118,26 +158,30 @@ class ESMallUpdateQueueTest extends ElasticsearchTestCase
         // Create mall in antartica
         $mall = Factory::create('Mall');
 
-        $elasticQueue = new ESMallCreateQueue($this->es);
+        // update mall name when doesnt exist elasticsearch index
+        $mall->name = 'irianto';
+        $mall->save();
+
+        $elasticQueueUpdate = new ESMallUpdateQueue($this->es);
         $data = ['mall_id' => $mall->merchant_id];
 
         // Mock the response of ES->index($params)
         $this->es->method('index')->willReturn([
-            '_index' => $this->esIndex,
-            '_type' => $this->esIndexType,
-            '_id' => $mall->merchant_id,
+            '_index'  => $this->esIndex,
+            '_type'   => $this->esIndexType,
+            '_id'     => $mall->merchant_id,
             'created' => 1,
             '_shards' => [
-                'total' => 2,
+                'total'      => 2,
                 'successful' => 1,
-                'failed' => 0
+                'failed'     => 0
             ]
         ]);
 
         // Fire the event
-        $response = $elasticQueue->fire($this->job, $data);
+        $response = $elasticQueueUpdate->fire($this->job, $data);
 
-        $message = sprintf('[Job ID: `%s`] Elasticsearch Create Index; Status: OK; ES Index Name: %s; ES Index Type: %s',
+        $message = sprintf('[Job ID: `%s`] Elasticsearch Update Index; Status: OK; ES Index Name: %s; ES Index Type: %s',
             $this->job->getJobId(), $this->esIndex, $this->esIndexType, $mall->merchant_id
         );
 
@@ -152,15 +196,15 @@ class ESMallUpdateQueueTest extends ElasticsearchTestCase
         $data = ['mall_id' => $mall->merchant_id];
 
         // Mock the response of ES->index($params)
-        $this->es->method('index')->willReturn([
-            '_index' => $this->esIndex,
-            '_type' => $this->esIndexType,
-            '_id' => $mall->merchant_id,
-            'created' => 1,
+        $this->es->method('update')->willReturn([
+            '_index'  => $this->esIndex,
+            '_type'   => $this->esIndexType,
+            '_id'     => $mall->merchant_id,
+            'created' => 0,
             '_shards' => [
-                'total' => 2,
+                'total'      => 2,
                 'successful' => 1,
-                'failed' => 0
+                'failed'     => 0
             ]
         ]);
 
@@ -181,26 +225,30 @@ class ESMallUpdateQueueTest extends ElasticsearchTestCase
         $geofence = Factory::create('MerchantGeofence', ['area' => NULL]);
         $mall = $geofence->mall;
 
-        $elasticQueue = new ESMallCreateQueue($this->es);
+        // update mall name when doesnt exist elasticsearch index
+        $mall->name = 'irianto';
+        $mall->save();
+
+        $elasticQueueUpdate = new ESMallUpdateQueue($this->es);
         $data = ['mall_id' => $mall->merchant_id];
 
         // Mock the response of ES->index($params)
         $this->es->method('index')->willReturn([
-            '_index' => $this->esIndex,
-            '_type' => $this->esIndexType,
-            '_id' => $mall->merchant_id,
+            '_index'  => $this->esIndex,
+            '_type'   => $this->esIndexType,
+            '_id'     => $mall->merchant_id,
             'created' => 1,
             '_shards' => [
-                'total' => 2,
+                'total'      => 2,
                 'successful' => 1,
-                'failed' => 0
+                'failed'     => 0
             ]
         ]);
 
         // Fire the event
-        $response = $elasticQueue->fire($this->job, $data);
+        $response = $elasticQueueUpdate->fire($this->job, $data);
 
-        $message = sprintf('[Job ID: `%s`] Elasticsearch Create Index; Status: OK; ES Index Name: %s; ES Index Type: %s',
+        $message = sprintf('[Job ID: `%s`] Elasticsearch Update Index; Status: OK; ES Index Name: %s; ES Index Type: %s',
             $this->job->getJobId(), $this->esIndex, $this->esIndexType, $mall->merchant_id
         );
 
@@ -215,15 +263,15 @@ class ESMallUpdateQueueTest extends ElasticsearchTestCase
         $data = ['mall_id' => $mall->merchant_id];
 
         // Mock the response of ES->index($params)
-        $this->es->method('index')->willReturn([
-            '_index' => $this->esIndex,
-            '_type' => $this->esIndexType,
-            '_id' => $mall->merchant_id,
-            'created' => 1,
+        $this->es->method('update')->willReturn([
+            '_index'  => $this->esIndex,
+            '_type'   => $this->esIndexType,
+            '_id'     => $mall->merchant_id,
+            'created' => 0,
             '_shards' => [
-                'total' => 2,
+                'total'      => 2,
                 'successful' => 1,
-                'failed' => 0
+                'failed'     => 0
             ]
         ]);
 
@@ -244,26 +292,30 @@ class ESMallUpdateQueueTest extends ElasticsearchTestCase
         $geofence = Factory::create('MerchantGeofence', ['position' => NULL]);
         $mall = $geofence->mall;
 
-        $elasticQueue = new ESMallCreateQueue($this->es);
+        // update mall name when doesnt exist elasticsearch index
+        $mall->name = 'irianto';
+        $mall->save();
+
+        $elasticQueueUpdate = new ESMallUpdateQueue($this->es);
         $data = ['mall_id' => $mall->merchant_id];
 
         // Mock the response of ES->index($params)
         $this->es->method('index')->willReturn([
-            '_index' => $this->esIndex,
-            '_type' => $this->esIndexType,
-            '_id' => $mall->merchant_id,
+            '_index'  => $this->esIndex,
+            '_type'   => $this->esIndexType,
+            '_id'     => $mall->merchant_id,
             'created' => 1,
             '_shards' => [
-                'total' => 2,
+                'total'      => 2,
                 'successful' => 1,
-                'failed' => 0
+                'failed'     => 0
             ]
         ]);
 
         // Fire the event
-        $response = $elasticQueue->fire($this->job, $data);
+        $response = $elasticQueueUpdate->fire($this->job, $data);
 
-        $message = sprintf('[Job ID: `%s`] Elasticsearch Create Index; Status: OK; ES Index Name: %s; ES Index Type: %s',
+        $message = sprintf('[Job ID: `%s`] Elasticsearch Update Index; Status: OK; ES Index Name: %s; ES Index Type: %s',
             $this->job->getJobId(), $this->esIndex, $this->esIndexType, $mall->merchant_id
         );
 
@@ -278,15 +330,15 @@ class ESMallUpdateQueueTest extends ElasticsearchTestCase
         $data = ['mall_id' => $mall->merchant_id];
 
         // Mock the response of ES->index($params)
-        $this->es->method('index')->willReturn([
-            '_index' => $this->esIndex,
-            '_type' => $this->esIndexType,
-            '_id' => $mall->merchant_id,
-            'created' => 1,
+        $this->es->method('update')->willReturn([
+            '_index'  => $this->esIndex,
+            '_type'   => $this->esIndexType,
+            '_id'     => $mall->merchant_id,
+            'created' => 0,
             '_shards' => [
-                'total' => 2,
+                'total'      => 2,
                 'successful' => 1,
-                'failed' => 0
+                'failed'     => 0
             ]
         ]);
 
@@ -307,35 +359,8 @@ class ESMallUpdateQueueTest extends ElasticsearchTestCase
         $geofence = Factory::create('MerchantGeofence');
         $mall = $geofence->mall;
 
-        $elasticQueue = new ESMallCreateQueue($this->es);
-        $data = ['mall_id' => $mall->merchant_id];
-
-        // Mock the response of ES->index($params)
-        $mockResponse = [
-            'error' => [
-                'type' => 'mapper_parsing_exception',
-                'reason' => 'failed to parse'
-            ],
-            'status' => 400
-        ];
-        $this->es->method('index')->willReturn($mockResponse);
-
-        // Fire the event
-        $response = $elasticQueue->fire($this->job, $data);
-
-        $message = sprintf('[Job ID: `%s`] Elasticsearch Create Index; Status: FAIL; ES Index Name: %s; ES Index Type: %s; Code: %s; Message: %s',
-            $this->job->getJobId(),
-            $this->esIndex,
-            $this->esIndexType,
-            $mockResponse['status'],
-            'Reason: ' . $mockResponse['error']['reason'] . ' - Type: ' . $mockResponse['error']['type']
-        );
-
-        $this->assertSame('fail', $response['status']);
-        $this->assertSame($message, $response['message']);
-
-        // update mall name
-        $mall->name = 'satuasa';
+        // update mall name when doesnt exist elasticsearch index
+        $mall->name = 'irianto';
         $mall->save();
 
         $elasticQueueUpdate = new ESMallUpdateQueue($this->es);
@@ -343,11 +368,11 @@ class ESMallUpdateQueueTest extends ElasticsearchTestCase
 
         // Mock the response of ES->index($params)
         $mockResponse = [
-            'error' => [
-                'type' => 'mapper_parsing_exception',
+            'error'  => [
+                'type'   => 'mapper_parsing_exception',
                 'reason' => 'failed to parse'
             ],
-            'status' => 400
+            'status' => 0
         ];
         $this->es->method('index')->willReturn($mockResponse);
 
@@ -362,77 +387,6 @@ class ESMallUpdateQueueTest extends ElasticsearchTestCase
             'Reason: ' . $mockResponse['error']['reason'] . ' - Type: ' . $mockResponse['error']['type']
         );
 
-        $this->assertSame('fail', $response['status']);
-        $this->assertSame($message, $response['message']);
-    }
-
-    public function test_should_not_indexed_to_elasticsearch_because_successful_is_zero()
-    {
-        // Create mall in antartica
-        $geofence = Factory::create('MerchantGeofence');
-        $mall = $geofence->mall;
-
-        $elasticQueue = new ESMallCreateQueue($this->es);
-        $data = ['mall_id' => $mall->merchant_id];
-
-        // Mock the response of ES->index($params)
-        $mockResponse = [
-            '_index' => $this->esIndex,
-            '_type' => $this->esIndexType,
-            '_id' => $mall->merchant_id,
-            'created' => 1,
-            '_shards' => [
-                'total' => 2,
-                'successful' => 0,
-                'failed' => 0
-            ]
-        ];
-        $this->es->method('index')->willReturn($mockResponse);
-
-        // Fire the event
-        $response = $elasticQueue->fire($this->job, $data);
-
-        $message = sprintf('[Job ID: `%s`] Elasticsearch Create Index; Status: FAIL; ES Index Name: %s; ES Index Type: %s; Code: %s; Message: %s',
-            $this->job->getJobId(),
-            $this->esIndex,
-            $this->esIndexType,
-            1,
-            'The document indexing seems fail because the successful value is less than 1.'
-        );
-        $this->assertSame('fail', $response['status']);
-        $this->assertSame($message, $response['message']);
-
-        // update mall name
-        $mall->name = 'sulastro';
-        $mall->save();
-
-        $elasticQueueUpdate = new ESMallUpdateQueue($this->es);
-        $data = ['mall_id' => $mall->merchant_id];
-
-        // Mock the response of ES->index($params)
-        $mockResponse = [
-            '_index' => $this->esIndex,
-            '_type' => $this->esIndexType,
-            '_id' => $mall->merchant_id,
-            'created' => 1,
-            '_shards' => [
-                'total' => 2,
-                'successful' => 0,
-                'failed' => 0
-            ]
-        ];
-        $this->es->method('index')->willReturn($mockResponse);
-
-        // Fire the event
-        $response = $elasticQueueUpdate->fire($this->job, $data);
-
-        $message = sprintf('[Job ID: `%s`] Elasticsearch Update Index; Status: FAIL; ES Index Name: %s; ES Index Type: %s; Code: %s; Message: %s',
-            $this->job->getJobId(),
-            $this->esIndex,
-            $this->esIndexType,
-            1,
-            'The document indexing seems fail because the successful value is less than 1.'
-        );
         $this->assertSame('fail', $response['status']);
         $this->assertSame($message, $response['message']);
     }

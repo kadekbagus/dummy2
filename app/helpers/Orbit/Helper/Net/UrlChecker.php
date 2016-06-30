@@ -16,7 +16,7 @@ use \UserDetail;
 use \Exception;
 use \Request;
 use \App;
-use Orbit\Helper\Net\GenerateGuestUser;
+use OrbitShop\API\v1\OrbitShopAPI;
 
 class UrlChecker
 {
@@ -48,7 +48,7 @@ class UrlChecker
     public static function isLoggedIn($session = NULL)
     {
         if (empty($session)) {
-            throw new Exception('Session error: user not found.');
+            OrbitShopAPI::throwInvalidArgument('Session error: user not found.');
         }
 
         $sessionId = $session->getSessionId();
@@ -92,10 +92,10 @@ class UrlChecker
     {
         if (in_array(\Route::currentRouteName(), Config::get('orbit.blocked_routes', []))) {
             if (! is_object($user)) {
-                throw new Exception('Session error: user not found.');
+                OrbitShopAPI::throwInvalidArgument('Session error: user not found.');
             } else {
                 if (strtolower($user->role()->first()->role_name) !== 'consumer') {
-                    throw new Exception('You need to log in to view this page.');
+                    OrbitShopAPI::throwInvalidArgument('You need to log in to view this page.');
                 }
             }
         }
@@ -112,7 +112,7 @@ class UrlChecker
     public static function blockedRoute($url, $param = [], $session)
     {
         if (empty($session)) {
-            throw new Exception('Session error: user not found.');
+            OrbitShopAPI::throwInvalidArgument('Session error: user not found.');
         }
 
         if (in_array($url, Config::get('orbit.blocked_routes', []))) {
