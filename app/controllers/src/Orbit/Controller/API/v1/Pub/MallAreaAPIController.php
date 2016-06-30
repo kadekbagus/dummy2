@@ -48,9 +48,24 @@ class MallAreaAPIController extends ControllerAPI
             $topLeft = explode(" ", $getArea[1]);
             $bottomRight = explode(" ", $getArea[3]);
 
+            $filterStatus = '';
+            if ($usingDemo) {
+                $filterStatus = '
+                    "not" : {
+                        "term" : {
+                            "status" : "deleted"
+                        }
+                    }';
+            } else {
+                // Production
+                $filterStatus = '
+                    "match" : {
+                        "status" : "active"
+                    }';
+            }
+
             // Filter
             $filterKeyword = '';
-            
             if ($keyword != '') {
                 $filterKeyword = '"query": {
                                     "multi_match" : {
@@ -64,27 +79,36 @@ class MallAreaAPIController extends ControllerAPI
             $skip = PaginationNumber::parseSkipFromGet();
 
             $json_area = '{
-                         "from" : ' . $skip . ', "size" : ' . $take . ',
-                          "query": {       
-                            "filtered": {
-                                ' . $filterKeyword . '
-                                  "filter": {
-                                     "geo_bounding_box": {
-                                  "type": "indexed",
-                                  "position": {
-                                    "top_left": {
-                                      "lat": ' . $topLeft[0] . ',
-                                      "lon": ' . $topLeft[1] . '
-                                    },
-                                    "bottom_right": {
-                                      "lat": ' . $bottomRight[0] . ',
-                                      "lon": ' . $bottomRight[1] . '
+                        "from" : ' . $skip . ', "size" : ' . $take . ',
+                            "query": {       
+                                "filtered": {
+                                    ' . $filterKeyword . '
+                                    "filter": {
+                                        "and": [
+                                            {
+                                                "query": {
+                                                    ' . $filterStatus . '
+                                                }
+                                            }, 
+                                            {
+                                                "geo_bounding_box": {
+                                                    "type": "indexed",
+                                                    "position": {
+                                                        "top_left": {
+                                                            "lat": ' . $topLeft[0] . ',
+                                                            "lon": ' . $topLeft[1] . '
+                                                        },
+                                                        "bottom_right": {
+                                                            "lat": ' . $bottomRight[0] . ',
+                                                            "lon": ' . $bottomRight[1] . '
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        ]
                                     }
-                                  }
                                 }
-                              }
                             }
-                          }
                         }';
             
             $param_area = [
