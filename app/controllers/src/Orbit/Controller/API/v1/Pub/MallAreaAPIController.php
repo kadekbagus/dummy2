@@ -65,8 +65,7 @@ class MallAreaAPIController extends ControllerAPI
 
             $json_area = '{
                          "from" : ' . $skip . ', "size" : ' . $take . ',
-                          "query": {
-                            
+                          "query": {       
                             "filtered": {
                                 ' . $filterKeyword . '
                                   "filter": {
@@ -85,10 +84,7 @@ class MallAreaAPIController extends ControllerAPI
                                 }
                               }
                             }
-                          },
-                          "sort": [
-                           { "name" : "asc" }
-                          ]
+                          }
                         }';
             
             $param_area = [
