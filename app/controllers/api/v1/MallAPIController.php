@@ -382,7 +382,7 @@ class MallAPIController extends ControllerAPI
                     'domain'                        => 'required|alpha_dash|orbit.exists.domain',
                     'geo_point_latitude'            => 'required|orbit.formaterror.geo_latitude',
                     'geo_point_longitude'           => 'required|orbit.formaterror.geo_longitude',
-                    'geo_area'                      => 'required',
+                    'geo_area'                      => 'required|orbit.formaterror.geo_area',
                     'campaign_base_price_promotion' => 'required',
                     'campaign_base_price_coupon'    => 'required',
                     'campaign_base_price_news'      => 'required',
@@ -1579,7 +1579,7 @@ class MallAPIController extends ControllerAPI
                     'free_wifi_status'                 => $free_wifi_status,
                     'geo_point_latitude'               => $geo_point_latitude,
                     'geo_point_longitude'              => $geo_point_longitude,
-                    // 'geo_area'                         => $geo_area
+                    'geo_area'                         => $geo_area
                 ),
                 array(
                     'merchant_id'                      => 'required|orbit.empty.mall',
@@ -1611,7 +1611,7 @@ class MallAPIController extends ControllerAPI
                     'free_wifi_status'                 => 'in:active,inactive',
                     'geo_point_latitude'               => 'orbit.formaterror.geo_latitude',
                     'geo_point_longitude'              => 'orbit.formaterror.geo_longitude',
-                    // 'geo_area'                         => 'orbit.formaterror.geo_area'
+                    'geo_area'                         => 'orbit.formaterror.geo_area'
                 ),
                 array(
                    'domain_exist_but_not_me'    => Lang::get('validation.orbit.exists.domain'),
@@ -3130,13 +3130,13 @@ class MallAPIController extends ControllerAPI
             $first_point = reset($geo_area);
             $last_point = end($geo_area);
 
-            if ($first_point !== $last_point) {
+            if (trim($first_point) !== trim($last_point)) {
                 return FALSE;
             }
 
             // check range longitude and latitude
             foreach($geo_area as $idx => $point){
-                $latlon = explode(' ', $point);
+                $latlon = explode(' ', trim($point));
 
                 // check lon
                 if (! ($latlon[1] >= -180 && $latlon[1] <= 180)) {

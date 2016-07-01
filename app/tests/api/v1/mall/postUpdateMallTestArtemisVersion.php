@@ -982,7 +982,7 @@ class postUpdateMallTestArtemisVersion extends TestCase
 
         $geo_point_latitude  = '-8.663937';
         $geo_point_longitude = '115.174142';
-        $geo_point_area      = '-8.663007 115.174527,-8.662275 115.176930,-8.664174 115.177735,-8.665669 115.175836,-8.664842 115.174227,-8.663007 115.174527';
+        $geo_point_area      = '-0.219726 112.5, 0.329588 114.785156, -1.58183 114.345703, -0.219726 112.5';
 
         $data = [
             'merchant_id'         => $this->mall_e->merchant_id,
