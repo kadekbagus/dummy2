@@ -46,12 +46,18 @@ class MallByDomainCIAPIController extends BaseAPIController
             }
 
             $dom = $subDom . '.' . Config::get('orbit.shop.main_domain');
-
             $data = NULL;
 
             $mall = Setting::getMallByDomain($dom);
-            $membership_card = Setting::where('setting_name','enable_membership_card')->where('object_id',$mall->merchant_id)->first();
 
+            if (! is_object($mall)) {
+                $errorMessage = 'Mall not found.';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $membership_card = Setting::where('setting_name', 'enable_membership_card')
+                ->where('object_id', $mall->merchant_id)
+                ->first();
             $enable_membership='false';
             if (is_object($membership_card)){
                 $enable_membership=$membership_card->setting_value;
@@ -125,7 +131,7 @@ class MallByDomainCIAPIController extends BaseAPIController
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = [$e->getFile(), $e->getLine()];
+            $this->response->data = null;
             $httpCode = 500;
         }
 
