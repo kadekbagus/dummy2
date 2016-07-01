@@ -217,43 +217,44 @@ class MallNearbyAPIController extends ControllerAPI
             $take = PaginationNumber::parseTakeFromGet('geo_location');
             $skip = PaginationNumber::parseSkipFromGet();
 
-            $json_search = '
-                            "from": ' . $skip . ',
-                            "size": ' . $take . ',
-                            "query": {
-                                "bool": {
-                                    "must": {
-                                        "multi_match": {
-                                            "query": "' . $keywordSearch . '",
-                                            "fields": [
-                                                "name^5",
-                                                "city^4",
-                                                "country^3",
-                                                "address_line^2",
-                                                "description"
-                                            ]
-                                        }
-                                    },
-                                    "must_not": {
-                                        "term": { "status": "deleted" }
-                                    }
-                                }
-                            },
-                            "sort": [
-                                "_score",
-                                {
-                                    "_geo_distance": {
-                                        "position": {
-                                            "lat": ' . $latitude . ',
-                                            "lon": ' . $longitude . ',
+            $json_search = '{
+                                "explain": true,
+                                "from": 0,
+                                "size": 100,
+                                "query": {
+                                    "bool": {
+                                        "must": {
+                                            "multi_match": {
+                                                "query": "' . $keywordSearch . '",
+                                                "fields": [
+                                                    "name^5",
+                                                    "city^4",
+                                                    "country^3",
+                                                    "address_line^2",
+                                                    "description"
+                                                ]
+                                            }
                                         },
-                                        "order": "asc",
-                                        "unit": "km",
-                                        "distance_type": "plane"
+                                        "must_not": {
+                                            "term": { "status": "deleted" }
+                                        }
                                     }
-                                }
-                            ]
-                            ';
+                                },
+                                "sort": [
+                                    "_score",
+                                    {
+                                        "_geo_distance": {
+                                            "position": {
+                                                "lat": ' . $latitude . ',
+                                                "lon": ' . $longitude . '
+                                            },
+                                            "order": "asc",
+                                            "unit": "km",
+                                            "distance_type": "plane"
+                                        }
+                                    }
+                                ]
+                            }';
 
             $param_nearest = [
                 'index'  => Config::get('orbit.elasticsearch.indices.malldata.index'),
