@@ -217,36 +217,43 @@ class MallNearbyAPIController extends ControllerAPI
             $take = PaginationNumber::parseTakeFromGet('geo_location');
             $skip = PaginationNumber::parseSkipFromGet();
 
-            $json_search = '{
-                                "from" : ' . $skip . ', "size" : ' . $take . ',
-                                "query": {
-                                "multi_match": {
-                                    "query": "' . $keywordSearch . '",
-                                    "fields": [
-                                        "name^10",
-                                        "city^2",
-                                        "country^2",
-                                        "address_line",
-                                        "description"
-                                    ]
-                                }
-                              },
-                                "sort": [
-                                    "_score",
-                                    {
-                                        "_geo_distance": {
-                                            "position": {
-                                                "lon": ' . $longitude . ',
-                                                "lat": ' . $latitude . '
-                                            },
-                                            "order": "asc",
-                                            "unit": "km",
-                                            "distance_type": "plane"
+            $json_search = '
+                            "from": ' . $skip . ',
+                            "size": ' . $take . ',
+                            "query": {
+                                "bool": {
+                                    "must": {
+                                        "multi_match": {
+                                            "query": "cinema",
+                                            "fields": [
+                                                "name^5",
+                                                "city^4",
+                                                "country^3",
+                                                "address_line^2",
+                                                "description"
+                                            ]
                                         }
+                                    },
+                                    "must_not": {
+                                        "term": { "status": "deleted" }
                                     }
-                                ]
-                            }';
-
+                                }
+                            },
+                            "sort": [
+                                "_score",
+                                {
+                                    "_geo_distance": {
+                                        "position": {
+                                            "lat": ' . $latitude . ',
+                                            "lon": ' . $longitude . ',
+                                        },
+                                        "order": "asc",
+                                        "unit": "km",
+                                        "distance_type": "plane"
+                                    }
+                                }
+                            ]
+                            ';
 
             $param_nearest = [
                 'index'  => Config::get('orbit.elasticsearch.indices.malldata.index'),
