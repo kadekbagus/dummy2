@@ -87,7 +87,7 @@ class getMallIdByDomainAngularCITest extends TestCase
         $json = $this->call('GET', $url)->getContent();
         $response = json_decode($json);
 
-        $this->assertSame(0, (int) $response->code);
+        $this->assertSame(14, (int) $response->code);
         $this->assertSame(null, $response->data);
     }
 
