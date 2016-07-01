@@ -17,6 +17,7 @@ use \Redirect;
 use Orbit\Helper\Net\UrlChecker as UrlBlock;
 use Orbit\Helper\Net\GuestUserGenerator;
 use Orbit\Helper\Net\SessionPreparer;
+use Orbit\Helper\Session\AppOriginProcessor;
 
 class BaseCIController extends ControllerAPI
 {
@@ -196,8 +197,18 @@ class BaseCIController extends ControllerAPI
             Config::set('orbit.session.availability.query_string', FALSE);
 
             // This user assumed are Consumer, which has been checked at login process
+            // Return mall_portal, cs_portal, pmp_portal etc
+            $appOrigin = AppOriginProcessor::create(Config::get('orbit.session.app_list'))
+                                           ->getAppName();
+
+            // Session Config
+            $orbitSessionConfig = Config::get('orbit.session.origin.' . $appOrigin);
+            $applicationId = Config::get('orbit.session.app_id.' . $appOrigin);
+
+            // Instantiate the OrbitSession object
             $config = new SessionConfig(Config::get('orbit.session'));
-            $config->setConfig('application_id', static::APPLICATION_ID);
+            $config->setConfig('session_origin', $orbitSessionConfig);
+            $config->setConfig('application_id', $applicationId);
 
             try {
                 $this->session = new Session($config);

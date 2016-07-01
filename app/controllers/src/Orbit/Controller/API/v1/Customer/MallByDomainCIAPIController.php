@@ -125,7 +125,7 @@ class MallByDomainCIAPIController extends BaseAPIController
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = null;
+            $this->response->data = [$e->getFile(), $e->getLine()];
             $httpCode = 500;
         }
 
