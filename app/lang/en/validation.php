@@ -382,7 +382,10 @@ return array(
             'date' => array(
                 'dmy_date' => 'The :attribute does not match the format dd-mm-yyyy'
             ),
-            'language' => 'The :attribute must be a valid language code'
+            'language'      => 'The :attribute must be a valid language code',
+            'geo_latitude'  => 'The Geofence latitude is not on range',
+            'geo_longitude' => 'The Geofence longitude is not on range',
+            'geo_area'      => 'The Geofence area is not valid',
         ),
         'actionlist' => array(
             'change_password'           => 'change password',

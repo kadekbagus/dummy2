@@ -775,4 +775,323 @@ class postNewMallTestArtemisVersion extends TestCase
         $this->assertSame("error", $response->status);
         $this->assertSame("Mobile default language must on list languages", $response->message);
     }
+
+    public function testGeofenceLatitudeRequired()
+    {
+        /*
+        * test geofence
+        */
+        $geo_point_latitude  = NULL;
+        $geo_point_longitude = '115.174142';
+        $geo_point_area      = '-8.663007 115.174527,-8.662275 115.176930,-8.664174 115.177735,-8.665669 115.175836,-8.664842 115.174227,-8.663007 115.174527';
+
+        $data = ['name' => 'antok mall',
+            'email'                         => 'antokmall@bumi.com',
+            'password'                      => '123456',
+            'address_line1'                 => 'jalan sudirman no 1',
+            'city'                          => 'badung',
+            'country'                       => $this->country->country_id,
+            'phone'                         => 123465,
+            'contact_person_firstname'      => 'antok',
+            'contact_person_lastname'       => 'mall',
+            'status'                        => 'active',
+            'languages'                     => ['jp','zh','id'],
+            'mobile_default_language'       => 'id',
+            'domain'                        => 'orbit',
+            'geo_point_latitude'            => $geo_point_latitude,
+            'geo_point_longitude'           => $geo_point_longitude,
+            'geo_area'                      => $geo_point_area,
+            'floors'                        => ["{\"name\":\"B3\",\"order\":\"1\"}"]
+        ];
+
+        $response = $this->setRequestPostNewMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("The geo point latitude field is required", $response->message);
+    }
+
+    public function testGeofenceLongitudeRequired()
+    {
+        /*
+        * test geofence
+        */
+        $geo_point_latitude  = '-8.663937';
+        $geo_point_longitude = NULL;
+        $geo_point_area      = '-8.663007 115.174527,-8.662275 115.176930,-8.664174 115.177735,-8.665669 115.175836,-8.664842 115.174227,-8.663007 115.174527';
+
+        $data = ['name' => 'antok mall',
+            'email'                         => 'antokmall@bumi.com',
+            'password'                      => '123456',
+            'address_line1'                 => 'jalan sudirman no 1',
+            'city'                          => 'badung',
+            'country'                       => $this->country->country_id,
+            'phone'                         => 123465,
+            'contact_person_firstname'      => 'antok',
+            'contact_person_lastname'       => 'mall',
+            'status'                        => 'active',
+            'languages'                     => ['jp','zh','id'],
+            'mobile_default_language'       => 'id',
+            'domain'                        => 'orbit',
+            'geo_point_latitude'            => $geo_point_latitude,
+            'geo_point_longitude'           => $geo_point_longitude,
+            'geo_area'                      => $geo_point_area,
+            'floors'                        => ["{\"name\":\"B3\",\"order\":\"1\"}"]
+        ];
+
+        $response = $this->setRequestPostNewMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("The geo point longitude field is required", $response->message);
+    }
+
+    public function testGeofenceAreaRequired()
+    {
+        /*
+        * test geofence
+        */
+        $geo_point_latitude  = '-8.663937';
+        $geo_point_longitude = '115.174142';
+        $geo_point_area      = NULL;
+
+        $data = ['name' => 'antok mall',
+            'email'                         => 'antokmall@bumi.com',
+            'password'                      => '123456',
+            'address_line1'                 => 'jalan sudirman no 1',
+            'city'                          => 'badung',
+            'country'                       => $this->country->country_id,
+            'phone'                         => 123465,
+            'contact_person_firstname'      => 'antok',
+            'contact_person_lastname'       => 'mall',
+            'status'                        => 'active',
+            'languages'                     => ['jp','zh','id'],
+            'mobile_default_language'       => 'id',
+            'domain'                        => 'orbit',
+            'geo_point_latitude'            => $geo_point_latitude,
+            'geo_point_longitude'           => $geo_point_longitude,
+            'geo_area'                      => $geo_point_area,
+            'floors'                        => ["{\"name\":\"B3\",\"order\":\"1\"}"]
+        ];
+
+        $response = $this->setRequestPostNewMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("The geo area field is required", $response->message);
+    }
+
+    public function testGeofenceLatitudeRangeError()
+    {
+        /*
+        * test geofence
+        */
+        $geo_point_latitude  = '100';
+        $geo_point_longitude = '115.174142';
+        $geo_point_area      = '-8.663007 115.174527,-8.662275 115.176930,-8.664174 115.177735,-8.665669 115.175836,-8.664842 115.174227,-8.663007 115.174527';
+
+        $data = ['name' => 'antok mall',
+            'email'                         => 'antokmall@bumi.com',
+            'password'                      => '123456',
+            'address_line1'                 => 'jalan sudirman no 1',
+            'city'                          => 'badung',
+            'country'                       => $this->country->country_id,
+            'phone'                         => 123465,
+            'contact_person_firstname'      => 'antok',
+            'contact_person_lastname'       => 'mall',
+            'status'                        => 'active',
+            'languages'                     => ['jp','zh','id'],
+            'mobile_default_language'       => 'id',
+            'domain'                        => 'orbit',
+            'geo_point_latitude'            => $geo_point_latitude,
+            'geo_point_longitude'           => $geo_point_longitude,
+            'geo_area'                      => $geo_point_area,
+            'floors'                        => ["{\"name\":\"B3\",\"order\":\"1\"}"]
+        ];
+
+        $response = $this->setRequestPostNewMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("The Geofence latitude is not on range", $response->message);
+    }
+
+    public function testGeofenceLongitudeRangeError()
+    {
+        /*
+        * test geofence
+        */
+        $geo_point_latitude  = '-8.663937';
+        $geo_point_longitude = '200';
+        $geo_point_area      = '-8.663007 115.174527,-8.662275 115.176930,-8.664174 115.177735,-8.665669 115.175836,-8.664842 115.174227,-8.663007 115.174527';
+
+        $data = ['name' => 'antok mall',
+            'email'                         => 'antokmall@bumi.com',
+            'password'                      => '123456',
+            'address_line1'                 => 'jalan sudirman no 1',
+            'city'                          => 'badung',
+            'country'                       => $this->country->country_id,
+            'phone'                         => 123465,
+            'contact_person_firstname'      => 'antok',
+            'contact_person_lastname'       => 'mall',
+            'status'                        => 'active',
+            'languages'                     => ['jp','zh','id'],
+            'mobile_default_language'       => 'id',
+            'domain'                        => 'orbit',
+            'geo_point_latitude'            => $geo_point_latitude,
+            'geo_point_longitude'           => $geo_point_longitude,
+            'geo_area'                      => $geo_point_area,
+            'floors'                        => ["{\"name\":\"B3\",\"order\":\"1\"}"]
+        ];
+
+        $response = $this->setRequestPostNewMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("The Geofence longitude is not on range", $response->message);
+    }
+
+    public function testGeofenceAreaPolygonFormatError()
+    {
+        /*
+        * test geofence
+        */
+        $geo_point_latitude  = '-8.663937';
+        $geo_point_longitude = '115.174142';
+        $geo_point_area      = '-8.663007 115.174527,-8.662275 115.176930,-8.663007 115.174527';
+
+        $data = ['name' => 'antok mall',
+            'email'                         => 'antokmall@bumi.com',
+            'password'                      => '123456',
+            'address_line1'                 => 'jalan sudirman no 1',
+            'city'                          => 'badung',
+            'country'                       => $this->country->country_id,
+            'phone'                         => 123465,
+            'contact_person_firstname'      => 'antok',
+            'contact_person_lastname'       => 'mall',
+            'status'                        => 'active',
+            'languages'                     => ['jp','zh','id'],
+            'mobile_default_language'       => 'id',
+            'domain'                        => 'orbit',
+            'geo_point_latitude'            => $geo_point_latitude,
+            'geo_point_longitude'           => $geo_point_longitude,
+            'geo_area'                      => $geo_point_area,
+            'floors'                        => ["{\"name\":\"B3\",\"order\":\"1\"}"]
+        ];
+
+        $response = $this->setRequestPostNewMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("The Geofence area is not valid", $response->message);
+    }
+
+    public function testGeofenceAreaPolygonFirstAndLastPointDifferent()
+    {
+        /*
+        * test geofence
+        */
+        $geo_point_latitude  = '-8.663937';
+        $geo_point_longitude = '115.174142';
+        $geo_point_area      = '-8.663007 115.174527,-8.662275 115.176930,-8.664174 115.177735,-8.665669 115.175836,-8.664842 115.174227,-8.663007 115.174537';
+
+        $data = ['name' => 'antok mall',
+            'email'                         => 'antokmall@bumi.com',
+            'password'                      => '123456',
+            'address_line1'                 => 'jalan sudirman no 1',
+            'city'                          => 'badung',
+            'country'                       => $this->country->country_id,
+            'phone'                         => 123465,
+            'contact_person_firstname'      => 'antok',
+            'contact_person_lastname'       => 'mall',
+            'status'                        => 'active',
+            'languages'                     => ['jp','zh','id'],
+            'mobile_default_language'       => 'id',
+            'domain'                        => 'orbit',
+            'geo_point_latitude'            => $geo_point_latitude,
+            'geo_point_longitude'           => $geo_point_longitude,
+            'geo_area'                      => $geo_point_area,
+            'floors'                        => ["{\"name\":\"B3\",\"order\":\"1\"}"]
+        ];
+
+        $response = $this->setRequestPostNewMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("The Geofence area is not valid", $response->message);
+    }
+
+    public function testGeofenceAreaLatLonFormatError()
+    {
+        /*
+        * test geofence
+        */
+        $geo_point_latitude  = '-8.663937';
+        $geo_point_longitude = '115.174142';
+        $geo_point_area      = '-190 80,-191 81,-192 83,-190 80';
+
+        $data = ['name' => 'antok mall',
+            'email'                         => 'antokmall@bumi.com',
+            'password'                      => '123456',
+            'address_line1'                 => 'jalan sudirman no 1',
+            'city'                          => 'badung',
+            'country'                       => $this->country->country_id,
+            'phone'                         => 123465,
+            'contact_person_firstname'      => 'antok',
+            'contact_person_lastname'       => 'mall',
+            'status'                        => 'active',
+            'languages'                     => ['jp','zh','id'],
+            'mobile_default_language'       => 'id',
+            'domain'                        => 'orbit',
+            'geo_point_latitude'            => $geo_point_latitude,
+            'geo_point_longitude'           => $geo_point_longitude,
+            'geo_area'                      => $geo_point_area,
+            'floors'                        => ["{\"name\":\"B3\",\"order\":\"1\"}"]
+        ];
+
+        $response = $this->setRequestPostNewMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("The Geofence area is not valid", $response->message);
+    }
+
+    public function testGeofenceSuccess()
+    {
+        /*
+        * test geofence
+        */
+        $geo_point_latitude  = '-8.663937';
+        $geo_point_longitude = '115.174142';
+        $geo_point_area      = '-0.219726 112.5, 0.329588 114.785156, -1.58183 114.345703, -0.219726 112.5';
+
+        $data = ['name' => 'antok mall',
+            'email'                         => 'antokmall@bumi.com',
+            'password'                      => '123456',
+            'address_line1'                 => 'jalan sudirman no 1',
+            'city'                          => 'badung',
+            'country'                       => $this->country->country_id,
+            'phone'                         => 123465,
+            'contact_person_firstname'      => 'antok',
+            'contact_person_lastname'       => 'mall',
+            'status'                        => 'active',
+            'languages'                     => ['jp','zh','id'],
+            'mobile_default_language'       => 'id',
+            'domain'                        => 'orbit',
+            'geo_point_latitude'            => $geo_point_latitude,
+            'geo_point_longitude'           => $geo_point_longitude,
+            'geo_area'                      => $geo_point_area,
+            'floors'                        => ["{\"name\":\"B3\",\"order\":\"1\"}"]
+        ];
+
+        $response = $this->setRequestPostNewMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
+        // check data is on database
+
+        $geo_mall = MerchantGeofence::select(
+                            DB::Raw('
+                                asText(area) as area,
+                                X(position) as latitude,
+                                Y(position) as longitude
+                            ')
+                        )
+                        ->where('merchant_id', $response->data->merchant_id)
+                        ->first();
+
+        $this->assertSame($geo_point_latitude, $geo_mall->latitude);
+        $this->assertSame($geo_point_longitude, $geo_mall->longitude);
+    }
 }
