@@ -382,7 +382,7 @@ class MallAPIController extends ControllerAPI
                     'domain'                        => 'required|alpha_dash|orbit.exists.domain',
                     'geo_point_latitude'            => 'required|orbit.formaterror.geo_latitude',
                     'geo_point_longitude'           => 'required|orbit.formaterror.geo_longitude',
-                    'geo_area'                      => 'required|orbit.formaterror.geo_area',
+                    'geo_area'                      => 'required',
                     'campaign_base_price_promotion' => 'required',
                     'campaign_base_price_coupon'    => 'required',
                     'campaign_base_price_news'      => 'required',
@@ -1579,7 +1579,7 @@ class MallAPIController extends ControllerAPI
                     'free_wifi_status'                 => $free_wifi_status,
                     'geo_point_latitude'               => $geo_point_latitude,
                     'geo_point_longitude'              => $geo_point_longitude,
-                    'geo_area'                         => $geo_area
+                    // 'geo_area'                         => $geo_area
                 ),
                 array(
                     'merchant_id'                      => 'required|orbit.empty.mall',
@@ -1611,7 +1611,7 @@ class MallAPIController extends ControllerAPI
                     'free_wifi_status'                 => 'in:active,inactive',
                     'geo_point_latitude'               => 'orbit.formaterror.geo_latitude',
                     'geo_point_longitude'              => 'orbit.formaterror.geo_longitude',
-                    'geo_area'                         => 'orbit.formaterror.geo_area'
+                    // 'geo_area'                         => 'orbit.formaterror.geo_area'
                 ),
                 array(
                    'domain_exist_but_not_me'    => Lang::get('validation.orbit.exists.domain'),
