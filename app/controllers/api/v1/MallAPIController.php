@@ -1549,34 +1549,37 @@ class MallAPIController extends ControllerAPI
 
             $validator = Validator::make(
                 array(
-                    'merchant_id'                   => $merchant_id,
-                    'name'                          => $name,
-                    'email'                         => $email,
-                    'password'                      => $password,
-                    'country'                       => $country,
-                    'url'                           => $url,
-                    'contact_person_email'          => $contact_person_email,
-                    // 'user_id'                    => $user_id,
-                    'status'                        => $status,
-                    'parent_id'                     => $parent_id,
-                    // 'orid'                       => $orid,
-                    'ticket_header'                 => $ticket_header,
-                    'ticket_footer'                 => $ticket_footer,
-                    'start_date_activity'           => $start_date_activity,
-                    'end_date_activity'             => $end_date_activity,
+                    'merchant_id'                      => $merchant_id,
+                    'name'                             => $name,
+                    'email'                            => $email,
+                    'password'                         => $password,
+                    'country'                          => $country,
+                    'url'                              => $url,
+                    'contact_person_email'             => $contact_person_email,
+                    // 'user_id'                       => $user_id,
+                    'status'                           => $status,
+                    'parent_id'                        => $parent_id,
+                    // 'orid'                          => $orid,
+                    'ticket_header'                    => $ticket_header,
+                    'ticket_footer'                    => $ticket_footer,
+                    'start_date_activity'              => $start_date_activity,
+                    'end_date_activity'                => $end_date_activity,
                     // 'timezone'                      => $timezoneName,
                     // 'currency'                      => $currency,
                     // 'currency_symbol'               => $currency_symbol,
                     // 'sector_of_activity'            => $sector_of_activity,
-                    'languages'                     => $languages,
-                    'domain'                        => $domain,
-                    'mobile_default_language'       => $mobile_default_language,
+                    'languages'                        => $languages,
+                    'domain'                           => $domain,
+                    'mobile_default_language'          => $mobile_default_language,
                     // 'campaign_base_price_promotion' => $campaign_base_price_promotion,
                     // 'campaign_base_price_coupon'    => $campaign_base_price_coupon,
                     // 'campaign_base_price_news'      => $campaign_base_price_news,
-                    'floors'                        => $floors,
-                    'description'                   => $description,
-                    'free_wifi_status'              => $free_wifi_status
+                    'floors'                           => $floors,
+                    'description'                      => $description,
+                    'free_wifi_status'                 => $free_wifi_status,
+                    'geo_point_latitude'               => $geo_point_latitude,
+                    'geo_point_longitude'              => $geo_point_longitude,
+                    'geo_area'                         => $geo_area
                 ),
                 array(
                     'merchant_id'                      => 'required|orbit.empty.mall',
@@ -1605,7 +1608,10 @@ class MallAPIController extends ControllerAPI
                     // 'campaign_base_price_news'      => 'format currency later will be check',
                     'floors'                           => 'array',
                     'description'                      => 'max:25',
-                    'free_wifi_status'                 => 'in:active,inactive'
+                    'free_wifi_status'                 => 'in:active,inactive',
+                    'geo_point_latitude'               => 'orbit.formaterror.geo_latitude',
+                    'geo_point_longitude'              => 'orbit.formaterror.geo_longitude',
+                    'geo_area'                         => 'orbit.formaterror.geo_area'
                 ),
                 array(
                    'domain_exist_but_not_me'    => Lang::get('validation.orbit.exists.domain'),
@@ -1925,11 +1931,6 @@ class MallAPIController extends ControllerAPI
                 $updatedmall->ticket_footer = $ticket_footer;
             });
 
-            // OrbitInput::post('timezone', function($timezoneName) use ($updatedmall) {
-            //     $timezone = $this->valid_timezone;
-            //     $updatedmall->timezone_id = $timezone->timezone_id;
-            // });
-
             $updatedmall->modified_by = $this->api->user->user_id;
 
             Event::fire('orbit.mall.postupdatemall.before.save', array($this, $updatedmall));
@@ -1942,39 +1943,6 @@ class MallAPIController extends ControllerAPI
                 // For response
                 $updatedmall->facebook_uri = $fb_uri;
             });
-
-            // OrbitInput::post('campaign_base_price_promotion', function($campaign_base_price_promotion) use ($updatedmall) {
-            //     $campaign_base_price = CampaignBasePrice::where('status', '=', 'active')
-            //                                             ->where('merchant_id', '=', $updatedmall->merchant_id)
-            //                                             ->where('campaign_type', '=', 'promotion')
-            //                                             ->first();
-            //     if (! empty($campaign_base_price)) {
-            //         $campaign_base_price->price = $campaign_base_price_promotion;
-            //         $campaign_base_price->save();
-            //     }
-            // });
-
-            // OrbitInput::post('campaign_base_price_coupon', function($campaign_base_price_coupon) use ($updatedmall) {
-            //     $campaign_base_price = CampaignBasePrice::where('status', '=', 'active')
-            //                                             ->where('merchant_id', '=', $updatedmall->merchant_id)
-            //                                             ->where('campaign_type', '=', 'coupon')
-            //                                             ->first();
-            //     if (! empty($campaign_base_price)) {
-            //         $campaign_base_price->price = $campaign_base_price_coupon;
-            //         $campaign_base_price->save();
-            //     }
-            // });
-
-            // OrbitInput::post('campaign_base_price_news', function($campaign_base_price_news) use ($updatedmall) {
-            //     $campaign_base_price = CampaignBasePrice::where('status', '=', 'active')
-            //                                             ->where('merchant_id', '=', $updatedmall->merchant_id)
-            //                                             ->where('campaign_type', '=', 'news')
-            //                                             ->first();
-            //     if (! empty($campaign_base_price)) {
-            //         $campaign_base_price->price = $campaign_base_price_news;
-            //         $campaign_base_price->save();
-            //     }
-            // });
 
             OrbitInput::post('languages', function($languages) use ($updatedmall, $mobile_default_language) {
                 // if (! in_array('en', $languages)) {
@@ -2113,14 +2081,7 @@ class MallAPIController extends ControllerAPI
                                 $newfloor->save();
                             } else {
                                 // check exists floor name but not me
-                                // $duplicate_floor = Object::excludeDeleted()
-                                //                     ->where('object_type', 'floor')
-                                //                     ->where('merchant_id', $updatedmall->merchant_id)
-                                //                     ->where('object_name', $floor->name)
-                                //                     ->where('object_id', '!=', $floor_id)
-                                //                     ->first();
-
-                                if (in_array($floor->name, $colect_floor)) // if (count($duplicate_floor) > 0)
+                                if (in_array($floor->name, $colect_floor))
                                 {
                                     OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.exists.floor'));
                                 }
@@ -2261,6 +2222,12 @@ class MallAPIController extends ControllerAPI
                     $fence->area = DB::raw("GEOMFROMTEXT(\"POLYGON(({$area}))\")");
                     $fence->position = DB::raw("POINT($latitude, $longitude)");
                     $fence->save();
+                } else {
+                    $new_fence = new MerchantGeofence();
+                    $new_fence->merchant_id = $updatedmall->merchant_id;
+                    $new_fence->area = DB::raw("GEOMFROMTEXT(\"POLYGON(({$area}))\")");
+                    $new_fence->position = DB::raw("POINT($latitude, $longitude)");
+                    $new_fence->save();
                 }
             }
 
