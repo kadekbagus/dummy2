@@ -1048,6 +1048,40 @@ class postNewMallTestArtemisVersion extends TestCase
         $this->assertSame("The Geofence area is not valid", $response->message);
     }
 
+    public function testGeofenceAreaSamePointWillErrorExceptFirstAndLastPoint()
+    {
+        /*
+        * test geofence
+        */
+        $geo_point_latitude  = '-8.663937';
+        $geo_point_longitude = '115.174142';
+        $geo_point_area      = '-90 180,-90 180,-90 180,-90 180';
+
+        $data = ['name' => 'antok mall',
+            'email'                         => 'antokmall@bumi.com',
+            'password'                      => '123456',
+            'address_line1'                 => 'jalan sudirman no 1',
+            'city'                          => 'badung',
+            'country'                       => $this->country->country_id,
+            'phone'                         => 123465,
+            'contact_person_firstname'      => 'antok',
+            'contact_person_lastname'       => 'mall',
+            'status'                        => 'active',
+            'languages'                     => ['jp','zh','id'],
+            'mobile_default_language'       => 'id',
+            'domain'                        => 'orbit',
+            'geo_point_latitude'            => $geo_point_latitude,
+            'geo_point_longitude'           => $geo_point_longitude,
+            'geo_area'                      => $geo_point_area,
+            'floors'                        => ["{\"name\":\"B3\",\"order\":\"1\"}"]
+        ];
+
+        $response = $this->setRequestPostNewMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("The Geofence area is not valid", $response->message);
+    }
+
     public function testGeofenceSuccess()
     {
         /*
