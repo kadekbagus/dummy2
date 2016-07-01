@@ -380,9 +380,9 @@ class MallAPIController extends ControllerAPI
                     'languages'                     => 'required|array',
                     'mobile_default_language'       => 'required|size:2|orbit.formaterror.language',
                     'domain'                        => 'required|alpha_dash|orbit.exists.domain',
-                    'geo_point_latitude'            => 'required',
-                    'geo_point_longitude'           => 'required',
-                    'geo_area'                      => 'required',
+                    'geo_point_latitude'            => 'required|orbit.formaterror.geo_latitude',
+                    'geo_point_longitude'           => 'required|orbit.formaterror.geo_longitude',
+                    'geo_area'                      => 'required|orbit.formaterror.geo_area',
                     'campaign_base_price_promotion' => 'required',
                     'campaign_base_price_coupon'    => 'required',
                     'campaign_base_price_news'      => 'required',
@@ -3123,6 +3123,63 @@ class MallAPIController extends ControllerAPI
 
             if (count($domain) > 0) {
                 return FALSE;
+            }
+
+            return TRUE;
+        });
+
+        Validator::extend('orbit.formaterror.geo_latitude', function($attribute, $value, $parameters)
+        {
+            $geo_latitude = $value;
+
+            if (! ($geo_latitude > -90 && $geo_latitude < 90)) {
+                return FALSE;
+            }
+
+            return TRUE;
+        });
+
+        Validator::extend('orbit.formaterror.geo_longitude', function($attribute, $value, $parameters)
+        {
+            $geo_longitude = $value;
+
+            if (! ($geo_longitude > -180 && $geo_longitude < 180)) {
+                return FALSE;
+            }
+
+            return TRUE;
+        });
+
+        Validator::extend('orbit.formaterror.geo_area', function($attribute, $value, $parameters)
+        {
+            $geo_area = explode(',', $value);
+
+            // check area array count
+            if (count($geo_area) < 4) {
+                return FALSE;
+            }
+
+            // check first and last point
+            $first_point = reset($geo_area);
+            $last_point = end($geo_area);
+
+            if ($first_point !== $last_point) {
+                return FALSE;
+            }
+
+            // check range longitude and latitude
+            foreach($geo_area as $idx => $point){
+                $latlon = explode(' ', $point);
+
+                // check lon
+                if (! ($latlon[1] >= -180 && $latlon[1] <= 180)) {
+                    return FALSE;
+                }
+
+                // check lat
+                if (! ($latlon[0] >= -90 && $latlon[0] <= 90)) {
+                    return FALSE;
+                }
             }
 
             return TRUE;
