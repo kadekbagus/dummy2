@@ -224,7 +224,7 @@ class MallNearbyAPIController extends ControllerAPI
                                 "bool": {
                                     "must": {
                                         "multi_match": {
-                                            "query": "cinema",
+                                            "query": "' . $keywordSearch . '",
                                             "fields": [
                                                 "name^5",
                                                 "city^4",
