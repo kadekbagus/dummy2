@@ -973,6 +973,30 @@ class postUpdateMallTestArtemisVersion extends TestCase
         $this->assertSame("The Geofence area is not valid", $response->message);
     }
 
+    public function testGeofenceAreaSamePointWillErrorExceptFirstAndLastPoint()
+    {
+        /*
+        * test geofence
+        */
+        $this->setDataMall();
+
+        $geo_point_latitude  = '-8.663937';
+        $geo_point_longitude = '115.174142';
+        $geo_point_area      = '-90 180,-90 180,-90 180,-90 180';
+
+        $data = [
+            'merchant_id'         => $this->mall_e->merchant_id,
+            'geo_point_latitude'  => $geo_point_latitude,
+            'geo_point_longitude' => $geo_point_longitude,
+            'geo_area'            => $geo_point_area,
+        ];
+
+        $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("The Geofence area is not valid", $response->message);
+    }
+
     public function testGeofenceSuccess()
     {
         /*

@@ -3134,8 +3134,10 @@ class MallAPIController extends ControllerAPI
                 return FALSE;
             }
 
+            unset($geo_area[0]); // remove first idx to make uniq point
+            $points = array();
             // check range longitude and latitude
-            foreach($geo_area as $idx => $point){
+            foreach ($geo_area as $idx => $point){
                 $latlon = explode(' ', trim($point));
 
                 // check lon
@@ -3145,6 +3147,18 @@ class MallAPIController extends ControllerAPI
 
                 // check lat
                 if (! ($latlon[0] >= -90 && $latlon[0] <= 90)) {
+                    return FALSE;
+                }
+
+                // push point to points to check it
+                array_push($points, trim($point));
+            }
+
+            // check the same point
+            foreach ($points as $idx => $value) {
+                unset($points[$idx]);
+
+                if (in_array($value, $points)) {
                     return FALSE;
                 }
             }
