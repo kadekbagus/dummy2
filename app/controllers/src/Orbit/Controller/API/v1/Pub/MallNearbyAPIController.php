@@ -205,10 +205,7 @@ class MallNearbyAPIController extends ControllerAPI
             $latitude = OrbitInput::get('latitude',null);
             $longitude = OrbitInput::get('longitude',null);
             $distance = OrbitInput::get('distance',null);
-            $keyword_search = OrbitInput::get('keyword_search',null);
-
-            // Default distance as a mention in SRS
-            $distance = "200km";
+            $keywordSearch = OrbitInput::get('keyword_search',null);
 
             $usingDemo = Config::get('orbit.is_demo', FALSE);
             $host = Config::get('orbit.elasticsearch');
@@ -222,12 +219,33 @@ class MallNearbyAPIController extends ControllerAPI
 
             $json_search = '{
                                 "from" : ' . $skip . ', "size" : ' . $take . ',
-                                "query" :{
-                                    "multi_match" : {
-                                        "query": "' . $keyword_search . '",
-                                        "fields": [ "name^4", "city^3", "country^3", "position^2", "address_line", "description"]
-                                    }
+                                "query": {
+                                "multi_match": {
+                                    "query": "' . $keywordSearch . '",
+                                    "fields": [
+                                        "name^4",
+                                        "city^3",
+                                        "country^3",
+                                        "position^2",
+                                        "address_line",
+                                        "description"
+                                    ]
                                 }
+                              },
+                                "sort": [
+                                    "_score",
+                                    {
+                                        "_geo_distance": {
+                                            "position": {
+                                                "lon": ' . $longitude . ',
+                                                "lat": ' . $latitude . '
+                                            },
+                                            "order": "asc",
+                                            "unit": "km",
+                                            "distance_type": "plane"
+                                        }
+                                    }
+                                ]
                             }';
 
 
