@@ -123,11 +123,11 @@ class MerchantGeofence extends Eloquent
             }
         }
 
-        if (empty($geofence->latidude)) {
-            $geofence->latidue = $_geofence->latitude;
+        if (empty($geofence->latitude)) {
+            $geofence->latitude = $_geofence->latitude;
         }
 
-        if (empty($geofence)) {
+        if (empty($geofence->longitude)) {
             $geofence->longitude = $_geofence->longitude;
         }
 

@@ -36,7 +36,7 @@ class MallAreaAPIController extends ControllerAPI
         try {
             $latitude = OrbitInput::get('latitude',null);
             $longitude = OrbitInput::get('longitude',null);
-            
+
             $area = OrbitInput::get('area', null);
             $keyword = OrbitInput::get('keyword_search');
 
@@ -73,7 +73,13 @@ class MallAreaAPIController extends ControllerAPI
                 $filterKeyword = '"query": {
                                     "multi_match" : {
                                         "query": "' . $keyword . '",
-                                        "fields": [ "name^4", "city^3", "country^3", "position^2", "address_line", "description"]
+                                        "fields": [
+                                            "name^10",
+                                            "city^2",
+                                            "country^2",
+                                            "address_line",
+                                            "description"
+                                        ]
                                     }
                                   },';
             }
@@ -83,7 +89,7 @@ class MallAreaAPIController extends ControllerAPI
 
             $json_area = '{
                         "from" : ' . $skip . ', "size" : ' . $take . ',
-                            "query": {       
+                            "query": {
                                 "filtered": {
                                     ' . $filterKeyword . '
                                     "filter": {
@@ -92,7 +98,7 @@ class MallAreaAPIController extends ControllerAPI
                                                 "query": {
                                                     ' . $filterStatus . '
                                                 }
-                                            }, 
+                                            },
                                             {
                                                 "geo_bounding_box": {
                                                     "type": "indexed",
@@ -127,7 +133,7 @@ class MallAreaAPIController extends ControllerAPI
                                 }
                             ]
                         }';
-            
+
             $param_area = [
                 'index'  => Config::get('orbit.elasticsearch.indices.malldata.index'),
                 'type'   => Config::get('orbit.elasticsearch.indices.malldata.type'),

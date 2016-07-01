@@ -12,6 +12,7 @@ use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
 use DominoPOS\OrbitSession\Session;
 use DominoPOS\OrbitSession\SessionConfig;
+use Orbit\Helper\Session\AppOriginProcessor;
 use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\ACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
@@ -433,8 +434,18 @@ class LoginAPIController extends IntermediateBaseController
         // set the query session string to FALSE, so the CI will depend on session cookie
         Config::set('orbit.session.availability.query_string', FALSE);
 
+        // Return mall_portal, cs_portal, pmp_portal etc
+        $appOrigin = AppOriginProcessor::create(Config::get('orbit.session.app_list'))
+                                       ->getAppName();
+
+        // Session Config
+        $orbitSessionConfig = Config::get('orbit.session.origin.' . $appOrigin);
+        $applicationId = Config::get('orbit.session.app_id.' . $appOrigin);
+
+        // Instantiate the OrbitSession object
         $config = new SessionConfig(Config::get('orbit.session'));
-        $config->setConfig('application_id', static::APPLICATION_ID);
+        $config->setConfig('session_origin', $orbitSessionConfig);
+        $config->setConfig('application_id', $applicationId);
 
         try {
             $this->session = new Session($config);
@@ -550,8 +561,18 @@ class LoginAPIController extends IntermediateBaseController
         $encoded_redirect_to_url = OrbitInput::get('to_url', NULL);
         $angular_ci = OrbitInput::get('aci', FALSE);
 
+        // Return mall_portal, cs_portal, pmp_portal etc
+        $appOrigin = AppOriginProcessor::create(Config::get('orbit.session.app_list'))
+                                       ->getAppName();
+
+        // Session Config
+        $orbitSessionConfig = Config::get('orbit.session.origin.' . $appOrigin);
+        $applicationId = Config::get('orbit.session.app_id.' . $appOrigin);
+
+        // Instantiate the OrbitSession object
         $config = new SessionConfig(Config::get('orbit.session'));
-        $config->setConfig('application_id', static::APPLICATION_ID);
+        $config->setConfig('session_origin', $orbitSessionConfig);
+        $config->setConfig('application_id', $applicationId);
 
         try {
             $this->session = new Session($config);
@@ -730,8 +751,19 @@ class LoginAPIController extends IntermediateBaseController
                 OrbitShopAPI::throwInvalidArgument('You are not allowed to login. Please check with Customer Service.');
             }
 
+            // Return mall_portal, cs_portal, pmp_portal etc
+            $appOrigin = AppOriginProcessor::create(Config::get('orbit.session.app_list'))
+                                           ->getAppName();
+
+            // Session Config
+            $orbitSessionConfig = Config::get('orbit.session.origin.' . $appOrigin);
+            $applicationId = Config::get('orbit.session.app_id.' . $appOrigin);
+
+            // Instantiate the OrbitSession object
             $config = new SessionConfig(Config::get('orbit.session'));
-            $config->setConfig('application_id', static::APPLICATION_ID);
+            $config->setConfig('session_origin', $orbitSessionConfig);
+            $config->setConfig('application_id', $applicationId);
+
             try {
                 $this->session = new Session($config);
                 $this->session->start(array(), 'no-session-creation');
