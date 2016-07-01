@@ -563,6 +563,21 @@ return array(
         ],
 
         /**
+         * Application ID mapping for session
+         */
+        'app_id' => [
+            'mobile_ci' => '1',
+            'desktop_ci' => '2',
+            'landing_page' => '3',
+
+            // Non Customer
+            'mall_portal' => '4',
+            'cs_portal' => '5',
+            'pmp_portal' => '6',
+            'admin_portal' => '7'
+        ],
+
+        /**
          * Path to write the session data
          *
          * - usage
@@ -704,7 +719,7 @@ return array(
                     'path'      => '/',
 
                     // domain
-                    'domain'    => NULL,
+                    'domain'    => 'gotomalls.cool',
 
                     // secure transfer via HTTPS only
                     'secure'    => FALSE,
@@ -739,7 +754,7 @@ return array(
                     'path'      => '/',
 
                     // domain
-                    'domain'    => NULL,
+                    'domain'    => 'gotomalls.cool',
 
                     // secure transfer via HTTPS only
                     'secure'    => FALSE,
@@ -774,7 +789,7 @@ return array(
                     'path'      => '/',
 
                     // domain
-                    'domain'    => NULL,
+                    'domain'    => 'gotomalls.cool',
 
                     // secure transfer via HTTPS only
                     'secure'    => FALSE,
