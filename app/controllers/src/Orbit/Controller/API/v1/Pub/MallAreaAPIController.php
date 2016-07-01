@@ -34,6 +34,9 @@ class MallAreaAPIController extends ControllerAPI
     {
         $httpCode = 200;
         try {
+            $latitude = OrbitInput::get('latitude',null);
+            $longitude = OrbitInput::get('longitude',null);
+            
             $area = OrbitInput::get('area', null);
             $keyword = OrbitInput::get('keyword_search');
 
@@ -108,7 +111,21 @@ class MallAreaAPIController extends ControllerAPI
                                         ]
                                     }
                                 }
-                            }
+                            },
+                            "sort": [
+                                "_score",
+                                {
+                                    "_geo_distance": {
+                                        "position": {
+                                            "lon": ' . $longitude . ',
+                                            "lat": ' . $latitude . '
+                                        },
+                                        "order": "asc",
+                                        "unit": "km",
+                                        "distance_type": "plane"
+                                    }
+                                }
+                            ]
                         }';
             
             $param_area = [
