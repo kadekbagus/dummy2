@@ -43,7 +43,9 @@
             <directory>./app/tests/uploader</directory>
             <directory>./app/test/api/v1/end-to-end</directory>
             <directory>./app/tests/notifier/elasticsearch</directory>
+            <directory>./app/tests/helpers</directory>
             <file>./app/tests/api/v1/mall/getSearchMallNearbyTest.php</file>
+            <file>./app/tests/api/v1/mall/getSearchMallNearestTest.php</file>
             <file>./app/tests/api/v1/mall/getMallAreaTest.php</file>
             <file>./app/tests/api/v1/mall/getMallFenceTest.php</file>
             <file>./app/tests/api/v1/tenant/getTenantListAngularCITest.php</file>

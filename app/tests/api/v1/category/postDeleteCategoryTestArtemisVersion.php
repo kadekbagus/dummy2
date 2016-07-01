@@ -9,7 +9,7 @@ use OrbitShop\API\v1\Helper\Generator;
 use Laracasts\TestDummy\Factory;
 use Faker\Factory as Faker;
 
-class postUpdateCategoryTestArtemisVersion extends TestCase
+class postDeleteCategoryTestArtemisVersion extends TestCase
 {
     private $apiUrlNew = '/api/v1/category/new';
     private $apiUrlDelete = '/api/v1/category/delete';
