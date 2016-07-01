@@ -389,7 +389,7 @@ class postUpdateMallTestArtemisVersion extends TestCase
         $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
         $this->assertSame(14, $response->code);
         $this->assertSame("error", $response->status);
-        $this->assertSame("The floor name has already been taken", $response->message);
+        $this->assertSame("Floor name has already been used", $response->message);
 
         $floor_array_db = ["{\"name\":\"B3\",\"order\":\"0\"}","{\"name\":\"B2\",\"order\":\"1\"}","{\"name\":\"B1\",\"order\":\"2\"}"];
 
