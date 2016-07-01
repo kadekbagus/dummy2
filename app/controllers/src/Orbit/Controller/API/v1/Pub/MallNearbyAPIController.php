@@ -223,12 +223,12 @@ class MallNearbyAPIController extends ControllerAPI
                                 "multi_match": {
                                     "query": "' . $keywordSearch . '",
                                     "fields": [
-                                        "name^4",
-                                        "city^3",
-                                        "country^3",
+                                        "name^8",
+                                        "city^4",
+                                        "country^4",
                                         "position^2",
-                                        "address_line",
-                                        "description"
+                                        "address_line^3",
+                                        "description^3"
                                     ]
                                 }
                               },
