@@ -986,7 +986,12 @@ return array(
                 'Cookie',
                 'Set-Cookie',
                 'Set-X-Orbit-Session',
-                'Orbit-Session'
+                'Orbit-Session',
+                'Set-X-OMS-Mobile',
+                'Set-X-OMS-Mall',
+                'Set-X-OMS-Admin',
+                'Set-X-OMS-PMP',
+                'Set-X-OMS-CS',
             ],
 
             // No need protocol, just enter domain name
