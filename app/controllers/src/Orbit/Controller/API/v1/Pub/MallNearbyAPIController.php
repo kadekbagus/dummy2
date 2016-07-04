@@ -218,27 +218,35 @@ class MallNearbyAPIController extends ControllerAPI
             $skip = PaginationNumber::parseSkipFromGet();
 
             $json_search = '{
-                                "from" : ' . $skip . ', "size" : ' . $take . ',
+                                "explain": true,
+                                "from": 0,
+                                "size": 100,
                                 "query": {
-                                "multi_match": {
-                                    "query": "' . $keywordSearch . '",
-                                    "fields": [
-                                        "name^4",
-                                        "city^3",
-                                        "country^3",
-                                        "position^2",
-                                        "address_line",
-                                        "description"
-                                    ]
-                                }
-                              },
+                                    "bool": {
+                                        "must": {
+                                            "multi_match": {
+                                                "query": "' . $keywordSearch . '",
+                                                "fields": [
+                                                    "name^5",
+                                                    "city^4",
+                                                    "country^3",
+                                                    "address_line^2",
+                                                    "description"
+                                                ]
+                                            }
+                                        },
+                                        "must_not": {
+                                            "term": { "status": "deleted" }
+                                        }
+                                    }
+                                },
                                 "sort": [
                                     "_score",
                                     {
                                         "_geo_distance": {
                                             "position": {
-                                                "lon": ' . $longitude . ',
-                                                "lat": ' . $latitude . '
+                                                "lat": ' . $latitude . ',
+                                                "lon": ' . $longitude . '
                                             },
                                             "order": "asc",
                                             "unit": "km",
@@ -247,7 +255,6 @@ class MallNearbyAPIController extends ControllerAPI
                                     }
                                 ]
                             }';
-
 
             $param_nearest = [
                 'index'  => Config::get('orbit.elasticsearch.indices.malldata.index'),

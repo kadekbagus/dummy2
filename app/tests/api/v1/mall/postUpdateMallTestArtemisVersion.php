@@ -389,7 +389,7 @@ class postUpdateMallTestArtemisVersion extends TestCase
         $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
         $this->assertSame(14, $response->code);
         $this->assertSame("error", $response->status);
-        $this->assertSame("The floor name has already been taken", $response->message);
+        $this->assertSame("Floor name has already been used", $response->message);
 
         $floor_array_db = ["{\"name\":\"B3\",\"order\":\"0\"}","{\"name\":\"B2\",\"order\":\"1\"}","{\"name\":\"B1\",\"order\":\"2\"}"];
 
@@ -851,5 +851,186 @@ class postUpdateMallTestArtemisVersion extends TestCase
         $this->assertSame(14, $response->code);
         $this->assertSame("error", $response->status);
         $this->assertSame("Mobile default language must on list languages", $response->message);
+    }
+
+    public function testGeofenceLatitudeRangeError()
+    {
+        /*
+        * test geofence
+        */
+        $this->setDataMall();
+
+        $geo_point_latitude  = '100';
+        $geo_point_longitude = '115.174142';
+        $geo_point_area      = '-8.663007 115.174527,-8.662275 115.176930,-8.664174 115.177735,-8.665669 115.175836,-8.664842 115.174227,-8.663007 115.174527';
+
+        $data = [
+            'merchant_id'         => $this->mall_e->merchant_id,
+            'geo_point_latitude'  => $geo_point_latitude,
+            'geo_point_longitude' => $geo_point_longitude,
+            'geo_area'            => $geo_point_area,
+        ];
+
+        $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("The Geofence latitude is not on range", $response->message);
+    }
+
+    public function testGeofenceLongitudeRangeError()
+    {
+        /*
+        * test geofence
+        */
+        $this->setDataMall();
+
+        $geo_point_latitude  = '-8.663937';
+        $geo_point_longitude = '200';
+        $geo_point_area      = '-8.663007 115.174527,-8.662275 115.176930,-8.664174 115.177735,-8.665669 115.175836,-8.664842 115.174227,-8.663007 115.174527';
+
+        $data = [
+            'merchant_id'         => $this->mall_e->merchant_id,
+            'geo_point_latitude'  => $geo_point_latitude,
+            'geo_point_longitude' => $geo_point_longitude,
+            'geo_area'            => $geo_point_area,
+        ];
+
+        $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("The Geofence longitude is not on range", $response->message);
+    }
+
+    public function testGeofenceAreaPolygonFormatError()
+    {
+        /*
+        * test geofence
+        */
+        $this->setDataMall();
+
+        $geo_point_latitude  = '-8.663937';
+        $geo_point_longitude = '115.174142';
+        $geo_point_area      = '-8.663007 115.174527,-8.662275 115.176930,-8.664174 115.177735';
+
+        $data = [
+            'merchant_id'         => $this->mall_e->merchant_id,
+            'geo_point_latitude'  => $geo_point_latitude,
+            'geo_point_longitude' => $geo_point_longitude,
+            'geo_area'            => $geo_point_area,
+        ];
+
+        $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("The Geofence area is not valid", $response->message);
+    }
+
+    public function testGeofenceAreaPolygonFirstAndLastPointDifferent()
+    {
+        /*
+        * test geofence
+        */
+        $this->setDataMall();
+
+        $geo_point_latitude  = '-8.663937';
+        $geo_point_longitude = '115.174142';
+        $geo_point_area      = '-8.663007 115.174527,-8.662275 115.176930,-8.664174 115.177735,-8.665669 115.175836,-8.664842 115.174227,-8.663007 115.174537';
+
+        $data = [
+            'merchant_id'         => $this->mall_e->merchant_id,
+            'geo_point_latitude'  => $geo_point_latitude,
+            'geo_point_longitude' => $geo_point_longitude,
+            'geo_area'            => $geo_point_area,
+        ];
+
+        $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("The Geofence area is not valid", $response->message);
+    }
+
+    public function testGeofenceAreaLatLonFormatError()
+    {
+        /*
+        * test geofence
+        */
+        $this->setDataMall();
+
+        $geo_point_latitude  = '-8.663937';
+        $geo_point_longitude = '115.174142';
+        $geo_point_area      = '-190 80,-191 81,-192 83,-190 80';
+
+        $data = [
+            'merchant_id'         => $this->mall_e->merchant_id,
+            'geo_point_latitude'  => $geo_point_latitude,
+            'geo_point_longitude' => $geo_point_longitude,
+            'geo_area'            => $geo_point_area,
+        ];
+
+        $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("The Geofence area is not valid", $response->message);
+    }
+
+    public function testGeofenceAreaSamePointWillErrorExceptFirstAndLastPoint()
+    {
+        /*
+        * test geofence
+        */
+        $this->setDataMall();
+
+        $geo_point_latitude  = '-8.663937';
+        $geo_point_longitude = '115.174142';
+        $geo_point_area      = '-90 180,-90 180,-90 180,-90 180';
+
+        $data = [
+            'merchant_id'         => $this->mall_e->merchant_id,
+            'geo_point_latitude'  => $geo_point_latitude,
+            'geo_point_longitude' => $geo_point_longitude,
+            'geo_area'            => $geo_point_area,
+        ];
+
+        $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("The Geofence area is not valid", $response->message);
+    }
+
+    public function testGeofenceSuccess()
+    {
+        /*
+        * test geofence
+        */
+        $this->setDataMall();
+
+        $geo_point_latitude  = '-8.663937';
+        $geo_point_longitude = '115.174142';
+        $geo_point_area      = '-0.219726 112.5, 0.329588 114.785156, -1.58183 114.345703, -0.219726 112.5';
+
+        $data = [
+            'merchant_id'         => $this->mall_e->merchant_id,
+            'geo_point_latitude'  => $geo_point_latitude,
+            'geo_point_longitude' => $geo_point_longitude,
+            'geo_area'            => $geo_point_area,
+        ];
+
+        $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
+        // check data is on database
+
+        $geo_mall = MerchantGeofence::select(
+                            DB::Raw('
+                                asText(area) as area,
+                                X(position) as latitude,
+                                Y(position) as longitude
+                            ')
+                        )
+                        ->where('merchant_id', $this->mall_e->merchant_id)
+                        ->first();
+
+        $this->assertSame($geo_point_latitude, $geo_mall->latitude);
+        $this->assertSame($geo_point_longitude, $geo_mall->longitude);
     }
 }

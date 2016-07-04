@@ -12,6 +12,7 @@ use DominoPOS\OrbitACL\ACL\Exception\ACLForbiddenException;
 use DominoPOS\OrbitSession\Session as OrbitSession;
 use DominoPOS\OrbitSession\SessionConfig;
 use Orbit\Helper\Util\CorsHeader;
+use Orbit\Helper\Session\AppOriginProcessor;
 
 class IntermediateBaseController extends Controller
 {
@@ -51,8 +52,20 @@ class IntermediateBaseController extends Controller
      */
     public function __construct()
     {
+        // Return mall_portal, cs_portal, pmp_portal etc
+        $appOrigin = AppOriginProcessor::create(Config::get('orbit.session.app_list'))
+                                       ->getAppName();
+
+        // Session Config
+        $orbitSessionConfig = Config::get('orbit.session.origin.' . $appOrigin);
+        $applicationId = Config::get('orbit.session.app_id.' . $appOrigin);
+
         // Instantiate the OrbitSession object
         $sessConfig = new SessionConfig(Config::get('orbit.session'));
+        $sessConfig->setConfig('session_origin', $orbitSessionConfig);
+        $sessConfig->setConfig('expire', $orbitSessionConfig['expire']);
+        $sessConfig->setConfig('application_id', $applicationId);
+
         $this->session = new OrbitSession($sessConfig);
 
         // CSRF protection

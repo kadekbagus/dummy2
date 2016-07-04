@@ -813,13 +813,15 @@ class CategoryAPIController extends ControllerAPI
                 }
             }
 
+            $merchant_id = OrbitInput::get('merchant_id', 0);
+
             // Builder object
             // if flag limit is true then show only category_id and category_name to make the frontend life easier
             // TODO : remove this with something like is_all_retailer on orbit-shop
             if ($limit) {
-                $categories = Category::select('categories.category_id','category_name')->excludeDeleted('categories');
+                $categories = Category::select('categories.category_id','category_name')->where('merchant_id', $merchant_id)->excludeDeleted('categories');
             } else {
-                $categories = Category::excludeDeleted('categories');
+                $categories = Category::where('merchant_id', $merchant_id)->excludeDeleted('categories');
             }
 
             // Filter category by Ids

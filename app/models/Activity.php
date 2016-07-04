@@ -7,6 +7,7 @@
 use OrbitRelation\BelongsTo as BelongsToObject;
 use DominoPOS\OrbitSession\SessionConfig;
 use DominoPOS\OrbitSession\Session;
+use Orbit\Helper\Session\AppOriginProcessor;
 
 class Activity extends Eloquent
 {
@@ -902,7 +903,19 @@ class Activity extends Eloquent
         $session = static::$session;
         if ($session === null) {
 
+            // Return mall_portal, cs_portal, pmp_portal etc
+            $appOrigin = AppOriginProcessor::create(Config::get('orbit.session.app_list'))
+                                           ->getAppName();
+
+            // Session Config
+            $orbitSessionConfig = Config::get('orbit.session.origin.' . $appOrigin);
+            $applicationId = Config::get('orbit.session.app_id.' . $appOrigin);
+
+            // Instantiate the OrbitSession object
             $config = new SessionConfig(Config::get('orbit.session'));
+            $config->setConfig('session_origin', $orbitSessionConfig);
+            $config->setConfig('expire', $orbitSessionConfig['expire']);
+            $config->setConfig('application_id', $applicationId);
 
             $session = new Session($config);
             // There is possibility that the session are already expired

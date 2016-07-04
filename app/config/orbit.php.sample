@@ -563,6 +563,21 @@ return array(
         ],
 
         /**
+         * Application ID mapping for session
+         */
+        'app_id' => [
+            'mobile_ci' => '1',
+            'desktop_ci' => '2',
+            'landing_page' => '3',
+
+            // Non Customer
+            'mall_portal' => '4',
+            'cs_portal' => '5',
+            'pmp_portal' => '6',
+            'admin_portal' => '7'
+        ],
+
+        /**
          * Path to write the session data
          *
          * - usage
@@ -642,6 +657,7 @@ return array(
          * Where is session data should be coming from
          */
         'session_origin' => array(
+            'expire' => 62208000,
             // From HTTP Headers
             'header'  => array(
                 'name'      => 'X-Orbit-Session'
@@ -704,7 +720,7 @@ return array(
                     'path'      => '/',
 
                     // domain
-                    'domain'    => NULL,
+                    'domain'    => 'gotomalls.cool',
 
                     // secure transfer via HTTPS only
                     'secure'    => FALSE,
@@ -739,7 +755,7 @@ return array(
                     'path'      => '/',
 
                     // domain
-                    'domain'    => NULL,
+                    'domain'    => 'gotomalls.cool',
 
                     // secure transfer via HTTPS only
                     'secure'    => FALSE,
@@ -774,7 +790,7 @@ return array(
                     'path'      => '/',
 
                     // domain
-                    'domain'    => NULL,
+                    'domain'    => 'gotomalls.cool',
 
                     // secure transfer via HTTPS only
                     'secure'    => FALSE,
@@ -971,7 +987,12 @@ return array(
                 'Cookie',
                 'Set-Cookie',
                 'Set-X-Orbit-Session',
-                'Orbit-Session'
+                'Orbit-Session',
+                'Set-X-OMS-Mobile',
+                'Set-X-OMS-Mall',
+                'Set-X-OMS-Admin',
+                'Set-X-OMS-PMP',
+                'Set-X-OMS-CS',
             ],
 
             // No need protocol, just enter domain name

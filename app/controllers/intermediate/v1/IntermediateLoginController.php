@@ -17,22 +17,10 @@ use DominoPOS\OrbitSession\Session as OrbitSession;
 use DominoPOS\OrbitAPI\v10\StatusInterface as Status;
 use Orbit\Helper\Net\GuestUserGenerator;
 use Orbit\Helper\Net\SessionPreparer;
+use Orbit\Helper\Session\AppOriginProcessor;
 
 class IntermediateLoginController extends IntermediateBaseController
 {
-    /**
-     * Mobile CI cookie, temporary fix.
-     *
-     * @author Rio Astamal <me@rioastamal.net>
-     * @todo put it on config
-     * @var string
-     */
-    protected $mobileCISessionName = [
-        'query_string'  => 'orbit_session',
-        'header'        => 'X-Orbit-Session',
-        'cookie'        => 'orbit_sessionx'
-    ];
-
     /**
      * @author Rio Astamal <me@rioastamal.net>
      * @param @see LoginAPIController::postLogin
@@ -1033,10 +1021,20 @@ class IntermediateLoginController extends IntermediateBaseController
              * The orbit mall does not have other application which reside at the same domain.
              * So we can safely use standard session name 'orbit_sessionx' for cookie.
              */
-            $this->session->getSessionConfig()->setConfig('session_origin.header.name', $this->mobileCISessionName['header']);
-            $this->session->getSessionConfig()->setConfig('session_origin.query_string.name', $this->mobileCISessionName['query_string']);
-            $this->session->getSessionConfig()->setConfig('session_origin.cookie.name', $this->mobileCISessionName['cookie']);
-            $this->session->getSessionConfig()->setConfig('application_id', MobileCIAPIController::APPLICATION_ID);
+
+            // Return mall_portal, cs_portal, pmp_portal etc
+            $appOrigin = AppOriginProcessor::create(Config::get('orbit.session.app_list'))
+                                           ->getAppName();
+
+            // Session Config
+            $orbitSessionConfig = Config::get('orbit.session.origin.' . $appOrigin);
+            $applicationId = Config::get('orbit.session.app_id.' . $appOrigin);
+
+            $this->session->getSessionConfig()->setConfig('session_origin.header.name', $orbitSessionConfig['header']);
+            $this->session->getSessionConfig()->setConfig('session_origin.query_string.name', $orbitSessionConfig['query_string']);
+            $this->session->getSessionConfig()->setConfig('session_origin.cookie.name', $orbitSessionConfig['cookie']);
+            $this->session->getSessionConfig()->setConfig('expire', $orbitSessionConfig['expire']);
+            $this->session->getSessionConfig()->setConfig('application_id', $applicationId);
             $this->session->enableForceNew()->start($data);
 
             // Send the session id via HTTP header
@@ -1143,9 +1141,16 @@ class IntermediateLoginController extends IntermediateBaseController
         setcookie('orbit_email', '', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
         setcookie('orbit_firstname', '', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
         setcookie('login_from', '', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
-        $this->session->getSessionConfig()->setConfig('session_origin.header.name', $this->mobileCISessionName['header']);
-        $this->session->getSessionConfig()->setConfig('session_origin.query_string.name', $this->mobileCISessionName['query_string']);
-        $this->session->getSessionConfig()->setConfig('session_origin.cookie.name', $this->mobileCISessionName['cookie']);
+        
+        $appOrigin = AppOriginProcessor::create(Config::get('orbit.session.app_list'))
+                                           ->getAppName();
+
+        // Session Config
+        $orbitSessionConfig = Config::get('orbit.session.origin.' . $appOrigin);
+
+        $this->session->getSessionConfig()->setConfig('session_origin.header.name', $orbitSessionConfig['header']['name']);
+        $this->session->getSessionConfig()->setConfig('session_origin.query_string.name', $orbitSessionConfig['query_string']['name']);
+        $this->session->getSessionConfig()->setConfig('session_origin.cookie.name', $orbitSessionConfig['cookie']['name']);
 
         if (isset($_GET['not_me'])) {
             setcookie('orbit_email', 'foo', time() - 3600, '/');
@@ -1414,7 +1419,14 @@ class IntermediateLoginController extends IntermediateBaseController
         }
 
         if (isset($_GET['createsession'])) {
-            $cookieName = $this->mobileCISessionName['cookie'];
+            // Return mall_portal, cs_portal, pmp_portal etc
+            $appOrigin = AppOriginProcessor::create(Config::get('orbit.session.app_list'))
+                                           ->getAppName();
+
+            // Session Config
+            $orbitSessionConfig = Config::get('orbit.session.origin.' . $appOrigin);
+
+            $cookieName = $orbitSessionConfig['cookie'];
             $expireTime = Config::get('orbit.session.session_origin.cookie.expire');
 
             $sessionId = $_GET['createsession'];
@@ -1434,7 +1446,7 @@ class IntermediateLoginController extends IntermediateBaseController
             $this->session->rawUpdate($sessData);
             $newData = $this->session->getSession();
 
-            $sessionName = $this->mobileCISessionName['query_string'];
+            $sessionName = $orbitSessionConfig['query_string'];
 
             $userId = $this->session->read('user_id');
             $user = User::excludeDeleted()->find($userId);

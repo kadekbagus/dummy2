@@ -13,6 +13,7 @@ use DominoPOS\OrbitAPI\v10\StatusInterface as Status;
 use Helper\EloquentRecordCounter as RecordCounter;
 use DominoPOS\OrbitSession\Session;
 use DominoPOS\OrbitSession\SessionConfig;
+use Orbit\Helper\Session\AppOriginProcessor;
 
 class InboxAPIController extends ControllerAPI
 {
@@ -826,12 +827,19 @@ class InboxAPIController extends ControllerAPI
     protected function prepareSession()
     {
         if (! is_object($this->session)) {
-            // This user assumed are Consumer, which has been checked at login process
+            // Return mall_portal, cs_portal, pmp_portal etc
+            $appOrigin = AppOriginProcessor::create(Config::get('orbit.session.app_list'))
+                                           ->getAppName();
+
+            // Session Config
+            $orbitSessionConfig = Config::get('orbit.session.origin.' . $appOrigin);
+            $applicationId = Config::get('orbit.session.app_id.' . $appOrigin);
+            // Instantiate the OrbitSession object
             $config = new SessionConfig(Config::get('orbit.session'));
-            $config->setConfig('session_origin.header.name', 'X-Orbit-Session');
-            $config->setConfig('session_origin.query_string.name', 'orbit_session');
-            $config->setConfig('session_origin.cookie.name', 'orbit_sessionx');
-            $config->setConfig('application_id', InboxAPIController::APPLICATION_ID);
+            $config->setConfig('session_origin', $orbitSessionConfig);
+            $config->setConfig('expire', $orbitSessionConfig['expire']);
+            $config->setConfig('application_id', $applicationId);
+
             $this->session = new Session($config);
             $this->session->start(array(), 'no-session-creation');
         }

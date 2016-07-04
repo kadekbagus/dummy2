@@ -98,6 +98,12 @@ class ESMallCreateQueue
                 ]
             ];
 
+            // validation geofence
+            if (empty($geofence->area) || empty($geofence->latitude) || empty($geofence->longitude)) {
+                unset($params['body']['position']);
+                unset($params['body']['area']);
+            }
+
             $response = $this->poster->index($params);
 
             // Example response when document created:
