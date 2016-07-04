@@ -76,7 +76,7 @@ class TenantImport extends Command {
                 }
 
                 foreach ($data['categories'] as $category_name) {
-                    $category = Category::where('merchant_id', $merchantId)->where('category_name', $category_name)->first();
+                    $category = Category::where('merchant_id', 0)->where('category_name', $category_name)->first();
                     if (empty($category)) {
                         throw new Exception(sprintf('ERROR: Category "%s" for tenant "%s" is not exist.', $category_name, $data['tenant_name']));
                     }
@@ -111,6 +111,7 @@ class TenantImport extends Command {
                                                         ->where('status', '=', 'active')
                                                         ->where('language_id', '=', $language->language_id)
                                                         ->first();
+
                     if (empty($merchantLanguage)) {
                         throw new Exception('Merchant Language is not exist.');
                     }
@@ -128,6 +129,7 @@ class TenantImport extends Command {
                 $newtenant->parent_id = $merchantId;
                 $newtenant->url = $data['url'];
                 $newtenant->floor = $data['floor'];
+                $newtenant->floor_id = $floor->object_id;
                 $newtenant->unit = $data['unit'];
                 $newtenant->status = $data['status'];
                 $newtenant->logo = $data['images']['tenant_logo'];
@@ -162,7 +164,7 @@ class TenantImport extends Command {
                 }
 
                 foreach ($data['categories'] as $category_name) {
-                    $category = Category::where('merchant_id', $merchantId)->where('category_name', $category_name)->first();
+                    $category = Category::where('merchant_id', 0)->where('category_name', $category_name)->first();
                     $categoryMerchant = new CategoryMerchant();
                     $categoryMerchant->category_id = $category->category_id;
                     $categoryMerchant->merchant_id = $newtenant->merchant_id;
