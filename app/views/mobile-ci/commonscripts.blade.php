@@ -87,7 +87,7 @@
 </div>
 <div class="row back-drop campaign-cards-back-drop"></div>
 
-@if (! $urlblock->isLoggedIn())
+@if (! $is_logged_in)
 <div class="sign-in-popup" style="display:none;">
     <div class="row sign-in-popup-wrapper">
         <div class="col-xs-12 text-center content-signin content-signin-popup">
@@ -143,6 +143,10 @@
                     <div class="col-xs-4 text-center">
                         <button type="button" class="btn btn-info icon-button form text-center" data-toggle="modal" data-target="#formModal"><i class="fa fa-pencil fa-3x"></i></button>
                     </div>
+                </div>
+                <br/><br/>
+                <div class="row">
+                    <div class="col-xs-12 text-center">v 2.2 <a target="_blank" href="{{ Config::get('orbit.contact_information.privacy_policy_url') }}">Privacy Policy</a>. <a target="_blank" href="{{ Config::get('orbit.contact_information.terms_of_service_url') }}">Terms and Conditions</a></div>
                 </div>
             </div>
         </div>
@@ -662,7 +666,7 @@
                     if (data.data.total_records > 0) {
                         // var show_result = '<div class="search-btn"><a id="show_all_result"><span class="col-xs-8"><strong>{{Lang::get('mobileci.search.show_all_result')}}</strong></span><span class="col-xs-4 text-right"><i class="fa fa-chevron-right"></i></span></a></div>';
                         var show_result = '';
-                        var tenants='',promotions='',news='',coupons='',lucky_draws='';
+                        var tenants='',promotions='',news='',coupons='',lucky_draws='',services='';
                         if (data.data.grouped_records.tenants.length > 0) {
                             search_results.tenants = data.data.grouped_records.tenants;
                             tenants = '<h4>{{Lang::get('mobileci.page_title.tenant_directory')}}</h4><ul>'
@@ -684,6 +688,29 @@
                                 tenants += '<a data-href="'+ data.data.grouped_records.tenants_redirect_url +'" href="'+ data.data.grouped_records.tenants_url +'" class="text-right" style="display:block;color:#fff;">{{ Lang::get('mobileci.search.show_more') }}</a>';
                             }
                             tenants += '</ul>';
+                        }
+                        if (data.data.grouped_records.services.length > 0) {
+
+                            search_results.services = data.data.grouped_records.services;
+                            services = '<h4>{{Lang::get('mobileci.page_title.service_directory')}}</h4><ul>'
+                            for(var i = 0; i < data.data.grouped_records.services.length; i++) {
+                                var hide = i > 2 ? 'limited hide' : '';
+                                services += '<li class="search-result-group '+ hide +'">\
+                                        <a data-href="'+ data.data.grouped_records.services[i].object_redirect_url +'" href="'+ data.data.grouped_records.services[i].object_url +'">\
+                                            <div class="col-xs-2 text-center">\
+                                                <img src="'+ data.data.grouped_records.services[i].object_image +'">\
+                                            </div>\
+                                            <div class="col-xs-10">\
+                                                <h5><strong>'+ data.data.grouped_records.services[i].object_name +'</strong></h5>\
+                                                <p>'+ (data.data.grouped_records.services[i].object_description ? data.data.grouped_records.services[i].object_description : '') +'</p>\
+                                            </div>\
+                                        </a>\
+                                    </li>';
+                            }
+                            if (data.data.grouped_records.services.length > 3) {
+                                services += '<a data-href="'+ data.data.grouped_records.services_redirect_url +'" href="'+ data.data.grouped_records.services_url +'" class="text-right" style="display:block;color:#fff;">{{ Lang::get('mobileci.search.show_more') }}</a>';
+                            }
+                            services += '</ul>';
                         }
                         if (data.data.grouped_records.promotions.length > 0) {
                             search_results.promotions = data.data.grouped_records.promotions;
@@ -774,7 +801,7 @@
                             lucky_draws += '</ul>';
                         }
                         var zonk = '<div style="width:100%;height:160px;background:transparent;">&nbsp;</div>'
-                        $('.search-results').html(show_result + tenants + promotions + news + coupons + lucky_draws + zonk);
+                        $('.search-results').html(show_result + tenants + promotions + news + coupons + lucky_draws + services + zonk);
                     } else {
                         if(data.message == 'Your session has expired.' || data.message == 'Invalid session data.') {
                             window.location.href = 'http://' + location.host;
@@ -1149,7 +1176,7 @@
                     // @Todo: Replace the hardcoded name
                     session_id = xhr.getResponseHeader('Set-X-Orbit-Session');
                     {{-- var landing_url = '{{ $landing_url }}'; --}}
-                    var landing_url = '{{ $urlblock->blockedRoute('ci-customer-home') }}';
+                    var landing_url = '{{ \Orbit\Helper\Net\UrlChecker::blockedRoute('ci-customer-home', [], $session) }}';
 
                     if (session_id) {
                         if (landing_url.indexOf('orbit_session=') < 0) {
@@ -1181,7 +1208,11 @@
                     orbitSignUpForm.switchForm('signup');
                 },
                 // Proceed the login for identified user
-                userIdentified
+                userIdentified,
+                function() {
+                    orbitSignUpForm.isProcessing = false;
+                    orbitSignUpForm.showErrorMessageBox('Something went wrong, please try again in a few moments.');
+                }
             );
         }
 
@@ -1251,7 +1282,7 @@
                     // @Todo: Replace the hardcoded name
                     session_id = xhr.getResponseHeader('Set-X-Orbit-Session');
                     {{-- var landing_url = '{{ $landing_url }}'; --}}
-                    var landing_url = '{{ $urlblock->blockedRoute('ci-customer-home') }}';
+                    var landing_url = '{{ \Orbit\Helper\Net\UrlChecker::blockedRoute('ci-customer-home', [], $session) }}';
 
                     if (session_id) {
                         if (landing_url.indexOf('orbit_session=') < 0) {
@@ -1285,6 +1316,11 @@
                     $('#signinForm #email').val(custEmail);
                     orbitSignUpForm.isProcessing = false;
                     orbitSignUpForm.showErrorMessageBox('{{Lang::get('mobileci.signup.email_exist')}}');
+                },
+
+                function() {
+                    orbitSignUpForm.isProcessing = false;
+                    orbitSignUpForm.showErrorMessageBox('Something went wrong, please try again in a few moments.');
                 }
             );
         }
@@ -1332,9 +1368,10 @@
          * @param string custEmail - Customer email
          * @param callback emptyCallback - Calback called when empty data returned
          * @param callback dataCallback - Callback called when user data is found
+         * @param callback errorCallback - Callback called when there is an error
          * @return void|object
          */
-        orbitSignUpForm.checkCustomerEmail = function(custEmail, emptyCallback, dataCallback) {
+        orbitSignUpForm.checkCustomerEmail = function(custEmail, emptyCallback, dataCallback, errorCallback) {
             $.ajax({
                 method: 'POST',
                 url: apiPath + 'customer/basic-data',
@@ -1346,6 +1383,8 @@
                 }
 
                 return dataCallback(data[0]);
+            }).fail(function (xhr, status, exception) {
+                return errorCallback();
             });
         };
 

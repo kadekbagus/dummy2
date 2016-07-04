@@ -26,7 +26,10 @@ return array(
         'promotion'         => 'PROMOTION',
         'not_found'         => 'ERROR',
         'recognize_me'      => 'RECOGNIZE ME',
+        'tenant'  => 'STORES',
         'tenant_directory'  => 'STORES',
+        'service'           => 'SERVICES',
+        'service_directory' => 'SERVICES',
         'promotions_tenants'=> 'PROMOTION STORES',
         'coupons_tenants'   => 'COUPON STORES',
         'news_tenants'      => 'NEWS STORES',
@@ -37,6 +40,7 @@ return array(
         'membership'        => 'MEMBERSHIP',
         'orbit_tour'        => 'ORBIT TOUR',
         'lucky_draws'       => 'LUCKY DRAWS',
+        'free_wifi'         => 'FREE INTERNET',
         'my_messages'       => 'MY MESSAGES',
         'my_message'        => 'MY MESSAGE',
         'redemption_places' => 'REDEMPTION PLACE',
@@ -47,19 +51,23 @@ return array(
     'widgets' => array(
         'catalogue'          => 'CATALOGUE',
         'new_product'        => 'NEW PRODUCTS',
-        'promotion'          => 'PROMOTIONS',
-        'coupon'             => 'MY COUPONS',
-        'tenant'             => 'STORES',
-        'lucky_draw'         => 'LUCKY DRAWS',
-        'news'               => 'NEWS',
+        'promotion'          => 'Promotions',
+        'coupon'             => 'My Coupons',
+        'tenant'             => 'Stores',
+        'service'            => 'Services',
+        'lucky_draw'         => 'Lucky Draws',
+        'news'               => 'News',
         'promotions'         => 'Promotions',
         'coupons'            => 'Coupons',
         'tenants'            => 'Stores',
+        'services'           => 'Services',
         'lucky_draws'        => 'Lucky Draws',
+        'free_wifi'          => 'FREE Internet',
         'newss'              => 'News',
         'promotions_single'  => 'Promotion',
         'coupons_single'     => 'Coupon',
         'tenants_single'     => 'Store',
+        'services_single'    => 'Service',
         'lucky_draws_single' => 'Lucky Draw',
         'newss_single'       => 'News',
     ),
@@ -76,6 +84,7 @@ return array(
         'no_news_listing'              => 'Sorry, there is no news at the moment in this mall.',
         'no_promotions_listing'        => 'Sorry, there is no promotion at the moment in this mall.',
         'no_stores_listing'            => 'Sorry, there is no store at the moment in this mall.',
+        'no_services_listing'          => 'Sorry, there is no service at the moment in this mall.',
     ),
 
     // modal specific lang
@@ -321,6 +330,7 @@ return array(
 
     'search' => array(
         'no_item'               => 'There is no store matching the criteria.',
+        'no_service'            => 'There is no service matching the criteria.',
         'too_much_items'        => 'Search result is too broad, please narrow it down.',
         'no_result'             => 'Sorry, search has no results.',
         'error'                 => 'There is an error while making the request.',
@@ -531,4 +541,38 @@ return array(
     'campaign_cards' => array(
         'go_to_page' => 'Go to page',
     ),
+
+    'captive'   => array(
+        'request_internet' => array(
+            'title'     => 'FREE INTERNET',
+            'heading'   => 'FREE Internet Access!',
+            'message'   => 'By connecting to our Wi-Fi you agree with our terms and conditions. Click the button below to get free internet access.',
+            'button'    => 'Get FREE Internet Access!',
+            'check_connection' => 'Checking internet connection please wait...',
+            'too_long' => 'If it takes too long try to refresh your browser.',
+            'instruction' => 'Copy and paste URL above to your browser to request free internet connection.',
+            'message_ex' => array(
+                'title' => 'FREE Internet Access!',
+                'instruction_heading' => 'These are the steps to get free internet:',
+                'instructions' => array(
+                    'Connect to mall Wi-Fi network',
+                    'Access this page',
+                    'Tap on Copy URL to clipboard',
+                    'Tap on Get FREE Internet Access! button below',
+                    ' Open internet browser and paste the URL to see connection status'
+                ),
+                'button_caption' => 'Get FREE Internet Access!',
+                'clipboard_caption' => 'Copy URL to clipboard',
+                'clipboard_success' => 'URL copied'
+            ),
+        ),
+        'granted' => array(
+            'title'     => 'FREE INTERNET',
+            'heading'   => 'You\'re Already Connected',
+            'message'   => 'You are connected to Internet for free.',
+            'button'    => 'OK'
+        ),
+        'widget_slogan' => 'Free Internet',
+        'widget_tagline' => 'Get your free access NOW!'
+    )
 );

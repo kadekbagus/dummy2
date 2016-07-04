@@ -33,3 +33,23 @@ $factory('Role', 'role_tenant_owner', [
     'role_name'  => 'Tenant Owner',
     'role_order' => 1
 ]);
+
+$factory('Role',  'role_guest', [
+    'role_name' => 'Guest',
+    'role_order' => 1
+]);
+
+$factory('Role',  'role_consumer', [
+    'role_name' => 'Consumer',
+    'role_order' => 1
+]);
+
+$factory('Role',  'role_campaign_owner', [
+    'role_name' => 'Campaign Owner',
+    'role_order' => 1
+]);
+
+$factory('Role', 'role_mall_customer_service', [
+    'role_name' => 'Mall Customer Service',
+    'role_order' => 1
+]);

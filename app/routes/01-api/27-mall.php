@@ -81,11 +81,31 @@ Route::get(
 )->where('search', '(api|app)');
 
 /**
+ * Get Mall nearby
+ */
+Route::get(
+    '/{search}/v1/pub/mall-nearby-es', ['as' => 'mall-nearby-es', function()
+    {
+        return Orbit\Controller\API\v1\Pub\MallNearbyAPIController::create()->getSearchMallKeyword();
+    }]
+)->where('search', '(api|app)');
+
+/**
  * Get Mall in Map Area
  */
 Route::get(
     '/{search}/v1/pub/mall-area', ['as' => 'mall-area', function()
     {
         return Orbit\Controller\API\v1\Pub\MallAreaAPIController::create()->getMallArea();
+    }]
+)->where('search', '(api|app)');
+
+/**
+ * Get Mall in Map Nearest
+ */
+Route::get(
+    '/{search}/v1/pub/mall-nearest', ['as' => 'mall-nearest', function()
+    {
+        return Orbit\Controller\API\v1\Pub\MallNearestAPIController::create()->getSearchMallNearest();
     }]
 )->where('search', '(api|app)');

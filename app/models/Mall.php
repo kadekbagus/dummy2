@@ -79,12 +79,34 @@ class Mall extends Eloquent
         return $this->hasOne('MerchantGeofence', 'merchant_id', 'merchant_id');
     }
 
+    public function country()
+    {
+        return $this->belongsTo('Country', 'country_id', 'country_id');
+    }
+
     /**
      * Merchant belongs to and has many category.
      */
     public function categories()
     {
         return $this->belongsToMany('Category', 'category_merchant', 'merchant_id', 'category_id');
+    }
+
+    /**
+     * Merchant belongs to and has many widgets.
+     */
+    public function widgets()
+    {
+        return $this->belongsToMany('Widget', 'widget_retailer', 'retailer_id', 'widget_id');
+    }
+
+    /**
+     * Specific widget free wifi.
+     */
+    public function widget_free_wifi()
+    {
+        return $this->widgets()
+            ->where('widget_type', 'free_wifi');
     }
 
     /**

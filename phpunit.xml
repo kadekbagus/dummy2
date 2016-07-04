@@ -28,5 +28,74 @@
             <directory>./app/tests/uuid</directory>
         </testsuite>
 
+        <testsuite name="Mall Geolocation">
+            <file>./app/tests/api/v1/mall/getSearchMallNearbyTest.php</file>
+            <file>./app/tests/api/v1/mall/getMallAreaTest.php</file>
+            <file>./app/tests/api/v1/mall/getMallFenceTest.php</file>
+        </testsuite>
+
+        <testsuite name="End-to-End">
+            <directory>./app/tests/api/v1/end-to-end</directory>
+        </testsuite>
+
+        <testsuite name="Orbit 2.2">
+            <directory>./app/tests/acl</directory>
+            <directory>./app/tests/uploader</directory>
+            <directory>./app/test/api/v1/end-to-end</directory>
+            <directory>./app/tests/notifier/elasticsearch</directory>
+            <directory>./app/tests/helpers</directory>
+            <file>./app/tests/api/v1/mall/getSearchMallNearbyTest.php</file>
+            <file>./app/tests/api/v1/mall/getSearchMallNearestTest.php</file>
+            <file>./app/tests/api/v1/mall/getMallAreaTest.php</file>
+            <file>./app/tests/api/v1/mall/getMallFenceTest.php</file>
+            <file>./app/tests/api/v1/tenant/getTenantListAngularCITest.php</file>
+            <file>./app/tests/api/v1/tenant/getTenantItemAngularCITest.php</file>
+            <file>./app/tests/api/v1/category/getCategoryListAngularCITest.php</file>
+            <file>./app/tests/api/v1/object/getObjectListAngularCITest.php</file>
+            <file>./app/tests/api/v1/coupon/getCouponListAngularCITest.php</file>
+            <file>./app/tests/api/v1/coupon/getCouponItemAngularCITest.php</file>
+            <file>./app/tests/api/v1/mall/getMallIdByDomainAngularCITest.php</file>
+            <file>./app/tests/api/v1/user/getMyAccountInfoCIAngularTest.php</file>
+            <file>./app/tests/api/v1/campaign/getCampaignPopupAngularCITest.php</file>
+            <file>./app/tests/api/v1/login/postDesktopCILoginTest.php</file>
+            <file>./app/tests/api/v1/login/postDesktopCISignUpTest.php</file>
+            <file>./app/tests/api/v1/widget/getSearchWidgetTest.php</file>
+            <file>./app/tests/api/v1/widget/getSearchWidgetAngularCITest.php</file>
+            <file>./app/tests/api/v1/tenant/getSearchTenantStoreAndServiceTest.php</file>
+            <file>./app/tests/api/v1/tenant/postNewTenantStoreAndServiceTest.php</file>
+            <file>./app/tests/api/v1/tenant/postUpdateTenantStoreAndServiceTest.php</file>
+            <file>./app/tests/api/v1/category/postNewCategoryTestArtemisVersion.php</file>
+            <file>./app/tests/api/v1/category/getSearchCategoryTestArtemisVersion.php</file>
+            <file>./app/tests/api/v1/category/postUpdateCategoryTestArtemisVersion.php</file>
+            <file>./app/tests/api/v1/category/postDeleteCategoryTestArtemisVersion.php</file>
+            <file>./app/tests/api/v1/category/postTenantTestLinkToTenantCategoryTestArtemisVersion.php</file>
+            <file>./app/tests/api/v1/promotion/getPromotionListMobileCITest.php</file>
+            <file>./app/tests/api/v1/promotion/getPromotionDetailMobileCITest.php</file>
+            <file>./app/tests/api/v1/mall/postNewMallTestArtemisVersion.php</file>
+            <file>./app/tests/api/v1/mall/getSearchMallTestArtemisVersion.php</file>
+            <file>./app/tests/api/v1/mall/postUpdateMallTestArtemisVersion.php</file>
+            <file>./app/tests/api/v1/news/getNewsListMobileCITest.php</file>
+            <file>./app/tests/api/v1/news/getNewsDetailMobileCITest.php</file>
+            <file>./app/tests/api/v1/user/getConsumerListingTestArtemisVersion.php</file>
+            <file>./app/tests/api/v1/tenant/getServiceListAngularCITest.php</file>
+            <file>./app/tests/api/v1/tenant/getServiceDetailAngularCITest.php</file>
+            <file>./app/tests/api/v1/tenant/postNewTenantTestArtemisVersion.php</file>
+            <file>./app/tests/api/v1/tenant/postUpdateTenantTestArtemisVersion.php</file>
+            <file>./app/tests/api/v1/news/getSearchNewsTest.php</file>
+            <file>./app/tests/api/v1/news/postNewNewsTest.php</file>
+            <file>./app/tests/api/v1/news/postUpdateNewsTest.php</file>
+            <file>./app/tests/api/v1/promotion/getSearchPromotion.php</file>
+            <file>./app/tests/api/v1/promotion/postNewPromotion.php</file>
+            <file>./app/tests/api/v1/promotion/postUpdatePromotion.php</file>
+			<file>./app/tests/api/v1/user/postUpdateMembershipTestArtemisVersion.php</file>
+            <file>./app/tests/api/v1/dashboard/getCustomerTodayDashboardTest.php</file>
+            <file>./app/tests/api/v1/dashboard/getCustomerGenderDashboardTest.php</file>
+            <file>./app/tests/api/v1/dashboard/getCustomerAgeRangeDashboardTest.php</file>
+            <file>./app/tests/api/v1/dashboard/getWidgetClickDashboardTest.php</file>
+            <file>./app/tests/api/v1/membership/getMembershipMobileCiTest.php</file>
+            <file>./app/tests/api/v1/user/postResetPasswordTest.php</file>
+            <file>./app/tests/api/v1/user/postResetPasswordLinkTest.php</file>
+            <file>./app/tests/api/v1/widget/postClickWidgetActivityTest.php</file>
+        </testsuite>
     </testsuites>
 </phpunit>

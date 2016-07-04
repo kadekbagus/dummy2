@@ -26,7 +26,10 @@ return array(
         'promotion'          => '促销',
         'not_found'          => '失误',
         'recognize_me'       => '认识我',
+        'tenant'             => '店铺',
         'tenant_directory'   => '店铺',
+        'service'            => '服务',
+        'service_directory'  => '服务',
         'promotions_tenants' => '促销店铺',
         'coupons_tenants'    => '优惠券店铺',
         'news_tenants'       => '新店铺',
@@ -37,6 +40,7 @@ return array(
         'membership'         => '会员',
         'orbit_tour'         => 'ORBIT巡视',
         'lucky_draws'        => '幸运大抽奖',
+        'free_wifi'          => '免费的互联网',
         'my_messages'        => '我的消息',
         'my_message'         => '我的消息',
         'redemption_places'  => '赎回位置',
@@ -50,16 +54,20 @@ return array(
         'promotion'     => '促销活动',
         'coupon'        => '我的优惠券',
         'tenant'        => '店铺',
+        'service'       => '服务',
         'lucky_draw'    => '幸运大抽奖',
         'news'          => '消息',
         'promotions'     => '促销活动',
         'coupons'        => '优惠券',
         'tenants'        => '店铺',
+        'services'       => '服务',
         'lucky_draws'    => '幸运大抽奖',
+        'free_wifi'      => '免费的互联网',
         'newss'          => '消息',
         'promotions_single'      => '促销活动',
         'coupons_single'        => '券',
         'tenants_single'        => '店铺',
+        'services_single'       => '服务',
         'lucky_draws_single'    => '幸运大抽奖',
         'newss_single'          => '消息',
     ),
@@ -76,6 +84,7 @@ return array(
         'no_news_listing'              => '对不起，这儿没有消息目前在这个购物中心。',
         'no_promotions_listing'        => '对不起，这儿没有促销活动目前在这个购物中心。',
         'no_stores_listing'            => '对不起，这儿没有商店目前在这个购物中心。',
+        'no_services_listing'          => '对不起，没有服务目前在这个购物中心。',
     ),
 
     // modal specific lang
@@ -321,6 +330,7 @@ return array(
 
     'search' => array(
         'no_item'            => '无店铺匹配条件。',
+        'no_service'         => '没有服务业条件匹配的。',
         'too_much_items'     => '搜索结果的范围太广，请缩小它',
         'no_result'          => '对不起，搜索有没有结果',
         'error'              => '发出请求时有错误',
@@ -530,4 +540,38 @@ return array(
     'campaign_cards' => array(
         'go_to_page' => '转到页面',
     ),
+    'captive'   => array(
+        'request_internet' => array(
+            'title'     => '免费的互联网',
+            'heading'   => '免费上网',
+            'message'   => '通过连接到我们的 Wi-Fi 你同意我们的条款和条件。请单击下面的按钮以获得免费上网。',
+            'button'    => ' 得到免费的互联网接入',
+            'check_connection' => '正在检查互联网连接，请稍候...',
+            'too_long' => '如果时间太长尝试刷新您的浏览器',
+            'instruction' => 'Salin alamat URL di atas ke browser untuk meminta akses internet gratis.',
+            'message_ex' => array(
+                'title' => '免费上网',
+                'instruction_heading' => '这些都是获得免费上网的步骤:',
+                'instructions' => array(
+                    '连接到 Wi-fi 网络化 商城',
+                    '访问此页',
+                    '点击复制 URL 到剪贴板',
+                    '点击获取免费上网 ！下面的按钮',
+                    '打开互联网浏览器和粘贴 URL 来查看连接状态'
+                ),
+                'button_caption' => '得到免费的互联网接入',
+                'clipboard_caption' => '将 URL 复制到剪贴板',
+                'clipboard_success' => 'URL copied'
+            ),
+
+        ),
+        'granted' => array(
+            'title'     => '免费的互联网',
+            'heading'   => '你已经连接',
+            'message'   => '您连接免费互联网',
+            'button'    => ' 还行'
+        ),
+        'widget_slogan' => '免费的互联网',
+        'widget_tagline' => '免费上网'
+    )
 );

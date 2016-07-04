@@ -14,6 +14,10 @@ use Mall;
 use Setting;
 use MerchantLanguage;
 use \Redirect;
+use Orbit\Helper\Net\UrlChecker as UrlBlock;
+use Orbit\Helper\Net\GuestUserGenerator;
+use Orbit\Helper\Net\SessionPreparer;
+use Orbit\Helper\Session\AppOriginProcessor;
 
 class BaseCIController extends ControllerAPI
 {
@@ -21,6 +25,8 @@ class BaseCIController extends ControllerAPI
     const PAYLOAD_KEY = '--orbit-mall--';
     protected $session = null;
     protected $retailer = null;
+    protected $commonViewsData = [];
+    protected $pageTitle = '';
 
     /**
     * Get list language from current merchant or mall
@@ -53,13 +59,9 @@ class BaseCIController extends ControllerAPI
      */
     protected function getLoggedInUser()
     {
-        $this->prepareSession();
+        $this->session = SessionPreparer::prepareSession();
 
         $userId = $this->session->read('user_id');
-
-        if ($this->session->read('logged_in') !== true || ! $userId) {
-            throw new Exception('Invalid session data.');
-        }
 
         if (empty($this->retailer)) {
             $this->retailer = $this->getRetailerInfo();
@@ -75,15 +77,57 @@ class BaseCIController extends ControllerAPI
                     ->excludeDeleted('membership_numbers')
                     ->excludeDeleted('memberships')
                     ->where('memberships.merchant_id', $retailer->merchant_id);
-            }])->where('user_id', $userId)->first();
+            }])
+            ->where('user_id', $userId)
+            ->whereHas('role', function($q) {
+                $q->where('role_name', 'Consumer');
+            })
+            ->first();
 
         if (! $user) {
-            throw new Exception('Session error: user not found.');
+            $user = $this->getLoggedInGuest($this->session);
         } else {
             $_user = clone($user);
             if (count($_user->membershipNumbers)) {
                $user->membership_number = $_user->membershipNumbers[0]->membership_number;
             }
+        }
+
+        return $user;
+    }
+
+    /**
+     * Get current guest user from session.
+     *
+     * @author Ahmad <ahmad@dominopos.com>
+     * @return User $user
+     */
+    protected function getLoggedInGuest($session)
+    {
+        $userId = $session->read('guest_user_id');
+
+        if (! empty($userId)) {
+            $user = User::with('userDetail')
+                ->where('user_id', $userId)
+                ->whereHas('role', function($q) {
+                    $q->where('role_name', 'guest');
+                })
+                ->first();
+
+            if (! is_object($user)) {
+                $user = NULL;
+            }
+        } else {
+            $user = GuestUserGenerator::create()->generate();
+
+            $sessionData = $session->read(NULL);
+            $sessionData['logged_in'] = TRUE;
+            $sessionData['guest_user_id'] = $user->user_id;
+            $sessionData['guest_email'] = $user->user_email;
+            $sessionData['role'] = $user->role->role_name;
+            $sessionData['fullname'] = '';
+
+            $session->update($sessionData);
         }
 
         return $user;
@@ -109,7 +153,7 @@ class BaseCIController extends ControllerAPI
                 }
             }
             $retailer = $retailer->first();
-            
+
             $membership_card = Setting::where('setting_name','enable_membership_card')->where('object_id',$retailer_id)->first();
 
             if (! empty($membership_card)){
@@ -141,20 +185,37 @@ class BaseCIController extends ControllerAPI
      * Prepare session.
      *
      * @author Rio Astamal <me@rioastamal.net>
+     * @author Ahmad Anshori <ahmad@dominopos.com>
      * @return void
      */
     protected function prepareSession()
     {
         if (! is_object($this->session)) {
+            // set the session strict to FALSE
+            Config::set('orbit.session.strict', FALSE);
+            // set the query session string to FALSE, so the CI will depend on session cookie
+            Config::set('orbit.session.availability.query_string', FALSE);
+
             // This user assumed are Consumer, which has been checked at login process
+            // Return mall_portal, cs_portal, pmp_portal etc
+            $appOrigin = AppOriginProcessor::create(Config::get('orbit.session.app_list'))
+                                           ->getAppName();
+
+            // Session Config
+            $orbitSessionConfig = Config::get('orbit.session.origin.' . $appOrigin);
+            $applicationId = Config::get('orbit.session.app_id.' . $appOrigin);
+
+            // Instantiate the OrbitSession object
             $config = new SessionConfig(Config::get('orbit.session'));
-            $config->setConfig('application_id', static::APPLICATION_ID);
+            $config->setConfig('session_origin', $orbitSessionConfig);
+            $config->setConfig('expire', $orbitSessionConfig['expire']);
+            $config->setConfig('application_id', $applicationId);
 
             try {
                 $this->session = new Session($config);
-                $this->session->start();
+                $this->session->start(array(), 'no-session-creation');
             } catch (Exception $e) {
-                Redirect::to('/customer/logout');
+                $this->session->start();
             }
         }
     }
@@ -162,13 +223,13 @@ class BaseCIController extends ControllerAPI
     /**
      * Redirect user if not logged in to sign page
      *
-     * @param object $e - Error object
-     *
-     * @return Illuminate\Support\Facades\Redirect
-     *
      * @author Ahmad Anshori <ahmad@dominopos.com>
+     * @author Rio Astamal <rio@dominopos.com>
+     * @param object $e - Error object
+     * @param string $urlLogout - Redirect to URL
+     * @return Illuminate\Support\Facades\Redirect
      */
-    public function redirectIfNotLoggedIn($e)
+    public function redirectIfNotLoggedIn($e, $urlLogout='/customer/logout')
     {
         if (Config::get('app.debug')) {
             return $e;
@@ -180,7 +241,7 @@ class BaseCIController extends ControllerAPI
             case Session::ERR_UA_MISS_MATCH;
             case Session::ERR_SESS_NOT_FOUND;
             case Session::ERR_SESS_EXPIRE;
-                return \Redirect::to('/customer/logout');
+                return \Redirect::to($urlLogout);
                 break;
 
             default:
@@ -196,5 +257,40 @@ class BaseCIController extends ControllerAPI
     public function base64UrlDecode($inputStr)
     {
         return base64_decode(strtr($inputStr, '-_,', '+/='));
+    }
+
+    /**
+     * $user is from getLoggedInUser() and it may returns
+     * NULL user. This method is safety net to make sure
+     * that email otherwise valid or empty
+     * @param type $user
+     * @return user email or empty if not valid
+     */
+    private function getUserEmail($user) {
+        $user_email = '';
+        if (isset($user) && isset($user->role)) {
+            $user_email = $user->role->role_name !== 'Guest' ? $user->user_email : '';
+        }
+        return $user_email;
+    }
+
+    /**
+     * This method return list of data which mostly needed by views.
+     *
+     * @return array
+     */
+    protected function fillCommonViewsData()
+    {
+        $retailer = $this->getRetailerInfo();
+        $languages = $this->getListLanguages($retailer);
+        $user = $this->getLoggedInUser();
+
+        return [
+            'user' => $user,
+            'retailer' => $retailer,
+            'languages' => $languages,
+            'page_title' => $this->pageTitle,
+            'user_email' => $this->getUserEmail($user)
+        ];
     }
 }

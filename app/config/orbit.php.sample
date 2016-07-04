@@ -3,6 +3,42 @@
  * Orbit specific configuraiton.
  */
 return array(
+    // Elasticsearch server configuration
+    'elasticsearch' => [
+        // Can be multiple hosts
+        'hosts' => [
+            // Without HTTP authentication
+            'http://localhost:9200'
+
+            // With HTTP authentication
+            // 'http://username:password@localhost:9200'
+        ],
+
+        // Number of retry when it fails
+        'retries' => 2,
+
+        // Path to CA Certificate, used when serving via HTTPS
+        'cacert' => '/path/to/cacert.crt',
+
+        // List of indices that we have in Elasticsearch
+        'indices' => [
+            'malldata' => [
+                'index' => 'malls',
+                'type'  => 'basic'
+            ],
+
+            'activities' => [
+                'index' => 'activities',
+                'type'  => 'activity'
+            ]
+        ],
+
+        'nearest' => [
+            'multiple' => 5,
+            'max_try' => 10
+        ]
+    ],
+
     // Demo environtment
     'is_demo' => FALSE,
 
@@ -11,6 +47,8 @@ return array(
         // all route names
         // 'ci-tenant-list',
         // 'ci-tenant-detail',
+        // 'ci-service-list',
+        // 'ci-service-detail',
         // 'ci-news-list',
         // 'ci-news-detail',
         // 'ci-promotion-list',
@@ -28,6 +66,22 @@ return array(
         // 'ci-home', // -> /
         // 'ci-customer-home', // -> /customer/home
         // 'mobile-ci-home', // -> /customer
+        // 'captive-request-internet', // -> /free internet
+
+        // angular CI routes
+        // 'customer-api-store-list',
+        // 'customer-api-store-detail',
+        // 'customer-api-promotion-list',
+        // 'customer-api-promotion-detail',
+        // 'customer-api-coupon-list',
+        // 'customer-api-coupon-detail',
+        // 'customer-api-news-list',
+        // 'customer-api-news-detail',
+        // 'customer-api-widget-list',
+        // 'customer-api-service-list',
+        // 'customer-api-service-detail',
+        // 'customer-api-my-account',
+        // 'customer-api-membership',
     ],
 
     // cdn path
@@ -93,7 +147,42 @@ return array(
     // Captive Portal related configuration
     'captive' => array(
         // All unregistered traffic should be redirected to this domain
-        'blackhole_domain'  => 'orbit.mall'
+        'blackhole_domain'  => 'orbit.mall',
+
+        // The URL which we redirect user to grant them internet access
+        'base_grant_url' => 'https://n69.network-auth.com/splash/grant',
+
+        // After the external captive portal grant internet, user should be
+        // redirected to this URL. Leave empty for default Orbit behavior
+        'user_continue_url' => '',
+
+        // URL to check for internet connection
+        'ping_url' => 'http://tools.pingdom.com/fpt/favicon.icox',
+
+        // Delay for setTimeout before displaying the button for
+        // getting internet connection, in seconds
+        'delay_button' => 1.5,
+
+        // Cookie for From Wifi
+        'from_wifi'    => array(
+            'name'      => 'from_wifi',
+
+            // Expire time, should be set equals or higher than
+            // SessionConifg.expire
+            'expire' => 600,   // on second
+
+            // Path of the cookie
+            'path'      => '/',
+
+            // domain
+            'domain'    => NULL,
+
+            // secure transfer via HTTPS only
+            'secure'    => FALSE,
+
+            // Deny access from client side script
+            'httponly'  => TRUE
+        ),
     ),
 
     // agreement configuration
@@ -150,6 +239,12 @@ return array(
 
         // the google analytics ID, eg: UA-XXXXXXX-X
         'google_analytics_id' => '',
+
+        // will be used to determine the domain in angular ci
+        'main_domain' => 'gotomalls.cool',
+
+        // will be used to determine the domain in mobile ci
+        'ci_domain' => 'gotomalls.cool',
     ),
 
     // General contact data
@@ -161,8 +256,8 @@ return array(
             'fax'   => '+62123456789',
             'office_hour'   => '9am - 6pm'
         ),
-        'privacy_policy_url' => '',
-        'terms_of_service_url' => '',
+        'privacy_policy_url' => 'http://dominopos.com/privacy-policy.html',
+        'terms_of_service_url' => 'http://dominopos.com/terms-and-conditions.html',
     ),
 
     // Lucky Draw
@@ -205,6 +300,12 @@ return array(
 
         // Coupon
         'coupon' => array(
+            'per_page'      => 50,
+            'max_record'    => 100,
+        ),
+
+        // Tenant Category
+        'category' => array(
             'per_page'      => 50,
             'max_record'    => 100,
         ),
@@ -447,6 +548,36 @@ return array(
         'expire' => 3600,
 
         /**
+         * Application list mapping for session
+         */
+        'app_list' => [
+            'mobile_ci' => 'X-OMS-Mobile',
+            'desktop_ci' => 'X-OMS-Mobile',
+            'landing_page' => 'X-OMS-Mobile',
+
+            // Non Customer
+            'mall_portal' => 'X-OMS-Mall',
+            'cs_portal' => 'X-OMS-CS',
+            'pmp_portal' => 'X-OMS-PMP',
+            'admin_portal' => 'X-OMS-Admin'
+        ],
+
+        /**
+         * Application ID mapping for session
+         */
+        'app_id' => [
+            'mobile_ci' => '1',
+            'desktop_ci' => '2',
+            'landing_page' => '3',
+
+            // Non Customer
+            'mall_portal' => '4',
+            'cs_portal' => '5',
+            'pmp_portal' => '6',
+            'admin_portal' => '7'
+        ],
+
+        /**
          * Path to write the session data
          *
          * - usage
@@ -526,6 +657,7 @@ return array(
          * Where is session data should be coming from
          */
         'session_origin' => array(
+            'expire' => 62208000,
             // From HTTP Headers
             'header'  => array(
                 'name'      => 'X-Orbit-Session'
@@ -563,7 +695,9 @@ return array(
          * @Todo: use this config instead
          */
         'origin' => array(
-            'mobile' => array(
+            'mobile_ci' => array(
+                'expire' => 62208000,   // two years
+
                 // From HTTP Headers
                 'header'  => array(
                     'name'      => 'X-OMS-Mobile'
@@ -586,7 +720,77 @@ return array(
                     'path'      => '/',
 
                     // domain
-                    'domain'    => NULL,
+                    'domain'    => 'gotomalls.cool',
+
+                    // secure transfer via HTTPS only
+                    'secure'    => FALSE,
+
+                    // Deny access from client side script
+                    'httponly'  => TRUE
+                ),
+            ),
+
+            'desktop_ci' => array(
+                'expire' => 62208000,   // two years
+
+                // From HTTP Headers
+                'header'  => array(
+                    'name'      => 'X-OMS-Mobile'
+                ),
+
+                // From Query String
+                'query_string' => array(
+                    'name'      => 'X-OMS-Mobile'
+                ),
+
+                // From Cookie
+                'cookie'    => array(
+                    'name'      => 'X-OMS-Mobile',
+
+                    // Expire time, should be set equals or higher than
+                    // SessionConifg.expire
+                    'expire' => 62208000,   // two years
+
+                    // Path of the cookie
+                    'path'      => '/',
+
+                    // domain
+                    'domain'    => 'gotomalls.cool',
+
+                    // secure transfer via HTTPS only
+                    'secure'    => FALSE,
+
+                    // Deny access from client side script
+                    'httponly'  => TRUE
+                ),
+            ),
+
+            'landing_page' => array(
+                'expire' => 62208000,   // two years
+
+                // From HTTP Headers
+                'header'  => array(
+                    'name'      => 'X-OMS-Mobile'
+                ),
+
+                // From Query String
+                'query_string' => array(
+                    'name'      => 'X-OMS-Mobile'
+                ),
+
+                // From Cookie
+                'cookie'    => array(
+                    'name'      => 'X-OMS-Mobile',
+
+                    // Expire time, should be set equals or higher than
+                    // SessionConifg.expire
+                    'expire' => 62208000,   // two years
+
+                    // Path of the cookie
+                    'path'      => '/',
+
+                    // domain
+                    'domain'    => 'gotomalls.cool',
 
                     // secure transfer via HTTPS only
                     'secure'    => FALSE,
@@ -597,6 +801,8 @@ return array(
             ),
 
             'admin_portal' => array(
+                'expire' => 3600,   // 1 hour
+
                 // From HTTP Headers
                 'header'  => array(
                     'name'      => 'X-OMS-Admin'
@@ -630,6 +836,8 @@ return array(
             ),
 
             'mall_portal' => array(
+                'expire' => 3600,   // 1 hour
+
                 // From HTTP Headers
                 'header'  => array(
                     'name'      => 'X-OMS-Mall'
@@ -663,6 +871,8 @@ return array(
             ),
 
             'cs_portal' => array(
+                'expire' => 3600,   // 1 hour
+
                 // From HTTP Headers
                 'header'  => array(
                     'name'      => 'X-OMS-CS'
@@ -676,6 +886,41 @@ return array(
                 // From Cookie
                 'cookie'    => array(
                     'name'      => 'X-OMS-CS',
+
+                    // Expire time, should be set equals or higher than
+                    // SessionConifg.expire
+                    'expire' => 62208000,   // two years
+
+                    // Path of the cookie
+                    'path'      => '/',
+
+                    // domain
+                    'domain'    => NULL,
+
+                    // secure transfer via HTTPS only
+                    'secure'    => FALSE,
+
+                    // Deny access from client side script
+                    'httponly'  => TRUE
+                ),
+            ),
+
+            'pmp_portal' => array(
+                'expire' => 3600,   // 1 hour
+
+                // From HTTP Headers
+                'header'  => array(
+                    'name'      => 'X-OMS-PMP'
+                ),
+
+                // From Query String
+                'query_string' => array(
+                    'name'      => 'X-OMS-PMP'
+                ),
+
+                // From Cookie
+                'cookie'    => array(
+                    'name'      => 'X-OMS-PMP',
 
                     // Expire time, should be set equals or higher than
                     // SessionConifg.expire
@@ -730,6 +975,37 @@ return array(
             ),
         ),
 
+        // CORS
+        'cors' => [
+            'allow_headers' => [
+                'Origin',
+                'Content-Type',
+                'Accept',
+                'Authorization',
+                'X-Request-With',
+                'X-Orbit-Signature',
+                'Cookie',
+                'Set-Cookie',
+                'Set-X-Orbit-Session',
+                'Orbit-Session',
+                'Set-X-OMS-Mobile',
+                'Set-X-OMS-Mall',
+                'Set-X-OMS-Admin',
+                'Set-X-OMS-PMP',
+                'Set-X-OMS-CS',
+            ],
+
+            // No need protocol, just enter domain name
+            // e.g: 'example.com' or 'sub.example.com'
+            'allow_origin' => [
+                'localhost',
+                'gotomalls.cool',
+                'thebreeze.v21.orbit-mall.rio'
+            ],
+            'allow_methods' => 'GET, POST',
+            'allow_credentials' => 'true'
+        ],
+
         // Firewall on Orbit Box
         'firewall'  => array(
             // Fake call means, no real call to the router
@@ -766,7 +1042,7 @@ return array(
                 'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
-                'file_size'     => 150000,
+                'file_size'     => 90000,
 
                 // The target path which file to be stored
                 'path'          => 'uploads/merchants/logo',
@@ -834,7 +1110,7 @@ return array(
                 'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
-                'file_size'     => 150000,
+                'file_size'     => 90000,
 
                 // The target path which file to be stored
                 'path'          => 'uploads/merchants/pictures',
@@ -902,7 +1178,7 @@ return array(
                 'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
-                'file_size'     => 150000,
+                'file_size'     => 90000,
 
                 // The target path which file to be stored
                 'path'          => 'uploads/merchants/maps',
@@ -970,7 +1246,7 @@ return array(
                 'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
-                'file_size'     => 150000,
+                'file_size'     => 90000,
 
                 // The target path which file to be stored
                 'path'          => 'uploads/merchants/backgrounds',
@@ -1040,7 +1316,7 @@ return array(
                 'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
-                'file_size'     => 150000,
+                'file_size'     => 90000,
 
                 // The target path which file to be stored
                 'path'          => 'uploads/mallgroups/logo',
@@ -1111,7 +1387,7 @@ return array(
                 'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
-                'file_size'     => 150000,
+                'file_size'     => 90000,
 
                 // The target path which file to be stored
                 'path'          => 'uploads/retailers/logo',
@@ -1179,7 +1455,7 @@ return array(
                 'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
-                'file_size'     => 150000,
+                'file_size'     => 90000,
 
                 // The target path which file to be stored
                 'path'          => 'uploads/retailers/pictures',
@@ -1247,7 +1523,7 @@ return array(
                 'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
-                'file_size'     => 150000,
+                'file_size'     => 90000,
 
                 // The target path which file to be stored
                 'path'          => 'uploads/retailers/maps',
@@ -1315,7 +1591,7 @@ return array(
                 'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
-                'file_size'     => 150000,
+                'file_size'     => 90000,
 
                 // The target path which file to be stored
                 'path'          => 'uploads/retailers/backgrounds',
@@ -1385,7 +1661,7 @@ return array(
                 'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
-                'file_size'     => 150000,
+                'file_size'     => 90000,
 
                 // The target path which file to be stored
                 'path'          => 'uploads/malls/logo',
@@ -1459,7 +1735,7 @@ return array(
                 'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
-                'file_size'     => 150000,
+                'file_size'     => 90000,
 
                 // The target path which file to be stored
                 'path'          => 'uploads/product',
@@ -1527,7 +1803,7 @@ return array(
                 'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
-                'file_size'     => 150000,
+                'file_size'     => 90000,
 
                 // The target path which file to be stored
                 'path'          => 'uploads/product/translation',
@@ -1601,7 +1877,7 @@ return array(
                 'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
-                'file_size'     => 150000,
+                'file_size'     => 90000,
 
                 // The target path which file to be stored
                 'path'          => 'uploads/promotion',
@@ -1669,7 +1945,7 @@ return array(
                 'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
-                'file_size'     => 150000,
+                'file_size'     => 90000,
 
                 // The target path which file to be stored
                 'path'          => 'uploads/promotion/translation',
@@ -1742,7 +2018,7 @@ return array(
                 'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
-                'file_size'     => 150000,
+                'file_size'     => 90000,
 
                 // The target path which file to be stored
                 'path'          => 'uploads/users',
@@ -1819,7 +2095,7 @@ return array(
                 'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
-                'file_size'     => 150000,
+                'file_size'     => 90000,
 
                 // The target path which file to be stored
                 'path'          => 'uploads/coupon',
@@ -1887,7 +2163,7 @@ return array(
                 'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
-                'file_size'     => 150000,
+                'file_size'     => 90000,
 
                 // The target path which file to be stored
                 'path'          => 'uploads/coupon/translation',
@@ -1960,7 +2236,7 @@ return array(
                 'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
-                'file_size'     => 150000,
+                'file_size'     => 90000,
 
                 // The target path which file to be stored
                 'path'          => 'uploads/event',
@@ -2028,7 +2304,7 @@ return array(
                 'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
-                'file_size'     => 150000,
+                'file_size'     => 90000,
 
                 // The target path which file to be stored
                 'path'          => 'uploads/event/translation',
@@ -2101,7 +2377,7 @@ return array(
                 'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
-                'file_size'     => 150000,
+                'file_size'     => 90000,
 
                 // The target path which file to be stored
                 'path'          => 'uploads/widgets',
@@ -2169,7 +2445,7 @@ return array(
                 'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
-                'file_size'     => 150000,
+                'file_size'     => 90000,
 
                 // The target path which file to be stored
                 'path'          => 'uploads/widgets/translation',
@@ -2243,7 +2519,7 @@ return array(
                 'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
-                'file_size'     => 150000,
+                'file_size'     => 90000,
 
                 // The target path which file to be stored
                 'path'          => 'uploads/news',
@@ -2311,7 +2587,7 @@ return array(
                 'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
-                'file_size'     => 150000,
+                'file_size'     => 90000,
 
                 // The target path which file to be stored
                 'path'          => 'uploads/news/translation',
@@ -2385,7 +2661,7 @@ return array(
                 'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
-                'file_size'     => 150000,
+                'file_size'     => 90000,
 
                 // The target path which file to be stored
                 'path'          => 'uploads/lucky-draws',
@@ -2453,7 +2729,7 @@ return array(
                 'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
-                'file_size'     => 150000,
+                'file_size'     => 90000,
 
                 // The target path which file to be stored
                 'path'          => 'uploads/lucky-draws/translation',
@@ -2521,7 +2797,7 @@ return array(
                 'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
-                'file_size'     => 150000,
+                'file_size'     => 90000,
 
                 // The target path which file to be stored
                 'path'          => 'uploads/lucky-draws/announcements',
@@ -2589,7 +2865,7 @@ return array(
                 'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
-                'file_size'     => 150000,
+                'file_size'     => 90000,
 
                 // The target path which file to be stored
                 'path'          => 'uploads/lucky-draws/announcements/translation',
@@ -2663,7 +2939,7 @@ return array(
                 'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
-                'file_size'     => 150000,
+                'file_size'     => 90000,
 
                 // The target path which file to be stored
                 'path'          => 'uploads/membership',
@@ -2731,7 +3007,7 @@ return array(
                 'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
-                'file_size'     => 150000,
+                'file_size'     => 90000,
 
                 // The target path which file to be stored
                 'path'          => 'uploads/membership/translation',

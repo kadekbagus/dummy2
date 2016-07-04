@@ -18,7 +18,7 @@ class MysqlStoredProcedure extends Command {
 	 *
 	 * @var string
 	 */
-	protected $description = 'Install mysql stored procedure and function, list : (a)fnc_campaign_cost (b)proc_campaign_detailed_cost';
+	protected $description = 'Install mysql stored procedure and function, list : (a)fnc_campaign_cost (b)proc_campaign_detailed_cost (c)fnc_geo_shape';
 
 	/**
 	 * Create a new command instance.
@@ -49,9 +49,13 @@ class MysqlStoredProcedure extends Command {
 			case 'proc_campaign_detailed_cost':
 				$this->createCampaignDetailedCostProc();
 				break;
+
+			case 'fnc_geo_shape':
+				$this->createFunctionGeoShape($prefix);
+				break;
 			
 			default:
-				$this->info("You can install (a)fnc_campaign_cost (b)proc_campaign_detailed_cost");
+				$this->info("You can install (a)fnc_campaign_cost (b)proc_campaign_detailed_cost (c)fnc_geo_shape");
 				break;
 		}
 	}
@@ -71,6 +75,37 @@ class MysqlStoredProcedure extends Command {
 		$this->info('Successfully created proc "prc_campaign_detailed_cost".');
 	}
 
+	protected function createFunctionGeoShape($prefix)
+	{
+		DB::unprepared("DROP FUNCTION IF EXISTS fnc_geo_shape;
+			CREATE FUNCTION fnc_geo_shape(mallid CHAR(16)) RETURNS text
+			BEGIN
+				DECLARE area text;
+
+				SELECT CONCAT('POLYGON((', GROUP_CONCAT(CONCAT_WS(' ', SUBSTRING_INDEX(koordinat, ' ', -1), SUBSTRING_INDEX(koordinat, ' ', 1))), '))') as pol
+			    INTO area
+				FROM
+				(
+					SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(TRIM(BOTH ')' FROM SUBSTRING(astext(omgs.area), 10)), ',', n.n), ',', -1) koordinat
+					FROM {$prefix}merchant_geofences omgs
+					CROSS JOIN 
+					(
+					   SELECT a.N + b.N * 10 + 1 n
+						 FROM 
+						(SELECT 0 AS N UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9) a
+					   ,(SELECT 0 AS N UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9) b
+						ORDER BY n
+					) n
+					WHERE n.n <= 1 + (LENGTH(astext(omgs.area)) - LENGTH(REPLACE(astext(omgs.area), ',', '')))
+			        AND omgs.merchant_id = mallid
+				) AS x;
+			            
+			RETURN area;
+			END
+		");
+
+		$this->info("Function (fnc_geo_shape) successfully created");
+	}
 
 	protected function createFunctionCampaignCost($prefix)
 	{	

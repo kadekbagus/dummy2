@@ -97,6 +97,7 @@ $factory('Mall', [
     'contact_person_firstname' => $faker->firstName,
     'contact_person_lastname'  => $faker->lastName,
     'contact_person_phone'     => $faker->phoneNumber,
+    'country_id' => 'factory:Country',
     'timezone_id'     => 'factory:Timezone',
     'mobile_default_language'  => 'en'
 ]);
@@ -108,5 +109,17 @@ $factory('Tenant', [
     'contact_person_firstname' => $faker->firstName,
     'contact_person_lastname'  => $faker->lastName,
     'contact_person_phone'     => $faker->phoneNumber,
+    'floor_id'     => 'factory:floor',
     'mobile_default_language'  => 'en'
+]);
+
+$factory('Tenant',  'tenant_angular_ci', [
+    'parent_id' => 'factory:Mall',
+    'name'      => $faker->company,
+    'user_id'   => 'factory:User',
+    'contact_person_firstname' => $faker->firstName,
+    'contact_person_lastname'  => $faker->lastName,
+    'contact_person_phone'     => $faker->phoneNumber,
+    'floor_id'     => 'factory:floor',
+    'unit'      => $faker->buildingNumber
 ]);

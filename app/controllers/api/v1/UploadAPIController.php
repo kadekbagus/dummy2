@@ -3372,6 +3372,7 @@ class UploadAPIController extends ControllerAPI
      * ----------------------
      * @param integer    `merchant_id`                 (required) - ID of the merchant
      * @param file|array `images`                      (required) - Images of the logo
+     * @param string     `object_type`                 (required) - Object type of tenant : tenant or service
      * @return Illuminate\Support\Facades\Response
      */
     public function postUploadTenantLogo()
@@ -3412,6 +3413,7 @@ class UploadAPIController extends ControllerAPI
 
             // Application input
             $merchant_id = OrbitInput::post('merchant_id');
+            $object_type = OrbitInput::post('object_type');
             $images = OrbitInput::files($elementName);
             $messages = array(
                 'nomore.than.one' => Lang::get('validation.max.array', array(
@@ -3425,7 +3427,7 @@ class UploadAPIController extends ControllerAPI
                     $elementName  => $images,
                 ),
                 array(
-                    'merchant_id'   => 'required|orbit.empty.tenant',
+                    'merchant_id'   => 'required|orbit.empty.tenantstoreandservice',
                     $elementName    => 'required|nomore.than.one',
                 ),
                 $messages
@@ -3447,7 +3449,7 @@ class UploadAPIController extends ControllerAPI
 
             // We already had Merchant instance on the RegisterCustomValidation
             // get it from there no need to re-query the database
-            $merchant = App::make('orbit.empty.tenant');
+            $merchant = App::make('orbit.empty.tenantstoreandservice');
 
             // Callback to rename the file, we will format it as follow
             // [MERCHANT_ID]-[MERCHANT_NAME_SLUG]
@@ -3470,10 +3472,22 @@ class UploadAPIController extends ControllerAPI
             // Begin uploading the files
             $uploaded = $uploader->upload($images);
 
+            $object_name = '';
+            $media_name_id = '';
+
+            // Set object_name and media name id as each object type (tenant or sevice)
+            if ($object_type === 'tenant') {
+                $object_name = 'retailer';
+                $media_name_id = 'retailer_logo';
+            } elseif ($object_type === 'service') {
+                $object_name = 'service';
+                $media_name_id = 'service_logo';
+            }
+
             // Delete old merchant logo
             $pastMedia = Media::where('object_id', $merchant->merchant_id)
-                              ->where('object_name', 'retailer')
-                              ->where('media_name_id', 'retailer_logo');
+                              ->where('object_name', $object_name)
+                              ->where('media_name_id', $media_name_id);
 
             // Delete each files
             $oldMediaFiles = $pastMedia->get();
@@ -3490,10 +3504,11 @@ class UploadAPIController extends ControllerAPI
             // Save the files metadata
             $object = array(
                 'id'            => $merchant->merchant_id,
-                'name'          => 'retailer',
-                'media_name_id' => 'retailer_logo',
+                'name'          => $object_name,
+                'media_name_id' => $media_name_id,
                 'modified_by'   => $user->user_id
             );
+
             $mediaList = $this->saveMetadata($object, $uploaded);
 
             Event::fire('orbit.upload.postuploadtenantlogo.after.save', array($this, $merchant, $uploader));
@@ -3755,6 +3770,7 @@ class UploadAPIController extends ControllerAPI
      * ----------------------
      * @param integer    `merchant_id`                 (required) - ID of the merchant
      * @param file|array `pictures`                    (required) - Images of the logo
+     * @param string     `object_type`                 (required) - Object type of tenant : tenant or service
      * @return Illuminate\Support\Facades\Response
      */
     public function postUploadTenantImage()
@@ -3796,6 +3812,8 @@ class UploadAPIController extends ControllerAPI
 
             // Application input
             $merchant_id = OrbitInput::post('merchant_id');
+            $object_type = OrbitInput::post('object_type');
+
             $images = OrbitInput::files($elementName);
             $messages = array(
                 'nomore.than.three' => Lang::get('validation.max.array', array(
@@ -3809,7 +3827,7 @@ class UploadAPIController extends ControllerAPI
                     $elementName  => $images,
                 ),
                 array(
-                    'merchant_id'   => 'required|orbit.empty.tenant',
+                    'merchant_id'   => 'required|orbit.empty.tenantstoreandservice',
                     $elementName    => 'required|array|nomore.than.three',
                 ),
                 $messages
@@ -3831,7 +3849,7 @@ class UploadAPIController extends ControllerAPI
 
             // We already had Merchant instance on the RegisterCustomValidation
             // get it from there no need to re-query the database
-            $merchant = App::make('orbit.empty.tenant');
+            $merchant = App::make('orbit.empty.tenantstoreandservice');
 
             // Callback to rename the file, we will format it as follow
             // [MERCHANT_ID]-[MERCHANT_NAME_SLUG]
@@ -3854,10 +3872,22 @@ class UploadAPIController extends ControllerAPI
             // Begin uploading the files
             $uploaded = $uploader->upload($images);
 
+            $object_name = '';
+            $media_name_id = '';
+
+            // Set object_name and media name id as each object type (tenant or sevice)
+            if ($object_type === 'tenant') {
+                $object_name = 'retailer';
+                $media_name_id = 'retailer_image';
+            } elseif ($object_type === 'service') {
+                $object_name = 'service';
+                $media_name_id = 'service_image';
+            }
+
             // Delete old merchant logo
             $pastMedia = Media::where('object_id', $merchant->merchant_id)
-                              ->where('object_name', 'retailer')
-                              ->where('media_name_id', 'retailer_image');
+                              ->where('object_name', $object_name)
+                              ->where('media_name_id', $media_name_id);
 
             // Get the index of the image to delete the right one
             $increment = 0;
@@ -3884,8 +3914,8 @@ class UploadAPIController extends ControllerAPI
             // Save the files metadata
             $object = array(
                 'id'            => $merchant->merchant_id,
-                'name'          => 'retailer',
-                'media_name_id' => 'retailer_image',
+                'name'          => $object_name,
+                'media_name_id' => $media_name_id,
                 'modified_by'   => $user->user_id
             );
             $mediaList = $this->saveMetadata($object, $uploaded);
@@ -3983,6 +4013,7 @@ class UploadAPIController extends ControllerAPI
      * ----------------------
      * @param integer    `merchant_id`                  (required) - ID of the merchant/retailer
      * @param integer    `picture_index`                (required) - Index of the picture
+     * @param integer    `object_type`                  (required) - Object type of tenant : tenant or service
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -4020,15 +4051,18 @@ class UploadAPIController extends ControllerAPI
             // Application input
             $merchant_id = OrbitInput::post('merchant_id');
             $picture_index = OrbitInput::post('picture_index');
+            $object_type = OrbitInput::post('object_type');
 
             $validator = Validator::make(
                 array(
                     'merchant_id'   => $merchant_id,
                     'picture_index' => $picture_index,
+                    'object_type'   => $object_type,
                 ),
                 array(
-                    'merchant_id'    => 'required|orbit.empty.tenant',
-                    'picture_index'  => 'array',
+                    'merchant_id'   => 'required|orbit.empty.tenantstoreandservice',
+                    'picture_index' => 'array',
+                    'object_type'   => 'orbit.empty.tenant_type',
                 )
             );
 
@@ -4048,12 +4082,25 @@ class UploadAPIController extends ControllerAPI
 
             // We already had Product instance on the RegisterCustomValidation
             // get it from there no need to re-query the database
-            $merchant = App::make('orbit.empty.tenant');
+            $merchant = App::make('orbit.empty.tenantstoreandservice');
+
+            $object_name = '';
+            $media_name_id = '';
+
+            // Set object_name and media name id as each object type (tenant or sevice)
+            if ($object_type === 'tenant') {
+                $object_name = 'retailer';
+                $media_name_id = 'retailer_image';
+            } elseif ($object_type === 'service') {
+                $object_name = 'service';
+                $media_name_id = 'service_image';
+            }
+
 
             // Delete old merchant logo
             $pastMedia = Media::where('object_id', $merchant->merchant_id)
-                              ->where('object_name', 'retailer')
-                              ->where('media_name_id', 'retailer_image');
+                              ->where('object_name', $object_name)
+                              ->where('media_name_id', $media_name_id);
 
             if (! empty($picture_index)) {
                 $pastMedia->where(function($q) use ($picture_index) {
@@ -4169,6 +4216,7 @@ class UploadAPIController extends ControllerAPI
      * ----------------------
      * @param integer    `merchant_id`                 (required) - ID of the merchant
      * @param file|array `maps`                        (required) - Images of the logo
+     * @param string     `object_type`                 (required) - Object type of tenant : tenant or service
      * @return Illuminate\Support\Facades\Response
      */
     public function postUploadTenantMap()
@@ -4210,6 +4258,7 @@ class UploadAPIController extends ControllerAPI
 
             // Application input
             $merchant_id = OrbitInput::post('merchant_id');
+            $object_type = OrbitInput::post('object_type');
             $images = OrbitInput::files($elementName);
             $messages = array(
                 'nomore.than.one' => Lang::get('validation.max.array', array(
@@ -4223,7 +4272,7 @@ class UploadAPIController extends ControllerAPI
                     $elementName  => $images,
                 ),
                 array(
-                    'merchant_id'   => 'required|orbit.empty.tenant',
+                    'merchant_id'   => 'required|orbit.empty.tenantstoreandservice',
                     $elementName    => 'required|nomore.than.one',
                 ),
                 $messages
@@ -4245,7 +4294,7 @@ class UploadAPIController extends ControllerAPI
 
             // We already had Merchant instance on the RegisterCustomValidation
             // get it from there no need to re-query the database
-            $merchant = App::make('orbit.empty.tenant');
+            $merchant = App::make('orbit.empty.tenantstoreandservice');
 
             // Callback to rename the file, we will format it as follow
             // [MERCHANT_ID]-[MERCHANT_NAME_SLUG]
@@ -4268,10 +4317,22 @@ class UploadAPIController extends ControllerAPI
             // Begin uploading the files
             $uploaded = $uploader->upload($images);
 
+            $object_name = '';
+            $media_name_id = '';
+
+            // Set object_name and media name id as each object type (tenant or sevice)
+            if ($object_type === 'tenant') {
+                $object_name = 'retailer';
+                $media_name_id = 'retailer_map';
+            } elseif ($object_type === 'service') {
+                $object_name = 'service';
+                $media_name_id = 'service_map';
+            }
+
             // Delete old merchant logo
             $pastMedia = Media::where('object_id', $merchant->merchant_id)
-                              ->where('object_name', 'retailer')
-                              ->where('media_name_id', 'retailer_map');
+                              ->where('object_name', $object_name)
+                              ->where('media_name_id', $media_name_id);
 
             // Delete each files
             $oldMediaFiles = $pastMedia->get();
@@ -4288,8 +4349,8 @@ class UploadAPIController extends ControllerAPI
             // Save the files metadata
             $object = array(
                 'id'            => $merchant->merchant_id,
-                'name'          => 'retailer',
-                'media_name_id' => 'retailer_map',
+                'name'          => $object_name,
+                'media_name_id' => $media_name_id,
                 'modified_by'   => $user->user_id
             );
             $mediaList = $this->saveMetadata($object, $uploaded);
@@ -5065,7 +5126,7 @@ class UploadAPIController extends ControllerAPI
 
             $custom_message = array(
                     'errors' => array(
-                        'file_too_big'          => 'Mobile Toolbar Logo Image size is too big, maximum size allowed is :size :unit.',
+                        'file_too_big'          => 'Mall Logo size is too big, maximum size allowed is :size :unit.',
                     ),
                 );
 
@@ -7879,7 +7940,7 @@ class UploadAPIController extends ControllerAPI
             });
 
             // @Todo: Refactor by adding allowedForUser for tenant
-            Validator::extend('orbit.empty.tenant', function ($attribute, $value, $parameters) use ($user) {
+            Validator::extend('orbit.empty.tenant123', function ($attribute, $value, $parameters) use ($user) {
                 $merchant = Tenant::excludeDeleted()
                             ->where('merchant_id', $value)
                             ->first();
@@ -7888,9 +7949,40 @@ class UploadAPIController extends ControllerAPI
                     return FALSE;
                 }
 
-                App::instance('orbit.empty.tenant', $merchant);
+                App::instance('orbit.empty.tenant123', $merchant);
 
                 return TRUE;
+            });
+
+            // Check existing tenant (with type tenant or service)
+            Validator::extend('orbit.empty.tenantstoreandservice', function ($attribute, $value, $parameters){
+                $merchant = TenantStoreAndService::excludeDeleted()
+                            ->where(function($q) {
+                                 $q->where('object_type', 'tenant')
+                                   ->orWhere('object_type', 'service');
+                            })
+                            ->where('merchant_id', $value)
+                            ->first();
+
+                if (empty($merchant)) {
+                    return FALSE;
+                }
+
+                App::instance('orbit.empty.tenantstoreandservice', $merchant);
+
+                return TRUE;
+            });
+
+
+            // Check the existance of the tenant type
+            Validator::extend('orbit.empty.tenant_type', function ($attribute, $value, $parameters) {
+                $valid = false;
+                $statuses = array('tenant', 'service');
+                foreach ($statuses as $status) {
+                    if($value === $status) $valid = $valid || TRUE;
+                }
+
+                return $valid;
             });
 
             // @Todo: Refactor by adding allowedForUser for mall

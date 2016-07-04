@@ -16,6 +16,8 @@ use Mall;
 use stdClass;
 use Orbit\Helper\Util\PaginationNumber;
 
+use Elasticsearch\ClientBuilder;
+
 class MallNearbyAPIController extends ControllerAPI
 {
     /**
@@ -47,7 +49,6 @@ class MallNearbyAPIController extends ControllerAPI
 
             $malls = Mall::select('merchants.*')
                          ->includeLatLong()
-                         ->includeDummyOpeningHours()   // @Todo: Remove this in the future
                          ->join('merchant_geofences', 'merchant_geofences.merchant_id', '=', 'merchants.merchant_id');
 
             if ($usingDemo) {
@@ -56,7 +57,7 @@ class MallNearbyAPIController extends ControllerAPI
                 // Production
                 $malls->active();
             }
-                         
+
             $callNearBy = TRUE;
 
             // Filter
@@ -178,4 +179,154 @@ class MallNearbyAPIController extends ControllerAPI
 
         return $output;
     }
+
+
+    /**
+     * GET - Search mall keyword by Elasticsearch
+     *
+     * Priority : name, city, country, position, address_line, description
+     *
+     * @author Firmansyah <firmansyah@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param string latitude
+     * @param string longitude
+     * @param string distance
+     * @param string keyword_search
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function getSearchMallKeyword()
+    {
+        $httpCode = 200;
+        try {
+
+            $latitude = OrbitInput::get('latitude',null);
+            $longitude = OrbitInput::get('longitude',null);
+            $distance = OrbitInput::get('distance',null);
+            $keywordSearch = OrbitInput::get('keyword_search',null);
+
+            $usingDemo = Config::get('orbit.is_demo', FALSE);
+            $host = Config::get('orbit.elasticsearch');
+
+            $client = ClientBuilder::create() // Instantiate a new ClientBuilder
+                    ->setHosts($host['hosts']) // Set the hosts
+                    ->build();
+
+            $take = PaginationNumber::parseTakeFromGet('geo_location');
+            $skip = PaginationNumber::parseSkipFromGet();
+
+            $json_search = '{
+                                "explain": true,
+                                "from": 0,
+                                "size": 100,
+                                "query": {
+                                    "bool": {
+                                        "must": {
+                                            "multi_match": {
+                                                "query": "' . $keywordSearch . '",
+                                                "fields": [
+                                                    "name^5",
+                                                    "city^4",
+                                                    "country^3",
+                                                    "address_line^2",
+                                                    "description"
+                                                ]
+                                            }
+                                        },
+                                        "must_not": {
+                                            "term": { "status": "deleted" }
+                                        }
+                                    }
+                                },
+                                "sort": [
+                                    "_score",
+                                    {
+                                        "_geo_distance": {
+                                            "position": {
+                                                "lat": ' . $latitude . ',
+                                                "lon": ' . $longitude . '
+                                            },
+                                            "order": "asc",
+                                            "unit": "km",
+                                            "distance_type": "plane"
+                                        }
+                                    }
+                                ]
+                            }';
+
+            $param_nearest = [
+                'index'  => Config::get('orbit.elasticsearch.indices.malldata.index'),
+                'type'  => Config::get('orbit.elasticsearch.indices.malldata.type'),
+                'body' => $json_search
+            ];
+            $response = $client->search($param_nearest);
+
+            $area_data = $response['hits'];
+
+            $listmall = array();
+
+            // Reformat return data
+            foreach ($area_data['hits'] as $key => $dt) {
+                $areadata = array();
+                $areadata['id'] = $dt['_id'];
+                foreach ($dt['_source'] as $source => $val) {
+                    $areadata[$source] = $val;
+                }
+
+                $listmall[] = $areadata;
+            }
+
+            $this->response->data = new stdClass();
+            $this->response->data->total_records = $area_data['total'];
+            $this->response->data->returned_records = count($listmall);
+            $this->response->data->records = $listmall;
+        } catch (ACLForbiddenException $e) {
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (InvalidArgsException $e) {
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $result['total_records'] = 0;
+            $result['returned_records'] = 0;
+            $result['records'] = null;
+
+            $this->response->data = $result;
+            $httpCode = 403;
+        } catch (QueryException $e) {
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+        } catch (Exception $e) {
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 500;
+        }
+
+        $output = $this->render($httpCode);
+
+        return $output;
+    }
+
+
+
 }

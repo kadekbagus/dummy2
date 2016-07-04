@@ -10,6 +10,7 @@ use Mall;
 use Carbon\Carbon as Carbon;
 use UserAPIController;
 use Setting;
+use Response;
 
 class ConsumerPrinterController extends DataPrinterController
 {

@@ -26,7 +26,10 @@ return array(
         'promotion'          => '販促',
         'not_found'          => 'エラー ',
         'recognize_me'       => '私を認識」',
+        'tenant'   => 'テナント',
         'tenant_directory'   => 'テナント',
+        'service'            => 'サービス',
+        'service_directory'  => 'サービス',
         'promotions_tenants' => 'テナントの販促',
         'coupons_tenants'    => 'クーポンのテナント',
         'news_tenants'       => 'テナントのニュース',
@@ -37,6 +40,7 @@ return array(
         'membership'         => '会員',
         'orbit_tour'         => 'ORBIT ツアー',
         'lucky_draws'        => '抽選',
+        'free_wifi'          => '無料インタネット',
         'my_messages'        => '私のメッセージ',
         'my_message'         => '私のメッセージ',
         'redemption_places'  => '償還場所',
@@ -50,16 +54,20 @@ return array(
         'promotion'          => '販促',
         'coupon'             => '私のクーポン',
         'tenant'             => 'テナント',
+        'service'            => 'サービス',
         'lucky_draw'         => '抽選',
         'news'               => 'ニュース',
         'promotions'         => '販促',
         'coupons'            => '券',
         'tenants'            => 'テナント',
+        'services'           => 'サービス',
         'lucky_draws'        => '抽選',
+        'free_wifi'          => '無料インタネット',
         'newss'              => 'ニュース',
         'promotions_single'  => '販促',
         'coupons_single'     => '券',
         'tenants_single'     => 'テナント',
+        'services_single'    => 'テナント',
         'lucky_draws_single' => '抽選',
         'newss_single'       => 'ニュース',
     ),
@@ -76,6 +84,7 @@ return array(
         'no_news_listing'              => '申し訳ありませんが、このモールで現時点ではニュースはありません。',
         'no_promotions_listing'        => '申し訳ありませんが、このモールで現時点でのプロモーションはありません。',
         'no_stores_listing'            => '申し訳ありませんが、このモールで現時点で店舗はありません。',
+        'no_services_listing'          => '申し訳ありません、 がこのモールで現時点でサービスはありません。',
     ),
 
     // modal specific lang
@@ -321,6 +330,7 @@ return array(
 
     'search' => array(
         'no_item'            => '基準にマッチしているテナントがありません。',
+        'no_service'         => '条件に一致するサービスはありません。',
         'too_much_items'     => '検索結果が広すぎる、それを絞り込むください.',
         'no_result'          => '申し訳ありませんが、検索結果がないです',
         'error'              => '要求の発行中にエラーがあります',
@@ -530,4 +540,38 @@ return array(
     'campaign_cards' => array(
         'go_to_page' => 'ページに移動',
     ),
+    'captive'   => array(
+        'request_internet' => array(
+            'title'     => '無料インターネット',
+            'heading'   => '無料インター ネット アクセス',
+            'message'   => '私たちの Wi-Fi に接続することによりあなたは利用規約に同意します。無料のインター ネット アクセスを取得するには下のボタンをクリックします。',
+            'button'    => '無料のインターネット アクセスを取得します',
+            'check_connection' => 'インターネット接続を確認してお待ちください...',
+            'too_long' => ' 時間がかかる場合、お使いのブラウザーさっぱりしてみてください。',
+            'instruction' => 'Salin alamat URL di atas ke browser untuk meminta akses internet gratis.',
+            'message_ex' => array(
+                'title' => '無料インター ネット アクセス',
+                'instruction_heading' => 'これらは、無料のインターネットを取得する手順:',
+                'instructions' => array(
+                    'モールの Wi-Fi ネットワークへの接続します',
+                    'このページにアクセスします',
+                    'クリップボードに URL をコピーをタップします',
+                    '無料のインター ネット アクセスを取得するをタップ!',
+                    'インターネット ブラウザーを開き、接続の状態を表示する URL を貼り付ける'
+                ),
+                'button_caption' => '無料のインターネット アクセスを取得します',
+                'clipboard_caption' => 'URL をクリップボードにコピーします',
+                'clipboard_success' => 'URL copied'
+            ),
+
+        ),
+        'granted' => array(
+            'title'     => '無料インターネット',
+            'heading'   => 'あなたはすでに接続されています',
+            'message'   => '無料でインターネットに接続しています。',
+            'button'    => 'OK'
+        ),
+        'widget_slogan' => '無料インターネット',
+        'widget_tagline' => '無料インター ネット アクセス'
+    )
 );

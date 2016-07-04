@@ -101,7 +101,10 @@ class Coupon extends Eloquent
 
     public function campaignLocations()
     {
-        return $this->belongsToMany('CampaignLocation', 'promotion_retailer', 'promotion_id', 'retailer_id');
+        $prefix = DB::getTablePrefix();
+        return $this->belongsToMany('CampaignLocation', 'promotion_retailer', 'promotion_id', 'retailer_id')
+                ->select('merchants.*', DB::raw("IF({$prefix}merchants.object_type = 'tenant', (select language_id from {$prefix}languages where name = pm.mobile_default_language), (select language_id from {$prefix}languages where name = {$prefix}merchants.mobile_default_language)) as default_language"))
+                ->leftjoin('merchants as pm', DB::raw("pm.merchant_id"), '=', 'merchants.parent_id');
     }
 
     /**
@@ -257,21 +260,6 @@ class Coupon extends Eloquent
     {
         return $this->hasMany('Media', 'object_id', 'promotion_id')
                     ->where('object_name', 'coupon');
-    }
-
-    /**
-     * Accessor for empty product image
-     *
-     * @author Ahmad Anshori <ahmad@dominopos.com>
-     * @param string $value - image path
-     * @return string $value
-     */
-    public function getImageAttribute($value)
-    {
-        if (empty($value)) {
-            return 'mobile-ci/images/default_coupon.png';
-        }
-        return ($value);
     }
 
     public function scopeOfMerchantId($query, $merchantId)

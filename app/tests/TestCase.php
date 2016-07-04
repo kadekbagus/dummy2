@@ -3,7 +3,7 @@
 use Laracasts\TestDummy\Factory;
 use Illuminate\Http\Request;
 
-class TestCase extends Illuminate\Foundation\Testing\TestCase {
+abstract class TestCase extends Illuminate\Foundation\Testing\TestCase {
 
     protected static $registered;
 

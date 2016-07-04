@@ -194,6 +194,7 @@ class UserReportAPIController extends ControllerAPI
                     inner join {$tablePrefix}users u on us.user_id = u.user_id
                     inner join {$tablePrefix}user_details ud on u.user_id = ud.user_id
                     where u.status != 'deleted'
+                    and us.signin_via != 'guest'
                     and us.location_id in ('{$mallId}')
                     and us.created_at between '{$startDate}' and '{$endDate}'
                     ) us2
@@ -246,6 +247,7 @@ class UserReportAPIController extends ControllerAPI
                     inner join {$tablePrefix}users u on us.user_id = u.user_id
                     inner join {$tablePrefix}user_details ud on u.user_id = ud.user_id
                     where u.status != 'deleted'
+                    and us.signin_via != 'guest'
                     and us.location_id in ('{$mallId}')
                     and us.created_at between '{$startDate}' and '{$endDate}'
                     group by {$uniqueSignInGroupBy}, us.user_id

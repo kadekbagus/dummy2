@@ -7,6 +7,7 @@
 use OrbitRelation\BelongsTo as BelongsToObject;
 use DominoPOS\OrbitSession\SessionConfig;
 use DominoPOS\OrbitSession\Session;
+use Orbit\Helper\Session\AppOriginProcessor;
 
 class Activity extends Eloquent
 {
@@ -78,6 +79,20 @@ class Activity extends Eloquent
 
         if ($this->group === 'pos' || $this->group === 'mobile-ci') {
             $this->location_id = Config::get('orbit.shop.id');
+        }
+
+        if ($this->group === 'mobile-ci') {
+            if (isset($_COOKIE['from_wifi'])) {
+                $domain = Config::get('orbit.captive.from_wifi.domain', NULL);
+                $path = Config::get('orbit.captive.from_wifi.path', '/');
+                $expire = time() + Config::get('orbit.captive.from_wifi.expire', 60); // default expired if doesnt exist is 60 second (1 minute)
+
+                setcookie(Config::get('orbit.captive.from_wifi.name', 'from_wifi'), 'Y', $expire, $path, $domain, FALSE);
+
+                $this->from_wifi = 'Y';
+            } else {
+                $this->from_wifi = 'N';
+            }
         }
 
         return $this;
@@ -888,7 +903,19 @@ class Activity extends Eloquent
         $session = static::$session;
         if ($session === null) {
 
+            // Return mall_portal, cs_portal, pmp_portal etc
+            $appOrigin = AppOriginProcessor::create(Config::get('orbit.session.app_list'))
+                                           ->getAppName();
+
+            // Session Config
+            $orbitSessionConfig = Config::get('orbit.session.origin.' . $appOrigin);
+            $applicationId = Config::get('orbit.session.app_id.' . $appOrigin);
+
+            // Instantiate the OrbitSession object
             $config = new SessionConfig(Config::get('orbit.session'));
+            $config->setConfig('session_origin', $orbitSessionConfig);
+            $config->setConfig('expire', $orbitSessionConfig['expire']);
+            $config->setConfig('application_id', $applicationId);
 
             $session = new Session($config);
             // There is possibility that the session are already expired
@@ -955,24 +982,30 @@ class Activity extends Eloquent
             ->first();
 
         if (empty($activity)) {
-            $newConnected = new ConnectedNow();
-            $newConnected->merchant_id = $this->location_id;
-            $newConnected->customer_connected = 1;
-            $newConnected->date = $date;
-            $newConnected->hour = $hour;
-            $newConnected->minute = $minute;
-            $newConnected->save();
+            if (! empty($this->location_id)) {
+                $newConnected = new ConnectedNow();
+                $newConnected->merchant_id = $this->location_id;
+                $newConnected->customer_connected = 1;
+                $newConnected->date = $date;
+                $newConnected->hour = $hour;
+                $newConnected->minute = $minute;
+                $newConnected->save();
 
-            $newListConnectedUser = new ListConnectedUser();
-            $newListConnectedUser->connected_now_id = $newConnected->connected_now_id;
-            $newListConnectedUser->user_id = $this->user_id;
-            $newListConnectedUser->save();
+                if (! empty($this->user_id)) {
+                    $newListConnectedUser = new ListConnectedUser();
+                    $newListConnectedUser->connected_now_id = $newConnected->connected_now_id;
+                    $newListConnectedUser->user_id = $this->user_id;
+                    $newListConnectedUser->save();
+                }
+            }
         } else {
             if (is_null($activity->user_id)) {
-                $newListConnectedUser = new ListConnectedUser();
-                $newListConnectedUser->connected_now_id = $activity->connected_now_id;
-                $newListConnectedUser->user_id = $this->user_id;
-                $newListConnectedUser->save();
+                if (! empty($this->user_id)) {
+                    $newListConnectedUser = new ListConnectedUser();
+                    $newListConnectedUser->connected_now_id = $activity->connected_now_id;
+                    $newListConnectedUser->user_id = $this->user_id;
+                    $newListConnectedUser->save();
+                }
 
                 $activity->customer_connected += 1;
                 $activity->save();
@@ -1075,7 +1108,7 @@ class Activity extends Eloquent
         }
 
         // Save also the activity to particular `campaign_xyz` table
-        $connection = ConnectionTime::where('session_id', $this->session_id)->first();
+        $connection = ConnectionTime::where('session_id', $this->session_id)->where('location_id', $this->location_id)->first();
         if (! is_object($connection)) {
             $connection = new ConnectionTime();
         }
@@ -1087,6 +1120,7 @@ class Activity extends Eloquent
         $now = date('Y-m-d H:i:s');
         if ($this->activity_name === 'login_ok') {
             $connection->login_at = $now;
+            $connection->logout_at = NULL;
         }
         if ($this->activity_name === 'logout_ok') {
             $connection->logout_at = $now;

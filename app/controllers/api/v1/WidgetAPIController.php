@@ -56,14 +56,23 @@ class WidgetAPIController extends ControllerAPI
             $user = $this->api->user;
             Event::fire('orbit.widget.postnewwidget.before.authz', array($this, $user));
 
-            if (! ACL::create($user)->isAllowed('create_widget')) {
-                Event::fire('orbit.widget.postnewwidget.authz.notallowed', array($this, $user));
+            // if (! ACL::create($user)->isAllowed('create_widget')) {
+            //     Event::fire('orbit.widget.postnewwidget.authz.notallowed', array($this, $user));
 
-                $errorMessage = Lang::get('validation.orbit.actionlist.add_new_widget');
-                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $errorMessage));
+            //     $errorMessage = Lang::get('validation.orbit.actionlist.add_new_widget');
+            //     $message = Lang::get('validation.orbit.access.forbidden', array('action' => $errorMessage));
 
+            //     ACL::throwAccessForbidden($message);
+            // }
+
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = ['super admin', 'mall admin', 'mall owner'];
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
             }
+
             Event::fire('orbit.widget.postnewwidget.after.authz', array($this, $user));
 
             $this->registerCustomValidation();
@@ -118,7 +127,7 @@ class WidgetAPIController extends ControllerAPI
                     array(
                         'object_id'             => 'required',
                         'merchant_id'           => 'required|orbit.empty.merchant',
-                        'widget_type'           => 'required|in:tenant,lucky_draw,promotion,coupon,news|orbit.exists.widget_type:' . $merchantId,
+                        'widget_type'           => 'required|in:tenant,lucky_draw,promotion,coupon,news,service,free_wifi|orbit.exists.widget_type:' . $merchantId,
                         // 'slogan'                => 'required',
                         'animation'             => 'in:none,horizontal,vertical',
                         'widget_order'          => 'required|numeric',
@@ -157,7 +166,7 @@ class WidgetAPIController extends ControllerAPI
 
                 $widget->save();
 
-                $widget->retailers()->sync(array($merchantId));
+                $widget->malls()->sync(array($merchantId));
 
                 // // If widget is empty then it should be applied to all retailers
                 // if (empty(OrbitInput::post('retailer_ids', NULL))) {
@@ -330,12 +339,20 @@ class WidgetAPIController extends ControllerAPI
             $user = $this->api->user;
             Event::fire('orbit.widget.postupdatewidget.before.authz', array($this, $user));
 
-            if (! ACL::create($user)->isAllowed('update_widget')) {
-                Event::fire('orbit.widget.postupdatewidget.authz.notallowed', array($this, $user));
+            // if (! ACL::create($user)->isAllowed('update_widget')) {
+            //     Event::fire('orbit.widget.postupdatewidget.authz.notallowed', array($this, $user));
 
-                $errorMessage = Lang::get('validation.orbit.actionlist.update_widget');
-                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $errorMessage));
+            //     $errorMessage = Lang::get('validation.orbit.actionlist.update_widget');
+            //     $message = Lang::get('validation.orbit.access.forbidden', array('action' => $errorMessage));
 
+            //     ACL::throwAccessForbidden($message);
+            // }
+
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = ['super admin', 'mall admin', 'mall owner'];
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
             }
 
@@ -395,7 +412,7 @@ class WidgetAPIController extends ControllerAPI
                         'widget_id'           => 'required|orbit.empty.widget',
                         'object_id'           => '',
                         'merchant_id'         => 'orbit.empty.merchant',
-                        'widget_type'         => 'required|in:tenant,lucky_draw,promotion,coupon,news|orbit.exists.widget_type_but_me:' . $merchantId . ', ' . $widgetId,
+                        'widget_type'         => 'required|in:tenant,lucky_draw,promotion,coupon,news,service,free_wifi|orbit.exists.widget_type_but_me:' . $merchantId . ', ' . $widgetId,
                         'animation'           => 'in:none,horizontal,vertical',
                         'widget_order'        => 'numeric',
                         'widget_image_type'   => 'in:image/jpg,image/png,image/jpeg,image/gif',
@@ -469,7 +486,7 @@ class WidgetAPIController extends ControllerAPI
 
                 // Insert attribute values if specified by the caller
                 // if ($retailerIds != NULL) {
-                    $updatedwidget->retailers()->sync(array($merchantId));
+                    $updatedwidget->malls()->sync(array($merchantId));
                 // }
 
                 // If widget is empty then it should be applied to all retailers
@@ -1214,14 +1231,23 @@ class WidgetAPIController extends ControllerAPI
             $user = $this->api->user;
             Event::fire('orbit.widget.getwidget.before.authz', array($this, $user));
 
-            if (! ACL::create($user)->isAllowed('view_widget')) {
-                Event::fire('orbit.widget.getwidget.authz.notallowed', array($this, $user));
+            // if (! ACL::create($user)->isAllowed('view_widget')) {
+            //     Event::fire('orbit.widget.getwidget.authz.notallowed', array($this, $user));
 
-                $errorMessage = Lang::get('validation.orbit.actionlist.view_widget');
-                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $errorMessage));
+            //     $errorMessage = Lang::get('validation.orbit.actionlist.view_widget');
+            //     $message = Lang::get('validation.orbit.access.forbidden', array('action' => $errorMessage));
 
+            //     ACL::throwAccessForbidden($message);
+            // }
+
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = ['super admin', 'mall admin', 'mall owner'];
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
             }
+
             Event::fire('orbit.widget.getwidget.after.authz', array($this, $user));
 
             $validator = Validator::make(
@@ -1275,9 +1301,19 @@ class WidgetAPIController extends ControllerAPI
             // Available retailer to query
             $listOfRetailerIds = [];
 
+            $merchantId = implode("', '", OrbitInput::get('merchant_id'));
             // Builder object
-            $widgets = Widget::joinRetailer()
-                            ->excludeDeleted('widgets');
+            $tablePrefix = DB::getTablePrefix();
+            $widgets = Widget::select('widgets.*')
+                            ->leftJoin(DB::raw("(SELECT setting_id, setting_name, setting_value, object_id
+                                        FROM {$tablePrefix}settings
+                                        WHERE setting_name like '%widget%'
+                                            AND object_id IN ('{$merchantId}')) AS os"),
+                                // On
+                                DB::raw('os.setting_name'), '=', DB::raw("CONCAT('enable_', {$tablePrefix}widgets.widget_type, '_widget')"))
+                            ->join('widget_retailer', 'widget_retailer.widget_id', '=', 'widgets.widget_id')
+                            ->where('widgets.status', '=', 'active')
+                            ->whereRaw("(CASE WHEN os.setting_id IS NULL THEN 'true' ELSE os.setting_value END) = 'true'");
 
             // Include other relationship
             OrbitInput::get('with', function($with) use ($widgets) {
@@ -1394,6 +1430,156 @@ class WidgetAPIController extends ControllerAPI
 
             $totalWidgets = RecordCounter::create($_widgets)->count();
             $listOfWidgets = $widgets->get();
+
+            $counter = 1;
+            foreach ($listOfWidgets as $widget) {
+                $widget->widget_order = $counter;
+                $counter += 1;
+
+                if ($widget->widget_type == 'tenant') {
+                    $widget->image = 'mobile-ci/images/default_tenants_directory.png';
+                    $widget->default_image = 'mobile-ci/images/default_tenants_directory.png';
+
+                    foreach ($widget->media as $media) {
+                        if ($media->media_name_long === 'home_widget_orig') {
+                            if (empty($media->path)) {
+                                $widget->image = 'mobile-ci/images/default_tenants_directory.png';
+                            } else {
+                                $widget->image = $media->path;
+                            }
+                        }
+                    }
+
+                    $widget->display_title = Lang::get('mobileci.page_title.tenant');
+                    if ($widget->item_count > 1) {
+                        $widget->display_sub_title = Lang::get('mobileci.page_title.tenants');
+                    } else {
+                        $widget->display_sub_title = Lang::get('mobileci.page_title.tenants_single');
+                    }
+                }
+                if ($widget->widget_type == 'service') {
+                    $widget->image = 'mobile-ci/images/default_services_directory.png';
+                    $widget->default_image = 'mobile-ci/images/default_services_directory.png';
+
+                    foreach ($widget->media as $media) {
+                        if ($media->media_name_long === 'home_widget_orig') {
+                            if (empty($media->path)) {
+                                $widget->image = 'mobile-ci/images/default_services_directory.png';
+                            } else {
+                                $widget->image = $media->path;
+                            }
+                        }
+                    }
+
+                    $widget->display_title = Lang::get('mobileci.page_title.service');
+                    if ($widget->item_count > 1) {
+                        $widget->display_sub_title = Lang::get('mobileci.page_title.services');
+                    } else {
+                        $widget->display_sub_title = Lang::get('mobileci.page_title.services_single');
+                    }
+                }
+                if ($widget->widget_type == 'promotion') {
+                    $widget->image = 'mobile-ci/images/default_promotion.png';
+                    $widget->default_image = 'mobile-ci/images/default_promotion.png';
+
+                    foreach ($widget->media as $media) {
+                        if ($media->media_name_long === 'home_widget_orig') {
+                            if (empty($media->path)) {
+                                $widget->image = 'mobile-ci/images/default_promotion.png';
+                            } else {
+                                $widget->image = $media->path;
+                            }
+                        }
+                    }
+
+                    $widget->display_title = Lang::get('mobileci.page_title.promotion');
+                    if ($widget->item_count > 1) {
+                        $widget->display_sub_title = Lang::get('mobileci.page_title.promotions');
+                    } else {
+                        $widget->display_sub_title = Lang::get('mobileci.page_title.promotions_single');
+                    }
+                }
+                if ($widget->widget_type == 'news') {
+                    $widget->image = 'mobile-ci/images/default_news.png';
+                    $widget->default_image = 'mobile-ci/images/default_news.png';
+
+                    foreach ($widget->media as $media) {
+                        if ($media->media_name_long === 'home_widget_orig') {
+                            if (empty($media->path)) {
+                                $widget->image = 'mobile-ci/images/default_news.png';
+                            } else {
+                                $widget->image = $media->path;
+                            }
+                        }
+                    }
+
+                    $widget->display_title = Lang::get('mobileci.page_title.news');
+                    if ($widget->item_count > 1) {
+                        $widget->display_sub_title = Lang::get('mobileci.page_title.newss');
+                    } else {
+                        $widget->display_sub_title = Lang::get('mobileci.page_title.newss_single');
+                    }
+                }
+                if ($widget->widget_type == 'coupon') {
+                    $widget->image = 'mobile-ci/images/default_coupon.png';
+                    $widget->default_image = 'mobile-ci/images/default_coupon.png';
+
+                    foreach ($widget->media as $media) {
+                        if ($media->media_name_long === 'home_widget_orig') {
+                            if (empty($media->path)) {
+                                $widget->image = 'mobile-ci/images/default_coupon.png';
+                            } else {
+                                $widget->image = $media->path;
+                            }
+                        }
+                    }
+
+                    $widget->display_title = Lang::get('mobileci.page_title.coupons');
+                    if ($widget->item_count > 1) {
+                        $widget->display_sub_title = Lang::get('mobileci.page_title.coupons');
+                    } else {
+                        $widget->display_sub_title = Lang::get('mobileci.page_title.coupons_single');
+                    }
+                }
+                if ($widget->widget_type == 'lucky_draw') {
+                    $widget->image = 'mobile-ci/images/default_lucky_number.png';
+                    $widget->default_image = 'mobile-ci/images/default_lucky_number.png';
+
+                    foreach ($widget->media as $media) {
+                        if ($media->media_name_long === 'home_widget_orig') {
+                            if (empty($media->path)) {
+                                $widget->image = 'mobile-ci/images/default_lucky_number.png';
+                            } else {
+                                $widget->image = $media->path;
+                            }
+                        }
+                    }
+
+                    $widget->display_title = Lang::get('mobileci.page_title.lucky_draws');
+                    if ($widget->item_count > 1) {
+                        $widget->display_sub_title = Lang::get('mobileci.page_title.lucky_draws');
+                    } else {
+                        $widget->display_sub_title = Lang::get('mobileci.page_title.lucky_draws_single');
+                    }
+                }
+                if ($widget->widget_type == 'free_wifi') {
+                    $widget->image = 'mobile-ci/images/default_free_wifi_directory.png';
+                    $widget->default_image = 'mobile-ci/images/default_free_wifi_directory.png';
+
+                    foreach ($widget->media as $media) {
+                        if ($media->media_name_long === 'home_widget_orig') {
+                            if (empty($media->path)) {
+                                $widget->image = 'mobile-ci/images/default_free_wifi_directory.png';
+                            } else {
+                                $widget->image = $media->path;
+                            }
+                        }
+                    }
+
+                    $widget->display_title = Lang::get('mobileci.page_title.free_wifi');
+                    $widget->display_sub_title = Lang::get('mobileci.page_title.free_wifi');
+                }
+            }
 
             $data = new stdclass();
             $data->total_records = $totalWidgets;

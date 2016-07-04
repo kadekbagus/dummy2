@@ -26,7 +26,10 @@ return array(
         'promotion'         => 'PROMOSI',
         'not_found'         => 'ERROR',
         'recognize_me'      => 'KENALI SAYA',
+        'tenant'            => 'GERAI',
         'tenant_directory'  => 'GERAI',
+        'service'           => 'LAYANAN',
+        'service_directory' => 'LAYANAN',
         'promotions_tenants'=> 'PROMOSI GERAI',
         'coupons_tenants'   => 'KUPON GERAI',
         'news_tenants'      => 'INFORMASI GERAI',
@@ -37,6 +40,7 @@ return array(
         'membership'        => 'KEANGGOTAAN',
         'orbit_tour'        => 'TUR ORBIT',
         'lucky_draws'       => 'UNDIAN BERHADIAH',
+        'free_wifi'         => 'INTERNET GRATIS',
         'my_messages'       => 'PESAN SAYA',
         'my_message'        => 'PESAN SAYA',
         'redemption_places' => 'TEMPAT PENUKARAN',
@@ -47,19 +51,23 @@ return array(
     'widgets' => array(
         'catalogue'             => 'KATALOG',
         'new_product'           => 'PRODUK TERBARU',
-        'promotion'             => 'PROMOSI',
-        'coupon'                => 'KUPON SAYA',
-        'tenant'                => 'GERAI',
+        'promotion'             => 'Promosi',
+        'coupon'                => 'Kupon Saya',
+        'tenant'                => 'Gerai',
+        'service'               => 'Layanan',
         'lucky_draw'            => 'Undian Berhadiah',
-        'news'                  => 'BERITA',
+        'news'                  => 'Berita',
         'promotions'            => 'Promosi',
         'coupons'               => 'Kupon',
         'tenants'               => 'Gerai',
+        'services'              => 'Layanan',
         'lucky_draws'           => 'Undian Berhadiah',
+        'free_wifi'             => 'Internet GRATIS',
         'newss'                 => 'Berita',
         'promotions_single'     => 'Promosi',
         'coupons_single'        => 'Kupon',
         'tenants_single'        => 'Gerai',
+        'services_single'       => 'Layanan',
         'lucky_draws_single'    => 'Undian Berhadiah',
         'newss_single'          => 'Berita',
     ),
@@ -76,6 +84,7 @@ return array(
         'no_news_listing'              => 'Maaf, tidak ada berita pada saat ini di mall ini.',
         'no_promotions_listing'        => 'Maaf, tidak ada promosi pada saat ini di mall ini.',
         'no_stores_listing'            => 'Maaf, tidak ada gerai pada saat ini di mall ini.',
+        'no_services_listing'          => 'Maaf, tidak ada layanan pada saat ini di mall ini.',
     ),
 
     // modal specific lang
@@ -321,6 +330,7 @@ return array(
 
     'search'                => array(
         'no_item'            => 'Tidak ada gerai yang sesuai kriteria.',
+        'no_service'         => 'Tidak ada layanan yang sesuai kriteria.',
         'too_much_items'     => 'Hasil pencarian terlalu banyak, tolong persempit pencarian Anda.',
         'no_result'          => 'Maaf, tidak ada hasil pencarian.',
         'error'              => 'Ada error pada waktu melakukan request.',
@@ -531,5 +541,40 @@ return array(
     'campaign_cards' => array(
         'go_to_page' => 'Buka halaman',
     ),
+
+    'captive'   => array(
+        'request_internet' => array(
+            'title'     => 'INTERNET GRATIS',
+            'heading'   => 'Akses Internet GRATIS',
+            'message'   => 'Dengan terhubung ke jaringan Wi-FI kami Anda setuju dengan syarat dan ketentuan kami. Klik tombol di bawah untuk mendapatkan akses internet gratis.',
+            'button'    => 'Dapatkan akses internet GRATIS!',
+            'check_connection' => 'Memeriksa koneksi internet harap tunggu...',
+            'too_long' => 'Jika terlalu lama, silakan me-refresh browser Anda.',
+            'instruction' => 'Salin alamat URL di atas ke browser untuk meminta akses internet gratis.',
+            'message_ex' => array(
+                'title' => 'Akses Internet GRATIS',
+                'instruction_heading' => 'Berikut adalah langkah-langkah untuk mendapatkan internet gratis:',
+                'instructions' => array(
+                    'Menyambung ke jaringan Wi-Fi mall',
+                    'Akses halaman ini',
+                    'Tekan  Copy URL ke Clipboard',
+                    'Tekan pada tombol  Dapatkan akses internet GRATIS! di bawah ini',
+                    'Buka internet browser dan paste URL untuk melihat status sambungan'
+                ),
+                'button_caption' => 'Dapatkan akses internet GRATIS!',
+                'clipboard_caption' => 'Copy URL ke clipboard',
+                'clipboard_success' => 'URL disalin'
+            ),
+
+        ),
+        'granted' => array(
+            'title'     => 'INTERNET GRATIS',
+            'heading'   => 'Anda sudah terhubung',
+            'message'   => 'Anda sudah terhubung ke internet secara gratis',
+            'button'    => 'OK'
+        ),
+        'widget_slogan' => 'Internet GRATIS!',
+        'widget_tagline' => 'Dapatkan akses gratismu SEKARANG!'
+    )
 );
 

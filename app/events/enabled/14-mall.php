@@ -82,3 +82,54 @@ Event::listen('orbit.mall.postupdatemall.after.save', function($controller, $mal
     }
     $mall->load('mediaLogo');
 });
+
+/**
+ * Listen on:    `orbit.mall.postnewmall.after.commit`
+ * Purpose:      Post actions after the data has been successfully commited
+ *
+ * @author Rio Astamal <rio@dominopos.com>
+ *
+ * @param EventAPIController $controller - The instance of the EventAPIController or its subclass
+ * @param Event $mall - Instance of object Event
+ */
+Event::listen('orbit.mall.postnewmall.after.commit', function($controller, $mall)
+{
+    // Notify the queueing system to update Elasticsearch document
+    Queue::push('Orbit\\Queue\\Elasticsearch\\ESMallCreateQueue', [
+        'mall_id' => $mall->merchant_id
+    ]);
+});
+
+/**
+ * Listen on:    `orbit.mall.postupdatemall.after.commit`
+ * Purpose:      Post actions after the data has been successfully commited
+ *
+ * @author Irianto <irianto@dominopos.com>
+ *
+ * @param EventAPIController $controller - The instance of the EventAPIController or its subclass
+ * @param Event $mall - Instance of object Event
+ */
+Event::listen('orbit.mall.postupdatemall.after.commit', function($controller, $mall)
+{
+    // Notify the queueing system to update Elasticsearch document
+    Queue::push('Orbit\\Queue\\Elasticsearch\\ESMallUpdateQueue', [
+        'mall_id' => $mall->merchant_id
+    ]);
+});
+
+/**
+ * Listen on:    `orbit.mall.postdeletemall.after.commit`
+ * Purpose:      Post actions after the data has been successfully commited
+ *
+ * @author Irianto <irianto@dominopos.com>
+ *
+ * @param EventAPIController $controller - The instance of the EventAPIController or its subclass
+ * @param Event $mall - Instance of object Event
+ */
+Event::listen('orbit.mall.postdeletemall.after.commit', function($controller, $mall)
+{
+    // Notify the queueing system to delete Elasticsearch document
+    Queue::push('Orbit\\Queue\\Elasticsearch\\ESMallDeleteQueue', [
+        'mall_id' => $mall->merchant_id
+    ]);
+});

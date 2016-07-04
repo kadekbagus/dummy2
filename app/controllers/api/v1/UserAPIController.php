@@ -1494,6 +1494,9 @@ class UserAPIController extends ControllerAPI
             // get user mall_ids
             $listOfMallIds = $user->getUserMallIds($merchantIds);
 
+            $filterLuckyDrawMallIds = '';
+            $filterMembershipNumberMallIds = '';
+            $filterMallIds = '';
             if (empty($listOfMallIds)) { // invalid mall id
                 $filterMallIds = 'and 0';
                 $filterMembershipNumberMallIds = 'and 0';
@@ -1514,13 +1517,7 @@ class UserAPIController extends ControllerAPI
                          ->leftJoin('merchants', 'merchants.merchant_id', '=', 'user_details.last_visit_shop_id')
                          ->with(array('userDetail', 'userDetail.lastVisitedShop'))
                          ->with(array('categories' => function ($q) use ($listOfMallIds) {
-                            if (empty($listOfMallIds)) { // invalid mall id
-                                $q->whereRaw('0');
-                            } elseif ($listOfMallIds[0] === 1) { // if super admin
-                                // show all users
-                            } else { // valid mall id
-                                $q->whereIn('categories.merchant_id', $listOfMallIds);
-                            }
+                                $q->where('status', '!=', 'deleted');
                          }))
                          ->with(array('banks' => function ($q) use ($listOfMallIds) {
                             if (empty($listOfMallIds)) { // invalid mall id
@@ -2918,14 +2915,6 @@ class UserAPIController extends ControllerAPI
                 $deleted_category_ids = UserPersonalInterest::where('user_id', $updateduser->user_id)
                                                             ->where('object_type', 'category')
                                                             ->join('categories', 'categories.category_id', '=', 'user_personal_interest.personal_interest_id');
-
-                if (empty($listOfMallIds)) { // invalid mall id
-                    $deleted_category_ids->whereRaw('0');
-                } elseif ($listOfMallIds[0] === 1) { // if super admin
-                    // show all users
-                } else { // valid mall id
-                    $deleted_category_ids->whereIn('categories.merchant_id', $listOfMallIds);
-                }
 
                 $deleted_category_ids = $deleted_category_ids->get(array('personal_interest_id'))
                                                              ->toArray();

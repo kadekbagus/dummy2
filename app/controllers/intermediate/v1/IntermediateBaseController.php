@@ -11,6 +11,8 @@ use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\ACL\Exception\ACLForbiddenException;
 use DominoPOS\OrbitSession\Session as OrbitSession;
 use DominoPOS\OrbitSession\SessionConfig;
+use Orbit\Helper\Util\CorsHeader;
+use Orbit\Helper\Session\AppOriginProcessor;
 
 class IntermediateBaseController extends Controller
 {
@@ -50,8 +52,20 @@ class IntermediateBaseController extends Controller
      */
     public function __construct()
     {
+        // Return mall_portal, cs_portal, pmp_portal etc
+        $appOrigin = AppOriginProcessor::create(Config::get('orbit.session.app_list'))
+                                       ->getAppName();
+
+        // Session Config
+        $orbitSessionConfig = Config::get('orbit.session.origin.' . $appOrigin);
+        $applicationId = Config::get('orbit.session.app_id.' . $appOrigin);
+
         // Instantiate the OrbitSession object
         $sessConfig = new SessionConfig(Config::get('orbit.session'));
+        $sessConfig->setConfig('session_origin', $orbitSessionConfig);
+        $sessConfig->setConfig('expire', $orbitSessionConfig['expire']);
+        $sessConfig->setConfig('application_id', $applicationId);
+
         $this->session = new OrbitSession($sessConfig);
 
         // CSRF protection
@@ -116,27 +130,18 @@ class IntermediateBaseController extends Controller
      */
     protected function getCORSHeaders()
     {
+        $cors = CorsHeader::create(Config::get('orbit.security.cors', []));
+
         // Allow Cross-Domain Request
         // http://enable-cors.org/index.html
         $headers = [];
-        $headers['Access-Control-Allow-Origin'] = '*';
-        $headers['Access-Control-Allow-Methods'] = 'GET, POST';
-        $headers['Access-Control-Allow-Credentials'] = 'true';
+        $headers['Access-Control-Allow-Origin'] = $cors->getAllowOrigin();
+        $headers['Access-Control-Allow-Methods'] = $cors->getAllowMethods();
+        $headers['Access-Control-Allow-Credentials'] = $cors->getAllowCredentials();
 
         $angularTokenName = Config::get('orbit.security.csrf.angularjs.header_name');
         $sessionHeader = $this->session->getSessionConfig()->getConfig('session_origin.header.name');
-        $allowHeaders = array(
-            'Origin',
-            'Content-Type',
-            'Accept',
-            'Authorization',
-            'X-Request-With',
-            'X-Orbit-Signature',
-            'Cookie',
-            'Set-Cookie',
-            $sessionHeader,
-            'Set-' . $sessionHeader
-        );
+        $allowHeaders = $cors->getAllowHeaders();
         if (! empty($angularTokenName)) {
             $allowHeaders[] = $angularTokenName;
         }
@@ -191,6 +196,7 @@ class IntermediateBaseController extends Controller
     {
         // Get the API key of current user
         $theClass = get_class($this);
+        $namespace = '';
 
         if ($theClass === 'IntermediateAuthController') {
             if ($userId = $this->authCheck()) {
@@ -210,6 +216,23 @@ class IntermediateBaseController extends Controller
                 $signature = Generator::genSignature($apikey->api_secret_key);
                 $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = $signature;
             }
+        } elseif ($theClass === 'IntermediateCIAuthController') {
+            $namespace = 'Orbit\Controller\API\v1\Customer\\';
+            if ($userId = $this->authCheckFromAngularCI()) {
+                $user = User::find($userId);
+                // This will query the database if the apikey has not been set up yet
+                $apikey = $user->apikey;
+
+                if (empty($apikey)) {
+                    // Create new one
+                    $apikey = $user->createAPiKey();
+                }
+                // Generate the signature
+                $_GET['apikey'] = $apikey->api_key;
+                $_GET['apitimestamp'] = time();
+                $signature = Generator::genSignature($apikey->api_secret_key);
+                $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = $signature;
+            }
         }
 
         // Call the API class
@@ -217,10 +240,11 @@ class IntermediateBaseController extends Controller
         $args = func_get_args();
 
         if (count($args) === 2) {
-            $class = $args[0];
+            $class = $namespace . $args[0];
             $method = $args[1];
         } elseif (count($args) === 1) {
             list($class, $method) = explode('@', $args[0]);
+            $class = $namespace . $class;
         } else {
             $class = 'Foo';
             $method = 'Bar';
@@ -276,6 +300,26 @@ class IntermediateBaseController extends Controller
         $userId = $this->session->read('user_id');
         if ($this->session->read('logged_in') !== TRUE || ! $userId) {
             return FALSE;
+        }
+
+        return $userId;
+    }
+
+    /**
+     * Check the authentication status from angular CI.
+     *
+     * @author Ahmad <ahmad@dominopos.com>
+     * @return int - User ID
+     */
+    protected function authCheckFromAngularCI()
+    {
+        $userId = $this->session->read('user_id');
+
+        if (empty($userId)) {
+            $userId = $this->session->read('guest_user_id');
+            if (empty($userId)) {
+                return FALSE;
+            }
         }
 
         return $userId;
