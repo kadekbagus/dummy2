@@ -657,6 +657,7 @@ return array(
          * Where is session data should be coming from
          */
         'session_origin' => array(
+            'expire' => 62208000,
             // From HTTP Headers
             'header'  => array(
                 'name'      => 'X-Orbit-Session'
