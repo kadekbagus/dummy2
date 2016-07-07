@@ -59,6 +59,9 @@ Artisan::add(new TenantImport);
 // Elasticsearch Migration
 Artisan::add(new ElasticsearchMigrationCommand);
 
+// Category Migration
+Artisan::add(new CategoryMigration);
+
 // Insert or update data on settings table
 // @Todo investigate why its error
 // Artisan::add(new MerchantSetting);
