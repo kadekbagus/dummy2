@@ -1033,6 +1033,7 @@ class IntermediateLoginController extends IntermediateBaseController
             $this->session->getSessionConfig()->setConfig('session_origin.header.name', $orbitSessionConfig['header']);
             $this->session->getSessionConfig()->setConfig('session_origin.query_string.name', $orbitSessionConfig['query_string']);
             $this->session->getSessionConfig()->setConfig('session_origin.cookie.name', $orbitSessionConfig['cookie']);
+            $this->session->getSessionConfig()->setConfig('expire', $orbitSessionConfig['expire']);
             $this->session->getSessionConfig()->setConfig('application_id', $applicationId);
             $this->session->enableForceNew()->start($data);
 

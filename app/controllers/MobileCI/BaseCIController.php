@@ -208,6 +208,7 @@ class BaseCIController extends ControllerAPI
             // Instantiate the OrbitSession object
             $config = new SessionConfig(Config::get('orbit.session'));
             $config->setConfig('session_origin', $orbitSessionConfig);
+            $config->setConfig('expire', $orbitSessionConfig['expire']);
             $config->setConfig('application_id', $applicationId);
 
             try {

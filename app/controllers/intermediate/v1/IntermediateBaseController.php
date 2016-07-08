@@ -63,6 +63,7 @@ class IntermediateBaseController extends Controller
         // Instantiate the OrbitSession object
         $sessConfig = new SessionConfig(Config::get('orbit.session'));
         $sessConfig->setConfig('session_origin', $orbitSessionConfig);
+        $sessConfig->setConfig('expire', $orbitSessionConfig['expire']);
         $sessConfig->setConfig('application_id', $applicationId);
 
         $this->session = new OrbitSession($sessConfig);
