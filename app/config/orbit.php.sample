@@ -657,6 +657,7 @@ return array(
          * Where is session data should be coming from
          */
         'session_origin' => array(
+            'expire' => 62208000,
             // From HTTP Headers
             'header'  => array(
                 'name'      => 'X-Orbit-Session'
@@ -986,7 +987,12 @@ return array(
                 'Cookie',
                 'Set-Cookie',
                 'Set-X-Orbit-Session',
-                'Orbit-Session'
+                'Orbit-Session',
+                'Set-X-OMS-Mobile',
+                'Set-X-OMS-Mall',
+                'Set-X-OMS-Admin',
+                'Set-X-OMS-PMP',
+                'Set-X-OMS-CS',
             ],
 
             // No need protocol, just enter domain name

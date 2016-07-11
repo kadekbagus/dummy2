@@ -33,7 +33,7 @@ if (! defined('ORBIT_APP_VERSION')) {
  * Constant storing codename.
  */
 if (! defined('ORBIT_APP_CODENAME')) {
-    define('ORBIT_APP_CODENAME', 'Titan');
+    define('ORBIT_APP_CODENAME', 'Artemis');
 }
 
 /**
