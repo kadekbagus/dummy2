@@ -188,7 +188,7 @@ class QuestionerAPIController extends ControllerAPI
      * List of API Parameters
      * ----------------------
      * @param string userid
-     * @param string quenstion_id
+     * @param string question_id
      * @param string answer_id
      *
      * @return Illuminate\Support\Facades\Response
@@ -210,19 +210,19 @@ class QuestionerAPIController extends ControllerAPI
 
             // $user_id = $this->api->user->user_id;
             $user_id = OrbitInput::post('user_id');
-            $quenstion_id = OrbitInput::post('quenstion_id');
+            $question_id = OrbitInput::post('question_id');
             $answer_id = OrbitInput::post('answer_id');
 
             $validator = Validator::make(
                 array(
-                    'user_id'        => $user_id,
-                    'quenstion_id'   => $quenstion_id,
-                    'answer_id'      => $answer_id,
+                    'user_id'     => $user_id,
+                    'question_id' => $question_id,
+                    'answer_id'   => $answer_id,
                 ),
                 array(
-                    'user_id'          => 'required|orbit.empty.user',
-                    'quenstion_id'     => 'required|orbit.empty.quenstion_id',
-                    'answer_id'        => 'required|orbit.exists.answer_id:' . $user_id . ',' . $quenstion_id . ',' .$answer_id,
+                    'user_id'     => 'required|orbit.empty.user',
+                    'question_id' => 'required|orbit.empty.question_id',
+                    'answer_id'   => 'required|orbit.empty.answer_id|orbit.exists.answer_id:' . $user_id . ',' . $question_id . ',' .$answer_id,
                 )
             );
 
@@ -241,7 +241,7 @@ class QuestionerAPIController extends ControllerAPI
 
             $newuseranswer = new UserAnswer();
             $newuseranswer->user_id = $user_id;
-            $newuseranswer->quenstion_id = $quenstion_id;
+            $newuseranswer->question_id = $question_id;
             $newuseranswer->answer_id = $answer_id;
 
             Event::fire('orbit.questioner.postuseranswer.before.save', array($this, $newuseranswer));
@@ -330,7 +330,7 @@ class QuestionerAPIController extends ControllerAPI
         });
 
         // Check exist quenstion
-        Validator::extend('orbit.empty.quenstion_id', function ($attribute, $value, $parameters) {
+        Validator::extend('orbit.empty.question_id', function ($attribute, $value, $parameters) {
             $quenstion = Question::where('question_id', '=', $value)
                                     ->first();
 
