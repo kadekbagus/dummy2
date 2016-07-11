@@ -312,6 +312,7 @@ class RegistrationAPIController extends IntermediateBaseController
             array(
                 'date_of_birth.date_format' => Lang::get('validation.orbit.formaterror.date.dmy_date'),
                 'orbit_email_exists' => Lang::get('validation.orbit.email.exists'),
+                'date_of_birth.date' => Lang::get('validation.orbit.formaterror.date.invalid_date'),
                 'date_of_birth.before' => Lang::get('validation.orbit.formaterror.date.cannot_future_date'),
             )
         );
