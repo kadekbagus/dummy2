@@ -305,7 +305,7 @@ class RegistrationAPIController extends IntermediateBaseController
                 'first_name' => 'required',
                 'last_name'  => 'required',
                 'gender'     => 'required|in:m,f',
-                'date_of_birth' => 'required|date_format:d-m-Y|before:' . $current_date,
+                'date_of_birth' => 'required|date|date_format:d-m-Y|before:' . $current_date,
                 'password_confirmation' => 'required|min:6',
                 'password'  => 'min:6|confirmed',
             ),
