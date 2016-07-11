@@ -205,6 +205,7 @@ return array(
     'CreateTableSocialMedia' => $baseDir . '/app/database/migrations/2016_02_26_020103_create_table_social_media.php',
     'CreateTableSpendingRules' => $baseDir . '/app/database/migrations/2016_03_18_071333_create_table_spending_rules.php',
     'CreateTableTimezones' => $baseDir . '/app/database/migrations/2015_10_18_085530_create_table_timezones.php',
+    'CreateTableUserAnswer' => $baseDir . '/app/database/migrations/2016_07_11_061909_create_table_user_answer.php',
     'CreateTableUserCampaign' => $baseDir . '/app/database/migrations/2016_03_16_084422_create_table_user_campaign.php',
     'CreateTableUserGuests' => $baseDir . '/app/database/migrations/2016_04_05_103609_create_table_user_guests.php',
     'CreateTableUserMerchant' => $baseDir . '/app/database/migrations/2016_03_16_083656_create_table_user_merchant.php',
