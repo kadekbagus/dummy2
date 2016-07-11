@@ -220,8 +220,8 @@ class QuestionerAPIController extends ControllerAPI
                     'answer_id'      => $answer_id,
                 ),
                 array(
-                    'user_id'          => 'required|orbit.exists.user_id',
-                    'quenstion_id'     => 'required|orbit.exists.quenstion_id',
+                    'user_id'          => 'required|orbit.empty.user',
+                    'quenstion_id'     => 'required|orbit.empty.quenstion_id',
                     'answer_id'        => 'required|orbit.exists.answer_id:' . $user_id . ',' . $quenstion_id . ',' .$answer_id,
                 )
             );
@@ -313,5 +313,65 @@ class QuestionerAPIController extends ControllerAPI
 
         return $this->render($httpCode);
     }
+
+    protected function registerCustomValidation()
+    {
+        // Check the exist use_id
+        Validator::extend('orbit.empty.user', function ($attribute, $value, $parameters) {
+
+            $userId = User::where('user_id', '=', $value)
+                                    ->first();
+
+            if (empty($userId)) {
+                return false;
+            }
+
+            return true;
+        });
+
+        // Check exist quenstion
+        Validator::extend('orbit.empty.quenstion_id', function ($attribute, $value, $parameters) {
+            $quenstion = Question::where('question_id', '=', $value)
+                                    ->first();
+
+            if (empty($quenstion)) {
+                return false;
+            }
+
+            return true;
+        });
+
+        // Check exist answer
+        Validator::extend('orbit.empty.answer_id', function ($attribute, $value, $parameters) {
+            $quenstion = Answer::where('answer_id', '=', $value)
+                                    ->first();
+
+            if (empty($quenstion)) {
+                return false;
+            }
+
+            return true;
+        });
+
+
+        // Check exist user answer
+        Validator::extend('orbit.exists.answer_id', function ($attribute, $value, $parameters) {
+            $user_id = $parameters[0];
+            $question_id = $parameters[1];
+            $answer_id = $parameters[2];
+
+            $existUserAnswer = UserAnswer::where('user_id', '=', $user_id)
+                                    ->where('question_id', '=', $question_id)
+                                    ->where('answer_id', '=', $answer_id)
+                                    ->first();
+
+            if (empty($existUserAnswer)) {
+                return true;
+            }
+
+            return false;
+        });
+    }
+
 
 }
