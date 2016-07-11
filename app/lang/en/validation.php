@@ -382,6 +382,7 @@ return array(
             'date' => array(
                 'dmy_date' => 'The :attribute does not match the format dd-mm-yyyy',
                 'cannot_future_date' => 'The :attribute cannot be future date',
+                'invalid_date' => 'The :attribute is not a valid date',
             ),
             'language'      => 'The :attribute must be a valid language code',
             'geo_latitude'  => 'The Geofence latitude is not on range',
