@@ -15,60 +15,121 @@ use Config;
 use Mall;
 use stdClass;
 use Orbit\Helper\Util\PaginationNumber;
+use Question;
 
 class QuestionerAPIController extends ControllerAPI
 {
     /**
-     * GET - check if user inside mall area
+     * GET - question and answer selection
      *
-     * @author Firmansyah <firmansyah@dominopos.com>
+     * @author kadek <kadek@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
-     * @param string latitude
-     * @param string longitude
+     * @param integer id
+     * @param array ids
+     * @param string status
      *
      * @return Illuminate\Support\Facades\Response
      */
-    public function getMallFence()
+    public function getQuestion()
     {
         $httpCode = 200;
         try {
 
-            $lat = OrbitInput::get('latitude', null);
-            $long = OrbitInput::get('longitude', null);
-
-            $usingDemo = Config::get('orbit.is_demo', FALSE);
-
-            $malls = Mall::select('merchants.*')->includeLatLong()->InsideArea($lat, $long);
-
-            if ($usingDemo) {
-                $malls->excludeDeleted();
-            } else {
-                // Production
-                $malls->active();
+            // Get the maximum record
+            $maxRecord = (int) Config::get('orbit.pagination.activity.max_record');
+            if ($maxRecord <= 0) {
+                // Fallback
+                $maxRecord = (int) Config::get('orbit.pagination.max_record');
+                if ($maxRecord <= 0) {
+                    $maxRecord = 20;
+                }
+            }
+            // Get default per page (take)
+            $perPage = (int) Config::get('orbit.pagination.activity.per_page');
+            if ($perPage <= 0) {
+                // Fallback
+                $perPage = (int) Config::get('orbit.pagination.per_page');
+                if ($perPage <= 0) {
+                    $perPage = 20;
+                }
             }
 
-            // Filter by mall_id
-            OrbitInput::get('mall_id', function ($mallid) use ($malls) {
-                $malls->where('merchants.merchant_id', $mallid);
+            $questions = Question::with('answers');
+
+             // Filter by id
+            OrbitInput::get('id', function($questionId) use ($questions) {
+                $questions->where('questions.question_id', $questionId);
             });
 
-            $_malls = clone $malls;
+            // Filter by ids
+            OrbitInput::get('ids', function($questionId) use ($questions) {
+                $questions->whereIn('questions.question_id', $questionId);
+            });
 
-            $take = PaginationNumber::parseTakeFromGet('geo_location');
-            $malls->take($take);
+            // Filter by status
+            OrbitInput::get('status', function($status) use ($questions) {
+                $questions->where('questions.status', $status);
+            });
 
-            $skip = PaginationNumber::parseSkipFromGet();
-            $malls->skip($skip);
+            $_questions = clone $questions;
 
-            $listmalls = $malls->get();
-            $count = RecordCounter::create($_malls)->count();
+            // Get the take args
+            $take = $perPage;
+            OrbitInput::get('take', function ($_take) use (&$take, $maxRecord) {
+                if ($_take > $maxRecord) {
+                    $_take = $maxRecord;
+                }
+                $take = $_take;
+
+                if ((int)$take <= 0) {
+                    $take = $maxRecord;
+                }
+            });
+            $questions->take($take);
+
+            $skip = 0;
+            OrbitInput::get('skip', function ($_skip) use (&$skip, $questions) {
+                if ($_skip < 0) {
+                    $_skip = 0;
+                }
+
+                $skip = $_skip;
+            });
+            $questions->skip($skip);
+
+            // Default sort by
+            $sortBy = 'questions.question_id';
+            // Default sort mode
+            $sortMode = 'desc';
+
+            OrbitInput::get('sortby', function ($_sortBy) use (&$sortBy) {
+                // Map the sortby request to the real column name
+                $sortByMapping = array(
+                    'id'              => 'questions.question_id',
+                    'status'          => 'questions.status',
+                );
+
+                if (array_key_exists($_sortBy, $sortByMapping)) {
+                    $sortBy = $sortByMapping[$_sortBy];
+                }
+            });
+
+            OrbitInput::get('sortmode', function ($_sortMode) use (&$sortMode) {
+                if (strtolower($_sortMode) !== 'desc') {
+                    $sortMode = 'asc';
+                }
+            });
+            $questions->orderBy($sortBy, $sortMode);
+
+            $listQuestions = $questions->get();
+            $count = RecordCounter::create($_questions)->count();
 
             $this->response->data = new stdClass();
             $this->response->data->total_records = $count;
-            $this->response->data->returned_records = count($listmalls);
-            $this->response->data->records = $listmalls;
+            $this->response->data->returned_records = count($listQuestions);
+            $this->response->data->records = $listQuestions;
         } catch (ACLForbiddenException $e) {
 
             $this->response->code = $e->getCode();
