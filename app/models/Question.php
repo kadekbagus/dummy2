@@ -8,6 +8,6 @@ class Question extends Eloquent
 
     public function answers()
     {
-        return $this->hasMany('Answer', 'question_id', 'question_id');
+        return $this->hasMany('Answer', 'question_id', 'question_id')->orderBy('answer_order', 'asc');
     }
 }
