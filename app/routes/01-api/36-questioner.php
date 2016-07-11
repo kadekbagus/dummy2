@@ -1,15 +1,12 @@
 <?php
 
 /**
- * Get Quentions
+ * Post user answer
  */
-Route::get(
-    '/{search}/v1/pub/question', ['as' => 'question', function()
-    {
-        return Orbit\Controller\API\v1\Pub\QuestionerAPIController::create()->getQuestion();
-    }]
-)->where('search', '(api|app)');
-
+Route::get('/api/v1/question', function()
+{
+    return QuestionerAPIController::create()->getQuestion();
+});
 
 /**
  * Post user answer

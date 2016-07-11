@@ -1,22 +1,24 @@
-<?php namespace Orbit\Controller\API\v1\Pub;
+<?php
 /**
- * An API controller for managing mall geo location.
+ * An API controller for managing News.
  */
 use OrbitShop\API\v1\ControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
 use DominoPOS\OrbitACL\ACL;
-use DominoPOS\OrbitACL\ACL\Exception\ACLForbiddenException;
+use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Helper\EloquentRecordCounter as RecordCounter;
-use Config;
-use stdClass;
-use Orbit\Helper\Util\PaginationNumber;
-use Question;
 
-class QuestionerAPIController extends ControllerAPI
+
+class UserAnswerAPIController extends ControllerAPI
 {
+    /**
+     * Flag to return the query builder.
+     *
+     * @var Builder
+     */
 
     protected $validRoles = ['consumer', 'guest'];
 
@@ -200,28 +202,14 @@ class QuestionerAPIController extends ControllerAPI
 
             Event::fire('orbit.questioner.postuseranswer.before.auth', array($this));
 
-            $this->checkAuth();
+            // $this->checkAuth();
 
             Event::fire('orbit.questioner.postuseranswer.after.auth', array($this));
 
-            // Try to check access control list, does this user allowed to
-            // perform this action
-            $user = $this->api->user;
-
-            Event::fire('orbit.questioner.postuseranswer.before.authz', array($this, $user));
-
-            $role = $user->role;
-            $validRoles = $this->validRoles;
-            if (! in_array( strtolower($role->role_name), $validRoles)) {
-                $message = 'Your role are not allowed to access this resource.';
-                ACL::throwAccessForbidden($message);
-            }
-
-            Event::fire('orbit.questioner.postuseranswer.after.authz', array($this, $user));
-
             $this->registerCustomValidation();
 
-            $user_id = $this->api->user->user_id;
+            // $user_id = $this->api->user->user_id;
+            $user_id = OrbitInput::post('user_id');
             $quenstion_id = OrbitInput::post('quenstion_id');
             $answer_id = OrbitInput::post('answer_id');
 
@@ -267,15 +255,6 @@ class QuestionerAPIController extends ControllerAPI
             // Commit the changes
             $this->commit();
 
-            // Successfull Creation
-            $activityNotes = sprintf('User Answer: %s', $newuseranswer->answer_id);
-            $activity->setUser($user)
-                    ->setActivityName('user_answer')
-                    ->setActivityNameLong('User Answer OK')
-                    ->setObject($newuseranswer)
-                    ->setNotes($activityNotes)
-                    ->responseOK();
-
             Event::fire('orbit.questioner.postuseranswer.after.commit', array($this, $newuseranswer));
         } catch (ACLForbiddenException $e) {
             Event::fire('orbit.questioner.postuseranswer.access.forbidden', array($this, $e));
@@ -289,12 +268,6 @@ class QuestionerAPIController extends ControllerAPI
             // Rollback the changes
             $this->rollBack();
 
-            // Creation failed Activity log
-            $activity->setUser($user)
-                    ->setActivityName('user_answer')
-                    ->setActivityNameLong('User Answer Failed')
-                    ->setNotes($e->getMessage())
-                    ->responseFailed();
         } catch (InvalidArgsException $e) {
             Event::fire('orbit.questioner.postuseranswer.invalid.arguments', array($this, $e));
 
@@ -307,12 +280,6 @@ class QuestionerAPIController extends ControllerAPI
             // Rollback the changes
             $this->rollBack();
 
-            // Creation failed Activity log
-            $activity->setUser($user)
-                    ->setActivityName('user_answer')
-                    ->setActivityNameLong('User Answer Failed')
-                    ->setNotes($e->getMessage())
-                    ->responseFailed();
         } catch (QueryException $e) {
             Event::fire('orbit.questioner.postuseranswer.query.error', array($this, $e));
 
@@ -331,12 +298,6 @@ class QuestionerAPIController extends ControllerAPI
             // Rollback the changes
             $this->rollBack();
 
-            // Creation failed Activity log
-            $activity->setUser($user)
-                    ->setActivityName('user_answer')
-                    ->setActivityNameLong('User Answer Failed')
-                    ->setNotes($e->getMessage())
-                    ->responseFailed();
         } catch (Exception $e) {
             Event::fire('orbit.questioner.postuseranswer.general.exception', array($this, $e));
 
@@ -348,68 +309,9 @@ class QuestionerAPIController extends ControllerAPI
             // Rollback the changes
             $this->rollBack();
 
-            // Creation failed Activity log
-            $activity->setUser($user)
-                    ->setActivityName('user_answer')
-                    ->setActivityNameLong('User Answer Failed')
-                    ->setNotes($e->getMessage())
-                    ->responseFailed();
         }
-
-        // Save the activity
-        $activity->save();
 
         return $this->render($httpCode);
     }
-
-
-
-    protected function registerCustomValidation()
-    {
-        // Check the exist use_id
-        Validator::extend('orbit.exists.user_id', function ($attribute, $value, $parameters) {
-            $userId = UserAnswer::where('user_id', '=', $value)
-                                    ->first();
-
-            if (empty($userId)) {
-                return false;
-            }
-
-            return true;
-        });
-
-        // Check exist quenstion
-        Validator::extend('orbit.exists.quenstion_id', function ($attribute, $value, $parameters) {
-            $quenstion = Question::where('question_id', '=', $value)
-                                    ->first();
-
-            if (empty($quenstion)) {
-                return false;
-            }
-
-            return true;
-        });
-
-
-        // Check exist user answer
-        Validator::extend('orbit.exists.answer_id', function ($attribute, $value, $parameters) {
-            $user_id = $parameters[0];
-            $question_id = $parameters[1];
-            $answer_id = $parameters[2];
-
-            $existUserAnswer = UserAnswer::where('user_id', '=', $user_id)
-                                    ->where('question_id', '=', $question_id)
-                                    ->where('answer_id', '=', $answer_id)
-                                    ->first();
-
-            if (empty($existUserAnswer)) {
-                return false;
-            }
-
-            return true;
-        });
-
-    }
-
 
 }
