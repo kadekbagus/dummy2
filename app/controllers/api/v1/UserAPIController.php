@@ -1494,6 +1494,9 @@ class UserAPIController extends ControllerAPI
             // get user mall_ids
             $listOfMallIds = $user->getUserMallIds($merchantIds);
 
+            $filterLuckyDrawMallIds = '';
+            $filterMembershipNumberMallIds = '';
+            $filterMallIds = '';
             if (empty($listOfMallIds)) { // invalid mall id
                 $filterMallIds = 'and 0';
                 $filterMembershipNumberMallIds = 'and 0';

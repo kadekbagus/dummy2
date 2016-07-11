@@ -39,6 +39,7 @@ class UrlGenerator extends \Illuminate\Routing\UrlGenerator
         // Instantiate the OrbitSession object
         $config = new SessionConfig(Config::get('orbit.session'));
         $config->setConfig('session_origin', $orbitSessionConfig);
+        $config->setConfig('expire', $orbitSessionConfig['expire']);
         $config->setConfig('application_id', $applicationId);
 
         $session = new Session($config);
