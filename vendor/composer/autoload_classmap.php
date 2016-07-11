@@ -169,6 +169,7 @@ return array(
     'CreateFunctionCampaignCost' => $baseDir . '/app/database/migrations/2016_02_03_040022_create_function_campaign_cost.php',
     'CreateFunctionCampaignTotalSpending' => $baseDir . '/app/database/migrations/2016_02_01_032738_create_function_campaign_total_spending.php',
     'CreateTableAgeRanges' => $baseDir . '/app/database/migrations/2015_12_29_042343_create_table_age_ranges.php',
+    'CreateTableAnswers' => $baseDir . '/app/database/migrations/2016_07_11_041706_create_table_answers.php',
     'CreateTableCampaignAccount' => $baseDir . '/app/database/migrations/2016_03_18_034757_create_table_campaign_account.php',
     'CreateTableCampaignAge' => $baseDir . '/app/database/migrations/2015_12_29_042344_create_table_campaign_age.php',
     'CreateTableCampaignBasePrices' => $baseDir . '/app/database/migrations/2015_12_29_042348_create_table_campaign_base_prices.php',
