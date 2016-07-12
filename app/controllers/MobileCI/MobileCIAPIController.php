@@ -82,6 +82,7 @@ use ListConnectedUser;
 use Helper\EloquentRecordCounter as RecordCounter;
 use MobileCI\ExCaptivePortalController as CaptivePortalController;
 use Orbit\Helper\Net\SessionPreparer;
+use Orbit\Database\ObjectID;
 
 class MobileCIAPIController extends BaseCIController
 {
@@ -9890,6 +9891,7 @@ class MobileCIAPIController extends BaseCIController
 
             foreach ($newTenantsCount as $counter) {
                 $viewedItems[] = array(
+                        'viewed_item_user_id' => (string)ObjectID::make(),
                         'item_id' => $counter,
                         'user_id' => $user->user_id,
                         'mall_id' => $retailer->merchant_id,
@@ -9907,6 +9909,7 @@ class MobileCIAPIController extends BaseCIController
 
             foreach ($newTenantsCount as $counter) {
                 $viewedItems[] = array(
+                        'viewed_item_user_id' => (string)ObjectID::make(),
                         'item_id' => $counter,
                         'user_id' => $user->user_id,
                         'mall_id' => $retailer->merchant_id,
@@ -9972,6 +9975,7 @@ class MobileCIAPIController extends BaseCIController
 
             foreach ($promotionData as $counter) {
                 $viewedItems[] = array(
+                        'viewed_item_user_id' => (string)ObjectID::make(),
                         'item_id' => $counter->news_id,
                         'user_id' => $user->user_id,
                         'mall_id' => $retailer->merchant_id,
@@ -10037,6 +10041,7 @@ class MobileCIAPIController extends BaseCIController
 
             foreach ($newsData as $counter) {
                 $viewedItems[] = array(
+                        'viewed_item_user_id' => (string)ObjectID::make(),
                         'item_id' => $counter->news_id,
                         'user_id' => $user->user_id,
                         'mall_id' => $retailer->merchant_id,
@@ -10122,6 +10127,7 @@ class MobileCIAPIController extends BaseCIController
 
             foreach ($couponData as $counter) {
                 $viewedItems[] = array(
+                        'viewed_item_user_id' => (string)ObjectID::make(),
                         'item_id' => $counter->promotion_id,
                         'user_id' => $user->user_id,
                         'mall_id' => $retailer->merchant_id,
@@ -10139,6 +10145,7 @@ class MobileCIAPIController extends BaseCIController
 
             foreach ($newLuckydrawsCount as $counter) {
                 $viewedItems[] = array(
+                        'viewed_item_user_id' => (string)ObjectID::make(),
                         'item_id' => $counter,
                         'user_id' => $user->user_id,
                         'mall_id' => $retailer->merchant_id,
@@ -10149,13 +10156,8 @@ class MobileCIAPIController extends BaseCIController
             }
         }
 
-        foreach ($viewedItems as $item) {
-            $insertViewedItems = new \ViewItemUser();
-            $insertViewedItems->item_id = $item['item_id'];
-            $insertViewedItems->user_id = $item['user_id'];
-            $insertViewedItems->mall_id = $item['mall_id'];
-            $insertViewedItems->item_type = $item['item_type'];
-            $insertViewedItems->save();
+        if (! empty($viewedItems)) {
+            \ViewItemUser::insert($viewedItems);
         }
     }
 
