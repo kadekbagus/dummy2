@@ -2572,9 +2572,11 @@ class NewsAPIController extends ControllerAPI
                 }
                 if (empty($existing_translation)) {
                     if (! empty(trim($translations->news_name))) {
-                        $news_translation = NewsTranslation::excludeDeleted()
-                                                    ->where('merchant_language_id', '=', $merchant_language_id)
-                                                    ->where('news_name', '=', $translations->news_name)
+                        $news_translation = NewsTranslation::join('news', 'news.news_id', '=', 'news_translations.news_id')
+                                                    ->where('news_translations.status', '!=', 'deleted')
+                                                    ->where('news.object_type', $news->object_type)
+                                                    ->where('news_translations.merchant_language_id', '=', $merchant_language_id)
+                                                    ->where('news_translations.news_name', '=', $translations->news_name)
                                                     ->first();
                         if (! empty($news_translation)) {
                             OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.exists.news_name'));
@@ -2583,10 +2585,12 @@ class NewsAPIController extends ControllerAPI
                     $operations[] = ['create', $merchant_language_id, $translations];
                 } else {
                     if (! empty(trim($translations->news_name))) {
-                        $news_translation_but_not_me = NewsTranslation::excludeDeleted()
+                        $news_translation_but_not_me = NewsTranslation::join('news', 'news.news_id', '=', 'news_translations.news_id')
+                                                    ->where('news_translations.status', '!=', 'deleted')
+                                                    ->where('news.object_type', $news->object_type)
                                                     ->where('merchant_language_id', '=', $merchant_language_id)
-                                                    ->where('news_id', '!=', $news->news_id)
-                                                    ->where('news_name', '=', $translations->news_name)
+                                                    ->where('news_translations.news_id', '!=', $news->news_id)
+                                                    ->where('news_translations.news_name', '=', $translations->news_name)
                                                     ->first();
                         if (! empty($news_translation_but_not_me)) {
                             OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.exists.news_name'));
