@@ -1652,6 +1652,12 @@ class MallAPIController extends ControllerAPI
                 }
             });
 
+            OrbitInput::post('name', function($name) use ($updatedUser) {
+                if (! empty(trim($name))) {
+                    $updatedUser->user_firstname = $name;
+                }
+            });
+
             $updatedUser->modified_by = $this->api->user->user_id;
 
             Event::fire('orbit.mallgroup.postupdateuser.before.save', array($this, $updatedUser));

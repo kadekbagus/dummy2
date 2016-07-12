@@ -1033,4 +1033,39 @@ class postUpdateMallTestArtemisVersion extends TestCase
         $this->assertSame($geo_point_latitude, $geo_mall->latitude);
         $this->assertSame($geo_point_longitude, $geo_mall->longitude);
     }
+
+    public function testUpdateMallName()
+    {
+        $testUser = Factory::create('User', ['user_firstname' => 'Orbit']);
+        $testMall = Factory::create('Mall', ['name' => 'Homer Mall', 'user_id' => $testUser->user_id]);
+
+        $user = User::excludeDeleted()
+                        ->where('user_id', $testUser->user_id)->first();
+
+        $mall = Mall::excludeDeleted()
+                        ->where('merchant_id', $testMall->merchant_id)->first();
+
+        $this->assertSame($user->user_id, $testMall->user_id);
+        $this->assertSame('Orbit', $user->user_firstname);
+
+        $mallName = 'Homer Mall';
+
+        /*
+        * test update mall name
+        */
+        $data = [
+            'merchant_id' => $testMall->merchant_id,
+            'name'    => $mallName
+        ];
+
+        $response = $this->setRequestPostUpdateMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
+        $this->assertSame('Homer Mall', $response->data->name);
+
+        $user = User::excludeDeleted()
+                        ->where('user_id', $user->user_id)->first();
+
+        $this->assertSame('Homer Mall', $user->user_firstname);
+    }
 }
