@@ -208,7 +208,7 @@ class getSearchMallTestArtemisVersion extends TestCase
         }
     }
 
-    public function testGetMobileDefaultLanguageLinkStatus() {
+    public function testGetMobileDefaultLanguageLinkStatusCampaignLinkToTenant() {
         $mall_a = Factory::create('Mall', ['description' => 'mall antok bagus', 'mobile_default_language' => 'en']);
         Factory::create('MerchantLanguage', ['language_id' => $this->enLang->language_id, 'merchant_id' => $mall_a->merchant_id]);
         Factory::create('MerchantLanguage', ['language_id' => $this->zhLang->language_id, 'merchant_id' => $mall_a->merchant_id]);
@@ -227,11 +227,67 @@ class getSearchMallTestArtemisVersion extends TestCase
                 'news_id' => $news->news_id,
                 'merchant_language_id' => $this->idLang->language_id
             ]);
+        // create campaign link to tenant
         $tenant = Factory::create('Tenant', ['parent_id' => $mall_b->merchant_id]);
-        $new_merchant = Factory::create('NewsMerchant', [
+        $news_merchant = Factory::create('NewsMerchant', [
                     'news_id' => $news->news_id,
                     'merchant_id' => $tenant->merchant_id,
                     'object_type' => 'tenant'
+                ]);
+
+        $filter = [
+            'with' => ['mallLanguages']
+        ];
+
+        /*
+        * test get language and mobile default language link status
+        */
+        $response_search = $this->setRequestGetSearchMall($this->apiKey->api_key, $this->apiKey->api_secret_key, $filter);
+        $this->assertSame(0, $response_search->code);
+        $this->assertSame('success', $response_search->status);
+        foreach ($response_search->data->records as $idx => $data) {
+            if($mall_b->merchant_id  === $data->merchant_id) {
+                $this->assertSame('mall irianto oke', $data->description);
+                foreach ($data->mall_languages as $language) {
+                    $this->assertContains($language->language_id, $language_mall_b);
+                }
+                $this->assertSame('true', $data->disable_mobile_default_language);
+            }
+            if($mall_a->merchant_id  === $data->merchant_id) {
+                $this->assertSame('mall antok bagus', $data->description);
+                foreach ($data->mall_languages as $language) {
+                    $this->assertContains($language->language_id, $language_mall_a);
+                }
+                $this->assertSame('false', $data->disable_mobile_default_language);
+            }
+        }
+    }
+
+    public function testGetMobileDefaultLanguageLinkStatusCampaignLinkToMall() {
+        $mall_a = Factory::create('Mall', ['description' => 'mall antok bagus', 'mobile_default_language' => 'en']);
+        Factory::create('MerchantLanguage', ['language_id' => $this->enLang->language_id, 'merchant_id' => $mall_a->merchant_id]);
+        Factory::create('MerchantLanguage', ['language_id' => $this->zhLang->language_id, 'merchant_id' => $mall_a->merchant_id]);
+        Factory::create('MerchantLanguage', ['language_id' => $this->idLang->language_id, 'merchant_id' => $mall_a->merchant_id]);
+        $language_mall_a = [$this->enLang->language_id,$this->zhLang->language_id,$this->idLang->language_id];
+
+        $mall_b = Factory::create('Mall', ['description' => 'mall irianto oke', 'mobile_default_language' => 'id']);
+        Factory::create('MerchantLanguage', ['language_id' => $this->idLang->language_id, 'merchant_id' => $mall_b->merchant_id]);
+        Factory::create('MerchantLanguage', ['language_id' => $this->zhLang->language_id, 'merchant_id' => $mall_b->merchant_id]);
+        Factory::create('MerchantLanguage', ['language_id' => $this->jpLang->language_id, 'merchant_id' => $mall_b->merchant_id]);
+        $language_mall_b = [$this->idLang->language_id,$this->zhLang->language_id,$this->jpLang->language_id];
+
+        // create campaign translation with mobile default language
+        $news = Factory::create('News');
+        $news_translation = Factory::create('NewsTranslation', [
+                'news_id' => $news->news_id,
+                'merchant_language_id' => $this->idLang->language_id
+            ]);
+
+        // create campaign link to mall
+        $news_merchant = Factory::create('NewsMerchant', [
+                    'news_id' => $news->news_id,
+                    'merchant_id' => $mall_b->merchant_id,
+                    'object_type' => 'mall'
                 ]);
 
         $filter = [
