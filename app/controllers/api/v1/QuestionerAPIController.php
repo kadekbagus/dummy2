@@ -10,7 +10,7 @@ use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Helper\EloquentRecordCounter as RecordCounter;
-
+use Orbit\Helper\Net\SessionPreparer;
 
 class QuestionerAPIController extends ControllerAPI
 {
@@ -41,99 +41,118 @@ class QuestionerAPIController extends ControllerAPI
         $httpCode = 200;
         try {
 
-            // Get the maximum record
-            $maxRecord = (int) Config::get('orbit.pagination.activity.max_record');
-            if ($maxRecord <= 0) {
-                // Fallback
-                $maxRecord = (int) Config::get('orbit.pagination.max_record');
+            $sessionId = OrbitInput::get('session_id', null);
+            $this->session = SessionPreparer::prepareSession();
+            $this->session->start(array(), 'no-session-creation');
+            $this->session->setSessionId($sessionId);
+
+            $userId = $this->session->read('user_id');
+            if ($userId == null) {
+                $userId = $this->session->read('guest_user_id');
+            }
+
+            $existUserAnswer = UserAnswer::where('user_id', '=', $userId)->first();
+
+            if (is_object($existUserAnswer)) {
+                $this->response->data = null;
+            } else {
+
+                // Get the maximum record
+                $maxRecord = (int) Config::get('orbit.pagination.activity.max_record');
                 if ($maxRecord <= 0) {
-                    $maxRecord = 20;
+                    // Fallback
+                    $maxRecord = (int) Config::get('orbit.pagination.max_record');
+                    if ($maxRecord <= 0) {
+                        $maxRecord = 20;
+                    }
                 }
-            }
-            // Get default per page (take)
-            $perPage = (int) Config::get('orbit.pagination.activity.per_page');
-            if ($perPage <= 0) {
-                // Fallback
-                $perPage = (int) Config::get('orbit.pagination.per_page');
+                // Get default per page (take)
+                $perPage = (int) Config::get('orbit.pagination.activity.per_page');
                 if ($perPage <= 0) {
-                    $perPage = 20;
+                    // Fallback
+                    $perPage = (int) Config::get('orbit.pagination.per_page');
+                    if ($perPage <= 0) {
+                        $perPage = 20;
+                    }
                 }
+
+                $questions = Question::with('answers');
+
+                 // Filter by id
+                OrbitInput::get('id', function($questionId) use ($questions) {
+                    $questions->where('questions.question_id', $questionId);
+                });
+
+                // Filter by ids
+                OrbitInput::get('ids', function($questionId) use ($questions) {
+                    $questions->whereIn('questions.question_id', $questionId);
+                });
+
+                // Filter by status
+                OrbitInput::get('status', function($status) use ($questions) {
+                    $questions->where('questions.status', $status);
+                });
+
+                $_questions = clone $questions;
+
+                // Get the take args
+                $take = $perPage;
+                OrbitInput::get('take', function ($_take) use (&$take, $maxRecord) {
+                    if ($_take > $maxRecord) {
+                        $_take = $maxRecord;
+                    }
+                    $take = $_take;
+
+                    if ((int)$take <= 0) {
+                        $take = $maxRecord;
+                    }
+                });
+                $questions->take($take);
+
+                $skip = 0;
+                OrbitInput::get('skip', function ($_skip) use (&$skip, $questions) {
+                    if ($_skip < 0) {
+                        $_skip = 0;
+                    }
+
+                    $skip = $_skip;
+                });
+                $questions->skip($skip);
+
+                // Default sort by
+                $sortBy = 'questions.question_id';
+                // Default sort mode
+                $sortMode = 'desc';
+
+                OrbitInput::get('sortby', function ($_sortBy) use (&$sortBy) {
+                    // Map the sortby request to the real column name
+                    $sortByMapping = array(
+                        'id'              => 'questions.question_id',
+                        'status'          => 'questions.status',
+                    );
+
+                    if (array_key_exists($_sortBy, $sortByMapping)) {
+                        $sortBy = $sortByMapping[$_sortBy];
+                    }
+                });
+
+                OrbitInput::get('sortmode', function ($_sortMode) use (&$sortMode) {
+                    if (strtolower($_sortMode) !== 'desc') {
+                        $sortMode = 'asc';
+                    }
+                });
+                $questions->orderBy($sortBy, $sortMode);
+
+                $listQuestions = $questions->first();
+                $count = RecordCounter::create($_questions)->count();
+
+                $this->response->data = $listQuestions;
+                // $this->response->data = new stdClass();
+                // $this->response->data->total_records = $count;
+                // $this->response->data->returned_records = count($listQuestions);
+                // $this->response->data->records = $listQuestions;
             }
 
-            $questions = Question::with('answers');
-
-             // Filter by id
-            OrbitInput::get('id', function($questionId) use ($questions) {
-                $questions->where('questions.question_id', $questionId);
-            });
-
-            // Filter by ids
-            OrbitInput::get('ids', function($questionId) use ($questions) {
-                $questions->whereIn('questions.question_id', $questionId);
-            });
-
-            // Filter by status
-            OrbitInput::get('status', function($status) use ($questions) {
-                $questions->where('questions.status', $status);
-            });
-
-            $_questions = clone $questions;
-
-            // Get the take args
-            $take = $perPage;
-            OrbitInput::get('take', function ($_take) use (&$take, $maxRecord) {
-                if ($_take > $maxRecord) {
-                    $_take = $maxRecord;
-                }
-                $take = $_take;
-
-                if ((int)$take <= 0) {
-                    $take = $maxRecord;
-                }
-            });
-            $questions->take($take);
-
-            $skip = 0;
-            OrbitInput::get('skip', function ($_skip) use (&$skip, $questions) {
-                if ($_skip < 0) {
-                    $_skip = 0;
-                }
-
-                $skip = $_skip;
-            });
-            $questions->skip($skip);
-
-            // Default sort by
-            $sortBy = 'questions.question_id';
-            // Default sort mode
-            $sortMode = 'desc';
-
-            OrbitInput::get('sortby', function ($_sortBy) use (&$sortBy) {
-                // Map the sortby request to the real column name
-                $sortByMapping = array(
-                    'id'              => 'questions.question_id',
-                    'status'          => 'questions.status',
-                );
-
-                if (array_key_exists($_sortBy, $sortByMapping)) {
-                    $sortBy = $sortByMapping[$_sortBy];
-                }
-            });
-
-            OrbitInput::get('sortmode', function ($_sortMode) use (&$sortMode) {
-                if (strtolower($_sortMode) !== 'desc') {
-                    $sortMode = 'asc';
-                }
-            });
-            $questions->orderBy($sortBy, $sortMode);
-
-            $listQuestions = $questions->get();
-            $count = RecordCounter::create($_questions)->count();
-
-            $this->response->data = new stdClass();
-            $this->response->data->total_records = $count;
-            $this->response->data->returned_records = count($listQuestions);
-            $this->response->data->records = $listQuestions;
         } catch (ACLForbiddenException $e) {
 
             $this->response->code = $e->getCode();
