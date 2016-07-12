@@ -362,14 +362,13 @@ class QuestionerAPIController extends ControllerAPI
 
             $existUserAnswer = UserAnswer::where('user_id', '=', $user_id)
                                     ->where('question_id', '=', $question_id)
-                                    ->where('answer_id', '=', $answer_id)
                                     ->first();
 
-            if (empty($existUserAnswer)) {
-                return true;
+            if (!empty($existUserAnswer)) {
+                return false;
             }
 
-            return false;
+            return true;
         });
     }
 
