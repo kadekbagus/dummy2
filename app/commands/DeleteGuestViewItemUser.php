@@ -75,6 +75,10 @@ class DeleteGuestViewItemUser extends Command {
                 ->where('viewed_item_user.created_at', '<', $dateThreshold)
                 ->lists('viewed_item_user_id');
 
+            if (empty($deletedItems)) {
+                throw new Exception("No records found.", 1);
+            }
+
             $proceed = $this->ask('Deleting [' . count($deletedItems) . "] records beyond [". $dateThreshold ."]. Proceed? (y/n)\n");
 
             if ($proceed === 'y') {

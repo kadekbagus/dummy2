@@ -75,6 +75,10 @@ class DeleteGuestUser extends Command {
                 ->where('users.created_at', '<', $dateThreshold)
                 ->lists('user_id');
 
+            if (empty($deletedItems)) {
+                throw new Exception("No records found.", 1);
+            }
+
             $proceed = $this->ask('Deleting [' . count($deletedItems) . "] records beyond [". $dateThreshold ."]. Proceed? (y/n)\n");
 
             if ($proceed === 'y') {
