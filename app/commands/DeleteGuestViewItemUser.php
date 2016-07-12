@@ -110,7 +110,7 @@ class DeleteGuestViewItemUser extends Command {
     protected function getOptions()
     {
         return array(
-            array('days', null, InputOption::VALUE_OPTIONAL, 'Number of day threshold to keep the records, beyond that will be deleted. (Default: 7 days)'),
+            array('days', null, InputOption::VALUE_OPTIONAL, 'Number of day threshold to keep the records, beyond that will be deleted. (Default: ' . $this->defaultDays . ' days)'),
         );
     }
 
