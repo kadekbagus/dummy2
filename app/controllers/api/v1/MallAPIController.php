@@ -946,40 +946,36 @@ class MallAPIController extends ControllerAPI
                                             (
                                                 select sum(total_campaign_has_translation) as total_translation
                                                 from
-                                                    (
-                                                        select t.parent_id, nt.merchant_language_id, count(n.news_id) as total_campaign_has_translation
-                                                        from {$prefix}news_translations nt
-                                                        join {$prefix}news n
-                                                            on n.news_id = nt.news_id
-                                                        join {$prefix}news_merchant nm
-                                                            on nm.news_id = n.news_id
-                                                        join {$prefix}merchants t
-                                                            on t.merchant_id = nm.merchant_id
-                                                        join {$prefix}merchant_languages ml
-                                                            on ml.language_id  = nt.merchant_language_id
-                                                            and ml.merchant_id = t.parent_id
-                                                        where t.object_type = 'tenant'
-                                                            and n.status != 'deleted'
-                                                        group by t.parent_id, nt.merchant_language_id
+                                                (
+                                                    select CASE WHEN m.object_type = 'tenant' THEN m.parent_id ELSE m.merchant_id END as mall_id,
+                                                            nt.merchant_language_id, count(n.news_id) as total_campaign_has_translation
+                                                    from {$prefix}news_translations nt
+                                                    join {$prefix}news n
+                                                        on n.news_id = nt.news_id
+                                                    join {$prefix}news_merchant nm
+                                                        on nm.news_id = n.news_id
+                                                    join {$prefix}merchants m
+                                                        on m.merchant_id = nm.merchant_id
+                                                    where m.object_type in ('mall', 'tenant')
+                                                        and n.status != 'deleted'
+                                                    group by mall_id, nt.merchant_language_id
 
-                                                        union
+                                                    union
 
-                                                        select t.parent_id, ct.merchant_language_id, count(c.promotion_id) as total_campaign_has_translation
-                                                        from {$prefix}coupon_translations ct
-                                                        join {$prefix}promotions c
-                                                            on c.promotion_id = ct.promotion_id
-                                                        join {$prefix}promotion_retailer pr
-                                                            on pr.promotion_id = c.promotion_id
-                                                        join {$prefix}merchants t
-                                                            on t.merchant_id = pr.retailer_id
-                                                        join {$prefix}merchant_languages ml
-                                                            on ml.language_id  = ct.merchant_language_id
-                                                            and ml.merchant_id = t.parent_id
-                                                        where t.object_type = 'tenant'
-                                                            and c.status != 'deleted'
-                                                        group by t.parent_id, ct.merchant_language_id
-                                                    ) as campaign
-                                                where campaign.parent_id = {$prefix}merchants.merchant_id
+                                                    select CASE WHEN m.object_type = 'tenant' THEN m.parent_id ELSE m.merchant_id END as mall_id,
+                                                            ct.merchant_language_id, count(c.promotion_id) as total_campaign_has_translation
+                                                    from {$prefix}coupon_translations ct
+                                                    join {$prefix}promotions c
+                                                        on c.promotion_id = ct.promotion_id
+                                                    join {$prefix}promotion_retailer pr
+                                                        on pr.promotion_id = c.promotion_id
+                                                    join {$prefix}merchants m
+                                                        on m.merchant_id = pr.retailer_id
+                                                    where m.object_type in ('mall', 'tenant')
+                                                        and c.status != 'deleted'
+                                                    group by mall_id, ct.merchant_language_id
+                                                ) as campaign
+                                                where campaign.mall_id = {$prefix}merchants.merchant_id
                                                     and campaign.merchant_language_id = (
                                                         select lang.language_id
                                                         from {$prefix}languages lang
