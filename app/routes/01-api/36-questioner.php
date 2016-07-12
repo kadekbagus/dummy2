@@ -3,7 +3,7 @@
 /**
  * Post user answer
  */
-Route::get('/api/v1/question', function()
+Route::get('/api/v1/pub/question', function()
 {
     return QuestionerAPIController::create()->getQuestion();
 });
@@ -11,7 +11,7 @@ Route::get('/api/v1/question', function()
 /**
  * Post user answer
  */
-Route::post('/api/v1/user-answer', function()
+Route::post('/api/v1/pub/user-answer', function()
 {
     return QuestionerAPIController::create()->postUserAnswer();
 });

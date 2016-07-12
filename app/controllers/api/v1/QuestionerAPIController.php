@@ -1,6 +1,6 @@
 <?php
 /**
- * An API controller for managing News.
+ * An API controller for managing Questioner.
  */
 use OrbitShop\API\v1\ControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
@@ -53,7 +53,7 @@ class QuestionerAPIController extends ControllerAPI
 
             $existUserAnswer = UserAnswer::where('user_id', '=', $userId)->first();
 
-            if (is_object($existUserAnswer)) {
+            if (! empty($existUserAnswer)) {
                 $this->response->data = null;
             } else {
 
