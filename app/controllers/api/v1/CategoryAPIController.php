@@ -1200,9 +1200,11 @@ class CategoryAPIController extends ControllerAPI
                 }
                 if (empty($existing_translation)) {
                     if (! empty(trim($translations->category_name))) {
-                        $category_translation = CategoryTranslation::excludeDeleted()
-                                                    ->where('merchant_language_id', '=', $language_id)
-                                                    ->where('category_name', '=', $translations->category_name)
+                        $category_translation = CategoryTranslation::excludeDeleted('category_translations')
+                                                    ->join('categories', 'categories.category_id', '=', 'category_translations.category_id')
+                                                    ->where('category_translations.merchant_language_id', '=', $language_id)
+                                                    ->where('category_translations.category_name', '=', $translations->category_name)
+                                                    ->where('categories.merchant_id', '0')
                                                     ->first();
                         if (! empty($category_translation)) {
                             OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.exists.category_name'));
@@ -1211,10 +1213,12 @@ class CategoryAPIController extends ControllerAPI
                     $operations[] = ['create', $language_id, $translations];
                 } else {
                     if (! empty(trim($translations->category_name))) {
-                        $category_translation_but_not_me = CategoryTranslation::excludeDeleted()
-                                                    ->where('merchant_language_id', '=', $language_id)
-                                                    ->where('category_id', '!=', $category->category_id)
-                                                    ->where('category_name', '=', $translations->category_name)
+                        $category_translation_but_not_me = CategoryTranslation::excludeDeleted('category_translations')
+                                                    ->join('categories', 'categories.category_id', '=', 'category_translations.category_id')
+                                                    ->where('category_translations.merchant_language_id', '=', $language_id)
+                                                    ->where('category_translations.category_name', '=', $translations->category_name)
+                                                    ->where('category_translations.category_id', '!=', $category->category_id)
+                                                    ->where('categories.merchant_id', '0')
                                                     ->first();
                         if (! empty($category_translation_but_not_me)) {
                             OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.exists.category_name'));
