@@ -1101,6 +1101,7 @@ class CategoryAPIController extends ControllerAPI
         Validator::extend('orbit.exists.category_name', function ($attribute, $value, $parameters) {
             $categoryName = Category::excludeDeleted()
                         ->where('category_name', $value)
+                        ->where('merchant_id', '0')
                         ->first();
 
             if (! empty($categoryName)) {
