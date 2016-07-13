@@ -808,6 +808,12 @@ class CampaignReportAPIController extends ControllerAPI
                         where {$tablePrefix}news_merchant.news_id = {$this->quote($campaign_id)}
                     ) as campaign_location_names
                 ";
+                $locationId = "select IF({$tablePrefix}merchants.object_type = 'tenant', pm.merchant_id, {$tablePrefix}merchants.merchant_id)
+                        from {$tablePrefix}news_merchant
+                        inner join {$tablePrefix}merchants on {$tablePrefix}merchants.merchant_id = {$tablePrefix}news_merchant.merchant_id
+                        inner join {$tablePrefix}merchants pm on {$tablePrefix}merchants.parent_id = pm.merchant_id
+                        where {$tablePrefix}news_merchant.news_id = {$this->quote($campaign_id)}
+                ";
 
             } elseif ($campaign_type === 'coupon') {
                 // Get begin and end
@@ -827,6 +833,12 @@ class CampaignReportAPIController extends ControllerAPI
                         inner join {$tablePrefix}merchants pm on {$tablePrefix}merchants.parent_id = pm.merchant_id
                         where {$tablePrefix}promotion_retailer.promotion_id = {$this->quote($campaign_id)}
                     ) as campaign_location_names
+                ";
+                $locationId = "select IF({$tablePrefix}merchants.object_type = 'tenant', pm.merchant_id, {$tablePrefix}merchants.merchant_id)
+                        from {$tablePrefix}promotion_retailer
+                        inner join {$tablePrefix}merchants on {$tablePrefix}merchants.merchant_id = {$tablePrefix}promotion_retailer.retailer_id
+                        inner join {$tablePrefix}merchants pm on {$tablePrefix}merchants.parent_id = pm.merchant_id
+                        where {$tablePrefix}promotion_retailer.promotion_id = {$this->quote($campaign_id)}
                 ";
             }
 
@@ -850,6 +862,8 @@ class CampaignReportAPIController extends ControllerAPI
                                 SELECT COUNT(DISTINCT user_id)
                                 FROM {$tablePrefix}user_signin
                                 WHERE DATE(created_at) = date
+                                    and signin_via != 'guest'
+                                    and location_id in ( " . $locationId . " )
                             ) AS unique_users,
                             (
                                 SELECT COUNT(ocpv.campaign_page_view_id) AS value
@@ -1977,6 +1991,25 @@ class CampaignReportAPIController extends ControllerAPI
                 $dateRange[] = $date->format("Y-m-d");
             }
 
+            if ($campaign_type === 'News' or $campaign_type === 'Promotion') {
+
+                $locationId = "select IF({$tablePrefix}merchants.object_type = 'tenant', pm.merchant_id, {$tablePrefix}merchants.merchant_id)
+                        from {$tablePrefix}news_merchant
+                        inner join {$tablePrefix}merchants on {$tablePrefix}merchants.merchant_id = {$tablePrefix}news_merchant.merchant_id
+                        inner join {$tablePrefix}merchants pm on {$tablePrefix}merchants.parent_id = pm.merchant_id
+                        where {$tablePrefix}news_merchant.news_id = {$this->quote($campaign_id)}
+                ";
+
+            } elseif ($campaign_type === 'Coupon') {
+
+                $locationId = "select IF({$tablePrefix}merchants.object_type = 'tenant', pm.merchant_id, {$tablePrefix}merchants.merchant_id)
+                        from {$tablePrefix}promotion_retailer
+                        inner join {$tablePrefix}merchants on {$tablePrefix}merchants.merchant_id = {$tablePrefix}promotion_retailer.retailer_id
+                        inner join {$tablePrefix}merchants pm on {$tablePrefix}merchants.parent_id = pm.merchant_id
+                        where {$tablePrefix}promotion_retailer.promotion_id = {$this->quote($campaign_id)}
+                ";
+            }
+
             $campaign_view = DB::select("
                                 SELECT
                                     DATE_FORMAT(CONVERT_TZ(ocpv.created_at, '+00:00', ?), '%Y-%m-%d') AS date,
@@ -2020,14 +2053,13 @@ class CampaignReportAPIController extends ControllerAPI
                                 ORDER BY 1
             ", array($timezoneOffset, $campaign_id, $start_date, $end_date, $campaign_type));
 
-            $unique_user = DB::select("select date_format(convert_tz(created_at, '+00:00', ?), '%Y-%m-%d') as date, count(distinct user_id) as value
+            $unique_user =  DB::select("select date_format(convert_tz(created_at, '+00:00', {$this->quote($timezoneOffset)}), '%Y-%m-%d') as date, count(distinct user_id) as value
                         from {$tablePrefix}user_signin
-                        where location_id = ?
-                            and created_at between ? and ?
+                        where location_id in ( " . $locationId . " )
+                            and created_at between {$this->quote($start_date)} and {$this->quote($end_date)}
                             and signin_via != 'guest'
                         group by 1
-                        order by 1
-            ", array($timezoneOffset, $current_mall, $start_date, $end_date));
+                        order by 1");
 
             function cmp($a, $b)
             {
