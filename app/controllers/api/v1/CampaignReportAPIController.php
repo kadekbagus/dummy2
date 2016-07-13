@@ -2022,6 +2022,7 @@ class CampaignReportAPIController extends ControllerAPI
                         from {$tablePrefix}user_signin
                         where location_id = ?
                             and created_at between ? and ?
+                            and signin_via != 'guest'
                         group by 1
                         order by 1
             ", array($timezoneOffset, $current_mall, $start_date, $end_date));
