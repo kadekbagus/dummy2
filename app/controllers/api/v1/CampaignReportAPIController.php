@@ -1647,33 +1647,35 @@ class CampaignReportAPIController extends ControllerAPI
             ", array($campaign_id, $start_date, $end_date));
 
             $female = array();
-            $percent = 0;
-            $total = 0;
+            $percentFemale = 0;
+            $percentMale = 0;
+            $totalFemale = 0;
+            $totalMale = 0;
 
             foreach (Config::get('orbit.age_ranges') as $key => $ageRange) {
                 if ( $demograhicFemale[0]->$ageRange !== null ) {
                     if ($demograhicFemale[0]->total !== 0){
-                        $percent = ($demograhicFemale[0]->$ageRange / $demograhicFemale[0]->total) * 100;
-                        $total = $demograhicFemale[0]->$ageRange;
+                        $percentFemale = ($demograhicFemale[0]->$ageRange / $demograhicFemale[0]->total) * 100;
+                        $totalFemale = $demograhicFemale[0]->$ageRange;
                     }
                 }
 
                 $female[$key]['age_range'] = $ageRange;
-                $female[$key]['total'] = $total;
-                $female[$key]['percent'] = round($percent, 2) . ' %';
+                $female[$key]['total'] = $totalFemale;
+                $female[$key]['percent'] = round($percentFemale, 2) . ' %';
             }
 
             foreach (Config::get('orbit.age_ranges') as $key => $ageRange) {
                 if ( $demograhicMale[0]->$ageRange !== null ) {
                     if ($demograhicMale[0]->total !== 0){
-                        $percent = ($demograhicMale[0]->$ageRange / $demograhicMale[0]->total) * 100;
-                        $total = $demograhicMale[0]->$ageRange;
+                        $percentMale = ($demograhicMale[0]->$ageRange / $demograhicMale[0]->total) * 100;
+                        $totalMale = $demograhicMale[0]->$ageRange;
                     }
                 }
 
                 $male[$key]['age_range'] = $ageRange;
-                $male[$key]['total'] = $total;
-                $male[$key]['percent'] = round($percent, 2) . ' %';
+                $male[$key]['total'] = $totalMale;
+                $male[$key]['percent'] = round($percentMale, 2) . ' %';
             }
 
             // get column name from config
