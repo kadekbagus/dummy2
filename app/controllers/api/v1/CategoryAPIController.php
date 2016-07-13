@@ -1120,6 +1120,7 @@ class CategoryAPIController extends ControllerAPI
             $category = Category::excludeDeleted()
                         ->where('category_name', $value)
                         ->where('category_id', '!=', $category_id)
+                        ->where('merchant_id', '0')
                         ->first();
 
             if (! empty($category)) {
