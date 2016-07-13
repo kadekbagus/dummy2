@@ -50,9 +50,16 @@ class ResetPasswordLinkAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
+            //Bug fix OM-2249: we only allow active user to request reset password,
+            //if we allow non-active user such as pending user to request password reset
+            //then this will make pending user can activate their account
+            //without proper email activation step (activate/account) because
+            //ResetPasswordAPIController (see line 97) will change
+            //its status to active upon successful password reset
             $user = User::with('apikey', 'userdetail', 'role')
                 ->excludeDeleted()
                 ->where('user_email', $email)
+                ->where('status', 'active')
                 ->whereHas('role', function($query)
                 {
                     $query->where('role_name','Consumer');
