@@ -9382,26 +9382,22 @@ class MobileCIAPIController extends BaseCIController
      */
     private function maybeJoinWithCategoryTranslationsTable($categories, $alternateLanguage)
     {
-        if (!empty($alternateLanguage)) {
-            // join to translations table so can use to search, sort, and overwrite fields
-            $prefix = DB::getTablePrefix();
+        // join to translations table so can use to search, sort, and overwrite fields
+        $prefix = DB::getTablePrefix();
 
-            $categories->leftJoin('category_translations', function ($join) use ($alternateLanguage) {
-                $join->on('categories.category_id', '=', 'category_translations.category_id');
-                $join->where('category_translations.merchant_language_id', '=',
-                    $alternateLanguage->language_id);
-                $join->where('category_translations.category_name', '!=', '');
-            });
-            $categories->select('categories.*')->orderBy('category_translations.category_name', 'ASC');
-            // and overwrite fields with alternate language fields if present
-            foreach (['category_name', 'description'] as $field) {
-                $categories->addSelect([
-                    DB::raw("COALESCE(${prefix}category_translations.${field}, ${prefix}categories.${field}) as ${field}")
-                ]);
-            }
-        } else {
-            $categories->orderBy('categories.category_name', 'ASC');
+        $categories->leftJoin('category_translations', function ($join) use ($alternateLanguage) {
+            $join->on('categories.category_id', '=', 'category_translations.category_id');
+            $join->where('category_translations.merchant_language_id', '=',
+                $alternateLanguage->language_id);
+            $join->where('category_translations.category_name', '!=', '');
+        });
+        // and overwrite fields with alternate language fields if present
+        foreach (['category_name', 'description'] as $field) {
+            $categories->addSelect([
+                DB::raw("COALESCE(${prefix}category_translations.${field}, ${prefix}categories.${field}) as ${field}")
+            ]);
         }
+        $categories->orderBy('category_name', 'ASC');
     }
 
     /**
