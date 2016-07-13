@@ -2083,6 +2083,9 @@ class MobileCIAPIController extends BaseCIController
             case 'tenant':
                 $landing_url = UrlBlock::blockedRoute('ci-tenant-list', [], $this->session);
                 break;
+            case 'service':
+                $landing_url = UrlBlock::blockedRoute('ci-service-list', [], $this->session);
+                break;
 
             case 'promotion':
                 $landing_url = UrlBlock::blockedRoute('ci-promotion-list', [], $this->session);
