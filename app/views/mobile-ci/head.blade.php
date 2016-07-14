@@ -1,6 +1,6 @@
 <title>{{{ $this_mall->name }}}</title>
 <meta charset="utf-8" />
-<meta name="description" content="{{{ $this_mall->description }}" />
+<meta name="description" content="{{{ $this_mall->description }}}" />
 <meta name="author" content="DominoPOS" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
 <meta name="format-detection" content="telephone=no">
