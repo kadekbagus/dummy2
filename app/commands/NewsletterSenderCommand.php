@@ -70,6 +70,7 @@ class NewsletterSenderCommand extends Command
         $processed = 0;
         $skip = 0;
         $limit = (int)$this->option('limit');
+        $usleep = (int)$this->option('usleep');
 
         while (true) {
             DB::beginTransaction();
@@ -130,7 +131,7 @@ class NewsletterSenderCommand extends Command
             }
 
             // Sleep 1/10 seconds
-            usleep(100000);
+            usleep($usleep);
         }
 
         $end = microtime(TRUE);
@@ -270,6 +271,7 @@ class NewsletterSenderCommand extends Command
             // ];
             array('email-config', null, InputOption::VALUE_REQUIRED, 'Credentials to connect to SMTP.', null),
             array('logfile', null, InputOption::VALUE_OPTIONAL, 'The name of the log file.', 'email.log'),
+            array('usleep', null, InputOption::VALUE_OPTIONAL, 'Delay execution per email in microseconds.', 100000),
             array('limit', null, InputOption::VALUE_OPTIONAL, 'Limit the number of emails processed.', -1),
             array('dry-run', null, InputOption::VALUE_NONE, 'Sending email to logs.', null),
             array('no-mx-check', null, InputOption::VALUE_NONE, 'Disable MX necord check.', null)
