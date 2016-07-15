@@ -7,7 +7,7 @@
             </ul>
         </div>
         @if (!empty($retailer->logo))
-            <div class="logo" style="background-image: url('{{asset($retailer->logo)}}')">
+            <div class="logo" style="background-image: url('{{asset($retailer->logo)}}');width: calc(100% - 155px)">
             </div>
         @endif
         <div class="button-container pull-right">
