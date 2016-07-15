@@ -3940,27 +3940,27 @@ class CouponAPIController extends ControllerAPI
                     }
                 }
                 if (empty($existing_translation)) {
-                    if (! empty(trim($translations->promotion_name))) {
-                        $coupon_translation = CouponTranslation::excludeDeleted()
-                                                    ->where('merchant_language_id', '=', $merchant_language_id)
-                                                    ->where('promotion_name', '=', $translations->promotion_name)
-                                                    ->first();
-                        if (! empty($coupon_translation)) {
-                            OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.exists.coupon_name'));
-                        }
-                    }
+                    // if (! empty(trim($translations->promotion_name))) {
+                    //     $coupon_translation = CouponTranslation::excludeDeleted()
+                    //                                 ->where('merchant_language_id', '=', $merchant_language_id)
+                    //                                 ->where('promotion_name', '=', $translations->promotion_name)
+                    //                                 ->first();
+                    //     if (! empty($coupon_translation)) {
+                    //         OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.exists.coupon_name'));
+                    //     }
+                    // }
                     $operations[] = ['create', $merchant_language_id, $translations];
                 } else {
-                    if (! empty(trim($translations->promotion_name))) {
-                        $coupon_translation_but_not_me = CouponTranslation::excludeDeleted()
-                                                    ->where('merchant_language_id', '=', $merchant_language_id)
-                                                    ->where('promotion_id', '!=', $coupon->promotion_id)
-                                                    ->where('promotion_name', '=', $translations->promotion_name)
-                                                    ->first();
-                        if (! empty($coupon_translation_but_not_me)) {
-                            OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.exists.coupon_name'));
-                        }
-                    }
+                    // if (! empty(trim($translations->promotion_name))) {
+                    //     $coupon_translation_but_not_me = CouponTranslation::excludeDeleted()
+                    //                                 ->where('merchant_language_id', '=', $merchant_language_id)
+                    //                                 ->where('promotion_id', '!=', $coupon->promotion_id)
+                    //                                 ->where('promotion_name', '=', $translations->promotion_name)
+                    //                                 ->first();
+                    //     if (! empty($coupon_translation_but_not_me)) {
+                    //         OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.exists.coupon_name'));
+                    //     }
+                    // }
                     $operations[] = ['update', $existing_translation, $translations];
                 }
             }
