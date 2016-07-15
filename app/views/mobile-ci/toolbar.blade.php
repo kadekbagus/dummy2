@@ -1,6 +1,6 @@
 <header class="mobile-ci ci-header header-container">
     <div class="header-buttons-container">
-        <div class="button-container">
+        <div class="button-container pull-left">
             <ul class="buttons-list">
                 <li id="orbit-tour-home"><a href="{{ \Orbit\Helper\Net\UrlChecker::blockedRoute('ci-customer-home', [], $session) }}"><span><i class="glyphicon glyphicon-home"></i></span></a></li>
                 <li id="orbit-tour-map"><a href="{{ Config::get('orbit.shop.back_to_map_url') }}"><span><i class="fa fa-map-marker" style="font-size: 26px;font-weight: bold;"></i></span></a></li>
