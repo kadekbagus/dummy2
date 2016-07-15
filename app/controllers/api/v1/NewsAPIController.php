@@ -383,22 +383,27 @@ class NewsAPIController extends ControllerAPI
             $campaignhistory->save();
 
             //save campaign histories (tenant)
-            $withSpending = 'Y';
+            $withSpending = array('mall' => 'N', 'tenant' => 'Y');
             foreach ($retailer_ids as $retailer_id) {
+                $type = 'tenant';
                 $data = @json_decode($retailer_id);
                 $tenant_id = $data->tenant_id;
                 $mall_id = $data->mall_id;
                 // insert tenant/merchant to campaign history
-                $tenantstatus = CampaignLocation::select('status')->where('merchant_id', $tenant_id)->first();
+                $tenantstatus = CampaignLocation::select('status', 'object_type')->where('merchant_id', $tenant_id)->first();
                 $spendingrule = SpendingRule::select('with_spending')->where('object_id', $tenant_id)->first();
 
-                if ($spendingrule) {
-                    $withSpending = $spendingrule->with_spending;
-                } else {
-                    $withSpending = 'N';
+                if ($tenantstatus->object_type === 'mall') {
+                    $type = 'mall';
                 }
 
-                if (($tenantstatus->status === 'active') && ($withSpending === 'Y')) {
+                if ($spendingrule) {
+                    $spending = $spendingrule->with_spending;
+                } else {
+                    $spending = $withSpending[$type];
+                }
+
+                if (($tenantstatus->status === 'active') && ($spending === 'Y')) {
                     $addtenant = new CampaignHistory();
                     $addtenant->campaign_type = $object_type;
                     $addtenant->campaign_id = $newnews->news_id;
@@ -1079,23 +1084,28 @@ class NewsAPIController extends ControllerAPI
             //check for add/remove tenant
             $removetenant = array_diff($merchantdb, $retailernew);
             $addtenant = array_diff($retailernew, $merchantdb);
-            $withSpending = 'Y';
+            $withSpending = array('mall' => 'N', 'tenant' => 'Y');
             if (! empty($removetenant)) {
                 $actionhistory = 'delete';
                 $addtenantid = CampaignHistoryAction::getIdFromAction('delete_tenant');
                 //save campaign histories (tenant)
                 foreach ($removetenant as $retailer_id) {
                     // insert tenant/merchant to campaign history
-                    $tenantstatus = CampaignLocation::select('status')->where('merchant_id', $retailer_id)->first();
+                    $type = 'tenant';
+                    $tenantstatus = CampaignLocation::select('status', 'object_type')->where('merchant_id', $retailer_id)->first();
                     $spendingrule = SpendingRule::select('with_spending')->where('object_id', $retailer_id)->first();
 
-                    if ($spendingrule) {
-                        $withSpending = $spendingrule->with_spending;
-                    } else {
-                        $withSpending = 'N';
+                    if ($tenantstatus->object_type === 'mall') {
+                        $type = 'mall';
                     }
 
-                    if (($tenantstatus->status === 'active') && ($withSpending === 'Y')) {
+                    if ($spendingrule) {
+                        $spending = $spendingrule->with_spending;
+                    } else {
+                        $spending = $withSpending[$type];
+                    }
+
+                    if (($tenantstatus->status === 'active') && ($spending === 'Y')) {
                         $tenanthistory = new CampaignHistory();
                         $tenanthistory->campaign_type = $object_type;
                         $tenanthistory->campaign_id = $news_id;
@@ -1116,16 +1126,21 @@ class NewsAPIController extends ControllerAPI
                 //save campaign histories (tenant)
                 foreach ($addtenant as $retailer_id) {
                     // insert tenant/merchant to campaign history
-                    $tenantstatus = CampaignLocation::select('status')->where('merchant_id', $retailer_id)->first();
+                    $type = 'tenant';
+                    $tenantstatus = CampaignLocation::select('status', 'object_type')->where('merchant_id', $retailer_id)->first();
                     $spendingrule = SpendingRule::select('with_spending')->where('object_id', $retailer_id)->first();
 
-                    if ($spendingrule) {
-                        $withSpending = $spendingrule->with_spending;
-                    } else {
-                        $withSpending = 'N';
+                    if ($tenantstatus->object_type === 'mall') {
+                        $type = 'mall';
                     }
 
-                    if (($tenantstatus->status === 'active') && ($withSpending === 'Y')) {
+                    if ($spendingrule) {
+                        $spending = $spendingrule->with_spending;
+                    } else {
+                        $spending = $withSpending[$type];
+                    }
+
+                    if (($tenantstatus->status === 'active') && ($spending === 'Y')) {
                         $tenanthistory = new CampaignHistory();
                         $tenanthistory->campaign_type = $object_type;
                         $tenanthistory->campaign_id = $news_id;
@@ -2557,9 +2572,11 @@ class NewsAPIController extends ControllerAPI
                 }
                 if (empty($existing_translation)) {
                     if (! empty(trim($translations->news_name))) {
-                        $news_translation = NewsTranslation::excludeDeleted()
-                                                    ->where('merchant_language_id', '=', $merchant_language_id)
-                                                    ->where('news_name', '=', $translations->news_name)
+                        $news_translation = NewsTranslation::join('news', 'news.news_id', '=', 'news_translations.news_id')
+                                                    ->where('news_translations.status', '!=', 'deleted')
+                                                    ->where('news.object_type', $news->object_type)
+                                                    ->where('news_translations.merchant_language_id', '=', $merchant_language_id)
+                                                    ->where('news_translations.news_name', '=', $translations->news_name)
                                                     ->first();
                         if (! empty($news_translation)) {
                             OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.exists.news_name'));
@@ -2568,10 +2585,12 @@ class NewsAPIController extends ControllerAPI
                     $operations[] = ['create', $merchant_language_id, $translations];
                 } else {
                     if (! empty(trim($translations->news_name))) {
-                        $news_translation_but_not_me = NewsTranslation::excludeDeleted()
+                        $news_translation_but_not_me = NewsTranslation::join('news', 'news.news_id', '=', 'news_translations.news_id')
+                                                    ->where('news_translations.status', '!=', 'deleted')
+                                                    ->where('news.object_type', $news->object_type)
                                                     ->where('merchant_language_id', '=', $merchant_language_id)
-                                                    ->where('news_id', '!=', $news->news_id)
-                                                    ->where('news_name', '=', $translations->news_name)
+                                                    ->where('news_translations.news_id', '!=', $news->news_id)
+                                                    ->where('news_translations.news_name', '=', $translations->news_name)
                                                     ->first();
                         if (! empty($news_translation_but_not_me)) {
                             OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.exists.news_name'));

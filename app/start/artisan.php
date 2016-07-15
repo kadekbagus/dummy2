@@ -62,6 +62,12 @@ Artisan::add(new ElasticsearchMigrationCommand);
 // Category Migration
 Artisan::add(new CategoryMigration);
 
+// DeleteGuestViewItemUser
+Artisan::add(new DeleteGuestViewItemUser);
+
+// DeleteGuestUser
+Artisan::add(new DeleteGuestUser);
+
 // Insert or update data on settings table
 // @Todo investigate why its error
 // Artisan::add(new MerchantSetting);
