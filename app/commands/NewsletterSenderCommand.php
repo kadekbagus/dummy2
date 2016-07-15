@@ -72,6 +72,8 @@ class NewsletterSenderCommand extends Command
         $limit = (int)$this->option('limit');
 
         while (true) {
+            DB::beginTransaction();
+
             $row = DB::table($tableName)->skip($skip)->take($limit)->first();
             if (empty($row)) {
                 $this->info(sprintf('No emails found on table %s.', $tableName));
@@ -87,6 +89,7 @@ class NewsletterSenderCommand extends Command
                 $this->checkMX($email);
                 $status = $this->sendEmailTo($email, $bodyPlain, $bodyHtml);
                 $this->deleteEmail($tableName, $email);
+                DB::commit();
             } catch (Exception $e) {
                 $status = 0;
                 $message = $e->getMessage();
@@ -94,6 +97,7 @@ class NewsletterSenderCommand extends Command
 
                 if ($e->getMessage() === 'MX Records not found') {
                     $this->deleteEmail($tableName, $email);
+                    DB::commit();
                 }
             }
             $processed++;
