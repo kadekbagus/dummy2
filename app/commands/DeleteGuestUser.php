@@ -55,6 +55,9 @@ class DeleteGuestUser extends Command {
     {
         try {
             $days = $this->option('days');
+            $confirm = $this->option('yes');
+            $limit = $this->option('limit');
+
             $this->checkAndSetDaysOption($days);
 
             $guestRoleIds = Role::roleIdsByName([$this->guestRoleName]);
@@ -67,35 +70,44 @@ class DeleteGuestUser extends Command {
 
             echo "Counting records...\n\n";
             $dateString = '-' . $this->defaultDays . ' days';
-            $dateThreshold = date('Y-m-d H:i:s', strtotime($dateString));
+            $dateThreshold = date('Y-m-d 00:00:00', strtotime($dateString));
 
-            $deletedItems = DB::table('users')
+            $data = DB::table('users')
                 ->leftJoin('roles', 'users.user_role_id', '=', 'roles.role_id')
                 ->where('roles.role_id', $guestRoleId)
                 ->where('users.created_at', '<', $dateThreshold)
-                ->lists('user_id');
+                ->orderBy('users.created_at', 'desc');
 
-            if (empty($deletedItems)) {
-                throw new Exception("No records found.", 1);
+            $deletedItems = clone $data;
+            $deletedItems = $deletedItems->take($limit)->lists('user_id');
+
+            if ($data->count() < $limit) {
+                if ($data->count() === 0) {
+                    throw new Exception("No records found.", 1);
+                }
+                $limit = $data->count();
             }
 
-            $proceed = $this->ask('Deleting [' . count($deletedItems) . "] records beyond [". $dateThreshold ."]. Proceed? (y/n)\n");
-
-            if ($proceed === 'y') {
-                echo "Deleting users records...\n";
-                DB::table('users')
-                    ->whereIn('user_id', $deletedItems)
-                    ->delete();
-
-                echo "Deleting user_details records...\n";
-                DB::table('user_details')
-                    ->whereIn('user_id', $deletedItems)
-                    ->delete();
-
-                echo count($deletedItems) . " guest user deleted. Done.\n";
-            } else {
-                echo "Aborted.\n";
+            if (! $confirm) {
+                $question = "Are you sure want to delete " . $limit . " guest data, which ages over " . $days ." days with total " . $data->count() . " record(s)? [y|n]";
+                if (! $this->confirm($question, false)) {
+                    $confirm = false;
+                    return;
+                }
             }
+
+            echo "Deleting users records...\n";
+            DB::table('users')
+                ->whereIn('user_id', $deletedItems)
+                ->delete();
+
+            echo "Deleting user_details records...\n";
+            DB::table('user_details')
+                ->whereIn('user_id', $deletedItems)
+                ->delete();
+
+            echo count($deletedItems) . " guest user deleted. Done.\n";
+           
         } catch (Exception $e) {
             echo $e->getMessage();
         }
@@ -121,6 +133,8 @@ class DeleteGuestUser extends Command {
     {
         return array(
             array('days', null, InputOption::VALUE_OPTIONAL, 'Number of day threshold to keep the records, beyond that will be deleted. (Default: ' . $this->defaultDays . ' days)'),
+            array('limit', null, InputOption::VALUE_OPTIONAL, 'Limitation for delete records, default is 5000', 5000),
+            array('yes', null, InputOption::VALUE_NONE, 'Confirmation to delete guest'),
         );
     }
 
