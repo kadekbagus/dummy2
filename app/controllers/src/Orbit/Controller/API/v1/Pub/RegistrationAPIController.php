@@ -289,13 +289,14 @@ class RegistrationAPIController extends IntermediateBaseController
             return TRUE;
         });
 
+        $current_date = date('Y-m-d');
         $validator = Validator::make(
             array(
                 'email'      => $email,
                 'first_name' => $firstname,
                 'last_name'  => $lastname,
                 'gender'     => $gender,
-                'birth_date' => $birthdate,
+                'date_of_birth' => $birthdate,
                 'password_confirmation' => $password_confirmation,
                 'password' => $password,
             ),
@@ -304,13 +305,15 @@ class RegistrationAPIController extends IntermediateBaseController
                 'first_name' => 'required',
                 'last_name'  => 'required',
                 'gender'     => 'required|in:m,f',
-                'birth_date' => 'required|date_format:d-m-Y',
+                'date_of_birth' => 'required|date|date_format:d-m-Y|before:' . $current_date,
                 'password_confirmation' => 'required|min:6',
                 'password'  => 'min:6|confirmed',
             ),
             array(
-                'birth_date.date_format' => Lang::get('validation.orbit.formaterror.date.dmy_date'),
-                'orbit_email_exists' => Lang::get('validation.orbit.email.exists')
+                'date_of_birth.date_format' => Lang::get('validation.orbit.formaterror.date.dmy_date'),
+                'orbit_email_exists' => Lang::get('validation.orbit.email.exists'),
+                'date_of_birth.date' => Lang::get('validation.orbit.formaterror.date.invalid_date'),
+                'date_of_birth.before' => Lang::get('validation.orbit.formaterror.date.cannot_future_date'),
             )
         );
 

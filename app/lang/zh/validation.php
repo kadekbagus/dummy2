@@ -319,7 +319,12 @@ return array(
             'translation' => array(
                 'key' => '指定了无效键翻译.',
                 'value' => '指定翻译的值无效.',
-            )
+            ),
+            'date' => array(
+                'dmy_date' => 'The :attribute does not match the format dd-mm-yyyy',
+                'cannot_future_date' => '出生日期不能在未来',
+                'invalid_date' => '出生日期不是一个有效日期',
+            ),
         ),
         'actionlist' => array(
             'change_password'           => '更改密码',

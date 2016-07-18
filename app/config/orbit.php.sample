@@ -243,8 +243,8 @@ return array(
         // will be used to determine the domain in angular ci
         'main_domain' => 'gotomalls.cool',
 
-        // will be used to determine the domain in mobile ci
-        'ci_domain' => 'gotomalls.cool',
+        // will be used to determine the domain in mobile ci prefix dot, example: .gotomalls.cool
+        'ci_domain' => '.gotomalls.cool',
     ),
 
     // General contact data

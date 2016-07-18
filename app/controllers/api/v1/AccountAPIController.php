@@ -392,7 +392,8 @@ class AccountAPIController extends ControllerAPI
     {
         $data = new stdClass();
 
-        $pmpAccounts = User::pmpAccounts();
+        $pmpAccounts = User::excludeDeleted('users')
+                            ->pmpAccounts();
 
         // Filter by mall name
         if (Input::get('mall_name')) {
