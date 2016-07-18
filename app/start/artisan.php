@@ -68,6 +68,9 @@ Artisan::add(new DeleteGuestViewItemUser);
 // DeleteGuestUser
 Artisan::add(new DeleteGuestUser);
 
+// DestroyMall
+Artisan::add(new DestroyMall);
+
 // Insert or update data on settings table
 // @Todo investigate why its error
 // Artisan::add(new MerchantSetting);
