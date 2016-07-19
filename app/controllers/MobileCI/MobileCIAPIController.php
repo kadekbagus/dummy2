@@ -82,6 +82,7 @@ use ListConnectedUser;
 use Helper\EloquentRecordCounter as RecordCounter;
 use MobileCI\ExCaptivePortalController as CaptivePortalController;
 use Orbit\Helper\Net\SessionPreparer;
+use Orbit\Database\ObjectID;
 
 class MobileCIAPIController extends BaseCIController
 {
@@ -2081,6 +2082,9 @@ class MobileCIAPIController extends BaseCIController
         switch ($landing[0]) {
             case 'tenant':
                 $landing_url = UrlBlock::blockedRoute('ci-tenant-list', [], $this->session);
+                break;
+            case 'service':
+                $landing_url = UrlBlock::blockedRoute('ci-service-list', [], $this->session);
                 break;
 
             case 'promotion':
@@ -9378,26 +9382,22 @@ class MobileCIAPIController extends BaseCIController
      */
     private function maybeJoinWithCategoryTranslationsTable($categories, $alternateLanguage)
     {
-        if (!empty($alternateLanguage)) {
-            // join to translations table so can use to search, sort, and overwrite fields
-            $prefix = DB::getTablePrefix();
+        // join to translations table so can use to search, sort, and overwrite fields
+        $prefix = DB::getTablePrefix();
 
-            $categories->leftJoin('category_translations', function ($join) use ($alternateLanguage) {
-                $join->on('categories.category_id', '=', 'category_translations.category_id');
-                $join->where('category_translations.merchant_language_id', '=',
-                    $alternateLanguage->language_id);
-                $join->where('category_translations.category_name', '!=', '');
-            });
-            $categories->select('categories.*')->orderBy('category_translations.category_name', 'ASC');
-            // and overwrite fields with alternate language fields if present
-            foreach (['category_name', 'description'] as $field) {
-                $categories->addSelect([
-                    DB::raw("COALESCE(${prefix}category_translations.${field}, ${prefix}categories.${field}) as ${field}")
-                ]);
-            }
-        } else {
-            $categories->orderBy('categories.category_name', 'ASC');
+        $categories->leftJoin('category_translations', function ($join) use ($alternateLanguage) {
+            $join->on('categories.category_id', '=', 'category_translations.category_id');
+            $join->where('category_translations.merchant_language_id', '=',
+                $alternateLanguage->language_id);
+            $join->where('category_translations.category_name', '!=', '');
+        });
+        // and overwrite fields with alternate language fields if present
+        foreach (['category_name', 'description'] as $field) {
+            $categories->addSelect([
+                DB::raw("COALESCE(${prefix}category_translations.${field}, ${prefix}categories.${field}) as ${field}")
+            ]);
         }
+        $categories->orderBy('category_name', 'ASC');
     }
 
     /**
@@ -9890,6 +9890,7 @@ class MobileCIAPIController extends BaseCIController
 
             foreach ($newTenantsCount as $counter) {
                 $viewedItems[] = array(
+                        'viewed_item_user_id' => (string)ObjectID::make(),
                         'item_id' => $counter,
                         'user_id' => $user->user_id,
                         'mall_id' => $retailer->merchant_id,
@@ -9907,6 +9908,7 @@ class MobileCIAPIController extends BaseCIController
 
             foreach ($newTenantsCount as $counter) {
                 $viewedItems[] = array(
+                        'viewed_item_user_id' => (string)ObjectID::make(),
                         'item_id' => $counter,
                         'user_id' => $user->user_id,
                         'mall_id' => $retailer->merchant_id,
@@ -9972,6 +9974,7 @@ class MobileCIAPIController extends BaseCIController
 
             foreach ($promotionData as $counter) {
                 $viewedItems[] = array(
+                        'viewed_item_user_id' => (string)ObjectID::make(),
                         'item_id' => $counter->news_id,
                         'user_id' => $user->user_id,
                         'mall_id' => $retailer->merchant_id,
@@ -10037,6 +10040,7 @@ class MobileCIAPIController extends BaseCIController
 
             foreach ($newsData as $counter) {
                 $viewedItems[] = array(
+                        'viewed_item_user_id' => (string)ObjectID::make(),
                         'item_id' => $counter->news_id,
                         'user_id' => $user->user_id,
                         'mall_id' => $retailer->merchant_id,
@@ -10122,6 +10126,7 @@ class MobileCIAPIController extends BaseCIController
 
             foreach ($couponData as $counter) {
                 $viewedItems[] = array(
+                        'viewed_item_user_id' => (string)ObjectID::make(),
                         'item_id' => $counter->promotion_id,
                         'user_id' => $user->user_id,
                         'mall_id' => $retailer->merchant_id,
@@ -10139,6 +10144,7 @@ class MobileCIAPIController extends BaseCIController
 
             foreach ($newLuckydrawsCount as $counter) {
                 $viewedItems[] = array(
+                        'viewed_item_user_id' => (string)ObjectID::make(),
                         'item_id' => $counter,
                         'user_id' => $user->user_id,
                         'mall_id' => $retailer->merchant_id,
@@ -10149,13 +10155,8 @@ class MobileCIAPIController extends BaseCIController
             }
         }
 
-        foreach ($viewedItems as $item) {
-            $insertViewedItems = new \ViewItemUser();
-            $insertViewedItems->item_id = $item['item_id'];
-            $insertViewedItems->user_id = $item['user_id'];
-            $insertViewedItems->mall_id = $item['mall_id'];
-            $insertViewedItems->item_type = $item['item_type'];
-            $insertViewedItems->save();
+        if (! empty($viewedItems)) {
+            \ViewItemUser::insert($viewedItems);
         }
     }
 
