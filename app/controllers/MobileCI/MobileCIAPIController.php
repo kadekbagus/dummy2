@@ -2585,7 +2585,9 @@ class MobileCIAPIController extends BaseCIController
                     'urlblock' => null,
                     'user' => $user,
                     'user_email' => $user->role->role_name !== 'Guest' ? $user->user_email : '',
-                    'languages' => $languages
+                    'languages' => $languages,
+                    'session' => $this->session,
+                    'is_logged_in' => UrlBlock::isLoggedIn($this->session),
                 ));
             }
 
@@ -3286,7 +3288,13 @@ class MobileCIAPIController extends BaseCIController
 
             if (empty($tenant)) {
                 // throw new Exception('Product id ' . $product_id . ' not found');
-                return View::make('mobile-ci.404', array('page_title'=>Lang::get('mobileci.page_title.not_found'), 'retailer'=>$retailer));
+                return View::make('mobile-ci.404', array(
+                    'page_title'=>Lang::get('mobileci.page_title.not_found'),
+                    'retailer'=>$retailer,
+                    'session' => $this->session,
+                    'is_logged_in' => UrlBlock::isLoggedIn($this->session),
+                    'languages' => $languages,
+                ));
             }
 
             if (empty($tenant->logo)) {
@@ -3503,15 +3511,21 @@ class MobileCIAPIController extends BaseCIController
                 }
             }
 
+            $languages = $this->getListLanguages($retailer);
+
             if (empty($service)) {
-                return View::make('mobile-ci.404', array('page_title'=>Lang::get('mobileci.page_title.not_found'), 'retailer'=>$retailer));
+                return View::make('mobile-ci.404', array(
+                    'page_title'=>Lang::get('mobileci.page_title.not_found'),
+                    'retailer'=>$retailer,
+                    'session' => $this->session,
+                    'is_logged_in' => UrlBlock::isLoggedIn($this->session),
+                    'languages' => $languages,
+                ));
             }
 
             if (empty($service->logo)) {
                 $service->logo = 'mobile-ci/images/default_tenants_directory.png';
             }
-
-            $languages = $this->getListLanguages($retailer);
 
             // cek if any language active
             if (!empty($alternateLanguage) && !empty($service)) {
@@ -5458,7 +5472,10 @@ class MobileCIAPIController extends BaseCIController
                                 'user'          => $user,
                                 'languages'     => $languages,
                                 'retailer'      => $retailer,
-                                'luckydraw'     => null
+                                'luckydraw'     => null,
+                                'session' => $this->session,
+                                'is_logged_in' => UrlBlock::isLoggedIn($this->session),
+                                'languages' => $languages,
                 ]);
             }
 
@@ -6458,7 +6475,13 @@ class MobileCIAPIController extends BaseCIController
                 ->first();
 
             if (empty($coupons)) {
-                return View::make('mobile-ci.404', array('page_title'=>Lang::get('mobileci.page_title.not_found'), 'retailer'=>$retailer, 'languages' => $languages));
+                return View::make('mobile-ci.404', array(
+                    'page_title'=>Lang::get('mobileci.page_title.not_found'),
+                    'retailer'=>$retailer,
+                    'session' => $this->session,
+                    'is_logged_in' => UrlBlock::isLoggedIn($this->session),
+                    'languages' => $languages,
+                ));
             }
 
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
@@ -7088,7 +7111,13 @@ class MobileCIAPIController extends BaseCIController
 
             if (empty($promotion)) {
                 // throw new Exception('Product id ' . $promotion_id . ' not found');
-                return View::make('mobile-ci.404', array('page_title'=>Lang::get('mobileci.page_title.not_found'), 'retailer'=>$retailer));
+                return View::make('mobile-ci.404', array(
+                    'page_title'=>Lang::get('mobileci.page_title.not_found'),
+                    'retailer'=>$retailer,
+                    'session' => $this->session,
+                    'is_logged_in' => UrlBlock::isLoggedIn($this->session),
+                    'languages' => $languages,
+                ));
             }
 
             if (empty($promotion->image)) {
@@ -7709,7 +7738,13 @@ class MobileCIAPIController extends BaseCIController
 
             if (empty($news)) {
                 // throw new Exception('Product id ' . $product_id . ' not found');
-                return View::make('mobile-ci.404', array('page_title'=>Lang::get('mobileci.page_title.not_found'), 'retailer'=>$retailer));
+                return View::make('mobile-ci.404', array(
+                    'page_title'=>Lang::get('mobileci.page_title.not_found'),
+                    'retailer'=>$retailer,
+                    'session' => $this->session,
+                    'is_logged_in' => UrlBlock::isLoggedIn($this->session),
+                    'languages' => $languages,
+                ));
             }
 
             if (empty($news->image)) {
@@ -7924,10 +7959,12 @@ class MobileCIAPIController extends BaseCIController
 
             if (! is_object($inbox)) {
                 return View::make('mobile-ci.404', [
-                                'page_title'    => Lang::get('mobileci.page_title.not_found'),
-                                'user'          => $user,
-                                'languages'     => $languages,
-                                'retailer'      => $retailer
+                    'page_title'    => Lang::get('mobileci.page_title.not_found'),
+                    'user'          => $user,
+                    'languages'     => $languages,
+                    'retailer'      => $retailer,
+                    'session' => $this->session,
+                    'is_logged_in' => UrlBlock::isLoggedIn($this->session)
                 ]);
             }
 
@@ -8039,10 +8076,12 @@ class MobileCIAPIController extends BaseCIController
 
             if (! is_object($luckyDraw)) {
                 return View::make('mobile-ci.404', [
-                                'page_title'    => Lang::get('mobileci.page_title.not_found'),
-                                'user'          => $user,
-                                'languages'     => $languages,
-                                'retailer'      => $retailer
+                    'page_title'    => Lang::get('mobileci.page_title.not_found'),
+                    'user'          => $user,
+                    'languages'     => $languages,
+                    'retailer'      => $retailer,
+                    'session' => $this->session,
+                    'is_logged_in' => UrlBlock::isLoggedIn($this->session),
                 ]);
             }
 
