@@ -644,23 +644,28 @@ class CouponAPIController extends ControllerAPI
             $campaignhistory->save();
 
             // save campaign history tenant
-            $withSpending = 'Y';
+            $withSpending = array('mall' => 'N', 'tenant' => 'Y');
             foreach ($linkToTenantIds as $retailer_id) {
+                $type = 'tenant';
                 $data = @json_decode($retailer_id);
                 $tenant_id = $data->tenant_id;
                 $mall_id = $data->mall_id;
 
                 // insert tenant/merchant to campaign history
-                $tenantstatus = CampaignLocation::select('status')->where('merchant_id', $tenant_id)->first();
+                $tenantstatus = CampaignLocation::select('status', 'object_type')->where('merchant_id', $tenant_id)->first();
                 $spendingrule = SpendingRule::select('with_spending')->where('object_id', $tenant_id)->first();
 
-                if ($spendingrule) {
-                    $withSpending = $spendingrule->with_spending;
-                } else {
-                    $withSpending = 'N';
+                if ($tenantstatus->object_type === 'mall') {
+                    $type = 'mall';
                 }
 
-                if (($tenantstatus->status === 'active') && ($withSpending === 'Y')) {
+                if ($spendingrule) {
+                    $spending = $spendingrule->with_spending;
+                } else {
+                    $spending = $withSpending[$type];
+                }
+
+                if (($tenantstatus->status === 'active') && ($spending === 'Y')) {
                     $addtenant = new CampaignHistory();
                     $addtenant->campaign_type = 'coupon';
                     $addtenant->campaign_id = $newcoupon->promotion_id;
@@ -1114,7 +1119,7 @@ class CouponAPIController extends ControllerAPI
             //check for add/remove tenant
             $removetenant = array_diff($retailerdb, $linktotenantnew);
             $addtenant = array_diff($linktotenantnew, $retailerdb);
-            $withSpending = 'Y';
+            $withSpending = array('mall' => 'N', 'tenant' => 'Y');
 
             if (! empty($removetenant)) {
                 $actionhistory = 'delete';
@@ -1122,16 +1127,21 @@ class CouponAPIController extends ControllerAPI
                 //save histories
                 foreach ($removetenant as $retailer_id) {
                     // insert tenant/merchant to campaign history
-                    $tenantstatus = CampaignLocation::select('status')->where('merchant_id', $retailer_id)->first();
+                    $type = 'tenant';
+                    $tenantstatus = CampaignLocation::select('status', 'object_type')->where('merchant_id', $retailer_id)->first();
                     $spendingrule = SpendingRule::select('with_spending')->where('object_id', $retailer_id)->first();
 
-                    if ($spendingrule) {
-                        $withSpending = $spendingrule->with_spending;
-                    } else {
-                        $withSpending = 'N';
+                    if ($tenantstatus->object_type === 'mall') {
+                        $type = 'mall';
                     }
 
-                    if (($tenantstatus->status === 'active') && ($withSpending === 'Y')) {
+                    if ($spendingrule) {
+                        $spending = $spendingrule->with_spending;
+                    } else {
+                        $spending = $withSpending[$type];
+                    }
+
+                    if (($tenantstatus->status === 'active') && ($spending === 'Y')) {
                         $tenanthistory = new CampaignHistory();
                         $tenanthistory->campaign_type = 'coupon';
                         $tenanthistory->campaign_id = $promotion_id;
@@ -1152,16 +1162,21 @@ class CouponAPIController extends ControllerAPI
                 //save histories
                 foreach ($addtenant as $retailer_id) {
                     // insert tenant/merchant to campaign history
-                    $tenantstatus = CampaignLocation::select('status')->where('merchant_id', $retailer_id)->first();
+                    $type = 'tenant';
+                    $tenantstatus = CampaignLocation::select('status', 'object_type')->where('merchant_id', $retailer_id)->first();
                     $spendingrule = SpendingRule::select('with_spending')->where('object_id', $retailer_id)->first();
 
-                    if ($spendingrule) {
-                        $withSpending = 'Y';
-                    } else {
-                        $withSpending = 'N';
+                    if ($tenantstatus->object_type === 'mall') {
+                        $type = 'mall';
                     }
 
-                    if (($tenantstatus->status === 'active') && ($withSpending === 'Y')) {
+                    if ($spendingrule) {
+                        $spending = $spendingrule->with_spending;
+                    } else {
+                        $spending = $withSpending[$type];
+                    }
+
+                    if (($tenantstatus->status === 'active') && ($spending === 'Y')) {
                         $tenanthistory = new CampaignHistory();
                         $tenanthistory->campaign_type = 'coupon';
                         $tenanthistory->campaign_id = $promotion_id;
