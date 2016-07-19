@@ -68,34 +68,36 @@ class SpendingCalculation
             $begin = date('Y-m-d', strtotime($begin_date));
             $end = date('Y-m-d', strtotime($end_date));
 
-            // only calculate spending when update date between start and date of campaign
-            if ($dateNowMall >= $begin && $dateNowMall <= $end) {
-                $daily = CampaignDailySpending::where('date', '=', $getspending->date_in_utc)->where('campaign_id', '=', $campaign_id)->where('mall_id', '=', $mall)->first();
+            if (! empty($getspending)) {
+                // only calculate spending when update date between start and date of campaign
+                if ($dateNowMall >= $begin && $dateNowMall <= $end) {
+                    $daily = CampaignDailySpending::where('date', '=', $getspending->date_in_utc)->where('campaign_id', '=', $campaign_id)->where('mall_id', '=', $mall)->first();
 
-                if ($daily['campaign_daily_spending_id']) {
-                    $dailySpending = CampaignDailySpending::find($daily['campaign_daily_spending_id']);
-                } else {
-                    $dailySpending = new CampaignDailySpending;
+                    if ($daily['campaign_daily_spending_id']) {
+                        $dailySpending = CampaignDailySpending::find($daily['campaign_daily_spending_id']);
+                    } else {
+                        $dailySpending = new CampaignDailySpending;
+                    }
+
+                    $dailySpending->date = $getspending->date_in_utc;
+                    $dailySpending->campaign_type = $campaign_type;
+                    $dailySpending->campaign_id = $campaign_id;
+                    $dailySpending->mall_id = $mall;
+                    $dailySpending->number_active_tenants = $getspending->campaign_number_tenant;
+                    $dailySpending->base_price = $getspending->base_price;
+                    $dailySpending->campaign_status = $getspending->campaign_status;
+                    $dailySpending->total_spending = $getspending->daily_cost;
+                    $dailySpending->save();
+
+                    if ($dailySpending) {
+                        \Log::info('*** Spending Calculation Queue for campaign_id : ' . $campaign_id . ' completed ***');
+                        DB::commit();
+                    } else {
+                        \Log::error('*** Spending Calculation Queue for campaign_id : ' . $campaign_id . ' error ***');
+                        DB::rollBack();
+                    }
                 }
-
-                $dailySpending->date = $getspending->date_in_utc;
-                $dailySpending->campaign_type = $campaign_type;
-                $dailySpending->campaign_id = $campaign_id;
-                $dailySpending->mall_id = $mall;
-                $dailySpending->number_active_tenants = $getspending->campaign_number_tenant;
-                $dailySpending->base_price = $getspending->base_price;
-                $dailySpending->campaign_status = $getspending->campaign_status;
-                $dailySpending->total_spending = $getspending->daily_cost;
-                $dailySpending->save();
-
-                if ($dailySpending) {
-                    \Log::info('*** Spending Calculation Queue for campaign_id : ' . $campaign_id . ' completed ***');
-                    DB::commit();
-                } else {
-                    \Log::error('*** Spending Calculation Queue for campaign_id : ' . $campaign_id . ' error ***');
-                    DB::rollBack();
-                }
-            }            
+            }
         }
 
         // Don't care if the job success or not we will provide user
