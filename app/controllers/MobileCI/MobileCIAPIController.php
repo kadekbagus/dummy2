@@ -2426,6 +2426,7 @@ class MobileCIAPIController extends BaseCIController
 
             $couponTenantRedeem = new stdclass();
             $couponTenantRedeem->linkedToTenant = FALSE;
+            $couponTenantRedeem->linkedToMall = FALSE;
             $couponTenantRedeem->linkedToCS = FALSE;
 
             // this is came fron my coupon (or issued coupon) page
@@ -2498,7 +2499,10 @@ class MobileCIAPIController extends BaseCIController
                 'coupon_id',
                 function ($pid) use ($tenants, $retailer, &$notfound, &$couponTenantRedeem, $mallid) {
                     if (! empty($pid)) {
-                        $coupon = \Coupon::leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
+                        $coupon = \Coupon::with(['linkToMalls' => function($q) use($mallid) {
+                                $q->where('merchants.merchant_id', $mallid);
+                            }])
+                            ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                             ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
                             ->where(function ($q) use ($mallid) {
                                     $q->where('merchants.parent_id', '=', $mallid)
@@ -2518,7 +2522,11 @@ class MobileCIAPIController extends BaseCIController
                         ->lists('retailer_id');
 
                         if (empty($retailers)) {
-                            $notfound = TRUE;
+                            if (empty($coupon->linkToMalls)) {
+                                $notfound = TRUE;
+                            } else {
+                                $couponTenantRedeem->linkedToMall = TRUE;
+                            }
                         } else {
                             $couponTenantRedeem->linkedToTenant = TRUE;
                             $tenants->whereIn('merchants.merchant_id', $retailers);
@@ -2589,6 +2597,10 @@ class MobileCIAPIController extends BaseCIController
                     'session' => $this->session,
                     'is_logged_in' => UrlBlock::isLoggedIn($this->session),
                 ));
+            }
+
+            if ($couponTenantRedeem->linkedToMall) {
+                return Redirect::route('ci-coupon-list');
             }
 
             OrbitInput::get(
