@@ -23,8 +23,6 @@ class SpendingCalculation
      */
     public function fire($job, $data)
     {
-        // Begin database transaction
-        DB::beginTransaction();
 
         $prefix = DB::getTablePrefix();
         $campaign_id = $data['campaign_id'];
@@ -43,9 +41,9 @@ class SpendingCalculation
                                 ->join('news', 'news.news_id', '=', 'news_merchant.news_id')
                                 ->where('news_merchant.news_id', $campaign_id)
                                 ->groupBy('mall_id')
-                                ->get();   
+                                ->get();
         }
-        
+
         foreach ($getMall as $listMall) {
             $mall = $listMall['mall_id'];
             $begin_date = $listMall['begin_date'];
@@ -69,6 +67,9 @@ class SpendingCalculation
             $end = date('Y-m-d', strtotime($end_date));
 
             if (! empty($getspending)) {
+                // Begin database transaction
+                DB::beginTransaction();
+
                 // only calculate spending when update date between start and date of campaign
                 if ($dateNowMall >= $begin && $dateNowMall <= $end) {
                     $daily = CampaignDailySpending::where('date', '=', $getspending->date_in_utc)->where('campaign_id', '=', $campaign_id)->where('mall_id', '=', $mall)->first();
