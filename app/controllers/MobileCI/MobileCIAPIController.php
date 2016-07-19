@@ -3285,6 +3285,7 @@ class MobileCIAPIController extends BaseCIController
                 }
             }
 
+            $languages = $this->getListLanguages($retailer);
 
             if (empty($tenant)) {
                 // throw new Exception('Product id ' . $product_id . ' not found');
@@ -3314,8 +3315,6 @@ class MobileCIAPIController extends BaseCIController
             }
             // set tenant facebook share url
             $tenant->facebook_share_url = $this->getFBShareDummyPage('tenant', $tenant->merchant_id, $alternateLanguage->language_id);
-
-            $languages = $this->getListLanguages($retailer);
 
             // cek if any language active
             if (!empty($alternateLanguage) && !empty($tenant)) {
@@ -5468,14 +5467,13 @@ class MobileCIAPIController extends BaseCIController
 
             if (empty($luckydraw)) {
                 return View::make('mobile-ci.404', [
-                                'page_title'    => Lang::get('mobileci.page_title.not_found'),
-                                'user'          => $user,
-                                'languages'     => $languages,
-                                'retailer'      => $retailer,
-                                'luckydraw'     => null,
-                                'session' => $this->session,
-                                'is_logged_in' => UrlBlock::isLoggedIn($this->session),
-                                'languages' => $languages,
+                    'page_title'    => Lang::get('mobileci.page_title.not_found'),
+                    'user'          => $user,
+                    'languages'     => $languages,
+                    'retailer'      => $retailer,
+                    'luckydraw'     => null,
+                    'session' => $this->session,
+                    'is_logged_in' => UrlBlock::isLoggedIn($this->session),
                 ]);
             }
 
@@ -7087,6 +7085,8 @@ class MobileCIAPIController extends BaseCIController
             $this->acquireUser($retailer, $user);
             Coupon::issueAutoCoupon($retailer, $user, $this->session);
 
+            $languages = $this->getListLanguages($retailer);
+
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
 
             $promotion_id = trim(OrbitInput::get('id'));
@@ -7187,8 +7187,6 @@ class MobileCIAPIController extends BaseCIController
                     }
                 }
             }
-
-            $languages = $this->getListLanguages($retailer);
 
             $activityPageNotes = sprintf('Page viewed: Promotion Detail, promotion Id: %s', $promotion_id);
             $activityPage->setUser($user)
@@ -7714,6 +7712,7 @@ class MobileCIAPIController extends BaseCIController
             $this->acquireUser($retailer, $user);
             Coupon::issueAutoCoupon($retailer, $user, $this->session);
 
+            $languages = $this->getListLanguages($retailer);
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
 
             $product_id = trim(OrbitInput::get('id'));
@@ -7815,8 +7814,6 @@ class MobileCIAPIController extends BaseCIController
                     }
                 }
             }
-
-            $languages = $this->getListLanguages($retailer);
 
             $activityPageNotes = sprintf('Page viewed: News Detail, news Id: %s', $product_id);
             $activityPage->setUser($user)
