@@ -2346,55 +2346,6 @@ class NewsAPIController extends ControllerAPI
             return true;
         });
 
-        // Check news name, it should not exists
-        Validator::extend('orbit.exists.news_name', function ($attribute, $value, $parameters) {
-
-            // this is for fixing OM-578
-            // can not make promotion if the name has already been used for news
-            $object_type = OrbitInput::post('object_type');
-            $mall_id = OrbitInput::post('current_mall');
-
-            if (empty($object_type)) {
-                $object_type = 'news';
-            }
-
-            $newsName = News::excludeDeleted()
-                    ->where('news_name', $value)
-                    ->where('object_type', $object_type)
-                    ->where('mall_id', $mall_id)
-                    ->first();
-
-            if (! empty($newsName)) {
-                return false;
-            }
-
-            App::instance('orbit.validation.news_name', $newsName);
-
-            return true;
-        });
-
-        // Check news name, it should not exists (for update)
-        Validator::extend('news_name_exists_but_me', function ($attribute, $value, $parameters) {
-            $news_id = trim(OrbitInput::post('news_id'));
-            $object_type = trim(OrbitInput::post('object_type'));
-            $mall_id = OrbitInput::post('current_mall');
-
-            $news = News::excludeDeleted()
-                        ->where('news_name', $value)
-                        ->where('news_id', '!=', $news_id)
-                        ->where('object_type', $object_type)
-                        ->where('mall_id', $mall_id)
-                        ->first();
-
-            if (! empty($news)) {
-                return false;
-            }
-
-            App::instance('orbit.validation.news_name', $news);
-
-            return true;
-        });
-
         // Check the existence of the news status
         Validator::extend('orbit.empty.news_status', function ($attribute, $value, $parameters) {
             $valid = false;
