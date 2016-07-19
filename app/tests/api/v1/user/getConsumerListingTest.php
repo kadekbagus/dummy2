@@ -9,7 +9,7 @@ use OrbitShop\API\v1\Helper\Generator;
 use Laracasts\TestDummy\Factory;
 use Faker\Factory as Faker;
 
-class getConsumerListingTestArtemisVersion extends TestCase
+class getConsumerListingTest extends TestCase
 {
     private $apiUrlList = 'api/v1/consumer/search';
 

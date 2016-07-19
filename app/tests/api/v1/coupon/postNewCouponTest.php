@@ -9,7 +9,7 @@ use OrbitShop\API\v1\Helper\Generator;
 use Laracasts\TestDummy\Factory;
 use Faker\Factory as Faker;
 
-class postNewCouponTestArtemisVersion extends TestCase
+class postNewCouponTest extends TestCase
 {
     private $apiUrl = '/api/v1/coupon/new';
 
@@ -118,11 +118,6 @@ class postNewCouponTestArtemisVersion extends TestCase
     public function testNewCouponDuplicateNameSuccess()
     {
         $coupon_satu = Factory::create('Coupon', ['promotion_name' => 'Coupon Satu TEST']);
-
-        $db_coupon = Coupon::excludeDeleted()
-                            ->first();
-
-        $this->assertSame('Coupon Satu TEST', $db_coupon->promotion_name);
 
         /*
         * test new coupon success
