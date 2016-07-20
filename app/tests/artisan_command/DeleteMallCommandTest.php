@@ -7,7 +7,7 @@ use \DestroyMall;
  *
  */
 class DeleteMallCommandTest extends TestCase {
-    
+
     public function setUp()
     {
         parent::setUp();
@@ -65,17 +65,53 @@ class DeleteMallCommandTest extends TestCase {
         $this->keyword = Factory::create('Keyword', [
             'merchant_id' => $mall->merchant_id
         ]);
-        // lucky_draw_receipts
-        $this->lucky_draw_receipt = Factory::create('LuckyDrawReceipt', [
-            'mall_id' => $mall->merchant_id
+        // keyword_object
+        $this->keyword_object = Factory::create('KeywordObject', [
+            'keyword_id' => $this->keyword->keyword_id,
+            'object_type' => 'tenant',
+            'object_id' => $mall->merchant_id
         ]);
         // lucky_draws
         $this->lucky_draw = Factory::create('LuckyDraw', [
             'mall_id' => $mall->merchant_id
         ]);
+        // lucky_draw_receipts
+        $this->lucky_draw_receipt = Factory::create('LuckyDrawReceipt', [
+            'mall_id' => $mall->merchant_id
+        ]);
+        // lucky_draw_announcements
+        $this->lucky_draw_announcement = Factory::create('LuckyDrawAnnouncement', [
+            'lucky_draw_id' => $this->lucky_draw->lucky_draw_id
+        ]);
+        // lucky_draw_numbers
+        $this->lucky_draw_number = Factory::create('LuckyDrawNumber', [
+            'lucky_draw_id' => $this->lucky_draw->lucky_draw_id
+        ]);
+        // lucky_draw_prize
+        $this->lucky_draw_prize = Factory::create('LuckyDrawPrize', [
+            'lucky_draw_id' => $this->lucky_draw->lucky_draw_id
+        ]);
+        // lucky_draw_translation
+        $this->lucky_draw_translations = Factory::create('LuckyDrawTranslation', [
+            'lucky_draw_id' => $this->lucky_draw->lucky_draw_id
+        ]);
+        // lucky_draw_winners
+        $this->lucky_draw_winner = Factory::create('LuckyDrawWinner', [
+            'lucky_draw_id' => $this->lucky_draw->lucky_draw_id,
+            'lucky_draw_number_id' => $this->lucky_draw_number->lucky_draw_numbers_id,
+            'lucky_draw_prize_id' => $this->lucky_draw_prize->lucky_draw_prize_id
+        ]);
+        // lucky_draw_announcement_translation
+        $this->lucky_draw_announcement_translations = Factory::create('LuckyDrawAnnouncementTranslation', [
+            'lucky_draw_announcement_id' => $this->lucky_draw_announcement->lucky_draw_announcement_id
+        ]);
         // membership
         $this->membership = Factory::create('Membership', [
             'merchant_id' => $mall->merchant_id
+        ]);
+        // membership_number
+        $this->membership_number = Factory::create('MembershipNumber', [
+            'membership_id' => $this->membership->membership_id,
         ]);
         // merchant_geofences
         $this->merchant_geofence = Factory::create('MerchantGeofence', [
@@ -85,8 +121,20 @@ class DeleteMallCommandTest extends TestCase {
         $this->merchant_language = Factory::create('MerchantLanguage', [
             'merchant_id' => $mall->merchant_id
         ]);
+        // merchant_translation
+        $this->merchant_translations = Factory::create('MerchantTranslation', [
+            'merchant_language_id' => $this->merchant_language->merchant_language_id
+        ]);
+        // setting_translation
+        $this->setting_translations = Factory::create('SettingTranslation', [
+            'merchant_language_id' => $this->merchant_language->merchant_language_id
+        ]);
+        // widget_translations
+        $this->widget_translations = Factory::create('WidgetTranslation', [
+            'merchant_language_id' => $this->merchant_language->merchant_language_id
+        ]);
         // merchant_page_views
-        $this->merchant_language = Factory::create('MerchantPageView', [
+        $this->merchant_page_views = Factory::create('MerchantPageView', [
             'location_id' => $mall->merchant_id
         ]);
         // merchant_social_media
@@ -137,10 +185,20 @@ class DeleteMallCommandTest extends TestCase {
         $this->widget = Factory::create('Widget', [
             'merchant_id' => $mall->merchant_id
         ]);
+        // widget_retailer
+        $this->widget_retailer = Factory::create('WidgetRetailer', [
+            'widget_id' => $this->widget->widget_id,
+            'retailer_id' => $mall->merchant_id
+        ]);
+        // setting
+        $this->setting = Factory::create('Setting', [
+            'setting_name' => 'enable_coupon_widget',
+            'object_id' => $mall->merchant_id,
+        ]);
     }
 
     public function testDeleteMallOK()
-    {   
+    {
         $cmd = new DestroyMall($this->mall->merchant_id, TRUE, 'yes');
         $cmd->fire();
 
@@ -158,11 +216,22 @@ class DeleteMallCommandTest extends TestCase {
         $this->assertNull(\ConnectionTime::where('location_id', $this->mall->merchant_id)->first());
         $this->assertNull(\Inbox::where('merchant_id', $this->mall->merchant_id)->first());
         $this->assertNull(\Keyword::where('merchant_id', $this->mall->merchant_id)->first());
+        $this->assertNull(\KeywordObject::where('object_id', $this->mall->merchant_id)->first());
         $this->assertNull(\LuckyDrawReceipt::where('mall_id', $this->mall->merchant_id)->first());
         $this->assertNull(\LuckyDraw::where('mall_id', $this->mall->merchant_id)->first());
+        $this->assertNull(\LuckyDrawAnnouncement::where('lucky_draw_id', $this->lucky_draw->lucky_draw_id)->first());
+        $this->assertNull(\LuckyDrawNumber::where('lucky_draw_id', $this->lucky_draw->lucky_draw_id)->first());
+        $this->assertNull(\LuckyDrawPrize::where('lucky_draw_id', $this->lucky_draw->lucky_draw_id)->first());
+        $this->assertNull(\LuckyDrawTranslation::where('lucky_draw_id', $this->lucky_draw->lucky_draw_id)->first());
+        $this->assertNull(\LuckyDrawWinner::where('lucky_draw_id', $this->lucky_draw->lucky_draw_id)->first());
+        $this->assertNull(\LuckyDrawAnnouncementTranslation::where('lucky_draw_announcement_id', $this->lucky_draw_announcement->lucky_draw_announcement_id)->first());
         $this->assertNull(\Membership::where('merchant_id', $this->mall->merchant_id)->first());
+        $this->assertNull(\MembershipNumber::where('membership_id', $this->membership->membership_id)->first());
         $this->assertNull(\MerchantGeofence::where('merchant_id', $this->mall->merchant_id)->first());
         $this->assertNull(\MerchantLanguage::where('merchant_id', $this->mall->merchant_id)->first());
+        $this->assertNull(\MerchantTranslation::where('merchant_language_id', $this->merchant_language->merchant_language_id)->first());
+        $this->assertNull(\SettingTranslation::where('merchant_language_id', $this->merchant_language->merchant_language_id)->first());
+        $this->assertNull(\WidgetTranslation::where('merchant_language_id', $this->merchant_language->merchant_language_id)->first());
         $this->assertNull(\MerchantPageView::where('location_id', $this->mall->merchant_id)->first());
         $this->assertNull(\MerchantSocialMedia::where('merchant_id', $this->mall->merchant_id)->first());
         $this->assertNull(\NewsMerchant::where('merchant_id', $this->mall->merchant_id)->first());
@@ -175,5 +244,7 @@ class DeleteMallCommandTest extends TestCase {
         $this->assertNull(\ViewItemUser::where('mall_id', $this->mall->merchant_id)->first());
         $this->assertNull(\WidgetClick::where('location_id', $this->mall->merchant_id)->first());
         $this->assertNull(\Widget::where('merchant_id', $this->mall->merchant_id)->first());
+        $this->assertNull(\WidgetRetailer::where('widget_id', $this->widget->widget_id)->first());
+        $this->assertNull(\Setting::where('object_id', $this->mall->merchant_id)->first());
     }
 }

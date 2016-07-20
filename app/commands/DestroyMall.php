@@ -94,15 +94,16 @@ class DestroyMall extends Command {
 
         echo ("\nDelete all " . $mall->name . " data in {$prefix}inboxes table ... ");
         DB::unprepared("
-            DELETE 
+            DELETE
             FROM {$prefix}inboxes WHERE merchant_id = '{$mallid}'
         ");
 
         echo ("\nDelete all " . $mall->name . " data in {$prefix}lucky_draws table ... ");
         DB::unprepared("
-            DELETE  {$prefix}lucky_draws, {$prefix}lucky_draw_announcements, {$prefix}lucky_draw_numbers, {$prefix}lucky_draw_prizes, {$prefix}lucky_draw_translations, {$prefix}lucky_draw_winners
-            FROM  {$prefix}lucky_draws 
+            DELETE  {$prefix}lucky_draws, {$prefix}lucky_draw_announcements, {$prefix}lucky_draw_numbers, {$prefix}lucky_draw_prizes, {$prefix}lucky_draw_translations, {$prefix}lucky_draw_winners, {$prefix}lucky_draw_announcement_translations
+            FROM  {$prefix}lucky_draws
             LEFT JOIN {$prefix}lucky_draw_announcements ON {$prefix}lucky_draw_announcements.lucky_draw_id = {$prefix}lucky_draws.lucky_draw_id
+            LEFT JOIN {$prefix}lucky_draw_announcement_translations ON {$prefix}lucky_draw_announcement_translations.lucky_draw_announcement_id = {$prefix}lucky_draw_announcements.lucky_draw_announcement_id
             LEFT JOIN {$prefix}lucky_draw_numbers ON {$prefix}lucky_draw_numbers.lucky_draw_id = {$prefix}lucky_draws.lucky_draw_id
             LEFT JOIN {$prefix}lucky_draw_prizes ON {$prefix}lucky_draw_prizes.lucky_draw_id = {$prefix}lucky_draws.lucky_draw_id
             LEFT JOIN {$prefix}lucky_draw_translations ON {$prefix}lucky_draw_translations.lucky_draw_id = {$prefix}lucky_draws.lucky_draw_id
@@ -112,39 +113,45 @@ class DestroyMall extends Command {
 
         echo ("\nDelete all " . $mall->name . " data in {$prefix}lucky_draw_receipts table ... ");
         DB::unprepared("
-            DELETE 
+            DELETE
             FROM {$prefix}lucky_draw_receipts WHERE mall_id = '{$mallid}'
         ");
 
         echo ("\nDelete all " . $mall->name . " data in {$prefix}memberships table ... ");
         DB::unprepared("
             DELETE {$prefix}memberships, {$prefix}membership_numbers
-            FROM {$prefix}memberships 
+            FROM {$prefix}memberships
             LEFT JOIN {$prefix}membership_numbers ON {$prefix}membership_numbers.membership_id = {$prefix}memberships.membership_id
             WHERE {$prefix}memberships.merchant_id = '{$mallid}'
         ");
 
         echo ("\nDelete all " . $mall->name . " data in {$prefix}merchant_geofences table ... ");
         DB::unprepared("
-            DELETE 
+            DELETE
             FROM {$prefix}merchant_geofences WHERE merchant_id = '{$mallid}'
         ");
 
         echo ("\nDelete all " . $mall->name . " data in {$prefix}merchant_languages table ... ");
         DB::unprepared("
-            DELETE 
-            FROM {$prefix}merchant_languages WHERE merchant_id = '{$mallid}'
+            DELETE {$prefix}merchant_languages, {$prefix}lucky_draw_announcement_translations, {$prefix}lucky_draw_translations, {$prefix}merchant_translations, {$prefix}setting_translations, {$prefix}widget_translations
+            FROM {$prefix}merchant_languages
+            LEFT JOIN {$prefix}lucky_draw_announcement_translations ON {$prefix}lucky_draw_announcement_translations.merchant_language_id = {$prefix}merchant_languages.merchant_language_id
+            LEFT JOIN {$prefix}lucky_draw_translations ON {$prefix}lucky_draw_translations.merchant_language_id = {$prefix}merchant_languages.merchant_language_id
+            LEFT JOIN {$prefix}merchant_translations ON {$prefix}merchant_translations.merchant_language_id = {$prefix}merchant_languages.merchant_language_id
+            LEFT JOIN {$prefix}setting_translations ON {$prefix}setting_translations.merchant_language_id = {$prefix}merchant_languages.merchant_language_id
+            LEFT JOIN {$prefix}widget_translations ON {$prefix}widget_translations.merchant_language_id = {$prefix}merchant_languages.merchant_language_id
+            WHERE {$prefix}merchant_languages.merchant_id = '{$mallid}'
         ");
 
         echo ("\nDelete all " . $mall->name . " data in {$prefix}merchant_page_views table ... ");
         DB::unprepared("
-            DELETE 
+            DELETE
             FROM {$prefix}merchant_page_views WHERE location_id = '{$mallid}'
         ");
 
         echo ("\nDelete all " . $mall->name . " data in {$prefix}merchant_social_media table ... ");
         DB::unprepared("
-            DELETE 
+            DELETE
             FROM {$prefix}merchant_social_media WHERE merchant_id = '{$mallid}'
         ");
 
@@ -153,7 +160,7 @@ class DestroyMall extends Command {
         $campaignActivity1 = '';
         $campaignActivity2 = '';
 
-        if ($campaign === "yes") { 
+        if ($campaign === "yes") {
             $campaign_1 = "{$prefix}news_merchant,
                 {$prefix}news_translations,
                 {$prefix}promotion_retailer,
@@ -168,18 +175,18 @@ class DestroyMall extends Command {
                 LEFT JOIN {$prefix}promotions ON {$prefix}promotions.merchant_id = {$prefix}merchants.merchant_id
                 LEFT JOIN {$prefix}campaign_base_prices ON {$prefix}campaign_base_prices.merchant_id = {$prefix}merchants.merchant_id";
 
-            $campaignActivity1 = "{$prefix}campaign_clicks, 
-                {$prefix}campaign_page_views, 
+            $campaignActivity1 = "{$prefix}campaign_clicks,
+                {$prefix}campaign_page_views,
                 {$prefix}campaign_popup_views,";
 
-            $campaignActivity2 = "LEFT JOIN {$prefix}campaign_clicks ON {$prefix}activities.activity_id = {$prefix}campaign_clicks.activity_id 
+            $campaignActivity2 = "LEFT JOIN {$prefix}campaign_clicks ON {$prefix}activities.activity_id = {$prefix}campaign_clicks.activity_id
                 LEFT JOIN {$prefix}campaign_page_views ON {$prefix}activities.activity_id = {$prefix}campaign_page_views.activity_id
                 LEFT JOIN {$prefix}campaign_popup_views ON {$prefix}activities.activity_id = {$prefix}campaign_popup_views.activity_id";
 
             echo ("\nDelete all " . $mall->name . " data in {$prefix}age_ranges table ... ");
             DB::unprepared("
                 DELETE {$prefix}age_ranges, {$prefix}campaign_age
-                FROM {$prefix}age_ranges 
+                FROM {$prefix}age_ranges
                 LEFT JOIN {$prefix}campaign_age ON {$prefix}age_ranges.age_range_id = {$prefix}campaign_age.age_range_id
                 WHERE {$prefix}age_ranges.merchant_id = '{$mallid}'
             ");
@@ -187,7 +194,7 @@ class DestroyMall extends Command {
             echo ("\nDelete all " . $mall->name . " data in {$prefix}keywords table ... ");
             DB::unprepared("
                 DELETE {$prefix}keywords, {$prefix}keyword_object
-                FROM {$prefix}keywords 
+                FROM {$prefix}keywords
                 LEFT JOIN {$prefix}keyword_object ON {$prefix}keyword_object.keyword_id = {$prefix}keywords.keyword_id
                 WHERE {$prefix}keywords.merchant_id = '{$mallid}'
             ");
@@ -200,13 +207,13 @@ class DestroyMall extends Command {
 
             echo ("\nDelete all " . $mall->name . " data in {$prefix}campaign_clicks table ... ");
             DB::unprepared("
-                DELETE 
+                DELETE
                 FROM {$prefix}campaign_clicks WHERE location_id = '{$mallid}'
             ");
 
             echo ("\nDelete all " . $mall->name . " data in {$prefix}campaign_daily_spendings table ... ");
             DB::unprepared("
-                DELETE 
+                DELETE
                 FROM {$prefix}campaign_daily_spendings WHERE mall_id = '{$mallid}'
             ");
 
@@ -266,13 +273,13 @@ class DestroyMall extends Command {
 
             echo ("\nDelete all " . $mall->name . " data in {$prefix}news_merchant table ... ");
             DB::unprepared("
-                DELETE 
+                DELETE
                 FROM {$prefix}news_merchant WHERE merchant_id = '{$mallid}'
             ");
 
             echo ("\nDelete all " . $mall->name . " data in {$prefix}news_translations table ... ");
             DB::unprepared("
-                DELETE 
+                DELETE
                 FROM {$prefix}news_translations WHERE merchant_id = '{$mallid}'
             ");
 
@@ -328,26 +335,26 @@ class DestroyMall extends Command {
 
             echo ("\nDelete all " . $mall->name . " data in {$prefix}news_merchant table ... ");
             DB::unprepared("
-                DELETE 
+                DELETE
                 FROM {$prefix}news_merchant WHERE merchant_id = '{$mallid}'
             ");
 
             echo ("\nDelete all " . $mall->name . " data in {$prefix}promotion_retailer table ... ");
             DB::unprepared("
-                DELETE 
+                DELETE
                 FROM {$prefix}promotion_retailer WHERE retailer_id = '{$mallid}'
             ");
 
             echo ("\nDelete all " . $mall->name . " data in {$prefix}promotion_retailer_redeem table ... ");
             DB::unprepared("
-                DELETE 
+                DELETE
                 FROM {$prefix}promotion_retailer_redeem WHERE retailer_id = '{$mallid}'
             ");
         }
 
         echo ("\nDelete all " . $mall->name . " data in {$prefix}activities table ... ");
         $sql_activity = "
-            DELETE {$prefix}activities, 
+            DELETE {$prefix}activities,
             " . $campaignActivity1 . "
             {$prefix}merchant_page_views,
             {$prefix}user_signin,
@@ -362,7 +369,7 @@ class DestroyMall extends Command {
         DB::unprepared($sql_activity);
 
         echo ("\nDelete all " . $mall->name . " data in {$prefix}merchants (tenant) table ... ");
-        $sql_merchant = "DELETE 
+        $sql_merchant = "DELETE
             {$prefix}merchants,
             {$prefix}age_ranges,
             {$prefix}carts,
@@ -396,7 +403,7 @@ class DestroyMall extends Command {
             {$prefix}widget_retailer,
             " . $campaign_1 . "
             {$prefix}widgets
-            FROM {$prefix}merchants 
+            FROM {$prefix}merchants
             " . $campaign_2 . "
             LEFT JOIN {$prefix}age_ranges ON {$prefix}age_ranges.merchant_id = {$prefix}merchants.merchant_id
             LEFT JOIN {$prefix}carts ON {$prefix}carts.merchant_id = {$prefix}merchants.merchant_id
@@ -434,7 +441,7 @@ class DestroyMall extends Command {
 
         echo ("\nDelete all " . $mall->name . " data in {$prefix}objects table ... ");
         DB::unprepared("
-            DELETE 
+            DELETE
             {$prefix}objects,
             {$prefix}activities,
             {$prefix}cart_coupons,
@@ -458,37 +465,37 @@ class DestroyMall extends Command {
 
         echo ("\nDelete all " . $mall->name . " data in {$prefix}user_merchant table ... ");
         DB::unprepared("
-            DELETE 
+            DELETE
             FROM {$prefix}user_merchant WHERE merchant_id = '{$mallid}'
         ");
 
         echo ("\nDelete all " . $mall->name . " data in {$prefix}user_signin table ... ");
         DB::unprepared("
-            DELETE 
+            DELETE
             FROM {$prefix}user_signin WHERE location_id = '{$mallid}'
         ");
 
         echo ("\nDelete all " . $mall->name . " data in {$prefix}user_verification_numbers table ... ");
         DB::unprepared("
-            DELETE 
+            DELETE
             FROM {$prefix}user_verification_numbers WHERE merchant_id = '{$mallid}'
         ");
 
         echo ("\nDelete all " . $mall->name . " data in {$prefix}viewed_item_user table ... ");
         DB::unprepared("
-            DELETE 
+            DELETE
             FROM {$prefix}viewed_item_user WHERE mall_id = '{$mallid}'
         ");
 
         echo ("\nDelete all " . $mall->name . " data in {$prefix}widget_clicks table ... ");
         DB::unprepared("
-            DELETE 
+            DELETE
             FROM {$prefix}widget_clicks WHERE location_id = '{$mallid}'
         ");
 
         echo ("\nDelete all " . $mall->name . " data in {$prefix}widgets table ... ");
         DB::unprepared("
-            DELETE 
+            DELETE
             {$prefix}widgets,
             {$prefix}widget_clicks,
             {$prefix}widget_retailer,
@@ -502,13 +509,13 @@ class DestroyMall extends Command {
 
         echo ("\nDelete all " . $mall->name . " data in {$prefix}settings table ... ");
         DB::unprepared("
-            DELETE 
+            DELETE
             FROM {$prefix}settings WHERE object_id = '{$mallid}' or setting_value = '{$mallid}'
         ");
 
         echo ("\nDelete all " . $mall->name . " data in {$prefix}merchants (mall) table ... ");
         DB::unprepared("
-            DELETE 
+            DELETE
             FROM {$prefix}merchants WHERE merchant_id = '{$mallid}'
         ");
 
