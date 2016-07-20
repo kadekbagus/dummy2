@@ -155,6 +155,12 @@ class DestroyMall extends Command {
             FROM {$prefix}merchant_social_media WHERE merchant_id = '{$mallid}'
         ");
 
+        echo ("\nDelete all " . $mall->name . " data in {$prefix}employee_retailer table ... ");
+        DB::unprepared("
+            DELETE
+            FROM {$prefix}employee_retailer WHERE retailer_id = '{$mallid}'
+        ");
+
         $campaign_1 = '';
         $campaign_2 = '';
         $campaignActivity1 = '';
@@ -542,7 +548,7 @@ class DestroyMall extends Command {
     {
         return array(
             array('merchant_id', null, InputOption::VALUE_REQUIRED, 'Mall or Merchant ID.'),
-            array('with_campaign', null, InputOption::VALUE_REQUIRED, 'Delete campaign data (news, promotion, coupon) [yes|no]'),
+            array('with_campaign', null, InputOption::VALUE_OPTIONAL, 'Delete campaign data (news, promotion, coupon) [yes|no]', 'no'),
             array('yes', null, InputOption::VALUE_NONE, 'Confirmation to delete mall data'),
         );
     }
