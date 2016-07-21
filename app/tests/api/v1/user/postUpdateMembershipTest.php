@@ -9,7 +9,7 @@ use OrbitShop\API\v1\Helper\Generator;
 use Laracasts\TestDummy\Factory;
 use Faker\Factory as Faker;
 
-class postUpdateMembershipTestArtemisVersion extends TestCase
+class postUpdateMembershipTest extends TestCase
 {
     private $apiUrlUpdate = 'api/v1/membership/update';
 
