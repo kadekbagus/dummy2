@@ -205,7 +205,7 @@ class CouponAPIController extends ControllerAPI
                     'is_popup'            => $is_popup,
                 ),
                 array(
-                    'promotion_name'          => 'required|max:255|orbit.exists.coupon_name',
+                    'promotion_name'          => 'required|max:255',
                     'promotion_type'          => 'required|orbit.empty.coupon_type',
                     'begin_date'              => 'required|date_format:Y-m-d H:i:s',
                     'end_date'                => 'required|date_format:Y-m-d H:i:s',
@@ -1007,7 +1007,7 @@ class CouponAPIController extends ControllerAPI
                 $data,
                 array(
                     'promotion_id'            => 'required|orbit.update.coupon',
-                    'promotion_name'          => 'sometimes|required|max:255|coupon_name_exists_but_me',
+                    'promotion_name'          => 'sometimes|required|max:255',
                     'promotion_type'          => 'orbit.empty.coupon_type',
                     'status'                  => 'orbit.empty.coupon_status',
                     'begin_date'              => 'date_format:Y-m-d H:i:s',
@@ -1026,7 +1026,6 @@ class CouponAPIController extends ControllerAPI
                     'is_all_age'              => 'required|orbit.empty.is_all_age',
                 ),
                 array(
-                    'coupon_name_exists_but_me' => Lang::get('validation.orbit.exists.coupon_name'),
                     'rule_value.required'       => 'The amount to obtain is required',
                     'rule_value.numeric'        => 'The amount to obtain must be a number',
                     'rule_value.min'            => 'The amount to obtain must be greater than zero',
@@ -3530,44 +3529,6 @@ class CouponAPIController extends ControllerAPI
             return TRUE;
         });
 
-        // Check coupon name, it should not exists
-        Validator::extend('orbit.exists.coupon_name', function ($attribute, $value, $parameters) {
-            $merchant_id = OrbitInput::post('current_mall');
-
-            $couponName = Coupon::excludeDeleted()
-                        ->where('promotion_name', $value)
-                        ->where('merchant_id', $merchant_id)
-                        ->first();
-
-            if (! empty($couponName)) {
-                return FALSE;
-            }
-
-            App::instance('orbit.validation.coupon_name', $couponName);
-
-            return TRUE;
-        });
-
-        // Check coupon name, it should not exists (for update)
-        Validator::extend('coupon_name_exists_but_me', function ($attribute, $value, $parameters) {
-            $promotion_id = trim(OrbitInput::post('promotion_id'));
-            $merchant_id = OrbitInput::post('current_mall');
-
-            $coupon = Coupon::excludeDeleted()
-                        ->where('promotion_name', $value)
-                        ->where('promotion_id', '!=', $promotion_id)
-                        ->where('merchant_id', $merchant_id)
-                        ->first();
-
-            if (! empty($coupon)) {
-                return FALSE;
-            }
-
-            App::instance('orbit.validation.coupon_name', $coupon);
-
-            return TRUE;
-        });
-
         // Check the existence of the coupon status
         Validator::extend('orbit.empty.coupon_status', function ($attribute, $value, $parameters) {
             $valid = false;
@@ -3955,27 +3916,8 @@ class CouponAPIController extends ControllerAPI
                     }
                 }
                 if (empty($existing_translation)) {
-                    if (! empty(trim($translations->promotion_name))) {
-                        $coupon_translation = CouponTranslation::excludeDeleted()
-                                                    ->where('merchant_language_id', '=', $merchant_language_id)
-                                                    ->where('promotion_name', '=', $translations->promotion_name)
-                                                    ->first();
-                        if (! empty($coupon_translation)) {
-                            OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.exists.coupon_name'));
-                        }
-                    }
                     $operations[] = ['create', $merchant_language_id, $translations];
                 } else {
-                    if (! empty(trim($translations->promotion_name))) {
-                        $coupon_translation_but_not_me = CouponTranslation::excludeDeleted()
-                                                    ->where('merchant_language_id', '=', $merchant_language_id)
-                                                    ->where('promotion_id', '!=', $coupon->promotion_id)
-                                                    ->where('promotion_name', '=', $translations->promotion_name)
-                                                    ->first();
-                        if (! empty($coupon_translation_but_not_me)) {
-                            OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.exists.coupon_name'));
-                        }
-                    }
                     $operations[] = ['update', $existing_translation, $translations];
                 }
             }
