@@ -21,6 +21,7 @@ return array(
     'AlterTableActivitiesAddObjectDisplayNameColumn' => $baseDir . '/app/database/migrations/2015_12_11_062518_alter_table_activities_add_object_display_name_column.php',
     'AlterTableActivitiesChangeSessionId' => $baseDir . '/app/database/migrations/2016_04_14_121551_alter_table_activities_change_session_id.php',
     'AlterTableCampaignAccountAddFieldAccountName' => $baseDir . '/app/database/migrations/2016_03_23_032853_alter_table_campaign_account_add_field_account_name.php',
+    'AlterTableCampaignAccountAddFieldAccountTypeId' => $baseDir . '/app/database/migrations/2016_07_21_080808_alter_table_campaign_account_add_field_account_type_id.php',
     'AlterTableCampaignAccountAddFieldPosition' => $baseDir . '/app/database/migrations/2016_03_24_022903_alter_table_campaign_account_add_field_position.php',
     'AlterTableCampaignDailySpendingsAddCampaignStatus' => $baseDir . '/app/database/migrations/2016_03_30_023044_alter_table_campaign_daily_spendings_add_campaign_status.php',
     'AlterTableCampaignHistoriesAddField' => $baseDir . '/app/database/migrations/2016_01_18_081524_alter_table_campaign_histories_add_field.php',
