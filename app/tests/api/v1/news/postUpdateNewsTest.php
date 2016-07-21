@@ -147,6 +147,13 @@ class postUpdateNewsTest extends TestCase {
         return $response;
     }
 
+    public function tearDown()
+    {
+        $this->useTruncate = false;
+
+        parent::tearDown();
+    }
+
     public function testOK_update_news_with_two_tenant()
     {
         Factory::create('NewsTranslation', [
@@ -378,6 +385,76 @@ class postUpdateNewsTest extends TestCase {
 
         $this->assertSame(14, $response->code);
         $this->assertSame('news default name and description is required', strtolower($response->message));
+    
+    }
+
+    public function testOK_update_news_with_same_translation()
+    {
+        Factory::create('NewsTranslation', [
+            'news_id' => $this->news->news_id, 
+            'merchant_id' => $this->mall_1->merchant_id,
+            'merchant_language_id' => $this->merchantLanguages['english']->language_id
+        ]);
+        Factory::create('NewsTranslation', [
+            'news_id' => $this->news->news_id, 
+            'merchant_id' => $this->mall_2->merchant_id,
+            'merchant_language_id' => $this->merchantLanguages['japanese']->language_id
+        ]);
+        Factory::create('NewsTranslation', [
+            'news_id' => $this->news->news_id, 
+            'merchant_id' => $this->mall_1->merchant_id,
+            'merchant_language_id' => $this->merchantLanguages['chinese']->language_id
+        ]);
+        Factory::create('NewsTranslation', [
+            'news_id' => $this->news->news_id, 
+            'merchant_id' => $this->mall_2->merchant_id,
+            'merchant_language_id' => $this->merchantLanguages['indonesia']->language_id
+        ]);
+
+        $translations_detil_1 = [
+            'news_name' => 'aaa',
+            'description' => 'aaa',
+        ];
+        $translations_detil_2 = [
+            'news_name' => 'bbb',
+            'description' => 'bbb',
+        ];
+        $translations_detil_3 = [
+            'news_name' => '',
+            'description' => '',
+        ];
+        $translations_detil_4 = [
+            'news_name' => Faker::create()->sentence(3),
+            'description' => Faker::create()->sentence(3),
+        ];
+        $translations = [
+            $this->merchantLanguages['english']->language_id => $translations_detil_1,
+            $this->merchantLanguages['indonesia']->language_id => $translations_detil_2,
+        ];
+
+        $linkTo1 = [
+            'tenant_id' => $this->tenant_1->merchant_id,
+            'mall_id' => $this->tenant_1->parent_id,
+        ];
+        $linkTo2 = [
+            'tenant_id' => $this->tenant_2->merchant_id,
+            'mall_id' => $this->tenant_2->parent_id,
+        ];
+        $tenants = array($linkTo1, $linkTo2);
+        $response = $this->makeRequest($tenants, $translations);
+
+        $this->assertSame(0, $response->code);
+        $this->assertSame('Request OK', $response->message);
+
+        $translations = [
+            $this->merchantLanguages['english']->language_id => $translations_detil_1,
+            $this->merchantLanguages['japanese']->language_id => $translations_detil_2,
+        ];
+
+        $response = $this->makeRequest($tenants, $translations);
+
+        $this->assertSame(0, $response->code);
+        $this->assertSame('Request OK', $response->message);
     
     }
 }

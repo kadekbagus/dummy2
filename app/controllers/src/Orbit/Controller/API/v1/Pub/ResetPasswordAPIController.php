@@ -94,7 +94,14 @@ class ResetPasswordAPIController extends ControllerAPI
 
             // Update user password and activate them
             $user->user_password = Hash::make($password);
-            $user->status = 'active';
+
+            //Bug fix OM-2249: we do not update user status automatically after reset
+            //because we allow non active user to reset their password
+            //Following old code cause pending user to activate their
+            //account by resetting their password without going to proper
+            //user activation steps
+            //$user->status = 'active';
+
             $user->save();
 
             $this->response->message = Lang::get('statuses.orbit.updated.your_password');

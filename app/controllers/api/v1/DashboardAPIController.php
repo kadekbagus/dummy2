@@ -4848,6 +4848,7 @@ class DashboardAPIController extends ControllerAPI
                         from {$tablePrefix}user_signin
                         where location_id = ?
                             and created_at between ? and ?
+                            and signin_via != 'guest'
                         group by 1
                         order by 1
                         ", array($merchant_id, $start_date, $end_date));
