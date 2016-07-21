@@ -3180,12 +3180,25 @@ class ActivityAPIController extends ControllerAPI
                                     os.sequence_number <= ((DATEDIFF(DATE_FORMAT({$quote($mallenddate)}, '%Y-%m-%d'), DATE_FORMAT({$quote($mallbegindate)}, '%Y-%m-%d'))))
                                     ) AS mydate
                                 LEFT JOIN
-                                    (select activity_id, activity_name_long, role, date_format(convert_tz(created_at, '+00:00', {$quote($timezoneOffset)}), '%Y-%m-%d') as createdat from {$tablePrefix}activities
-                                    where (`group` = 'mobile-ci'
-                                            or (`group` = 'portal' and activity_type in ('activation','create'))
-                                            or (`group` = 'cs-portal' and activity_type in ('registration')))
-                                            and response_status = 'OK' and location_id = {$quote($current_mall)}
-                                            and created_at between {$quote($start_date)} and {$quote($end_date)}) as oa
+                                    (
+                                        select activity_id, activity_name_long, role, date_format(convert_tz(created_at, '+00:00', {$quote($timezoneOffset)}), '%Y-%m-%d') as createdat from {$tablePrefix}activities
+                                        where (`group` = 'mobile-ci'
+                                                or (`group` = 'portal' and activity_type in ('activation','create'))
+                                                or (`group` = 'cs-portal' and activity_type in ('registration')))
+                                                and response_status = 'OK' and location_id = {$quote($current_mall)}
+                                                and created_at between {$quote($start_date)} and {$quote($end_date)}
+                                                and activity_name_long not like '%Sign In%'
+
+                                        UNION
+
+                                        select activity_id, activity_name_long, role, date_format(convert_tz(created_at, '+00:00', {$quote($timezoneOffset)}), '%Y-%m-%d') as createdat from {$tablePrefix}activities
+                                        where (`group` = 'mobile-ci'
+                                                or (`group` = 'portal' and activity_type in ('activation','create'))
+                                                or (`group` = 'cs-portal' and activity_type in ('registration')))
+                                                and response_status = 'OK' and location_id = {$quote($current_mall)}
+                                                and created_at between {$quote($start_date)} and {$quote($end_date)}
+                                                and (activity_name_long like '%Sign In%' and role != 'Guest')
+                                    ) as oa
                                 ON mydate.comp_date = oa.createdat
                             GROUP BY comp_date, 2
                         ) dt

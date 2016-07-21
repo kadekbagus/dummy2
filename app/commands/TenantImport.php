@@ -65,6 +65,15 @@ class TenantImport extends Command {
 
             $data = $this->readJSON($fileName);
             $data['tenant_name'] = trim($data['tenant_name']);
+            $data['floor'] = trim($data['floor']);
+            $data['unit'] = trim($data['unit']);
+            $data['facebook_id'] = trim($data['facebook_id']);
+            $data['url'] = trim($data['url']);
+            $data['phone_number'] = trim($data['phone_number']);
+            $data['status'] = trim($data['status']);
+            $data['images']['tenant_logo'] = trim($data['images']['tenant_logo']);
+            $data['images']['tenant_image'] = trim($data['images']['tenant_image']);
+            $data['images']['image_map'] = trim($data['images']['image_map']);
 
             $mall = Mall::excludeDeleted()->where('merchant_id', '=', $merchantId)->first();
 
@@ -76,7 +85,9 @@ class TenantImport extends Command {
                 }
 
                 foreach ($data['categories'] as $category_name) {
-                    $category = Category::where('merchant_id', 0)->where('category_name', $category_name)->first();
+                    $category_name = trim($category_name);
+                    $category = Category::where('merchant_id', '0')->where('category_name', $category_name)->first();
+
                     if (empty($category)) {
                         throw new Exception(sprintf('ERROR: Category "%s" for tenant "%s" is not exist.', $category_name, $data['tenant_name']));
                     }
@@ -103,7 +114,7 @@ class TenantImport extends Command {
                 }
 
                 foreach ($data['description'] as $desc) {
-                    $language =  Language::where('name', '=', $desc['language'])->first();
+                    $language =  Language::where('name', '=', trim($desc['language']))->first();
                     if (empty($language)) {
                         throw new Exception('Language is not exist.');
                     }
@@ -124,7 +135,7 @@ class TenantImport extends Command {
                 $newtenant->orid = '';
                 $newtenant->email = '';
                 $newtenant->name = $data['tenant_name'];
-                $newtenant->description = $data['description'][0]['content'];
+                $newtenant->description = trim($data['description'][0]['content']);
                 $newtenant->phone = $data['phone_number'];
                 $newtenant->parent_id = $merchantId;
                 $newtenant->url = $data['url'];
@@ -210,7 +221,7 @@ class TenantImport extends Command {
                 }
 
                 foreach ($data['description'] as $desc) {
-                    $language =  Language::where('name', '=', $desc['language'])->first();
+                    $language =  Language::where('name', '=', trim($desc['language']))->first();
 
                     $merchantLanguage = MerchantLanguage::where('merchant_id', '=', $merchantId)
                                                         ->where('status', '=', 'active')
@@ -220,7 +231,7 @@ class TenantImport extends Command {
                     $tenantTranslation = new MerchantTranslation();
                     $tenantTranslation->merchant_id = $newtenant->merchant_id;
                     $tenantTranslation->merchant_language_id = $language->language_id;
-                    $tenantTranslation->description = $desc['content'];
+                    $tenantTranslation->description = trim($desc['content']);
                     $tenantTranslation->status = 'active';
                     if (! $tenantTranslation->save()) {
                         throw new Exception( sprintf('Insert Tenant Translation %s Failed!', $data['tenant_name']) );

@@ -319,7 +319,12 @@ return array(
             'translation' => array(
                 'key' => '翻訳のための無効なキーが指定されました.',
                 'value' => '翻訳のための無効な値が指定されました.',
-            )
+            ),
+            'date' => array(
+                'dmy_date' => 'The :attribute does not match the format dd-mm-yyyy',
+                'cannot_future_date' => '誕生日は将来の日付にすることはできません',
+                'invalid_date' => '生年月日は有効な日付ではありません',
+            ),
         ),
         'actionlist' => array(
             'change_password'           => 'パスワードを変更する',

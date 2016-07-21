@@ -274,7 +274,12 @@ return array(
             'translation' => array(
                 'key' => 'Terdapat key yang invalid untuk terjemahan.',
                 'value' => 'Terdapat value yang invalid untuk terjemahan.',
-            )
+            ),
+            'date' => array(
+                'dmy_date' => 'Format tanggal tidak sesuai dd-mm-yyyy',
+                'cannot_future_date' => 'Tanggal lahir tidak bisa tanggal di masa depan',
+                'invalid_date' => 'Tanggal lahir merupakan tanggal yang tidak valid',
+            ),
         ),
         'actionlist' => array(
             'change_password'           => 'update password',

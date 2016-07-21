@@ -2,6 +2,7 @@
 	@yield('mall-fb-footer')
     <div class="row text-center">
     	<div class="col-xs-12">
+            <span>{{ 'v' . ORBIT_APP_VERSION }}</span>
 	    	@if(Config::get('orbit.contact_information.privacy_policy_url'))
 	        	<span> . <a target="_blank" href="{{ Config::get('orbit.contact_information.privacy_policy_url') }}">Privacy Policy</a></span>
 	        @endif
