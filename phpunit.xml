@@ -64,30 +64,30 @@
             <file>./app/tests/api/v1/tenant/getSearchTenantStoreAndServiceTest.php</file>
             <file>./app/tests/api/v1/tenant/postNewTenantStoreAndServiceTest.php</file>
             <file>./app/tests/api/v1/tenant/postUpdateTenantStoreAndServiceTest.php</file>
-            <file>./app/tests/api/v1/category/postNewCategoryTestArtemisVersion.php</file>
-            <file>./app/tests/api/v1/category/getSearchCategoryTestArtemisVersion.php</file>
-            <file>./app/tests/api/v1/category/postUpdateCategoryTestArtemisVersion.php</file>
-            <file>./app/tests/api/v1/category/postDeleteCategoryTestArtemisVersion.php</file>
-            <file>./app/tests/api/v1/category/postTenantTestLinkToTenantCategoryTestArtemisVersion.php</file>
+            <file>./app/tests/api/v1/category/postNewCategoryTest.php</file>
+            <file>./app/tests/api/v1/category/getSearchCategoryTest.php</file>
+            <file>./app/tests/api/v1/category/postUpdateCategoryTest.php</file>
+            <file>./app/tests/api/v1/category/postDeleteCategoryTest.php</file>
+            <file>./app/tests/api/v1/category/postTenantTestLinkToTenantCategoryTest.php</file>
             <file>./app/tests/api/v1/promotion/getPromotionListMobileCITest.php</file>
             <file>./app/tests/api/v1/promotion/getPromotionDetailMobileCITest.php</file>
-            <file>./app/tests/api/v1/mall/postNewMallTestArtemisVersion.php</file>
-            <file>./app/tests/api/v1/mall/getSearchMallTestArtemisVersion.php</file>
-            <file>./app/tests/api/v1/mall/postUpdateMallTestArtemisVersion.php</file>
+            <file>./app/tests/api/v1/mall/postNewMallTest.php</file>
+            <file>./app/tests/api/v1/mall/getSearchMallTest.php</file>
+            <file>./app/tests/api/v1/mall/postUpdateMallTest.php</file>
             <file>./app/tests/api/v1/news/getNewsListMobileCITest.php</file>
             <file>./app/tests/api/v1/news/getNewsDetailMobileCITest.php</file>
-            <file>./app/tests/api/v1/user/getConsumerListingTestArtemisVersion.php</file>
+            <file>./app/tests/api/v1/user/getConsumerListingTest.php</file>
             <file>./app/tests/api/v1/tenant/getServiceListAngularCITest.php</file>
             <file>./app/tests/api/v1/tenant/getServiceDetailAngularCITest.php</file>
-            <file>./app/tests/api/v1/tenant/postNewTenantTestArtemisVersion.php</file>
-            <file>./app/tests/api/v1/tenant/postUpdateTenantTestArtemisVersion.php</file>
+            <file>./app/tests/api/v1/tenant/postNewTenantTest.php</file>
+            <file>./app/tests/api/v1/tenant/postUpdateTenantTest.php</file>
             <file>./app/tests/api/v1/news/getSearchNewsTest.php</file>
             <file>./app/tests/api/v1/news/postNewNewsTest.php</file>
             <file>./app/tests/api/v1/news/postUpdateNewsTest.php</file>
             <file>./app/tests/api/v1/promotion/getSearchPromotion.php</file>
             <file>./app/tests/api/v1/promotion/postNewPromotion.php</file>
             <file>./app/tests/api/v1/promotion/postUpdatePromotion.php</file>
-			<file>./app/tests/api/v1/user/postUpdateMembershipTestArtemisVersion.php</file>
+			<file>./app/tests/api/v1/user/postUpdateMembershipTest.php</file>
             <file>./app/tests/api/v1/dashboard/getCustomerTodayDashboardTest.php</file>
             <file>./app/tests/api/v1/dashboard/getCustomerGenderDashboardTest.php</file>
             <file>./app/tests/api/v1/dashboard/getCustomerAgeRangeDashboardTest.php</file>

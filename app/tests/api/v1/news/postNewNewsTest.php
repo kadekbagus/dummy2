@@ -127,6 +127,13 @@ class postNewNewsTest extends TestCase {
         return $response;
     }
 
+    public function tearDown()
+    {
+        $this->useTruncate = false;
+
+        parent::tearDown();
+    }
+
     public function testOK_new_news_with_one_tenant()
     {
         $translations_detil = [
@@ -167,6 +174,7 @@ class postNewNewsTest extends TestCase {
             'tenant_id' => $this->tenant_1->merchant_id,
             'mall_id' => $this->tenant_1->parent_id,
         ];
+
         $tenants = array($linkTo1);
         $response = $this->makeRequest($tenants, $translations);
 
@@ -399,5 +407,52 @@ class postNewNewsTest extends TestCase {
         $this->assertSame(14, $response->code);
         $this->assertSame('news default name and description is required', strtolower($response->message));
     
+    }
+
+    public function testOK_new_news_with_same_translation()
+    {
+        // news translation can be the same
+        $translations_detil_1 = [
+            'news_name' => 'aaa',
+            'description' => 'aaa',
+        ];
+        $translations_detil_2 = [
+            'news_name' => 'bbb',
+            'description' => 'bbb',
+        ];
+        $translations_detil_3 = [
+            'news_name' => '',
+            'description' => '',
+        ];
+        $translations_detil_4 = [
+            'news_name' => Faker::create()->sentence(3),
+            'description' => Faker::create()->sentence(3),
+        ];
+        $translations = [
+            $this->merchantLanguages['english']->language_id => $translations_detil_1,
+            $this->merchantLanguages['indonesia']->language_id => $translations_detil_2,
+        ];
+
+        $linkTo1 = [
+            'tenant_id' => $this->tenant_1->merchant_id,
+            'mall_id' => $this->tenant_1->parent_id,
+        ];
+        $linkTo2 = [
+            'tenant_id' => $this->tenant_2->merchant_id,
+            'mall_id' => $this->tenant_2->parent_id,
+        ];
+        $tenants = array($linkTo1, $linkTo2);
+        $response = $this->makeRequest($tenants, $translations);
+        $this->assertSame(0, $response->code);
+        $this->assertSame('Request OK', $response->message);
+
+        $translations = [
+            $this->merchantLanguages['english']->language_id => $translations_detil_1,
+            $this->merchantLanguages['japanese']->language_id => $translations_detil_2,
+        ];
+
+        $response = $this->makeRequest($tenants, $translations);
+        $this->assertSame(0, $response->code);
+        $this->assertSame('Request OK', $response->message);
     }
 }
