@@ -1,259 +1,371 @@
 <?php
 /**
- * PHP Unit Test for Category Controller getSearchCategory
+ * PHP Unit Test for Category API Controller getSearchCategory
  *
- * @author: Yudi Rahono <yudi.rahono@dominopos.com>
+ * @author: Irianto Pratama <irianto@dominopos.com>
  */
-use DominoPOS\OrbitAPI\v10\StatusInterface as Status;
+
 use OrbitShop\API\v1\Helper\Generator;
 use Laracasts\TestDummy\Factory;
+use Faker\Factory as Faker;
 
 class getSearchCategoryTest extends TestCase
 {
-    private $baseUrl = '/api/v1/family/search/';
+    private $apiUrlNew = '/api/v1/category/new';
+    private $apiUrlList = '/api/v1/category/list';
 
     public function setUp()
     {
         parent::setUp();
 
-        DB::beginTransaction();
-        $this->authData   = Factory::create('Apikey', ['user_id' => 'factory:user_super_admin']);
-        $this->categories = Factory::times(6)->create('Category');
+        $this->apiKey = Factory::create('apikey_super_admin');
+
+        $this->enLang = Factory::create('Language', ['name' => 'en']);
+        $this->idLang = Factory::create('Language', ['name' => 'id']);
+        $this->zhLang = Factory::create('Language', ['name' => 'zh']);
+
+        $_GET = [];
+        $_POST = [];
     }
 
-    public function tearDown()
+    public function setRequestPostNewCategory($api_key, $api_secret_key, $new_data)
     {
-        DB::rollback();
-        $this->useTruncate = false;
-
-        parent::tearDown();
-    }
-
-    public function testError_get_without_auth_data()
-    {
-        $data          = new stdclass();
-        $data->code    = Status::CLIENT_ID_NOT_FOUND;
-        $data->status  = 'error';
-        $data->message = Status::CLIENT_ID_NOT_FOUND_MSG;
-        $data->data    = NULL;
-
-        $expect = json_encode($data);
-        $return = $this->call('GET', $this->baseUrl)->getContent();
-        $this->assertSame($expect, $return);
-    }
-
-    public function testError_get_with_invalid_auth_data()
-    {
-        $data          = new stdclass();
-        $data->code    = Status::INVALID_SIGNATURE;
-        $data->status  = 'error';
-        $data->message = Status::INVALID_SIGNATURE_MSG;
-        $data->data    = NULL;
-
-        $_GET['apikey']       = $this->authData->api_key;
+        // Set the client API Keys
+        $_GET['apikey'] = $api_key;
         $_GET['apitimestamp'] = time();
 
-        $url = $this->baseUrl . '?' . http_build_query($_GET);
+        foreach ($new_data as $field => $value) {
+            $_POST[$field] = $value;
+        }
+        $url = $this->apiUrlNew . '?' . http_build_query($_GET);
 
-        $secretKey = $this->authData->api_secret_key;
-        $_SERVER['REQUEST_METHOD']         = 'GET';
-        $_SERVER['REQUEST_URI']            = $url;
-        $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature('invalid', 'sha256');
+        $secretKey = $api_secret_key;
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $_SERVER['REQUEST_URI'] = $url;
+        $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
 
-        $expect = json_encode($data);
-        $return = $this->call('GET', $url)->getContent();
-        $this->assertSame($expect, $return);
+        $json = $this->call('POST', $url)->getContent();
+        $response = json_decode($json);
+
+        // clear all;
+        unset($_POST);
+        unset($_GET);
+
+        return $response;
     }
 
-    public function testError_get_category_as_guest()
+    public function setRequestGetListCategory($api_key, $api_secret_key, $filter)
     {
-        $apiKey = Factory::create('Apikey', ['user_id' => 'factory:user_guest']);
-
-        $_GET['apikey']       = $apiKey->api_key;
+        // Set the client API Keys
+        $_GET['apikey'] = $api_key;
         $_GET['apitimestamp'] = time();
 
-        $url = $this->baseUrl . '?' . http_build_query($_GET);
+        foreach ($filter as $field => $value) {
+            $_GET[$field] = $value;
+        }
 
-        $_SERVER['REQUEST_METHOD']         = 'GET';
-        $_SERVER['REQUEST_URI']            = $url;
-        $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($apiKey->api_secret_key, 'sha256');
+        $url = $this->apiUrlList . '?' . http_build_query($_GET);
 
-        $response = $this->call('GET', $url)->getContent();
-        $response = json_decode($response);
-
-        // Should Be OK
-        $this->assertResponseOk();
-        // Should Be No Error
-        $this->assertSame(Status::OK, (int)$response->code);
-        $this->assertSame('Request OK', $response->message);
-    }
-
-    public function testOK_get_without_additional_parameters()
-    {
-        // Set the client API Keys
-        $_GET['apikey']       = $this->authData->api_key;
-        $_GET['apitimestamp'] = time();
-
-        $url = $this->baseUrl . '?' . http_build_query($_GET);
-
-        $secretKey = $this->authData->api_secret_key;
-        $_SERVER['REQUEST_METHOD']         = 'GET';
-        $_SERVER['REQUEST_URI']            = $url;
+        $secretKey = $api_secret_key;
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_SERVER['REQUEST_URI'] = $url;
         $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
 
-        $response = $this->call('GET', $url)->getContent();
-        $response = json_decode($response);
+        $json = $this->call('GET', $url)->getContent();
+        $response = json_decode($json);
 
-        // Should Be OK
-        $this->assertResponseOk();
-        // Should Be No Error
-        $this->assertSame(Status::OK, (int)$response->code);
-        // Should Return Correct Number of Records
-        $this->assertSame(6, count($response->data->records));
-        // should shorted by name
-        $categories = Category::orderBy('category_name', 'asc')->get();
+        // clear all;
+        unset($_POST);
+        unset($_GET);
 
-        $this->assertSame($categories[0]->category_name, $response->data->records[0]->category_name);
-        $this->assertSame($categories[3]->category_name, $response->data->records[3]->category_name);
-        $this->assertSame($categories[5]->category_name, $response->data->records[5]->category_name);
+        return $response;
     }
 
-    public function testOK_get_with_custom_shorter()
+    public function setDefaultCategory()
     {
-        // Set the client API Keys
-        $_GET['apikey']       = $this->authData->api_key;
-        $_GET['apitimestamp'] = time();
-        $_GET['sortby']      = 'registered_date';
+        /*
+        * category health
+        */
+        $data = [
+                'category_name'    => 'health',
+                'status'           => 'active',
+                'default_language' => 'en',
+                'translations'     => '{"' . $this->idLang->language_id . '":{"category_name":"sehat","description":"ini adalah toko kesehatan"}}'
+                ];
 
-        $url = $this->baseUrl . '?' . http_build_query($_GET);
+        $response = $this->setRequestPostNewCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->category_health = $response->data;
 
-        $secretKey = $this->authData->api_secret_key;
-        $_SERVER['REQUEST_METHOD']         = 'GET';
-        $_SERVER['REQUEST_URI']            = $url;
-        $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
+        /*
+        * category book store
+        */
+        $data = [
+                'category_name'    => 'book store',
+                'status'           => 'active',
+                'default_language' => 'en'
+                ];
 
-        $response = $this->call('GET', $url)->getContent();
-        $response = json_decode($response);
+        $response = $this->setRequestPostNewCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->category_book_store = $response->data;
 
-        // Should Be OK
-        $this->assertResponseOk();
-        // Should Be No Error
-        $this->assertSame(Status::OK, (int)$response->code);
-        // Should Return Correct Number of Records
-        $this->assertSame(6, count($response->data->records));
-        // should shorted by name
-        $categories = Category::orderBy('created_at', 'asc')->get();
+        /*
+        * category restaurant
+        */
+        $data = [
+                'category_name'    => 'restaurant',
+                'status'           => 'active',
+                'default_language' => 'en',
+                'translations'     => '{"' . $this->zhLang->language_id . '":{"category_name":"restoran zh","description":"restoran china enak"}}'
+                ];
 
-        $this->assertSame($categories[0]->category_name, $response->data->records[0]->category_name);
-        $this->assertSame($categories[3]->category_name, $response->data->records[3]->category_name);
-        $this->assertSame($categories[5]->category_name, $response->data->records[5]->category_name);
+        $response = $this->setRequestPostNewCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->category_restaurant = $response->data;
+
+        /*
+        * category jewellery
+        */
+        $data = [
+                'category_name'    => 'jewellery',
+                'status'           => 'active',
+                'default_language' => 'en',
+                'translations'     => '{"' . $this->zhLang->language_id . '":{"category_name":"perhiasan zh","description":"perhiasan china bagus"},"' . $this->idLang->language_id . '":{"category_name":"perhiasan","description":"ini adalah toko perhiasan"}}'
+                ];
+
+        $response = $this->setRequestPostNewCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->category_jewellery = $response->data;
     }
 
-    public function testError_get_search_with_unknown_sorter()
+    public function testGetListCategoryWithoutFilter()
     {
-        // Set the client API Keys
-        $_GET['apikey']       = $this->authData->api_key;
-        $_GET['apitimestamp'] = time();
-        $_GET['sortby']      = 'unknown_field';
+        $this->setDefaultCategory();
 
-        $url = $this->baseUrl . '?' . http_build_query($_GET);
+        /*
+        * test get list category without filtering
+        */
+        $filter = [];
 
-        $secretKey = $this->authData->api_secret_key;
-        $_SERVER['REQUEST_METHOD']         = 'GET';
-        $_SERVER['REQUEST_URI']            = $url;
-        $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
+        $response_list = $this->setRequestGetListCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $filter);
+        $this->assertSame(0, $response_list->code);
+        $this->assertSame(4, $response_list->data->total_records);
 
-        $response = $this->call('GET', $url)->getContent();
-        $response = json_decode($response);
+        /*
+        * test get exclude deleted list category without filtering
+        */
+        $data = [
+                'category_name'    => 'hobbies',
+                'status'           => 'deleted',
+                'default_language' => 'en'
+                ];
 
-        $this->assertResponseStatus(403);
-        $this->assertSame(Status::INVALID_ARGUMENT, $response->code);
-        $this->assertRegExp('/The sort by argument you specified is not valid/i', $response->message);
+        $response = $this->setRequestPostNewCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(0, $response->code);
+
+        $data = [
+                'category_name'    => 'lifestyle',
+                'status'           => 'active',
+                'default_language' => 'en'
+                ];
+
+        $response = $this->setRequestPostNewCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(0, $response->code);
+
+        $response_list = $this->setRequestGetListCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $filter);
+        $this->assertSame(0, $response_list->code);
+        $this->assertSame(5, $response_list->data->total_records);
     }
 
-    public function testOK_get_search_by_category_name()
+    public function testSortBy()
     {
-        $searchable = Factory::create('Category', array('category_name' => 'Unique Searchable'));
+        $this->setDefaultCategory();
 
-        // Set the client API Keys
-        $_GET['apikey']        = $this->authData->api_key;
-        $_GET['apitimestamp']  = time();
-        $_GET['category_name'] = ['Unique Searchable'];
+        $filter = ['sort_by' => 'category_name'];
 
-        $url = $this->baseUrl . '?' . http_build_query($_GET);
+        $response_list = $this->setRequestGetListCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $filter);
+        $this->assertSame(0, $response_list->code);
+        $this->assertSame(4, $response_list->data->total_records);
 
-        $secretKey = $this->authData->api_secret_key;
-        $_SERVER['REQUEST_METHOD']         = 'GET';
-        $_SERVER['REQUEST_URI']            = $url;
-        $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
+        /*
+        * test sort by check first category
+        */
+        $this->assertSame('book store', $response_list->data->records[0]->category_name);
 
-        $response = $this->call('GET', $url)->getContent();
-        $response = json_decode($response);
+        /*
+        * test sort by check last category
+        */
+        $this->assertSame('restaurant', $response_list->data->records[3]->category_name);
 
-        // Should Be OK
-        $this->assertResponseOk();
-        // Should Be No Error
-        $this->assertSame(Status::OK, (int)$response->code);
-        // Should Return Correct Number of Records
-        // Failed Bugs See CategoryApiController@getSearchCategory on line 744, 896
-        // 744: Builder#whereIn accept only array and parameter from Request was string,
-        // 896: Zero Exceptions code should be a unknown error.
-        $this->assertSame(1, count($response->data->records));
-        $this->assertSame($searchable->category_id, (int)$response->data->records[0]->category_id);
+        $filter = ['sortby' => 'category_name', 'sortmode' => 'desc'];
+
+        $response_list = $this->setRequestGetListCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $filter);
+        $this->assertSame(0, $response_list->code);
+        $this->assertSame(4, $response_list->data->total_records);
+
+        /*
+        * test sort by and sort mode check first category
+        */
+        $this->assertSame('restaurant', $response_list->data->records[0]->category_name);
+
+        /*
+        * test sort by and sort mode check last category
+        */
+        $this->assertSame('book store', $response_list->data->records[3]->category_name);
+
+        /*
+        * test sort by translation language id (indonesia)
+        */
+        $filter = [
+                    'sortby'      => 'translation_category_name',
+                    'with'        => ['translations'],
+                    'language_id' => $this->idLang->language_id
+                  ];
+
+        $response_list = $this->setRequestGetListCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $filter);
+        $this->assertSame(0, $response_list->code);
+        $this->assertSame(2, $response_list->data->total_records);
+        /*
+        * test sort by and sort mode check first category
+        */
+        $this->assertSame('perhiasan', $response_list->data->records[0]->translations[2]->category_name);
+
+        /*
+        * test sort by and sort mode check last category
+        */
+        $this->assertSame('sehat', $response_list->data->records[1]->translations[1]->category_name);
+
+        /*
+        * test sort by translation language id (english)
+        */
+        $filter = [
+                    'sortby'      => 'translation_category_name',
+                    'with'        => ['translations'],
+                    'language_id' => $this->enLang->language_id
+                  ];
+
+        $response_list = $this->setRequestGetListCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $filter);
+        $this->assertSame(0, $response_list->code);
+        $this->assertSame(4, $response_list->data->total_records);
+        /*
+        * test sort by and sort mode check first category
+        */
+        $this->assertSame('health', $response_list->data->records[1]->translations[0]->category_name);
+
+        /*
+        * test sort by and sort mode check last category
+        */
+        $this->assertSame('jewellery', $response_list->data->records[2]->translations[0]->category_name);
+    }
+
+    public function testTakeDataCategory()
+    {
+        for ($i=0; $i < 100; $i++) { 
+            Factory::create('Category');
+        }
+
+        /*
+        * test get list category take 60
+        */
+        $filter = ['take' => 60];
+
+        $response_list = $this->setRequestGetListCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $filter);
+        $this->assertSame(0, $response_list->code);
+        $this->assertSame(100, $response_list->data->total_records);
+        $this->assertSame(60, $response_list->data->returned_records);
+    }
+
+    public function testFilterCategoryName()
+    {
+        $this->setDefaultCategory();
+
+        /*
+        * test get category restaurant
+        */
+        $filter = ['category_name' => ['restaurant']];
+
+        $response_list = $this->setRequestGetListCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $filter);
+        $this->assertSame(0, $response_list->code);
+        $this->assertSame('restaurant', $response_list->data->records[0]->category_name);
+
+        /*
+        * test get category restaurant
+        */
+        $filter = ['category_name_like' => 'staura'];
+
+        $response_list = $this->setRequestGetListCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $filter);
+        $this->assertSame(0, $response_list->code);
+        $this->assertSame('restaurant', $response_list->data->records[0]->category_name);
+
+        /*
+        * test get translation category restaurant
+        */
+        $filter = [
+                    'translation_category_name_like' => 'estor',
+                    'with'                           => ['translations'],
+                    'language_id'                    => $this->zhLang->language_id
+                    ];
+
+        $response_list = $this->setRequestGetListCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $filter);
+        $this->assertSame(0, $response_list->code);
+        // dd($response_list->data->records[0]);
+        $this->assertSame('restoran zh', $response_list->data->records[0]->translations[1]->category_name);
+    }
+
+    public function testFilterLanguage()
+    {
+        $this->setDefaultCategory();
+        /*
+        * test get category with indonesian translation
+        */
+        $filter = [
+                    'with' => ['translations'],
+                    'language_id' => $this->idLang->language_id
+                    ];
+
+        $response_list = $this->setRequestGetListCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $filter);
+        $this->assertSame(0, $response_list->code);
+        $this->assertSame(2, $response_list->data->total_records);
+
+        /*
+        * category hobbies with empty string translation
+        */
+        $data = [
+                'category_name'    => 'hobbies',
+                'status'           => 'active',
+                'default_language' => 'en',
+                'translations'     => '{"' . $this->zhLang->language_id . '":{"category_name":"","description":""},"' . $this->idLang->language_id . '":{"category_name":"hobi","description":"ini adalah toko peralatan hobi"}}'
+                ];
+
+        $response = $this->setRequestPostNewCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+
+        /*
+        * test get category with china translation without empty category name translation
+        */
+        $filter = [
+                    'with' => ['translations'],
+                    'language_id' => $this->zhLang->language_id
+                    ];
+
+        $response_list = $this->setRequestGetListCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $filter);
+        $this->assertSame(0, $response_list->code);
+        $this->assertSame(2, $response_list->data->total_records);
 
     }
 
-    public function testOK_get_search_by_category_name_like()
+    public function testFilterLimited()
     {
-        $searchable = Factory::create('Category', array('category_name' => 'Unique Searchable'));
+        $this->setDefaultCategory();
+        /*
+        * test filter limited for list link to tenant category
+        */
+        $filter = [
+                    'limited' => 'yes'
+                  ];
 
-        // Set the client API Keys
-        $_GET['apikey']        = $this->authData->api_key;
-        $_GET['apitimestamp']  = time();
-        $_GET['category_name_like'] = 'Unique';
-
-        $url = $this->baseUrl . '?' . http_build_query($_GET);
-
-        $secretKey = $this->authData->api_secret_key;
-        $_SERVER['REQUEST_METHOD']         = 'GET';
-        $_SERVER['REQUEST_URI']            = $url;
-        $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
-
-        $response = $this->call('GET', $url)->getContent();
-        $response = json_decode($response);
-
-        // Should Be OK
-        $this->assertResponseOk();
-        // Should Be No Error
-        $this->assertSame(Status::OK, (int)$response->code);
-        // should return correct number fo result
-        $this->assertSame(1, count($response->data->records));
-        // should  return correct data
-        $this->assertSame($searchable->category_id, (int)$response->data->records[0]->category_id);
-    }
-
-    public function testOK_get_search_with_custom_pagination()
-    {
-        // Set the client API Keys
-        $_GET['apikey']        = $this->authData->api_key;
-        $_GET['apitimestamp']  = time();
-        $_GET['take']          = '1';
-
-        $url = $this->baseUrl . '?' . http_build_query($_GET);
-
-        $secretKey = $this->authData->api_secret_key;
-        $_SERVER['REQUEST_METHOD']         = 'GET';
-        $_SERVER['REQUEST_URI']            = $url;
-        $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
-
-        $response = $this->call('GET', $url)->getContent();
-        $response = json_decode($response);
-
-        // Should Be OK
-        $this->assertResponseOk();
-        // Should Be No Error
-        $this->assertSame(Status::OK, (int)$response->code);
-        // should return correct number fo result
-        $this->assertSame(1, count($response->data->records));
+        $response_list = $this->setRequestGetListCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $filter);
+        $this->assertSame(0, $response_list->code);
+        $this->assertSame(4, $response_list->data->total_records);
+        foreach ($response_list->data->records[0] as $key => $value) {
+            $this->assertSame(true, in_array($key, ['category_id', 'category_name']));
+            $this->assertSame(false, in_array($key, ['category_order', 'category_level']));
+        }
     }
 }
