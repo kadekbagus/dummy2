@@ -68,6 +68,9 @@ Artisan::add(new DeleteGuestViewItemUser);
 // DeleteGuestUser
 Artisan::add(new DeleteGuestUser);
 
+// DestroyMall
+Artisan::add(new DestroyMall);
+
 // Send newsletter email
 Artisan::add(new NewsletterSenderCommand);
 
