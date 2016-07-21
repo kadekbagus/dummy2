@@ -37,3 +37,10 @@ $factory('Apikey', 'apikey_mall_customer_service', [
     'status'         => 'active',
     'user_id'        => 'factory:user_mall_customer_service'
 ]);
+
+$factory('Apikey', 'apikey_campaign_owner', [
+    'api_key'        => $faker->lexify('??????'),
+    'api_secret_key' => $faker->lexify('??????????'),
+    'status'         => 'active',
+    'user_id'        => 'factory:campaign_owner'
+]);

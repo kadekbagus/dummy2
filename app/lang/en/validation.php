@@ -102,6 +102,7 @@ return array(
             'issued_coupon_code'    => 'The coupon code has been redeemed',
             'event_name'            => 'The event name has already been used',
             'tax_name'              => 'The tax name has already been used',
+            'answer_id'             => 'This quenstion already ansewered by this user',
             'tax_link_to_product'   => 'The tax cannot be deleted: One or more products are attached to this tax',
             'product'               => array(
                 'attribute'         => array(
@@ -173,6 +174,8 @@ return array(
             'consumer_role'        => 'The Consumer role does not exist',
             'token'                => 'The token you specified is no longer available',
             'user'                 => 'The User ID you specified is not found',
+            'question_id'          => 'The Quenstion ID you specified is not found',
+            'answer_id'            => 'The Answer ID you specified is not found',
             'merchant'             => 'The Merchant ID you specified is not found',
             'retailer'             => 'The Retailer ID you specified is not found',
             'tenant'               => 'The Tenant ID you specified is not found',
@@ -380,7 +383,9 @@ return array(
                 'value' => 'An invalid value for translation was specified',
             ),
             'date' => array(
-                'dmy_date' => 'The :attribute does not match the format dd-mm-yyyy'
+                'dmy_date' => 'The :attribute does not match the format dd-mm-yyyy',
+                'cannot_future_date' => 'The :attribute cannot be future date',
+                'invalid_date' => 'The :attribute is not a valid date',
             ),
             'language'      => 'The :attribute must be a valid language code',
             'geo_latitude'  => 'The Geofence latitude is not on range',
