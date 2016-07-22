@@ -8,6 +8,7 @@ use OrbitRelation\BelongsTo as BelongsToObject;
 use DominoPOS\OrbitSession\SessionConfig;
 use DominoPOS\OrbitSession\Session;
 use Orbit\Helper\Session\AppOriginProcessor;
+use OrbitShop\API\v1\Helper\Input as OrbitInput;
 
 class Activity extends Eloquent
 {
@@ -773,6 +774,8 @@ class Activity extends Eloquent
             }
         }
 
+        $this->setUserLocation();
+
         $result = parent::save($options);
 
         // Save to additional activities table
@@ -1049,7 +1052,7 @@ class Activity extends Eloquent
             'View Promotion Pop Up'    => 'View Promotion Pop Up',
             'View News Pop Up'         => 'View News Pop Up'
         );
-        
+
         $proceed = in_array($this->activity_name_long, $activity_name_long_array);
         if (! $proceed) {
             return;
@@ -1078,7 +1081,7 @@ class Activity extends Eloquent
             'Click Promotion Pop Up'   => 'Click Promotion Pop Up',
             'Click News Pop Up'        => 'Click News Pop Up',
         );
-        
+
         $proceed = in_array($this->activity_name_long, $activity_name_long_array);
         if (! $proceed) {
             return;
@@ -1174,6 +1177,65 @@ class Activity extends Eloquent
         $click->widget_group_name_id = is_object($object) ? $object->widget_group_name_id : '0';
 
         $return = $click->save();
+    }
+
+    /**
+     * Save the user location
+     *
+     * @author Ahmad <ahmad@dominopos.com>
+     * @return void
+     */
+    protected function setUserLocation()
+    {
+        $location = NULL;
+        $longitude = NULL;
+        $latitude = NULL;
+
+        $userLocationQueryStringName = Config::get('orbit.user_location.query_string.name');
+        $userLocationCookieName = Config::get('orbit.user_location.cookie.name');
+        $userLocationCookieExpire = Config::get('orbit.user_location.cookie.expire', 3600);
+
+        if (empty($userLocationQueryStringName) || empty($userLocationCookieName)) {
+            // missing configuration, do not save
+            return;
+        }
+
+        // get location from query string
+        OrbitInput::get($userLocationQueryStringName, function($userLocationQueryString) use(&$location, &$longitude, &$latitude) {
+            $userLocationQueryStringArray = explode('|', $userLocationQueryString);
+
+            if (isset($userLocationQueryStringArray[0]) && isset($userLocationQueryStringArray[1])) {
+                $location = $userLocationQueryStringArray;
+                $longitude = $userLocationQueryStringArray[0];
+                $latitude = $userLocationQueryStringArray[1];
+            }
+        });
+
+        // use the location from cookie if empty
+        if (empty($location)) {
+            $userLocationCookieArray = isset($_COOKIE[$userLocationCookieName]) ? explode('|', $_COOKIE[$userLocationCookieName]) : NULL;
+
+            if (! is_null($userLocationCookieArray) && isset($userLocationCookieArray[0]) && isset($userLocationCookieArray[1])) {
+                $location = $userLocationCookieArray;
+                $longitude = $userLocationCookieArray[0];
+                $latitude = $userLocationCookieArray[1];
+            }
+        }
+
+        // validate longitude value
+        if (! preg_match('/^[-]?((((1[0-7][0-9])|([0-9]?[0-9]))\.(\d+))|180(\.0+)?)$/', $longitude)) {
+            return;
+        }
+
+        // validate latitude value
+        if (! preg_match('/^[-]?(([0-8]?[0-9])\.(\d+))|(90(\.0+)?)$/', $latitude)) {
+            return;
+        }
+
+        setrawcookie($userLocationCookieName, implode('|', $location), time() + $userLocationCookieExpire, '/', Config::get('orbit.shop.main_domain'), FALSE, FALSE);
+
+        $this->longitude = $longitude;
+        $this->latitude = $latitude;
     }
 
     /**
