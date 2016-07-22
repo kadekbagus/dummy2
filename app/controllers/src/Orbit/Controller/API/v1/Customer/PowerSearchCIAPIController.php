@@ -61,9 +61,6 @@ class PowerSearchCIAPIController extends BaseAPIController
 
             // Require authentication
             $this->registerCustomValidation();
-            $user = $this->getLoggedInUser();
-
-            UrlBlock::checkBlockedUrl($user);
 
             $lang = OrbitInput::get('lang', 'en');
             $this->mall_id = OrbitInput::get('mall_id', NULL);
@@ -83,6 +80,10 @@ class PowerSearchCIAPIController extends BaseAPIController
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
+
+            $user = $this->getLoggedInUser($this->mall_id);
+
+            UrlBlock::checkBlockedUrl($user);
 
             $language = \Language::where('name', '=', $lang)->first();
 
