@@ -4,6 +4,8 @@
  * @desc Base controller used for Mobile CI Angular
  */
 use OrbitShop\API\v1\ControllerAPI;
+use Orbit\Helper\Net\SessionPreparer;
+use App;
 use Config;
 use URL;
 use Validator;
@@ -15,6 +17,8 @@ use Carbon\Carbon as Carbon;
 use Tenant;
 use Coupon;
 use News;
+use Mall;
+use User;
 
 class BaseAPIController extends ControllerAPI
 {
@@ -118,6 +122,77 @@ class BaseAPIController extends ControllerAPI
 
         // above methods did not result in any selected language, use mall default
         return null;
+    }
+
+    protected function getLoggedInUser($mallId)
+    {
+        $this->session = SessionPreparer::prepareSession();
+
+        $userId = $this->session->read('user_id');
+
+        // @todo: Why we query membership also? do we need it on every page?
+        $user = User::with(['userDetail',
+            'membershipNumbers' => function($q) use ($mallId) {
+                $q->select('membership_numbers.*')
+                    ->with('membership.media')
+                    ->join('memberships', 'memberships.membership_id', '=', 'membership_numbers.membership_id')
+                    ->excludeDeleted('membership_numbers')
+                    ->excludeDeleted('memberships')
+                    ->where('memberships.merchant_id', $mallId);
+            }])
+            ->where('user_id', $userId)
+            ->whereHas('role', function($q) {
+                $q->where('role_name', 'Consumer');
+            })
+            ->first();
+
+        if (! $user) {
+            $user = $this->getLoggedInGuest($this->session);
+        } else {
+            $_user = clone($user);
+            if (count($_user->membershipNumbers)) {
+               $user->membership_number = $_user->membershipNumbers[0]->membership_number;
+            }
+        }
+
+        return $user;
+    }
+
+    /**
+     * Get current guest user from session.
+     *
+     * @author Ahmad <ahmad@dominopos.com>
+     * @return User $user
+     */
+    protected function getLoggedInGuest($session)
+    {
+        $userId = $session->read('guest_user_id');
+
+        if (! empty($userId)) {
+            $user = User::with('userDetail')
+                ->where('user_id', $userId)
+                ->whereHas('role', function($q) {
+                    $q->where('role_name', 'guest');
+                })
+                ->first();
+
+            if (! is_object($user)) {
+                $user = NULL;
+            }
+        } else {
+            $user = GuestUserGenerator::create()->generate();
+
+            $sessionData = $session->read(NULL);
+            $sessionData['logged_in'] = TRUE;
+            $sessionData['guest_user_id'] = $user->user_id;
+            $sessionData['guest_email'] = $user->user_email;
+            $sessionData['role'] = $user->role->role_name;
+            $sessionData['fullname'] = '';
+
+            $session->update($sessionData);
+        }
+
+        return $user;
     }
 
     protected function viewItemUserUpdate($type, $user, $retailer)
@@ -399,6 +474,49 @@ class BaseAPIController extends ControllerAPI
             $insertViewedItems->mall_id = $item['mall_id'];
             $insertViewedItems->item_type = $item['item_type'];
             $insertViewedItems->save();
-        } 
+        }
     }
+
+    public function getRetailerInfo($with = null)
+    {
+        try {
+            $retailer_id = App::make('orbitSetting')->getSetting('current_retailer'); //<pre>EXs5F-TKS-------
+
+            $retailer = Mall::with('parent')->where('merchant_id', $retailer_id);
+            if (! is_null($with)) {
+                $with = (array) $with;
+                foreach ($with as $rel) {
+                    $retailer->with($rel);
+                }
+            }
+            $retailer = $retailer->first();
+
+            $membership_card = Setting::where('setting_name','enable_membership_card')->where('object_id',$retailer_id)->first();
+
+            if (! empty($membership_card)){
+                $retailer->enable_membership=$membership_card->setting_value;
+            } else {
+                $retailer->enable_membership='false';
+            }
+
+            return $retailer;
+        } catch (ACLForbiddenException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+        } catch (InvalidArgsException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+        } catch (Exception $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+        }
+    }
+
+
 }
