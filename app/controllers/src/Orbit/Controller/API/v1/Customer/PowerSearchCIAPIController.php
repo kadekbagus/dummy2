@@ -31,7 +31,6 @@ use \stdclass;
 
 class PowerSearchCIAPIController extends BaseAPIController
 {
-	protected $validRoles = ['super admin', 'consumer', 'guest'];
 
     /**
      * GET - Get search tenant, coupon, news, promotion, lucky draw
@@ -42,6 +41,10 @@ class PowerSearchCIAPIController extends BaseAPIController
      *
      * @author Firmansyah <firmansyah@dominopos.com>
      */
+
+    protected $validRoles = ['super admin', 'consumer', 'guest'];
+    protected $mall_id = NULL;
+
     public function getPowerSearch() {
         $user = null;
         $keyword = null;
@@ -57,21 +60,22 @@ class PowerSearchCIAPIController extends BaseAPIController
             }
 
             // Require authentication
+            $this->registerCustomValidation();
             $user = $this->getLoggedInUser();
 
             UrlBlock::checkBlockedUrl($user);
-            $retailer = $this->getRetailerInfo();
-
 
             $lang = OrbitInput::get('lang', 'en');
+            $this->mall_id = OrbitInput::get('mall_id', NULL);
 
-            $this->registerCustomValidation();
             $validator = Validator::make(
                 array(
                     'id_language_default' => $lang,
+                    'mall_id' => $this->mall_id,
                 ),
                 array(
                     'id_language_default' => 'orbit.empty.language_default',
+                    'mall_id' => 'required|orbit.empty.mall',
                 )
             );
 
@@ -82,6 +86,9 @@ class PowerSearchCIAPIController extends BaseAPIController
 
             $language = \Language::where('name', '=', $lang)->first();
 
+            $retailer = Mall::excludeDeleted()->where('merchant_id', $this->mall_id)->first();
+            $mallTime = Carbon::now($retailer->timezone->timezone_name);
+
             $alternateLanguage = null;
             if (is_object($language)) {
                 $alternateLanguage = \MerchantLanguage::excludeDeleted()
@@ -91,7 +98,6 @@ class PowerSearchCIAPIController extends BaseAPIController
             }
 
             //$alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
-            $mallTime = Carbon::now($retailer->timezone->timezone_name);
             $userAge = 0;
             if ($user->userDetail->birthdate !== '0000-00-00' && $user->userDetail->birthdate !== null) {
                 $userAge = $this->calculateAge($user->userDetail->birthdate);
@@ -653,6 +659,21 @@ class PowerSearchCIAPIController extends BaseAPIController
             }
 
             return true;
+        });
+
+        // Check the existance of merchant id
+        Validator::extend('orbit.empty.mall', function ($attribute, $value, $parameters) {
+            $mall = Mall::excludeDeleted()
+                        ->where('merchant_id', $value)
+                        ->first();
+
+            if (empty($mall)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.empty.mall', $mall);
+
+            return TRUE;
         });
 
     }
