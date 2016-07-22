@@ -104,7 +104,7 @@ class AccountTypeAPIController extends ControllerAPI
             $account_type->skip($skip);
 
             // Default sort by
-            $sortBy = 'account_types.type_name';
+            $sortBy = 'account_types.account_order';
             // Default sort mode
             $sortMode = 'asc';
 
