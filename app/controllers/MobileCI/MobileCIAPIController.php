@@ -82,6 +82,7 @@ use ListConnectedUser;
 use Helper\EloquentRecordCounter as RecordCounter;
 use MobileCI\ExCaptivePortalController as CaptivePortalController;
 use Orbit\Helper\Net\SessionPreparer;
+use Orbit\Database\ObjectID;
 
 class MobileCIAPIController extends BaseCIController
 {
@@ -2082,6 +2083,9 @@ class MobileCIAPIController extends BaseCIController
             case 'tenant':
                 $landing_url = UrlBlock::blockedRoute('ci-tenant-list', [], $this->session);
                 break;
+            case 'service':
+                $landing_url = UrlBlock::blockedRoute('ci-service-list', [], $this->session);
+                break;
 
             case 'promotion':
                 $landing_url = UrlBlock::blockedRoute('ci-promotion-list', [], $this->session);
@@ -2422,6 +2426,7 @@ class MobileCIAPIController extends BaseCIController
 
             $couponTenantRedeem = new stdclass();
             $couponTenantRedeem->linkedToTenant = FALSE;
+            $couponTenantRedeem->linkedToMall = FALSE;
             $couponTenantRedeem->linkedToCS = FALSE;
 
             // this is came fron my coupon (or issued coupon) page
@@ -2494,7 +2499,10 @@ class MobileCIAPIController extends BaseCIController
                 'coupon_id',
                 function ($pid) use ($tenants, $retailer, &$notfound, &$couponTenantRedeem, $mallid) {
                     if (! empty($pid)) {
-                        $coupon = \Coupon::leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
+                        $coupon = \Coupon::with(['linkToMalls' => function($q) use($mallid) {
+                                $q->where('merchants.merchant_id', $mallid);
+                            }])
+                            ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                             ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
                             ->where(function ($q) use ($mallid) {
                                     $q->where('merchants.parent_id', '=', $mallid)
@@ -2514,7 +2522,11 @@ class MobileCIAPIController extends BaseCIController
                         ->lists('retailer_id');
 
                         if (empty($retailers)) {
-                            $notfound = TRUE;
+                            if (empty($coupon->linkToMalls)) {
+                                $notfound = TRUE;
+                            } else {
+                                $couponTenantRedeem->linkedToMall = TRUE;
+                            }
                         } else {
                             $couponTenantRedeem->linkedToTenant = TRUE;
                             $tenants->whereIn('merchants.merchant_id', $retailers);
@@ -2581,8 +2593,14 @@ class MobileCIAPIController extends BaseCIController
                     'urlblock' => null,
                     'user' => $user,
                     'user_email' => $user->role->role_name !== 'Guest' ? $user->user_email : '',
-                    'languages' => $languages
+                    'languages' => $languages,
+                    'session' => $this->session,
+                    'is_logged_in' => UrlBlock::isLoggedIn($this->session),
                 ));
+            }
+
+            if ($couponTenantRedeem->linkedToMall) {
+                return Redirect::route('ci-coupon-list');
             }
 
             OrbitInput::get(
@@ -3279,10 +3297,17 @@ class MobileCIAPIController extends BaseCIController
                 }
             }
 
+            $languages = $this->getListLanguages($retailer);
 
             if (empty($tenant)) {
                 // throw new Exception('Product id ' . $product_id . ' not found');
-                return View::make('mobile-ci.404', array('page_title'=>Lang::get('mobileci.page_title.not_found'), 'retailer'=>$retailer));
+                return View::make('mobile-ci.404', array(
+                    'page_title'=>Lang::get('mobileci.page_title.not_found'),
+                    'retailer'=>$retailer,
+                    'session' => $this->session,
+                    'is_logged_in' => UrlBlock::isLoggedIn($this->session),
+                    'languages' => $languages,
+                ));
             }
 
             if (empty($tenant->logo)) {
@@ -3302,8 +3327,6 @@ class MobileCIAPIController extends BaseCIController
             }
             // set tenant facebook share url
             $tenant->facebook_share_url = $this->getFBShareDummyPage('tenant', $tenant->merchant_id, $alternateLanguage->language_id);
-
-            $languages = $this->getListLanguages($retailer);
 
             // cek if any language active
             if (!empty($alternateLanguage) && !empty($tenant)) {
@@ -3499,15 +3522,21 @@ class MobileCIAPIController extends BaseCIController
                 }
             }
 
+            $languages = $this->getListLanguages($retailer);
+
             if (empty($service)) {
-                return View::make('mobile-ci.404', array('page_title'=>Lang::get('mobileci.page_title.not_found'), 'retailer'=>$retailer));
+                return View::make('mobile-ci.404', array(
+                    'page_title'=>Lang::get('mobileci.page_title.not_found'),
+                    'retailer'=>$retailer,
+                    'session' => $this->session,
+                    'is_logged_in' => UrlBlock::isLoggedIn($this->session),
+                    'languages' => $languages,
+                ));
             }
 
             if (empty($service->logo)) {
                 $service->logo = 'mobile-ci/images/default_tenants_directory.png';
             }
-
-            $languages = $this->getListLanguages($retailer);
 
             // cek if any language active
             if (!empty($alternateLanguage) && !empty($service)) {
@@ -5450,11 +5479,13 @@ class MobileCIAPIController extends BaseCIController
 
             if (empty($luckydraw)) {
                 return View::make('mobile-ci.404', [
-                                'page_title'    => Lang::get('mobileci.page_title.not_found'),
-                                'user'          => $user,
-                                'languages'     => $languages,
-                                'retailer'      => $retailer,
-                                'luckydraw'     => null
+                    'page_title'    => Lang::get('mobileci.page_title.not_found'),
+                    'user'          => $user,
+                    'languages'     => $languages,
+                    'retailer'      => $retailer,
+                    'luckydraw'     => null,
+                    'session' => $this->session,
+                    'is_logged_in' => UrlBlock::isLoggedIn($this->session),
                 ]);
             }
 
@@ -6454,7 +6485,13 @@ class MobileCIAPIController extends BaseCIController
                 ->first();
 
             if (empty($coupons)) {
-                return View::make('mobile-ci.404', array('page_title'=>Lang::get('mobileci.page_title.not_found'), 'retailer'=>$retailer, 'languages' => $languages));
+                return View::make('mobile-ci.404', array(
+                    'page_title'=>Lang::get('mobileci.page_title.not_found'),
+                    'retailer'=>$retailer,
+                    'session' => $this->session,
+                    'is_logged_in' => UrlBlock::isLoggedIn($this->session),
+                    'languages' => $languages,
+                ));
             }
 
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
@@ -7060,6 +7097,8 @@ class MobileCIAPIController extends BaseCIController
             $this->acquireUser($retailer, $user);
             Coupon::issueAutoCoupon($retailer, $user, $this->session);
 
+            $languages = $this->getListLanguages($retailer);
+
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
 
             $promotion_id = trim(OrbitInput::get('id'));
@@ -7084,7 +7123,13 @@ class MobileCIAPIController extends BaseCIController
 
             if (empty($promotion)) {
                 // throw new Exception('Product id ' . $promotion_id . ' not found');
-                return View::make('mobile-ci.404', array('page_title'=>Lang::get('mobileci.page_title.not_found'), 'retailer'=>$retailer));
+                return View::make('mobile-ci.404', array(
+                    'page_title'=>Lang::get('mobileci.page_title.not_found'),
+                    'retailer'=>$retailer,
+                    'session' => $this->session,
+                    'is_logged_in' => UrlBlock::isLoggedIn($this->session),
+                    'languages' => $languages,
+                ));
             }
 
             if (empty($promotion->image)) {
@@ -7154,8 +7199,6 @@ class MobileCIAPIController extends BaseCIController
                     }
                 }
             }
-
-            $languages = $this->getListLanguages($retailer);
 
             $activityPageNotes = sprintf('Page viewed: Promotion Detail, promotion Id: %s', $promotion_id);
             $activityPage->setUser($user)
@@ -7681,6 +7724,7 @@ class MobileCIAPIController extends BaseCIController
             $this->acquireUser($retailer, $user);
             Coupon::issueAutoCoupon($retailer, $user, $this->session);
 
+            $languages = $this->getListLanguages($retailer);
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
 
             $product_id = trim(OrbitInput::get('id'));
@@ -7705,7 +7749,13 @@ class MobileCIAPIController extends BaseCIController
 
             if (empty($news)) {
                 // throw new Exception('Product id ' . $product_id . ' not found');
-                return View::make('mobile-ci.404', array('page_title'=>Lang::get('mobileci.page_title.not_found'), 'retailer'=>$retailer));
+                return View::make('mobile-ci.404', array(
+                    'page_title'=>Lang::get('mobileci.page_title.not_found'),
+                    'retailer'=>$retailer,
+                    'session' => $this->session,
+                    'is_logged_in' => UrlBlock::isLoggedIn($this->session),
+                    'languages' => $languages,
+                ));
             }
 
             if (empty($news->image)) {
@@ -7776,8 +7826,6 @@ class MobileCIAPIController extends BaseCIController
                     }
                 }
             }
-
-            $languages = $this->getListLanguages($retailer);
 
             $activityPageNotes = sprintf('Page viewed: News Detail, news Id: %s', $product_id);
             $activityPage->setUser($user)
@@ -7920,10 +7968,12 @@ class MobileCIAPIController extends BaseCIController
 
             if (! is_object($inbox)) {
                 return View::make('mobile-ci.404', [
-                                'page_title'    => Lang::get('mobileci.page_title.not_found'),
-                                'user'          => $user,
-                                'languages'     => $languages,
-                                'retailer'      => $retailer
+                    'page_title'    => Lang::get('mobileci.page_title.not_found'),
+                    'user'          => $user,
+                    'languages'     => $languages,
+                    'retailer'      => $retailer,
+                    'session' => $this->session,
+                    'is_logged_in' => UrlBlock::isLoggedIn($this->session)
                 ]);
             }
 
@@ -8035,10 +8085,12 @@ class MobileCIAPIController extends BaseCIController
 
             if (! is_object($luckyDraw)) {
                 return View::make('mobile-ci.404', [
-                                'page_title'    => Lang::get('mobileci.page_title.not_found'),
-                                'user'          => $user,
-                                'languages'     => $languages,
-                                'retailer'      => $retailer
+                    'page_title'    => Lang::get('mobileci.page_title.not_found'),
+                    'user'          => $user,
+                    'languages'     => $languages,
+                    'retailer'      => $retailer,
+                    'session' => $this->session,
+                    'is_logged_in' => UrlBlock::isLoggedIn($this->session),
                 ]);
             }
 
@@ -9378,26 +9430,22 @@ class MobileCIAPIController extends BaseCIController
      */
     private function maybeJoinWithCategoryTranslationsTable($categories, $alternateLanguage)
     {
-        if (!empty($alternateLanguage)) {
-            // join to translations table so can use to search, sort, and overwrite fields
-            $prefix = DB::getTablePrefix();
+        // join to translations table so can use to search, sort, and overwrite fields
+        $prefix = DB::getTablePrefix();
 
-            $categories->leftJoin('category_translations', function ($join) use ($alternateLanguage) {
-                $join->on('categories.category_id', '=', 'category_translations.category_id');
-                $join->where('category_translations.merchant_language_id', '=',
-                    $alternateLanguage->language_id);
-                $join->where('category_translations.category_name', '!=', '');
-            });
-            $categories->select('categories.*')->orderBy('category_translations.category_name', 'ASC');
-            // and overwrite fields with alternate language fields if present
-            foreach (['category_name', 'description'] as $field) {
-                $categories->addSelect([
-                    DB::raw("COALESCE(${prefix}category_translations.${field}, ${prefix}categories.${field}) as ${field}")
-                ]);
-            }
-        } else {
-            $categories->orderBy('categories.category_name', 'ASC');
+        $categories->leftJoin('category_translations', function ($join) use ($alternateLanguage) {
+            $join->on('categories.category_id', '=', 'category_translations.category_id');
+            $join->where('category_translations.merchant_language_id', '=',
+                $alternateLanguage->language_id);
+            $join->where('category_translations.category_name', '!=', '');
+        });
+        // and overwrite fields with alternate language fields if present
+        foreach (['category_name', 'description'] as $field) {
+            $categories->addSelect([
+                DB::raw("COALESCE(${prefix}category_translations.${field}, ${prefix}categories.${field}) as ${field}")
+            ]);
         }
+        $categories->orderBy('category_name', 'ASC');
     }
 
     /**
@@ -9890,6 +9938,7 @@ class MobileCIAPIController extends BaseCIController
 
             foreach ($newTenantsCount as $counter) {
                 $viewedItems[] = array(
+                        'viewed_item_user_id' => (string)ObjectID::make(),
                         'item_id' => $counter,
                         'user_id' => $user->user_id,
                         'mall_id' => $retailer->merchant_id,
@@ -9907,6 +9956,7 @@ class MobileCIAPIController extends BaseCIController
 
             foreach ($newTenantsCount as $counter) {
                 $viewedItems[] = array(
+                        'viewed_item_user_id' => (string)ObjectID::make(),
                         'item_id' => $counter,
                         'user_id' => $user->user_id,
                         'mall_id' => $retailer->merchant_id,
@@ -9972,6 +10022,7 @@ class MobileCIAPIController extends BaseCIController
 
             foreach ($promotionData as $counter) {
                 $viewedItems[] = array(
+                        'viewed_item_user_id' => (string)ObjectID::make(),
                         'item_id' => $counter->news_id,
                         'user_id' => $user->user_id,
                         'mall_id' => $retailer->merchant_id,
@@ -10037,6 +10088,7 @@ class MobileCIAPIController extends BaseCIController
 
             foreach ($newsData as $counter) {
                 $viewedItems[] = array(
+                        'viewed_item_user_id' => (string)ObjectID::make(),
                         'item_id' => $counter->news_id,
                         'user_id' => $user->user_id,
                         'mall_id' => $retailer->merchant_id,
@@ -10122,6 +10174,7 @@ class MobileCIAPIController extends BaseCIController
 
             foreach ($couponData as $counter) {
                 $viewedItems[] = array(
+                        'viewed_item_user_id' => (string)ObjectID::make(),
                         'item_id' => $counter->promotion_id,
                         'user_id' => $user->user_id,
                         'mall_id' => $retailer->merchant_id,
@@ -10139,6 +10192,7 @@ class MobileCIAPIController extends BaseCIController
 
             foreach ($newLuckydrawsCount as $counter) {
                 $viewedItems[] = array(
+                        'viewed_item_user_id' => (string)ObjectID::make(),
                         'item_id' => $counter,
                         'user_id' => $user->user_id,
                         'mall_id' => $retailer->merchant_id,
@@ -10149,13 +10203,8 @@ class MobileCIAPIController extends BaseCIController
             }
         }
 
-        foreach ($viewedItems as $item) {
-            $insertViewedItems = new \ViewItemUser();
-            $insertViewedItems->item_id = $item['item_id'];
-            $insertViewedItems->user_id = $item['user_id'];
-            $insertViewedItems->mall_id = $item['mall_id'];
-            $insertViewedItems->item_type = $item['item_type'];
-            $insertViewedItems->save();
+        if (! empty($viewedItems)) {
+            \ViewItemUser::insert($viewedItems);
         }
     }
 

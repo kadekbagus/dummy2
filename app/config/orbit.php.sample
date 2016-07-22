@@ -192,6 +192,21 @@ return array(
         'pmp'   => 'http://pmp-portal.orbit-mall.here/?mode=pmp/#/service-agreement?token=%s'
     ),
 
+    'user_location' => array(
+        'query_string' => array(
+            // query string name for user location
+            'name'      => 'ul',
+        ),
+        'cookie' => array(
+            // cookie name for user location
+            'name'      => 'ul',
+
+            // additional time to refresh the user location cookie (in seconds)
+            // each time Activity is saved
+            'expire'    => 3600,
+        ),
+    ),
+
     'shop' => array(
         // Id of the retailer
         'id'    => NULL,
@@ -243,8 +258,8 @@ return array(
         // will be used to determine the domain in angular ci
         'main_domain' => 'gotomalls.cool',
 
-        // will be used to determine the domain in mobile ci
-        'ci_domain' => 'gotomalls.cool',
+        // will be used to determine the domain in mobile ci prefix dot, example: .gotomalls.cool
+        'ci_domain' => '.gotomalls.cool',
     ),
 
     // General contact data

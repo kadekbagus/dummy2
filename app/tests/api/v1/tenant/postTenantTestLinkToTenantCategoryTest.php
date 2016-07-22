@@ -9,7 +9,7 @@ use OrbitShop\API\v1\Helper\Generator;
 use Laracasts\TestDummy\Factory;
 use Faker\Factory as Faker;
 
-class postTenantTestLinkToTenantCategoryTestArtemisVersion extends TestCase
+class postTenantTestLinkToTenantCategoryTest extends TestCase
 {
     private $apiUrlNewCategory  = '/api/v1/category/new';
     private $apiUrlNewTenant    = '/api/v1/tenant/new';

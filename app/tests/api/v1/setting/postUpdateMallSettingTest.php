@@ -9,7 +9,7 @@ use OrbitShop\API\v1\Helper\Generator;
 use Laracasts\TestDummy\Factory;
 use Faker\Factory as Faker;
 
-class postUpdateMallSettingTestArtemisVersion extends TestCase
+class postUpdateMallSettingTest extends TestCase
 {
     private $apiUrlUpdate = '/api/v1/mall-setting/update';
 

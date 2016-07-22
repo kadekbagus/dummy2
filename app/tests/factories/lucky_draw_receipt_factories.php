@@ -2,7 +2,7 @@
 
 $factory('LuckyDrawReceipt', [
     'mall_id'           => 'factory:retailer_mall',
-    'user_id'           => '$factory:user',
+    'user_id'           => 'factory:User',
     'receipt_number'    => $faker->randomNumber(),
     'receipt_date'      => date('Y-m-d H:i:s'),
     'receipt_payment_type'  => 'cash',

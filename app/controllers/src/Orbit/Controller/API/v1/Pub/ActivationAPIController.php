@@ -13,6 +13,7 @@ use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\ACL\Exception\ACLForbiddenException;
 use OrbitShop\API\v1\ResponseProvider;
 use Illuminate\Database\QueryException;
+use Orbit\Helper\Net\GuestUserGenerator;
 use Config;
 use stdClass;
 use Orbit\Helper\Util\PaginationNumber;
@@ -184,15 +185,37 @@ class ActivationAPIController extends IntermediateBaseController
      */
     protected function createLoginSession($user)
     {
-        // Start the orbit session
-        $data = array(
-            'logged_in' => TRUE,
-            'user_id'   => $user->user_id,
-            'email'     => $user->user_email,
-            'role'      => $user->role->role_name,
-            'fullname'  => $user->getFullName(),
-        );
-        $this->session->enableForceNew()->start($data);
+        try{
+            // update current session if exists
+            $this->session->start(array(), 'no-session-creation');
+            $sessionData = $this->session->read(NULL);
+            $sessionData['logged_in'] = TRUE;
+            $sessionData['user_id'] = $user->user_id;
+            $sessionData['email'] = $user->user_email;
+            $sessionData['role'] = $user->role->role_name;
+            $sessionData['fullname'] = $user->getFullName();
+
+            $this->session->update($sessionData);
+        } catch (\Exception $e) {
+            // generate guest and add to session data
+            $guestConfig = [
+                'record_signin_activity' => FALSE
+            ];
+            $guest = GuestUserGenerator::create($guestConfig)->generate();
+
+            // Start the orbit session
+            $data = array(
+                'logged_in' => TRUE,
+                'user_id'   => $user->user_id,
+                'email'     => $user->user_email,
+                'role'      => $user->role->role_name,
+                'fullname'  => $user->getFullName(),
+                'guest_user_id' => $guest->user_id,
+                'guest_email' => $guest->user_email
+            );
+            $this->session->enableForceNew()->start($data);
+        }
+
 
         // Send the session id via HTTP header
         $sessionHeader = $this->session->getSessionConfig()->getConfig('session_origin.header.name');

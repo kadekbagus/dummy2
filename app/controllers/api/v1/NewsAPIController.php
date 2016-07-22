@@ -141,7 +141,7 @@ class NewsAPIController extends ControllerAPI
                     'is_popup'            => $is_popup,
                 ),
                 array(
-                    'news_name'           => 'required|max:255|orbit.exists.news_name',
+                    'news_name'           => 'required|max:255',
                     'object_type'         => 'required|orbit.empty.news_object_type',
                     'status'              => 'required|orbit.empty.news_status',
                     'link_object_type'    => 'orbit.empty.link_object_type',
@@ -383,22 +383,27 @@ class NewsAPIController extends ControllerAPI
             $campaignhistory->save();
 
             //save campaign histories (tenant)
-            $withSpending = 'Y';
+            $withSpending = array('mall' => 'N', 'tenant' => 'Y');
             foreach ($retailer_ids as $retailer_id) {
+                $type = 'tenant';
                 $data = @json_decode($retailer_id);
                 $tenant_id = $data->tenant_id;
                 $mall_id = $data->mall_id;
                 // insert tenant/merchant to campaign history
-                $tenantstatus = CampaignLocation::select('status')->where('merchant_id', $tenant_id)->first();
+                $tenantstatus = CampaignLocation::select('status', 'object_type')->where('merchant_id', $tenant_id)->first();
                 $spendingrule = SpendingRule::select('with_spending')->where('object_id', $tenant_id)->first();
 
-                if ($spendingrule) {
-                    $withSpending = $spendingrule->with_spending;
-                } else {
-                    $withSpending = 'N';
+                if ($tenantstatus->object_type === 'mall') {
+                    $type = 'mall';
                 }
 
-                if (($tenantstatus->status === 'active') && ($withSpending === 'Y')) {
+                if ($spendingrule) {
+                    $spending = $spendingrule->with_spending;
+                } else {
+                    $spending = $withSpending[$type];
+                }
+
+                if (($tenantstatus->status === 'active') && ($spending === 'Y')) {
                     $addtenant = new CampaignHistory();
                     $addtenant->campaign_type = $object_type;
                     $addtenant->campaign_id = $newnews->news_id;
@@ -677,7 +682,7 @@ class NewsAPIController extends ControllerAPI
                 $data,
                 array(
                     'news_id'             => 'required|orbit.update.news:' . $object_type,
-                    'news_name'           => 'sometimes|required|max:255|news_name_exists_but_me',
+                    'news_name'           => 'sometimes|required|max:255',
                     'object_type'         => 'required|orbit.empty.news_object_type',
                     'status'              => 'orbit.empty.news_status',
                     'link_object_type'    => 'orbit.empty.link_object_type',
@@ -1079,23 +1084,28 @@ class NewsAPIController extends ControllerAPI
             //check for add/remove tenant
             $removetenant = array_diff($merchantdb, $retailernew);
             $addtenant = array_diff($retailernew, $merchantdb);
-            $withSpending = 'Y';
+            $withSpending = array('mall' => 'N', 'tenant' => 'Y');
             if (! empty($removetenant)) {
                 $actionhistory = 'delete';
                 $addtenantid = CampaignHistoryAction::getIdFromAction('delete_tenant');
                 //save campaign histories (tenant)
                 foreach ($removetenant as $retailer_id) {
                     // insert tenant/merchant to campaign history
-                    $tenantstatus = CampaignLocation::select('status')->where('merchant_id', $retailer_id)->first();
+                    $type = 'tenant';
+                    $tenantstatus = CampaignLocation::select('status', 'object_type')->where('merchant_id', $retailer_id)->first();
                     $spendingrule = SpendingRule::select('with_spending')->where('object_id', $retailer_id)->first();
 
-                    if ($spendingrule) {
-                        $withSpending = $spendingrule->with_spending;
-                    } else {
-                        $withSpending = 'N';
+                    if ($tenantstatus->object_type === 'mall') {
+                        $type = 'mall';
                     }
 
-                    if (($tenantstatus->status === 'active') && ($withSpending === 'Y')) {
+                    if ($spendingrule) {
+                        $spending = $spendingrule->with_spending;
+                    } else {
+                        $spending = $withSpending[$type];
+                    }
+
+                    if (($tenantstatus->status === 'active') && ($spending === 'Y')) {
                         $tenanthistory = new CampaignHistory();
                         $tenanthistory->campaign_type = $object_type;
                         $tenanthistory->campaign_id = $news_id;
@@ -1116,16 +1126,21 @@ class NewsAPIController extends ControllerAPI
                 //save campaign histories (tenant)
                 foreach ($addtenant as $retailer_id) {
                     // insert tenant/merchant to campaign history
-                    $tenantstatus = CampaignLocation::select('status')->where('merchant_id', $retailer_id)->first();
+                    $type = 'tenant';
+                    $tenantstatus = CampaignLocation::select('status', 'object_type')->where('merchant_id', $retailer_id)->first();
                     $spendingrule = SpendingRule::select('with_spending')->where('object_id', $retailer_id)->first();
 
-                    if ($spendingrule) {
-                        $withSpending = $spendingrule->with_spending;
-                    } else {
-                        $withSpending = 'N';
+                    if ($tenantstatus->object_type === 'mall') {
+                        $type = 'mall';
                     }
 
-                    if (($tenantstatus->status === 'active') && ($withSpending === 'Y')) {
+                    if ($spendingrule) {
+                        $spending = $spendingrule->with_spending;
+                    } else {
+                        $spending = $withSpending[$type];
+                    }
+
+                    if (($tenantstatus->status === 'active') && ($spending === 'Y')) {
                         $tenanthistory = new CampaignHistory();
                         $tenanthistory->campaign_type = $object_type;
                         $tenanthistory->campaign_id = $news_id;
@@ -2331,55 +2346,6 @@ class NewsAPIController extends ControllerAPI
             return true;
         });
 
-        // Check news name, it should not exists
-        Validator::extend('orbit.exists.news_name', function ($attribute, $value, $parameters) {
-
-            // this is for fixing OM-578
-            // can not make promotion if the name has already been used for news
-            $object_type = OrbitInput::post('object_type');
-            $mall_id = OrbitInput::post('current_mall');
-
-            if (empty($object_type)) {
-                $object_type = 'news';
-            }
-
-            $newsName = News::excludeDeleted()
-                    ->where('news_name', $value)
-                    ->where('object_type', $object_type)
-                    ->where('mall_id', $mall_id)
-                    ->first();
-
-            if (! empty($newsName)) {
-                return false;
-            }
-
-            App::instance('orbit.validation.news_name', $newsName);
-
-            return true;
-        });
-
-        // Check news name, it should not exists (for update)
-        Validator::extend('news_name_exists_but_me', function ($attribute, $value, $parameters) {
-            $news_id = trim(OrbitInput::post('news_id'));
-            $object_type = trim(OrbitInput::post('object_type'));
-            $mall_id = OrbitInput::post('current_mall');
-
-            $news = News::excludeDeleted()
-                        ->where('news_name', $value)
-                        ->where('news_id', '!=', $news_id)
-                        ->where('object_type', $object_type)
-                        ->where('mall_id', $mall_id)
-                        ->first();
-
-            if (! empty($news)) {
-                return false;
-            }
-
-            App::instance('orbit.validation.news_name', $news);
-
-            return true;
-        });
-
         // Check the existence of the news status
         Validator::extend('orbit.empty.news_status', function ($attribute, $value, $parameters) {
             $valid = false;
@@ -2556,27 +2522,8 @@ class NewsAPIController extends ControllerAPI
                     }
                 }
                 if (empty($existing_translation)) {
-                    if (! empty(trim($translations->news_name))) {
-                        $news_translation = NewsTranslation::excludeDeleted()
-                                                    ->where('merchant_language_id', '=', $merchant_language_id)
-                                                    ->where('news_name', '=', $translations->news_name)
-                                                    ->first();
-                        if (! empty($news_translation)) {
-                            OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.exists.news_name'));
-                        }
-                    }
                     $operations[] = ['create', $merchant_language_id, $translations];
                 } else {
-                    if (! empty(trim($translations->news_name))) {
-                        $news_translation_but_not_me = NewsTranslation::excludeDeleted()
-                                                    ->where('merchant_language_id', '=', $merchant_language_id)
-                                                    ->where('news_id', '!=', $news->news_id)
-                                                    ->where('news_name', '=', $translations->news_name)
-                                                    ->first();
-                        if (! empty($news_translation_but_not_me)) {
-                            OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.exists.news_name'));
-                        }
-                    }
                     $operations[] = ['update', $existing_translation, $translations];
                 }
             }

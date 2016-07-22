@@ -2240,7 +2240,8 @@ class TenantAPIController extends ControllerAPI
                                         )
                                        ->leftjoin('merchants as pm', DB::raw("pm.merchant_id"), '=', 'merchants.parent_id')
                                        ->whereIn('merchants.object_type', ['mall', 'tenant'])
-                                       ->where('merchants.status', '!=', 'deleted');
+                                       ->where('merchants.status', '!=', 'deleted')
+                                       ->groupBy('merchants.merchant_id');
 
             if (in_array(strtolower($user->role->role_name), $this->campaignRole)) {
                 $tenants->join('user_merchant', function($q) use ($user)
