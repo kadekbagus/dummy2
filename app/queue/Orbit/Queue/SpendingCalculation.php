@@ -45,6 +45,9 @@ class SpendingCalculation
         }
 
         foreach ($getMall as $listMall) {
+            // Begin database transaction
+            DB::beginTransaction();
+
             $mall = $listMall['mall_id'];
             $begin_date = $listMall['begin_date'];
             $end_date = $listMall['end_date'];
@@ -67,9 +70,6 @@ class SpendingCalculation
             $end = date('Y-m-d', strtotime($end_date));
 
             if (! empty($getspending)) {
-                // Begin database transaction
-                DB::beginTransaction();
-
                 // only calculate spending when update date between start and date of campaign
                 if ($dateNowMall >= $begin && $dateNowMall <= $end) {
                     $daily = CampaignDailySpending::where('date', '=', $getspending->date_in_utc)->where('campaign_id', '=', $campaign_id)->where('mall_id', '=', $mall)->first();
