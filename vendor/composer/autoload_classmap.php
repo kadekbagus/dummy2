@@ -7,6 +7,9 @@ $baseDir = dirname($vendorDir);
 
 return array(
     'AccountAPIController' => $baseDir . '/app/controllers/api/v1/AccountAPIController.php',
+    'AccountType' => $baseDir . '/app/models/AccountType.php',
+    'AccountTypeAPIController' => $baseDir . '/app/controllers/api/v1/AccountTypeAPIController.php',
+    'AccountTypeTableSeeder' => $baseDir . '/app/database/seeds/AccountTypeTableSeeder.php',
     'Activity' => $baseDir . '/app/models/Activity.php',
     'ActivityAPIController' => $baseDir . '/app/controllers/api/v1/ActivityAPIController.php',
     'AgeRange' => $baseDir . '/app/models/AgeRange.php',
@@ -16,6 +19,7 @@ return array(
     'AlterIndexesUserSignin' => $baseDir . '/app/database/migrations/2016_01_21_230428_alter_indexes_user_signin.php',
     'AlterSessionsAddApplicationId' => $baseDir . '/app/database/migrations/2015_10_30_112636_alter_sessions_add_application_id.php',
     'AlterSessionsAddIndexExpireAt' => $baseDir . '/app/database/migrations/2015_10_27_094038_alter_sessions_add_index_expire_at.php',
+    'AlterTableAccountTypeAddFieldAccountOrder' => $baseDir . '/app/database/migrations/2016_07_22_034157_alter_table_account_type_add_field_account_order.php',
     'AlterTableActivitiesAddFieldFromWifi' => $baseDir . '/app/database/migrations/2016_06_01_074700_alter_table_activities_add_field_from_wifi.php',
     'AlterTableActivitiesAddLongitudeAndLatitudeColumn' => $baseDir . '/app/database/migrations/2016_07_21_041540_alter_table_activities_add_longitude_and_latitude_column.php',
     'AlterTableActivitiesAddObjectDisplayNameColumn' => $baseDir . '/app/database/migrations/2015_12_11_062518_alter_table_activities_add_object_display_name_column.php',
@@ -1254,6 +1258,7 @@ return array(
     'Orbit\\Controller\\API\\v1\\Customer\\MallByDomainCIAPIController' => $baseDir . '/app/controllers/src/Orbit/Controller/API/v1/Customer/MallByDomainCIAPIController.php',
     'Orbit\\Controller\\API\\v1\\Customer\\MembershipCIAPIController' => $baseDir . '/app/controllers/src/Orbit/Controller/API/v1/Customer/MembershipCIAPIController.php',
     'Orbit\\Controller\\API\\v1\\Customer\\ObjectCIAPIController' => $baseDir . '/app/controllers/src/Orbit/Controller/API/v1/Customer/ObjectCIAPIController.php',
+    'Orbit\\Controller\\API\\v1\\Customer\\PowerSearchCIAPIController' => $baseDir . '/app/controllers/src/Orbit/Controller/API/v1/Customer/PowerSearchCIAPIController.php',
     'Orbit\\Controller\\API\\v1\\Customer\\PromotionCIAPIController' => $baseDir . '/app/controllers/src/Orbit/Controller/API/v1/Customer/PromotionCIAPIController.php',
     'Orbit\\Controller\\API\\v1\\Customer\\ServiceCIAPIController' => $baseDir . '/app/controllers/src/Orbit/Controller/API/v1/Customer/ServiceCIAPIController.php',
     'Orbit\\Controller\\API\\v1\\Customer\\TenantCIAPIController' => $baseDir . '/app/controllers/src/Orbit/Controller/API/v1/Customer/TenantCIAPIController.php',

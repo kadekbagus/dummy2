@@ -31,7 +31,6 @@ use \stdclass;
 
 class PowerSearchCIAPIController extends BaseAPIController
 {
-	protected $validRoles = ['super admin', 'consumer', 'guest'];
 
     /**
      * GET - Get search tenant, coupon, news, promotion, lucky draw
@@ -42,6 +41,10 @@ class PowerSearchCIAPIController extends BaseAPIController
      *
      * @author Firmansyah <firmansyah@dominopos.com>
      */
+
+    protected $validRoles = ['super admin', 'consumer', 'guest'];
+    protected $mall_id = NULL;
+
     public function getPowerSearch() {
         $user = null;
         $keyword = null;
@@ -57,21 +60,19 @@ class PowerSearchCIAPIController extends BaseAPIController
             }
 
             // Require authentication
-            $user = $this->getLoggedInUser();
-
-            UrlBlock::checkBlockedUrl($user);
-            $retailer = $this->getRetailerInfo();
-
+            $this->registerCustomValidation();
 
             $lang = OrbitInput::get('lang', 'en');
+            $this->mall_id = OrbitInput::get('mall_id', NULL);
 
-            $this->registerCustomValidation();
             $validator = Validator::make(
                 array(
                     'id_language_default' => $lang,
+                    'mall_id' => $this->mall_id,
                 ),
                 array(
                     'id_language_default' => 'orbit.empty.language_default',
+                    'mall_id' => 'required|orbit.empty.mall',
                 )
             );
 
@@ -80,7 +81,14 @@ class PowerSearchCIAPIController extends BaseAPIController
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
+            $user = $this->getLoggedInUser($this->mall_id);
+
+            UrlBlock::checkBlockedUrl($user);
+
             $language = \Language::where('name', '=', $lang)->first();
+
+            $retailer = Mall::excludeDeleted()->where('merchant_id', $this->mall_id)->first();
+            $mallTime = Carbon::now($retailer->timezone->timezone_name);
 
             $alternateLanguage = null;
             if (is_object($language)) {
@@ -91,7 +99,6 @@ class PowerSearchCIAPIController extends BaseAPIController
             }
 
             //$alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
-            $mallTime = Carbon::now($retailer->timezone->timezone_name);
             $userAge = 0;
             if ($user->userDetail->birthdate !== '0000-00-00' && $user->userDetail->birthdate !== null) {
                 $userAge = $this->calculateAge($user->userDetail->birthdate);
@@ -338,62 +345,32 @@ class PowerSearchCIAPIController extends BaseAPIController
 
             $grouped_search_result = new stdclass();
             $grouped_search_result->tenants = [];
-            $grouped_search_result->tenants_counts = $_tenant->count();
-            $grouped_search_result->tenants_url = UrlBlock::blockedRoute('ci-tenant-list', ['keyword' => htmlspecialchars($keyword)], $this->session);
-            // $grouped_search_result->tenants_redirect_url = URL::route('ci-tenant-list', ['keyword' => htmlspecialchars($keyword)]);
             $grouped_search_result->services = [];
-            $grouped_search_result->services_counts = $_service->count();
-            $grouped_search_result->services_url = UrlBlock::blockedRoute('ci-service-list', ['keyword' => htmlspecialchars($keyword)], $this->session);
-            // $grouped_search_result->services_redirect_url = URL::route('ci-service-list', ['keyword' => htmlspecialchars($keyword)]);
             $grouped_search_result->news = [];
-            $grouped_search_result->news_counts = $_news->count();
-            $grouped_search_result->news_url = UrlBlock::blockedRoute('ci-news-list', ['keyword' => htmlspecialchars($keyword)], $this->session);
-            // $grouped_search_result->news_redirect_url = URL::route('ci-news-list', ['keyword' => htmlspecialchars($keyword)]);
             $grouped_search_result->promotions = [];
-            $grouped_search_result->promotions_counts = $_promo->count();
-            $grouped_search_result->promotions_url = UrlBlock::blockedRoute('ci-promotion-list', ['keyword' => htmlspecialchars($keyword)], $this->session);
-            // $grouped_search_result->promotions_redirect_url = URL::route('ci-promotion-list', ['keyword' => htmlspecialchars($keyword)]);
             $grouped_search_result->coupons = [];
-            $grouped_search_result->coupons_counts = count($_coupon->groupBy('promotions.promotion_id')->get());
-            $grouped_search_result->coupons_url = UrlBlock::blockedRoute('ci-coupon-list', ['keyword' => htmlspecialchars($keyword)], $this->session);
-            // $grouped_search_result->coupons_redirect_url = URL::route('ci-coupon-list', ['keyword' => htmlspecialchars($keyword)]);
             $grouped_search_result->lucky_draws = [];
-            $grouped_search_result->lucky_draws_counts = $_lucky_draw->count();
-            $grouped_search_result->lucky_draws_url = UrlBlock::blockedRoute('ci-luckydraw-list', ['keyword' => htmlspecialchars($keyword)], $this->session);
-            // $grouped_search_result->lucky_draws_redirect_url = URL::route('ci-luckydraw-list', ['keyword' => htmlspecialchars($keyword)]);
 
             foreach($search_results as $near_end_result) {
                 if ($near_end_result->object_type === 'promotion') {
-                    $near_end_result->object_url = UrlBlock::blockedRoute('ci-promotion-detail', ['id' => $near_end_result->object_id], $this->session);
-                    // $near_end_result->object_redirect_url = URL::route('ci-promotion-detail', ['id' => $near_end_result->object_id]);
                     $near_end_result->object_image = URL::asset('mobile-ci/images/default_promotion.png');
                 } elseif ($near_end_result->object_type === 'news') {
-                    $near_end_result->object_url = UrlBlock::blockedRoute('ci-news-detail', ['id' => $near_end_result->object_id], $this->session);
-                    // $near_end_result->object_redirect_url = URL::route('ci-news-detail', ['id' => $near_end_result->object_id]);
                     $near_end_result->object_image = URL::asset('mobile-ci/images/default_news.png');
                 } elseif ($near_end_result->object_type === 'coupon') {
-                    $near_end_result->object_url = UrlBlock::blockedRoute('ci-coupon-detail', ['id' => $near_end_result->object_id], $this->session);
-                    // $near_end_result->object_redirect_url = URL::route('ci-coupon-detail', ['id' => $near_end_result->object_id]);
                     $near_end_result->object_image = URL::asset('mobile-ci/images/default_coupon.png');
                 } elseif ($near_end_result->object_type === 'tenant') {
-                    $near_end_result->object_url = UrlBlock::blockedRoute('ci-tenant-detail', ['id' => $near_end_result->object_id], $this->session);
-                    // $near_end_result->object_redirect_url = URL::route('ci-tenant-detail', ['id' => $near_end_result->object_id]);
                     if (! is_null($near_end_result->object_image)) {
                         $near_end_result->object_image = URL::asset($near_end_result->object_image);
                     } else {
                         $near_end_result->object_image = URL::asset('mobile-ci/images/default_tenants_directory.png');
                     }
                 } elseif ($near_end_result->object_type === 'service') {
-                    $near_end_result->object_url = UrlBlock::blockedRoute('ci-service-detail', ['id' => $near_end_result->object_id], $this->session);
-                    // $near_end_result->object_redirect_url = URL::route('ci-service-detail', ['id' => $near_end_result->object_id]);
                     if (! is_null($near_end_result->object_image)) {
                         $near_end_result->object_image = URL::asset($near_end_result->object_image);
                     } else {
                         $near_end_result->object_image = URL::asset('mobile-ci/images/default_services_directory.png');
                     }
                 } elseif ($near_end_result->object_type === 'lucky_draw') {
-                    $near_end_result->object_url = UrlBlock::blockedRoute('ci-luckydraw-detail', ['id' => $near_end_result->object_id], $this->session);
-                    // $near_end_result->object_redirect_url = URL::route('ci-luckydraw-detail', ['id' => $near_end_result->object_id]);
                     $near_end_result->object_image = URL::asset('mobile-ci/images/default_lucky_number.png');
                 }
 
@@ -549,8 +526,7 @@ class PowerSearchCIAPIController extends BaseAPIController
             $data = new stdclass();
             $data->total_records = count($search_results);
             $data->returned_records = count($search_results);
-            $data->records = $search_results;
-            $data->grouped_records = $grouped_search_result;
+            $data->records = $grouped_search_result;
 
             if (count($search_results) === 0) {
                 $data->records = null;
@@ -653,6 +629,21 @@ class PowerSearchCIAPIController extends BaseAPIController
             }
 
             return true;
+        });
+
+        // Check the existance of merchant id
+        Validator::extend('orbit.empty.mall', function ($attribute, $value, $parameters) {
+            $mall = Mall::excludeDeleted()
+                        ->where('merchant_id', $value)
+                        ->first();
+
+            if (empty($mall)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.empty.mall', $mall);
+
+            return TRUE;
         });
 
     }

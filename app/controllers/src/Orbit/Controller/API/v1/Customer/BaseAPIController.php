@@ -124,32 +124,21 @@ class BaseAPIController extends ControllerAPI
         return null;
     }
 
-    /**
-     * Get current logged in user used in view related page.
-     *
-     * @author Rio Astamal <me@rioastamal.net>
-     * @return User $user
-     */
-    protected function getLoggedInUser()
+    protected function getLoggedInUser($mallId)
     {
         $this->session = SessionPreparer::prepareSession();
 
         $userId = $this->session->read('user_id');
 
-        if (empty($this->retailer)) {
-            $this->retailer = $this->getRetailerInfo();
-        }
-        $retailer = $this->retailer;
-
         // @todo: Why we query membership also? do we need it on every page?
         $user = User::with(['userDetail',
-            'membershipNumbers' => function($q) use ($retailer) {
+            'membershipNumbers' => function($q) use ($mallId) {
                 $q->select('membership_numbers.*')
                     ->with('membership.media')
                     ->join('memberships', 'memberships.membership_id', '=', 'membership_numbers.membership_id')
                     ->excludeDeleted('membership_numbers')
                     ->excludeDeleted('memberships')
-                    ->where('memberships.merchant_id', $retailer->merchant_id);
+                    ->where('memberships.merchant_id', $mallId);
             }])
             ->where('user_id', $userId)
             ->whereHas('role', function($q) {
@@ -491,7 +480,7 @@ class BaseAPIController extends ControllerAPI
     public function getRetailerInfo($with = null)
     {
         try {
-            $retailer_id = App::make('orbitSetting')->getSetting('current_retailer');
+            $retailer_id = App::make('orbitSetting')->getSetting('current_retailer'); //<pre>EXs5F-TKS-------
 
             $retailer = Mall::with('parent')->where('merchant_id', $retailer_id);
             if (! is_null($with)) {
