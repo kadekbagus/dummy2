@@ -40,5 +40,4 @@ return [
             'sort_key' => 'status',
         ],
     ],
-    
 ];
