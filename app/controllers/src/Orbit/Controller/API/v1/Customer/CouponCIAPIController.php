@@ -178,10 +178,7 @@ class CouponCIAPIController extends BaseAPIController
             OrbitInput::get(
                 'keyword', // todo: add alternateLanguage
                 function ($keyword) use ($coupons) {
-                    $coupons->leftJoin('coupon_translations', function($join) {
-                            $join->on('promotions.promotion_id', '=', 'coupon_translations.promotion_id');
-                        })
-                        ->leftJoin('keyword_object', function($join) {
+                    $coupons->leftJoin('keyword_object', function($join) {
                             $join->on('promotions.promotion_id', '=', 'keyword_object.object_id');
                             $join->where('keyword_object.object_type', '=', 'coupon');
                         })
@@ -197,7 +194,7 @@ class CouponCIAPIController extends BaseAPIController
                         });
                 }
             );
-            
+
             $this->viewItemUserUpdate('coupon', $user, $mall);
 
             $coupons->groupBy('promotions.promotion_id');
