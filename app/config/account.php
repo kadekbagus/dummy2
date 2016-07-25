@@ -8,6 +8,10 @@ return [
             'title' => 'Account Name',
             'sort_key' => 'account_name',
         ],
+        'type_name' => [
+            'title' => 'Type Name',
+            'sort_key' => 'type_name',
+        ],
         'company_name' => [
             'title' => 'Company Name',
             'sort_key' => 'company_name',
