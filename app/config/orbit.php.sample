@@ -3244,5 +3244,54 @@ return array(
     // Block access to some end point
     'maintenance_mode' => [
         'crmsummary' => FALSE
-    ]
+    ],
+
+    'generic_activity' => array(
+        'parameter_name' => 'act',
+        'activity_list' => array(
+            // landing page activity list
+            // - Successfully landed in Gotomalls
+            '1' => array(
+                'name' => 'view_landing_page',
+                'name_long' => 'View Landing Page',
+                'module_name' => 'Application',
+                'type' => 'view',
+            ),
+            // - Clicking on a mall in result list
+            '2' => array(
+                'name' => 'click_mall_list',
+                'name_long' => 'Click Mall List',
+                'module_name' => 'Application',
+                'type' => 'click',
+            ),
+            // - Clicking on a mall pin on the map
+            '3' => array(
+                'name' => 'click_mall_pin',
+                'name_long' => 'Click Mall Pin',
+                'module_name' => 'Application',
+                'type' => 'click',
+            ),
+            // - Visiting a mall
+            '4' => array(
+                'name' => 'view_mall',
+                'name_long' => 'View Mall',
+                'module_name' => 'Application',
+                'type' => 'view',
+            ),
+            // - Viewing mall info
+            '5' => array(
+                'name' => 'view_mall_info',
+                'name_long' => 'View Mall Info',
+                'module_name' => 'Application',
+                'type' => 'view',
+            ),
+            // - Switching user
+            '6' => array(
+                'name' => 'click_not_me',
+                'name_long' => 'Switch User',
+                'module_name' => 'Application',
+                'type' => 'click',
+            ),
+        ),
+    ),
 );

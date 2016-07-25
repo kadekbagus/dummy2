@@ -4,6 +4,7 @@ use Carbon\Carbon;
 use OrbitShop\API\v1\ControllerAPI;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
 use OrbitShop\API\v1\OrbitShopAPI;
+use OrbitShop\API\v1\Helper\Input as OrbitInput;
 
 /**
  * The PMP Account controller
@@ -410,19 +411,32 @@ class AccountAPIController extends ControllerAPI
         // Join with 'campaign_account' (1 to 1)
         $pmpAccounts->join('campaign_account', 'users.user_id', '=', 'campaign_account.user_id');
 
+        // Join with 'account_types' (1 to 1)
+        $pmpAccounts->leftJoin('account_types', 'campaign_account.account_type_id', '=', 'account_types.account_type_id');
+
         // Join with 'countries' (1 to 1)
         if (Input::get('location')) {
             $pmpAccounts->leftJoin('countries', 'user_details.country_id', '=', 'countries.country_id');
         }
 
+        // Filter by account type id
+        OrbitInput::get('account_type_id', function ($account_type_id) use ($pmpAccounts) {
+            $pmpAccounts->where('account_types.account_type_id', '=', $account_type_id);
+        });
+
+        // Filter by account type name
+        OrbitInput::get('account_type_name', function ($account_type_name) use ($pmpAccounts) {
+            $pmpAccounts->where('account_types.type_name', 'LIKE', '%' . $account_type_name . '%');
+        });
+
         // Filter by Account Name
         if (Input::get('account_name')) {
-            $pmpAccounts->where('account_name', 'LIKE', '%'.Input::get('account_name').'%');
+            $pmpAccounts->where('account_name', 'LIKE', '%' . Input::get('account_name') . '%');
         }
 
         // Filter by Company Name
         if (Input::get('company_name')) {
-            $pmpAccounts->where('company_name', 'LIKE', '%'.Input::get('company_name').'%');
+            $pmpAccounts->where('company_name', 'LIKE', '%' . Input::get('company_name') . '%');
         }
 
         // Filter by Location
@@ -506,6 +520,8 @@ class AccountAPIController extends ControllerAPI
                 'company_name' => $row->company_name,
                 'city'         => $row->userDetail->city,
                 'role_name'    => $row->role_name,
+                'account_type_id'=> $row->campaignAccount->account_type_id,
+                'type_name'      => $row->type_name,
                 'tenant_count' => count($tenantAtMallArray),
                 'tenants'      => $tenantAtMallArray,
 
