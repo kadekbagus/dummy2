@@ -109,5 +109,15 @@ Route::get('/api/v1/activity/crm-summary-report', function()
 
 Route::get('/api/v1/activity/groups', function()
 {
-   return ActivityAPIController::create()->getGroups(); 
+   return ActivityAPIController::create()->getGroups();
 });
+
+/**
+ * Post new generic activity
+ */
+Route::post(
+    '/{search}/v1/pub/generic-activity/new', ['as' => 'generic-activity-new', function()
+    {
+        return Orbit\Controller\API\v1\Pub\GenericActivityAPIController::create()->postNewGenericActivity();
+    }]
+)->where('search', '(api|app)');
