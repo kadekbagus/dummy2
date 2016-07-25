@@ -18,7 +18,7 @@ Route::post('/api/v1/account/new', function()
 // Update a PMP Account
 Route::post('/api/v1/account/update', function()
 {
-    return AccountAPIController::create()->postCreateUpdate();
+    return AccountAPIController::create()->postUpdateAccount();
 });
 
 Route::get('/api/v1/account/tenants/available', function()

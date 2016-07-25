@@ -1,6 +1,6 @@
 <?php
 /**
- * PHP Unit Test for Account API Controller postNewAccount
+ * PHP Unit Test for Account API Controller postUpdateAccount
  *
  * @author: Irianto Pratama <irianto@dominopos.com>
  */
@@ -9,9 +9,9 @@ use OrbitShop\API\v1\Helper\Generator;
 use Laracasts\TestDummy\Factory;
 use Faker\Factory as Faker;
 
-class postNewAccountTest extends TestCase
+class postUpdateAccountTest extends TestCase
 {
-    private $apiUrl = 'api/v1/account/new';
+    private $apiUrl = 'api/v1/account/update';
 
     public function setUp()
     {
@@ -23,9 +23,6 @@ class postNewAccountTest extends TestCase
 
         // country
         $this->country = Factory::create('Country');
-
-        // role campaign owner for new account
-        Factory::create('role_campaign_owner');
 
         // account_types
         $this->account_type_mall      = Factory::create('account_type_mall');
@@ -42,17 +39,23 @@ class postNewAccountTest extends TestCase
         $this->tenant_b1 = $tenant_b1 = Factory::create('Tenant', ['parent_id' => $mall_b->merchant_id]);
         $this->tenant_b2 = $tenant_b2 = Factory::create('Tenant', ['parent_id' => $mall_b->merchant_id]);
 
+        // base user
+        $this->pmp_user = Factory::create('campaign_owner');
+        $this->pmp_user_detail = Factory::create('UserDetail', ['user_id' => $this->pmp_user->user_id]);
+        $this->pmp_campaign_account = Factory::create('CampaignAccount', ['user_id' => $this->pmp_user->user_id, 'parent_user_id' => NULL]);
+        $this->pmp_employee = Factory::create('Employee', ['user_id' => $this->pmp_user->user_id]);
+
         $_GET = [];
         $_POST = [];
     }
 
-    public function setRequestPostNewAccount($api_key, $api_secret_key, $new_data)
+    public function setRequestPostUpdateAccount($api_key, $api_secret_key, $update_data)
     {
         // Set the client API Keys
         $_GET['apikey'] = $api_key;
         $_GET['apitimestamp'] = time();
 
-        foreach ($new_data as $field => $value) {
+        foreach ($update_data as $field => $value) {
             $_POST[$field] = $value;
         }
         $url = $this->apiUrl . '?' . http_build_query($_GET);
@@ -69,26 +72,24 @@ class postNewAccountTest extends TestCase
         return $response;
     }
 
-    public function testRequiredUserFirstName()
+    public function testRequiredUserId()
     {
         /*
-        * test mall name is required
+        * test user_id is required
         */
         $data = [];
 
-        $response = $this->setRequestPostNewAccount($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $response = $this->setRequestPostUpdateAccount($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
         $this->assertSame(14, $response->code);
         $this->assertSame("error", $response->status);
-        $this->assertSame("The user firstname field is required", $response->message);
+        $this->assertSame("The id field is required", $response->message);
         $this->assertSame(NULL, $response->data);
     }
 
-    public function testCreatePMPAccountSuccess()
+    public function testUpdatePMPAccountSuccess()
     {
-        /*
-        * test mall name is required
-        */
         $data = [
+            'id'              => $this->pmp_user->user_id,
             'user_firstname'  => 'irianto',
             'user_lastname'   => 'pratama',
             'user_email'      => 'pmpsatu@campaignowner.com',
@@ -99,11 +100,10 @@ class postNewAccountTest extends TestCase
             'country_id'      => $this->country->country_id,
             'merchant_ids'    => [$this->mall_a->merchant_id, $this->mall_b->merchant_id],
             'account_type_id' => $this->account_type_mall->account_type_id,
-            'user_password'   => '123456',
             'role_name'       => 'Campaign Owner',
         ];
 
-        $response = $this->setRequestPostNewAccount($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $response = $this->setRequestPostUpdateAccount($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
         $this->assertSame("Request OK", $response->message);
         $this->assertSame(0, $response->code);
         $this->assertSame("success", $response->status);
