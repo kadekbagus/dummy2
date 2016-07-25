@@ -22,6 +22,7 @@ use Validator;
 use User;
 use Lang;
 use Mall;
+use App;
 use Orbit\Helper\Session\UserGetter;
 
 class GenericActivityAPIController extends IntermediateBaseController
@@ -65,6 +66,9 @@ class GenericActivityAPIController extends IntermediateBaseController
             || ! isset($genericActivityConfig['activity_list'][$activityNumber])
             || ! isset($genericActivityConfig['activity_list'][$activityNumber]['name'])
             || empty($genericActivityConfig['activity_list'][$activityNumber]['name'])
+            || ! isset($genericActivityConfig['activity_list'][$activityNumber]['name_long'])
+            || ! isset($genericActivityConfig['activity_list'][$activityNumber]['module_name'])
+            || ! isset($genericActivityConfig['activity_list'][$activityNumber]['type'])
         ) {
             $this->response->code = 1;
             $this->response->status = 'error';
@@ -77,6 +81,8 @@ class GenericActivityAPIController extends IntermediateBaseController
         $activityNameLong = $genericActivityConfig['activity_list'][$activityNumber]['name_long'];
         $activityModuleName = $genericActivityConfig['activity_list'][$activityNumber]['module_name'];
         $activityType = $genericActivityConfig['activity_list'][$activityNumber]['type'];
+        $activityObjectType = $genericActivityConfig['activity_list'][$activityNumber]['object_type'];
+        $activityObjectIDParamName = $genericActivityConfig['activity_list'][$activityNumber]['parameter_name'];
 
         $activity = Activity::mobileci()->setActivityType($activityType);
         try {
@@ -84,10 +90,27 @@ class GenericActivityAPIController extends IntermediateBaseController
 
             $user = UserGetter::getLoggedInUserOrGuest($this->session);
 
+            $object = null;
+            if (! empty($activityObjectType) && ! empty($activityObjectIDParamName)) {
+                $object_id = OrbitInput::post($activityObjectIDParamName, null);
+
+                if (! empty($object_id)) {
+                    $object_primary_name = App::make($activityObjectType)->getkeyName();
+
+                    $savedObject = $activityObjectType::excludeDeleted()
+                        ->where($object_primary_name, $object_id)
+                        ->first();
+
+                    if (is_object($savedObject)) {
+                        $object = $savedObject;
+                    }
+                }
+            }
+
             $activity->setUser($user)
                 ->setActivityName($activityName)
                 ->setActivityNameLong($activityNameLong)
-                ->setObject(null)
+                ->setObject($object)
                 ->setModuleName($activityModuleName)
                 ->responseOK()
                 ->save();

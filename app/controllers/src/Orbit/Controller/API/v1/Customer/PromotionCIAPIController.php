@@ -32,10 +32,11 @@ class PromotionCIAPIController extends BaseAPIController
 
     public function getPromotionList()
     {
+        $activity = Activity::mobileci()->setActivityType('view');
+        $user = null;
         $httpCode = 200;
         $this->response = new ResponseProvider();
-
-        $user = null;
+        $objectType = null;
         $keyword = null;
 
         try{
@@ -171,7 +172,7 @@ class PromotionCIAPIController extends BaseAPIController
             if ($objectType == 'news') {
                 $this->viewItemUserUpdate('news', $user, $mall);
             }
-            
+
             $promotions = $promotions->groupBy('news.news_id');
 
             $_promotions = clone($promotions);
@@ -273,6 +274,19 @@ class PromotionCIAPIController extends BaseAPIController
             $data->total_records = RecordCounter::create($_promotions)->count();
             $data->records = $listOfRec;
 
+            if (empty($skip)) {
+                $activityNotes = sprintf('Page viewed: %s List Page', ucwords($objectType));
+                $activity->setUser($user)
+                    ->setActivityName(sprintf('view_%s_list', $objectType))
+                    ->setActivityNameLong(sprintf('View %s List', ucwords($objectType)))
+                    ->setObject(null)
+                    ->setModuleName(ucwords($objectType))
+                    ->setNotes($activityNotes)
+                    ->setLocation($mall)
+                    ->responseOK()
+                    ->save();
+            }
+
             $this->response->data = $data;
             $this->response->code = 0;
             $this->response->status = 'success';
@@ -285,6 +299,15 @@ class PromotionCIAPIController extends BaseAPIController
             $this->response->data = null;
             $httpCode = 403;
 
+            $activityNotes = sprintf('Failed to view Page: %s List. Err: %s', ucwords($objectType), $e->getMessage());
+            $activity->setUser($user)
+                ->setActivityName(sprintf('view_%s_list', $objectType))
+                ->setActivityNameLong(sprintf('View %s List Failed', ucwords($objectType)))
+                ->setObject(null)
+                ->setModuleName(ucwords($objectType))
+                ->setNotes($activityNotes)
+                ->responseFailed()
+                ->save();
         } catch (InvalidArgsException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -296,6 +319,15 @@ class PromotionCIAPIController extends BaseAPIController
             $this->response->data = $result;
             $httpCode = 403;
 
+            $activityNotes = sprintf('Failed to view Page: %s List. Err: %s', ucwords($objectType), $e->getMessage());
+            $activity->setUser($user)
+                ->setActivityName(sprintf('view_%s_list', $objectType))
+                ->setActivityNameLong(sprintf('View %s List Failed', ucwords($objectType)))
+                ->setObject(null)
+                ->setModuleName(ucwords($objectType))
+                ->setNotes($activityNotes)
+                ->responseFailed()
+                ->save();
         } catch (QueryException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -308,13 +340,31 @@ class PromotionCIAPIController extends BaseAPIController
             $this->response->data = null;
             $httpCode = 500;
 
+            $activityNotes = sprintf('Failed to view Page: %s List. Err: %s', ucwords($objectType), $e->getMessage());
+            $activity->setUser($user)
+                ->setActivityName(sprintf('view_%s_list', $objectType))
+                ->setActivityNameLong(sprintf('View %s List Failed', ucwords($objectType)))
+                ->setObject(null)
+                ->setModuleName(ucwords($objectType))
+                ->setNotes($activityNotes)
+                ->responseFailed()
+                ->save();
         } catch (Exception $e) {
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = null; 
+            $this->response->data = null;
             $httpCode = 500;
 
+            $activityNotes = sprintf('Failed to view Page: %s List. Err: %s', ucwords($objectType), $e->getMessage());
+            $activity->setUser($user)
+                ->setActivityName(sprintf('view_%s_list', $objectType))
+                ->setActivityNameLong(sprintf('View %s List Failed', ucwords($objectType)))
+                ->setObject(null)
+                ->setModuleName(ucwords($objectType))
+                ->setNotes($activityNotes)
+                ->responseFailed()
+                ->save();
         }
 
         return $this->render($httpCode);
@@ -322,11 +372,12 @@ class PromotionCIAPIController extends BaseAPIController
 
     public function getPromotionDetail()
     {
+        $activity = Activity::mobileci()->setActivityType('view');
+        $user = null;
         $httpCode = 200;
         $this->response = new ResponseProvider();
-
-        $user = null;
         $promotionId = 0;
+        $objectType = null;
 
         try{
             $this->checkAuth();
@@ -382,8 +433,8 @@ class PromotionCIAPIController extends BaseAPIController
                     $q->where('merchants.status', 'active');
                     $q->where('merchants.parent_id', $mall->merchant_id);
                 }])
-                ->select('news.news_id', 'news.news_name','image', 'news.object_type', 
-                    DB::raw("CONCAT(DATE_FORMAT({$prefix}news.begin_date, '%d %M %Y'),' - ', DATE_FORMAT({$prefix}news.end_date, '%d %M %Y')) AS validity_date"), 
+                ->select('news.news_id', 'news.news_name','image', 'news.object_type',
+                    DB::raw("CONCAT(DATE_FORMAT({$prefix}news.begin_date, '%d %M %Y'),' - ', DATE_FORMAT({$prefix}news.end_date, '%d %M %Y')) AS validity_date"),
                     'news.description as description')
                 ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                 ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
@@ -475,6 +526,18 @@ class PromotionCIAPIController extends BaseAPIController
                 }
             }
 
+            $activityNotes = sprintf('Page viewed: %s Detail, %s Id: %s', ucwords($objectType), $objectType, $promotionId);
+            $activity->setUser($user)
+                ->setActivityName(sprintf('view_%s', $objectType))
+                ->setActivityNameLong(sprintf('View %s Detail', ucwords($objectType)))
+                ->setObject($promotion)
+                ->setNews($promotion)
+                ->setModuleName(ucwords($objectType))
+                ->setLocation($mall)
+                ->setNotes($activityNotes)
+                ->responseOK()
+                ->save();
+
             $this->response->data = $_promotion;
             $this->response->code = 0;
             $this->response->status = 'success';
@@ -487,6 +550,15 @@ class PromotionCIAPIController extends BaseAPIController
             $this->response->data = null;
             $httpCode = 403;
 
+            $activityNotes = sprintf('Page viewed: %s Detail Failed, %s Id: %s. Err: %s', ucwords($objectType), $objectType, $promotionId, $e->getMessage());
+            $activity->setUser($user)
+                ->setActivityName(sprintf('view_%s', $objectType))
+                ->setActivityNameLong(sprintf('View %s Detail Failed', ucwords($objectType)))
+                ->setObject(null)
+                ->setModuleName(ucwords($objectType))
+                ->setNotes($activityNotes)
+                ->responseFailed()
+                ->save();
         } catch (InvalidArgsException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -498,6 +570,15 @@ class PromotionCIAPIController extends BaseAPIController
             $this->response->data = $result;
             $httpCode = 403;
 
+            $activityNotes = sprintf('Page viewed: %s Detail Failed, %s Id: %s. Err: %s', ucwords($objectType), $objectType, $promotionId, $e->getMessage());
+            $activity->setUser($user)
+                ->setActivityName(sprintf('view_%s', $objectType))
+                ->setActivityNameLong(sprintf('View %s Detail Failed', ucwords($objectType)))
+                ->setObject(null)
+                ->setModuleName(ucwords($objectType))
+                ->setNotes($activityNotes)
+                ->responseFailed()
+                ->save();
         } catch (QueryException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -510,13 +591,31 @@ class PromotionCIAPIController extends BaseAPIController
             $this->response->data = null;
             $httpCode = 500;
 
+            $activityNotes = sprintf('Page viewed: %s Detail Failed, %s Id: %s. Err: %s', ucwords($objectType), $objectType, $promotionId, $e->getMessage());
+            $activity->setUser($user)
+                ->setActivityName(sprintf('view_%s', $objectType))
+                ->setActivityNameLong(sprintf('View %s Detail Failed', ucwords($objectType)))
+                ->setObject(null)
+                ->setModuleName(ucwords($objectType))
+                ->setNotes($activityNotes)
+                ->responseFailed()
+                ->save();
         } catch (Exception $e) {
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = null; 
+            $this->response->data = null;
             $httpCode = 500;
-            
+
+            $activityNotes = sprintf('Page viewed: %s Detail Failed, %s Id: %s. Err: %s', ucwords($objectType), $objectType, $promotionId, $e->getMessage());
+            $activity->setUser($user)
+                ->setActivityName(sprintf('view_%s', $objectType))
+                ->setActivityNameLong(sprintf('View %s Detail Failed', ucwords($objectType)))
+                ->setObject(null)
+                ->setModuleName(ucwords($objectType))
+                ->setNotes($activityNotes)
+                ->responseFailed()
+                ->save();
         }
 
         return $this->render($httpCode);

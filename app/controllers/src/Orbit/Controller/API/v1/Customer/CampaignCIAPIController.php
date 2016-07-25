@@ -27,6 +27,7 @@ use Promotion;
 use Coupon;
 use User;
 use URL;
+use Activity;
 
 class CampaignCIAPIController extends BaseAPIController
 {
@@ -325,6 +326,104 @@ class CampaignCIAPIController extends BaseAPIController
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $this->response->data = null;
+            $httpCode = 500;
+        }
+
+        return $this->render($httpCode);
+    }
+
+    public function postCampaignPopUpActivities()
+    {
+        $activity = Activity::mobileci();
+        $user = null;
+        $mall = null;
+        $campaign_type = null;
+        $campaign_id = null;
+        $activity_type = null;
+
+        $httpCode = 200;
+        $this->response = new ResponseProvider();
+
+        try{
+            $this->checkAuth();
+            $user = $this->api->user;
+
+            $this->mall_id = OrbitInput::get('mall_id', NULL);
+            $campaign_type = OrbitInput::post('campaign_type');
+            $campaign_id   = OrbitInput::post('campaign_id');
+            $activity_type = OrbitInput::post('activity_type');
+
+            $this->registerCustomValidation();
+            $validator = Validator::make(
+                array(
+                    'mall_id' => $this->mall_id,
+                    'campaign_type' => $campaign_type,
+                    'campaign_id'   => $campaign_id,
+                    'activity_type' => $activity_type,
+                ),
+                array(
+                    'mall_id' => 'required|orbit.empty.mall',
+                    'campaign_type' => 'required|in:news,promotion,coupon',
+                    'campaign_id'   => 'required',
+                    'activity_type' => 'required|in:view,click',
+                )
+            );
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $mall = Mall::excludeDeleted()->where('merchant_id', $this->mall_id)->first();
+
+            $activity->setActivityType($activity_type);
+
+            $campaign = null;
+            if ($campaign_type === 'news' || $campaign_type === 'promotion') {
+                $campaign = News::active()->where('news_id', $campaign_id)
+                                          ->where('object_type', $campaign_type)
+                                          ->first();
+                $activity->setNews($campaign);
+            }
+            if ($campaign_type === 'coupon') {
+                $campaign = Coupon::active()->where('promotion_id', $campaign_id)
+                                            ->where('is_coupon', 'Y')
+                                            ->first();
+                $activity->setCoupon($campaign);
+            }
+
+            $activityNotes = sprintf('Campaign ' . ucfirst($activity_type) . '. Campaign Id : %s, Campaign Type : %s', $campaign_id, $campaign_type);
+            $activity->setUser($user)
+                ->setActivityName($activity_type . '_' . $campaign_type . '_popup')
+                ->setActivityNameLong(ucfirst($activity_type) . ' ' . ucwords(str_replace('_', ' ', $campaign_type)) . ' Pop Up')
+                ->setObject($campaign)
+                ->setModuleName(ucfirst($campaign_type))
+                ->setLocation($mall)
+                ->setNotes($activityNotes)
+                ->responseOK()
+                ->save();
+        } catch (ACLForbiddenException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            $this->rollback();
+            $httpCode = 403;
+        } catch (InvalidArgsException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            $this->rollback();
+            $httpCode = 403;
+        } catch (Exception $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = $e->getLine();
+            $this->response->message = $e->getMessage();
+            $this->response->data = $e->getFile();
+
+            $this->rollback();
             $httpCode = 500;
         }
 
