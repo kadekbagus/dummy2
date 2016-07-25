@@ -2877,7 +2877,7 @@ class MobileCIAPIController extends BaseCIController
             if (! empty(OrbitInput::get('coupon_id'))) {
                 $pagetitle = Lang::get('mobileci.page_title.coupons_tenants');
 
-                $activityPageNotes = sprintf('Page viewed: Coupon Tenants List Page, promotion ID: %s', OrbitInput::get('promotion_id'));
+                $activityPageNotes = sprintf('Page viewed: Coupon Tenants List Page, promotion ID: %s', OrbitInput::get('coupon_id'));
                 $activityPage->setUser($user)
                     ->setActivityName('view_retailer')
                     ->setActivityNameLong('View Coupon Tenant List')
@@ -2891,7 +2891,7 @@ class MobileCIAPIController extends BaseCIController
             if (! empty(OrbitInput::get('coupon_redeem_id'))) {
                 $pagetitle = Lang::get('mobileci.page_title.redemption_places');
 
-                $activityPageNotes = sprintf('Page viewed: Coupon Redemption Tenants List Page, promotion ID: %s', OrbitInput::get('promotion_id'));
+                $activityPageNotes = sprintf('Page viewed: Coupon Redemption Tenants List Page, promotion ID: %s', OrbitInput::get('coupon_redeem_id'));
                 $activityPage->setUser($user)
                     ->setActivityName('view_retailer')
                     ->setActivityNameLong('View Coupon Redemption Places')
@@ -2962,7 +2962,7 @@ class MobileCIAPIController extends BaseCIController
             $activityPageNotes = sprintf('Failed to view: Tenant Listing Page');
             $activityPage->setUser($user)
                 ->setActivityName('view_retailer')
-                ->setActivityNameLong('View Tenant')
+                ->setActivityNameLong('View Tenant List Failed')
                 ->setObject(null)
                 ->setModuleName('Tenant')
                 ->setNotes($activityPageNotes)
@@ -3407,7 +3407,7 @@ class MobileCIAPIController extends BaseCIController
             $activityPageNotes = sprintf('Failed to view: Tenant Detail Page, tenant ID: ' . $product_id);
             $activityPage->setUser($user)
                 ->setActivityName('view_retailer')
-                ->setActivityNameLong('View Tenant')
+                ->setActivityNameLong('View Tenant Detail Failed')
                 ->setObject(null)
                 ->setModuleName('Tenant')
                 ->setNotes($activityPageNotes)
