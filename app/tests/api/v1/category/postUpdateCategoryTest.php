@@ -1,185 +1,447 @@
 <?php
 /**
- * PHP Unit Test for Category Controller postUpdateCategory
+ * PHP Unit Test for Category API Controller postUpdateCategory
  *
- * @author: Yudi Rahono <yudi.rahono@dominopos.com>
+ * @author: Irianto Pratama <irianto@dominopos.com>
  */
-use DominoPOS\OrbitAPI\v10\StatusInterface as Status;
+
 use OrbitShop\API\v1\Helper\Generator;
 use Laracasts\TestDummy\Factory;
+use Faker\Factory as Faker;
 
 class postUpdateCategoryTest extends TestCase
 {
-    private $baseUrl = '/api/v1/family/update/';
+    private $apiUrlNew = '/api/v1/category/new';
+    private $apiUrlList = '/api/v1/category/list';
+    private $apiUrlUpdate = '/api/v1/category/update';
 
     public function setUp()
     {
         parent::setUp();
 
-        $this->authData = Factory::create('Apikey', ['user_id' => 'factory:user_super_admin']);
-        $this->category = Factory::create('Category');
+        $this->apiKey = Factory::create('apikey_super_admin');
+
+        $this->enLang = Factory::create('Language', ['name' => 'en']);
+        $this->idLang = Factory::create('Language', ['name' => 'id']);
+        $this->zhLang = Factory::create('Language', ['name' => 'zh']);
+
+        $_GET = [];
+        $_POST = [];
     }
 
-    public function testError_update_non_owned_category()
+    public function setRequestPostNewCategory($api_key, $api_secret_key, $new_data)
     {
-        $role = Factory::create('role_admin');
-        $permission = Factory::create('Permission', ['permission_name' => 'update_category']);
-        $user = Factory::create('User', ['user_role_id' => $role->role_id]);
-        $authData = Factory::create('Apikey', ['user_id' => $user->user_id]);
-        $category = Factory::create('Category', ['created_by' => $user->user_id, 'category_name' => 'Should Not Updated']);
-
-        Factory::create('PermissionRole', ['permission_id' => $permission->permission_id, 'role_id' => $role->role_id]);
-
-        $_GET['apikey']       = $authData->api_key;
+        // Set the client API Keys
+        $_GET['apikey'] = $api_key;
         $_GET['apitimestamp'] = time();
 
-        $_POST['category_id']    = $category->category_id;
-        $_POST['category_name']  = 'Unique Submitted';
-        $_POST['category_level'] = '1';
-        $_POST['status']         = 'active';
+        foreach ($new_data as $field => $value) {
+            $_POST[$field] = $value;
+        }
+        $url = $this->apiUrlNew . '?' . http_build_query($_GET);
 
-        $_POST['id_language_default'] = 1;
-
-        $url = $this->baseUrl . '?' . http_build_query($_GET);
-
-        $secretKey = $authData->api_secret_key;
-        $_SERVER['REQUEST_METHOD']         = 'POST';
-        $_SERVER['REQUEST_URI']            = $url;
+        $secretKey = $api_secret_key;
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $_SERVER['REQUEST_URI'] = $url;
         $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
 
-        $response = $this->call('POST', $url, $_POST)->getContent();
-        $response = json_decode($response);
+        $json = $this->call('POST', $url)->getContent();
+        $response = json_decode($json);
 
-        // Should be failed
-        // TODO: should not 200
-        // $this->assertResponseOk();
+        // clear all;
+        unset($_POST);
+        unset($_GET);
 
-        // should say merchant not found
-        // TODO: Bugs Caused By zero code
-        // $this->assertSame(Status::UNKNOWN_ERROR, $response->code);
-
-        // should update the category
-        $currentCategory = Category::where('category_id', $category->category_id)->first();
-        $this->assertSame('Should Not Updated', $currentCategory->category_name);
+        return $response;
     }
 
-    public function testOK_update_category_as_super_admin()
+    public function setRequestGetListCategory($api_key, $api_secret_key, $filter)
     {
-        $_GET['apikey']       = $this->authData->api_key;
+        // Set the client API Keys
+        $_GET['apikey'] = $api_key;
         $_GET['apitimestamp'] = time();
 
-        $_POST['category_id']    = $this->category->category_id;
-        $_POST['category_name']  = 'Unique Submitted';
-        $_POST['category_level'] = '1';
-        $_POST['status']         = 'active';
+        foreach ($filter as $field => $value) {
+            $_GET[$field] = $value;
+        }
 
-        $_POST['id_language_default'] = 1;
+        $url = $this->apiUrlList . '?' . http_build_query($_GET);
 
-        $url = $this->baseUrl . '?' . http_build_query($_GET);
-
-        $secretKey = $this->authData->api_secret_key;
-        $_SERVER['REQUEST_METHOD']         = 'POST';
-        $_SERVER['REQUEST_URI']            = $url;
+        $secretKey = $api_secret_key;
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_SERVER['REQUEST_URI'] = $url;
         $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
 
-        $response = $this->call('POST', $url, $_POST)->getContent();
-        $response = json_decode($response);
+        $json = $this->call('GET', $url)->getContent();
+        $response = json_decode($json);
 
-        // Should be OK
-        $this->assertResponseOk();
+        // clear all;
+        unset($_POST);
+        unset($_GET);
 
-        // should say OK
-        $this->assertSame(Status::OK, $response->code);
-        $this->assertSame(Status::OK_MSG, $response->message);
-
-        // should update the category
-        $currentCategory = Category::where('category_id', $this->category->category_id)->first();
-        $this->assertSame('Unique Submitted', $currentCategory->category_name);
+        return $response;
     }
 
-    public function testOK_update_owned_category()
+    public function setRequestPostUpdateCategory($api_key, $api_secret_key, $update_data)
     {
-        $role = Factory::create('Role', ['role_name' => 'mall owner']);
-        $permission = Factory::create('Permission', ['permission_name' => 'update_category']);
-        $user = Factory::create('User', ['user_role_id' => $role->role_id]);
-        $authData = Factory::create('Apikey', ['user_id' => $user->user_id]);
-        $merchant = Factory::create('Merchant', ['user_id' => $user->user_id]);
-        $category = Factory::create('Category', ['created_by' => $user->user_id, 'merchant_id' => $merchant->merchant_id]);
-
-        Factory::create('PermissionRole', ['permission_id' => $permission->permission_id, 'role_id' => $role->role_id]);
-
-        $_GET['apikey']       = $authData->api_key;
+        // Set the client API Keys
+        $_GET['apikey'] = $api_key;
         $_GET['apitimestamp'] = time();
 
-        $_POST['category_id']    = $category->category_id;
-        $_POST['category_name']  = 'Unique Submitted';
-        $_POST['category_level'] = '1';
-        $_POST['status']         = 'active';
+        foreach ($update_data as $field => $value) {
+            $_POST[$field] = $value;
+        }
+        $url = $this->apiUrlUpdate . '?' . http_build_query($_GET);
 
-        $_POST['id_language_default'] = 1;
-
-        $url = $this->baseUrl . '?' . http_build_query($_GET);
-
-        $secretKey = $authData->api_secret_key;
-        $_SERVER['REQUEST_METHOD']         = 'POST';
-        $_SERVER['REQUEST_URI']            = $url;
+        $secretKey = $api_secret_key;
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $_SERVER['REQUEST_URI'] = $url;
         $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
 
-        $response = $this->call('POST', $url, $_POST)->getContent();
-        $response = json_decode($response);
+        $json = $this->call('POST', $url)->getContent();
+        $response = json_decode($json);
 
-        // Should be OK
-        $this->assertResponseOk();
+        // clear all;
+        unset($_POST);
+        unset($_GET);
 
-        // should say request OK
-        $this->assertSame(Status::OK, $response->code);
-        $this->assertSame(Status::OK_MSG, $response->message);
-
-        // should update the category
-        $currentCategory = Category::where('category_id', $category->category_id)->first();
-        $this->assertSame('Unique Submitted', $currentCategory->category_name);
+        return $response;
     }
 
-    public function testOK_update_same_merchant_owner()
+    public function setDefaultCategory()
     {
-        $role = Factory::create('Role', ['role_name' => 'mall owner']);
-        $permission = Factory::create('Permission', ['permission_name' => 'update_category']);
-        $user = Factory::create('User', ['user_role_id' => $role->role_id]);
-        $authData = Factory::create('Apikey', ['user_id' => $user->user_id]);
-        $merchant = Factory::create('Merchant', ['user_id' => $user->user_id]);
-        $category = Factory::create('Category', ['merchant_id' => $merchant->merchant_id]);
+        /*
+        * category health
+        */
+        $data = [
+                'category_name'    => 'health',
+                'status'           => 'active',
+                'default_language' => 'en',
+                'translations'     => '{"' . $this->idLang->language_id . '":{"category_name":"kesehatan","description":"ini adalah toko kesehatan"}}'
+                ];
 
-        Factory::create('PermissionRole', ['permission_id' => $permission->permission_id, 'role_id' => $role->role_id]);
+        $response = $this->setRequestPostNewCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->category_health = $response->data;
 
-        $_GET['apikey']       = $authData->api_key;
-        $_GET['apitimestamp'] = time();
+        /*
+        * category book store
+        */
+        $data = [
+                'category_name'    => 'book store',
+                'status'           => 'active',
+                'default_language' => 'en'
+                ];
 
-        $_POST['category_id']    = $category->category_id;
-        $_POST['category_name']  = 'Unique Submitted';
-        $_POST['category_level'] = '1';
-        $_POST['status']         = 'active';
+        $response = $this->setRequestPostNewCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->category_book_store = $response->data;
 
-        $_POST['id_language_default'] = 1;
+        /*
+        * category restaurant
+        */
+        $data = [
+                'category_name'    => 'restaurant',
+                'status'           => 'active',
+                'default_language' => 'en',
+                'translations'     => '{"' . $this->zhLang->language_id . '":{"category_name":"restoran zh","description":"restoran china enak"}}'
+                ];
 
-        $url = $this->baseUrl . '?' . http_build_query($_GET);
+        $response = $this->setRequestPostNewCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->category_restaurant = $response->data;
 
-        $secretKey = $authData->api_secret_key;
-        $_SERVER['REQUEST_METHOD']         = 'POST';
-        $_SERVER['REQUEST_URI']            = $url;
-        $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
+        /*
+        * category jewellery
+        */
+        $data = [
+                'category_name'    => 'jewellery',
+                'status'           => 'active',
+                'default_language' => 'en',
+                'translations'     => '{"' . $this->zhLang->language_id . '":{"category_name":"perhiasan zh","description":"perhiasan china bagus"},"' . $this->idLang->language_id . '":{"category_name":"perhiasan","description":"ini adalah toko perhiasan"}}'
+                ];
 
-        $response = $this->call('POST', $url, $_POST)->getContent();
-        $response = json_decode($response);
+        $response = $this->setRequestPostNewCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->category_jewellery = $response->data;
+    }
 
-        // Should be OK
-        $this->assertResponseOk();
+    public function testRequiredVariable()
+    {
+        $this->setDefaultCategory();
+        $_GET = [];
+        $_POST = [];
 
-        // should say request OK
-        $this->assertSame(Status::OK, $response->code);
-        $this->assertSame(Status::OK_MSG, $response->message);
+        /*
+        * test category_id is required
+        */
+        $update_data = [];
 
-        // should update the category
-        $currentCategory = Category::where('category_id', $category->category_id)->first();
-        $this->assertSame('Unique Submitted', $currentCategory->category_name);
+        $response = $this->setRequestPostUpdateCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $update_data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("The category id field is required", $response->message);
+        $this->assertSame(NULL, $response->data);
+
+        /*
+        * test default_language is required
+        */
+        $update_data = ['category_id' => $this->category_book_store->category_id];
+
+        $response = $this->setRequestPostUpdateCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $update_data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("The default language field is required", $response->message);
+        $this->assertSame(NULL, $response->data);
+
+        /*
+        * test required variable success
+        */
+        $update_data = [
+                            'category_id' => $this->category_book_store->category_id,
+                            'default_language' => 'en'
+                        ];
+
+        $response = $this->setRequestPostUpdateCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $update_data);
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
+        $this->assertSame("Request OK", $response->message);
+        $this->assertSame($this->category_book_store->category_name, $response->data->category_name);
+    }
+
+    public function testSuccessPostUpdateCategory()
+    {
+        $this->setDefaultCategory();
+        $_GET = [];
+        $_POST = [];
+
+        /*
+        * exist category name but not me
+        */
+        $update_data = [
+                            'category_id' => $this->category_book_store->category_id,
+                            'default_language' => 'en',
+                            'category_name' => 'book store'
+                        ];
+
+        $response = $this->setRequestPostUpdateCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $update_data);
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
+        $this->assertSame("Request OK", $response->message);
+        $this->assertSame($this->category_book_store->category_name, $response->data->category_name);
+
+        /*
+        * not exist category name
+        */
+        $update_data = [
+                            'category_id' => $this->category_book_store->category_id,
+                            'default_language' => 'en',
+                            'category_name' => 'library'
+                        ];
+
+        $response = $this->setRequestPostUpdateCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $update_data);
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
+        $this->assertSame("Request OK", $response->message);
+        $this->assertSame('library', $response->data->category_name);
+
+        /*
+        * category level
+        */
+        $update_data = [
+                            'category_id' => $this->category_book_store->category_id,
+                            'default_language' => 'en',
+                            'category_level' => 2
+                        ];
+
+        $response = $this->setRequestPostUpdateCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $update_data);
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
+        $this->assertSame("Request OK", $response->message);
+        $this->assertSame(2, $response->data->category_level);
+
+        /*
+        * category order
+        */
+        $update_data = [
+                            'category_id' => $this->category_book_store->category_id,
+                            'default_language' => 'en',
+                            'category_order' => 1
+                        ];
+
+        $response = $this->setRequestPostUpdateCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $update_data);
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
+        $this->assertSame("Request OK", $response->message);
+        $this->assertSame(1, $response->data->category_order);
+
+        /*
+        * status
+        */
+        $update_data = [
+                            'category_id' => $this->category_book_store->category_id,
+                            'default_language' => 'en',
+                            'status' => 'inactive'
+                        ];
+
+        $response = $this->setRequestPostUpdateCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $update_data);
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
+        $this->assertSame("Request OK", $response->message);
+        $this->assertSame('inactive', $response->data->status);
+
+        /*
+        * exist translation category name but not me
+        */
+        $update_data = [
+                            'category_id' => $this->category_book_store->category_id,
+                            'default_language' => 'en',
+                            'translations'     => '{"' . $this->idLang->language_id . '":{"category_name":"toko buku","description":"ini adalah toko buku"}}'
+                        ];
+
+        $response = $this->setRequestPostUpdateCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $update_data);
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
+        $this->assertSame("Request OK", $response->message);
+
+        $data_translation = @json_decode($update_data['translations']);
+        foreach ($data_translation as $translations_key => $translation_value) {
+            $translations_key_id = 'translation_' . snake_case($translations_key);
+            if (ctype_upper(substr($translations_key, 0, 1))) {
+                $translations_key_id = 'translation__' . snake_case($translations_key);
+            }
+            $this->assertSame($translation_value->category_name, $response->data->$translations_key_id->category_name);
+            $this->assertSame($translation_value->description, $response->data->$translations_key_id->description);
+        }
+
+        /*
+        * not exist translation category name
+        */
+        $update_data = [
+                            'category_id' => $this->category_book_store->category_id,
+                            'default_language' => 'en',
+                            'translations'     => '{"' . $this->idLang->language_id . '":{"category_name":"toko majalah","description":"ini adalah toko buku"}}'
+                        ];
+
+        $response = $this->setRequestPostUpdateCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $update_data);
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
+        $this->assertSame("Request OK", $response->message);
+
+        $data_translation = @json_decode($update_data['translations']);
+        foreach ($data_translation as $translations_key => $translation_value) {
+            $translations_key_id = 'translation_' . snake_case($translations_key);
+            if (ctype_upper(substr($translations_key, 0, 1))) {
+                $translations_key_id = 'translation__' . snake_case($translations_key);
+            }
+            $this->assertSame($translation_value->category_name, $response->data->$translations_key_id->category_name);
+            $this->assertSame($translation_value->description, $response->data->$translations_key_id->description);
+        }
+    }
+
+    public function testFailedPostUpdateCategory()
+    {
+        $this->setDefaultCategory();
+        $_GET = [];
+        $_POST = [];
+
+        /*
+        * test failed category_id
+        */
+        $update_data = [
+                            'category_id' => 'dfasd6514',
+                            'default_language' => 'en',
+                        ];
+
+        $response = $this->setRequestPostUpdateCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $update_data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("The Category ID you specified is not found", $response->message);
+        $this->assertSame(NULL, $response->data);
+
+        /*
+        * test exist category name
+        */
+        $update_data = [
+                            'category_id' => $this->category_book_store->category_id,
+                            'default_language' => 'en',
+                            'category_name' => 'restaurant'
+                        ];
+
+        $response = $this->setRequestPostUpdateCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $update_data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("The category name has already been used", $response->message);
+        $this->assertSame(NULL, $response->data);
+
+        /*
+        * test category level must numeric
+        */
+        $update_data = [
+                            'category_id' => $this->category_book_store->category_id,
+                            'default_language' => 'en',
+                            'category_level' => 'restaurant'
+                        ];
+
+        $response = $this->setRequestPostUpdateCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $update_data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("The category level must be a number", $response->message);
+        $this->assertSame(NULL, $response->data);
+
+        /*
+        * test category order must numeric
+        */
+        $update_data = [
+                            'category_id' => $this->category_book_store->category_id,
+                            'default_language' => 'en',
+                            'category_order' => 'restaurant'
+                        ];
+
+        $response = $this->setRequestPostUpdateCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $update_data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("The category order must be a number", $response->message);
+        $this->assertSame(NULL, $response->data);
+
+        /*
+        * test failed status
+        */
+        $update_data = [
+                            'category_id' => $this->category_book_store->category_id,
+                            'default_language' => 'en',
+                            'status' => 'off'
+                        ];
+
+        $response = $this->setRequestPostUpdateCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $update_data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("The category status you specified is not found", $response->message);
+        $this->assertSame(NULL, $response->data);
+
+        /*
+        * test failed default language
+        */
+        $update_data = [
+                            'category_id' => $this->category_book_store->category_id,
+                            'default_language' => 'jp',
+                        ];
+
+        $response = $this->setRequestPostUpdateCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $update_data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("The default language must english", $response->message);
+        $this->assertSame(NULL, $response->data);
+
+        /*
+        * exist translation category name
+        */
+        $update_data = [
+                            'category_id' => $this->category_book_store->category_id,
+                            'default_language' => 'en',
+                            'translations'     => '{"' . $this->idLang->language_id . '":{"category_name":"perhiasan","description":"ini adalah toko buku"}}'
+                        ];
+
+        $response = $this->setRequestPostUpdateCategory($this->apiKey->api_key, $this->apiKey->api_secret_key, $update_data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("The category name has already been used", $response->message);
+        $this->assertSame(NULL, $response->data);
     }
 }
