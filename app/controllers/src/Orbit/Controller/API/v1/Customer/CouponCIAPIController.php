@@ -26,6 +26,8 @@ use Lang;
 use User;
 use IssuedCoupon;
 use UserVerificationNumber;
+use Activity;
+use Event;
 
 class CouponCIAPIController extends BaseAPIController
 {
@@ -34,6 +36,8 @@ class CouponCIAPIController extends BaseAPIController
 
     public function getCouponList()
     {
+        $activity = Activity::mobileci()->setActivityType('view');
+        $user = null;
         $httpCode = 200;
         $this->response = new ResponseProvider();
 
@@ -178,10 +182,7 @@ class CouponCIAPIController extends BaseAPIController
             OrbitInput::get(
                 'keyword', // todo: add alternateLanguage
                 function ($keyword) use ($coupons) {
-                    $coupons->leftJoin('coupon_translations', function($join) {
-                            $join->on('promotions.promotion_id', '=', 'coupon_translations.promotion_id');
-                        })
-                        ->leftJoin('keyword_object', function($join) {
+                    $coupons->leftJoin('keyword_object', function($join) {
                             $join->on('promotions.promotion_id', '=', 'keyword_object.object_id');
                             $join->where('keyword_object.object_type', '=', 'coupon');
                         })
@@ -197,7 +198,7 @@ class CouponCIAPIController extends BaseAPIController
                         });
                 }
             );
-            
+
             $this->viewItemUserUpdate('coupon', $user, $mall);
 
             $coupons->groupBy('promotions.promotion_id');
@@ -257,6 +258,19 @@ class CouponCIAPIController extends BaseAPIController
             $data->total_records = RecordCounter::create($_coupons)->count();
             $data->extras = new \stdclass();
 
+            if (empty($skip)) {
+                $activityNotes = sprintf('Page viewed: %s List Page', 'Coupon');
+                $activity->setUser($user)
+                    ->setActivityName('view_coupon_list')
+                    ->setActivityNameLong('View Coupon List')
+                    ->setObject(null)
+                    ->setModuleName('Coupon')
+                    ->setNotes($activityNotes)
+                    ->setLocation($mall)
+                    ->responseOK()
+                    ->save();
+            }
+
             $this->response->data = $data;
             $this->response->code = 0;
             $this->response->status = 'success';
@@ -267,6 +281,16 @@ class CouponCIAPIController extends BaseAPIController
             $this->response->message = $e->getMessage();
             $this->response->data = null;
             $httpCode = 403;
+
+            $activityNotes = sprintf('Failed to view Page: Coupon List. Err: %s', $e->getMessage());
+            $activity->setUser($user)
+                ->setActivityName('view_coupon_list')
+                ->setActivityNameLong('View Coupon List Failed')
+                ->setObject(null)
+                ->setModuleName('Coupon')
+                ->setNotes($activityNotes)
+                ->responseFailed()
+                ->save();
         } catch (InvalidArgsException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -277,6 +301,16 @@ class CouponCIAPIController extends BaseAPIController
 
             $this->response->data = $result;
             $httpCode = 403;
+
+            $activityNotes = sprintf('Failed to view Page: Coupon List. Err: %s', $e->getMessage());
+            $activity->setUser($user)
+                ->setActivityName('view_coupon_list')
+                ->setActivityNameLong('View Coupon List Failed')
+                ->setObject(null)
+                ->setModuleName('Coupon')
+                ->setNotes($activityNotes)
+                ->responseFailed()
+                ->save();
         } catch (QueryException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -288,12 +322,32 @@ class CouponCIAPIController extends BaseAPIController
             }
             $this->response->data = null;
             $httpCode = 500;
+
+            $activityNotes = sprintf('Failed to view Page: Coupon List. Err: %s', $e->getMessage());
+            $activity->setUser($user)
+                ->setActivityName('view_coupon_list')
+                ->setActivityNameLong('View Coupon List Failed')
+                ->setObject(null)
+                ->setModuleName('Coupon')
+                ->setNotes($activityNotes)
+                ->responseFailed()
+                ->save();
         } catch (Exception $e) {
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $this->response->data = null;
             $httpCode = 500;
+
+            $activityNotes = sprintf('Failed to view Page: Coupon List. Err: %s', $e->getMessage());
+            $activity->setUser($user)
+                ->setActivityName('view_coupon_list')
+                ->setActivityNameLong('View Coupon List Failed')
+                ->setObject(null)
+                ->setModuleName('Coupon')
+                ->setNotes($activityNotes)
+                ->responseFailed()
+                ->save();
         }
 
         return $this->render($httpCode);
@@ -301,6 +355,9 @@ class CouponCIAPIController extends BaseAPIController
 
     public function getCouponItem()
     {
+        $activity = Activity::mobileci()->setActivityType('view');
+        $user = null;
+        $couponId = 0;
         $httpCode = 200;
         $this->response = new ResponseProvider();
 
@@ -474,6 +531,8 @@ class CouponCIAPIController extends BaseAPIController
 
             $coupon = $coupon->first();
 
+            $couponId = $coupon->promotion_id;
+
             // Check coupon have condition cs reedem
             $cs_reedem = false;
 
@@ -514,6 +573,18 @@ class CouponCIAPIController extends BaseAPIController
                 $coupon->linked_to_cs = $cs_reedem;
             }
 
+            $activityNotes = sprintf('Page viewed: Coupon Detail, Coupon Id: %s', $coupon->promotion_id);
+            $activity->setUser($user)
+                ->setActivityName('view_coupon')
+                ->setActivityNameLong('View Coupon Detail')
+                ->setObject($coupon)
+                ->setCoupon($coupon)
+                ->setModuleName('Coupon')
+                ->setLocation($mall)
+                ->setNotes($activityNotes)
+                ->responseOK()
+                ->save();
+
             $this->response->data = $coupon;
             $this->response->code = 0;
             $this->response->status = 'success';
@@ -524,6 +595,16 @@ class CouponCIAPIController extends BaseAPIController
             $this->response->message = $e->getMessage();
             $this->response->data = null;
             $httpCode = 403;
+
+            $activityNotes = sprintf('Page viewed: Coupon Detail Failed, Coupon Id: %s. Err: %s', $couponId, $e->getMessage());
+            $activity->setUser($user)
+                ->setActivityName('view_coupon')
+                ->setActivityNameLong('View Coupon Detail Failed')
+                ->setObject(null)
+                ->setModuleName('Coupon')
+                ->setNotes($activityNotes)
+                ->responseFailed()
+                ->save();
         } catch (InvalidArgsException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -534,6 +615,16 @@ class CouponCIAPIController extends BaseAPIController
 
             $this->response->data = $result;
             $httpCode = 403;
+
+            $activityNotes = sprintf('Page viewed: Coupon Detail Failed, Coupon Id: %s. Err: %s', $couponId, $e->getMessage());
+            $activity->setUser($user)
+                ->setActivityName('view_coupon')
+                ->setActivityNameLong('View Coupon Detail Failed')
+                ->setObject(null)
+                ->setModuleName('Coupon')
+                ->setNotes($activityNotes)
+                ->responseFailed()
+                ->save();
         } catch (QueryException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -545,12 +636,32 @@ class CouponCIAPIController extends BaseAPIController
             }
             $this->response->data = null;
             $httpCode = 500;
+
+            $activityNotes = sprintf('Page viewed: Coupon Detail Failed, Coupon Id: %s. Err: %s', $couponId, $e->getMessage());
+            $activity->setUser($user)
+                ->setActivityName('view_coupon')
+                ->setActivityNameLong('View Coupon Detail Failed')
+                ->setObject(null)
+                ->setModuleName('Coupon')
+                ->setNotes($activityNotes)
+                ->responseFailed()
+                ->save();
         } catch (Exception $e) {
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $this->response->data = null;
             $httpCode = 500;
+
+            $activityNotes = sprintf('Page viewed: Coupon Detail Failed, Coupon Id: %s. Err: %s', $couponId, $e->getMessage());
+            $activity->setUser($user)
+                ->setActivityName('view_coupon')
+                ->setActivityNameLong('View Coupon Detail Failed')
+                ->setObject(null)
+                ->setModuleName('Coupon')
+                ->setNotes($activityNotes)
+                ->responseFailed()
+                ->save();
         }
 
         return $this->render($httpCode);
@@ -558,6 +669,11 @@ class CouponCIAPIController extends BaseAPIController
 
     public function postRedeemCoupon()
     {
+        $activity = Activity::mobileci()->setActivityType('coupon');
+        $user = NULL;
+        $mall = NULL;
+        $mall_id = NULL;
+        $issuedcoupon = NULL;
         $httpCode = 200;
         $this->response = new ResponseProvider();
 
@@ -591,6 +707,11 @@ class CouponCIAPIController extends BaseAPIController
                     'issued_coupon_id'              => 'required|orbit.empty.issuedcoupon:' . $user->user_id . ',' . $this->mall_id . ',' . $verificationNumber,
                 )
             );
+
+            // Begin database transaction
+            $this->beginTransaction();
+
+            // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
@@ -641,6 +762,20 @@ class CouponCIAPIController extends BaseAPIController
             $this->response->message = 'Coupon has been successfully redeemed.';
             $this->response->data = $issuedcoupon->issued_coupon_code;
 
+            $activityNotes = sprintf('Coupon Redeemed: %s', $issuedcoupon->coupon->promotion_name);
+            $activity->setUser($user)
+                ->setActivityName('redeem_coupon')
+                ->setActivityNameLong('Coupon Redemption (Successful)')
+                ->setObject($coupon)
+                ->setNotes($activityNotes)
+                ->setLocation($mall)
+                ->setModuleName('Coupon')
+                ->responseOK();
+
+            $activity->coupon_id = $issuedcoupon->promotion_id;
+            $activity->coupon_name = $issuedcoupon->coupon->promotion_name;
+
+            Event::fire('orbit.coupon.postissuedcoupon.after.commit', array($this, $issuedcoupon));
         } catch (ACLForbiddenException $e) {
             Event::fire('orbit.coupon.redeemcoupon.access.forbidden', array($this, $e));
 
@@ -653,18 +788,14 @@ class CouponCIAPIController extends BaseAPIController
             // Rollback the changes
             $this->rollBack();
 
-            // temporary line, should be removed when user authentication on angular ci is present
-            if (! is_null($activity)) {
-                // Deletion failed Activity log
-                $activity->setUser($user)
-                        ->setActivityName('redeem_coupon')
-                        ->setActivityNameLong('Coupon Redemption (Failed)')
-                        ->setObject($issuedcoupon)
-                        ->setNotes($e->getMessage())
-                        ->setLocation($mall)
-                        ->setModuleName('Coupon')
-                        ->responseFailed();
-            }
+            $activity->setUser($user)
+                ->setActivityName('redeem_coupon')
+                ->setActivityNameLong('Coupon Redemption (Failed)')
+                ->setObject($issuedcoupon)
+                ->setNotes($e->getMessage())
+                ->setLocation($mall)
+                ->setModuleName('Coupon')
+                ->responseFailed();
         } catch (InvalidArgsException $e) {
             Event::fire('orbit.coupon.redeemcoupon.invalid.arguments', array($this, $e));
 
@@ -677,35 +808,17 @@ class CouponCIAPIController extends BaseAPIController
             // Rollback the changes
             $this->rollBack();
 
-            // temporary line, should be removed when user authentication on angular ci is present
-            if (! is_null($activity)) {
-                // Deletion failed Activity log
-                $activity->setUser($user)
-                        ->setActivityName('redeem_coupon')
-                        ->setActivityNameLong('Coupon Redemption (Failed)')
-                        ->setObject($issuedcoupon)
-                        ->setNotes($e->getMessage())
-                        ->setLocation($mall)
-                        ->setModuleName('Coupon')
-                        ->responseFailed();
-            }
-        } catch (ACLForbiddenException $e) {
-            $this->response->code = $e->getCode();
-            $this->response->status = 'error';
-            $this->response->message = $e->getMessage();
-            $this->response->data = null;
-            $httpCode = 403;
-        } catch (InvalidArgsException $e) {
-            $this->response->code = $e->getCode();
-            $this->response->status = 'error';
-            $this->response->message = $e->getMessage();
-            $result['total_records'] = 0;
-            $result['returned_records'] = 0;
-            $result['records'] = null;
-
-            $this->response->data = $result;
-            $httpCode = 403;
+            $activity->setUser($user)
+                ->setActivityName('redeem_coupon')
+                ->setActivityNameLong('Coupon Redemption (Failed)')
+                ->setObject($issuedcoupon)
+                ->setNotes($e->getMessage())
+                ->setLocation($mall)
+                ->setModuleName('Coupon')
+                ->responseFailed();
         } catch (QueryException $e) {
+            Event::fire('orbit.coupon.redeemcoupon.query.error', array($this, $e));
+
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             // Only shows full query error when we are in debug mode
@@ -716,13 +829,40 @@ class CouponCIAPIController extends BaseAPIController
             }
             $this->response->data = null;
             $httpCode = 500;
+
+            $this->rollBack();
+
+            $activity->setUser($user)
+                ->setActivityName('redeem_coupon')
+                ->setActivityNameLong('Coupon Redemption (Failed)')
+                ->setObject($issuedcoupon)
+                ->setNotes($e->getMessage())
+                ->setLocation($mall)
+                ->setModuleName('Coupon')
+                ->responseFailed();
         } catch (Exception $e) {
+            Event::fire('orbit.coupon.redeemcoupon.general.exception', array($this, $e));
+
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $this->response->data = null;
             $httpCode = 500;
+
+            $this->rollBack();
+
+            $activity->setUser($user)
+                ->setActivityName('redeem_coupon')
+                ->setActivityNameLong('Coupon Redemption (Failed)')
+                ->setObject($issuedcoupon)
+                ->setNotes($e->getMessage())
+                ->setLocation($mall)
+                ->setModuleName('Coupon')
+                ->responseFailed();
         }
+
+        // Save the activity
+        $activity->save();
 
         return $this->render($httpCode);
     }
