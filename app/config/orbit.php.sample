@@ -3306,4 +3306,21 @@ return array(
             ),
         ),
     ),
+
+    'redirect_url_list' => array(
+        'instagram' => array(
+            'url' => 'https://www.instagram.com/gotomalls',
+            'activity_name' => 'click_social_media',
+            'activity_name_long' => 'Click Instagram',
+            'activity_module_name' => 'Application',
+            'activity_type' => 'click',
+        ),
+        'facebook' => array(
+            'url' => 'https://www.facebook.com/Gotomalls.Indo',
+            'activity_name' => 'click_social_media',
+            'activity_name_long' => 'Click Facebook',
+            'activity_module_name' => 'Application',
+            'activity_type' => 'click',
+        ),
+    ),
 );
