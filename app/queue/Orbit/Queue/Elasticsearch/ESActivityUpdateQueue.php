@@ -118,6 +118,11 @@ class ESActivityUpdateQueue
 
             $response_search = $this->poster->search($params_search);
 
+            $pos = [ 'lon' => $activity->longitude, 'lat' => $activity->latitude];
+            if (empty($activity->longitude) || empty($activity->latitude)) {
+                $pos = null;
+            }
+
             $response = NULL;
             if ($response_search['hits']['total'] > 0) {
                 $params = [
@@ -151,7 +156,7 @@ class ESActivityUpdateQueue
                             'status' =>  $activity->status,
                             'parent_id' =>  $activity->parent_id,
                             'response_status' =>  $activity->response_status,
-                            'created_at' =>  $activity->created_at,
+                            'created_at' => $activity->created_at->format('Y-m-d H:i:s'),
                             'object_display_name' =>  $activity->object_display_name,
                             'browser_name' => $browserName,
                             'browser_version' => $browserVersion,
@@ -162,17 +167,13 @@ class ESActivityUpdateQueue
                             'device_model' => $deviceModel,
                             'country' =>  $findIp->country,
                             'city' =>  $findIp->city,
-                            'position'        => [
-                                'lon' => $activity->longitude,
-                                'lat' => $activity->latitude
-                            ]
+                            'position' => $pos
                         ]
                     ]
                 ];
 
                 $response = $this->poster->update($params);
             } else {
-
                 $params = [
                     'index' => Config::get('orbit.elasticsearch.indices.activities.index'),
                     'type' => Config::get('orbit.elasticsearch.indices.activities.type'),
@@ -203,7 +204,7 @@ class ESActivityUpdateQueue
                         'status' =>  $activity->status,
                         'parent_id' =>  $activity->parent_id,
                         'response_status' =>  $activity->response_status,
-                        'created_at' =>  $activity->created_at,
+                        'created_at' => $activity->created_at->format('Y-m-d H:i:s'),
                         'object_display_name' =>  $activity->object_display_name,
                         'browser_name' => $browserName,
                         'browser_version' => $browserVersion,
@@ -214,10 +215,7 @@ class ESActivityUpdateQueue
                         'device_model' => $deviceModel,
                         'country' =>  $findIp->country,
                         'city' =>  $findIp->city,
-                        'position'        => [
-                            'lon' => $activity->longitude,
-                            'lat' => $activity->latitude
-                        ]
+                        'position' => $pos
                     ]
                 ];
                 $response = $this->poster->index($params);
