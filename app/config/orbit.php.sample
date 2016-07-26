@@ -39,6 +39,12 @@ return array(
         ]
     ],
 
+    // db ip configuration
+    'dbip' => [
+        'connection_id' => 'dbip',
+        'table' => 'july_2016'
+    ],
+
     // Demo environtment
     'is_demo' => FALSE,
 
