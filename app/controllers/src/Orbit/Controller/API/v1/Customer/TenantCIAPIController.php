@@ -286,7 +286,8 @@ class TenantCIAPIController extends BaseAPIController
                     ->where(
                         function ($q) use ($keyword_like, $keyword) {
                             $q->where('merchants.name', 'like', $keyword_like)
-                                ->orWhere('keyword', '=', $keyword);
+                                ->orWhere('keyword', '=', $keyword)
+                                ->orWhere('merchants.description', 'like', $keyword_like);
                             $q->orWhereHas('categories', function($q2) use ($keyword_like) {
                                 $q2->where('category_name', 'like', $keyword_like);
                             });

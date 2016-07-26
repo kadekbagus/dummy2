@@ -763,11 +763,12 @@ class AccountAPIController extends ControllerAPI
             $new_user_detail->save();
 
             // Save to campaign_account table (1 to 1)
-            $campaignAccount               = new CampaignAccount();
-            $campaignAccount->user_id      = $new_user->user_id;
-            $campaignAccount->account_name = $account_name;
-            $campaignAccount->position     = $position;
-            $campaignAccount->status       = $status;
+            $campaignAccount                  = new CampaignAccount();
+            $campaignAccount->user_id         = $new_user->user_id;
+            $campaignAccount->account_type_id = $account_type_id;
+            $campaignAccount->account_name    = $account_name;
+            $campaignAccount->position        = $position;
+            $campaignAccount->status          = $status;
             $campaignAccount->save();
 
             // new employee
@@ -1176,6 +1177,12 @@ class AccountAPIController extends ControllerAPI
             // Save to campaign_account table (1 to 1)
             $campaignAccount = CampaignAccount::where('user_id', $update_user->user_id)
                                             ->first();
+
+            OrbitInput::post('account_type_id', function($account_type_id) use ($campaignAccount) {
+                if ($campaignAccount->account_type_id === '') {
+                    $campaignAccount->account_type_id = $account_type_id;
+                }
+            });
 
             OrbitInput::post('account_name', function($account_name) use ($campaignAccount) {
                 $campaignAccount->account_name = $account_name;

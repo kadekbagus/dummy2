@@ -353,25 +353,25 @@ class PowerSearchCIAPIController extends BaseAPIController
 
             foreach($search_results as $near_end_result) {
                 if ($near_end_result->object_type === 'promotion') {
-                    $near_end_result->object_image = URL::asset('mobile-ci/images/default_promotion.png');
+                    $near_end_result->object_image = null;
                 } elseif ($near_end_result->object_type === 'news') {
-                    $near_end_result->object_image = URL::asset('mobile-ci/images/default_news.png');
+                    $near_end_result->object_image = null;
                 } elseif ($near_end_result->object_type === 'coupon') {
-                    $near_end_result->object_image = URL::asset('mobile-ci/images/default_coupon.png');
+                    $near_end_result->object_image = null;
                 } elseif ($near_end_result->object_type === 'tenant') {
                     if (! is_null($near_end_result->object_image)) {
                         $near_end_result->object_image = URL::asset($near_end_result->object_image);
                     } else {
-                        $near_end_result->object_image = URL::asset('mobile-ci/images/default_tenants_directory.png');
+                        $near_end_result->object_image = null;
                     }
                 } elseif ($near_end_result->object_type === 'service') {
                     if (! is_null($near_end_result->object_image)) {
                         $near_end_result->object_image = URL::asset($near_end_result->object_image);
                     } else {
-                        $near_end_result->object_image = URL::asset('mobile-ci/images/default_services_directory.png');
+                        $near_end_result->object_image = null;
                     }
                 } elseif ($near_end_result->object_type === 'lucky_draw') {
-                    $near_end_result->object_image = URL::asset('mobile-ci/images/default_lucky_number.png');
+                    $near_end_result->object_image = null;
                 }
 
                 if (!empty($alternateLanguage)) {
