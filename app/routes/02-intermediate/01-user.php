@@ -7,10 +7,10 @@
 Route::get('/app/v1/account/list', 'IntermediateAuthController@Account_getAccount');
 
 // Create new PMP Account
-Route::post('/app/v1/account/new', 'IntermediateAuthController@Account_postCreateUpdate');
+Route::post('/app/v1/account/new', 'IntermediateAuthController@Account_postNewAccount');
 
 // Update a PMP Account
-Route::post('/app/v1/account/update', 'IntermediateAuthController@Account_postCreateUpdate');
+Route::post('/app/v1/account/update', 'IntermediateAuthController@Account_postUpdateAccount');
 
 // ...
 Route::get('/app/v1/account/tenants/available', 'IntermediateAuthController@Account_getAvailableTenantsSelection');
