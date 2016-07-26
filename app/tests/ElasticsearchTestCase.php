@@ -11,6 +11,7 @@ class ElasticsearchTestCase extends TestCase
     protected $job = NULL;
     protected $esIndex = 'gotomalls_test';
     protected $esIndexType = 'malls';
+    protected $esIndexTypeActivity = 'activities';
     protected $es = NULL;
 
     public function setUp()
