@@ -108,5 +108,10 @@ class postUpdateAccountTest extends TestCase
         $this->assertSame(0, $response->code);
         $this->assertSame("success", $response->status);
         $this->assertSame('irianto', $response->data->user_firstname);
+
+        $account_type = CampaignAccount::where('user_id', $response->data->user_id)
+                                ->first();
+
+        $this->assertSame($this->account_type_mall->account_type_id, $account_type->account_type_id);
     }
 }

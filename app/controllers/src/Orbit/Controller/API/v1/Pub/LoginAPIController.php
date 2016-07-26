@@ -52,11 +52,12 @@ class LoginAPIController extends IntermediateBaseController
      */
     public function postLoginCustomer()
     {
+
         $this->response = new ResponseProvider();
         $roles=['Consumer'];
         $activity = Activity::portal()
                             ->setActivityType('login');
-        $activity_origin = OrbitInput::post('activity_origin'); 
+        $activity_origin = OrbitInput::post('activity_origin');
         if ($activity_origin === 'mobileci') {
             // set this activity as mobileci instead of portal if coming from mobileci
                 $activity = Activity::mobileci()
@@ -105,19 +106,45 @@ class LoginAPIController extends IntermediateBaseController
                 OrbitShopAPI::throwInvalidArgument($message);
             }
 
-            $this->session->start(array(), 'no-session-creation');
-            // get the session data
-            $sessionData = $this->session->read(NULL);
-            $sessionData['logged_in'] = TRUE;
-            $sessionData['user_id'] = $user->user_id;
-            $sessionData['email'] = $user->user_email;
-            $sessionData['role'] = $user->role->role_name;
-            $sessionData['fullname'] = $user->getFullName();
-            $sessionData['visited_location'] = [];
-            $sessionData['coupon_location'] = [];
+            try {
+                $this->session->start(array(), 'no-session-creation');
+                // get the session data
+                $sessionData = $this->session->read(NULL);
+                $sessionData['logged_in'] = TRUE;
+                $sessionData['user_id'] = $user->user_id;
+                $sessionData['email'] = $user->user_email;
+                $sessionData['role'] = $user->role->role_name;
+                $sessionData['fullname'] = $user->getFullName();
+                $sessionData['visited_location'] = [];
+                $sessionData['coupon_location'] = [];
 
-            // update the guest session data, append user data to it so the user will be recognized
-            $this->session->update($sessionData);
+                // update the guest session data, append user data to it so the user will be recognized
+                $this->session->update($sessionData);
+            } catch (Exception $e) {
+
+                // Return mall_portal, cs_portal, pmp_portal etc
+                $appOrigin = AppOriginProcessor::create(Config::get('orbit.session.app_list'))
+                                               ->getAppName();
+
+                // Session Config
+                $orbitSessionConfig = Config::get('orbit.session.origin.' . $appOrigin);
+                $applicationId = Config::get('orbit.session.app_id.' . $appOrigin);
+
+                // Instantiate the OrbitSession object
+                $config = new SessionConfig(Config::get('orbit.session'));
+                $config->setConfig('session_origin', $orbitSessionConfig);
+                $config->setConfig('expire', $orbitSessionConfig['expire']);
+                $config->setConfig('application_id', $applicationId);
+
+                // get the session data
+                $sessionData = array();
+                $sessionData['logged_in'] = TRUE;
+                $sessionData['user_id'] = $user->user_id;
+                $sessionData['email'] = $user->user_email;
+                $sessionData['role'] = $user->role->role_name;
+                $sessionData['fullname'] = $user->getFullName();
+                $this->session->enableForceNew()->start($sessionData);
+            }
 
             // Send the session id via HTTP header
             $sessionHeader = $this->session->getSessionConfig()->getConfig('session_origin.header.name');
@@ -135,7 +162,6 @@ class LoginAPIController extends IntermediateBaseController
                          ->setActivityName('login_ok')
                          ->setActivityNameLong('Sign in')
                          ->responseOK()->setModuleName('Application')->save();
-                
                 $user->activity = $activity;
             } else {
                 // set \MobileCI\MobileCIAPIController->session using $this->session
@@ -375,7 +401,7 @@ class LoginAPIController extends IntermediateBaseController
                 }
                 return Redirect::to($caller_url);
             }
-        }   
+        }
     }
 
     protected function getFacebookError($encoded_caller_url = NULL)
@@ -615,7 +641,7 @@ class LoginAPIController extends IntermediateBaseController
     /**
      * The purpose of this function is to by pass the new sign in process that use password
      * e.g: User came from Facebook / Google sign in
-     * 
+     *
      * @author Ahmad <ahmad@dominopos.com>
      * @param string $email User email
      * @return User $user (IF user exist; FALSE: user not exist)
