@@ -207,7 +207,6 @@ class MessageCIAPIController extends BaseAPIController
     public function getMessageDetail()
     {
         $user = null;
-        $keyword = null;
         $activityPage = Activity::mobileci()
                         ->setActivityType('search');
 
@@ -363,10 +362,9 @@ class MessageCIAPIController extends BaseAPIController
      */
     public function postDeleteMessage()
     {
-        // $user = null;
-        // $keyword = null;
-        // $activityPage = Activity::mobileci()
-        //                 ->setActivityType('search');
+        $user = null;
+        $activityPage = Activity::mobileci()
+                        ->setActivityType('search');
 
         try {
             $httpCode = 200;
@@ -474,6 +472,153 @@ class MessageCIAPIController extends BaseAPIController
             $this->rollBack();
         } catch (Exception $e) {
             Event::fire('orbit.inbox.postdeletedalert.general.exception', array($this, $e));
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+
+            if (Config::get('app.debug')) {
+                $this->response->data = $e->__toString();
+            } else {
+                $this->response->data = null;
+            }
+
+            // Rollback the changes
+            $this->rollBack();
+        }
+
+        return $this->render($httpCode);
+    }
+
+
+    /**
+     * POST -  Change flag of the alert on/off
+     *
+     * @author Firmansyah <firmansyah@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postReadUnreadMessage()
+    {
+        $user = null;
+        $activityPage = Activity::mobileci()
+                        ->setActivityType('search');
+
+        try {
+            $httpCode = 200;
+
+            $this->registerCustomValidation();
+
+            $mallId = OrbitInput::post('mall_id', null);
+            $inboxId = OrbitInput::post('inbox_id');
+
+            // validation mall id
+            $validator = Validator::make(
+                array('mall_id' => $mallId,),
+                array('mall_id' => 'required|orbit.empty.mall',)
+            );
+
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $user = $this->getLoggedInUser($mallId);
+
+            // validation mall id
+            $validatorInboxId = Validator::make(
+                array('inbox_id' => $inboxId),
+                array('inbox_id' => 'required|orbit.empty.alert:' . $user->user_id)
+            );
+
+            if ($validatorInboxId->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            Event::fire('orbit.inbox.postreadalert.before.validation', array($this, $validator));
+
+            // Begin database transaction
+            $this->beginTransaction();
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.inbox.postreadalert.after.validation', array($this, $validator));
+
+            $retailer = Mall::excludeDeleted()->where('merchant_id', $mallId)->first();
+
+            $inbox = Inbox::where('user_id', $user->user_id)
+                        ->where('merchant_id', $retailer->merchant_id)
+                        ->where('inbox_id', $inboxId)
+                        ->first();
+
+            if ($inbox->is_read === 'Y') {
+                $inbox->is_read = 'N';
+            } else {
+                $inbox->is_read = 'Y';
+            }
+            $inbox->save();
+
+            $inbox = Inbox::where('user_id', $user->user_id)
+                        ->where('merchant_id', $retailer->merchant_id)
+                        ->where('inbox_id', $inboxId)
+                        ->first();
+
+            Event::fire('orbit.inbox.postreadalert.after.save', array($this, $inbox));
+
+            $this->response->message = $inbox->is_read === 'Y' ? 'Message has been flagged as read' : 'Message has been flagged as unread';
+            $this->response->data = $inbox->is_read === 'Y' ? 'read' : 'unread';
+
+            // Commit the changes
+            $this->commit();
+
+            Event::fire('orbit.inbox.postreadalert.after.commit', array($this, $inbox));
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.inbox.postreadalert.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            $this->rollBack();
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.inbox.postreadalert.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            $this->rollBack();
+        } catch (QueryException $e) {
+            Event::fire('orbit.inbox.postreadalert.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            // Rollback the changes
+            $this->rollBack();
+        } catch (Exception $e) {
+            Event::fire('orbit.inbox.postreadalert.general.exception', array($this, $e));
 
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
