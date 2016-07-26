@@ -177,7 +177,6 @@
                 $('.slide-menu-backdrop-tab').toggle('fade', 'slow');
                 $('body').toggleClass('freeze-scroll');
                 tabOpen = false;
-                $('.content-container').children().not('.slide-tab-container, .slide-menu-backdrop-tab').removeBlur();
             });
 
         });
