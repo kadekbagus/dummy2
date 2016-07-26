@@ -69,6 +69,38 @@ class postNewGenericActivityTest extends TestCase
         $this->assertSame(Config::get('orbit.generic_activity.activity_list.1.name'), $activity->activity_name);
     }
 
+    public function testOKPostNewGenericActivityFromLandingPageMallClick()
+    {
+        $this->sessionId = time();
+        $this->createSessionForUser($this->guest_user);
+
+        Config::set('orbit.session', $this->genSessionConfig());
+        Config::set('orbit.generic_activity', $this->genGenericActivityList());
+        Config::set('orbit.activity.force.save', TRUE);
+
+        $_GET['X-Orbit-App-Origin'] = 'landing_page';
+        $_GET['X-OMS-Mobile'] = $this->sessionId;
+
+        $_POST[Config::get('orbit.generic_activity.parameter_name')] = 2;
+        $_POST[Config::get('orbit.generic_activity.activity_list.2.parameter_name')] = $this->mall_1->merchant_id;
+
+        $_SERVER['REMOTE_ADDR'] = '127.0.0.1';
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $_SERVER['REQUEST_URI'] = $this->apiUrl;
+
+        $json = $this->call('POST', $this->apiUrl)->getContent();
+        $response = json_decode($json);
+
+        $this->assertSame(0, (int) $response->code);
+
+        $activity = Activity::where('activity_id', $response->data)->first();
+
+        $this->assertSame(TRUE, is_object($activity));
+        $this->assertSame(Config::get('orbit.generic_activity.activity_list.2.name'), $activity->activity_name);
+        $this->assertSame(Config::get('orbit.generic_activity.activity_list.2.object_type'), $activity->object_name);
+        $this->assertSame($this->mall_1->merchant_id, $activity->object_id);
+    }
+
     public function testFAILPostNewGenericActivityFromLandingPageNoUser()
     {
         $this->sessionId = time();
@@ -198,6 +230,8 @@ class postNewGenericActivityTest extends TestCase
                     'name_long' => 'View Landing Page',
                     'module_name' => 'Application',
                     'type' => 'view',
+                    'object_type' => null,
+                    'parameter_name' => null
                 ),
                 // - Clicking on a mall in result list
                 '2' => array(
@@ -205,6 +239,8 @@ class postNewGenericActivityTest extends TestCase
                     'name_long' => 'Click Mall List',
                     'module_name' => 'Application',
                     'type' => 'click',
+                    'object_type' => 'Mall',
+                    'parameter_name' => 'mall_id'
                 ),
                 // - Clicking on a mall pin on the map
                 '3' => array(
@@ -212,6 +248,8 @@ class postNewGenericActivityTest extends TestCase
                     'name_long' => 'Click Mall Pin',
                     'module_name' => 'Application',
                     'type' => 'click',
+                    'object_type' => 'Mall',
+                    'parameter_name' => 'mall_id'
                 ),
                 // - Visiting a mall
                 '4' => array(
@@ -219,6 +257,8 @@ class postNewGenericActivityTest extends TestCase
                     'name_long' => 'View Mall',
                     'module_name' => 'Application',
                     'type' => 'view',
+                    'object_type' => 'Mall',
+                    'parameter_name' => 'mall_id'
                 ),
                 // - Viewing mall info
                 '5' => array(
@@ -226,6 +266,8 @@ class postNewGenericActivityTest extends TestCase
                     'name_long' => 'View Mall Info',
                     'module_name' => 'Application',
                     'type' => 'view',
+                    'object_type' => 'Mall',
+                    'parameter_name' => 'mall_id'
                 ),
                 // - Switching user
                 '6' => array(
@@ -233,6 +275,8 @@ class postNewGenericActivityTest extends TestCase
                     'name_long' => 'Switch User',
                     'module_name' => 'Application',
                     'type' => 'click',
+                    'object_type' => null,
+                    'parameter_name' => null
                 ),
             ),
         );
