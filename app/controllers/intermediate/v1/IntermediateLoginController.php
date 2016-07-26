@@ -830,13 +830,7 @@ class IntermediateLoginController extends IntermediateBaseController
                     $this->session = SessionPreparer::prepareSession();
                 }
 
-                // if this goes live then we should remove the $guestConfig param in GuestUserGenerator::create()
-                // or change the record_signin_activity to TRUE
-                // to be able to record guest in Dashboard
-                $guestConfig = [
-                    'record_signin_activity' => FALSE
-                ];
-                $guest = GuestUserGenerator::create($guestConfig)->generate();
+                $guest = GuestUserGenerator::create()->generate();
 
                 $sessionData = $this->session->read(NULL);
                 $sessionData['logged_in'] = TRUE;
@@ -1141,7 +1135,7 @@ class IntermediateLoginController extends IntermediateBaseController
         setcookie('orbit_email', '', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
         setcookie('orbit_firstname', '', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
         setcookie('login_from', '', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
-        
+
         $appOrigin = AppOriginProcessor::create(Config::get('orbit.session.app_list'))
                                            ->getAppName();
 
