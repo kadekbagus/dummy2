@@ -20,6 +20,7 @@ class postUpdateAccountTest extends TestCase
         $this->apiKey = Factory::create('apikey_super_admin');
 
         Factory::create('role_mall_owner');
+        $role_campaign_owner = Factory::create('role_campaign_owner');
 
         // country
         $this->country = Factory::create('Country');
@@ -39,11 +40,134 @@ class postUpdateAccountTest extends TestCase
         $this->tenant_b1 = $tenant_b1 = Factory::create('Tenant', ['parent_id' => $mall_b->merchant_id]);
         $this->tenant_b2 = $tenant_b2 = Factory::create('Tenant', ['parent_id' => $mall_b->merchant_id]);
 
-        // base user
-        $this->pmp_user = Factory::create('campaign_owner');
-        $this->pmp_user_detail = Factory::create('UserDetail', ['user_id' => $this->pmp_user->user_id]);
-        $this->pmp_campaign_account = Factory::create('CampaignAccount', ['user_id' => $this->pmp_user->user_id, 'parent_user_id' => NULL]);
-        $this->pmp_employee = Factory::create('Employee', ['user_id' => $this->pmp_user->user_id]);
+        $this->mall_c = $mall_c = Factory::create('Mall');
+        $this->tenant_c = $tenant_c = Factory::create('Tenant', ['parent_id' => $mall_c->merchant_id]);
+
+        // pmp_mall link to mall a
+        $this->pmp_mall_user = Factory::create('User', [
+                'user_role_id' => $role_campaign_owner->role_id
+            ]);
+
+        $this->pmp_mall_user_detail = Factory::create('UserDetail',[
+                'user_id' => $this->pmp_mall_user->user_id
+            ]);
+        $this->pmp_mall_campaign_account = Factory::create('CampaignAccount', [
+                'user_id' => $this->pmp_mall_user->user_id,
+                'parent_user_id' => NULL,
+                'account_type_id' => $this->account_type_mall->account_type_id
+            ]);
+
+        $this->pmp_mall_employee = Factory::create('Employee', [
+                'user_id' => $this->pmp_mall_user->user_id
+            ]);
+
+        $this->pmp_mall_user_merchant = Factory::create('UserMerchant', [
+                'user_id'     => $this->pmp_mall_user->user_id,
+                'merchant_id' => $this->mall_a->merchant_id,
+                'object_type' => 'mall'
+            ]);
+
+        // pmp_merchant link to tenant_a
+        $this->pmp_merchant_user = Factory::create('User', [
+                'user_role_id' => $role_campaign_owner->role_id
+            ]);
+
+        $this->pmp_merchant_user_detail = Factory::create('UserDetail',[
+                'user_id' => $this->pmp_merchant_user->user_id
+            ]);
+        $this->pmp_merchant_campaign_account = Factory::create('CampaignAccount', [
+                'user_id' => $this->pmp_merchant_user->user_id,
+                'parent_user_id' => NULL,
+                'account_type_id' => $this->account_type_merchant->account_type_id
+            ]);
+
+        $this->pmp_merchant_employee = Factory::create('Employee', [
+                'user_id' => $this->pmp_merchant_user->user_id
+            ]);
+
+        $this->pmp_merchant_user_merchant = Factory::create('UserMerchant', [
+                'user_id'     => $this->pmp_merchant_user->user_id,
+                'merchant_id' => $this->tenant_a->merchant_id,
+                'object_type' => 'tenant'
+            ]);
+
+        // pmp_agency link to mall and tenant c
+        $this->pmp_agency_user = Factory::create('User', [
+                'user_role_id' => $role_campaign_owner->role_id
+            ]);
+
+        $this->pmp_agency_user_detail = Factory::create('UserDetail',[
+                'user_id' => $this->pmp_agency_user->user_id
+            ]);
+        $this->pmp_agency_campaign_account = Factory::create('CampaignAccount', [
+                'user_id' => $this->pmp_agency_user->user_id,
+                'parent_user_id' => NULL,
+                'account_type_id' => $this->account_type_agency->account_type_id
+            ]);
+
+        $this->pmp_agency_employee = Factory::create('Employee', [
+                'user_id' => $this->pmp_agency_user->user_id
+            ]);
+
+        $this->pmp_agency_user_merchant = Factory::create('UserMerchant', [
+                'user_id'     => $this->pmp_agency_user->user_id,
+                'merchant_id' => $this->mall_c->merchant_id,
+                'object_type' => 'mall'
+            ]);
+
+        $this->pmp_agency_user_merchant = Factory::create('UserMerchant', [
+                'user_id'     => $this->pmp_agency_user->user_id,
+                'merchant_id' => $this->tenant_c->merchant_id,
+                'object_type' => 'tenant'
+            ]);
+
+        // pmp_3rd link to mall b
+        $this->pmp_3rd_user = Factory::create('User', [
+                'user_role_id' => $role_campaign_owner->role_id
+            ]);
+
+        $this->pmp_3rd_user_detail = Factory::create('UserDetail',[
+                'user_id' => $this->pmp_3rd_user->user_id
+            ]);
+        $this->pmp_3rd_campaign_account = Factory::create('CampaignAccount', [
+                'user_id' => $this->pmp_3rd_user->user_id,
+                'parent_user_id' => NULL,
+                'account_type_id' => $this->account_type_3rd->account_type_id
+            ]);
+
+        $this->pmp_3rd_employee = Factory::create('Employee', [
+                'user_id' => $this->pmp_3rd_user->user_id
+            ]);
+
+        $this->pmp_3rd_user_merchant = Factory::create('UserMerchant', [
+                'user_id'     => $this->pmp_3rd_user->user_id,
+                'merchant_id' => $this->mall_b->merchant_id,
+                'object_type' => 'mall'
+            ]);
+
+        // pmp_dominopos link to tenant_b
+        $this->pmp_dominopos_user = Factory::create('User', [
+                'user_role_id' => $role_campaign_owner->role_id
+            ]);
+
+        $this->pmp_dominopos_user_detail = Factory::create('UserDetail',[
+                'user_id' => $this->pmp_dominopos_user->user_id
+            ]);
+        $this->pmp_dominopos_campaign_account = Factory::create('CampaignAccount', [
+                'user_id' => $this->pmp_dominopos_user->user_id,
+                'parent_user_id' => NULL,
+                'account_type_id' => $this->account_type_dominopos->account_type_id
+            ]);
+
+        $this->pmp_dominopos_employee = Factory::create('Employee', [
+                'user_id' => $this->pmp_dominopos_user->user_id
+            ]);
+
+        $this->pmp_dominopos_user_merchant = Factory::create('UserMerchant', [
+                'user_id'     => $this->pmp_dominopos_user->user_id,
+                'merchant_id' => $this->tenant_b1->merchant_id,
+                'object_type' => 'tenant'
+            ]);
 
         $_GET = [];
         $_POST = [];
@@ -82,14 +206,15 @@ class postUpdateAccountTest extends TestCase
         $response = $this->setRequestPostUpdateAccount($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
         $this->assertSame(14, $response->code);
         $this->assertSame("error", $response->status);
-        $this->assertSame("The id field is required", $response->message);
+        $this->assertSame("The account type id field is required", $response->message);
         $this->assertSame(NULL, $response->data);
     }
 
     public function testUpdatePMPAccountSuccess()
     {
         $data = [
-            'id'              => $this->pmp_user->user_id,
+            'id'              => $this->pmp_mall_user->user_id,
+            'account_type_id' => $this->account_type_mall->account_type_id,
             'user_firstname'  => 'irianto',
             'user_lastname'   => 'pratama',
             'user_email'      => 'pmpsatu@campaignowner.com',
@@ -98,8 +223,7 @@ class postUpdateAccountTest extends TestCase
             'address_line1'   => 'Jl. Gunung Salak 31 A',
             'city'            => 'Badung',
             'country_id'      => $this->country->country_id,
-            'merchant_ids'    => [$this->mall_a->merchant_id, $this->mall_b->merchant_id],
-            'account_type_id' => $this->account_type_mall->account_type_id,
+            'merchant_ids'    => [$this->mall_b->merchant_id],
             'role_name'       => 'Campaign Owner',
         ];
 
@@ -112,6 +236,371 @@ class postUpdateAccountTest extends TestCase
         $account_type = CampaignAccount::where('user_id', $response->data->user_id)
                                 ->first();
 
-        $this->assertSame('', $account_type->account_type_id);
+        $this->assertSame($this->account_type_mall->account_type_id, $account_type->account_type_id);
+    }
+
+    public function testAccountTypeMallFailedLinkHasExists()
+    {
+        /*
+        * test pmp account with account type mall failed cause mall has link to other account type
+        */
+        $data = [
+            'id'              => $this->pmp_mall_user->user_id,
+            'account_type_id' => $this->account_type_mall->account_type_id,
+            'user_firstname'  => 'irianto',
+            'user_lastname'   => 'pratama',
+            'user_email'      => 'pmpsatu@campaignowner.com',
+            'account_name'    => 'PMP Satu',
+            'company_name'    => 'Domino Mall',
+            'address_line1'   => 'Jl. Gunung Salak 31 A',
+            'city'            => 'Badung',
+            'country_id'      => $this->country->country_id,
+            'merchant_ids'    => [$this->mall_a->merchant_id, $this->mall_b->merchant_id, $this->mall_c->merchant_id],
+            'user_password'   => '123456',
+            'role_name'       => 'Campaign Owner',
+        ];
+
+        $response = $this->setRequestPostUpdateAccount($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("Link to tenant is does not allowed", $response->message);
+    }
+
+    public function testAccountTypeMallFailedLinkObjectTypeIsTenant()
+    {
+        /*
+        * test pmp account with account type mall failed cause mall has link to other account type
+        */
+        $data = [
+            'id'              => $this->pmp_mall_user->user_id,
+            'account_type_id' => $this->account_type_mall->account_type_id,
+            'user_firstname'  => 'irianto',
+            'user_lastname'   => 'pratama',
+            'user_email'      => 'pmpsatu@campaignowner.com',
+            'account_name'    => 'PMP Satu',
+            'company_name'    => 'Domino Mall',
+            'address_line1'   => 'Jl. Gunung Salak 31 A',
+            'city'            => 'Badung',
+            'country_id'      => $this->country->country_id,
+            'merchant_ids'    => [$this->tenant_b1->merchant_id],
+            'user_password'   => '123456',
+            'role_name'       => 'Campaign Owner',
+        ];
+
+        $response = $this->setRequestPostUpdateAccount($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("Link to tenant is does not allowed", $response->message);
+    }
+
+    public function testAccountTypeMerchantSuccess()
+    {
+        /*
+        * test pmp account with account type mall failed cause mall has link to other account type
+        */
+        $data = [
+            'id'              => $this->pmp_merchant_user->user_id,
+            'account_type_id' => $this->account_type_merchant->account_type_id,
+            'user_firstname'  => 'irianto',
+            'user_lastname'   => 'pratama',
+            'user_email'      => 'pmpsatu@campaignowner.com',
+            'account_name'    => 'PMP Satu',
+            'company_name'    => 'Domino Mall',
+            'address_line1'   => 'Jl. Gunung Salak 31 A',
+            'city'            => 'Badung',
+            'country_id'      => $this->country->country_id,
+            'merchant_ids'    => [$this->tenant_b1->merchant_id],
+            'user_password'   => '123456',
+            'role_name'       => 'Campaign Owner',
+        ];
+
+        $response = $this->setRequestPostUpdateAccount($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame("Request OK", $response->message);
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
+        $this->assertSame('irianto', $response->data->user_firstname);
+
+        $account_type = CampaignAccount::where('user_id', $response->data->user_id)
+                                ->first();
+
+        $this->assertSame($this->account_type_merchant->account_type_id, $account_type->account_type_id);
+    }
+
+    public function testAccountTypeMerchantFailedLinkHasExists()
+    {
+        /*
+        * test pmp account with account type mall failed cause mall has link to other account type
+        */
+        $data = [
+            'id'              => $this->pmp_merchant_user->user_id,
+            'account_type_id' => $this->account_type_merchant->account_type_id,
+            'user_firstname'  => 'irianto',
+            'user_lastname'   => 'pratama',
+            'user_email'      => 'pmpsatu@campaignowner.com',
+            'account_name'    => 'PMP Satu',
+            'company_name'    => 'Domino Mall',
+            'address_line1'   => 'Jl. Gunung Salak 31 A',
+            'city'            => 'Badung',
+            'country_id'      => $this->country->country_id,
+            'merchant_ids'    => [$this->tenant_a->merchant_id, $this->tenant_c->merchant_id],
+            'user_password'   => '123456',
+            'role_name'       => 'Campaign Owner',
+        ];
+
+        $response = $this->setRequestPostUpdateAccount($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("Link to tenant is does not allowed", $response->message);
+    }
+
+    public function testAccountTypeMerchantFailedLinkObjectTypeIsMall()
+    {
+        /*
+        * test pmp account with account type mall failed cause mall has link to other account type
+        */
+        $data = [
+            'id'              => $this->pmp_merchant_user->user_id,
+            'account_type_id' => $this->account_type_merchant->account_type_id,
+            'user_firstname'  => 'irianto',
+            'user_lastname'   => 'pratama',
+            'user_email'      => 'pmpsatu@campaignowner.com',
+            'account_name'    => 'PMP Satu',
+            'company_name'    => 'Domino Mall',
+            'address_line1'   => 'Jl. Gunung Salak 31 A',
+            'city'            => 'Badung',
+            'country_id'      => $this->country->country_id,
+            'merchant_ids'    => [$this->mall_b->merchant_id],
+            'user_password'   => '123456',
+            'role_name'       => 'Campaign Owner',
+        ];
+
+        $response = $this->setRequestPostUpdateAccount($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("Link to tenant is does not allowed", $response->message);
+    }
+
+    public function testAccountTypeAgencySuccess()
+    {
+        /*
+        * test pmp account with account type mall failed cause mall has link to other account type
+        */
+        $data = [
+            'id'              => $this->pmp_agency_user->user_id,
+            'account_type_id' => $this->account_type_agency->account_type_id,
+            'user_firstname'  => 'irianto',
+            'user_lastname'   => 'pratama',
+            'user_email'      => 'pmpsatu@campaignowner.com',
+            'account_name'    => 'PMP Satu',
+            'company_name'    => 'Domino Mall',
+            'address_line1'   => 'Jl. Gunung Salak 31 A',
+            'city'            => 'Badung',
+            'country_id'      => $this->country->country_id,
+            'merchant_ids'    => [$this->mall_b->merchant_id, $this->tenant_b1->merchant_id],
+            'user_password'   => '123456',
+            'role_name'       => 'Campaign Owner',
+        ];
+
+        $response = $this->setRequestPostUpdateAccount($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame("Request OK", $response->message);
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
+        $this->assertSame('irianto', $response->data->user_firstname);
+
+        $account_type = CampaignAccount::where('user_id', $response->data->user_id)
+                                ->first();
+
+        $this->assertSame($this->account_type_agency->account_type_id, $account_type->account_type_id);
+    }
+
+    public function testAccountTypeAgencyFailedLinkHasExists()
+    {
+        /*
+        * test pmp account with account type mall failed cause mall has link to other account type
+        */
+        $data = [
+            'id'              => $this->pmp_agency_user->user_id,
+            'account_type_id' => $this->account_type_agency->account_type_id,
+            'user_firstname'  => 'irianto',
+            'user_lastname'   => 'pratama',
+            'user_email'      => 'pmpsatu@campaignowner.com',
+            'account_name'    => 'PMP Satu',
+            'company_name'    => 'Domino Mall',
+            'address_line1'   => 'Jl. Gunung Salak 31 A',
+            'city'            => 'Badung',
+            'country_id'      => $this->country->country_id,
+            'merchant_ids'    => [$this->mall_c->merchant_id, $this->mall_a->merchant_id, $this->tenant_a->merchant_id],
+            'user_password'   => '123456',
+            'role_name'       => 'Campaign Owner',
+        ];
+
+        $response = $this->setRequestPostUpdateAccount($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("Link to tenant is does not allowed", $response->message);
+    }
+
+    public function testAccountType3rdSuccess()
+    {
+        /*
+        * test pmp account with account type mall failed cause mall has link to other account type
+        */
+        $data = [
+            'id'              => $this->pmp_3rd_user->user_id,
+            'account_type_id' => $this->account_type_3rd->account_type_id,
+            'user_firstname'  => 'irianto',
+            'user_lastname'   => 'pratama',
+            'user_email'      => 'pmpsatu@campaignowner.com',
+            'account_name'    => 'PMP Satu',
+            'company_name'    => 'Domino Mall',
+            'address_line1'   => 'Jl. Gunung Salak 31 A',
+            'city'            => 'Badung',
+            'country_id'      => $this->country->country_id,
+            'merchant_ids'    => [$this->mall_b->merchant_id, $this->mall_a->merchant_id],
+            'user_password'   => '123456',
+            'role_name'       => 'Campaign Owner',
+        ];
+
+        $response = $this->setRequestPostUpdateAccount($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame("Request OK", $response->message);
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
+        $this->assertSame('irianto', $response->data->user_firstname);
+
+        $account_type = CampaignAccount::where('user_id', $response->data->user_id)
+                                ->first();
+
+        $this->assertSame($this->account_type_3rd->account_type_id, $account_type->account_type_id);
+    }
+
+    public function testAccountType3rdFailedLinkObjectTypeIsTenant()
+    {
+        /*
+        * test pmp account with account type mall failed cause mall has link to other account type
+        */
+        $data = [
+            'id'              => $this->pmp_3rd_user->user_id,
+            'account_type_id' => $this->account_type_3rd->account_type_id,
+            'user_firstname'  => 'irianto',
+            'user_lastname'   => 'pratama',
+            'user_email'      => 'pmpsatu@campaignowner.com',
+            'account_name'    => 'PMP Satu',
+            'company_name'    => 'Domino Mall',
+            'address_line1'   => 'Jl. Gunung Salak 31 A',
+            'city'            => 'Badung',
+            'country_id'      => $this->country->country_id,
+            'merchant_ids'    => [$this->tenant_b1->merchant_id],
+            'user_password'   => '123456',
+            'role_name'       => 'Campaign Owner',
+        ];
+
+        $response = $this->setRequestPostUpdateAccount($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("Link to tenant is does not allowed", $response->message);
+    }
+
+    public function testAccountTypeDominoposSuccess()
+    {
+        /*
+        * test pmp account with account type mall failed cause mall has link to other account type
+        */
+        $data = [
+            'id'              => $this->pmp_dominopos_user->user_id,
+            'account_type_id' => $this->account_type_dominopos->account_type_id,
+            'user_firstname'  => 'irianto',
+            'user_lastname'   => 'pratama',
+            'user_email'      => 'pmpsatu@campaignowner.com',
+            'account_name'    => 'PMP Satu',
+            'company_name'    => 'Domino Mall',
+            'address_line1'   => 'Jl. Gunung Salak 31 A',
+            'city'            => 'Badung',
+            'country_id'      => $this->country->country_id,
+            'merchant_ids'    => [
+                    $this->mall_b->merchant_id,
+                    $this->mall_a->merchant_id,
+                    $this->tenant_a->merchant_id,
+                    $this->tenant_b1->merchant_id
+                ],
+            'user_password'   => '123456',
+            'role_name'       => 'Campaign Owner',
+        ];
+
+        $response = $this->setRequestPostUpdateAccount($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame("Request OK", $response->message);
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
+        $this->assertSame('irianto', $response->data->user_firstname);
+
+        $account_type = CampaignAccount::where('user_id', $response->data->user_id)
+                                ->first();
+
+        $this->assertSame($this->account_type_dominopos->account_type_id, $account_type->account_type_id);
+    }
+
+    public function testAccountType3rdSelectAllTenantsSuccess()
+    {
+        /*
+        * test pmp account with account type mall failed cause mall has link to other account type
+        */
+        $data = [
+            'id'              => $this->pmp_3rd_user->user_id,
+            'account_type_id'    => $this->account_type_3rd->account_type_id,
+            'user_firstname'     => 'irianto',
+            'user_lastname'      => 'pratama',
+            'user_email'         => 'pmpsatu@campaignowner.com',
+            'account_name'       => 'PMP Satu',
+            'company_name'       => 'Domino Mall',
+            'address_line1'      => 'Jl. Gunung Salak 31 A',
+            'city'               => 'Badung',
+            'country_id'         => $this->country->country_id,
+            'select_all_tenants' => 'true',
+            'user_password'      => '123456',
+            'role_name'          => 'Campaign Owner',
+        ];
+
+        $response = $this->setRequestPostUpdateAccount($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame("Request OK", $response->message);
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
+        $this->assertSame('irianto', $response->data->user_firstname);
+
+        $account_type = CampaignAccount::where('user_id', $response->data->user_id)
+                                ->first();
+
+        $this->assertSame($this->account_type_3rd->account_type_id, $account_type->account_type_id);
+    }
+
+    public function testAccountTypeDominoposSelectAllTenantsSuccess()
+    {
+        /*
+        * test pmp account with account type mall failed cause mall has link to other account type
+        */
+        $data = [
+            'id'              => $this->pmp_dominopos_user->user_id,
+            'account_type_id'    => $this->account_type_dominopos->account_type_id,
+            'user_firstname'     => 'irianto',
+            'user_lastname'      => 'pratama',
+            'user_email'         => 'pmpsatu@campaignowner.com',
+            'account_name'       => 'PMP Satu',
+            'company_name'       => 'Domino Mall',
+            'address_line1'      => 'Jl. Gunung Salak 31 A',
+            'city'               => 'Badung',
+            'country_id'         => $this->country->country_id,
+            'select_all_tenants' => 'true',
+            'user_password'      => '123456',
+            'role_name'          => 'Campaign Owner',
+        ];
+
+        $response = $this->setRequestPostUpdateAccount($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame("Request OK", $response->message);
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
+        $this->assertSame('irianto', $response->data->user_firstname);
+
+        $account_type = CampaignAccount::where('user_id', $response->data->user_id)
+                                ->first();
+
+        $this->assertSame($this->account_type_dominopos->account_type_id, $account_type->account_type_id);
     }
 }

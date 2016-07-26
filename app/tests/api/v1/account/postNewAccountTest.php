@@ -20,12 +20,10 @@ class postNewAccountTest extends TestCase
         $this->apiKey = Factory::create('apikey_super_admin');
 
         Factory::create('role_mall_owner');
+        $role_campaign_owner = Factory::create('role_campaign_owner');
 
         // country
         $this->country = Factory::create('Country');
-
-        // role campaign owner for new account
-        Factory::create('role_campaign_owner');
 
         // account_types
         $this->account_type_mall      = Factory::create('account_type_mall');
@@ -46,7 +44,10 @@ class postNewAccountTest extends TestCase
         $this->tenant_c = $tenant_c = Factory::create('Tenant', ['parent_id' => $mall_c->merchant_id]);
 
         // pmp_mall link to mall a
-        $this->pmp_mall_user = Factory::create('campaign_owner');
+        $this->pmp_mall_user = Factory::create('User', [
+                'user_role_id' => $role_campaign_owner->role_id
+            ]);
+
         $this->pmp_mall_user_detail = Factory::create('UserDetail',[
                 'user_id' => $this->pmp_mall_user->user_id
             ]);
@@ -67,7 +68,10 @@ class postNewAccountTest extends TestCase
             ]);
 
         // pmp_merchant link to tenant_a
-        $this->pmp_merchant_user = Factory::create('campaign_owner');
+        $this->pmp_merchant_user = Factory::create('User', [
+                'user_role_id' => $role_campaign_owner->role_id
+            ]);
+
         $this->pmp_merchant_user_detail = Factory::create('UserDetail',[
                 'user_id' => $this->pmp_merchant_user->user_id
             ]);
@@ -88,7 +92,10 @@ class postNewAccountTest extends TestCase
             ]);
 
         // pmp_3rd link to mall b
-        $this->pmp_3rd_user = Factory::create('campaign_owner');
+        $this->pmp_3rd_user = Factory::create('User', [
+                'user_role_id' => $role_campaign_owner->role_id
+            ]);
+
         $this->pmp_3rd_user_detail = Factory::create('UserDetail',[
                 'user_id' => $this->pmp_3rd_user->user_id
             ]);
@@ -109,7 +116,10 @@ class postNewAccountTest extends TestCase
             ]);
 
         // pmp_dominopos link to tenant_b
-        $this->pmp_dominoposs_user = Factory::create('campaign_owner');
+        $this->pmp_dominoposs_user = Factory::create('User', [
+                'user_role_id' => $role_campaign_owner->role_id
+            ]);
+
         $this->pmp_dominoposs_user_detail = Factory::create('UserDetail',[
                 'user_id' => $this->pmp_dominoposs_user->user_id
             ]);
