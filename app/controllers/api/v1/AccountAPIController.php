@@ -1178,12 +1178,6 @@ class AccountAPIController extends ControllerAPI
             $campaignAccount = CampaignAccount::where('user_id', $update_user->user_id)
                                             ->first();
 
-            OrbitInput::post('account_type_id', function($account_type_id) use ($campaignAccount) {
-                if ($campaignAccount->account_type_id === '') {
-                    $campaignAccount->account_type_id = $account_type_id;
-                }
-            });
-
             OrbitInput::post('account_name', function($account_name) use ($campaignAccount) {
                 $campaignAccount->account_name = $account_name;
             });
