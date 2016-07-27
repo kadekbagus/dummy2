@@ -536,6 +536,26 @@ class AccountAPIController extends ControllerAPI
         $records = [];
         foreach ($pmpAccounts as $row) {
             $tenantAtMallArray = $this->getTenantAtMallArray($row->userTenants()->lists('merchant_id'));
+
+            $select_all_tenants = 'false';
+            if ($row->type_name === '3rd Party' || $row->type_name === 'Dominopos') {
+                $mall_tenant = CampaignLocation::where('merchants.status', '!=', 'deleted');
+
+                if ($row->type_name === '3rd Party') {
+                    $mall_tenant->where('merchants.object_type', 'mall');
+                }
+
+                if ($row->type_name === 'Dominopos') {
+                    $mall_tenant->whereIn('merchants.object_type', ['mall', 'tenant']);
+                }
+
+                $mall_tenant = $mall_tenant->get();
+
+                if (count($mall_tenant) === count($tenantAtMallArray)) {
+                    $select_all_tenants = 'true';
+                }
+            }
+
             $records[] = [
                 'account_name' => $row->campaignAccount->account_name,
                 'company_name' => $row->company_name,
@@ -544,6 +564,7 @@ class AccountAPIController extends ControllerAPI
                 'account_type_id'=> $row->campaignAccount->account_type_id,
                 'type_name'      => $row->type_name,
                 'tenant_count' => count($tenantAtMallArray),
+                'select_all_tenants' => $select_all_tenants,
                 'tenants'      => $tenantAtMallArray,
 
                 // Taken from getUserCreatedAtAttribute() in the model
