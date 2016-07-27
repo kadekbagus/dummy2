@@ -786,9 +786,9 @@ class Activity extends Eloquent
         $this->saveToWidgetClick();
         $this->saveToConnectionTime();
 
-        // if ($this->group === 'mobile-ci') {
-        //     $this->saveToElasticSearch();
-        // }
+        if ($this->group === 'mobile-ci') {
+            $this->saveToElasticSearch();
+        }
 
         return $result;
     }
