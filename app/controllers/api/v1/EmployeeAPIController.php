@@ -794,6 +794,7 @@ class EmployeeAPIController extends ControllerAPI
             $newCampaignAccount = new CampaignAccount();
             $newCampaignAccount->user_id = $newUser->user_id;
             $newCampaignAccount->account_name = $parentCampaignAcc->account_name;
+            $newCampaignAccount->account_type_id = $parentCampaignAcc->account_type_id;
             $newCampaignAccount->parent_user_id = $user->user_id;
             $newCampaignAccount->status = $newUser->status;
             $newCampaignAccount->save();
