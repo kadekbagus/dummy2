@@ -95,8 +95,8 @@ class ESActivityUpdateQueue
 
         $findIp = DB::connection(Config::get('orbit.dbip.connection_id'))
                     ->table(Config::get('orbit.dbip.table'))
-                    ->where('ip_start', '<=', inet_ntop($addr))
-                    ->where('ip_end', '>=', inet_ntop($addr))
+                    ->where('ip_start', '<=', $addr)
+                    ->where('ip_end', '>=', $addr)
                     ->where('addr_type', '=', $addr_type)
                     ->first();
 
