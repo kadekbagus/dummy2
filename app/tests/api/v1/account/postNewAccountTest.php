@@ -528,7 +528,7 @@ class postNewAccountTest extends TestCase
             'address_line1'      => 'Jl. Gunung Salak 31 A',
             'city'               => 'Badung',
             'country_id'         => $this->country->country_id,
-            'select_all_tenants' => 'true',
+            'select_all_tenants' => 'Y',
             'user_password'      => '123456',
             'role_name'          => 'Campaign Owner',
         ];
@@ -543,6 +543,11 @@ class postNewAccountTest extends TestCase
                                 ->first();
 
         $this->assertSame($this->account_type_3rd->account_type_id, $account_type->account_type_id);
+
+        $user_merchant = UserMerchant::where('user_id', $response->data->user_id)
+                                ->first();
+
+        $this->assertSame(empty($user_firstname), true);
     }
 
     public function testAccountTypeDominoposSelectAllTenantsSuccess()
@@ -561,7 +566,7 @@ class postNewAccountTest extends TestCase
             'address_line1'      => 'Jl. Gunung Salak 31 A',
             'city'               => 'Badung',
             'country_id'         => $this->country->country_id,
-            'select_all_tenants' => 'true',
+            'select_all_tenants' => 'Y',
             'user_password'      => '123456',
             'role_name'          => 'Campaign Owner',
         ];
@@ -576,5 +581,10 @@ class postNewAccountTest extends TestCase
                                 ->first();
 
         $this->assertSame($this->account_type_dominopos->account_type_id, $account_type->account_type_id);
+
+        $user_merchant = UserMerchant::where('user_id', $response->data->user_id)
+                                ->first();
+
+        $this->assertSame(empty($user_firstname), true);
     }
 }
