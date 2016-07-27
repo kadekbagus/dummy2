@@ -148,6 +148,7 @@ return array(
             'domain'                 => 'Mall URL Application Domain name has already been taken',
             'mobile_default_lang'    => 'Cannot remove default supported language',
             'link_mobile_default_lang'=> 'Cannot change default supported language has campaign translation',
+            'link_to_tenant'         => 'Link to tenant is does not allowed',
         ),
         'access' => array(
             'forbidden'              => 'You do not have permission to :action',
