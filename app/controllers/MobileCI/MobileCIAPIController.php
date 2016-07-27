@@ -9383,7 +9383,8 @@ class MobileCIAPIController extends BaseCIController
     private function getDefaultLanguage($mall)
     {
         // English is default language
-        $language = \Language::where('name', '=', 'en')->first();
+        $deflang = \Mall::where('merchant_id', $mall->merchant_id)->first();
+        $language = \Language::where('name', '=', $deflang->mobile_default_language)->first();
         if(isset($language) && count($language) > 0){
             $defaultLanguage = \MerchantLanguage::excludeDeleted()
                 ->where('merchant_id', '=', $mall->merchant_id)

@@ -786,7 +786,6 @@ class Activity extends Eloquent
         $this->saveToWidgetClick();
         $this->saveToConnectionTime();
 
-        // todo enable this after create dbip and setup es
         // if ($this->group === 'mobile-ci') {
         //     $this->saveToElasticSearch();
         // }
