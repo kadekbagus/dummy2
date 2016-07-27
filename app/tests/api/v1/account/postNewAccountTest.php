@@ -543,11 +543,12 @@ class postNewAccountTest extends TestCase
                                 ->first();
 
         $this->assertSame($this->account_type_3rd->account_type_id, $account_type->account_type_id);
+        $this->assertSame('Y', $account_type->is_link_to_all);
 
         $user_merchant = UserMerchant::where('user_id', $response->data->user_id)
                                 ->first();
 
-        $this->assertSame(empty($user_firstname), true);
+        $this->assertSame(empty($user_merchant), true);
     }
 
     public function testAccountTypeDominoposSelectAllTenantsSuccess()
@@ -581,10 +582,11 @@ class postNewAccountTest extends TestCase
                                 ->first();
 
         $this->assertSame($this->account_type_dominopos->account_type_id, $account_type->account_type_id);
+        $this->assertSame('Y', $account_type->is_link_to_all);
 
         $user_merchant = UserMerchant::where('user_id', $response->data->user_id)
                                 ->first();
 
-        $this->assertSame(empty($user_firstname), true);
+        $this->assertSame(empty($user_merchant), true);
     }
 }
