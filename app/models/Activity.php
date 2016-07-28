@@ -786,6 +786,10 @@ class Activity extends Eloquent
         $this->saveToWidgetClick();
         $this->saveToConnectionTime();
 
+        if ($this->group === 'mobile-ci') {
+            $this->saveToElasticSearch();
+        }
+
         return $result;
     }
 
@@ -1130,6 +1134,20 @@ class Activity extends Eloquent
         }
 
         $connection->save();
+    }
+
+    /**
+     * Create new document in elasticsearch.
+     *
+     * @author Shelgi Prasetyo <shelgi@dominopos.com>
+     * @return void
+     */
+    protected function saveToElasticSearch()
+    {
+        // queue for create/update activity document in elasticsearch
+        Queue::push('Orbit\\Queue\\Elasticsearch\\ESActivityUpdateQueue', [
+            'activity_id' => $this->activity_id,
+        ]);
     }
 
     /**

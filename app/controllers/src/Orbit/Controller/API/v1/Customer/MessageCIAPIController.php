@@ -638,6 +638,142 @@ class MessageCIAPIController extends BaseAPIController
     }
 
 
+    /**
+     * GET -  Get total unread message
+     *
+     * @author Firmansyah <firmansyah@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function getPollMessages()
+    {
+        $user = null;
+        $activityPage = Activity::mobileci()
+                        ->setActivityType('search');
+
+        try {
+
+            $httpCode = 200;
+
+            $this->registerCustomValidation();
+
+            $mallId = OrbitInput::get('mall_id', null);
+
+            // validation mall id
+            $validator = Validator::make(
+                array('mall_id' => $mallId,),
+                array('mall_id' => 'required|orbit.empty.mall',)
+            );
+
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $user = $this->getLoggedInUser($mallId);
+            $retailer = Mall::excludeDeleted()->where('merchant_id', $mallId)->first();
+
+            $alerts = Inbox::where('user_id', $user->user_id)
+                            ->where('merchant_id', $retailer->merchant_id)
+                            ->isNotDeleted()
+                            ->isNotRead()
+                            ->isNotAlert();
+
+            $untoastedAlerts = Inbox::where('user_id', $user->user_id)
+                            ->where('merchant_id', $retailer->merchant_id)
+                            ->isNotDeleted()
+                            ->isNotNotified()
+                            ->isNotAlert()
+                            ->get();
+
+            foreach ($untoastedAlerts as $untoastedAlert) {
+                $untoastedAlert->url = URL::to('customer/message/detail?id=' . $untoastedAlert->inbox_id);
+            }
+            // Clone the query builder which still does not include the take,
+            // skip, and order by
+            $_alerts = clone $alerts;
+
+            $totalAlerts = RecordCounter::create($_alerts)->count();
+            $listOfAlerts = $alerts->count();
+
+            $data = new stdclass();
+            $data->total_records = $totalAlerts;
+            $data->returned_records = $listOfAlerts;
+            $data->records = $listOfAlerts;
+            $data->untoasted_records = $untoastedAlerts;
+
+            if ($listOfAlerts > 9) {
+                $data->records = '9+';
+            }
+
+            if ($totalAlerts === 0) {
+                $data->records = null;
+                $this->response->message = 'No new alert';
+            }
+
+            $this->response->data = $data;
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.inbox.getpollmessage.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            $this->rollBack();
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.inbox.getpollmessage.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            $this->rollBack();
+        } catch (QueryException $e) {
+            Event::fire('orbit.inbox.getpollmessage.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            // Rollback the changes
+            $this->rollBack();
+        } catch (Exception $e) {
+            Event::fire('orbit.inbox.getpollmessage.general.exception', array($this, $e));
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+
+            if (Config::get('app.debug')) {
+                $this->response->data = $e->__toString();
+            } else {
+                $this->response->data = null;
+            }
+
+            // Rollback the changes
+            $this->rollBack();
+        }
+
+        return $this->render($httpCode);
+    }
+
+
     protected function registerCustomValidation()
     {
         // Check the existance of id_language_default
