@@ -692,4 +692,39 @@ class postUpdateAccountTest extends TestCase
 
         $this->assertSame(empty($user_merchant), true);
     }
+
+    public function testUpdateEmptyStringSelectAllTenantSuccess()
+    {
+        /*
+        * test update empty string select all tenant to default 'N'
+        */
+        $data = [
+            'select_all_tenants' => '',
+            'id'                 => $this->pmp_agency_user->user_id,
+            'account_type_id'    => $this->account_type_agency->account_type_id,
+            'user_firstname'     => 'irianto',
+            'user_lastname'      => 'pratama',
+            'user_email'         => 'pmpsatu@campaignowner.com',
+            'account_name'       => 'PMP Satu',
+            'company_name'       => 'Domino Mall',
+            'address_line1'      => 'Jl. Gunung Salak 31 A',
+            'city'               => 'Badung',
+            'country_id'         => $this->country->country_id,
+            'merchant_ids'       => [$this->mall_b->merchant_id, $this->tenant_b1->merchant_id],
+            'user_password'      => '123456',
+            'role_name'          => 'Campaign Owner',
+        ];
+
+        $response = $this->setRequestPostUpdateAccount($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame("Request OK", $response->message);
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
+        $this->assertSame('irianto', $response->data->user_firstname);
+
+        $account_type = CampaignAccount::where('user_id', $response->data->user_id)
+                                ->first();
+
+        $this->assertSame($this->account_type_agency->account_type_id, $account_type->account_type_id);
+        $this->assertSame('N', $account_type->is_link_to_all);
+    }
 }
