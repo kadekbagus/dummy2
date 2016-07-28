@@ -658,6 +658,7 @@
                             tenants = '<h4>{{Lang::get('mobileci.page_title.tenant_directory')}}</h4><ul>'
                             for(var i = 0; i < data.data.grouped_records.tenants.length; i++) {
                                 var hide = i > 2 ? 'limited hide' : '';
+                                var description = data.data.grouped_records.tenants[i].object_description ? data.data.grouped_records.tenants[i].object_description : '';
                                 tenants += '<li class="search-result-group '+ hide +'">\
                                         <a data-href="'+ data.data.grouped_records.tenants[i].object_redirect_url +'" href="'+ data.data.grouped_records.tenants[i].object_url +'">\
                                             <div class="col-xs-2 text-center">\
@@ -665,7 +666,7 @@
                                             </div>\
                                             <div class="col-xs-10">\
                                                 <h5><strong>'+ data.data.grouped_records.tenants[i].object_name +'</strong></h5>\
-                                                <p>'+ (data.data.grouped_records.tenants[i].object_description ? data.data.grouped_records.tenants[i].object_description : '') +'</p>\
+                                                <p>'+ $('<span />').html(description).text() +'</p>\
                                             </div>\
                                         </a>\
                                     </li>';
@@ -681,6 +682,7 @@
                             services = '<h4>{{Lang::get('mobileci.page_title.service_directory')}}</h4><ul>'
                             for(var i = 0; i < data.data.grouped_records.services.length; i++) {
                                 var hide = i > 2 ? 'limited hide' : '';
+                                var description = data.data.grouped_records.services[i].object_description ? data.data.grouped_records.services[i].object_description : '';
                                 services += '<li class="search-result-group '+ hide +'">\
                                         <a data-href="'+ data.data.grouped_records.services[i].object_redirect_url +'" href="'+ data.data.grouped_records.services[i].object_url +'">\
                                             <div class="col-xs-2 text-center">\
@@ -688,7 +690,7 @@
                                             </div>\
                                             <div class="col-xs-10">\
                                                 <h5><strong>'+ data.data.grouped_records.services[i].object_name +'</strong></h5>\
-                                                <p>'+ (data.data.grouped_records.services[i].object_description ? data.data.grouped_records.services[i].object_description : '') +'</p>\
+                                                <p>'+ $('<span />').html(description).text() +'</p>\
                                             </div>\
                                         </a>\
                                     </li>';
@@ -703,6 +705,7 @@
                             promotions = '<h4>{{Lang::get('mobileci.page_title.promotions')}}</h4><ul>'
                             for(var i = 0; i < data.data.grouped_records.promotions.length; i++) {
                                 var hide = i > 2 ? 'limited hide' : '';
+                                var description = data.data.grouped_records.promotions[i].object_description ? data.data.grouped_records.promotions[i].object_description : '';
                                 promotions += '<li class="search-result-group '+ hide +'">\
                                         <a data-href="'+ data.data.grouped_records.promotions[i].object_redirect_url +'" href="'+ data.data.grouped_records.promotions[i].object_url +'">\
                                             <div class="col-xs-2 text-center">\
@@ -710,7 +713,7 @@
                                             </div>\
                                             <div class="col-xs-10">\
                                                 <h5><strong>'+ data.data.grouped_records.promotions[i].object_name +'</strong></h5>\
-                                                <p>'+ (data.data.grouped_records.promotions[i].object_description ? data.data.grouped_records.promotions[i].object_description : '') +'</p>\
+                                                <p>'+ $('<span />').html(description).text() +'</p>\
                                             </div>\
                                         </a>\
                                     </li>';
@@ -725,6 +728,7 @@
                             news = '<h4>{{Lang::get('mobileci.page_title.news')}}</h4><ul>'
                             for(var i = 0; i < data.data.grouped_records.news.length; i++) {
                                 var hide = i > 2 ? 'limited hide' : '';
+                                var description = data.data.grouped_records.news[i].object_description ? data.data.grouped_records.news[i].object_description : '';
                                 news += '<li class="search-result-group '+ hide +'">\
                                         <a data-href="'+ data.data.grouped_records.news[i].object_redirect_url +'" href="'+ data.data.grouped_records.news[i].object_url +'">\
                                             <div class="col-xs-2 text-center">\
@@ -732,7 +736,7 @@
                                             </div>\
                                             <div class="col-xs-10">\
                                                 <h5><strong>'+ data.data.grouped_records.news[i].object_name +'</strong></h5>\
-                                                <p>'+ (data.data.grouped_records.news[i].object_description ? data.data.grouped_records.news[i].object_description : '') +'</p>\
+                                                <p>'+ $('<span />').html(description).text() +'</p>\
                                             </div>\
                                         </a>\
                                     </li>';
@@ -747,6 +751,7 @@
                             coupons = '<h4>{{Lang::get('mobileci.page_title.coupons')}}</h4><ul>'
                             for(var i = 0; i < data.data.grouped_records.coupons.length; i++) {
                                 var hide = i > 2 ? 'limited hide' : '';
+                                var description = data.data.grouped_records.coupons[i].object_description ? data.data.grouped_records.coupons[i].object_description : '';
                                 coupons += '<li class="search-result-group '+ hide +'">\
                                         <a data-href="'+ data.data.grouped_records.coupons[i].object_redirect_url +'" href="'+ data.data.grouped_records.coupons[i].object_url +'">\
                                             <div class="col-xs-2 text-center">\
@@ -754,7 +759,7 @@
                                             </div>\
                                             <div class="col-xs-10">\
                                                 <h5><strong>'+ data.data.grouped_records.coupons[i].object_name +'</strong></h5>\
-                                                <p>'+ (data.data.grouped_records.coupons[i].object_description ? data.data.grouped_records.coupons[i].object_description : '') +'</p>\
+                                                <p>'+ $('<span />').html(description).text() +'</p>\
                                             </div>\
                                         </a>\
                                     </li>';
@@ -769,6 +774,7 @@
                             lucky_draws = '<h4>{{Lang::get('mobileci.page_title.lucky_draws')}}</h4><ul>'
                             for(var i = 0; i < data.data.grouped_records.lucky_draws.length; i++) {
                                 var hide = i > 2 ? 'limited hide' : '';
+                                var description = data.data.grouped_records.lucky_draws[i].object_description ? data.data.grouped_records.lucky_draws[i].object_description : '';
                                 lucky_draws += '<li class="search-result-group '+ hide +'">\
                                         <a data-href="'+ data.data.grouped_records.lucky_draws[i].object_redirect_url +'" href="'+ data.data.grouped_records.lucky_draws[i].object_url +'">\
                                             <div class="col-xs-2 text-center">\
@@ -776,7 +782,7 @@
                                             </div>\
                                             <div class="col-xs-10">\
                                                 <h5><strong>'+ data.data.grouped_records.lucky_draws[i].object_name +'</strong></h5>\
-                                                <p>'+ (data.data.grouped_records.lucky_draws[i].object_description ? data.data.grouped_records.lucky_draws[i].object_description : '') +'</p>\
+                                                <p>'+ $('<span />').html(description).text() +'</p>\
                                             </div>\
                                         </a>\
                                     </li>';
@@ -1584,5 +1590,10 @@
         }
 
         orbitSignUpForm.boot();
+    });
+
+    // Show pokestop map in this mall
+    $('#orbit-tour-pokestop').on('click', function(evt) {
+        $('#pokegomapmodal').modal('show');
     });
 </script>
