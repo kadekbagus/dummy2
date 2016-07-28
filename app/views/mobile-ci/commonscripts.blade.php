@@ -659,7 +659,7 @@
                             for(var i = 0; i < data.data.grouped_records.tenants.length; i++) {
                                 var hide = i > 2 ? 'limited hide' : '';
                                 var description = data.data.grouped_records.tenants[i].object_description ? data.data.grouped_records.tenants[i].object_description : '';
-                                var filteredDescription = description.match(/[a-zA-Z0-9\s]+/)[0];
+                                description = description.indexOf('<br') > 0 ? description.slice(0, description.indexOf('<br')) : description;
                                 tenants += '<li class="search-result-group '+ hide +'">\
                                         <a data-href="'+ data.data.grouped_records.tenants[i].object_redirect_url +'" href="'+ data.data.grouped_records.tenants[i].object_url +'">\
                                             <div class="col-xs-2 text-center">\
@@ -667,7 +667,7 @@
                                             </div>\
                                             <div class="col-xs-10">\
                                                 <h5><strong>'+ data.data.grouped_records.tenants[i].object_name +'</strong></h5>\
-                                                <p>'+ filteredDescription +'</p>\
+                                                <p>'+ description +'</p>\
                                             </div>\
                                         </a>\
                                     </li>';
@@ -684,7 +684,7 @@
                             for(var i = 0; i < data.data.grouped_records.services.length; i++) {
                                 var hide = i > 2 ? 'limited hide' : '';
                                 var description = data.data.grouped_records.services[i].object_description ? data.data.grouped_records.services[i].object_description : '';
-                                var filteredDescription = description.match(/[a-zA-Z0-9\s]+/)[0];
+                                description = description.indexOf('<br') > 0 ? description.slice(0, description.indexOf('<br')) : description;
                                 services += '<li class="search-result-group '+ hide +'">\
                                         <a data-href="'+ data.data.grouped_records.services[i].object_redirect_url +'" href="'+ data.data.grouped_records.services[i].object_url +'">\
                                             <div class="col-xs-2 text-center">\
@@ -692,7 +692,7 @@
                                             </div>\
                                             <div class="col-xs-10">\
                                                 <h5><strong>'+ data.data.grouped_records.services[i].object_name +'</strong></h5>\
-                                                <p>'+ filteredDescription +'</p>\
+                                                <p>'+ description +'</p>\
                                             </div>\
                                         </a>\
                                     </li>';
@@ -708,7 +708,7 @@
                             for(var i = 0; i < data.data.grouped_records.promotions.length; i++) {
                                 var hide = i > 2 ? 'limited hide' : '';
                                 var description = data.data.grouped_records.promotions[i].object_description ? data.data.grouped_records.promotions[i].object_description : '';
-                                var filteredDescription = description.match(/[a-zA-Z0-9\s]+/)[0];
+                                description = description.indexOf('<br') > 0 ? description.slice(0, description.indexOf('<br')) : description;
                                 promotions += '<li class="search-result-group '+ hide +'">\
                                         <a data-href="'+ data.data.grouped_records.promotions[i].object_redirect_url +'" href="'+ data.data.grouped_records.promotions[i].object_url +'">\
                                             <div class="col-xs-2 text-center">\
@@ -716,7 +716,7 @@
                                             </div>\
                                             <div class="col-xs-10">\
                                                 <h5><strong>'+ data.data.grouped_records.promotions[i].object_name +'</strong></h5>\
-                                                <p>'+ filteredDescription +'</p>\
+                                                <p>'+ description +'</p>\
                                             </div>\
                                         </a>\
                                     </li>';
@@ -732,7 +732,7 @@
                             for(var i = 0; i < data.data.grouped_records.news.length; i++) {
                                 var hide = i > 2 ? 'limited hide' : '';
                                 var description = data.data.grouped_records.news[i].object_description ? data.data.grouped_records.news[i].object_description : '';
-                                var filteredDescription = description.match(/[a-zA-Z0-9\s]+/)[0];
+                                description = description.indexOf('<br') > 0 ? description.slice(0, description.indexOf('<br')) : description;
                                 news += '<li class="search-result-group '+ hide +'">\
                                         <a data-href="'+ data.data.grouped_records.news[i].object_redirect_url +'" href="'+ data.data.grouped_records.news[i].object_url +'">\
                                             <div class="col-xs-2 text-center">\
@@ -740,7 +740,7 @@
                                             </div>\
                                             <div class="col-xs-10">\
                                                 <h5><strong>'+ data.data.grouped_records.news[i].object_name +'</strong></h5>\
-                                                <p>'+ filteredDescription +'</p>\
+                                                <p>'+ description +'</p>\
                                             </div>\
                                         </a>\
                                     </li>';
@@ -756,7 +756,7 @@
                             for(var i = 0; i < data.data.grouped_records.coupons.length; i++) {
                                 var hide = i > 2 ? 'limited hide' : '';
                                 var description = data.data.grouped_records.coupons[i].object_description ? data.data.grouped_records.coupons[i].object_description : '';
-                                var filteredDescription = description.match(/[a-zA-Z0-9\s]+/)[0];
+                                description = description.indexOf('<br') > 0 ? description.slice(0, description.indexOf('<br')) : description;
                                 coupons += '<li class="search-result-group '+ hide +'">\
                                         <a data-href="'+ data.data.grouped_records.coupons[i].object_redirect_url +'" href="'+ data.data.grouped_records.coupons[i].object_url +'">\
                                             <div class="col-xs-2 text-center">\
@@ -764,7 +764,7 @@
                                             </div>\
                                             <div class="col-xs-10">\
                                                 <h5><strong>'+ data.data.grouped_records.coupons[i].object_name +'</strong></h5>\
-                                                <p>'+ filteredDescription +'</p>\
+                                                <p>'+ description +'</p>\
                                             </div>\
                                         </a>\
                                     </li>';
@@ -780,7 +780,7 @@
                             for(var i = 0; i < data.data.grouped_records.lucky_draws.length; i++) {
                                 var hide = i > 2 ? 'limited hide' : '';
                                 var description = data.data.grouped_records.lucky_draws[i].object_description ? data.data.grouped_records.lucky_draws[i].object_description : '';
-                                var filteredDescription = description.match(/[a-zA-Z0-9\s]+/)[0];
+                                description = description.indexOf('<br') > 0 ? description.slice(0, description.indexOf('<br')) : description;
                                 lucky_draws += '<li class="search-result-group '+ hide +'">\
                                         <a data-href="'+ data.data.grouped_records.lucky_draws[i].object_redirect_url +'" href="'+ data.data.grouped_records.lucky_draws[i].object_url +'">\
                                             <div class="col-xs-2 text-center">\
@@ -788,7 +788,7 @@
                                             </div>\
                                             <div class="col-xs-10">\
                                                 <h5><strong>'+ data.data.grouped_records.lucky_draws[i].object_name +'</strong></h5>\
-                                                <p>'+ filteredDescription +'</p>\
+                                                <p>'+ description +'</p>\
                                             </div>\
                                         </a>\
                                     </li>';
