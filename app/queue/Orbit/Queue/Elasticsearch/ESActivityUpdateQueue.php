@@ -118,7 +118,7 @@ class ESActivityUpdateQueue
 
             $response_search = $this->poster->search($params_search);
 
-            $pos = [ 'lon' => $activity->longitude, 'lat' => $activity->latitude];
+            $pos = ['lon' => $activity->longitude, 'lat' => $activity->latitude];
             if (empty($activity->longitude) || empty($activity->latitude)) {
                 $pos = null;
             }
@@ -156,7 +156,7 @@ class ESActivityUpdateQueue
                             'status' =>  $activity->status,
                             'parent_id' =>  $activity->parent_id,
                             'response_status' =>  $activity->response_status,
-                            'created_at' => $activity->created_at->format('Y-m-d H:i:s'),
+                            'created_at' => $activity->created_at->format("Y-m-d") . 'T' . $activity->created_at->format("H:i:s") . 'Z',
                             'object_display_name' =>  $activity->object_display_name,
                             'browser_name' => $browserName,
                             'browser_version' => $browserVersion,
@@ -204,7 +204,7 @@ class ESActivityUpdateQueue
                         'status' =>  $activity->status,
                         'parent_id' =>  $activity->parent_id,
                         'response_status' =>  $activity->response_status,
-                        'created_at' => $activity->created_at->format('Y-m-d H:i:s'),
+                        'created_at' => $activity->created_at->format("Y-m-d") . 'T' . $activity->created_at->format("H:i:s") . 'Z',
                         'object_display_name' =>  $activity->object_display_name,
                         'browser_name' => $browserName,
                         'browser_version' => $browserVersion,
