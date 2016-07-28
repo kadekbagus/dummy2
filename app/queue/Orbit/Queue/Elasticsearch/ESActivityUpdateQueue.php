@@ -118,11 +118,6 @@ class ESActivityUpdateQueue
 
             $response_search = $this->poster->search($params_search);
 
-            $pos = [ 'lon' => $activity->longitude, 'lat' => $activity->latitude];
-            if (empty($activity->longitude) || empty($activity->latitude)) {
-                $pos = null;
-            }
-
             $response = NULL;
             if ($response_search['hits']['total'] > 0) {
                 $params = [
@@ -167,7 +162,7 @@ class ESActivityUpdateQueue
                             'device_model' => $deviceModel,
                             'country' =>  $findIp->country,
                             'city' =>  $findIp->city,
-                            'position' => $pos
+                            'position' => ['lon' => $activity->longitude, 'lat' => $activity->latitude]
                         ]
                     ]
                 ];
@@ -215,7 +210,7 @@ class ESActivityUpdateQueue
                         'device_model' => $deviceModel,
                         'country' =>  $findIp->country,
                         'city' =>  $findIp->city,
-                        'position' => $pos
+                        'position' => ['lon' => $activity->longitude, 'lat' => $activity->latitude]
                     ]
                 ];
                 $response = $this->poster->index($params);
