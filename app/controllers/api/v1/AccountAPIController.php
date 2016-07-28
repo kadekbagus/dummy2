@@ -1378,7 +1378,8 @@ class AccountAPIController extends ControllerAPI
                             $dateNowMall = $nowMall->toDateString();
 
                             //get data in news and promotion
-                            $newsPromotionActive = News::select('news.news_id')
+                            $newsPromotionActive = News::allowedForPMPUser($update_user, 'news_promotion')
+                                                        ->select('news.news_id')
                                                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
                                                         ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                                                         ->whereRaw("(CASE WHEN {$prefix}news.end_date < {$this->quote($nowMall)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) NOT IN ('stopped', 'expired')")
@@ -1386,7 +1387,8 @@ class AccountAPIController extends ControllerAPI
                                                         ->count();
 
                             //get data in coupon
-                            $couponStatusActive = Coupon::select('campaign_status.campaign_status_name')
+                            $couponStatusActive = Coupon::allowedForPMPUser($update_user, 'coupon')
+                                                        ->select('campaign_status.campaign_status_name')
                                                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
                                                         ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                                                         ->whereRaw("(CASE WHEN {$prefix}promotions.end_date < {$this->quote($nowMall)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) NOT IN ('stopped', 'expired')")
