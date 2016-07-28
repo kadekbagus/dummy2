@@ -554,10 +554,10 @@ class AccountAPIController extends ControllerAPI
 
         $records = [];
         foreach ($pmpAccounts as $row) {
-            $tenantAtMallArray = $this->getTenantAtMallArray($row->type_name, $row->userTenants()->lists('merchant_id'));
-
             if ($row->campaignAccount->is_link_to_all === 'Y') {
                 $tenantAtMallArray = $this->getTenantAtMallArray($row->type_name);
+            } else {
+                $tenantAtMallArray = $this->getTenantAtMallArray($row->type_name, $row->userTenants()->lists('merchant_id'));
             }
 
             $records[] = [

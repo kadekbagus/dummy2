@@ -34,15 +34,15 @@ class postUpdateAccountTest extends TestCase
         $this->account_type_dominopos = Factory::create('account_type_dominopos');
 
         // mall and tenant for list link to tenant
-        $this->mall_a = $mall_a = Factory::create('Mall');
-        $this->tenant_a = $tenant_a = Factory::create('Tenant', ['parent_id' => $mall_a->merchant_id]);
+        $this->mall_a = $mall_a = Factory::create('Mall', ['name' => 'Mall A']);
+        $this->tenant_a = $tenant_a = Factory::create('Tenant', ['name' => 'Tenant A', 'parent_id' => $mall_a->merchant_id]);
 
-        $this->mall_b = $mall_b = Factory::create('Mall');
-        $this->tenant_b1 = $tenant_b1 = Factory::create('Tenant', ['parent_id' => $mall_b->merchant_id]);
-        $this->tenant_b2 = $tenant_b2 = Factory::create('Tenant', ['parent_id' => $mall_b->merchant_id]);
+        $this->mall_b = $mall_b = Factory::create('Mall', ['name' => 'Mall B']);
+        $this->tenant_b1 = $tenant_b1 = Factory::create('Tenant', ['name' => 'Tenant B1', 'parent_id' => $mall_b->merchant_id]);
+        $this->tenant_b2 = $tenant_b2 = Factory::create('Tenant', ['name' => 'Tenant B2', 'parent_id' => $mall_b->merchant_id]);
 
-        $this->mall_c = $mall_c = Factory::create('Mall');
-        $this->tenant_c = $tenant_c = Factory::create('Tenant', ['parent_id' => $mall_c->merchant_id]);
+        $this->mall_c = $mall_c = Factory::create('Mall', ['name' => 'Mall C']);
+        $this->tenant_c = $tenant_c = Factory::create('Tenant', ['name' => 'Tenant C', 'parent_id' => $mall_c->merchant_id]);
 
         // pmp_mall link to mall a
         $this->pmp_mall_user = Factory::create('User', [
