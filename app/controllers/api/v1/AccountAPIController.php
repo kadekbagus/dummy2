@@ -536,6 +536,26 @@ class AccountAPIController extends ControllerAPI
         $records = [];
         foreach ($pmpAccounts as $row) {
             $tenantAtMallArray = $this->getTenantAtMallArray($row->userTenants()->lists('merchant_id'));
+
+            $select_all_tenants = 'false';
+            if ($row->type_name === '3rd Party' || $row->type_name === 'Dominopos') {
+                $mall_tenant = CampaignLocation::where('merchants.status', '!=', 'deleted');
+
+                if ($row->type_name === '3rd Party') {
+                    $mall_tenant->where('merchants.object_type', 'mall');
+                }
+
+                if ($row->type_name === 'Dominopos') {
+                    $mall_tenant->whereIn('merchants.object_type', ['mall', 'tenant']);
+                }
+
+                $mall_tenant = $mall_tenant->get();
+
+                if (count($mall_tenant) === count($tenantAtMallArray)) {
+                    $select_all_tenants = 'true';
+                }
+            }
+
             $records[] = [
                 'account_name' => $row->campaignAccount->account_name,
                 'company_name' => $row->company_name,
@@ -544,6 +564,7 @@ class AccountAPIController extends ControllerAPI
                 'account_type_id'=> $row->campaignAccount->account_type_id,
                 'type_name'      => $row->type_name,
                 'tenant_count' => count($tenantAtMallArray),
+                'select_all_tenants' => $select_all_tenants,
                 'tenants'      => $tenantAtMallArray,
 
                 // Taken from getUserCreatedAtAttribute() in the model
@@ -1170,7 +1191,7 @@ class AccountAPIController extends ControllerAPI
                     'city'            => 'required',
                     'country_id'      => 'required|orbit.empty.country',
                     'merchant_ids'    => 'required|array|exists:merchants,merchant_id|orbit.exists.link_to_tenant',
-                    'role_name'       => 'required|in:Campaign Owner|orbit.empty.role',
+                    'role_name'       => 'required|in:Campaign Owner,Campaign Employee|orbit.empty.role',
                     'user_password'   => 'min:6',
                 ),
                 array(
@@ -1580,6 +1601,7 @@ class AccountAPIController extends ControllerAPI
 
         // Check link to tenant is not exists just for account type mall, merchant, and agency
         Validator::extend('orbit.exists.link_to_tenant', function ($attribute, $value, $parameters) {
+            $prefix = DB::getTablePrefix();
             $account_type = $this->valid_account_type;
 
             if (! is_null($account_type)){
@@ -1594,8 +1616,31 @@ class AccountAPIController extends ControllerAPI
                                                 ->whereIn('user_merchant.object_type', $unique_rule)
                                                 ->whereIn('user_merchant.merchant_id', $value);
 
-                    OrbitInput::post('id', function($user_id) use ($mall_tenant) {
-                        $mall_tenant->where('user_merchant.user_id', '!=', $user_id);
+                    OrbitInput::post('id', function($user_id) use ($mall_tenant, $prefix) {
+                        $mall_tenant->whereRaw("(
+                                {$prefix}user_merchant.user_id not in (
+                                    select ca.user_id
+                                    from {$prefix}campaign_account ca
+                                    left join {$prefix}campaign_account cas
+                                        on cas.parent_user_id = ca.parent_user_id
+                                    where (
+                                            ca.user_id = (
+                                                            SELECT parent_user_id
+                                                            FROM   {$prefix}campaign_account
+                                                            WHERE  user_id = {$this->quote($user_id)}
+                                                        )
+                                                            OR
+                                            ca.parent_user_id = (
+                                                            SELECT parent_user_id
+                                                            FROM   {$prefix}campaign_account
+                                                            WHERE  user_id = {$this->quote($user_id)}
+                                                        )
+                                            OR ca.user_id = {$this->quote($user_id)}
+                                            OR ca.parent_user_id = {$this->quote($user_id)}
+                                        )
+                                    group by ca.user_id
+                                )
+                            )");
                     });
 
                     $mall_tenant = $mall_tenant->first();

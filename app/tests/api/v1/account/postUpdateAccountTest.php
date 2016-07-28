@@ -21,6 +21,7 @@ class postUpdateAccountTest extends TestCase
 
         Factory::create('role_mall_owner');
         $role_campaign_owner = Factory::create('role_campaign_owner');
+        $role_campaign_employee = Factory::create('role_campaign_employee');
 
         // country
         $this->country = Factory::create('Country');
@@ -63,6 +64,30 @@ class postUpdateAccountTest extends TestCase
 
         $this->pmp_mall_user_merchant = Factory::create('UserMerchant', [
                 'user_id'     => $this->pmp_mall_user->user_id,
+                'merchant_id' => $this->mall_a->merchant_id,
+                'object_type' => 'mall'
+            ]);
+
+        // pmp_employee_mall link to mall a
+        $this->pmp_employee_mall_user = Factory::create('User', [
+                'user_role_id' => $role_campaign_employee->role_id
+            ]);
+
+        $this->pmp_employee_mall_user_detail = Factory::create('UserDetail',[
+                'user_id' => $this->pmp_employee_mall_user->user_id
+            ]);
+        $this->pmp_employee_mall_campaign_account = Factory::create('CampaignAccount', [
+                'user_id' => $this->pmp_employee_mall_user->user_id,
+                'parent_user_id' => $this->pmp_mall_user->user_id,
+                'account_type_id' => $this->pmp_mall_campaign_account->account_type_id
+            ]);
+
+        $this->pmp_employee_mall_employee = Factory::create('Employee', [
+                'user_id' => $this->pmp_employee_mall_user->user_id
+            ]);
+
+        $this->pmp_employee_mall_user_merchant = Factory::create('UserMerchant', [
+                'user_id'     => $this->pmp_employee_mall_user->user_id,
                 'merchant_id' => $this->mall_a->merchant_id,
                 'object_type' => 'mall'
             ]);
@@ -224,6 +249,58 @@ class postUpdateAccountTest extends TestCase
             'city'            => 'Badung',
             'country_id'      => $this->country->country_id,
             'merchant_ids'    => [$this->mall_b->merchant_id],
+            'role_name'       => 'Campaign Owner',
+        ];
+
+        $response = $this->setRequestPostUpdateAccount($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame("Request OK", $response->message);
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
+        $this->assertSame('irianto', $response->data->user_firstname);
+
+        $account_type = CampaignAccount::where('user_id', $response->data->user_id)
+                                ->first();
+
+        $this->assertSame($this->account_type_mall->account_type_id, $account_type->account_type_id);
+    }
+
+    public function testUpdatePMPEmployeeAccountFailedCauseCannotUpdateTenant()
+    {
+        $data = [
+            'id'              => $this->pmp_employee_mall_user->user_id,
+            'account_type_id' => $this->account_type_mall->account_type_id,
+            'user_firstname'  => 'irianto',
+            'user_lastname'   => 'pratama',
+            'user_email'      => 'pmpsatu@campaignemployee.com',
+            'account_name'    => 'PMP Satu',
+            'company_name'    => 'Domino Mall',
+            'address_line1'   => 'Jl. Gunung Salak 31 A',
+            'city'            => 'Badung',
+            'country_id'      => $this->country->country_id,
+            'merchant_ids'    => [$this->mall_a->merchant_id, $this->mall_b->merchant_id],
+            'role_name'       => 'Campaign Employee',
+        ];
+
+        $response = $this->setRequestPostUpdateAccount($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame("Cannot update tenant", $response->message);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+    }
+
+    public function testAccountTypeMallSuccess()
+    {
+        $data = [
+            'id'              => $this->pmp_mall_user->user_id,
+            'account_type_id' => $this->account_type_mall->account_type_id,
+            'user_firstname'  => 'irianto',
+            'user_lastname'   => 'pratama',
+            'user_email'      => 'pmpsatu@campaignowner.com',
+            'account_name'    => 'PMP Satu',
+            'company_name'    => 'Domino Mall',
+            'address_line1'   => 'Jl. Gunung Salak 31 A',
+            'city'            => 'Badung',
+            'country_id'      => $this->country->country_id,
+            'merchant_ids'    => [$this->mall_a->merchant_id, $this->mall_b->merchant_id],
             'role_name'       => 'Campaign Owner',
         ];
 

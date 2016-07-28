@@ -829,8 +829,10 @@ class IntermediateLoginController extends IntermediateBaseController
                     // Start the orbit session
                     $this->session = SessionPreparer::prepareSession();
                 }
-
-                $guest = GuestUserGenerator::create()->generate();
+                $guestConfig = [
+                    'record_signin_activity' => FALSE
+                ];
+                $guest = GuestUserGenerator::create($guestConfig)->generate();
 
                 $sessionData = $this->session->read(NULL);
                 $sessionData['logged_in'] = TRUE;
