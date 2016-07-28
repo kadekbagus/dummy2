@@ -39,7 +39,7 @@ class RegistrationAPIController extends IntermediateBaseController
         $this->response = new ResponseProvider();
         $activity = Activity::portal()
                             ->setActivityType('registration');
-        $activity_origin = OrbitInput::post('activity_origin'); 
+        $activity_origin = OrbitInput::post('activity_origin');
         if ($activity_origin === 'mobileci') {
             // set this activity as mobileci instead of portal if coming from mobileci
                 $activity = Activity::mobileci()
@@ -314,6 +314,8 @@ class RegistrationAPIController extends IntermediateBaseController
                 'orbit_email_exists' => Lang::get('validation.orbit.email.exists'),
                 'date_of_birth.date' => Lang::get('validation.orbit.formaterror.date.invalid_date'),
                 'date_of_birth.before' => Lang::get('validation.orbit.formaterror.date.cannot_future_date'),
+                'password_confirmation.min' => Lang::get('validation.orbit.formaterror.min'),
+                'password.confirmed' => Lang::get('validation.orbit.formaterror.confirmed_password'),
             )
         );
 
