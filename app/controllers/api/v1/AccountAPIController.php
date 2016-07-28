@@ -113,14 +113,33 @@ class AccountAPIController extends ControllerAPI
         return $this->render(200);
     }
 
-    protected function getTenantAtMallArray($tenantIds)
+    protected function getTenantAtMallArray($type_name, $tenantIds = NULL)
     {
-        if ( ! $tenantIds) {
-            return [];
+        $permission = [
+                'Mall'      => 'mall',
+                'Merchant'  => 'tenant',
+                'Agency'    => 'mall_tenant',
+                '3rd Party' => 'mall',
+                'Dominopos' => 'mall_tenant'
+            ];
+
+        $get_tenants = CampaignLocation::where('status', '!=', 'deleted');
+
+        // access
+        if (array_key_exists($type_name, $permission)) {
+            $access = explode("_", $permission[$type_name]);
+            $get_tenants->whereIn('object_type', $access);
         }
 
+        // filter
+        if (! is_null($tenantIds)) {
+            $get_tenants->whereIn('merchant_id', $tenantIds);
+        }
+
+        $get_tenants = $get_tenants->orderBy('name')->get();
+
         $tenantArray = [];
-        foreach (CampaignLocation::whereIn('merchant_id', $tenantIds)->orderBy('name')->get() as $row) {
+        foreach ($get_tenants as $row) {
             $tenantArray[] = ['id' => $row->merchant_id, 'name' => $row->tenant_at_mall, 'status' => $row->status];
         }
 
@@ -535,16 +554,22 @@ class AccountAPIController extends ControllerAPI
 
         $records = [];
         foreach ($pmpAccounts as $row) {
-            $tenantAtMallArray = $this->getTenantAtMallArray($row->userTenants()->lists('merchant_id'));
+            $tenantAtMallArray = $this->getTenantAtMallArray($row->type_name, $row->userTenants()->lists('merchant_id'));
+
+            if ($row->campaignAccount->is_link_to_all === 'Y') {
+                $tenantAtMallArray = $this->getTenantAtMallArray($row->type_name);
+            }
+
             $records[] = [
-                'account_name' => $row->campaignAccount->account_name,
-                'company_name' => $row->company_name,
-                'city'         => $row->userDetail->city,
-                'role_name'    => $row->role_name,
-                'account_type_id'=> $row->campaignAccount->account_type_id,
-                'type_name'      => $row->type_name,
-                'tenant_count' => count($tenantAtMallArray),
-                'tenants'      => $tenantAtMallArray,
+                'account_name'       => $row->campaignAccount->account_name,
+                'company_name'       => $row->company_name,
+                'city'               => $row->userDetail->city,
+                'role_name'          => $row->role_name,
+                'account_type_id'    => $row->campaignAccount->account_type_id,
+                'type_name'          => $row->type_name,
+                'select_all_tenants' => $row->campaignAccount->is_link_to_all,
+                'tenant_count'       => count($tenantAtMallArray),
+                'tenants'            => $tenantAtMallArray,
 
                 // Taken from getUserCreatedAtAttribute() in the model
                 //                                                     What is this?
@@ -742,6 +767,9 @@ class AccountAPIController extends ControllerAPI
                     unset($validation_data['merchant_ids']);
                     unset($validation_error['merchant_ids']);
                 }
+            } else {
+                // for handle empty string cause select all tenant is not required
+                $select_all_tenants = 'N';
             }
 
             $validator = Validator::make(
@@ -1251,6 +1279,11 @@ class AccountAPIController extends ControllerAPI
             });
 
             OrbitInput::post('select_all_tenants', function($select_all_tenants) use ($campaignAccount) {
+                // for handle empty string cause select all tenant is not required
+                if ($select_all_tenants !== 'Y') {
+                    $select_all_tenants = 'N';
+                }
+
                 $campaignAccount->is_link_to_all = $select_all_tenants;
             });
 
