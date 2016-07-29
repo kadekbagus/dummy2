@@ -28,6 +28,7 @@ use IssuedCoupon;
 use UserVerificationNumber;
 use Activity;
 use Event;
+use Orbit\Helper\Net\SessionPreparer;
 
 class CouponCIAPIController extends BaseAPIController
 {
@@ -357,7 +358,7 @@ class CouponCIAPIController extends BaseAPIController
     {
         $activity = Activity::mobileci()->setActivityType('view');
         $user = null;
-        $couponId = 0;
+        $coupon_id = 0;
         $httpCode = 200;
         $this->response = new ResponseProvider();
 
@@ -446,8 +447,9 @@ class CouponCIAPIController extends BaseAPIController
                         $q->select('merchants.merchant_id')
                             ->where('merchants.merchant_id', $this->mall_id);
                     }
-                ])
-                ->select(
+                ]);
+            $_coupon = clone($coupon);
+            $coupon = $coupon->select(
                     'promotions.promotion_id',
                     'promotions.promotion_name',
                     'promotions.description',
@@ -535,7 +537,11 @@ class CouponCIAPIController extends BaseAPIController
 
             $coupon = $coupon->first();
 
-            $couponId = $coupon->promotion_id;
+            $_coupon = $_coupon->where('promotion_id', $coupon_id)->first();
+
+            $coupon_links = new \stdclass();
+            $coupon_links->linkToTenants = $_coupon->linkToTenants;
+            $coupon_links->linkToMalls = $_coupon->linkToMalls;
 
             // Check coupon have condition cs reedem
             $cs_reedem = false;
@@ -547,7 +553,6 @@ class CouponCIAPIController extends BaseAPIController
                 ->count('users.user_id');
 
             if (is_object($coupon)) {
-
                 $issued_coupon = IssuedCoupon::active()
                     ->where('promotion_id', $coupon->promotion_id)
                     ->where('user_id', $user->user_id)
@@ -577,7 +582,7 @@ class CouponCIAPIController extends BaseAPIController
                 $coupon->linked_to_cs = $cs_reedem;
             }
 
-            $activityNotes = sprintf('Page viewed: Coupon Detail, Coupon Id: %s', $coupon->promotion_id);
+            $activityNotes = sprintf('Page viewed: Coupon Detail, Coupon Id: %s', $coupon_id);
             $activity->setUser($user)
                 ->setActivityName('view_coupon')
                 ->setActivityNameLong('View Coupon Detail')
@@ -589,7 +594,14 @@ class CouponCIAPIController extends BaseAPIController
                 ->responseOK()
                 ->save();
 
-            $this->response->data = $coupon;
+            if (is_object($coupon)) {
+                $this->response->data = $coupon;
+            } else {
+                $data = new \stdclass();
+                $data->coupon = NULL;
+                $data->coupon_links = $coupon_links;
+                $this->response->data = $data;
+            }
             $this->response->code = 0;
             $this->response->status = 'success';
             $this->response->message = 'Success';
@@ -600,7 +612,7 @@ class CouponCIAPIController extends BaseAPIController
             $this->response->data = null;
             $httpCode = 403;
 
-            $activityNotes = sprintf('Page viewed: Coupon Detail Failed, Coupon Id: %s. Err: %s', $couponId, $e->getMessage());
+            $activityNotes = sprintf('Page viewed: Coupon Detail Failed, Coupon Id: %s. Err: %s', $coupon_id, $e->getMessage());
             $activity->setUser($user)
                 ->setActivityName('view_coupon')
                 ->setActivityNameLong('View Coupon Detail Failed')
@@ -620,7 +632,7 @@ class CouponCIAPIController extends BaseAPIController
             $this->response->data = $result;
             $httpCode = 403;
 
-            $activityNotes = sprintf('Page viewed: Coupon Detail Failed, Coupon Id: %s. Err: %s', $couponId, $e->getMessage());
+            $activityNotes = sprintf('Page viewed: Coupon Detail Failed, Coupon Id: %s. Err: %s', $coupon_id, $e->getMessage());
             $activity->setUser($user)
                 ->setActivityName('view_coupon')
                 ->setActivityNameLong('View Coupon Detail Failed')
@@ -641,7 +653,7 @@ class CouponCIAPIController extends BaseAPIController
             $this->response->data = null;
             $httpCode = 500;
 
-            $activityNotes = sprintf('Page viewed: Coupon Detail Failed, Coupon Id: %s. Err: %s', $couponId, $e->getMessage());
+            $activityNotes = sprintf('Page viewed: Coupon Detail Failed, Coupon Id: %s. Err: %s', $coupon_id, $e->getMessage());
             $activity->setUser($user)
                 ->setActivityName('view_coupon')
                 ->setActivityNameLong('View Coupon Detail Failed')
@@ -657,7 +669,7 @@ class CouponCIAPIController extends BaseAPIController
             $this->response->data = null;
             $httpCode = 500;
 
-            $activityNotes = sprintf('Page viewed: Coupon Detail Failed, Coupon Id: %s. Err: %s', $couponId, $e->getMessage());
+            $activityNotes = sprintf('Page viewed: Coupon Detail Failed, Coupon Id: %s. Err: %s', $coupon_id, $e->getMessage());
             $activity->setUser($user)
                 ->setActivityName('view_coupon')
                 ->setActivityNameLong('View Coupon Detail Failed')
@@ -870,6 +882,97 @@ class CouponCIAPIController extends BaseAPIController
 
         return $this->render($httpCode);
     }
+
+    public function issueAutoCoupon()
+    {
+        $httpCode = 200;
+        $this->response = new ResponseProvider();
+
+        try{
+            $this->checkAuth();
+            $session = SessionPreparer::prepareSession();
+            $user = $this->api->user;
+
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = $this->validRoles;
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            $this->mall_id = OrbitInput::get('mall_id', NULL);
+
+            $this->registerCustomValidation();
+            $validator = Validator::make(
+                array(
+                    'mall_id' => $this->mall_id,
+                ),
+                array(
+                    'mall_id' => 'required|orbit.empty.mall',
+                ),
+                array(
+                    'sortby.in' => Lang::get('validation.orbit.empty.tenant_ci_sortby'),
+                )
+            );
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $retailer = Mall::excludeDeleted()->where('merchant_id', $this->mall_id)->first();
+            $mallTime = Carbon::now($retailer->timezone->timezone_name);
+
+            Coupon::issueAutoCoupon($retailer, $user, $session);
+
+            $this->response->data = null;
+            $this->response->code = 0;
+            $this->response->status = 'success';
+            $this->response->message = 'Success';
+
+        } catch (ACLForbiddenException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+        } catch (InvalidArgsException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $result['total_records'] = 0;
+            $result['returned_records'] = 0;
+            $result['records'] = null;
+
+            $this->response->data = $result;
+            $httpCode = 403;
+
+        } catch (QueryException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+        } catch (Exception $e) {
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 500;
+
+        }
+
+        return $this->render($httpCode);
+    }
+
+
 
     protected function registerCustomValidation()
     {

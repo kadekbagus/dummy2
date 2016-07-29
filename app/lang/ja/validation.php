@@ -325,6 +325,8 @@ return array(
                 'cannot_future_date' => '誕生日は将来の日付にすることはできません',
                 'invalid_date' => '生年月日は有効な日付ではありません',
             ),
+            'min' => '最小パスワード確認最小限に :min 文字.',
+            'confirmed_password' => 'パスワードの確認は適切ではありません.',
         ),
         'actionlist' => array(
             'change_password'           => 'パスワードを変更する',
