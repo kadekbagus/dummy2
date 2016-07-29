@@ -164,6 +164,7 @@ return array(
             'missingmasterpassword'  => 'The master password is not set',
             'wrongmasterpassword'    => 'The master password is incorrect',
             'agreement'              => 'Agreement is not accepted yet',
+            'select_all_tenants'     => 'You do not have permission to select all tenants',
         ),
         'empty' => array(
             'age'                  => 'The Age Range ID you specified is not found',

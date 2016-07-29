@@ -50,4 +50,9 @@ class CampaignLocation extends Eloquent
     {
         return $this->belongsTo('Mall', 'parent_id', 'merchant_id');
     }
+
+    public function timezone()
+    {
+        return $this->belongsTo('Timezone', 'timezone_id', 'timezone_id');
+    }
 }

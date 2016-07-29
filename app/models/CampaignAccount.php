@@ -40,6 +40,10 @@ class CampaignAccount extends Eloquent
         return $this->hasOne('UserDetail', 'user_id', 'user_id');
     }
 
+    public function accountType()
+    {
+        return $this->belongsTo('AccountType', 'account_type_id', 'account_type_id');
+    }
 
     public function settings()
     {
