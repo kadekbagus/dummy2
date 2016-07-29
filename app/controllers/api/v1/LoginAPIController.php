@@ -200,29 +200,15 @@ class LoginAPIController extends ControllerAPI
 
             $menus = Config::get('orbit.menus.pmp');
 
+            $user_campaign = $user->campaignAccount;
             $mall = [];
             if ($user->isCampaignOwner() || $user->isCampaignEmployee()) {
-                $user_merchants = $user->userMerchant;
+                $user_account_type = $user_campaign->accountType;
 
-                $parent_id = '';
-                foreach ($user_merchants as $key => $user_merchant) {
-                    if ($user_merchant->object_type === 'mall') {
-                        $tmp_mall = $user_merchant->mall->load('timezone');
-                        if (! empty($tmp_mall)) {
-                            if ($tmp_mall[0]->merchant_id !== $parent_id) {
-                                $mall[] = $tmp_mall[0];
-                            }
-                            $parent_id = $tmp_mall[0]->merchant_id;
-                        }
-                    } elseif ($user_merchant->object_type === 'tenant') {
-                        $tenant = $user_merchant->tenant;
-                        if (! empty($tenant)) {
-                            if ($tenant->parent_id !== $parent_id) {
-                                $mall[] = $user_merchant->tenant->parent->load('timezone');
-                            }
-                            $parent_id = $tenant->parent_id;
-                        }
-                    }
+                if ($user_campaign->is_link_to_all === 'Y') {
+                    $mall = $this->getListMall($user_account_type->type_name);
+                } else {
+                    $mall = $this->getListMall($user_account_type->type_name, $user->userTenants()->lists('merchant_id'));
                 }
             } elseif ($user->isCampaignAdmin()) {
                 $mall = Mall::excludeDeleted()
@@ -231,7 +217,6 @@ class LoginAPIController extends ControllerAPI
             }
 
             $user->mall = $mall;
-            unset($user->userMerchant);
 
             // Successfull login
             $activity->setUser($user)
@@ -241,32 +226,37 @@ class LoginAPIController extends ControllerAPI
 
             $this->response->data = $user;
 
-
             // get total manage tenant and mall per user pmp
             $pmp_parent = $user->campaignAccount()->where('user_id', '=', $user->user_id)->first();
 
-            // Get mall id from mall
-            $mallId = array();
-            $userMallAtMall = $pmp_parent->userMall()->get();
-            if (count($userMallAtMall) > 0) {
-                foreach ($userMallAtMall as $key => $vallMall) {
-                    $mallId[] = $vallMall->merchant_id;
-                }
-            }
+            if ($user_campaign->is_link_to_all === 'Y') {
+                $um = count(Mall::excludeDeleted()->get());
+                $ut = count(Tenant::excludeDeleted()->get());
+            } else {
 
-            // Get mall id from tenant
-            $userTenantAtMall = $pmp_parent->userTenant()
-                ->join('merchants', 'user_merchant.merchant_id', '=', 'merchants.merchant_id')
-                ->groupBy('merchants.parent_id')
-                ->get();
-            if (count($userTenantAtMall) > 0) {
-                foreach ($userTenantAtMall as $key => $valTenant) {
-                    $mallId[] = $valTenant->parent_id;
+                // Get mall id from mall
+                $mallId = array();
+                $userMallAtMall = $pmp_parent->userMall()->get();
+                if (count($userMallAtMall) > 0) {
+                    foreach ($userMallAtMall as $key => $vallMall) {
+                        $mallId[] = $vallMall->merchant_id;
+                    }
                 }
-            }
 
-            $um = count(array_unique($mallId));
-            $ut = $pmp_parent->userTenant()->count();
+                // Get mall id from tenant
+                $userTenantAtMall = $pmp_parent->userTenant()
+                    ->join('merchants', 'user_merchant.merchant_id', '=', 'merchants.merchant_id')
+                    ->groupBy('merchants.parent_id')
+                    ->get();
+                if (count($userTenantAtMall) > 0) {
+                    foreach ($userTenantAtMall as $key => $valTenant) {
+                        $mallId[] = $valTenant->parent_id;
+                    }
+                }
+
+                $um = count(array_unique($mallId));
+                $ut = $pmp_parent->userTenant()->count();
+            }
 
             $user->total_mall = $um;
             $user->total_tenant = $ut;
@@ -1597,5 +1587,41 @@ class LoginAPIController extends ControllerAPI
         $new_user->apikey = $apikey;
 
         return [$new_user, $user_detail, $apikey];
+    }
+
+    protected function getListMall($type_name, $tenantIds = NULL)
+    {
+        $permission = [
+                'Mall'      => 'mall',
+                'Merchant'  => 'tenant',
+                'Agency'    => 'mall_tenant',
+                '3rd Party' => 'mall',
+                'Dominopos' => 'mall_tenant'
+            ];
+        $prefix = DB::getTablePrefix();
+
+        $get_mall = CampaignLocation::with('timezone')
+                                    ->leftJoin('merchants as pm', DB::Raw('pm.merchant_id'), '=', 'merchants.parent_id')
+                                    ->select(
+                                              DB::Raw("IF ({$prefix}merchants.object_type = 'tenant', pm.merchant_id, {$prefix}merchants.merchant_id) as merchant_id"),
+                                              DB::Raw("IF ({$prefix}merchants.object_type = 'tenant', pm.timezone_id, {$prefix}merchants.timezone_id) as timezone_id")
+                                        )
+                                    ->where('merchants.status', '!=', 'deleted')
+                                    ->groupBy('merchant_id');
+
+        // access
+        if (array_key_exists($type_name, $permission)) {
+            $access = explode("_", $permission[$type_name]);
+            $get_mall->whereIn('merchants.object_type', $access);
+        }
+
+        // filter
+        if (! is_null($tenantIds)) {
+            $get_mall->whereIn('merchants.merchant_id', $tenantIds);
+        }
+
+        $get_mall = $get_mall->orderBy('merchants.name')->get();
+
+        return $get_mall;
     }
 }
