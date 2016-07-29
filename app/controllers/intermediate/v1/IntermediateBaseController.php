@@ -45,6 +45,13 @@ class IntermediateBaseController extends Controller
     protected $useTransaction = TRUE;
 
     /**
+     * App origin.
+     *
+     * @var boolean
+     */
+    protected $appOrigin = NULL;
+
+    /**
      * Class constructor
      *
      * @author Rio Astamal <me@rioastamal.net>
@@ -53,12 +60,12 @@ class IntermediateBaseController extends Controller
     public function __construct()
     {
         // Return mall_portal, cs_portal, pmp_portal etc
-        $appOrigin = AppOriginProcessor::create(Config::get('orbit.session.app_list'))
+        $this->appOrigin = AppOriginProcessor::create(Config::get('orbit.session.app_list'))
                                        ->getAppName();
 
         // Session Config
-        $orbitSessionConfig = Config::get('orbit.session.origin.' . $appOrigin);
-        $applicationId = Config::get('orbit.session.app_id.' . $appOrigin);
+        $orbitSessionConfig = Config::get('orbit.session.origin.' . $this->appOrigin);
+        $applicationId = Config::get('orbit.session.app_id.' . $this->appOrigin);
 
         // Instantiate the OrbitSession object
         $sessConfig = new SessionConfig(Config::get('orbit.session'));
