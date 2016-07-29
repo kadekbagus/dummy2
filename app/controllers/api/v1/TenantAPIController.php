@@ -2211,6 +2211,10 @@ class TenantAPIController extends ControllerAPI
             $filtermode = OrbitInput::get('filtermode');
             $account_type_id = OrbitInput::get('account_type_id');
 
+            if (in_array(strtolower($user->role->role_name), $this->campaignRole)) {
+                $account_type_id = $user->campaignAccount->account_type_id;
+            }
+
             $validator = Validator::make(
                 array(
                     'sortby' => $sort_by,

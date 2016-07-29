@@ -10294,8 +10294,8 @@ class MobileCIAPIController extends BaseCIController
                 $guest_id = $guest->user_id;
                 $sessionData = $this->session->read(NULL);
                 $sessionData['logged_in'] = TRUE;
-                $sessionData['guest_user_id'] = $user->user_id;
-                $sessionData['guest_email'] = $user->user_email;
+                $sessionData['guest_user_id'] = $guest->user_id;
+                $sessionData['guest_email'] = $guest->user_email;
                 $sessionData['role'] = $user->role->role_name;
                 $sessionData['fullname'] = '';
 
@@ -10467,14 +10467,15 @@ class MobileCIAPIController extends BaseCIController
             if ($mode === 'registration') {
                 // do the registration
                 $_POST['activity_name_long'] = 'Sign Up via Mobile (Email Address)';
-                $_POST['activity_origin'] = 'mobileci';
                 $_POST['use_transaction'] = FALSE;
                 $registration = \Orbit\Controller\API\v1\Pub\RegistrationAPIController::create('raw');
-                $response = $registration->setMallId($retailer->merchant_id)->postRegisterCustomer();
+                $response = $registration
+                    ->setAppOrigin('mobile_ci')
+                    ->setMallId($retailer->merchant_id)
+                    ->postRegisterCustomer();
                 $response_data = json_decode($response->getOriginalContent());
 
                 unset($_POST['activity_name_long']);
-                unset($_POST['activity_origin']);
                 if($response_data->code !== 0) {
                     $errorMessage = $response_data->message;
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
