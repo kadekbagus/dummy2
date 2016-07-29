@@ -358,7 +358,7 @@ class CouponCIAPIController extends BaseAPIController
     {
         $activity = Activity::mobileci()->setActivityType('view');
         $user = null;
-        $couponId = 0;
+        $coupon_id = 0;
         $httpCode = 200;
         $this->response = new ResponseProvider();
 
@@ -447,8 +447,9 @@ class CouponCIAPIController extends BaseAPIController
                         $q->select('merchants.merchant_id')
                             ->where('merchants.merchant_id', $this->mall_id);
                     }
-                ])
-                ->select(
+                ]);
+            $_coupon = clone($coupon);
+            $coupon = $coupon->select(
                     'promotions.promotion_id',
                     'promotions.promotion_name',
                     'promotions.description',
@@ -536,7 +537,11 @@ class CouponCIAPIController extends BaseAPIController
 
             $coupon = $coupon->first();
 
-            $couponId = $coupon->promotion_id;
+            $_coupon = $_coupon->where('promotion_id', $coupon_id)->first();
+
+            $coupon_links = new \stdclass();
+            $coupon_links->linkToTenants = $_coupon->linkToTenants;
+            $coupon_links->linkToMalls = $_coupon->linkToMalls;
 
             // Check coupon have condition cs reedem
             $cs_reedem = false;
@@ -548,7 +553,6 @@ class CouponCIAPIController extends BaseAPIController
                 ->count('users.user_id');
 
             if (is_object($coupon)) {
-
                 $issued_coupon = IssuedCoupon::active()
                     ->where('promotion_id', $coupon->promotion_id)
                     ->where('user_id', $user->user_id)
@@ -578,7 +582,7 @@ class CouponCIAPIController extends BaseAPIController
                 $coupon->linked_to_cs = $cs_reedem;
             }
 
-            $activityNotes = sprintf('Page viewed: Coupon Detail, Coupon Id: %s', $coupon->promotion_id);
+            $activityNotes = sprintf('Page viewed: Coupon Detail, Coupon Id: %s', $coupon_id);
             $activity->setUser($user)
                 ->setActivityName('view_coupon')
                 ->setActivityNameLong('View Coupon Detail')
@@ -590,7 +594,14 @@ class CouponCIAPIController extends BaseAPIController
                 ->responseOK()
                 ->save();
 
-            $this->response->data = $coupon;
+            if (is_object($coupon)) {
+                $this->response->data = $coupon;
+            } else {
+                $data = new \stdclass();
+                $data->coupon = NULL;
+                $data->coupon_links = $coupon_links;
+                $this->response->data = $data;
+            }
             $this->response->code = 0;
             $this->response->status = 'success';
             $this->response->message = 'Success';
@@ -601,7 +612,7 @@ class CouponCIAPIController extends BaseAPIController
             $this->response->data = null;
             $httpCode = 403;
 
-            $activityNotes = sprintf('Page viewed: Coupon Detail Failed, Coupon Id: %s. Err: %s', $couponId, $e->getMessage());
+            $activityNotes = sprintf('Page viewed: Coupon Detail Failed, Coupon Id: %s. Err: %s', $coupon_id, $e->getMessage());
             $activity->setUser($user)
                 ->setActivityName('view_coupon')
                 ->setActivityNameLong('View Coupon Detail Failed')
@@ -621,7 +632,7 @@ class CouponCIAPIController extends BaseAPIController
             $this->response->data = $result;
             $httpCode = 403;
 
-            $activityNotes = sprintf('Page viewed: Coupon Detail Failed, Coupon Id: %s. Err: %s', $couponId, $e->getMessage());
+            $activityNotes = sprintf('Page viewed: Coupon Detail Failed, Coupon Id: %s. Err: %s', $coupon_id, $e->getMessage());
             $activity->setUser($user)
                 ->setActivityName('view_coupon')
                 ->setActivityNameLong('View Coupon Detail Failed')
@@ -642,7 +653,7 @@ class CouponCIAPIController extends BaseAPIController
             $this->response->data = null;
             $httpCode = 500;
 
-            $activityNotes = sprintf('Page viewed: Coupon Detail Failed, Coupon Id: %s. Err: %s', $couponId, $e->getMessage());
+            $activityNotes = sprintf('Page viewed: Coupon Detail Failed, Coupon Id: %s. Err: %s', $coupon_id, $e->getMessage());
             $activity->setUser($user)
                 ->setActivityName('view_coupon')
                 ->setActivityNameLong('View Coupon Detail Failed')
@@ -658,7 +669,7 @@ class CouponCIAPIController extends BaseAPIController
             $this->response->data = null;
             $httpCode = 500;
 
-            $activityNotes = sprintf('Page viewed: Coupon Detail Failed, Coupon Id: %s. Err: %s', $couponId, $e->getMessage());
+            $activityNotes = sprintf('Page viewed: Coupon Detail Failed, Coupon Id: %s. Err: %s', $coupon_id, $e->getMessage());
             $activity->setUser($user)
                 ->setActivityName('view_coupon')
                 ->setActivityNameLong('View Coupon Detail Failed')
