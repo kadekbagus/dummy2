@@ -28,6 +28,7 @@ use IssuedCoupon;
 use UserVerificationNumber;
 use Activity;
 use Event;
+use Orbit\Helper\Net\SessionPreparer;
 
 class CouponCIAPIController extends BaseAPIController
 {
@@ -870,6 +871,97 @@ class CouponCIAPIController extends BaseAPIController
 
         return $this->render($httpCode);
     }
+
+    public function issueAutoCoupon()
+    {
+        $httpCode = 200;
+        $this->response = new ResponseProvider();
+
+        try{
+            $this->checkAuth();
+            $session = SessionPreparer::prepareSession();
+            $user = $this->api->user;
+
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = $this->validRoles;
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            $this->mall_id = OrbitInput::get('mall_id', NULL);
+
+            $this->registerCustomValidation();
+            $validator = Validator::make(
+                array(
+                    'mall_id' => $this->mall_id,
+                ),
+                array(
+                    'mall_id' => 'required|orbit.empty.mall',
+                ),
+                array(
+                    'sortby.in' => Lang::get('validation.orbit.empty.tenant_ci_sortby'),
+                )
+            );
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $retailer = Mall::excludeDeleted()->where('merchant_id', $this->mall_id)->first();
+            $mallTime = Carbon::now($retailer->timezone->timezone_name);
+
+            Coupon::issueAutoCoupon($retailer, $user, $session);
+
+            $this->response->data = null;
+            $this->response->code = 0;
+            $this->response->status = 'success';
+            $this->response->message = 'Success';
+
+        } catch (ACLForbiddenException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+        } catch (InvalidArgsException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $result['total_records'] = 0;
+            $result['returned_records'] = 0;
+            $result['records'] = null;
+
+            $this->response->data = $result;
+            $httpCode = 403;
+
+        } catch (QueryException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+        } catch (Exception $e) {
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 500;
+
+        }
+
+        return $this->render($httpCode);
+    }
+
+
 
     protected function registerCustomValidation()
     {
