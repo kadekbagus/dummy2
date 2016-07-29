@@ -325,6 +325,8 @@ return array(
                 'cannot_future_date' => '出生日期不能在未来',
                 'invalid_date' => '出生日期不是一个有效日期',
             ),
+            'min' => '最小密码确认最小 :min 人物.',
+            'confirmed_password' => '确认密码是不恰当的.',
         ),
         'actionlist' => array(
             'change_password'           => '更改密码',

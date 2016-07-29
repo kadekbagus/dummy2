@@ -11,6 +11,7 @@ use OrbitShop\API\v1\Exception\InvalidArgsException;
 use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\ACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
+use Orbit\Helper\Net\GuestUserGenerator;
 use Config;
 use Mall;
 use stdClass;
@@ -39,12 +40,13 @@ class RegistrationAPIController extends IntermediateBaseController
         $this->response = new ResponseProvider();
         $activity = Activity::portal()
                             ->setActivityType('registration');
-        $activity_origin = OrbitInput::post('activity_origin');
-        if ($activity_origin === 'mobileci') {
+
+        if ($this->appOrigin === 'mobile_ci') {
             // set this activity as mobileci instead of portal if coming from mobileci
-                $activity = Activity::mobileci()
-                                ->setActivityType('registration');
+            $activity = Activity::mobileci()
+                            ->setActivityType('registration');
         };
+
         try {
             $email = trim(OrbitInput::post('email'));
             $password = OrbitInput::post('password');
@@ -74,17 +76,39 @@ class RegistrationAPIController extends IntermediateBaseController
             }
 
             $user = $this->createCustomerUser($email, $password, $password_confirmation, $firstname, $lastname, $gender, $birthdate, $this->mallId, FALSE);
+
             // let mobileci handle it's own session
-            if ($activity_origin !== 'mobileci') {
-                // Start the orbit session
-                $data = array(
-                    'logged_in' => TRUE,
-                    'user_id'   => $user->user_id,
-                    'email'     => $user->user_email,
-                    'role'      => $user->role->role_name,
-                    'fullname'  => $user->getFullName(),
-                );
-                $this->session->enableForceNew()->start($data);
+            if ($this->appOrigin !== 'mobile_ci') {
+
+                try{
+                    $this->session->start([], 'no-session-creation');
+
+                    $sessionData = $this->session->read(NULL);
+                    $sessionData['logged_in'] = TRUE;
+                    $sessionData['user_id'] = $user->user_id;
+                    $sessionData['email'] = $user->user_email;
+                    $sessionData['role'] = $user->role->role_name;
+                    $sessionData['fullname'] = $user->getFullName();
+                    $sessionData['visited_location'] = [];
+                    $sessionData['coupon_location'] = [];
+
+                    // update the guest session data, append user data to it so the user will be recognized
+                    $this->session->update($sessionData);
+                } catch (\Exception $e) {
+                    $guest = GuestUserGenerator::create()->generate();
+                    // Start the orbit session
+                    $data = array(
+                        'logged_in' => TRUE,
+                        'user_id'   => $user->user_id,
+                        'email'     => $user->user_email,
+                        'role'      => $user->role->role_name,
+                        'fullname'  => $user->getFullName(),
+                        'guest_user_id' => $guest->user_id,
+                        'guest_email' => $guest->user_email
+                    );
+
+                    $this->session->enableForceNew()->start($data);
+                }
 
                 // Send the session id via HTTP header
                 $sessionHeader = $this->session->getSessionConfig()->getConfig('session_origin.header.name');
@@ -144,7 +168,7 @@ class RegistrationAPIController extends IntermediateBaseController
                      ->setNotes($e->getMessage())
                      ->responseFailed()
                      ->setModuleName('Application')->save();
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             if ($useTransaction) {
                 DB::rollback();
             }
@@ -330,6 +354,13 @@ class RegistrationAPIController extends IntermediateBaseController
     public function setMallId($mallId)
     {
         $this->mallId = $mallId;
+
+        return $this;
+    }
+
+    public function setAppOrigin($appOrigin)
+    {
+        $this->appOrigin = $appOrigin;
 
         return $this;
     }

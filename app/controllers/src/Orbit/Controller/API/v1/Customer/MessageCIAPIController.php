@@ -235,8 +235,6 @@ class MessageCIAPIController extends BaseAPIController
             $user = $this->getLoggedInUser($mallId);
             UrlBlock::checkBlockedUrl($user);
             $retailer = Mall::excludeDeleted()->where('merchant_id', $mallId)->first();
-            // $this->acquireUser($retailer, $user);
-            Coupon::issueAutoCoupon($retailer, $user, $this->session);
             // $languages = $this->getListLanguages($retailer);
 
             $inbox = Inbox::excludeDeleted()
