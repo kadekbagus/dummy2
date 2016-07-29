@@ -394,6 +394,8 @@ return array(
             'geo_latitude'  => 'The Geofence latitude is not on range',
             'geo_longitude' => 'The Geofence longitude is not on range',
             'geo_area'      => 'The Geofence area is not valid',
+            'min' => 'Minimum password confirmation minimal :min characters.',
+            'confirmed_password' => 'Password confirmation is not appropriate.',
         ),
         'actionlist' => array(
             'change_password'           => 'change password',
