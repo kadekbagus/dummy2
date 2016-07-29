@@ -280,6 +280,8 @@ return array(
                 'cannot_future_date' => 'Tanggal lahir tidak bisa tanggal di masa depan',
                 'invalid_date' => 'Tanggal lahir merupakan tanggal yang tidak valid',
             ),
+            'min' => 'Konfirmasi kata sandi minimal :min karakter.',
+            'confirmed_password' => "Kata kunci konfirmasi tidak sesuai.",
         ),
         'actionlist' => array(
             'change_password'           => 'update password',

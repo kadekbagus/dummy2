@@ -113,14 +113,33 @@ class AccountAPIController extends ControllerAPI
         return $this->render(200);
     }
 
-    protected function getTenantAtMallArray($tenantIds)
+    protected function getTenantAtMallArray($type_name, $tenantIds = NULL)
     {
-        if ( ! $tenantIds) {
-            return [];
+        $permission = [
+                'Mall'      => 'mall',
+                'Merchant'  => 'tenant',
+                'Agency'    => 'mall_tenant',
+                '3rd Party' => 'mall',
+                'Dominopos' => 'mall_tenant'
+            ];
+
+        $get_tenants = CampaignLocation::where('status', '!=', 'deleted');
+
+        // access
+        if (array_key_exists($type_name, $permission)) {
+            $access = explode("_", $permission[$type_name]);
+            $get_tenants->whereIn('object_type', $access);
         }
 
+        // filter
+        if (! is_null($tenantIds)) {
+            $get_tenants->whereIn('merchant_id', $tenantIds);
+        }
+
+        $get_tenants = $get_tenants->orderBy('name')->get();
+
         $tenantArray = [];
-        foreach (CampaignLocation::whereIn('merchant_id', $tenantIds)->orderBy('name')->get() as $row) {
+        foreach ($get_tenants as $row) {
             $tenantArray[] = ['id' => $row->merchant_id, 'name' => $row->tenant_at_mall, 'status' => $row->status];
         }
 
@@ -535,37 +554,22 @@ class AccountAPIController extends ControllerAPI
 
         $records = [];
         foreach ($pmpAccounts as $row) {
-            $tenantAtMallArray = $this->getTenantAtMallArray($row->userTenants()->lists('merchant_id'));
-
-            $select_all_tenants = 'false';
-            if ($row->type_name === '3rd Party' || $row->type_name === 'Dominopos') {
-                $mall_tenant = CampaignLocation::where('merchants.status', '!=', 'deleted');
-
-                if ($row->type_name === '3rd Party') {
-                    $mall_tenant->where('merchants.object_type', 'mall');
-                }
-
-                if ($row->type_name === 'Dominopos') {
-                    $mall_tenant->whereIn('merchants.object_type', ['mall', 'tenant']);
-                }
-
-                $mall_tenant = $mall_tenant->get();
-
-                if (count($mall_tenant) === count($tenantAtMallArray)) {
-                    $select_all_tenants = 'true';
-                }
+            if ($row->campaignAccount->is_link_to_all === 'Y') {
+                $tenantAtMallArray = $this->getTenantAtMallArray($row->type_name);
+            } else {
+                $tenantAtMallArray = $this->getTenantAtMallArray($row->type_name, $row->userTenants()->lists('merchant_id'));
             }
 
             $records[] = [
-                'account_name' => $row->campaignAccount->account_name,
-                'company_name' => $row->company_name,
-                'city'         => $row->userDetail->city,
-                'role_name'    => $row->role_name,
-                'account_type_id'=> $row->campaignAccount->account_type_id,
-                'type_name'      => $row->type_name,
-                'tenant_count' => count($tenantAtMallArray),
-                'select_all_tenants' => $select_all_tenants,
-                'tenants'      => $tenantAtMallArray,
+                'account_name'       => $row->campaignAccount->account_name,
+                'company_name'       => $row->company_name,
+                'city'               => $row->userDetail->city,
+                'role_name'          => $row->role_name,
+                'account_type_id'    => $row->campaignAccount->account_type_id,
+                'type_name'          => $row->type_name,
+                'select_all_tenants' => $row->campaignAccount->is_link_to_all,
+                'tenant_count'       => count($tenantAtMallArray),
+                'tenants'            => $tenantAtMallArray,
 
                 // Taken from getUserCreatedAtAttribute() in the model
                 //                                                     What is this?
@@ -697,15 +701,15 @@ class AccountAPIController extends ControllerAPI
             $address_line1   = OrbitInput::post('address_line1');
             $city            = OrbitInput::post('city');
             $country_id      = OrbitInput::post('country_id');
-            $merchant_ids    = OrbitInput::post('merchant_ids');
+            $merchant_ids    = OrbitInput::post('merchant_ids', []);
             $account_type_id = OrbitInput::post('account_type_id');
             $user_password   = OrbitInput::post('user_password');
             $role_name       = OrbitInput::post('role_name');
-
             $province        = OrbitInput::post('province');
             $postal_code     = OrbitInput::post('postal_code');
-
             $position        = OrbitInput::post('position');
+            // select all link to tenant just for 3rd and dominopos
+            $select_all_tenants = OrbitInput::post('select_all_tenants', 'N');
 
             // split validation account type for support select all tenant for account type 3rd and dominopos
             $validator = Validator::make(
@@ -726,56 +730,51 @@ class AccountAPIController extends ControllerAPI
 
             $account_type = $this->valid_account_type;
 
-            // select all link to tenant just for 3rd and dominopos
-            $select_all_tenants = OrbitInput::post('select_all_tenants');
-            if ($select_all_tenants === 'true') {
-                $tenants = CampaignLocation::where('merchants.status', '!=', 'deleted');
+            $validation_data = [
+                'select_all_tenants' => $select_all_tenants,
+                'user_firstname'     => $user_firstname,
+                'user_lastname'      => $user_lastname,
+                'user_email'         => $user_email,
+                'account_name'       => $account_name,
+                'status'             => $status,
+                'company_name'       => $company_name,
+                'address_line1'      => $address_line1,
+                'city'               => $city,
+                'country_id'         => $country_id,
+                'merchant_ids'       => $merchant_ids,
+                'user_password'      => $user_password,
+                'role_name'          => $role_name,
+            ];
 
-                if ($account_type->type_name === '3rd Party') {
-                    $tenants->where('merchants.object_type', 'mall');
+            $validation_error = [
+                'select_all_tenants' => 'in:N,Y|orbit.access.select_all_tenants:' . $account_type->type_name,
+                'user_firstname'     => 'required',
+                'user_lastname'      => 'required',
+                'user_email'         => 'required|email|orbit.exists.username',
+                'account_name'       => 'required|unique:campaign_account,account_name',
+                'status'             => 'required|in:active,inactive',
+                'company_name'       => 'required',
+                'address_line1'      => 'required',
+                'city'               => 'required',
+                'country_id'         => 'required|orbit.empty.country',
+                'merchant_ids'       => 'required|array|exists:merchants,merchant_id|orbit.exists.link_to_tenant',
+                'user_password'      => 'required|min:6',
+                'role_name'          => 'required|in:Campaign Owner|orbit.empty.role',
+            ];
+
+            if ($select_all_tenants === 'Y') {
+                if ($account_type->type_name === 'Dominopos' || $account_type->type_name === '3rd Party') {
+                    unset($validation_data['merchant_ids']);
+                    unset($validation_error['merchant_ids']);
                 }
-
-                if ($account_type->type_name === 'Dominopos') {
-                    $tenants->whereIn('merchants.object_type', ['mall', 'tenant']);
-                }
-
-                $tenants = $tenants->get();
-
-                $merchant_ids = [];
-                foreach ($tenants as $tenant) {
-                    array_push($merchant_ids, $tenant->merchant_id);
-                }
+            } else {
+                // for handle empty string cause select all tenant is not required
+                $select_all_tenants = 'N';
             }
 
             $validator = Validator::make(
-                array(
-                    'user_firstname'  => $user_firstname,
-                    'user_lastname'   => $user_lastname,
-                    'user_email'      => $user_email,
-                    'account_name'    => $account_name,
-                    'status'          => $status,
-                    'company_name'    => $company_name,
-                    'address_line1'   => $address_line1,
-                    'city'            => $city,
-                    'country_id'      => $country_id,
-                    'merchant_ids'    => $merchant_ids,
-                    'user_password'   => $user_password,
-                    'role_name'       => $role_name,
-                ),
-                array(
-                    'user_firstname'  => 'required',
-                    'user_lastname'   => 'required',
-                    'user_email'      => 'required|email|orbit.exists.username',
-                    'account_name'    => 'required|unique:campaign_account,account_name',
-                    'status'          => 'required|in:active,inactive',
-                    'company_name'    => 'required',
-                    'address_line1'   => 'required',
-                    'city'            => 'required',
-                    'country_id'      => 'required|orbit.empty.country',
-                    'merchant_ids'    => 'required|array|exists:merchants,merchant_id|orbit.exists.link_to_tenant',
-                    'user_password'   => 'required|min:6',
-                    'role_name'       => 'required|in:Campaign Owner|orbit.empty.role',
-                ),
+                $validation_data,
+                $validation_error,
                 array(
                     'user_password.min' => 'Password must more than 5 character',
                     'orbit.empty.role'  => 'The Role you specified is not found',
@@ -825,6 +824,7 @@ class AccountAPIController extends ControllerAPI
             $campaignAccount->user_id         = $new_user->user_id;
             $campaignAccount->account_type_id = $account_type->account_type_id;
             $campaignAccount->account_name    = $account_name;
+            $campaignAccount->is_link_to_all  = $select_all_tenants;
             $campaignAccount->position        = $position;
             $campaignAccount->status          = $status;
             $campaignAccount->save();
@@ -1122,6 +1122,8 @@ class AccountAPIController extends ControllerAPI
             $account_type_id = OrbitInput::post('account_type_id');
             $role_name       = OrbitInput::post('role_name');
             $user_password   = OrbitInput::post('user_password');
+            // select all link to tenant just for 3rd and dominopos
+            $select_all_tenants = OrbitInput::post('select_all_tenants', 'N');
 
             // split validation account type for support select all tenant for account type 3rd and dominopos
             $validator = Validator::make(
@@ -1142,58 +1144,57 @@ class AccountAPIController extends ControllerAPI
 
             $account_type = $this->valid_account_type;
 
-            // select all link to tenant just for 3rd and dominopos
-            $select_all_tenants = OrbitInput::post('select_all_tenants');
-            if ($select_all_tenants === 'true') {
-                $tenants = CampaignLocation::where('merchants.status', '!=', 'deleted');
+            $validation_data = [
+                'id'                 => $user_id,
+                'select_all_tenants' => $select_all_tenants,
+                'user_firstname'     => $user_firstname,
+                'user_lastname'      => $user_lastname,
+                'user_email'         => $user_email,
+                'account_name'       => $account_name,
+                'status'             => $status,
+                'company_name'       => $company_name,
+                'address_line1'      => $address_line1,
+                'city'               => $city,
+                'country_id'         => $country_id,
+                'merchant_ids'       => $merchant_ids,
+                'role_name'          => $role_name,
+                'user_password'      => $user_password,
+            ];
 
-                if ($account_type->type_name === '3rd Party') {
-                    $tenants->where('merchants.object_type', 'mall');
-                }
+            $validation_error = [
+                'id'                 => 'required|exists:users,user_id',
+                'select_all_tenants' => 'in:N,Y|orbit.access.select_all_tenants:' . $account_type->type_name,
+                'user_firstname'     => 'required',
+                'user_lastname'      => 'required',
+                'user_email'         => 'required|email', // user_email exist but not me
+                'account_name'       => 'required', // account name exist but not me
+                'status'             => 'in:active,inactive',
+                'company_name'       => 'required',
+                'address_line1'      => 'required',
+                'city'               => 'required',
+                'country_id'         => 'required|orbit.empty.country',
+                'merchant_ids'       => 'required|array|exists:merchants,merchant_id|orbit.exists.link_to_tenant',
+                'role_name'          => 'required|in:Campaign Owner,Campaign Employee|orbit.empty.role',
+                'user_password'      => 'min:6',
+            ];
 
-                if ($account_type->type_name === 'Dominopos') {
-                    $tenants->whereIn('merchants.object_type', ['mall', 'tenant']);
-                }
+            if ($select_all_tenants === 'Y') {
+                if ($account_type->type_name === 'Dominopos' || $account_type->type_name === '3rd Party') {
+                    unset($validation_data['merchant_ids']);
+                    unset($validation_error['merchant_ids']);
 
-                $tenants = $tenants->get();
+                    // delete link if exists on table user merchant
+                    $pmp_account = CampaignAccount::where('parent_user_id', '=', $user_id)
+                                            ->lists('user_id');
+                    array_push($pmp_account, $user_id);
 
-                $merchant_ids = [];
-                foreach ($tenants as $tenant) {
-                    array_push($merchant_ids, $tenant->merchant_id);
+                    $del_user_merchant = UserMerchant::whereIn('user_id', $pmp_account)->delete();
                 }
             }
 
             $validator = Validator::make(
-                array(
-                    'id'              => $user_id,
-                    'user_firstname'  => $user_firstname,
-                    'user_lastname'   => $user_lastname,
-                    'user_email'      => $user_email,
-                    'account_name'    => $account_name,
-                    'status'          => $status,
-                    'company_name'    => $company_name,
-                    'address_line1'   => $address_line1,
-                    'city'            => $city,
-                    'country_id'      => $country_id,
-                    'merchant_ids'    => $merchant_ids,
-                    'role_name'       => $role_name,
-                    'user_password'   => $user_password,
-                ),
-                array(
-                    'id'              => 'required|exists:users,user_id',
-                    'user_firstname'  => 'required',
-                    'user_lastname'   => 'required',
-                    'user_email'      => 'required|email', // user_email exist but not me
-                    'account_name'    => 'required', // account name exist but not me
-                    'status'          => 'in:active,inactive',
-                    'company_name'    => 'required',
-                    'address_line1'   => 'required',
-                    'city'            => 'required',
-                    'country_id'      => 'required|orbit.empty.country',
-                    'merchant_ids'    => 'required|array|exists:merchants,merchant_id|orbit.exists.link_to_tenant',
-                    'role_name'       => 'required|in:Campaign Owner,Campaign Employee|orbit.empty.role',
-                    'user_password'   => 'min:6',
-                ),
+                $validation_data,
+                $validation_error,
                 array(
                     'orbit.empty.role'  => 'The Role you specified is not found',
                 )
@@ -1275,6 +1276,15 @@ class AccountAPIController extends ControllerAPI
 
             OrbitInput::post('account_name', function($account_name) use ($campaignAccount) {
                 $campaignAccount->account_name = $account_name;
+            });
+
+            OrbitInput::post('select_all_tenants', function($select_all_tenants) use ($campaignAccount) {
+                // for handle empty string cause select all tenant is not required
+                if ($select_all_tenants !== 'Y') {
+                    $select_all_tenants = 'N';
+                }
+
+                $campaignAccount->is_link_to_all = $select_all_tenants;
             });
 
             OrbitInput::post('position', function($position) use ($campaignAccount) {
@@ -1368,7 +1378,8 @@ class AccountAPIController extends ControllerAPI
                             $dateNowMall = $nowMall->toDateString();
 
                             //get data in news and promotion
-                            $newsPromotionActive = News::select('news.news_id')
+                            $newsPromotionActive = News::allowedForPMPUser($update_user, 'news_promotion')
+                                                        ->select('news.news_id')
                                                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
                                                         ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                                                         ->whereRaw("(CASE WHEN {$prefix}news.end_date < {$this->quote($nowMall)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) NOT IN ('stopped', 'expired')")
@@ -1376,7 +1387,8 @@ class AccountAPIController extends ControllerAPI
                                                         ->count();
 
                             //get data in coupon
-                            $couponStatusActive = Coupon::select('campaign_status.campaign_status_name')
+                            $couponStatusActive = Coupon::allowedForPMPUser($update_user, 'coupon')
+                                                        ->select('campaign_status.campaign_status_name')
                                                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
                                                         ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                                                         ->whereRaw("(CASE WHEN {$prefix}promotions.end_date < {$this->quote($nowMall)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) NOT IN ('stopped', 'expired')")
@@ -1673,6 +1685,22 @@ class AccountAPIController extends ControllerAPI
             } else {
                 return FALSE;
             }
+        });
+
+        // Check permission select all tenants
+        Validator::extend('orbit.access.select_all_tenants', function ($attribute, $value, $parameters) {
+            $type_name = $parameters[0];
+            $select_all_tenants = $value;
+
+            if ($select_all_tenants === 'Y') {
+                if ($type_name === 'Dominopos' || $type_name === '3rd Party') {
+                    return TRUE;
+                } else {
+                    return FALSE;
+                }
+            }
+
+            return TRUE;
         });
     }
 

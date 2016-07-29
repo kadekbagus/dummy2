@@ -441,6 +441,10 @@ class CouponCIAPIController extends BaseAPIController
                         $q->select('merchants.merchant_id')
                             ->where('merchants.status', 'active')
                             ->where('merchants.parent_id', $this->mall_id);
+                    },
+                    'linkToMalls' => function($q) {
+                        $q->select('merchants.merchant_id')
+                            ->where('merchants.merchant_id', $this->mall_id);
                     }
                 ])
                 ->select(
