@@ -838,137 +838,13 @@ class AccountAPIController extends ControllerAPI
 
             // Save to user_merchant (1 to M)
             if ($merchant_ids) {
-                $merchants = UserMerchant::select('merchant_id')
-                                ->where('user_id', $new_user->user_id)->get()
-                                ->toArray();
-
-                $merchantdb = array();
-                foreach($merchants as $merchantdbid) {
-                    $merchantdb[] = $merchantdbid['merchant_id'];
-                }
-                $removetenant = array_diff($merchantdb, $merchant_ids);
-                $addtenant = array_diff($merchant_ids, $merchantdb);
-                $newsPromotionActive = 0;
-                $couponStatusActive = 0;
-
-                if ($addtenant || $removetenant) {
-                    $validator = Validator::make(
-                        array(
-                            'role_name'    => $new_user->role->role_name,
-                        ),
-                        array(
-                            'role_name'    => 'in:Campaign Owner',
-                        ),
-                        array(
-                            'role_name.in' => 'Cannot update tenant',
-                        )
-                    );
-
-                    if ($validator->fails()) {
-                        OrbitShopAPI::throwInvalidArgument($validator->messages()->first());
-                    }
-                }
-
-                $prefix = DB::getTablePrefix();
-
-                if ($removetenant) {
-                    foreach ($removetenant as $tenant_id) {
-                        $activeCampaign = 0;
-                        $newsPromotionActive = 0;
-                        $couponStatusActive = 0;
-
-                        $mall = CampaignLocation::select('merchant_id',
-                                                    'parent_id',
-                                                    'object_type')
-                                                ->where('merchant_id', '=', $tenant_id)
-                                                ->whereIn('object_type', ['mall', 'tenant'])
-                                                ->first();
-
-                        if (! empty($mall)) {
-                            $mallid = '';
-                            if ($mall->object_type === 'mall') {
-                                $mallid = $mall->merchant_id;
-                            } else {
-                                $mallid = $mall->parent_id;
-                            }
-
-                            $timezone = Mall::leftJoin('timezones','timezones.timezone_id','=','merchants.timezone_id')
-                                ->where('merchants.merchant_id','=', $mallid)
-                                ->first();
-
-                            $timezoneName = $timezone->timezone_name;
-
-                            $nowMall = Carbon::now($timezoneName);
-                            $dateNowMall = $nowMall->toDateString();
-
-                            //get data in news and promotion
-                            $newsPromotionActive = News::select('news.news_id')
-                                                        ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
-                                                        ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
-                                                        ->whereRaw("(CASE WHEN {$prefix}news.end_date < {$this->quote($nowMall)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) NOT IN ('stopped', 'expired')")
-                                                        ->where('news_merchant.merchant_id', $tenant_id)
-                                                        ->count();
-
-                            //get data in coupon
-                            $couponStatusActive = Coupon::select('campaign_status.campaign_status_name')
-                                                        ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
-                                                        ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
-                                                        ->whereRaw("(CASE WHEN {$prefix}promotions.end_date < {$this->quote($nowMall)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) NOT IN ('stopped', 'expired')")
-                                                        ->where('promotion_retailer.retailer_id', $tenant_id)
-                                                        ->count();
-
-
-
-                            $activeCampaign = (int) $newsPromotionActive + (int) $couponStatusActive;
-
-                            $validator = Validator::make(
-                                array(
-                                    'active_campaign'  => $activeCampaign,
-                                ),
-                                array(
-                                    'active_campaign'    => 'in: 0',
-                                ),
-                                array(
-                                    'active_campaign.in' => 'Cannot unlink the tenant with an active campaign',
-                                )
-                            );
-
-                            if ($validator->fails()) {
-                                OrbitShopAPI::throwInvalidArgument($validator->messages()->first());
-                            }
-                        }
-                    }
-                }
-
-                // get campaign employee and delete merchant
-                $employee = CampaignAccount::where('parent_user_id', '=', $new_user->user_id)
-                                        ->lists('user_id');
-
-                if (! empty($employee)) {
-                    $merchantEmployee = UserMerchant::whereIn('user_id', $employee)
-                                                    ->delete();
-                }
-
-                $ownermerchant = UserMerchant::where('user_id', $new_user->user_id)->delete();
-
                 // Then update the user_id with the submitted ones
                 foreach ($merchant_ids as $merchantId) {
-
                     $userMerchant = new UserMerchant;
                     $userMerchant->user_id = $new_user->user_id;
                     $userMerchant->merchant_id = $merchantId;
                     $userMerchant->object_type = CampaignLocation::find($merchantId)->object_type;
                     $userMerchant->save();
-
-                    if (! empty($employee)) {
-                        foreach ($employee as $emp) {
-                            $employeeMerchant = new UserMerchant;
-                            $employeeMerchant->user_id = $emp;
-                            $employeeMerchant->merchant_id = $merchantId;
-                            $employeeMerchant->object_type = CampaignLocation::find($merchantId)->object_type;
-                            $employeeMerchant->save();
-                        }
-                    }
                 }
             }
 
@@ -1317,6 +1193,21 @@ class AccountAPIController extends ControllerAPI
                 $merchants = UserMerchant::select('merchant_id')
                                 ->where('user_id', $update_user->user_id)->get()
                                 ->toArray();
+
+                // handle from select all tenants when tenant has link to active campaign
+                if (empty($merchants)) {
+                    $link_to_tenants = CampaignLocation::excludeDeleted();
+
+                    if ($account_type->type_name === 'Dominopos') {
+                        $link_to_tenants->whereIn('object_type', ['mall', 'tenant']);
+                    }
+
+                    if ($account_type->type_name === '3rd Party') {
+                        $link_to_tenants->where('object_type', 'mall');
+                    }
+
+                    $merchants = $link_to_tenants->get()->toArray();
+                }
 
                 $merchantdb = array();
                 foreach($merchants as $merchantdbid) {
