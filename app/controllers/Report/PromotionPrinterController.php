@@ -5,45 +5,49 @@ use Config;
 use DB;
 use PDO;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
+use Helper\EloquentRecordCounter as RecordCounter;
 use Orbit\Text as OrbitText;
+use Activity;
+use NewsAPIController;
+use Response;
 use Mall;
 use Carbon\Carbon as Carbon;
-use MallAPIController;
-use Setting;
-use Response;
-use NewsAPIController;
 
 class PromotionPrinterController extends DataPrinterController
 {
-	public function getPromotionPrintView()
+    public function getPromotionPrintView()
     {
         $this->preparePDO();
+        $prefix = DB::getTablePrefix();
 
         $mode = OrbitInput::get('export', 'print');
-        $user = $this->loggedUser;
-
         $current_mall = OrbitInput::get('current_mall');
         $currentDateAndTime = OrbitInput::get('currentDateAndTime');
+
         $timezone = $this->getTimeZone($current_mall);
 
-        // Instantiate the UserAPIController to get the query builder of Users
+        $user = $this->loggedUser;
+
+        // Instantiate the NewsAPIController to get the query builder of Coupons
         $response = NewsAPIController::create('raw')
-            ->setReturnBuilder(true)
-            ->getSearchNews();
+                                            ->setReturnBuilder(TRUE)
+                                            ->getSearchNews();
 
         if (! is_array($response)) {
             return Response::make($response->message);
         }
 
+        // get total data
         $promotions = $response['builder'];
         $totalRec = $response['count'];
 
-        $this->prepareUnbufferedQuery();
+        $pdo = DB::Connection()->getPdo();
+        $prepareUnbufferedQuery = $pdo->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, FALSE);
 
         $sql = $promotions->toSql();
         $binds = $promotions->getBindings();
 
-        $statement = $this->pdo->prepare($sql);
+        $statement = $pdo->prepare($sql);
         $statement->execute($binds);
 
         // Filter mode
