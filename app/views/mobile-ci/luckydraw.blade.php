@@ -174,7 +174,7 @@ if(!empty($luckydraw)) {
                 <div class="col-xs-12">
                     <ul class="ld-pagination">
                         @if($current_page != '1')
-                        <li><a data-href="{{ route('ci-luckydraw-detail', ['id' => $luckydraw->lucky_draw_id, 'page' => 1]) }}" href="{{\Orbit\Helper\Net\UrlChecker::blockedRoute('ci-luckydraw-detail', ['id' => $luckydraw->lucky_draw_id, 'page' => 1], $session)}}#ln-nav" class="{{ ($prev_url === '#1' ? 'disabled' : ''); }}"><i class="fa fa-angle-double-left"></i></a></li>
+                        <li><a data-href="{{ route('ci-luckydraw-detail', ['id' => $luckydraw->lucky_draw_id, 'name' => Str::slug($luckydraw->lucky_draw_name), 'page' => 1]) }}" href="{{\Orbit\Helper\Net\UrlChecker::blockedRoute('ci-luckydraw-detail', ['id' => $luckydraw->lucky_draw_id, 'name' => Str::slug($luckydraw->lucky_draw_name), 'page' => 1], $session)}}#ln-nav" class="{{ ($prev_url === '#1' ? 'disabled' : ''); }}"><i class="fa fa-angle-double-left"></i></a></li>
                         @else
                         <li><a class="disabled" style="color:#dedede;"><i class="fa fa-angle-double-left"></i></a></li>
                         @endif
@@ -182,13 +182,13 @@ if(!empty($luckydraw)) {
                         <li class="ld-pagination-ellipsis">...</li>
                         @endif
                         @foreach($paginationPage as $p)
-                        <li @if($current_page == $p) class="ld-pagination-active" @endif><a data-href="{{ route('ci-luckydraw-detail', ['id' => $luckydraw->lucky_draw_id, 'page' => $p]) }}" href="{{\Orbit\Helper\Net\UrlChecker::blockedRoute('ci-luckydraw-detail', ['id' => $luckydraw->lucky_draw_id, 'page' => $p], $session)}}#ln-nav" class="{{ ($prev_url === '#1' ? 'disabled' : ''); }}">{{ $p }}</a></li>
+                        <li @if($current_page == $p) class="ld-pagination-active" @endif><a data-href="{{ route('ci-luckydraw-detail', ['id' => $luckydraw->lucky_draw_id, 'name' => Str::slug($luckydraw->lucky_draw_name), 'page' => $p]) }}" href="{{\Orbit\Helper\Net\UrlChecker::blockedRoute('ci-luckydraw-detail', ['id' => $luckydraw->lucky_draw_id, 'name' => Str::slug($luckydraw->lucky_draw_name), 'page' => $p], $session)}}#ln-nav" class="{{ ($prev_url === '#1' ? 'disabled' : ''); }}">{{ $p }}</a></li>
                         @endforeach
                         @if(! in_array($total_pages, $paginationPage))
                         <li class="ld-pagination-ellipsis">...</li>
                         @endif
                         @if($current_page != $total_pages)
-                        <li><a data-href="{{ route('ci-luckydraw-detail', ['id' => $luckydraw->lucky_draw_id, 'page' => $total_pages]) }}" href="{{\Orbit\Helper\Net\UrlChecker::blockedRoute('ci-luckydraw-detail', ['id' => $luckydraw->lucky_draw_id, 'page' => $total_pages], $session)}}#ln-nav" class="{{ ($prev_url === '#1' ? 'disabled' : ''); }}"><i class="fa fa-angle-double-right"></i></a></li>
+                        <li><a data-href="{{ route('ci-luckydraw-detail', ['id' => $luckydraw->lucky_draw_id, 'name' => Str::slug($luckydraw->lucky_draw_name), 'page' => $total_pages]) }}" href="{{\Orbit\Helper\Net\UrlChecker::blockedRoute('ci-luckydraw-detail', ['id' => $luckydraw->lucky_draw_id, 'name' => Str::slug($luckydraw->lucky_draw_name), 'page' => $total_pages], $session)}}#ln-nav" class="{{ ($prev_url === '#1' ? 'disabled' : ''); }}"><i class="fa fa-angle-double-right"></i></a></li>
                         @else
                         <li><a class="disabled" style="color:#dedede;"><i class="fa fa-angle-double-right"></i></a></li>
                         @endif
