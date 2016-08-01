@@ -150,7 +150,7 @@ class MessageCIAPIController extends BaseAPIController
 
             if (empty($skip)) {
                 $activityPageNotes = sprintf('Page viewed: %s', 'Notification List Page');
-                $activityPage->setUser($user)
+                $activity->setUser($user)
                     ->setActivityName('view_notification_list')
                     ->setActivityNameLong('View Notification List')
                     ->setObject(null)
