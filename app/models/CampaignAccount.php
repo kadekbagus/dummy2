@@ -6,6 +6,12 @@
  */
 class CampaignAccount extends Eloquent
 {
+    /**
+     * Import trait ModelStatusTrait so we can use some common scope dealing
+     * with `status` field.
+     */
+    use ModelStatusTrait;
+
     protected $primaryKey = 'campaign_account_id';
     protected $table = 'campaign_account';
 

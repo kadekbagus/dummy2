@@ -1147,20 +1147,40 @@ class AccountAPIController extends ControllerAPI
             $update_user_detail->save();
 
             // Save to campaign_account table (1 to 1)
-            $campaignAccount = CampaignAccount::where('user_id', $update_user->user_id)
+            $campaignAccount = CampaignAccount::excludeDeleted('campaign_account')
+                                            ->where('user_id', $update_user->user_id)
                                             ->first();
 
-            OrbitInput::post('account_name', function($account_name) use ($campaignAccount) {
+            // update pmp employee
+            $pmp_employee = CampaignAccount::excludeDeleted()
+                                    ->where('parent_user_id', $update_user->user_id)
+                                    ->get();
+
+            OrbitInput::post('account_name', function($account_name) use ($campaignAccount, $pmp_employee) {
                 $campaignAccount->account_name = $account_name;
+
+                if (count($pmp_employee) > 0) {
+                    foreach ($pmp_employee as $employee) {
+                        $employee->account_name = $account_name;
+                        $employee->save();
+                    }
+                }
             });
 
-            OrbitInput::post('select_all_tenants', function($select_all_tenants) use ($campaignAccount) {
+            OrbitInput::post('select_all_tenants', function($select_all_tenants) use ($campaignAccount, $pmp_employee) {
                 // for handle empty string cause select all tenant is not required
                 if ($select_all_tenants !== 'Y') {
                     $select_all_tenants = 'N';
                 }
 
                 $campaignAccount->is_link_to_all = $select_all_tenants;
+
+                if (count($pmp_employee) > 0) {
+                    foreach ($pmp_employee as $employee) {
+                        $employee->is_link_to_all = $select_all_tenants;
+                        $employee->save();
+                    }
+                }
             });
 
             OrbitInput::post('position', function($position) use ($campaignAccount) {
