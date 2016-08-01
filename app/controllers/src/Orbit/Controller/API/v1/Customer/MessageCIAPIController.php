@@ -223,6 +223,8 @@ class MessageCIAPIController extends BaseAPIController
         $activityPage = Activity::mobileci()
                         ->setActivityType('search');
 
+        $this->response = new ResponseProvider();
+
         try {
             $httpCode = 200;
 
@@ -376,6 +378,7 @@ class MessageCIAPIController extends BaseAPIController
         $user = null;
         $activityPage = Activity::mobileci()
                         ->setActivityType('search');
+        $this->response = new ResponseProvider();
 
         try {
             $httpCode = 200;
@@ -516,6 +519,7 @@ class MessageCIAPIController extends BaseAPIController
         $user = null;
         $activityPage = Activity::mobileci()
                         ->setActivityType('search');
+        $this->response = new ResponseProvider();
 
         try {
             $httpCode = 200;
@@ -663,6 +667,7 @@ class MessageCIAPIController extends BaseAPIController
         $user = null;
         $activityPage = Activity::mobileci()
                         ->setActivityType('search');
+        $this->response = new ResponseProvider();
 
         try {
 
