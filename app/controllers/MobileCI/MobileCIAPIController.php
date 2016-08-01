@@ -3554,17 +3554,15 @@ class MobileCIAPIController extends BaseCIController
                 }
             }
 
-            if (! empty($promo_id) ) {
-                $activityPageNotes = sprintf('Page viewed: Service Detail Page, service ID: ' . $service->merchant_id);
-                $activityPage->setUser($user)
-                    ->setActivityName('view_service')
-                    ->setActivityNameLong('View Service Detail')
-                    ->setObject($service)
-                    ->setModuleName('Service')
-                    ->setNotes($activityPageNotes)
-                    ->responseOK()
-                    ->save();
-            }
+            $activityPageNotes = sprintf('Page viewed: Service Detail Page, service ID: ' . $service->merchant_id);
+            $activityPage->setUser($user)
+                ->setActivityName('view_service')
+                ->setActivityNameLong('View Service Detail')
+                ->setObject($service)
+                ->setModuleName('Service')
+                ->setNotes($activityPageNotes)
+                ->responseOK()
+                ->save();
 
             $box_url = "";
             if (! empty($service->box_url)) {
@@ -10489,7 +10487,9 @@ class MobileCIAPIController extends BaseCIController
             // do the login
             $_POST['activity_name_long'] = 'Sign In via Mobile (Email Address)';
             $_POST['activity_origin'] = 'mobileci';
-            $login_response = \Orbit\Controller\API\v1\Pub\LoginAPIController::create('raw')->postLoginCustomer();
+            $login_response = \Orbit\Controller\API\v1\Pub\LoginAPIController::create('raw')
+                ->setAppOrigin('mobile_ci')
+                ->postLoginCustomer();
             $login_response_data = json_decode($login_response->getOriginalContent());
             unset($_POST['activity_name_long']);
             unset($_POST['activity_origin']);
