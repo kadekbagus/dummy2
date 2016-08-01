@@ -2712,54 +2712,13 @@ class EmployeeAPIController extends ControllerAPI
             // Builder object
             $joined = FALSE;
 
-            $pmpAccount = ($user->isCampaignOwner() || $user->isCampaignEmployee() || $user->isCampaignAdmin());
-
-            if (! $pmpAccount) {
-                $users = Employee::excludeDeleted('employees')->joinUserRole()
-                                 ->select('employees.*', 'users.username',
-                                         'users.username as login_id', 'users.user_email',
-                                         'users.status as user_status',
-                                         'users.user_firstname', 'users.user_lastname',
-                                         'roles.role_name')
-                                 ->groupBy('employees.user_id');
-            } else {
-                $users = Employee::excludeDeleted('employees')->joinUserRole()
-                                 ->select('employees.*', 'users.username',
-                                         'users.username as login_id', 'users.user_email',
-                                         'users.status as user_status',
-                                         'users.user_firstname', 'users.user_lastname',
-                                         'roles.role_name', DB::Raw('er.retailer_id as mall_id'))
-                                 ->leftJoin('employee_retailer as er', DB::Raw('er.employee_id'), '=', 'employees.employee_id')
-                                 ->whereRaw("er.retailer_id in (
-                                        select merchant_id
-                                        from {$prefix}user_merchant
-                                        where user_id in (
-                                            select cpmp.user_id
-                                            from {$prefix}campaign_account cpmp
-                                            left join {$prefix}campaign_account cas
-                                                on cpmp.parent_user_id = cas.parent_user_id
-                                            where (
-                                                cpmp.user_id = (
-                                                                SELECT parent_user_id
-                                                                FROM   {$prefix}campaign_account
-                                                                WHERE  user_id = {$this->quote($user->user_id)}
-                                                            )
-                                                                OR
-                                                cpmp.parent_user_id = (
-                                                                SELECT parent_user_id
-                                                                FROM   {$prefix}campaign_account
-                                                                WHERE  user_id = {$this->quote($user->user_id)}
-                                                            )
-                                                OR cpmp.user_id = {$this->quote($user->user_id)}
-                                                OR cpmp.parent_user_id = {$this->quote($user->user_id)}
-                                            )
-                                            group by cpmp.user_id
-                                        )
-                                        and object_type = 'mall'
-                                        group by merchant_id
-                                    )")
-                                 ->groupBy('employees.user_id');
-            }
+            $users = Employee::excludeDeleted('employees')->joinUserRole()
+                             ->select('employees.*', 'users.username',
+                                     'users.username as login_id', 'users.user_email',
+                                     'users.status as user_status',
+                                     'users.user_firstname', 'users.user_lastname',
+                                     'roles.role_name')
+                             ->groupBy('employees.user_id');
 
 
             // Include Relationship
@@ -2863,25 +2822,7 @@ class EmployeeAPIController extends ControllerAPI
 
             $portal = 'mall';
             $searchable_roles_mall = ['mall admin', 'mall customer service'];
-            $searchable_roles_pmp = ['campaign owner', 'campaign employee'];
             $searchable_roles = $searchable_roles_mall;
-
-            if (in_array(strtolower($role->role_name), $searchable_roles_mall)) { // determine the where the user came from
-                $portal = 'mall';
-                $searchable_roles = $searchable_roles_mall;
-            } elseif (in_array(strtolower($role->role_name), $searchable_roles_pmp)) {
-                $portal = 'pmp';
-                $searchable_roles = $searchable_roles_pmp;
-            }
-
-            $list_request = OrbitInput::get('list_request');
-            if ($list_request === 'mall') {
-                $searchable_roles = $searchable_roles_mall;
-            } elseif ($list_request === 'pmp') {
-                $searchable_roles = $searchable_roles_pmp;
-            } else {
-                $searchable_roles = $searchable_roles;
-            }
 
             // Filter user by their role name
             if (! is_null(OrbitInput::get('role_names', NULL))) {
