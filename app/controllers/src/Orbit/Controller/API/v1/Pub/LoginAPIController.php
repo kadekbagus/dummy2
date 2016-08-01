@@ -57,8 +57,8 @@ class LoginAPIController extends IntermediateBaseController
         $roles=['Consumer'];
         $activity = Activity::portal()
                             ->setActivityType('login');
-        $activity_origin = OrbitInput::post('activity_origin');
-        if ($activity_origin === 'mobileci') {
+
+        if ($this->appOrigin === 'mobile_ci') {
             // set this activity as mobileci instead of portal if coming from mobileci
                 $activity = Activity::mobileci()
                                 ->setActivityType('login');
@@ -157,7 +157,7 @@ class LoginAPIController extends IntermediateBaseController
             setcookie('orbit_firstname', $user->user_firstname, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
             setcookie('login_from', 'Form', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
 
-            if ($activity_origin !== 'mobileci') {
+            if ($this->appOrigin !== 'mobile_ci') {
                 $activity->setUser($user)
                          ->setActivityName('login_ok')
                          ->setActivityNameLong('Sign in')
@@ -928,5 +928,12 @@ class LoginAPIController extends IntermediateBaseController
 
             return TRUE;
         });
+    }
+
+    public function setAppOrigin($appOrigin)
+    {
+        $this->appOrigin = $appOrigin;
+
+        return $this;
     }
 }
