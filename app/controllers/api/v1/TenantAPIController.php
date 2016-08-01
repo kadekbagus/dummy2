@@ -2211,10 +2211,6 @@ class TenantAPIController extends ControllerAPI
             $filtermode = OrbitInput::get('filtermode');
             $account_type_id = OrbitInput::get('account_type_id');
 
-            if (in_array(strtolower($user->role->role_name), $this->campaignRole)) {
-                $account_type_id = $user->campaignAccount->account_type_id;
-            }
-
             $validator = Validator::make(
                 array(
                     'sortby' => $sort_by,
@@ -2258,6 +2254,10 @@ class TenantAPIController extends ControllerAPI
                         $q->on('user_merchant.merchant_id', '=', 'merchants.merchant_id')
                              ->where('user_merchant.user_id', '=', $user->user_id);
                     });
+                } else {
+                    if ($user->campaignAccount->accountType->type_name === '3rd Party') {
+                        $tenants->whereRaw("{$prefix}merchants.object_type = 'mall'");
+                    }
                 }
             }
 

@@ -51,10 +51,9 @@ class MessageCIAPIController extends BaseAPIController
 
     public function getMessage()
     {
+        $activity = Activity::mobileci()->setActivityType('view');
         $user = null;
         $mallId = null;
-        $activityPage = Activity::mobileci()
-                        ->setActivityType('search');
 
         try {
             $httpCode = 200;
@@ -147,6 +146,19 @@ class MessageCIAPIController extends BaseAPIController
             $data->total_records = $totalAlerts;
             $data->returned_records = count($listOfAlerts);
             $data->records = $listOfAlerts;
+
+
+            if (empty($skip)) {
+                $activityPageNotes = sprintf('Page viewed: %s', 'Notification List Page');
+                $activityPage->setUser($user)
+                    ->setActivityName('view_notification_list')
+                    ->setActivityNameLong('View Notification List')
+                    ->setObject(null)
+                    ->setModuleName('Inbox')
+                    ->setNotes($activityPageNotes)
+                    ->responseOK()
+                    ->save();
+            }
 
             if ($totalAlerts === 0) {
                 $data->records = null;
