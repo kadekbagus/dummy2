@@ -242,7 +242,10 @@ class TenantCIAPIController extends BaseAPIController
                 $tenants->whereHas('redeemCoupons', function ($q) use ($coupon_id) {
                     $q->where('promotions.promotion_id', $coupon_id);
                     $q->where('promotions.status', 'active');
-                });
+                })
+                ->where('merchants.masterbox_number', '<>', '')
+                ->whereNotNull('merchants.masterbox_number');
+
                 $coupon = Coupon::active()->where('promotion_id', $coupon_id)->first();
 
                 if (is_object($coupon)) {
