@@ -20,6 +20,7 @@ class TenantAPIController extends ControllerAPI
     protected $tenantModifiyRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee'];
     protected $campaignRole = ['campaign owner', 'campaign employee'];
     protected $valid_floor = Null;
+    protected $valid_account_type = Null;
 
     /**
      * Flag to return the query builder.
@@ -2208,13 +2209,16 @@ class TenantAPIController extends ControllerAPI
 
             $sort_by = OrbitInput::get('sortby');
             $filtermode = OrbitInput::get('filtermode');
+            $account_type_id = OrbitInput::get('account_type_id');
 
             $validator = Validator::make(
                 array(
                     'sortby' => $sort_by,
+                    'account_type_id' => $account_type_id,
                 ),
                 array(
                     'sortby' => 'in:registered_date,retailer_name,retailer_email,retailer_userid,retailer_description,retailerid,retailer_address1,retailer_address2,retailer_address3,retailer_cityid,retailer_city,retailer_countryid,retailer_country,retailer_phone,retailer_fax,retailer_status,retailer_currency,contact_person_firstname,merchant_name,retailer_floor,retailer_unit,retailer_external_object_id,retailer_created_at,retailer_updated_at',
+                    'account_type_id' => 'orbit.empty.account_type',
                 ),
                 array(
                     'sortby.in' => Lang::get('validation.orbit.empty.retailer_sortby'),
@@ -2244,23 +2248,63 @@ class TenantAPIController extends ControllerAPI
                                        ->groupBy('merchants.merchant_id');
 
             if (in_array(strtolower($user->role->role_name), $this->campaignRole)) {
-                $tenants->join('user_merchant', function($q) use ($user)
-                {
-                    $q->on('user_merchant.merchant_id', '=', 'merchants.merchant_id')
-                         ->where('user_merchant.user_id', '=', $user->user_id);
-                });
+                if ($user->campaignAccount->is_link_to_all === 'N') {
+                    $tenants->join('user_merchant', function($q) use ($user)
+                    {
+                        $q->on('user_merchant.merchant_id', '=', 'merchants.merchant_id')
+                             ->where('user_merchant.user_id', '=', $user->user_id);
+                    });
+                } else {
+                    if ($user->campaignAccount->accountType->type_name === '3rd Party') {
+                        $tenants->whereRaw("{$prefix}merchants.object_type = 'mall'");
+                    }
+                }
+            }
+
+            // filter by account type
+            if (! is_null($this->valid_account_type)) {
+                $account_type = $this->valid_account_type;
+                $permission = [
+                        'Mall'      => 'mall',
+                        'Merchant'  => 'tenant',
+                        'Agency'    => 'mall_tenant',
+                        '3rd Party' => 'mall',
+                        'Dominopos' => 'mall_tenant'
+                    ];
+                // unique link to tenant
+                if ($account_type->unique_rule !== 'none') {
+                    $unique_rule = implode("','", explode("_", $account_type->unique_rule));
+
+                    $tenants->whereRaw("{$prefix}merchants.merchant_id NOT IN (
+                                            SELECT um.merchant_id
+                                            FROM {$prefix}user_merchant um
+                                            JOIN {$prefix}campaign_account ca
+                                                ON ca.user_id = um.user_id
+                                            JOIN {$prefix}account_types at
+                                                ON at.account_type_id = ca.account_type_id
+                                            WHERE um.object_type IN ('$unique_rule')
+                                                AND at.unique_rule != 'none'
+                                            GROUP BY um.merchant_id
+                                        )");
+                }
+
+                // access
+                if (array_key_exists($account_type->type_name, $permission)) {
+                    $access = implode("','", explode("_", $permission[$account_type->type_name]));
+                    $tenants->whereRaw("{$prefix}merchants.object_type in ('$access')");
+                }
             }
 
             if ($filtermode === 'available') {
                 $tenants->whereRaw("{$prefix}merchants.merchant_id NOT IN (
-                                    SELECT merchant_id FROM orb_user_merchant
+                                    SELECT merchant_id FROM {$prefix}user_merchant
                                     WHERE {$prefix}user_merchant.object_type IN ('mall', 'tenant'))");
             }
 
             // Only showing tenant only, provide for coupon redemption place.
             if ($filtermode === 'tenant') {
                 $tenants->whereRaw("{$prefix}merchants.merchant_id NOT IN (
-                                    SELECT merchant_id FROM orb_user_merchant
+                                    SELECT merchant_id FROM {$prefix}user_merchant
                                     WHERE {$prefix}user_merchant.object_type IN ('mall'))");
             }
 
@@ -2867,6 +2911,22 @@ class TenantAPIController extends ControllerAPI
             }
 
             $this->valid_floor = $floor;
+
+            return TRUE;
+        });
+
+        Validator::extend('orbit.empty.account_type', function ($attribute, $value, $parameters) {
+            $account_type_id = $value;
+
+            $account_type = AccountType::excludeDeleted()
+                        ->where('account_type_id', $account_type_id)
+                        ->first();
+
+            if (! is_object($account_type)) {
+                return FALSE;
+            }
+
+            $this->valid_account_type = $account_type;
 
             return TRUE;
         });

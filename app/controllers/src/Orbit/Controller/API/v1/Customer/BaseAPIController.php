@@ -19,10 +19,162 @@ use Coupon;
 use News;
 use Mall;
 use User;
+use Orbit\Helper\Session\UserGetter;
+use OrbitShop\API\v1\Helper\Input as OrbitInput;
+use Activity;
+use UserSignin;
+
+
 
 class BaseAPIController extends ControllerAPI
 {
     protected $user = NULL;
+    protected $mall_id = NULL;
+    protected $session = NULL;
+
+    public function __construct()
+    {
+        $mallId = OrbitInput::get('mall_id', null);
+
+        if (!empty($mallId)) {
+            $this->registerCustomValidation();
+
+            $validator = Validator::make(
+                array(
+                    'mall_id' => $mallId,
+                ),
+                array(
+                    'mall_id' => 'orbit.empty.mall',
+                )
+            );
+
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $retailer = Mall::excludeDeleted()->where('merchant_id', $mallId)->first();
+
+            $this->session = SessionPreparer::prepareSession();
+
+            $user = UserGetter::getLoggedInUserOrGuest($this->session);
+
+            if (is_object($user)) {
+                $this->acquireUser($retailer, $user);
+            }
+        }
+
+
+
+    }
+
+    protected function acquireUser($retailer, $user, $signUpVia = null)
+    {
+        if (is_null($signUpVia)) {
+            $signUpVia = 'form';
+            if (isset($_COOKIE['login_from'])) {
+                switch (strtolower($_COOKIE['login_from'])) {
+                    case 'google':
+                        $signUpVia = 'google';
+                        break;
+                    case 'facebook':
+                        $signUpVia = 'facebook';
+                        break;
+                    default:
+                        $signUpVia = 'form';
+                        break;
+                }
+            }
+
+            $signUpVia = $user->isGuest() ? 'guest' : $signUpVia;
+        }
+
+        if ($user->isConsumer()) {
+            $firstAcquired = $retailer->acquireUser($user, $signUpVia);
+
+            // if the user is viewing the mall for the 1st time then set the signup activity
+            if ($firstAcquired) {
+                $this->setSignUpActivity($user, $signUpVia, $retailer);
+            }
+        }
+
+        $session = $this->session;
+        $visited_locations = [];
+        if (! empty($session->read('visited_location'))) {
+            $visited_locations = $session->read('visited_location');
+        }
+        if (! in_array($retailer->merchant_id, $visited_locations)) {
+            $this->setSignInActivity($user, $signUpVia, $retailer, null);
+            $session->write('visited_location', array_merge($visited_locations, [$retailer->merchant_id]));
+        }
+    }
+
+    // create activity signup from socmed
+    public function setSignUpActivity($user, $from, $retailer)
+    {
+        $activity = Activity::mobileci()
+            ->setLocation($retailer)
+            ->setActivityType('registration')
+            ->setUser($user)
+            ->setActivityName('registration_ok')
+            ->setObject($user)
+            ->setModuleName('User')
+            ->responseOK();
+
+        if ($from === 'facebook') {
+            $activity->setActivityNameLong('Sign Up via Mobile (Facebook)')
+                    ->setNotes('Sign Up via Mobile (Facebook) OK');
+        } else if ($from === 'google') {
+            $activity->setActivityNameLong('Sign Up via Mobile (Google+)')
+                    ->setNotes('Sign Up via Mobile (Google+) OK');
+        } else if ($from === 'form') {
+            $activity->setActivityNameLong('Sign Up via Mobile (Email Address)')
+                    ->setNotes('Sign Up via Mobile (Email Address) OK');
+        }
+
+        $activity->save();
+    }
+
+    // create activity signin from socmed
+    public function setSignInActivity($user, $from, $retailer, $activity = null)
+    {
+        if (is_object($user)) {
+            if (is_null($activity)) {
+                $activity = Activity::mobileci()
+                        ->setLocation($retailer)
+                        ->setUser($user)
+                        ->setActivityName('login_ok')
+                        ->setActivityNameLong('Sign In')
+                        ->setActivityType('login')
+                        ->setObject($user)
+                        ->setModuleName('Application')
+                        ->responseOK();
+
+                $activity->save();
+            }
+
+            $newUserSignin = new UserSignin();
+            $newUserSignin->user_id = $user->user_id;
+            $newUserSignin->signin_via = $from;
+            $newUserSignin->location_id = $retailer->merchant_id;
+            $newUserSignin->activity_id = $activity->activity_id;
+            $newUserSignin->save();
+        } else {
+            $activity = Activity::mobileci()
+                    ->setLocation($retailer)
+                    ->setUser('guest')
+                    ->setActivityName('login_failed')
+                    ->setActivityNameLong('Sign In Failed')
+                    ->setActivityType('login')
+                    ->setModuleName('Application')
+                    ->responseFailed();
+
+            $activity->save();
+        }
+    }
+
+    // ===================================================================================================== //
+
 
     /**
      * Calculate the Age
@@ -124,32 +276,21 @@ class BaseAPIController extends ControllerAPI
         return null;
     }
 
-    /**
-     * Get current logged in user used in view related page.
-     *
-     * @author Rio Astamal <me@rioastamal.net>
-     * @return User $user
-     */
-    protected function getLoggedInUser()
+    protected function getLoggedInUser($mallId)
     {
         $this->session = SessionPreparer::prepareSession();
 
         $userId = $this->session->read('user_id');
 
-        if (empty($this->retailer)) {
-            $this->retailer = $this->getRetailerInfo();
-        }
-        $retailer = $this->retailer;
-
         // @todo: Why we query membership also? do we need it on every page?
         $user = User::with(['userDetail',
-            'membershipNumbers' => function($q) use ($retailer) {
+            'membershipNumbers' => function($q) use ($mallId) {
                 $q->select('membership_numbers.*')
                     ->with('membership.media')
                     ->join('memberships', 'memberships.membership_id', '=', 'membership_numbers.membership_id')
                     ->excludeDeleted('membership_numbers')
                     ->excludeDeleted('memberships')
-                    ->where('memberships.merchant_id', $retailer->merchant_id);
+                    ->where('memberships.merchant_id', $mallId);
             }])
             ->where('user_id', $userId)
             ->whereHas('role', function($q) {
@@ -491,7 +632,7 @@ class BaseAPIController extends ControllerAPI
     public function getRetailerInfo($with = null)
     {
         try {
-            $retailer_id = App::make('orbitSetting')->getSetting('current_retailer');
+            $retailer_id = App::make('orbitSetting')->getSetting('current_retailer'); //<pre>EXs5F-TKS-------
 
             $retailer = Mall::with('parent')->where('merchant_id', $retailer_id);
             if (! is_null($with)) {
@@ -529,5 +670,23 @@ class BaseAPIController extends ControllerAPI
         }
     }
 
+
+    protected function registerCustomValidation()
+    {
+        // Check the existance of merchant id
+        Validator::extend('orbit.empty.mall', function ($attribute, $value, $parameters) {
+            $mall = Mall::excludeDeleted()
+                        ->where('merchant_id', $value)
+                        ->first();
+
+            if (empty($mall)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.empty.mall', $mall);
+
+            return TRUE;
+        });
+    }
 
 }

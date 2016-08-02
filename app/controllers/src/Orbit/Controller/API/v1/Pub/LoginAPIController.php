@@ -52,12 +52,13 @@ class LoginAPIController extends IntermediateBaseController
      */
     public function postLoginCustomer()
     {
+
         $this->response = new ResponseProvider();
         $roles=['Consumer'];
         $activity = Activity::portal()
                             ->setActivityType('login');
-        $activity_origin = OrbitInput::post('activity_origin'); 
-        if ($activity_origin === 'mobileci') {
+
+        if ($this->appOrigin === 'mobile_ci') {
             // set this activity as mobileci instead of portal if coming from mobileci
                 $activity = Activity::mobileci()
                                 ->setActivityType('login');
@@ -105,19 +106,45 @@ class LoginAPIController extends IntermediateBaseController
                 OrbitShopAPI::throwInvalidArgument($message);
             }
 
-            $this->session->start(array(), 'no-session-creation');
-            // get the session data
-            $sessionData = $this->session->read(NULL);
-            $sessionData['logged_in'] = TRUE;
-            $sessionData['user_id'] = $user->user_id;
-            $sessionData['email'] = $user->user_email;
-            $sessionData['role'] = $user->role->role_name;
-            $sessionData['fullname'] = $user->getFullName();
-            $sessionData['visited_location'] = [];
-            $sessionData['coupon_location'] = [];
+            try {
+                $this->session->start(array(), 'no-session-creation');
+                // get the session data
+                $sessionData = $this->session->read(NULL);
+                $sessionData['logged_in'] = TRUE;
+                $sessionData['user_id'] = $user->user_id;
+                $sessionData['email'] = $user->user_email;
+                $sessionData['role'] = $user->role->role_name;
+                $sessionData['fullname'] = $user->getFullName();
+                $sessionData['visited_location'] = [];
+                $sessionData['coupon_location'] = [];
 
-            // update the guest session data, append user data to it so the user will be recognized
-            $this->session->update($sessionData);
+                // update the guest session data, append user data to it so the user will be recognized
+                $this->session->update($sessionData);
+            } catch (Exception $e) {
+
+                // Return mall_portal, cs_portal, pmp_portal etc
+                $appOrigin = AppOriginProcessor::create(Config::get('orbit.session.app_list'))
+                                               ->getAppName();
+
+                // Session Config
+                $orbitSessionConfig = Config::get('orbit.session.origin.' . $appOrigin);
+                $applicationId = Config::get('orbit.session.app_id.' . $appOrigin);
+
+                // Instantiate the OrbitSession object
+                $config = new SessionConfig(Config::get('orbit.session'));
+                $config->setConfig('session_origin', $orbitSessionConfig);
+                $config->setConfig('expire', $orbitSessionConfig['expire']);
+                $config->setConfig('application_id', $applicationId);
+
+                // get the session data
+                $sessionData = array();
+                $sessionData['logged_in'] = TRUE;
+                $sessionData['user_id'] = $user->user_id;
+                $sessionData['email'] = $user->user_email;
+                $sessionData['role'] = $user->role->role_name;
+                $sessionData['fullname'] = $user->getFullName();
+                $this->session->enableForceNew()->start($sessionData);
+            }
 
             // Send the session id via HTTP header
             $sessionHeader = $this->session->getSessionConfig()->getConfig('session_origin.header.name');
@@ -130,12 +157,11 @@ class LoginAPIController extends IntermediateBaseController
             setcookie('orbit_firstname', $user->user_firstname, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
             setcookie('login_from', 'Form', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
 
-            if ($activity_origin !== 'mobileci') {
+            if ($this->appOrigin !== 'mobile_ci') {
                 $activity->setUser($user)
                          ->setActivityName('login_ok')
                          ->setActivityNameLong('Sign in')
                          ->responseOK()->setModuleName('Application')->save();
-                
                 $user->activity = $activity;
             } else {
                 // set \MobileCI\MobileCIAPIController->session using $this->session
@@ -375,7 +401,7 @@ class LoginAPIController extends IntermediateBaseController
                 }
                 return Redirect::to($caller_url);
             }
-        }   
+        }
     }
 
     protected function getFacebookError($encoded_caller_url = NULL)
@@ -615,7 +641,7 @@ class LoginAPIController extends IntermediateBaseController
     /**
      * The purpose of this function is to by pass the new sign in process that use password
      * e.g: User came from Facebook / Google sign in
-     * 
+     *
      * @author Ahmad <ahmad@dominopos.com>
      * @param string $email User email
      * @return User $user (IF user exist; FALSE: user not exist)
@@ -799,13 +825,13 @@ class LoginAPIController extends IntermediateBaseController
 
             // acquire user
             // todo: remove comment if the QA ok'ed this implementation, so it not affect dashboard
-            // $firstAcquired = $mall->acquireUser($user, 'form');
+            $firstAcquired = $mall->acquireUser($user, 'form');
 
             // if the user is viewing the mall for the 1st time then set the signup activity
             // todo: remove comment if the QA ok'ed this implementation, so it not affect dashboard
-            // if ($firstAcquired) {
-                // \MobileCI\MobileCIAPIController::create()->setSession($this->session)->setSignUpActivity($user, 'form', $mall);
-            // }
+            if ($firstAcquired) {
+                \MobileCI\MobileCIAPIController::create()->setSession($this->session)->setSignUpActivity($user, 'form', $mall);
+            }
 
             // if the user is viewing the mall for the 1st time in this session
             // then set also the sign in activity
@@ -815,7 +841,7 @@ class LoginAPIController extends IntermediateBaseController
             }
             if (! in_array($mall->merchant_id, $visited_locations)) {
                 // todo: remove comment if the QA ok'ed this implementation, so it not affect dashboard
-                // \MobileCI\MobileCIAPIController::create()->setSession($this->session)->setSignInActivity($user, 'form', $mall, null);
+                \MobileCI\MobileCIAPIController::create()->setSession($this->session)->setSignInActivity($user, 'form', $mall, null);
                 $this->session->write('visited_location', array_merge($visited_locations, [$mall->merchant_id]));
             }
 
@@ -825,9 +851,11 @@ class LoginAPIController extends IntermediateBaseController
             $user_detail->last_visit_any_shop = Carbon::now($mall->timezone->timezone_name);
             $user_detail->save();
 
-            // auto coupon issuance checkwill happen on each page after the login success
-            // todo: remove comment if the QA ok'ed this implementation, so it not affect dashboard
-            // \Coupon::issueAutoCoupon($mall, $user, $this->session);
+            $expireTime = Config::get('orbit.session.session_origin.cookie.expire');
+
+            setcookie('orbit_email', $user->user_email, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+            setcookie('orbit_firstname', $user->user_firstname, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+            setcookie('login_from', 'Form', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
 
             DB::commit();
             $data = new stdClass();
@@ -902,5 +930,12 @@ class LoginAPIController extends IntermediateBaseController
 
             return TRUE;
         });
+    }
+
+    public function setAppOrigin($appOrigin)
+    {
+        $this->appOrigin = $appOrigin;
+
+        return $this;
     }
 }

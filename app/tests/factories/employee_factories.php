@@ -12,7 +12,7 @@
 */
 $factory('Employee', [
     'user_id'     => 'factory:User',
-    'employee_id' => 'EMPL001',
+    'employee_id_char' => 'EMPL001',
     'position'    => 'Employee',
     'status'      => 'active',
 ]);

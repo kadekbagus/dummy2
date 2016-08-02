@@ -476,7 +476,6 @@ if(sizeof($tenant->newsPromotionsProfiling) > 0 || sizeof($tenant->newsProfiling
                 $('.slide-menu-backdrop-tab').toggle('fade', 'slow');
                 $('body').toggleClass('freeze-scroll');
                 tabOpen = false;
-                $('.content-container').children().not('.slide-tab-container, .slide-menu-backdrop-tab').removeBlur();
             });
             $('#slide-tab-promo').click(function(){
                 if($('#slide-tab-news-container').is(':visible') || $('#slide-tab-coupon-container').is(':visible')) {
@@ -493,10 +492,6 @@ if(sizeof($tenant->newsPromotionsProfiling) > 0 || sizeof($tenant->newsProfiling
                     $('.slide-tab-container').toggle('slide', {direction: 'up'}, 'slow');
                     $('.slide-menu-backdrop-tab').toggle('fade', 'slow');
                     $('body').toggleClass('freeze-scroll');
-                    $('.content-container').children().not('.slide-tab-container, .slide-menu-backdrop-tab').addBlur();
-                }
-                if(!tabOpen){
-                    $('.content-container').children().not('.slide-tab-container, .slide-menu-backdrop-tab').removeBlur();
                 }
                 $('#slide-tab-promo-container').toggle('fade', 'slow');
                 $('#slide-tab-promo').closest('li').toggleClass('active');
@@ -517,10 +512,6 @@ if(sizeof($tenant->newsPromotionsProfiling) > 0 || sizeof($tenant->newsProfiling
                     $('.slide-tab-container').toggle('slide', {direction: 'up'}, 'slow');
                     $('.slide-menu-backdrop-tab').toggle('fade', 'slow');
                     $('body').toggleClass('freeze-scroll');
-                    $('.content-container').children().not('.slide-tab-container, .slide-menu-backdrop-tab').addBlur();
-                }
-                if(!tabOpen){
-                    $('.content-container').children().not('.slide-tab-container, .slide-menu-backdrop-tab').removeBlur();
                 }
                 $('#slide-tab-news-container').toggle('fade', 'slow');
                 $('#slide-tab-news').closest('li').toggleClass('active');
@@ -541,10 +532,6 @@ if(sizeof($tenant->newsPromotionsProfiling) > 0 || sizeof($tenant->newsProfiling
                     $('.slide-tab-container').toggle('slide', {direction: 'up'}, 'slow');
                     $('.slide-menu-backdrop-tab').toggle('fade', 'slow');
                     $('body').toggleClass('freeze-scroll');
-                    $('.content-container').children().not('.slide-tab-container, .slide-menu-backdrop-tab').addBlur();
-                }
-                if(!tabOpen){
-                    $('.content-container').children().not('.slide-tab-container, .slide-menu-backdrop-tab').removeBlur();
                 }
                 $('#slide-tab-coupon-container').toggle('fade', 'slow');
                 $('#slide-tab-coupon').closest('li').toggleClass('active');

@@ -465,16 +465,10 @@
         })();
         var browser = navigator.getBrowser[0];
         $.fn.addBlur = function(){
-            if(browser.indexOf('Firefox') < 0) {
-                $(this).removeClass('unblurred');
-                $(this).addClass('blurred');
-            }
+            return;
         }
         $.fn.removeBlur = function(){
-            if(browser.indexOf('Firefox') < 0) {
-                $(this).removeClass('blurred');
-                $(this).addClass('unblurred');
-            }
+            return;
         }
         function isInArray(value, str) {
             return str.indexOf(value) > -1;
@@ -512,7 +506,6 @@
                         }
                         var autoSliderOption = data.data.records.length > 1 ? true : false;
                         $('body').addClass('freeze-scroll');
-                        $('.content-container, .header-container, footer').addBlur();
                         $('.campaign-cards-back-drop').fadeIn('slow');
                         $('.campaign-cards-container').toggle('slide', {direction: 'down'}, 'slow');
                         slider = $('#campaign-cards').lightSlider({
@@ -564,7 +557,6 @@
             slider.pause();
             $.cookie('dismiss_campaign_cards', 't', {expires: 3650, path: '/'});
             $('body').removeClass('freeze-scroll');
-            $('.content-container, .header-container, footer').removeBlur();
             $('.campaign-cards-back-drop').fadeOut('slow');
             $('.campaign-cards-container').toggle('slide', {direction: 'up'}, 'fast');
         });
@@ -621,8 +613,7 @@
             $('.search-top').toggle('slide', {direction: 'down'}, 'fast');
             $('.search-back-drop').fadeIn('fast');
             $('#search-type').val('');
-            $('.content-container, .header-container, footer').addBlur();
-            //$('#SearchProducts').modal();
+
             setTimeout(function(){
                 $('#search-type').focus();
             }, 10);
@@ -631,14 +622,9 @@
             $('.search-container').toggle('slide', {direction: 'down'}, 'slow');
             $('.search-top').toggle('slide', {direction: 'down'}, 'fast');
             $('.search-back-drop').fadeOut('fast');
-            if(!menuOpen){
-                $('.content-container, footer').removeBlur();
-            }
-            $('.header-container').removeBlur();
+
             $('#search-type').val('');
-            // ------------- cuma dummy
             $('.search-results').hide();
-            // ---------------- -------
         });
         var search_results = {};
         search_results.tenants = [];
@@ -672,6 +658,8 @@
                             tenants = '<h4>{{Lang::get('mobileci.page_title.tenant_directory')}}</h4><ul>'
                             for(var i = 0; i < data.data.grouped_records.tenants.length; i++) {
                                 var hide = i > 2 ? 'limited hide' : '';
+                                var description = data.data.grouped_records.tenants[i].object_description ? data.data.grouped_records.tenants[i].object_description : '';
+                                description = description.indexOf('<br') > 0 ? description.slice(0, description.indexOf('<br')) : description;
                                 tenants += '<li class="search-result-group '+ hide +'">\
                                         <a data-href="'+ data.data.grouped_records.tenants[i].object_redirect_url +'" href="'+ data.data.grouped_records.tenants[i].object_url +'">\
                                             <div class="col-xs-2 text-center">\
@@ -679,7 +667,7 @@
                                             </div>\
                                             <div class="col-xs-10">\
                                                 <h5><strong>'+ data.data.grouped_records.tenants[i].object_name +'</strong></h5>\
-                                                <p>'+ (data.data.grouped_records.tenants[i].object_description ? data.data.grouped_records.tenants[i].object_description : '') +'</p>\
+                                                <p>'+ description +'</p>\
                                             </div>\
                                         </a>\
                                     </li>';
@@ -695,6 +683,8 @@
                             services = '<h4>{{Lang::get('mobileci.page_title.service_directory')}}</h4><ul>'
                             for(var i = 0; i < data.data.grouped_records.services.length; i++) {
                                 var hide = i > 2 ? 'limited hide' : '';
+                                var description = data.data.grouped_records.services[i].object_description ? data.data.grouped_records.services[i].object_description : '';
+                                description = description.indexOf('<br') > 0 ? description.slice(0, description.indexOf('<br')) : description;
                                 services += '<li class="search-result-group '+ hide +'">\
                                         <a data-href="'+ data.data.grouped_records.services[i].object_redirect_url +'" href="'+ data.data.grouped_records.services[i].object_url +'">\
                                             <div class="col-xs-2 text-center">\
@@ -702,7 +692,7 @@
                                             </div>\
                                             <div class="col-xs-10">\
                                                 <h5><strong>'+ data.data.grouped_records.services[i].object_name +'</strong></h5>\
-                                                <p>'+ (data.data.grouped_records.services[i].object_description ? data.data.grouped_records.services[i].object_description : '') +'</p>\
+                                                <p>'+ description +'</p>\
                                             </div>\
                                         </a>\
                                     </li>';
@@ -717,6 +707,8 @@
                             promotions = '<h4>{{Lang::get('mobileci.page_title.promotions')}}</h4><ul>'
                             for(var i = 0; i < data.data.grouped_records.promotions.length; i++) {
                                 var hide = i > 2 ? 'limited hide' : '';
+                                var description = data.data.grouped_records.promotions[i].object_description ? data.data.grouped_records.promotions[i].object_description : '';
+                                description = description.indexOf('<br') > 0 ? description.slice(0, description.indexOf('<br')) : description;
                                 promotions += '<li class="search-result-group '+ hide +'">\
                                         <a data-href="'+ data.data.grouped_records.promotions[i].object_redirect_url +'" href="'+ data.data.grouped_records.promotions[i].object_url +'">\
                                             <div class="col-xs-2 text-center">\
@@ -724,7 +716,7 @@
                                             </div>\
                                             <div class="col-xs-10">\
                                                 <h5><strong>'+ data.data.grouped_records.promotions[i].object_name +'</strong></h5>\
-                                                <p>'+ (data.data.grouped_records.promotions[i].object_description ? data.data.grouped_records.promotions[i].object_description : '') +'</p>\
+                                                <p>'+ description +'</p>\
                                             </div>\
                                         </a>\
                                     </li>';
@@ -739,6 +731,8 @@
                             news = '<h4>{{Lang::get('mobileci.page_title.news')}}</h4><ul>'
                             for(var i = 0; i < data.data.grouped_records.news.length; i++) {
                                 var hide = i > 2 ? 'limited hide' : '';
+                                var description = data.data.grouped_records.news[i].object_description ? data.data.grouped_records.news[i].object_description : '';
+                                description = description.indexOf('<br') > 0 ? description.slice(0, description.indexOf('<br')) : description;
                                 news += '<li class="search-result-group '+ hide +'">\
                                         <a data-href="'+ data.data.grouped_records.news[i].object_redirect_url +'" href="'+ data.data.grouped_records.news[i].object_url +'">\
                                             <div class="col-xs-2 text-center">\
@@ -746,7 +740,7 @@
                                             </div>\
                                             <div class="col-xs-10">\
                                                 <h5><strong>'+ data.data.grouped_records.news[i].object_name +'</strong></h5>\
-                                                <p>'+ (data.data.grouped_records.news[i].object_description ? data.data.grouped_records.news[i].object_description : '') +'</p>\
+                                                <p>'+ description +'</p>\
                                             </div>\
                                         </a>\
                                     </li>';
@@ -761,6 +755,8 @@
                             coupons = '<h4>{{Lang::get('mobileci.page_title.coupons')}}</h4><ul>'
                             for(var i = 0; i < data.data.grouped_records.coupons.length; i++) {
                                 var hide = i > 2 ? 'limited hide' : '';
+                                var description = data.data.grouped_records.coupons[i].object_description ? data.data.grouped_records.coupons[i].object_description : '';
+                                description = description.indexOf('<br') > 0 ? description.slice(0, description.indexOf('<br')) : description;
                                 coupons += '<li class="search-result-group '+ hide +'">\
                                         <a data-href="'+ data.data.grouped_records.coupons[i].object_redirect_url +'" href="'+ data.data.grouped_records.coupons[i].object_url +'">\
                                             <div class="col-xs-2 text-center">\
@@ -768,7 +764,7 @@
                                             </div>\
                                             <div class="col-xs-10">\
                                                 <h5><strong>'+ data.data.grouped_records.coupons[i].object_name +'</strong></h5>\
-                                                <p>'+ (data.data.grouped_records.coupons[i].object_description ? data.data.grouped_records.coupons[i].object_description : '') +'</p>\
+                                                <p>'+ description +'</p>\
                                             </div>\
                                         </a>\
                                     </li>';
@@ -783,6 +779,8 @@
                             lucky_draws = '<h4>{{Lang::get('mobileci.page_title.lucky_draws')}}</h4><ul>'
                             for(var i = 0; i < data.data.grouped_records.lucky_draws.length; i++) {
                                 var hide = i > 2 ? 'limited hide' : '';
+                                var description = data.data.grouped_records.lucky_draws[i].object_description ? data.data.grouped_records.lucky_draws[i].object_description : '';
+                                description = description.indexOf('<br') > 0 ? description.slice(0, description.indexOf('<br')) : description;
                                 lucky_draws += '<li class="search-result-group '+ hide +'">\
                                         <a data-href="'+ data.data.grouped_records.lucky_draws[i].object_redirect_url +'" href="'+ data.data.grouped_records.lucky_draws[i].object_url +'">\
                                             <div class="col-xs-2 text-center">\
@@ -790,7 +788,7 @@
                                             </div>\
                                             <div class="col-xs-10">\
                                                 <h5><strong>'+ data.data.grouped_records.lucky_draws[i].object_name +'</strong></h5>\
-                                                <p>'+ (data.data.grouped_records.lucky_draws[i].object_description ? data.data.grouped_records.lucky_draws[i].object_description : '') +'</p>\
+                                                <p>'+ description +'</p>\
                                             </div>\
                                         </a>\
                                     </li>';
@@ -902,7 +900,6 @@
                 resetImage();
                 fl = $.featherlight.current();
                 $("body").addClass("freeze-scroll");
-                $('.content-container, .header-container, footer').addBlur();
                 $(".featherlight-image").panzoom({
                     minScale: 1,
                     maxScale: 5,
@@ -926,10 +923,6 @@
                     if(! changed) {
                         fl.close();
                         $("body").removeClass("freeze-scroll");
-                        if(!menuOpen){
-                            $('.content-container, footer').removeBlur();
-                        }
-                        $('.header-container').removeBlur();
                     }
                 });
             }, 50);
@@ -955,19 +948,11 @@
 
         $(document).on('click', '.featherlight-close', function(){
             $("body").removeClass("freeze-scroll");
-            if(!menuOpen){
-                $('.content-container, footer').removeBlur();
-            }
-            $('.header-container').removeBlur();
         });
 
         $(document).on('click', '.featherlight-content, .featherlight-image', function(){
             fl.close();
             $("body").removeClass("freeze-scroll");
-            if(!menuOpen){
-                $('.content-container, footer').removeBlur();
-            }
-            $('.header-container').removeBlur();
         });
         $('#slide-trigger, .slide-menu-backdrop').click(function(){
             if(menuOpen) {
@@ -981,16 +966,11 @@
             $('.slide-menu-backdrop').toggle('fade', 'slow');
             if(menuOpen) {
                 $('.header-container').css('height', '100%');
-                $('.content-container, .header-location-banner, .header-tenant-tab, footer').addBlur();
                 $('body').addClass('freeze-scroll');
                 $('#orbit-tour-profile').addClass('active');
                 $('#slide-trigger').addClass('active');
             } else {
-                if(!menuOpen){
-                    $('.content-container, footer').removeBlur();
-                }
                 $('.header-container').css('height', '92px');
-                $('.header-location-banner, .header-tenant-tab').removeBlur();
                 if(!tabOpen){
                     $('body').removeClass('freeze-scroll');
                 }

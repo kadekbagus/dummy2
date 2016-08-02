@@ -2265,26 +2265,14 @@ class CampaignReportAPIController extends ControllerAPI
 
             $campaign = UserCampaign::where('campaign_id', '=', $campaign_id)
                                     ->whereRaw("{$prefix}user_campaign.user_id in (
-                                            select cpmp.user_id
-                                            from {$prefix}campaign_account cpmp
-                                            left join {$prefix}campaign_account cas
-                                                on cpmp.parent_user_id = cas.parent_user_id
-                                            where (
-                                                cpmp.user_id = (
-                                                                SELECT parent_user_id
-                                                                FROM   {$prefix}campaign_account
-                                                                WHERE  user_id = '{$user->user_id}'
-                                                            )
-                                                                OR
-                                                cpmp.parent_user_id = (
-                                                                SELECT parent_user_id
-                                                                FROM   {$prefix}campaign_account
-                                                                WHERE  user_id = '{$user->user_id}'
-                                                            )
-                                                OR cpmp.user_id = '{$user->user_id}'
-                                                OR cpmp.parent_user_id = '{$user->user_id}'
-                                            )
-                                            group by cpmp.user_id
+                                            select oca.user_id
+                                            from orb_campaign_account oca,
+                                            (
+                                                select ifnull(ca.parent_user_id, ca.user_id) as uid
+                                                from orb_campaign_account ca
+                                                where ca.user_id = {$user->user_id}
+                                            ) as ca
+                                            where oca.user_id = ca.uid or oca.parent_user_id = ca.uid
                                         )")->first();
 
             if (empty($campaign)) {

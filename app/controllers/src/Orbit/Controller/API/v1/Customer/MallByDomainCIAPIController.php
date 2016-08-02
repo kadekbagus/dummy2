@@ -58,10 +58,12 @@ class MallByDomainCIAPIController extends BaseAPIController
             $membership_card = Setting::where('setting_name', 'enable_membership_card')
                 ->where('object_id', $mall->merchant_id)
                 ->first();
-            $enable_membership='false';
-            if (is_object($membership_card)){
-                $enable_membership=$membership_card->setting_value;
+            $enable_membership = 'false';
+            if (is_object($membership_card)) {
+                $enable_membership = $membership_card->setting_value;
             }
+
+            $data = new \stdclass();
 
             if (is_object($mall)) {
                 $mall = $mall->load('mediaLogoOrig');
@@ -80,9 +82,16 @@ class MallByDomainCIAPIController extends BaseAPIController
                     $mallLogo = $mall->mediaLogoOrig[0]->path;
                 }
 
+                $landing_page_setting = Setting::where('setting_name', 'landing_page')
+                    ->where('object_id', $mall->merchant_id)
+                    ->first();
+                $landing_page = 'widget';
+                if (is_object($landing_page_setting)) {
+                    $landing_page = $landing_page_setting->setting_value;
+                }
+
                 $mallLanguages = $this->getListLanguages($mall);
 
-                $data = new \stdclass();
                 $data->merchant_id = $mall->merchant_id;
                 $data->name = $mall->name;
                 $data->mobile_default_language = $mall->mobile_default_language;
@@ -94,6 +103,7 @@ class MallByDomainCIAPIController extends BaseAPIController
                 $data->enable_membership = $enable_membership;
                 $data->cookie_domain = Config::get('orbit.session.session_origin.cookie.domain');
                 $data->after_logout_url = Config::get('orbit.shop.after_logout_url');
+                $data->landing_page = $landing_page;
             }
 
             $this->response->data = $data;
