@@ -2717,7 +2717,8 @@ class EmployeeAPIController extends ControllerAPI
                                      'users.username as login_id', 'users.user_email',
                                      'users.status as user_status',
                                      'users.user_firstname', 'users.user_lastname',
-                                     'roles.role_name')
+                                     'roles.role_name', DB::Raw('er.retailer_id as mall_id'))
+                             ->leftJoin('employee_retailer as er', DB::Raw('er.employee_id'), '=', 'employees.employee_id')
                              ->groupBy('employees.user_id');
 
 

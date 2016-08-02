@@ -51,10 +51,10 @@ class MessageCIAPIController extends BaseAPIController
 
     public function getMessage()
     {
+        $activity = Activity::mobileci()->setActivityType('view');
         $user = null;
         $mallId = null;
-        $activityPage = Activity::mobileci()
-                        ->setActivityType('search');
+        $this->response = new ResponseProvider();
 
         try {
             $httpCode = 200;
@@ -148,6 +148,19 @@ class MessageCIAPIController extends BaseAPIController
             $data->returned_records = count($listOfAlerts);
             $data->records = $listOfAlerts;
 
+
+            if (empty($skip)) {
+                $activityPageNotes = sprintf('Page viewed: %s', 'Notification List Page');
+                $activity->setUser($user)
+                    ->setActivityName('view_notification_list')
+                    ->setActivityNameLong('View Notification List')
+                    ->setObject(null)
+                    ->setModuleName('Inbox')
+                    ->setNotes($activityPageNotes)
+                    ->responseOK()
+                    ->save();
+            }
+
             if ($totalAlerts === 0) {
                 $data->records = null;
                 $this->response->message = 'No results found';
@@ -209,6 +222,8 @@ class MessageCIAPIController extends BaseAPIController
         $user = null;
         $activityPage = Activity::mobileci()
                         ->setActivityType('search');
+
+        $this->response = new ResponseProvider();
 
         try {
             $httpCode = 200;
@@ -363,6 +378,7 @@ class MessageCIAPIController extends BaseAPIController
         $user = null;
         $activityPage = Activity::mobileci()
                         ->setActivityType('search');
+        $this->response = new ResponseProvider();
 
         try {
             $httpCode = 200;
@@ -503,6 +519,7 @@ class MessageCIAPIController extends BaseAPIController
         $user = null;
         $activityPage = Activity::mobileci()
                         ->setActivityType('search');
+        $this->response = new ResponseProvider();
 
         try {
             $httpCode = 200;
@@ -650,6 +667,7 @@ class MessageCIAPIController extends BaseAPIController
         $user = null;
         $activityPage = Activity::mobileci()
                         ->setActivityType('search');
+        $this->response = new ResponseProvider();
 
         try {
 

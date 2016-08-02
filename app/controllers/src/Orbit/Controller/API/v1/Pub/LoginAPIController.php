@@ -57,8 +57,8 @@ class LoginAPIController extends IntermediateBaseController
         $roles=['Consumer'];
         $activity = Activity::portal()
                             ->setActivityType('login');
-        $activity_origin = OrbitInput::post('activity_origin');
-        if ($activity_origin === 'mobileci') {
+
+        if ($this->appOrigin === 'mobile_ci') {
             // set this activity as mobileci instead of portal if coming from mobileci
                 $activity = Activity::mobileci()
                                 ->setActivityType('login');
@@ -157,7 +157,7 @@ class LoginAPIController extends IntermediateBaseController
             setcookie('orbit_firstname', $user->user_firstname, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
             setcookie('login_from', 'Form', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
 
-            if ($activity_origin !== 'mobileci') {
+            if ($this->appOrigin !== 'mobile_ci') {
                 $activity->setUser($user)
                          ->setActivityName('login_ok')
                          ->setActivityNameLong('Sign in')
@@ -825,13 +825,13 @@ class LoginAPIController extends IntermediateBaseController
 
             // acquire user
             // todo: remove comment if the QA ok'ed this implementation, so it not affect dashboard
-            // $firstAcquired = $mall->acquireUser($user, 'form');
+            $firstAcquired = $mall->acquireUser($user, 'form');
 
             // if the user is viewing the mall for the 1st time then set the signup activity
             // todo: remove comment if the QA ok'ed this implementation, so it not affect dashboard
-            // if ($firstAcquired) {
-                // \MobileCI\MobileCIAPIController::create()->setSession($this->session)->setSignUpActivity($user, 'form', $mall);
-            // }
+            if ($firstAcquired) {
+                \MobileCI\MobileCIAPIController::create()->setSession($this->session)->setSignUpActivity($user, 'form', $mall);
+            }
 
             // if the user is viewing the mall for the 1st time in this session
             // then set also the sign in activity
@@ -841,7 +841,7 @@ class LoginAPIController extends IntermediateBaseController
             }
             if (! in_array($mall->merchant_id, $visited_locations)) {
                 // todo: remove comment if the QA ok'ed this implementation, so it not affect dashboard
-                // \MobileCI\MobileCIAPIController::create()->setSession($this->session)->setSignInActivity($user, 'form', $mall, null);
+                \MobileCI\MobileCIAPIController::create()->setSession($this->session)->setSignInActivity($user, 'form', $mall, null);
                 $this->session->write('visited_location', array_merge($visited_locations, [$mall->merchant_id]));
             }
 
@@ -851,9 +851,11 @@ class LoginAPIController extends IntermediateBaseController
             $user_detail->last_visit_any_shop = Carbon::now($mall->timezone->timezone_name);
             $user_detail->save();
 
-            // auto coupon issuance checkwill happen on each page after the login success
-            // todo: remove comment if the QA ok'ed this implementation, so it not affect dashboard
-            // \Coupon::issueAutoCoupon($mall, $user, $this->session);
+            $expireTime = Config::get('orbit.session.session_origin.cookie.expire');
+
+            setcookie('orbit_email', $user->user_email, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+            setcookie('orbit_firstname', $user->user_firstname, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+            setcookie('login_from', 'Form', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
 
             DB::commit();
             $data = new stdClass();
@@ -928,5 +930,12 @@ class LoginAPIController extends IntermediateBaseController
 
             return TRUE;
         });
+    }
+
+    public function setAppOrigin($appOrigin)
+    {
+        $this->appOrigin = $appOrigin;
+
+        return $this;
     }
 }
