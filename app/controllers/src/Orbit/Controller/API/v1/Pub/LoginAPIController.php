@@ -470,6 +470,7 @@ class LoginAPIController extends IntermediateBaseController
         $encoded_caller_url = \Input::get('caller_url', NULL);
         $encoded_redirect_to_url = \Input::get('redirect_to_url', NULL);
         $angular_ci = \Input::get('aci', FALSE);
+        $mall_id = \Input::get('mall_id', NULL);
 
         // error=access_denied&
         // error_code=200&
@@ -604,14 +605,13 @@ class LoginAPIController extends IntermediateBaseController
         setcookie('login_from', 'Facebook', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
 
         if ($angular_ci) {
-            $mallId = OrbitInput::get('mall_id', null);
 
-            if (!empty($mallId)) {
+            if (!empty($mall_id)) {
                 $this->registerCustomValidation();
 
                 $validator = Validator::make(
                     array(
-                        'mall_id' => $mallId,
+                        'mall_id' => $mall_id,
                     ),
                     array(
                         'mall_id' => 'orbit.empty.mall',
@@ -623,7 +623,7 @@ class LoginAPIController extends IntermediateBaseController
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
 
-                $retailer = Mall::excludeDeleted()->where('merchant_id', $mallId)->first();
+                $retailer = Mall::excludeDeleted()->where('merchant_id', $mall_id)->first();
 
                 $this->session = SessionPreparer::prepareSession();
 
@@ -648,6 +648,7 @@ class LoginAPIController extends IntermediateBaseController
      */
     public function postSocialLoginView()
     {
+        $mall_id = OrbitInput::get('mall_id', NULL);
         $encoded_caller_url_full = OrbitInput::get('from_url_full', NULL);
         $encoded_redirect_to_url = OrbitInput::get('to_url', NULL);
         $angular_ci = OrbitInput::get('aci', FALSE);
@@ -689,6 +690,7 @@ class LoginAPIController extends IntermediateBaseController
             'caller_url' => $encoded_caller_url_full,
             'redirect_to_url' => $encoded_redirect_to_url,
             'aci' => $angular_ci,
+            'mall_id' => $mall_id
         ]);
 
         // This is to re-popup the permission on login in case some of the permissions revoked by user
