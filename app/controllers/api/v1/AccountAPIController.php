@@ -1542,26 +1542,14 @@ class AccountAPIController extends ControllerAPI
                     OrbitInput::post('id', function($user_id) use ($mall_tenant, $prefix) {
                         $mall_tenant->whereRaw("(
                                 {$prefix}user_merchant.user_id not in (
-                                    select ca.user_id
-                                    from {$prefix}campaign_account ca
-                                    left join {$prefix}campaign_account cas
-                                        on cas.parent_user_id = ca.parent_user_id
-                                    where (
-                                            ca.user_id = (
-                                                            SELECT parent_user_id
-                                                            FROM   {$prefix}campaign_account
-                                                            WHERE  user_id = {$this->quote($user_id)}
-                                                        )
-                                                            OR
-                                            ca.parent_user_id = (
-                                                            SELECT parent_user_id
-                                                            FROM   {$prefix}campaign_account
-                                                            WHERE  user_id = {$this->quote($user_id)}
-                                                        )
-                                            OR ca.user_id = {$this->quote($user_id)}
-                                            OR ca.parent_user_id = {$this->quote($user_id)}
-                                        )
-                                    group by ca.user_id
+                                    select oca.user_id
+                                    from {$prefix}campaign_account oca,
+                                    (
+                                        select ifnull(ca.parent_user_id, ca.user_id) as uid
+                                        from {$prefix}campaign_account ca
+                                        where ca.user_id = {$this->quote($user_id)}
+                                    ) as ca
+                                    where oca.user_id = ca.uid or oca.parent_user_id = ca.uid
                                 )
                             )");
                     });
