@@ -269,7 +269,7 @@ class LoginAPIController extends IntermediateBaseController
         $caller_url = ! is_null($caller_url) ? URL::route($caller_url) : Config::get('orbit.shop.after_social_sign_in');
         $encoded_caller_url_full = OrbitInput::get('from_url_full', NULL); // this input using full-url
         $encoded_redirect_to_url = OrbitInput::get('to_url', NULL); // this input using full-url
-        $mall_id = OrbitInput::get('mid', NULL);
+        $mall_id = OrbitInput::get('mid', OrbitInput::get('mall_id', NULL));
         $user_location = OrbitInput::get(Config::get('orbit.user_location.query_string.name', 'ul'), NULL);
         $angular_ci = OrbitInput::get('aci', NULL);
 
@@ -387,7 +387,7 @@ class LoginAPIController extends IntermediateBaseController
                         $user = UserGetter::getLoggedInUserOrGuest($this->session);
 
                         if (is_object($user)) {
-                            $this->acquireUser($retailer, $user, 'facebook');
+                            $this->acquireUser($retailer, $user, 'google');
                         }
                     }
                     // request coming from angular-ci
