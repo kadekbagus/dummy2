@@ -59,7 +59,9 @@ class BaseAPIController extends ControllerAPI
 
             $user = UserGetter::getLoggedInUserOrGuest($this->session);
 
-            $this->acquireUser($retailer, $user);
+            if (is_object($user)) {
+                $this->acquireUser($retailer, $user);
+            }
         }
 
 
