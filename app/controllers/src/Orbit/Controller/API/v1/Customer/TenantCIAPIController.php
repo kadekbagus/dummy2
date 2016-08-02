@@ -197,12 +197,12 @@ class TenantCIAPIController extends BaseAPIController
             ->leftJoin(DB::raw("(
                     SELECT {$prefix}merchants.merchant_id, count({$prefix}promotions.promotion_id) as coupon_counter
                     from {$prefix}promotions
-                    LEFT JOIN {$prefix}promotion_retailer_redeem on {$prefix}promotion_retailer_redeem.promotion_id = {$prefix}promotions.promotion_id
-                    LEFT JOIN {$prefix}merchants on {$prefix}promotion_retailer_redeem.retailer_id = {$prefix}merchants.merchant_id
+                    LEFT JOIN {$prefix}promotion_retailer on {$prefix}promotion_retailer.promotion_id = {$prefix}promotions.promotion_id
+                    LEFT JOIN {$prefix}merchants on {$prefix}promotion_retailer.retailer_id = {$prefix}merchants.merchant_id
 
                     JOIN {$prefix}issued_coupons ON {$prefix}issued_coupons.promotion_id = {$prefix}promotions.promotion_id
 
-                    WHERE {$prefix}promotion_retailer_redeem.object_type = 'tenant'
+                    WHERE {$prefix}promotion_retailer.object_type = 'tenant'
                     AND {$prefix}promotions.is_coupon = 'Y'
                     AND {$prefix}promotions.status = 'active'
                     AND {$prefix}merchants.parent_id = {$quoted_mall_id}
@@ -704,8 +704,8 @@ class TenantCIAPIController extends BaseAPIController
                 ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'promotions.promotion_id')
                 ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'promotions.promotion_id')
                 ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
-                ->leftJoin('promotion_retailer_redeem', 'promotion_retailer_redeem.promotion_id', '=', 'promotions.promotion_id')
-                ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer_redeem.retailer_id')
+                ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
+                ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
                 ->join('issued_coupons', function($join) {
                     $join->on('promotions.promotion_id', '=', 'issued_coupons.promotion_id')
                         ->where('issued_coupons.status', '=', 'active');
