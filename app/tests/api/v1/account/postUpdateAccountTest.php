@@ -33,9 +33,13 @@ class postUpdateAccountTest extends TestCase
         $this->account_type_3rd       = Factory::create('account_type_3rd');
         $this->account_type_dominopos = Factory::create('account_type_dominopos');
 
+        // inactive mall
+        $this->mall_x = $mall_x = Factory::create('Mall', ['name' => 'Mall X', 'status' => 'inactive']);
+
         // mall and tenant for list link to tenant
         $this->mall_a = $mall_a = Factory::create('Mall', ['name' => 'Mall A']);
         $this->tenant_a = $tenant_a = Factory::create('Tenant', ['name' => 'Tenant A', 'parent_id' => $mall_a->merchant_id]);
+        $this->tenant_x = $tenant_x = Factory::create('Tenant', ['name' => 'Tenant X', 'parent_id' => $mall_a->merchant_id, 'status' => 'inactive']);
 
         $this->mall_b = $mall_b = Factory::create('Mall', ['name' => 'Mall B']);
         $this->tenant_b1 = $tenant_b1 = Factory::create('Tenant', ['name' => 'Tenant B1', 'parent_id' => $mall_b->merchant_id]);
@@ -340,7 +344,7 @@ class postUpdateAccountTest extends TestCase
         $response = $this->setRequestPostUpdateAccount($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
         $this->assertSame(14, $response->code);
         $this->assertSame("error", $response->status);
-        $this->assertSame("Link to tenant is does not allowed", $response->message);
+        $this->assertSame("Link to tenant is not allowed", $response->message);
     }
 
     public function testAccountTypeMallFailedLinkObjectTypeIsTenant()
@@ -367,7 +371,7 @@ class postUpdateAccountTest extends TestCase
         $response = $this->setRequestPostUpdateAccount($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
         $this->assertSame(14, $response->code);
         $this->assertSame("error", $response->status);
-        $this->assertSame("Link to tenant is does not allowed", $response->message);
+        $this->assertSame("Link to tenant is not allowed", $response->message);
     }
 
     public function testAccountTypeMerchantSuccess()
@@ -427,7 +431,7 @@ class postUpdateAccountTest extends TestCase
         $response = $this->setRequestPostUpdateAccount($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
         $this->assertSame(14, $response->code);
         $this->assertSame("error", $response->status);
-        $this->assertSame("Link to tenant is does not allowed", $response->message);
+        $this->assertSame("Link to tenant is not allowed", $response->message);
     }
 
     public function testAccountTypeMerchantFailedLinkObjectTypeIsMall()
@@ -454,7 +458,7 @@ class postUpdateAccountTest extends TestCase
         $response = $this->setRequestPostUpdateAccount($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
         $this->assertSame(14, $response->code);
         $this->assertSame("error", $response->status);
-        $this->assertSame("Link to tenant is does not allowed", $response->message);
+        $this->assertSame("Link to tenant is not allowed", $response->message);
     }
 
     public function testAccountTypeAgencySuccess()
@@ -514,7 +518,7 @@ class postUpdateAccountTest extends TestCase
         $response = $this->setRequestPostUpdateAccount($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
         $this->assertSame(14, $response->code);
         $this->assertSame("error", $response->status);
-        $this->assertSame("Link to tenant is does not allowed", $response->message);
+        $this->assertSame("Link to tenant is not allowed", $response->message);
     }
 
     public function testAccountType3rdSuccess()
@@ -574,7 +578,7 @@ class postUpdateAccountTest extends TestCase
         $response = $this->setRequestPostUpdateAccount($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
         $this->assertSame(14, $response->code);
         $this->assertSame("error", $response->status);
-        $this->assertSame("Link to tenant is does not allowed", $response->message);
+        $this->assertSame("Link to tenant is not allowed", $response->message);
     }
 
     public function testAccountTypeDominoposSuccess()
@@ -726,5 +730,76 @@ class postUpdateAccountTest extends TestCase
 
         $this->assertSame($this->account_type_agency->account_type_id, $account_type->account_type_id);
         $this->assertSame('N', $account_type->is_link_to_all);
+    }
+
+    public function testUpdate3rdPartyWithInactiveLink()
+    {
+        /*
+        * 
+        */
+        $data = [
+            'select_all_tenants' => 'N',
+            'id'                 => $this->pmp_3rd_user->user_id,
+            'account_type_id'    => $this->account_type_3rd->account_type_id,
+            'user_firstname'     => 'irianto',
+            'user_lastname'      => 'pratama',
+            'user_email'         => 'pmpsatu@campaignowner.com',
+            'account_name'       => 'PMP Satu',
+            'company_name'       => 'Domino Mall',
+            'address_line1'      => 'Jl. Gunung Salak 31 A',
+            'city'               => 'Badung',
+            'country_id'         => $this->country->country_id,
+            'merchant_ids'       => [
+                    $this->mall_a->merchant_id,
+                    $this->mall_b->merchant_id,
+                    $this->mall_c->merchant_id,
+                    $this->mall_x->merchant_id,
+                ],
+            'user_password'      => '123456',
+            'role_name'          => 'Campaign Owner',
+        ];
+
+        $response = $this->setRequestPostUpdateAccount($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame("Link to tenant is not allowed", $response->message);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+    }
+
+    public function testUpdateDominoposWithInactiveLink()
+    {
+        /*
+        * 
+        */
+        $data = [
+            'select_all_tenants' => 'N',
+            'id'                 => $this->pmp_dominopos_user->user_id,
+            'account_type_id'    => $this->account_type_dominopos->account_type_id,
+            'user_firstname'     => 'irianto',
+            'user_lastname'      => 'pratama',
+            'user_email'         => 'pmpsatu@campaignowner.com',
+            'account_name'       => 'PMP Satu',
+            'company_name'       => 'Domino Mall',
+            'address_line1'      => 'Jl. Gunung Salak 31 A',
+            'city'               => 'Badung',
+            'country_id'         => $this->country->country_id,
+            'merchant_ids'       => [
+                    $this->mall_a->merchant_id,
+                    $this->mall_b->merchant_id,
+                    $this->mall_c->merchant_id,
+                    $this->mall_x->merchant_id,
+                    $this->tenant_a->merchant_id,
+                    $this->tenant_b1->merchant_id,
+                    $this->tenant_b2->merchant_id,
+                    $this->tenant_c->merchant_id,
+                    $this->tenant_x->merchant_id,
+                ],
+            'user_password'      => '123456',
+            'role_name'          => 'Campaign Owner',
+        ];
+
+        $response = $this->setRequestPostUpdateAccount($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame("Link to tenant is not allowed", $response->message);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
     }
 }

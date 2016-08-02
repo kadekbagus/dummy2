@@ -237,7 +237,7 @@ class postNewAccountTest extends TestCase
         $response = $this->setRequestPostNewAccount($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
         $this->assertSame(14, $response->code);
         $this->assertSame("error", $response->status);
-        $this->assertSame("Link to tenant is does not allowed", $response->message);
+        $this->assertSame("Link to tenant is not allowed", $response->message);
     }
 
     public function testAccountTypeMallFailedLinkObjectTypeIsTenant()
@@ -264,7 +264,7 @@ class postNewAccountTest extends TestCase
         $response = $this->setRequestPostNewAccount($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
         $this->assertSame(14, $response->code);
         $this->assertSame("error", $response->status);
-        $this->assertSame("Link to tenant is does not allowed", $response->message);
+        $this->assertSame("Link to tenant is not allowed", $response->message);
     }
 
     public function testAccountTypeMerchantSuccess()
@@ -324,7 +324,7 @@ class postNewAccountTest extends TestCase
         $response = $this->setRequestPostNewAccount($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
         $this->assertSame(14, $response->code);
         $this->assertSame("error", $response->status);
-        $this->assertSame("Link to tenant is does not allowed", $response->message);
+        $this->assertSame("Link to tenant is not allowed", $response->message);
     }
 
     public function testAccountTypeMerchantFailedLinkObjectTypeIsMall()
@@ -351,7 +351,7 @@ class postNewAccountTest extends TestCase
         $response = $this->setRequestPostNewAccount($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
         $this->assertSame(14, $response->code);
         $this->assertSame("error", $response->status);
-        $this->assertSame("Link to tenant is does not allowed", $response->message);
+        $this->assertSame("Link to tenant is not allowed", $response->message);
     }
 
     public function testAccountTypeAgencySuccess()
@@ -411,7 +411,7 @@ class postNewAccountTest extends TestCase
         $response = $this->setRequestPostNewAccount($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
         $this->assertSame(14, $response->code);
         $this->assertSame("error", $response->status);
-        $this->assertSame("Link to tenant is does not allowed", $response->message);
+        $this->assertSame("Link to tenant is not allowed", $response->message);
     }
 
     public function testAccountType3rdSuccess()
@@ -471,7 +471,7 @@ class postNewAccountTest extends TestCase
         $response = $this->setRequestPostNewAccount($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
         $this->assertSame(14, $response->code);
         $this->assertSame("error", $response->status);
-        $this->assertSame("Link to tenant is does not allowed", $response->message);
+        $this->assertSame("Link to tenant is not allowed", $response->message);
     }
 
     public function testAccountTypeDominoposSuccess()

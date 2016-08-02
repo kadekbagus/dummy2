@@ -1604,9 +1604,11 @@ class LoginAPIController extends ControllerAPI
                                     ->leftJoin('merchants as pm', DB::Raw('pm.merchant_id'), '=', 'merchants.parent_id')
                                     ->select(
                                               DB::Raw("IF ({$prefix}merchants.object_type = 'tenant', pm.merchant_id, {$prefix}merchants.merchant_id) as merchant_id"),
+                                              DB::Raw("IF ({$prefix}merchants.object_type = 'tenant', pm.status, {$prefix}merchants.status) as status"),
+                                              DB::Raw("IF ({$prefix}merchants.object_type = 'tenant', pm.object_type, {$prefix}merchants.object_type) as object_type"),
                                               DB::Raw("IF ({$prefix}merchants.object_type = 'tenant', pm.timezone_id, {$prefix}merchants.timezone_id) as timezone_id")
                                         )
-                                    ->where('merchants.status', '!=', 'deleted')
+                                    ->where('merchants.status', '=', 'active')
                                     ->groupBy('merchant_id');
 
         // access
