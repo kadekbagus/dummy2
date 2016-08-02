@@ -290,7 +290,7 @@ class LoginAPIController extends IntermediateBaseController
                 $mall_id_from_state = json_decode($this->base64UrlDecode($state))->mid;
                 $angular_ci_from_state = json_decode($this->base64UrlDecode($state))->aci;
                 $redirect_to_url_from_state = json_decode($this->base64UrlDecode($state))->redirect_to_url;
-                $_GET[Config::get('orbit.user_location.query_string.name', 'ul')] => json_decode($this->base64UrlDecode($state))->user_location;
+                $_GET[Config::get('orbit.user_location.query_string.name', 'ul')] = json_decode($this->base64UrlDecode($state))->user_location;
 
                 // from mall = yes, indicate the request coming from Mall CI, then use MobileCIAPIController::getGoogleCallbackView
                 // to set the session and other things
