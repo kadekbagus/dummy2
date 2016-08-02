@@ -50,6 +50,7 @@ class PowerSearchCIAPIController extends BaseAPIController
         $keyword = null;
         $activityPage = Activity::mobileci()
                         ->setActivityType('search');
+        $this->response = new ResponseProvider();
 
         try {
             $httpCode = 200;
