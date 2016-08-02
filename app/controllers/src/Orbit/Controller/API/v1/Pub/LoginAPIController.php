@@ -1032,16 +1032,6 @@ class LoginAPIController extends IntermediateBaseController
                 $this->setSignUpActivity($user, $signUpVia, $retailer);
             }
         }
-
-        $session = $this->session;
-        $visited_locations = [];
-        if (! empty($session->read('visited_location'))) {
-            $visited_locations = $session->read('visited_location');
-        }
-        if (! in_array($retailer->merchant_id, $visited_locations)) {
-            $this->setSignInActivity($user, $signUpVia, $retailer, null);
-            $session->write('visited_location', array_merge($visited_locations, [$retailer->merchant_id]));
-        }
     }
 
     // create activity signup from socmed
@@ -1068,43 +1058,5 @@ class LoginAPIController extends IntermediateBaseController
         }
 
         $activity->save();
-    }
-
-    // create activity signin from socmed
-    public function setSignInActivity($user, $from, $retailer, $activity = null)
-    {
-        if (is_object($user)) {
-            if (is_null($activity)) {
-                $activity = Activity::mobileci()
-                        ->setLocation($retailer)
-                        ->setUser($user)
-                        ->setActivityName('login_ok')
-                        ->setActivityNameLong('Sign In')
-                        ->setActivityType('login')
-                        ->setObject($user)
-                        ->setModuleName('Application')
-                        ->responseOK();
-
-                $activity->save();
-            }
-
-            $newUserSignin = new UserSignin();
-            $newUserSignin->user_id = $user->user_id;
-            $newUserSignin->signin_via = $from;
-            $newUserSignin->location_id = $retailer->merchant_id;
-            $newUserSignin->activity_id = $activity->activity_id;
-            $newUserSignin->save();
-        } else {
-            $activity = Activity::mobileci()
-                    ->setLocation($retailer)
-                    ->setUser('guest')
-                    ->setActivityName('login_failed')
-                    ->setActivityNameLong('Sign In Failed')
-                    ->setActivityType('login')
-                    ->setModuleName('Application')
-                    ->responseFailed();
-
-            $activity->save();
-        }
     }
 }
