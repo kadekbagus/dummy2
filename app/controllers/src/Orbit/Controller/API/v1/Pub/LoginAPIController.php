@@ -22,6 +22,7 @@ use Config;
 use Mall;
 use stdClass;
 use Activity;
+use UserSignin;
 use User;
 use UserDetail;
 use Hash;
@@ -37,6 +38,8 @@ use Orbit\Helper\Net\Domain;
 use \Carbon\Carbon;
 use \Exception;
 use \Inbox;
+use Orbit\Helper\Session\UserGetter;
+use Orbit\Helper\Net\SessionPreparer;
 
 class LoginAPIController extends IntermediateBaseController
 {
@@ -354,6 +357,36 @@ class LoginAPIController extends IntermediateBaseController
                     if (empty($angular_ci_from_state)) {
                         return Redirect::to(Config::get('orbit.shop.after_social_sign_in'));
                     }
+
+                    $mallId = $mall_id_from_state;
+
+                    if (!empty($mallId)) {
+                        $this->registerCustomValidation();
+
+                        $validator = Validator::make(
+                            array(
+                                'mall_id' => $mallId,
+                            ),
+                            array(
+                                'mall_id' => 'orbit.empty.mall',
+                            )
+                        );
+
+                        if ($validator->fails()) {
+                            $errorMessage = $validator->messages()->first();
+                            OrbitShopAPI::throwInvalidArgument($errorMessage);
+                        }
+
+                        $retailer = Mall::excludeDeleted()->where('merchant_id', $mallId)->first();
+
+                        $this->session = SessionPreparer::prepareSession();
+
+                        $user = UserGetter::getLoggedInUserOrGuest($this->session);
+
+                        if (is_object($user)) {
+                            $this->acquireUser($retailer, $user, 'facebook');
+                        }
+                    }
                     // request coming from angular-ci
                     return Redirect::to(urldecode($redirect_to_url_from_state));
                 }
@@ -497,6 +530,7 @@ class LoginAPIController extends IntermediateBaseController
             $query .= ',location,relationship_status,photos,work,education';
         }
         $response = $fb->get($query, $accessToken->getValue());
+
         $user = $response->getGraphUser();
 
         $userEmail = isset($user['email']) ? $user['email'] : '';
@@ -570,8 +604,38 @@ class LoginAPIController extends IntermediateBaseController
         setcookie('login_from', 'Facebook', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
 
         if ($angular_ci) {
+            $mallId = OrbitInput::get('mall_id', null);
+
+            if (!empty($mallId)) {
+                $this->registerCustomValidation();
+
+                $validator = Validator::make(
+                    array(
+                        'mall_id' => $mallId,
+                    ),
+                    array(
+                        'mall_id' => 'orbit.empty.mall',
+                    )
+                );
+
+                if ($validator->fails()) {
+                    $errorMessage = $validator->messages()->first();
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+
+                $retailer = Mall::excludeDeleted()->where('merchant_id', $mallId)->first();
+
+                $this->session = SessionPreparer::prepareSession();
+
+                $user = UserGetter::getLoggedInUserOrGuest($this->session);
+
+                if (is_object($user)) {
+                    $this->acquireUser($retailer, $user, 'facebook');
+                }
+            }
             return Redirect::to(urldecode($encoded_redirect_to_url));
         }
+
         return Redirect::to(Config::get('orbit.shop.after_social_sign_in'));
     }
 
@@ -937,5 +1001,128 @@ class LoginAPIController extends IntermediateBaseController
         $this->appOrigin = $appOrigin;
 
         return $this;
+    }
+
+    protected function acquireUser($retailer, $user, $signUpVia = null)
+    {
+        if (is_null($signUpVia)) {
+            $signUpVia = 'form';
+            if (isset($_COOKIE['login_from'])) {
+                switch (strtolower($_COOKIE['login_from'])) {
+                    case 'google':
+                        $signUpVia = 'google';
+                        break;
+                    case 'facebook':
+                        $signUpVia = 'facebook';
+                        break;
+                    default:
+                        $signUpVia = 'form';
+                        break;
+                }
+            }
+
+            $signUpVia = $user->isGuest() ? 'guest' : $signUpVia;
+        }
+
+        if ($user->isConsumer()) {
+            $firstAcquired = $retailer->acquireUser($user, $signUpVia);
+
+            // if the user is viewing the mall for the 1st time then set the signup activity
+            if ($firstAcquired) {
+                $this->setSignUpActivity($user, $signUpVia, $retailer);
+            }
+        }
+
+        $session = $this->session;
+        $visited_locations = [];
+        if (! empty($session->read('visited_location'))) {
+            $visited_locations = $session->read('visited_location');
+        }
+        if (! in_array($retailer->merchant_id, $visited_locations)) {
+            $this->setSignInActivity($user, $signUpVia, $retailer, null);
+            $session->write('visited_location', array_merge($visited_locations, [$retailer->merchant_id]));
+        }
+    }
+
+    // create activity signup from socmed
+    public function setSignUpActivity($user, $from, $retailer)
+    {
+        $activity = Activity::mobileci()
+            ->setLocation($retailer)
+            ->setActivityType('registration')
+            ->setUser($user)
+            ->setActivityName('registration_ok')
+            ->setObject($user)
+            ->setModuleName('User')
+            ->responseOK();
+
+        if ($from === 'facebook') {
+            $activity->setActivityNameLong('Sign Up via Mobile (Facebook)')
+                    ->setNotes('Sign Up via Mobile (Facebook) OK');
+        } else if ($from === 'google') {
+            $activity->setActivityNameLong('Sign Up via Mobile (Google+)')
+                    ->setNotes('Sign Up via Mobile (Google+) OK');
+        } else if ($from === 'form') {
+            $activity->setActivityNameLong('Sign Up via Mobile (Email Address)')
+                    ->setNotes('Sign Up via Mobile (Email Address) OK');
+        }
+
+        $activity->save();
+    }
+
+    // create activity signin from socmed
+    public function setSignInActivity($user, $from, $retailer, $activity = null)
+    {
+        if (is_object($user)) {
+            if (is_null($activity)) {
+                $activity = Activity::mobileci()
+                        ->setLocation($retailer)
+                        ->setUser($user)
+                        ->setActivityName('login_ok')
+                        ->setActivityNameLong('Sign In')
+                        ->setActivityType('login')
+                        ->setObject($user)
+                        ->setModuleName('Application')
+                        ->responseOK();
+
+                $activity->save();
+            }
+
+            $newUserSignin = new UserSignin();
+            $newUserSignin->user_id = $user->user_id;
+            $newUserSignin->signin_via = $from;
+            $newUserSignin->location_id = $retailer->merchant_id;
+            $newUserSignin->activity_id = $activity->activity_id;
+            $newUserSignin->save();
+        } else {
+            $activity = Activity::mobileci()
+                    ->setLocation($retailer)
+                    ->setUser('guest')
+                    ->setActivityName('login_failed')
+                    ->setActivityNameLong('Sign In Failed')
+                    ->setActivityType('login')
+                    ->setModuleName('Application')
+                    ->responseFailed();
+
+            $activity->save();
+        }
+    }
+
+    protected function registerCustomValidation()
+    {
+        // Check the existance of merchant id
+        Validator::extend('orbit.empty.mall', function ($attribute, $value, $parameters) {
+            $mall = Mall::excludeDeleted()
+                        ->where('merchant_id', $value)
+                        ->first();
+
+            if (empty($mall)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.empty.mall', $mall);
+
+            return TRUE;
+        });
     }
 }
