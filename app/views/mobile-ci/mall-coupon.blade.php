@@ -124,7 +124,7 @@
                 <p>{{ nl2br(e($coupon->description)) }}</p>
             </div>
             <div class="col-xs-12">
-                <p>{{ nl2br(e($coupon->long_description)) }}</p>
+                <p><!-- {{ nl2br(e($coupon->long_description)) }} --></p>
             </div>
             <div class="col-xs-12">
                 <h4><strong>{{{ Lang::get('mobileci.coupon_detail.validity_label') }}}</strong></h4>
