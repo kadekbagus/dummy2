@@ -123,7 +123,7 @@ class AccountAPIController extends ControllerAPI
                 'Dominopos' => 'mall_tenant'
             ];
 
-        $get_tenants = CampaignLocation::where('status', '!=', 'deleted');
+        $get_tenants = CampaignLocation::where('status', '=', 'active');
 
         // access
         if (array_key_exists($type_name, $permission)) {
@@ -1535,7 +1535,7 @@ class AccountAPIController extends ControllerAPI
                                                 ->leftJoin('campaign_account', 'campaign_account.user_id', '=', 'user_merchant.user_id')
                                                 ->leftJoin('account_types', 'account_types.account_type_id', '=', 'campaign_account.account_type_id')
                                                 ->where('account_types.unique_rule', '!=', 'none')
-                                                ->where('merchants.status', '!=', 'deleted')
+                                                ->where('merchants.status', '=', 'active')
                                                 ->whereIn('user_merchant.object_type', $unique_rule)
                                                 ->whereIn('user_merchant.merchant_id', $value);
 
@@ -1583,11 +1583,11 @@ class AccountAPIController extends ControllerAPI
                 $access = explode("_", $permission[$account_type->type_name]);
                 // access
                 if (array_key_exists($account_type->type_name, $permission)) {
-                    $mall_tenant = CampaignLocation::where('merchants.status', '!=', 'deleted')
+                    $mall_tenant = CampaignLocation::where('merchants.status', '=', 'active')
                                                 ->whereIn('merchants.object_type', $access)
                                                 ->whereIn('merchants.merchant_id', $value)
-                                                ->first();
-                    if (empty($mall_tenant)) {
+                                                ->get()->count();
+                    if ($mall_tenant !== count($value)) {
                         return FALSE;
                     }
                 }
