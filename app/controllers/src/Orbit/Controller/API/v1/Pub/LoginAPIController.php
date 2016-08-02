@@ -270,6 +270,7 @@ class LoginAPIController extends IntermediateBaseController
         $encoded_caller_url_full = OrbitInput::get('from_url_full', NULL); // this input using full-url
         $encoded_redirect_to_url = OrbitInput::get('to_url', NULL); // this input using full-url
         $mall_id = OrbitInput::get('mid', NULL);
+        $user_location = OrbitInput::get(Config::get('orbit.user_location.query_string.name', 'ul'), NULL);
         $angular_ci = OrbitInput::get('aci', NULL);
 
         $googleService = OAuth::consumer( 'Google' );
@@ -289,6 +290,8 @@ class LoginAPIController extends IntermediateBaseController
                 $mall_id_from_state = json_decode($this->base64UrlDecode($state))->mid;
                 $angular_ci_from_state = json_decode($this->base64UrlDecode($state))->aci;
                 $redirect_to_url_from_state = json_decode($this->base64UrlDecode($state))->redirect_to_url;
+                $_GET[Config::get('orbit.user_location.query_string.name', 'ul')] => json_decode($this->base64UrlDecode($state))->user_location;
+
                 // from mall = yes, indicate the request coming from Mall CI, then use MobileCIAPIController::getGoogleCallbackView
                 // to set the session and other things
                 if (! empty($mall_id_from_state)) {
@@ -409,7 +412,12 @@ class LoginAPIController extends IntermediateBaseController
                 // get googleService authorization
                 $url = $googleService->getAuthorizationUri();
                 // override state param to have our destination url inside
-                $state_array = array('redirect_to_url' => $encoded_redirect_to_url, 'mid' => $mall_id, 'aci' => $angular_ci);
+                $state_array = array(
+                    'redirect_to_url' => $encoded_redirect_to_url,
+                    'mid' => $mall_id,
+                    'aci' => $angular_ci,
+                    'user_location' => $user_location
+                );
                 $state = json_encode($state_array);
                 $stateString = $this->base64UrlEncode($state);
                 $parsed_url = parse_url((string)$url);
@@ -649,6 +657,7 @@ class LoginAPIController extends IntermediateBaseController
     public function postSocialLoginView()
     {
         $mall_id = OrbitInput::get('mall_id', NULL);
+        $user_location = OrbitInput::get(Config::get('orbit.user_location.query_string.name', 'ul'), NULL);
         $encoded_caller_url_full = OrbitInput::get('from_url_full', NULL);
         $encoded_redirect_to_url = OrbitInput::get('to_url', NULL);
         $angular_ci = OrbitInput::get('aci', FALSE);
@@ -690,7 +699,8 @@ class LoginAPIController extends IntermediateBaseController
             'caller_url' => $encoded_caller_url_full,
             'redirect_to_url' => $encoded_redirect_to_url,
             'aci' => $angular_ci,
-            'mall_id' => $mall_id
+            'mall_id' => $mall_id,
+            Config::get('orbit.user_location.query_string.name', 'ul') => $user_location
         ]);
 
         // This is to re-popup the permission on login in case some of the permissions revoked by user
