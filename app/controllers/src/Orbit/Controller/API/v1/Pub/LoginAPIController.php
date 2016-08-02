@@ -1107,22 +1107,4 @@ class LoginAPIController extends IntermediateBaseController
             $activity->save();
         }
     }
-
-    protected function registerCustomValidation()
-    {
-        // Check the existance of merchant id
-        Validator::extend('orbit.empty.mall', function ($attribute, $value, $parameters) {
-            $mall = Mall::excludeDeleted()
-                        ->where('merchant_id', $value)
-                        ->first();
-
-            if (empty($mall)) {
-                return FALSE;
-            }
-
-            App::instance('orbit.empty.mall', $mall);
-
-            return TRUE;
-        });
-    }
 }
