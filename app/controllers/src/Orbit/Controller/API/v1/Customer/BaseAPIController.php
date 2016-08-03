@@ -84,6 +84,20 @@ class BaseAPIController extends ControllerAPI
                         $signUpVia = 'form';
                         break;
                 }
+            } else {
+                if (! empty($session->read('login_from'))) {
+                    switch (strtolower($session->read('login_from'))) {
+                        case 'google':
+                            $signUpVia = 'google';
+                            break;
+                        case 'facebook':
+                            $signUpVia = 'facebook';
+                            break;
+                        default:
+                            $signUpVia = 'form';
+                            break;
+                    }
+                }
             }
 
             $signUpVia = $user->isGuest() ? 'guest' : $signUpVia;

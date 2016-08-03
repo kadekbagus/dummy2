@@ -383,6 +383,7 @@ class LoginAPIController extends IntermediateBaseController
                         $retailer = Mall::excludeDeleted()->where('merchant_id', $mallId)->first();
 
                         $this->session = SessionPreparer::prepareSession();
+                        $this->session->write('login_from', 'google');
 
                         $user = UserGetter::getLoggedInUserOrGuest($this->session);
 
@@ -634,6 +635,7 @@ class LoginAPIController extends IntermediateBaseController
                 $retailer = Mall::excludeDeleted()->where('merchant_id', $mall_id)->first();
 
                 $this->session = SessionPreparer::prepareSession();
+                $this->session->write('login_from', 'facebook');
 
                 $user = UserGetter::getLoggedInUserOrGuest($this->session);
 
@@ -911,6 +913,7 @@ class LoginAPIController extends IntermediateBaseController
             // set sign in activity
             \MobileCI\MobileCIAPIController::create()->setSession($this->session)->setSignInActivity($user, 'form', $mall, null);
             $this->session->write('visited_location', [$mall->merchant_id]);
+            $this->session->write('login_from', 'form');
 
             // update last visited records
             $user_detail = UserDetail::where('user_id', $user->user_id)->first();
