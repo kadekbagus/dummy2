@@ -909,17 +909,9 @@ class LoginAPIController extends IntermediateBaseController
                 \MobileCI\MobileCIAPIController::create()->setSession($this->session)->setSignUpActivity($user, 'form', $mall);
             }
 
-            // if the user is viewing the mall for the 1st time in this session
-            // then set also the sign in activity
-            $visited_locations = [];
-            if (! empty($this->session->read('visited_location'))) {
-                $visited_locations = $this->session->read('visited_location');
-            }
-            if (! in_array($mall->merchant_id, $visited_locations)) {
-                // todo: remove comment if the QA ok'ed this implementation, so it not affect dashboard
-                \MobileCI\MobileCIAPIController::create()->setSession($this->session)->setSignInActivity($user, 'form', $mall, null);
-                $this->session->write('visited_location', array_merge($visited_locations, [$mall->merchant_id]));
-            }
+            // set sign in activity
+            \MobileCI\MobileCIAPIController::create()->setSession($this->session)->setSignInActivity($user, 'form', $mall, null);
+            $this->session->write('visited_location', [$mall->merchant_id]);
 
             // update last visited records
             $user_detail = UserDetail::where('user_id', $user->user_id)->first();
