@@ -70,6 +70,7 @@ class BaseAPIController extends ControllerAPI
 
     protected function acquireUser($retailer, $user, $signUpVia = null)
     {
+        $session = $this->session;
         if (is_null($signUpVia)) {
             $signUpVia = 'form';
             if (isset($_COOKIE['login_from'])) {
@@ -112,7 +113,6 @@ class BaseAPIController extends ControllerAPI
             }
         }
 
-        $session = $this->session;
         $visited_locations = [];
         if (! empty($session->read('visited_location'))) {
             $visited_locations = $session->read('visited_location');
