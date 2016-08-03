@@ -123,7 +123,7 @@ class AccountAPIController extends ControllerAPI
                 'Dominopos' => 'mall_tenant'
             ];
 
-        $get_tenants = CampaignLocation::where('status', '=', 'active');
+        $get_tenants = CampaignLocation::excludeDeleted();
 
         // access
         if (array_key_exists($type_name, $permission)) {
