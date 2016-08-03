@@ -79,7 +79,6 @@ class RegistrationAPIController extends IntermediateBaseController
 
             // let mobileci handle it's own session
             if ($this->appOrigin !== 'mobile_ci') {
-
                 try{
                     $this->session->start([], 'no-session-creation');
 
@@ -115,7 +114,7 @@ class RegistrationAPIController extends IntermediateBaseController
                 $sessionHeader = 'Set-' . $sessionHeader;
                 $this->customHeaders[$sessionHeader] = $this->session->getSessionId();
 
-                $activity_name_long = 'Sign Up';
+                $activity_name_long = 'Sign Up via Mobile (Email Address)';
                 // Successfull login
                 $activity->setUser($user)
                          ->setActivityName('registration_ok')
