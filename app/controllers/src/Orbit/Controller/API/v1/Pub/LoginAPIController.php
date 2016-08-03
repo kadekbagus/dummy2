@@ -291,7 +291,7 @@ class LoginAPIController extends IntermediateBaseController
                 $angular_ci_from_state = json_decode($this->base64UrlDecode($state))->aci;
                 $redirect_to_url_from_state = json_decode($this->base64UrlDecode($state))->redirect_to_url;
                 $_GET[Config::get('orbit.user_location.query_string.name', 'ul')] = json_decode($this->base64UrlDecode($state))->user_location;
-
+                $this->session = SessionPreparer::prepareSession();
                 // from mall = yes, indicate the request coming from Mall CI, then use MobileCIAPIController::getGoogleCallbackView
                 // to set the session and other things
                 if (! empty($mall_id_from_state)) {
@@ -305,6 +305,8 @@ class LoginAPIController extends IntermediateBaseController
                     $_GET['last_name'] = $lastName;
                     $_GET['gender'] = $gender;
                     $_GET['socialid'] = $socialid;
+                    $this->session->write('login_from', 'google');
+
                     $response = \MobileCI\MobileCIAPIController::create()->getGoogleCallbackView();
 
                     return $response;
@@ -382,7 +384,6 @@ class LoginAPIController extends IntermediateBaseController
 
                         $retailer = Mall::excludeDeleted()->where('merchant_id', $mallId)->first();
 
-                        $this->session = SessionPreparer::prepareSession();
                         $this->session->write('login_from', 'google');
 
                         $user = UserGetter::getLoggedInUserOrGuest($this->session);
