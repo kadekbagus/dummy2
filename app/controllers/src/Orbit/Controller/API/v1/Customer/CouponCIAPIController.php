@@ -436,7 +436,10 @@ class CouponCIAPIController extends BaseAPIController
                     'tenants' => function($q) {
                         $q->select('merchants.merchant_id')
                             ->where('merchants.status', 'active')
-                            ->where('merchants.parent_id', $this->mall_id);
+                            ->where('merchants.parent_id', $this->mall_id)
+                            ->where('merchants.masterbox_number', '<>', '')
+                            ->whereNotNull('merchants.masterbox_number')
+                            ;
                     },
                     'linkToTenants' => function($q) {
                         $q->select('merchants.merchant_id')

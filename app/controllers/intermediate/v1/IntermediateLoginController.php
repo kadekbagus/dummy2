@@ -765,6 +765,7 @@ class IntermediateLoginController extends IntermediateBaseController
                     $this->session->remove('facebooksdk.state');
                     $this->session->remove('visited_location');
                     $this->session->remove('coupon_location');
+                    $this->session->remove('login_from');
                     $sessionData = $this->session->read(NULL);
                     $sessionData['fullname'] = '';
                     $sessionData['role'] = $guestUser->role->role_name;

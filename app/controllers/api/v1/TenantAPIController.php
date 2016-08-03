@@ -2259,6 +2259,7 @@ class TenantAPIController extends ControllerAPI
                         $tenants->whereRaw("{$prefix}merchants.object_type = 'mall'");
                     }
                 }
+                $tenants->where('merchants.status', '=', 'active');
             }
 
             // filter by account type
