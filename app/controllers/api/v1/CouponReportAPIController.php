@@ -244,8 +244,7 @@ class CouponReportAPIController extends ControllerAPI
                                                             GROUP BY promotion_id
                                                         ) redeemed"),
                                             // On
-                                            DB::raw('redeemed.promotion_id'), '=', 'promotions.promotion_id')
-                                        ->where('promotions.merchant_id', '=', $current_mall);
+                                            DB::raw('redeemed.promotion_id'), '=', 'promotions.promotion_id');
 
             // Filter by Promotion Name
             OrbitInput::get('promotion_name', function($name) use ($coupons) {
@@ -310,11 +309,6 @@ class CouponReportAPIController extends ControllerAPI
 
             // Filter by mall id
             OrbitInput::get('mall_id', function($mallId) use ($coupons) {
-                $coupons->where('promotions.merchant_id', $mallId);
-            });
-
-            // Filter by merchant id / dupes, same as above
-            OrbitInput::get('merchant_id', function($mallId) use ($coupons) {
                 $coupons->where('promotions.merchant_id', $mallId);
             });
 
