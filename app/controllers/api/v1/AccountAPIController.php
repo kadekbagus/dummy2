@@ -136,7 +136,7 @@ class AccountAPIController extends ControllerAPI
             $get_tenants->whereIn('merchant_id', $tenantIds);
         }
 
-        $get_tenants = $get_tenants->orderBy('name')->get();
+        $get_tenants = $get_tenants->orderBy('merchants.status', 'asc')->orderBy('name', 'asc')->get();
 
         $tenantArray = [];
         foreach ($get_tenants as $row) {
