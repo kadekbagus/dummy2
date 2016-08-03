@@ -123,7 +123,7 @@ class AccountAPIController extends ControllerAPI
                 'Dominopos' => 'mall_tenant'
             ];
 
-        $get_tenants = CampaignLocation::where('status', '!=', 'deleted');
+        $get_tenants = CampaignLocation::where('status', '=', 'active');
 
         // access
         if (array_key_exists($type_name, $permission)) {
@@ -1535,33 +1535,21 @@ class AccountAPIController extends ControllerAPI
                                                 ->leftJoin('campaign_account', 'campaign_account.user_id', '=', 'user_merchant.user_id')
                                                 ->leftJoin('account_types', 'account_types.account_type_id', '=', 'campaign_account.account_type_id')
                                                 ->where('account_types.unique_rule', '!=', 'none')
-                                                ->where('merchants.status', '!=', 'deleted')
+                                                ->where('merchants.status', '=', 'active')
                                                 ->whereIn('user_merchant.object_type', $unique_rule)
                                                 ->whereIn('user_merchant.merchant_id', $value);
 
                     OrbitInput::post('id', function($user_id) use ($mall_tenant, $prefix) {
                         $mall_tenant->whereRaw("(
                                 {$prefix}user_merchant.user_id not in (
-                                    select ca.user_id
-                                    from {$prefix}campaign_account ca
-                                    left join {$prefix}campaign_account cas
-                                        on cas.parent_user_id = ca.parent_user_id
-                                    where (
-                                            ca.user_id = (
-                                                            SELECT parent_user_id
-                                                            FROM   {$prefix}campaign_account
-                                                            WHERE  user_id = {$this->quote($user_id)}
-                                                        )
-                                                            OR
-                                            ca.parent_user_id = (
-                                                            SELECT parent_user_id
-                                                            FROM   {$prefix}campaign_account
-                                                            WHERE  user_id = {$this->quote($user_id)}
-                                                        )
-                                            OR ca.user_id = {$this->quote($user_id)}
-                                            OR ca.parent_user_id = {$this->quote($user_id)}
-                                        )
-                                    group by ca.user_id
+                                    select oca.user_id
+                                    from {$prefix}campaign_account oca,
+                                    (
+                                        select ifnull(ca.parent_user_id, ca.user_id) as uid
+                                        from {$prefix}campaign_account ca
+                                        where ca.user_id = {$this->quote($user_id)}
+                                    ) as ca
+                                    where oca.user_id = ca.uid or oca.parent_user_id = ca.uid
                                 )
                             )");
                     });
@@ -1583,11 +1571,11 @@ class AccountAPIController extends ControllerAPI
                 $access = explode("_", $permission[$account_type->type_name]);
                 // access
                 if (array_key_exists($account_type->type_name, $permission)) {
-                    $mall_tenant = CampaignLocation::where('merchants.status', '!=', 'deleted')
+                    $mall_tenant = CampaignLocation::where('merchants.status', '=', 'active')
                                                 ->whereIn('merchants.object_type', $access)
                                                 ->whereIn('merchants.merchant_id', $value)
-                                                ->first();
-                    if (empty($mall_tenant)) {
+                                                ->get()->count();
+                    if ($mall_tenant !== count($value)) {
                         return FALSE;
                     }
                 }
