@@ -582,6 +582,7 @@ class Coupon extends Eloquent
                                     ->setActivityType('view');
                 $activityPageNotes = sprintf('Page viewed: %s', 'Coupon List Page');
                 $activity->setUser($user)
+                        ->setLocation($retailer)
                         ->setActivityName('view_coupon_list')
                         ->setActivityNameLong('Coupon Issuance')
                         ->setObject($activity_coupon)
