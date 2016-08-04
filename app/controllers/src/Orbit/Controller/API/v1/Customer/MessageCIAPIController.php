@@ -81,6 +81,8 @@ class MessageCIAPIController extends BaseAPIController
 
             $user = $this->getLoggedInUser($mallId);
 
+            $mall = Mall::excludeDeleted()->where('merchant_id', $mallId)->first();
+
             $myMessage = Inbox::excludeDeleted()
                             ->select('inbox_id','subject','is_read','created_at')
                             ->where('user_id', $user->user_id)
@@ -152,6 +154,7 @@ class MessageCIAPIController extends BaseAPIController
             if (empty($skip)) {
                 $activityPageNotes = sprintf('Page viewed: %s', 'Notification List Page');
                 $activity->setUser($user)
+                    ->setLocation($mall)
                     ->setActivityName('view_notification_list')
                     ->setActivityNameLong('View Notification List')
                     ->setObject(null)
