@@ -2269,8 +2269,8 @@ class CampaignReportAPIController extends ControllerAPI
                                             from orb_campaign_account oca,
                                             (
                                                 select ifnull(ca.parent_user_id, ca.user_id) as uid
-                                                from orb_campaign_account ca
-                                                where ca.user_id = {$user->user_id}
+                                                from {$prefix}campaign_account ca
+                                                where ca.user_id = {$this->quote($user->user_id)}
                                             ) as ca
                                             where oca.user_id = ca.uid or oca.parent_user_id = ca.uid
                                         )")->first();
