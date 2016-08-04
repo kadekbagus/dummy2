@@ -269,7 +269,8 @@ class LoginAPIController extends IntermediateBaseController
         $caller_url = ! is_null($caller_url) ? URL::route($caller_url) : Config::get('orbit.shop.after_social_sign_in');
         $encoded_caller_url_full = OrbitInput::get('from_url_full', NULL); // this input using full-url
         $encoded_redirect_to_url = OrbitInput::get('to_url', NULL); // this input using full-url
-        $mall_id = OrbitInput::get('mid', OrbitInput::get('mall_id', NULL));
+        $mall_id = OrbitInput::get('mid', NULL);
+        $mall_id_from_desktop = OrbitInput::get('mall_id', NULL);
         $user_location = OrbitInput::get(Config::get('orbit.user_location.query_string.name', 'ul'), NULL);
         $angular_ci = OrbitInput::get('aci', NULL);
 
@@ -288,10 +289,11 @@ class LoginAPIController extends IntermediateBaseController
                 $socialid = isset($user['id']) ? $user['id'] : '';
 
                 $mall_id_from_state = json_decode($this->base64UrlDecode($state))->mid;
+                $mall_id_from_desktop_state = json_decode($this->base64UrlDecode($state))->mall_id;
                 $angular_ci_from_state = json_decode($this->base64UrlDecode($state))->aci;
                 $redirect_to_url_from_state = json_decode($this->base64UrlDecode($state))->redirect_to_url;
                 $_GET[Config::get('orbit.user_location.query_string.name', 'ul')] = json_decode($this->base64UrlDecode($state))->user_location;
-
+                $this->session = SessionPreparer::prepareSession();
                 // from mall = yes, indicate the request coming from Mall CI, then use MobileCIAPIController::getGoogleCallbackView
                 // to set the session and other things
                 if (! empty($mall_id_from_state)) {
@@ -305,6 +307,8 @@ class LoginAPIController extends IntermediateBaseController
                     $_GET['last_name'] = $lastName;
                     $_GET['gender'] = $gender;
                     $_GET['socialid'] = $socialid;
+                    $this->session->write('login_from', 'google');
+
                     $response = \MobileCI\MobileCIAPIController::create()->getGoogleCallbackView();
 
                     return $response;
@@ -361,8 +365,8 @@ class LoginAPIController extends IntermediateBaseController
                         return Redirect::to(Config::get('orbit.shop.after_social_sign_in'));
                     }
 
-                    $mallId = $mall_id_from_state;
-
+                    $mallId = $mall_id_from_desktop_state;
+                    // this flow coming from desktop ci
                     if (!empty($mallId)) {
                         $this->registerCustomValidation();
 
@@ -382,7 +386,7 @@ class LoginAPIController extends IntermediateBaseController
 
                         $retailer = Mall::excludeDeleted()->where('merchant_id', $mallId)->first();
 
-                        $this->session = SessionPreparer::prepareSession();
+                        $this->session->write('login_from', 'google');
 
                         $user = UserGetter::getLoggedInUserOrGuest($this->session);
 
@@ -415,6 +419,7 @@ class LoginAPIController extends IntermediateBaseController
                 $state_array = array(
                     'redirect_to_url' => $encoded_redirect_to_url,
                     'mid' => $mall_id,
+                    'mall_id' => $mall_id_from_desktop,
                     'aci' => $angular_ci,
                     'user_location' => $user_location
                 );
@@ -634,6 +639,7 @@ class LoginAPIController extends IntermediateBaseController
                 $retailer = Mall::excludeDeleted()->where('merchant_id', $mall_id)->first();
 
                 $this->session = SessionPreparer::prepareSession();
+                $this->session->write('login_from', 'facebook');
 
                 $user = UserGetter::getLoggedInUserOrGuest($this->session);
 
@@ -911,6 +917,7 @@ class LoginAPIController extends IntermediateBaseController
             // set sign in activity
             \MobileCI\MobileCIAPIController::create()->setSession($this->session)->setSignInActivity($user, 'form', $mall, null);
             $this->session->write('visited_location', [$mall->merchant_id]);
+            $this->session->write('login_from', 'form');
 
             // update last visited records
             $user_detail = UserDetail::where('user_id', $user->user_id)->first();
