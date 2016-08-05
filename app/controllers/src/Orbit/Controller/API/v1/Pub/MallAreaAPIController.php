@@ -43,6 +43,9 @@ class MallAreaAPIController extends ControllerAPI
             $usingDemo = Config::get('orbit.is_demo', FALSE);
             $host = Config::get('orbit.elasticsearch');
 
+            $sort_by = OrbitInput::get('sortby',null);
+            $sort_mode = OrbitInput::get('sortmode','asc');
+
             $client = ClientBuilder::create() // Instantiate a new ClientBuilder
                     ->setHosts($host['hosts']) // Set the hosts
                     ->build();
@@ -87,6 +90,27 @@ class MallAreaAPIController extends ControllerAPI
             $take = PaginationNumber::parseTakeFromGet('geo_location');
             $skip = PaginationNumber::parseSkipFromGet();
 
+            switch ($sort_by) {
+                case 'name':
+                    $sortby = '{"name.raw" : {"order" : "' . $sort_mode . '"}}';
+                    break;
+
+                default:
+                    $sortby = '{"_score" : {"order" : "' . $sort_mode . '"}},
+                        {
+                            "_geo_distance": {
+                                "position": {
+                                    "lon": ' . $longitude . ',
+                                    "lat": ' . $latitude . '
+                                },
+                                "order": "' . $sort_mode . '",
+                                "unit": "km",
+                                "distance_type": "plane"
+                            }
+                        }';
+                    break;
+            }
+
             $json_area = '{
                         "from" : ' . $skip . ', "size" : ' . $take . ',
                             "query": {
@@ -119,18 +143,7 @@ class MallAreaAPIController extends ControllerAPI
                                 }
                             },
                             "sort": [
-                                "_score",
-                                {
-                                    "_geo_distance": {
-                                        "position": {
-                                            "lon": ' . $longitude . ',
-                                            "lat": ' . $latitude . '
-                                        },
-                                        "order": "asc",
-                                        "unit": "km",
-                                        "distance_type": "plane"
-                                    }
-                                }
+                                ' . $sortby . '
                             ]
                         }';
 
