@@ -12,6 +12,7 @@
 use Net\Security\RequestAccess;
 use Orbit\Helper\Net\FBBotChecker;
 use Orbit\Helper\Security\MallAccess;
+use Net\Util\MobileDetect;
 
 App::after(function($request, $response)
 {
@@ -148,6 +149,12 @@ Route::filter('turn-off-query-string-session', function()
 */
 Route::filter('orbit-settings', function()
 {
+    if (! (new MobileDetect)->isMobile()) {
+        Config::set('orbit.error_message.e500', 'Desktop version is coming soon, please use mobile device to access this site at the moment.');
+
+        App::abort(403, Config::get('orbit.error_message.e500'));
+    }
+
     if (! App::make('orbitSetting')->getSetting('current_retailer')) {
         throw new Exception ('You have to setup current retailer first on Admin Portal.');
     }
