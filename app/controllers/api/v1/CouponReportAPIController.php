@@ -216,8 +216,8 @@ class CouponReportAPIController extends ControllerAPI
                                         'promotions.updated_at',
 
                                         DB::raw("(select GROUP_CONCAT(IF({$prefix}merchants.object_type = 'tenant', CONCAT({$prefix}merchants.name,' at ', pm.name), CONCAT('Mall at ',{$prefix}merchants.name)) separator ', ') from {$prefix}promotion_retailer
-                                        inner join {$prefix}merchants on {$prefix}merchants.merchant_id = {$prefix}promotion_retailer.retailer_id
-                                        inner join {$prefix}merchants pm on {$prefix}merchants.parent_id = pm.merchant_id
+                                        left join {$prefix}merchants on {$prefix}merchants.merchant_id = {$prefix}promotion_retailer.retailer_id
+                                        left join {$prefix}merchants pm on {$prefix}merchants.parent_id = pm.merchant_id
                                         where {$prefix}promotion_retailer.promotion_id = {$prefix}promotions.promotion_id) as campaign_location_names"),
                                         DB::raw("COUNT(DISTINCT {$prefix}promotion_retailer.promotion_retailer_id) as total_location"),
                                         DB::raw("CASE WHEN {$prefix}promotions.end_date < {$this->quote($now)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END AS campaign_status"),
