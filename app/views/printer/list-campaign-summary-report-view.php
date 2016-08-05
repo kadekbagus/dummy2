@@ -249,13 +249,13 @@
             <?php $count = 1; while ($row = $statement->fetch(PDO::FETCH_OBJ)) : ?>
                 <tr class="{{ $rowCounter % 2 === 0 ? 'zebra' : '' }}">
                     <td><?php echo $count++; ?></td>
-                    <td><?php echo $me->printUtf8($row->campaign_name); ?></td>
+                    <td><?php echo $row->campaign_name; ?></td>
                     <td><?php echo htmlentities($row->campaign_type); ?></td>
                     <td>
                         <?php
                             $locations = explode(', ', $row->campaign_location_names);
                             for($x = 0; $x < count($locations); $x++) {
-                                echo $me->printUtf8($locations[$x]) . '<br>';
+                                echo $locations[$x] . '<br>';
                             }
                         ?>
                     </td>
