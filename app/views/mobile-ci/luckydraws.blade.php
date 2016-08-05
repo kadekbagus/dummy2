@@ -9,7 +9,7 @@
                 @foreach($data->records as $luckydraw)
                     <div class="col-xs-12 col-sm-12 item-x" data-ids="{{$luckydraw->lucky_draw_id}}" id="item-{{$luckydraw->lucky_draw_id}}">
                         <section class="list-item-single-tenant">
-                            <a class="list-item-link" data-href="{{ route('ci-luckydraw-detail', ['id' => $luckydraw->lucky_draw_id]) }}" href="{{ \Orbit\Helper\Net\UrlChecker::blockedRoute('ci-luckydraw-detail', ['id' => $luckydraw->lucky_draw_id], $session) }}">
+                            <a class="list-item-link" data-href="{{ route('ci-luckydraw-detail', ['id' => $luckydraw->lucky_draw_id, 'name' => Str::slug($luckydraw->lucky_draw_name)]) }}" href="{{ \Orbit\Helper\Net\UrlChecker::blockedRoute('ci-luckydraw-detail', ['id' => $luckydraw->lucky_draw_id, 'name' => Str::slug($luckydraw->lucky_draw_name)], $session) }}">
                                 <div class="list-item-info">
                                     <header class="list-item-title">
                                         <div><strong>{{ $luckydraw->lucky_draw_name }}</strong></div>
