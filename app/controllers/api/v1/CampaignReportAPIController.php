@@ -184,8 +184,8 @@ class CampaignReportAPIController extends ControllerAPI
                 (
                     select GROUP_CONCAT(IF({$tablePrefix}merchants.object_type = 'tenant', CONCAT({$tablePrefix}merchants.name,' at ', pm.name), CONCAT('Mall at ',{$tablePrefix}merchants.name) ) separator ', ')
                     from {$tablePrefix}news_merchant
-                    inner join {$tablePrefix}merchants on {$tablePrefix}merchants.merchant_id = {$tablePrefix}news_merchant.merchant_id
-                    inner join {$tablePrefix}merchants pm on {$tablePrefix}merchants.parent_id = pm.merchant_id
+                    left join {$tablePrefix}merchants on {$tablePrefix}merchants.merchant_id = {$tablePrefix}news_merchant.merchant_id
+                    left join {$tablePrefix}merchants pm on {$tablePrefix}merchants.parent_id = pm.merchant_id
                     where {$tablePrefix}news_merchant.news_id = {$tablePrefix}news.news_id
                 ) as campaign_location_names,
 
@@ -273,8 +273,8 @@ class CampaignReportAPIController extends ControllerAPI
                 (
                     select GROUP_CONCAT(IF({$tablePrefix}merchants.object_type = 'tenant', CONCAT({$tablePrefix}merchants.name,' at ', pm.name), CONCAT('Mall at ',{$tablePrefix}merchants.name) ) separator ', ')
                     from {$tablePrefix}news_merchant
-                    inner join {$tablePrefix}merchants on {$tablePrefix}merchants.merchant_id = {$tablePrefix}news_merchant.merchant_id
-                    inner join {$tablePrefix}merchants pm on {$tablePrefix}merchants.parent_id = pm.merchant_id
+                    left join {$tablePrefix}merchants on {$tablePrefix}merchants.merchant_id = {$tablePrefix}news_merchant.merchant_id
+                    left join {$tablePrefix}merchants pm on {$tablePrefix}merchants.parent_id = pm.merchant_id
                     where {$tablePrefix}news_merchant.news_id = {$tablePrefix}news.news_id
                 ) as campaign_location_names,
                 {$tablePrefix}news.status, CASE WHEN {$tablePrefix}campaign_status.campaign_status_name = 'expired' THEN {$tablePrefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$tablePrefix}news.end_date < {$this->quote($now)} THEN 'expired' ELSE {$tablePrefix}campaign_status.campaign_status_name END) END  AS campaign_status, {$tablePrefix}campaign_status.order"))
@@ -361,8 +361,8 @@ class CampaignReportAPIController extends ControllerAPI
                 ) as popup_clicks,
                 (
                     select GROUP_CONCAT(IF({$tablePrefix}merchants.object_type = 'tenant', CONCAT({$tablePrefix}merchants.name,' at ', pm.name), CONCAT('Mall at ',{$tablePrefix}merchants.name)) separator ', ') from {$tablePrefix}promotion_retailer
-                    inner join {$tablePrefix}merchants on {$tablePrefix}merchants.merchant_id = {$tablePrefix}promotion_retailer.retailer_id
-                    inner join {$tablePrefix}merchants pm on {$tablePrefix}merchants.parent_id = pm.merchant_id
+                    left join {$tablePrefix}merchants on {$tablePrefix}merchants.merchant_id = {$tablePrefix}promotion_retailer.retailer_id
+                    left join {$tablePrefix}merchants pm on {$tablePrefix}merchants.parent_id = pm.merchant_id
                     where {$tablePrefix}promotion_retailer.promotion_id = {$tablePrefix}promotions.promotion_id
                 ) as campaign_location_names,
 
@@ -803,8 +803,8 @@ class CampaignReportAPIController extends ControllerAPI
                     (
                         select GROUP_CONCAT(IF({$tablePrefix}merchants.object_type = 'tenant', CONCAT({$tablePrefix}merchants.name,' at ', pm.name), CONCAT('Mall at ',{$tablePrefix}merchants.name) ) separator ', ')
                         from {$tablePrefix}news_merchant
-                        inner join {$tablePrefix}merchants on {$tablePrefix}merchants.merchant_id = {$tablePrefix}news_merchant.merchant_id
-                        inner join {$tablePrefix}merchants pm on {$tablePrefix}merchants.parent_id = pm.merchant_id
+                        left join {$tablePrefix}merchants on {$tablePrefix}merchants.merchant_id = {$tablePrefix}news_merchant.merchant_id
+                        left join {$tablePrefix}merchants pm on {$tablePrefix}merchants.parent_id = pm.merchant_id
                         where {$tablePrefix}news_merchant.news_id = {$this->quote($campaign_id)}
                     ) as campaign_location_names
                 ";
@@ -829,15 +829,15 @@ class CampaignReportAPIController extends ControllerAPI
                     (
                         select GROUP_CONCAT(IF({$tablePrefix}merchants.object_type = 'tenant', CONCAT({$tablePrefix}merchants.name,' at ', pm.name), CONCAT('Mall at ',{$tablePrefix}merchants.name)) separator ', ')
                         from {$tablePrefix}promotion_retailer
-                        inner join {$tablePrefix}merchants on {$tablePrefix}merchants.merchant_id = {$tablePrefix}promotion_retailer.retailer_id
-                        inner join {$tablePrefix}merchants pm on {$tablePrefix}merchants.parent_id = pm.merchant_id
+                        left join {$tablePrefix}merchants on {$tablePrefix}merchants.merchant_id = {$tablePrefix}promotion_retailer.retailer_id
+                        left join {$tablePrefix}merchants pm on {$tablePrefix}merchants.parent_id = pm.merchant_id
                         where {$tablePrefix}promotion_retailer.promotion_id = {$this->quote($campaign_id)}
                     ) as campaign_location_names
                 ";
                 $locationId = "select IF({$tablePrefix}merchants.object_type = 'tenant', pm.merchant_id, {$tablePrefix}merchants.merchant_id)
                         from {$tablePrefix}promotion_retailer
-                        inner join {$tablePrefix}merchants on {$tablePrefix}merchants.merchant_id = {$tablePrefix}promotion_retailer.retailer_id
-                        inner join {$tablePrefix}merchants pm on {$tablePrefix}merchants.parent_id = pm.merchant_id
+                        left join {$tablePrefix}merchants on {$tablePrefix}merchants.merchant_id = {$tablePrefix}promotion_retailer.retailer_id
+                        left join {$tablePrefix}merchants pm on {$tablePrefix}merchants.parent_id = pm.merchant_id
                         where {$tablePrefix}promotion_retailer.promotion_id = {$this->quote($campaign_id)}
                 ";
             }
@@ -2269,8 +2269,8 @@ class CampaignReportAPIController extends ControllerAPI
                                             from orb_campaign_account oca,
                                             (
                                                 select ifnull(ca.parent_user_id, ca.user_id) as uid
-                                                from orb_campaign_account ca
-                                                where ca.user_id = {$user->user_id}
+                                                from {$prefix}campaign_account ca
+                                                where ca.user_id = {$this->quote($user->user_id)}
                                             ) as ca
                                             where oca.user_id = ca.uid or oca.parent_user_id = ca.uid
                                         )")->first();

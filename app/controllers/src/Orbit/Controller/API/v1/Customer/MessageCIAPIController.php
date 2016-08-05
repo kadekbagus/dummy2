@@ -81,6 +81,8 @@ class MessageCIAPIController extends BaseAPIController
 
             $user = $this->getLoggedInUser($mallId);
 
+            $mall = Mall::excludeDeleted()->where('merchant_id', $mallId)->first();
+
             $myMessage = Inbox::excludeDeleted()
                             ->select('inbox_id','subject','is_read','created_at')
                             ->where('user_id', $user->user_id)
@@ -152,6 +154,7 @@ class MessageCIAPIController extends BaseAPIController
             if (empty($skip)) {
                 $activityPageNotes = sprintf('Page viewed: %s', 'Notification List Page');
                 $activity->setUser($user)
+                    ->setLocation($mall)
                     ->setActivityName('view_notification_list')
                     ->setActivityNameLong('View Notification List')
                     ->setObject(null)
@@ -221,7 +224,7 @@ class MessageCIAPIController extends BaseAPIController
     {
         $user = null;
         $activityPage = Activity::mobileci()
-                        ->setActivityType('search');
+                        ->setActivityType('view');
 
         $this->response = new ResponseProvider();
 
@@ -266,6 +269,7 @@ class MessageCIAPIController extends BaseAPIController
                     case 'activation':
                         $activityPageNotes = sprintf('Page viewed: %s', 'Activation Notification Detail Page');
                         $activityPage->setUser($user)
+                            ->setLocation($retailer)
                             ->setActivityName('read_notification')
                             ->setActivityNameLong('Read Activation Notification')
                             ->setObject($inbox)
@@ -278,6 +282,7 @@ class MessageCIAPIController extends BaseAPIController
                     case 'lucky_draw_issuance':
                         $activityPageNotes = sprintf('Page viewed: %s', 'Lucky Draw Number Issuance Notification Detail Page');
                         $activityPage->setUser($user)
+                            ->setLocation($retailer)
                             ->setActivityName('read_notification')
                             ->setActivityNameLong('Read Lucky Draw Number Issuance Notification')
                             ->setObject($inbox)
@@ -290,6 +295,7 @@ class MessageCIAPIController extends BaseAPIController
                     case 'lucky_draw_blast':
                         $activityPageNotes = sprintf('Page viewed: %s', 'Lucky Draw Number Issuance Notification Detail Page');
                         $activityPage->setUser($user)
+                            ->setLocation($retailer)
                             ->setActivityName('read_notification')
                             ->setActivityNameLong('Read Winner Announcement Notification')
                             ->setObject($inbox)
@@ -302,6 +308,7 @@ class MessageCIAPIController extends BaseAPIController
                     case 'coupon_issuance':
                         $activityPageNotes = sprintf('Page viewed: %s', 'Coupon Issuance Notification Detail Page');
                         $activityPage->setUser($user)
+                            ->setLocation($retailer)
                             ->setActivityName('read_notification')
                             ->setActivityNameLong('Read Coupon Issuance Notification')
                             ->setObject($inbox)

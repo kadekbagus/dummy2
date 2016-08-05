@@ -123,7 +123,7 @@ class AccountAPIController extends ControllerAPI
                 'Dominopos' => 'mall_tenant'
             ];
 
-        $get_tenants = CampaignLocation::where('status', '=', 'active');
+        $get_tenants = CampaignLocation::excludeDeleted();
 
         // access
         if (array_key_exists($type_name, $permission)) {
@@ -136,7 +136,7 @@ class AccountAPIController extends ControllerAPI
             $get_tenants->whereIn('merchant_id', $tenantIds);
         }
 
-        $get_tenants = $get_tenants->orderBy('name')->get();
+        $get_tenants = $get_tenants->orderBy('merchants.status', 'asc')->orderBy('name', 'asc')->get();
 
         $tenantArray = [];
         foreach ($get_tenants as $row) {

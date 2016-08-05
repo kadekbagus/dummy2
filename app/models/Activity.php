@@ -1182,6 +1182,10 @@ class Activity extends Eloquent
                 $groupName = 'Tenant';
                 break;
 
+            case 'Widget Click Service':
+                $groupName = 'Service';
+                break;
+
             case 'Widget Click Coupon':
                 $groupName = 'Coupon';
                 break;
