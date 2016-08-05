@@ -27,7 +27,6 @@ use TenantStoreAndService;
 use App;
 use Lang;
 use Carbon\Carbon as Carbon;
-use WidgetClick;
 use WidgetGroupName;
 use Activity;
 
@@ -752,23 +751,6 @@ class WidgetCIAPIController extends BaseAPIController
             $mall = Mall::excludeDeleted()
                 ->where('merchant_id', $this->mall_id)
                 ->first();
-
-            //save to table widget click
-            $newWidget = new WidgetClick();
-            $newWidget->widget_id = $this->widget_id;
-            $newWidget->user_id = $user->user_id;
-            $newWidget->location_id = $this->mall_id;
-            $newWidget->activity_id = 0;
-
-            $widgetGroupNames = WidgetGroupName::get();
-
-            foreach ($widgetGroupNames as $group_name) {
-                if ($widget_type === $group_name->widget_group_name) {
-                    $newWidget->widget_group_name_id = $group_name->widget_group_name_id;
-                }
-            }
-
-            $newWidget->save();
 
             // Commit the changes
             $this->commit();
