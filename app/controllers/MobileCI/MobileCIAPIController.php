@@ -15,6 +15,7 @@ use OrbitShop\API\v1\OrbitShopAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
+use Orbit\Helper\Exception\UrlException;
 use \View;
 use \User;
 use \Token;
@@ -946,6 +947,10 @@ class MobileCIAPIController extends BaseCIController
                 ->responseFailed()
                 ->save();
 
+            if ($e instanceof UrlException) {
+                return $this->redirectIfNotLoggedIn($e, URL::to($e->getRedirectRoute()));
+            }
+
             return $this->redirectIfNotLoggedIn($e);
         }
     }
@@ -1735,6 +1740,10 @@ class MobileCIAPIController extends BaseCIController
                 ->setNotes($activityPageNotes)
                 ->responseFailed()
                 ->save();
+
+            if ($e instanceof UrlException) {
+                return $this->redirectIfNotLoggedIn($e, URL::to($e->getRedirectRoute()));
+            }
 
             return $this->redirectIfNotLoggedIn($e);
         }
@@ -2970,6 +2979,10 @@ class MobileCIAPIController extends BaseCIController
                 ->responseFailed()
                 ->save();
 
+            if ($e instanceof UrlException) {
+                return $this->redirectIfNotLoggedIn($e, URL::to($e->getRedirectRoute()));
+            }
+
             return $this->redirectIfNotLoggedIn($e);
         }
     }
@@ -3415,8 +3428,11 @@ class MobileCIAPIController extends BaseCIController
                 ->responseFailed()
                 ->save();
 
+            if ($e instanceof UrlException) {
+                return $this->redirectIfNotLoggedIn($e, URL::to($e->getRedirectRoute()));
+            }
+
             return $this->redirectIfNotLoggedIn($e);
-                // return $e;
         }
     }
 
@@ -3599,6 +3615,10 @@ class MobileCIAPIController extends BaseCIController
                 ->setNotes($activityPageNotes)
                 ->responseFailed()
                 ->save();
+
+            if ($e instanceof UrlException) {
+                return $this->redirectIfNotLoggedIn($e, URL::to($e->getRedirectRoute()));
+            }
 
             return $this->redirectIfNotLoggedIn($e);
                 // return $e;
@@ -4552,6 +4572,10 @@ class MobileCIAPIController extends BaseCIController
                 ->responseFailed()
                 ->save();
 
+            if ($e instanceof UrlException) {
+                return $this->redirectIfNotLoggedIn($e, URL::to($e->getRedirectRoute()));
+            }
+
             return $this->redirectIfNotLoggedIn($e);
         }
     }
@@ -5041,6 +5065,10 @@ class MobileCIAPIController extends BaseCIController
                 ->responseOK()
                 ->save();
 
+            if ($e instanceof UrlException) {
+                return $this->redirectIfNotLoggedIn($e, URL::to($e->getRedirectRoute()));
+            }
+
             return $this->redirectIfNotLoggedIn($e);
         }
     }
@@ -5435,6 +5463,10 @@ class MobileCIAPIController extends BaseCIController
                 ->responseOK()
                 ->save();
 
+            if ($e instanceof UrlException) {
+                return $this->redirectIfNotLoggedIn($e, URL::to($e->getRedirectRoute()));
+            }
+
             return $this->redirectIfNotLoggedIn($e);
         }
     }
@@ -5628,6 +5660,10 @@ class MobileCIAPIController extends BaseCIController
                 ->setNotes($activityProductNotes)
                 ->responseOK()
                 ->save();
+
+            if ($e instanceof UrlException) {
+                return $this->redirectIfNotLoggedIn($e, URL::to($e->getRedirectRoute()));
+            }
 
             return $this->redirectIfNotLoggedIn($e);
         }
@@ -5929,6 +5965,10 @@ class MobileCIAPIController extends BaseCIController
                 ->setNotes($activityPageNotes)
                 ->responseFailed()
                 ->save();
+
+            if ($e instanceof UrlException) {
+                return $this->redirectIfNotLoggedIn($e, URL::to($e->getRedirectRoute()));
+            }
 
             return $this->redirectIfNotLoggedIn($e);
         }
@@ -6440,14 +6480,18 @@ class MobileCIAPIController extends BaseCIController
 
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: Coupon Detail, Coupon Id: %s', $promotion_id);
-            // $activityPage->setUser($user)
-            //     ->setActivityName('view_coupon')
-            //     ->setActivityNameLong('View Coupon Detail Failed')
-            //     ->setObject(null)
-            //     ->setModuleName('Coupon')
-            //     ->setNotes($activityPageNotes)
-            //     ->responseFailed()
-            //     ->save();
+            $activityPage->setUser($user)
+                ->setActivityName('view_coupon')
+                ->setActivityNameLong('View Coupon Detail Failed')
+                ->setObject(null)
+                ->setModuleName('Coupon')
+                ->setNotes($activityPageNotes)
+                ->responseFailed()
+                ->save();
+
+            if ($e instanceof UrlException) {
+                return $this->redirectIfNotLoggedIn($e, URL::to($e->getRedirectRoute()));
+            }
 
             return $this->redirectIfNotLoggedIn($e);
         }
@@ -6845,6 +6889,10 @@ class MobileCIAPIController extends BaseCIController
                 ->responseFailed()
                 ->save();
 
+            if ($e instanceof UrlException) {
+                return $this->redirectIfNotLoggedIn($e, URL::to($e->getRedirectRoute()));
+            }
+
             return $this->redirectIfNotLoggedIn($e);
         }
     }
@@ -7236,8 +7284,11 @@ class MobileCIAPIController extends BaseCIController
                 ->responseFailed()
                 ->save();
 
+            if ($e instanceof UrlException) {
+                return $this->redirectIfNotLoggedIn($e, URL::to($e->getRedirectRoute()));
+            }
+
             return $this->redirectIfNotLoggedIn($e);
-                // return $e;
         }
     }
 
@@ -7471,6 +7522,10 @@ class MobileCIAPIController extends BaseCIController
                 ->setNotes($activityPageNotes)
                 ->responseFailed()
                 ->save();
+
+            if ($e instanceof UrlException) {
+                return $this->redirectIfNotLoggedIn($e, URL::to($e->getRedirectRoute()));
+            }
 
             return $this->redirectIfNotLoggedIn($e);
         }
@@ -7863,6 +7918,10 @@ class MobileCIAPIController extends BaseCIController
                 ->responseFailed()
                 ->save();
 
+            if ($e instanceof UrlException) {
+                return $this->redirectIfNotLoggedIn($e, URL::to($e->getRedirectRoute()));
+            }
+
             return $this->redirectIfNotLoggedIn($e);
         }
     }
@@ -7926,6 +7985,10 @@ class MobileCIAPIController extends BaseCIController
                 ->setNotes($activityPageNotes)
                 ->responseFailed()
                 ->save();
+
+            if ($e instanceof UrlException) {
+                return $this->redirectIfNotLoggedIn($e, URL::to($e->getRedirectRoute()));
+            }
 
             return $this->redirectIfNotLoggedIn($e);
         }
@@ -8143,6 +8206,10 @@ class MobileCIAPIController extends BaseCIController
                     ]);
             }
         } catch (Exception $e) {
+            if ($e instanceof UrlException) {
+                return $this->redirectIfNotLoggedIn($e, URL::to($e->getRedirectRoute()));
+            }
+
             return $this->redirectIfNotLoggedIn($e);
         }
     }
