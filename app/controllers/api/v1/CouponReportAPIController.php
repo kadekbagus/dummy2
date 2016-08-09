@@ -685,15 +685,35 @@ class CouponReportAPIController extends ControllerAPI
                             ->join('promotion_rules', 'promotion_rules.promotion_id', '=', 'promotions.promotion_id')
                             ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
                             ->leftJoin(DB::raw("(select ic.promotion_id AS promotionid, count(ic.promotion_id) as total_issued
-                                              from {$prefix}issued_coupons ic
-                                              where (ic.status = 'active' or ic.status = 'redeemed') " . $dateFilterForIssued .
-                                              " group by ic.promotion_id) issued"),
+                                                from {$prefix}issued_coupons ic
+                                                left join {$prefix}users u on ic.issuer_user_id = u.user_id
+                                                left join {$prefix}employees e on u.user_id = e.user_id
+                                                left join {$prefix}employee_retailer er on e.employee_id = er.employee_id
+                                                left join {$prefix}merchants mall on ic.issuer_retailer_id = mall.merchant_id
+                                                where (ic.status = 'active' or ic.status = 'redeemed')
+                                                AND (
+                                                    er.retailer_id = {$this->quote($configMallId)}
+                                                    OR
+                                                    mall.merchant_id = {$this->quote($configMallId)}
+                                                )
+                                                " . $dateFilterForIssued .
+                                                " group by ic.promotion_id) issued"),
                             // On
                             DB::raw('issued.promotionid'), '=', 'promotions.promotion_id')
 
-                            ->leftJoin(DB::raw("(select ic.promotion_id AS promotionid, redeem_retailer_id, count(promotion_id) as total_redeemed
+                            ->leftJoin(DB::raw("(select ic.promotion_id AS promotionid, redeem_retailer_id, count(promotion_id) as total_redeemed, redeem_user_id
                                                 from {$prefix}issued_coupons ic
-                                                where ic.status = 'redeemed' " . $dateFilterForRedeemed .
+                                                left join {$prefix}users u on ic.redeem_user_id = u.user_id
+                                                left join {$prefix}employees e on u.user_id = e.user_id
+                                                left join {$prefix}employee_retailer er on e.employee_id = er.employee_id
+                                                left join {$prefix}merchants tenant on ic.redeem_retailer_id = tenant.merchant_id
+                                                where ic.status = 'redeemed'
+                                                AND (
+                                                    er.retailer_id = {$this->quote($configMallId)}
+                                                    OR
+                                                    tenant.parent_id = {$this->quote($configMallId)}
+                                                )
+                                                " . $dateFilterForRedeemed .
                                                 " group by ic.promotion_id) redeemed"),
                             // On
                             DB::raw('redeemed.promotionid'), '=', 'promotions.promotion_id')
