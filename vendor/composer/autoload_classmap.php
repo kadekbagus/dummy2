@@ -1283,6 +1283,7 @@ return array(
     'Orbit\\Helper\\Asset\\Stylesheet' => $baseDir . '/app/helpers/Orbit/Helper/Asset/Stylesheet.php',
     'Orbit\\Helper\\Elasticsearch\\ElasticsearchErrorChecker' => $baseDir . '/app/helpers/Orbit/Helper/Elasticsearch/ElasticsearchErrorChecker.php',
     'Orbit\\Helper\\Email\\MXEmailChecker' => $baseDir . '/app/helpers/Orbit/Helper/Email/MXEmailChecker.php',
+    'Orbit\\Helper\\Exception\\UrlException' => $baseDir . '/app/helpers/Orbit/Helper/Exception/UrlException.php',
     'Orbit\\Helper\\Net\\Domain' => $baseDir . '/app/helpers/Orbit/Helper/Net/Domain.php',
     'Orbit\\Helper\\Net\\FBBotChecker' => $baseDir . '/app/helpers/Orbit/Helper/Net/FBBotChecker.php',
     'Orbit\\Helper\\Net\\GuestUserGenerator' => $baseDir . '/app/helpers/Orbit/Helper/Net/GuestUserGenerator.php',
