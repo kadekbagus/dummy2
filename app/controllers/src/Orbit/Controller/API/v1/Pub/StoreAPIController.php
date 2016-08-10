@@ -48,6 +48,9 @@ class StoreAPIController extends ControllerAPI
 
             OrbitInput::get('filter_name', function ($filterName) use ($store) {
                 if (! empty($filterName)) {
+                    if ($filterName === '#') {
+                        $filterName = '^a-zA-Z';
+                    }
                     $store->whereRaw("name REGEXP '^[{$filterName}]'");
                 }
             });
@@ -171,6 +174,9 @@ class StoreAPIController extends ControllerAPI
 
             OrbitInput::get('filter_name', function ($filterName) use ($mall, $prefix) {
                 if (! empty($filterName)) {
+                    if ($filterName === '#') {
+                        $filterName = '^a-zA-Z';
+                    }
                     $mall->whereRaw("merchants.name REGEXP '^[{$filterName}]'");
                 }
             });
