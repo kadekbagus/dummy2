@@ -24,6 +24,7 @@ use Coupon;
 use News;
 use Lang;
 use User;
+use Activity;
 
 class UserCIAPIController extends BaseAPIController
 {
@@ -32,6 +33,8 @@ class UserCIAPIController extends BaseAPIController
 
     public function getMyAccountInfo()
     {
+        $activity = Activity::mobileci()->setActivityType('view');
+        $user = null;
         $httpCode = 200;
         $this->response = new ResponseProvider();
 
@@ -63,6 +66,8 @@ class UserCIAPIController extends BaseAPIController
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
+            $mall = Mall::excludeDeleted()->where('merchant_id', $this->mall_id)->first();
+
             $image = NULL;
             $media = $user->profilePicture()
                 ->where('media_name_long', 'user_profile_picture_orig')
@@ -80,6 +85,16 @@ class UserCIAPIController extends BaseAPIController
             $data->lastname = $user->user_lastname;
             $data->image = $image;
 
+            $activityNote = sprintf('Page viewed: My Account, user Id: %s', $user->user_id);
+            $activity->setUser($user)
+                ->setActivityName('view_my_account')
+                ->setActivityNameLong('View My Account')
+                ->setModuleName('My Account')
+                ->setLocation($mall)
+                ->setNotes($activityNote)
+                ->responseOK()
+                ->save();
+
             $this->response->data = $data;
             $this->response->code = 0;
             $this->response->status = 'success';
@@ -90,6 +105,14 @@ class UserCIAPIController extends BaseAPIController
             $this->response->message = $e->getMessage();
             $this->response->data = null;
             $httpCode = 403;
+
+            $activity->setUser($user)
+                ->setActivityName('view_my_account')
+                ->setActivityNameLong('View My Account Failed')
+                ->setModuleName('My Account')
+                ->setNotes($e->getMessage())
+                ->responseFailed()
+                ->save();
         } catch (InvalidArgsException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -100,6 +123,14 @@ class UserCIAPIController extends BaseAPIController
 
             $this->response->data = $result;
             $httpCode = 403;
+
+            $activity->setUser($user)
+                ->setActivityName('view_my_account')
+                ->setActivityNameLong('View My Account Failed')
+                ->setModuleName('My Account')
+                ->setNotes($e->getMessage())
+                ->responseFailed()
+                ->save();
         } catch (QueryException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -111,12 +142,28 @@ class UserCIAPIController extends BaseAPIController
             }
             $this->response->data = null;
             $httpCode = 500;
+
+            $activity->setUser($user)
+                ->setActivityName('view_my_account')
+                ->setActivityNameLong('View My Account Failed')
+                ->setModuleName('My Account')
+                ->setNotes($e->getMessage())
+                ->responseFailed()
+                ->save();
         } catch (Exception $e) {
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $this->response->data = null;
             $httpCode = 500;
+
+            $activity->setUser($user)
+                ->setActivityName('view_my_account')
+                ->setActivityNameLong('View My Account Failed')
+                ->setModuleName('My Account')
+                ->setNotes('Failed to view: My Account Page. Err: ' . $e->getMessage())
+                ->responseFailed()
+                ->save();
         }
 
         return $this->render($httpCode);

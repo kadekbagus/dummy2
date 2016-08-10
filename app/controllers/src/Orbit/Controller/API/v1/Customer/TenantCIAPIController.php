@@ -24,6 +24,7 @@ use Coupon;
 use News;
 use Lang;
 use User;
+use Activity;
 
 class TenantCIAPIController extends BaseAPIController
 {
@@ -32,6 +33,8 @@ class TenantCIAPIController extends BaseAPIController
 
     public function getTenantList ()
     {
+        $activity = Activity::mobileci()->setActivityType('view');
+        $user = null;
         $httpCode = 200;
         $this->response = new ResponseProvider();
 
@@ -194,12 +197,12 @@ class TenantCIAPIController extends BaseAPIController
             ->leftJoin(DB::raw("(
                     SELECT {$prefix}merchants.merchant_id, count({$prefix}promotions.promotion_id) as coupon_counter
                     from {$prefix}promotions
-                    LEFT JOIN {$prefix}promotion_retailer_redeem on {$prefix}promotion_retailer_redeem.promotion_id = {$prefix}promotions.promotion_id
-                    LEFT JOIN {$prefix}merchants on {$prefix}promotion_retailer_redeem.retailer_id = {$prefix}merchants.merchant_id
+                    LEFT JOIN {$prefix}promotion_retailer on {$prefix}promotion_retailer.promotion_id = {$prefix}promotions.promotion_id
+                    LEFT JOIN {$prefix}merchants on {$prefix}promotion_retailer.retailer_id = {$prefix}merchants.merchant_id
 
                     JOIN {$prefix}issued_coupons ON {$prefix}issued_coupons.promotion_id = {$prefix}promotions.promotion_id
 
-                    WHERE {$prefix}promotion_retailer_redeem.object_type = 'tenant'
+                    WHERE {$prefix}promotion_retailer.object_type = 'tenant'
                     AND {$prefix}promotions.is_coupon = 'Y'
                     AND {$prefix}promotions.status = 'active'
                     AND {$prefix}merchants.parent_id = {$quoted_mall_id}
@@ -239,7 +242,10 @@ class TenantCIAPIController extends BaseAPIController
                 $tenants->whereHas('redeemCoupons', function ($q) use ($coupon_id) {
                     $q->where('promotions.promotion_id', $coupon_id);
                     $q->where('promotions.status', 'active');
-                });
+                })
+                ->where('merchants.masterbox_number', '<>', '')
+                ->whereNotNull('merchants.masterbox_number');
+
                 $coupon = Coupon::active()->where('promotion_id', $coupon_id)->first();
 
                 if (is_object($coupon)) {
@@ -283,7 +289,8 @@ class TenantCIAPIController extends BaseAPIController
                     ->where(
                         function ($q) use ($keyword_like, $keyword) {
                             $q->where('merchants.name', 'like', $keyword_like)
-                                ->orWhere('keyword', '=', $keyword);
+                                ->orWhere('keyword', '=', $keyword)
+                                ->orWhere('merchants.description', 'like', $keyword_like);
                             $q->orWhereHas('categories', function($q2) use ($keyword_like) {
                                 $q2->where('category_name', 'like', $keyword_like);
                             });
@@ -381,6 +388,77 @@ class TenantCIAPIController extends BaseAPIController
             $data->extras = new \stdclass();
             $data->extras->redeem_to_cs_flag = $redeemToCSFlag;
 
+            if (empty($skip)) {
+                if (! empty(OrbitInput::get('promotion_id'))) {
+                    $activityNotes = sprintf('Page viewed: Promotion Tenants List Page, promotion ID: %s', OrbitInput::get('promotion_id'));
+                    $activity->setUser($user)
+                        ->setActivityName('view_retailer')
+                        ->setActivityNameLong('View Promotion Tenant List')
+                        ->setObject(null)
+                        ->setModuleName('Tenant')
+                        ->setNotes($activityNotes)
+                        ->setLocation($mall)
+                        ->responseOK()
+                        ->save();
+                }
+
+                if (! empty(OrbitInput::get('coupon_id'))) {
+                    $activityNotes = sprintf('Page viewed: Coupon Tenants List Page, promotion ID: %s', OrbitInput::get('coupon_id'));
+                    $activity->setUser($user)
+                        ->setActivityName('view_retailer')
+                        ->setActivityNameLong('View Coupon Tenant List')
+                        ->setObject(null)
+                        ->setModuleName('Tenant')
+                        ->setNotes($activityNotes)
+                        ->setLocation($mall)
+                        ->responseOK()
+                        ->save();
+                }
+
+                if (! empty(OrbitInput::get('coupon_redeem_id'))) {
+                    $activityNotes = sprintf('Page viewed: Coupon Redemption Tenants List Page, promotion ID: %s', OrbitInput::get('coupon_redeem_id'));
+                    $activity->setUser($user)
+                        ->setActivityName('view_retailer')
+                        ->setActivityNameLong('View Coupon Redemption Places')
+                        ->setObject(null)
+                        ->setModuleName('Tenant')
+                        ->setNotes($activityNotes)
+                        ->setLocation($mall)
+                        ->responseOK()
+                        ->save();
+                }
+
+                if (! empty(OrbitInput::get('news_id'))) {
+                    $activityNotes = sprintf('Page viewed: News Tenants List Page, news ID: %s', OrbitInput::get('news_id'));
+                    $activity->setUser($user)
+                        ->setActivityName('view_retailer')
+                        ->setActivityNameLong('View News Tenant List')
+                        ->setObject(null)
+                        ->setModuleName('Tenant')
+                        ->setNotes($activityNotes)
+                        ->setLocation($mall)
+                        ->responseOK()
+                        ->save();
+                }
+
+                if (empty(OrbitInput::get('promotion_id'))
+                    && empty(OrbitInput::get('news_id'))
+                    && empty(OrbitInput::get('coupon_id'))
+                    && empty(OrbitInput::get('coupon_redeem_id'))
+                ) {
+                    $activityNotes = sprintf('Page viewed: Tenant Listing Page');
+                    $activity->setUser($user)
+                        ->setActivityName('view_retailer')
+                        ->setActivityNameLong('View Tenant List')
+                        ->setObject(null)
+                        ->setModuleName('Tenant')
+                        ->setNotes($activityNotes)
+                        ->setLocation($mall)
+                        ->responseOK()
+                        ->save();
+                }
+            }
+
             $this->response->data = $data;
             $this->response->code = 0;
             $this->response->status = 'success';
@@ -391,6 +469,15 @@ class TenantCIAPIController extends BaseAPIController
             $this->response->message = $e->getMessage();
             $this->response->data = null;
             $httpCode = 403;
+
+            $activity->setUser($user)
+                ->setActivityName('view_retailer')
+                ->setActivityNameLong('View Tenant Failed')
+                ->setObject(null)
+                ->setModuleName('Tenant')
+                ->setNotes('Failed to view: Tenant Listing Page. Err: ' . $e->getMessage())
+                ->responseFailed()
+                ->save();
         } catch (InvalidArgsException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -401,6 +488,15 @@ class TenantCIAPIController extends BaseAPIController
 
             $this->response->data = $result;
             $httpCode = 403;
+
+            $activity->setUser($user)
+                ->setActivityName('view_retailer')
+                ->setActivityNameLong('View Tenant Failed')
+                ->setObject(null)
+                ->setModuleName('Tenant')
+                ->setNotes('Failed to view: Tenant Listing Page. Err: ' . $e->getMessage())
+                ->responseFailed()
+                ->save();
         } catch (QueryException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -412,12 +508,30 @@ class TenantCIAPIController extends BaseAPIController
             }
             $this->response->data = null;
             $httpCode = 500;
+
+            $activity->setUser($user)
+                ->setActivityName('view_retailer')
+                ->setActivityNameLong('View Tenant Failed')
+                ->setObject(null)
+                ->setModuleName('Tenant')
+                ->setNotes('Failed to view: Tenant Listing Page. Err: ' . $e->getMessage())
+                ->responseFailed()
+                ->save();
         } catch (Exception $e) {
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $this->response->data = null;
             $httpCode = 500;
+
+            $activity->setUser($user)
+                ->setActivityName('view_retailer')
+                ->setActivityNameLong('View Tenant Failed')
+                ->setObject(null)
+                ->setModuleName('Tenant')
+                ->setNotes('Failed to view: Tenant Listing Page. Err: ' . $e->getMessage())
+                ->responseFailed()
+                ->save();
         }
 
         return $this->render($httpCode);
@@ -425,6 +539,9 @@ class TenantCIAPIController extends BaseAPIController
 
     public function getTenantItem ()
     {
+        $activity = Activity::mobileci()->setActivityType('view');
+        $user = null;
+        $tenantId = null;
         $httpCode = 200;
         $this->response = new ResponseProvider();
 
@@ -442,6 +559,9 @@ class TenantCIAPIController extends BaseAPIController
 
             $this->mall_id = OrbitInput::get('mall_id', NULL);
             $store_id = OrbitInput::get('store_id', NULL);
+
+            $promo_id = trim(OrbitInput::get('pid'));
+            $news_id = trim(OrbitInput::get('nid'));
 
             $this->registerCustomValidation();
             $validator = Validator::make(
@@ -587,8 +707,8 @@ class TenantCIAPIController extends BaseAPIController
                 ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'promotions.promotion_id')
                 ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'promotions.promotion_id')
                 ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
-                ->leftJoin('promotion_retailer_redeem', 'promotion_retailer_redeem.promotion_id', '=', 'promotions.promotion_id')
-                ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer_redeem.retailer_id')
+                ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
+                ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
                 ->join('issued_coupons', function($join) {
                     $join->on('promotions.promotion_id', '=', 'issued_coupons.promotion_id')
                         ->where('issued_coupons.status', '=', 'active');
@@ -617,6 +737,7 @@ class TenantCIAPIController extends BaseAPIController
 
             // default data without filter data id
             $this->response->data = $tenant;
+            $tenantId = $tenant->merchant_id;
 
             // overide data if filter doesn't exist
             if (!is_null($news_id) && $tenant->news_flag === 'false') {
@@ -631,6 +752,45 @@ class TenantCIAPIController extends BaseAPIController
                 $this->response->data = [];
             }
 
+            if (! empty($promo_id)) {
+                $activityNotes = sprintf('Page viewed: Tenant Detail Page from Promotion, tenant ID: ' . $tenant->merchant_id . ', promotion ID: '. $promo_id);
+                $activity->setUser($user)
+                    ->setActivityName('view_retailer')
+                    ->setActivityNameLong('View Tenant Detail')
+                    ->setObject($tenant)
+                    ->setModuleName('Tenant')
+                    ->setLocation($mall)
+                    ->setNotes($activityNotes)
+                    ->responseOK()
+                    ->save();
+            }
+
+            if (! empty($news_id)) {
+                $activityNotes = sprintf('Page viewed: Tenant Detail Page from News, tenant ID: ' . $tenant->merchant_id . ', news ID: '. $news_id);
+                $activity->setUser($user)
+                    ->setActivityName('view_retailer')
+                    ->setActivityNameLong('View Tenant Detail')
+                    ->setObject($tenant)
+                    ->setModuleName('Tenant')
+                    ->setLocation($mall)
+                    ->setNotes($activityNotes)
+                    ->responseOK()
+                    ->save();
+            }
+
+            if (empty($promo_id) && empty($news_id)) {
+                $activityNotes = sprintf('Page viewed: Tenant Detail Page, tenant ID: ' . $tenant->merchant_id);
+                $activity->setUser($user)
+                    ->setActivityName('view_retailer')
+                    ->setActivityNameLong('View Tenant Detail')
+                    ->setObject($tenant)
+                    ->setModuleName('Tenant')
+                    ->setLocation($mall)
+                    ->setNotes($activityNotes)
+                    ->responseOK()
+                    ->save();
+            }
+
             $this->response->code = 0;
             $this->response->status = 'success';
             $this->response->message = 'Success';
@@ -640,6 +800,15 @@ class TenantCIAPIController extends BaseAPIController
             $this->response->message = $e->getMessage();
             $this->response->data = null;
             $httpCode = 403;
+
+            $activity->setUser($user)
+                ->setActivityName('view_retailer')
+                ->setActivityNameLong('View Tenant Detail Failed')
+                ->setObject(null)
+                ->setModuleName('Tenant')
+                ->setNotes('Failed to view: Tenant Detail Page. Tenant ID: ' . $tenantId . '. Err: ' . $e->getMessage())
+                ->responseFailed()
+                ->save();
         } catch (InvalidArgsException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -650,6 +819,15 @@ class TenantCIAPIController extends BaseAPIController
 
             $this->response->data = $result;
             $httpCode = 403;
+
+            $activity->setUser($user)
+                ->setActivityName('view_retailer')
+                ->setActivityNameLong('View Tenant Detail Failed')
+                ->setObject(null)
+                ->setModuleName('Tenant')
+                ->setNotes('Failed to view: Tenant Detail Page. Tenant ID: ' . $tenantId . '. Err: ' . $e->getMessage())
+                ->responseFailed()
+                ->save();
         } catch (QueryException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -661,12 +839,30 @@ class TenantCIAPIController extends BaseAPIController
             }
             $this->response->data = null;
             $httpCode = 500;
+
+            $activity->setUser($user)
+                ->setActivityName('view_retailer')
+                ->setActivityNameLong('View Tenant Detail Failed')
+                ->setObject(null)
+                ->setModuleName('Tenant')
+                ->setNotes('Failed to view: Tenant Detail Page. Tenant ID: ' . $tenantId . '. Err: ' . $e->getMessage())
+                ->responseFailed()
+                ->save();
         } catch (Exception $e) {
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $this->response->data = null;
             $httpCode = 500;
+
+            $activity->setUser($user)
+                ->setActivityName('view_retailer')
+                ->setActivityNameLong('View Tenant Detail Failed')
+                ->setObject(null)
+                ->setModuleName('Tenant')
+                ->setNotes('Failed to view: Tenant Detail Page. Tenant ID: ' . $tenantId . '. Err: ' . $e->getMessage())
+                ->responseFailed()
+                ->save();
         }
 
         return $this->render($httpCode);

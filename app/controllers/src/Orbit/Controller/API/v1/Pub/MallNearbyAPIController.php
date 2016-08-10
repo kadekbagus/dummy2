@@ -15,8 +15,10 @@ use Config;
 use Mall;
 use stdClass;
 use Orbit\Helper\Util\PaginationNumber;
-
+use \Activity;
 use Elasticsearch\ClientBuilder;
+use Orbit\Helper\Session\UserGetter;
+use Orbit\Helper\Net\SessionPreparer;
 
 class MallNearbyAPIController extends ControllerAPI
 {
@@ -135,6 +137,7 @@ class MallNearbyAPIController extends ControllerAPI
             $this->response->data->total_records = $count;
             $this->response->data->returned_records = count($listmalls);
             $this->response->data->records = $listmalls;
+
         } catch (ACLForbiddenException $e) {
 
             $this->response->code = $e->getCode();
@@ -199,8 +202,12 @@ class MallNearbyAPIController extends ControllerAPI
      */
     public function getSearchMallKeyword()
     {
+        $user = NULL;
+        $activity = Activity::mobileci()->setActivityType('search');
         $httpCode = 200;
         try {
+            $session = SessionPreparer::prepareSession();
+            $user = UserGetter::getLoggedInUserOrGuest($session);
 
             $latitude = OrbitInput::get('latitude',null);
             $longitude = OrbitInput::get('longitude',null);
@@ -295,6 +302,16 @@ class MallNearbyAPIController extends ControllerAPI
             $this->response->data->total_records = $area_data['total'];
             $this->response->data->returned_records = count($listmall);
             $this->response->data->records = $listmall;
+
+            $activity->setUser($user)
+                    ->setActivityName('search_landing_page')
+                    ->setActivityNameLong('Search On Landing Page')
+                    ->setObject(null)
+                    ->setModuleName('Search')
+                    ->setNotes($keywordSearch)
+                    ->responseOK()
+                    ->save();
+
         } catch (ACLForbiddenException $e) {
 
             $this->response->code = $e->getCode();
@@ -302,6 +319,15 @@ class MallNearbyAPIController extends ControllerAPI
             $this->response->message = $e->getMessage();
             $this->response->data = null;
             $httpCode = 403;
+
+            $activity->setUser($user)
+                ->setActivityName('search_landing_page')
+                ->setActivityNameLong('Search On Landing Page Failed')
+                ->setObject(null)
+                ->setModuleName('Search')
+                ->setNotes('Failed to search on landing page: ' . $e->getMessage())
+                ->responseFailed()
+                ->save();
         } catch (InvalidArgsException $e) {
 
             $this->response->code = $e->getCode();
@@ -313,6 +339,15 @@ class MallNearbyAPIController extends ControllerAPI
 
             $this->response->data = $result;
             $httpCode = 403;
+
+            $activity->setUser($user)
+                ->setActivityName('search_landing_page')
+                ->setActivityNameLong('Search On Landing Page Failed')
+                ->setObject(null)
+                ->setModuleName('Search')
+                ->setNotes('Failed to search on landing page: ' . $e->getMessage())
+                ->responseFailed()
+                ->save();
         } catch (QueryException $e) {
 
             $this->response->code = $e->getCode();
@@ -326,6 +361,15 @@ class MallNearbyAPIController extends ControllerAPI
             }
             $this->response->data = null;
             $httpCode = 500;
+
+            $activity->setUser($user)
+                ->setActivityName('search_landing_page')
+                ->setActivityNameLong('Search On Landing Page Failed')
+                ->setObject(null)
+                ->setModuleName('Search')
+                ->setNotes('Failed to search on landing page: ' . $e->getMessage())
+                ->responseFailed()
+                ->save();
         } catch (Exception $e) {
 
             $this->response->code = $this->getNonZeroCode($e->getCode());
@@ -333,6 +377,15 @@ class MallNearbyAPIController extends ControllerAPI
             $this->response->message = $e->getMessage();
             $this->response->data = null;
             $httpCode = 500;
+
+            $activity->setUser($user)
+                ->setActivityName('search_landing_page')
+                ->setActivityNameLong('Search On Landing Page Failed')
+                ->setObject(null)
+                ->setModuleName('Search')
+                ->setNotes('Failed to search on landing page: ' . $e->getMessage())
+                ->responseFailed()
+                ->save();
         }
 
         $output = $this->render($httpCode);

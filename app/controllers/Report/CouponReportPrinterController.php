@@ -80,12 +80,14 @@ class CouponReportPrinterController extends DataPrinterController
         $totalIssued = $response['total_issued'];
         $totalRedeemed = $response['total_redeemed'];
 
-        $this->prepareUnbufferedQuery();
+        $pdo = DB::Connection()->getPdo();
+
+        $prepareUnbufferedQuery = $pdo->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, FALSE);
 
         $sql = $coupons->toSql();
         $binds = $coupons->getBindings();
 
-        $statement = $this->pdo->prepare($sql);
+        $statement = $pdo->prepare($sql);
         $statement->execute($binds);
 
         $pageTitle = 'Coupon Summary Report';
@@ -175,11 +177,11 @@ class CouponReportPrinterController extends DataPrinterController
 
                     printf("\"%s\",\"%s\",\"%s - %s\",\"%s\",\"%s\",\"%s\",\"%s / %s\",\"%s / %s\",\"%s\"\n",
                         $count,
-                        $this->printUtf8($row->promotion_name),
+                        $row->promotion_name,
                         date('d M Y', strtotime($row->begin_date)),
                         date('d M Y', strtotime($row->end_date)),
                         date('d M Y', strtotime($row->coupon_validity_in_date)),
-                        str_replace(', ', "\n", $this->printUtf8($row->campaign_location_names)),
+                        str_replace(', ', "\n", $row->campaign_location_names),
                         $rule_type,
                         $row->total_issued != 'Unlimited' ? number_format($row->total_issued, 0, '', '') : 'Unlimited',
                         $row->available != 'Unlimited' ? number_format($row->available, 0, '', '') : 'Unlimited',
@@ -226,12 +228,14 @@ class CouponReportPrinterController extends DataPrinterController
         $coupons = $response['builder'];
         $totalCoupons = $response['count'];
 
-        $this->prepareUnbufferedQuery();
+        $pdo = DB::Connection()->getPdo();
+
+        $prepareUnbufferedQuery = $pdo->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, FALSE);
 
         $sql = $coupons->toSql();
         $binds = $coupons->getBindings();
 
-        $statement = $this->pdo->prepare($sql);
+        $statement = $pdo->prepare($sql);
         $statement->execute($binds);
 
         $pageTitle = 'Redeemed Coupon Report for ' . $couponName;
@@ -256,7 +260,7 @@ class CouponReportPrinterController extends DataPrinterController
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
                     printf("\"%s\",\"%s\",\"=\"\"%s\"\"\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
                             $count,
-                            $this->printUtf8($row->redeem_retailer_name),
+                            $row->redeem_retailer_name,
                             '1 / ' . $row->total_issued,
                             $row->issued_coupon_code,
                             $row->user_email,
@@ -316,12 +320,14 @@ class CouponReportPrinterController extends DataPrinterController
         $totalActiveDays = $response['total_active_days'];
         $totalRedemptionPlace = $response['total_redemption_place'];
 
-        $this->prepareUnbufferedQuery();
+        $pdo = DB::Connection()->getPdo();
+
+        $prepareUnbufferedQuery = $pdo->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, FALSE);
 
         $sql = $coupons->toSql();
         $binds = $coupons->getBindings();
 
-        $statement = $this->pdo->prepare($sql);
+        $statement = $pdo->prepare($sql);
         $statement->execute($binds);
 
         $pageTitle = 'Coupon Detail Report for ' . $couponName;
@@ -462,12 +468,14 @@ class CouponReportPrinterController extends DataPrinterController
         $coupons = $response['builder'];
         $totalCoupons = $response['count'];
 
-        $this->prepareUnbufferedQuery();
+        $pdo = DB::Connection()->getPdo();
+
+        $prepareUnbufferedQuery = $pdo->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, FALSE);
 
         $sql = $coupons->toSql();
         $binds = $coupons->getBindings();
 
-        $statement = $this->pdo->prepare($sql);
+        $statement = $pdo->prepare($sql);
         $statement->execute($binds);
 
         $pageTitle = 'Issued Coupon Report';

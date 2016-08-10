@@ -27,8 +27,8 @@ use TenantStoreAndService;
 use App;
 use Lang;
 use Carbon\Carbon as Carbon;
-use WidgetClick;
 use WidgetGroupName;
+use Activity;
 
 class WidgetCIAPIController extends BaseAPIController
 {
@@ -37,6 +37,8 @@ class WidgetCIAPIController extends BaseAPIController
 
     public function getWidgetList()
     {
+        $activity = Activity::mobileci()->setActivityType('view');
+        $user = null;
         $httpCode = 200;
         $this->response = new ResponseProvider();
 
@@ -613,6 +615,17 @@ class WidgetCIAPIController extends BaseAPIController
             $data->records = $widgets;
             $data->extras = new \stdclass();
 
+            $activityNotes = sprintf('Page viewed: %s', 'Home');
+            $activity->setUser($user)
+                ->setActivityName('view_page_home')
+                ->setActivityNameLong('View (Home Page)')
+                ->setObject(null)
+                ->setNotes($activityNotes)
+                ->setModuleName('Widget')
+                ->setLocation($mall)
+                ->responseOK()
+                ->save();
+
             $this->response->data = $data;
             $this->response->code = 0;
             $this->response->status = 'success';
@@ -623,6 +636,15 @@ class WidgetCIAPIController extends BaseAPIController
             $this->response->message = $e->getMessage();
             $this->response->data = null;
             $httpCode = 403;
+
+            $activity->setUser($user)
+                ->setActivityName('view_page_home')
+                ->setActivityNameLong('View (Home Page) Failed')
+                ->setObject(null)
+                ->setModuleName('Widget')
+                ->setNotes('Failed to view: Home Page. Err: ' . $e->getMessage())
+                ->responseFailed()
+                ->save();
         } catch (InvalidArgsException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -633,6 +655,15 @@ class WidgetCIAPIController extends BaseAPIController
 
             $this->response->data = $result;
             $httpCode = 403;
+
+            $activity->setUser($user)
+                ->setActivityName('view_page_home')
+                ->setActivityNameLong('View (Home Page) Failed')
+                ->setObject(null)
+                ->setModuleName('Widget')
+                ->setNotes('Failed to view: Home Page. Err: ' . $e->getMessage())
+                ->responseFailed()
+                ->save();
         } catch (QueryException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -644,12 +675,30 @@ class WidgetCIAPIController extends BaseAPIController
             }
             $this->response->data = null;
             $httpCode = 500;
+
+            $activity->setUser($user)
+                ->setActivityName('view_page_home')
+                ->setActivityNameLong('View (Home Page) Failed')
+                ->setObject(null)
+                ->setModuleName('Widget')
+                ->setNotes('Failed to view: Home Page. Err: ' . $e->getMessage())
+                ->responseFailed()
+                ->save();
         } catch (Exception $e) {
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $this->response->data = [$e->getFile(), $e->getLine(), $e->getMessage()];
             $httpCode = 500;
+
+            $activity->setUser($user)
+                ->setActivityName('view_page_home')
+                ->setActivityNameLong('View (Home Page) Failed')
+                ->setObject(null)
+                ->setModuleName('Widget')
+                ->setNotes('Failed to view: Home Page. Err: ' . $e->getMessage())
+                ->responseFailed()
+                ->save();
         }
 
         return $this->render($httpCode);
@@ -657,6 +706,8 @@ class WidgetCIAPIController extends BaseAPIController
 
     public function postClickWidgetActivity()
     {
+        $activity = Activity::mobileci()->setActivityType('click');
+        $user = null;
         $httpCode = 200;
         $this->response = new ResponseProvider();
 
@@ -697,25 +748,23 @@ class WidgetCIAPIController extends BaseAPIController
             // Begin database transaction
             $this->beginTransaction();
 
-            //save to table widget click
-            $newWidget = new WidgetClick();
-            $newWidget->widget_id = $this->widget_id;
-            $newWidget->user_id = $user->user_id;
-            $newWidget->location_id = $this->mall_id;
-            $newWidget->activity_id = 0;
-
-            $widgetGroupNames = WidgetGroupName::get();
-
-            foreach ($widgetGroupNames as $group_name) {
-                if ($widget_type === $group_name->widget_group_name) {
-                    $newWidget->widget_group_name_id = $group_name->widget_group_name_id;
-                }
-            }
-
-            $newWidget->save();
+            $mall = Mall::excludeDeleted()
+                ->where('merchant_id', $this->mall_id)
+                ->first();
 
             // Commit the changes
             $this->commit();
+
+            $activityNotes = sprintf('Widget Click. Widget Id : %s', $this->widget_id);
+            $activity->setUser($user)
+                ->setActivityName('widget_click')
+                ->setActivityNameLong('Widget Click ' . $widget_type)
+                ->setObject($widget)
+                ->setModuleName('Widget')
+                ->setLocation($mall)
+                ->setNotes($activityNotes)
+                ->responseOK()
+                ->save();
 
             $this->response->data = null;
             $this->response->code = 0;
@@ -728,6 +777,15 @@ class WidgetCIAPIController extends BaseAPIController
             $this->response->data = null;
             $httpCode = 403;
             $this->rollback();
+
+            $activity->setUser($user)
+                ->setActivityName('widget_click')
+                ->setActivityNameLong('Widget Click ' . $widget_type . ' Failed')
+                ->setObject(null)
+                ->setModuleName('Widget')
+                ->setNotes($e->getMessage())
+                ->responseFailed()
+                ->save();
         } catch (InvalidArgsException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -739,6 +797,15 @@ class WidgetCIAPIController extends BaseAPIController
             $this->response->data = $result;
             $httpCode = 403;
             $this->rollback();
+
+            $activity->setUser($user)
+                ->setActivityName('widget_click')
+                ->setActivityNameLong('Widget Click ' . $widget_type . ' Failed')
+                ->setObject(null)
+                ->setModuleName('Widget')
+                ->setNotes($e->getMessage())
+                ->responseFailed()
+                ->save();
         } catch (QueryException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -751,6 +818,15 @@ class WidgetCIAPIController extends BaseAPIController
             $this->response->data = null;
             $httpCode = 500;
             $this->rollback();
+
+            $activity->setUser($user)
+                ->setActivityName('widget_click')
+                ->setActivityNameLong('Widget Click ' . $widget_type . ' Failed')
+                ->setObject(null)
+                ->setModuleName('Widget')
+                ->setNotes($e->getMessage())
+                ->responseFailed()
+                ->save();
         } catch (Exception $e) {
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
@@ -758,6 +834,15 @@ class WidgetCIAPIController extends BaseAPIController
             $this->response->data = null;
             $httpCode = 500;
             $this->rollback();
+
+            $activity->setUser($user)
+                ->setActivityName('widget_click')
+                ->setActivityNameLong('Widget Click ' . $widget_type . ' Failed')
+                ->setObject(null)
+                ->setModuleName('Widget')
+                ->setNotes($e->getMessage())
+                ->responseFailed()
+                ->save();
         }
 
         return $this->render($httpCode);

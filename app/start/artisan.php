@@ -68,8 +68,17 @@ Artisan::add(new DeleteGuestViewItemUser);
 // DeleteGuestUser
 Artisan::add(new DeleteGuestUser);
 
+// DestroyMall
+Artisan::add(new DestroyMall);
+
 // Send newsletter email
 Artisan::add(new NewsletterSenderCommand);
+
+// Import DB IP
+Artisan::add(new ImportDBIP);
+
+// Create table for DB IP
+Artisan::add(new CreateTableDBIP);
 
 // Insert or update data on settings table
 // @Todo investigate why its error
