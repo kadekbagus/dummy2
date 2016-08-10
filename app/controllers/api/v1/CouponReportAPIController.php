@@ -733,12 +733,13 @@ class CouponReportAPIController extends ControllerAPI
                 });
             });
 
-            OrbitInput::get('merchant_id', function($mallId) use ($coupons, $configMallId) {
-                $coupons->where(function ($q) use ($mallId) {
-                    $q->where(DB::Raw('m.merchant_id'), '=', $mallId)
-                      ->orWhere(DB::Raw('m.parent_id'), '=', $mallId);
-                });
-            });
+            // Disabled, so coupon that not linked to current mall but redemeed on this mall could be displayed
+            // OrbitInput::get('merchant_id', function($mallId) use ($coupons, $configMallId) {
+            //     $coupons->where(function ($q) use ($mallId) {
+            //         $q->where(DB::Raw('m.merchant_id'), '=', $mallId)
+            //           ->orWhere(DB::Raw('m.parent_id'), '=', $mallId);
+            //     });
+            // });
 
             // Filter by Promotion ID
             OrbitInput::get('promotion_id', function($pid) use ($coupons) {
