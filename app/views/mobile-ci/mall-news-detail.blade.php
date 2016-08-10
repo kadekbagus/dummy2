@@ -34,7 +34,7 @@
                 <li>
                     @if(count($news->tenants) > 0)
                         @if(count($news->tenants) === 1)
-                        <a data-href="{{ route('ci-tenant-detail', ['id' => $news->tenants[0]->merchant_id]) }}" href="{{{ \Orbit\Helper\Net\UrlChecker::blockedRoute('ci-tenant-detail', ['id' => $news->tenants[0]->merchant_id], $session) }}}">
+                        <a data-href="{{ route('ci-tenant-detail', ['id' => $news->tenants[0]->merchant_id, 'name' => Str::slug($news->tenants[0]->name)]) }}" href="{{{ \Orbit\Helper\Net\UrlChecker::blockedRoute('ci-tenant-detail', ['id' => $news->tenants[0]->merchant_id, 'name' => Str::slug($news->tenants[0]->name)], $session) }}}">
                         @else
                         <a data-href="{{ route('ci-tenant-list', ['news_id' => $news->news_id]) }}" href="{{{ \Orbit\Helper\Net\UrlChecker::blockedRoute('ci-tenant-list', ['news_id' => $news->news_id], $session) }}}">
                         @endif

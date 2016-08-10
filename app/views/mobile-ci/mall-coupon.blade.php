@@ -50,9 +50,9 @@
                 <li>
                     @if(count($link_to_tenants) > 0)
                         @if(count($link_to_tenants) === 1)
-                        <a data-href="{{ route('ci-tenant-detail', ['id' => $link_to_tenants[0]->retailer_id]) }}" href="{{{ \Orbit\Helper\Net\UrlChecker::blockedRoute('ci-tenant-detail', ['id' => $link_to_tenants[0]->retailer_id], $session) }}}">
+                        <a data-href="{{ route('ci-tenant-detail', ['id' => $link_to_tenants[0]->retailer_id, 'name' => Str::slug($link_to_tenants[0]->name)]) }}" href="{{{ \Orbit\Helper\Net\UrlChecker::blockedRoute('ci-tenant-detail', ['id' => $link_to_tenants[0]->retailer_id, 'name' => Str::slug($link_to_tenants[0]->name)], $session) }}}">
                         @else
-                        <a data-href="{{ route('ci-tenant-list', ['coupon_id' => $coupon->promotion_id]) }}" href="{{{ \Orbit\Helper\Net\UrlChecker::blockedRoute('ci-tenant-list', ['coupon_id' => $coupon->promotion_id], $session) }}}">
+                        <a data-href="{{ route('ci-tenant-list', ['coupon_id' => $coupon->promotion_id, 'name' => Str::slug($coupon->promotion_name)]) }}" href="{{{ \Orbit\Helper\Net\UrlChecker::blockedRoute('ci-tenant-list', ['coupon_id' => $coupon->promotion_id, 'name' => Str::slug($coupon->promotion_name)], $session) }}}">
                         @endif
                             <span class="fa fa-stack icon">
                                 <i class="fa fa-circle fa-stack-2x"></i>
@@ -74,9 +74,9 @@
                 @if(count($issued_coupons) > 0)
                 <li>
                     @if(count($tenants) === 1 && ! $cs_reedem)
-                    <a data-href="{{ route('ci-tenant-detail', ['id' => $tenants[0]->retailer_id]) }}" href="{{{ \Orbit\Helper\Net\UrlChecker::blockedRoute('ci-tenant-detail', ['id' => $tenants[0]->retailer_id], $session) }}}">
+                    <a data-href="{{ route('ci-tenant-detail', ['id' => $tenants[0]->retailer_id]) }}" href="{{{ \Orbit\Helper\Net\UrlChecker::blockedRoute('ci-tenant-detail', ['id' => $tenants[0]->retailer_id, 'name' => Str::slug($tenants[0]->name)], $session) }}}">
                     @elseif(count($tenants) > 1 || $cs_reedem)
-                    <a data-href="{{ route('ci-tenant-list', ['coupon_redeem_id' => $coupon->promotion_id]) }}" href="{{{ \Orbit\Helper\Net\UrlChecker::blockedRoute('ci-tenant-list', ['coupon_redeem_id' => $coupon->promotion_id], $session) }}}">
+                    <a data-href="{{ route('ci-tenant-list', ['coupon_redeem_id' => $coupon->promotion_id]) }}" href="{{{ \Orbit\Helper\Net\UrlChecker::blockedRoute('ci-tenant-list', ['coupon_redeem_id' => $coupon->promotion_id, 'name' => Str::slug($coupon->promotion_name)], $session) }}}">
                     @else
                     <a class="disabled">
                     @endif
@@ -124,9 +124,6 @@
         <div class="row">
             <div class="col-xs-12">
                 <p>{{ nl2br(e($coupon->description)) }}</p>
-            </div>
-            <div class="col-xs-12">
-                <p><!-- {{ nl2br(e($coupon->long_description)) }} --></p>
             </div>
             <div class="col-xs-12">
                 <h4><strong>{{{ Lang::get('mobileci.coupon_detail.validity_label') }}}</strong></h4>

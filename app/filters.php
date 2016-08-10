@@ -12,6 +12,7 @@
 use Net\Security\RequestAccess;
 use Orbit\Helper\Net\FBBotChecker;
 use Orbit\Helper\Security\MallAccess;
+use Net\Util\MobileDetect;
 
 App::after(function($request, $response)
 {
@@ -102,22 +103,22 @@ Route::filter('fb-bot', function() {
     if (! $FBChecker->isFBCrawler()) {
         switch (Route::currentRouteName()) {
             case 'share-tenant':
-                $redirect_to = URL::route('ci-tenant-detail', array('id' => Input::get('id')));
+                $redirect_to = URL::route('ci-tenant-detail', array('id' => Input::get('id'), 'name' => Str::slug(Input::get('name', ''))));
                 break;
             case 'share-promotion':
-                $redirect_to = URL::route('ci-promotion-detail', array('id' => Input::get('id')));
+                $redirect_to = URL::route('ci-promotion-detail', array('id' => Input::get('id'), 'name' => Str::slug(Input::get('name', ''))));
                 break;
             case 'share-news':
-                $redirect_to = URL::route('ci-news-detail', array('id' => Input::get('id')));
+                $redirect_to = URL::route('ci-news-detail', array('id' => Input::get('id'), 'name' => Str::slug(Input::get('name', ''))));
                 break;
             case 'share-coupon':
-                $redirect_to = URL::route('ci-coupon-detail', array('id' => Input::get('id')));
+                $redirect_to = URL::route('ci-coupon-detail', array('id' => Input::get('id'), 'name' => Str::slug(Input::get('name', ''))));
                 break;
             case 'share-lucky-draw':
-                $redirect_to = URL::route('ci-luckydraw-detail', array('id' => Input::get('id')));
+                $redirect_to = URL::route('ci-luckydraw-detail', array('id' => Input::get('id'), 'name' => Str::slug(Input::get('name', ''))));
                 break;
             case 'share-home':
-                $redirect_to = URL::route('ci-customer-home', array('id' => Input::get('id')));
+                $redirect_to = URL::route('ci-customer-home', array('id' => Input::get('id'), 'name' => Str::slug(Input::get('name', ''))));
                 break;
             default:
                 $redirect_to = NULL;
@@ -148,6 +149,12 @@ Route::filter('turn-off-query-string-session', function()
 */
 Route::filter('orbit-settings', function()
 {
+    if (! (new MobileDetect)->isMobile()) {
+        Config::set('orbit.error_message.e500', 'Desktop version is coming soon, please use mobile device to access this site at the moment.');
+
+        App::abort(403, Config::get('orbit.error_message.e500'));
+    }
+
     if (! App::make('orbitSetting')->getSetting('current_retailer')) {
         throw new Exception ('You have to setup current retailer first on Admin Portal.');
     }
