@@ -148,6 +148,8 @@ class LuckyDrawAPIController extends ControllerAPI
             $default_merchant_language_id = MerchantLanguage::getLanguageIdByMerchant($mall_id, static::DEFAULT_LANG);
             $id_language_default = OrbitInput::post('id_language_default', $default_merchant_language_id);
 
+            $object_type = OrbitInput::post('object_type', 'manual');
+
             // Begin database transaction
             $this->beginTransaction();
 
@@ -167,6 +169,7 @@ class LuckyDrawAPIController extends ControllerAPI
                     'grace_period_in_days'     => $grace_period_in_days,
                     'campaign_status'          => OrbitInput::post('campaign_status'),
                     'id_language_default'      => $id_language_default,
+                    'object_type'              => $object_type,
                 ),
                 array(
                     'mall_id'                  => 'orbit.empty.mall',
@@ -183,6 +186,7 @@ class LuckyDrawAPIController extends ControllerAPI
                     'grace_period_in_days'     => 'numeric',
                     'campaign_status'          => 'required|exists:'.$this->getCampaignStatusTable().',campaign_status_name',
                     'id_language_default'      => 'required|orbit.empty.language_default',
+                    'object_type'              => 'in:manual,auto',
                 )
             );
 
@@ -201,9 +205,15 @@ class LuckyDrawAPIController extends ControllerAPI
                                     ->where('name', '=', 'en')
                                     ->first();
 
+            // handle empty string
+            if ($object_type !== 'auto') {
+                $object_type = 'manual';
+            }
+
             // save lucky draw.
             $newluckydraw = new LuckyDraw();
             $newluckydraw->mall_id = $mall_id;
+            $newluckydraw->object_type = $object_type;
             $newluckydraw->start_date = $start_date;
             $newluckydraw->end_date = $end_date;
             $newluckydraw->draw_date = $draw_date;
