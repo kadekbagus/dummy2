@@ -484,7 +484,7 @@ class LuckyDrawAPIController extends ControllerAPI
                     'end_date'            => 'date_format:Y-m-d H:i:s',
                     'draw_date'           => 'date_format:Y-m-d H:i:s',
                     'grace_period_date'   => 'date_format:Y-m-d H:i:s',
-                    'id_language_default' => 'required|orbit.empty.language_default',
+                    'id_language_default' => 'required|orbit.empty.language_default:' . $mall_id,
                     'images_type'         => 'in:image/jpg,image/png,image/jpeg,image/gif',
                     'images_size'         => 'orbit.max.file_size:' . $luckydraw_image_config['file_size'],
                 ),
@@ -570,31 +570,6 @@ class LuckyDrawAPIController extends ControllerAPI
 
             $updatedluckydraw->modified_by = $this->api->user->user_id;
 
-            // english and default language in mall is required
-            $idLanguageEnglish = Language::select('language_id')
-                                    ->where('name', '=', 'en')
-                                    ->first();
-
-            // Check for english content
-            $dataTranslations = @json_decode($translations);
-            if (json_last_error() != JSON_ERROR_NONE) {
-                OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'translations']));
-            }
-
-            // Get english lucky draw name and description
-            foreach ($dataTranslations as $key => $val) {
-                // Validation language id from translation
-                $language = Language::where('language_id', '=', $key)->first();
-                if (empty($language)) {
-                    OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.merchant_language'));
-                }
-
-                if ($key === $idLanguageEnglish->language_id) {
-                    $updatedluckydraw->lucky_draw_name = $val->lucky_draw_name;
-                    $updatedluckydraw->description = $val->description;
-                }
-            }
-
             Event::fire('orbit.luckydraw.postupdateluckydraw.before.save', array($this, $updatedluckydraw));
 
             $updatedluckydraw->save();
@@ -607,29 +582,23 @@ class LuckyDrawAPIController extends ControllerAPI
 
             $prefix = DB::getTablePrefix();
             $isAvailable = LuckyDrawTranslation::where('lucky_draw_id', '=', $lucky_draw_id)
-                                            ->whereRaw("{$prefix}lucky_draw_translations.merchant_language_id IN (select language_id
+                                            ->whereRaw("{$prefix}lucky_draw_translations.merchant_language_id = (select language_id
                                                                                                                     from {$prefix}languages
                                                                                                                     where name = (select mobile_default_language
                                                                                                                                     from {$prefix}merchants
                                                                                                                                     where {$prefix}merchants.object_type = 'mall'
-                                                                                                                                    and merchant_id = {$this->quote($mall_id)})
-                                                                                                                    or name = 'en')")
+                                                                                                                                    and merchant_id = {$this->quote($mall_id)}))")
                                             ->where(function($query) {
-                                                $query->where('lucky_draw_name', '=', '')
-                                                      ->orWhere('description', '=', '')
-                                                      ->orWhereNull('lucky_draw_name')
-                                                      ->orWhereNull('description');
+                                                $query->where('lucky_draw_name', '!=', '')
+                                                      ->orWhere('description', '!=', '')
+                                                      ->orWhereNotNull('lucky_draw_name')
+                                                      ->orWhereNotNull('description');
                                               })
-                                            ->get();
+                                            ->first();
 
-            foreach ($isAvailable as $val) {
-                if ($val->merchant_language_id === $idLanguageEnglish->language_id) {
-                    $errorMessage = Lang::get('validation.orbit.empty.english_language');
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-                } else {
-                    $errorMessage = Lang::get('validation.orbit.empty.default_language');
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-                }
+            if (empty($isAvailable)) {
+                $errorMessage = Lang::get('validation.orbit.empty.default_language_both', ['type' => $valid_lang->name_long]);
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
             $this->response->data = $updatedluckydraw;
@@ -2089,7 +2058,7 @@ class LuckyDrawAPIController extends ControllerAPI
                 array(
                     'mall_id'                  => 'required|orbit.empty.mall',
                     'lucky_draw_id'            => 'required|orbit.empty.lucky_draw',
-                    'id_language_default'      => 'required|orbit.empty.language_default',
+                    'id_language_default'      => 'required|orbit.empty.language_default:' . $mall_id,
                     'title'                    => 'required|max:255',
                     'description'              => 'required',
                     'status'                   => 'required|orbit.empty.lucky_draw_status',
@@ -2492,7 +2461,7 @@ class LuckyDrawAPIController extends ControllerAPI
                     'lucky_draw_announcement_id'      => 'required|orbit.empty.lucky_draw_announcement',
                     'title'                => 'max:255',
                     'status'               => 'orbit.empty.lucky_draw_status',
-                    'id_language_default'  => 'required|orbit.empty.language_default',
+                    'id_language_default'  => 'required|orbit.empty.language_default:' . $mall_id,
                 )
             );
 
