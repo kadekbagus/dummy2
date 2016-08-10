@@ -49,22 +49,6 @@ class UserCIAPIController extends BaseAPIController
                 ACL::throwAccessForbidden($message);
             }
 
-            $this->mall_id = OrbitInput::get('mall_id', null);
-
-            $this->registerCustomValidation();
-            $validator = Validator::make(
-                array(
-                    'mall_id' => $this->mall_id,
-                ),
-                array(
-                    'mall_id' => 'required|orbit.empty.mall',
-                )
-            );
-            if ($validator->fails()) {
-                $errorMessage = $validator->messages()->first();
-                OrbitShopAPI::throwInvalidArgument($errorMessage);
-            }
-
             $image = null;
             $media = $user->profilePicture()
                 ->where('media_name_long', 'user_profile_picture_orig')
