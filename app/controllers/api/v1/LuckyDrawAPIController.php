@@ -29,6 +29,8 @@ class LuckyDrawAPIController extends ControllerAPI
      */
     const DEFAULT_LANG = 'en';
 
+    protected $valid_lang = NULL;
+
     private function getCampaignStatusTable()
     {
         $campaignStatus = new CampaignStatus;
@@ -185,7 +187,7 @@ class LuckyDrawAPIController extends ControllerAPI
                     'grace_period_date'        => 'date_format:Y-m-d H:i:s|after:' . $end_date,
                     'grace_period_in_days'     => 'numeric',
                     'campaign_status'          => 'required|exists:'.$this->getCampaignStatusTable().',campaign_status_name',
-                    'id_language_default'      => 'required|orbit.empty.language_default',
+                    'id_language_default'      => 'required|orbit.empty.language_default:' . $mall_id,
                     'object_type'              => 'in:manual,auto',
                 )
             );
@@ -200,15 +202,12 @@ class LuckyDrawAPIController extends ControllerAPI
 
             Event::fire('orbit.luckydraw.postnewluckydraw.after.validation', array($this, $validator));
 
-            // Get english language id
-            $idLanguageEnglish = Language::select('language_id')
-                                    ->where('name', '=', 'en')
-                                    ->first();
-
             // handle empty string
             if ($object_type !== 'auto') {
                 $object_type = 'manual';
             }
+
+            $valid_lang = $this->valid_lang;
 
             // save lucky draw.
             $newluckydraw = new LuckyDraw();
@@ -226,25 +225,8 @@ class LuckyDrawAPIController extends ControllerAPI
             $newluckydraw->created_by = $this->api->user->user_id;
             $newluckydraw->modified_by = $this->api->user->user_id;
 
-            // Check for english content
-            $dataTranslations = @json_decode($translations);
-            if (json_last_error() != JSON_ERROR_NONE) {
-                OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'translations']));
-            }
-
-            // Get english lucky draw name and description
-            foreach ($dataTranslations as $key => $val) {
-                // Validation language id from translation
-                $language = Language::where('language_id', '=', $key)->first();
-                if (empty($language)) {
-                    OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.merchant_language'));
-                }
-
-                if ($key === $idLanguageEnglish->language_id) {
-                    $newluckydraw->lucky_draw_name = $val->lucky_draw_name;
-                    $newluckydraw->description = $val->description;
-                }
-            }
+            $newluckydraw->lucky_draw_name = $lucky_draw_name;
+            $newluckydraw->description = $description;
 
             list($newluckydraw->campaign_status_id, $newluckydraw->status) = $this->handleStatus();
 
@@ -258,32 +240,25 @@ class LuckyDrawAPIController extends ControllerAPI
                 $this->validateAndSaveTranslations($newluckydraw, $translation_json_string, 'create', $mall_id);
             });
 
-            // english and default language in mall is required
             $prefix = DB::getTablePrefix();
             $isAvailable = LuckyDrawTranslation::where('lucky_draw_id', '=', $newluckydraw->lucky_draw_id)
-                                            ->whereRaw("{$prefix}lucky_draw_translations.merchant_language_id IN (select language_id
+                                            ->whereRaw("{$prefix}lucky_draw_translations.merchant_language_id = (select language_id
                                                                                                                     from {$prefix}languages
                                                                                                                     where name = (select mobile_default_language
                                                                                                                                     from {$prefix}merchants
                                                                                                                                     where {$prefix}merchants.object_type = 'mall'
-                                                                                                                                    and merchant_id = {$this->quote($mall_id)})
-                                                                                                                    or name = 'en')")
+                                                                                                                                    and merchant_id = {$this->quote($mall_id)}))")
                                             ->where(function($query) {
-                                                $query->where('lucky_draw_name', '=', '')
-                                                      ->orWhere('description', '=', '')
-                                                      ->orWhereNull('lucky_draw_name')
-                                                      ->orWhereNull('description');
+                                                $query->where('lucky_draw_name', '!=', '')
+                                                      ->orWhere('description', '!=', '')
+                                                      ->orWhereNotNull('lucky_draw_name')
+                                                      ->orWhereNotNull('description');
                                               })
-                                            ->get();
+                                            ->first();
 
-            foreach ($isAvailable as $val) {
-                if ($val->merchant_language_id === $idLanguageEnglish->language_id) {
-                    $errorMessage = Lang::get('validation.orbit.empty.english_language');
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-                } else {
-                    $errorMessage = Lang::get('validation.orbit.empty.default_language');
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-                }
+            if (empty($isAvailable)) {
+                $errorMessage = Lang::get('validation.orbit.empty.default_language_both', ['type' => $valid_lang->name_long]);
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
             $this->response->data = $newluckydraw;
@@ -4079,15 +4054,18 @@ class LuckyDrawAPIController extends ControllerAPI
     {
         // Check the existance of id_language_default
         Validator::extend('orbit.empty.language_default', function ($attribute, $value, $parameters) {
-            $news = MerchantLanguage::excludeDeleted()
-                        ->where('language_id', $value)
+            $mall_id = $parameters[0];
+            $lang = MerchantLanguage::excludeDeleted('merchant_languages')
+                        ->join('languages', 'languages.language_id', '=', 'merchant_languages.language_id')
+                        ->where('merchant_id', $mall_id)
+                        ->where('merchant_languages.language_id', $value)
                         ->first();
 
-            if (empty($news)) {
+            if (empty($lang)) {
                 return FALSE;
             }
 
-            App::instance('orbit.empty.language_default', $news);
+            $this->valid_lang = $lang;
 
             return TRUE;
         });
