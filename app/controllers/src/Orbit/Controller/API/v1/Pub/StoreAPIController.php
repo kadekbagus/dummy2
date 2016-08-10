@@ -44,7 +44,7 @@ class StoreAPIController extends ControllerAPI
             $sort_mode = OrbitInput::get('sortmode','asc');
             $usingDemo = Config::get('orbit.is_demo', FALSE);
 
-            $store = Tenant::select('merchant_id', 'name');
+            $store = Tenant::select('merchant_id', 'name')->active();
 
             OrbitInput::get('filter_name', function ($filterName) use ($store) {
                 if (! empty($filterName)) {
@@ -56,13 +56,6 @@ class StoreAPIController extends ControllerAPI
             });
 
             $store = $store->groupBy('name')->orderBy($sort_by, $sort_mode);
-
-            if ($usingDemo) {
-                $store->excludeDeleted();
-            } else {
-                // Production
-                $store->active();
-            }
 
             $_store = clone $store;
 
@@ -146,7 +139,6 @@ class StoreAPIController extends ControllerAPI
         try {
             $sort_by = OrbitInput::get('sortby', 'merchants.name');
             $sort_mode = OrbitInput::get('sortmode','asc');
-            $usingDemo = Config::get('orbit.is_demo', FALSE);
             $storename = OrbitInput::get('store_name');
 
             $prefix = DB::getTablePrefix();
@@ -170,7 +162,8 @@ class StoreAPIController extends ControllerAPI
             }
 
             $mall = Mall::select('merchants.merchant_id', 'merchants.name', 'merchants.ci_domain', DB::raw("CONCAT({$prefix}merchants.ci_domain, '/customer/tenant?id=', oms.merchant_id) as store_url"))
-                    ->join(DB::raw("(select merchant_id, `name`, parent_id from {$prefix}merchants where name = {$this->quote($storename)}) as oms"), DB::raw('oms.parent_id'), '=', 'merchants.merchant_id');
+                    ->join(DB::raw("(select merchant_id, `name`, parent_id from {$prefix}merchants where name = {$this->quote($storename)}) as oms"), DB::raw('oms.parent_id'), '=', 'merchants.merchant_id')
+                    ->active();
 
             OrbitInput::get('filter_name', function ($filterName) use ($mall, $prefix) {
                 if (! empty($filterName)) {
@@ -182,13 +175,6 @@ class StoreAPIController extends ControllerAPI
             });
 
             $mall = $mall->groupBy('merchants.merchant_id')->orderBy($sort_by, $sort_mode);
-
-            if ($usingDemo) {
-                $mall->excludeDeleted();
-            } else {
-                // Production
-                $mall->active();
-            }
 
             $_mall = clone $mall;
 
