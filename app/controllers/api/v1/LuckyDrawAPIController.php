@@ -1006,7 +1006,8 @@ class LuckyDrawAPIController extends ControllerAPI
             // Builder object
             $prefix = DB::getTablePrefix();
             $luckydraws = LuckyDraw::excludeDeleted('lucky_draws')
-                                    ->select('lucky_draws.*', 'lucky_draw_translations.lucky_draw_name as lucky_draw_name_english', 'lucky_draw_translations.lucky_draw_name as lucky_draw_name_english', 'campaign_status.order', DB::raw('media.path as image_path'), DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$prefix}lucky_draws.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
+                                    ->select('lucky_draws.*', 'lucky_draw_translations.lucky_draw_name as lucky_draw_name_default',
+                                        'campaign_status.order', DB::raw('media.path as image_path'), DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$prefix}lucky_draws.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
                                                                 FROM {$prefix}merchants om
                                                                 LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
                                                                 WHERE om.merchant_id = {$prefix}lucky_draws.mall_id)
@@ -1014,9 +1015,15 @@ class LuckyDrawAPIController extends ControllerAPI
                                     ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'lucky_draws.campaign_status_id')
                                     ->leftJoin('lucky_draw_translations', 'lucky_draw_translations.lucky_draw_id', '=', 'lucky_draws.lucky_draw_id')
                                     ->leftJoin('languages', 'languages.language_id', '=', 'lucky_draw_translations.merchant_language_id')
-                                    ->leftJoin(DB::raw("( SELECT * FROM {$prefix}media WHERE media_name_long = 'lucky_draw_translation_image_resized_default' ) as media"), DB::raw('media.object_id'), '=', 'lucky_draw_translations.lucky_draw_translation_id');
+                                    ->leftJoin(DB::raw("( SELECT * FROM {$prefix}media WHERE media_name_long = 'lucky_draw_translation_image_resized_default' ) as media"), DB::raw('media.object_id'), '=', 'lucky_draw_translations.lucky_draw_translation_id')
+                                    ->whereRaw("{$prefix}lucky_draw_translations.merchant_language_id = (select language_id
+                                                                                                            from {$prefix}languages
+                                                                                                            where name = (select mobile_default_language
+                                                                                                                            from {$prefix}merchants
+                                                                                                                            where {$prefix}merchants.object_type = 'mall'
+                                                                                                                            and merchant_id = {$prefix}lucky_draws.mall_id))");
             if ($details_view === 'yes' || $this->returnBuilder) {
-                $luckydraws->select('lucky_draws.*', 'lucky_draw_translations.lucky_draw_name as lucky_draw_name_english', 'campaign_status.order', DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$prefix}lucky_draws.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
+                $luckydraws->select('lucky_draws.*', 'lucky_draw_translations.lucky_draw_name as lucky_draw_name_default', 'campaign_status.order', DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$prefix}lucky_draws.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
                     FROM {$prefix}merchants om
                     LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
                     WHERE om.merchant_id = {$prefix}lucky_draws.mall_id) THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END  AS campaign_status"), 'merchants.name',
