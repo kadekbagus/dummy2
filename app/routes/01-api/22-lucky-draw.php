@@ -122,3 +122,13 @@ Route::post('/api/v1/lucky-draw-announcement/blast', function()
 {
     return LuckyDrawAPIController::create()->postBlastLuckyDrawAnnouncement();
 });
+
+/**
+ * Route for getting list of lucky draw on all malls
+ */
+Route::get(
+    '/{prefix}/v1/pub/lucky-draw/list', ['as' => 'pub-lucky-draw-list', function()
+    {
+        return Orbit\Controller\API\v1\Pub\LuckyDrawAPIController::create()->getSearchLuckyDraw();
+    }]
+)->where('prefix', '(api|app)');
