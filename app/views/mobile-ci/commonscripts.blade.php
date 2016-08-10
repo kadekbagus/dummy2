@@ -371,6 +371,22 @@
             window.location.reload();
         }
     });
+    @if (! $is_logged_in && Input::get('do_sign_in') === 'true')
+    var popup_default_url = '{{\URL::route('ci-customer-home')}}';
+    var popup_current_url = '{{Input::get('redirect_url')}}';
+
+    if (popup_current_url) {
+        popup_default_url = popup_current_url;
+    }
+
+    $('.to_url').val(popup_default_url);
+    $('.sign-in-back-drop').fadeIn('fast');
+    $('.sign-in-popup').toggle('slide', {direction: 'down'}, 'fast');
+
+    @if (! Config::get('orbit.shop.dismissable_signin_popup', TRUE))
+    $('#signin-popup-close-btn').remove();
+    @endif
+    @endif
     var keyword = '{{{Input::get('keyword', '')}}}';
     var take = {{Config::get('orbit.pagination.per_page', 25)}},
         skip = {{Config::get('orbit.pagination.per_page', 25)}};
