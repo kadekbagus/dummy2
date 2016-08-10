@@ -50,6 +50,7 @@ class PowerSearchCIAPIController extends BaseAPIController
         $keyword = null;
         $activityPage = Activity::mobileci()
                         ->setActivityType('search');
+        $this->response = new ResponseProvider();
 
         try {
             $httpCode = 200;
@@ -87,18 +88,18 @@ class PowerSearchCIAPIController extends BaseAPIController
 
             $language = \Language::where('name', '=', $lang)->first();
 
-            $retailer = Mall::excludeDeleted()->where('merchant_id', $this->mall_id)->first();
-            $mallTime = Carbon::now($retailer->timezone->timezone_name);
+            $mall = Mall::excludeDeleted()->where('merchant_id', $this->mall_id)->first();
+            $mallTime = Carbon::now($mall->timezone->timezone_name);
 
             $alternateLanguage = null;
             if (is_object($language)) {
                 $alternateLanguage = \MerchantLanguage::excludeDeleted()
-                    ->where('merchant_id', '=', $retailer->merchant_id)
+                    ->where('merchant_id', '=', $mall->merchant_id)
                     ->where('language_id', '=', $language->language_id)
                     ->first();
             }
 
-            //$alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
+            //$alternateLanguage = $this->getAlternateMerchantLanguage($user, $mall);
             $userAge = 0;
             if ($user->userDetail->birthdate !== '0000-00-00' && $user->userDetail->birthdate !== null) {
                 $userAge = $this->calculateAge($user->userDetail->birthdate);
@@ -111,7 +112,7 @@ class PowerSearchCIAPIController extends BaseAPIController
 
             $prefix = DB::getTablePrefix();
 
-            $mallid = $retailer->merchant_id;
+            $mallid = $mall->merchant_id;
 
             $promo = DB::table('news')
                 ->selectRaw("{$prefix}news.news_id as object_id, {$prefix}news.news_name as object_name, {$prefix}news.description as object_description, {$prefix}news.image as object_image, 'promotion' as object_type")
@@ -126,9 +127,9 @@ class PowerSearchCIAPIController extends BaseAPIController
                     $join->on('news.news_id', '=', 'keyword_object.object_id');
                     $join->where('keyword_object.object_type', '=', 'promotion');
                 })
-                ->leftJoin('keywords', function($join) use ($retailer) {
+                ->leftJoin('keywords', function($join) use ($mall) {
                     $join->on('keywords.keyword_id', '=', 'keyword_object.keyword_id');
-                    $join->where('keywords.merchant_id', '=', $retailer->merchant_id);
+                    $join->where('keywords.merchant_id', '=', $mall->merchant_id);
                 })
                 ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                 ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
@@ -158,9 +159,9 @@ class PowerSearchCIAPIController extends BaseAPIController
                     $join->on('news.news_id', '=', 'keyword_object.object_id');
                     $join->where('keyword_object.object_type', '=', 'news');
                 })
-                ->leftJoin('keywords', function($join) use ($retailer) {
+                ->leftJoin('keywords', function($join) use ($mall) {
                     $join->on('keywords.keyword_id', '=', 'keyword_object.keyword_id');
-                    $join->where('keywords.merchant_id', '=', $retailer->merchant_id);
+                    $join->where('keywords.merchant_id', '=', $mall->merchant_id);
                 })
                 ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                 ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
@@ -190,9 +191,9 @@ class PowerSearchCIAPIController extends BaseAPIController
                     $join->on('promotions.promotion_id', '=', 'keyword_object.object_id');
                     $join->where('keyword_object.object_type', '=', 'coupon');
                 })
-                ->leftJoin('keywords', function($join) use ($retailer) {
+                ->leftJoin('keywords', function($join) use ($mall) {
                     $join->on('keywords.keyword_id', '=', 'keyword_object.keyword_id');
-                    $join->where('keywords.merchant_id', '=', $retailer->merchant_id);
+                    $join->where('keywords.merchant_id', '=', $mall->merchant_id);
                 })
                 ->leftJoin('issued_coupons', 'issued_coupons.promotion_id', '=', 'promotions.promotion_id')
                 ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
@@ -223,9 +224,9 @@ class PowerSearchCIAPIController extends BaseAPIController
                     $join->on('merchants.merchant_id', '=', 'keyword_object.object_id');
                     $join->where('keyword_object.object_type', '=', 'tenant');
                 })
-                ->leftJoin('keywords', function($join) use ($retailer) {
+                ->leftJoin('keywords', function($join) use ($mall) {
                     $join->on('keywords.keyword_id', '=', 'keyword_object.keyword_id');
-                    $join->where('keywords.merchant_id', '=', $retailer->merchant_id);
+                    $join->where('keywords.merchant_id', '=', $mall->merchant_id);
                 })
                 ->leftJoin('media', function($join) {
                     $join->on('merchants.merchant_id', '=', 'media.object_id')
@@ -234,7 +235,7 @@ class PowerSearchCIAPIController extends BaseAPIController
                 })
                 ->where('merchants.object_type', '=', 'tenant')
                 ->where('merchants.status', 'active')
-                ->where('parent_id', $retailer->merchant_id)
+                ->where('parent_id', $mall->merchant_id)
                 ->where(function($q) use ($keyword) {
                     $q->where('merchants.name', 'like', "%$keyword%")
                         ->orWhere('merchant_translations.description', 'like', "%$keyword%")
@@ -251,9 +252,9 @@ class PowerSearchCIAPIController extends BaseAPIController
                     $join->on('merchants.merchant_id', '=', 'keyword_object.object_id');
                     $join->where('keyword_object.object_type', '=', 'tenant');
                 })
-                ->leftJoin('keywords', function($join) use ($retailer) {
+                ->leftJoin('keywords', function($join) use ($mall) {
                     $join->on('keywords.keyword_id', '=', 'keyword_object.keyword_id');
-                    $join->where('keywords.merchant_id', '=', $retailer->merchant_id);
+                    $join->where('keywords.merchant_id', '=', $mall->merchant_id);
                 })
                 ->leftJoin('media', function($join) {
                     $join->on('merchants.merchant_id', '=', 'media.object_id')
@@ -262,7 +263,7 @@ class PowerSearchCIAPIController extends BaseAPIController
                 })
                 ->where('merchants.object_type', '=', 'service')
                 ->where('merchants.status', 'active')
-                ->where('parent_id', $retailer->merchant_id)
+                ->where('parent_id', $mall->merchant_id)
                 ->where(function($q) use ($keyword) {
                     $q->where('merchants.name', 'like', "%$keyword%")
                         ->orWhere('merchant_translations.description', 'like', "%$keyword%")
@@ -276,7 +277,7 @@ class PowerSearchCIAPIController extends BaseAPIController
                     $join->where('lucky_draw_translations.merchant_language_id', '=', $alternateLanguage->language_id);
                 })
                 ->where('lucky_draws.status', 'active')
-                ->where('mall_id', $retailer->merchant_id)
+                ->where('mall_id', $mall->merchant_id)
                 ->whereRaw("? between start_date and grace_period_date", [$mallTime])
                 ->where(function($q) use ($keyword) {
                     $q->where('lucky_draw_translations.lucky_draw_name', 'like', "%$keyword%")
@@ -353,25 +354,25 @@ class PowerSearchCIAPIController extends BaseAPIController
 
             foreach($search_results as $near_end_result) {
                 if ($near_end_result->object_type === 'promotion') {
-                    $near_end_result->object_image = URL::asset('mobile-ci/images/default_promotion.png');
+                    $near_end_result->object_image = null;
                 } elseif ($near_end_result->object_type === 'news') {
-                    $near_end_result->object_image = URL::asset('mobile-ci/images/default_news.png');
+                    $near_end_result->object_image = null;
                 } elseif ($near_end_result->object_type === 'coupon') {
-                    $near_end_result->object_image = URL::asset('mobile-ci/images/default_coupon.png');
+                    $near_end_result->object_image = null;
                 } elseif ($near_end_result->object_type === 'tenant') {
                     if (! is_null($near_end_result->object_image)) {
                         $near_end_result->object_image = URL::asset($near_end_result->object_image);
                     } else {
-                        $near_end_result->object_image = URL::asset('mobile-ci/images/default_tenants_directory.png');
+                        $near_end_result->object_image = null;
                     }
                 } elseif ($near_end_result->object_type === 'service') {
                     if (! is_null($near_end_result->object_image)) {
                         $near_end_result->object_image = URL::asset($near_end_result->object_image);
                     } else {
-                        $near_end_result->object_image = URL::asset('mobile-ci/images/default_services_directory.png');
+                        $near_end_result->object_image = null;
                     }
                 } elseif ($near_end_result->object_type === 'lucky_draw') {
-                    $near_end_result->object_image = URL::asset('mobile-ci/images/default_lucky_number.png');
+                    $near_end_result->object_image = null;
                 }
 
                 if (!empty($alternateLanguage)) {
@@ -413,7 +414,7 @@ class PowerSearchCIAPIController extends BaseAPIController
                             } else {
                                 // back to default image if in the content multilanguage not have image
                                 // check the system language
-                                $defaultLanguage = $this->getDefaultLanguage($retailer);
+                                $defaultLanguage = $this->getDefaultLanguage($mall);
                                 if ($defaultLanguage !== NULL) {
                                     $contentDefaultLanguage = \NewsTranslation::excludeDeleted()
                                         ->where('merchant_language_id', '=', $defaultLanguage->language_id)
@@ -447,7 +448,7 @@ class PowerSearchCIAPIController extends BaseAPIController
                             } else {
                                 // back to default image if in the content multilanguage not have image
                                 // check the system language
-                                $defaultLanguage = $this->getDefaultLanguage($retailer);
+                                $defaultLanguage = $this->getDefaultLanguage($mall);
                                 if ($defaultLanguage !== NULL) {
                                     $contentDefaultLanguage = \CouponTranslation::excludeDeleted()
                                         ->where('merchant_language_id', '=', $defaultLanguage->language_id)
@@ -486,7 +487,7 @@ class PowerSearchCIAPIController extends BaseAPIController
                             } else {
                                 // back to default image if in the content multilanguage not have image
                                 // check the system language
-                                $defaultLanguage = $this->getDefaultLanguage($retailer);
+                                $defaultLanguage = $this->getDefaultLanguage($mall);
                                 if ($defaultLanguage !== NULL) {
                                     $contentDefaultLanguage = \LuckyDrawTranslation::excludeDeleted()
                                         ->where('merchant_language_id', '=', $defaultLanguage->language_id)
@@ -533,15 +534,16 @@ class PowerSearchCIAPIController extends BaseAPIController
                 $this->response->message = 'No results found.';
             }
 
-            $activityPageNotes = sprintf('Keyword Searched: %s', $keyword);
+            $activityPageNotes = sprintf($keyword);
             $activityPage->setUser($user)
-                    ->setActivityName('search_keyword')
-                    ->setActivityNameLong('Search')
-                    ->setObject(null)
-                    ->setModuleName('Search')
-                    ->setNotes($activityPageNotes)
-                    ->responseOK()
-                    ->save();
+                ->setActivityName('search_keyword')
+                ->setActivityNameLong('Search')
+                ->setObject(null)
+                ->setModuleName('Search')
+                ->setNotes($activityPageNotes)
+                ->setLocation($mall)
+                ->responseOK()
+                ->save();
 
             $this->response->data = $data;
         } catch (ACLForbiddenException $e) {
@@ -551,6 +553,16 @@ class PowerSearchCIAPIController extends BaseAPIController
             $this->response->message = $e->getMessage();
             $this->response->data = null;
             $httpCode = 403;
+
+            $activityPageNotes = sprintf($keyword);
+            $activityPage->setUser($user)
+                ->setActivityName('search_keyword')
+                ->setActivityNameLong('Search Failed')
+                ->setObject(null)
+                ->setModuleName('Search')
+                ->setNotes($activityPageNotes)
+                ->responseFailed()
+                ->save();
         } catch (InvalidArgsException $e) {
 
             $this->response->code = $e->getCode();
@@ -562,6 +574,16 @@ class PowerSearchCIAPIController extends BaseAPIController
 
             $this->response->data = $result;
             $httpCode = 403;
+
+            $activityPageNotes = sprintf($keyword);
+            $activityPage->setUser($user)
+                ->setActivityName('search_keyword')
+                ->setActivityNameLong('Search Failed')
+                ->setObject(null)
+                ->setModuleName('Search')
+                ->setNotes($activityPageNotes)
+                ->responseFailed()
+                ->save();
         } catch (QueryException $e) {
 
             $this->response->code = $e->getCode();
@@ -575,6 +597,16 @@ class PowerSearchCIAPIController extends BaseAPIController
             }
             $this->response->data = null;
             $httpCode = 500;
+
+            $activityPageNotes = sprintf($keyword);
+            $activityPage->setUser($user)
+                ->setActivityName('search_keyword')
+                ->setActivityNameLong('Search Failed')
+                ->setObject(null)
+                ->setModuleName('Search')
+                ->setNotes($activityPageNotes)
+                ->responseFailed()
+                ->save();
         } catch (Exception $e) {
 
             $this->response->code = $this->getNonZeroCode($e->getCode());
@@ -608,6 +640,16 @@ class PowerSearchCIAPIController extends BaseAPIController
 
                     $this->response->data = $data;
             }
+
+            $activityPageNotes = sprintf($keyword);
+            $activityPage->setUser($user)
+                ->setActivityName('search_keyword')
+                ->setActivityNameLong('Search Failed')
+                ->setObject(null)
+                ->setModuleName('Search')
+                ->setNotes($activityPageNotes)
+                ->responseFailed()
+                ->save();
         }
 
         $output = $this->render($httpCode);

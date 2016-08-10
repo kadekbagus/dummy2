@@ -2248,11 +2248,18 @@ class TenantAPIController extends ControllerAPI
                                        ->groupBy('merchants.merchant_id');
 
             if (in_array(strtolower($user->role->role_name), $this->campaignRole)) {
-                $tenants->join('user_merchant', function($q) use ($user)
-                {
-                    $q->on('user_merchant.merchant_id', '=', 'merchants.merchant_id')
-                         ->where('user_merchant.user_id', '=', $user->user_id);
-                });
+                if ($user->campaignAccount->is_link_to_all === 'N') {
+                    $tenants->join('user_merchant', function($q) use ($user)
+                    {
+                        $q->on('user_merchant.merchant_id', '=', 'merchants.merchant_id')
+                             ->where('user_merchant.user_id', '=', $user->user_id);
+                    });
+                } else {
+                    if ($user->campaignAccount->accountType->type_name === '3rd Party') {
+                        $tenants->whereRaw("{$prefix}merchants.object_type = 'mall'");
+                    }
+                }
+                $tenants->where('merchants.status', '=', 'active');
             }
 
             // filter by account type
@@ -2270,8 +2277,16 @@ class TenantAPIController extends ControllerAPI
                     $unique_rule = implode("','", explode("_", $account_type->unique_rule));
 
                     $tenants->whereRaw("{$prefix}merchants.merchant_id NOT IN (
-                                        SELECT merchant_id FROM orb_user_merchant
-                                        WHERE {$prefix}user_merchant.object_type IN ('$unique_rule'))");
+                                            SELECT um.merchant_id
+                                            FROM {$prefix}user_merchant um
+                                            JOIN {$prefix}campaign_account ca
+                                                ON ca.user_id = um.user_id
+                                            JOIN {$prefix}account_types at
+                                                ON at.account_type_id = ca.account_type_id
+                                            WHERE um.object_type IN ('$unique_rule')
+                                                AND at.unique_rule != 'none'
+                                            GROUP BY um.merchant_id
+                                        )");
                 }
 
                 // access
@@ -2283,14 +2298,14 @@ class TenantAPIController extends ControllerAPI
 
             if ($filtermode === 'available') {
                 $tenants->whereRaw("{$prefix}merchants.merchant_id NOT IN (
-                                    SELECT merchant_id FROM orb_user_merchant
+                                    SELECT merchant_id FROM {$prefix}user_merchant
                                     WHERE {$prefix}user_merchant.object_type IN ('mall', 'tenant'))");
             }
 
             // Only showing tenant only, provide for coupon redemption place.
             if ($filtermode === 'tenant') {
                 $tenants->whereRaw("{$prefix}merchants.merchant_id NOT IN (
-                                    SELECT merchant_id FROM orb_user_merchant
+                                    SELECT merchant_id FROM {$prefix}user_merchant
                                     WHERE {$prefix}user_merchant.object_type IN ('mall'))");
             }
 

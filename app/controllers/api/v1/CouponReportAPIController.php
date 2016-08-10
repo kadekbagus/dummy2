@@ -216,8 +216,8 @@ class CouponReportAPIController extends ControllerAPI
                                         'promotions.updated_at',
 
                                         DB::raw("(select GROUP_CONCAT(IF({$prefix}merchants.object_type = 'tenant', CONCAT({$prefix}merchants.name,' at ', pm.name), CONCAT('Mall at ',{$prefix}merchants.name)) separator ', ') from {$prefix}promotion_retailer
-                                        inner join {$prefix}merchants on {$prefix}merchants.merchant_id = {$prefix}promotion_retailer.retailer_id
-                                        inner join {$prefix}merchants pm on {$prefix}merchants.parent_id = pm.merchant_id
+                                        left join {$prefix}merchants on {$prefix}merchants.merchant_id = {$prefix}promotion_retailer.retailer_id
+                                        left join {$prefix}merchants pm on {$prefix}merchants.parent_id = pm.merchant_id
                                         where {$prefix}promotion_retailer.promotion_id = {$prefix}promotions.promotion_id) as campaign_location_names"),
                                         DB::raw("COUNT(DISTINCT {$prefix}promotion_retailer.promotion_retailer_id) as total_location"),
                                         DB::raw("CASE WHEN {$prefix}promotions.end_date < {$this->quote($now)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END AS campaign_status"),
@@ -244,8 +244,7 @@ class CouponReportAPIController extends ControllerAPI
                                                             GROUP BY promotion_id
                                                         ) redeemed"),
                                             // On
-                                            DB::raw('redeemed.promotion_id'), '=', 'promotions.promotion_id')
-                                        ->where('promotions.merchant_id', '=', $current_mall);
+                                            DB::raw('redeemed.promotion_id'), '=', 'promotions.promotion_id');
 
             // Filter by Promotion Name
             OrbitInput::get('promotion_name', function($name) use ($coupons) {
@@ -310,11 +309,6 @@ class CouponReportAPIController extends ControllerAPI
 
             // Filter by mall id
             OrbitInput::get('mall_id', function($mallId) use ($coupons) {
-                $coupons->where('promotions.merchant_id', $mallId);
-            });
-
-            // Filter by merchant id / dupes, same as above
-            OrbitInput::get('merchant_id', function($mallId) use ($coupons) {
                 $coupons->where('promotions.merchant_id', $mallId);
             });
 
@@ -691,15 +685,35 @@ class CouponReportAPIController extends ControllerAPI
                             ->join('promotion_rules', 'promotion_rules.promotion_id', '=', 'promotions.promotion_id')
                             ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
                             ->leftJoin(DB::raw("(select ic.promotion_id AS promotionid, count(ic.promotion_id) as total_issued
-                                              from {$prefix}issued_coupons ic
-                                              where (ic.status = 'active' or ic.status = 'redeemed') " . $dateFilterForIssued .
-                                              " group by ic.promotion_id) issued"),
+                                                from {$prefix}issued_coupons ic
+                                                left join {$prefix}users u on ic.issuer_user_id = u.user_id
+                                                left join {$prefix}employees e on u.user_id = e.user_id
+                                                left join {$prefix}employee_retailer er on e.employee_id = er.employee_id
+                                                left join {$prefix}merchants mall on ic.issuer_retailer_id = mall.merchant_id
+                                                where (ic.status = 'active' or ic.status = 'redeemed')
+                                                AND (
+                                                    er.retailer_id = {$this->quote($configMallId)}
+                                                    OR
+                                                    mall.merchant_id = {$this->quote($configMallId)}
+                                                )
+                                                " . $dateFilterForIssued .
+                                                " group by ic.promotion_id) issued"),
                             // On
                             DB::raw('issued.promotionid'), '=', 'promotions.promotion_id')
 
-                            ->leftJoin(DB::raw("(select ic.promotion_id AS promotionid, redeem_retailer_id, count(promotion_id) as total_redeemed
+                            ->leftJoin(DB::raw("(select ic.promotion_id AS promotionid, redeem_retailer_id, count(promotion_id) as total_redeemed, redeem_user_id
                                                 from {$prefix}issued_coupons ic
-                                                where ic.status = 'redeemed' " . $dateFilterForRedeemed .
+                                                left join {$prefix}users u on ic.redeem_user_id = u.user_id
+                                                left join {$prefix}employees e on u.user_id = e.user_id
+                                                left join {$prefix}employee_retailer er on e.employee_id = er.employee_id
+                                                left join {$prefix}merchants tenant on ic.redeem_retailer_id = tenant.merchant_id
+                                                where ic.status = 'redeemed'
+                                                AND (
+                                                    er.retailer_id = {$this->quote($configMallId)}
+                                                    OR
+                                                    tenant.parent_id = {$this->quote($configMallId)}
+                                                )
+                                                " . $dateFilterForRedeemed .
                                                 " group by ic.promotion_id) redeemed"),
                             // On
                             DB::raw('redeemed.promotionid'), '=', 'promotions.promotion_id')

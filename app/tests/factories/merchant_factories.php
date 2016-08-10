@@ -123,3 +123,15 @@ $factory('Tenant',  'tenant_angular_ci', [
     'floor_id'     => 'factory:floor',
     'unit'      => $faker->buildingNumber
 ]);
+
+$factory('TenantStoreAndService',  'tenant_and_service_angular_ci', [
+    'parent_id' => 'factory:Mall',
+    'name'      => $faker->company,
+    'user_id'   => 'factory:User',
+    'object_type'   => 'tenant',
+    'contact_person_firstname' => $faker->firstName,
+    'contact_person_lastname'  => $faker->lastName,
+    'contact_person_phone'     => $faker->phoneNumber,
+    'floor_id'     => 'factory:floor',
+    'unit'      => $faker->buildingNumber
+]);

@@ -39,6 +39,12 @@ return array(
         ]
     ],
 
+    // db ip configuration
+    'dbip' => [
+        'connection_id' => 'dbip',
+        'table' => 'july_2016'
+    ],
+
     // Demo environtment
     'is_demo' => FALSE,
 
@@ -3256,6 +3262,8 @@ return array(
                 'name_long' => 'View Landing Page',
                 'module_name' => 'Application',
                 'type' => 'view',
+                'object_type' => null,
+                'parameter_name' => null
             ),
             // - Clicking on a mall in result list
             '2' => array(
@@ -3263,6 +3271,8 @@ return array(
                 'name_long' => 'Click Mall List',
                 'module_name' => 'Application',
                 'type' => 'click',
+                'object_type' => 'Mall',
+                'parameter_name' => 'mall_id'
             ),
             // - Clicking on a mall pin on the map
             '3' => array(
@@ -3270,6 +3280,8 @@ return array(
                 'name_long' => 'Click Mall Pin',
                 'module_name' => 'Application',
                 'type' => 'click',
+                'object_type' => 'Mall',
+                'parameter_name' => 'mall_id'
             ),
             // - Visiting a mall
             '4' => array(
@@ -3277,6 +3289,8 @@ return array(
                 'name_long' => 'View Mall',
                 'module_name' => 'Application',
                 'type' => 'view',
+                'object_type' => 'Mall',
+                'parameter_name' => 'mall_id'
             ),
             // - Viewing mall info
             '5' => array(
@@ -3284,6 +3298,8 @@ return array(
                 'name_long' => 'View Mall Info',
                 'module_name' => 'Application',
                 'type' => 'view',
+                'object_type' => 'Mall',
+                'parameter_name' => 'mall_id'
             ),
             // - Switching user
             '6' => array(
@@ -3291,7 +3307,26 @@ return array(
                 'name_long' => 'Switch User',
                 'module_name' => 'Application',
                 'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
             ),
+        ),
+    ),
+
+    'redirect_url_list' => array(
+        'instagram' => array(
+            'url' => 'https://www.instagram.com/gotomalls',
+            'activity_name' => 'click_social_media',
+            'activity_name_long' => 'Click Instagram',
+            'activity_module_name' => 'Application',
+            'activity_type' => 'click',
+        ),
+        'facebook' => array(
+            'url' => 'https://www.facebook.com/Gotomalls.Indo',
+            'activity_name' => 'click_social_media',
+            'activity_name_long' => 'Click Facebook',
+            'activity_module_name' => 'Application',
+            'activity_type' => 'click',
         ),
     ),
 );

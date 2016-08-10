@@ -6,6 +6,12 @@
  */
 class CampaignAccount extends Eloquent
 {
+    /**
+     * Import trait ModelStatusTrait so we can use some common scope dealing
+     * with `status` field.
+     */
+    use ModelStatusTrait;
+
     protected $primaryKey = 'campaign_account_id';
     protected $table = 'campaign_account';
 
@@ -40,6 +46,10 @@ class CampaignAccount extends Eloquent
         return $this->hasOne('UserDetail', 'user_id', 'user_id');
     }
 
+    public function accountType()
+    {
+        return $this->belongsTo('AccountType', 'account_type_id', 'account_type_id');
+    }
 
     public function settings()
     {

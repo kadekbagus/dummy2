@@ -22,6 +22,7 @@ use App;
 use Employee;
 use Lang;
 use User;
+use Activity;
 
 class ServiceCIAPIController extends BaseAPIController
 {
@@ -31,6 +32,8 @@ class ServiceCIAPIController extends BaseAPIController
 
     public function getServiceList()
     {
+        $activity = Activity::mobileci()->setActivityType('view');
+        $user = null;
         $httpCode = 200;
         $this->response = new ResponseProvider();
 
@@ -132,7 +135,8 @@ class ServiceCIAPIController extends BaseAPIController
                     ->where(
                         function ($q) use ($keyword_like, $keyword) {
                             $q->where('merchants.name', 'like', $keyword_like)
-                                ->orWhere('keyword', '=', $keyword);
+                                ->orWhere('keyword', '=', $keyword)
+                                ->orWhere('merchants.description', 'like', $keyword_like);
                             $q->orWhereHas('categories', function($q2) use ($keyword_like) {
                                 $q2->where('category_name', 'like', $keyword_like);
                             });
@@ -145,7 +149,7 @@ class ServiceCIAPIController extends BaseAPIController
             OrbitInput::get('object_type', function ($object_type) use ($service) {
                 $service->where('merchants.object_type', $object_type);
             });
-            
+
             $this->viewItemUserUpdate('service', $user, $mall);
 
             $service->groupBy('merchants.merchant_id');
@@ -230,6 +234,19 @@ class ServiceCIAPIController extends BaseAPIController
             $data->extras = new \stdclass();
             $data->extras->redeem_to_cs_flag = $redeemToCSFlag;
 
+            if (empty($skip)) {
+                $activityNotes = sprintf('Page viewed: Service Listing Page');
+                $activity->setUser($user)
+                    ->setActivityName('view_service_list')
+                    ->setActivityNameLong('View Service List')
+                    ->setObject(null)
+                    ->setModuleName('Service')
+                    ->setNotes($activityNotes)
+                    ->setLocation($mall)
+                    ->responseOK()
+                    ->save();
+            }
+
             $this->response->data = $data;
             $this->response->code = 0;
             $this->response->status = 'success';
@@ -240,6 +257,15 @@ class ServiceCIAPIController extends BaseAPIController
             $this->response->message = $e->getMessage();
             $this->response->data = null;
             $httpCode = 403;
+
+            $activity->setUser($user)
+                ->setActivityName('view_service_list')
+                ->setActivityNameLong('View Service Failed')
+                ->setObject(null)
+                ->setModuleName('Service')
+                ->setNotes('Failed to view: Service Listing Page. Err: ' . $e->getMessage())
+                ->responseFailed()
+                ->save();
         } catch (InvalidArgsException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -250,6 +276,15 @@ class ServiceCIAPIController extends BaseAPIController
 
             $this->response->data = $result;
             $httpCode = 403;
+
+            $activity->setUser($user)
+                ->setActivityName('view_service_list')
+                ->setActivityNameLong('View Service Failed')
+                ->setObject(null)
+                ->setModuleName('Service')
+                ->setNotes('Failed to view: Service Listing Page. Err: ' . $e->getMessage())
+                ->responseFailed()
+                ->save();
         } catch (QueryException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -261,12 +296,30 @@ class ServiceCIAPIController extends BaseAPIController
             }
             $this->response->data = null;
             $httpCode = 500;
+
+            $activity->setUser($user)
+                ->setActivityName('view_service_list')
+                ->setActivityNameLong('View Service Failed')
+                ->setObject(null)
+                ->setModuleName('Service')
+                ->setNotes('Failed to view: Service Listing Page. Err: ' . $e->getMessage())
+                ->responseFailed()
+                ->save();
         } catch (Exception $e) {
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $this->response->data = null;
             $httpCode = 500;
+
+            $activity->setUser($user)
+                ->setActivityName('view_service_list')
+                ->setActivityNameLong('View Service Failed')
+                ->setObject(null)
+                ->setModuleName('Service')
+                ->setNotes('Failed to view: Service Listing Page. Err: ' . $e->getMessage())
+                ->responseFailed()
+                ->save();
         }
 
         return $this->render($httpCode);
@@ -274,6 +327,9 @@ class ServiceCIAPIController extends BaseAPIController
 
     public function getServiceItem()
     {
+        $activity = Activity::mobileci()->setActivityType('view');
+        $user = null;
+        $serviceId = null;
         $httpCode = 200;
         $this->response = new ResponseProvider();
 
@@ -347,6 +403,18 @@ class ServiceCIAPIController extends BaseAPIController
 
             // default data without filter data id
             $this->response->data = $service;
+            $serviceId = $service->merchant_id;
+
+            $activityNotes = sprintf('Page viewed: Service Detail Page, service ID: ' . $serviceId);
+            $activity->setUser($user)
+                ->setActivityName('view_service')
+                ->setActivityNameLong('View Service Detail')
+                ->setObject($service)
+                ->setModuleName('Service')
+                ->setLocation($mall)
+                ->setNotes($activityNotes)
+                ->responseOK()
+                ->save();
 
             $this->response->code = 0;
             $this->response->status = 'success';
@@ -357,6 +425,15 @@ class ServiceCIAPIController extends BaseAPIController
             $this->response->message = $e->getMessage();
             $this->response->data = null;
             $httpCode = 403;
+
+            $activity->setUser($user)
+                ->setActivityName('view_service')
+                ->setActivityNameLong('View Service Detail Failed')
+                ->setObject(null)
+                ->setModuleName('Service')
+                ->setNotes('Failed to view: Service Detail Page. Service ID: ' . $serviceId . '. Err: ' . $e->getMessage())
+                ->responseFailed()
+                ->save();
         } catch (InvalidArgsException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -367,6 +444,15 @@ class ServiceCIAPIController extends BaseAPIController
 
             $this->response->data = $result;
             $httpCode = 403;
+
+            $activity->setUser($user)
+                ->setActivityName('view_service')
+                ->setActivityNameLong('View Service Detail Failed')
+                ->setObject(null)
+                ->setModuleName('Service')
+                ->setNotes('Failed to view: Service Detail Page. Service ID: ' . $serviceId . '. Err: ' . $e->getMessage())
+                ->responseFailed()
+                ->save();
         } catch (QueryException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -378,12 +464,30 @@ class ServiceCIAPIController extends BaseAPIController
             }
             $this->response->data = null;
             $httpCode = 500;
+
+            $activity->setUser($user)
+                ->setActivityName('view_service')
+                ->setActivityNameLong('View Service Detail Failed')
+                ->setObject(null)
+                ->setModuleName('Service')
+                ->setNotes('Failed to view: Service Detail Page. Service ID: ' . $serviceId . '. Err: ' . $e->getMessage())
+                ->responseFailed()
+                ->save();
         } catch (Exception $e) {
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $this->response->data = null;
             $httpCode = 500;
+
+            $activity->setUser($user)
+                ->setActivityName('view_service')
+                ->setActivityNameLong('View Service Detail Failed')
+                ->setObject(null)
+                ->setModuleName('Service')
+                ->setNotes('Failed to view: Service Detail Page. Service ID: ' . $serviceId . '. Err: ' . $e->getMessage())
+                ->responseFailed()
+                ->save();
         }
 
         return $this->render($httpCode);

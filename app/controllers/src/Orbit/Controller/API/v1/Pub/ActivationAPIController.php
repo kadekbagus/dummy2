@@ -197,11 +197,7 @@ class ActivationAPIController extends IntermediateBaseController
 
             $this->session->update($sessionData);
         } catch (\Exception $e) {
-            // generate guest and add to session data
-            $guestConfig = [
-                'record_signin_activity' => FALSE
-            ];
-            $guest = GuestUserGenerator::create($guestConfig)->generate();
+            $guest = GuestUserGenerator::create()->generate();
 
             // Start the orbit session
             $data = array(

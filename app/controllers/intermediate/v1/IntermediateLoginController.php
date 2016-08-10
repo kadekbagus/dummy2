@@ -716,6 +716,7 @@ class IntermediateLoginController extends IntermediateBaseController
     public function getLogout()
     {
         $from = isset($_GET['_orbit_logout_from']) === FALSE ? 'portal' : $_GET['_orbit_logout_from'];
+        $location_id = isset($_GET['mall_id']) ? $_GET['mall_id'] : NULL;
         $validFrom = ['portal', 'mobile-ci', 'pos'];
 
         switch ($from) {
@@ -765,6 +766,7 @@ class IntermediateLoginController extends IntermediateBaseController
                     $this->session->remove('facebooksdk.state');
                     $this->session->remove('visited_location');
                     $this->session->remove('coupon_location');
+                    $this->session->remove('login_from');
                     $sessionData = $this->session->read(NULL);
                     $sessionData['fullname'] = '';
                     $sessionData['role'] = $guestUser->role->role_name;
@@ -783,6 +785,13 @@ class IntermediateLoginController extends IntermediateBaseController
                      ->setActivityNameLong('Sign Out')
                      ->setModuleName('Application')
                      ->responseOK();
+            if (! is_null($location_id)) {
+                $mall = Mall::excludeDeleted()->where('merchant_id', $location_id)->first();
+
+                if (is_object($mall)) {
+                    $activity->setLocation($mall);
+                }
+            }
         } catch (Exception $e) {
             try {
                 $this->session->destroy();
@@ -829,10 +838,6 @@ class IntermediateLoginController extends IntermediateBaseController
                     // Start the orbit session
                     $this->session = SessionPreparer::prepareSession();
                 }
-
-                // if this goes live then we should remove the $guestConfig param in GuestUserGenerator::create()
-                // or change the record_signin_activity to TRUE
-                // to be able to record guest in Dashboard
                 $guestConfig = [
                     'record_signin_activity' => FALSE
                 ];
@@ -1141,7 +1146,7 @@ class IntermediateLoginController extends IntermediateBaseController
         setcookie('orbit_email', '', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
         setcookie('orbit_firstname', '', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
         setcookie('login_from', '', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
-        
+
         $appOrigin = AppOriginProcessor::create(Config::get('orbit.session.app_list'))
                                            ->getAppName();
 

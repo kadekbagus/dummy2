@@ -786,6 +786,10 @@ class Activity extends Eloquent
         $this->saveToWidgetClick();
         $this->saveToConnectionTime();
 
+        if ($this->group === 'mobile-ci') {
+            $this->saveToElasticSearch();
+        }
+
         return $result;
     }
 
@@ -1133,6 +1137,20 @@ class Activity extends Eloquent
     }
 
     /**
+     * Create new document in elasticsearch.
+     *
+     * @author Shelgi Prasetyo <shelgi@dominopos.com>
+     * @return void
+     */
+    protected function saveToElasticSearch()
+    {
+        // queue for create/update activity document in elasticsearch
+        Queue::push('Orbit\\Queue\\Elasticsearch\\ESActivityUpdateQueue', [
+            'activity_id' => $this->activity_id,
+        ]);
+    }
+
+    /**
      * Save to `widget_clicks` table
      *
      * @author Rio Astamal <rio@dominopos.com>
@@ -1162,6 +1180,10 @@ class Activity extends Eloquent
 
             case 'Widget Click Tenant':
                 $groupName = 'Tenant';
+                break;
+
+            case 'Widget Click Service':
+                $groupName = 'Service';
                 break;
 
             case 'Widget Click Coupon':

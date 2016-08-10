@@ -188,11 +188,11 @@
         <?php $count = 1; while ($row = $statement->fetch(PDO::FETCH_OBJ)) : ?>
             <tr class="{{ $rowCounter % 2 === 0 ? 'zebra' : '' }}">
                 <!-- <td><?php //echo ($count); ?></td> -->
-                 <td><?php echo $me->printUtf8($row->user_firstname . ' ' . $row->user_lastname); ?></td>
-                 <td><?php echo $me->printUtf8($row->user_email); ?></td>
-                 <td><?php echo $me->printUtf8($row->role_name); ?></td>
-                 <td><?php echo $me->printUtf8($row->employee_id_char); ?></td>
-                 <td><?php echo $me->printUtf8($row->status); ?></td>
+                 <td><?php echo $row->user_firstname . ' ' . $row->user_lastname; ?></td>
+                 <td><?php echo $row->user_email; ?></td>
+                 <td><?php echo $row->role_name; ?></td>
+                 <td><?php echo $row->employee_id_char; ?></td>
+                 <td><?php echo $row->status; ?></td>
                  <td><?php 
                             if( $flagMallPortal) { 
                                 echo $me->printDateTime($row->updated_at, $timezone, 'd F Y H:i:s'); 

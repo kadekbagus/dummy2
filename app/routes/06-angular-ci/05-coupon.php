@@ -15,8 +15,15 @@ Route::post('/api/v1/cust/coupons/redeem', function()
     return Orbit\Controller\API\v1\Customer\CouponCIAPIController::create()->postRedeemCoupon();
 });
 
+Route::get('/api/v1/cust/coupon/autoissuecoupon', function()
+{
+    return Orbit\Controller\API\v1\Customer\CouponCIAPIController::create()->issueAutoCoupon();
+});
+
 Route::get('/app/v1/cust/coupons', ['as' => 'customer-api-coupon-list', 'uses' => 'IntermediateCIAuthController@CouponCI_getCouponList']);
 
 Route::get('/app/v1/cust/coupons/detail', ['as' => 'customer-api-coupon-detail', 'uses' => 'IntermediateCIAuthController@CouponCI_getCouponItem']);
 
 Route::post('/app/v1/cust/coupons/redeem', 'IntermediateCIAuthController@CouponCI_postRedeemCoupon');
+
+Route::get('/app/v1/cust/coupons/autoissuecoupon', ['as' => 'customer-api-issue-auto-coupon', 'uses' => 'IntermediateCIAuthController@CouponCI_issueAutoCoupon']);

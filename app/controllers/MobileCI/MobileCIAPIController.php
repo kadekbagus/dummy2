@@ -2877,7 +2877,7 @@ class MobileCIAPIController extends BaseCIController
             if (! empty(OrbitInput::get('coupon_id'))) {
                 $pagetitle = Lang::get('mobileci.page_title.coupons_tenants');
 
-                $activityPageNotes = sprintf('Page viewed: Coupon Tenants List Page, promotion ID: %s', OrbitInput::get('promotion_id'));
+                $activityPageNotes = sprintf('Page viewed: Coupon Tenants List Page, promotion ID: %s', OrbitInput::get('coupon_id'));
                 $activityPage->setUser($user)
                     ->setActivityName('view_retailer')
                     ->setActivityNameLong('View Coupon Tenant List')
@@ -2891,7 +2891,7 @@ class MobileCIAPIController extends BaseCIController
             if (! empty(OrbitInput::get('coupon_redeem_id'))) {
                 $pagetitle = Lang::get('mobileci.page_title.redemption_places');
 
-                $activityPageNotes = sprintf('Page viewed: Coupon Redemption Tenants List Page, promotion ID: %s', OrbitInput::get('promotion_id'));
+                $activityPageNotes = sprintf('Page viewed: Coupon Redemption Tenants List Page, promotion ID: %s', OrbitInput::get('coupon_redeem_id'));
                 $activityPage->setUser($user)
                     ->setActivityName('view_retailer')
                     ->setActivityNameLong('View Coupon Redemption Places')
@@ -2962,7 +2962,7 @@ class MobileCIAPIController extends BaseCIController
             $activityPageNotes = sprintf('Failed to view: Tenant Listing Page');
             $activityPage->setUser($user)
                 ->setActivityName('view_retailer')
-                ->setActivityNameLong('View Tenant')
+                ->setActivityNameLong('View Tenant List Failed')
                 ->setObject(null)
                 ->setModuleName('Tenant')
                 ->setNotes($activityPageNotes)
@@ -3407,7 +3407,7 @@ class MobileCIAPIController extends BaseCIController
             $activityPageNotes = sprintf('Failed to view: Tenant Detail Page, tenant ID: ' . $product_id);
             $activityPage->setUser($user)
                 ->setActivityName('view_retailer')
-                ->setActivityNameLong('View Tenant')
+                ->setActivityNameLong('View Tenant Detail Failed')
                 ->setObject(null)
                 ->setModuleName('Tenant')
                 ->setNotes($activityPageNotes)
@@ -3554,17 +3554,15 @@ class MobileCIAPIController extends BaseCIController
                 }
             }
 
-            if (! empty($promo_id) ) {
-                $activityPageNotes = sprintf('Page viewed: Service Detail Page, service ID: ' . $service->merchant_id);
-                $activityPage->setUser($user)
-                    ->setActivityName('view_service')
-                    ->setActivityNameLong('View Service Detail')
-                    ->setObject($service)
-                    ->setModuleName('Service')
-                    ->setNotes($activityPageNotes)
-                    ->responseOK()
-                    ->save();
-            }
+            $activityPageNotes = sprintf('Page viewed: Service Detail Page, service ID: ' . $service->merchant_id);
+            $activityPage->setUser($user)
+                ->setActivityName('view_service')
+                ->setActivityNameLong('View Service Detail')
+                ->setObject($service)
+                ->setModuleName('Service')
+                ->setNotes($activityPageNotes)
+                ->responseOK()
+                ->save();
 
             $box_url = "";
             if (! empty($service->box_url)) {
@@ -9383,7 +9381,8 @@ class MobileCIAPIController extends BaseCIController
     private function getDefaultLanguage($mall)
     {
         // English is default language
-        $language = \Language::where('name', '=', 'en')->first();
+        $deflang = \Mall::where('merchant_id', $mall->merchant_id)->first();
+        $language = \Language::where('name', '=', $deflang->mobile_default_language)->first();
         if(isset($language) && count($language) > 0){
             $defaultLanguage = \MerchantLanguage::excludeDeleted()
                 ->where('merchant_id', '=', $mall->merchant_id)
@@ -10293,8 +10292,8 @@ class MobileCIAPIController extends BaseCIController
                 $guest_id = $guest->user_id;
                 $sessionData = $this->session->read(NULL);
                 $sessionData['logged_in'] = TRUE;
-                $sessionData['guest_user_id'] = $user->user_id;
-                $sessionData['guest_email'] = $user->user_email;
+                $sessionData['guest_user_id'] = $guest->user_id;
+                $sessionData['guest_email'] = $guest->user_email;
                 $sessionData['role'] = $user->role->role_name;
                 $sessionData['fullname'] = '';
 
@@ -10466,14 +10465,15 @@ class MobileCIAPIController extends BaseCIController
             if ($mode === 'registration') {
                 // do the registration
                 $_POST['activity_name_long'] = 'Sign Up via Mobile (Email Address)';
-                $_POST['activity_origin'] = 'mobileci';
                 $_POST['use_transaction'] = FALSE;
                 $registration = \Orbit\Controller\API\v1\Pub\RegistrationAPIController::create('raw');
-                $response = $registration->setMallId($retailer->merchant_id)->postRegisterCustomer();
+                $response = $registration
+                    ->setAppOrigin('mobile_ci')
+                    ->setMallId($retailer->merchant_id)
+                    ->postRegisterCustomer();
                 $response_data = json_decode($response->getOriginalContent());
 
                 unset($_POST['activity_name_long']);
-                unset($_POST['activity_origin']);
                 if($response_data->code !== 0) {
                     $errorMessage = $response_data->message;
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
@@ -10487,7 +10487,9 @@ class MobileCIAPIController extends BaseCIController
             // do the login
             $_POST['activity_name_long'] = 'Sign In via Mobile (Email Address)';
             $_POST['activity_origin'] = 'mobileci';
-            $login_response = \Orbit\Controller\API\v1\Pub\LoginAPIController::create('raw')->postLoginCustomer();
+            $login_response = \Orbit\Controller\API\v1\Pub\LoginAPIController::create('raw')
+                ->setAppOrigin('mobile_ci')
+                ->postLoginCustomer();
             $login_response_data = json_decode($login_response->getOriginalContent());
             unset($_POST['activity_name_long']);
             unset($_POST['activity_origin']);

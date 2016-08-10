@@ -19,10 +19,16 @@ use Coupon;
 use News;
 use Mall;
 use User;
+use OrbitShop\API\v1\Helper\Input as OrbitInput;
+use Activity;
+
+
 
 class BaseAPIController extends ControllerAPI
 {
     protected $user = NULL;
+    protected $mall_id = NULL;
+    protected $session = NULL;
 
     /**
      * Calculate the Age
@@ -518,5 +524,23 @@ class BaseAPIController extends ControllerAPI
         }
     }
 
+
+    protected function registerCustomValidation()
+    {
+        // Check the existance of merchant id
+        Validator::extend('orbit.empty.mall', function ($attribute, $value, $parameters) {
+            $mall = Mall::excludeDeleted()
+                        ->where('merchant_id', $value)
+                        ->first();
+
+            if (empty($mall)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.empty.mall', $mall);
+
+            return TRUE;
+        });
+    }
 
 }
