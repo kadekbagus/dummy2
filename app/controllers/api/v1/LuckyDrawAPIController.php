@@ -1070,8 +1070,7 @@ class LuckyDrawAPIController extends ControllerAPI
                                     ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'lucky_draws.campaign_status_id')
                                     ->leftJoin('lucky_draw_translations', 'lucky_draw_translations.lucky_draw_id', '=', 'lucky_draws.lucky_draw_id')
                                     ->leftJoin('languages', 'languages.language_id', '=', 'lucky_draw_translations.merchant_language_id')
-                                    ->leftJoin(DB::raw("( SELECT * FROM {$prefix}media WHERE media_name_long = 'lucky_draw_translation_image_resized_default' ) as media"), DB::raw('media.object_id'), '=', 'lucky_draw_translations.lucky_draw_translation_id')
-                                    ->where('languages.name', '=', 'en');
+                                    ->leftJoin(DB::raw("( SELECT * FROM {$prefix}media WHERE media_name_long = 'lucky_draw_translation_image_resized_default' ) as media"), DB::raw('media.object_id'), '=', 'lucky_draw_translations.lucky_draw_translation_id');
             if ($details_view === 'yes' || $this->returnBuilder) {
                 $luckydraws->select('lucky_draws.*', 'lucky_draw_translations.lucky_draw_name as lucky_draw_name_english', 'campaign_status.order', DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$prefix}lucky_draws.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
                     FROM {$prefix}merchants om
