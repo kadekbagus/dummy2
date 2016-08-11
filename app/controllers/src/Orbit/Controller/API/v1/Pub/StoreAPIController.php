@@ -45,26 +45,23 @@ class StoreAPIController extends ControllerAPI
             $sort_mode = OrbitInput::get('sortmode','asc');
             $usingDemo = Config::get('orbit.is_demo', FALSE);
 
-            $store = Tenant::select('merchant_id', 'name');
+            $prefix = DB::getTablePrefix();
 
-            OrbitInput::get('filter_name', function ($filterName) use ($store) {
+            $store = Tenant::select('merchants.merchant_id', 'merchants.name')
+                ->join(DB::raw("(select merchant_id, status, parent_id from {$prefix}merchants where object_type = 'mall') as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
+                ->where('merchants.status', 'active')
+                ->whereRaw("oms.status = 'active'");
+
+            OrbitInput::get('filter_name', function ($filterName) use ($store, $prefix) {
                 if (! empty($filterName)) {
                     if ($filterName === '#') {
                         $filterName = '^a-zA-Z';
                     }
-                    $store->whereRaw("name REGEXP '^[{$filterName}]'");
+                    $store->whereRaw("{$prefix}merchants.name REGEXP '^[{$filterName}]'");
                 }
             });
 
-            $store = $store->groupBy('name')->orderBy($sort_by, $sort_mode);
-
-            if ($usingDemo) {
-                $store->excludeDeleted();
-            } else {
-                // Production
-                $store->active();
-            }
-
+            $store = $store->groupBy('merchants.name')->orderBy($sort_by, $sort_mode);
             $_store = clone $store;
 
             $take = PaginationNumber::parseTakeFromGet('retailer');
@@ -147,7 +144,6 @@ class StoreAPIController extends ControllerAPI
         try {
             $sort_by = OrbitInput::get('sortby', 'merchants.name');
             $sort_mode = OrbitInput::get('sortmode','asc');
-            $usingDemo = Config::get('orbit.is_demo', FALSE);
             $storename = OrbitInput::get('store_name');
 
             $prefix = DB::getTablePrefix();
@@ -170,8 +166,9 @@ class StoreAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $mall = Mall::select('merchants.merchant_id', 'merchants.name', 'merchants.ci_domain', DB::raw("CONCAT({$prefix}merchants.ci_domain, '/customer/tenant?id=', oms.merchant_id) as store_url"))
-                    ->join(DB::raw("(select merchant_id, `name`, parent_id from {$prefix}merchants where name = {$this->quote($storename)}) as oms"), DB::raw('oms.parent_id'), '=', 'merchants.merchant_id');
+            $mall = Mall::select('merchants.merchant_id', 'merchants.name', 'merchants.ci_domain', 'merchants.city', 'merchants.description', DB::raw("CONCAT({$prefix}merchants.ci_domain, '/customer/tenant?id=', oms.merchant_id) as store_url"))
+                    ->join(DB::raw("(select merchant_id, `name`, parent_id from {$prefix}merchants where name = {$this->quote($storename)}) as oms"), DB::raw('oms.parent_id'), '=', 'merchants.merchant_id')
+                    ->active();
 
             OrbitInput::get('filter_name', function ($filterName) use ($mall, $prefix) {
                 if (! empty($filterName)) {
@@ -183,13 +180,6 @@ class StoreAPIController extends ControllerAPI
             });
 
             $mall = $mall->groupBy('merchants.merchant_id')->orderBy($sort_by, $sort_mode);
-
-            if ($usingDemo) {
-                $mall->excludeDeleted();
-            } else {
-                // Production
-                $mall->active();
-            }
 
             $_mall = clone $mall;
 
