@@ -286,7 +286,7 @@ class StoreAPIController extends ControllerAPI
                     if ($filterName === '#') {
                         $filterName = '^a-zA-Z';
                     }
-                    $mall->whereRaw("merchants.name REGEXP '^[{$filterName}]'");
+                    $mall->whereRaw("{$prefix}merchants.name REGEXP '^[{$filterName}]'");
                 }
             });
 
