@@ -5813,6 +5813,18 @@ class MobileCIAPIController extends BaseCIController
             $csrf_token = csrf_token();
             $this->session->write('orbit_csrf_token', $csrf_token);
 
+            $data = new stdclass();
+            $data->total_records = 1;
+            $data->returned_records = 1;
+            $data->expected_issued_numbers = 1;
+            $data->records = null;
+            $data->lucky_draw_number_code = (array) $lucky_draw_number->lucky_draw_number_code;
+            $data->lucky_draw_name = $luckyDraw->lucky_draw_name;
+
+            // Insert to alert system
+            $inbox = new Inbox();
+            $inbox->addToInbox($user->user_id, $data, $mall->merchant_id, 'lucky_draw_issuance');
+
             $this->commit();
 
             // Successfull Creation
@@ -5820,19 +5832,30 @@ class MobileCIAPIController extends BaseCIController
                 ->setActivityName('issue_lucky_draw')
                 ->setActivityNameLong('Lucky Draw Number Auto Issuance')
                 ->setLocation($mall)
+                ->setNotes('Generated number: ' . $lucky_draw_number->lucky_draw_number_code)
                 ->setObject($luckyDraw, TRUE)
                 ->responseOK();
 
-            $this->response->data = $lucky_draw_number->lucky_draw_number_code;
+            $response = new stdclass();
+            $response->lucky_draw_number_code = $lucky_draw_number->lucky_draw_number_code;
+            $response->token = $csrf_token;
+
+            $this->response->data = $response;
 
         } catch (ACLForbiddenException $e) {
             // Rollback the changes
             $this->rollBack();
 
+            // refresh csrf_token
+            $csrf_token = csrf_token();
+            $this->session->write('orbit_csrf_token', $csrf_token);
+            $data = new stdclass();
+            $data->token = $csrf_token;
+
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = null;
+            $this->response->data = $data;
 
             $httpCode = 403;
 
@@ -5847,10 +5870,16 @@ class MobileCIAPIController extends BaseCIController
             // Rollback the changes
             $this->rollBack();
 
+            // refresh csrf_token
+            $csrf_token = csrf_token();
+            $this->session->write('orbit_csrf_token', $csrf_token);
+            $data = new stdclass();
+            $data->token = $csrf_token;
+
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = null;
+            $this->response->data = $data;
             $httpCode = 400;
 
             // Creation failed Activity log
@@ -5864,6 +5893,12 @@ class MobileCIAPIController extends BaseCIController
             // Rollback the changes
             $this->rollBack();
 
+            // refresh csrf_token
+            $csrf_token = csrf_token();
+            $this->session->write('orbit_csrf_token', $csrf_token);
+            $data = new stdclass();
+            $data->token = $csrf_token;
+
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
 
@@ -5873,7 +5908,7 @@ class MobileCIAPIController extends BaseCIController
             } else {
                 $this->response->message = Lang::get('validation.orbit.queryerror');
             }
-            $this->response->data = null;
+            $this->response->data = $data;
             $httpCode = 500;
 
             // Creation failed Activity log
@@ -5887,14 +5922,24 @@ class MobileCIAPIController extends BaseCIController
             // Rollback the changes
             $this->rollBack();
 
+            // refresh csrf_token
+            $csrf_token = csrf_token();
+            $this->session->write('orbit_csrf_token', $csrf_token);
+            $data = new stdclass();
+
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
 
             if (Config::get('app.debug')) {
-                $this->response->data = $e->__toString();
+                $data->message = $e->__toString();
+                $data->token = $csrf_token;
+
+                $this->response->data = $data;
             } else {
-                $this->response->data = null;
+                $data->token = $csrf_token;
+
+                $this->response->data = $data;
             }
 
             // Creation failed Activity log
