@@ -44,19 +44,23 @@ class StoreAPIController extends ControllerAPI
             $sort_mode = OrbitInput::get('sortmode','asc');
             $usingDemo = Config::get('orbit.is_demo', FALSE);
 
-            $store = Tenant::select('merchant_id', 'name')->active();
+            $prefix = DB::getTablePrefix();
 
-            OrbitInput::get('filter_name', function ($filterName) use ($store) {
+            $store = Tenant::select('merchants.merchant_id', 'merchants.name')
+                ->join(DB::raw("(select merchant_id, status, parent_id from {$prefix}merchants where object_type = 'mall') as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
+                ->where('merchants.status', 'active')
+                ->whereRaw("oms.status = 'active'");
+
+            OrbitInput::get('filter_name', function ($filterName) use ($store, $prefix) {
                 if (! empty($filterName)) {
                     if ($filterName === '#') {
                         $filterName = '^a-zA-Z';
                     }
-                    $store->whereRaw("name REGEXP '^[{$filterName}]'");
+                    $store->whereRaw("{$prefix}merchants.name REGEXP '^[{$filterName}]'");
                 }
             });
 
-            $store = $store->groupBy('name')->orderBy($sort_by, $sort_mode);
-
+            $store = $store->groupBy('merchants.name')->orderBy($sort_by, $sort_mode);
             $_store = clone $store;
 
             $take = PaginationNumber::parseTakeFromGet('retailer');
