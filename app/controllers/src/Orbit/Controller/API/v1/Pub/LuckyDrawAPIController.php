@@ -91,6 +91,10 @@ class LuckyDrawAPIController extends IntermediateBaseController
                 ->where('lucky_draws.start_date', '<=', $asiaJakartaTime)
                 ->where('lucky_draws.grace_period_date', '>=', $asiaJakartaTime);
 
+            OrbitInput::get('object_type', function($objType) use($luckydraws) {
+                $luckydraws->where('lucky_draws.object_type', $objType);
+            });
+
             $_luckydraws = clone $luckydraws;
 
             // Get the take args
