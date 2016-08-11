@@ -3310,6 +3310,15 @@ return array(
                 'object_type' => null,
                 'parameter_name' => null
             ),
+            // - Tap Lucky draw Menu
+            '7' => array(
+                'name' => 'click_lucky_draw_menu',
+                'name_long' => 'Click Lucky Draw Menu',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
         ),
     ),
 
