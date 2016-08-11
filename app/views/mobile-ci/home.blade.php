@@ -24,6 +24,16 @@
 @stop
 
 @section('content')
+
+    {{-- POKESTOP BAR --}}
+    @if (! empty($pokestops))
+        <div class="container pokestop">
+            <a class="widget-link" href="{{ url('/customer/pokestopdetail') }}">
+                <img src="{{ asset('mobile-ci/images/pokestop_bar.jpg') }}" />
+            </a>
+        </div>
+    @endif
+
     @yield('widget-template')
 @stop
 
