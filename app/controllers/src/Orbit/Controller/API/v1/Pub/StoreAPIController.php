@@ -277,7 +277,7 @@ class StoreAPIController extends ControllerAPI
 
             $prefix = DB::getTablePrefix();
 
-            $mall = News::select('merchants.merchant_id', 'merchants.name', 'merchants.address_line1', 'merchants.city', 'merchants.description', DB::raw("CONCAT({$prefix}merchants.ci_domain, '/customer/pokestopdetail') pokestopdetail_url") )
+            $mall = News::select('merchants.merchant_id', 'merchants.name', 'merchants.city', 'merchants.description', DB::raw("CONCAT({$prefix}merchants.ci_domain, '/customer/pokestopdetail') pokestopdetail_url") )
                          ->join('merchants', 'merchants.merchant_id', '=', 'news.mall_id')
                          ->where('news.object_type','pokestop');
 
