@@ -916,6 +916,11 @@ class MobileCIAPIController extends BaseCIController
                 ->responseOK()
                 ->save();
 
+            $pokestopData = News::excludeDeleted()
+                        ->where('object_type','pokestop')
+                        ->where('mall_id',$retailer->merchant_id)
+                        ->get();
+
             $data = array(
                 'page_title' => null,
                 'retailer' => $retailer,
@@ -928,6 +933,7 @@ class MobileCIAPIController extends BaseCIController
                 'facebookInfo' => Config::get('orbit.social_login.facebook'),
                 'session' => $this->session,
                 'is_logged_in' => UrlBlock::isLoggedIn($this->session),
+                'pokestops' => $pokestopData,
             );
 
             // check view file existance, if not fallback to default
@@ -7756,6 +7762,99 @@ class MobileCIAPIController extends BaseCIController
         }
     }
 
+    /**
+     * GET - Pokestop detail page
+     *
+     * @param integer    `id`        (required) - The product ID
+     *
+     * @return Illuminate\View\View
+     *
+     * @author Firmansyah <firmansyah@dominopos.com>
+     */
+    public function getMallPokestopDetailView()
+    {
+        $user = null;
+        $product_id = 0;
+        $activityPage = Activity::mobileci()
+                                   ->setActivityType('view');
+        $product = null;
+        try {
+            $user = $this->getLoggedInUser();
+            UrlBlock::checkBlockedUrl($user);
+            $retailer = $this->getRetailerInfo();
+            $this->acquireUser($retailer, $user);
+            Coupon::issueAutoCoupon($retailer, $user, $this->session);
+
+            $languages = $this->getListLanguages($retailer);
+            $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
+
+            $mallid = $retailer->merchant_id;
+
+            $pokestop = \News::excludeDeleted()
+                        ->where('object_type','pokestop')
+                        ->where('mall_id', $mallid)
+                        ->with('mediaPokestop')
+                        ->first();
+
+            // Get Image from db
+            if (isset($pokestop->mediaPokestop->file_name)) {
+                $pokestop->image = 'mobile-ci/images/pokestop/' . $pokestop->mediaPokestop->file_name;
+            } else {
+                $pokestop->image = null;
+            }
+
+            if (empty($pokestop)) {
+                return View::make('mobile-ci.404', array(
+                    'page_title'=>Lang::get('mobileci.page_title.not_found'),
+                    'retailer'=>$retailer,
+                    'session' => $this->session,
+                    'is_logged_in' => UrlBlock::isLoggedIn($this->session),
+                    'languages' => $languages,
+                ));
+            }
+
+            $product_id = $pokestop->news_id;
+
+            $activityPageNotes = sprintf('Page viewed: Pokestop Detail, pokestop Id: %s', $product_id);
+            $activityPage->setUser($user)
+                ->setActivityName('view_news')
+                ->setActivityNameLong('View Pokestop Detail')
+                ->setObject($pokestop)
+                ->setNews($pokestop)
+                ->setModuleName('Pokestop')
+                ->setNotes($activityPageNotes)
+                ->responseOK()
+                ->save();
+
+            return View::make('mobile-ci.mall-pokestop-detail', array(
+                'page_title' => $pokestop->news_name,
+                'user' => $user,
+                'retailer' => $retailer,
+                'pokestop' => $pokestop,
+                'languages' => $languages,
+                'session' => $this->session,
+                'is_logged_in' => UrlBlock::isLoggedIn($this->session),
+                'user_email' => $user->role->role_name !== 'Guest' ? $user->user_email : '',
+            ));
+
+        } catch (Exception $e) {
+            $activityPageNotes = sprintf('Failed to view Page: Pokestop Detail, pokestop Id: %s', $product_id);
+            $activityPage->setUser($user)
+                ->setActivityName('view_pokestop')
+                ->setActivityNameLong('View Pokestop Detail Failed')
+                ->setObject(null)
+                ->setModuleName('Pokestop')
+                ->setNotes($activityPageNotes)
+                ->responseFailed()
+                ->save();
+
+            if ($e instanceof UrlException) {
+                return $this->redirectIfNotLoggedIn($e, URL::to($e->getRedirectRoute()));
+            }
+
+            return $this->redirectIfNotLoggedIn($e);
+        }
+    }
     /**
      * GET - News detail page
      *
