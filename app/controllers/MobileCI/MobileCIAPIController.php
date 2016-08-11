@@ -5832,6 +5832,7 @@ class MobileCIAPIController extends BaseCIController
                 ->setActivityName('issue_lucky_draw')
                 ->setActivityNameLong('Lucky Draw Number Auto Issuance')
                 ->setLocation($mall)
+                ->setNotes('Generated number: ' . $lucky_draw_number->lucky_draw_number_code)
                 ->setObject($luckyDraw, TRUE)
                 ->responseOK();
 
