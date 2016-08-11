@@ -259,7 +259,7 @@ class LoginAPIController extends IntermediateBaseController
 
                 $mall_id_from_state = json_decode($this->base64UrlDecode($state))->mid;
                 $angular_ci_from_state = json_decode($this->base64UrlDecode($state))->aci;
-                $redirect_to_url_from_state = json_decode($this->base64UrlDecode($state))->redirect_to_url;
+                $redirect_to_url_from_state = empty(json_decode($this->base64UrlDecode($state))->redirect_to_url) ? Config::get('orbit.shop.after_social_sign_in') : json_decode($this->base64UrlDecode($state))->redirect_to_url;
                 // from mall = yes, indicate the request coming from Mall CI, then use MobileCIAPIController::getGoogleCallbackView
                 // to set the session and other things
                 if (! empty($mall_id_from_state)) {
@@ -325,9 +325,6 @@ class LoginAPIController extends IntermediateBaseController
                     setcookie('orbit_firstname', $firstName, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
                     setcookie('login_from', 'Google', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
 
-                    if (empty($angular_ci_from_state)) {
-                        return Redirect::to(Config::get('orbit.shop.after_social_sign_in'));
-                    }
                     // request coming from angular-ci
                     return Redirect::to(urldecode($redirect_to_url_from_state));
                 }
@@ -408,8 +405,8 @@ class LoginAPIController extends IntermediateBaseController
     public function getSocialLoginCallbackView()
     {
         $recognized = \Input::get('recognized', 'none');
-        $encoded_caller_url = \Input::get('caller_url', NULL);
-        $encoded_redirect_to_url = \Input::get('redirect_to_url', NULL);
+        $encoded_caller_url = \Input::get('caller_url', Config::get('orbit.shop.after_social_sign_in'));
+        $encoded_redirect_to_url = \Input::get('redirect_to_url', Config::get('orbit.shop.after_social_sign_in'));
         $angular_ci = \Input::get('aci', FALSE);
 
         // error=access_denied&
@@ -519,10 +516,7 @@ class LoginAPIController extends IntermediateBaseController
         // There is a chance that user not 'grant' his email while approving our app
         // so we double check it here
         if (empty($userEmail)) {
-            if ($angular_ci) {
-                return Redirect::to(urldecode($encoded_caller_url) . '/#/?error=no_email');
-            }
-            return Redirect::to(Config::get('orbit.shop.after_social_sign_in') . '/#/?error=no_email');
+            return Redirect::to(urldecode($encoded_caller_url) . '/#/?error=no_email');
         }
 
         $loggedInUser = $this->doAutoLogin($userEmail);
@@ -543,10 +537,7 @@ class LoginAPIController extends IntermediateBaseController
         setcookie('orbit_firstname', $firstName, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
         setcookie('login_from', 'Facebook', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
 
-        if ($angular_ci) {
-            return Redirect::to(urldecode($encoded_redirect_to_url));
-        }
-        return Redirect::to(Config::get('orbit.shop.after_social_sign_in'));
+        return Redirect::to(urldecode($encoded_redirect_to_url));
     }
 
     /**
