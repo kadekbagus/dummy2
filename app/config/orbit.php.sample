@@ -20,7 +20,11 @@ return array(
         // Path to CA Certificate, used when serving via HTTPS
         'cacert' => '/path/to/cacert.crt',
 
+        // Prefix to access indices
+        'indices_prefix' => 'v23_'
+
         // List of indices that we have in Elasticsearch
+        // All the query to the index name will be appended by prefix automatically
         'indices' => [
             'malldata' => [
                 'index' => 'malls',

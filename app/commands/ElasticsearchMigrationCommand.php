@@ -118,8 +118,9 @@ class ElasticsearchMigrationCommand extends Command
                 continue;
             }
 
+            $indexPrefix = Config::get('elasticsearch.indices_prefix');
             $params = [
-                'index' => $json['index'],
+                'index' => $indexPrefix . $json['index'],
                 'body' => $json['es_data']
             ];
             switch ($json['action']) {
