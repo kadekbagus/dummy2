@@ -5982,6 +5982,14 @@ class MobileCIAPIController extends BaseCIController
 
             $pagetitle = Lang::get('mobileci.page_title.coupons');
 
+            /* map pageSubTitle to be like css ellipsis*/
+            $pageSubTitle = array_map(function ($arr) {
+                if (mb_strlen($arr) >= 30) {
+                    return substr($arr, 0, 30) . '...';
+                }
+                return $arr;
+            }, Lang::get('mobileci.page_sub_title.coupons'));
+
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
 
             // Get the maximum record
@@ -6192,6 +6200,7 @@ class MobileCIAPIController extends BaseCIController
 
             $view_data = array(
                 'page_title' => $pagetitle,
+                'page_sub_title' => $pageSubTitle,
                 'retailer' => $retailer,
                 'data' => $data,
                 'active_user' => ($user->status === 'active'),
@@ -6200,6 +6209,7 @@ class MobileCIAPIController extends BaseCIController
                 'session' => $this->session,
                 'is_logged_in' => UrlBlock::isLoggedIn($this->session),
                 'user_email' => $user->role->role_name !== 'Guest' ? $user->user_email : '',
+                'is_coupon_wallet' => false
             );
             return View::make('mobile-ci.mall-coupon-list', $view_data);
 

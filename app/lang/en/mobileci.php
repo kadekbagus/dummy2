@@ -48,6 +48,13 @@ return array(
         'back_to_map_lower' => 'Back to Map',
     ),
 
+    'page_sub_title' => array(
+        'coupons' => array(
+            'available_coupons' => 'AVAILABLE COUPONS',
+            'coupon_wallet'     => 'COUPON WALLET'
+        )
+    ),
+
     'widgets' => array(
         'catalogue'          => 'CATALOGUE',
         'new_product'        => 'NEW PRODUCTS',
