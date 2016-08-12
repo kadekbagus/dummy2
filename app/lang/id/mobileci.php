@@ -465,7 +465,7 @@ return array(
         'lucky_draw_download_title' => 'Unduh Nomor Undian Berhadiah',
         'upload_receipt'            => 'Upload Receipt',
         'upload_success'            => 'Upload Successful!',
-        'upload_congrats'           => 'You get 1 lucky number: ',
+        'upload_congrats'           => 'You have obtained 1 lucky number! Here is your lucky number ',
     ),
 
     'notification' => array(
