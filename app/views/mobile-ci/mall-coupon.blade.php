@@ -45,6 +45,14 @@
                 <div class="vertical"></div>
             </div>
         </div>
+        <div class="coupon-wallet pull-right">
+            <span class="fa-stack fa-2x">
+               <i class="fa fae-wallet fa-stack-2x"></i>
+               <i class="fa fa-circle fa-stack-2x"></i>
+               <i class="fa fa-plus fa-stack-1x"></i>
+            </span>
+            <span class="wallet-text">Add to <br/> Wallet</span>
+        </div>
         <div class="actions-panel" style="display: none;">
             <ul class="list-unstyled">
                 <li>
@@ -87,15 +95,6 @@
                         <span class="text">{{{ Lang::get('mobileci.tenant.redemption_places') }}}</span>
                     </a>
                 </li>
-                <li>
-                    <a id="useBtn">
-                        <span class="fa fa-stack icon">
-                            <i class="fa fa-circle fa-stack-2x"></i>
-                            <i class="fa fa-scissors fa-inverse fa-stack-1x"></i>
-                        </span>
-                        <span class="text">{{{ Lang::get('mobileci.coupon.use_coupon') }}}</span>
-                    </a>
-                </li>
                 @endif
                 @if ($is_logged_in)
                     @if(! empty($coupon->facebook_share_url))
@@ -119,7 +118,13 @@
       </div>
     </div>
 </div>
-<div class="row product-info padded" style="z-index: 101;">
+<div class="row fullbutton">
+    <a class="col-xs-12" id="useBtn">
+        <i class="fa fa-scissors"></i>
+        <span class="text">{{{ Lang::get('mobileci.coupon.use_coupon') }}}</span>
+    </a>
+</div>
+<div class="row product-info padded disable-box-shadow" style="z-index: 101;">
     <div class="col-xs-12">
         <div class="row">
             <div class="col-xs-12">
