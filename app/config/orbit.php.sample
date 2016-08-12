@@ -20,7 +20,11 @@ return array(
         // Path to CA Certificate, used when serving via HTTPS
         'cacert' => '/path/to/cacert.crt',
 
+        // Prefix to access indices
+        'indices_prefix' => 'v2x_',
+
         // List of indices that we have in Elasticsearch
+        // All the query to the index name will be appended by prefix automatically
         'indices' => [
             'malldata' => [
                 'index' => 'malls',
@@ -194,8 +198,8 @@ return array(
     // agreement configuration
     'agreement' => array(
         // This should be frontend URL not backend
-        'mall'  => 'http://portal.orbit-mall.here/#/service-agreement?token=%s',
-        'pmp'   => 'http://pmp-portal.orbit-mall.here/?mode=pmp/#/service-agreement?token=%s'
+        'mall'  => 'https://mall.gotomalls.cool/#/service-agreement?token=%s',
+        'pmp'   => 'https://pmp.gotomalls.cool/?mode=pmp/#/service-agreement?token=%s'
     ),
 
     'user_location' => array(
@@ -230,7 +234,7 @@ return array(
 
         // Internet offline check
         'offline_check' => [
-            'enable'    => TRUE,
+            'enable'    => FALSE,
 
             // enable must be true
             // in milliseconds
@@ -250,10 +254,10 @@ return array(
         'after_logout_url' => '',
 
         // back to map url
-        'back_to_map_url' => 'http://gotomalls.cool/#/?redirect_ci=false',
+        'back_to_map_url' => 'https://www.gotomalls.cool/#/?redirect_ci=false',
 
         // after sign in social url
-        'after_social_sign_in' => 'http://gotomalls.cool',
+        'after_social_sign_in' => 'https://www.gotomalls.cool',
 
         // enable or disable the google analytics tracking
         'enable_google_analytics' => FALSE,
@@ -608,18 +612,18 @@ return array(
          *
          * example:
          * FILE:
-         * 'path' => sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'orbit-session'
+         * 'path' => storage_path() . DIRECTORY_SEPARATOR . 'orbit-session'
          * TABLE NAME:
          * 'path' => 'orb_sessions'
          * NAMESPACE:
          * 'path' => 'SESSIONS'
          */
-        'path' => storage_path() . DIRECTORY_SEPARATOR . 'orbit-session',
+        'path' => DB::getTablePrefix() . 'sessions',
 
         /**
          * Strict mode, will check the user agent and ip address
          */
-        'strict' => TRUE,
+        'strict' => FALSE,
 
         /**
          * Connection Information
@@ -658,12 +662,14 @@ return array(
          *     ),
          * ),
          */
-        'connection' => array(),
+        'connection' => DB::connection()->getPdo(),
 
         /**
          * Session Driver
+         *
+         * supported value are 'file' or 'database'
          */
-        'driver' => 'file',
+        'driver' => 'database',
 
         /**
          * Session data available
@@ -3132,7 +3138,7 @@ return array(
             'version'       => 'v2.4'
         ],
         'google' => array(
-            'callback_url' => 'http://mall-api.gotomalls.cool/pub/social-google-callback',
+            'callback_url' => 'https://mall-api.gotomalls.cool/pub/social-google-callback',
         ),
     ],
 
@@ -3244,7 +3250,7 @@ return array(
     ),
 
     'error_message' => array(
-        'e500' => '<a href=http://gotomalls.com>gotomalls.com</a> is improving your user experience. Come back later.'
+        'e500' => '<a href="https://www.gotomalls.com">gotomalls.com</a> is improving your user experience. Please come back later.'
     ),
 
     // Block access to some end point
@@ -3305,6 +3311,15 @@ return array(
             '6' => array(
                 'name' => 'click_not_me',
                 'name_long' => 'Switch User',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - Tap Lucky draw Menu
+            '7' => array(
+                'name' => 'click_lucky_draw_menu',
+                'name_long' => 'Click Lucky Draw Menu',
                 'module_name' => 'Application',
                 'type' => 'click',
                 'object_type' => null,

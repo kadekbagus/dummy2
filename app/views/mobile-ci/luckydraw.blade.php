@@ -125,6 +125,28 @@ if(!empty($luckydraw)) {
         </div>
     </div>
 </div>
+@if($luckydraw->object_type === 'auto')
+<div class="row">
+    @if(\Carbon\Carbon::now($retailer->timezone->timezone_name) < $luckydraw->end_date)
+    <div class="col-xs-12 text-center">
+        <form method="post" enctype="multipart/form-data">
+            <input type="hidden" name="_token" id="_token" value="{{$csrf_token}}">
+            <div class="file-upload btn btn-upload">
+                <span>{{Lang::get('mobileci.lucky_draw.upload_receipt')}}</span>
+                <input type="file" class="upload" name="photo" accept="image/*" id="lucky-draw-capture" capture="camera">
+            </div>
+        </form>
+    </div>
+    <div class="col-xs-12 text-center">
+        <p id="upload-message"></p>
+    </div>
+    @else
+    <div class="col-xs-12 text-center">
+        <button type="button" class="btn btn-disabled-ld">{{Lang::get('mobileci.lucky_draw.upload_receipt')}}</button>
+    </div>
+    @endif
+</div>
+@endif
 <div class="row text-center lucky-number-wrapper">
     @if(!empty($luckydraw))
         <div class="row vertically-spaced">
@@ -140,9 +162,6 @@ if(!empty($luckydraw)) {
                         <img class="img-responsive" src="{{ asset('mobile-ci/images/default_lucky_number.png') }}" style="margin:0 auto" />
                     </div>
                     <h4>{{ Lang::get('mobileci.lucky_draw.no_lucky_draw_number_1') }}</h4>
-                    <small>
-                        {{ Lang::get('mobileci.lucky_draw.no_lucky_draw_number_2') }}
-                    </small>
                 @endif
                 <a name="ln-nav" id="ln-nav"></a>
             </div>
@@ -273,6 +292,45 @@ if(!empty($luckydraw)) {
             $('#ldtitle').click(function(){
                 $('#lddetail').modal();
             });
+
+        @if($luckydraw->object_type === 'auto')
+            function fileSelected() {
+                var count = document.getElementById('lucky-draw-capture').files.length;
+                if (count > 0) {
+                    var file = document.getElementById('lucky-draw-capture').files[0];
+                    if (file.size > 0) {
+                        return true;
+                    }
+                }
+                return true;
+            }
+            $('body').on('change', '#lucky-draw-capture', function(e) {
+                if(fileSelected()){
+                    $('#upload-message').text('');
+                    $('#upload-message').fadeIn();
+                    $.ajax({
+                        method: 'post',
+                        url: '{{route('ci-luckydraw-auto-issue')}}',
+                        data: {
+                            lucky_draw_id: '{{$luckydraw->lucky_draw_id}}',
+                            _token: $('#_token').val()
+                        }
+                    }).done(function(data){
+                        if (data.code === 0) {
+                            $('#upload-message').css('color', 'green').html("{{Lang::get('mobileci.lucky_draw.upload_success')}} <br> {{Lang::get('mobileci.lucky_draw.upload_congrats')}}" + data.data.lucky_draw_number_code);
+                        } else {
+                            $('#upload-message').css('color', 'red').text(data.message);
+                        }
+                        $('#_token').val(data.data.token);
+                    }).fail(function(data){
+                        $('#_token').val(data.responseJSON.data.token);
+                        $('#upload-message').css('color', 'red').text(data.responseJSON.message);
+                    }).always(function(data){
+
+                    });
+                }
+            });
+        @endif
 
         @if(!empty($luckydraw))
            {{-- we only display countdown timer when there is valid lucky draw --}}
