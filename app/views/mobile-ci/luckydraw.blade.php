@@ -321,7 +321,7 @@ if(!empty($luckydraw)) {
                         }
                     }).done(function(data){
                         if (data.code === 0) {
-                            $('#upload-message').css('color', 'green').text("{{Lang::get('mobileci.lucky_draw.upload_congrats')}}" + data.data.lucky_draw_number_code);
+                            $('#upload-message').css('color', 'green').html("{{Lang::get('mobileci.lucky_draw.upload_success')}} <br> {{Lang::get('mobileci.lucky_draw.upload_congrats')}}" + data.data.lucky_draw_number_code);
                         } else {
                             $('#upload-message').css('color', 'red').text(data.message);
                         }
