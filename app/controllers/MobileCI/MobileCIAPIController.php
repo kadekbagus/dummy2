@@ -7797,8 +7797,8 @@ class MobileCIAPIController extends BaseCIController
                         ->first();
 
             // Get Image from db
-            if (isset($pokestop->mediaPokestop->file_name)) {
-                $pokestop->image = 'mobile-ci/images/pokestop/' . $pokestop->mediaPokestop->file_name;
+            if (isset($pokestop->mediaPokestop->realpath) && $pokestop->mediaPokestop->realpath != '') {
+                $pokestop->image = $pokestop->mediaPokestop->realpath;
             } else {
                 $pokestop->image = null;
             }
