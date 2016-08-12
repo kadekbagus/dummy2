@@ -295,7 +295,7 @@ class LoginAPIController extends IntermediateBaseController
                     // so we double check it here
                     if (empty($userEmail)) {
                         if (! empty($angular_ci_from_state)) {
-                            $caller_url = urldecode($encoded_caller_url_full);
+                            $caller_url = $encoded_caller_url_full;
                         }
                         $parsed_caller_url = parse_url((string)$caller_url);
                         if (isset($parsed_caller_url['query'])) {
@@ -304,7 +304,7 @@ class LoginAPIController extends IntermediateBaseController
                             $caller_url .= '?error=no_email';
                         }
 
-                        return Redirect::to(urldecode($encoded_caller_url_full));
+                        return Redirect::to($encoded_caller_url_full);
                     }
 
                     $loggedInUser = $this->doAutoLogin($userEmail);
@@ -326,11 +326,11 @@ class LoginAPIController extends IntermediateBaseController
                     setcookie('login_from', 'Google', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
 
                     // request coming from angular-ci
-                    return Redirect::to(urldecode($redirect_to_url_from_state));
+                    return Redirect::to($redirect_to_url_from_state);
                 }
             } catch (Exception $e) {
                 if (! empty($angular_ci)) {
-                    $caller_url = urldecode($encoded_caller_url_full);
+                    $caller_url = $encoded_caller_url_full;
                 }
                 $errorMessage = 'Error: ' . $e->getMessage();
                 $parsed_caller_url = parse_url((string)$caller_url);
@@ -361,7 +361,7 @@ class LoginAPIController extends IntermediateBaseController
                 return Redirect::to((string)$new_url);
             } catch (Exception $e) {
                 if (! empty($angular_ci)) {
-                    $caller_url = urldecode($encoded_caller_url_full);
+                    $caller_url = $encoded_caller_url_full;
                 }
                 $errorMessage = 'Error: ' . $e->getMessage();
                 $parsed_caller_url = parse_url((string)$caller_url);
@@ -390,7 +390,7 @@ class LoginAPIController extends IntermediateBaseController
         }
         $caller_url = Config::get('orbit.shop.after_social_sign_in');
         if (! empty($encoded_caller_url)) {
-            $caller_url = urldecode($encoded_caller_url);
+            $caller_url = $encoded_caller_url;
         }
         $errorMessage = 'Facebook Error: ' . $fbError;
         $parsed_caller_url = parse_url((string)$caller_url);
@@ -516,7 +516,7 @@ class LoginAPIController extends IntermediateBaseController
         // There is a chance that user not 'grant' his email while approving our app
         // so we double check it here
         if (empty($userEmail)) {
-            return Redirect::to(urldecode($encoded_caller_url) . '/#/?error=no_email');
+            return Redirect::to($encoded_caller_url . '/#/?error=no_email');
         }
 
         $loggedInUser = $this->doAutoLogin($userEmail);
@@ -537,7 +537,7 @@ class LoginAPIController extends IntermediateBaseController
         setcookie('orbit_firstname', $firstName, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
         setcookie('login_from', 'Facebook', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
 
-        return Redirect::to(urldecode($encoded_redirect_to_url));
+        return Redirect::to($encoded_redirect_to_url);
     }
 
     /**
