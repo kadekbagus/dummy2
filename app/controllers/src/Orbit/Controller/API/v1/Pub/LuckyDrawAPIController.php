@@ -72,7 +72,6 @@ class LuckyDrawAPIController extends IntermediateBaseController
 
             $ciLuckyDrawPath = URL::route('ci-luckydraw-detail', []);
             $ciLuckyDrawPath = $this->getRelPathWithoutParam($ciLuckyDrawPath, 'orbit_session');
-            $urlScheme = 'https://'; // could be configurable
 
             $asiaJakartaTime = Carbon::now('Asia/Jakarta');
 
@@ -84,7 +83,7 @@ class LuckyDrawAPIController extends IntermediateBaseController
                     'city',
                     'country',
                     'ci_domain',
-                    DB::raw("(CONCAT('{$urlScheme}', ci_domain, '" . $ciLuckyDrawPath . "?id=', lucky_draw_id)) as ci_path")
+                    DB::raw("(CONCAT(ci_domain, '" . $ciLuckyDrawPath . "?id=', lucky_draw_id)) as ci_path")
                 )
                 ->leftJoin('merchants', 'lucky_draws.mall_id', '=', 'merchants.merchant_id')
                 ->active('lucky_draws')
