@@ -135,3 +135,14 @@ Route::get(
         return Orbit\Controller\API\v1\Pub\StoreAPIController::create()->getMallStoreList();
     }]
 )->where('search', '(api|app)');
+
+
+/**
+ * Get mall list based on store name
+ */
+Route::get(
+    '/{search}/v1/pub/mall-pokestop-list', ['as' => 'mall-pokestop-list', function()
+    {
+        return Orbit\Controller\API\v1\Pub\StoreAPIController::create()->getMallPokestopList();
+    }]
+)->where('search', '(api|app)');
