@@ -20,7 +20,11 @@ return array(
         // Path to CA Certificate, used when serving via HTTPS
         'cacert' => '/path/to/cacert.crt',
 
+        // Prefix to access indices
+        'indices_prefix' => 'v23_'
+
         // List of indices that we have in Elasticsearch
+        // All the query to the index name will be appended by prefix automatically
         'indices' => [
             'malldata' => [
                 'index' => 'malls',
@@ -3307,6 +3311,15 @@ return array(
             '6' => array(
                 'name' => 'click_not_me',
                 'name_long' => 'Switch User',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - Tap Lucky draw Menu
+            '7' => array(
+                'name' => 'click_lucky_draw_menu',
+                'name_long' => 'Click Lucky Draw Menu',
                 'module_name' => 'Application',
                 'type' => 'click',
                 'object_type' => null,
