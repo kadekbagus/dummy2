@@ -131,7 +131,7 @@ if(!empty($luckydraw)) {
     <div class="col-xs-12 text-center">
         <form method="post" enctype="multipart/form-data">
             <input type="hidden" name="_token" id="_token" value="{{$csrf_token}}">
-            <div class="file-upload btn btn-info">
+            <div class="file-upload btn btn-upload">
                 <span>{{Lang::get('mobileci.lucky_draw.upload_receipt')}}</span>
                 <input type="file" class="upload" name="photo" accept="image/*" id="lucky-draw-capture" capture="camera">
             </div>
