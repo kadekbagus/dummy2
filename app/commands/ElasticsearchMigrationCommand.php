@@ -101,6 +101,8 @@ class ElasticsearchMigrationCommand extends Command
         $directory = 'migrations';
         $suffixInfo = 'Migrated:';
 
+        $env = App::environment();
+
         if ($mode === 'rollback') {
             $directory = 'rollback';
             $suffixInfo = 'Rollback:';
@@ -119,7 +121,7 @@ class ElasticsearchMigrationCommand extends Command
                 continue;
             }
 
-            $indexPrefix = Config::get('elasticsearch.indices_prefix');
+            $indexPrefix = Config::get('orbit.elasticsearch.indices_prefix');
             $params = [
                 'index' => $indexPrefix . $json['index'],
                 'body' => $json['es_data']
@@ -133,7 +135,7 @@ class ElasticsearchMigrationCommand extends Command
                     break;
 
                 case 'delete_index':
-                    $response = $this->es->indices()->delete(['index' => $json['index']]);
+                    $response = $this->es->indices()->delete(['index' => $indexPrefix . $json['index']]);
                     if (isset($response['acknowledged']) && isset($response['acknowledged'])) {
                         $success = TRUE;
                     }
@@ -159,7 +161,7 @@ class ElasticsearchMigrationCommand extends Command
             }
 
             if ($mode === 'rollback') {
-                unlink($this->elasticDataDir . '/migrated/' . $file);
+                unlink($this->elasticDataDir . '/migrated/' . $env . '/' . $file);
             } else {
                 $this->writeMigratedFile($file);
             }
