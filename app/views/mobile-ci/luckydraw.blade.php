@@ -131,7 +131,7 @@ if(!empty($luckydraw)) {
     <div class="col-xs-12 text-center">
         <form method="post" enctype="multipart/form-data">
             <input type="hidden" name="_token" id="_token" value="{{$csrf_token}}">
-            <div class="file-upload btn btn-info">
+            <div class="file-upload btn btn-upload">
                 <span>{{Lang::get('mobileci.lucky_draw.upload_receipt')}}</span>
                 <input type="file" class="upload" name="photo" accept="image/*" id="lucky-draw-capture" capture="camera">
             </div>
@@ -162,9 +162,6 @@ if(!empty($luckydraw)) {
                         <img class="img-responsive" src="{{ asset('mobile-ci/images/default_lucky_number.png') }}" style="margin:0 auto" />
                     </div>
                     <h4>{{ Lang::get('mobileci.lucky_draw.no_lucky_draw_number_1') }}</h4>
-                    <small>
-                        {{ Lang::get('mobileci.lucky_draw.no_lucky_draw_number_2') }}
-                    </small>
                 @endif
                 <a name="ln-nav" id="ln-nav"></a>
             </div>
@@ -309,7 +306,6 @@ if(!empty($luckydraw)) {
             }
             $('body').on('change', '#lucky-draw-capture', function(e) {
                 if(fileSelected()){
-                    document.getElementById("lucky-draw-capture").disabled = true;
                     $('#upload-message').text('');
                     $('#upload-message').fadeIn();
                     $.ajax({
@@ -321,7 +317,7 @@ if(!empty($luckydraw)) {
                         }
                     }).done(function(data){
                         if (data.code === 0) {
-                            $('#upload-message').css('color', 'green').text("{{Lang::get('mobileci.lucky_draw.upload_congrats')}}" + data.data.lucky_draw_number_code);
+                            $('#upload-message').css('color', 'green').html("{{Lang::get('mobileci.lucky_draw.upload_success')}} <br> {{Lang::get('mobileci.lucky_draw.upload_congrats')}}" + data.data.lucky_draw_number_code);
                         } else {
                             $('#upload-message').css('color', 'red').text(data.message);
                         }
@@ -330,10 +326,7 @@ if(!empty($luckydraw)) {
                         $('#_token').val(data.responseJSON.data.token);
                         $('#upload-message').css('color', 'red').text(data.responseJSON.message);
                     }).always(function(data){
-                        document.getElementById("lucky-draw-capture").disabled = false;
-                        setTimeout(function(){
-                            $('#upload-message').fadeOut();
-                        }, 2000);
+
                     });
                 }
             });
