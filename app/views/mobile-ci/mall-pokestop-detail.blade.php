@@ -10,11 +10,9 @@
         <div class="col-xs-12 product-detail img-wrapper" style="z-index: 100;">
             <div class="vertical-align-middle-outer">
                 <div class="vertical-align-middle-inner">
-                    @if(($pokestop->image!='mobile-ci/images/default_pokestop.png'))
-                        <a href="{{{ asset($pokestop->image) }}}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer"><img src="{{ asset($pokestop->image) }}"></a>
-                    @else
-                        <img class="img-responsive" src="{{ asset($pokestop->image) }}">
-                    @endif
+                    <a href="{{{ asset($pokestop->image) }}}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer">
+                        <img src="{{ asset($pokestop->image) }}">
+                    </a>
                 </div>
             </div>
         </div>
