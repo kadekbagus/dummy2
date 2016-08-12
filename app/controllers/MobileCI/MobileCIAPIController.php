@@ -5983,10 +5983,6 @@ class MobileCIAPIController extends BaseCIController
                     $join->on('promotion_rules.promotion_id', '=', 'promotions.promotion_id');
                     $join->where('promotions.status', '=', 'active');
                 })
-                ->join('issued_coupons', function ($join) {
-                    $join->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
-                    $join->where('issued_coupons.status', '=', 'active');
-                })
                 ->leftJoin('promotion_retailer_redeem', 'promotion_retailer_redeem.promotion_id', '=', 'promotions.promotion_id')
                 ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer_redeem.retailer_id')
                 ->where(function ($q) use ($mallid) {
@@ -6004,8 +6000,7 @@ class MobileCIAPIController extends BaseCIController
                         });
                     });
                 })
-                ->where('promotions.coupon_validity_in_date', '>=', Carbon::now($retailer->timezone->timezone_name))
-                ->where('issued_coupons.user_id', $user->user_id);
+                ->where('promotions.coupon_validity_in_date', '>=', Carbon::now($retailer->timezone->timezone_name));
 
             // filter by age and gender
             if ($userGender !== null) {
