@@ -463,6 +463,8 @@ return array(
         'lucky_draw_prizes'         => 'Lucky Draw Prizes',
         'no_prize'                  => 'The prize is coming soon',
         'lucky_draw_download_title' => 'Download Lucky Draw Number',
+        'upload_receipt'            => 'Upload Receipt',
+        'upload_congrats'           => "Congratulations! You've got 1 lucky number: ",
     ),
 
     'notification' => array(

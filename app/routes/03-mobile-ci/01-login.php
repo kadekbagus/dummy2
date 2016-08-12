@@ -203,6 +203,18 @@ Route::group(
                         return MobileCI\MobileCIAPIController::create()->getLuckyDrawAnnouncementView();
                     }]
                 );
+
+                Route::group(
+                    array('before' => 'orbit-csrf'),
+                    function() {
+                        Route::post(
+                            '/app/v1/customer/luckydraw-issue', ['as' => 'ci-luckydraw-auto-issue',
+                            function () {
+                                return MobileCI\MobileCIAPIController::create()->postLuckyDrawAutoIssue();
+                            }]
+                        );
+                    }
+                );
             }
         );
 
