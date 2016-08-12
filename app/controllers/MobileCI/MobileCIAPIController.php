@@ -5722,7 +5722,7 @@ class MobileCIAPIController extends BaseCIController
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            if ((($checkMaxIssuance->max_number - $checkMaxIssuance->min_number + 1) <= $checkMaxIssuance->generated_numbers) && ($checkMaxIssuance->free_number_batch === 0)) {
+            if ((((int) $checkMaxIssuance->max_number - (int) $checkMaxIssuance->min_number + 1) <= (int) $checkMaxIssuance->generated_numbers) && ((int) $checkMaxIssuance->free_number_batch === 0)) {
                 $this->rollBack();
                 $errorMessage = Lang::get('validation.orbit.exceed.lucky_draw.max_issuance', ['max_number' => $checkMaxIssuance->max_number]);
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
