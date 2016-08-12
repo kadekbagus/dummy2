@@ -464,7 +464,8 @@ return array(
         'no_prize'                  => '賞金はすぐに来ています',
         'lucky_draw_download_title' => '抽選番号をダウンロード',
         'upload_receipt'            => 'Upload Receipt',
-        'upload_congrats'           => "Congratulations! You've got 1 lucky number: ",
+        'upload_success'            => 'Upload Successful!',
+        'upload_congrats'           => 'You get 1 lucky number: ',
     ),
 
     'notification' => array(
