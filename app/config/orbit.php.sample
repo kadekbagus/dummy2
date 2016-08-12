@@ -21,7 +21,7 @@ return array(
         'cacert' => '/path/to/cacert.crt',
 
         // Prefix to access indices
-        'indices_prefix' => 'v23_'
+        'indices_prefix' => 'v2x_',
 
         // List of indices that we have in Elasticsearch
         // All the query to the index name will be appended by prefix automatically
