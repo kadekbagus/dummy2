@@ -10,7 +10,7 @@
                     <div class="col-xs-12 col-sm-12 item-x" data-ids="{{$coupon->promotion_id}}"  id="item-{{$coupon->promotion_id}}">
                         <section class="list-item-single-tenant">
                             <a class="list-item-link" data-href="{{ route('ci-coupon-detail', ['id' => $coupon->promotion_id, 'name' => Str::slug($coupon->promotion_name)]) }}" href="{{ \Orbit\Helper\Net\UrlChecker::blockedRoute('ci-coupon-detail', ['id' => $coupon->promotion_id, 'name' => Str::slug($coupon->promotion_name)], $session) }}">
-                                @if($is_coupon_wallet === TRUE)
+                                @if($is_coupon_wallet)
                                 <span class="fa-stack fa-2x pull-right couponbadge-container couponbadge-shadow couponbadge-medium" data-count="{{ ($coupon->quantity > 99) ? '99+' : $coupon->quantity }}">
                                    <i class="fa fa-circle fa-stack-2x color-base"></i>
                                    <i class="fa fa-ticket fa-stack-1x color-icon couponbadge-ticket-small"></i>
