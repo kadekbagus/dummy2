@@ -563,8 +563,6 @@ class MobileCIAPIController extends BaseCIController
         }
 
         $couponsCount = Coupon::select('promotions.promotion_id')->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'promotions.promotion_id')
-                        ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'promotions.promotion_id')
-                        ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
                         ->leftJoin('promotion_retailer_redeem', 'promotion_retailer_redeem.promotion_id', '=', 'promotions.promotion_id')
                         ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer_redeem.retailer_id')
                         ->where(function ($q) use ($mallid) {
@@ -583,54 +581,17 @@ class MobileCIAPIController extends BaseCIController
                             });
                         });
 
-        if ($userGender !== null) {
-            $couponsCount = $couponsCount->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
-        }
-
-        if ($userAge !== null) {
-            if ($userAge === 0){
-                $couponsCount = $couponsCount->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
-            } else {
-                if ($userAge >= 55) {
-                    $couponsCount = $couponsCount->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
-                } else {
-                    $couponsCount = $couponsCount->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
-                }
-            }
-        }
-
         $couponsCount->join('promotion_rules', function($join) {
                 $join->on('promotions.promotion_id', '=', 'promotion_rules.promotion_id')
                     ->where('promotions.is_coupon', '=', 'Y');
-            })->join('issued_coupons', function($join) {
-                $join->on('promotions.promotion_id', '=', 'issued_coupons.promotion_id')
-                    ->where('issued_coupons.status', '=', 'active');
-            })
+                })
             ->where('promotions.status', '=', 'active')
             ->where('promotions.coupon_validity_in_date', '>=', $now)
-            ->where('issued_coupons.user_id', $user->user_id)
             ->groupBy('promotions.promotion_id');
         $couponsCount = RecordCounter::create($couponsCount)->count();
 
-        $newCouponsCount = Coupon::select('promotions.promotion_id')->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'promotions.promotion_id')
-                        ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'promotions.promotion_id')
-                        ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id');
+        $newCouponsCount = Coupon::select('promotions.promotion_id')->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'promotions.promotion_id');
 
-        if ($userGender !== null) {
-            $newCouponsCount = $newCouponsCount->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
-        }
-
-        if ($userAge !== null) {
-            if ($userAge === 0){
-                $newCouponsCount = $newCouponsCount->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
-            } else {
-                if ($userAge >= 55) {
-                    $newCouponsCount = $newCouponsCount->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
-                } else {
-                    $newCouponsCount = $newCouponsCount->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
-                }
-            }
-        }
         $prefix = DB::getTablePrefix();
         $merchant_id = $retailer->merchant_id;
         $user_id = $user->user_id;
@@ -864,7 +825,7 @@ class MobileCIAPIController extends BaseCIController
                                 // On
                                 DB::raw('os.setting_name'), '=', DB::raw("CONCAT('enable_', {$prefix}widgets.widget_type, '_widget')"))
                             ->join('widget_retailer', 'widget_retailer.widget_id', '=', 'widgets.widget_id')
-                            ->where('widgets.status', '!=', 'deleted')
+                            ->where('widgets.status', '=', 'active')
                             ->where('widgets.merchant_id', '=', $merchantId)
                             ->whereRaw("(CASE WHEN os.setting_id IS NULL THEN 'true' ELSE os.setting_value END) = 'true'")
                             ->groupBy('widgets.widget_type')
@@ -5429,6 +5390,9 @@ class MobileCIAPIController extends BaseCIController
                 ->save();
 
             $servertime = Carbon::now($retailer->timezone->timezone_name);
+            $csrf_token = csrf_token();
+
+            $this->session->write('orbit_csrf_token', $csrf_token);
 
             return View::make('mobile-ci.luckydraw', [
                                 'page_title'    => $luckydraw->lucky_draw_name,
@@ -5449,6 +5413,7 @@ class MobileCIAPIController extends BaseCIController
                                 'session' => $this->session,
                                 'is_logged_in' => UrlBlock::isLoggedIn($this->session),
                                 'user_email' => $user->role->role_name !== 'Guest' ? $user->user_email : '',
+                                'csrf_token' => $csrf_token,
             ]);
         } catch (Exception $e) {
             $activityProductNotes = sprintf('Failed to view: Lucky Draw Page');
@@ -5708,6 +5673,252 @@ class MobileCIAPIController extends BaseCIController
     }
 
     /**
+     * POST - post auto issue lucky draw
+     *
+     * @param string lucky_draw_id
+     *
+     * @author Ahmad Anshori <ahmad@dominopos.com>
+     */
+    public function postLuckyDrawAutoIssue()
+    {
+        $user = null;
+        $activity = Activity::mobileci()
+                        ->setActivityType('create');
+
+        try {
+            $httpCode = 200;
+            $user = $this->getLoggedInUser();
+            $mall = $this->getRetailerInfo();
+
+            $lucky_draw_id = OrbitInput::post('lucky_draw_id');
+
+            $this->beginTransaction();
+            $luckyDraw = LuckyDraw::active()->where('lucky_draw_id', $lucky_draw_id)->first();
+
+            if (! is_object($luckyDraw)) {
+                $errorMessage = sprintf('Lucky draw ID is not found.', $lucky_draw_id);
+                OrbitShopAPI::throwInvalidArgument(htmlentities($errorMessage));
+            }
+
+            $now = strtotime(Carbon::now($mall->timezone->timezone_name));
+            $luckyDrawDate = strtotime($luckyDraw->end_date);
+
+            if ($now > $luckyDrawDate) {
+                $errorMessage = sprintf('The lucky draw already expired on %s.', date('d/m/Y', strtotime($luckyDraw->end_date)));
+                OrbitShopAPI::throwInvalidArgument(htmlentities($errorMessage));
+            }
+
+            $checkMaxIssuance = DB::table('lucky_draws')
+                ->where('status', 'active')
+                ->where('start_date', '<=', Carbon::now($mall->timezone->timezone_name))
+                ->where('end_date', '>=', Carbon::now($mall->timezone->timezone_name))
+                ->where('lucky_draw_id', $lucky_draw_id)
+                ->lockForUpdate()
+                ->first();
+
+            if (! is_object($checkMaxIssuance)) {
+                $this->rollBack();
+                $errorMessage = Lang::get('validation.orbit.empty.lucky_draw');
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            if ((($checkMaxIssuance->max_number - $checkMaxIssuance->min_number + 1) == $checkMaxIssuance->generated_numbers) && ($checkMaxIssuance->free_number_batch === 0)) {
+                $this->rollBack();
+                $errorMessage = Lang::get('validation.orbit.exceed.lucky_draw.max_issuance', ['max_number' => $checkMaxIssuance->generated_numbers]);
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $activeluckydraw = DB::table('lucky_draws')
+                ->where('status', 'active')
+                ->where('start_date', '<=', Carbon::now($mall->timezone->timezone_name))
+                ->where('end_date', '>=', Carbon::now($mall->timezone->timezone_name))
+                ->where('lucky_draw_id', $lucky_draw_id)
+                ->lockForUpdate()
+                ->first();
+
+            if (! is_object($activeluckydraw)) {
+                $this->rollBack();
+                $errorMessage = Lang::get('validation.orbit.empty.lucky_draw');
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            // determine the starting number
+            $starting_number_code = DB::table('lucky_draw_numbers')
+                ->where('lucky_draw_id', $lucky_draw_id)
+                ->max(DB::raw('CAST(lucky_draw_number_code AS UNSIGNED)'));
+
+            if (empty ($starting_number_code)) {
+                $starting_number_code = $activeluckydraw->min_number;
+            } else {
+                $starting_number_code = $starting_number_code + 1;
+            }
+
+            // do the issuance
+            $lucky_draw_number = new LuckyDrawNumber;
+            $lucky_draw_number->lucky_draw_id = $lucky_draw_id;
+            $lucky_draw_number->lucky_draw_number_code = $starting_number_code;
+            $lucky_draw_number->user_id = $user->user_id;
+            $lucky_draw_number->issued_date = Carbon::now();
+            $lucky_draw_number->status = 'active';
+            $lucky_draw_number->created_by = $user->user_id;
+            $lucky_draw_number->modified_by = $user->user_id;
+            $lucky_draw_number->save();
+
+            // update free_number_batch and generated_numbers
+            $updated_luckydraw = LuckyDraw::where('lucky_draw_id', $lucky_draw_id)->first();
+            $updated_luckydraw->free_number_batch = 0;
+            $updated_luckydraw->generated_numbers = $updated_luckydraw->generated_numbers + 1;
+            $updated_luckydraw->save();
+
+            // refresh csrf_token
+            $csrf_token = csrf_token();
+            $this->session->write('orbit_csrf_token', $csrf_token);
+
+            $data = new stdclass();
+            $data->total_records = 1;
+            $data->returned_records = 1;
+            $data->expected_issued_numbers = 1;
+            $data->records = null;
+            $data->lucky_draw_number_code = (array) $lucky_draw_number->lucky_draw_number_code;
+            $data->lucky_draw_name = $luckyDraw->lucky_draw_name;
+
+            // Insert to alert system
+            $inbox = new Inbox();
+            $inbox->addToInbox($user->user_id, $data, $mall->merchant_id, 'lucky_draw_issuance');
+
+            $this->commit();
+
+            // Successfull Creation
+            $activity->setUser($user)
+                ->setActivityName('issue_lucky_draw')
+                ->setActivityNameLong('Lucky Draw Number Auto Issuance')
+                ->setLocation($mall)
+                ->setNotes('Generated number: ' . $lucky_draw_number->lucky_draw_number_code)
+                ->setObject($luckyDraw, TRUE)
+                ->responseOK();
+
+            $response = new stdclass();
+            $response->lucky_draw_number_code = $lucky_draw_number->lucky_draw_number_code;
+            $response->token = $csrf_token;
+
+            $this->response->data = $response;
+
+        } catch (ACLForbiddenException $e) {
+            // Rollback the changes
+            $this->rollBack();
+
+            // refresh csrf_token
+            $csrf_token = csrf_token();
+            $this->session->write('orbit_csrf_token', $csrf_token);
+            $data = new stdclass();
+            $data->token = $csrf_token;
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = $data;
+
+            $httpCode = 403;
+
+            // Creation failed Activity log
+            $activity->setUser($user)
+                ->setModuleName('LuckyDraw')
+                ->setActivityName('issue_lucky_draw')
+                ->setActivityNameLong('Lucky Draw Number Auto Issuance Failed')
+                ->setNotes($e->getMessage())
+                ->responseFailed();
+        } catch (InvalidArgsException $e) {
+            // Rollback the changes
+            $this->rollBack();
+
+            // refresh csrf_token
+            $csrf_token = csrf_token();
+            $this->session->write('orbit_csrf_token', $csrf_token);
+            $data = new stdclass();
+            $data->token = $csrf_token;
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = $data;
+            $httpCode = 400;
+
+            // Creation failed Activity log
+            $activity->setUser($user)
+                ->setModuleName('LuckyDraw')
+                ->setActivityName('issue_lucky_draw')
+                ->setActivityNameLong('Lucky Draw Number Auto Issuance Failed')
+                ->setNotes($e->getMessage())
+                ->responseFailed();
+        } catch (QueryException $e) {
+            // Rollback the changes
+            $this->rollBack();
+
+            // refresh csrf_token
+            $csrf_token = csrf_token();
+            $this->session->write('orbit_csrf_token', $csrf_token);
+            $data = new stdclass();
+            $data->token = $csrf_token;
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = $data;
+            $httpCode = 500;
+
+            // Creation failed Activity log
+            $activity->setUser($user)
+                ->setModuleName('LuckyDraw')
+                ->setActivityName('issue_lucky_draw')
+                ->setActivityNameLong('Lucky Draw Number Auto Issuance Failed')
+                ->setNotes($e->getMessage())
+                ->responseFailed();
+        } catch (Exception $e) {
+            // Rollback the changes
+            $this->rollBack();
+
+            // refresh csrf_token
+            $csrf_token = csrf_token();
+            $this->session->write('orbit_csrf_token', $csrf_token);
+            $data = new stdclass();
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+
+            if (Config::get('app.debug')) {
+                $data->message = $e->__toString();
+                $data->token = $csrf_token;
+
+                $this->response->data = $data;
+            } else {
+                $data->token = $csrf_token;
+
+                $this->response->data = $data;
+            }
+
+            // Creation failed Activity log
+            $activity->setUser($user)
+                ->setModuleName('LuckyDraw')
+                ->setActivityName('issue_lucky_draw')
+                ->setActivityNameLong('Lucky Draw Number Auto Issuance Failed')
+                ->setNotes($e->getMessage())
+                ->responseFailed();
+        }
+
+        // Save the activity
+        $activity->save();
+
+        return $this->render($httpCode);
+    }
+
+    /**
      * GET - Get coupon list in mall
      *
      * @return Illuminate\View\View
@@ -5772,10 +5983,6 @@ class MobileCIAPIController extends BaseCIController
                     $join->on('promotion_rules.promotion_id', '=', 'promotions.promotion_id');
                     $join->where('promotions.status', '=', 'active');
                 })
-                ->join('issued_coupons', function ($join) {
-                    $join->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
-                    $join->where('issued_coupons.status', '=', 'active');
-                })
                 ->leftJoin('promotion_retailer_redeem', 'promotion_retailer_redeem.promotion_id', '=', 'promotions.promotion_id')
                 ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer_redeem.retailer_id')
                 ->where(function ($q) use ($mallid) {
@@ -5793,8 +6000,7 @@ class MobileCIAPIController extends BaseCIController
                         });
                     });
                 })
-                ->where('promotions.coupon_validity_in_date', '>=', Carbon::now($retailer->timezone->timezone_name))
-                ->where('issued_coupons.user_id', $user->user_id);
+                ->where('promotions.coupon_validity_in_date', '>=', Carbon::now($retailer->timezone->timezone_name));
 
             // filter by age and gender
             if ($userGender !== null) {

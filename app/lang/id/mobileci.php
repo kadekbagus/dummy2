@@ -463,6 +463,8 @@ return array(
         'lucky_draw_prizes'         => 'Hadiah Undian Berhadiah',
         'no_prize'                  => 'Hadiah segera tersedia',
         'lucky_draw_download_title' => 'Unduh Nomor Undian Berhadiah',
+        'upload_receipt'            => 'Upload Receipt',
+        'upload_congrats'           => "Congratulations! You've got 1 lucky number: ",
     ),
 
     'notification' => array(
