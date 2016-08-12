@@ -5978,12 +5978,12 @@ class MobileCIAPIController extends BaseCIController
                     {$prefix}promotions.long_description AS long_description,
                     {$prefix}promotions.image AS promo_image,
                     (
-                        SELECT COUNT({$prefix}issued_coupons.issued_coupon_id)
+                        SELECT (CASE WHEN COUNT({$prefix}issued_coupons.issued_coupon_id) > 0 THEN 'true' ELSE 'false' END)
                         from {$prefix}issued_coupons
                         where user_id = '{$user_id}'
                         AND {$prefix}issued_coupons.status = 'active'
                         AND {$prefix}issued_coupons.promotion_id = {$prefix}promotions.promotion_id
-                    ) as quantity")
+                    ) as added_to_wallet")
                 ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'promotions.promotion_id')
                 ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'promotions.promotion_id')
                 ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
