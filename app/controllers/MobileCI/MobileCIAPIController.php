@@ -15,6 +15,7 @@ use OrbitShop\API\v1\OrbitShopAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
+use Orbit\Helper\Exception\UrlException;
 use \View;
 use \User;
 use \Token;
@@ -83,6 +84,7 @@ use Helper\EloquentRecordCounter as RecordCounter;
 use MobileCI\ExCaptivePortalController as CaptivePortalController;
 use Orbit\Helper\Net\SessionPreparer;
 use Orbit\Database\ObjectID;
+use Str;
 
 class MobileCIAPIController extends BaseCIController
 {
@@ -945,6 +947,10 @@ class MobileCIAPIController extends BaseCIController
                 ->responseFailed()
                 ->save();
 
+            if ($e instanceof UrlException) {
+                return $this->redirectIfNotLoggedIn($e, URL::to($e->getRedirectRoute()));
+            }
+
             return $this->redirectIfNotLoggedIn($e);
         }
     }
@@ -1734,6 +1740,10 @@ class MobileCIAPIController extends BaseCIController
                 ->setNotes($activityPageNotes)
                 ->responseFailed()
                 ->save();
+
+            if ($e instanceof UrlException) {
+                return $this->redirectIfNotLoggedIn($e, URL::to($e->getRedirectRoute()));
+            }
 
             return $this->redirectIfNotLoggedIn($e);
         }
@@ -2969,6 +2979,10 @@ class MobileCIAPIController extends BaseCIController
                 ->responseFailed()
                 ->save();
 
+            if ($e instanceof UrlException) {
+                return $this->redirectIfNotLoggedIn($e, URL::to($e->getRedirectRoute()));
+            }
+
             return $this->redirectIfNotLoggedIn($e);
         }
     }
@@ -3414,8 +3428,11 @@ class MobileCIAPIController extends BaseCIController
                 ->responseFailed()
                 ->save();
 
+            if ($e instanceof UrlException) {
+                return $this->redirectIfNotLoggedIn($e, URL::to($e->getRedirectRoute()));
+            }
+
             return $this->redirectIfNotLoggedIn($e);
-                // return $e;
         }
     }
 
@@ -3596,6 +3613,10 @@ class MobileCIAPIController extends BaseCIController
                 ->setNotes($activityPageNotes)
                 ->responseFailed()
                 ->save();
+
+            if ($e instanceof UrlException) {
+                return $this->redirectIfNotLoggedIn($e, URL::to($e->getRedirectRoute()));
+            }
 
             return $this->redirectIfNotLoggedIn($e);
                 // return $e;
@@ -4118,8 +4139,8 @@ class MobileCIAPIController extends BaseCIController
                     }
                 }
                 $tenant->category_string = mb_strlen($category_string) > 30 ? mb_substr($category_string, 0, 30, 'UTF-8') . '...' : $category_string;
-                $tenant->url = UrlBlock::blockedRoute('ci-tenant-detail' , ['id' => $tenant->merchant_id], $this->session);
-                $tenant->redirect_url = URL::route('ci-tenant-detail' , ['id' => $tenant->merchant_id]);
+                $tenant->url = UrlBlock::blockedRoute('ci-tenant-detail' , ['id' => $tenant->merchant_id, 'name' => Str::slug($tenant->name)], $this->session);
+                $tenant->redirect_url = URL::route('ci-tenant-detail' , ['id' => $tenant->merchant_id, 'name' => Str::slug($tenant->name)]);
                 if (count($tenant->mediaLogo) > 0) {
                     foreach ($tenant->mediaLogo as $media) {
                         if ($media->media_name_long == 'retailer_logo_orig') {
@@ -4549,6 +4570,10 @@ class MobileCIAPIController extends BaseCIController
                 ->responseFailed()
                 ->save();
 
+            if ($e instanceof UrlException) {
+                return $this->redirectIfNotLoggedIn($e, URL::to($e->getRedirectRoute()));
+            }
+
             return $this->redirectIfNotLoggedIn($e);
         }
     }
@@ -4792,8 +4817,8 @@ class MobileCIAPIController extends BaseCIController
                     }
                 }
                 $service->category_string = mb_strlen($category_string) > 30 ? mb_substr($category_string, 0, 30, 'UTF-8') . '...' : $category_string;
-                $service->url = UrlBlock::blockedRoute('ci-service-detail' , ['id' => $service->merchant_id], $this->session);
-                $service->redirect_url = URL::route('ci-service-detail' , ['id' => $service->merchant_id]);
+                $service->url = UrlBlock::blockedRoute('ci-service-detail' , ['id' => $service->merchant_id, 'name' => Str::slug($service->name)], $this->session);
+                $service->redirect_url = URL::route('ci-service-detail' , ['id' => $service->merchant_id, 'name' => Str::slug($service->name)]);
                 if (count($service->mediaLogo) > 0) {
                     foreach ($service->mediaLogo as $media) {
                         if ($media->media_name_long == 'service_logo_orig') {
@@ -5038,6 +5063,10 @@ class MobileCIAPIController extends BaseCIController
                 ->responseOK()
                 ->save();
 
+            if ($e instanceof UrlException) {
+                return $this->redirectIfNotLoggedIn($e, URL::to($e->getRedirectRoute()));
+            }
+
             return $this->redirectIfNotLoggedIn($e);
         }
     }
@@ -5171,8 +5200,8 @@ class MobileCIAPIController extends BaseCIController
 
             foreach ($listOfRec as $item) {
                 $item->image = empty($item->image) ? URL::asset('mobile-ci/images/default_lucky_number.png') : URL::asset($item->image);
-                $item->url = UrlBlock::blockedRoute('ci-luckydraw-detail', ['id' => $item->lucky_draw_id], $this->session);
-                $item->redirect_url = URL::route('ci-luckydraw-detail', ['id' => $item->lucky_draw_id]);
+                $item->url = UrlBlock::blockedRoute('ci-luckydraw-detail', ['id' => $item->lucky_draw_id, 'name' => Str::slug($item->lucky_draw_name)], $this->session);
+                $item->redirect_url = URL::route('ci-luckydraw-detail', ['id' => $item->lucky_draw_id, 'name' => Str::slug($item->lucky_draw_name)]);
                 $item->name = mb_strlen($item->lucky_draw_name) > 64 ? mb_substr($item->lucky_draw_name, 0, 64) . '...' : $item->lucky_draw_name;
                 $item->item_id = $item->lucky_draw_id;
             }
@@ -5432,6 +5461,10 @@ class MobileCIAPIController extends BaseCIController
                 ->responseOK()
                 ->save();
 
+            if ($e instanceof UrlException) {
+                return $this->redirectIfNotLoggedIn($e, URL::to($e->getRedirectRoute()));
+            }
+
             return $this->redirectIfNotLoggedIn($e);
         }
     }
@@ -5625,6 +5658,10 @@ class MobileCIAPIController extends BaseCIController
                 ->setNotes($activityProductNotes)
                 ->responseOK()
                 ->save();
+
+            if ($e instanceof UrlException) {
+                return $this->redirectIfNotLoggedIn($e, URL::to($e->getRedirectRoute()));
+            }
 
             return $this->redirectIfNotLoggedIn($e);
         }
@@ -5927,6 +5964,10 @@ class MobileCIAPIController extends BaseCIController
                 ->responseFailed()
                 ->save();
 
+            if ($e instanceof UrlException) {
+                return $this->redirectIfNotLoggedIn($e, URL::to($e->getRedirectRoute()));
+            }
+
             return $this->redirectIfNotLoggedIn($e);
         }
     }
@@ -6129,8 +6170,8 @@ class MobileCIAPIController extends BaseCIController
 
             foreach ($listOfRec as $item) {
                 $item->image = empty($item->image) ? URL::asset('mobile-ci/images/default_news.png') : URL::asset($item->image);
-                $item->url = UrlBlock::blockedRoute('ci-coupon-detail', ['id' => $item->issued_coupon_id], $this->session);
-                $item->redirect_url = URL::route('ci-coupon-detail', ['id' => $item->issued_coupon_id]);
+                $item->url = UrlBlock::blockedRoute('ci-coupon-detail', ['id' => $item->issued_coupon_id, 'name' => Str::slug($item->promotion_name)], $this->session);
+                $item->redirect_url = URL::route('ci-coupon-detail', ['id' => $item->issued_coupon_id, 'name' => Str::slug($item->promotion_name)]);
                 $item->name = mb_strlen($item->promotion_name) > 64 ? mb_substr($item->promotion_name, 0, 64) . '...' : $item->promotion_name;
                 $item->item_id = $item->promotion_id;
             }
@@ -6437,14 +6478,18 @@ class MobileCIAPIController extends BaseCIController
 
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: Coupon Detail, Coupon Id: %s', $promotion_id);
-            // $activityPage->setUser($user)
-            //     ->setActivityName('view_coupon')
-            //     ->setActivityNameLong('View Coupon Detail Failed')
-            //     ->setObject(null)
-            //     ->setModuleName('Coupon')
-            //     ->setNotes($activityPageNotes)
-            //     ->responseFailed()
-            //     ->save();
+            $activityPage->setUser($user)
+                ->setActivityName('view_coupon')
+                ->setActivityNameLong('View Coupon Detail Failed')
+                ->setObject(null)
+                ->setModuleName('Coupon')
+                ->setNotes($activityPageNotes)
+                ->responseFailed()
+                ->save();
+
+            if ($e instanceof UrlException) {
+                return $this->redirectIfNotLoggedIn($e, URL::to($e->getRedirectRoute()));
+            }
 
             return $this->redirectIfNotLoggedIn($e);
         }
@@ -6842,6 +6887,10 @@ class MobileCIAPIController extends BaseCIController
                 ->responseFailed()
                 ->save();
 
+            if ($e instanceof UrlException) {
+                return $this->redirectIfNotLoggedIn($e, URL::to($e->getRedirectRoute()));
+            }
+
             return $this->redirectIfNotLoggedIn($e);
         }
     }
@@ -7024,8 +7073,8 @@ class MobileCIAPIController extends BaseCIController
 
             foreach ($listOfRec as $item) {
                 $item->image = empty($item->image) ? URL::asset('mobile-ci/images/default_promotion.png') : URL::asset($item->image);
-                $item->url = UrlBlock::blockedRoute('ci-promotion-detail', ['id' => $item->news_id], $this->session);
-                $item->redirect_url = URL::route('ci-promotion-detail', ['id' => $item->news_id]);
+                $item->url = UrlBlock::blockedRoute('ci-promotion-detail', ['id' => $item->news_id, 'name' => Str::slug($item->news_name)], $this->session);
+                $item->redirect_url = URL::route('ci-promotion-detail', ['id' => $item->news_id, 'name' => Str::slug($item->news_name)]);
                 $item->name = mb_strlen($item->news_name) > 64 ? mb_substr($item->news_name, 0, 64) . '...' : $item->news_name;
                 $item->item_id = $item->news_id;
             }
@@ -7233,8 +7282,11 @@ class MobileCIAPIController extends BaseCIController
                 ->responseFailed()
                 ->save();
 
+            if ($e instanceof UrlException) {
+                return $this->redirectIfNotLoggedIn($e, URL::to($e->getRedirectRoute()));
+            }
+
             return $this->redirectIfNotLoggedIn($e);
-                // return $e;
         }
     }
 
@@ -7469,6 +7521,10 @@ class MobileCIAPIController extends BaseCIController
                 ->responseFailed()
                 ->save();
 
+            if ($e instanceof UrlException) {
+                return $this->redirectIfNotLoggedIn($e, URL::to($e->getRedirectRoute()));
+            }
+
             return $this->redirectIfNotLoggedIn($e);
         }
     }
@@ -7651,8 +7707,8 @@ class MobileCIAPIController extends BaseCIController
 
             foreach ($listOfRec as $item) {
                 $item->image = empty($item->image) ? URL::asset('mobile-ci/images/default_news.png') : URL::asset($item->image);
-                $item->url = UrlBlock::blockedRoute('ci-promotion-detail', ['id' => $item->news_id], $this->session);
-                $item->redirect_url = URL::route('ci-promotion-detail', ['id' => $item->news_id]);
+                $item->url = UrlBlock::blockedRoute('ci-promotion-detail', ['id' => $item->news_id, 'name' => Str::slug($item->news_name)], $this->session);
+                $item->redirect_url = URL::route('ci-promotion-detail', ['id' => $item->news_id, 'name' => Str::slug($item->news_name)]);
                 $item->name = mb_strlen($item->news_name) > 64 ? mb_substr($item->news_name, 0, 64) . '...' : $item->news_name;
                 $item->item_id = $item->news_id;
             }
@@ -7860,6 +7916,10 @@ class MobileCIAPIController extends BaseCIController
                 ->responseFailed()
                 ->save();
 
+            if ($e instanceof UrlException) {
+                return $this->redirectIfNotLoggedIn($e, URL::to($e->getRedirectRoute()));
+            }
+
             return $this->redirectIfNotLoggedIn($e);
         }
     }
@@ -7923,6 +7983,10 @@ class MobileCIAPIController extends BaseCIController
                 ->setNotes($activityPageNotes)
                 ->responseFailed()
                 ->save();
+
+            if ($e instanceof UrlException) {
+                return $this->redirectIfNotLoggedIn($e, URL::to($e->getRedirectRoute()));
+            }
 
             return $this->redirectIfNotLoggedIn($e);
         }
@@ -8140,6 +8204,10 @@ class MobileCIAPIController extends BaseCIController
                     ]);
             }
         } catch (Exception $e) {
+            if ($e instanceof UrlException) {
+                return $this->redirectIfNotLoggedIn($e, URL::to($e->getRedirectRoute()));
+            }
+
             return $this->redirectIfNotLoggedIn($e);
         }
     }
@@ -8294,16 +8362,16 @@ class MobileCIAPIController extends BaseCIController
             foreach($end_results as $near_end_result) {
                 $near_end_result->campaign_link = Lang::get('mobileci.campaign_cards.go_to_page');
                 if ($near_end_result->campaign_type === 'promotion') {
-                    $near_end_result->campaign_url = UrlBlock::blockedRoute('ci-promotion-detail', ['id' => $near_end_result->campaign_id], $this->session);
-                    $near_end_result->redirect_campaign_url = URL::route('ci-promotion-detail', ['id' => $near_end_result->campaign_id]);
+                    $near_end_result->campaign_url = UrlBlock::blockedRoute('ci-promotion-detail', ['id' => $near_end_result->campaign_id, 'name' => Str::slug($near_end_result->campaign_name)], $this->session);
+                    $near_end_result->redirect_campaign_url = URL::route('ci-promotion-detail', ['id' => $near_end_result->campaign_id, 'name' => Str::slug($near_end_result->campaign_name)]);
                     $near_end_result->campaign_image = URL::asset('mobile-ci/images/default_promotion.png');
                 } elseif ($near_end_result->campaign_type === 'news') {
-                    $near_end_result->campaign_url = UrlBlock::blockedRoute('ci-news-detail', ['id' => $near_end_result->campaign_id], $this->session);
-                    $near_end_result->redirect_campaign_url = URL::route('ci-news-detail', ['id' => $near_end_result->campaign_id]);
+                    $near_end_result->campaign_url = UrlBlock::blockedRoute('ci-news-detail', ['id' => $near_end_result->campaign_id, 'name' => Str::slug($near_end_result->campaign_name)], $this->session);
+                    $near_end_result->redirect_campaign_url = URL::route('ci-news-detail', ['id' => $near_end_result->campaign_id, 'name' => Str::slug($near_end_result->campaign_name)]);
                     $near_end_result->campaign_image = URL::asset('mobile-ci/images/default_news.png');
                 } elseif ($near_end_result->campaign_type === 'coupon') {
-                    $near_end_result->campaign_url = UrlBlock::blockedRoute('ci-coupon-detail', ['id' => $near_end_result->campaign_id], $this->session);
-                    $near_end_result->redirect_campaign_url = URL::route('ci-coupon-detail', ['id' => $near_end_result->campaign_id]);
+                    $near_end_result->campaign_url = UrlBlock::blockedRoute('ci-coupon-detail', ['id' => $near_end_result->campaign_id, 'name' => Str::slug($near_end_result->campaign_name)], $this->session);
+                    $near_end_result->redirect_campaign_url = URL::route('ci-coupon-detail', ['id' => $near_end_result->campaign_id, 'name' => Str::slug($near_end_result->campaign_name)]);
                     $near_end_result->campaign_image = URL::asset('mobile-ci/images/default_coupon.png');
                 }
 
@@ -8772,36 +8840,36 @@ class MobileCIAPIController extends BaseCIController
 
             foreach($search_results as $near_end_result) {
                 if ($near_end_result->object_type === 'promotion') {
-                    $near_end_result->object_url = UrlBlock::blockedRoute('ci-promotion-detail', ['id' => $near_end_result->object_id], $this->session);
-                    $near_end_result->object_redirect_url = URL::route('ci-promotion-detail', ['id' => $near_end_result->object_id]);
+                    $near_end_result->object_url = UrlBlock::blockedRoute('ci-promotion-detail', ['id' => $near_end_result->object_id, 'name' => Str::slug($near_end_result->object_name)], $this->session);
+                    $near_end_result->object_redirect_url = URL::route('ci-promotion-detail', ['id' => $near_end_result->object_id, 'name' => Str::slug($near_end_result->object_name)]);
                     $near_end_result->object_image = URL::asset('mobile-ci/images/default_promotion.png');
                 } elseif ($near_end_result->object_type === 'news') {
-                    $near_end_result->object_url = UrlBlock::blockedRoute('ci-news-detail', ['id' => $near_end_result->object_id], $this->session);
-                    $near_end_result->object_redirect_url = URL::route('ci-news-detail', ['id' => $near_end_result->object_id]);
+                    $near_end_result->object_url = UrlBlock::blockedRoute('ci-news-detail', ['id' => $near_end_result->object_id, 'name' => Str::slug($near_end_result->object_name)], $this->session);
+                    $near_end_result->object_redirect_url = URL::route('ci-news-detail', ['id' => $near_end_result->object_id, 'name' => Str::slug($near_end_result->object_name)]);
                     $near_end_result->object_image = URL::asset('mobile-ci/images/default_news.png');
                 } elseif ($near_end_result->object_type === 'coupon') {
-                    $near_end_result->object_url = UrlBlock::blockedRoute('ci-coupon-detail', ['id' => $near_end_result->object_id], $this->session);
-                    $near_end_result->object_redirect_url = URL::route('ci-coupon-detail', ['id' => $near_end_result->object_id]);
+                    $near_end_result->object_url = UrlBlock::blockedRoute('ci-coupon-detail', ['id' => $near_end_result->object_id, 'name' => Str::slug($near_end_result->object_name)], $this->session);
+                    $near_end_result->object_redirect_url = URL::route('ci-coupon-detail', ['id' => $near_end_result->object_id, 'name' => Str::slug($near_end_result->object_name)]);
                     $near_end_result->object_image = URL::asset('mobile-ci/images/default_coupon.png');
                 } elseif ($near_end_result->object_type === 'tenant') {
-                    $near_end_result->object_url = UrlBlock::blockedRoute('ci-tenant-detail', ['id' => $near_end_result->object_id], $this->session);
-                    $near_end_result->object_redirect_url = URL::route('ci-tenant-detail', ['id' => $near_end_result->object_id]);
+                    $near_end_result->object_url = UrlBlock::blockedRoute('ci-tenant-detail', ['id' => $near_end_result->object_id, 'name' => Str::slug($near_end_result->object_name)], $this->session);
+                    $near_end_result->object_redirect_url = URL::route('ci-tenant-detail', ['id' => $near_end_result->object_id, 'name' => Str::slug($near_end_result->object_name)]);
                     if (! is_null($near_end_result->object_image)) {
                         $near_end_result->object_image = URL::asset($near_end_result->object_image);
                     } else {
                         $near_end_result->object_image = URL::asset('mobile-ci/images/default_tenants_directory.png');
                     }
                 } elseif ($near_end_result->object_type === 'service') {
-                    $near_end_result->object_url = UrlBlock::blockedRoute('ci-service-detail', ['id' => $near_end_result->object_id], $this->session);
-                    $near_end_result->object_redirect_url = URL::route('ci-service-detail', ['id' => $near_end_result->object_id]);
+                    $near_end_result->object_url = UrlBlock::blockedRoute('ci-service-detail', ['id' => $near_end_result->object_id, 'name' => Str::slug($near_end_result->object_name)], $this->session);
+                    $near_end_result->object_redirect_url = URL::route('ci-service-detail', ['id' => $near_end_result->object_id, 'name' => Str::slug($near_end_result->object_name)]);
                     if (! is_null($near_end_result->object_image)) {
                         $near_end_result->object_image = URL::asset($near_end_result->object_image);
                     } else {
                         $near_end_result->object_image = URL::asset('mobile-ci/images/default_services_directory.png');
                     }
                 } elseif ($near_end_result->object_type === 'lucky_draw') {
-                    $near_end_result->object_url = UrlBlock::blockedRoute('ci-luckydraw-detail', ['id' => $near_end_result->object_id], $this->session);
-                    $near_end_result->object_redirect_url = URL::route('ci-luckydraw-detail', ['id' => $near_end_result->object_id]);
+                    $near_end_result->object_url = UrlBlock::blockedRoute('ci-luckydraw-detail', ['id' => $near_end_result->object_id, 'name' => Str::slug($near_end_result->object_name)], $this->session);
+                    $near_end_result->object_redirect_url = URL::route('ci-luckydraw-detail', ['id' => $near_end_result->object_id, 'name' => Str::slug($near_end_result->object_name)]);
                     $near_end_result->object_image = URL::asset('mobile-ci/images/default_lucky_number.png');
                 }
 

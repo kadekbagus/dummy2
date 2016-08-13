@@ -57,7 +57,7 @@ if(sizeof($tenant->newsPromotionsProfiling) > 0 || sizeof($tenant->newsProfiling
             @foreach($tenant->newsPromotionsProfiling as $promotab)
                 <div class="col-xs-12 col-sm-12">
                     <section class="list-item-single-tenant">
-                        <a class="list-item-link" data-href="{{ route('ci-promotion-detail', ['id' => $promotab->news_id]) }}" href="{{ \Orbit\Helper\Net\UrlChecker::blockedRoute('ci-promotion-detail', ['id' => $promotab->news_id], $session) }}">
+                        <a class="list-item-link" data-href="{{ route('ci-promotion-detail', ['id' => $promotab->news_id, 'name' => Str::slug($promotab->news_name)]) }}" href="{{ \Orbit\Helper\Net\UrlChecker::blockedRoute('ci-promotion-detail', ['id' => $promotab->news_id, 'name' => Str::slug($promotab->news_name)], $session) }}">
                             <div class="list-item-info">
                                 <header class="list-item-title">
                                     <div><strong>{{{ $promotab->news_name }}}</strong></div>
@@ -119,7 +119,7 @@ if(sizeof($tenant->newsPromotionsProfiling) > 0 || sizeof($tenant->newsProfiling
             @foreach($tenant->newsProfiling as $newstab)
                 <div class="col-xs-12 col-sm-12">
                     <section class="list-item-single-tenant">
-                        <a class="list-item-link" data-href="{{ route('ci-news-detail', ['id' => $newstab->news_id]) }}" href="{{ \Orbit\Helper\Net\UrlChecker::blockedRoute('ci-news-detail', ['id' => $newstab->news_id], $session) }}">
+                        <a class="list-item-link" data-href="{{ route('ci-news-detail', ['id' => $newstab->news_id, 'name' => Str::slug($newstab->news_name)]) }}" href="{{ \Orbit\Helper\Net\UrlChecker::blockedRoute('ci-news-detail', ['id' => $newstab->news_id, 'name' => Str::slug($newstab->news_name)], $session) }}">
                             <div class="list-item-info">
                                 <header class="list-item-title">
                                     <div><strong>{{{ $newstab->news_name }}}</strong></div>
@@ -181,7 +181,7 @@ if(sizeof($tenant->newsPromotionsProfiling) > 0 || sizeof($tenant->newsProfiling
             @foreach($tenant->couponsProfiling as $coupontab)
                 <div class="col-xs-12 col-sm-12">
                     <section class="list-item-single-tenant">
-                        <a class="list-item-link" data-href="{{ route('ci-coupon-detail', ['id' => $coupontab->promotion_id]) }}" href="{{ \Orbit\Helper\Net\UrlChecker::blockedRoute('ci-coupon-detail', ['id' => $coupontab->promotion_id], $session) }}">
+                        <a class="list-item-link" data-href="{{ route('ci-coupon-detail', ['id' => $coupontab->promotion_id, 'name' => Str::slug($coupontab->promotion_name)]) }}" href="{{ \Orbit\Helper\Net\UrlChecker::blockedRoute('ci-coupon-detail', ['id' => $coupontab->promotion_id, 'name' => Str::slug($coupontab->promotion_name)], $session) }}">
                                 <span class="fa-stack fa-2x pull-right couponbadge-container couponbadge-shadow couponbadge-medium" data-count="{{ ($coupontab->quantity > 99) ? '99+' : $coupontab->quantity }}">
                                    <i class="fa fa-circle fa-stack-2x color-base"></i>
                                    <i class="fa fa-ticket fa-stack-1x color-icon couponbadge-ticket-small"></i>
