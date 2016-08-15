@@ -28,7 +28,7 @@
         font-size: 1.2em;
         position:absolute;
         width:100%;
-        
+
         .page-title {
             padding-left: .5em;
         }
@@ -67,6 +67,16 @@
     }
     .buttons-list.right {
         float: right;
+    }
+    .tab-button {
+        .btn {
+            background:@theme-main-complimentary;
+            border: 0;
+
+            &.active {
+                background:@theme-main-complimentary-3;
+            }
+        }
     }
 }
 

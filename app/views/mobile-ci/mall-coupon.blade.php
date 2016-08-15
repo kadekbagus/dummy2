@@ -45,14 +45,22 @@
                 <div class="vertical"></div>
             </div>
         </div>
+        @if(!$is_coupon_wallet_detail || !$added_to_wallet_detail)
         <div class="coupon-wallet pull-right">
             <span class="fa-stack fa-2x">
-               <i class="fa fae-wallet fa-stack-2x"></i>
-               <i class="fa fa-circle fa-stack-2x"></i>
-               <i class="fa fa-plus fa-stack-1x"></i>
+                <i class="fa fae-wallet fa-stack-2x"></i>
+                <i class="fa fa-circle fa-stack-2x"></i>
+                <i class="fa @if($added_to_wallet_detail) fa-plus @else fa-check @endif fa-stack-1x"></i>
             </span>
-            <span class="wallet-text">Add to <br/> Wallet</span>
+            <span class="wallet-text">
+                @if($added_to_wallet_detail)
+                    {{ Lang::get('mobileci.coupon.add_wallet') }}
+                @else
+                    {{ Lang::get('mobileci.coupon.added_wallet') }}
+                @endif
+            </span>
         </div>
+        @endif
         <div class="actions-panel" style="display: none;">
             <ul class="list-unstyled">
                 <li>
@@ -118,13 +126,15 @@
       </div>
     </div>
 </div>
+@if($is_coupon_wallet_detail && $added_to_wallet_detail)
 <div class="row fullbutton">
     <a class="col-xs-12" id="useBtn">
         <i class="fa fa-scissors"></i>
         <span class="text">{{{ Lang::get('mobileci.coupon.use_coupon') }}}</span>
     </a>
 </div>
-<div class="row product-info padded disable-box-shadow" style="z-index: 101;">
+@endif
+<div class="row product-info padded @if($is_coupon_wallet_detail && $added_to_wallet_detail) disable-box-shadow @endif" style="z-index: 101;">
     <div class="col-xs-12">
         <div class="row">
             <div class="col-xs-12">
