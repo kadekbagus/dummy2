@@ -424,14 +424,32 @@
                 skip = skip + take;
                 if(data.records.length > 0) {
                     for(var i = 0; i < data.records.length; i++) {
-                        var coupon_badge = '';
+                        var coupon_badge = '',
+                            walletIcon = 'fa-plus';
+                            walletText = '{{ Lang::get("mobileci.coupon.add_wallet") }}';
+                            couponWallet = '';
+
                         if(itemtype === 'my-coupon') {
-                            coupon_badge = '<div class="coupon-new-badge"><div class="new-number">'+data.records[i].quantity+'</div></div>';
+                            if (data.records[i].added_to_wallet) {
+                                walletIcon = 'fa-check';
+                                walletText = '{{ Lang::get("mobileci.coupon.added_wallet") }}';
+                            }
                         }
-                        var list = '<div class="col-xs-12 col-sm-12 item-x" data-ids="'+data.records[i].item_id+'" id="item-'+data.records[i].item_id+'">\
+
+                        couponWallet = '\
+                            <div class="coupon-wallet pull-right">\
+                                <span class="fa-stack fa-2x">\
+                                    <i class="fa fae-wallet fa-stack-2x"></i>\
+                                    <i class="fa fa-circle fa-stack-2x"></i>\
+                                    <i class="fa ' + walletIcon + ' fa-stack-1x"></i>\
+                                </span>\
+                                <span class="wallet-text">' + walletText + '</span>\
+                            </div>';
+
+                        var list = '<div class="col-xs-12 col-sm-12 item-x" data-ids="' + data.records[i].item_id + '" id="item-' + data.records[i].item_id + '">\
                                 <section class="list-item-single-tenant">\
+                                    '+ couponWallet +'\
                                     <a class="list-item-link" href="'+data.records[i].redirect_url+'" href="'+data.records[i].url+'">\
-                                        '+coupon_badge+'\
                                         <div class="list-item-info">\
                                             <header class="list-item-title">\
                                                 <div><strong>'+data.records[i].name+'</strong></div>\
