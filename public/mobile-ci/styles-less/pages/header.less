@@ -3,12 +3,12 @@
     width: 100%;
     top: 0;
     left: 0;
-    height: 5.5em;
+    height: 3.1em;
     z-index: 1000;
     .header-buttons-container {
         background-color: @theme-main-complimentary-2;
         height:44px;
-        
+
         .button-container {
             display: inline-block;
         }
@@ -28,7 +28,7 @@
         font-size: 1.2em;
         position:absolute;
         width:100%;
-        
+
         .page-title {
             padding-left: .5em;
         }
@@ -67,6 +67,16 @@
     }
     .buttons-list.right {
         float: right;
+    }
+    .tab-button {
+        .btn {
+            background:@theme-main-complimentary;
+            border: 0;
+
+            &.active {
+                background:@theme-main-complimentary-3;
+            }
+        }
     }
 }
 

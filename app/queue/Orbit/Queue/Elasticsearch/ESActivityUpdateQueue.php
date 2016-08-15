@@ -101,11 +101,12 @@ class ESActivityUpdateQueue
                     ->first();
 
         $esConfig = Config::get('orbit.elasticsearch');
+        $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
 
         try {
             // check exist elasticsearch index
             $params_search = [
-                'index' => Config::get('orbit.elasticsearch.indices.activities.index'),
+                'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.activities.index'),
                 'type' => Config::get('orbit.elasticsearch.indices.activities.type'),
                 'body' => [
                     'query' => [
@@ -126,7 +127,7 @@ class ESActivityUpdateQueue
             $response = NULL;
             if ($response_search['hits']['total'] > 0) {
                 $params = [
-                    'index' => Config::get('orbit.elasticsearch.indices.activities.index'),
+                    'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.activities.index'),
                     'type' => Config::get('orbit.elasticsearch.indices.activities.type'),
                     'id' => $activity->activity_id,
                     'body' => [
@@ -175,7 +176,7 @@ class ESActivityUpdateQueue
                 $response = $this->poster->update($params);
             } else {
                 $params = [
-                    'index' => Config::get('orbit.elasticsearch.indices.activities.index'),
+                    'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.activities.index'),
                     'type' => Config::get('orbit.elasticsearch.indices.activities.type'),
                     'id' => $activity->activity_id,
                     'body' => [
