@@ -586,6 +586,8 @@ class MobileCIAPIController extends BaseCIController
                     ->where('promotions.is_coupon', '=', 'Y');
                 })
             ->where('promotions.status', '=', 'active')
+            ->where('promotions.begin_date', '<=', $now)
+            ->where('promotions.end_date', '>=', $now)
             ->where('promotions.coupon_validity_in_date', '>=', $now)
             ->groupBy('promotions.promotion_id');
         $couponsCount = RecordCounter::create($couponsCount)->count();
@@ -601,9 +603,6 @@ class MobileCIAPIController extends BaseCIController
         $newCouponsCount->join('promotion_rules', function($join) {
                 $join->on('promotions.promotion_id', '=', 'promotion_rules.promotion_id')
                     ->where('promotions.is_coupon', '=', 'Y');
-            })->join('issued_coupons', function($join) {
-                $join->on('promotions.promotion_id', '=', 'issued_coupons.promotion_id')
-                    ->where('issued_coupons.status', '=', 'active');
             })
             ->whereRaw("
                 {$prefix}promotions.promotion_id NOT IN (
@@ -629,8 +628,9 @@ class MobileCIAPIController extends BaseCIController
                 });
             })
             ->where('promotions.status', '=', 'active')
+            ->where('promotions.begin_date', '<=', $now)
+            ->where('promotions.end_date', '>=', $now)
             ->where('promotions.coupon_validity_in_date', '>=', $now)
-            ->where('issued_coupons.user_id', $user->user_id)
             ->groupBy('promotions.promotion_id');
         $newCouponsCount = RecordCounter::create($newCouponsCount)->count();
 
