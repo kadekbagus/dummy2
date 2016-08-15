@@ -6365,57 +6365,74 @@ class MobileCIAPIController extends BaseCIController
             if ($user->userDetail->gender !== '' && $user->userDetail->gender !== null) {
                 $userGender =  $user->userDetail->gender;
             }
-
+            $type = OrbitInput::get('coupon_type', 'available');
+            $is_coupon_wallet = false;
             $mallid = $retailer->merchant_id;
 
-            $coupons = Coupon::selectRaw('*, ' . DB::getTablePrefix() . 'promotions.image AS promo_image, ' . DB::getTablePrefix() . 'promotions.description AS description, ' . DB::getTablePrefix() . 'promotions.long_description AS long_description, count(' . DB::getTablePrefix() . 'promotions.promotion_id) as quantity')
-                ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'promotions.promotion_id')
-                ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'promotions.promotion_id')
-                ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
-                ->join('promotion_rules', function ($join) {
-                    $join->on('promotion_rules.promotion_id', '=', 'promotions.promotion_id');
-                    $join->where('promotions.status', '=', 'active');
-                })
-                ->join('issued_coupons', function ($join) {
-                    $join->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
-                    $join->where('issued_coupons.status', '=', 'active');
-                })
-                ->leftJoin('promotion_retailer_redeem', 'promotion_retailer_redeem.promotion_id', '=', 'promotions.promotion_id')
-                ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer_redeem.retailer_id')
-                ->where(function ($q) use ($mallid) {
-                    $q->where(function ($q2) use ($mallid) {
-                        $q2->where('merchants.parent_id', '=', $mallid)
-                            ->orWhere('merchants.merchant_id', '=', $mallid);
-                    });
-                    $q->orWhere(function ($q2) use ($mallid) {
-                        $q2->whereHas('employee', function ($q3) use ($mallid) {
-                            $q3->whereHas('employee', function ($q4) use ($mallid) {
-                                $q4->whereHas('retailers', function ($q5) use ($mallid) {
-                                    $q5->where('merchants.merchant_id', $mallid);
+            if ($type === 'wallet') {
+                $coupons = Coupon::selectRaw('*, ' . DB::getTablePrefix() . 'promotions.image AS promo_image, ' . DB::getTablePrefix() . 'promotions.description AS description, ' . DB::getTablePrefix() . 'promotions.long_description AS long_description, count(' . DB::getTablePrefix() . 'promotions.promotion_id) as quantity')
+                    ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'promotions.promotion_id')
+                    ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'promotions.promotion_id')
+                    ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
+                    ->join('promotion_rules', function ($join) {
+                        $join->on('promotion_rules.promotion_id', '=', 'promotions.promotion_id');
+                        $join->where('promotions.status', '=', 'active');
+                    })
+                    ->join('issued_coupons', function ($join) {
+                        $join->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
+                        $join->where('issued_coupons.status', '=', 'active');
+                    })
+                    ->leftJoin('promotion_retailer_redeem', 'promotion_retailer_redeem.promotion_id', '=', 'promotions.promotion_id')
+                    ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer_redeem.retailer_id')
+                    ->where(function ($q) use ($mallid) {
+                        $q->where(function ($q2) use ($mallid) {
+                            $q2->where('merchants.parent_id', '=', $mallid)
+                                ->orWhere('merchants.merchant_id', '=', $mallid);
+                        });
+                        $q->orWhere(function ($q2) use ($mallid) {
+                            $q2->whereHas('employee', function ($q3) use ($mallid) {
+                                $q3->whereHas('employee', function ($q4) use ($mallid) {
+                                    $q4->whereHas('retailers', function ($q5) use ($mallid) {
+                                        $q5->where('merchants.merchant_id', $mallid);
+                                    });
                                 });
                             });
                         });
-                    });
-                })
-                ->where('promotions.coupon_validity_in_date', '>=', Carbon::now($retailer->timezone->timezone_name))
-                ->where('issued_coupons.user_id', $user->user_id);
-
-            // filter by age and gender
-            if ($userGender !== null) {
-                $coupons = $coupons->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
+                    })
+                    ->where('promotions.coupon_validity_in_date', '>=', Carbon::now($retailer->timezone->timezone_name))
+                    ->where('issued_coupons.user_id', $user->user_id);
+                $is_coupon_wallet = true;
+            } else {
+                $coupons = Coupon::selectRaw('*, ' . DB::getTablePrefix() . 'promotions.image AS promo_image, ' . DB::getTablePrefix() . 'promotions.description AS description, ' . DB::getTablePrefix() . 'promotions.long_description AS long_description, count(' . DB::getTablePrefix() . 'promotions.promotion_id) as quantity')
+                    ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'promotions.promotion_id')
+                    ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'promotions.promotion_id')
+                    ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
+                    ->join('promotion_rules', function ($join) {
+                        $join->on('promotion_rules.promotion_id', '=', 'promotions.promotion_id');
+                        $join->where('promotions.status', '=', 'active');
+                    })
+                    ->leftJoin('promotion_retailer_redeem', 'promotion_retailer_redeem.promotion_id', '=', 'promotions.promotion_id')
+                    ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer_redeem.retailer_id')
+                    ->where(function ($q) use ($mallid) {
+                        $q->where(function ($q2) use ($mallid) {
+                            $q2->where('merchants.parent_id', '=', $mallid)
+                                ->orWhere('merchants.merchant_id', '=', $mallid);
+                        });
+                        $q->orWhere(function ($q2) use ($mallid) {
+                            $q2->whereHas('employee', function ($q3) use ($mallid) {
+                                $q3->whereHas('employee', function ($q4) use ($mallid) {
+                                    $q4->whereHas('retailers', function ($q5) use ($mallid) {
+                                        $q5->where('merchants.merchant_id', $mallid);
+                                    });
+                                });
+                            });
+                        });
+                    })
+                    ->where('promotions.begin_date', '<=', Carbon::now($retailer->timezone->timezone_name))
+                    ->where('promotions.end_date', '>=', Carbon::now($retailer->timezone->timezone_name))
+                    ->where('promotions.coupon_validity_in_date', '>=', Carbon::now($retailer->timezone->timezone_name));
             }
 
-            if ($userAge !== null) {
-                if ($userAge === 0){
-                    $coupons = $coupons->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
-                } else {
-                    if ($userAge >= 55) {
-                        $coupons = $coupons->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
-                    } else {
-                        $coupons = $coupons->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
-                    }
-                }
-            }
 
             OrbitInput::get(
                 'keyword',
