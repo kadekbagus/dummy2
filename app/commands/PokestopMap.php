@@ -40,16 +40,20 @@ class PokestopMap extends Command {
         $mode = $this->option('mode');
 
         switch ($mode) {
-            case 'a':
+            case 'insert':
                 $this->insertPokestopMap();
                 break;
 
-            case 'b':
+            case 'update':
+                $this->insertPokestopMap();
+                break;
+
+            case 'delete':
                 $this->deletePokestopMap();
                 break;
 
             default:
-                $this->info("You must choose (a or b) : (a).Insert or (b)Delete");
+                $this->info("You must choose: insert, update, or delete");
                 break;
         }
 	}
