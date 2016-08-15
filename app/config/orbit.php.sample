@@ -612,18 +612,18 @@ return array(
          *
          * example:
          * FILE:
-         * 'path' => storage_path() . DIRECTORY_SEPARATOR . 'orbit-session'
+         * 'path' => sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'orbit-session'
          * TABLE NAME:
          * 'path' => 'orb_sessions'
          * NAMESPACE:
          * 'path' => 'SESSIONS'
          */
-        'path' => DB::getTablePrefix() . 'sessions',
+        'path' => storage_path() . DIRECTORY_SEPARATOR . 'orbit-session',
 
         /**
          * Strict mode, will check the user agent and ip address
          */
-        'strict' => FALSE,
+        'strict' => TRUE,
 
         /**
          * Connection Information
@@ -662,14 +662,12 @@ return array(
          *     ),
          * ),
          */
-        'connection' => DB::connection()->getPdo(),
+        'connection' => array(),
 
         /**
          * Session Driver
-         *
-         * supported value are 'file' or 'database'
          */
-        'driver' => 'database',
+        'driver' => 'file',
 
         /**
          * Session data available
@@ -3138,7 +3136,7 @@ return array(
             'version'       => 'v2.4'
         ],
         'google' => array(
-            'callback_url' => 'https://mall-api.gotomalls.cool/pub/social-google-callback',
+            'callback_url' => 'http://mall-api.gotomalls.cool/pub/social-google-callback',
         ),
     ],
 
@@ -3250,98 +3248,11 @@ return array(
     ),
 
     'error_message' => array(
-        'e500' => '<a href="https://www.gotomalls.com">gotomalls.com</a> is improving your user experience. Please come back later.'
+        'e500' => '<a href=http://gotomalls.com>gotomalls.com</a> is improving your user experience. Come back later.'
     ),
 
     // Block access to some end point
     'maintenance_mode' => [
         'crmsummary' => FALSE
-    ],
-
-    'generic_activity' => array(
-        'parameter_name' => 'act',
-        'activity_list' => array(
-            // landing page activity list
-            // - Successfully landed in Gotomalls
-            '1' => array(
-                'name' => 'view_landing_page',
-                'name_long' => 'View Landing Page',
-                'module_name' => 'Application',
-                'type' => 'view',
-                'object_type' => null,
-                'parameter_name' => null
-            ),
-            // - Clicking on a mall in result list
-            '2' => array(
-                'name' => 'click_mall_list',
-                'name_long' => 'Click Mall List',
-                'module_name' => 'Application',
-                'type' => 'click',
-                'object_type' => 'Mall',
-                'parameter_name' => 'mall_id'
-            ),
-            // - Clicking on a mall pin on the map
-            '3' => array(
-                'name' => 'click_mall_pin',
-                'name_long' => 'Click Mall Pin',
-                'module_name' => 'Application',
-                'type' => 'click',
-                'object_type' => 'Mall',
-                'parameter_name' => 'mall_id'
-            ),
-            // - Visiting a mall
-            '4' => array(
-                'name' => 'view_mall',
-                'name_long' => 'View Mall',
-                'module_name' => 'Application',
-                'type' => 'view',
-                'object_type' => 'Mall',
-                'parameter_name' => 'mall_id'
-            ),
-            // - Viewing mall info
-            '5' => array(
-                'name' => 'view_mall_info',
-                'name_long' => 'View Mall Info',
-                'module_name' => 'Application',
-                'type' => 'view',
-                'object_type' => 'Mall',
-                'parameter_name' => 'mall_id'
-            ),
-            // - Switching user
-            '6' => array(
-                'name' => 'click_not_me',
-                'name_long' => 'Switch User',
-                'module_name' => 'Application',
-                'type' => 'click',
-                'object_type' => null,
-                'parameter_name' => null
-            ),
-            // - Tap Lucky draw Menu
-            '7' => array(
-                'name' => 'click_lucky_draw_menu',
-                'name_long' => 'Click Lucky Draw Menu',
-                'module_name' => 'Application',
-                'type' => 'click',
-                'object_type' => null,
-                'parameter_name' => null
-            ),
-        ),
-    ),
-
-    'redirect_url_list' => array(
-        'instagram' => array(
-            'url' => 'https://www.instagram.com/gotomalls',
-            'activity_name' => 'click_social_media',
-            'activity_name_long' => 'Click Instagram',
-            'activity_module_name' => 'Application',
-            'activity_type' => 'click',
-        ),
-        'facebook' => array(
-            'url' => 'https://www.facebook.com/Gotomalls.Indo',
-            'activity_name' => 'click_social_media',
-            'activity_name_long' => 'Click Facebook',
-            'activity_module_name' => 'Application',
-            'activity_type' => 'click',
-        ),
-    ),
+    ]
 );
