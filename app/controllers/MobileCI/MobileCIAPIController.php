@@ -6690,6 +6690,8 @@ class MobileCIAPIController extends BaseCIController
                 'session' => $this->session,
                 'is_logged_in' => UrlBlock::isLoggedIn($this->session),
                 'user_email' => $user->role->role_name !== 'Guest' ? $user->user_email : '',
+                'is_coupon_wallet_detail' => true, //false = available | true = wallet
+                'added_to_wallet_detail' => true //false = not in wallet | true = in wallet
             ));
 
         } catch (Exception $e) {
