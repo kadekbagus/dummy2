@@ -72,7 +72,8 @@
     $(document).ready(function(){
         var listOfIDs = [],
             helperObject = {
-                'skip': 0
+                'skip': 0,
+                'coupon_type': 'available-coupon'
             };
         loadMoreX('my-coupon', listOfIDs, helperObject);
 
@@ -80,26 +81,36 @@
             loadMoreX('my-coupon', listOfIDs);
         });
 
-        var viewAvailableCoupon = function () {
-            listOfIDs.length = 0;
-            loadMoreX('my-coupon', listOfIDs, helperObject);
-            },
-            viewCouponWallet = function () {
-            };
-
         $('.coupon-button').click(function () {
             $(".catalogue-wrapper").empty();
             $(".coupon-button").removeClass('active');
             $(this).addClass('active');
 
-            switch ($(this).data('type')) {
-                case 'available-coupon':
-                    viewAvailableCoupon();
-                    break;
-                case 'coupon-wallet':
-                    viewCouponWallet();
-                    break;
+            listOfIDs.length = 0;
+            helperObject.coupon_type = $(this).data('type');
+            loadMoreX('my-coupon', listOfIDs, helperObject);
+        });
+
+        $('body').on('click', '.coupon-wallet', function(){
+            var element = $(this),
+                id = element.data('ids');
+
+            if (element.attr('data-isaddedtowallet') === 'true') {
+                return;
             }
+
+            $.ajax({
+                url: apiPath + 'my-coupon' + '/load-more',
+                method: 'GET',
+                data: {
+                    take: 25,
+                    skip: 0
+                }
+            }).done(function (data) {
+                console.log(element);
+                element.children('.wallet-text').html('{{ Lang::get("mobileci.coupon.added_wallet") }}');
+                element.attr('data-isaddedtowallet', true);
+            });
         });
     });
 </script>

@@ -397,14 +397,24 @@
      *             ids(array(list of already loaded ids))
      */
     function loadMoreX(itemtype, ids, helperObject) {
-        var catalogueWrapper = $('.catalogue-wrapper');
-        var itemList = [];
-        var btn = $('#load-more-x');
+        var catalogueWrapper = $('.catalogue-wrapper'),
+            itemList = [],
+            btn = $('#load-more-x'),
+            ajaxParams = {
+                take: take,
+                keyword: keyword,
+                skip: skip,
+                ids: ids
+            };
 
         if (helperObject !== undefined) {
             /* skip page for coupon only */
             if (helperObject.skip !== undefined) {
-                skip = helperObject.skip;
+                ajaxParams.skip = helperObject.skip;
+            }
+
+            if (helperObject.coupon_type !== undefined) {
+                ajaxParams.coupon_type = helperObject.coupon_type;
             }
         }
 
@@ -413,12 +423,7 @@
         $.ajax({
             url: apiPath + itemtype + '/load-more',
             method: 'GET',
-            data: {
-                take: take,
-                keyword: keyword,
-                skip: skip,
-                ids: ids
-            }
+            data: ajaxParams
         }).done(function(data) {
             if(data.status == 1) {
                 skip = skip + take;
@@ -437,7 +442,7 @@
                         }
 
                         couponWallet = '\
-                            <div class="coupon-wallet pull-right">\
+                            <div class="coupon-wallet pull-right" data-ids="' + data.records[i].item_id + '" data-isaddedtowallet="' + data.records[i].added_to_wallet + '">\
                                 <span class="fa-stack fa-2x">\
                                     <i class="fa fae-wallet fa-stack-2x"></i>\
                                     <i class="fa fa-circle fa-stack-2x"></i>\
