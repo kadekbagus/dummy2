@@ -122,6 +122,8 @@ class LuckyDrawAPIController extends IntermediateBaseController
             );
             $luckydraws->skip($skip);
 
+            $luckydraws->orderBy('lucky_draw_name', 'asc');
+
             $totalRec = RecordCounter::create($_luckydraws)->count();
             $listOfRec = $luckydraws->get();
 
