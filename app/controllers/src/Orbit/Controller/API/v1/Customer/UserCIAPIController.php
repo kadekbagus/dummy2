@@ -26,6 +26,7 @@ use Lang;
 use User;
 use Event;
 use Hash;
+use Activity;
 
 class UserCIAPIController extends BaseAPIController
 {
