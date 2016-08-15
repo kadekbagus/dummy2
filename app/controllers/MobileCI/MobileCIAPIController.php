@@ -6428,6 +6428,8 @@ class MobileCIAPIController extends BaseCIController
                             });
                         });
                     })
+                    ->where('promotions.begin_date', '<=', Carbon::now($retailer->timezone->timezone_name))
+                    ->where('promotions.end_date', '>=', Carbon::now($retailer->timezone->timezone_name))
                     ->where('promotions.coupon_validity_in_date', '>=', Carbon::now($retailer->timezone->timezone_name));
             }
 
