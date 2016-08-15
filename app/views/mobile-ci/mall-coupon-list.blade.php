@@ -6,71 +6,7 @@
             <div class="row">
             @if($data->status === 1)
                 <div class="catalogue-wrapper">
-                @foreach($data->records as $coupon)
-                    <div class="col-xs-12 col-sm-12 item-x" data-ids="{{$coupon->promotion_id}}"  id="item-{{$coupon->promotion_id}}">
-                        <section class="list-item-single-tenant">
-                            <a class="list-item-link" data-href="{{ route('ci-coupon-detail', ['id' => $coupon->promotion_id, 'name' => Str::slug($coupon->promotion_name)]) }}" href="{{ \Orbit\Helper\Net\UrlChecker::blockedRoute('ci-coupon-detail', ['id' => $coupon->promotion_id, 'name' => Str::slug($coupon->promotion_name)], $session) }}">
-                                @if($is_coupon_wallet)
-                                <span class="fa-stack fa-2x pull-right couponbadge-container couponbadge-shadow couponbadge-medium" data-count="{{ ($coupon->quantity > 99) ? '99+' : $coupon->quantity }}">
-                                   <i class="fa fa-circle fa-stack-2x color-base"></i>
-                                   <i class="fa fa-ticket fa-stack-1x color-icon couponbadge-ticket-small"></i>
-                                   <i class="fa fa-certificate fa-stack-2x couponbadge color-badge couponbadge-small"></i>
-                                </span>
-                                @endif
-                                <div class="list-item-info">
-                                    <header class="list-item-title">
-                                        <div><strong>{{{ $coupon->promotion_name }}}</strong></div>
-                                    </header>
-                                    <header class="list-item-subtitle">
-                                        <div>
-                                            {{-- Limit description per two line and 45 total character --}}
-                                            <?php
-                                                $desc = explode("\n", $coupon->description);
-                                            ?>
-                                            @if (mb_strlen($coupon->description) > 45)
-                                                @if (count($desc) > 1)
-                                                    <?php
-                                                        $two_row = array_slice($desc, 0, 1);
-                                                    ?>
-                                                    @foreach ($two_row as $key => $value)
-                                                        @if ($key === 0)
-                                                            {{{ $value }}} <br>
-                                                        @else
-                                                            {{{ $value }}} ...
-                                                        @endif
-                                                    @endforeach
-                                                @else
-                                                    {{{ mb_substr($coupon->description, 0, 45, 'UTF-8') . '...' }}}
-                                                @endif
-                                            @else
-                                                @if (count($desc) > 1)
-                                                    <?php
-                                                        $two_row = array_slice($desc, 0, 1);
-                                                    ?>
-                                                    @foreach ($two_row as $key => $value)
-                                                        @if ($key === 0)
-                                                            {{{ $value }}} <br>
-                                                        @else
-                                                            {{{ $value }}} ...
-                                                        @endif
-                                                    @endforeach
-                                                @else
-                                                    {{{ mb_substr($coupon->description, 0, 45, 'UTF-8') }}}
-                                                @endif
-                                            @endif
-                                        </div>
-                                    </header>
-                                </div>
-                                <div class="list-vignette-non-tenant"></div>
-                                @if(!empty($coupon->image))
-                                <img class="img-responsive img-fit-tenant" src="{{ asset($coupon->image) }}" />
-                                @else
-                                <img class="img-responsive img-fit-tenant" src="{{ asset('mobile-ci/images/default_coupon.png') }}"/>
-                                @endif
-                            </a>
-                        </section>
-                    </div>
-                @endforeach
+                    <!-- scope data -->
                 </div>
                 @if($data->returned_records < $data->total_records)
                     <div class="row">
@@ -134,12 +70,36 @@
 @section('ext_script_bot')
 <script type="text/javascript">
     $(document).ready(function(){
+        var listOfIDs = [],
+            helperObject = {
+                'skip': 0
+            };
+        loadMoreX('my-coupon', listOfIDs, helperObject);
+
         $('body').on('click', '#load-more-x', function(){
-            var listOfIDs = [];
-            $('.catalogue-wrapper .item-x').each(function(id){
-                listOfIDs.push($(this).data('ids'));
-            });
             loadMoreX('my-coupon', listOfIDs);
+        });
+
+        var viewAvailableCoupon = function () {
+            listOfIDs.length = 0;
+            loadMoreX('my-coupon', listOfIDs, helperObject);
+            },
+            viewCouponWallet = function () {
+            };
+
+        $('.coupon-button').click(function () {
+            $(".catalogue-wrapper").empty();
+            $(".coupon-button").removeClass('active');
+            $(this).addClass('active');
+
+            switch ($(this).data('type')) {
+                case 'available-coupon':
+                    viewAvailableCoupon();
+                    break;
+                case 'coupon-wallet':
+                    viewCouponWallet();
+                    break;
+            }
         });
     });
 </script>

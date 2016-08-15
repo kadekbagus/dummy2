@@ -396,10 +396,18 @@
      * parameters: itemtype(news,promotion,lucky-draw,my-coupon)
      *             ids(array(list of already loaded ids))
      */
-    function loadMoreX(itemtype, ids) {
+    function loadMoreX(itemtype, ids, helperObject) {
         var catalogueWrapper = $('.catalogue-wrapper');
         var itemList = [];
         var btn = $('#load-more-x');
+
+        if (helperObject !== undefined) {
+            /* skip page for coupon only */
+            if (helperObject.skip !== undefined) {
+                skip = helperObject.skip;
+            }
+        }
+
         btn.attr('disabled', 'disabled');
         btn.html('<i class="fa fa-circle-o-notch fa-spin"></i>');
         $.ajax({
