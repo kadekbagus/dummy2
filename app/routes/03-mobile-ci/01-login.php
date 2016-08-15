@@ -416,6 +416,14 @@ Route::group(
         });
 
         /**
+         * Add coupon to wallet API
+         */
+        Route::post('/app/v1/coupon/addtowallet', function()
+        {
+            return MobileCI\MobileCIAPIController::create()->postAddToWallet();
+        });
+
+        /**
          * Check user location
          */
         Route::post('/app/v1/customer/check-location', ['as' => 'ci-check-user-location', function()
