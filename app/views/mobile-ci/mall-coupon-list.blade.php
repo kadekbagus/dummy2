@@ -107,7 +107,6 @@
                     skip: 0
                 }
             }).done(function (data) {
-                console.log(element);
                 element.children('.wallet-text').html('{{ Lang::get("mobileci.coupon.added_wallet") }}');
                 element.attr('data-isaddedtowallet', true);
             });
