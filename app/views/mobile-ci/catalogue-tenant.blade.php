@@ -177,7 +177,7 @@
         }
     }
 
-    var generateListItem = function (merchantId, redirectUrl, url, name, floor, unit, location, category, facebook_like_url, promotion_flag, news_flag, coupon_flag, logoUrl) {
+    var generateListItem = function (merchantId, redirectUrl, url, name, floor, unit, location, category, promotion_flag, news_flag, coupon_flag, logoUrl) {
         var $listDiv = $('<div />').addClass('col-xs-12 col-sm-12').attr({
             'id': 'item-' + merchantId
         }).data('name', name);
@@ -218,17 +218,6 @@
         $itemLink.append($itemListInfo);
         $listSection.append($itemLink);
         $listDiv.append($listSection);
-
-        if (facebook_like_url) {
-            var $fbLikeDiv = $('<div />').addClass('fb-like').attr({
-                'data-href': facebook_like_url,
-                'data-layout': 'button_count',
-                'data-action': 'like',
-                'data-show-faces': 'false',
-                'data-share': 'false'
-            });
-            $subtitleHeader.append($fbLikeDiv);
-        }
 
         var $badgeHeader = $('<header />').addClass('list-item-badges');
         var $badgeWrapper = $('<div />').addClass('col-xs-12 badges-wrapper text-right');
@@ -285,13 +274,12 @@
             var unit = records[i].unit;
             var location = records[i].location != null ? records[i].location : '-';
             var category = records[i].category_string;
-            var facebook_like_url = records[i].facebook_like_url;
             var promotion_flag = records[i].promotion_flag;
             var news_flag = records[i].news_flag;
             var coupon_flag = records[i].coupon_flag;
             var logoUrl = records[i].logo_orig;
 
-            var $listDiv = generateListItem(merchantId, redirectUrl, url, name, floor, unit, location, category, facebook_like_url, promotion_flag, news_flag, coupon_flag, logoUrl);
+            var $listDiv = generateListItem(merchantId, redirectUrl, url, name, floor, unit, location, category, promotion_flag, news_flag, coupon_flag, logoUrl);
 
             $('.catalogue-wrapper').append($listDiv);
 
