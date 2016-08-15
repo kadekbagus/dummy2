@@ -73,7 +73,7 @@
         var listOfIDs = [],
             helperObject = {
                 'skip': 0,
-                'coupon_type': 'available-coupon'
+                'coupon_type': 'available'
             };
         loadMoreX('my-coupon', listOfIDs, helperObject);
 
