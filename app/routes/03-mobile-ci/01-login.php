@@ -263,6 +263,13 @@ Route::group(
         );
 
         Route::get(
+            '/customer/pokestopdetail', ['as' => 'ci-pokesyop-detail',
+            function () {
+                return MobileCI\MobileCIAPIController::create()->getMallPokestopDetailView();
+            }]
+        );
+
+        Route::get(
             '/customer/luckydrawnumber/download', ['as' => 'ci-luckydrawnumber-download',
             function () {
                 return MobileCI\MobileCIAPIController::create()->getMallLuckyDrawDownloadList();
@@ -406,6 +413,14 @@ Route::group(
         Route::get('/app/v1/lucky-draw/load-more', function()
         {
             return MobileCI\MobileCIAPIController::create()->getSearchLuckyDraw();
+        });
+
+        /**
+         * Add coupon to wallet API
+         */
+        Route::post('/app/v1/coupon/addtowallet', function()
+        {
+            return MobileCI\MobileCIAPIController::create()->postAddToWallet();
         });
 
         /**

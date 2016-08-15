@@ -396,34 +396,65 @@
      * parameters: itemtype(news,promotion,lucky-draw,my-coupon)
      *             ids(array(list of already loaded ids))
      */
-    function loadMoreX(itemtype, ids) {
-        var catalogueWrapper = $('.catalogue-wrapper');
-        var itemList = [];
-        var btn = $('#load-more-x');
+    function loadMoreX(itemtype, ids, helperObject) {
+        var catalogueWrapper = $('.catalogue-wrapper'),
+            itemList = [],
+            btn = $('#load-more-x'),
+            ajaxParams = {
+                take: take,
+                keyword: keyword,
+                skip: skip,
+                ids: ids
+            };
+
+        if (helperObject !== undefined) {
+            /* skip page for coupon only */
+            if (helperObject.skip !== undefined) {
+                ajaxParams.skip = helperObject.skip;
+            }
+
+            if (helperObject.coupon_type !== undefined) {
+                ajaxParams.coupon_type = helperObject.coupon_type;
+            }
+        }
+
         btn.attr('disabled', 'disabled');
         btn.html('<i class="fa fa-circle-o-notch fa-spin"></i>');
         $.ajax({
             url: apiPath + itemtype + '/load-more',
             method: 'GET',
-            data: {
-                take: take,
-                keyword: keyword,
-                skip: skip,
-                ids: ids
-            }
+            data: ajaxParams
         }).done(function(data) {
             if(data.status == 1) {
                 skip = skip + take;
                 if(data.records.length > 0) {
                     for(var i = 0; i < data.records.length; i++) {
-                        var coupon_badge = '';
+                        var coupon_badge = '',
+                            walletIcon = 'fa-plus';
+                            walletText = '{{ Lang::get("mobileci.coupon.add_wallet") }}';
+                            couponWallet = '';
+
                         if(itemtype === 'my-coupon') {
-                            coupon_badge = '<div class="coupon-new-badge"><div class="new-number">'+data.records[i].quantity+'</div></div>';
+                            if (data.records[i].added_to_wallet) {
+                                walletIcon = 'fa-check';
+                                walletText = '{{ Lang::get("mobileci.coupon.added_wallet") }}';
+                            }
                         }
-                        var list = '<div class="col-xs-12 col-sm-12 item-x" data-ids="'+data.records[i].item_id+'" id="item-'+data.records[i].item_id+'">\
+
+                        couponWallet = '\
+                            <div class="coupon-wallet pull-right" data-ids="' + data.records[i].item_id + '" data-isaddedtowallet="' + data.records[i].added_to_wallet + '">\
+                                <span class="fa-stack fa-2x">\
+                                    <i class="fa fae-wallet fa-stack-2x"></i>\
+                                    <i class="fa fa-circle fa-stack-2x"></i>\
+                                    <i class="fa ' + walletIcon + ' fa-stack-1x"></i>\
+                                </span>\
+                                <span class="wallet-text">' + walletText + '</span>\
+                            </div>';
+
+                        var list = '<div class="col-xs-12 col-sm-12 item-x" data-ids="' + data.records[i].item_id + '" id="item-' + data.records[i].item_id + '">\
                                 <section class="list-item-single-tenant">\
+                                    '+ couponWallet +'\
                                     <a class="list-item-link" href="'+data.records[i].redirect_url+'" href="'+data.records[i].url+'">\
-                                        '+coupon_badge+'\
                                         <div class="list-item-info">\
                                             <header class="list-item-title">\
                                                 <div><strong>'+data.records[i].name+'</strong></div>\
