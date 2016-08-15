@@ -8156,7 +8156,7 @@ class MobileCIAPIController extends BaseCIController
             UrlBlock::checkBlockedUrl($user);
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
-            Coupon::issueAutoCoupon($retailer, $user, $this->session);
+            //Coupon::issueAutoCoupon($retailer, $user, $this->session);
 
             $languages = $this->getListLanguages($retailer);
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
@@ -11080,7 +11080,7 @@ class MobileCIAPIController extends BaseCIController
             $user_detail->save();
 
             // auto coupon issuance checkwill happen on each page after the login success
-            Coupon::issueAutoCoupon($retailer, $user_obj, $this->session);
+            //Coupon::issueAutoCoupon($retailer, $user_obj, $this->session);
 
             DB::commit();
 
