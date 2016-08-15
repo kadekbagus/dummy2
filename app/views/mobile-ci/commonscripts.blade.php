@@ -454,7 +454,7 @@
                         var list = '<div class="col-xs-12 col-sm-12 item-x" data-ids="' + data.records[i].item_id + '" id="item-' + data.records[i].item_id + '">\
                                 <section class="list-item-single-tenant">\
                                     '+ couponWallet +'\
-                                    <a class="list-item-link" href="'+data.records[i].redirect_url+'" href="'+data.records[i].url+'">\
+                                    <a class="list-item-link" data-href="'+data.records[i].redirect_url+'" href="'+data.records[i].url+'">\
                                         <div class="list-item-info">\
                                             <header class="list-item-title">\
                                                 <div><strong>'+data.records[i].name+'</strong></div>\
