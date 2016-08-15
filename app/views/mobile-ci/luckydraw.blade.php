@@ -304,6 +304,10 @@ if(!empty($luckydraw)) {
                 }
                 return true;
             }
+            function resetFormElement(e) {
+                e.wrap('<form>').closest('form').get(0).reset();
+                e.unwrap();
+            }
             $('body').on('change', '#lucky-draw-capture', function(e) {
                 if(fileSelected()){
                     $('#upload-message').text('');
@@ -326,7 +330,7 @@ if(!empty($luckydraw)) {
                         $('#_token').val(data.responseJSON.data.token);
                         $('#upload-message').css('color', 'red').text(data.responseJSON.message);
                     }).always(function(data){
-
+                        resetFormElement($('#lucky-draw-capture'));
                     });
                 }
             });
