@@ -100,15 +100,16 @@
             }
 
             $.ajax({
-                url: apiPath + 'my-coupon' + '/load-more',
-                method: 'GET',
+                url: apiPath + 'coupon/addtowallet',
+                method: 'POST',
                 data: {
-                    take: 25,
-                    skip: 0
+                    coupon_id: id
                 }
             }).done(function (data) {
-                element.children('.wallet-text').html('{{ Lang::get("mobileci.coupon.added_wallet") }}');
-                element.attr('data-isaddedtowallet', true);
+                if(data.status === 'success') {
+                    element.children('.wallet-text').html('{{ Lang::get("mobileci.coupon.added_wallet") }}');
+                    element.attr('data-isaddedtowallet', true);
+                }
             });
         });
     });
