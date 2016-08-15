@@ -320,6 +320,8 @@ return array(
         'use'                              => 'Use',
         'next_time'                        => 'Next time',
         'check_coupon'                     => 'You can check your coupons in Home Page <i class="fa fa-arrow-right"></i> Coupons',
+        'add_wallet'                       => 'Add to <br/> Wallet',
+        'added_wallet'                     => 'Added to <br/> Wallet',
     ),
 
     'coupon_list' => array(

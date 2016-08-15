@@ -7,7 +7,7 @@ use OrbitShop\API\v1\OrbitShopAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
 use DominoPOS\OrbitACL\ACL;
-use DominoPOS\OrbitACL\ACL\Exception\ACLForbiddenException;
+use DominoPOS\OrbitACL\ACL\Exception\ACLForbiddenExceptio;
 use Illuminate\Database\QueryException;
 use Text\Util\LineChecker;
 use Helper\EloquentRecordCounter as RecordCounter;
@@ -17,7 +17,7 @@ use stdClass;
 use Orbit\Helper\Util\PaginationNumber;
 use Elasticsearch\ClientBuilder;
 
-class MallAreaAPIController extends ControllerAPI
+class MallListAPIController extends ControllerAPI
 {
     /**
      * GET - check if mall inside map area
@@ -30,15 +30,15 @@ class MallAreaAPIController extends ControllerAPI
      *
      * @return Illuminate\Support\Facades\Response
      */
-    public function getMallArea()
+    public function getMallList()
     {
         $httpCode = 200;
         try {
             $latitude = OrbitInput::get('latitude',null);
             $longitude = OrbitInput::get('longitude',null);
 
-            $area = OrbitInput::get('area', null);
             $keyword = OrbitInput::get('keyword_search');
+            $filterName = OrbitInput::get('filter_name');
 
             $usingDemo = Config::get('orbit.is_demo', FALSE);
             $host = Config::get('orbit.elasticsearch');
@@ -49,10 +49,6 @@ class MallAreaAPIController extends ControllerAPI
             $client = ClientBuilder::create() // Instantiate a new ClientBuilder
                     ->setHosts($host['hosts']) // Set the hosts
                     ->build();
-
-            $getArea = explode(", ", $area);
-            $topLeft = explode(" ", $getArea[1]);
-            $bottomRight = explode(" ", $getArea[3]);
 
             $filterStatus = '';
             if ($usingDemo) {
@@ -87,29 +83,25 @@ class MallAreaAPIController extends ControllerAPI
                                   },';
             }
 
-            $take = PaginationNumber::parseTakeFromGet('geo_location');
+            $namebetween = '';
+            if (! empty($filterName)) {
+                $filter = '[^a-zA-Z].*';
+                if ($filterName != "#") {
+                    $upper = strtoupper($filterName);
+                    $filter = '[' . $filterName . $upper . '].*';
+                }
+                
+                $namebetween = '{ 
+                            "regexp":{
+                                "name.raw": "' . $filter . '"
+                            }
+                        },';
+            }
+
+            $take = PaginationNumber::parseTakeFromGet('retailer');
             $skip = PaginationNumber::parseSkipFromGet();
 
-            switch ($sort_by) {
-                case 'name':
-                    $sortby = '{"name.raw" : {"order" : "' . $sort_mode . '"}}';
-                    break;
-
-                default:
-                    $sortby = '{"_score" : {"order" : "' . $sort_mode . '"}},
-                        {
-                            "_geo_distance": {
-                                "position": {
-                                    "lon": ' . $longitude . ',
-                                    "lat": ' . $latitude . '
-                                },
-                                "order": "' . $sort_mode . '",
-                                "unit": "km",
-                                "distance_type": "plane"
-                            }
-                        }';
-                    break;
-            }
+            $sortby = '{"name.raw" : {"order" : "' . $sort_mode . '"}}';
 
             $json_area = '{
                         "from" : ' . $skip . ', "size" : ' . $take . ',
@@ -118,24 +110,10 @@ class MallAreaAPIController extends ControllerAPI
                                     ' . $filterKeyword . '
                                     "filter": {
                                         "and": [
+                                            ' . $namebetween . '
                                             {
                                                 "query": {
                                                     ' . $filterStatus . '
-                                                }
-                                            },
-                                            {
-                                                "geo_bounding_box": {
-                                                    "type": "indexed",
-                                                    "position": {
-                                                        "top_left": {
-                                                            "lat": ' . $topLeft[0] . ',
-                                                            "lon": ' . $topLeft[1] . '
-                                                        },
-                                                        "bottom_right": {
-                                                            "lat": ' . $bottomRight[0] . ',
-                                                            "lon": ' . $bottomRight[1] . '
-                                                        }
-                                                    }
                                                 }
                                             }
                                         ]

@@ -21,12 +21,12 @@
     <div class="header-location-banner">
         @if(empty(Input::get('keyword')))
             @if(isset($page_sub_title) && !empty($page_sub_title))
-        <div class="btn-group btn-group-justified" role="group">
+        <div class="btn-group btn-group-justified tab-button" role="group">
             <div class="btn-group" role="group">
-                <a type="button" class="btn btn-primary {{ !$is_coupon_wallet ? 'active' : '' }}" href="{{ route('ci-coupon-list') }}">{{{ $page_sub_title['available_coupons'] }}}</a>
+                <a type="button" class="coupon-button btn-upload btn btn-primary {{ !$is_coupon_wallet ? 'active' : '' }}" data-type="available">{{{ $page_sub_title['available_coupons'] }}}</a>
             </div>
             <div class="btn-group" role="group">
-                <a type="button" class="btn btn-primary {{ $is_coupon_wallet ? 'active' : '' }}">{{{ $page_sub_title['coupon_wallet'] }}}</a>
+                <a type="button" class="coupon-button btn btn-primary {{ $is_coupon_wallet ? 'active' : '' }}" data-type="wallet">{{{ $page_sub_title['coupon_wallet'] }}}</a>
             </div>
         </div>
             @else
