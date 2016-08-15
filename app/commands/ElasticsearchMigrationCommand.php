@@ -51,7 +51,7 @@ class ElasticsearchMigrationCommand extends Command
     public function fire()
     {
         $mode = $this->option('mode');
-
+        $dryrun = $this->option('dry-run');
         switch ($mode) {
             case 'create':
                 $fname = $this->option('filename');
