@@ -71,6 +71,9 @@ Artisan::add(new DeleteGuestUser);
 // Send newsletter email
 Artisan::add(new NewsletterSenderCommand);
 
+// Insert or delete pokestop map
+Artisan::add(new PokestopMap);
+
 // Insert or update data on settings table
 // @Todo investigate why its error
 // Artisan::add(new MerchantSetting);
