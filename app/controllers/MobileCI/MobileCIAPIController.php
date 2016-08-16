@@ -1653,13 +1653,18 @@ class MobileCIAPIController extends BaseCIController
      */
     public function postAddToWallet()
     {
-        // $activity = Activity::mobileci()
-        //                     ->setActivityType('click');
-        // $user = null;
-        // $event_id = null;
-        // $event = null;
+        $activity = Activity::mobileci()
+                            ->setActivityType('click');
+        $user = NULL;
+        $coupon = NULL;
+        $issuedCoupon = NULL;
         try {
             $user = $this->getLoggedInUser();
+
+            // guest cannot add to wallet
+            if (! $user->isConsumer()) {
+                OrbitShopAPI::throwInvalidArgument('You must login to access this.');
+            }
             $retailer = $this->getRetailerInfo();
             $this->registerCustomValidation();
 
@@ -1681,48 +1686,78 @@ class MobileCIAPIController extends BaseCIController
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            //$this->beginTransaction();
+            $this->beginTransaction();
             $coupon = Coupon::where('promotion_id', '=', $coupon_id)->first(); 
             $newIssuedCoupon = new IssuedCoupon();
             $issuedCoupon = $newIssuedCoupon->issue($coupon, $user->user_id, $user, $retailer);
+            $this->commit();
 
             if ($issuedCoupon) {
                 $this->response->message = 'Request Ok';
-                $this->response->data = null;
-                // $activityNotes = sprintf('Event Click. Event Id : %s', $event_id);
-                // $activity->setUser($user)
-                //     ->setActivityName('event_click')
-                //     ->setActivityNameLong('Event Click')
-                //     ->setObject($event)
-                //     ->setModuleName('Event')
-                //     ->setEvent($event)
-                //     ->setNotes($activityNotes)
-                //     ->responseOK()
-                //     ->save();
-                //$this->commit();
+                $this->response->data = NULL;
+                $activityNotes = sprintf('Added to wallet Coupon Id: %s. Issued Coupon Id: %s', $coupon->promotion_id, $issuedCoupon->issued_coupon_id);
+                $activity->setUser($user)
+                    ->setActivityName('click_add_to_wallet')
+                    ->setActivityNameLong('Click Add To Wallet')
+                    ->setObject($issuedCoupon)
+                    ->setModuleName('Coupon')
+                    ->setCoupon($coupon)
+                    ->setNotes($activityNotes)
+                    ->responseOK()
+                    ->save();
             } else {
-                $this->response->message = 'Request Failed';
-                $this->response->data = null;
+                $this->response->message = 'Fail to issue coupon';
+                $this->response->data = NULL;
             }
 
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = null;
+            $this->response->data = NULL;
             $this->rollback();
+            $activityNotes = sprintf('Failed to add to wallet. Error: %s', $e->getMessage());
+            $activity->setUser($user)
+                ->setActivityName('click_add_to_wallet')
+                ->setActivityNameLong('Failed to Click Add To Wallet')
+                ->setObject($issuedCoupon)
+                ->setModuleName('Coupon')
+                ->setCoupon($coupon)
+                ->setNotes($activityNotes)
+                ->responseFailed()
+                ->save();
         } catch (InvalidArgsException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = null;
+            $this->response->data = NULL;
             $this->rollback();
+            $activityNotes = sprintf('Failed to add to wallet. Error: %s', $e->getMessage());
+            $activity->setUser($user)
+                ->setActivityName('click_add_to_wallet')
+                ->setActivityNameLong('Failed to Click Add To Wallet')
+                ->setObject($issuedCoupon)
+                ->setModuleName('Coupon')
+                ->setCoupon($coupon)
+                ->setNotes($activityNotes)
+                ->responseFailed()
+                ->save();
         } catch (Exception $e) {
             $this->response->code = $e->getCode();
             $this->response->status = $e->getLine();
             $this->response->message = $e->getMessage();
             $this->response->data = $e->getFile();
             $this->rollback();
+            $activityNotes = sprintf('Failed to add to wallet. Error: %s', $e->getMessage());
+            $activity->setUser($user)
+                ->setActivityName('click_add_to_wallet')
+                ->setActivityNameLong('Failed to Click Add To Wallet')
+                ->setObject($issuedCoupon)
+                ->setModuleName('Coupon')
+                ->setCoupon($coupon)
+                ->setNotes($activityNotes)
+                ->responseFailed()
+                ->save();
         }
 
         return $this->render();
@@ -6571,8 +6606,8 @@ class MobileCIAPIController extends BaseCIController
 
             foreach ($listOfRec as $item) {
                 $item->image = empty($item->image) ? URL::asset('mobile-ci/images/default_news.png') : URL::asset($item->image);
-                $item->url = UrlBlock::blockedRoute('ci-coupon-detail', ['id' => $item->promotion_id, 'name' => Str::slug($item->promotion_name)], $this->session);
-                $item->redirect_url = URL::route('ci-coupon-detail', ['id' => $item->promotion_id, 'name' => Str::slug($item->promotion_name)]);
+                $item->url = UrlBlock::blockedRoute('ci-coupon-detail', ['id' => $item->promotion_id, 'name' => Str::slug($item->promotion_name), 'type' => $type], $this->session);
+                $item->redirect_url = URL::route('ci-coupon-detail', ['id' => $item->promotion_id, 'name' => Str::slug($item->promotion_name), 'type' => $type]);
                 $item->name = mb_strlen($item->promotion_name) > 64 ? mb_substr($item->promotion_name, 0, 64) . '...' : $item->promotion_name;
                 $item->item_id = $item->promotion_id;
             }
@@ -6642,15 +6677,23 @@ class MobileCIAPIController extends BaseCIController
             
 
             $promotion_id = trim(OrbitInput::get('id'));
+            $type = OrbitInput::get('type', 'available');
 
             $issued_coupons = IssuedCoupon::where('user_id', $user->user_id)
                                 ->where('promotion_id', $promotion_id)
                                 ->active()
                                 ->first();
 
-            if (empty($issued_coupons)) {
-                return Redirect::route('ci-tenant-list', array('coupon_id' => $promotion_id));
+            $added_to_wallet_detail = false;                   
+            if (!empty($issued_coupons)) {
+                //return Redirect::route('ci-tenant-list', array('coupon_id' => $promotion_id));
+                $added_to_wallet_detail = true;
             }
+
+            $is_coupon_wallet_detail = false;
+            if ($type == 'wallet') {
+                $is_coupon_wallet_detail = true;
+            } 
 
             $userAge = 0;
             if ($user->userDetail->birthdate !== '0000-00-00' && $user->userDetail->birthdate !== null) {
@@ -6686,23 +6729,6 @@ class MobileCIAPIController extends BaseCIController
                         });
                     });
                 });
-
-            // filter by age and gender
-            if ($userGender !== null) {
-                $coupons = $coupons->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
-            }
-
-            if ($userAge !== null) {
-                if ($userAge === 0){
-                    $coupons = $coupons->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
-                } else {
-                    if ($userAge >= 55) {
-                        $coupons = $coupons->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
-                    } else {
-                        $coupons = $coupons->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
-                    }
-                }
-            }
 
             $languages = $this->getListLanguages($retailer);
 
@@ -6875,8 +6901,8 @@ class MobileCIAPIController extends BaseCIController
                 'session' => $this->session,
                 'is_logged_in' => UrlBlock::isLoggedIn($this->session),
                 'user_email' => $user->role->role_name !== 'Guest' ? $user->user_email : '',
-                'is_coupon_wallet_detail' => true, //false = available | true = wallet
-                'added_to_wallet_detail' => true //false = not in wallet | true = in wallet
+                'is_coupon_wallet_detail' => $is_coupon_wallet_detail, //false = available | true = wallet
+                'added_to_wallet_detail' => $added_to_wallet_detail //false = not in wallet | true = in wallet
             ));
 
         } catch (Exception $e) {
