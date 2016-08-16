@@ -435,7 +435,7 @@
                             couponWallet = '';
 
                         if(itemtype === 'my-coupon') {
-                            if (data.records[i].added_to_wallet) {
+                            if (data.records[i].added_to_wallet === 'true') {
                                 walletIcon = 'fa-check';
                                 walletText = '{{ Lang::get("mobileci.coupon.added_wallet") }}';
                             }
