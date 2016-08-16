@@ -791,7 +791,7 @@ class MobileCIAPIController extends BaseCIController
             // check url, is it blocked or not
             UrlBlock::checkBlockedUrl($user);
             $this->acquireUser($retailer, $user);
-            
+
 
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
 
@@ -1682,7 +1682,7 @@ class MobileCIAPIController extends BaseCIController
             }
 
             //$this->beginTransaction();
-            $coupon = Coupon::where('promotion_id', '=', $coupon_id)->first(); 
+            $coupon = Coupon::where('promotion_id', '=', $coupon_id)->first();
             $newIssuedCoupon = new IssuedCoupon();
             $issuedCoupon = $newIssuedCoupon->issue($coupon, $user->user_id, $user, $retailer);
 
@@ -1749,7 +1749,7 @@ class MobileCIAPIController extends BaseCIController
 
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
-            
+
             $languages = $this->getListLanguages($retailer);
             $pageTitle = Lang::get('mobileci.page_title.my_account');
 
@@ -2004,7 +2004,7 @@ class MobileCIAPIController extends BaseCIController
                 ->where('end_date', '>=', $mallTime)
                 ->where('coupon_validity_in_date', '>=', $mallTime)
                 ->first();
-            
+
                 if (empty($coupon)) {
                     return false;
                 }
@@ -2315,7 +2315,7 @@ class MobileCIAPIController extends BaseCIController
             UrlBlock::checkBlockedUrl($user);
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
-            
+
 
             $sort_by = OrbitInput::get('sort_by');
             $keyword = trim(OrbitInput::get('keyword'));
@@ -3062,7 +3062,7 @@ class MobileCIAPIController extends BaseCIController
             UrlBlock::checkBlockedUrl($user);
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
-            
+
 
             $product_id = trim(OrbitInput::get('id'));
             $promo_id = trim(OrbitInput::get('pid'));
@@ -3511,7 +3511,7 @@ class MobileCIAPIController extends BaseCIController
             UrlBlock::checkBlockedUrl($user);
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
-            
+
 
             $product_id = trim(OrbitInput::get('id'));
 
@@ -4305,7 +4305,7 @@ class MobileCIAPIController extends BaseCIController
             UrlBlock::checkBlockedUrl($user);
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
-            
+
 
             $sort_by = OrbitInput::get('sort_by');
             $keyword = trim(OrbitInput::get('keyword'));
@@ -4955,7 +4955,7 @@ class MobileCIAPIController extends BaseCIController
             UrlBlock::checkBlockedUrl($user);
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
-            
+
 
             $languages = $this->getListLanguages($retailer);
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
@@ -5321,7 +5321,7 @@ class MobileCIAPIController extends BaseCIController
             UrlBlock::checkBlockedUrl($user);
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
-            
+
 
             $lucky_draw_id = OrbitInput::get('id');
 
@@ -5547,7 +5547,7 @@ class MobileCIAPIController extends BaseCIController
             UrlBlock::checkBlockedUrl($user);
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
-            
+
 
             $lucky_draw_id = OrbitInput::get('id');
 
@@ -6031,7 +6031,7 @@ class MobileCIAPIController extends BaseCIController
             UrlBlock::checkBlockedUrl($user);
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
-            
+
 
             $pagetitle = Lang::get('mobileci.page_title.coupons');
 
@@ -6575,6 +6575,7 @@ class MobileCIAPIController extends BaseCIController
                 $item->redirect_url = URL::route('ci-coupon-detail', ['id' => $item->promotion_id, 'name' => Str::slug($item->promotion_name)]);
                 $item->name = mb_strlen($item->promotion_name) > 64 ? mb_substr($item->promotion_name, 0, 64) . '...' : $item->promotion_name;
                 $item->item_id = $item->promotion_id;
+                $item->add_to_wallet_hash = ! UrlBlock::isLoggedIn($this->session) ? '#' : '#1';
             }
 
             $data = new stdclass();
@@ -6639,7 +6640,7 @@ class MobileCIAPIController extends BaseCIController
             UrlBlock::checkBlockedUrl($user);
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
-            
+
 
             $promotion_id = trim(OrbitInput::get('id'));
 
@@ -6919,7 +6920,7 @@ class MobileCIAPIController extends BaseCIController
             UrlBlock::checkBlockedUrl($user);
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
-            
+
 
             $coupon_id = trim(OrbitInput::get('id'));
             $languages = $this->getListLanguages($retailer);
@@ -7082,7 +7083,7 @@ class MobileCIAPIController extends BaseCIController
             UrlBlock::checkBlockedUrl($user);
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
-            
+
 
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
 
@@ -7545,7 +7546,7 @@ class MobileCIAPIController extends BaseCIController
             UrlBlock::checkBlockedUrl($user);
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
-            
+
 
             $languages = $this->getListLanguages($retailer);
 
@@ -7714,7 +7715,7 @@ class MobileCIAPIController extends BaseCIController
             UrlBlock::checkBlockedUrl($user);
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
-            
+
 
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
 
@@ -8272,7 +8273,7 @@ class MobileCIAPIController extends BaseCIController
             UrlBlock::checkBlockedUrl($user);
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
-            
+
 
             $languages = $this->getListLanguages($retailer);
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
@@ -8443,7 +8444,7 @@ class MobileCIAPIController extends BaseCIController
             UrlBlock::checkBlockedUrl($user);
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
-            
+
 
             $languages = $this->getListLanguages($retailer);
 
@@ -8512,7 +8513,7 @@ class MobileCIAPIController extends BaseCIController
             UrlBlock::checkBlockedUrl($user);
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
-            
+
 
             $languages = $this->getListLanguages($retailer);
 
@@ -10081,7 +10082,7 @@ class MobileCIAPIController extends BaseCIController
 
             // $user = $this->getLoggedInUser();
 
-            // 
+            //
 
             $this->response->data = $user;
 

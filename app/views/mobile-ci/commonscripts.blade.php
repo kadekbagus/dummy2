@@ -442,12 +442,14 @@
                         }
 
                         couponWallet = '\
-                            <div class="coupon-wallet pull-right" data-ids="' + data.records[i].item_id + '" data-isaddedtowallet="' + data.records[i].added_to_wallet + '">\
-                                <span class="fa-stack fa-2x">\
-                                    <i class="fa fae-wallet fa-stack-2x"></i>\
-                                    <i class="fa fa-circle fa-stack-2x"></i>\
-                                    <i class="fa ' + walletIcon + ' fa-stack-1x"></i>\
-                                </span>\
+                            <div class="coupon-wallet pull-right">\
+                                <a href="' + data.records[i].add_to_wallet_hash + '">\
+                                    <span class="fa-stack fa-2x clickable" data-ids="' + data.records[i].item_id + '" data-isaddedtowallet="' + data.records[i].added_to_wallet + '">\
+                                        <i class="fa fae-wallet fa-stack-2x"></i>\
+                                        <i class="fa fa-circle fa-stack-2x"></i>\
+                                        <i class="fa ' + walletIcon + ' fa-stack-1x state-icon"></i>\
+                                    </span>\
+                                </a>\
                                 <span class="wallet-text">' + walletText + '</span>\
                             </div>';
 

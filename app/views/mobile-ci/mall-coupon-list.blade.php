@@ -91,11 +91,11 @@
             loadMoreX('my-coupon', listOfIDs, helperObject);
         });
 
-        $('body').on('click', '.coupon-wallet', function(){
+        $('body').on('click', '.coupon-wallet .clickable', function(){
             var element = $(this),
                 id = element.data('ids');
 
-            if (element.attr('data-isaddedtowallet') === 'true') {
+            if (element.attr('data-isaddedtowallet') === 'true' || element.parent().attr('href') === '#') {
                 return;
             }
 
@@ -107,7 +107,10 @@
                 }
             }).done(function (data) {
                 if(data.status === 'success') {
-                    element.children('.wallet-text').html('{{ Lang::get("mobileci.coupon.added_wallet") }}');
+                    element.children('.state-icon').removeClass('fa-plus');
+                    element.children('.state-icon').addClass('fa-check');
+                    element.siblings().html('{{ Lang::get("mobileci.coupon.added_wallet") }}');
+                    $(".coupon-button").removeClass('active');
                     element.attr('data-isaddedtowallet', true);
                 }
             });
