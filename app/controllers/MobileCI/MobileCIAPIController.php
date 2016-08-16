@@ -6368,9 +6368,21 @@ class MobileCIAPIController extends BaseCIController
             $type = OrbitInput::get('coupon_type', 'available');
             $is_coupon_wallet = false;
             $mallid = $retailer->merchant_id;
+            $user_id = $user->user_id;
+            $prefix = DB::getTablePrefix();
 
             if ($type === 'wallet') {
-                $coupons = Coupon::selectRaw('*, ' . DB::getTablePrefix() . 'promotions.image AS promo_image, ' . DB::getTablePrefix() . 'promotions.description AS description, ' . DB::getTablePrefix() . 'promotions.long_description AS long_description, count(' . DB::getTablePrefix() . 'promotions.promotion_id) as quantity')
+                $coupons = Coupon::selectRaw("*, {$prefix}promotions.promotion_id AS promotion_id,
+                        {$prefix}promotions.description AS description,
+                        {$prefix}promotions.long_description AS long_description,
+                        {$prefix}promotions.image AS promo_image,
+                        (
+                            SELECT (CASE WHEN COUNT({$prefix}issued_coupons.issued_coupon_id) > 0 THEN 'true' ELSE 'false' END)
+                            from {$prefix}issued_coupons
+                            where user_id = '{$user_id}'
+                            AND {$prefix}issued_coupons.status = 'active'
+                            AND {$prefix}issued_coupons.promotion_id = {$prefix}promotions.promotion_id
+                        ) as added_to_wallet")
                     ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'promotions.promotion_id')
                     ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'promotions.promotion_id')
                     ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
@@ -6403,7 +6415,17 @@ class MobileCIAPIController extends BaseCIController
                     ->where('issued_coupons.user_id', $user->user_id);
                 $is_coupon_wallet = true;
             } else {
-                $coupons = Coupon::selectRaw('*, ' . DB::getTablePrefix() . 'promotions.image AS promo_image, ' . DB::getTablePrefix() . 'promotions.description AS description, ' . DB::getTablePrefix() . 'promotions.long_description AS long_description, count(' . DB::getTablePrefix() . 'promotions.promotion_id) as quantity')
+                $coupons = Coupon::selectRaw("*, {$prefix}promotions.promotion_id AS promotion_id,
+                        {$prefix}promotions.description AS description,
+                        {$prefix}promotions.long_description AS long_description,
+                        {$prefix}promotions.image AS promo_image,
+                        (
+                            SELECT (CASE WHEN COUNT({$prefix}issued_coupons.issued_coupon_id) > 0 THEN 'true' ELSE 'false' END)
+                            from {$prefix}issued_coupons
+                            where user_id = '{$user_id}'
+                            AND {$prefix}issued_coupons.status = 'active'
+                            AND {$prefix}issued_coupons.promotion_id = {$prefix}promotions.promotion_id
+                        ) as added_to_wallet")
                     ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'promotions.promotion_id')
                     ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'promotions.promotion_id')
                     ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
@@ -6549,8 +6571,8 @@ class MobileCIAPIController extends BaseCIController
 
             foreach ($listOfRec as $item) {
                 $item->image = empty($item->image) ? URL::asset('mobile-ci/images/default_news.png') : URL::asset($item->image);
-                $item->url = UrlBlock::blockedRoute('ci-coupon-detail', ['id' => $item->issued_coupon_id, 'name' => Str::slug($item->promotion_name)], $this->session);
-                $item->redirect_url = URL::route('ci-coupon-detail', ['id' => $item->issued_coupon_id, 'name' => Str::slug($item->promotion_name)]);
+                $item->url = UrlBlock::blockedRoute('ci-coupon-detail', ['id' => $item->promotion_id, 'name' => Str::slug($item->promotion_name)], $this->session);
+                $item->redirect_url = URL::route('ci-coupon-detail', ['id' => $item->promotion_id, 'name' => Str::slug($item->promotion_name)]);
                 $item->name = mb_strlen($item->promotion_name) > 64 ? mb_substr($item->promotion_name, 0, 64) . '...' : $item->promotion_name;
                 $item->item_id = $item->promotion_id;
             }

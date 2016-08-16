@@ -131,6 +131,7 @@ if(!empty($luckydraw)) {
     <div class="col-xs-12 text-center">
         <form method="post" enctype="multipart/form-data">
             <input type="hidden" name="_token" id="_token" value="{{$csrf_token}}">
+            <input type="hidden" name="refresher" id="refresher" value="no">
             <div class="file-upload btn btn-upload">
                 <span>{{Lang::get('mobileci.lucky_draw.upload_receipt')}}</span>
                 <input type="file" class="upload" name="photo" accept="image/*" id="lucky-draw-capture" capture="camera">
@@ -294,6 +295,14 @@ if(!empty($luckydraw)) {
             });
 
         @if($luckydraw->object_type === 'auto')
+            onload = function(){
+                var e = document.getElementById("refresher");
+                if (e.value=="no") e.value="yes";
+                else {
+                    e.value="no";
+                    location.reload();
+                }
+            }
             function fileSelected() {
                 var count = document.getElementById('lucky-draw-capture').files.length;
                 if (count > 0) {
