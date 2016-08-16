@@ -4,32 +4,9 @@
     <div class="container">
         <div class="mobile-ci list-item-container">
             <div class="row">
-            @if($data->status === 1)
                 <div class="catalogue-wrapper">
                 <!-- scope data -->
                 </div>
-                @if($data->returned_records < $data->total_records)
-                    <div class="row">
-                        <div class="col-xs-12 padded">
-                            <button class="btn btn-info btn-block" id="load-more-x">{{Lang::get('mobileci.notification.load_more_btn')}}</button>
-                        </div>
-                    </div>
-                @endif
-            @else
-                @if(Input::get('keyword') === null)
-                <div class="row padded">
-                    <div class="col-xs-12">
-                        <h4>{{ Lang::get('mobileci.greetings.no_coupons_listing') }}</h4>
-                    </div>
-                </div>
-                @else
-                <div class="row padded">
-                    <div class="col-xs-12">
-                        <h4>{{ Lang::get('mobileci.search.no_result') }}</h4>
-                    </div>
-                </div>
-                @endif
-            @endif
             </div>
         </div>
     </div>
@@ -88,14 +65,25 @@
 
             listOfIDs.length = 0;
             helperObject.coupon_type = $(this).data('type');
+
+            // validate user login
+            if ('wallet' === helperObject.coupon_type && !Boolean({{$is_logged_in}})) {
+                var elementMessage = '\
+                    <div class="col-xs-12">\
+                        <h4>{{ Lang::get('mobileci.coupon.login_to_show_coupon_wallet') }}</h4>\
+                    </div>';
+                $(".catalogue-wrapper").html(elementMessage);
+                return;
+            }
+
             loadMoreX('my-coupon', listOfIDs, helperObject);
         });
 
-        $('body').on('click', '.coupon-wallet', function(){
+        $('body').on('click', '.coupon-wallet .clickable', function(){
             var element = $(this),
                 id = element.data('ids');
 
-            if (element.attr('data-isaddedtowallet') === 'true') {
+            if (element.attr('data-isaddedtowallet') === 'true' || element.parent().attr('href') === '#') {
                 return;
             }
 
@@ -107,7 +95,10 @@
                 }
             }).done(function (data) {
                 if(data.status === 'success') {
-                    element.children('.wallet-text').html('{{ Lang::get("mobileci.coupon.added_wallet") }}');
+                    element.children('.state-icon').removeClass('fa-plus');
+                    element.children('.state-icon').addClass('fa-check');
+                    element.siblings().html('{{ Lang::get("mobileci.coupon.added_wallet") }}');
+                    $(".coupon-button").removeClass('active');
                     element.attr('data-isaddedtowallet', true);
                 }
             });
