@@ -45,20 +45,16 @@
                 <div class="vertical"></div>
             </div>
         </div>
-        @if(!$is_coupon_wallet_detail || !$added_to_wallet_detail)
+        @if(!$wallet['is_coupon_wallet'] || !$wallet['added_to_wallet'])
         <div class="coupon-wallet pull-right">
-            <span class="fa-stack fa-2x">
-                <i class="fa fae-wallet fa-stack-2x"></i>
-                <i class="fa fa-circle fa-stack-2x"></i>
-                <i class="fa @if($added_to_wallet_detail) fa-plus @else fa-check @endif fa-stack-1x"></i>
-            </span>
-            <span class="wallet-text">
-                @if($added_to_wallet_detail)
-                    {{ Lang::get('mobileci.coupon.add_wallet') }}
-                @else
-                    {{ Lang::get('mobileci.coupon.added_wallet') }}
-                @endif
-            </span>
+            <a href="{{ $wallet['hash'] }}">
+                <span class="fa-stack fa-2x clickable" data-ids="{{ $coupon->promotion_id }}" data-isaddedtowallet="{{ $wallet['added_to_wallet'] }}">
+                    <i class="fa fae-wallet fa-stack-2x"></i>
+                    <i class="fa {{ $wallet['circle'] }} fa-circle fa-stack-2x"></i>
+                    <i class="fa {{ $wallet['icon'] }} fa-stack-1x state-icon"></i>
+                </span>
+            </a>
+            <span class="wallet-text">{{ $wallet['text'] }}</span>
         </div>
         @endif
         <div class="actions-panel" style="display: none;">
@@ -126,7 +122,7 @@
       </div>
     </div>
 </div>
-@if($is_coupon_wallet_detail && $added_to_wallet_detail)
+@if($wallet['is_coupon_wallet'] && $wallet['added_to_wallet'])
 <div class="row fullbutton">
     <a class="col-xs-12" id="useBtn">
         <i class="fa fa-scissors"></i>
@@ -134,7 +130,7 @@
     </a>
 </div>
 @endif
-<div class="row product-info padded @if($is_coupon_wallet_detail && $added_to_wallet_detail) disable-box-shadow @endif" style="z-index: 101;">
+<div class="row product-info padded @if($wallet['is_coupon_wallet'] && $wallet['added_to_wallet']) disable-box-shadow @endif" style="z-index: 101;">
     <div class="col-xs-12">
         <div class="row">
             <div class="col-xs-12">
