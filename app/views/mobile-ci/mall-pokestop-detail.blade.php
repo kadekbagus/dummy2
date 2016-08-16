@@ -7,15 +7,40 @@
 @section('content')
     <!-- product -->
     <div class="row relative-wrapper">
-        <div class="col-xs-12 product-detail img-wrapper" style="z-index: 100;">
+        <div class="col-xs-12 product-detail" style="z-index: 100;">
             <div class="vertical-align-middle-outer">
                 <div class="vertical-align-middle-inner">
-                    <a href="{{{ asset($pokestop->image) }}}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer">
-                        <img src="{{ asset($pokestop->image) }}">
+                    <a href="https://s3.postimg.io/4x19q9d9v/season_city.jpg" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer">
+                        <img src="https://s3.postimg.io/4x19q9d9v/season_city.jpg">
+                        <span class="zoom-info">
+                            Click to zoom
+                            <i class="fa fa-expand"> </i>
+                        </span>
                     </a>
                 </div>
             </div>
         </div>
+    </div>
+    <div class="row">
+    <div class="col-xs-12">
+        <ul class="legends list-unstyled">
+            <li>
+                <span class="legend">
+                    <img src="{{ asset('mobile-ci/images/pokegym_gtm.png') }}" />
+                </span>
+                <span class="info">
+                    Pokegym
+                </span>
+            </li>
+            <li>
+                <span class="legend">
+                    <img src="{{ asset('mobile-ci/images/pokestops_gtm.png') }}" />
+                </span>
+                <span class="info">
+                    Pokestop
+                </span>
+            </li>
+        </ul>
     </div>
     <!-- end of product -->
 @stop
