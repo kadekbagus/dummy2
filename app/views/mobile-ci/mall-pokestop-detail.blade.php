@@ -10,8 +10,8 @@
         <div class="col-xs-12 product-detail" style="z-index: 100;">
             <div class="vertical-align-middle-outer">
                 <div class="vertical-align-middle-inner">
-                    <a href="https://s3.postimg.io/4x19q9d9v/season_city.jpg" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer">
-                        <img src="https://s3.postimg.io/4x19q9d9v/season_city.jpg">
+                    <a href="{{{ asset($pokestop->image) }}}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer">
+                        <img src="{{{ asset($pokestop->image) }}}">
                         <span class="zoom-info">
                             Click to zoom
                             <i class="fa fa-expand"> </i>
