@@ -141,7 +141,11 @@ return array(
     'assets' => array(
         // Asset root (without trailing slash)
         // leave undefined to work from app root
-        // 'root' => 'http://assets.myorbit.com'
+        // 'root' => 'http://assets.myorbit.com',
+
+        // Every deployment which changes the CSS should also
+        // change this value
+        // 'timestamp' => '201608161427'
     ),
 
     // Languages that supported by orbit app
