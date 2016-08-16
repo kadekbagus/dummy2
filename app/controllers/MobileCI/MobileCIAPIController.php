@@ -1653,13 +1653,18 @@ class MobileCIAPIController extends BaseCIController
      */
     public function postAddToWallet()
     {
-        // $activity = Activity::mobileci()
-        //                     ->setActivityType('click');
-        // $user = null;
-        // $event_id = null;
-        // $event = null;
+        $activity = Activity::mobileci()
+                            ->setActivityType('click');
+        $user = NULL;
+        $coupon = NULL;
+        $issuedCoupon = NULL;
         try {
             $user = $this->getLoggedInUser();
+
+            // guest cannot add to wallet
+            if (! $user->isConsumer()) {
+                OrbitShopAPI::throwInvalidArgument('You must login to access this.');
+            }
             $retailer = $this->getRetailerInfo();
             $this->registerCustomValidation();
 
@@ -1681,48 +1686,78 @@ class MobileCIAPIController extends BaseCIController
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            //$this->beginTransaction();
+            $this->beginTransaction();
             $coupon = Coupon::where('promotion_id', '=', $coupon_id)->first(); 
             $newIssuedCoupon = new IssuedCoupon();
             $issuedCoupon = $newIssuedCoupon->issue($coupon, $user->user_id, $user, $retailer);
+            $this->commit();
 
             if ($issuedCoupon) {
                 $this->response->message = 'Request Ok';
-                $this->response->data = null;
-                // $activityNotes = sprintf('Event Click. Event Id : %s', $event_id);
-                // $activity->setUser($user)
-                //     ->setActivityName('event_click')
-                //     ->setActivityNameLong('Event Click')
-                //     ->setObject($event)
-                //     ->setModuleName('Event')
-                //     ->setEvent($event)
-                //     ->setNotes($activityNotes)
-                //     ->responseOK()
-                //     ->save();
-                //$this->commit();
+                $this->response->data = NULL;
+                $activityNotes = sprintf('Added to wallet Coupon Id: %s. Issued Coupon Id: %s', $coupon->promotion_id, $issuedCoupon->issued_coupon_id);
+                $activity->setUser($user)
+                    ->setActivityName('click_add_to_wallet')
+                    ->setActivityNameLong('Click Add To Wallet')
+                    ->setObject($issuedCoupon)
+                    ->setModuleName('Coupon')
+                    ->setCoupon($coupon)
+                    ->setNotes($activityNotes)
+                    ->responseOK()
+                    ->save();
             } else {
-                $this->response->message = 'Request Failed';
-                $this->response->data = null;
+                $this->response->message = 'Fail to issue coupon';
+                $this->response->data = NULL;
             }
 
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = null;
+            $this->response->data = NULL;
             $this->rollback();
+            $activityNotes = sprintf('Failed to add to wallet. Error: %s', $e->getMessage());
+            $activity->setUser($user)
+                ->setActivityName('click_add_to_wallet')
+                ->setActivityNameLong('Failed to Click Add To Wallet')
+                ->setObject($issuedCoupon)
+                ->setModuleName('Coupon')
+                ->setCoupon($coupon)
+                ->setNotes($activityNotes)
+                ->responseFailed()
+                ->save();
         } catch (InvalidArgsException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = null;
+            $this->response->data = NULL;
             $this->rollback();
+            $activityNotes = sprintf('Failed to add to wallet. Error: %s', $e->getMessage());
+            $activity->setUser($user)
+                ->setActivityName('click_add_to_wallet')
+                ->setActivityNameLong('Failed to Click Add To Wallet')
+                ->setObject($issuedCoupon)
+                ->setModuleName('Coupon')
+                ->setCoupon($coupon)
+                ->setNotes($activityNotes)
+                ->responseFailed()
+                ->save();
         } catch (Exception $e) {
             $this->response->code = $e->getCode();
             $this->response->status = $e->getLine();
             $this->response->message = $e->getMessage();
             $this->response->data = $e->getFile();
             $this->rollback();
+            $activityNotes = sprintf('Failed to add to wallet. Error: %s', $e->getMessage());
+            $activity->setUser($user)
+                ->setActivityName('click_add_to_wallet')
+                ->setActivityNameLong('Failed to Click Add To Wallet')
+                ->setObject($issuedCoupon)
+                ->setModuleName('Coupon')
+                ->setCoupon($coupon)
+                ->setNotes($activityNotes)
+                ->responseFailed()
+                ->save();
         }
 
         return $this->render();
