@@ -100,6 +100,7 @@ class UrlChecker
                     ->getAppName();
 
                 $id = OrbitInput::get('id', '');
+                $currentParams = \Input::all();
                 $params = array();
                 $currentRoute = \Route::currentRouteName();
                 if ($appOrigin === 'mobile_ci') {
@@ -113,6 +114,10 @@ class UrlChecker
                             $params = ['id' => $id];
                             break;
                         case 'ci-coupon-detail':
+                            $redirectTo = 'ci-coupon-list';
+                            $params = ['id' => $id];
+                            break;
+                        case 'ci-coupon-detail-wallet':
                             $redirectTo = 'ci-coupon-list';
                             $params = ['id' => $id];
                             break;
@@ -134,6 +139,7 @@ class UrlChecker
                             break;
                     }
 
+                    $params = array_merge($params, $currentParams);
                     // throw exception custom UrlException
                     $redirectTo = URL::route($redirectTo, [
                         'do_sign_in' => 'true',
