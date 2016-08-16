@@ -1,4 +1,9 @@
 <?php
+/**
+ * Command for insert, update or delete the pokestop map
+ *
+ * @author Firmansyah <firmansyah@dominopos.com>
+ */
 
 use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputOption;
@@ -18,7 +23,7 @@ class PokestopMap extends Command {
 	 *
 	 * @var string
 	 */
-	protected $description = 'Command for insert or delete pokestop map';
+	protected $description = 'Command for insert,update or delete pokestop map';
 
 	/**
 	 * Create a new command instance.
@@ -186,9 +191,9 @@ class PokestopMap extends Command {
 	protected function getOptions()
 	{
 		return array(
-			array('mode', null, InputOption::VALUE_REQUIRED, 'An example option.', null),
-			array('mall_id', null, InputOption::VALUE_REQUIRED, 'An example option.', null),
-			array('image_url', null, InputOption::VALUE_REQUIRED, 'An example option.', null),
+			array('mode', null, InputOption::VALUE_REQUIRED, 'Mode insert, update or delete', null),
+			array('mall_id', null, InputOption::VALUE_REQUIRED, 'Merchant or mall id', null),
+			array('image_url', null, InputOption::VALUE_REQUIRED, 'Image url', null),
 		);
 	}
 
