@@ -93,6 +93,7 @@ class PokestopMap extends Command {
 						$media = new Media();
 			            $media->object_id = $newPokestopMap->news_id;
 			            $media->object_name = 'pokestop';
+			            $media->media_name_id = 'pokestop_image';
 			            $media->realpath = $imageUrl;
 			            $media->save();
 					}
@@ -108,6 +109,7 @@ class PokestopMap extends Command {
 						$media = new Media();
 			            $media->object_id = $pokestopMap->news_id;
 			            $media->object_name = 'pokestop';
+			            $media->media_name_id = 'pokestop_image';
 			            $media->realpath = $imageUrl;
 			            $media->save();
 					}
