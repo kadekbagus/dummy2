@@ -9,11 +9,11 @@
                 <!-- scope data -->
                 </div>
                 @if($data->returned_records < $data->total_records)
-                    <div class="row">
-                        <div class="col-xs-12 padded">
-                            <button class="btn btn-info btn-block" id="load-more-x">{{Lang::get('mobileci.notification.load_more_btn')}}</button>
-                        </div>
+                <div class="row">
+                    <div class="col-xs-12 padded">
+                        <button class="btn btn-info btn-block" id="load-more-x">{{Lang::get('mobileci.notification.load_more_btn')}}</button>
                     </div>
+                </div>
                 @endif
             @else
                 @if(Input::get('keyword') === null)
@@ -88,6 +88,17 @@
 
             listOfIDs.length = 0;
             helperObject.coupon_type = $(this).data('type');
+
+            // validate user login
+            if ('wallet' === helperObject.coupon_type && !Boolean({{$is_logged_in}})) {
+                var elementMessage = '\
+                    <div class="col-xs-12">\
+                        <h4>{{ Lang::get('mobileci.coupon.login_to_show_coupon_wallet') }}</h4>\
+                    </div>';
+                $(".catalogue-wrapper").html(elementMessage);
+                return;
+            }
+
             loadMoreX('my-coupon', listOfIDs, helperObject);
         });
 
