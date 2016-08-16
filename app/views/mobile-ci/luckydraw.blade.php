@@ -139,7 +139,13 @@ if(!empty($luckydraw)) {
         </form>
     </div>
     <div class="col-xs-12 text-center">
-        <p id="upload-message"></p>
+        <p id="upload-message">
+            @if(Input::get('show_message') === 'true' && count($numbers) > 0)
+            <span style="color:green;">
+            {{Lang::get('mobileci.lucky_draw.upload_success')}} <br> {{Lang::get('mobileci.lucky_draw.upload_congrats') . $numbers[0]->lucky_draw_number_code}}
+            </span>
+            @endif
+        </p>
     </div>
     @else
     <div class="col-xs-12 text-center">
@@ -331,6 +337,9 @@ if(!empty($luckydraw)) {
                     }).done(function(data){
                         if (data.code === 0) {
                             $('#upload-message').css('color', 'green').html("{{Lang::get('mobileci.lucky_draw.upload_success')}} <br> {{Lang::get('mobileci.lucky_draw.upload_congrats')}}" + data.data.lucky_draw_number_code);
+                            setTimeout(function() {
+                                window.location.replace('{{route('ci-luckydraw-detail', ['id' => $luckydraw->lucky_draw_id, 'name' => Str::slug($luckydraw->lucky_draw_name), 'show_message' => 'true'])}}');
+                            }, 1000);
                         } else {
                             $('#upload-message').css('color', 'red').text(data.message);
                         }
