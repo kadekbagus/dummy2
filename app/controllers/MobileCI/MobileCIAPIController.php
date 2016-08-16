@@ -6664,6 +6664,15 @@ class MobileCIAPIController extends BaseCIController
                     ->save();
             }
 
+            $walletData = array(
+                        'is_coupon_wallet' => $is_coupon_wallet_detail, //false = available | true = wallet
+                        'added_to_wallet' => $added_to_wallet_detail, //false = not in wallet | true = in wallet
+                        'hash' => (! UrlBlock::isLoggedIn($this->session) ? '#' : '#1'),
+                        'icon' => ($added_to_wallet_detail ? 'fa-check' : 'fa-plus'),
+                        'text' => ($added_to_wallet_detail ?  Lang::get('mobileci.coupon.added_wallet') : Lang::get('mobileci.coupon.add_wallet')),
+                        'circle' => ($added_to_wallet_detail ? 'added' : '')
+                    );
+
             return View::make('mobile-ci.mall-coupon', array(
                 'page_title' => $coupons->promotion_name,
                 'user' => $user,
@@ -6680,8 +6689,7 @@ class MobileCIAPIController extends BaseCIController
                 'session' => $this->session,
                 'is_logged_in' => UrlBlock::isLoggedIn($this->session),
                 'user_email' => $user->role->role_name !== 'Guest' ? $user->user_email : '',
-                'is_coupon_wallet_detail' => $is_coupon_wallet_detail, //false = available | true = wallet
-                'added_to_wallet_detail' => $added_to_wallet_detail //false = not in wallet | true = in wallet
+                'wallet' => $walletData
             ));
 
         } catch (Exception $e) {
