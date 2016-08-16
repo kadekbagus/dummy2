@@ -4,32 +4,9 @@
     <div class="container">
         <div class="mobile-ci list-item-container">
             <div class="row">
-            @if($data->status === 1)
                 <div class="catalogue-wrapper">
                 <!-- scope data -->
                 </div>
-                @if($data->returned_records < $data->total_records)
-                <div class="row">
-                    <div class="col-xs-12 padded">
-                        <button class="btn btn-info btn-block" id="load-more-x">{{Lang::get('mobileci.notification.load_more_btn')}}</button>
-                    </div>
-                </div>
-                @endif
-            @else
-                @if(Input::get('keyword') === null)
-                <div class="row padded">
-                    <div class="col-xs-12">
-                        <h4>{{ Lang::get('mobileci.greetings.no_coupons_listing') }}</h4>
-                    </div>
-                </div>
-                @else
-                <div class="row padded">
-                    <div class="col-xs-12">
-                        <h4>{{ Lang::get('mobileci.search.no_result') }}</h4>
-                    </div>
-                </div>
-                @endif
-            @endif
             </div>
         </div>
     </div>
