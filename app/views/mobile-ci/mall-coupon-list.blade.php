@@ -69,8 +69,9 @@
             // validate user login
             if ('wallet' === helperObject.coupon_type && !Boolean({{$is_logged_in}})) {
                 var elementMessage = '\
-                    <div class="col-xs-12">\
+                    <div class="col-xs-12 notification-message">\
                         <h4>{{ Lang::get('mobileci.coupon.login_to_show_coupon_wallet') }}</h4>\
+                        <a href="#" type="button" class="sign-button btn">SIGN IN</a>\
                     </div>';
                 $(".catalogue-wrapper").html(elementMessage);
                 return;
