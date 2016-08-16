@@ -8029,7 +8029,7 @@ class MobileCIAPIController extends BaseCIController
 
             $activityPageNotes = sprintf('Page viewed: Pokestop Detail, pokestop Id: %s', $product_id);
             $activityPage->setUser($user)
-                ->setActivityName('view_news')
+                ->setActivityName('view_pokestop')
                 ->setActivityNameLong('View Pokestop Detail')
                 ->setObject($pokestop)
                 ->setNews($pokestop)
