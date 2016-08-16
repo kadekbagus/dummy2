@@ -10676,21 +10676,6 @@ class MobileCIAPIController extends BaseCIController
                             ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'promotions.promotion_id')
                             ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id');
 
-            if ($userGender !== null) {
-                $newCoupons->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
-            }
-
-            if ($userAge !== null) {
-                if ($userAge === 0){
-                    $newCoupons->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
-                } else {
-                    if ($userAge >= 55) {
-                        $newCoupons->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
-                    } else {
-                        $newCoupons->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
-                    }
-                }
-            }
             $prefix = DB::getTablePrefix();
             $merchant_id = $retailer->merchant_id;
             $user_id = $user->user_id;
@@ -10700,9 +10685,6 @@ class MobileCIAPIController extends BaseCIController
             $newCoupons->join('promotion_rules', function($join) {
                     $join->on('promotions.promotion_id', '=', 'promotion_rules.promotion_id')
                         ->where('promotions.is_coupon', '=', 'Y');
-                })->join('issued_coupons', function($join) {
-                    $join->on('promotions.promotion_id', '=', 'issued_coupons.promotion_id')
-                        ->where('issued_coupons.status', '=', 'active');
                 })
                 ->whereRaw("
                     {$prefix}promotions.promotion_id NOT IN (
@@ -10730,7 +10712,6 @@ class MobileCIAPIController extends BaseCIController
                 })
                 ->where('promotions.status', '=', 'active')
                 ->where('promotions.coupon_validity_in_date', '>=', $now)
-                ->where('issued_coupons.user_id', $user->user_id)
                 ->groupBy('promotions.promotion_id');
 
             $couponData = $newCoupons->get();
