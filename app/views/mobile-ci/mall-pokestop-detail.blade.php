@@ -11,7 +11,11 @@
             <div class="vertical-align-middle-outer">
                 <div class="vertical-align-middle-inner">
                     <a href="{{{ asset($pokestop->image) }}}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer">
-                        <img src="{{ asset($pokestop->image) }}">
+                        <img src="{{{ asset($pokestop->image) }}}">
+                        <span class="zoom-info">
+                            Click to zoom
+                            <i class="fa fa-expand"> </i>
+                        </span>
                     </a>
                 </div>
             </div>
