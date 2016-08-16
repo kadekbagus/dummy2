@@ -234,6 +234,14 @@ Route::group(
         );
 
         Route::get(
+            '/customer/mallcoupon-wallet', ['as' => 'ci-coupon-detail-wallet',
+            function () {
+
+                return MobileCI\MobileCIAPIController::create()->getMallCouponDetailView();
+            }]
+        );
+
+        Route::get(
             '/customer/mallpromotions', ['as' => 'ci-promotion-list',
             function () {
                 return MobileCI\MobileCIAPIController::create()->getMallPromotionList();

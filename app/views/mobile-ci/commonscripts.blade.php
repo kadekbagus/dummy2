@@ -482,6 +482,18 @@
                 if(data.message === 'session_expired') {
                     window.location.replace('/customer');
                 }
+
+                if (helperObject !== undefined) {
+                    if (helperObject.coupon_type !== undefined) {
+                        var message = "{{ Lang::get('mobileci.greetings.no_coupon_listing') }}";
+                        if ('wallet' === helperObject.coupon_type && data.records.length === 0) {
+                            message = "{{ Lang::get('mobileci.greetings.no_coupon_wallet') }}";
+                        }
+
+                        var elementNoCouponWallet = '<h4>' + message + '</h4>';
+                        catalogueWrapper.html(elementNoCouponWallet);
+                    }
+                }
             }
         }).always(function(data){
             btn.removeAttr('disabled', 'disabled');
