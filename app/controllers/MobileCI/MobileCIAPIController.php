@@ -6571,8 +6571,8 @@ class MobileCIAPIController extends BaseCIController
 
             foreach ($listOfRec as $item) {
                 $item->image = empty($item->image) ? URL::asset('mobile-ci/images/default_news.png') : URL::asset($item->image);
-                $item->url = UrlBlock::blockedRoute('ci-coupon-detail', ['id' => $item->promotion_id, 'name' => Str::slug($item->promotion_name)], $this->session);
-                $item->redirect_url = URL::route('ci-coupon-detail', ['id' => $item->promotion_id, 'name' => Str::slug($item->promotion_name)]);
+                $item->url = UrlBlock::blockedRoute('ci-coupon-detail', ['id' => $item->promotion_id, 'name' => Str::slug($item->promotion_name), 'type' => $type], $this->session);
+                $item->redirect_url = URL::route('ci-coupon-detail', ['id' => $item->promotion_id, 'name' => Str::slug($item->promotion_name), 'type' => $type]);
                 $item->name = mb_strlen($item->promotion_name) > 64 ? mb_substr($item->promotion_name, 0, 64) . '...' : $item->promotion_name;
                 $item->item_id = $item->promotion_id;
             }
@@ -6642,15 +6642,23 @@ class MobileCIAPIController extends BaseCIController
             
 
             $promotion_id = trim(OrbitInput::get('id'));
+            $type = OrbitInput::get('type', 'available');
 
             $issued_coupons = IssuedCoupon::where('user_id', $user->user_id)
                                 ->where('promotion_id', $promotion_id)
                                 ->active()
                                 ->first();
 
-            if (empty($issued_coupons)) {
-                return Redirect::route('ci-tenant-list', array('coupon_id' => $promotion_id));
+            $added_to_wallet_detail = false;                   
+            if (!empty($issued_coupons)) {
+                //return Redirect::route('ci-tenant-list', array('coupon_id' => $promotion_id));
+                $added_to_wallet_detail = true;
             }
+
+            $is_coupon_wallet_detail = false;
+            if ($type == 'wallet') {
+                $is_coupon_wallet_detail = true;
+            } 
 
             $userAge = 0;
             if ($user->userDetail->birthdate !== '0000-00-00' && $user->userDetail->birthdate !== null) {
@@ -6686,23 +6694,6 @@ class MobileCIAPIController extends BaseCIController
                         });
                     });
                 });
-
-            // filter by age and gender
-            if ($userGender !== null) {
-                $coupons = $coupons->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
-            }
-
-            if ($userAge !== null) {
-                if ($userAge === 0){
-                    $coupons = $coupons->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
-                } else {
-                    if ($userAge >= 55) {
-                        $coupons = $coupons->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
-                    } else {
-                        $coupons = $coupons->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
-                    }
-                }
-            }
 
             $languages = $this->getListLanguages($retailer);
 
@@ -6875,8 +6866,8 @@ class MobileCIAPIController extends BaseCIController
                 'session' => $this->session,
                 'is_logged_in' => UrlBlock::isLoggedIn($this->session),
                 'user_email' => $user->role->role_name !== 'Guest' ? $user->user_email : '',
-                'is_coupon_wallet_detail' => true, //false = available | true = wallet
-                'added_to_wallet_detail' => true //false = not in wallet | true = in wallet
+                'is_coupon_wallet_detail' => $is_coupon_wallet_detail, //false = available | true = wallet
+                'added_to_wallet_detail' => $added_to_wallet_detail //false = not in wallet | true = in wallet
             ));
 
         } catch (Exception $e) {
