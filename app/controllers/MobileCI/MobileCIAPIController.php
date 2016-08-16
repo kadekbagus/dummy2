@@ -8037,7 +8037,7 @@ class MobileCIAPIController extends BaseCIController
                 ->save();
 
             return View::make('mobile-ci.mall-pokestop-detail', array(
-                'page_title' => $pokestop->news_name,
+                'page_title' => 'PokéMAPS<sup>TM</sup>',
                 'user' => $user,
                 'retailer' => $retailer,
                 'pokestop' => $pokestop,
