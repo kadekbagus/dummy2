@@ -1140,13 +1140,27 @@ class Activity extends Eloquent
      * Create new document in elasticsearch.
      *
      * @author Shelgi Prasetyo <shelgi@dominopos.com>
+     * @author Rio Astamal
      * @return void
      */
     protected function saveToElasticSearch()
     {
+        // Normal referer
+        $referer = NULL;
+
+        if (isset($_SERVER['HTTP_REFERER']) && ! empty($_SERVER['HTTP_REFERER'])) {
+            $referer = $_SERVER['HTTP_REFERER'];
+        }
+
+        // Orbit specific referer, this may override above
+        if (isset($_SERVER['HTTP_X_ORBIT_REFERER']) && ! empty($_SERVER['HTTP_X_ORBIT_REFERER'])) {
+            $referer = $_SERVER['HTTP_X_ORBIT_REFERER'];
+        }
+
         // queue for create/update activity document in elasticsearch
         Queue::push('Orbit\\Queue\\Elasticsearch\\ESActivityUpdateQueue', [
             'activity_id' => $this->activity_id,
+            'referer' => $referer
         ]);
     }
 
