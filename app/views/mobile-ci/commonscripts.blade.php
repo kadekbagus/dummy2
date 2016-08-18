@@ -396,34 +396,75 @@
      * parameters: itemtype(news,promotion,lucky-draw,my-coupon)
      *             ids(array(list of already loaded ids))
      */
-    function loadMoreX(itemtype, ids) {
-        var catalogueWrapper = $('.catalogue-wrapper');
-        var itemList = [];
-        var btn = $('#load-more-x');
+    function loadMoreX(itemtype, ids, helperObject) {
+        var catalogueWrapper = $('.catalogue-wrapper'),
+            itemList = [],
+            btn = $('#load-more-x'),
+            ajaxParams = {
+                take: take,
+                keyword: keyword,
+                skip: skip,
+                ids: ids
+            };
+
+        if (helperObject !== undefined) {
+            /* skip page for coupon only */
+            if (helperObject.skip !== undefined) {
+                ajaxParams.skip = helperObject.skip;
+            }
+
+            if (helperObject.coupon_type !== undefined) {
+                ajaxParams.coupon_type = helperObject.coupon_type;
+            }
+        }
+
         btn.attr('disabled', 'disabled');
         btn.html('<i class="fa fa-circle-o-notch fa-spin"></i>');
         $.ajax({
             url: apiPath + itemtype + '/load-more',
             method: 'GET',
-            data: {
-                take: take,
-                keyword: keyword,
-                skip: skip,
-                ids: ids
-            }
+            data: ajaxParams
         }).done(function(data) {
             if(data.status == 1) {
                 skip = skip + take;
                 if(data.records.length > 0) {
                     for(var i = 0; i < data.records.length; i++) {
-                        var coupon_badge = '';
+                        var coupon_badge = '',
+                            walletIcon = 'fa-plus';
+                            walletText = '{{ Lang::get("mobileci.coupon.add_wallet") }}',
+                            circleColor = '',
+                            couponWallet = '';
+
                         if(itemtype === 'my-coupon') {
-                            coupon_badge = '<div class="coupon-new-badge"><div class="new-number">'+data.records[i].quantity+'</div></div>';
+                            if (data.records[i].added_to_wallet === 'true') {
+                                walletIcon = 'fa-check';
+                                walletText = '{{ Lang::get("mobileci.coupon.added_wallet") }}';
+                                circleColor = 'added';
+                            }
                         }
-                        var list = '<div class="col-xs-12 col-sm-12 item-x" data-ids="'+data.records[i].item_id+'" id="item-'+data.records[i].item_id+'">\
+
+                         if (helperObject !== undefined) {
+                            if (helperObject.coupon_type !== undefined) {
+                                if ('available' === helperObject.coupon_type) {
+                                    couponWallet = '\
+                                        <div class="coupon-wallet pull-right">\
+                                            <a href="' + data.records[i].add_to_wallet_hash + '">\
+                                                <span class="fa-stack fa-2x clickable" data-ids="' + data.records[i].item_id + '" data-isaddedtowallet="' + data.records[i].added_to_wallet + '">\
+                                                    <i class="fa fae-wallet fa-stack-2x"></i>\
+                                                    <i class="fa ' + circleColor + ' fa-circle fa-stack-2x"></i>\
+                                                    <i class="fa ' + walletIcon + ' fa-stack-1x state-icon"></i>\
+                                                </span>\
+                                            </a>\
+                                            <span class="wallet-text">' + walletText + '</span>\
+                                        </div>';
+                                }
+                            }
+                        }
+
+                        var list = '<div class="col-xs-12 col-sm-12 item-x" data-ids="' + data.records[i].item_id + '" id="item-' + data.records[i].item_id + '">\
                                 <section class="list-item-single-tenant">\
-                                    <a class="list-item-link" href="'+data.records[i].redirect_url+'" href="'+data.records[i].url+'">\
-                                        '+coupon_badge+'\
+                                    '+ couponWallet +'\
+                                    <a class="list-item-link" data-href="'+data.records[i].redirect_url+'" href="'+data.records[i].url+'">\
                                         <div class="list-item-info">\
                                             <header class="list-item-title">\
                                                 <div><strong>'+data.records[i].name+'</strong></div>\
@@ -441,6 +482,28 @@
                         itemList.push(list);
                     }
                     catalogueWrapper.append(itemList.join(''));
+                } else {
+                    if (helperObject !== undefined) {
+                        if (helperObject.coupon_type !== undefined) {
+                            var message = "{{ Lang::get('mobileci.greetings.no_coupons_listing') }}";
+                            if ('wallet' === helperObject.coupon_type) {
+                                message = " {{ Lang::get('mobileci.greetings.no_coupon_wallet_1') }}\
+                                            <div class='coupon-wallet-message-icon'>\
+                                                <span class='fa-stack fa-2x'>\
+                                                    <i class='fa fae-wallet fa-stack-2x'></i>\
+                                                    <i class='fa fa-circle fa-stack-2x'></i>\
+                                                    <i class='fa fa-plus fa-stack-1x state-icon'></i>\
+                                                </span>\
+                                            </div>\
+                                            {{ Lang::get('mobileci.greetings.no_coupon_wallet_2') }}";
+                            }
+
+                            var elementNoCouponWallet = '<div class="col-xs-12 notification-message">\
+                                                            <h4>' + message + '</h4>\
+                                                         </div>';
+                            catalogueWrapper.html(elementNoCouponWallet);
+                        }
+                    }
                 }
                 if (data.total_records - take <= 0) {
                     btn.remove();
@@ -674,6 +737,8 @@
                             tenants = '<h4>{{Lang::get('mobileci.page_title.tenant_directory')}}</h4><ul>'
                             for(var i = 0; i < data.data.grouped_records.tenants.length; i++) {
                                 var hide = i > 2 ? 'limited hide' : '';
+                                var description = data.data.grouped_records.tenants[i].object_description ? data.data.grouped_records.tenants[i].object_description : '';
+                                description = description.indexOf('<br') > 0 ? description.slice(0, description.indexOf('<br')) : description;
                                 tenants += '<li class="search-result-group '+ hide +'">\
                                         <a data-href="'+ data.data.grouped_records.tenants[i].object_redirect_url +'" href="'+ data.data.grouped_records.tenants[i].object_url +'">\
                                             <div class="col-xs-2 text-center">\
@@ -681,7 +746,7 @@
                                             </div>\
                                             <div class="col-xs-10">\
                                                 <h5><strong>'+ data.data.grouped_records.tenants[i].object_name +'</strong></h5>\
-                                                <p>'+ (data.data.grouped_records.tenants[i].object_description ? data.data.grouped_records.tenants[i].object_description : '') +'</p>\
+                                                <p>'+ description +'</p>\
                                             </div>\
                                         </a>\
                                     </li>';
@@ -697,6 +762,8 @@
                             services = '<h4>{{Lang::get('mobileci.page_title.service_directory')}}</h4><ul>'
                             for(var i = 0; i < data.data.grouped_records.services.length; i++) {
                                 var hide = i > 2 ? 'limited hide' : '';
+                                var description = data.data.grouped_records.services[i].object_description ? data.data.grouped_records.services[i].object_description : '';
+                                description = description.indexOf('<br') > 0 ? description.slice(0, description.indexOf('<br')) : description;
                                 services += '<li class="search-result-group '+ hide +'">\
                                         <a data-href="'+ data.data.grouped_records.services[i].object_redirect_url +'" href="'+ data.data.grouped_records.services[i].object_url +'">\
                                             <div class="col-xs-2 text-center">\
@@ -704,7 +771,7 @@
                                             </div>\
                                             <div class="col-xs-10">\
                                                 <h5><strong>'+ data.data.grouped_records.services[i].object_name +'</strong></h5>\
-                                                <p>'+ (data.data.grouped_records.services[i].object_description ? data.data.grouped_records.services[i].object_description : '') +'</p>\
+                                                <p>'+ description +'</p>\
                                             </div>\
                                         </a>\
                                     </li>';
@@ -719,6 +786,8 @@
                             promotions = '<h4>{{Lang::get('mobileci.page_title.promotions')}}</h4><ul>'
                             for(var i = 0; i < data.data.grouped_records.promotions.length; i++) {
                                 var hide = i > 2 ? 'limited hide' : '';
+                                var description = data.data.grouped_records.promotions[i].object_description ? data.data.grouped_records.promotions[i].object_description : '';
+                                description = description.indexOf('<br') > 0 ? description.slice(0, description.indexOf('<br')) : description;
                                 promotions += '<li class="search-result-group '+ hide +'">\
                                         <a data-href="'+ data.data.grouped_records.promotions[i].object_redirect_url +'" href="'+ data.data.grouped_records.promotions[i].object_url +'">\
                                             <div class="col-xs-2 text-center">\
@@ -726,7 +795,7 @@
                                             </div>\
                                             <div class="col-xs-10">\
                                                 <h5><strong>'+ data.data.grouped_records.promotions[i].object_name +'</strong></h5>\
-                                                <p>'+ (data.data.grouped_records.promotions[i].object_description ? data.data.grouped_records.promotions[i].object_description : '') +'</p>\
+                                                <p>'+ description +'</p>\
                                             </div>\
                                         </a>\
                                     </li>';
@@ -741,6 +810,8 @@
                             news = '<h4>{{Lang::get('mobileci.page_title.news')}}</h4><ul>'
                             for(var i = 0; i < data.data.grouped_records.news.length; i++) {
                                 var hide = i > 2 ? 'limited hide' : '';
+                                var description = data.data.grouped_records.news[i].object_description ? data.data.grouped_records.news[i].object_description : '';
+                                description = description.indexOf('<br') > 0 ? description.slice(0, description.indexOf('<br')) : description;
                                 news += '<li class="search-result-group '+ hide +'">\
                                         <a data-href="'+ data.data.grouped_records.news[i].object_redirect_url +'" href="'+ data.data.grouped_records.news[i].object_url +'">\
                                             <div class="col-xs-2 text-center">\
@@ -748,7 +819,7 @@
                                             </div>\
                                             <div class="col-xs-10">\
                                                 <h5><strong>'+ data.data.grouped_records.news[i].object_name +'</strong></h5>\
-                                                <p>'+ (data.data.grouped_records.news[i].object_description ? data.data.grouped_records.news[i].object_description : '') +'</p>\
+                                                <p>'+ description +'</p>\
                                             </div>\
                                         </a>\
                                     </li>';
@@ -763,6 +834,8 @@
                             coupons = '<h4>{{Lang::get('mobileci.page_title.coupons')}}</h4><ul>'
                             for(var i = 0; i < data.data.grouped_records.coupons.length; i++) {
                                 var hide = i > 2 ? 'limited hide' : '';
+                                var description = data.data.grouped_records.coupons[i].object_description ? data.data.grouped_records.coupons[i].object_description : '';
+                                description = description.indexOf('<br') > 0 ? description.slice(0, description.indexOf('<br')) : description;
                                 coupons += '<li class="search-result-group '+ hide +'">\
                                         <a data-href="'+ data.data.grouped_records.coupons[i].object_redirect_url +'" href="'+ data.data.grouped_records.coupons[i].object_url +'">\
                                             <div class="col-xs-2 text-center">\
@@ -770,7 +843,7 @@
                                             </div>\
                                             <div class="col-xs-10">\
                                                 <h5><strong>'+ data.data.grouped_records.coupons[i].object_name +'</strong></h5>\
-                                                <p>'+ (data.data.grouped_records.coupons[i].object_description ? data.data.grouped_records.coupons[i].object_description : '') +'</p>\
+                                                <p>'+ description +'</p>\
                                             </div>\
                                         </a>\
                                     </li>';
@@ -785,6 +858,8 @@
                             lucky_draws = '<h4>{{Lang::get('mobileci.page_title.lucky_draws')}}</h4><ul>'
                             for(var i = 0; i < data.data.grouped_records.lucky_draws.length; i++) {
                                 var hide = i > 2 ? 'limited hide' : '';
+                                var description = data.data.grouped_records.lucky_draws[i].object_description ? data.data.grouped_records.lucky_draws[i].object_description : '';
+                                description = description.indexOf('<br') > 0 ? description.slice(0, description.indexOf('<br')) : description;
                                 lucky_draws += '<li class="search-result-group '+ hide +'">\
                                         <a data-href="'+ data.data.grouped_records.lucky_draws[i].object_redirect_url +'" href="'+ data.data.grouped_records.lucky_draws[i].object_url +'">\
                                             <div class="col-xs-2 text-center">\
@@ -792,7 +867,7 @@
                                             </div>\
                                             <div class="col-xs-10">\
                                                 <h5><strong>'+ data.data.grouped_records.lucky_draws[i].object_name +'</strong></h5>\
-                                                <p>'+ (data.data.grouped_records.lucky_draws[i].object_description ? data.data.grouped_records.lucky_draws[i].object_description : '') +'</p>\
+                                                <p>'+ description +'</p>\
                                             </div>\
                                         </a>\
                                     </li>';

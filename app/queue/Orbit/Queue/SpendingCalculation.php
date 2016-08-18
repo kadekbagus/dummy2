@@ -29,18 +29,18 @@ class SpendingCalculation
         $campaign_type = $data['campaign_type'];
 
         if ($campaign_type === 'coupon') {
-            $getMall = PromotionRetailer::select('promotions.*', DB::raw("CASE WHEN {$prefix}promotion_retailer.object_type = 'mall' THEN {$prefix}promotion_retailer.retailer_id ELSE {$prefix}merchants.parent_id END AS mall_id"))
+            $getMall = PromotionRetailer::select('promotions.*', DB::raw("CASE WHEN {$prefix}promotion_retailer.object_type = 'mall' THEN {$prefix}promotion_retailer.retailer_id ELSE {$prefix}merchants.parent_id END AS per_mall_id"))
                                 ->join('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
                                 ->join('promotions', 'promotions.promotion_id', '=', 'promotion_retailer.promotion_id')
                                 ->where('promotion_retailer.promotion_id', $campaign_id)
-                                ->groupBy('mall_id')
+                                ->groupBy('per_mall_id')
                                 ->get();
         } else {
-            $getMall = NewsMerchant::select('news.*', DB::raw("CASE WHEN {$prefix}news_merchant.object_type = 'mall' THEN {$prefix}news_merchant.merchant_id ELSE {$prefix}merchants.parent_id END AS mall_id"))
+            $getMall = NewsMerchant::select('news.*', DB::raw("CASE WHEN {$prefix}news_merchant.object_type = 'mall' THEN {$prefix}news_merchant.merchant_id ELSE {$prefix}merchants.parent_id END AS per_mall_id"))
                                 ->join('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
                                 ->join('news', 'news.news_id', '=', 'news_merchant.news_id')
                                 ->where('news_merchant.news_id', $campaign_id)
-                                ->groupBy('mall_id')
+                                ->groupBy('per_mall_id')
                                 ->get();
         }
 
@@ -48,7 +48,7 @@ class SpendingCalculation
             // Begin database transaction
             DB::beginTransaction();
 
-            $mall = $listMall['mall_id'];
+            $mall = $listMall['per_mall_id'];
             $begin_date = $listMall['begin_date'];
             $end_date = $listMall['end_date'];
 

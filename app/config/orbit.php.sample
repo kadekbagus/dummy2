@@ -21,7 +21,7 @@ return array(
         'cacert' => '/path/to/cacert.crt',
 
         // Prefix to access indices
-        'indices_prefix' => 'v23_'
+        'indices_prefix' => 'v2x_',
 
         // List of indices that we have in Elasticsearch
         // All the query to the index name will be appended by prefix automatically
@@ -43,6 +43,12 @@ return array(
         ]
     ],
 
+    // db ip configuration
+    'dbip' => [
+        'connection_id' => 'dbip',
+        'table' => 'july_2016'
+    ],
+
     // Demo environtment
     'is_demo' => FALSE,
 
@@ -59,6 +65,7 @@ return array(
         // 'ci-promotion-detail',
         // 'ci-coupon-list',
         // 'ci-coupon-detail',
+        // 'ci-coupon-detail-wallet',
         // 'ci-notification-list',
         // 'ci-notification-detail',
         // 'ci-my-account',
@@ -196,8 +203,23 @@ return array(
     // agreement configuration
     'agreement' => array(
         // This should be frontend URL not backend
-        'mall'  => 'http://portal.orbit-mall.here/#/service-agreement?token=%s',
-        'pmp'   => 'http://pmp-portal.orbit-mall.here/?mode=pmp/#/service-agreement?token=%s'
+        'mall'  => 'https://mall.gotomalls.cool/#/service-agreement?token=%s',
+        'pmp'   => 'https://pmp.gotomalls.cool/?mode=pmp/#/service-agreement?token=%s'
+    ),
+
+    'user_location' => array(
+        'query_string' => array(
+            // query string name for user location
+            'name'      => 'ul',
+        ),
+        'cookie' => array(
+            // cookie name for user location
+            'name'      => 'ul',
+
+            // additional time to refresh the user location cookie (in seconds)
+            // each time Activity is saved
+            'expire'    => 3600,
+        ),
     ),
 
     'shop' => array(
@@ -217,7 +239,7 @@ return array(
 
         // Internet offline check
         'offline_check' => [
-            'enable'    => TRUE,
+            'enable'    => FALSE,
 
             // enable must be true
             // in milliseconds
@@ -237,10 +259,10 @@ return array(
         'after_logout_url' => '',
 
         // back to map url
-        'back_to_map_url' => 'http://gotomalls.cool/#/?redirect_ci=false',
+        'back_to_map_url' => 'https://www.gotomalls.cool/#/?redirect_ci=false',
 
         // after sign in social url
-        'after_social_sign_in' => 'http://gotomalls.cool',
+        'after_social_sign_in' => 'https://www.gotomalls.cool',
 
         // enable or disable the google analytics tracking
         'enable_google_analytics' => FALSE,

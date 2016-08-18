@@ -20,17 +20,28 @@
     @if(!is_null($page_title))
     <div class="header-location-banner">
         @if(empty(Input::get('keyword')))
-        <span>
-            @if(is_null($page_title))
-            {{ 'ORBIT' }}
+            @if(isset($page_sub_title) && !empty($page_sub_title))
+        <div class="btn-group btn-group-justified tab-button" role="group">
+            <div class="btn-group" role="group">
+                <a type="button" class="coupon-button btn-upload btn btn-primary {{ !$is_coupon_wallet ? 'active' : '' }}" data-type="available">{{{ $page_sub_title['available_coupons'] }}}</a>
+            </div>
+            <div class="btn-group" role="group">
+                <a type="button" class="coupon-button btn btn-primary {{ $is_coupon_wallet ? 'active' : '' }}" data-type="wallet">{{{ $page_sub_title['coupon_wallet'] }}}</a>
+            </div>
+        </div>
             @else
-                @if(mb_strlen($page_title) >= 30)
-                {{{ substr($page_title, 0, 30) . '...' }}}
+        <span class="page-title">
+                @if(is_null($page_title))
+                {{ 'ORBIT' }}
                 @else
-                {{ $page_title }}
+                    @if(mb_strlen($page_title) >= 30)
+                    {{{ substr($page_title, 0, 30) . '...' }}}
+                    @else
+                    {{{ $page_title }}}
+                    @endif
                 @endif
-            @endif
         </span>
+            @endif
         @else
         <div class="col-xs-6">
             <span>

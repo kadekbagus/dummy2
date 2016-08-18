@@ -463,6 +463,9 @@ return array(
         'lucky_draw_prizes'         => '幸運な抽選賞',
         'no_prize'                  => '賞金はすぐに来ています',
         'lucky_draw_download_title' => '抽選番号をダウンロード',
+        'upload_receipt'            => 'Upload Receipt',
+        'upload_success'            => 'Upload Successful!',
+        'upload_congrats'           => 'You have obtained 1 lucky number! Here is your lucky number ',
     ),
 
     'notification' => array(

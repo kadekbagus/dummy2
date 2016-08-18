@@ -56,12 +56,14 @@ class EmployeePrinterController extends DataPrinterController
         $malls = $response['builder'];
         $totalRec = $response['count'];
 
-        $this->prepareUnbufferedQuery();
+        $pdo = DB::Connection()->getPdo();
+
+        $prepareUnbufferedQuery = $pdo->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, FALSE);
 
         $sql = $malls->toSql();
         $binds = $malls->getBindings();
 
-        $statement = $this->pdo->prepare($sql);
+        $statement = $pdo->prepare($sql);
         $statement->execute($binds);
 
         $pageTitle = 'Employee List';
@@ -124,11 +126,11 @@ class EmployeePrinterController extends DataPrinterController
                         $lastUpdate = $this->printDateTime($row->updated_at, null, 'd F Y H:i:s');
                     }
                     printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
-                        '', $this->printUtf8($row->user_firstname . ' ' . $row->user_lastname),
-                            $this->printUtf8($row->user_email),
-                            $this->printUtf8($row->role_name),
-                            $this->printUtf8($row->employee_id_char),
-                            $this->printUtf8($row->status),
+                        '', $row->user_firstname . ' ' . $row->user_lastname,
+                            $row->user_email,
+                            $row->role_name,
+                            $row->employee_id_char,
+                            $row->status,
                             $lastUpdate
                        );
 

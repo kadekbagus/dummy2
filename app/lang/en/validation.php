@@ -148,6 +148,7 @@ return array(
             'domain'                 => 'Mall URL Application Domain name has already been taken',
             'mobile_default_lang'    => 'Cannot remove default supported language',
             'link_mobile_default_lang'=> 'Cannot change default supported language has campaign translation',
+            'link_to_tenant'         => 'Link to tenant is not allowed',
         ),
         'access' => array(
             'forbidden'              => 'You do not have permission to :action',
@@ -163,6 +164,7 @@ return array(
             'missingmasterpassword'  => 'The master password is not set',
             'wrongmasterpassword'    => 'The master password is incorrect',
             'agreement'              => 'Agreement is not accepted yet',
+            'select_all_tenants'     => 'You do not have permission to select all tenants',
         ),
         'empty' => array(
             'age'                  => 'The Age Range ID you specified is not found',
@@ -338,6 +340,7 @@ return array(
             'tenant_type' => 'Tenant type you specified is not found : the valid values are: tenant, service',
             'floor' => 'The Floor you specified is not found',
             'mobile_default_lang' => 'Mobile default language must on list languages',
+            'account_type'         => 'Account type not exist',
         ),
         'queryerror' => 'Database query error, turn on debug mode to see the full query',
         'jsonerror'  => array(
@@ -391,6 +394,8 @@ return array(
             'geo_latitude'  => 'The Geofence latitude is not on range',
             'geo_longitude' => 'The Geofence longitude is not on range',
             'geo_area'      => 'The Geofence area is not valid',
+            'min' => 'Minimum password confirmation minimal :min characters.',
+            'confirmed_password' => 'Password confirmation is not appropriate.',
         ),
         'actionlist' => array(
             'change_password'           => 'change password',

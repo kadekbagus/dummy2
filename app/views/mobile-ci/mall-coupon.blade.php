@@ -45,6 +45,18 @@
                 <div class="vertical"></div>
             </div>
         </div>
+        @if(!$wallet['is_coupon_wallet'] || !$wallet['added_to_wallet'])
+        <div class="coupon-wallet pull-right">
+            <a href="{{ $wallet['hash'] }}">
+                <span class="fa-stack fa-2x clickable" data-ids="{{ $coupon->promotion_id }}" data-isaddedtowallet="{{ $wallet['added_to_wallet'] }}">
+                    <i class="fa fae-wallet fa-stack-2x"></i>
+                    <i class="fa {{ $wallet['circle'] }} fa-circle fa-stack-2x"></i>
+                    <i class="fa {{ $wallet['icon'] }} fa-stack-1x state-icon"></i>
+                </span>
+            </a>
+            <span class="wallet-text">{{ $wallet['text'] }}</span>
+        </div>
+        @endif
         <div class="actions-panel" style="display: none;">
             <ul class="list-unstyled">
                 <li>
@@ -75,23 +87,16 @@
                 <li>
                     @if(count($tenants) === 1 && ! $cs_reedem)
                     <a data-href="{{ route('ci-tenant-detail', ['id' => $tenants[0]->retailer_id]) }}" href="{{{ \Orbit\Helper\Net\UrlChecker::blockedRoute('ci-tenant-detail', ['id' => $tenants[0]->retailer_id, 'name' => Str::slug($tenants[0]->name)], $session) }}}">
-                    @else
+                    @elseif(count($tenants) > 1 || $cs_reedem)
                     <a data-href="{{ route('ci-tenant-list', ['coupon_redeem_id' => $coupon->promotion_id]) }}" href="{{{ \Orbit\Helper\Net\UrlChecker::blockedRoute('ci-tenant-list', ['coupon_redeem_id' => $coupon->promotion_id, 'name' => Str::slug($coupon->promotion_name)], $session) }}}">
+                    @else
+                    <a class="disabled">
                     @endif
                         <span class="fa fa-stack icon">
                             <i class="fa fa-circle fa-stack-2x"></i>
                             <i class="fa fa-laptop fa-inverse fa-stack-1x"></i>
                         </span>
                         <span class="text">{{{ Lang::get('mobileci.tenant.redemption_places') }}}</span>
-                    </a>
-                </li>
-                <li>
-                    <a id="useBtn">
-                        <span class="fa fa-stack icon">
-                            <i class="fa fa-circle fa-stack-2x"></i>
-                            <i class="fa fa-scissors fa-inverse fa-stack-1x"></i>
-                        </span>
-                        <span class="text">{{{ Lang::get('mobileci.coupon.use_coupon') }}}</span>
                     </a>
                 </li>
                 @endif
@@ -117,14 +122,19 @@
       </div>
     </div>
 </div>
-<div class="row product-info padded" style="z-index: 101;">
+@if($wallet['is_coupon_wallet'] && $wallet['added_to_wallet'])
+<div class="row fullbutton">
+    <a class="col-xs-12" id="useBtn">
+        <i class="fa fa-scissors"></i>
+        <span class="text">{{{ Lang::get('mobileci.coupon.use_coupon') }}}</span>
+    </a>
+</div>
+@endif
+<div class="row product-info padded @if($wallet['is_coupon_wallet'] && $wallet['added_to_wallet']) disable-box-shadow @endif" style="z-index: 101;">
     <div class="col-xs-12">
         <div class="row">
             <div class="col-xs-12">
                 <p>{{ nl2br(e($coupon->description)) }}</p>
-            </div>
-            <div class="col-xs-12">
-                <p>{{ nl2br(e($coupon->long_description)) }}</p>
             </div>
             <div class="col-xs-12">
                 <h4><strong>{{{ Lang::get('mobileci.coupon_detail.validity_label') }}}</strong></h4>

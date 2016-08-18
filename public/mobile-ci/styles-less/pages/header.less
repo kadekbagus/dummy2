@@ -26,9 +26,12 @@
         background-color: @theme-main-complimentary;
         color: @theme-main-complimentary-2;
         font-size: 1.2em;
-        padding-left: .5em;
         position:absolute;
         width:100%;
+
+        .page-title {
+            padding-left: .5em;
+        }
     }
     .buttons-list {
         list-style-type: none;
@@ -64,6 +67,16 @@
     }
     .buttons-list.right {
         float: right;
+    }
+    .tab-button {
+        .btn {
+            background:@theme-main-complimentary;
+            border: 0;
+
+            &.active {
+                background:@theme-main-complimentary-3;
+            }
+        }
     }
 }
 

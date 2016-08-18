@@ -20,7 +20,7 @@ return array(
         'searching'         => 'SEARCH',
         'new_products'      => 'NEW PRODUCTS',
         'promotions'        => 'PROMOTIONS',
-        'my_coupons'        => 'MY COUPONS',
+        'my_coupons'        => 'COUPONS',
         'coupon_single'     => 'COUPON',
         'coupon_plural'     => 'COUPONS',
         'promotion'         => 'PROMOTION',
@@ -34,7 +34,7 @@ return array(
         'coupons_tenants'   => 'COUPON STORES',
         'news_tenants'      => 'NEWS STORES',
         'events_tenants'    => 'EVENT STORES',
-        'coupons'           => 'MY COUPONS',
+        'coupons'           => 'COUPONS',
         'promotions'        => 'PROMOTIONS',
         'news'              => 'NEWS',
         'membership'        => 'MEMBERSHIP',
@@ -48,11 +48,18 @@ return array(
         'back_to_map_lower' => 'Back to Map',
     ),
 
+    'page_sub_title' => array(
+        'coupons' => array(
+            'available_coupons' => 'AVAILABLE COUPONS',
+            'coupon_wallet'     => 'COUPON WALLET'
+        )
+    ),
+
     'widgets' => array(
         'catalogue'          => 'CATALOGUE',
         'new_product'        => 'NEW PRODUCTS',
         'promotion'          => 'Promotions',
-        'coupon'             => 'My Coupons',
+        'coupon'             => 'Coupons',
         'tenant'             => 'Stores',
         'service'            => 'Services',
         'lucky_draw'         => 'Lucky Draws',
@@ -85,6 +92,8 @@ return array(
         'no_promotions_listing'        => 'Sorry, there is no promotion at the moment in this mall.',
         'no_stores_listing'            => 'Sorry, there is no store at the moment in this mall.',
         'no_services_listing'          => 'Sorry, there is no service at the moment in this mall.',
+        'no_coupon_wallet_1'           => 'You have not added any coupons to your wallet. Tap on',
+        'no_coupon_wallet_2'           => 'to add a coupon to your wallet.'
     ),
 
     // modal specific lang
@@ -94,7 +103,7 @@ return array(
         'email_error'            => 'Please enter your email first.',
         'event_title'            => 'Events',
         'info_title'             => 'Info',
-        'coupon_title'           => 'My Coupons',
+        'coupon_title'           => 'Coupons',
         'search_title'           => 'Search Store',
         'checkout_title'         => 'Checkout',
         'tip_title'              => 'Tip',
@@ -312,7 +321,10 @@ return array(
         'my_coupon'                        => 'My Coupon',
         'use'                              => 'Use',
         'next_time'                        => 'Next time',
-        'check_coupon'                     => 'You can check your coupons in Home Page <i class="fa fa-arrow-right"></i> My Coupons',
+        'check_coupon'                     => 'You can check your coupons in Home Page <i class="fa fa-arrow-right"></i> Coupons',
+        'add_wallet'                       => 'Add to <br/> Wallet',
+        'added_wallet'                     => 'Added to <br/> Wallet',
+        'login_to_show_coupon_wallet'      => 'You need to sign in to view your coupon wallet.'
     ),
 
     'coupon_list' => array(
@@ -463,6 +475,9 @@ return array(
         'lucky_draw_prizes'         => 'Lucky Draw Prizes',
         'no_prize'                  => 'The prize is coming soon',
         'lucky_draw_download_title' => 'Download Lucky Draw Number',
+        'upload_receipt'            => 'Upload Receipt',
+        'upload_success'            => 'Upload Successful!',
+        'upload_congrats'           => 'You have obtained 1 lucky number! Here is your lucky number ',
     ),
 
     'notification' => array(
@@ -508,7 +523,7 @@ return array(
             'content' => 'Check out promotions for great money-saving deals.'
         ),
         'coupon' => array(
-            'title'   => 'My Coupons',
+            'title'   => 'Coupons',
             'content' => 'See the list of shopping coupons that you have obtained. Redeem them now!'
         ),
         'end' => array(

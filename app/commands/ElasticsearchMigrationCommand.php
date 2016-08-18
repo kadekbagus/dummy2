@@ -101,6 +101,8 @@ class ElasticsearchMigrationCommand extends Command
         $directory = 'migrations';
         $suffixInfo = 'Migrated:';
 
+        $env = App::environment();
+
         if ($mode === 'rollback') {
             $directory = 'rollback';
             $suffixInfo = 'Rollback:';
@@ -113,12 +115,13 @@ class ElasticsearchMigrationCommand extends Command
             $json = json_decode($origJson, TRUE);   // associative array
 
             if ($this->option('dry-run')) {
-                $this->info(sprintf('[DRY RUN] %s %s', $suffixInfo, $file));
+                $this->info(sprintf("[DRY RUN] %s %s", $suffixInfo, $file));
                 readfile($fullpath);
+                echo "\n";
                 continue;
             }
 
-            $indexPrefix = Config::get('elasticsearch.indices_prefix');
+            $indexPrefix = Config::get('orbit.elasticsearch.indices_prefix');
             $params = [
                 'index' => $indexPrefix . $json['index'],
                 'body' => $json['es_data']
@@ -132,7 +135,7 @@ class ElasticsearchMigrationCommand extends Command
                     break;
 
                 case 'delete_index':
-                    $response = $this->es->indices()->delete(['index' => $json['index']]);
+                    $response = $this->es->indices()->delete(['index' => $indexPrefix . $json['index']]);
                     if (isset($response['acknowledged']) && isset($response['acknowledged'])) {
                         $success = TRUE;
                     }
@@ -153,12 +156,12 @@ class ElasticsearchMigrationCommand extends Command
                     break;
 
                 default:
-                    $this->error('Unknown action on json document.');
+                    $this->error(sprintf('Unknown action "%s" on json document.', $json['action']));
                     break;
             }
 
             if ($mode === 'rollback') {
-                unlink($this->elasticDataDir . '/migrated/' . $file);
+                unlink($this->elasticDataDir . '/migrated/' . $env . '/' . $file);
             } else {
                 $this->writeMigratedFile($file);
             }
@@ -180,8 +183,10 @@ class ElasticsearchMigrationCommand extends Command
             return pathinfo($file, PATHINFO_BASENAME);
         };
 
+        $env = App::environment();
+
         if ($mode === 'rollback') {
-            $rolledbackFiles = array_map($onlyName, glob($this->elasticDataDir . '/migrated/*.esm'));
+            $rolledbackFiles = array_map($onlyName, glob($this->elasticDataDir . '/' . '/migrated/' . $env . '/*.esm'));
 
             // Reverse the order, because rollback should happens from newest to oldest
             rsort($rolledbackFiles);
@@ -190,7 +195,7 @@ class ElasticsearchMigrationCommand extends Command
         }
 
         $migrationsDir = array_map($onlyName, glob($this->elasticDataDir . '/migrations/*.esm'));
-        $migratedDir = array_map($onlyName, glob($this->elasticDataDir . '/migrated/*.esm'));
+        $migratedDir = array_map($onlyName, glob($this->elasticDataDir . '/migrated/' . $env . '/*.esm'));
 
         return array_diff($migrationsDir, $migratedDir);
     }
@@ -203,10 +208,19 @@ class ElasticsearchMigrationCommand extends Command
      */
     protected function writeMigratedFile($file)
     {
+        $env = App::environment();
+
+        // Get the migrated directory for current working environment
+        $migratedDir = $this->elasticDataDir . '/migrated/' . $env;
+
+        if (! file_exists($migratedDir)) {
+            @mkdir($migratedDir, 0755, TRUE);
+        }
+
         // Copy the contents of what is inside /rollback/$file to the
         // migrated. We can use function copy() also.
         $rollbackFile = $this->elasticDataDir . '/rollback/' . $file;
-        $migratedFile = $this->elasticDataDir . '/migrated/' . $file;
+        $migratedFile = $migratedDir . '/' . $file;
 
         return copy($rollbackFile, $migratedFile);
     }

@@ -53,6 +53,12 @@ return array(
 		),
 
 		'mysql' => array(
+			'read'		=> array(
+				'host'	=> 'localhost'
+			),
+			'write'		=> array(
+				'host'	=> 'localhost'
+			),
 			'driver'    => 'mysql',
 			'host'      => 'localhost',
 			'database'  => '',
@@ -60,38 +66,18 @@ return array(
 			'password'  => '',
 			'charset'   => 'utf8',
 			'collation' => 'utf8_unicode_ci',
-			'prefix'    => 'orbs_',
+			'prefix'    => 'orb_',
 		),
 
-		'symmetric' => array(
+		'dbip' => array(
 			'driver'    => 'mysql',
 			'host'      => 'localhost',
-			'database'  => '',
+			'database'  => 'orbit_db_ip',
 			'username'  => 'root',
-			'password'  => '',
+			'password'  => 'root',
 			'charset'   => 'utf8',
 			'collation' => 'utf8_unicode_ci',
-			'prefix'    => 'sym_',
-		),
-
-		'pgsql' => array(
-			'driver'   => 'pgsql',
-			'host'     => 'localhost',
-			'database' => 'forge',
-			'username' => 'forge',
-			'password' => '',
-			'charset'  => 'utf8',
-			'prefix'   => '',
-			'schema'   => 'public',
-		),
-
-		'sqlsrv' => array(
-			'driver'   => 'sqlsrv',
-			'host'     => 'localhost',
-			'database' => 'database',
-			'username' => 'root',
-			'password' => '',
-			'prefix'   => '',
+			'prefix'    => 'orb_',
 		),
 
 	),

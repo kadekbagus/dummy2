@@ -328,9 +328,7 @@ if(sizeof($tenant->newsPromotionsProfiling) > 0 || sizeof($tenant->newsProfiling
             <!-- <li><span class="tenant-list-icon"><i class="fa fa-map-marker fa-lg" style="padding-left: 11px;"></i></span><p class="tenant-list-text">{{{ !empty($tenant->floor) ? $tenant->floor : '' }}}{{{ !empty($tenant->unit) ? ' - ' . $tenant->unit : '' }}}</p></li> -->
             <li><span class="tenant-list-icon"><i class="fa fa-map-marker fa-lg" style="padding-left: 11px;"></i></span><p class="tenant-list-text">{{{ !empty($tenant->location) ? $tenant->location : '-' }}}</p></li>
             <li><span class="tenant-list-icon"><i class="fa fa-globe fa-lg"></i></span><p class="tenant-list-text">{{{ (($tenant->url) != '') ? 'http://'.$tenant->url : '-' }}}</p></li>
-            @if(! empty($tenant->facebook_like_url))
-            <li><span class="tenant-list-icon"><i class="fa fa-facebook-square fa-lg"></i></span><p class="tenant-list-text">{{{ str_replace('//', '', $tenant->facebook_like_url) }}}</p></li>
-            @endif
+            <li><span class="tenant-list-icon"><i class="fa fa-facebook-square fa-lg"></i></span><p class="tenant-list-text">{{{ (($tenant->facebook_like_url) != '') ? str_replace('//', '', $tenant->facebook_like_url) : '-' }}}</p></li>
             <li><span class="tenant-list-icon"><i class="fa fa-phone-square fa-lg"></i></span><p class="tenant-list-text">@if($tenant->phone != '')<a href="tel:{{{ $tenant->phone }}}">{{{ $tenant->phone }}}</a>@else - @endif</p></li>
             @if(count($tenant->categories) > 0)
                 <li><span class="tenant-list-icon"><i class="fa fa-list-ul"></i></span></li>

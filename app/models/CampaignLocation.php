@@ -10,6 +10,12 @@ class CampaignLocation extends Eloquent
      *
      */
 
+    /**
+     * Import trait ModelStatusTrait so we can use some common scope dealing
+     * with `status` field.
+     */
+    use ModelStatusTrait;
+
     protected $primaryKey = 'merchant_id';
 
     protected $table = 'merchants';
@@ -49,5 +55,10 @@ class CampaignLocation extends Eloquent
     public function mall()
     {
         return $this->belongsTo('Mall', 'parent_id', 'merchant_id');
+    }
+
+    public function timezone()
+    {
+        return $this->belongsTo('Timezone', 'timezone_id', 'timezone_id');
     }
 }

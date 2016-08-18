@@ -22,6 +22,7 @@ use Config;
 use Mall;
 use stdClass;
 use Activity;
+use UserSignin;
 use User;
 use UserDetail;
 use Hash;
@@ -37,6 +38,8 @@ use Orbit\Helper\Net\Domain;
 use \Carbon\Carbon;
 use \Exception;
 use \Inbox;
+use Orbit\Helper\Session\UserGetter;
+use Orbit\Helper\Net\SessionPreparer;
 
 class LoginAPIController extends IntermediateBaseController
 {
@@ -56,8 +59,8 @@ class LoginAPIController extends IntermediateBaseController
         $roles=['Consumer'];
         $activity = Activity::portal()
                             ->setActivityType('login');
-        $activity_origin = OrbitInput::post('activity_origin'); 
-        if ($activity_origin === 'mobileci') {
+
+        if ($this->appOrigin === 'mobile_ci') {
             // set this activity as mobileci instead of portal if coming from mobileci
                 $activity = Activity::mobileci()
                                 ->setActivityType('login');
@@ -105,19 +108,45 @@ class LoginAPIController extends IntermediateBaseController
                 OrbitShopAPI::throwInvalidArgument($message);
             }
 
-            $this->session->start(array(), 'no-session-creation');
-            // get the session data
-            $sessionData = $this->session->read(NULL);
-            $sessionData['logged_in'] = TRUE;
-            $sessionData['user_id'] = $user->user_id;
-            $sessionData['email'] = $user->user_email;
-            $sessionData['role'] = $user->role->role_name;
-            $sessionData['fullname'] = $user->getFullName();
-            $sessionData['visited_location'] = [];
-            $sessionData['coupon_location'] = [];
+            try {
+                $this->session->start(array(), 'no-session-creation');
+                // get the session data
+                $sessionData = $this->session->read(NULL);
+                $sessionData['logged_in'] = TRUE;
+                $sessionData['user_id'] = $user->user_id;
+                $sessionData['email'] = $user->user_email;
+                $sessionData['role'] = $user->role->role_name;
+                $sessionData['fullname'] = $user->getFullName();
+                $sessionData['visited_location'] = [];
+                $sessionData['coupon_location'] = [];
 
-            // update the guest session data, append user data to it so the user will be recognized
-            $this->session->update($sessionData);
+                // update the guest session data, append user data to it so the user will be recognized
+                $this->session->update($sessionData);
+            } catch (Exception $e) {
+
+                // Return mall_portal, cs_portal, pmp_portal etc
+                $appOrigin = AppOriginProcessor::create(Config::get('orbit.session.app_list'))
+                                               ->getAppName();
+
+                // Session Config
+                $orbitSessionConfig = Config::get('orbit.session.origin.' . $appOrigin);
+                $applicationId = Config::get('orbit.session.app_id.' . $appOrigin);
+
+                // Instantiate the OrbitSession object
+                $config = new SessionConfig(Config::get('orbit.session'));
+                $config->setConfig('session_origin', $orbitSessionConfig);
+                $config->setConfig('expire', $orbitSessionConfig['expire']);
+                $config->setConfig('application_id', $applicationId);
+
+                // get the session data
+                $sessionData = array();
+                $sessionData['logged_in'] = TRUE;
+                $sessionData['user_id'] = $user->user_id;
+                $sessionData['email'] = $user->user_email;
+                $sessionData['role'] = $user->role->role_name;
+                $sessionData['fullname'] = $user->getFullName();
+                $this->session->enableForceNew()->start($sessionData);
+            }
 
             // Send the session id via HTTP header
             $sessionHeader = $this->session->getSessionConfig()->getConfig('session_origin.header.name');
@@ -130,7 +159,7 @@ class LoginAPIController extends IntermediateBaseController
             setcookie('orbit_firstname', $user->user_firstname, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
             setcookie('login_from', 'Form', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
 
-            if ($activity_origin !== 'mobileci') {
+            if ($this->appOrigin !== 'mobile_ci') {
                 $activity->setUser($user)
                          ->setActivityName('login_ok')
                          ->setActivityNameLong('Sign in')
@@ -241,6 +270,8 @@ class LoginAPIController extends IntermediateBaseController
         $encoded_caller_url_full = OrbitInput::get('from_url_full', NULL); // this input using full-url
         $encoded_redirect_to_url = OrbitInput::get('to_url', NULL); // this input using full-url
         $mall_id = OrbitInput::get('mid', NULL);
+        $mall_id_from_desktop = OrbitInput::get('mall_id', NULL);
+        $user_location = OrbitInput::get(Config::get('orbit.user_location.query_string.name', 'ul'), NULL);
         $angular_ci = OrbitInput::get('aci', NULL);
 
         $googleService = OAuth::consumer( 'Google' );
@@ -258,8 +289,11 @@ class LoginAPIController extends IntermediateBaseController
                 $socialid = isset($user['id']) ? $user['id'] : '';
 
                 $mall_id_from_state = json_decode($this->base64UrlDecode($state))->mid;
+                $mall_id_from_desktop_state = json_decode($this->base64UrlDecode($state))->mall_id;
                 $angular_ci_from_state = json_decode($this->base64UrlDecode($state))->aci;
                 $redirect_to_url_from_state = empty(json_decode($this->base64UrlDecode($state))->redirect_to_url) ? Config::get('orbit.shop.after_social_sign_in') : json_decode($this->base64UrlDecode($state))->redirect_to_url;
+                $_GET[Config::get('orbit.user_location.query_string.name', 'ul')] = json_decode($this->base64UrlDecode($state))->user_location;
+                $this->session = SessionPreparer::prepareSession();
                 // from mall = yes, indicate the request coming from Mall CI, then use MobileCIAPIController::getGoogleCallbackView
                 // to set the session and other things
                 if (! empty($mall_id_from_state)) {
@@ -273,6 +307,8 @@ class LoginAPIController extends IntermediateBaseController
                     $_GET['last_name'] = $lastName;
                     $_GET['gender'] = $gender;
                     $_GET['socialid'] = $socialid;
+                    $this->session->write('login_from', 'google');
+
                     $response = \MobileCI\MobileCIAPIController::create()->getGoogleCallbackView();
 
                     return $response;
@@ -325,6 +361,39 @@ class LoginAPIController extends IntermediateBaseController
                     setcookie('orbit_firstname', $firstName, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
                     setcookie('login_from', 'Google', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
 
+                    if (empty($angular_ci_from_state)) {
+                        return Redirect::to(Config::get('orbit.shop.after_social_sign_in'));
+                    }
+
+                    $mallId = $mall_id_from_desktop_state;
+                    // this flow coming from desktop ci
+                    if (!empty($mallId)) {
+                        $this->registerCustomValidation();
+
+                        $validator = Validator::make(
+                            array(
+                                'mall_id' => $mallId,
+                            ),
+                            array(
+                                'mall_id' => 'orbit.empty.mall',
+                            )
+                        );
+
+                        if ($validator->fails()) {
+                            $errorMessage = $validator->messages()->first();
+                            OrbitShopAPI::throwInvalidArgument($errorMessage);
+                        }
+
+                        $retailer = Mall::excludeDeleted()->where('merchant_id', $mallId)->first();
+
+                        $this->session->write('login_from', 'google');
+
+                        $user = UserGetter::getLoggedInUserOrGuest($this->session);
+
+                        if (is_object($user)) {
+                            $this->acquireUser($retailer, $user, 'google');
+                        }
+                    }
                     // request coming from angular-ci
                     return Redirect::to($redirect_to_url_from_state);
                 }
@@ -347,7 +416,13 @@ class LoginAPIController extends IntermediateBaseController
                 // get googleService authorization
                 $url = $googleService->getAuthorizationUri();
                 // override state param to have our destination url inside
-                $state_array = array('redirect_to_url' => $encoded_redirect_to_url, 'mid' => $mall_id, 'aci' => $angular_ci);
+                $state_array = array(
+                    'redirect_to_url' => $encoded_redirect_to_url,
+                    'mid' => $mall_id,
+                    'mall_id' => $mall_id_from_desktop,
+                    'aci' => $angular_ci,
+                    'user_location' => $user_location
+                );
                 $state = json_encode($state_array);
                 $stateString = $this->base64UrlEncode($state);
                 $parsed_url = parse_url((string)$url);
@@ -372,7 +447,7 @@ class LoginAPIController extends IntermediateBaseController
                 }
                 return Redirect::to($caller_url);
             }
-        }   
+        }
     }
 
     protected function getFacebookError($encoded_caller_url = NULL)
@@ -408,6 +483,7 @@ class LoginAPIController extends IntermediateBaseController
         $encoded_caller_url = \Input::get('caller_url', Config::get('orbit.shop.after_social_sign_in'));
         $encoded_redirect_to_url = \Input::get('redirect_to_url', Config::get('orbit.shop.after_social_sign_in'));
         $angular_ci = \Input::get('aci', FALSE);
+        $mall_id = \Input::get('mall_id', NULL);
 
         // error=access_denied&
         // error_code=200&
@@ -537,7 +613,40 @@ class LoginAPIController extends IntermediateBaseController
         setcookie('orbit_firstname', $firstName, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
         setcookie('login_from', 'Facebook', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
 
-        return Redirect::to($encoded_redirect_to_url);
+        if ($angular_ci) {
+
+            if (!empty($mall_id)) {
+                $this->registerCustomValidation();
+
+                $validator = Validator::make(
+                    array(
+                        'mall_id' => $mall_id,
+                    ),
+                    array(
+                        'mall_id' => 'orbit.empty.mall',
+                    )
+                );
+
+                if ($validator->fails()) {
+                    $errorMessage = $validator->messages()->first();
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+
+                $retailer = Mall::excludeDeleted()->where('merchant_id', $mall_id)->first();
+
+                $this->session = SessionPreparer::prepareSession();
+                $this->session->write('login_from', 'facebook');
+
+                $user = UserGetter::getLoggedInUserOrGuest($this->session);
+
+                if (is_object($user)) {
+                    $this->acquireUser($retailer, $user, 'facebook');
+                }
+            }
+            return Redirect::to($encoded_redirect_to_url);
+        }
+
+        return Redirect::to(Config::get('orbit.shop.after_social_sign_in'));
     }
 
     /**
@@ -549,6 +658,8 @@ class LoginAPIController extends IntermediateBaseController
      */
     public function postSocialLoginView()
     {
+        $mall_id = OrbitInput::get('mall_id', NULL);
+        $user_location = OrbitInput::get(Config::get('orbit.user_location.query_string.name', 'ul'), NULL);
         $encoded_caller_url_full = OrbitInput::get('from_url_full', NULL);
         $encoded_redirect_to_url = OrbitInput::get('to_url', NULL);
         $angular_ci = OrbitInput::get('aci', FALSE);
@@ -590,6 +701,8 @@ class LoginAPIController extends IntermediateBaseController
             'caller_url' => $encoded_caller_url_full,
             'redirect_to_url' => $encoded_redirect_to_url,
             'aci' => $angular_ci,
+            'mall_id' => $mall_id,
+            Config::get('orbit.user_location.query_string.name', 'ul') => $user_location
         ]);
 
         // This is to re-popup the permission on login in case some of the permissions revoked by user
@@ -606,7 +719,7 @@ class LoginAPIController extends IntermediateBaseController
     /**
      * The purpose of this function is to by pass the new sign in process that use password
      * e.g: User came from Facebook / Google sign in
-     * 
+     *
      * @author Ahmad <ahmad@dominopos.com>
      * @param string $email User email
      * @return User $user (IF user exist; FALSE: user not exist)
@@ -688,15 +801,14 @@ class LoginAPIController extends IntermediateBaseController
 
             if ($mode === 'registration') {
                 // do the registration
-                $_POST['activity_name_long'] = 'Sign Up via Mobile (Email Address)';
-                $_POST['activity_origin'] = 'mobileci';
                 $_POST['use_transaction'] = FALSE;
                 $registration = \Orbit\Controller\API\v1\Pub\RegistrationAPIController::create('raw');
-                $response = $registration->setMallId($mall_id)->postRegisterCustomer();
+                $response = $registration
+                    ->setAppOrigin('mobile_ci')
+                    ->setMallId($mall_id)
+                    ->postRegisterCustomer();
                 $response_data = json_decode($response->getOriginalContent());
 
-                unset($_POST['activity_name_long']);
-                unset($_POST['activity_origin']);
                 if($response_data->code !== 0) {
                     $errorMessage = $response_data->message;
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
@@ -790,25 +902,18 @@ class LoginAPIController extends IntermediateBaseController
 
             // acquire user
             // todo: remove comment if the QA ok'ed this implementation, so it not affect dashboard
-            // $firstAcquired = $mall->acquireUser($user, 'form');
+            $firstAcquired = $mall->acquireUser($user, 'form');
 
             // if the user is viewing the mall for the 1st time then set the signup activity
             // todo: remove comment if the QA ok'ed this implementation, so it not affect dashboard
-            // if ($firstAcquired) {
-                // \MobileCI\MobileCIAPIController::create()->setSession($this->session)->setSignUpActivity($user, 'form', $mall);
-            // }
+            if ($firstAcquired) {
+                \MobileCI\MobileCIAPIController::create()->setSession($this->session)->setSignUpActivity($user, 'form', $mall);
+            }
 
-            // if the user is viewing the mall for the 1st time in this session
-            // then set also the sign in activity
-            $visited_locations = [];
-            if (! empty($this->session->read('visited_location'))) {
-                $visited_locations = $this->session->read('visited_location');
-            }
-            if (! in_array($mall->merchant_id, $visited_locations)) {
-                // todo: remove comment if the QA ok'ed this implementation, so it not affect dashboard
-                // \MobileCI\MobileCIAPIController::create()->setSession($this->session)->setSignInActivity($user, 'form', $mall, null);
-                $this->session->write('visited_location', array_merge($visited_locations, [$mall->merchant_id]));
-            }
+            // set sign in activity
+            \MobileCI\MobileCIAPIController::create()->setSession($this->session)->setSignInActivity($user, 'form', $mall, null);
+            $this->session->write('visited_location', [$mall->merchant_id]);
+            $this->session->write('login_from', 'form');
 
             // update last visited records
             $user_detail = UserDetail::where('user_id', $user->user_id)->first();
@@ -816,9 +921,11 @@ class LoginAPIController extends IntermediateBaseController
             $user_detail->last_visit_any_shop = Carbon::now($mall->timezone->timezone_name);
             $user_detail->save();
 
-            // auto coupon issuance checkwill happen on each page after the login success
-            // todo: remove comment if the QA ok'ed this implementation, so it not affect dashboard
-            // \Coupon::issueAutoCoupon($mall, $user, $this->session);
+            $expireTime = Config::get('orbit.session.session_origin.cookie.expire');
+
+            setcookie('orbit_email', $user->user_email, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+            setcookie('orbit_firstname', $user->user_firstname, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+            setcookie('login_from', 'Form', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
 
             DB::commit();
             $data = new stdClass();
@@ -893,5 +1000,69 @@ class LoginAPIController extends IntermediateBaseController
 
             return TRUE;
         });
+    }
+
+    public function setAppOrigin($appOrigin)
+    {
+        $this->appOrigin = $appOrigin;
+
+        return $this;
+    }
+
+    protected function acquireUser($retailer, $user, $signUpVia = null)
+    {
+        if (is_null($signUpVia)) {
+            $signUpVia = 'form';
+            if (isset($_COOKIE['login_from'])) {
+                switch (strtolower($_COOKIE['login_from'])) {
+                    case 'google':
+                        $signUpVia = 'google';
+                        break;
+                    case 'facebook':
+                        $signUpVia = 'facebook';
+                        break;
+                    default:
+                        $signUpVia = 'form';
+                        break;
+                }
+            }
+
+            $signUpVia = $user->isGuest() ? 'guest' : $signUpVia;
+        }
+
+        if ($user->isConsumer()) {
+            $firstAcquired = $retailer->acquireUser($user, $signUpVia);
+
+            // if the user is viewing the mall for the 1st time then set the signup activity
+            if ($firstAcquired) {
+                $this->setSignUpActivity($user, $signUpVia, $retailer);
+            }
+        }
+    }
+
+    // create activity signup from socmed
+    public function setSignUpActivity($user, $from, $retailer)
+    {
+        $activity = Activity::mobileci()
+            ->setLocation($retailer)
+            ->setActivityType('registration')
+            ->setUser($user)
+            ->setActivityName('registration_ok')
+            ->setObject($user)
+            ->setModuleName('User')
+            ->responseOK();
+
+        if ($from === 'facebook') {
+            $activity->setActivityNameLong('Sign Up via Mobile (Facebook)')
+                    ->setNotes('Sign Up via Mobile (Facebook) OK');
+        } else if ($from === 'google') {
+            $activity->setActivityNameLong('Sign Up via Mobile (Google+)')
+                    ->setNotes('Sign Up via Mobile (Google+) OK');
+        } else if ($from === 'form') {
+            $activity->setActivityNameLong('Sign Up via Mobile (Email Address)')
+                    ->setNotes('Sign Up via Mobile (Email Address) OK');
+        }
+
+        $activity->save();
     }
 }
