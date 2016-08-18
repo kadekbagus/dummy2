@@ -328,7 +328,7 @@
                         });
 
                         $('#successCouponModal').on('hide.bs.modal', function ($event) {
-                            window.location.replace('{{ \Orbit\Helper\Net\UrlChecker::blockedRoute('ci-coupon-list', [], $session) }}');
+                            window.location.replace('{{ \Orbit\Helper\Net\UrlChecker::blockedRoute('ci-coupon-list', ["type" => "wallet"], $session) }}');
                         });
                     }
                     else{
