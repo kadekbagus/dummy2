@@ -396,7 +396,7 @@
      * parameters: itemtype(news,promotion,lucky-draw,my-coupon)
      *             ids(array(list of already loaded ids))
      */
-    function loadMoreX(itemtype, ids, helperObject) {
+    function loadMoreX(itemtype, ids, helperObject, callback) {
         var catalogueWrapper = $('.catalogue-wrapper'),
             itemList = [],
             btn = $('#load-more-x'),
@@ -541,6 +541,9 @@
         }).always(function(data){
             btn.removeAttr('disabled', 'disabled');
             btn.html('{{Lang::get('mobileci.notification.load_more_btn')}}');
+            if (callback) {
+                callback();
+            }
         });
     }
     var notInMessagesPage = true; {{-- this var is used to enable/disable pop up notification --}}

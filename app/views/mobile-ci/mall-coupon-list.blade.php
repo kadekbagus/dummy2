@@ -135,13 +135,14 @@
             return;
         }
 
-        loadMoreX('my-coupon', listOfIDs, helperObject);
+        loadMoreX('my-coupon', listOfIDs, helperObject, function () {
+            if (idForAddWallet !== '') {
+                addToWallet(idForAddWallet, function () {
+                    history.pushState({}, '', 'mallcoupons' );
+                });
+            }
 
-        if (idForAddWallet !== '') {
-            addToWallet(idForAddWallet, function () {
-                history.pushState({}, '', 'mallcoupons' );
-            });
-        }
+        });
     });
 </script>
 @stop
