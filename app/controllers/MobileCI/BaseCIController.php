@@ -106,18 +106,7 @@ class BaseCIController extends ControllerAPI
     {
         $userId = $session->read('guest_user_id');
 
-        if (! empty($userId)) {
-            $user = User::with('userDetail')
-                ->where('user_id', $userId)
-                ->whereHas('role', function($q) {
-                    $q->where('role_name', 'guest');
-                })
-                ->first();
-
-            if (! is_object($user)) {
-                $user = NULL;
-            }
-        } else {
+        $generateGuest = function ($session) {
             $user = GuestUserGenerator::create()->generate();
 
             $sessionData = $session->read(NULL);
@@ -128,6 +117,23 @@ class BaseCIController extends ControllerAPI
             $sessionData['fullname'] = '';
 
             $session->update($sessionData);
+
+            return $user;
+        };
+
+        if (! empty($userId)) {
+            $user = User::with('userDetail')
+                ->where('user_id', $userId)
+                ->whereHas('role', function($q) {
+                    $q->where('role_name', 'guest');
+                })
+                ->first();
+
+            if (! is_object($user)) {
+                $user = $generateGuest($session);
+            }
+        } else {
+            $user = $generateGuest($session);
         }
 
         return $user;
