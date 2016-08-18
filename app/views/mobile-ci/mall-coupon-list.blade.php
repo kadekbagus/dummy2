@@ -62,6 +62,10 @@
         });
 
         $('.coupon-button').click(function () {
+            if (helperObject.isProgress) {
+                return;
+            }
+
             $(".catalogue-wrapper").empty();
             $(".coupon-button").removeClass('active');
             $(this).addClass('active');
@@ -69,9 +73,6 @@
             listOfIDs.length = 0;
             helperObject.coupon_type = $(this).data('type');
 
-            if (helperObject.isProgress) {
-                return;
-            }
 
             // validate user login
             if ('wallet' === helperObject.coupon_type && !Boolean({{$is_logged_in}})) {
