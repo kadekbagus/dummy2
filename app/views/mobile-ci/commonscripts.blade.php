@@ -482,6 +482,28 @@
                         itemList.push(list);
                     }
                     catalogueWrapper.append(itemList.join(''));
+                } else {
+                    if (helperObject !== undefined) {
+                        if (helperObject.coupon_type !== undefined) {
+                            var message = "{{ Lang::get('mobileci.greetings.no_coupons_listing') }}";
+                            if ('wallet' === helperObject.coupon_type) {
+                                message = " {{ Lang::get('mobileci.greetings.no_coupon_wallet_1') }}\
+                                            <div class='coupon-wallet-message-icon'>\
+                                                <span class='fa-stack fa-2x'>\
+                                                    <i class='fa fae-wallet fa-stack-2x'></i>\
+                                                    <i class='fa fa-circle fa-stack-2x'></i>\
+                                                    <i class='fa fa-plus fa-stack-1x state-icon'></i>\
+                                                </span>\
+                                            </div>\
+                                            {{ Lang::get('mobileci.greetings.no_coupon_wallet_2') }}";
+                            }
+
+                            var elementNoCouponWallet = '<div class="col-xs-12 notification-message">\
+                                                            <h4>' + message + '</h4>\
+                                                         </div>';
+                            catalogueWrapper.html(elementNoCouponWallet);
+                        }
+                    }
                 }
                 if (data.total_records - take <= 0) {
                     btn.remove();
@@ -489,28 +511,6 @@
             } else {
                 if(data.message === 'session_expired') {
                     window.location.replace('/customer');
-                }
-
-                if (helperObject !== undefined) {
-                    if (helperObject.coupon_type !== undefined) {
-                        var message = "{{ Lang::get('mobileci.greetings.no_coupon_listing') }}";
-                        if ('wallet' === helperObject.coupon_type && data.records.length === 0) {
-                            message = " {{ Lang::get('mobileci.greetings.no_coupon_wallet_1') }}\
-                                        <div class='coupon-wallet-message-icon'>\
-                                            <span class='fa-stack fa-2x'>\
-                                                <i class='fa fae-wallet fa-stack-2x'></i>\
-                                                <i class='fa fa-circle fa-stack-2x'></i>\
-                                                <i class='fa fa-plus fa-stack-1x state-icon'></i>\
-                                            </span>\
-                                        </div>\
-                                        {{ Lang::get('mobileci.greetings.no_coupon_wallet_2') }}";
-                        }
-
-                        var elementNoCouponWallet = '<div class="col-xs-12 notification-message">\
-                                                        <h4>' + message + '</h4>\
-                                                     </div>';
-                        catalogueWrapper.html(elementNoCouponWallet);
-                    }
                 }
             }
         }).always(function(data){
