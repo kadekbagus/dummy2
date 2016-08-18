@@ -131,6 +131,7 @@ if(!empty($luckydraw)) {
     <div class="col-xs-12 text-center">
         <form method="post" enctype="multipart/form-data">
             <input type="hidden" name="_token" id="_token" value="{{$csrf_token}}">
+            <input type="hidden" name="refresher" id="refresher" value="no">
             <div class="file-upload btn btn-upload">
                 <span>{{Lang::get('mobileci.lucky_draw.upload_receipt')}}</span>
                 <input type="file" class="upload" name="photo" accept="image/*" id="lucky-draw-capture" capture="camera">
@@ -138,7 +139,13 @@ if(!empty($luckydraw)) {
         </form>
     </div>
     <div class="col-xs-12 text-center">
-        <p id="upload-message"></p>
+        <p id="upload-message">
+            @if(Input::get('show_message') === 'true' && count($numbers) > 0)
+            <span style="color:green;">
+            {{Lang::get('mobileci.lucky_draw.upload_success')}} <br> {{Lang::get('mobileci.lucky_draw.upload_congrats') . $numbers[0]->lucky_draw_number_code}}
+            </span>
+            @endif
+        </p>
     </div>
     @else
     <div class="col-xs-12 text-center">
@@ -294,6 +301,14 @@ if(!empty($luckydraw)) {
             });
 
         @if($luckydraw->object_type === 'auto')
+            onload = function(){
+                var e = document.getElementById("refresher");
+                if (e.value=="no") e.value="yes";
+                else {
+                    e.value="no";
+                    location.reload();
+                }
+            }
             function fileSelected() {
                 var count = document.getElementById('lucky-draw-capture').files.length;
                 if (count > 0) {
@@ -303,6 +318,10 @@ if(!empty($luckydraw)) {
                     }
                 }
                 return true;
+            }
+            function resetFormElement(e) {
+                e.wrap('<form>').closest('form').get(0).reset();
+                e.unwrap();
             }
             $('body').on('change', '#lucky-draw-capture', function(e) {
                 if(fileSelected()){
@@ -318,6 +337,9 @@ if(!empty($luckydraw)) {
                     }).done(function(data){
                         if (data.code === 0) {
                             $('#upload-message').css('color', 'green').html("{{Lang::get('mobileci.lucky_draw.upload_success')}} <br> {{Lang::get('mobileci.lucky_draw.upload_congrats')}}" + data.data.lucky_draw_number_code);
+                            setTimeout(function() {
+                                window.location.replace('{{route('ci-luckydraw-detail', ['id' => $luckydraw->lucky_draw_id, 'name' => Str::slug($luckydraw->lucky_draw_name), 'show_message' => 'true'])}}#lucky-draw-capture');
+                            }, 1000);
                         } else {
                             $('#upload-message').css('color', 'red').text(data.message);
                         }
@@ -326,7 +348,7 @@ if(!empty($luckydraw)) {
                         $('#_token').val(data.responseJSON.data.token);
                         $('#upload-message').css('color', 'red').text(data.responseJSON.message);
                     }).always(function(data){
-
+                        resetFormElement($('#lucky-draw-capture'));
                     });
                 }
             });

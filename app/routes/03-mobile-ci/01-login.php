@@ -234,6 +234,14 @@ Route::group(
         );
 
         Route::get(
+            '/customer/mallcoupon-wallet', ['as' => 'ci-coupon-detail-wallet',
+            function () {
+
+                return MobileCI\MobileCIAPIController::create()->getMallCouponDetailView();
+            }]
+        );
+
+        Route::get(
             '/customer/mallpromotions', ['as' => 'ci-promotion-list',
             function () {
                 return MobileCI\MobileCIAPIController::create()->getMallPromotionList();
@@ -414,6 +422,15 @@ Route::group(
         {
             return MobileCI\MobileCIAPIController::create()->getSearchLuckyDraw();
         });
+
+        /**
+         * Add coupon to wallet API
+         */
+        Route::post('/app/v1/coupon/addtowallet', ['as' => 'coupon-add-to-wallet', function()
+            {
+                return MobileCI\MobileCIAPIController::create()->postAddToWallet();
+            }]
+        );
 
         /**
          * Check user location
