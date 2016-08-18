@@ -50,18 +50,39 @@ class StoreAPIController extends ControllerAPI
             $store = Tenant::select('merchants.merchant_id', 'merchants.name')
                 ->join(DB::raw("(select merchant_id, status, parent_id from {$prefix}merchants where object_type = 'mall') as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                 ->where('merchants.status', 'active')
-                ->whereRaw("oms.status = 'active'");
+                ->whereRaw("oms.status = 'active'")
+                ->groupBy('merchants.name')
+                ->orderBy($sort_by, $sort_mode);
 
             OrbitInput::get('filter_name', function ($filterName) use ($store, $prefix) {
                 if (! empty($filterName)) {
                     if ($filterName === '#') {
-                        $filterName = '^a-zA-Z';
+                        $store->whereRaw("SUBSTR({$prefix}merchants.name,1,1) not between 'a' and 'z'");
+                    } else {
+                        $filter = explode("-", $filterName);
+                        $store->whereRaw("SUBSTR({$prefix}merchants.name,1,1) between {$this->quote($filter[0])} and {$this->quote($filter[1])}");
                     }
-                    $store->whereRaw("{$prefix}merchants.name REGEXP '^[{$filterName}]'");
                 }
             });
 
-            $store = $store->groupBy('merchants.name')->orderBy($sort_by, $sort_mode);
+            OrbitInput::get('keyword', function ($keyword) use ($store, $prefix) {
+                if (! empty($keyword)) {
+                    $store = $store->leftJoin('keywords', 'keywords.merchant_id', '=',  'merchants.merchant_id')
+                                ->leftJoin(DB::raw("(select * from {$prefix}keyword_object where object_type = 'tenant') as oko"), DB::raw('oko.keyword_id'), '=', 'keywords.keyword_id')
+                                ->where(function($query) use ($keyword)
+                                {
+                                    $word = explode(" ", $keyword);
+                                    foreach ($word as $key => $value) {
+                                        $query->orWhere(function($q) use ($value){
+                                            $q->where('merchants.name', 'like', '%' . $value . '%')
+                                                ->orWhere('merchants.description', 'like', '%' . $value . '%')
+                                                ->orWhere('keywords.keyword', '=', $value);
+                                        });
+                                    }
+                                });
+                }
+            });
+
             $_store = clone $store;
 
             $take = PaginationNumber::parseTakeFromGet('retailer');
