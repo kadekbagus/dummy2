@@ -6675,7 +6675,7 @@ class MobileCIAPIController extends BaseCIController
                         'is_coupon_wallet' => $is_coupon_wallet_detail, //false = available | true = wallet
                         'added_to_wallet' => $added_to_wallet_detail, //false = not in wallet | true = in wallet
                         'hash' => (! UrlBlock::isLoggedIn($this->session) ? '#' : '#1'),
-                        'hash_url' => $redirect_hash_url,
+                        'hash_url' => $redirect_hash_url . '&successLogin=true',
                         'icon' => ($added_to_wallet_detail ? 'fa-check' : 'fa-plus'),
                         'text' => ($added_to_wallet_detail ?  Lang::get('mobileci.coupon.added_wallet') : Lang::get('mobileci.coupon.add_wallet')),
                         'circle' => ($added_to_wallet_detail ? 'added' : '')

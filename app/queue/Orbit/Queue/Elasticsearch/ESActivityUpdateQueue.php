@@ -14,6 +14,7 @@ use Orbit\Helper\Util\UserAgent;
 use Orbit\Helper\Util\JobBurier;
 use Exception;
 use Log;
+use Orbit\Helper\Util\CampaignSourceParser;
 
 class ESActivityUpdateQueue
 {
@@ -45,9 +46,11 @@ class ESActivityUpdateQueue
      * Laravel main method to fire a job on a queue.
      *
      * @author Shelgi Prasetyo <shelgi@dominopos.com>
+     * @author Rio Astamal <rio@dominopos.com>
      * @param Job $job
      * @param array $data[
-     *                    'activity_id' => NUM // Mall ID
+     *                    'activity_id' => NUM, // Activity ID
+     *                    'referer' => HTTP_REFERER
      * ]
      * @return void
      * @todo Make this testable
@@ -125,100 +128,68 @@ class ESActivityUpdateQueue
             }
 
             $response = NULL;
-            if ($response_search['hits']['total'] > 0) {
-                $params = [
-                    'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.activities.index'),
-                    'type' => Config::get('orbit.elasticsearch.indices.activities.type'),
-                    'id' => $activity->activity_id,
-                    'body' => [
-                        'doc' => [
-                            'activity_name' =>  $activity->activity_name,
-                            'activity_name_long' =>  $activity->activity_name_long,
-                            'activity_type' =>  $activity->activity_type,
-                            'module_name' =>  $activity->module_name,
-                            'user_id' =>  $activity->user_id,
-                            'user_email' =>  $activity->user_email,
-                            'full_name' =>  $activity->full_name,
-                            'gender' =>  $activity->gender,
-                            'group' =>  $activity->group,
-                            'role' =>  $activity->role,
-                            'role_id' =>  $activity->role_id,
-                            'object_id' =>  $activity->object_id,
-                            'object_name' =>  $activity->object_name,
-                            'location_id' =>  $activity->location_id,
-                            'location_name' =>  $activity->location_name,
-                            'ip_address' =>  $activity->ip_address,
-                            'from_wifi' =>  $activity->from_wifi,
-                            'session_id' =>  $activity->session_id,
-                            'user_agent' =>  $activity->user_agent,
-                            'staff_id' =>  $activity->staff_id,
-                            'staff_name' =>  $activity->staff_name,
-                            'notes' =>  $activity->notes,
-                            'status' =>  $activity->status,
-                            'parent_id' =>  $activity->parent_id,
-                            'response_status' =>  $activity->response_status,
-                            'created_at' => $activity->created_at->format("Y-m-d") . 'T' . $activity->created_at->format("H:i:s") . 'Z',
-                            'object_display_name' =>  $activity->object_display_name,
-                            'browser_name' => $browserName,
-                            'browser_version' => $browserVersion,
-                            'os_name' => $osName,
-                            'os_version' => $osVersion,
-                            'device_type' => $deviceType,
-                            'device_vendor' => null,
-                            'device_model' => $deviceModel,
-                            'country' =>  $findIp->country,
-                            'city' =>  $findIp->city,
-                            'position' => $pos
-                        ]
-                    ]
-                ];
+            $params = [
+                'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.activities.index'),
+                'type' => Config::get('orbit.elasticsearch.indices.activities.type'),
+                'id' => $activity->activity_id,
+                'body' => []
+            ];
+            $campaignData = CampaignSourceParser::create()
+                                                ->setUrl($data['referer'])
+                                                ->getCampaignSource();
+            $esBody = [
+                'activity_name' =>  $activity->activity_name,
+                'activity_name_long' =>  $activity->activity_name_long,
+                'activity_type' =>  $activity->activity_type,
+                'module_name' =>  $activity->module_name,
+                'user_id' =>  $activity->user_id,
+                'user_email' =>  $activity->user_email,
+                'full_name' =>  $activity->full_name,
+                'gender' =>  $activity->gender,
+                'group' =>  $activity->group,
+                'role' =>  $activity->role,
+                'role_id' =>  $activity->role_id,
+                'object_id' =>  $activity->object_id,
+                'object_name' =>  $activity->object_name,
+                'location_id' =>  $activity->location_id,
+                'location_name' =>  $activity->location_name,
+                'ip_address' =>  $activity->ip_address,
+                'from_wifi' =>  $activity->from_wifi,
+                'session_id' =>  $activity->session_id,
+                'user_agent' =>  $activity->user_agent,
+                'staff_id' =>  $activity->staff_id,
+                'staff_name' =>  $activity->staff_name,
+                'notes' =>  $activity->notes,
+                'status' =>  $activity->status,
+                'parent_id' =>  $activity->parent_id,
+                'response_status' =>  $activity->response_status,
+                'created_at' => $activity->created_at->format("Y-m-d") . 'T' . $activity->created_at->format("H:i:s") . 'Z',
+                'object_display_name' =>  $activity->object_display_name,
+                'browser_name' => $browserName,
+                'browser_version' => $browserVersion,
+                'os_name' => $osName,
+                'os_version' => $osVersion,
+                'device_type' => $deviceType,
+                'device_vendor' => null,
+                'device_model' => $deviceModel,
+                'country' =>  $findIp->country,
+                'city' =>  $findIp->city,
+                'position' => $pos,
+                'referer' => $data['referer'],
+                'utm_source' => $campaignData['campaign_source'],
+                'utm_medium' => $campaignData['campaign_medium'],
+                'utm_term' => $campaignData['campaign_term'],
+                'utm_content' => $campaignData['campaign_content'],
+                'utm_campaign' => $campaignData['campaign_name']
+            ];
 
+            if ($response_search['hits']['total'] > 0) {
+                $params['body'] = [
+                    'docs' => $esBody
+                ];
                 $response = $this->poster->update($params);
             } else {
-                $params = [
-                    'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.activities.index'),
-                    'type' => Config::get('orbit.elasticsearch.indices.activities.type'),
-                    'id' => $activity->activity_id,
-                    'body' => [
-                        'activity_name' =>  $activity->activity_name,
-                        'activity_name_long' =>  $activity->activity_name_long,
-                        'activity_type' =>  $activity->activity_type,
-                        'module_name' =>  $activity->module_name,
-                        'user_id' =>  $activity->user_id,
-                        'user_email' =>  $activity->user_email,
-                        'full_name' =>  $activity->full_name,
-                        'gender' =>  $activity->gender,
-                        'group' =>  $activity->group,
-                        'role' =>  $activity->role,
-                        'role_id' =>  $activity->role_id,
-                        'object_id' =>  $activity->object_id,
-                        'object_name' =>  $activity->object_name,
-                        'location_id' =>  $activity->location_id,
-                        'location_name' =>  $activity->location_name,
-                        'ip_address' =>  $activity->ip_address,
-                        'from_wifi' =>  $activity->from_wifi,
-                        'session_id' =>  $activity->session_id,
-                        'user_agent' =>  $activity->user_agent,
-                        'staff_id' =>  $activity->staff_id,
-                        'staff_name' =>  $activity->staff_name,
-                        'notes' =>  $activity->notes,
-                        'status' =>  $activity->status,
-                        'parent_id' =>  $activity->parent_id,
-                        'response_status' =>  $activity->response_status,
-                        'created_at' => $activity->created_at->format("Y-m-d") . 'T' . $activity->created_at->format("H:i:s") . 'Z',
-                        'object_display_name' =>  $activity->object_display_name,
-                        'browser_name' => $browserName,
-                        'browser_version' => $browserVersion,
-                        'os_name' => $osName,
-                        'os_version' => $osVersion,
-                        'device_type' => $deviceType,
-                        'device_vendor' => null,
-                        'device_model' => $deviceModel,
-                        'country' =>  $findIp->country,
-                        'city' =>  $findIp->city,
-                        'position' => $pos
-                    ]
-                ];
+                $params['body'] = $esBody;
                 $response = $this->poster->index($params);
             }
 
@@ -242,11 +213,13 @@ class ESActivityUpdateQueue
             // Safely delete the object
             $job->delete();
 
-            $message = sprintf('[Job ID: `%s`] Elasticsearch Update Index; Status: OK; ES Index Name: %s; ES Index Type: %s',
+            $message = sprintf('[Job ID: `%s`] Elasticsearch Update Index; Status: OK; ES Index Name: %s; ES Index Type: %s; Activity %s',
                                 $job->getJobId(),
                                 $esConfig['indices']['activities']['index'],
-                                $esConfig['indices']['activities']['type']);
+                                $esConfig['indices']['activities']['type'],
+                                $activity->activity_name_long);
             Log::info($message);
+            Log::info('HTTP_REFERER for ES Data: ' . $data['referer']);
 
             return [
                 'status' => 'ok',
