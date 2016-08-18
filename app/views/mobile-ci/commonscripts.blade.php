@@ -425,33 +425,53 @@
             method: 'GET',
             data: ajaxParams
         }).done(function(data) {
+            if (helperObject !== undefined) {
+                /* skip page for coupon only */
+                if (helperObject.skip !== undefined) {
+                    helperObject.skip += ajaxParams.take;
+                }
+
+                if (helperObject.isProgress !== undefined) {
+                    helperObject.isProgress = false;
+                }
+            }
             if(data.status == 1) {
+
                 skip = skip + take;
                 if(data.records.length > 0) {
                     for(var i = 0; i < data.records.length; i++) {
+                        ids.push(data.records[i].item_id);
                         var coupon_badge = '',
                             walletIcon = 'fa-plus';
-                            walletText = '{{ Lang::get("mobileci.coupon.add_wallet") }}';
+                            walletText = '{{ Lang::get("mobileci.coupon.add_wallet") }}',
+                            circleColor = '',
                             couponWallet = '';
 
                         if(itemtype === 'my-coupon') {
                             if (data.records[i].added_to_wallet === 'true') {
                                 walletIcon = 'fa-check';
                                 walletText = '{{ Lang::get("mobileci.coupon.added_wallet") }}';
+                                circleColor = 'added';
                             }
                         }
 
-                        couponWallet = '\
-                            <div class="coupon-wallet pull-right">\
-                                <a href="' + data.records[i].add_to_wallet_hash + '">\
-                                    <span class="fa-stack fa-2x clickable" data-ids="' + data.records[i].item_id + '" data-isaddedtowallet="' + data.records[i].added_to_wallet + '">\
-                                        <i class="fa fae-wallet fa-stack-2x"></i>\
-                                        <i class="fa fa-circle fa-stack-2x"></i>\
-                                        <i class="fa ' + walletIcon + ' fa-stack-1x state-icon"></i>\
-                                    </span>\
-                                </a>\
-                                <span class="wallet-text">' + walletText + '</span>\
-                            </div>';
+                         if (helperObject !== undefined) {
+                            if (helperObject.coupon_type !== undefined) {
+                                if ('available' === helperObject.coupon_type) {
+                                    couponWallet = '\
+                                        <div class="coupon-wallet pull-right">\
+                                            <a data-href="' + data.records[i].add_to_wallet_hash_url + '" href="' + data.records[i].add_to_wallet_hash + '">\
+                                                <span class="fa-stack fa-2x clickable" data-ids="' + data.records[i].item_id + '" data-isaddedtowallet="' + data.records[i].added_to_wallet + '">\
+                                                    <i class="fa fae-wallet fa-stack-2x"></i>\
+                                                    <i class="fa ' + circleColor + ' fa-circle fa-stack-2x"></i>\
+                                                    <i class="fa ' + walletIcon + ' fa-stack-1x state-icon"></i>\
+                                                </span>\
+                                            </a>\
+                                            <span class="wallet-text">' + walletText + '</span>\
+                                        </div>';
+                                }
+                            }
+                        }
 
                         var list = '<div class="col-xs-12 col-sm-12 item-x" data-ids="' + data.records[i].item_id + '" id="item-' + data.records[i].item_id + '">\
                                 <section class="list-item-single-tenant">\
@@ -473,26 +493,46 @@
 
                         itemList.push(list);
                     }
+                    if(data.returned_records < data.total_records) {
+                        var viewMoreButton = '\
+                            <div class="row">\
+                                <div class="col-xs-12 padded">\
+                                    <button class="btn btn-info btn-block" id="load-more-x">{{Lang::get('mobileci.notification.load_more_btn')}}</button>\
+                                </div>\
+                            </div>';
+                        itemList.push(viewMoreButton);
+                    }
                     catalogueWrapper.append(itemList.join(''));
+                } else {
+                    if (helperObject !== undefined) {
+                        if (helperObject.coupon_type !== undefined) {
+                            var message = "{{ Lang::get('mobileci.greetings.no_coupons_listing') }}";
+                            if ('wallet' === helperObject.coupon_type) {
+                                message = " {{ Lang::get('mobileci.greetings.no_coupon_wallet_1') }}\
+                                            <div class='coupon-wallet-message-icon'>\
+                                                <span class='fa-stack fa-2x'>\
+                                                    <i class='fa fae-wallet fa-stack-2x'></i>\
+                                                    <i class='fa fa-circle fa-stack-2x'></i>\
+                                                    <i class='fa fa-plus fa-stack-1x state-icon'></i>\
+                                                </span>\
+                                            </div>\
+                                            {{ Lang::get('mobileci.greetings.no_coupon_wallet_2') }}";
+                            }
+
+                            var elementNoCouponWallet = '<div class="col-xs-12 notification-message">\
+                                                            <h4>' + message + '</h4>\
+                                                         </div>';
+                            catalogueWrapper.html(elementNoCouponWallet);
+                        }
+                    }
                 }
+
                 if (data.total_records - take <= 0) {
                     btn.remove();
                 }
             } else {
                 if(data.message === 'session_expired') {
                     window.location.replace('/customer');
-                }
-
-                if (helperObject !== undefined) {
-                    if (helperObject.coupon_type !== undefined) {
-                        var message = "{{ Lang::get('mobileci.greetings.no_coupon_listing') }}";
-                        if ('wallet' === helperObject.coupon_type && data.records.length === 0) {
-                            message = "{{ Lang::get('mobileci.greetings.no_coupon_wallet') }}";
-                        }
-
-                        var elementNoCouponWallet = '<h4>' + message + '</h4>';
-                        catalogueWrapper.html(elementNoCouponWallet);
-                    }
                 }
             }
         }).always(function(data){

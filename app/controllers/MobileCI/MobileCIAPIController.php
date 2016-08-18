@@ -3172,10 +3172,6 @@ class MobileCIAPIController extends BaseCIController
                         $prefix = DB::getTablePrefix();
                         $mallid = $retailer->merchant_id;
                         $q->select("*", DB::raw('count(' . DB::getTablePrefix() . 'promotions.promotion_id) as quantity'))
-                            ->join('issued_coupons', function ($join) {
-                                $join->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
-                                $join->where('issued_coupons.status', '=', 'active');
-                            })
                             ->leftJoin('promotion_retailer_redeem', 'promotion_retailer_redeem.promotion_id', '=', 'promotions.promotion_id')
                             ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer_redeem.retailer_id')
                             ->where(function ($q) use ($mallid) {
@@ -3193,8 +3189,7 @@ class MobileCIAPIController extends BaseCIController
                                     });
                                 });
                             })
-                            ->where('promotions.coupon_validity_in_date', '>=', $mallTime)
-                            ->where('issued_coupons.user_id', $user->user_id);
+                            ->where('promotions.coupon_validity_in_date', '>=', $mallTime);
 
                         if ($userGender !== null) {
                             $q->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
@@ -6062,7 +6057,7 @@ class MobileCIAPIController extends BaseCIController
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
 
-            $type = OrbitInput::get('coupon_type', 'available');
+            $type = OrbitInput::get('type', 'available');
             $is_coupon_wallet = false;
             if ($type === 'wallet') {
                 $is_coupon_wallet = true;
@@ -6079,6 +6074,10 @@ class MobileCIAPIController extends BaseCIController
 
             $languages = $this->getListLanguages($retailer);
 
+            $walletData = array(
+                            'is_coupon_wallet' => $is_coupon_wallet, //false = available | true = wallet
+                        );
+
             $view_data = array(
                 'page_title' => $pagetitle,
                 'page_sub_title' => $pageSubTitle,
@@ -6089,7 +6088,8 @@ class MobileCIAPIController extends BaseCIController
                 'session' => $this->session,
                 'is_logged_in' => UrlBlock::isLoggedIn($this->session),
                 'user_email' => $user->role->role_name !== 'Guest' ? $user->user_email : '',
-                'is_coupon_wallet' => $is_coupon_wallet
+                'wallet' => $walletData,
+                'signin_url' => URL::route('ci-coupon-list', ['type' => 'wallet']),
             );
             return View::make('mobile-ci.mall-coupon-list', $view_data);
 
@@ -6347,6 +6347,7 @@ class MobileCIAPIController extends BaseCIController
                 $item->name = mb_strlen($item->promotion_name) > 64 ? mb_substr($item->promotion_name, 0, 64) . '...' : $item->promotion_name;
                 $item->item_id = $item->promotion_id;
                 $item->add_to_wallet_hash = ! UrlBlock::isLoggedIn($this->session) ? '#' : '#1';
+                $item->add_to_wallet_hash_url = URL::route('ci-coupon-list');
             }
 
             $data = new stdclass();
@@ -6664,8 +6665,33 @@ class MobileCIAPIController extends BaseCIController
                     ->save();
             }
 
+            if ($is_coupon_wallet_detail) {
+                $redirect_hash_url = URL::route('ci-coupon-detail-wallet', ['id' => $promotion_id, 'name' => Str::slug($coupons->promotion_name), 'type' => $type]);
+            } else {
+                $redirect_hash_url = URL::route('ci-coupon-detail', ['id' => $promotion_id, 'name' => Str::slug($coupons->promotion_name), 'type' => $type]);
+            }
+
+            $walletData = array(
+                        'is_coupon_wallet' => $is_coupon_wallet_detail, //false = available | true = wallet
+                        'added_to_wallet' => $added_to_wallet_detail, //false = not in wallet | true = in wallet
+                        'hash' => (! UrlBlock::isLoggedIn($this->session) ? '#' : '#1'),
+                        'hash_url' => $redirect_hash_url,
+                        'icon' => ($added_to_wallet_detail ? 'fa-check' : 'fa-plus'),
+                        'text' => ($added_to_wallet_detail ?  Lang::get('mobileci.coupon.added_wallet') : Lang::get('mobileci.coupon.add_wallet')),
+                        'circle' => ($added_to_wallet_detail ? 'added' : '')
+                    );
+
+            /* map pageSubTitle to be like css ellipsis*/
+            $pageSubTitle = array_map(function ($arr) {
+                if (mb_strlen($arr) >= 30) {
+                    return substr($arr, 0, 30) . '...';
+                }
+                return $arr;
+            }, Lang::get('mobileci.page_sub_title.coupons'));
+
             return View::make('mobile-ci.mall-coupon', array(
                 'page_title' => $coupons->promotion_name,
+                'page_sub_title' => $pageSubTitle,
                 'user' => $user,
                 'retailer' => $retailer,
                 'coupon' => $coupons,
@@ -6680,8 +6706,10 @@ class MobileCIAPIController extends BaseCIController
                 'session' => $this->session,
                 'is_logged_in' => UrlBlock::isLoggedIn($this->session),
                 'user_email' => $user->role->role_name !== 'Guest' ? $user->user_email : '',
-                'is_coupon_wallet_detail' => $is_coupon_wallet_detail, //false = available | true = wallet
-                'added_to_wallet_detail' => $added_to_wallet_detail //false = not in wallet | true = in wallet
+                'wallet' => $walletData,
+                'available_url' => URL::route('ci-coupon-list', ['type' => 'available']),
+                'wallet_url' => URL::route('ci-coupon-list', ['type' => 'wallet']),
+                'layout' => 'detail',
             ));
 
         } catch (Exception $e) {
@@ -8029,7 +8057,7 @@ class MobileCIAPIController extends BaseCIController
 
             $activityPageNotes = sprintf('Page viewed: Pokestop Detail, pokestop Id: %s', $product_id);
             $activityPage->setUser($user)
-                ->setActivityName('view_news')
+                ->setActivityName('view_pokestop')
                 ->setActivityNameLong('View Pokestop Detail')
                 ->setObject($pokestop)
                 ->setNews($pokestop)

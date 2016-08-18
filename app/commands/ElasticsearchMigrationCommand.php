@@ -149,11 +149,16 @@ class ElasticsearchMigrationCommand extends Command
                     break;
 
                 case 'update_mapping':
+                    $params['type'] = $json['type'];
                     $response = $this->es->indices()->putMapping($params);
                     if (isset($response['acknowledged']) && isset($response['acknowledged'])) {
                         $success = TRUE;
                     }
                     break;
+
+                case 'nothing':
+                    $success = TRUE;
+                break;
 
                 default:
                     $this->error(sprintf('Unknown action "%s" on json document.', $json['action']));

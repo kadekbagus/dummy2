@@ -92,7 +92,8 @@ return array(
         'no_promotions_listing'        => 'Sorry, there is no promotion at the moment in this mall.',
         'no_stores_listing'            => 'Sorry, there is no store at the moment in this mall.',
         'no_services_listing'          => 'Sorry, there is no service at the moment in this mall.',
-        'no_coupon_wallet'             => 'Sorry no coupon wallet'
+        'no_coupon_wallet_1'           => 'You have not added any coupons to your wallet. Tap on',
+        'no_coupon_wallet_2'           => 'to add a coupon to your wallet.'
     ),
 
     // modal specific lang
@@ -323,7 +324,7 @@ return array(
         'check_coupon'                     => 'You can check your coupons in Home Page <i class="fa fa-arrow-right"></i> Coupons',
         'add_wallet'                       => 'Add to <br/> Wallet',
         'added_wallet'                     => 'Added to <br/> Wallet',
-        'login_to_show_coupon_wallet'      => 'Please login to show coupon wallet'
+        'login_to_show_coupon_wallet'      => 'You need to sign in to view your coupon wallet.'
     ),
 
     'coupon_list' => array(

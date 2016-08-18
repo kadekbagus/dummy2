@@ -18,6 +18,9 @@
         .tenant-list li{
             list-style: none;
         }
+        .headed-layout.content-container {
+            padding-top: 7em;
+        }
     </style>
 @stop
 
@@ -45,20 +48,16 @@
                 <div class="vertical"></div>
             </div>
         </div>
-        @if(!$is_coupon_wallet_detail || !$added_to_wallet_detail)
+        @if(!$wallet['is_coupon_wallet'] || !$wallet['added_to_wallet'])
         <div class="coupon-wallet pull-right">
-            <span class="fa-stack fa-2x">
-                <i class="fa fae-wallet fa-stack-2x"></i>
-                <i class="fa fa-circle fa-stack-2x"></i>
-                <i class="fa @if($added_to_wallet_detail) fa-plus @else fa-check @endif fa-stack-1x"></i>
-            </span>
-            <span class="wallet-text">
-                @if($added_to_wallet_detail)
-                    {{ Lang::get('mobileci.coupon.add_wallet') }}
-                @else
-                    {{ Lang::get('mobileci.coupon.added_wallet') }}
-                @endif
-            </span>
+            <a data-href="{{ $wallet['hash_url'] }}" href="{{ $wallet['hash'] }}">
+                <span class="fa-stack fa-2x clickable" data-ids="{{ $coupon->promotion_id }}" data-isaddedtowallet="{{ $wallet['added_to_wallet'] }}">
+                    <i class="fa fae-wallet fa-stack-2x"></i>
+                    <i class="fa {{ $wallet['circle'] }} fa-circle fa-stack-2x"></i>
+                    <i class="fa {{ $wallet['icon'] }} fa-stack-1x state-icon"></i>
+                </span>
+            </a>
+            <span class="wallet-text">{{ $wallet['text'] }}</span>
         </div>
         @endif
         <div class="actions-panel" style="display: none;">
@@ -87,7 +86,6 @@
                     </a>
                     @endif
                 </li>
-                @if(count($issued_coupons) > 0)
                 <li>
                     @if(count($tenants) === 1 && ! $cs_reedem)
                     <a data-href="{{ route('ci-tenant-detail', ['id' => $tenants[0]->retailer_id]) }}" href="{{{ \Orbit\Helper\Net\UrlChecker::blockedRoute('ci-tenant-detail', ['id' => $tenants[0]->retailer_id, 'name' => Str::slug($tenants[0]->name)], $session) }}}">
@@ -103,7 +101,6 @@
                         <span class="text">{{{ Lang::get('mobileci.tenant.redemption_places') }}}</span>
                     </a>
                 </li>
-                @endif
                 @if ($is_logged_in)
                     @if(! empty($coupon->facebook_share_url))
                     <li>
@@ -126,7 +123,7 @@
       </div>
     </div>
 </div>
-@if($is_coupon_wallet_detail && $added_to_wallet_detail)
+@if($wallet['is_coupon_wallet'] && $wallet['added_to_wallet'])
 <div class="row fullbutton">
     <a class="col-xs-12" id="useBtn">
         <i class="fa fa-scissors"></i>
@@ -134,7 +131,7 @@
     </a>
 </div>
 @endif
-<div class="row product-info padded @if($is_coupon_wallet_detail && $added_to_wallet_detail) disable-box-shadow @endif" style="z-index: 101;">
+<div class="row product-info padded @if($wallet['is_coupon_wallet'] && $wallet['added_to_wallet']) disable-box-shadow @endif" style="z-index: 101;">
     <div class="col-xs-12">
         <div class="row">
             <div class="col-xs-12">
@@ -243,6 +240,36 @@
     {{-- End of Script fallback --}}
     <script type="text/javascript">
         $(document).ready(function(){
+            $('.coupon-wallet a').on('click', function() {
+                e.preventDefault();
+            });
+
+            $('.coupon-wallet .clickable').on('click', function() {
+                var element = $(this),
+                    id = element.data('ids');
+
+                if (element.attr('data-isaddedtowallet') === 'true' || element.parent().attr('href') === '#') {
+                    return;
+                }
+
+                $.ajax({
+                    url: apiPath + 'coupon/addtowallet',
+                    method: 'POST',
+                    data: {
+                        coupon_id: id
+                    }
+                }).done(function (data) {
+                    if(data.status === 'success') {
+                        element.children('.state-icon').removeClass('fa-plus');
+                        element.children('.state-icon').addClass('fa-check');
+                        element.children('.fa-circle').addClass('added');
+                        element.parent().siblings().html('{{ Lang::get("mobileci.coupon.added_wallet") }}');
+                        $(".coupon-button").removeClass('active');
+                        element.attr('data-isaddedtowallet', true);
+                    }
+                });
+            });
+
             // Set fromSource in localStorage.
             localStorage.setItem('fromSource', 'mall-coupon');
 
@@ -301,7 +328,7 @@
                         });
 
                         $('#successCouponModal').on('hide.bs.modal', function ($event) {
-                            window.location.replace('{{ \Orbit\Helper\Net\UrlChecker::blockedRoute('ci-coupon-list', [], $session) }}');
+                            window.location.replace('{{ \Orbit\Helper\Net\UrlChecker::blockedRoute('ci-coupon-list', ["type" => "wallet"], $session) }}');
                         });
                     }
                     else{
