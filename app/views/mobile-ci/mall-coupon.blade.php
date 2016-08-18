@@ -83,7 +83,6 @@
                     </a>
                     @endif
                 </li>
-                @if(count($issued_coupons) > 0)
                 <li>
                     @if(count($tenants) === 1 && ! $cs_reedem)
                     <a data-href="{{ route('ci-tenant-detail', ['id' => $tenants[0]->retailer_id]) }}" href="{{{ \Orbit\Helper\Net\UrlChecker::blockedRoute('ci-tenant-detail', ['id' => $tenants[0]->retailer_id, 'name' => Str::slug($tenants[0]->name)], $session) }}}">
@@ -99,7 +98,6 @@
                         <span class="text">{{{ Lang::get('mobileci.tenant.redemption_places') }}}</span>
                     </a>
                 </li>
-                @endif
                 @if ($is_logged_in)
                     @if(! empty($coupon->facebook_share_url))
                     <li>
