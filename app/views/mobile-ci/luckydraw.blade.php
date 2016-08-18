@@ -338,7 +338,7 @@ if(!empty($luckydraw)) {
                         if (data.code === 0) {
                             $('#upload-message').css('color', 'green').html("{{Lang::get('mobileci.lucky_draw.upload_success')}} <br> {{Lang::get('mobileci.lucky_draw.upload_congrats')}}" + data.data.lucky_draw_number_code);
                             setTimeout(function() {
-                                window.location.replace('{{route('ci-luckydraw-detail', ['id' => $luckydraw->lucky_draw_id, 'name' => Str::slug($luckydraw->lucky_draw_name), 'show_message' => 'true'])}}#lucky-draw-capture');
+                                window.location.replace('{{route('ci-luckydraw-detail', ['id' => $luckydraw->lucky_draw_id, 'name' => Str::slug($luckydraw->lucky_draw_name), 'show_message' => 'true', 'nc' => strtotime('now')])}}#lucky-draw-capture');
                             }, 1000);
                         } else {
                             $('#upload-message').css('color', 'red').text(data.message);

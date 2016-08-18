@@ -3172,10 +3172,6 @@ class MobileCIAPIController extends BaseCIController
                         $prefix = DB::getTablePrefix();
                         $mallid = $retailer->merchant_id;
                         $q->select("*", DB::raw('count(' . DB::getTablePrefix() . 'promotions.promotion_id) as quantity'))
-                            ->join('issued_coupons', function ($join) {
-                                $join->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
-                                $join->where('issued_coupons.status', '=', 'active');
-                            })
                             ->leftJoin('promotion_retailer_redeem', 'promotion_retailer_redeem.promotion_id', '=', 'promotions.promotion_id')
                             ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer_redeem.retailer_id')
                             ->where(function ($q) use ($mallid) {
@@ -3193,8 +3189,7 @@ class MobileCIAPIController extends BaseCIController
                                     });
                                 });
                             })
-                            ->where('promotions.coupon_validity_in_date', '>=', $mallTime)
-                            ->where('issued_coupons.user_id', $user->user_id);
+                            ->where('promotions.coupon_validity_in_date', '>=', $mallTime);
 
                         if ($userGender !== null) {
                             $q->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
