@@ -240,34 +240,55 @@
     {{-- End of Script fallback --}}
     <script type="text/javascript">
         $(document).ready(function(){
-            $('.coupon-wallet a').on('click', function() {
+            var idForAddWallet = '{{ \Input::get("id") }}' !== '' ? '{{ \Input::get("id") }}' : '',
+                successLogin = '{{ \Input::get("successLogin") }}' !== '' ? '{{ \Input::get("successLogin") }}' : 'false',
+                addToWallet = function (ids, callback) {
+                    var element = $("span[data-ids='" + ids  + "']");
+
+                    $.ajax({
+                        url: apiPath + 'coupon/addtowallet',
+                        method: 'POST',
+                        data: {
+                            coupon_id: ids
+                        }
+                    }).done(function (data) {
+                        if(data.status === 'success') {
+                            element.children('.state-icon').removeClass('fa-plus');
+                            element.children('.state-icon').addClass('fa-check');
+                            element.children('.fa-circle').addClass('added');
+                            element.parent().siblings().html('{{ Lang::get("mobileci.coupon.added_wallet") }}');
+                            element.attr('data-isaddedtowallet', true);
+
+                            if (callback) {
+                                callback();
+                            }
+                        }
+                    });
+                };
+
+            if (idForAddWallet !== '' && successLogin === 'true') {
+                addToWallet(idForAddWallet, function () {
+                    var id = '{{ \Input::get("id") }}',
+                        name = '{{ \Input::get("name") }}',
+                        type = '{{ \Input::get("type") }}';
+
+                    history.pushState({}, '', 'mallcoupon?id=' + id + '&name=' + name + '&type=' + type);
+                });
+            }
+
+            $('.coupon-wallet a').on('click', function(e) {
                 e.preventDefault();
             });
 
             $('.coupon-wallet .clickable').on('click', function() {
                 var element = $(this),
-                    id = element.data('ids');
+                    ids = element.data('ids');
 
                 if (element.attr('data-isaddedtowallet') === 'true' || element.parent().attr('href') === '#') {
                     return;
                 }
 
-                $.ajax({
-                    url: apiPath + 'coupon/addtowallet',
-                    method: 'POST',
-                    data: {
-                        coupon_id: id
-                    }
-                }).done(function (data) {
-                    if(data.status === 'success') {
-                        element.children('.state-icon').removeClass('fa-plus');
-                        element.children('.state-icon').addClass('fa-check');
-                        element.children('.fa-circle').addClass('added');
-                        element.parent().siblings().html('{{ Lang::get("mobileci.coupon.added_wallet") }}');
-                        $(".coupon-button").removeClass('active');
-                        element.attr('data-isaddedtowallet', true);
-                    }
-                });
+                addToWallet(ids);
             });
 
             // Set fromSource in localStorage.
