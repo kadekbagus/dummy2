@@ -1147,6 +1147,8 @@ class Activity extends Eloquent
     {
         // Normal referer
         $referer = NULL;
+        // Orbit Referer (Custom one for AJAX nagivation)
+        $orbitReferer = NULL;
 
         if (isset($_SERVER['HTTP_REFERER']) && ! empty($_SERVER['HTTP_REFERER'])) {
             $referer = $_SERVER['HTTP_REFERER'];
@@ -1154,13 +1156,14 @@ class Activity extends Eloquent
 
         // Orbit specific referer, this may override above
         if (isset($_SERVER['HTTP_X_ORBIT_REFERER']) && ! empty($_SERVER['HTTP_X_ORBIT_REFERER'])) {
-            $referer = $_SERVER['HTTP_X_ORBIT_REFERER'];
+            $orbitReferer = $_SERVER['HTTP_X_ORBIT_REFERER'];
         }
 
         // queue for create/update activity document in elasticsearch
         Queue::push('Orbit\\Queue\\Elasticsearch\\ESActivityUpdateQueue', [
             'activity_id' => $this->activity_id,
-            'referer' => $referer
+            'referer' => substr($referer, 0, 1024),
+            'orbit_referer' => substr($orbitReferer, 0, 1024)
         ]);
     }
 
