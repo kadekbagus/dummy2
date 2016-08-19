@@ -39,7 +39,7 @@ class RegistrationAPIController extends IntermediateBaseController
     {
         $this->response = new ResponseProvider();
         $activity = Activity::mobileci()
-                            ->setActivityType('registration');
+            ->setActivityType('registration');
 
         try {
             $email = trim(OrbitInput::post('email'));
@@ -108,13 +108,27 @@ class RegistrationAPIController extends IntermediateBaseController
                 $sessionHeader = 'Set-' . $sessionHeader;
                 $this->customHeaders[$sessionHeader] = $this->session->getSessionId();
 
-                $activity_name_long = 'Sign Up via Mobile (Email Address)';
-                // Successfull login
+                // Registration_ok activity
                 $activity->setUser($user)
-                         ->setActivityName('registration_ok')
-                         ->setActivityNameLong($activity_name_long)
-                         ->responseOK()
-                         ->setModuleName('Application')->save();
+                    ->setObject($user)
+                    ->setActivityName('registration_ok')
+                    ->setActivityNameLong('Sign Up via Mobile (Email Address)')
+                    ->setNotes('Sign Up via Mobile (Email Address) OK')
+                    ->responseOK()
+                    ->setModuleName('Application')
+                    ->save();
+
+                // Login_ok activity
+                $activity_login = Activity::mobileci()
+                    ->setUser($user)
+                    ->setActivityName('login_ok')
+                    ->setActivityNameLong('Sign In')
+                    ->setActivityType('login')
+                    ->setObject($user)
+                    ->setNotes('Sign In via Mobile (Form) OK')
+                    ->setModuleName('Application')
+                    ->responseOK()
+                    ->save();
             }
 
             $this->response->data = $user;
