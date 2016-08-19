@@ -44,7 +44,7 @@
                     @if(mb_strlen($page_title) >= 30)
                     {{{ substr($page_title, 0, 30) . '...' }}}
                     @else
-                    {{{ $page_title }}}
+                    {{ $page_title }}
                     @endif
         </span>
                 @endif
@@ -57,7 +57,7 @@
                     @if(mb_strlen($page_title) >= 30)
                     {{{ substr($page_title, 0, 30) . '...' }}}
                     @else
-                    {{{ $page_title }}}
+                    {{ $page_title }}
                     @endif
                 @endif
         </span>
@@ -110,7 +110,7 @@
                 </li>
                 <li class=""><a id="multi-language"><span><span class="glyphicon glyphicon-globe fa-relative"></span> {{ ucwords(strtolower(Lang::get('mobileci.page_title.language'))) }}</span></a></li>
                 @if($is_logged_in)
-                <li class=""><a href="{{ url('/customer/logout') }}"><span><span class="glyphicon glyphicon-off fa-relative"></span> {{ ucwords(strtolower(Lang::get('mobileci.page_title.logout'))) }}</span></a></li>
+                <li class=""><a href="{{ url('/customer/logout?mall_id=' . $retailer->merchant_id) }}"><span><span class="glyphicon glyphicon-off fa-relative"></span> {{ ucwords(strtolower(Lang::get('mobileci.page_title.logout'))) }}</span></a></li>
                 @endif
             </ul>
         </div>
