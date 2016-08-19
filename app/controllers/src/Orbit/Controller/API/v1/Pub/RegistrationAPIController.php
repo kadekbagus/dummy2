@@ -38,14 +38,8 @@ class RegistrationAPIController extends IntermediateBaseController
     public function postRegisterCustomer()
     {
         $this->response = new ResponseProvider();
-        $activity = Activity::portal()
+        $activity = Activity::mobileci()
                             ->setActivityType('registration');
-
-        if ($this->appOrigin === 'mobile_ci') {
-            // set this activity as mobileci instead of portal if coming from mobileci
-            $activity = Activity::mobileci()
-                            ->setActivityType('registration');
-        };
 
         try {
             $email = trim(OrbitInput::post('email'));
