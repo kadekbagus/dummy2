@@ -57,14 +57,9 @@ class LoginAPIController extends IntermediateBaseController
     {
         $this->response = new ResponseProvider();
         $roles=['Consumer'];
-        $activity = Activity::portal()
+        $activity = Activity::mobileci()
                             ->setActivityType('login');
 
-        if ($this->appOrigin === 'mobile_ci') {
-            // set this activity as mobileci instead of portal if coming from mobileci
-                $activity = Activity::mobileci()
-                                ->setActivityType('login');
-        };
         try {
             $email = trim(OrbitInput::post('email'));
             $password = trim(OrbitInput::post('password'));
@@ -164,7 +159,7 @@ class LoginAPIController extends IntermediateBaseController
                          ->setActivityName('login_ok')
                          ->setActivityNameLong('Sign in')
                          ->responseOK()->setModuleName('Application')->save();
-                
+
                 $user->activity = $activity;
             } else {
                 // set \MobileCI\MobileCIAPIController->session using $this->session
@@ -352,8 +347,12 @@ class LoginAPIController extends IntermediateBaseController
                             throw new Exception($response->message, $response->code);
                         }
 
+                        $this->setSignUpActivity($response, 'google', NULL);
+
                         $loggedInUser = $this->doAutoLogin($response->user_email);
                     }
+
+                    $this->setSignInActivity($loggedInUser, 'google', NULL);
 
                     $expireTime = Config::get('orbit.session.session_origin.cookie.expire');
 
@@ -604,8 +603,12 @@ class LoginAPIController extends IntermediateBaseController
                 throw new Exception($response->message, $response->code);
             }
 
+            $this->setSignUpActivity($response, 'facebook', NULL);
+
             $loggedInUser = $this->doAutoLogin($response->user_email);
         }
+
+        $this->setSignInActivity($loggedInUser, 'facebook', NULL);
 
         $expireTime = Config::get('orbit.session.session_origin.cookie.expire');
 
@@ -1041,7 +1044,7 @@ class LoginAPIController extends IntermediateBaseController
     }
 
     // create activity signup from socmed
-    public function setSignUpActivity($user, $from, $retailer)
+    protected function setSignUpActivity($user, $from, $retailer)
     {
         $activity = Activity::mobileci()
             ->setLocation($retailer)
@@ -1064,5 +1067,23 @@ class LoginAPIController extends IntermediateBaseController
         }
 
         $activity->save();
+    }
+
+    // create activity signin from socmed
+    protected function setSignInActivity($user, $from, $retailer)
+    {
+        if (is_object($user)) {
+            $activity = Activity::mobileci()
+                ->setLocation($retailer)
+                ->setUser($user)
+                ->setActivityName('login_ok')
+                ->setActivityNameLong('Sign In')
+                ->setActivityType('login')
+                ->setObject($user)
+                ->setNotes(sprintf('Sign In via Mobile (%s) OK', ucfirst($from)))
+                ->setModuleName('Application')
+                ->responseOK()
+                ->save();
+        }
     }
 }
