@@ -14,14 +14,9 @@ use \Exception;
 use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use \DB;
-use \Carbon\Carbon as Carbon;
 use \Validator;
-use Tenant;
 use Mall;
 use App;
-use Employee;
-use Coupon;
-use News;
 use Lang;
 use User;
 use Activity;
@@ -29,7 +24,7 @@ use Activity;
 class UserCIAPIController extends BaseAPIController
 {
     protected $validRoles = ['super admin', 'consumer', 'guest'];
-    protected $mall_id = NULL;
+    protected $mall_id = null;
 
     public function getMyAccountInfo()
     {
@@ -50,25 +45,7 @@ class UserCIAPIController extends BaseAPIController
                 ACL::throwAccessForbidden($message);
             }
 
-            $this->mall_id = OrbitInput::get('mall_id', NULL);
-
-            $this->registerCustomValidation();
-            $validator = Validator::make(
-                array(
-                    'mall_id' => $this->mall_id,
-                ),
-                array(
-                    'mall_id' => 'required|orbit.empty.mall',
-                )
-            );
-            if ($validator->fails()) {
-                $errorMessage = $validator->messages()->first();
-                OrbitShopAPI::throwInvalidArgument($errorMessage);
-            }
-
-            $mall = Mall::excludeDeleted()->where('merchant_id', $this->mall_id)->first();
-
-            $image = NULL;
+            $image = null;
             $media = $user->profilePicture()
                 ->where('media_name_long', 'user_profile_picture_orig')
                 ->get();
@@ -83,17 +60,8 @@ class UserCIAPIController extends BaseAPIController
             $data->email = $user->user_email;
             $data->firstname = $user->user_firstname;
             $data->lastname = $user->user_lastname;
+            $data->role = $role->role_name;
             $data->image = $image;
-
-            $activityNote = sprintf('Page viewed: My Account, user Id: %s', $user->user_id);
-            $activity->setUser($user)
-                ->setActivityName('view_my_account')
-                ->setActivityNameLong('View My Account')
-                ->setModuleName('My Account')
-                ->setLocation($mall)
-                ->setNotes($activityNote)
-                ->responseOK()
-                ->save();
 
             $this->response->data = $data;
             $this->response->code = 0;
@@ -105,14 +73,6 @@ class UserCIAPIController extends BaseAPIController
             $this->response->message = $e->getMessage();
             $this->response->data = null;
             $httpCode = 403;
-
-            $activity->setUser($user)
-                ->setActivityName('view_my_account')
-                ->setActivityNameLong('View My Account Failed')
-                ->setModuleName('My Account')
-                ->setNotes($e->getMessage())
-                ->responseFailed()
-                ->save();
         } catch (InvalidArgsException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -123,14 +83,6 @@ class UserCIAPIController extends BaseAPIController
 
             $this->response->data = $result;
             $httpCode = 403;
-
-            $activity->setUser($user)
-                ->setActivityName('view_my_account')
-                ->setActivityNameLong('View My Account Failed')
-                ->setModuleName('My Account')
-                ->setNotes($e->getMessage())
-                ->responseFailed()
-                ->save();
         } catch (QueryException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -142,48 +94,14 @@ class UserCIAPIController extends BaseAPIController
             }
             $this->response->data = null;
             $httpCode = 500;
-
-            $activity->setUser($user)
-                ->setActivityName('view_my_account')
-                ->setActivityNameLong('View My Account Failed')
-                ->setModuleName('My Account')
-                ->setNotes($e->getMessage())
-                ->responseFailed()
-                ->save();
         } catch (Exception $e) {
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $this->response->data = null;
             $httpCode = 500;
-
-            $activity->setUser($user)
-                ->setActivityName('view_my_account')
-                ->setActivityNameLong('View My Account Failed')
-                ->setModuleName('My Account')
-                ->setNotes('Failed to view: My Account Page. Err: ' . $e->getMessage())
-                ->responseFailed()
-                ->save();
         }
 
         return $this->render($httpCode);
-    }
-
-    protected function registerCustomValidation()
-    {
-        // Check the existance of merchant id
-        Validator::extend('orbit.empty.mall', function ($attribute, $value, $parameters) {
-            $mall = Mall::excludeDeleted()
-                        ->where('merchant_id', $value)
-                        ->first();
-
-            if (empty($mall)) {
-                return FALSE;
-            }
-
-            App::instance('orbit.empty.mall', $mall);
-
-            return TRUE;
-        });
     }
 }

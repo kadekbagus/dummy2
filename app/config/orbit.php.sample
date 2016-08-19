@@ -20,7 +20,11 @@ return array(
         // Path to CA Certificate, used when serving via HTTPS
         'cacert' => '/path/to/cacert.crt',
 
+        // Prefix to access indices
+        'indices_prefix' => 'v2x_',
+
         // List of indices that we have in Elasticsearch
+        // All the query to the index name will be appended by prefix automatically
         'indices' => [
             'malldata' => [
                 'index' => 'malls',
@@ -61,6 +65,7 @@ return array(
         // 'ci-promotion-detail',
         // 'ci-coupon-list',
         // 'ci-coupon-detail',
+        // 'ci-coupon-detail-wallet',
         // 'ci-notification-list',
         // 'ci-notification-detail',
         // 'ci-my-account',
@@ -137,7 +142,11 @@ return array(
     'assets' => array(
         // Asset root (without trailing slash)
         // leave undefined to work from app root
-        // 'root' => 'http://assets.myorbit.com'
+        // 'root' => 'http://assets.myorbit.com',
+
+        // Every deployment which changes the CSS should also
+        // change this value
+        // 'timestamp' => '201608161427'
     ),
 
     // Languages that supported by orbit app
@@ -198,6 +207,7 @@ return array(
         'pmp'   => 'https://pmp.gotomalls.cool/?mode=pmp/#/service-agreement?token=%s'
     ),
 
+    // Latitude and longitude of the user send by the frontend side
     'user_location' => array(
         'query_string' => array(
             // query string name for user location
@@ -608,18 +618,18 @@ return array(
          *
          * example:
          * FILE:
-         * 'path' => storage_path() . DIRECTORY_SEPARATOR . 'orbit-session'
+         * 'path' => sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'orbit-session'
          * TABLE NAME:
          * 'path' => 'orb_sessions'
          * NAMESPACE:
          * 'path' => 'SESSIONS'
          */
-        'path' => DB::getTablePrefix() . 'sessions',
+        'path' => storage_path() . DIRECTORY_SEPARATOR . 'orbit-session',
 
         /**
          * Strict mode, will check the user agent and ip address
          */
-        'strict' => FALSE,
+        'strict' => TRUE,
 
         /**
          * Connection Information
@@ -658,14 +668,12 @@ return array(
          *     ),
          * ),
          */
-        'connection' => DB::connection()->getPdo(),
+        'connection' => array(),
 
         /**
          * Session Driver
-         *
-         * supported value are 'file' or 'database'
          */
-        'driver' => 'database',
+        'driver' => 'file',
 
         /**
          * Session data available
@@ -3134,7 +3142,7 @@ return array(
             'version'       => 'v2.4'
         ],
         'google' => array(
-            'callback_url' => 'https://mall-api.gotomalls.cool/pub/social-google-callback',
+            'callback_url' => 'http://mall-api.gotomalls.cool/pub/social-google-callback',
         ),
     ],
 
@@ -3246,7 +3254,7 @@ return array(
     ),
 
     'error_message' => array(
-        'e500' => '<a href="https://www.gotomalls.com">gotomalls.com</a> is improving your user experience. Please come back later.'
+        'e500' => '<a href=http://gotomalls.com>gotomalls.com</a> is improving your user experience. Come back later.'
     ),
 
     // Block access to some end point
@@ -3311,6 +3319,143 @@ return array(
                 'type' => 'click',
                 'object_type' => null,
                 'parameter_name' => null
+            ),
+            // ** Main Page Widgets **
+            // - Home Click
+            '7' => array(
+                'name' => 'click_home_main_page',
+                'name_long' => 'Click Home Main Page',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - Map Click
+            '8' => array(
+                'name' => 'click_map_main_page',
+                'name_long' => 'Click Map Main Page',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - Map View
+            '9' => array(
+                'name' => 'view_map_main_page',
+                'name_long' => 'View Map Main Page',
+                'module_name' => 'Application',
+                'type' => 'view',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - Discover Click
+            '10' => array(
+                'name' => 'click_discover_main_page',
+                'name_long' => 'Click Discover Main Page',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - Discover View
+            '11' => array(
+                'name' => 'view_discover_main_page',
+                'name_long' => 'View Discover Main Page',
+                'module_name' => 'Application',
+                'type' => 'view',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - Malls Click
+            '12' => array(
+                'name' => 'click_mall_main_page',
+                'name_long' => 'Click Mall Main Page',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - Malls View
+            '13' => array(
+                'name' => 'view_mall_main_page',
+                'name_long' => 'View Mall Main Page',
+                'module_name' => 'Application',
+                'type' => 'view',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - Stores Click
+            '14' => array(
+                'name' => 'click_stores_main_page',
+                'name_long' => 'Click Stores Main Page',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - Stores View
+            '15' => array(
+                'name' => 'view_stores_main_page',
+                'name_long' => 'View Stores Main Page',
+                'module_name' => 'Application',
+                'type' => 'view',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - Lucky Draws Click
+            '16' => array(
+                'name' => 'click_lucky_draws_main_page',
+                'name_long' => 'Click Lucky Draws Main Page',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - Lucky Draws View
+            '17' => array(
+                'name' => 'view_lucky_draws_main_page',
+                'name_long' => 'View Lucky Draws Main Page',
+                'module_name' => 'Application',
+                'type' => 'view',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - PokeMaps Click
+            '18' => array(
+                'name' => 'click_pokemaps_main_page',
+                'name_long' => 'Click Pokemaps Main Page',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - PokeMaps View
+            '19' => array(
+                'name' => 'view_pokemaps_main_page',
+                'name_long' => 'View Pokemaps Main Page',
+                'module_name' => 'Application',
+                'type' => 'view',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // ** End Of Main Page Widgets **
+            // - Clicking on a store in list
+            '20' => array(
+                'name' => 'click_store_list',
+                'name_long' => 'Click Store List',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => 'Tenant',
+                'parameter_name' => 'store_id'
+            ),
+            // - Clicking on a lucky draw in list
+            '21' => array(
+                'name' => 'click_lucky_draw_list',
+                'name_long' => 'Click Lucky Draw List',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => 'LuckyDraw',
+                'parameter_name' => 'lucky_draw_id'
             ),
         ),
     ),

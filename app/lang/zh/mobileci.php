@@ -463,6 +463,9 @@ return array(
         'lucky_draw_prizes'         => '幸运抽奖',
         'no_prize'                  => '该奖项即将到来',
         'lucky_draw_download_title' => '下载抽奖号码',
+        'upload_receipt'            => 'Upload Receipt',
+        'upload_success'            => 'Upload Successful!',
+        'upload_congrats'           => 'You have obtained 1 lucky number! Here is your lucky number ',
     ),
 
     'notification' => array(

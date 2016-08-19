@@ -203,6 +203,18 @@ Route::group(
                         return MobileCI\MobileCIAPIController::create()->getLuckyDrawAnnouncementView();
                     }]
                 );
+
+                Route::group(
+                    array('before' => 'orbit-csrf'),
+                    function() {
+                        Route::post(
+                            '/app/v1/customer/luckydraw-issue', ['as' => 'ci-luckydraw-auto-issue',
+                            function () {
+                                return MobileCI\MobileCIAPIController::create()->postLuckyDrawAutoIssue();
+                            }]
+                        );
+                    }
+                );
             }
         );
 
@@ -215,6 +227,14 @@ Route::group(
 
         Route::get(
             '/customer/mallcoupon', ['as' => 'ci-coupon-detail',
+            function () {
+
+                return MobileCI\MobileCIAPIController::create()->getMallCouponDetailView();
+            }]
+        );
+
+        Route::get(
+            '/customer/mallcoupon-wallet', ['as' => 'ci-coupon-detail-wallet',
             function () {
 
                 return MobileCI\MobileCIAPIController::create()->getMallCouponDetailView();
@@ -247,6 +267,13 @@ Route::group(
             '/customer/mallnewsdetail', ['as' => 'ci-news-detail',
             function () {
                 return MobileCI\MobileCIAPIController::create()->getMallNewsDetailView();
+            }]
+        );
+
+        Route::get(
+            '/customer/pokestopdetail', ['as' => 'ci-pokesyop-detail',
+            function () {
+                return MobileCI\MobileCIAPIController::create()->getMallPokestopDetailView();
             }]
         );
 
@@ -395,6 +422,15 @@ Route::group(
         {
             return MobileCI\MobileCIAPIController::create()->getSearchLuckyDraw();
         });
+
+        /**
+         * Add coupon to wallet API
+         */
+        Route::post('/app/v1/coupon/addtowallet', ['as' => 'coupon-add-to-wallet', function()
+            {
+                return MobileCI\MobileCIAPIController::create()->postAddToWallet();
+            }]
+        );
 
         /**
          * Check user location

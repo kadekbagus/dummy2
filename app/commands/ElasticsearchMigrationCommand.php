@@ -51,7 +51,7 @@ class ElasticsearchMigrationCommand extends Command
     public function fire()
     {
         $mode = $this->option('mode');
-
+        $dryrun = $this->option('dry-run');
         switch ($mode) {
             case 'create':
                 $fname = $this->option('filename');
@@ -101,6 +101,8 @@ class ElasticsearchMigrationCommand extends Command
         $directory = 'migrations';
         $suffixInfo = 'Migrated:';
 
+        $env = App::environment();
+
         if ($mode === 'rollback') {
             $directory = 'rollback';
             $suffixInfo = 'Rollback:';
@@ -119,8 +121,9 @@ class ElasticsearchMigrationCommand extends Command
                 continue;
             }
 
+            $indexPrefix = Config::get('orbit.elasticsearch.indices_prefix');
             $params = [
-                'index' => $json['index'],
+                'index' => $indexPrefix . $json['index'],
                 'body' => $json['es_data']
             ];
             switch ($json['action']) {
@@ -132,7 +135,7 @@ class ElasticsearchMigrationCommand extends Command
                     break;
 
                 case 'delete_index':
-                    $response = $this->es->indices()->delete(['index' => $json['index']]);
+                    $response = $this->es->indices()->delete(['index' => $indexPrefix . $json['index']]);
                     if (isset($response['acknowledged']) && isset($response['acknowledged'])) {
                         $success = TRUE;
                     }
@@ -146,11 +149,16 @@ class ElasticsearchMigrationCommand extends Command
                     break;
 
                 case 'update_mapping':
+                    $params['type'] = $json['type'];
                     $response = $this->es->indices()->putMapping($params);
                     if (isset($response['acknowledged']) && isset($response['acknowledged'])) {
                         $success = TRUE;
                     }
                     break;
+
+                case 'nothing':
+                    $success = TRUE;
+                break;
 
                 default:
                     $this->error(sprintf('Unknown action "%s" on json document.', $json['action']));
@@ -158,7 +166,7 @@ class ElasticsearchMigrationCommand extends Command
             }
 
             if ($mode === 'rollback') {
-                unlink($this->elasticDataDir . '/migrated/' . $file);
+                unlink($this->elasticDataDir . '/migrated/' . $env . '/' . $file);
             } else {
                 $this->writeMigratedFile($file);
             }

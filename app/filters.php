@@ -13,6 +13,7 @@ use Net\Security\RequestAccess;
 use Orbit\Helper\Net\FBBotChecker;
 use Orbit\Helper\Security\MallAccess;
 use Net\Util\MobileDetect;
+use Orbit\Helper\Net\SessionPreparer;
 
 App::after(function($request, $response)
 {
@@ -88,6 +89,16 @@ Route::filter('guest', function()
 Route::filter('csrf', function()
 {
     if (Session::token() !== Input::get('_token'))
+    {
+        throw new Illuminate\Session\TokenMismatchException;
+    }
+});
+
+Route::filter('orbit-csrf', function()
+{
+    $session = SessionPreparer::prepareSession();
+
+    if ($session->read('orbit_csrf_token') !== Input::get('_token'))
     {
         throw new Illuminate\Session\TokenMismatchException;
     }

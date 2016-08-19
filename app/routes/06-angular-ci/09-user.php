@@ -13,3 +13,11 @@ Route::post('/api/v1/cust/checkin', function()
 });
 
 Route::post('/app/v1/cust/checkin', ['as' => 'customer-cek-sign-in', 'uses' => 'IntermediateCIAuthController@CheckInCI_postCekSignIn']);
+
+
+Route::post(
+    '/{prefix}/v1/pub/edit-account', ['as' => 'pub-edit-account', function()
+    {
+        return Orbit\Controller\API\v1\Pub\UserAPIController::create()->postEditAccount();
+    }]
+)->where('prefix', '(api|app)');

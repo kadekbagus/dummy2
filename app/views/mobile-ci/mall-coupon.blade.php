@@ -18,6 +18,9 @@
         .tenant-list li{
             list-style: none;
         }
+        .headed-layout.content-container {
+            padding-top: 7em;
+        }
     </style>
 @stop
 
@@ -45,6 +48,18 @@
                 <div class="vertical"></div>
             </div>
         </div>
+        @if(!$wallet['is_coupon_wallet'] || !$wallet['added_to_wallet'])
+        <div class="coupon-wallet pull-right">
+            <a data-href="{{ $wallet['hash_url'] }}" href="{{ $wallet['hash'] }}">
+                <span class="fa-stack fa-2x clickable" data-ids="{{ $coupon->promotion_id }}" data-isaddedtowallet="{{ $wallet['added_to_wallet'] }}">
+                    <i class="fa fae-wallet fa-stack-2x"></i>
+                    <i class="fa {{ $wallet['circle'] }} fa-circle fa-stack-2x"></i>
+                    <i class="fa {{ $wallet['icon'] }} fa-stack-1x state-icon"></i>
+                </span>
+            </a>
+            <span class="wallet-text">{{ $wallet['text'] }}</span>
+        </div>
+        @endif
         <div class="actions-panel" style="display: none;">
             <ul class="list-unstyled">
                 <li>
@@ -71,7 +86,6 @@
                     </a>
                     @endif
                 </li>
-                @if(count($issued_coupons) > 0)
                 <li>
                     @if(count($tenants) === 1 && ! $cs_reedem)
                     <a data-href="{{ route('ci-tenant-detail', ['id' => $tenants[0]->retailer_id]) }}" href="{{{ \Orbit\Helper\Net\UrlChecker::blockedRoute('ci-tenant-detail', ['id' => $tenants[0]->retailer_id, 'name' => Str::slug($tenants[0]->name)], $session) }}}">
@@ -87,18 +101,8 @@
                         <span class="text">{{{ Lang::get('mobileci.tenant.redemption_places') }}}</span>
                     </a>
                 </li>
-                <li>
-                    <a id="useBtn">
-                        <span class="fa fa-stack icon">
-                            <i class="fa fa-circle fa-stack-2x"></i>
-                            <i class="fa fa-scissors fa-inverse fa-stack-1x"></i>
-                        </span>
-                        <span class="text">{{{ Lang::get('mobileci.coupon.use_coupon') }}}</span>
-                    </a>
-                </li>
-                @endif
                 @if ($is_logged_in)
-                    @if(! empty($coupon->facebook_share_url))
+                    @if(! empty($coupon->facebook_share_url) && !$wallet['is_coupon_wallet'])
                     <li>
                         <div class="fb-share-button" data-href="{{$coupon->facebook_share_url}}" data-layout="button"></div>
                     </li>
@@ -119,7 +123,15 @@
       </div>
     </div>
 </div>
-<div class="row product-info padded" style="z-index: 101;">
+@if($wallet['is_coupon_wallet'] && $wallet['added_to_wallet'])
+<div class="row fullbutton">
+    <a class="col-xs-12" id="useBtn">
+        <i class="fa fa-scissors"></i>
+        <span class="text">{{{ Lang::get('mobileci.coupon.use_coupon') }}}</span>
+    </a>
+</div>
+@endif
+<div class="row product-info padded @if($wallet['is_coupon_wallet'] && $wallet['added_to_wallet']) disable-box-shadow @endif" style="z-index: 101;">
     <div class="col-xs-12">
         <div class="row">
             <div class="col-xs-12">
@@ -228,6 +240,57 @@
     {{-- End of Script fallback --}}
     <script type="text/javascript">
         $(document).ready(function(){
+            var idForAddWallet = '{{ \Input::get("id") }}' !== '' ? '{{ \Input::get("id") }}' : '',
+                successLogin = '{{ \Input::get("successLogin") }}' !== '' ? '{{ \Input::get("successLogin") }}' : 'false',
+                addToWallet = function (ids, callback) {
+                    var element = $("span[data-ids='" + ids  + "']");
+
+                    $.ajax({
+                        url: apiPath + 'coupon/addtowallet',
+                        method: 'POST',
+                        data: {
+                            coupon_id: ids
+                        }
+                    }).done(function (data) {
+                        if(data.status === 'success') {
+                            element.children('.state-icon').removeClass('fa-plus');
+                            element.children('.state-icon').addClass('fa-check');
+                            element.children('.fa-circle').addClass('added');
+                            element.parent().siblings().html('{{ Lang::get("mobileci.coupon.added_wallet") }}');
+                            element.attr('data-isaddedtowallet', true);
+
+                            if (callback) {
+                                callback();
+                            }
+                        }
+                    });
+                };
+
+            if (idForAddWallet !== '' && successLogin === 'true') {
+                addToWallet(idForAddWallet, function () {
+                    var id = '{{ \Input::get("id") }}',
+                        name = '{{ \Input::get("name") }}',
+                        type = '{{ \Input::get("type") }}';
+
+                    history.pushState({}, '', 'mallcoupon?id=' + id + '&name=' + name + '&type=' + type);
+                });
+            }
+
+            $('.coupon-wallet a').on('click', function(e) {
+                e.preventDefault();
+            });
+
+            $('.coupon-wallet .clickable').on('click', function() {
+                var element = $(this),
+                    ids = element.data('ids');
+
+                if (element.attr('data-isaddedtowallet') === 'true' || element.parent().attr('href') === '#') {
+                    return;
+                }
+
+                addToWallet(ids);
+            });
+
             // Set fromSource in localStorage.
             localStorage.setItem('fromSource', 'mall-coupon');
 
@@ -286,7 +349,7 @@
                         });
 
                         $('#successCouponModal').on('hide.bs.modal', function ($event) {
-                            window.location.replace('{{ \Orbit\Helper\Net\UrlChecker::blockedRoute('ci-coupon-list', [], $session) }}');
+                            window.location.replace('{{ \Orbit\Helper\Net\UrlChecker::blockedRoute('ci-coupon-list', ["type" => "wallet"], $session) }}');
                         });
                     }
                     else{

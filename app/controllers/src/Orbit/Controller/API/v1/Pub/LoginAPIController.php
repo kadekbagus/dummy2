@@ -55,7 +55,6 @@ class LoginAPIController extends IntermediateBaseController
      */
     public function postLoginCustomer()
     {
-
         $this->response = new ResponseProvider();
         $roles=['Consumer'];
         $activity = Activity::portal()
@@ -165,6 +164,7 @@ class LoginAPIController extends IntermediateBaseController
                          ->setActivityName('login_ok')
                          ->setActivityNameLong('Sign in')
                          ->responseOK()->setModuleName('Application')->save();
+                
                 $user->activity = $activity;
             } else {
                 // set \MobileCI\MobileCIAPIController->session using $this->session
@@ -291,7 +291,7 @@ class LoginAPIController extends IntermediateBaseController
                 $mall_id_from_state = json_decode($this->base64UrlDecode($state))->mid;
                 $mall_id_from_desktop_state = json_decode($this->base64UrlDecode($state))->mall_id;
                 $angular_ci_from_state = json_decode($this->base64UrlDecode($state))->aci;
-                $redirect_to_url_from_state = json_decode($this->base64UrlDecode($state))->redirect_to_url;
+                $redirect_to_url_from_state = empty(json_decode($this->base64UrlDecode($state))->redirect_to_url) ? Config::get('orbit.shop.after_social_sign_in') : json_decode($this->base64UrlDecode($state))->redirect_to_url;
                 $_GET[Config::get('orbit.user_location.query_string.name', 'ul')] = json_decode($this->base64UrlDecode($state))->user_location;
                 $this->session = SessionPreparer::prepareSession();
                 // from mall = yes, indicate the request coming from Mall CI, then use MobileCIAPIController::getGoogleCallbackView
@@ -331,7 +331,7 @@ class LoginAPIController extends IntermediateBaseController
                     // so we double check it here
                     if (empty($userEmail)) {
                         if (! empty($angular_ci_from_state)) {
-                            $caller_url = urldecode($encoded_caller_url_full);
+                            $caller_url = $encoded_caller_url_full;
                         }
                         $parsed_caller_url = parse_url((string)$caller_url);
                         if (isset($parsed_caller_url['query'])) {
@@ -340,7 +340,7 @@ class LoginAPIController extends IntermediateBaseController
                             $caller_url .= '?error=no_email';
                         }
 
-                        return Redirect::to(urldecode($encoded_caller_url_full));
+                        return Redirect::to($encoded_caller_url_full);
                     }
 
                     $loggedInUser = $this->doAutoLogin($userEmail);
@@ -395,11 +395,11 @@ class LoginAPIController extends IntermediateBaseController
                         }
                     }
                     // request coming from angular-ci
-                    return Redirect::to(urldecode($redirect_to_url_from_state));
+                    return Redirect::to($redirect_to_url_from_state);
                 }
             } catch (Exception $e) {
                 if (! empty($angular_ci)) {
-                    $caller_url = urldecode($encoded_caller_url_full);
+                    $caller_url = $encoded_caller_url_full;
                 }
                 $errorMessage = 'Error: ' . $e->getMessage();
                 $parsed_caller_url = parse_url((string)$caller_url);
@@ -436,7 +436,7 @@ class LoginAPIController extends IntermediateBaseController
                 return Redirect::to((string)$new_url);
             } catch (Exception $e) {
                 if (! empty($angular_ci)) {
-                    $caller_url = urldecode($encoded_caller_url_full);
+                    $caller_url = $encoded_caller_url_full;
                 }
                 $errorMessage = 'Error: ' . $e->getMessage();
                 $parsed_caller_url = parse_url((string)$caller_url);
@@ -465,7 +465,7 @@ class LoginAPIController extends IntermediateBaseController
         }
         $caller_url = Config::get('orbit.shop.after_social_sign_in');
         if (! empty($encoded_caller_url)) {
-            $caller_url = urldecode($encoded_caller_url);
+            $caller_url = $encoded_caller_url;
         }
         $errorMessage = 'Facebook Error: ' . $fbError;
         $parsed_caller_url = parse_url((string)$caller_url);
@@ -480,8 +480,8 @@ class LoginAPIController extends IntermediateBaseController
     public function getSocialLoginCallbackView()
     {
         $recognized = \Input::get('recognized', 'none');
-        $encoded_caller_url = \Input::get('caller_url', NULL);
-        $encoded_redirect_to_url = \Input::get('redirect_to_url', NULL);
+        $encoded_caller_url = \Input::get('caller_url', Config::get('orbit.shop.after_social_sign_in'));
+        $encoded_redirect_to_url = \Input::get('redirect_to_url', Config::get('orbit.shop.after_social_sign_in'));
         $angular_ci = \Input::get('aci', FALSE);
         $mall_id = \Input::get('mall_id', NULL);
 
@@ -544,7 +544,6 @@ class LoginAPIController extends IntermediateBaseController
             $query .= ',location,relationship_status,photos,work,education';
         }
         $response = $fb->get($query, $accessToken->getValue());
-
         $user = $response->getGraphUser();
 
         $userEmail = isset($user['email']) ? $user['email'] : '';
@@ -593,10 +592,7 @@ class LoginAPIController extends IntermediateBaseController
         // There is a chance that user not 'grant' his email while approving our app
         // so we double check it here
         if (empty($userEmail)) {
-            if ($angular_ci) {
-                return Redirect::to(urldecode($encoded_caller_url) . '/#/?error=no_email');
-            }
-            return Redirect::to(Config::get('orbit.shop.after_social_sign_in') . '/#/?error=no_email');
+            return Redirect::to($encoded_caller_url . '/#/?error=no_email');
         }
 
         $loggedInUser = $this->doAutoLogin($userEmail);
@@ -647,7 +643,7 @@ class LoginAPIController extends IntermediateBaseController
                     $this->acquireUser($retailer, $user, 'facebook');
                 }
             }
-            return Redirect::to(urldecode($encoded_redirect_to_url));
+            return Redirect::to($encoded_redirect_to_url);
         }
 
         return Redirect::to(Config::get('orbit.shop.after_social_sign_in'));
