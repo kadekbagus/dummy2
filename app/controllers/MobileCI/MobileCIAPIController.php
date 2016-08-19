@@ -5179,7 +5179,7 @@ class MobileCIAPIController extends BaseCIController
 
             $mallTime = Carbon::now($retailer->timezone->timezone_name);
             $luckydraws = LuckyDraw::with('translations')
-                ->active()
+                ->where('lucky_draws.status', 'active')
                 ->where('mall_id', $retailer->merchant_id)
                 ->whereRaw("? between start_date and grace_period_date", [$mallTime]);
 
@@ -5202,7 +5202,7 @@ class MobileCIAPIController extends BaseCIController
                 $luckydraws->whereNotIn('lucky_draws.lucky_draw_id', $ids);
             });
 
-            $luckydraws->groupBy('lucky_draw_id');
+            $luckydraws->groupBy('lucky_draws.lucky_draw_id');
 
             $_luckydraws = clone $luckydraws;
 
