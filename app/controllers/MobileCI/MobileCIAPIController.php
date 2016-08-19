@@ -1663,12 +1663,24 @@ class MobileCIAPIController extends BaseCIController
 
             // guest cannot add to wallet
             if (! $user->isConsumer()) {
-                OrbitShopAPI::throwInvalidArgument('You must login to access this.');
+                $message = 'You must login to access this.';
+                OrbitShopAPI::throwInvalidArgument($message);
             }
+
             $retailer = $this->getRetailerInfo();
             $this->registerCustomValidation();
-
             $coupon_id = OrbitInput::post('coupon_id');
+
+            // check if coupon already add to wallet
+            $wallet = IssuedCoupon::where('promotion_id', '=', $coupon_id)
+                                  ->where('user_id', '=', $user->user_id)
+                                  ->where('status', '=', 'active')
+                                  ->first(); 
+            
+            if (is_object($wallet)) {
+               $message = 'coupon already added to wallet';
+               OrbitShopAPI::throwInvalidArgument($message); 
+            }
 
             $validator = Validator::make(
                 array(
@@ -2033,12 +2045,11 @@ class MobileCIAPIController extends BaseCIController
                 $retailer = $this->getRetailerInfo();
                 $mallTime = Carbon::now($retailer->timezone->timezone_name);
                 $coupon = Coupon::active()
-                ->where('merchant_id', '=', $retailer->merchant_id)
-                ->where('promotion_id', $value)
-                ->where('begin_date', "<=", $mallTime)
-                ->where('end_date', '>=', $mallTime)
-                ->where('coupon_validity_in_date', '>=', $mallTime)
-                ->first();
+                                ->where('promotion_id', $value)
+                                ->where('begin_date', "<=", $mallTime)
+                                ->where('end_date', '>=', $mallTime)
+                                ->where('coupon_validity_in_date', '>=', $mallTime)
+                                ->first();
 
                 if (empty($coupon)) {
                     return false;
@@ -2858,28 +2869,8 @@ class MobileCIAPIController extends BaseCIController
                         ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'promotions.promotion_id')
                         ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'promotions.promotion_id')
                         ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
-                        ->join('issued_coupons', function ($join) {
-                            $join->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
-                            $join->where('issued_coupons.status', '=', 'active');
-                        })
-                        ->where('promotions.coupon_validity_in_date', '>=', Carbon::now($retailer->timezone->timezone_name))
-                        ->where('issued_coupons.user_id', $user->user_id);
+                        ->where('promotions.coupon_validity_in_date', '>=', Carbon::now($retailer->timezone->timezone_name));
 
-            // filter by age and gender
-            if ($userGender !== null) {
-                $coupon_flag = $coupon_flag->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
-            }
-            if ($userAge !== null) {
-                if ($userAge === 0){
-                    $coupon_flag = $coupon_flag->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
-                } else {
-                    if ($userAge >= 55) {
-                        $coupon_flag = $coupon_flag->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
-                    } else {
-                        $coupon_flag = $coupon_flag->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
-                    }
-                }
-            }
 
             $coupon_flag = $coupon_flag->where('merchants.parent_id', '=', $retailer->merchant_id)
                         ->where('promotions.is_coupon', '=', 'Y')
@@ -3172,10 +3163,6 @@ class MobileCIAPIController extends BaseCIController
                         $prefix = DB::getTablePrefix();
                         $mallid = $retailer->merchant_id;
                         $q->select("*", DB::raw('count(' . DB::getTablePrefix() . 'promotions.promotion_id) as quantity'))
-                            ->join('issued_coupons', function ($join) {
-                                $join->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
-                                $join->where('issued_coupons.status', '=', 'active');
-                            })
                             ->leftJoin('promotion_retailer_redeem', 'promotion_retailer_redeem.promotion_id', '=', 'promotions.promotion_id')
                             ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer_redeem.retailer_id')
                             ->where(function ($q) use ($mallid) {
@@ -3193,23 +3180,22 @@ class MobileCIAPIController extends BaseCIController
                                     });
                                 });
                             })
-                            ->where('promotions.coupon_validity_in_date', '>=', $mallTime)
-                            ->where('issued_coupons.user_id', $user->user_id);
+                            ->where('promotions.coupon_validity_in_date', '>=', $mallTime);
 
-                        if ($userGender !== null) {
-                            $q->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
-                        }
-                        if ($userAge !== null) {
-                            if ($userAge === 0) {
-                                $q->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
-                            } else {
-                                if ($userAge >= 55) {
-                                    $q->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
-                                } else {
-                                    $q->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
-                                }
-                            }
-                        }
+                        // if ($userGender !== null) {
+                        //     $q->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
+                        // }
+                        // if ($userAge !== null) {
+                        //     if ($userAge === 0) {
+                        //         $q->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                        //     } else {
+                        //         if ($userAge >= 55) {
+                        //             $q->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
+                        //         } else {
+                        //             $q->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                        //         }
+                        //     }
+                        // }
                         $q->whereRaw("? between begin_date and end_date", [$mallTime])
                             ->groupBy('promotions.promotion_id');
                     }
@@ -6062,7 +6048,7 @@ class MobileCIAPIController extends BaseCIController
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
 
-            $type = OrbitInput::get('coupon_type', 'available');
+            $type = OrbitInput::get('type', 'available');
             $is_coupon_wallet = false;
             if ($type === 'wallet') {
                 $is_coupon_wallet = true;
@@ -6079,6 +6065,10 @@ class MobileCIAPIController extends BaseCIController
 
             $languages = $this->getListLanguages($retailer);
 
+            $walletData = array(
+                            'is_coupon_wallet' => $is_coupon_wallet, //false = available | true = wallet
+                        );
+
             $view_data = array(
                 'page_title' => $pagetitle,
                 'page_sub_title' => $pageSubTitle,
@@ -6089,7 +6079,8 @@ class MobileCIAPIController extends BaseCIController
                 'session' => $this->session,
                 'is_logged_in' => UrlBlock::isLoggedIn($this->session),
                 'user_email' => $user->role->role_name !== 'Guest' ? $user->user_email : '',
-                'is_coupon_wallet' => $is_coupon_wallet
+                'wallet' => $walletData,
+                'signin_url' => URL::route('ci-coupon-list', ['type' => 'wallet']),
             );
             return View::make('mobile-ci.mall-coupon-list', $view_data);
 
@@ -6347,6 +6338,7 @@ class MobileCIAPIController extends BaseCIController
                 $item->name = mb_strlen($item->promotion_name) > 64 ? mb_substr($item->promotion_name, 0, 64) . '...' : $item->promotion_name;
                 $item->item_id = $item->promotion_id;
                 $item->add_to_wallet_hash = ! UrlBlock::isLoggedIn($this->session) ? '#' : '#1';
+                $item->add_to_wallet_hash_url = URL::route('ci-coupon-list');
             }
 
             $data = new stdclass();
@@ -6664,17 +6656,33 @@ class MobileCIAPIController extends BaseCIController
                     ->save();
             }
 
+            if ($is_coupon_wallet_detail) {
+                $redirect_hash_url = URL::route('ci-coupon-detail-wallet', ['id' => $promotion_id, 'name' => Str::slug($coupons->promotion_name), 'type' => $type]);
+            } else {
+                $redirect_hash_url = URL::route('ci-coupon-detail', ['id' => $promotion_id, 'name' => Str::slug($coupons->promotion_name), 'type' => $type]);
+            }
+
             $walletData = array(
                         'is_coupon_wallet' => $is_coupon_wallet_detail, //false = available | true = wallet
                         'added_to_wallet' => $added_to_wallet_detail, //false = not in wallet | true = in wallet
                         'hash' => (! UrlBlock::isLoggedIn($this->session) ? '#' : '#1'),
+                        'hash_url' => $redirect_hash_url . '&successLogin=true',
                         'icon' => ($added_to_wallet_detail ? 'fa-check' : 'fa-plus'),
                         'text' => ($added_to_wallet_detail ?  Lang::get('mobileci.coupon.added_wallet') : Lang::get('mobileci.coupon.add_wallet')),
                         'circle' => ($added_to_wallet_detail ? 'added' : '')
                     );
 
+            /* map pageSubTitle to be like css ellipsis*/
+            $pageSubTitle = array_map(function ($arr) {
+                if (mb_strlen($arr) >= 30) {
+                    return substr($arr, 0, 30) . '...';
+                }
+                return $arr;
+            }, Lang::get('mobileci.page_sub_title.coupons'));
+
             return View::make('mobile-ci.mall-coupon', array(
                 'page_title' => $coupons->promotion_name,
+                'page_sub_title' => $pageSubTitle,
                 'user' => $user,
                 'retailer' => $retailer,
                 'coupon' => $coupons,
@@ -6689,7 +6697,10 @@ class MobileCIAPIController extends BaseCIController
                 'session' => $this->session,
                 'is_logged_in' => UrlBlock::isLoggedIn($this->session),
                 'user_email' => $user->role->role_name !== 'Guest' ? $user->user_email : '',
-                'wallet' => $walletData
+                'wallet' => $walletData,
+                'available_url' => URL::route('ci-coupon-list', ['type' => 'available']),
+                'wallet_url' => URL::route('ci-coupon-list', ['type' => 'wallet']),
+                'layout' => 'detail',
             ));
 
         } catch (Exception $e) {

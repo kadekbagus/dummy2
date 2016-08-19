@@ -48,17 +48,54 @@
 <script type="text/javascript">
     $(document).ready(function(){
         var listOfIDs = [],
+            getCouponType = ('{{ \Input::get("type") }}' !== '' ? '{{ \Input::get("type") }}' : 'available'),
+            idForAddWallet = ('{{ \Input::get("idForAddWallet") }}' !== '' ? '{{ \Input::get("idForAddWallet") }}' : ''),
             helperObject = {
                 'skip': 0,
-                'coupon_type': 'available'
+                'coupon_type': getCouponType,
+                'isProgress': false
+            },
+            messageNotLogin = function () {
+                var elementMessage = '\
+                    <div class="col-xs-12 notification-message">\
+                        <h4>{{ Lang::get('mobileci.coupon.login_to_show_coupon_wallet') }}</h4>\
+                        <a data-href="{{ $signin_url }}" href="#" type="button" class="sign-button btn">SIGN IN</a>\
+                    </div>';
+                $(".catalogue-wrapper").html(elementMessage);
+            },
+            addToWallet = function (ids, callback) {
+                var element = $("span[data-ids='" + ids +"']");
+
+                $.ajax({
+                    url: apiPath + 'coupon/addtowallet',
+                    method: 'POST',
+                    data: {
+                        coupon_id: ids
+                    }
+                }).done(function (data) {
+                    if(data.status === 'success') {
+                        element.children('.state-icon').removeClass('fa-plus');
+                        element.children('.state-icon').addClass('fa-check');
+                        element.children('.fa-circle').addClass('added');
+                        element.parent().siblings().html('{{ Lang::get("mobileci.coupon.added_wallet") }}');
+                        element.attr('data-isaddedtowallet', true);
+
+                        if (callback) {
+                            callback();
+                        }
+                    }
+                });
             };
-        loadMoreX('my-coupon', listOfIDs, helperObject);
 
         $('body').on('click', '#load-more-x', function(){
-            loadMoreX('my-coupon', listOfIDs);
+            loadMoreX('my-coupon', listOfIDs, helperObject);
         });
 
         $('.coupon-button').click(function () {
+            if (helperObject.isProgress) {
+                return;
+            }
+
             $(".catalogue-wrapper").empty();
             $(".coupon-button").removeClass('active');
             $(this).addClass('active');
@@ -66,43 +103,45 @@
             listOfIDs.length = 0;
             helperObject.coupon_type = $(this).data('type');
 
+
             // validate user login
             if ('wallet' === helperObject.coupon_type && !Boolean({{$is_logged_in}})) {
-                var elementMessage = '\
-                    <div class="col-xs-12 notification-message">\
-                        <h4>{{ Lang::get('mobileci.coupon.login_to_show_coupon_wallet') }}</h4>\
-                        <a href="#" type="button" class="sign-button btn">SIGN IN</a>\
-                    </div>';
-                $(".catalogue-wrapper").html(elementMessage);
+                messageNotLogin();
                 return;
             }
 
+            helperObject.isProgress = true;
             loadMoreX('my-coupon', listOfIDs, helperObject);
+        });
+
+        $('body').on('click', '.coupon-wallet a', function(e){
+            e.preventDefault();
         });
 
         $('body').on('click', '.coupon-wallet .clickable', function(){
             var element = $(this),
-                id = element.data('ids');
+                ids = element.data('ids');
 
             if (element.attr('data-isaddedtowallet') === 'true' || element.parent().attr('href') === '#') {
                 return;
             }
 
-            $.ajax({
-                url: apiPath + 'coupon/addtowallet',
-                method: 'POST',
-                data: {
-                    coupon_id: id
-                }
-            }).done(function (data) {
-                if(data.status === 'success') {
-                    element.children('.state-icon').removeClass('fa-plus');
-                    element.children('.state-icon').addClass('fa-check');
-                    element.siblings().html('{{ Lang::get("mobileci.coupon.added_wallet") }}');
-                    $(".coupon-button").removeClass('active');
-                    element.attr('data-isaddedtowallet', true);
-                }
-            });
+            addToWallet(ids);
+        });
+
+        // validate user login
+        if ('wallet' === helperObject.coupon_type && !Boolean({{$is_logged_in}})) {
+            messageNotLogin();
+            return;
+        }
+
+        loadMoreX('my-coupon', listOfIDs, helperObject, function () {
+            if (idForAddWallet !== '') {
+                addToWallet(idForAddWallet, function () {
+                    history.pushState({}, '', 'mallcoupons' );
+                });
+            }
+
         });
     });
 </script>

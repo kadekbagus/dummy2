@@ -379,7 +379,7 @@ class MallAPIController extends ControllerAPI
                     'sector_of_activity'            => 'required',
                     'languages'                     => 'required|array',
                     'mobile_default_language'       => 'required|size:2|orbit.formaterror.language',
-                    'domain'                        => 'required|alpha_dash|orbit.exists.domain',
+                    'domain'                        => 'required|orbit.exists.domain',
                     'geo_point_latitude'            => 'required|orbit.formaterror.geo_latitude',
                     'geo_point_longitude'           => 'required|orbit.formaterror.geo_longitude',
                     'geo_area'                      => 'required|orbit.formaterror.geo_area',
@@ -926,13 +926,15 @@ class MallAPIController extends ControllerAPI
             }
 
             $prefix = DB::getTablePrefix();
+            $subdomain = Config::get('orbit.shop.ci_domain');
 
             // Get Facebook social media ID
             $facebookSocmedId = SocialMedia::whereSocialMediaCode('facebook')->first()->social_media_id;
 
             $malls = Mall::excludeDeleted('merchants')
                                 ->select(
-                                        'merchants.*', DB::raw("LEFT({$prefix}merchants.ci_domain, instr({$prefix}merchants.ci_domain, '.') - 1) as subdomain"),
+                                        'merchants.*',
+                                        DB::raw("TRIM(TRAILING {$this->quote($subdomain)} FROM {$prefix}merchants.ci_domain) as subdomain"),
                                         DB::raw('count(tenant.merchant_id) AS total_tenant'),
                                         DB::raw('mall_group.name AS mall_group_name'),
                                         'merchant_social_media.social_media_uri as facebook_uri',
@@ -1597,7 +1599,7 @@ class MallAPIController extends ControllerAPI
                     // 'currency'                         => 'size:3',
                     'vat_included'                     => 'in:yes,no',
                     'languages'                        => 'array',
-                    'domain'                           => 'alpha_dash|domain_exist_but_not_me:' . $merchant_id,
+                    'domain'                           => 'domain_exist_but_not_me:' . $merchant_id,
                     'mobile_default_language'          => 'size:2|orbit.formaterror.language',
                     // 'campaign_base_price_promotion' => 'format currency later will be check',
                     // 'campaign_base_price_coupon'    => 'format currency later will be check',
@@ -3074,7 +3076,7 @@ class MallAPIController extends ControllerAPI
                         ->where('ci_domain', $value . $ci_domain_config)
                         ->first();
 
-            if (count($domain) > 0) {
+            if (! empty($domain)) {
                 return FALSE;
             }
 
@@ -3090,7 +3092,7 @@ class MallAPIController extends ControllerAPI
                         ->where('merchant_id', '!=', $merchant_id)
                         ->first();
 
-            if (count($domain) > 0) {
+            if (! empty($domain)) {
                 return FALSE;
             }
 
@@ -3365,4 +3367,8 @@ class MallAPIController extends ControllerAPI
         return $this;
     }
 
+    protected function quote($arg)
+    {
+        return DB::connection()->getPdo()->quote($arg);
+    }
 }
