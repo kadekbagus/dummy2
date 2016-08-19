@@ -311,7 +311,7 @@ class LoginAPIController extends IntermediateBaseController
                             throw new Exception($response->message, $response->code);
                         }
 
-                        $this->setSignUpActivity($loggedInUser, 'google', NULL);
+                        $this->setSignUpActivity($response, 'google', NULL);
 
                         $loggedInUser = $this->doAutoLogin($response->user_email);
                     }
@@ -527,7 +527,7 @@ class LoginAPIController extends IntermediateBaseController
                 throw new Exception($response->message, $response->code);
             }
 
-            $this->setSignUpActivity($loggedInUser, 'facebook', NULL);
+            $this->setSignUpActivity($response, 'facebook', NULL);
 
             $loggedInUser = $this->doAutoLogin($response->user_email);
         }
