@@ -6541,10 +6541,11 @@ class MobileCIAPIController extends BaseCIController
                 $linkToAllTenant = FALSE;
 
                 $tenants = \CouponRetailerRedeem::with('tenant', 'tenant.categories')
-                    ->wherehas('tenant', function($q){
+                    ->wherehas('tenant', function ($q) use ($retailer) {
                         $q->where('merchants.status', 'active');
                         $q->where('merchants.masterbox_number', '<>', '');
                         $q->whereNotNull('merchants.masterbox_number');
+                        $q->where('merchants.parent_id', $retailer->merchant_id);
                     })
                     ->where('promotion_id', $coupon_id)->get();
 
