@@ -21,15 +21,35 @@
     <div class="header-location-banner">
         @if(empty(Input::get('keyword')))
             @if(isset($page_sub_title) && !empty($page_sub_title))
+
         <div class="btn-group btn-group-justified tab-button" role="group">
             <div class="btn-group" role="group">
-                <a type="button" class="coupon-button btn-upload btn btn-primary {{ !$is_coupon_wallet ? 'active' : '' }}" data-type="available">{{{ $page_sub_title['available_coupons'] }}}</a>
+                @if (isset($available_url))
+                <a href="{{ $available_url }}" type="button" class="coupon-button btn-upload btn btn-primary {{ !$wallet['is_coupon_wallet'] ? 'active' : '' }}" data-type="available">{{{ $page_sub_title['available_coupons'] }}}</a>
+                @else
+                <a type="button" class="coupon-button btn-upload btn btn-primary {{ !$wallet['is_coupon_wallet'] ? 'active' : '' }}" data-type="available">{{{ $page_sub_title['available_coupons'] }}}</a>
+                @endif
             </div>
             <div class="btn-group" role="group">
-                <a type="button" class="coupon-button btn btn-primary {{ $is_coupon_wallet ? 'active' : '' }}" data-type="wallet">{{{ $page_sub_title['coupon_wallet'] }}}</a>
+                @if (isset($wallet_url))
+                <a href="{{ $wallet_url }}" type="button" class="coupon-button btn-upload btn btn-primary {{ $wallet['is_coupon_wallet'] ? 'active' : '' }}" data-type="available">{{{ $page_sub_title['coupon_wallet'] }}}</a>
+                @else
+                <a type="button" class="coupon-button btn-upload btn btn-primary {{ $wallet['is_coupon_wallet'] ? 'active' : '' }}" data-type="wallet">{{{ $page_sub_title['coupon_wallet'] }}}</a>
+                @endif
             </div>
         </div>
+
+                @if ($page_title && isset($layout) && $layout === 'detail')
+        <span class="page-title">
+                    @if(mb_strlen($page_title) >= 30)
+                    {{{ substr($page_title, 0, 30) . '...' }}}
+                    @else
+                    {{{ $page_title }}}
+                    @endif
+        </span>
+                @endif
             @else
+
         <span class="page-title">
                 @if(is_null($page_title))
                 {{ 'ORBIT' }}
@@ -90,7 +110,7 @@
                 </li>
                 <li class=""><a id="multi-language"><span><span class="glyphicon glyphicon-globe fa-relative"></span> {{ ucwords(strtolower(Lang::get('mobileci.page_title.language'))) }}</span></a></li>
                 @if($is_logged_in)
-                <li class=""><a href="{{ url('/customer/logout') }}"><span><span class="glyphicon glyphicon-off fa-relative"></span> {{ ucwords(strtolower(Lang::get('mobileci.page_title.logout'))) }}</span></a></li>
+                <li class=""><a href="{{ url('/customer/logout?mall_id=' . $retailer->merchant_id) }}"><span><span class="glyphicon glyphicon-off fa-relative"></span> {{ ucwords(strtolower(Lang::get('mobileci.page_title.logout'))) }}</span></a></li>
                 @endif
             </ul>
         </div>

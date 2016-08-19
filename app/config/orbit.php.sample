@@ -207,6 +207,7 @@ return array(
         'pmp'   => 'https://pmp.gotomalls.cool/?mode=pmp/#/service-agreement?token=%s'
     ),
 
+    // Latitude and longitude of the user send by the frontend side
     'user_location' => array(
         'query_string' => array(
             // query string name for user location
@@ -510,6 +511,12 @@ return array(
 
         // link to tenant pagination
         'link_to_tenant' => array(
+            'per_page'      => 50,
+            'max_record'    => 1000,
+        ),
+
+        // account type pagination
+        'account_type' => array(
             'per_page'      => 50,
             'max_record'    => 1000,
         ),
@@ -3318,6 +3325,143 @@ return array(
                 'type' => 'click',
                 'object_type' => null,
                 'parameter_name' => null
+            ),
+            // ** Main Page Widgets **
+            // - Home Click
+            '7' => array(
+                'name' => 'click_home_main_page',
+                'name_long' => 'Click Home Main Page',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - Map Click
+            '8' => array(
+                'name' => 'click_map_main_page',
+                'name_long' => 'Click Map Main Page',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - Map View
+            '9' => array(
+                'name' => 'view_map_main_page',
+                'name_long' => 'View Map Main Page',
+                'module_name' => 'Application',
+                'type' => 'view',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - Discover Click
+            '10' => array(
+                'name' => 'click_discover_main_page',
+                'name_long' => 'Click Discover Main Page',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - Discover View
+            '11' => array(
+                'name' => 'view_discover_main_page',
+                'name_long' => 'View Discover Main Page',
+                'module_name' => 'Application',
+                'type' => 'view',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - Malls Click
+            '12' => array(
+                'name' => 'click_mall_main_page',
+                'name_long' => 'Click Mall Main Page',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - Malls View
+            '13' => array(
+                'name' => 'view_mall_main_page',
+                'name_long' => 'View Mall Main Page',
+                'module_name' => 'Application',
+                'type' => 'view',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - Stores Click
+            '14' => array(
+                'name' => 'click_stores_main_page',
+                'name_long' => 'Click Stores Main Page',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - Stores View
+            '15' => array(
+                'name' => 'view_stores_main_page',
+                'name_long' => 'View Stores Main Page',
+                'module_name' => 'Application',
+                'type' => 'view',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - Lucky Draws Click
+            '16' => array(
+                'name' => 'click_lucky_draws_main_page',
+                'name_long' => 'Click Lucky Draws Main Page',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - Lucky Draws View
+            '17' => array(
+                'name' => 'view_lucky_draws_main_page',
+                'name_long' => 'View Lucky Draws Main Page',
+                'module_name' => 'Application',
+                'type' => 'view',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - PokeMaps Click
+            '18' => array(
+                'name' => 'click_pokemaps_main_page',
+                'name_long' => 'Click Pokemaps Main Page',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - PokeMaps View
+            '19' => array(
+                'name' => 'view_pokemaps_main_page',
+                'name_long' => 'View Pokemaps Main Page',
+                'module_name' => 'Application',
+                'type' => 'view',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // ** End Of Main Page Widgets **
+            // - Clicking on a store in list
+            '20' => array(
+                'name' => 'click_store_list',
+                'name_long' => 'Click Store List',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => 'Tenant',
+                'parameter_name' => 'store_id'
+            ),
+            // - Clicking on a lucky draw in list
+            '21' => array(
+                'name' => 'click_lucky_draw_list',
+                'name_long' => 'Click Lucky Draw List',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => 'LuckyDraw',
+                'parameter_name' => 'lucky_draw_id'
             ),
         ),
     ),
