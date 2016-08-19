@@ -106,6 +106,7 @@
             // validate user login
             if ('wallet' === helperObject.coupon_type && !Boolean({{$is_logged_in}})) {
                 messageNotLogin();
+                helperObject.isProgress = false;
                 return;
             }
 
@@ -131,6 +132,7 @@
         // validate user login
         if ('wallet' === helperObject.coupon_type && !Boolean({{$is_logged_in}})) {
             messageNotLogin();
+            helperObject.isProgress = false;
             return;
         }
 
