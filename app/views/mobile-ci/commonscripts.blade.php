@@ -396,7 +396,7 @@
      * parameters: itemtype(news,promotion,lucky-draw,my-coupon)
      *             ids(array(list of already loaded ids))
      */
-    function loadMoreX(itemtype, ids, helperObject) {
+    function loadMoreX(itemtype, ids, helperObject, callback) {
         var catalogueWrapper = $('.catalogue-wrapper'),
             itemList = [],
             btn = $('#load-more-x'),
@@ -458,9 +458,12 @@
                          if (helperObject !== undefined) {
                             if (helperObject.coupon_type !== undefined) {
                                 if ('available' === helperObject.coupon_type) {
+                                    var connectionChar = /\?/.test(data.records[i].add_to_wallet_hash_url) ? '&' : '?',
+                                        couponId = 'idForAddWallet=' + data.records[i].item_id;
+
                                     couponWallet = '\
                                         <div class="coupon-wallet pull-right">\
-                                            <a data-href="' + data.records[i].add_to_wallet_hash_url + '" href="' + data.records[i].add_to_wallet_hash + '">\
+                                            <a data-href="' + data.records[i].add_to_wallet_hash_url + connectionChar + couponId + '" href="' + data.records[i].add_to_wallet_hash + '">\
                                                 <span class="fa-stack fa-2x clickable" data-ids="' + data.records[i].item_id + '" data-isaddedtowallet="' + data.records[i].added_to_wallet + '">\
                                                     <i class="fa fae-wallet fa-stack-2x"></i>\
                                                     <i class="fa ' + circleColor + ' fa-circle fa-stack-2x"></i>\
@@ -493,13 +496,16 @@
 
                         itemList.push(list);
                     }
+
+                    $('#load-more-container').remove();
                     if(data.returned_records < data.total_records) {
                         var viewMoreButton = '\
-                            <div class="row">\
+                            <div class="row" id="load-more-container">\
                                 <div class="col-xs-12 padded">\
                                     <button class="btn btn-info btn-block" id="load-more-x">{{Lang::get('mobileci.notification.load_more_btn')}}</button>\
                                 </div>\
                             </div>';
+
                         itemList.push(viewMoreButton);
                     }
                     catalogueWrapper.append(itemList.join(''));
@@ -526,10 +532,6 @@
                         }
                     }
                 }
-
-                if (data.total_records - take <= 0) {
-                    btn.remove();
-                }
             } else {
                 if(data.message === 'session_expired') {
                     window.location.replace('/customer');
@@ -538,6 +540,9 @@
         }).always(function(data){
             btn.removeAttr('disabled', 'disabled');
             btn.html('{{Lang::get('mobileci.notification.load_more_btn')}}');
+            if (callback) {
+                callback();
+            }
         });
     }
     var notInMessagesPage = true; {{-- this var is used to enable/disable pop up notification --}}
