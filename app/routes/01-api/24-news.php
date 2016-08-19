@@ -58,3 +58,24 @@ Route::get('/api/v1/newspromotion/by-retailer/search', function()
 {
     return NewsAPIController::create()->getSearchNewsPromotionByRetailer();
 });
+
+
+/**
+ * List of news or promotions on all malls
+ */
+Route::get(
+    '/{prefix}/v1/pub/newspromotion-list', ['as' => 'pub-newspromotion-list', function()
+    {
+        return Orbit\Controller\API\v1\Pub\NewsPromotionAPIController::create()->getSearchNewsPromotion();
+    }]
+)->where('prefix', '(api|app)');
+
+/**
+ * List mall of news
+ */
+Route::get(
+    '/{prefix}/v1/pub/mall-newspromotion-list', ['as' => 'pub-mall-newspromotion-list', function()
+    {
+        return Orbit\Controller\API\v1\Pub\NewsPromotionAPIController::create()->getMallPerNewsPromotion();
+    }]
+)->where('prefix', '(api|app)');
