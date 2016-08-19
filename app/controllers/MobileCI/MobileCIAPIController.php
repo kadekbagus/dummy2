@@ -3931,8 +3931,11 @@ class MobileCIAPIController extends BaseCIController
                         } else {
                             //get link tenant redeem
                             $retailers = \CouponRetailerRedeem::whereHas('tenant', function($q) use($pid) {
-                                $q->where('promotion_id', $pid);
-                            })->has('coupon')
+                                $q->where('promotion_id', $pid)
+                                    ->where('merchants.masterbox_number', '<>', '')
+                                    ->whereNotNull('merchants.masterbox_number');
+                            })
+                            ->has('coupon')
                             ->get()
                             ->lists('retailer_id');
 
@@ -5186,7 +5189,7 @@ class MobileCIAPIController extends BaseCIController
 
             $mallTime = Carbon::now($retailer->timezone->timezone_name);
             $luckydraws = LuckyDraw::with('translations')
-                ->active()
+                ->where('lucky_draws.status', 'active')
                 ->where('mall_id', $retailer->merchant_id)
                 ->whereRaw("? between start_date and grace_period_date", [$mallTime]);
 
@@ -5209,7 +5212,7 @@ class MobileCIAPIController extends BaseCIController
                 $luckydraws->whereNotIn('lucky_draws.lucky_draw_id', $ids);
             });
 
-            $luckydraws->groupBy('lucky_draw_id');
+            $luckydraws->groupBy('lucky_draws.lucky_draw_id');
 
             $_luckydraws = clone $luckydraws;
 
@@ -6217,21 +6220,12 @@ class MobileCIAPIController extends BaseCIController
                         $join->on('promotion_rules.promotion_id', '=', 'promotions.promotion_id');
                         $join->where('promotions.status', '=', 'active');
                     })
-                    ->leftJoin('promotion_retailer_redeem', 'promotion_retailer_redeem.promotion_id', '=', 'promotions.promotion_id')
-                    ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer_redeem.retailer_id')
+                    ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
+                    ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
                     ->where(function ($q) use ($mallid) {
                         $q->where(function ($q2) use ($mallid) {
                             $q2->where('merchants.parent_id', '=', $mallid)
                                 ->orWhere('merchants.merchant_id', '=', $mallid);
-                        });
-                        $q->orWhere(function ($q2) use ($mallid) {
-                            $q2->whereHas('employee', function ($q3) use ($mallid) {
-                                $q3->whereHas('employee', function ($q4) use ($mallid) {
-                                    $q4->whereHas('retailers', function ($q5) use ($mallid) {
-                                        $q5->where('merchants.merchant_id', $mallid);
-                                    });
-                                });
-                            });
                         });
                     })
                     ->where('promotions.begin_date', '<=', Carbon::now($retailer->timezone->timezone_name))
