@@ -102,7 +102,7 @@
                     </a>
                 </li>
                 @if ($is_logged_in)
-                    @if(! empty($coupon->facebook_share_url))
+                    @if(! empty($coupon->facebook_share_url) && !$wallet['is_coupon_wallet'])
                     <li>
                         <div class="fb-share-button" data-href="{{$coupon->facebook_share_url}}" data-layout="button"></div>
                     </li>

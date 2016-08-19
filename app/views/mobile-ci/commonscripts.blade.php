@@ -496,13 +496,16 @@
 
                         itemList.push(list);
                     }
+
+                    $('#load-more-container').remove();
                     if(data.returned_records < data.total_records) {
                         var viewMoreButton = '\
-                            <div class="row">\
+                            <div class="row" id="load-more-container">\
                                 <div class="col-xs-12 padded">\
                                     <button class="btn btn-info btn-block" id="load-more-x">{{Lang::get('mobileci.notification.load_more_btn')}}</button>\
                                 </div>\
                             </div>';
+
                         itemList.push(viewMoreButton);
                     }
                     catalogueWrapper.append(itemList.join(''));
@@ -528,10 +531,6 @@
                             catalogueWrapper.html(elementNoCouponWallet);
                         }
                     }
-                }
-
-                if (data.total_records - take <= 0) {
-                    btn.remove();
                 }
             } else {
                 if(data.message === 'session_expired') {
