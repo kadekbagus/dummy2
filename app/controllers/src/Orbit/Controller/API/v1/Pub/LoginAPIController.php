@@ -56,6 +56,7 @@ class LoginAPIController extends IntermediateBaseController
         $roles=['Consumer'];
         $activity = Activity::mobileci()
                             ->setActivityType('login');
+        $activity_origin = OrbitInput::post('activity_origin');
 
         try {
             $email = trim(OrbitInput::post('email'));

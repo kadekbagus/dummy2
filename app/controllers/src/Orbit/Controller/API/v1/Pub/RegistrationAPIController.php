@@ -39,7 +39,7 @@ class RegistrationAPIController extends IntermediateBaseController
         $this->response = new ResponseProvider();
         $activity = Activity::mobileci()
                             ->setActivityType('registration');
-
+        $activity_origin = OrbitInput::post('activity_origin');
         try {
             $email = trim(OrbitInput::post('email'));
             $password = OrbitInput::post('password');
