@@ -43,7 +43,7 @@ class ActivationAPIController extends IntermediateBaseController
     {
         $this->response = new ResponseProvider();
 
-        $activity = Activity::portal()
+        $activity = Activity::mobileci()
                             ->setActivityType('activation');
         try {
             $tokenValue = trim(OrbitInput::post('token'));
