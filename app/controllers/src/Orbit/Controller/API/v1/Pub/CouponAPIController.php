@@ -186,13 +186,13 @@ class CouponAPIController extends ControllerAPI
 
             $validator = Validator::make(
                 array(
-                    'promotion_id' => $couponId,
+                    'coupon_id' => $couponId,
                 ),
                 array(
-                    'promotion_id' => 'required',
+                    'coupon_id' => 'required',
                 ),
                 array(
-                    'required' => 'Promotion ID is required',
+                    'required' => 'Coupon ID is required',
                 )
             );
 
@@ -211,7 +211,8 @@ class CouponAPIController extends ControllerAPI
                                             DB::raw("CONCAT(IF({$prefix}merchants.object_type = 'tenant', oms.ci_domain, {$prefix}merchants.ci_domain), '/customer/mallcoupon?id=', {$prefix}promotion_retailer.promotion_id) as coupon_url"))
                                         ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
                                         ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
-                                        ->where('promotion_retailer.promotion_id', '=', $couponId);
+                                        ->where('promotion_retailer.promotion_id', '=', $couponId)
+                                        ->groupBy('merchant_id');
 
             OrbitInput::get('filter_name', function ($filterName) use ($mall, $prefix) {
                 if (! empty($filterName)) {
