@@ -207,6 +207,7 @@ return array(
         'pmp'   => 'https://pmp.gotomalls.cool/?mode=pmp/#/service-agreement?token=%s'
     ),
 
+    // Latitude and longitude of the user send by the frontend side
     'user_location' => array(
         'query_string' => array(
             // query string name for user location

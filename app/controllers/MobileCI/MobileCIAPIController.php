@@ -1663,12 +1663,25 @@ class MobileCIAPIController extends BaseCIController
 
             // guest cannot add to wallet
             if (! $user->isConsumer()) {
-                OrbitShopAPI::throwInvalidArgument('You must login to access this.');
+                $message = 'You must login to access this.';
+                OrbitShopAPI::throwInvalidArgument($message);
             }
+
             $retailer = $this->getRetailerInfo();
             $this->registerCustomValidation();
-
             $coupon_id = OrbitInput::post('coupon_id');
+
+            // check if coupon already add to wallet
+            $wallet = IssuedCoupon::where('promotion_id', '=', $coupon_id)
+                                  ->where('user_id', '=', $user->user_id)
+                                  ->where('issuer_retailer_id', '=', $retailer->merchant_id)
+                                  ->where('status', '=', 'active')
+                                  ->first(); 
+            
+            if (is_object($wallet)) {
+               $message = 'coupon already added to wallet';
+               OrbitShopAPI::throwInvalidArgument($message); 
+            }
 
             $validator = Validator::make(
                 array(
@@ -6675,7 +6688,7 @@ class MobileCIAPIController extends BaseCIController
                         'is_coupon_wallet' => $is_coupon_wallet_detail, //false = available | true = wallet
                         'added_to_wallet' => $added_to_wallet_detail, //false = not in wallet | true = in wallet
                         'hash' => (! UrlBlock::isLoggedIn($this->session) ? '#' : '#1'),
-                        'hash_url' => $redirect_hash_url,
+                        'hash_url' => $redirect_hash_url . '&successLogin=true',
                         'icon' => ($added_to_wallet_detail ? 'fa-check' : 'fa-plus'),
                         'text' => ($added_to_wallet_detail ?  Lang::get('mobileci.coupon.added_wallet') : Lang::get('mobileci.coupon.add_wallet')),
                         'circle' => ($added_to_wallet_detail ? 'added' : '')
