@@ -177,6 +177,7 @@ class ESActivityUpdateQueue
                 'position' => $pos,
                 'page' => explode('?', $activity->request_uri)[0],
                 'referer' => $data['referer'],
+                'orbit_referer' => $data['orbit_referer'],
                 'utm_source' => $campaignData['campaign_source'],
                 'utm_medium' => $campaignData['campaign_medium'],
                 'utm_term' => $campaignData['campaign_term'],
