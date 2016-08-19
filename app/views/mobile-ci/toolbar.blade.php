@@ -34,7 +34,7 @@
                 @if (isset($wallet_url))
                 <a href="{{ $wallet_url }}" type="button" class="coupon-button btn-upload btn btn-primary {{ $wallet['is_coupon_wallet'] ? 'active' : '' }}" data-type="available">{{{ $page_sub_title['coupon_wallet'] }}}</a>
                 @else
-                <a type="button" class="coupon-button btn btn-primary {{ $wallet['is_coupon_wallet'] ? 'active' : '' }}" data-type="wallet">{{{ $page_sub_title['coupon_wallet'] }}}</a>
+                <a type="button" class="coupon-button btn-upload btn btn-primary {{ $wallet['is_coupon_wallet'] ? 'active' : '' }}" data-type="wallet">{{{ $page_sub_title['coupon_wallet'] }}}</a>
                 @endif
             </div>
         </div>
