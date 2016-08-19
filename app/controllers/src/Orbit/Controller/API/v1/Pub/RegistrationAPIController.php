@@ -38,7 +38,7 @@ class RegistrationAPIController extends IntermediateBaseController
     {
         $this->response = new ResponseProvider();
         $activity = Activity::mobileci()
-                            ->setActivityType('registration');
+            ->setActivityType('registration');
         $activity_origin = OrbitInput::post('activity_origin');
         try {
             $email = trim(OrbitInput::post('email'));
@@ -71,6 +71,7 @@ class RegistrationAPIController extends IntermediateBaseController
             $user = $this->createCustomerUser($email, $password, $password_confirmation, $firstname, $lastname, $gender, $birthdate, $this->mallId, FALSE);
             // let mobileci handle it's own session
             if ($activity_origin !== 'mobileci') {
+                // This means request coming from landing page, add also sign in activity after sign up
                 // Start the orbit session
                 $data = array(
                     'logged_in' => TRUE,
@@ -86,13 +87,27 @@ class RegistrationAPIController extends IntermediateBaseController
                 $sessionHeader = 'Set-' . $sessionHeader;
                 $this->customHeaders[$sessionHeader] = $this->session->getSessionId();
 
-                $activity_name_long = 'Sign Up';
-                // Successfull login
+                // Registration_ok activity
                 $activity->setUser($user)
-                         ->setActivityName('registration_ok')
-                         ->setActivityNameLong($activity_name_long)
-                         ->responseOK()
-                         ->setModuleName('Application')->save();
+                    ->setObject($user)
+                    ->setActivityName('registration_ok')
+                    ->setActivityNameLong('Sign Up via Mobile (Email Address)')
+                    ->setNotes('Sign Up via Mobile (Email Address) OK')
+                    ->responseOK()
+                    ->setModuleName('Application')
+                    ->save();
+
+                // Login_ok activity
+                $activity_login = Activity::mobileci()
+                    ->setUser($user)
+                    ->setActivityName('login_ok')
+                    ->setActivityNameLong('Sign In')
+                    ->setActivityType('login')
+                    ->setObject($user)
+                    ->setNotes('Sign In via Mobile (Form) OK')
+                    ->setModuleName('Application')
+                    ->responseOK()
+                    ->save();
             }
 
             $this->response->data = $user;
