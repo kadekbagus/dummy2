@@ -54,14 +54,9 @@ class LoginAPIController extends IntermediateBaseController
     {
         $this->response = new ResponseProvider();
         $roles=['Consumer'];
-        $activity = Activity::portal()
+        $activity = Activity::mobileci()
                             ->setActivityType('login');
-        $activity_origin = OrbitInput::post('activity_origin'); 
-        if ($activity_origin === 'mobileci') {
-            // set this activity as mobileci instead of portal if coming from mobileci
-                $activity = Activity::mobileci()
-                                ->setActivityType('login');
-        };
+
         try {
             $email = trim(OrbitInput::post('email'));
             $password = trim(OrbitInput::post('password'));
@@ -135,7 +130,7 @@ class LoginAPIController extends IntermediateBaseController
                          ->setActivityName('login_ok')
                          ->setActivityNameLong('Sign in')
                          ->responseOK()->setModuleName('Application')->save();
-                
+
                 $user->activity = $activity;
             } else {
                 // set \MobileCI\MobileCIAPIController->session using $this->session
@@ -316,8 +311,12 @@ class LoginAPIController extends IntermediateBaseController
                             throw new Exception($response->message, $response->code);
                         }
 
+                        $this->setSignUpActivity($loggedInUser, 'google', NULL);
+
                         $loggedInUser = $this->doAutoLogin($response->user_email);
                     }
+
+                    $this->setSignInActivity($loggedInUser, 'google', NULL);
 
                     $expireTime = Config::get('orbit.session.session_origin.cookie.expire');
 
@@ -372,7 +371,7 @@ class LoginAPIController extends IntermediateBaseController
                 }
                 return Redirect::to($caller_url);
             }
-        }   
+        }
     }
 
     protected function getFacebookError($encoded_caller_url = NULL)
@@ -528,8 +527,12 @@ class LoginAPIController extends IntermediateBaseController
                 throw new Exception($response->message, $response->code);
             }
 
+            $this->setSignUpActivity($loggedInUser, 'facebook', NULL);
+
             $loggedInUser = $this->doAutoLogin($response->user_email);
         }
+
+        $this->setSignInActivity($loggedInUser, 'facebook', NULL);
 
         $expireTime = Config::get('orbit.session.session_origin.cookie.expire');
 
@@ -606,7 +609,7 @@ class LoginAPIController extends IntermediateBaseController
     /**
      * The purpose of this function is to by pass the new sign in process that use password
      * e.g: User came from Facebook / Google sign in
-     * 
+     *
      * @author Ahmad <ahmad@dominopos.com>
      * @param string $email User email
      * @return User $user (IF user exist; FALSE: user not exist)
@@ -893,5 +896,49 @@ class LoginAPIController extends IntermediateBaseController
 
             return TRUE;
         });
+    }
+
+    // create activity signup from socmed
+    protected function setSignUpActivity($user, $from, $retailer)
+    {
+        $activity = Activity::mobileci()
+            ->setLocation($retailer)
+            ->setActivityType('registration')
+            ->setUser($user)
+            ->setActivityName('registration_ok')
+            ->setObject($user)
+            ->setModuleName('User')
+            ->responseOK();
+
+        if ($from === 'facebook') {
+            $activity->setActivityNameLong('Sign Up via Mobile (Facebook)')
+                    ->setNotes('Sign Up via Mobile (Facebook) OK');
+        } else if ($from === 'google') {
+            $activity->setActivityNameLong('Sign Up via Mobile (Google+)')
+                    ->setNotes('Sign Up via Mobile (Google+) OK');
+        } else if ($from === 'form') {
+            $activity->setActivityNameLong('Sign Up via Mobile (Email Address)')
+                    ->setNotes('Sign Up via Mobile (Email Address) OK');
+        }
+
+        $activity->save();
+    }
+
+    // create activity signin from socmed
+    protected function setSignInActivity($user, $from, $retailer)
+    {
+        if (is_object($user)) {
+            $activity = Activity::mobileci()
+                ->setLocation($retailer)
+                ->setUser($user)
+                ->setActivityName('login_ok')
+                ->setActivityNameLong('Sign In')
+                ->setActivityType('login')
+                ->setObject($user)
+                ->setNotes(sprintf('Sign In via Mobile (%s) OK', ucfirst($from)));
+                ->setModuleName('Application')
+                ->responseOK()
+                ->save();
+        }
     }
 }
