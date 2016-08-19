@@ -122,3 +122,23 @@ Route::get('/api/v1/coupon/customer-service', ['as' => 'api-coupon-customer-serv
 {
         return Orbit\Controller\API\v1\CSListByCouponAPIController::create()->getList();
 }]);
+
+/**
+ * Get coupon list
+ */
+Route::get(
+    '/{search}/v1/pub/coupon-list', ['as' => 'coupon-list', function()
+    {
+        return Orbit\Controller\API\v1\Pub\CouponAPIController::create()->getCouponList();
+    }]
+)->where('search', '(api|app)');
+
+/**
+ * Get mall list after click coupon
+ */
+Route::get(
+    '/{search}/v1/pub/mall-coupon-list', ['as' => 'mall-coupon-list', function()
+    {
+        return Orbit\Controller\API\v1\Pub\CouponAPIController::create()->getMallCouponList();
+    }]
+)->where('search', '(api|app)');
