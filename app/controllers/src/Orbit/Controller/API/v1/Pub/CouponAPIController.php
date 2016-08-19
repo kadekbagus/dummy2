@@ -13,17 +13,18 @@ use Text\Util\LineChecker;
 use Helper\EloquentRecordCounter as RecordCounter;
 use Config;
 use Mall;
-use News;
+use Coupon;
+use PromotionRetailer;
 use Tenant;
 use stdClass;
 use Orbit\Helper\Util\PaginationNumber;
 use DB;
 use Validator;
 
-class StoreAPIController extends ControllerAPI
+class CouponAPIController extends ControllerAPI
 {
     /**
-     * GET - get all store in all mall, group by name
+     * GET - get all coupon in all mall
      *
      * @author Shelgi Prasetyo <shelgi@dominopos.com>
      *
@@ -37,7 +38,7 @@ class StoreAPIController extends ControllerAPI
      *
      * @return Illuminate\Support\Facades\Response
      */
-    public function getStoreList()
+    public function getCouponList()
     {
         $httpCode = 200;
         try {
@@ -47,35 +48,49 @@ class StoreAPIController extends ControllerAPI
 
             $prefix = DB::getTablePrefix();
 
-            $store = Tenant::select('merchants.merchant_id', 'merchants.name')
-                ->join(DB::raw("(select merchant_id, status, parent_id from {$prefix}merchants where object_type = 'mall') as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
-                ->where('merchants.status', 'active')
-                ->whereRaw("oms.status = 'active'")
-                ->groupBy('merchants.name')
-                ->orderBy($sort_by, $sort_mode);
-
-            OrbitInput::get('filter_name', function ($filterName) use ($store, $prefix) {
+            $coupon = Coupon::select(DB::raw("{$prefix}promotions.promotion_id, {$prefix}promotions.merchant_id, 
+                                {$prefix}coupon_translations.promotion_name, {$prefix}coupon_translations.description, {$prefix}promotions.begin_date, 
+                                {$prefix}promotions.end_date, {$prefix}promotions.status,
+                                CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name 
+                                    ELSE (CASE WHEN {$prefix}promotions.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
+                                                                                FROM {$prefix}merchants om
+                                                                                LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
+                                                                                WHERE om.merchant_id = {$prefix}promotions.merchant_id)
+                                    THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END AS campaign_status,
+                                (SELECT COUNT(DISTINCT(CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN {$prefix}merchants.parent_id ELSE {$prefix}merchants.merchant_id END)) AS mall_id
+                                    FROM {$prefix}promotion_retailer
+                                    JOIN {$prefix}merchants ON {$prefix}merchants.merchant_id = {$prefix}promotion_retailer.retailer_id 
+                                    WHERE promotion_id = {$prefix}promotions.promotion_id) as number_of_mall,
+                                {$prefix}promotions.created_at, {$prefix}promotions.updated_at"))
+                            ->leftJoin('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
+                            ->leftJoin('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
+                            ->leftJoin('languages', 'languages.language_id', '=', 'coupon_translations.merchant_language_id')
+                            ->where('languages.name', '=', 'en')
+                            ->where('coupon_translations.promotion_name', '!=', '')
+                            ->having('campaign_status', '=', 'ongoing');
+            
+            OrbitInput::get('filter_name', function ($filterName) use ($coupon, $prefix) {
                 if (! empty($filterName)) {
                     if ($filterName === '#') {
-                        $store->whereRaw("SUBSTR({$prefix}merchants.name,1,1) not between 'a' and 'z'");
+                        $coupon->whereRaw("SUBSTR({$prefix}coupon_translations.promotion_name,1,1) not between 'a' and 'z'");
                     } else {
                         $filter = explode("-", $filterName);
-                        $store->whereRaw("SUBSTR({$prefix}merchants.name,1,1) between {$this->quote($filter[0])} and {$this->quote($filter[1])}");
+                        $coupon->whereRaw("SUBSTR({$prefix}coupon_translations.promotion_name,1,1) between {$this->quote($filter[0])} and {$this->quote($filter[1])}");
                     }
                 }
             });
 
-            OrbitInput::get('keyword', function ($keyword) use ($store, $prefix) {
+            OrbitInput::get('keyword', function ($keyword) use ($coupon, $prefix) {
                 if (! empty($keyword)) {
-                    $store = $store->leftJoin(DB::raw("(select * from {$prefix}keyword_object where object_type = 'coupon') as oko"), DB::raw('oko.object_id'), '=', 'merchants.merchant_id')
+                    $coupon = $coupon->leftJoin(DB::raw("(select * from {$prefix}keyword_object where object_type = 'coupon') as oko"), DB::raw('oko.object_id'), '=', 'promotions.promotion_id')
                                 ->leftJoin('keywords', 'keywords.keyword_id', '=',  DB::raw('oko.object_id'))
-                                ->where(function($query) use ($keyword)
+                                ->where(function($query) use ($keyword, $prefix)
                                 {
                                     $word = explode(" ", $keyword);
                                     foreach ($word as $key => $value) {
-                                        $query->orWhere(function($q) use ($value){
-                                            $q->where('merchants.name', 'like', '%' . $value . '%')
-                                                ->orWhere('merchants.description', 'like', '%' . $value . '%')
+                                        $query->orWhere(function($q) use ($value, $prefix){
+                                            $q->where('coupon_translations.promotion_name', 'like', '%' . $value . '%')
+                                                ->orWhere('coupon_translations.description', 'like', '%' . $value . '%')
                                                 ->orWhere('keywords.keyword', '=', $value);
                                         });
                                     }
@@ -83,21 +98,21 @@ class StoreAPIController extends ControllerAPI
                 }
             });
 
-            $_store = clone $store;
+            $_coupon = clone $coupon;
 
             $take = PaginationNumber::parseTakeFromGet('retailer');
-            $store->take($take);
+            $coupon->take($take);
 
             $skip = PaginationNumber::parseSkipFromGet();
-            $store->skip($skip);
+            $coupon->skip($skip);
 
-            $liststore = $store->get();
-            $count = RecordCounter::create($_store)->count();
+            $listcoupon = $coupon->get();
+            $count = RecordCounter::create($_coupon)->count();
 
             $this->response->data = new stdClass();
             $this->response->data->total_records = $count;
-            $this->response->data->returned_records = count($liststore);
-            $this->response->data->records = $liststore;
+            $this->response->data->returned_records = count($listcoupon);
+            $this->response->data->records = $listcoupon;
         } catch (ACLForbiddenException $e) {
 
             $this->response->code = $e->getCode();
@@ -159,25 +174,25 @@ class StoreAPIController extends ControllerAPI
      *
      * @return Illuminate\Support\Facades\Response
      */
-    public function getMallStoreList()
+    public function getMallCouponList()
     {
         $httpCode = 200;
         try {
-            $sort_by = OrbitInput::get('sortby', 'merchants.name');
+            $sort_by = OrbitInput::get('sortby', 'name');
             $sort_mode = OrbitInput::get('sortmode','asc');
-            $storename = OrbitInput::get('store_name');
+            $promotionId = OrbitInput::get('promotion_id');
 
             $prefix = DB::getTablePrefix();
 
             $validator = Validator::make(
                 array(
-                    'store_name' => $storename,
+                    'promotion_id' => $promotionId,
                 ),
                 array(
-                    'store_name' => 'required',
+                    'promotion_id' => 'required',
                 ),
                 array(
-                    'required' => 'Store name is required',
+                    'required' => 'Promotion ID is required',
                 )
             );
 
@@ -187,21 +202,29 @@ class StoreAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $mall = Mall::select('merchants.merchant_id', 'merchants.name', 'merchants.ci_domain', 'merchants.city', 'merchants.description', DB::raw("CONCAT({$prefix}merchants.ci_domain, '/customer/tenant?id=', oms.merchant_id) as store_url"))
-                    ->join(DB::raw("(select merchant_id, `name`, parent_id from {$prefix}merchants where name = {$this->quote($storename)}) as oms"), DB::raw('oms.parent_id'), '=', 'merchants.merchant_id')
-                    ->active();
+            $mall = PromotionRetailer::select('promotion_retailer.promotion_id', 
+                                            DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.name ELSE {$prefix}merchants.name END as name"),
+                                            DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.ci_domain ELSE {$prefix}merchants.ci_domain END as ci_domain"),
+                                            DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.city ELSE {$prefix}merchants.city END as city"),
+                                            DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.description ELSE {$prefix}merchants.description END as description"),
+                                            DB::raw("CONCAT(IF({$prefix}merchants.object_type = 'tenant', oms.ci_domain, {$prefix}merchants.ci_domain), '/customer/mallcoupon?id=', {$prefix}promotion_retailer.promotion_id) as store_url"))
+                                        ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
+                                        ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
+                                        ->where('promotion_retailer.promotion_id', '=', $promotionId);
 
             OrbitInput::get('filter_name', function ($filterName) use ($mall, $prefix) {
                 if (! empty($filterName)) {
                     if ($filterName === '#') {
-                        $filterName = '^a-zA-Z';
+                        $mall->whereRaw("SUBSTR((CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.name ELSE {$prefix}merchants.name END),1,1) not between 'a' and 'z'");
+                    } else {
+                        $filter = explode("-", $filterName);
+                        $mall->whereRaw("SUBSTR((CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.name ELSE {$prefix}merchants.name END),1,1) between {$this->quote($filter[0])} and {$this->quote($filter[1])}");
                     }
-                    $mall->whereRaw("merchants.name REGEXP '^[{$filterName}]'");
                 }
             });
 
-            $mall = $mall->groupBy('merchants.merchant_id')->orderBy($sort_by, $sort_mode);
-
+            $mall = $mall->orderBy($sort_by, $sort_mode);
+            
             $_mall = clone $mall;
 
             $take = PaginationNumber::parseTakeFromGet('retailer');
