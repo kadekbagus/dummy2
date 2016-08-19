@@ -7797,8 +7797,8 @@ class MobileCIAPIController extends BaseCIController
                         ->first();
 
             // Get Image from db
-            if (isset($pokestop->mediaPokestop->file_name)) {
-                $pokestop->image = 'mobile-ci/images/pokestop/' . $pokestop->mediaPokestop->file_name;
+            if (isset($pokestop->mediaPokestop->realpath) && $pokestop->mediaPokestop->realpath != '') {
+                $pokestop->image = $pokestop->mediaPokestop->realpath;
             } else {
                 $pokestop->image = null;
             }
@@ -7817,7 +7817,7 @@ class MobileCIAPIController extends BaseCIController
 
             $activityPageNotes = sprintf('Page viewed: Pokestop Detail, pokestop Id: %s', $product_id);
             $activityPage->setUser($user)
-                ->setActivityName('view_news')
+                ->setActivityName('view_pokestop')
                 ->setActivityNameLong('View Pokestop Detail')
                 ->setObject($pokestop)
                 ->setNews($pokestop)
@@ -7827,7 +7827,7 @@ class MobileCIAPIController extends BaseCIController
                 ->save();
 
             return View::make('mobile-ci.mall-pokestop-detail', array(
-                'page_title' => $pokestop->news_name,
+                'page_title' => 'PokéMAPS<sup>TM</sup>',
                 'user' => $user,
                 'retailer' => $retailer,
                 'pokestop' => $pokestop,

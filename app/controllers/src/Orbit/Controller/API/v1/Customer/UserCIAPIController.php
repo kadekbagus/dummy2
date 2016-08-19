@@ -26,6 +26,7 @@ use Lang;
 use User;
 use Event;
 use Hash;
+use Activity;
 
 class UserCIAPIController extends BaseAPIController
 {
@@ -111,6 +112,9 @@ class UserCIAPIController extends BaseAPIController
 
     public function postEditAccount()
     {
+        $activity = Activity::portal()
+                           ->setActivityType('update');
+
         $httpCode = 200;
         $this->response = new ResponseProvider();
 
@@ -180,13 +184,13 @@ class UserCIAPIController extends BaseAPIController
             $this->commit();
 
             // Successfull Update
-            // $activityNotes = sprintf('User updated: %s', $updateUser->username);
-            // $activity->setUser($user)
-            //         ->setActivityName('update_user')
-            //         ->setActivityNameLong('Update User OK')
-            //         ->setObject($updateUser)
-            //         ->setNotes($activityNotes)
-            //         ->responseOK();
+            $activityNotes = sprintf('User updated: %s', $updateUser->username);
+            $activity->setUser($user)
+                    ->setActivityName('update_user')
+                    ->setActivityNameLong('Update User OK')
+                    ->setObject($updateUser)
+                    ->setNotes($activityNotes)
+                    ->responseOK();
 
             $image = null;
             $media = $user->profilePicture()

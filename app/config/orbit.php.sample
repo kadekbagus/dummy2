@@ -20,7 +20,11 @@ return array(
         // Path to CA Certificate, used when serving via HTTPS
         'cacert' => '/path/to/cacert.crt',
 
+        // Prefix to access indices
+        'indices_prefix' => 'v23_'
+
         // List of indices that we have in Elasticsearch
+        // All the query to the index name will be appended by prefix automatically
         'indices' => [
             'malldata' => [
                 'index' => 'malls',
@@ -131,7 +135,11 @@ return array(
     'assets' => array(
         // Asset root (without trailing slash)
         // leave undefined to work from app root
-        // 'root' => 'http://assets.myorbit.com'
+        // 'root' => 'http://assets.myorbit.com',
+
+        // Every deployment which changes the CSS should also
+        // change this value
+        // 'timestamp' => '201608161427'
     ),
 
     // Languages that supported by orbit app
