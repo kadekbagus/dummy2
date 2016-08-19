@@ -1674,7 +1674,6 @@ class MobileCIAPIController extends BaseCIController
             // check if coupon already add to wallet
             $wallet = IssuedCoupon::where('promotion_id', '=', $coupon_id)
                                   ->where('user_id', '=', $user->user_id)
-                                  ->where('issuer_retailer_id', '=', $retailer->merchant_id)
                                   ->where('status', '=', 'active')
                                   ->first(); 
             
