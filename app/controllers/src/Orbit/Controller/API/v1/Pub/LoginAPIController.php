@@ -935,7 +935,7 @@ class LoginAPIController extends IntermediateBaseController
                 ->setActivityNameLong('Sign In')
                 ->setActivityType('login')
                 ->setObject($user)
-                ->setNotes(sprintf('Sign In via Mobile (%s) OK', ucfirst($from)));
+                ->setNotes(sprintf('Sign In via Mobile (%s) OK', ucfirst($from)))
                 ->setModuleName('Application')
                 ->responseOK()
                 ->save();
