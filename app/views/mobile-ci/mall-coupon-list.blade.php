@@ -53,7 +53,7 @@
             helperObject = {
                 'skip': 0,
                 'coupon_type': getCouponType,
-                'isProgress': false
+                'isProgress': true
             },
             messageNotLogin = function () {
                 var elementMessage = '\
@@ -96,13 +96,12 @@
                 return;
             }
 
-            $(".catalogue-wrapper").empty();
+            $(".catalogue-wrapper").html('');
+            listOfIDs.length = 0;
             $(".coupon-button").removeClass('active');
             $(this).addClass('active');
 
-            listOfIDs.length = 0;
             helperObject.coupon_type = $(this).data('type');
-
 
             // validate user login
             if ('wallet' === helperObject.coupon_type && !Boolean({{$is_logged_in}})) {
