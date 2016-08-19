@@ -175,6 +175,7 @@ class ESActivityUpdateQueue
                 'country' =>  $findIp->country,
                 'city' =>  $findIp->city,
                 'position' => $pos,
+                'page' => explode('?', $activity->request_uri)[0],
                 'referer' => $data['referer'],
                 'utm_source' => $campaignData['campaign_source'],
                 'utm_medium' => $campaignData['campaign_medium'],
