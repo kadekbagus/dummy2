@@ -67,8 +67,8 @@ class StoreAPIController extends ControllerAPI
 
             OrbitInput::get('keyword', function ($keyword) use ($store, $prefix) {
                 if (! empty($keyword)) {
-                    $store = $store->leftJoin('keywords', 'keywords.merchant_id', '=',  'merchants.merchant_id')
-                                ->leftJoin(DB::raw("(select * from {$prefix}keyword_object where object_type = 'tenant') as oko"), DB::raw('oko.keyword_id'), '=', 'keywords.keyword_id')
+                    $store = $store->leftJoin(DB::raw("(select * from {$prefix}keyword_object where object_type = 'coupon') as oko"), DB::raw('oko.object_id'), '=', 'merchants.merchant_id')
+                                ->leftJoin('keywords', 'keywords.keyword_id', '=',  DB::raw('oko.object_id'))
                                 ->where(function($query) use ($keyword)
                                 {
                                     $word = explode(" ", $keyword);
