@@ -768,6 +768,7 @@ class MobileCIAPIController extends BaseCIController
     public function getHomeView()
     {
         $user = null;
+        $retailer = null;
         $activityPage = Activity::mobileci()
                             ->setActivityType('view');
         try {
@@ -869,6 +870,7 @@ class MobileCIAPIController extends BaseCIController
 
             $activityPageNotes = sprintf('Page viewed: %s', 'Home');
             $activityPage->setUser($user)
+                ->setLocation($retailer)
                 ->setActivityName('view_page_home')
                 ->setActivityNameLong('View (Home Page)')
                 ->setObject(null)
@@ -906,6 +908,7 @@ class MobileCIAPIController extends BaseCIController
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: %s', 'Home');
             $activityPage->setUser($user)
+                ->setLocation($retailer)
                 ->setActivityName('view_page_home')
                 ->setActivityNameLong('View (Home Page) Failed')
                 ->setObject(null)
@@ -1507,6 +1510,7 @@ class MobileCIAPIController extends BaseCIController
         $user = null;
         $event_id = null;
         $event = null;
+        $retailer = null;
         try {
             $user = $this->getLoggedInUser();
 
@@ -1520,6 +1524,7 @@ class MobileCIAPIController extends BaseCIController
                 ->setActivityName('event_view')
                 ->setActivityNameLong('Event View (Pop Up)')
                 ->setObject($event)
+                ->setLocation($retailer)
                 ->setModuleName('Event')
                 ->setEvent($event)
                 ->setNotes($activityNotes)
@@ -1532,6 +1537,7 @@ class MobileCIAPIController extends BaseCIController
                 ->setActivityName('event_view')
                 ->setActivityNameLong('Event View Failed')
                 ->setObject(null)
+                ->setLocation($retailer)
                 ->setModuleName('Event')
                 ->setEvent($event)
                 ->setNotes($e->getMessage())
@@ -1658,6 +1664,7 @@ class MobileCIAPIController extends BaseCIController
         $user = NULL;
         $coupon = NULL;
         $issuedCoupon = NULL;
+        $retailer = null;
         try {
             $user = $this->getLoggedInUser();
 
@@ -1675,11 +1682,11 @@ class MobileCIAPIController extends BaseCIController
             $wallet = IssuedCoupon::where('promotion_id', '=', $coupon_id)
                                   ->where('user_id', '=', $user->user_id)
                                   ->where('status', '=', 'active')
-                                  ->first(); 
-            
+                                  ->first();
+
             if (is_object($wallet)) {
                $message = 'coupon already added to wallet';
-               OrbitShopAPI::throwInvalidArgument($message); 
+               OrbitShopAPI::throwInvalidArgument($message);
             }
 
             $validator = Validator::make(
@@ -1711,6 +1718,7 @@ class MobileCIAPIController extends BaseCIController
                 $activity->setUser($user)
                     ->setActivityName('click_add_to_wallet')
                     ->setActivityNameLong('Click Add To Wallet')
+                    ->setLocation($retailer)
                     ->setObject($issuedCoupon)
                     ->setModuleName('Coupon')
                     ->setCoupon($coupon)
@@ -1735,6 +1743,7 @@ class MobileCIAPIController extends BaseCIController
                 ->setObject($issuedCoupon)
                 ->setModuleName('Coupon')
                 ->setCoupon($coupon)
+                ->setLocation($retailer)
                 ->setNotes($activityNotes)
                 ->responseFailed()
                 ->save();
@@ -1751,6 +1760,7 @@ class MobileCIAPIController extends BaseCIController
                 ->setObject($issuedCoupon)
                 ->setModuleName('Coupon')
                 ->setCoupon($coupon)
+                ->setLocation($retailer)
                 ->setNotes($activityNotes)
                 ->responseFailed()
                 ->save();
@@ -1767,6 +1777,7 @@ class MobileCIAPIController extends BaseCIController
                 ->setObject($issuedCoupon)
                 ->setModuleName('Coupon')
                 ->setCoupon($coupon)
+                ->setLocation($retailer)
                 ->setNotes($activityNotes)
                 ->responseFailed()
                 ->save();
@@ -1787,6 +1798,7 @@ class MobileCIAPIController extends BaseCIController
         $user = null;
         $media = null;
         $user_full_name = null;
+        $retailer = null;
 
         $activityPage = Activity::mobileci()
                                    ->setActivityType('view');
@@ -1813,6 +1825,7 @@ class MobileCIAPIController extends BaseCIController
             $activityPage->setUser($user)
                 ->setActivityName('view_my_account')
                 ->setActivityNameLong('View My Account')
+                ->setLocation($retailer)
                 ->setModuleName('Inbox')
                 ->setNotes($activityPageNotes)
                 ->responseOK()
@@ -1837,6 +1850,7 @@ class MobileCIAPIController extends BaseCIController
                 ->setActivityName('view_my_account')
                 ->setActivityNameLong('View My Account Failed')
                 ->setModuleName('Inbox')
+                ->setLocation($retailer)
                 ->setNotes($activityPageNotes)
                 ->responseFailed()
                 ->save();
@@ -1868,6 +1882,7 @@ class MobileCIAPIController extends BaseCIController
         $campaign_type = null;
         $campaign_id = null;
         $activity_type = null;
+        $retailer = null;
 
         try {
             $user = $this->getLoggedInUser();
@@ -2351,6 +2366,7 @@ class MobileCIAPIController extends BaseCIController
     {
         $user = null;
         $keyword = null;
+        $retailer = null;
         $activityPage = Activity::mobileci()
                         ->setActivityType('view');
 
@@ -2957,6 +2973,7 @@ class MobileCIAPIController extends BaseCIController
                     ->setActivityName('view_retailer')
                     ->setActivityNameLong('View Promotion Tenant List')
                     ->setObject(null)
+                    ->setLocation($retailer)
                     ->setModuleName('Tenant')
                     ->setNotes($activityPageNotes)
                     ->responseOK()
@@ -2971,6 +2988,7 @@ class MobileCIAPIController extends BaseCIController
                     ->setActivityName('view_retailer')
                     ->setActivityNameLong('View Coupon Tenant List')
                     ->setObject(null)
+                    ->setLocation($retailer)
                     ->setModuleName('Tenant')
                     ->setNotes($activityPageNotes)
                     ->responseOK()
@@ -2985,6 +3003,7 @@ class MobileCIAPIController extends BaseCIController
                     ->setActivityName('view_retailer')
                     ->setActivityNameLong('View Coupon Redemption Places')
                     ->setObject(null)
+                    ->setLocation($retailer)
                     ->setModuleName('Tenant')
                     ->setNotes($activityPageNotes)
                     ->responseOK()
@@ -2999,6 +3018,7 @@ class MobileCIAPIController extends BaseCIController
                     ->setActivityName('view_retailer')
                     ->setActivityNameLong('View News Tenant List')
                     ->setObject(null)
+                    ->setLocation($retailer)
                     ->setModuleName('Tenant')
                     ->setNotes($activityPageNotes)
                     ->responseOK()
@@ -3013,6 +3033,7 @@ class MobileCIAPIController extends BaseCIController
                     ->setActivityName('view_retailer')
                     ->setActivityNameLong('View Events Tenant List')
                     ->setObject(null)
+                    ->setLocation($retailer)
                     ->setModuleName('Tenant')
                     ->setNotes($activityPageNotes)
                     ->responseOK()
@@ -3025,6 +3046,7 @@ class MobileCIAPIController extends BaseCIController
                     ->setActivityName('view_retailer')
                     ->setActivityNameLong('View Tenant List')
                     ->setObject(null)
+                    ->setLocation($retailer)
                     ->setModuleName('Tenant')
                     ->setNotes($activityPageNotes)
                     ->responseOK()
@@ -3053,6 +3075,7 @@ class MobileCIAPIController extends BaseCIController
                 ->setActivityName('view_retailer')
                 ->setActivityNameLong('View Tenant List Failed')
                 ->setObject(null)
+                ->setLocation($retailer)
                 ->setModuleName('Tenant')
                 ->setNotes($activityPageNotes)
                 ->responseFailed()
@@ -3080,6 +3103,7 @@ class MobileCIAPIController extends BaseCIController
     {
         $user = null;
         $product_id = 0;
+        $retailer = null;
         $activityPage = Activity::mobileci()
                                    ->setActivityType('view');
         $tenant = null;
@@ -3439,6 +3463,7 @@ class MobileCIAPIController extends BaseCIController
                     ->setActivityName('view_retailer')
                     ->setActivityNameLong('View Tenant Detail')
                     ->setObject($tenant)
+                    ->setLocation($retailer)
                     ->setModuleName('Tenant')
                     ->setNotes($activityPageNotes)
                     ->responseOK()
@@ -3451,6 +3476,7 @@ class MobileCIAPIController extends BaseCIController
                     ->setActivityName('view_retailer')
                     ->setActivityNameLong('View Tenant Detail')
                     ->setObject($tenant)
+                    ->setLocation($retailer)
                     ->setModuleName('Tenant')
                     ->setNotes($activityPageNotes)
                     ->responseOK()
@@ -3463,6 +3489,7 @@ class MobileCIAPIController extends BaseCIController
                     ->setActivityName('view_retailer')
                     ->setActivityNameLong('View Tenant Detail')
                     ->setObject($tenant)
+                    ->setLocation($retailer)
                     ->setModuleName('Tenant')
                     ->setNotes($activityPageNotes)
                     ->responseOK()
@@ -3497,6 +3524,7 @@ class MobileCIAPIController extends BaseCIController
                 ->setActivityName('view_retailer')
                 ->setActivityNameLong('View Tenant Detail Failed')
                 ->setObject(null)
+                ->setLocation($retailer)
                 ->setModuleName('Tenant')
                 ->setNotes($activityPageNotes)
                 ->responseFailed()
@@ -3524,6 +3552,7 @@ class MobileCIAPIController extends BaseCIController
     {
         $user = null;
         $product_id = 0;
+        $retailer = null;
         $activityPage = Activity::mobileci()
                                    ->setActivityType('view');
         $service = null;
@@ -3617,8 +3646,8 @@ class MobileCIAPIController extends BaseCIController
 
             if (empty($service)) {
                 return View::make('mobile-ci.404', array(
-                    'page_title'=>Lang::get('mobileci.page_title.not_found'),
-                    'retailer'=>$retailer,
+                    'page_title' => Lang::get('mobileci.page_title.not_found'),
+                    'retailer'=> $retailer,
                     'session' => $this->session,
                     'is_logged_in' => UrlBlock::isLoggedIn($this->session),
                     'languages' => $languages,
@@ -3650,6 +3679,7 @@ class MobileCIAPIController extends BaseCIController
                 ->setActivityName('view_service')
                 ->setActivityNameLong('View Service Detail')
                 ->setObject($service)
+                ->setLocation($retailer)
                 ->setModuleName('Service')
                 ->setNotes($activityPageNotes)
                 ->responseOK()
@@ -3683,6 +3713,7 @@ class MobileCIAPIController extends BaseCIController
                 ->setActivityName('view_service')
                 ->setActivityNameLong('View Service')
                 ->setObject(null)
+                ->setLocation($retailer)
                 ->setModuleName('Service')
                 ->setNotes($activityPageNotes)
                 ->responseFailed()
@@ -3900,8 +3931,11 @@ class MobileCIAPIController extends BaseCIController
                         } else {
                             //get link tenant redeem
                             $retailers = \CouponRetailerRedeem::whereHas('tenant', function($q) use($pid) {
-                                $q->where('promotion_id', $pid);
-                            })->has('coupon')
+                                $q->where('promotion_id', $pid)
+                                    ->where('merchants.masterbox_number', '<>', '')
+                                    ->whereNotNull('merchants.masterbox_number');
+                            })
+                            ->has('coupon')
                             ->get()
                             ->lists('retailer_id');
 
@@ -4295,6 +4329,7 @@ class MobileCIAPIController extends BaseCIController
     public function getServiceView() {
         $user = null;
         $keyword = null;
+        $retailer = null;
         $activityPage = Activity::mobileci()
                         ->setActivityType('view');
 
@@ -4591,6 +4626,7 @@ class MobileCIAPIController extends BaseCIController
                 ->setActivityName('view_service_list')
                 ->setActivityNameLong('View Service List')
                 ->setObject(null)
+                ->setLocation($retailer)
                 ->setModuleName('service')
                 ->setNotes($activityPageNotes)
                 ->responseOK()
@@ -4618,6 +4654,7 @@ class MobileCIAPIController extends BaseCIController
                 ->setActivityName('view_service_list')
                 ->setActivityNameLong('View service List Failed')
                 ->setObject(null)
+                ->setLocation($retailer)
                 ->setModuleName('Service')
                 ->setNotes($activityPageNotes)
                 ->responseFailed()
@@ -4948,6 +4985,7 @@ class MobileCIAPIController extends BaseCIController
     public function getLuckyDrawListView()
     {
         $user = null;
+        $retailer = null;
         $activityPage = Activity::mobileci()
             ->setActivityType('view');
         try {
@@ -5086,6 +5124,7 @@ class MobileCIAPIController extends BaseCIController
                 ->setActivityName('view_lucky_draw_list')
                 ->setActivityNameLong('View Lucky Draw List')
                 ->setObject(null)
+                ->setLocation($retailer)
                 ->setModuleName('LuckyDraw')
                 ->setNotes($activityPageNotes)
                 ->responseOK()
@@ -5111,6 +5150,7 @@ class MobileCIAPIController extends BaseCIController
                 ->setActivityName('view_lucky_draw_list')
                 ->setActivityNameLong('View Lucky Draw List')
                 ->setObject(null)
+                ->setLocation($retailer)
                 ->setModuleName('LuckyDraw')
                 ->setNotes($activityPageNotes)
                 ->responseOK()
@@ -5149,7 +5189,7 @@ class MobileCIAPIController extends BaseCIController
 
             $mallTime = Carbon::now($retailer->timezone->timezone_name);
             $luckydraws = LuckyDraw::with('translations')
-                ->active()
+                ->where('lucky_draws.status', 'active')
                 ->where('mall_id', $retailer->merchant_id)
                 ->whereRaw("? between start_date and grace_period_date", [$mallTime]);
 
@@ -5172,7 +5212,7 @@ class MobileCIAPIController extends BaseCIController
                 $luckydraws->whereNotIn('lucky_draws.lucky_draw_id', $ids);
             });
 
-            $luckydraws->groupBy('lucky_draw_id');
+            $luckydraws->groupBy('lucky_draws.lucky_draw_id');
 
             $_luckydraws = clone $luckydraws;
 
@@ -5313,6 +5353,7 @@ class MobileCIAPIController extends BaseCIController
     {
         $user = null;
         $product_id = 0;
+        $retailer = null;
         $activityProduct = Activity::mobileci()
                                    ->setActivityType('view');
         $product = null;
@@ -5476,6 +5517,7 @@ class MobileCIAPIController extends BaseCIController
                 ->setActivityName('view_lucky_draw')
                 ->setActivityNameLong('View Lucky Draw Detail')
                 ->setObject($luckydraw, TRUE)
+                ->setLocation($retailer)
                 ->setModuleName('LuckyDraw')
                 ->setNotes($activityProductNotes)
                 ->responseOK()
@@ -5513,6 +5555,7 @@ class MobileCIAPIController extends BaseCIController
                 ->setActivityName('view_lucky_draw')
                 ->setActivityNameLong('View Lucky Draw Detail')
                 ->setObject(null)
+                ->setLocation($retailer)
                 ->setModuleName('Lucky Draw')
                 ->setNotes($activityProductNotes)
                 ->responseOK()
@@ -5539,6 +5582,7 @@ class MobileCIAPIController extends BaseCIController
     {
         $user = null;
         $product_id = 0;
+        $retailer = null;
         $activityProduct = Activity::mobileci()
                                    ->setActivityType('view');
 
@@ -5689,6 +5733,7 @@ class MobileCIAPIController extends BaseCIController
                 ->setActivityName('view_lucky_draw_announcement')
                 ->setActivityNameLong('View Winning Numbers & Prizes')
                 ->setObject($luckydraw, TRUE)
+                ->setLocation($retailer)
                 ->setModuleName('Lucky Draw')
                 ->setNotes($activityProductNotes)
                 ->responseOK()
@@ -5711,6 +5756,7 @@ class MobileCIAPIController extends BaseCIController
                 ->setActivityName('view_lucky_draw')
                 ->setActivityNameLong('View Winning Numbers & Prizes')
                 ->setObject(null)
+                ->setLocation($retailer)
                 ->setModuleName('Lucky Draw')
                 ->setNotes($activityProductNotes)
                 ->responseOK()
@@ -5774,6 +5820,7 @@ class MobileCIAPIController extends BaseCIController
     public function postLuckyDrawAutoIssue()
     {
         $user = null;
+        $mall = null;
         $activity = Activity::mobileci()
                         ->setActivityType('create');
 
@@ -5915,6 +5962,7 @@ class MobileCIAPIController extends BaseCIController
             // Creation failed Activity log
             $activity->setUser($user)
                 ->setModuleName('LuckyDraw')
+                ->setLocation($mall)
                 ->setActivityName('issue_lucky_draw')
                 ->setActivityNameLong('Lucky Draw Number Auto Issuance Failed')
                 ->setNotes($e->getMessage())
@@ -5938,6 +5986,7 @@ class MobileCIAPIController extends BaseCIController
             // Creation failed Activity log
             $activity->setUser($user)
                 ->setModuleName('LuckyDraw')
+                ->setLocation($mall)
                 ->setActivityName('issue_lucky_draw')
                 ->setActivityNameLong('Lucky Draw Number Auto Issuance Failed')
                 ->setNotes($e->getMessage())
@@ -5967,6 +6016,7 @@ class MobileCIAPIController extends BaseCIController
             // Creation failed Activity log
             $activity->setUser($user)
                 ->setModuleName('LuckyDraw')
+                ->setLocation($mall)
                 ->setActivityName('issue_lucky_draw')
                 ->setActivityNameLong('Lucky Draw Number Auto Issuance Failed')
                 ->setNotes($e->getMessage())
@@ -5998,6 +6048,7 @@ class MobileCIAPIController extends BaseCIController
             // Creation failed Activity log
             $activity->setUser($user)
                 ->setModuleName('LuckyDraw')
+                ->setLocation($mall)
                 ->setActivityName('issue_lucky_draw')
                 ->setActivityNameLong('Lucky Draw Number Auto Issuance Failed')
                 ->setNotes($e->getMessage())
@@ -6080,6 +6131,8 @@ class MobileCIAPIController extends BaseCIController
      * @author Ahmad Anshori <ahmad@dominopos.com>
      */
     public function getSearchCoupon() {
+        $retailer = null;
+        $user = null;
         try {
             // Require authentication
             $this->registerCustomValidation();
@@ -6167,21 +6220,12 @@ class MobileCIAPIController extends BaseCIController
                         $join->on('promotion_rules.promotion_id', '=', 'promotions.promotion_id');
                         $join->where('promotions.status', '=', 'active');
                     })
-                    ->leftJoin('promotion_retailer_redeem', 'promotion_retailer_redeem.promotion_id', '=', 'promotions.promotion_id')
-                    ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer_redeem.retailer_id')
+                    ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
+                    ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
                     ->where(function ($q) use ($mallid) {
                         $q->where(function ($q2) use ($mallid) {
                             $q2->where('merchants.parent_id', '=', $mallid)
                                 ->orWhere('merchants.merchant_id', '=', $mallid);
-                        });
-                        $q->orWhere(function ($q2) use ($mallid) {
-                            $q2->whereHas('employee', function ($q3) use ($mallid) {
-                                $q3->whereHas('employee', function ($q4) use ($mallid) {
-                                    $q4->whereHas('retailers', function ($q5) use ($mallid) {
-                                        $q5->where('merchants.merchant_id', $mallid);
-                                    });
-                                });
-                            });
                         });
                     })
                     ->where('promotions.begin_date', '<=', Carbon::now($retailer->timezone->timezone_name))
@@ -6336,6 +6380,7 @@ class MobileCIAPIController extends BaseCIController
                         ->setActivityName('view_coupon_wallet_list')
                         ->setActivityNameLong('View Coupon Wallet List')
                         ->setObject(null)
+                        ->setLocation($retailer)
                         ->setModuleName('Coupon')
                         ->setNotes($activityPageNotes)
                         ->responseOK();
@@ -6345,6 +6390,7 @@ class MobileCIAPIController extends BaseCIController
                         ->setActivityName('view_coupon_list')
                         ->setActivityNameLong('View Coupon List')
                         ->setObject(null)
+                        ->setLocation($retailer)
                         ->setModuleName('Coupon')
                         ->setNotes($activityPageNotes)
                         ->responseOK();
@@ -6403,6 +6449,7 @@ class MobileCIAPIController extends BaseCIController
         $user = null;
         $promotion_id = 0;
         $type = '';
+        $retailer = null;
         $activityPage = Activity::mobileci()
                                    ->setActivityType('view');
         try {
@@ -6616,6 +6663,7 @@ class MobileCIAPIController extends BaseCIController
                 $activityPage->setUser($user)
                     ->setActivityName('view_coupon_wallet')
                     ->setActivityNameLong('View Coupon Wallet Detail')
+                    ->setLocation($retailer)
                     ->setObject($coupons)
                     ->setCoupon($coupons)
                     ->setModuleName('Coupon')
@@ -6627,6 +6675,7 @@ class MobileCIAPIController extends BaseCIController
                 $activityPage->setUser($user)
                     ->setActivityName('view_coupon')
                     ->setActivityNameLong('View Coupon Detail')
+                    ->setLocation($retailer)
                     ->setObject($coupons)
                     ->setCoupon($coupons)
                     ->setModuleName('Coupon')
@@ -6686,6 +6735,7 @@ class MobileCIAPIController extends BaseCIController
             if ($type === 'wallet') {
                 $activityPageNotes = sprintf('Failed to view Page: Coupon Wallet Detail, Coupon Id: %s', $promotion_id);
                 $activityPage->setUser($user)
+                    ->setLocation($retailer)
                     ->setActivityName('view_coupon')
                     ->setActivityNameLong('View Coupon Wallet Detail Failed')
                     ->setObject(null)
@@ -6696,6 +6746,7 @@ class MobileCIAPIController extends BaseCIController
             } else {
                 $activityPageNotes = sprintf('Failed to view Page: Coupon Detail, Coupon Id: %s', $promotion_id);
                 $activityPage->setUser($user)
+                    ->setLocation($retailer)
                     ->setActivityName('view_coupon')
                     ->setActivityNameLong('View Coupon Detail Failed')
                     ->setObject(null)
@@ -6887,6 +6938,7 @@ class MobileCIAPIController extends BaseCIController
     public function getMallPromotionList() {
         $user = null;
         $keyword = null;
+        $retailer = null;
         $activityPage = Activity::mobileci()
                         ->setActivityType('view');
 
@@ -7076,6 +7128,7 @@ class MobileCIAPIController extends BaseCIController
                 ->setActivityName('view_promotion_list')
                 ->setActivityNameLong('View Promotion List')
                 ->setObject(null)
+                ->setLocation($retailer)
                 ->setModuleName('Promotion')
                 ->setNotes($activityPageNotes)
                 ->responseOK()
@@ -7100,6 +7153,7 @@ class MobileCIAPIController extends BaseCIController
                 ->setActivityName('view_promotion_list')
                 ->setActivityNameLong('View Promotion List Failed')
                 ->setObject(null)
+                ->setLocation($retailer)
                 ->setModuleName('Promotion')
                 ->setNotes($activityPageNotes)
                 ->responseFailed()
@@ -7352,6 +7406,7 @@ class MobileCIAPIController extends BaseCIController
     {
         $user = null;
         $promotion_id = 0;
+        $retailer = null;
         $activityPage = Activity::mobileci()
                                    ->setActivityType('view');
         $promotion = null;
@@ -7469,6 +7524,7 @@ class MobileCIAPIController extends BaseCIController
             $activityPage->setUser($user)
                 ->setActivityName('view_promotion')
                 ->setActivityNameLong('View Promotion Detail')
+                ->setLocation($retailer)
                 ->setObject($promotion)
                 ->setNews($promotion)
                 ->setModuleName('Promotion')
@@ -7494,6 +7550,7 @@ class MobileCIAPIController extends BaseCIController
             $activityPage->setUser($user)
                 ->setActivityName('view_promotion')
                 ->setActivityNameLong('View Promotion Failed')
+                ->setLocation($retailer)
                 ->setObject(null)
                 ->setModuleName('Promotion')
                 ->setNotes($activityPageNotes)
@@ -7519,6 +7576,7 @@ class MobileCIAPIController extends BaseCIController
     public function getMallNewsList() {
         $user = null;
         $keyword = null;
+        $retailer = null;
         $activityPage = Activity::mobileci()
                         ->setActivityType('view');
 
@@ -7710,6 +7768,7 @@ class MobileCIAPIController extends BaseCIController
                 ->setActivityName('view_news_list')
                 ->setActivityNameLong('View News List')
                 ->setObject(null)
+                ->setLocation($retailer)
                 ->setModuleName('News')
                 ->setNotes($activityPageNotes)
                 ->responseOK()
@@ -7734,6 +7793,7 @@ class MobileCIAPIController extends BaseCIController
                 ->setActivityName('view_news_list')
                 ->setActivityNameLong('View News List Failed')
                 ->setObject(null)
+                ->setLocation($retailer)
                 ->setModuleName('News')
                 ->setNotes($activityPageNotes)
                 ->responseFailed()
@@ -7985,6 +8045,7 @@ class MobileCIAPIController extends BaseCIController
     {
         $user = null;
         $product_id = 0;
+        $retailer = null;
         $activityPage = Activity::mobileci()
                                    ->setActivityType('view');
         $product = null;
@@ -8031,6 +8092,7 @@ class MobileCIAPIController extends BaseCIController
                 ->setActivityNameLong('View Pokestop Detail')
                 ->setObject($pokestop)
                 ->setNews($pokestop)
+                ->setLocation($retailer)
                 ->setModuleName('Pokestop')
                 ->setNotes($activityPageNotes)
                 ->responseOK()
@@ -8053,6 +8115,7 @@ class MobileCIAPIController extends BaseCIController
                 ->setActivityName('view_pokestop')
                 ->setActivityNameLong('View Pokestop Detail Failed')
                 ->setObject(null)
+                ->setLocation($retailer)
                 ->setModuleName('Pokestop')
                 ->setNotes($activityPageNotes)
                 ->responseFailed()
@@ -8079,6 +8142,7 @@ class MobileCIAPIController extends BaseCIController
     {
         $user = null;
         $product_id = 0;
+        $retailer = null;
         $activityPage = Activity::mobileci()
                                    ->setActivityType('view');
         $product = null;
@@ -8198,6 +8262,7 @@ class MobileCIAPIController extends BaseCIController
                 ->setActivityNameLong('View News Detail')
                 ->setObject($news)
                 ->setNews($news)
+                ->setLocation($retailer)
                 ->setModuleName('News')
                 ->setNotes($activityPageNotes)
                 ->responseOK()
@@ -8222,6 +8287,7 @@ class MobileCIAPIController extends BaseCIController
                 ->setActivityName('view_news')
                 ->setActivityNameLong('View News Detail Failed')
                 ->setObject(null)
+                ->setLocation($retailer)
                 ->setModuleName('News')
                 ->setNotes($activityPageNotes)
                 ->responseFailed()
@@ -8248,6 +8314,7 @@ class MobileCIAPIController extends BaseCIController
     {
         $user = null;
         $keyword = null;
+        $retailer = null;
         $activityPage = Activity::mobileci()
                         ->setActivityType('view');
 
@@ -8267,6 +8334,7 @@ class MobileCIAPIController extends BaseCIController
                 ->setActivityName('view_notification_list')
                 ->setActivityNameLong('View Notification List')
                 ->setObject(null)
+                ->setLocation($retailer)
                 ->setModuleName('Inbox')
                 ->setNotes($activityPageNotes)
                 ->responseOK()
@@ -8290,6 +8358,7 @@ class MobileCIAPIController extends BaseCIController
                 ->setActivityName('view_notification_list')
                 ->setActivityNameLong('View Notification List')
                 ->setObject(null)
+                ->setLocation($retailer)
                 ->setModuleName('Inbox')
                 ->setNotes($activityPageNotes)
                 ->responseFailed()
@@ -8317,6 +8386,7 @@ class MobileCIAPIController extends BaseCIController
         $user = null;
         $inbox = null;
         $keyword = null;
+        $retailer = null;
         $activityPage = Activity::mobileci()
                         ->setActivityType('view');
 
@@ -8362,6 +8432,7 @@ class MobileCIAPIController extends BaseCIController
                         ->setActivityName('read_notification')
                         ->setActivityNameLong('Read Activation Notification')
                         ->setObject($inbox)
+                        ->setLocation($retailer)
                         ->setModuleName('Inbox')
                         ->setNotes($activityPageNotes)
                         ->responseOK()
@@ -8374,6 +8445,7 @@ class MobileCIAPIController extends BaseCIController
                         ->setActivityName('read_notification')
                         ->setActivityNameLong('Read Lucky Draw Number Issuance Notification')
                         ->setObject($inbox)
+                        ->setLocation($retailer)
                         ->setModuleName('Inbox')
                         ->setNotes($activityPageNotes)
                         ->responseOK()
@@ -8386,6 +8458,7 @@ class MobileCIAPIController extends BaseCIController
                         ->setActivityName('read_notification')
                         ->setActivityNameLong('Read Winner Announcement Notification')
                         ->setObject($inbox)
+                        ->setLocation($retailer)
                         ->setModuleName('Inbox')
                         ->setNotes($activityPageNotes)
                         ->responseOK()
@@ -8398,6 +8471,7 @@ class MobileCIAPIController extends BaseCIController
                         ->setActivityName('read_notification')
                         ->setActivityNameLong('Read Coupon Issuance Notification')
                         ->setObject($inbox)
+                        ->setLocation($retailer)
                         ->setModuleName('Inbox')
                         ->setNotes($activityPageNotes)
                         ->responseOK()
@@ -8427,6 +8501,7 @@ class MobileCIAPIController extends BaseCIController
                 ->setActivityName('read_notification')
                 ->setActivityNameLong('Read Notification')
                 ->setObject(null)
+                ->setLocation($retailer)
                 ->setModuleName('Inbox')
                 ->setNotes($activityPageNotes)
                 ->responseFailed()
@@ -8843,6 +8918,7 @@ class MobileCIAPIController extends BaseCIController
     public function getPowerSearch() {
         $user = null;
         $keyword = null;
+        $retailer = null;
         $activityPage = Activity::mobileci()
                         ->setActivityType('search');
 
@@ -9044,9 +9120,9 @@ class MobileCIAPIController extends BaseCIController
 
             $lucky_draw = DB::table('lucky_draws')
                 ->selectRaw("{$prefix}lucky_draws.lucky_draw_id as object_id, {$prefix}lucky_draws.lucky_draw_name as object_name, {$prefix}lucky_draws.description as object_description, {$prefix}lucky_draws.image as object_image, 'lucky_draw' as object_type")
-                ->leftJoin('lucky_draw_translations', function($join) use ($alternateLanguage){
+                ->leftJoin('lucky_draw_translations', function($join) use ($language){
                     $join->on('lucky_draws.lucky_draw_id', '=', 'lucky_draw_translations.lucky_draw_id');
-                    $join->where('lucky_draw_translations.merchant_language_id', '=', $alternateLanguage->language_id);
+                    $join->where('lucky_draw_translations.merchant_language_id', '=', $language->language_id);
                 })
                 ->where('lucky_draws.status', 'active')
                 ->where('mall_id', $retailer->merchant_id)
@@ -9342,6 +9418,7 @@ class MobileCIAPIController extends BaseCIController
                     ->setActivityName('search_keyword')
                     ->setActivityNameLong('Search')
                     ->setObject(null)
+                    ->setLocation($retailer)
                     ->setModuleName('Search')
                     ->setNotes($activityPageNotes)
                     ->responseOK()
@@ -9383,7 +9460,7 @@ class MobileCIAPIController extends BaseCIController
 
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
-            $this->response->message = $e->getMessage();
+            $this->response->message = [$e->getMessage(), $e->getLine(), $e->getFile()];
 
             switch ($e->getCode()) {
                 case Session::ERR_UNKNOWN;

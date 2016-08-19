@@ -34,7 +34,7 @@
                 @if (isset($wallet_url))
                 <a href="{{ $wallet_url }}" type="button" class="coupon-button btn-upload btn btn-primary {{ $wallet['is_coupon_wallet'] ? 'active' : '' }}" data-type="available">{{{ $page_sub_title['coupon_wallet'] }}}</a>
                 @else
-                <a type="button" class="coupon-button btn btn-primary {{ $wallet['is_coupon_wallet'] ? 'active' : '' }}" data-type="wallet">{{{ $page_sub_title['coupon_wallet'] }}}</a>
+                <a type="button" class="coupon-button btn-upload btn btn-primary {{ $wallet['is_coupon_wallet'] ? 'active' : '' }}" data-type="wallet">{{{ $page_sub_title['coupon_wallet'] }}}</a>
                 @endif
             </div>
         </div>
@@ -110,7 +110,7 @@
                 </li>
                 <li class=""><a id="multi-language"><span><span class="glyphicon glyphicon-globe fa-relative"></span> {{ ucwords(strtolower(Lang::get('mobileci.page_title.language'))) }}</span></a></li>
                 @if($is_logged_in)
-                <li class=""><a href="{{ url('/customer/logout') }}"><span><span class="glyphicon glyphicon-off fa-relative"></span> {{ ucwords(strtolower(Lang::get('mobileci.page_title.logout'))) }}</span></a></li>
+                <li class=""><a href="{{ url('/customer/logout?mall_id=' . $retailer->merchant_id) }}"><span><span class="glyphicon glyphicon-off fa-relative"></span> {{ ucwords(strtolower(Lang::get('mobileci.page_title.logout'))) }}</span></a></li>
                 @endif
             </ul>
         </div>
