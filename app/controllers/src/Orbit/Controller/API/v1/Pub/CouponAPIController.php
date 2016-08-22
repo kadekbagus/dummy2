@@ -65,6 +65,10 @@ class CouponAPIController extends ControllerAPI
                             ->leftJoin('languages', 'languages.language_id', '=', 'coupon_translations.merchant_language_id')
                             ->where('languages.name', '=', 'en')
                             ->where('coupon_translations.promotion_name', '!=', '')
+                            ->whereRaw("{$prefix}promotions.begin_date <= (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
+                                                                                FROM {$prefix}merchants om
+                                                                                LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
+                                                                                WHERE om.merchant_id = {$prefix}promotions.merchant_id)")
                             ->having('campaign_status', '=', 'ongoing');
             
             OrbitInput::get('filter_name', function ($filterName) use ($coupon, $prefix) {
