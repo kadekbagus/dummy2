@@ -52,8 +52,6 @@ class NewsPromotionAPIController extends BaseAPIController
      */
     public function getSearchNewsPromotion()
     {
-        $activity = Activity::mobileci()->setActivityType('view');
-        $user = null;
         $httpCode = 200;
         $this->response = new ResponseProvider();
         $objectType = null;
@@ -82,21 +80,23 @@ class NewsPromotionAPIController extends BaseAPIController
                                 LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
                                 WHERE om.merchant_id = {$prefix}news.mall_id)
                                 THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END AS campaign_status
-                            ")
-                )
-                ->join('news_translations', 'news_translations.news_id', '=', 'news.news_id')
-                ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
-                ->where('news_translations.merchant_language_id', '=', $languageEnId)
-                ->where('news.object_type', '=', $objectType)
-                ->where('news_translations.news_name', '!=', '')
-                ->having('campaign_status', '=', 'ongoing');
+                            "))
+                        ->join('news_translations', 'news_translations.news_id', '=', 'news.news_id')
+                        ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
+                        ->whereRaw("{$prefix}news.begin_date <= (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
+                                                                            FROM {$prefix}merchants om
+                                                                            LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
+                                                                            WHERE om.merchant_id = {$prefix}news.mall_id)")
+                        ->where('news_translations.merchant_language_id', '=', $languageEnId)
+                        ->where('news.object_type', '=', $objectType)
+                        ->where('news_translations.news_name', '!=', '')
+                        ->having('campaign_status', '=', 'ongoing');
 
             OrbitInput::get('keyword', function($keyword) use ($news) {
                  if (! empty($keyword)) {
                     $news = $news->leftJoin('keyword_object', 'news.news_id', '=', 'keyword_object.object_id')
                                 ->leftJoin('keywords', 'keyword_object.keyword_id', '=', 'keywords.keyword_id')
                                 ->where(function($query) use ($keyword){
-
                                     //Search per word
                                     $words = explode(' ', $keyword);
                                     foreach ($words as $key => $word) {
@@ -104,7 +104,6 @@ class NewsPromotionAPIController extends BaseAPIController
                                             ->orWhere('news_translations.description', 'like', '%' . $word . '%')
                                             ->orWhere('keywords.keyword', '=', $word);
                                     }
-
                                 });
                  }
             });
@@ -152,15 +151,6 @@ class NewsPromotionAPIController extends BaseAPIController
             $this->response->data = null;
             $httpCode = 403;
 
-            $activityNotes = sprintf('Failed to view Page: %s List. Err: %s', ucwords($objectType), $e->getMessage());
-            $activity->setUser($user)
-                ->setActivityName(sprintf('view_%s_list', $objectType))
-                ->setActivityNameLong(sprintf('View %s List Failed', ucwords($objectType)))
-                ->setObject(null)
-                ->setModuleName(ucwords($objectType))
-                ->setNotes($activityNotes)
-                ->responseFailed()
-                ->save();
         } catch (InvalidArgsException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -172,15 +162,6 @@ class NewsPromotionAPIController extends BaseAPIController
             $this->response->data = $result;
             $httpCode = 403;
 
-            $activityNotes = sprintf('Failed to view Page: %s List. Err: %s', ucwords($objectType), $e->getMessage());
-            $activity->setUser($user)
-                ->setActivityName(sprintf('view_%s_list', $objectType))
-                ->setActivityNameLong(sprintf('View %s List Failed', ucwords($objectType)))
-                ->setObject(null)
-                ->setModuleName(ucwords($objectType))
-                ->setNotes($activityNotes)
-                ->responseFailed()
-                ->save();
         } catch (QueryException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -193,31 +174,12 @@ class NewsPromotionAPIController extends BaseAPIController
             $this->response->data = null;
             $httpCode = 500;
 
-            $activityNotes = sprintf('Failed to view Page: %s List. Err: %s', ucwords($objectType), $e->getMessage());
-            $activity->setUser($user)
-                ->setActivityName(sprintf('view_%s_list', $objectType))
-                ->setActivityNameLong(sprintf('View %s List Failed', ucwords($objectType)))
-                ->setObject(null)
-                ->setModuleName(ucwords($objectType))
-                ->setNotes($activityNotes)
-                ->responseFailed()
-                ->save();
         } catch (Exception $e) {
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $this->response->data = null;
             $httpCode = 500;
-
-            $activityNotes = sprintf('Failed to view Page: %s List. Err: %s', ucwords($objectType), $e->getMessage());
-            $activity->setUser($user)
-                ->setActivityName(sprintf('view_%s_list', $objectType))
-                ->setActivityNameLong(sprintf('View %s List Failed', ucwords($objectType)))
-                ->setObject(null)
-                ->setModuleName(ucwords($objectType))
-                ->setNotes($activityNotes)
-                ->responseFailed()
-                ->save();
         }
 
         return $this->render($httpCode);
@@ -225,11 +187,10 @@ class NewsPromotionAPIController extends BaseAPIController
 
     public function getMallPerNewsPromotion()
     {
-        $activity = Activity::mobileci()->setActivityType('view');
-        $user = null;
         $httpCode = 200;
         $this->response = new ResponseProvider();
         $objectType = null;
+        $newsPromotionLink = null;
 
         try{
             $newsPromotionId = OrbitInput::get('news_promotion_id', null);
@@ -237,9 +198,28 @@ class NewsPromotionAPIController extends BaseAPIController
             $sort_by = OrbitInput::get('sortby', 'name');
             $sort_mode = OrbitInput::get('sortmode','asc');
 
-            $prefix = DB::getTablePrefix();
+            $this->registerCustomValidation();
 
-            $newsPromotionLink = null;
+            $validator = Validator::make(
+                array(
+                    'object_type' => $objectType,
+                ),
+                array(
+                    'object_type' => 'required|orbit.empty.object_type',
+                ),
+                array(
+                    'required' => 'Object type is required',
+                    'orbit.empty.object_type' => 'Object type must news or promotion',
+                )
+            );
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $prefix = DB::getTablePrefix();
 
             if ($objectType === 'news') {
                 $newsPromotionLink = 'mallnewsdetail';
@@ -279,19 +259,6 @@ class NewsPromotionAPIController extends BaseAPIController
             $data->total_records = RecordCounter::create($_news)->count();
             $data->records = $listOfRec;
 
-            if (empty($skip)) {
-                $activityNotes = sprintf('Page viewed: %s List Page', ucwords($objectType));
-                $activity->setUser($user)
-                    ->setActivityName(sprintf('view_%s_list', $objectType))
-                    ->setActivityNameLong(sprintf('View %s List', ucwords($objectType)))
-                    ->setObject(null)
-                    ->setModuleName(ucwords($objectType))
-                    ->setNotes($activityNotes)
-                    // ->setLocation($mall)
-                    ->responseOK()
-                    ->save();
-            }
-
             $this->response->data = $data;
             $this->response->code = 0;
             $this->response->status = 'success';
@@ -304,15 +271,6 @@ class NewsPromotionAPIController extends BaseAPIController
             $this->response->data = null;
             $httpCode = 403;
 
-            $activityNotes = sprintf('Failed to view Page: %s List. Err: %s', ucwords($objectType), $e->getMessage());
-            $activity->setUser($user)
-                ->setActivityName(sprintf('view_%s_list', $objectType))
-                ->setActivityNameLong(sprintf('View %s List Failed', ucwords($objectType)))
-                ->setObject(null)
-                ->setModuleName(ucwords($objectType))
-                ->setNotes($activityNotes)
-                ->responseFailed()
-                ->save();
         } catch (InvalidArgsException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -324,15 +282,6 @@ class NewsPromotionAPIController extends BaseAPIController
             $this->response->data = $result;
             $httpCode = 403;
 
-            $activityNotes = sprintf('Failed to view Page: %s List. Err: %s', ucwords($objectType), $e->getMessage());
-            $activity->setUser($user)
-                ->setActivityName(sprintf('view_%s_list', $objectType))
-                ->setActivityNameLong(sprintf('View %s List Failed', ucwords($objectType)))
-                ->setObject(null)
-                ->setModuleName(ucwords($objectType))
-                ->setNotes($activityNotes)
-                ->responseFailed()
-                ->save();
         } catch (QueryException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -345,15 +294,6 @@ class NewsPromotionAPIController extends BaseAPIController
             $this->response->data = null;
             $httpCode = 500;
 
-            $activityNotes = sprintf('Failed to view Page: %s List. Err: %s', ucwords($objectType), $e->getMessage());
-            $activity->setUser($user)
-                ->setActivityName(sprintf('view_%s_list', $objectType))
-                ->setActivityNameLong(sprintf('View %s List Failed', ucwords($objectType)))
-                ->setObject(null)
-                ->setModuleName(ucwords($objectType))
-                ->setNotes($activityNotes)
-                ->responseFailed()
-                ->save();
         } catch (Exception $e) {
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
@@ -361,15 +301,6 @@ class NewsPromotionAPIController extends BaseAPIController
             $this->response->data = null;
             $httpCode = 500;
 
-            $activityNotes = sprintf('Failed to view Page: %s List. Err: %s', ucwords($objectType), $e->getMessage());
-            $activity->setUser($user)
-                ->setActivityName(sprintf('view_%s_list', $objectType))
-                ->setActivityNameLong(sprintf('View %s List Failed', ucwords($objectType)))
-                ->setObject(null)
-                ->setModuleName(ucwords($objectType))
-                ->setNotes($activityNotes)
-                ->responseFailed()
-                ->save();
         }
 
         return $this->render($httpCode);
@@ -377,49 +308,12 @@ class NewsPromotionAPIController extends BaseAPIController
 
     protected function registerCustomValidation()
     {
-        // Check the existance of mall id
-        Validator::extend('orbit.empty.mall', function ($attribute, $value, $parameters) {
-            $mall = Mall::excludeDeleted('merchants')
-                        ->where('merchant_id', $value)
-                        ->first();
-
-            if (empty($mall)) {
-                return false;
+        Validator::extend('orbit.empty.object_type', function ($attribute, $value, $parameters) {
+            if ($value === 'news' || $value === 'promotion') {
+                return true;
             }
 
-            App::instance('orbit.empty.mall', $mall);
-
-            return true;
-        });
-
-        // Check the existance of tenant id
-        Validator::extend('orbit.empty.tenant', function ($attribute, $value, $parameters) {
-            $tenant = Tenant::excludeDeleted('merchants')
-                        ->where('merchant_id', $value)
-                        ->first();
-
-            if (empty($tenant)) {
-                return false;
-            }
-
-            App::instance('orbit.empty.tenant', $tenant);
-
-            return true;
-        });
-
-        // Check the existance of promotion id
-        Validator::extend('orbit.empty.promotion', function ($attribute, $value, $parameters) {
-            $promotion = News::excludeDeleted('news')
-                        ->where('news_id', $value)
-                        ->first();
-
-            if (empty($promotion)) {
-                return false;
-            }
-
-            App::instance('orbit.empty.promotion', $promotion);
-
-            return true;
+            return false;
         });
     }
 
