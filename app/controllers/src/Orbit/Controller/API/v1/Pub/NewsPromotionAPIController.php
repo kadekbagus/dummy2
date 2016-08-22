@@ -86,9 +86,9 @@ class NewsPromotionAPIController extends BaseAPIController
                 )
                 ->join('news_translations', 'news_translations.news_id', '=', 'news.news_id')
                 ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
-                ->where('news.status', '=', 'active')
                 ->where('news_translations.merchant_language_id', '=', $languageEnId)
                 ->where('news.object_type', '=', $objectType)
+                ->where('news_translations.news_name', '!=', '')
                 ->having('campaign_status', '=', 'ongoing');
 
             OrbitInput::get('keyword', function($keyword) use ($news) {
@@ -242,9 +242,9 @@ class NewsPromotionAPIController extends BaseAPIController
             $newsPromotionLink = null;
 
             if ($objectType === 'news') {
-                $newsPromotionLink = 'mallnews';
+                $newsPromotionLink = 'mallnewsdetail';
             } elseif ($objectType === 'promotion'){
-                $newsPromotionLink = 'mallpromotions';
+                $newsPromotionLink = 'mallpromotion';
             }
 
             $prefix = DB::getTablePrefix();
@@ -260,7 +260,6 @@ class NewsPromotionAPIController extends BaseAPIController
                                     ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                                     ->where('news_merchant.news_id', '=', $newsPromotionId)
                                     ->groupBy('merchant_id');
-
 
             $_news = clone($news);
 
