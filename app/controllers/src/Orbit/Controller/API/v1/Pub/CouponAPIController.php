@@ -100,7 +100,7 @@ class CouponAPIController extends ControllerAPI
 
             $_coupon = clone $coupon;
 
-            $take = PaginationNumber::parseTakeFromGet('retailer');
+            $take = PaginationNumber::parseTakeFromGet('coupon');
             $coupon->take($take);
 
             $skip = PaginationNumber::parseSkipFromGet();
