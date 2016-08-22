@@ -12,7 +12,6 @@ use DominoPOS\OrbitSession\SessionConfig;
 use Orbit\Helper\Net\UrlChecker;
 use Orbit\Helper\Net\SessionPreparer;
 use Orbit\Helper\Net\GuestUserGenerator;
-use \Config;
 
 class IntermediateCIAuthController extends IntermediateBaseController
 {
