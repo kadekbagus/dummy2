@@ -27,6 +27,7 @@ use Language;
 use URL;
 use App;
 use Tenant;
+use Orbit\Helper\Util\PaginationNumber;
 
 class NewsPromotionAPIController extends BaseAPIController
 {
@@ -71,11 +72,24 @@ class NewsPromotionAPIController extends BaseAPIController
 
             $prefix = DB::getTablePrefix();
 
-            $news = News::select('news.news_id as news_promotion_id', 'news_translations.news_name as news_promotion_name', 'news.object_type', 'news.status')
+            $news = News::select('news.news_id as news_promotion_id', 'news_translations.news_name as news_promotion_name', 'news.object_type',
+                        // query for get status active based on timezone
+                        DB::raw("
+                                CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
+                                        THEN {$prefix}campaign_status.campaign_status_name
+                                        ELSE (CASE WHEN {$prefix}news.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
+                                FROM {$prefix}merchants om
+                                LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
+                                WHERE om.merchant_id = {$prefix}news.mall_id)
+                                THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END AS campaign_status
+                            ")
+                )
                 ->join('news_translations', 'news_translations.news_id', '=', 'news.news_id')
+                ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
                 ->where('news.status', '=', 'active')
                 ->where('news_translations.merchant_language_id', '=', $languageEnId)
-                ->where('news.object_type', '=', $objectType);
+                ->where('news.object_type', '=', $objectType)
+                ->having('campaign_status', '=', 'ongoing');
 
             OrbitInput::get('keyword', function($keyword) use ($news) {
                  if (! empty($keyword)) {
@@ -110,47 +124,10 @@ class NewsPromotionAPIController extends BaseAPIController
 
             $_news = clone($news);
 
-            // Get the maximum record
-            $maxRecord = (int) Config::get('orbit.pagination.retailer.max_record');
-            if ($maxRecord <= 0) {
-                // Fallback
-                $maxRecord = (int) Config::get('orbit.pagination.max_record');
-                if ($maxRecord <= 0) {
-                    $maxRecord = 20;
-                }
-            }
-            // Get default per page (take)
-            $perPage = (int) Config::get('orbit.pagination.retailer.per_page');
-            if ($perPage <= 0) {
-                // Fallback
-                $perPage = (int) Config::get('orbit.pagination.per_page');
-                if ($perPage <= 0) {
-                    $perPage = 20;
-                }
-            }
-
-            $take = $perPage;
-            OrbitInput::get('take', function ($_take) use (&$take, $maxRecord) {
-                if ($_take > $maxRecord) {
-                    $_take = $maxRecord;
-                }
-                $take = $_take;
-
-                if ((int)$take <= 0) {
-                    $take = $maxRecord;
-                }
-            });
+            $take = PaginationNumber::parseTakeFromGet('news');
             $news->take($take);
 
-            $skip = 0;
-            OrbitInput::get('skip', function($_skip) use (&$skip, $news)
-            {
-                if ($_skip < 0) {
-                    $_skip = 0;
-                }
-
-                $skip = $_skip;
-            });
+            $skip = PaginationNumber::parseSkipFromGet();
             $news->skip($skip);
 
             $news->orderBy('news_translations.news_name', 'asc');
@@ -262,14 +239,12 @@ class NewsPromotionAPIController extends BaseAPIController
 
             $prefix = DB::getTablePrefix();
 
-
-
-            $newsPromotion = null;
+            $newsPromotionLink = null;
 
             if ($objectType === 'news') {
-                $newsPromotion = 'mallnews';
+                $newsPromotionLink = 'mallnews';
             } elseif ($objectType === 'promotion'){
-                $newsPromotion = 'mallpromotions';
+                $newsPromotionLink = 'mallpromotions';
             }
 
             $prefix = DB::getTablePrefix();
@@ -279,7 +254,7 @@ class NewsPromotionAPIController extends BaseAPIController
                                             DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.name ELSE {$prefix}merchants.name END as name"),
                                             DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.city ELSE {$prefix}merchants.city END as city"),
                                             DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.description ELSE {$prefix}merchants.description END as description"),
-                                            DB::raw("CONCAT(IF({$prefix}merchants.object_type = 'tenant', oms.ci_domain, {$prefix}merchants.ci_domain), '/customer/mallnews?id=', {$prefix}news_merchant.news_id) as news_promotion_url")
+                                            DB::raw("CONCAT(IF({$prefix}merchants.object_type = 'tenant', oms.ci_domain, {$prefix}merchants.ci_domain), '/customer/" . $newsPromotionLink . "?id=', {$prefix}news_merchant.news_id) as news_promotion_url")
                                         )
                                     ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
                                     ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
@@ -289,47 +264,10 @@ class NewsPromotionAPIController extends BaseAPIController
 
             $_news = clone($news);
 
-            // Get the maximum record
-            $maxRecord = (int) Config::get('orbit.pagination.retailer.max_record');
-            if ($maxRecord <= 0) {
-                // Fallback
-                $maxRecord = (int) Config::get('orbit.pagination.max_record');
-                if ($maxRecord <= 0) {
-                    $maxRecord = 20;
-                }
-            }
-            // Get default per page (take)
-            $perPage = (int) Config::get('orbit.pagination.retailer.per_page');
-            if ($perPage <= 0) {
-                // Fallback
-                $perPage = (int) Config::get('orbit.pagination.per_page');
-                if ($perPage <= 0) {
-                    $perPage = 20;
-                }
-            }
-
-            $take = $perPage;
-            OrbitInput::get('take', function ($_take) use (&$take, $maxRecord) {
-                if ($_take > $maxRecord) {
-                    $_take = $maxRecord;
-                }
-                $take = $_take;
-
-                if ((int)$take <= 0) {
-                    $take = $maxRecord;
-                }
-            });
+            $take = PaginationNumber::parseTakeFromGet('news');
             $news->take($take);
 
-            $skip = 0;
-            OrbitInput::get('skip', function($_skip) use (&$skip, $news)
-            {
-                if ($_skip < 0) {
-                    $_skip = 0;
-                }
-
-                $skip = $_skip;
-            });
+            $skip = PaginationNumber::parseSkipFromGet();
             $news->skip($skip);
 
             $news->orderBy('name', 'asc');
