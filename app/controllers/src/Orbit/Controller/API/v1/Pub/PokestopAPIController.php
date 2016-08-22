@@ -52,9 +52,11 @@ class PokestopAPIController extends ControllerAPI
             OrbitInput::get('filter_name', function ($filterName) use ($mall, $prefix) {
                 if (! empty($filterName)) {
                     if ($filterName === '#') {
-                        $filterName = '^a-zA-Z';
+                        $mall->whereRaw("SUBSTR({$prefix}merchants.name,1,1) not between 'a' and 'z'");
+                    } else {
+                        $filter = explode("-", $filterName);
+                        $mall->whereRaw("SUBSTR({$prefix}merchants.name,1,1) between {$this->quote($filter[0])} and {$this->quote($filter[1])}");
                     }
-                    $mall->whereRaw("{$prefix}merchants.name REGEXP '^[{$filterName}]'");
                 }
             });
 
