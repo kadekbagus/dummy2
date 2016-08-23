@@ -1602,26 +1602,6 @@ class MobileCIAPIController extends BaseCIController
                 ->responseOK()
                 ->save();
 
-            //save to table widget click
-            $newWidget = new WidgetClick();
-            $newWidget->widget_id = $widget_id;
-            $newWidget->user_id = $user->user_id;
-            $newWidget->location_id = $retailer->merchant_id;
-            $newWidget->activity_id = $activity->activity_id;
-
-            $widgetGroupNames = WidgetGroupName::get();
-
-            foreach ($widgetGroupNames as $group_name) {
-                if ($widget_type === $group_name->widget_group_name) {
-                    $newWidget->widget_group_name_id = $group_name->widget_group_name_id;
-                }
-            }
-
-            $specialWidget  = array('service', 'free_wifi');
-            if (in_array( strtolower($widget->widget_type), $specialWidget)) {
-                $newWidget->save();
-            }
-
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -1826,7 +1806,7 @@ class MobileCIAPIController extends BaseCIController
                 ->setActivityName('view_my_account')
                 ->setActivityNameLong('View My Account')
                 ->setLocation($retailer)
-                ->setModuleName('Inbox')
+                ->setModuleName('My Account')
                 ->setNotes($activityPageNotes)
                 ->responseOK()
                 ->save();
@@ -1849,7 +1829,7 @@ class MobileCIAPIController extends BaseCIController
             $activityPage->setUser($user)
                 ->setActivityName('view_my_account')
                 ->setActivityNameLong('View My Account Failed')
-                ->setModuleName('Inbox')
+                ->setModuleName('My Account')
                 ->setLocation($retailer)
                 ->setNotes($activityPageNotes)
                 ->responseFailed()
@@ -3523,7 +3503,7 @@ class MobileCIAPIController extends BaseCIController
             $activityPage->setUser($user)
                 ->setActivityName('view_retailer')
                 ->setActivityNameLong('View Tenant Detail Failed')
-                ->setObject(null)
+                ->setObject($tenant)
                 ->setLocation($retailer)
                 ->setModuleName('Tenant')
                 ->setNotes($activityPageNotes)
@@ -3712,7 +3692,7 @@ class MobileCIAPIController extends BaseCIController
             $activityPage->setUser($user)
                 ->setActivityName('view_service')
                 ->setActivityNameLong('View Service')
-                ->setObject(null)
+                ->setObject($service)
                 ->setLocation($retailer)
                 ->setModuleName('Service')
                 ->setNotes($activityPageNotes)
@@ -5356,7 +5336,7 @@ class MobileCIAPIController extends BaseCIController
         $retailer = null;
         $activityProduct = Activity::mobileci()
                                    ->setActivityType('view');
-        $product = null;
+        $luckydraw = null;
         try {
             $user = $this->getLoggedInUser();
             UrlBlock::checkBlockedUrl($user);
@@ -5516,7 +5496,7 @@ class MobileCIAPIController extends BaseCIController
             $activityProduct->setUser($user)
                 ->setActivityName('view_lucky_draw')
                 ->setActivityNameLong('View Lucky Draw Detail')
-                ->setObject($luckydraw, TRUE)
+                ->setObject($luckydraw)
                 ->setLocation($retailer)
                 ->setModuleName('LuckyDraw')
                 ->setNotes($activityProductNotes)
@@ -5554,7 +5534,7 @@ class MobileCIAPIController extends BaseCIController
             $activityProduct->setUser($user)
                 ->setActivityName('view_lucky_draw')
                 ->setActivityNameLong('View Lucky Draw Detail')
-                ->setObject(null)
+                ->setObject($luckydraw)
                 ->setLocation($retailer)
                 ->setModuleName('Lucky Draw')
                 ->setNotes($activityProductNotes)
@@ -5585,7 +5565,7 @@ class MobileCIAPIController extends BaseCIController
         $retailer = null;
         $activityProduct = Activity::mobileci()
                                    ->setActivityType('view');
-
+        $luckydraw = null;
         try {
             $user = $this->getLoggedInUser();
             UrlBlock::checkBlockedUrl($user);
@@ -5732,7 +5712,7 @@ class MobileCIAPIController extends BaseCIController
             $activityProduct->setUser($user)
                 ->setActivityName('view_lucky_draw_announcement')
                 ->setActivityNameLong('View Winning Numbers & Prizes')
-                ->setObject($luckydraw, TRUE)
+                ->setObject($luckydraw)
                 ->setLocation($retailer)
                 ->setModuleName('Lucky Draw')
                 ->setNotes($activityProductNotes)
@@ -5755,7 +5735,7 @@ class MobileCIAPIController extends BaseCIController
             $activityProduct->setUser($user)
                 ->setActivityName('view_lucky_draw')
                 ->setActivityNameLong('View Winning Numbers & Prizes')
-                ->setObject(null)
+                ->setObject($luckydraw)
                 ->setLocation($retailer)
                 ->setModuleName('Lucky Draw')
                 ->setNotes($activityProductNotes)
@@ -5782,9 +5762,6 @@ class MobileCIAPIController extends BaseCIController
     public function postLuckyNumberPopup()
     {
         $user = null;
-        $activityPage = Activity::mobileci()
-                        ->setActivityType('view');
-
         try {
             $this->registerCustomValidation();
             $luckyid = OrbitInput::post('lid');
@@ -5823,7 +5800,7 @@ class MobileCIAPIController extends BaseCIController
         $mall = null;
         $activity = Activity::mobileci()
                         ->setActivityType('create');
-
+        $luckyDraw = null;
         try {
             $httpCode = 200;
             $user = $this->getLoggedInUser();
@@ -5933,7 +5910,7 @@ class MobileCIAPIController extends BaseCIController
                 ->setActivityNameLong('Lucky Draw Number Auto Issuance')
                 ->setLocation($mall)
                 ->setNotes('Generated number: ' . $lucky_draw_number->lucky_draw_number_code)
-                ->setObject($luckyDraw, TRUE)
+                ->setObject($luckyDraw)
                 ->responseOK();
 
             $response = new stdclass();
@@ -5965,6 +5942,7 @@ class MobileCIAPIController extends BaseCIController
                 ->setLocation($mall)
                 ->setActivityName('issue_lucky_draw')
                 ->setActivityNameLong('Lucky Draw Number Auto Issuance Failed')
+                ->setObject($luckyDraw)
                 ->setNotes($e->getMessage())
                 ->responseFailed();
         } catch (InvalidArgsException $e) {
@@ -5989,6 +5967,7 @@ class MobileCIAPIController extends BaseCIController
                 ->setLocation($mall)
                 ->setActivityName('issue_lucky_draw')
                 ->setActivityNameLong('Lucky Draw Number Auto Issuance Failed')
+                ->setObject($luckyDraw)
                 ->setNotes($e->getMessage())
                 ->responseFailed();
         } catch (QueryException $e) {
@@ -6019,6 +5998,7 @@ class MobileCIAPIController extends BaseCIController
                 ->setLocation($mall)
                 ->setActivityName('issue_lucky_draw')
                 ->setActivityNameLong('Lucky Draw Number Auto Issuance Failed')
+                ->setObject($luckyDraw)
                 ->setNotes($e->getMessage())
                 ->responseFailed();
         } catch (Exception $e) {
@@ -6051,6 +6031,7 @@ class MobileCIAPIController extends BaseCIController
                 ->setLocation($mall)
                 ->setActivityName('issue_lucky_draw')
                 ->setActivityNameLong('Lucky Draw Number Auto Issuance Failed')
+                ->setObject($luckyDraw)
                 ->setNotes($e->getMessage())
                 ->responseFailed();
         }
@@ -6452,6 +6433,7 @@ class MobileCIAPIController extends BaseCIController
         $retailer = null;
         $activityPage = Activity::mobileci()
                                    ->setActivityType('view');
+        $coupons = null;
         try {
             $user = $this->getLoggedInUser();
             if (\Route::currentRouteName() === 'ci-coupon-detail-wallet') {
@@ -6739,7 +6721,7 @@ class MobileCIAPIController extends BaseCIController
                     ->setLocation($retailer)
                     ->setActivityName('view_coupon')
                     ->setActivityNameLong('View Coupon Wallet Detail Failed')
-                    ->setObject(null)
+                    ->setObject($coupons)
                     ->setModuleName('Coupon')
                     ->setNotes($activityPageNotes)
                     ->responseFailed()
@@ -6750,7 +6732,7 @@ class MobileCIAPIController extends BaseCIController
                     ->setLocation($retailer)
                     ->setActivityName('view_coupon')
                     ->setActivityNameLong('View Coupon Detail Failed')
-                    ->setObject(null)
+                    ->setObject($coupons)
                     ->setModuleName('Coupon')
                     ->setNotes($activityPageNotes)
                     ->responseFailed()
@@ -6781,6 +6763,7 @@ class MobileCIAPIController extends BaseCIController
         $coupon_id = 0;
         $activityPage = Activity::mobileci()
                                    ->setActivityType('view');
+        $coupons = null;
         try {
             $user = $this->getLoggedInUser();
             UrlBlock::checkBlockedUrl($user);
@@ -6904,7 +6887,7 @@ class MobileCIAPIController extends BaseCIController
             $activityPage->setUser($user)
                 ->setActivityName('view_coupon')
                 ->setActivityNameLong('View Coupon Detail Failed')
-                ->setObject(null)
+                ->setObject($coupons)
                 ->setModuleName('Coupon')
                 ->setNotes($activityPageNotes)
                 ->responseFailed()
@@ -7552,7 +7535,7 @@ class MobileCIAPIController extends BaseCIController
                 ->setActivityName('view_promotion')
                 ->setActivityNameLong('View Promotion Failed')
                 ->setLocation($retailer)
-                ->setObject(null)
+                ->setObject($promotion)
                 ->setModuleName('Promotion')
                 ->setNotes($activityPageNotes)
                 ->responseFailed()
@@ -8049,7 +8032,7 @@ class MobileCIAPIController extends BaseCIController
         $retailer = null;
         $activityPage = Activity::mobileci()
                                    ->setActivityType('view');
-        $product = null;
+        $pokestop = null;
         try {
             $user = $this->getLoggedInUser();
             UrlBlock::checkBlockedUrl($user);
@@ -8115,7 +8098,7 @@ class MobileCIAPIController extends BaseCIController
             $activityPage->setUser($user)
                 ->setActivityName('view_pokestop')
                 ->setActivityNameLong('View Pokestop Detail Failed')
-                ->setObject(null)
+                ->setObject($pokestop)
                 ->setLocation($retailer)
                 ->setModuleName('Pokestop')
                 ->setNotes($activityPageNotes)
@@ -8146,7 +8129,7 @@ class MobileCIAPIController extends BaseCIController
         $retailer = null;
         $activityPage = Activity::mobileci()
                                    ->setActivityType('view');
-        $product = null;
+        $news = null;
         try {
             $user = $this->getLoggedInUser();
             UrlBlock::checkBlockedUrl($user);
@@ -8287,7 +8270,7 @@ class MobileCIAPIController extends BaseCIController
             $activityPage->setUser($user)
                 ->setActivityName('view_news')
                 ->setActivityNameLong('View News Detail Failed')
-                ->setObject(null)
+                ->setObject($news)
                 ->setLocation($retailer)
                 ->setModuleName('News')
                 ->setNotes($activityPageNotes)
@@ -8314,7 +8297,6 @@ class MobileCIAPIController extends BaseCIController
     public function getNotificationsView()
     {
         $user = null;
-        $keyword = null;
         $retailer = null;
         $activityPage = Activity::mobileci()
                         ->setActivityType('view');
@@ -8326,7 +8308,6 @@ class MobileCIAPIController extends BaseCIController
             UrlBlock::checkBlockedUrl($user);
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
-
 
             $languages = $this->getListLanguages($retailer);
 
@@ -8399,7 +8380,6 @@ class MobileCIAPIController extends BaseCIController
             $retailer = $this->getRetailerInfo();
             $this->acquireUser($retailer, $user);
 
-
             $languages = $this->getListLanguages($retailer);
 
             $inbox_id = OrbitInput::get('id');
@@ -8423,8 +8403,6 @@ class MobileCIAPIController extends BaseCIController
 
             $inbox->is_read = 'Y';
             $inbox->save();
-
-
 
             switch ($inbox->inbox_type) {
                 case 'activation':
@@ -8501,7 +8479,7 @@ class MobileCIAPIController extends BaseCIController
             $activityPage->setUser($user)
                 ->setActivityName('read_notification')
                 ->setActivityNameLong('Read Notification')
-                ->setObject(null)
+                ->setObject($inbox)
                 ->setLocation($retailer)
                 ->setModuleName('Inbox')
                 ->setNotes($activityPageNotes)
@@ -8608,10 +8586,6 @@ class MobileCIAPIController extends BaseCIController
      */
     public function getSearchCampaignCardsPopUp() {
         $user = null;
-        $keyword = null;
-        $activityPage = Activity::mobileci()
-                        ->setActivityType('view');
-
         try {
             $httpCode = 200;
             // Require authentication
