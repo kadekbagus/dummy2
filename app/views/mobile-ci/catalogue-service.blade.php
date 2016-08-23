@@ -151,7 +151,7 @@
 
         var $itemLink = $('<a />').addClass('list-item-link').attr({
             'data-href': redirectUrl,
-            'href': isLoggedIn ? redirectUrl : '#'
+            'href': url
         });
 
         var $itemListInfo = $('<div />').addClass('list-item-info');
