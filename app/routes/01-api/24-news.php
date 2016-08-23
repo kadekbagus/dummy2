@@ -61,12 +61,12 @@ Route::get('/api/v1/newspromotion/by-retailer/search', function()
 
 
 /**
- * List of news or promotions on all malls
+ * List of news on all malls
  */
 Route::get(
-    '/{prefix}/v1/pub/newspromotion-list', ['as' => 'pub-newspromotion-list', function()
+    '/{prefix}/v1/pub/news-list', ['as' => 'pub-news-list', function()
     {
-        return Orbit\Controller\API\v1\Pub\NewsPromotionAPIController::create()->getSearchNewsPromotion();
+        return Orbit\Controller\API\v1\Pub\NewsAPIController::create()->getSearchNews();
     }]
 )->where('prefix', '(api|app)');
 
@@ -74,8 +74,8 @@ Route::get(
  * List mall of news
  */
 Route::get(
-    '/{prefix}/v1/pub/mall-newspromotion-list', ['as' => 'pub-mall-newspromotion-list', function()
+    '/{prefix}/v1/pub/mall-news-list', ['as' => 'pub-mall-news-list', function()
     {
-        return Orbit\Controller\API\v1\Pub\NewsPromotionAPIController::create()->getMallPerNewsPromotion();
+        return Orbit\Controller\API\v1\Pub\NewsAPIController::create()->getMallPerNews();
     }]
 )->where('prefix', '(api|app)');
