@@ -80,17 +80,24 @@ class PromotionAPIController extends ControllerAPI
                         ->where('news_translations.news_name', '!=', '')
                         ->having('campaign_status', '=', 'ongoing');
 
-            OrbitInput::get('keyword', function($keyword) use ($promotion) {
+            OrbitInput::get('keyword', function($keyword) use ($promotion, $prefix) {
                  if (! empty($keyword)) {
                     $promotion = $promotion->leftJoin('keyword_object', 'news.news_id', '=', 'keyword_object.object_id')
                                 ->leftJoin('keywords', 'keyword_object.keyword_id', '=', 'keywords.keyword_id')
-                                ->where(function($query) use ($keyword){
+                                ->where(function($query) use ($keyword, $prefix){
                                     //Search per word
                                     $words = explode(' ', $keyword);
                                     foreach ($words as $key => $word) {
-                                        $query->orWhere('news_translations.news_name', 'like', '%' . $word . '%')
-                                            ->orWhere('news_translations.description', 'like', '%' . $word . '%')
-                                            ->orWhere('keywords.keyword', '=', $word);
+                                        // handle if user searching with special character
+                                        $search = "'%|{$word}%' escape '|'";
+                                        if (strpos($word, "'") !== false) {
+                                            $search = "'%\'%'";
+                                        }
+                                        $query->orWhere(function($q) use ($word, $prefix, $search){
+                                            $q->whereRaw("{$prefix}news_translations.news_name like {$search}")
+                                              ->orWhereRaw("{$prefix}news_translations.description like {$search}")
+                                              ->orWhereRaw("{$prefix}keywords.keyword like {$search}");
+                                        });
                                     }
                                 });
                  }

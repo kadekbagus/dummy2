@@ -49,7 +49,7 @@ class CouponAPIController extends ControllerAPI
             $prefix = DB::getTablePrefix();
 
             $coupon = Coupon::select(DB::raw("{$prefix}promotions.promotion_id as coupon_id,
-                                {$prefix}coupon_translations.promotion_name as coupon_name, {$prefix}coupon_translations.description as coupon_description, {$prefix}promotions.status,
+                                {$prefix}coupon_translations.promotion_name as coupon_name, {$prefix}promotions.status,
                                 CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name 
                                     ELSE (CASE WHEN {$prefix}promotions.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
                                                                                 FROM {$prefix}merchants om
@@ -84,16 +84,21 @@ class CouponAPIController extends ControllerAPI
 
             OrbitInput::get('keyword', function ($keyword) use ($coupon, $prefix) {
                 if (! empty($keyword)) {
-                    $coupon = $coupon->leftJoin(DB::raw("(select * from {$prefix}keyword_object where object_type = 'coupon') as oko"), DB::raw('oko.object_id'), '=', 'promotions.promotion_id')
-                                ->leftJoin('keywords', 'keywords.keyword_id', '=',  DB::raw('oko.object_id'))
+                    $coupon = $coupon->leftJoin('keyword_object', 'promotions.promotion_id', '=', 'keyword_object.object_id')
+                                ->leftJoin('keywords', 'keyword_object.keyword_id', '=', 'keywords.keyword_id')
                                 ->where(function($query) use ($keyword, $prefix)
                                 {
                                     $word = explode(" ", $keyword);
                                     foreach ($word as $key => $value) {
-                                        $query->orWhere(function($q) use ($value, $prefix){
-                                            $q->where('coupon_translations.promotion_name', 'like', '%' . $value . '%')
-                                                ->orWhere('coupon_translations.description', 'like', '%' . $value . '%')
-                                                ->orWhere('keywords.keyword', '=', $value);
+                                        // handle if user searching with special character
+                                        $search = "'%|{$value}%' escape '|'";
+                                        if (strpos($value, "'") !== false) {
+                                            $search = "'%\'%'";
+                                        }
+                                        $query->orWhere(function($q) use ($value, $prefix, $search){
+                                            $q->whereRaw("{$prefix}coupon_translations.promotion_name like {$search}")
+                                              ->orWhereRaw("{$prefix}coupon_translations.description like {$search}")
+                                              ->orWhereRaw("{$prefix}keywords.keyword like {$search}");
                                         });
                                     }
                                 });
