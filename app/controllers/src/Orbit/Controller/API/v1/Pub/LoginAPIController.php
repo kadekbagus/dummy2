@@ -3,6 +3,7 @@
  * An API controller for managing user sign in.
  */
 use Net\MacAddr;
+use Orbit\Helper\Net\GuestUserGenerator;
 use \IntermediateBaseController;
 use DominoPOS\OrbitAPI\v10\StatusInterface as Status;
 use OrbitShop\API\v1\ResponseProvider;
@@ -115,6 +116,18 @@ class LoginAPIController extends IntermediateBaseController
                 $sessionData['visited_location'] = [];
                 $sessionData['coupon_location'] = [];
 
+                $guest_id = $this->session->read('guest_user_id');
+
+                // check guest user id on session if empty create new one
+                if (empty($guest_id)) {
+                    $guestConfig = [
+                        'record_signin_activity' => FALSE
+                    ];
+                    $guest = GuestUserGenerator::create($guestConfig)->generate();
+                    $sessionData['guest_user_id'] = $guest->user_id;
+                    $sessionData['guest_email'] = $guest->user_email;
+                }
+
                 // update the guest session data, append user data to it so the user will be recognized
                 $this->session->update($sessionData);
             } catch (Exception $e) {
@@ -140,6 +153,14 @@ class LoginAPIController extends IntermediateBaseController
                 $sessionData['email'] = $user->user_email;
                 $sessionData['role'] = $user->role->role_name;
                 $sessionData['fullname'] = $user->getFullName();
+
+                $guestConfig = [
+                    'record_signin_activity' => FALSE
+                ];
+                $guest = GuestUserGenerator::create($guestConfig)->generate();
+                $sessionData['guest_user_id'] = $guest->user_id;
+                $sessionData['guest_email'] = $guest->user_email;
+
                 $this->session->enableForceNew()->start($sessionData);
             }
 
