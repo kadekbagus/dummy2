@@ -69,7 +69,8 @@ class CouponAPIController extends ControllerAPI
                                                                                 FROM {$prefix}merchants om
                                                                                 LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
                                                                                 WHERE om.merchant_id = {$prefix}promotions.merchant_id)")
-                            ->having('campaign_status', '=', 'ongoing');
+                            ->having('campaign_status', '=', 'ongoing')
+                            ->groupBy('coupon_id');
             
             OrbitInput::get('filter_name', function ($filterName) use ($coupon, $prefix) {
                 if (! empty($filterName)) {
