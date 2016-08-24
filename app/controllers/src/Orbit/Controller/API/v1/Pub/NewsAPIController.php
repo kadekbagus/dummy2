@@ -88,16 +88,19 @@ class NewsAPIController extends ControllerAPI
                                     //Search per word
                                     $words = explode(' ', $keyword);
                                     foreach ($words as $key => $word) {
-                                        // handle if user searching with special character
-                                        $search = "'%|{$word}%' escape '|'";
-                                        if (strpos($word, "'") !== false) {
-                                            $search = "'%" . str_replace("'","\'",$word) . "%'";
+                                        if (strlen($word) === 1 && $word === '%') {
+                                            $query->orWhere(function($q) use ($word, $prefix){
+                                                $q->whereRaw("{$prefix}news_translations.news_name like '%|{$word}%' escape '|'")
+                                                  ->orWhereRaw("{$prefix}news_translations.description like '%|{$word}%' escape '|'")
+                                                  ->orWhereRaw("{$prefix}keywords.keyword like '%|{$word}%' escape '|'");
+                                            });
+                                        } else {
+                                            $query->orWhere(function($q) use ($word, $prefix){
+                                                $q->where('news_translations.news_name', 'like', '%' . $word . '%')
+                                                  ->orWhere('news_translations.description', 'like', '%' . $word . '%')
+                                                  ->orWhere('keywords.keyword', 'like', '%' . $word . '%');
+                                            });
                                         }
-                                        $query->orWhere(function($q) use ($word, $prefix, $search){
-                                            $q->whereRaw("{$prefix}news_translations.news_name like {$search}")
-                                              ->orWhereRaw("{$prefix}news_translations.description like {$search}")
-                                              ->orWhereRaw("{$prefix}keywords.keyword like {$search}");
-                                        });
                                     }
                                 });
                  }

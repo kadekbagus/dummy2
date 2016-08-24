@@ -73,16 +73,19 @@ class StoreAPIController extends ControllerAPI
                                 {
                                     $word = explode(" ", $keyword);
                                     foreach ($word as $key => $value) {
-                                        // handle if user searching with special character
-                                        $search = "'%|{$value}%' escape '|'";
-                                        if (strpos($value, "'") !== false) {
-                                            $search = "'%" . str_replace("'","\'",$value) . "%'";
+                                        if (strlen($value) === 1 && $value === '%') {
+                                            $query->orWhere(function($q) use ($value, $prefix){
+                                                $q->whereRaw("{$prefix}merchants.name like '%|{$value}%' escape '|'")
+                                                  ->orWhereRaw("{$prefix}merchants.description like '%|{$value}%' escape '|'")
+                                                  ->orWhereRaw("{$prefix}keywords.keyword like '%|{$value}%' escape '|'");
+                                            });
+                                        } else {
+                                            $query->orWhere(function($q) use ($value, $prefix){
+                                                $q->where('merchants.name', 'like', '%' . $value . '%')
+                                                  ->orWhere('merchants.description', 'like', '%' . $value . '%')
+                                                  ->orWhere('keywords.keyword', 'like', '%' . $value . '%');
+                                            });
                                         }
-                                        $query->orWhere(function($q) use ($value, $prefix, $search){
-                                            $q->whereRaw("{$prefix}merchants.name like {$search}")
-                                              ->orWhereRaw("{$prefix}merchants.description like {$search}")
-                                              ->orWhereRaw("{$prefix}keywords.keyword like {$search}");
-                                        });
                                     }
                                 });
                 }
