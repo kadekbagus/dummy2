@@ -70,7 +70,7 @@ class PromotionAPIController extends ControllerAPI
                                                                                         LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
                                                                                     WHERE onm.news_id = {$prefix}news.news_id)
                                 THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END AS campaign_status,
-                                CASE WHEN {$prefix}news.begin_date <= (SELECT min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
+                                CASE WHEN {$prefix}news.begin_date <= (SELECT max(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
                                                                                     FROM {$prefix}news_merchant onm
                                                                                         LEFT JOIN {$prefix}merchants om ON om.merchant_id = onm.merchant_id
                                                                                         LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
