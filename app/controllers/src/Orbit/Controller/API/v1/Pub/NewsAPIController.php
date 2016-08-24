@@ -63,18 +63,22 @@ class NewsAPIController extends ControllerAPI
                         DB::raw("
                                 CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
                                         THEN {$prefix}campaign_status.campaign_status_name
-                                        ELSE (CASE WHEN {$prefix}news.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
-                                FROM {$prefix}merchants om
-                                LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
-                                WHERE om.merchant_id = {$prefix}news.mall_id)
+                                        ELSE (CASE WHEN {$prefix}news.end_date < (SELECT max(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
+                                                                                    FROM {$prefix}news_merchant onm
+                                                                                        LEFT JOIN {$prefix}merchants om ON om.merchant_id = onm.merchant_id
+                                                                                        LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
+                                                                                        LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
+                                                                                    WHERE onm.news_id = {$prefix}news.news_id)
                                 THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END AS campaign_status
                             "))
                         ->join('news_translations', 'news_translations.news_id', '=', 'news.news_id')
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
-                        ->whereRaw("{$prefix}news.begin_date <= (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
-                                                                            FROM {$prefix}merchants om
-                                                                            LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
-                                                                            WHERE om.merchant_id = {$prefix}news.mall_id)")
+                        ->whereRaw("{$prefix}news.begin_date <= (SELECT min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
+                                                                                    FROM {$prefix}news_merchant onm
+                                                                                        LEFT JOIN {$prefix}merchants om ON om.merchant_id = onm.merchant_id
+                                                                                        LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
+                                                                                        LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
+                                                                                    WHERE onm.news_id = {$prefix}news.news_id)")
                         ->where('news_translations.merchant_language_id', '=', $languageEnId)
                         ->where('news.object_type', '=', 'news')
                         ->where('news_translations.news_name', '!=', '')
@@ -214,17 +218,24 @@ class NewsAPIController extends ControllerAPI
 
             $prefix = DB::getTablePrefix();
 
-            $news = NewsMerchant::select(
+            $news = NewsMerchant::select('news.end_date as end_date',
                                             DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.merchant_id ELSE {$prefix}merchants.merchant_id END as merchant_id"),
                                             DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.name ELSE {$prefix}merchants.name END as name"),
                                             DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.city ELSE {$prefix}merchants.city END as city"),
                                             DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.description ELSE {$prefix}merchants.description END as description"),
-                                            DB::raw("CONCAT(IF({$prefix}merchants.object_type = 'tenant', oms.ci_domain, {$prefix}merchants.ci_domain), '/customer/mallnewsdetail?id=', {$prefix}news_merchant.news_id) as news_url")
+                                            DB::raw("CONCAT(IF({$prefix}merchants.object_type = 'tenant', oms.ci_domain, {$prefix}merchants.ci_domain), '/customer/mallnewsdetail?id=', {$prefix}news_merchant.news_id) as news_url"),
+                                            DB::raw("( SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
+                                                        FROM {$prefix}merchants om
+                                                        LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
+                                                        WHERE om.merchant_id = (CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.merchant_id ELSE {$prefix}merchants.merchant_id END)
+                                                    ) as tz")
                                         )
+                                    ->leftJoin('news', 'news_merchant.news_id', '=', 'news.news_id')
                                     ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
                                     ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                                     ->where('news_merchant.news_id', '=', $newsId)
-                                    ->groupBy('merchant_id');
+                                    ->groupBy('merchant_id')
+                                    ->havingRaw('tz < end_date');
 
             $_news = clone($news);
 
