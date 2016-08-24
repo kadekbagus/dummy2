@@ -67,16 +67,21 @@ class StoreAPIController extends ControllerAPI
 
             OrbitInput::get('keyword', function ($keyword) use ($store, $prefix) {
                 if (! empty($keyword)) {
-                    $store = $store->leftJoin(DB::raw("(select * from {$prefix}keyword_object where object_type = 'coupon') as oko"), DB::raw('oko.object_id'), '=', 'merchants.merchant_id')
-                                ->leftJoin('keywords', 'keywords.keyword_id', '=',  DB::raw('oko.object_id'))
-                                ->where(function($query) use ($keyword)
+                    $store = $store->leftJoin('keyword_object', 'merchants.merchant_id', '=', 'keyword_object.object_id')
+                                ->leftJoin('keywords', 'keyword_object.keyword_id', '=', 'keywords.keyword_id')
+                                ->where(function($query) use ($keyword, $prefix)
                                 {
                                     $word = explode(" ", $keyword);
                                     foreach ($word as $key => $value) {
-                                        $query->orWhere(function($q) use ($value){
-                                            $q->where('merchants.name', 'like', '%' . $value . '%')
-                                                ->orWhere('merchants.description', 'like', '%' . $value . '%')
-                                                ->orWhere('keywords.keyword', '=', $value);
+                                        // handle if user searching with special character
+                                        $search = "'%|{$value}%' escape '|'";
+                                        if (strpos($value, "'") !== false) {
+                                            $search = "'%\'%'";
+                                        }
+                                        $query->orWhere(function($q) use ($value, $prefix, $search){
+                                            $q->whereRaw("{$prefix}merchants.name like {$search}")
+                                              ->orWhereRaw("{$prefix}merchants.description like {$search}")
+                                              ->orWhereRaw("{$prefix}keywords.keyword like {$search}");
                                         });
                                     }
                                 });
