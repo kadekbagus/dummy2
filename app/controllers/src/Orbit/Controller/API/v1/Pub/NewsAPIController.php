@@ -73,7 +73,7 @@ class NewsAPIController extends ControllerAPI
                             "))
                         ->join('news_translations', 'news_translations.news_id', '=', 'news.news_id')
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
-                        ->whereRaw("{$prefix}news.begin_date <= (SELECT min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
+                        ->whereRaw("{$prefix}news.begin_date >= (SELECT min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
                                                                                     FROM {$prefix}news_merchant onm
                                                                                         LEFT JOIN {$prefix}merchants om ON om.merchant_id = onm.merchant_id
                                                                                         LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id

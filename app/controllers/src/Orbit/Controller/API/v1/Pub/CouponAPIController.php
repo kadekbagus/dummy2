@@ -63,7 +63,7 @@ class CouponAPIController extends ControllerAPI
                             ->leftJoin('languages', 'languages.language_id', '=', 'coupon_translations.merchant_language_id')
                             ->where('languages.name', '=', 'en')
                             ->where('coupon_translations.promotion_name', '!=', '')
-                            ->whereRaw("{$prefix}promotions.begin_date <= (SELECT min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
+                            ->whereRaw("{$prefix}promotions.begin_date >= (SELECT min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
                                                                                     FROM {$prefix}promotion_retailer opt
                                                                                         LEFT JOIN {$prefix}merchants om ON om.merchant_id = opt.retailer_id
                                                                                         LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
