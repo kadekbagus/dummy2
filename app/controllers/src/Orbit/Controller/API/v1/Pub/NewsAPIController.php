@@ -91,7 +91,7 @@ class NewsAPIController extends ControllerAPI
                                         // handle if user searching with special character
                                         $search = "'%|{$word}%' escape '|'";
                                         if (strpos($word, "'") !== false) {
-                                            $search = "'%\'%'";
+                                            $search = "'%" . str_replace("'","\'",$word) . "%'";
                                         }
                                         $query->orWhere(function($q) use ($word, $prefix, $search){
                                             $q->whereRaw("{$prefix}news_translations.news_name like {$search}")

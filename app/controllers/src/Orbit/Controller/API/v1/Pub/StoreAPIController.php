@@ -76,7 +76,7 @@ class StoreAPIController extends ControllerAPI
                                         // handle if user searching with special character
                                         $search = "'%|{$value}%' escape '|'";
                                         if (strpos($value, "'") !== false) {
-                                            $search = "'%\'%'";
+                                            $search = "'%" . str_replace("'","\'",$value) . "%'";
                                         }
                                         $query->orWhere(function($q) use ($value, $prefix, $search){
                                             $q->whereRaw("{$prefix}merchants.name like {$search}")
