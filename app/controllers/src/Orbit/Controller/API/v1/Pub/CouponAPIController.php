@@ -91,16 +91,19 @@ class CouponAPIController extends ControllerAPI
                                 {
                                     $word = explode(" ", $keyword);
                                     foreach ($word as $key => $value) {
-                                        // handle if user searching with special character
-                                        $search = "'%|{$value}%' escape '|'";
-                                        if (strpos($value, "'") !== false) {
-                                            $search = "'%" . str_replace("'","\'",$value) . "%'";
+                                        if (strlen($value) === 1 && $value === '%') {
+                                            $query->orWhere(function($q) use ($value, $prefix){
+                                                $q->whereRaw("{$prefix}coupon_translations.promotion_name like '%|{$value}%' escape '|'")
+                                                  ->orWhereRaw("{$prefix}coupon_translations.description like '%|{$value}%' escape '|'")
+                                                  ->orWhereRaw("{$prefix}keywords.keyword like '%|{$value}%' escape '|'");
+                                            });
+                                        } else {
+                                            $query->orWhere(function($q) use ($value, $prefix){
+                                                $q->where('coupon_translations.promotion_name', 'like', '%' . $value . '%')
+                                                  ->orWhere('coupon_translations.description', 'like', '%' . $value . '%')
+                                                  ->orWhere('keywords.keyword', 'like', '%' . $value . '%');
+                                            });
                                         }
-                                        $query->orWhere(function($q) use ($value, $prefix, $search){
-                                            $q->whereRaw("{$prefix}coupon_translations.promotion_name like {$search}")
-                                              ->orWhereRaw("{$prefix}coupon_translations.description like {$search}")
-                                              ->orWhereRaw("{$prefix}keywords.keyword like {$search}");
-                                        });
                                     }
                                 });
                 }
