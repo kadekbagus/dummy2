@@ -9487,7 +9487,7 @@ class MobileCIAPIController extends BaseCIController
         $dbConfig = Config::get('database.connections.' . $default);
         $mall = $this->getRetailerInfo();
 
-        $pdo = new PDO("mysql:host=localhost;dbname={$dbConfig['database']}", $dbConfig['username'], $dbConfig['password']);
+        $pdo = new PDO("mysql:host={$dbConfig['read']['host']};dbname={$dbConfig['database']}", $dbConfig['username'], $dbConfig['password']);
         $query = $pdo->query("SELECT * FROM {$prefix}lucky_draws
                               where lucky_draw_id='{$luckyDrawId}' and status='active' LIMIT 1");
 
