@@ -201,7 +201,7 @@ class StoreAPIController extends ControllerAPI
                     ->join(DB::raw("(select merchant_id, `name`, parent_id from {$prefix}merchants where name = {$this->quote($storename)}) as oms"), DB::raw('oms.parent_id'), '=', 'merchants.merchant_id')
                     ->active();
 
-            // Query list mall based on keyword. Because potentialy description between stores different
+            // Query list mall based on keyword. Handling description and keyword can be different with other stores
             if (! empty($keyword)) {
                 $words = explode(" ", $keyword);
                 foreach ($words as $key => $value) {
