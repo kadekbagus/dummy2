@@ -218,7 +218,7 @@ class NewsAPIController extends ControllerAPI
 
             $prefix = DB::getTablePrefix();
 
-            $news = NewsMerchant::select('news.end_date as end_date',
+            $news = NewsMerchant::select('news.begin_date as begin_date', 'news.end_date as end_date',
                                             DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.merchant_id ELSE {$prefix}merchants.merchant_id END as merchant_id"),
                                             DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.name ELSE {$prefix}merchants.name END as name"),
                                             DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.city ELSE {$prefix}merchants.city END as city"),
@@ -235,7 +235,7 @@ class NewsAPIController extends ControllerAPI
                                     ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                                     ->where('news_merchant.news_id', '=', $newsId)
                                     ->groupBy('merchant_id')
-                                    ->havingRaw('tz < end_date');
+                                    ->havingRaw('tz <= end_date AND tz >= begin_date');
 
             $_news = clone($news);
 

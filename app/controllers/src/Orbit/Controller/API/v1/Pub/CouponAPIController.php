@@ -215,7 +215,7 @@ class CouponAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $mall = PromotionRetailer::select('promotion_retailer.promotion_id as coupon_id','promotions.end_date as end_date',
+            $mall = PromotionRetailer::select('promotion_retailer.promotion_id as coupon_id','promotions.begin_date as begin_date','promotions.end_date as end_date',
                                             DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.merchant_id ELSE {$prefix}merchants.merchant_id END as merchant_id"),
                                             DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.name ELSE {$prefix}merchants.name END as name"),
                                             DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.ci_domain ELSE {$prefix}merchants.ci_domain END as ci_domain"),
@@ -232,7 +232,7 @@ class CouponAPIController extends ControllerAPI
                                         ->leftJoin('promotions', 'promotions.promotion_id', '=', 'promotion_retailer.promotion_id')
                                         ->where('promotion_retailer.promotion_id', '=', $couponId)
                                         ->groupBy('merchant_id')
-                                        ->havingRaw('tz < end_date');
+                                        ->havingRaw('tz <= end_date AND tz >= begin_date');
 
             OrbitInput::get('filter_name', function ($filterName) use ($mall, $prefix) {
                 if (! empty($filterName)) {
