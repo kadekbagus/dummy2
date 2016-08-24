@@ -174,8 +174,7 @@ class StoreAPIController extends ControllerAPI
             $sort_by = OrbitInput::get('sortby', 'merchants.name');
             $sort_mode = OrbitInput::get('sortmode','asc');
             $storename = OrbitInput::get('store_name');
-
-            $prefix = DB::getTablePrefix();
+            $keyword = OrbitInput::get('keyword');
 
             $validator = Validator::make(
                 array(
@@ -195,18 +194,41 @@ class StoreAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
+            $prefix = DB::getTablePrefix();
+
+            // Query without searching keyword
             $mall = Mall::select('merchants.merchant_id', 'merchants.name', 'merchants.ci_domain', 'merchants.city', 'merchants.description', DB::raw("CONCAT({$prefix}merchants.ci_domain, '/customer/tenant?id=', oms.merchant_id) as store_url"))
                     ->join(DB::raw("(select merchant_id, `name`, parent_id from {$prefix}merchants where name = {$this->quote($storename)}) as oms"), DB::raw('oms.parent_id'), '=', 'merchants.merchant_id')
                     ->active();
 
-            OrbitInput::get('filter_name', function ($filterName) use ($mall, $prefix) {
-                if (! empty($filterName)) {
-                    if ($filterName === '#') {
-                        $filterName = '^a-zA-Z';
+            // Query list mall based on keyword. Because potentialy description between stores different
+            if (! empty($keyword)) {
+                $words = explode(" ", $keyword);
+                foreach ($words as $key => $value) {
+                    if (strlen($value) === 1 && $value === '%') {
+                        $keywordSql = "( select {$prefix}merchants.merchant_id, name, parent_id from {$prefix}merchants
+                                            left join {$prefix}keyword_object on {$prefix}merchants.merchant_id = {$prefix}keyword_object.object_id
+                                            left join {$prefix}keywords on {$prefix}keyword_object.keyword_id = {$prefix}keywords.keyword_id
+                                            where name = {$this->quote($storename)}
+                                            and (({$prefix}merchants.name like '%|{$value}%' escape '|' or {$prefix}merchants.description like '%|{$value}%' escape '|' or {$prefix}keywords.keyword like '%|{$value}%' escape '|'))
+                                        ) as oms";
+                    } else {
+                        $word = '%' . $value . '%';
+                        $value = $this->quote($word);
+
+                        $keywordSql = "( select {$prefix}merchants.merchant_id, name, parent_id from {$prefix}merchants
+                                            left join {$prefix}keyword_object on {$prefix}merchants.merchant_id = {$prefix}keyword_object.object_id
+                                            left join {$prefix}keywords on {$prefix}keyword_object.keyword_id = {$prefix}keywords.keyword_id
+                                            where name = {$this->quote($storename)}
+                                            and (({$prefix}merchants.name like {$value} or {$prefix}merchants.description like {$value} or {$prefix}keywords.keyword like {$value}))
+                                        ) as oms";
                     }
-                    $mall->whereRaw("merchants.name REGEXP '^[{$filterName}]'");
                 }
-            });
+
+                $mall = Mall::select('merchants.merchant_id', 'merchants.name', 'merchants.ci_domain', 'merchants.city', 'merchants.description', DB::raw("CONCAT({$prefix}merchants.ci_domain, '/customer/tenant?id=', oms.merchant_id) as store_url"))
+                        ->join(DB::raw($keywordSql), DB::raw('oms.parent_id'), '=', 'merchants.merchant_id')
+                        ->active();
+            }
 
             $mall = $mall->groupBy('merchants.merchant_id')->orderBy($sort_by, $sort_mode);
 
