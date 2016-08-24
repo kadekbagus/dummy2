@@ -63,26 +63,27 @@ class PromotionAPIController extends ControllerAPI
                         DB::raw("
                                 CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
                                         THEN {$prefix}campaign_status.campaign_status_name
-                                        ELSE (CASE WHEN {$prefix}news.end_date < (SELECT max(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
+                                        ELSE (CASE WHEN {$prefix}news.end_date < (SELECT min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
                                                                                     FROM {$prefix}news_merchant onm
                                                                                         LEFT JOIN {$prefix}merchants om ON om.merchant_id = onm.merchant_id
                                                                                         LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
                                                                                         LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
                                                                                     WHERE onm.news_id = {$prefix}news.news_id)
-                                THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END AS campaign_status
-                            "))
-                        ->join('news_translations', 'news_translations.news_id', '=', 'news.news_id')
-                        ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
-                        ->whereRaw("{$prefix}news.begin_date <= (SELECT min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
+                                THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END AS campaign_status,
+                                CASE WHEN {$prefix}news.begin_date <= (SELECT max(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
                                                                                     FROM {$prefix}news_merchant onm
                                                                                         LEFT JOIN {$prefix}merchants om ON om.merchant_id = onm.merchant_id
                                                                                         LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
                                                                                         LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
-                                                                                    WHERE onm.news_id = {$prefix}news.news_id)")
+                                                                                    WHERE onm.news_id = {$prefix}news.news_id)
+                                THEN 'true' ELSE 'false' END AS is_running
+                            "))
+                        ->join('news_translations', 'news_translations.news_id', '=', 'news.news_id')
+                        ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
                         ->where('news_translations.merchant_language_id', '=', $languageEnId)
                         ->where('news.object_type', '=', 'promotion')
                         ->where('news_translations.news_name', '!=', '')
-                        ->having('campaign_status', '=', 'ongoing');
+                        ->havingRaw("campaign_status = 'ongoing' AND is_running = 'true'");
 
             OrbitInput::get('keyword', function($keyword) use ($promotion, $prefix) {
                  if (! empty($keyword)) {
@@ -218,7 +219,7 @@ class PromotionAPIController extends ControllerAPI
 
             $prefix = DB::getTablePrefix();
 
-            $promotion = NewsMerchant::select('news.end_date as end_date',
+            $promotion = NewsMerchant::select('news.begin_date as begin_date', 'news.end_date as end_date',
                                             DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.merchant_id ELSE {$prefix}merchants.merchant_id END as merchant_id"),
                                             DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.name ELSE {$prefix}merchants.name END as name"),
                                             DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.city ELSE {$prefix}merchants.city END as city"),
@@ -235,7 +236,7 @@ class PromotionAPIController extends ControllerAPI
                                     ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                                     ->where('news_merchant.news_id', '=', $promotionId)
                                     ->groupBy('merchant_id')
-                                    ->havingRaw('tz < end_date');
+                                    ->havingRaw('tz <= end_date AND tz >= begin_date');
 
             $_promotion = clone($promotion);
 
