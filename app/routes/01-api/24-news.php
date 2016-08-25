@@ -63,19 +63,19 @@ Route::get('/api/v1/newspromotion/by-retailer/search', function()
 /**
  * List of news on all malls
  */
-Route::get(
-    '/{prefix}/v1/pub/news-list', ['as' => 'pub-news-list', function()
-    {
-        return Orbit\Controller\API\v1\Pub\NewsAPIController::create()->getSearchNews();
-    }]
-)->where('prefix', '(api|app)');
+Route::get('/api/v1/pub/news-list', function()
+{
+    return Orbit\Controller\API\v1\Pub\NewsAPIController::create()->getSearchNews();
+});
+
+Route::get('/app/v1/pub/news-list', ['as' => 'pub-news-list', 'uses' => 'IntermediatePubAuthController@News_getSearchNews']);
 
 /**
  * List mall of news
  */
-Route::get(
-    '/{prefix}/v1/pub/mall-news-list', ['as' => 'pub-mall-news-list', function()
-    {
-        return Orbit\Controller\API\v1\Pub\NewsAPIController::create()->getMallPerNews();
-    }]
-)->where('prefix', '(api|app)');
+Route::get('/api/v1/pub/mall-news-list', function()
+{
+    return Orbit\Controller\API\v1\Pub\NewsAPIController::create()->getMallPerNews();
+});
+
+Route::get('/app/v1/pub/mall-news-list', ['as' => 'pub-mall-news-list', 'uses' => 'IntermediatePubAuthController@News_getMallPerNews']);
