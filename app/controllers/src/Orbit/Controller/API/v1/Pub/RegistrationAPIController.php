@@ -325,20 +325,10 @@ class RegistrationAPIController extends IntermediateBaseController
             array(
                 'email'      => $email,
                 'first_name' => $firstname,
-                'last_name'  => $lastname,
-                'gender'     => $gender,
-                'date_of_birth' => $birthdate,
-                'password_confirmation' => $password_confirmation,
-                'password' => $password,
             ),
             array(
                 'email'      => 'required|email|orbit_email_exists',
                 'first_name' => 'required',
-                'last_name'  => 'required',
-                'gender'     => 'required|in:m,f',
-                'date_of_birth' => 'required|date|date_format:d-m-Y|before:' . $current_date,
-                'password_confirmation' => 'required|min:6',
-                'password'  => 'min:6|confirmed',
             ),
             array(
                 'date_of_birth.date_format' => Lang::get('validation.orbit.formaterror.date.dmy_date'),
