@@ -37,10 +37,10 @@
             var $body = $('body');
 
             $body.addClass('modal-open');
-
+            var url = '{{ url('/app/v1/inbox/delete') }}';
             $.ajax({
                 method: 'POST',
-                url: apiPath + 'inbox/delete',
+                url: url,
                 data: {
                     inbox_id: inbox_id
                 }
@@ -164,9 +164,10 @@
             $('body').on('click', '.read-unread', function(e){
                 $('body').addClass('modal-open');
                 var inbox_id = $(this).data('id');
+                var url = '{{ url('/app/v1/inbox/read-unread') }}';
                 $.ajax({
                     method: 'POST',
-                    url: apiPath + 'inbox/read-unread',
+                    url: url,
                     data: {
                         inbox_id: inbox_id
                     }
@@ -201,9 +202,14 @@
                 param += '&skip='+skip;
                 var loadmoreBtn = $(this);
                 loadmoreBtn.prop('disabled', true)
+                var url = '{{ url('/app/v1/inbox/list') }}';
+                var qm = '?';
+                if (url.indexOf('?') > -1) {
+                    qm = '&';
+                }
                 $.ajax({
                     method: 'GET',
-                    url: apiPath + 'inbox/list?' + param
+                    url: url + qm + param
                 }).done(function(data){
                     if(data.data.total_records / (data.data.returned_records + skip) > 1) {
                         $('.loadmore').show();
