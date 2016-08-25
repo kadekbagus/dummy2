@@ -150,6 +150,8 @@ class UrlChecker
 
                 } elseif ($appOrigin === 'desktop_ci') {
                     OrbitShopAPI::throwInvalidArgument('You need to log in to view this page.');
+                } elseif ($appOrigin === 'landing_page') {
+                    OrbitShopAPI::throwInvalidArgument('You need to log in to view this page.');
                 }
             }
         }
