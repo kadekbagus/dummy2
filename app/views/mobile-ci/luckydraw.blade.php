@@ -157,7 +157,7 @@ if(!empty($luckydraw)) {
 <div class="row text-center lucky-number-wrapper">
     @if(!empty($luckydraw))
         <div class="row vertically-spaced">
-            @if (($total_number === 0) && ($luckydraw->end_date > \Carbon\Carbon::now($retailer->timezone->timezone_name)))
+            @if ($total_number > 0)
             <h4>{{ Lang::get('mobileci.lucky_draw.my_lucky_draw_number') }}</h4>
             @endif
         </div>
