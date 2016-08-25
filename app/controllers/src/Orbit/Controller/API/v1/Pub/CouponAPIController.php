@@ -58,19 +58,20 @@ class CouponAPIController extends ControllerAPI
                                                                                         LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
                                                                                     WHERE opt.promotion_id = {$prefix}promotions.promotion_id)
                                     THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END AS campaign_status,
-                                CASE WHEN {$prefix}promotions.begin_date <= (SELECT max(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
-                                                                                    FROM {$prefix}promotion_retailer opt
-                                                                                        LEFT JOIN {$prefix}merchants om ON om.merchant_id = opt.retailer_id
-                                                                                        LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
-                                                                                        LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
-                                                                                    WHERE opt.promotion_id = {$prefix}promotions.promotion_id)
-                                THEN 'true' ELSE 'false' END AS is_running"))
+                                CASE WHEN (SELECT count(opt.promotion_retailer_id)
+                                            FROM {$prefix}promotion_retailer opt
+                                                LEFT JOIN {$prefix}merchants om ON om.merchant_id = opt.retailer_id
+                                                LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
+                                                LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
+                                            WHERE opt.promotion_id = {$prefix}promotions.promotion_id
+                                            AND CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) between {$prefix}promotions.begin_date and {$prefix}promotions.end_date) > 0
+                                THEN 'true' ELSE 'false' END AS is_started"))
                             ->leftJoin('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
                             ->leftJoin('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
                             ->leftJoin('languages', 'languages.language_id', '=', 'coupon_translations.merchant_language_id')
                             ->where('languages.name', '=', 'en')
                             ->where('coupon_translations.promotion_name', '!=', '')
-                            ->havingRaw("campaign_status = 'ongoing' AND is_running = 'true'")
+                            ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                             ->groupBy('coupon_id');
 
             OrbitInput::get('filter_name', function ($filterName) use ($coupon, $prefix) {
