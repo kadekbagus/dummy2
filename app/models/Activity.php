@@ -326,50 +326,74 @@ class Activity extends Eloquent
      * @param Object $object
      * @return Activity
      */
-    public function setObject($object, $setDisplayName = FALSE)
+    public function setObject($object)
     {
         if (is_object($object)) {
             $primaryKey = $object->getKeyName();
             $this->object_id = $object->$primaryKey;
             $this->object_name = get_class($object);
 
-            if ($setDisplayName) {
-                switch (get_class($object)) {
-                    case 'News':
-                        $this->object_display_name = $object->news_name;
-                        break;
+            switch (get_class($object)) {
+                case 'News':
+                    $this->object_display_name = $object->news_name;
+                    break;
 
-                    case 'Promotion':
-                        $this->object_display_name = $object->promotion_name;
-                        break;
+                case 'Coupon':
+                case 'Promotion':
+                    $this->object_display_name = $object->promotion_name;
+                    break;
 
-                    case 'Merchant':
-                        $this->object_display_name = $object->name;
-                        break;
+                case 'IssuedCoupon':
+                    $coupon = Coupon::excludeDeleted()->where('promotion_id', $object->promotion_id)->first();
+                    if (is_object($coupon)) {
+                        $this->object_display_name = $coupon->promotion_name;
+                    }
+                    break;
 
-                    case 'LuckyDraw':
-                        $this->object_display_name = $object->lucky_draw_name;
-                        break;
+                case 'Merchant':
+                case 'Retailer':
+                case 'MallGroup':
+                case 'Mall':
+                case 'Tenant':
+                case 'TenantStoreAndService':
+                case 'CampaignLocation':
+                    $this->object_display_name = $object->name;
+                    break;
 
-                    case 'EventModel':
-                        $this->object_display_name = $object->event_name;
-                        break;
+                case 'LuckyDraw':
+                    $this->object_display_name = $object->lucky_draw_name;
+                    break;
 
-                    case 'Event':
-                        $this->object_display_name = $object->event_name;
-                        break;
+                case 'EventModel':
+                    $this->object_display_name = $object->event_name;
+                    break;
 
-                    case 'Object':
-                        $this->object_display_name = $object->object_name;
-                        break;
+                case 'Event':
+                    $this->object_display_name = $object->event_name;
+                    break;
 
-                    case 'User':
-                        $this->object_display_name = $object->getFullName();
-                        break;
+                case 'Object':
+                    $this->object_display_name = $object->object_name;
+                    break;
 
-                    default:
-                        break;
-                }
+                case 'User':
+                    $this->object_display_name = $object->getFullName();
+                    break;
+
+                case 'Inbox':
+                    $this->object_display_name = $object->subject;
+                    break;
+
+                case 'Widget':
+                    $widgetGroupName = WidgetGroupName::where('widget_group_name_id', $object->widget_group_name_id)->first();
+                    if (is_object($widgetGroupName)) {
+                        $this->object_display_name = $widgetGroupName->widget_group_name;
+                    }
+                    break;
+
+                default:
+                    $this->object_display_name = NULL;
+                    break;
             }
 
             $this->metadata_object = $object->toJSON();
@@ -1209,6 +1233,10 @@ class Activity extends Eloquent
 
             case 'Widget Click Lucky Draw':
                 $groupName = 'Lucky Draw';
+                break;
+
+            case 'Widget Click Free Wifi':
+                $groupName = 'Free Wifi';
                 break;
         }
 

@@ -163,7 +163,7 @@ Route::filter('orbit-settings', function()
     if (! (new MobileDetect)->isMobile()) {
         Config::set('orbit.error_message.e500', 'Desktop version is coming soon, please use mobile device to access this site at the moment.');
 
-        App::abort(403, Config::get('orbit.error_message.e500'));
+        return Redirect::to(Config::get('app.url'));
     }
 
     if (! App::make('orbitSetting')->getSetting('current_retailer')) {

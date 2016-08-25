@@ -17,6 +17,10 @@
    exit 1
 }
 
+# Running git submodule update to prevent wrong sub module check point for db migration
+echo "Pre-Deploy [local]: Running git submodule update..."
+git submodule update
+
 rsync -avz --delete \
 --exclude=.git/ \
 --exclude=app/config/app.php \
