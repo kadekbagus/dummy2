@@ -118,20 +118,19 @@ Route::post('/api/v1/mall-background/delete', function()
 /**
  * Get Store list for gotomalls landing page
  */
-Route::get(
-    '/{search}/v1/pub/store-list', ['as' => 'store-list', function()
-    {
-        return Orbit\Controller\API\v1\Pub\StoreAPIController::create()->getStoreList();
-    }]
-)->where('search', '(api|app)');
+Route::get('/api/v1/pub/store-list', function()
+{
+    return Orbit\Controller\API\v1\Pub\StoreAPIController::create()->getStoreList();
+});
 
+Route::get('/app/v1/pub/store-list', ['as' => 'pub-store-list', 'uses' => 'IntermediatePubAuthController@Store_getStoreList']);
 
 /**
  * Get mall list based on store name
  */
-Route::get(
-    '/{search}/v1/pub/mall-store-list', ['as' => 'mall-store-list', function()
-    {
-        return Orbit\Controller\API\v1\Pub\StoreAPIController::create()->getMallStoreList();
-    }]
-)->where('search', '(api|app)');
+Route::get('/api/v1/pub/mall-store-list', function()
+{
+    return Orbit\Controller\API\v1\Pub\StoreAPIController::create()->getStoreList();
+});
+
+Route::get('/app/v1/pub/mall-store-list', ['as' => 'pub-mall-store-list', 'uses' => 'IntermediatePubAuthController@Store_getMallStoreList']);
