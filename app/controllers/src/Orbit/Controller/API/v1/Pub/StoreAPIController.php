@@ -198,35 +198,32 @@ class StoreAPIController extends ControllerAPI
 
             // Query without searching keyword
             $mall = Mall::select('merchants.merchant_id', 'merchants.name', 'merchants.ci_domain', 'merchants.city', 'merchants.description', DB::raw("CONCAT({$prefix}merchants.ci_domain, '/customer/tenant?id=', oms.merchant_id) as store_url"))
-                    ->join(DB::raw("(select merchant_id, `name`, parent_id from {$prefix}merchants where name = {$this->quote($storename)}) as oms"), DB::raw('oms.parent_id'), '=', 'merchants.merchant_id')
+                    ->join(DB::raw("(select merchant_id, `name`, parent_id from {$prefix}merchants where name = {$this->quote($storename)} and status = 'active') as oms"), DB::raw('oms.parent_id'), '=', 'merchants.merchant_id')
                     ->active();
 
             // Query list mall based on keyword. Handling description and keyword can be different with other stores
             if (! empty($keyword)) {
                 $words = explode(" ", $keyword);
+                $keywordSql = " 1=1 ";
                 foreach ($words as $key => $value) {
                     if (strlen($value) === 1 && $value === '%') {
-                        $keywordSql = "( select {$prefix}merchants.merchant_id, name, parent_id from {$prefix}merchants
-                                            left join {$prefix}keyword_object on {$prefix}merchants.merchant_id = {$prefix}keyword_object.object_id
-                                            left join {$prefix}keywords on {$prefix}keyword_object.keyword_id = {$prefix}keywords.keyword_id
-                                            where name = {$this->quote($storename)}
-                                            and (({$prefix}merchants.name like '%|{$value}%' escape '|' or {$prefix}merchants.description like '%|{$value}%' escape '|' or {$prefix}keywords.keyword like '%|{$value}%' escape '|'))
-                                        ) as oms";
+                        $keywordSql .= " or {$prefix}merchants.name like '%|{$value}%' escape '|' or {$prefix}merchants.description like '%|{$value}%' escape '|' or {$prefix}keywords.keyword like '%|{$value}%' escape '|' ";
                     } else {
+                        // escaping the query
                         $word = '%' . $value . '%';
                         $value = $this->quote($word);
-
-                        $keywordSql = "( select {$prefix}merchants.merchant_id, name, parent_id from {$prefix}merchants
-                                            left join {$prefix}keyword_object on {$prefix}merchants.merchant_id = {$prefix}keyword_object.object_id
-                                            left join {$prefix}keywords on {$prefix}keyword_object.keyword_id = {$prefix}keywords.keyword_id
-                                            where name = {$this->quote($storename)}
-                                            and (({$prefix}merchants.name like {$value} or {$prefix}merchants.description like {$value} or {$prefix}keywords.keyword like {$value}))
-                                        ) as oms";
+                        $keywordSql .= " or {$prefix}merchants.name like {$value} or {$prefix}merchants.description like {$value} or {$prefix}keywords.keyword like {$value} ";
                     }
                 }
 
                 $mall = Mall::select('merchants.merchant_id', 'merchants.name', 'merchants.ci_domain', 'merchants.city', 'merchants.description', DB::raw("CONCAT({$prefix}merchants.ci_domain, '/customer/tenant?id=', oms.merchant_id) as store_url"))
-                        ->join(DB::raw($keywordSql), DB::raw('oms.parent_id'), '=', 'merchants.merchant_id')
+                        ->join(DB::raw("( select {$prefix}merchants.merchant_id, name, parent_id from {$prefix}merchants
+                                            left join {$prefix}keyword_object on {$prefix}merchants.merchant_id = {$prefix}keyword_object.object_id
+                                            left join {$prefix}keywords on {$prefix}keyword_object.keyword_id = {$prefix}keywords.keyword_id
+                                            where name = {$this->quote($storename)}
+                                            and {$prefix}merchants.status = 'active'
+                                            and (" . $keywordSql . ")
+                                        ) as oms"), DB::raw('oms.parent_id'), '=', 'merchants.merchant_id')
                         ->active();
             }
 
