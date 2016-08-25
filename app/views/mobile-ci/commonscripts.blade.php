@@ -592,6 +592,8 @@
         }
         var slider = null;
         var cookieLang = $.cookie('orbit_preferred_language') ? $.cookie('orbit_preferred_language') : 'en'; //send user lang from cookie
+        <?php $displayPopup = Config::get('orbit.shop.display_campaign_popup', function() {return FALSE;}); ?>
+        @if (is_callable($displayPopup) && $displayPopup($_GET))
         setTimeout(function(){
             if ($.cookie('dismiss_campaign_cards') !== 't') {
                 $.ajax({
@@ -658,6 +660,7 @@
                 });
             }
         }, ({{ Config::get('orbit.shop.event_delay', 2.5) }} * 1000));
+        @endif
 
         $('#campaign-cards-close-btn, .campaign-cards-back-drop').click(function(){
             slider.pause();
