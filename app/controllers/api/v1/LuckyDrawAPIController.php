@@ -1631,8 +1631,6 @@ class LuckyDrawAPIController extends ControllerAPI
                 }
             });
 
-            $luckydraws->orderBy('lucky_draw_numbers.issued_date', 'desc');
-
             if ($sortBy === 'lucky_draw_numbers.lucky_draw_number_code') {
                 $prefix = DB::getTablePrefix();
                 $luckydraws->orderByRaw("CAST({$prefix}{$sortBy} as UNSIGNED) {$sortMode}");

@@ -384,6 +384,13 @@ class Activity extends Eloquent
                     $this->object_display_name = $object->subject;
                     break;
 
+                case 'Widget':
+                    $widgetGroupName = WidgetGroupName::where('widget_group_name_id', $object->widget_group_name_id)->first();
+                    if (is_object($widgetGroupName)) {
+                        $this->object_display_name = $widgetGroupName->widget_group_name;
+                    }
+                    break;
+
                 default:
                     $this->object_display_name = NULL;
                     break;
