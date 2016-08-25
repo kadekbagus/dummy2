@@ -18,6 +18,7 @@ use Config;
 use stdclass;
 use DB;
 use Event;
+use Hash;
 
 class UserAPIController extends IntermediateBaseController
 {
