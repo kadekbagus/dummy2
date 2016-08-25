@@ -93,6 +93,17 @@ return array(
         // 'customer-api-service-detail',
         // 'customer-api-my-account',
         // 'customer-api-membership',
+
+        // landing page routes
+        // 'pub-store-list',
+        // 'pub-mall-store-list',
+        // 'pub-promotion-list',
+        // 'pub-mall-promotion-list',
+        // 'pub-news-list',
+        // 'pub-mall-news-list',
+        // 'pub-coupon-list',
+        // 'pub-mall-coupon-list',
+        // 'pub-lucky-draw-list',
     ],
 
     // cdn path
