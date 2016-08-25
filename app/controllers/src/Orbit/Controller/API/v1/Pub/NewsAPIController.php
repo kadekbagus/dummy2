@@ -2,45 +2,36 @@
 
 /**
  * @author firmansyah <firmansyah@dominopos.com>
- * @desc Controller for promotion Mobile CI Angular
+ * @desc Controller for news list and search in landing page
  */
 
-use Orbit\Controller\API\v1\Customer\BaseAPIController;
+use OrbitShop\API\v1\ControllerAPI;
+use OrbitShop\API\v1\OrbitShopAPI;
 use OrbitShop\API\v1\ResponseProvider;
 use Helper\EloquentRecordCounter as RecordCounter;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
-use DominoPOS\OrbitSession\Session;
-use DominoPOS\OrbitSession\SessionConfig;
 use \Config;
 use \Exception;
 use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use \DB;
-use \Carbon\Carbon as Carbon;
-use \Validator;
 use News;
 use NewsMerchant;
-use Mall;
-use OrbitShop\API\v1\OrbitShopAPI;
-use Activity;
 use Language;
-use URL;
-use App;
-use Tenant;
+use Validator;
 use Orbit\Helper\Util\PaginationNumber;
 
-class NewsPromotionAPIController extends BaseAPIController
+class NewsAPIController extends ControllerAPI
 {
 	protected $validRoles = ['super admin', 'consumer', 'guest'];
 
     /**
-     * GET - get active news or promotion in all mall, and also provide for searching
+     * GET - get active news in all mall, and also provide for searching
      *
      * @author Firmansyayh <firmansyah@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
-     * @param string object_type
      * @param string sortby
      * @param string sortmode
      * @param string take
@@ -50,16 +41,13 @@ class NewsPromotionAPIController extends BaseAPIController
      *
      * @return Illuminate\Support\Facades\Response
      */
-    public function getSearchNewsPromotion()
+    public function getSearchNews()
     {
         $httpCode = 200;
         $this->response = new ResponseProvider();
-        $objectType = null;
         $keyword = null;
 
         try{
-            $objectType = OrbitInput::get('object_type', null);
-
             // Get language_if of english
             $languageEnId = null;
             $language = Language::where('name', 'en')->first();
@@ -70,39 +58,55 @@ class NewsPromotionAPIController extends BaseAPIController
 
             $prefix = DB::getTablePrefix();
 
-            $news = News::select('news.news_id as news_promotion_id', 'news_translations.news_name as news_promotion_name', 'news.object_type',
+            $news = News::select('news.news_id as news_id', 'news_translations.news_name as news_name', 'news.object_type',
                         // query for get status active based on timezone
                         DB::raw("
                                 CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
                                         THEN {$prefix}campaign_status.campaign_status_name
-                                        ELSE (CASE WHEN {$prefix}news.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
-                                FROM {$prefix}merchants om
-                                LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
-                                WHERE om.merchant_id = {$prefix}news.mall_id)
-                                THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END AS campaign_status
+                                        ELSE (CASE WHEN {$prefix}news.end_date < (SELECT min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
+                                                                                    FROM {$prefix}news_merchant onm
+                                                                                        LEFT JOIN {$prefix}merchants om ON om.merchant_id = onm.merchant_id
+                                                                                        LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
+                                                                                        LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
+                                                                                    WHERE onm.news_id = {$prefix}news.news_id)
+                                THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END AS campaign_status,
+                                CASE WHEN (SELECT count(onm.merchant_id)
+                                            FROM {$prefix}news_merchant onm
+                                                LEFT JOIN {$prefix}merchants om ON om.merchant_id = onm.merchant_id
+                                                LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
+                                                LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
+                                            WHERE onm.news_id = {$prefix}news.news_id
+                                            AND CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) between {$prefix}news.begin_date and {$prefix}news.end_date) > 0
+                                THEN 'true' ELSE 'false' END AS is_started
                             "))
                         ->join('news_translations', 'news_translations.news_id', '=', 'news.news_id')
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
-                        ->whereRaw("{$prefix}news.begin_date <= (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
-                                                                            FROM {$prefix}merchants om
-                                                                            LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
-                                                                            WHERE om.merchant_id = {$prefix}news.mall_id)")
                         ->where('news_translations.merchant_language_id', '=', $languageEnId)
-                        ->where('news.object_type', '=', $objectType)
+                        ->where('news.object_type', '=', 'news')
                         ->where('news_translations.news_name', '!=', '')
-                        ->having('campaign_status', '=', 'ongoing');
+                        ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'");
 
-            OrbitInput::get('keyword', function($keyword) use ($news) {
+            OrbitInput::get('keyword', function($keyword) use ($news, $prefix) {
                  if (! empty($keyword)) {
                     $news = $news->leftJoin('keyword_object', 'news.news_id', '=', 'keyword_object.object_id')
                                 ->leftJoin('keywords', 'keyword_object.keyword_id', '=', 'keywords.keyword_id')
-                                ->where(function($query) use ($keyword){
+                                ->where(function($query) use ($keyword, $prefix){
                                     //Search per word
                                     $words = explode(' ', $keyword);
                                     foreach ($words as $key => $word) {
-                                        $query->orWhere('news_translations.news_name', 'like', '%' . $word . '%')
-                                            ->orWhere('news_translations.description', 'like', '%' . $word . '%')
-                                            ->orWhere('keywords.keyword', '=', $word);
+                                        if (strlen($word) === 1 && $word === '%') {
+                                            $query->orWhere(function($q) use ($word, $prefix){
+                                                $q->whereRaw("{$prefix}news_translations.news_name like '%|{$word}%' escape '|'")
+                                                  ->orWhereRaw("{$prefix}news_translations.description like '%|{$word}%' escape '|'")
+                                                  ->orWhereRaw("{$prefix}keywords.keyword like '%|{$word}%' escape '|'");
+                                            });
+                                        } else {
+                                            $query->orWhere(function($q) use ($word, $prefix){
+                                                $q->where('news_translations.news_name', 'like', '%' . $word . '%')
+                                                  ->orWhere('news_translations.description', 'like', '%' . $word . '%')
+                                                  ->orWhere('keywords.keyword', 'like', '%' . $word . '%');
+                                            });
+                                        }
                                     }
                                 });
                  }
@@ -185,31 +189,26 @@ class NewsPromotionAPIController extends BaseAPIController
         return $this->render($httpCode);
     }
 
-    public function getMallPerNewsPromotion()
+    public function getMallPerNews()
     {
         $httpCode = 200;
         $this->response = new ResponseProvider();
-        $objectType = null;
-        $newsPromotionLink = null;
 
         try{
-            $newsPromotionId = OrbitInput::get('news_promotion_id', null);
-            $objectType = OrbitInput::get('object_type', null);
+            $newsId = OrbitInput::get('news_id', null);
             $sort_by = OrbitInput::get('sortby', 'name');
             $sort_mode = OrbitInput::get('sortmode','asc');
 
-            $this->registerCustomValidation();
 
             $validator = Validator::make(
                 array(
-                    'object_type' => $objectType,
+                    'news_id' => $newsId,
                 ),
                 array(
-                    'object_type' => 'required|orbit.empty.object_type',
+                    'news_id' => 'required',
                 ),
                 array(
-                    'required' => 'Object type is required',
-                    'orbit.empty.object_type' => 'Object type must news or promotion',
+                    'required' => 'News ID is required',
                 )
             );
 
@@ -221,25 +220,24 @@ class NewsPromotionAPIController extends BaseAPIController
 
             $prefix = DB::getTablePrefix();
 
-            if ($objectType === 'news') {
-                $newsPromotionLink = 'mallnewsdetail';
-            } elseif ($objectType === 'promotion'){
-                $newsPromotionLink = 'mallpromotion';
-            }
-
-            $prefix = DB::getTablePrefix();
-
-            $news = NewsMerchant::select(
+            $news = NewsMerchant::select('news.begin_date as begin_date', 'news.end_date as end_date',
                                             DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.merchant_id ELSE {$prefix}merchants.merchant_id END as merchant_id"),
                                             DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.name ELSE {$prefix}merchants.name END as name"),
                                             DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.city ELSE {$prefix}merchants.city END as city"),
                                             DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.description ELSE {$prefix}merchants.description END as description"),
-                                            DB::raw("CONCAT(IF({$prefix}merchants.object_type = 'tenant', oms.ci_domain, {$prefix}merchants.ci_domain), '/customer/" . $newsPromotionLink . "?id=', {$prefix}news_merchant.news_id) as news_promotion_url")
+                                            DB::raw("CONCAT(IF({$prefix}merchants.object_type = 'tenant', oms.ci_domain, {$prefix}merchants.ci_domain), '/customer/mallnewsdetail?id=', {$prefix}news_merchant.news_id) as news_url"),
+                                            DB::raw("( SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
+                                                        FROM {$prefix}merchants om
+                                                        LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
+                                                        WHERE om.merchant_id = (CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.merchant_id ELSE {$prefix}merchants.merchant_id END)
+                                                    ) as tz")
                                         )
+                                    ->leftJoin('news', 'news_merchant.news_id', '=', 'news.news_id')
                                     ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
                                     ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
-                                    ->where('news_merchant.news_id', '=', $newsPromotionId)
-                                    ->groupBy('merchant_id');
+                                    ->where('news_merchant.news_id', '=', $newsId)
+                                    ->groupBy('merchant_id')
+                                    ->havingRaw('tz <= end_date AND tz >= begin_date');
 
             $_news = clone($news);
 
@@ -304,17 +302,6 @@ class NewsPromotionAPIController extends BaseAPIController
         }
 
         return $this->render($httpCode);
-    }
-
-    protected function registerCustomValidation()
-    {
-        Validator::extend('orbit.empty.object_type', function ($attribute, $value, $parameters) {
-            if ($value === 'news' || $value === 'promotion') {
-                return true;
-            }
-
-            return false;
-        });
     }
 
     protected function quote($arg)
