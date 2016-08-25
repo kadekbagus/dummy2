@@ -14,12 +14,52 @@ use Orbit\Helper\Session\AppOriginProcessor;
  */
 class UrlGenerator extends \Illuminate\Routing\UrlGenerator
 {
+    protected function getAppOrigin()
+    {
+        return $appOrigin = AppOriginProcessor::create(Config::get('orbit.session.app_list'))
+                                ->getAppName();
+    }
+
     /**
      * @return string
      */
     protected function getSessionIdParameterName()
     {
-        return Config::get('orbit.session.session_origin.query_string.name', '');
+        $paramName = Config::get('orbit.session.session_origin.query_string.name', '');
+        if (! empty($this->getAppOrigin())) {
+            $paramName = Config::get('orbit.session.origin.' . $this->getAppOrigin() . '.query_string.name', '');
+        }
+        return $paramName;
+    }
+
+    /**
+     * Get utm parameter as query string or array
+     * @author Ahmad <ahmad@dominopos.com>
+     * @param string $selector ('string' or 'array')
+     * @return string|array
+     */
+    protected function getUtmParameter($selector = 'string')
+    {
+        $queryString = '';
+        $queryStringArray = [];
+        if (Config::get('orbit.shop.append_utm_tracking_in_url', FALSE)) {
+            $utmParams = Config::get('orbit.shop.utm_parameters', []);
+            foreach ($utmParams as $utmParam) {
+                if (array_key_exists($utmParam, $_GET)) {
+                    $queryStringArray[$utmParam] = $_GET[$utmParam];
+                }
+            }
+        }
+
+        if ($selector === 'array') {
+            return $queryStringArray;
+        }
+
+        if (! empty($queryStringArray)) {
+            $queryString = http_build_query($queryStringArray);
+        }
+
+        return $queryString;
     }
 
     /**
@@ -29,8 +69,7 @@ class UrlGenerator extends \Illuminate\Routing\UrlGenerator
     protected function getSessionIdValue()
     {
         // Return mall_portal, cs_portal, pmp_portal etc
-        $appOrigin = AppOriginProcessor::create(Config::get('orbit.session.app_list'))
-                                       ->getAppName();
+        $appOrigin = $this->getAppOrigin();
 
         // Session Config
         $orbitSessionConfig = Config::get('orbit.session.origin.' . $appOrigin);
@@ -62,6 +101,7 @@ class UrlGenerator extends \Illuminate\Routing\UrlGenerator
     {
         $enabled = Config::get('orbit.session.availability.query_string', false);
         $name_set = Config::get('orbit.session.session_origin.query_string.name', null) !== null;
+
         return ($enabled && $name_set);
     }
 
@@ -80,15 +120,25 @@ class UrlGenerator extends \Illuminate\Routing\UrlGenerator
     {
         $original = parent::to($path, $extra, $secure);
 
-        if (!$this->getSessionInUrlEnabled()) {
-            return $original;
+        $sessionString = '';
+        if ($this->getSessionInUrlEnabled()) {
+            $id = $this->getSessionIdValue();
+            if ($id !== null) {
+                // session string
+                $sessionString = http_build_query([$this->getSessionIdParameterName() => $id]);
+            }
         }
-        $id = $this->getSessionIdValue();
-        if ($id === null) {
-            return $original;
-        }
+        // utm parameters
+        $utmString = $this->getUtmParameter();
 
-        $additional_query = http_build_query([$this->getSessionIdParameterName() => $id]);
+        // array of query strings that will be appended
+        $appendedQueryStrings = array(
+            $utmString,
+            $sessionString
+        );
+
+        // glue the appended string excluding empty values('', 0, NULL, FALSE)
+        $additional_query = implode('&', array_filter($appendedQueryStrings));
 
         $insert_qmark = false;
         $insert_ampersand = false;
@@ -133,6 +183,37 @@ class UrlGenerator extends \Illuminate\Routing\UrlGenerator
         }
 
         return $result;
+    }
+
+    /**
+     * Get the URL to a named route and add extra query parameter.
+     *
+     * @param  string  $name
+     * @param  mixed   $parameters
+     * @param  bool  $absolute
+     * @param  \Illuminate\Routing\Route  $route
+     * @return string
+     *
+     * @throws \InvalidArgumentException
+     */
+    public function route($name, $parameters = array(), $absolute = true, $route = null)
+    {
+        $route = $route ?: $this->routes->getByName($name);
+
+        // append extra parameters (utm parameters) to current parameters
+        $utmParams = $this->getUtmParameter('array');
+        $parameters = array_merge($parameters, $utmParams);
+
+        $parameters = (array) $parameters;
+
+        if ( ! is_null($route))
+        {
+            return parent::toRoute($route, $parameters, $absolute);
+        }
+        else
+        {
+            throw new InvalidArgumentException("Route [{$name}] not defined.");
+        }
     }
 
     /**
