@@ -48,6 +48,21 @@ class UserGetter
     {
         $userId = $session->read('guest_user_id');
 
+        $generateGuest = function ($session) {
+            $user = GuestUserGenerator::create()->generate();
+
+            $sessionData = $session->read(NULL);
+            $sessionData['logged_in'] = TRUE;
+            $sessionData['guest_user_id'] = $user->user_id;
+            $sessionData['guest_email'] = $user->user_email;
+            $sessionData['role'] = $user->role->role_name;
+            $sessionData['fullname'] = '';
+
+            $session->update($sessionData);
+
+            return $user;
+        };
+
         $user = User::with('userDetail')
             ->where('user_id', $userId)
             ->whereHas('role', function($q) {
@@ -56,7 +71,7 @@ class UserGetter
             ->first();
 
         if (! is_object($user)) {
-            $user = NULL;
+            $user = $generateGuest($session);
         }
 
         return $user;
