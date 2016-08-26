@@ -489,17 +489,21 @@
                                     var connectionChar = /\?/.test(data.records[i].add_to_wallet_hash_url) ? '&' : '?',
                                         couponId = 'idForAddWallet=' + data.records[i].item_id;
 
-                                    couponWallet = '\
-                                        <div class="coupon-wallet pull-right">\
-                                            <a data-href="' + data.records[i].add_to_wallet_hash_url + connectionChar + couponId + '" href="' + data.records[i].add_to_wallet_hash + '">\
-                                                <span class="fa-stack fa-2x clickable" data-ids="' + data.records[i].item_id + '" data-isaddedtowallet="' + data.records[i].added_to_wallet + '">\
-                                                    <i class="fa fae-wallet fa-stack-2x"></i>\
-                                                    <i class="fa ' + circleColor + ' fa-circle fa-stack-2x"></i>\
-                                                    <i class="fa ' + walletIcon + ' fa-stack-1x state-icon"></i>\
-                                                </span>\
-                                            </a>\
-                                            <span class="wallet-text">' + walletText + '</span>\
-                                        </div>';
+                                    // couponWallet = '\
+                                    //     <div class="coupon-wallet pull-right">\
+                                    //         <a data-href="' + data.records[i].add_to_wallet_hash_url + connectionChar + couponId + '" href="' + data.records[i].add_to_wallet_hash + '">\
+                                    //             <span class="fa-stack fa-2x clickable" data-ids="' + data.records[i].item_id + '" data-isaddedtowallet="' + data.records[i].added_to_wallet + '">\
+                                    //                 <i class="fa fae-wallet fa-stack-2x"></i>\
+                                    //                 <i class="fa ' + circleColor + ' fa-circle fa-stack-2x"></i>\
+                                    //                 <i class="fa ' + walletIcon + ' fa-stack-1x state-icon"></i>\
+                                    //             </span>\
+                                    //         </a>\
+                                    //         <span class="wallet-text">' + walletText + '</span>\
+                                    //     </div>';
+
+                                    //Vannessa wants to hide add coupon wallet in coupon list
+                                    //to enable just uncomment above code and remove following code
+                                    couponWallet = '';
                                 }
                             }
                         }
