@@ -420,8 +420,36 @@
 
         btn.attr('disabled', 'disabled');
         btn.html('<i class="fa fa-circle-o-notch fa-spin"></i>');
+        switch (itemtype) {
+            case 'my-coupon':
+            var url = '{{ url('/app/v1/my-coupon/load-more') }}';
+            break;
+
+            case 'news':
+            var url = '{{ url('/app/v1/news/load-more') }}';
+            break;
+
+            case 'promotion':
+            var url = '{{ url('/app/v1/promotion/load-more') }}';
+            break;
+
+            case 'service':
+            var url = '{{ url('/app/v1/service/load-more') }}';
+            break;
+
+            case 'tenant':
+            var url = '{{ url('app/v1/tenant/load-more') }}';
+            break;
+
+            case 'lucky-draw':
+            var url = '{{ url('/app/v1/lucky-draw/load-more') }}';
+            break;
+
+            default:
+            break;
+        }
         $.ajax({
-            url: apiPath + itemtype + '/load-more',
+            url: url,
             method: 'GET',
             data: ajaxParams
         }).done(function(data) {
@@ -580,8 +608,9 @@
             return str.indexOf(value) > -1;
         }
         function viewPopUpActivity(campaign_id, campaign_type) {
+            var url = '{{ url('/app/v1/campaign/activities') }}';
             $.ajax({
-                url: apiPath + 'campaign/activities',
+                url: url,
                 method: 'POST',
                 data: {
                     campaign_id: campaign_id,
@@ -592,10 +621,17 @@
         }
         var slider = null;
         var cookieLang = $.cookie('orbit_preferred_language') ? $.cookie('orbit_preferred_language') : 'en'; //send user lang from cookie
+        <?php $displayPopup = Config::get('orbit.shop.display_campaign_popup', function() {return FALSE;}); ?>
+        @if (is_callable($displayPopup) && $displayPopup($_GET))
         setTimeout(function(){
             if ($.cookie('dismiss_campaign_cards') !== 't') {
+                var url = '{{ url('/app/v1/campaign/list') }}';
+                var qm = '?';
+                if (url.indexOf('?') > -1) {
+                    qm = '&';
+                }
                 $.ajax({
-                    url: apiPath + 'campaign/list?lang='+cookieLang,
+                    url: url + qm + 'lang='+cookieLang,
                     method: 'GET'
                 }).done(function(data) {
                     if(data.data.total_records) {
@@ -658,6 +694,7 @@
                 });
             }
         }, ({{ Config::get('orbit.shop.event_delay', 2.5) }} * 1000));
+        @endif
 
         $('#campaign-cards-close-btn, .campaign-cards-back-drop').click(function(){
             slider.pause();
@@ -671,8 +708,9 @@
             e.preventDefault();
             var campaign_id = $(this).data('id');
             var campaign_type = $(this).data('type');
+            var url = '{{ url('/app/v1/campaign/activities') }}';
             $.ajax({
-                url: apiPath + 'campaign/activities',
+                url: url,
                 method: 'POST',
                 data: {
                     campaign_id: campaign_id,
@@ -747,12 +785,13 @@
                 var loader = '<div class="text-center" id="search-loader" style="font-size:48px;color:#fff;"><i class="fa fa-spinner fa-spin"></i></div>';
                 $('.search-wrapper').append(loader);
 
+                var url = '{{ url('/app/v1/keyword/search') }}';
+                var qm = '?';
+                if (url.indexOf('?') > -1) {
+                    qm = '&';
+                }
                 $.ajax({
-                    @if(Config::get('orbit.session.availability.query_string'))
-                    url: "{{ url('/app/v1/keyword/search') }}&keyword=" + keyword + '&lang=' + cookieLang,
-                    @else
-                    url: "{{ url('/app/v1/keyword/search') }}?keyword=" + keyword + '&lang=' + cookieLang,
-                    @endif
+                    url: url + qm + "keyword=" + keyword + '&lang=' + cookieLang,
                     method: 'GET'
                 }).done(function(data) {
                     if (data.data.total_records > 0) {
@@ -1223,9 +1262,10 @@
             // which is different from the old Orbit behavior
             var userIdentified = function() {
                 $('#btn-signin-form').attr('disabled', 'disabled');
+                var url = '{{ url('/app/v1/customer/login') }}';
                 $.ajax({
                     method: 'post',
-                    url: apiPath + 'customer/login',
+                    url: url,
                     data: {
                         email: custEmail,
                         password: custPassword,
@@ -1331,9 +1371,10 @@
                     'year': $('#signupForm [name=year]').val()
                 };
                 $('#btn-signup-form').attr('disabled', 'disabled');
+                var url = '{{ url('/app/v1/customer/login') }}';
                 $.ajax({
                     method: 'post',
-                    url: apiPath + 'customer/login',
+                    url: url,
                     data: {
                         email: custEmail,
                         payload: "{{{ Input::get('payload', '') }}}",
@@ -1458,9 +1499,10 @@
          * @return void|object
          */
         orbitSignUpForm.checkCustomerEmail = function(custEmail, emptyCallback, dataCallback, errorCallback) {
+            var url = '{{ url('/app/v1/customer/basic-data') }}';
             $.ajax({
                 method: 'POST',
-                url: apiPath + 'customer/basic-data',
+                url: url,
                 data: { email: custEmail }
             }).done(function (data, status, xhr) {
                 if (data.length === 0) {

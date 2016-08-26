@@ -37,7 +37,7 @@ class MallListAPIController extends ControllerAPI
             $latitude = OrbitInput::get('latitude',null);
             $longitude = OrbitInput::get('longitude',null);
 
-            $keyword = OrbitInput::get('keyword_search');
+            $keyword = OrbitInput::get('keyword');
             $filterName = OrbitInput::get('filter_name');
 
             $usingDemo = Config::get('orbit.is_demo', FALSE);
@@ -73,9 +73,9 @@ class MallListAPIController extends ControllerAPI
                                     "multi_match" : {
                                         "query": "' . $keyword . '",
                                         "fields": [
-                                            "name^10",
-                                            "city^2",
-                                            "country^2",
+                                            "name",
+                                            "city",
+                                            "country",
                                             "address_line",
                                             "description"
                                         ]
