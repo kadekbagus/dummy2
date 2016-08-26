@@ -288,6 +288,13 @@ return array(
         // will be used to determine the domain in mobile ci prefix dot, example: .gotomalls.cool
         'ci_domain' => '.gotomalls.cool',
 
+        // Flag to displaying a popup the value are using callback
+        'display_campaign_popup' => function($queryString) {
+            // isset no_popup AND no_popup=yes => TRUE
+            // isset no_popup AND no_popup!=yes => FALSE
+            return ! (isset($queryString['no_popup']) && $queryString['no_popup'] === 'yes');
+        },
+
         // Automatically add utm tracking in URL
         'append_utm_tracking_in_url' => FALSE,
 

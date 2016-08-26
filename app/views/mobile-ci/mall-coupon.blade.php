@@ -244,9 +244,9 @@
                 successLogin = '{{ \Input::get("successLogin") }}' !== '' ? '{{ \Input::get("successLogin") }}' : 'false',
                 addToWallet = function (ids, callback) {
                     var element = $("span[data-ids='" + ids  + "']");
-
+                    var url = '{{ route('coupon-add-to-wallet') }}';
                     $.ajax({
-                        url: apiPath + 'coupon/addtowallet',
+                        url: url,
                         method: 'POST',
                         data: {
                             coupon_id: ids
@@ -317,9 +317,9 @@
             $('#applyCoupon').click(function (){
                 $('#hasCouponModal .modal-content').css('display', 'none');
                 $('#hasCouponModal .modal-spinner').css('display', 'block');
-
+                var url = '{{ url('/app/v1/issued-coupon/redeem') }}';
                 $.ajax({
-                    url: apiPath + 'issued-coupon/redeem',
+                    url: url,
                     method: 'POST',
                     data: {
                         issued_coupon_id: '{{$issued_coupons[0]->issued_coupon_id}}',
