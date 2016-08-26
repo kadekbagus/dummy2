@@ -3505,5 +3505,12 @@ return array(
             'activity_module_name' => 'Application',
             'activity_type' => 'click',
         ),
+        'blog' => array(
+            'url' => 'https://blog.gotomalls.com',
+            'activity_name' => 'click_blog',
+            'activity_name_long' => 'Click Gotomalls Blog',
+            'activity_module_name' => 'Application',
+            'activity_type' => 'click',
+        ),
     ),
 );
