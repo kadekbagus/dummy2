@@ -548,11 +548,14 @@
                             if ('wallet' === helperObject.coupon_type) {
                                 message = " {{ Lang::get('mobileci.greetings.no_coupon_wallet_1') }}\
                                             <div class='coupon-wallet-message-icon'>\
+                                              <div>\
                                                 <span class='fa-stack fa-2x'>\
                                                     <i class='fa fae-wallet fa-stack-2x'></i>\
                                                     <i class='fa fa-circle fa-stack-2x'></i>\
                                                     <i class='fa fa-plus fa-stack-1x state-icon'></i>\
                                                 </span>\
+                                                <span class=\"wallet-text\">{{ Lang::get("mobileci.coupon.add_wallet") }}</span>\
+                                              </div>\
                                             </div>\
                                             {{ Lang::get('mobileci.greetings.no_coupon_wallet_2') }}";
                             }
