@@ -49,7 +49,7 @@
             </div>
         </div>
         @if(!$wallet['is_coupon_wallet'] || !$wallet['added_to_wallet'])
-        <div class="coupon-wallet pull-right">
+        <div class="coupon-wallet {{ $wallet['added_to_wallet'] ? 'padding-uniform' : '' }} pull-right">
             <a class="clickable" data-href="{{ $wallet['hash_url'] }}" href="{{ $wallet['hash'] }}" data-ids="{{ $coupon->promotion_id }}" data-isaddedtowallet="{{ $wallet['added_to_wallet'] }}">
                 <span class="fa-stack fa-2x">
                     <i class="fa fae-wallet fa-stack-2x"></i>
@@ -254,7 +254,7 @@
                         if(data.status === 'success') {
                             var parent = (element) ? element : $("a[data-ids='"+ ids +"']");
                             var elem = parent.children('span');
-
+                            parent.parent().addClass('padding-uniform');
                             elem.children('.state-icon').removeClass('fa-plus');
                             elem.children('.state-icon').addClass('fa-check');
                             elem.children('.fa-circle').addClass('added');
