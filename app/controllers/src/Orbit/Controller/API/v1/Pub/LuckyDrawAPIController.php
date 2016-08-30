@@ -95,7 +95,7 @@ class LuckyDrawAPIController extends IntermediateBaseController
                     'country',
                     'ci_domain',
                     DB::raw("(CONCAT(ci_domain, '" . $ciLuckyDrawPath . "?id=', {$prefix}lucky_draws.lucky_draw_id)) as ci_path"),
-                    DB::raw('media.path')
+                    DB::raw('media.path as image_url')
                 )
                 ->leftJoin('merchants', 'lucky_draws.mall_id', '=', 'merchants.merchant_id')
                 ->leftJoin('lucky_draw_translations', 'lucky_draw_translations.lucky_draw_id', '=', 'lucky_draws.lucky_draw_id')
@@ -104,7 +104,6 @@ class LuckyDrawAPIController extends IntermediateBaseController
                 ->where('lucky_draw_translations.merchant_language_id', '=', $languageEnId)
                 ->where('lucky_draws.start_date', '<=', $asiaJakartaTime)
                 ->where('lucky_draws.grace_period_date', '>=', $asiaJakartaTime);
-
 
             OrbitInput::get('object_type', function($objType) use($luckydraws) {
                 $luckydraws->where('lucky_draws.object_type', $objType);
