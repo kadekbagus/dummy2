@@ -62,7 +62,7 @@ class NewsAPIController extends ControllerAPI
 
             $prefix = DB::getTablePrefix();
 
-            $news = News::select('news.news_id as news_id', 'news_translations.news_name as news_name', 'news.object_type', DB::raw('media.path as image_url'),
+            $news = News::select('news.news_id as news_id', 'news_translations.news_name as news_name', 'news.object_type', 'news.description', DB::raw('media.path as image_url'),
                         // query for get status active based on timezone
                         DB::raw("
                                 CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
