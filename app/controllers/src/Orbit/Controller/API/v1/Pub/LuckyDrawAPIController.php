@@ -94,6 +94,7 @@ class LuckyDrawAPIController extends IntermediateBaseController
                     'city',
                     'country',
                     'ci_domain',
+                    'lucky_draw_translations.description',
                     DB::raw("(CONCAT(ci_domain, '" . $ciLuckyDrawPath . "?id=', {$prefix}lucky_draws.lucky_draw_id)) as ci_path"),
                     DB::raw('media.path as image_url')
                 )
