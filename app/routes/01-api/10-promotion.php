@@ -78,3 +78,24 @@ Route::get('/api/v1/pub/mall-promotion-list', function()
 });
 
 Route::get('/app/v1/pub/mall-promotion-list', ['as' => 'pub-mall-promotion-list', 'uses' => 'IntermediatePubAuthController@Promotion_getMallPerPromotion']);
+
+
+/**
+ * Get mall promotion detail on landing page
+ */
+Route::get('/api/v1/pub/mall-promotion/detail', function()
+{
+    return Orbit\Controller\API\v1\Pub\PromotionAPIController::create()->getNewsItem();
+});
+
+Route::get('/app/v1/pub/mall-promotion/detail', ['as' => 'pub-mall-promotion-detail', 'uses' => 'IntermediatePubAuthController@Promotion_getPromotionItem']);
+
+/**
+ * List location of a news
+ */
+Route::get('/api/v1/pub/mall-promotion-location/list', function()
+{
+    return Orbit\Controller\API\v1\Pub\PromotionAPIController::create()->getMallPerNews();
+});
+
+Route::get('/app/v1/pub/mall-promotion-location/list', ['as' => 'pub-mall-promotion-location-list', 'uses' => 'IntermediatePubAuthController@Promotion_getPromotionLocations']);
