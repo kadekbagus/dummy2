@@ -58,7 +58,7 @@ class NewsAPIController extends ControllerAPI
 
             $prefix = DB::getTablePrefix();
 
-            $news = News::select('news.news_id as news_id', 'news_translations.news_name as news_name', 'news.object_type',
+            $news = News::select('news.news_id as news_id', 'news_translations.news_name as news_name', 'news.object_type', DB::raw('media.path as image'),
                         // query for get status active based on timezone
                         DB::raw("
                                 CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
@@ -81,6 +81,7 @@ class NewsAPIController extends ControllerAPI
                             "))
                         ->join('news_translations', 'news_translations.news_id', '=', 'news.news_id')
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
+                        ->leftJoin(DB::raw("( SELECT * FROM {$prefix}media WHERE media_name_long = 'news_translation_image_orig' ) as media"), DB::raw('media.object_id'), '=', 'news_translations.news_translation_id')
                         ->where('news_translations.merchant_language_id', '=', $languageEnId)
                         ->where('news.object_type', '=', 'news')
                         ->where('news_translations.news_name', '!=', '')
