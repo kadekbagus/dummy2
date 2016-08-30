@@ -47,12 +47,16 @@ class StoreAPIController extends ControllerAPI
 
             $prefix = DB::getTablePrefix();
 
-            $store = Tenant::select('merchants.merchant_id', 'merchants.name')
+            $store = Tenant::select('merchants.merchant_id', 'merchants.name',
+                                    DB::raw("count({$prefix}media.object_id) as total_media"),
+                                    DB::raw("(select path from {$prefix}media where media_name_long = 'retailer_logo_orig' and object_id = {$prefix}merchants.merchant_id) as logo_url"))
                 ->join(DB::raw("(select merchant_id, status, parent_id from {$prefix}merchants where object_type = 'mall') as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
+                ->leftJoin('media', 'media.object_id', '=', 'merchants.merchant_id')
                 ->where('merchants.status', 'active')
                 ->whereRaw("oms.status = 'active'")
-                ->groupBy('merchants.name')
-                ->orderBy($sort_by, $sort_mode);
+                ->groupBy('merchants.merchant_id')
+                ->orderBy('merchants.name', 'asc')
+                ->orderBy('total_media', 'desc');
 
             OrbitInput::get('filter_name', function ($filterName) use ($store, $prefix) {
                 if (! empty($filterName)) {
@@ -91,6 +95,18 @@ class StoreAPIController extends ControllerAPI
                 }
             });
 
+            $sql = $store->toSql();
+            foreach($store->getBindings() as $binding)
+            {
+              $value = is_numeric($binding) ? $binding : $this->quote($binding);
+              $sql = preg_replace('/\?/', $value, $sql, 1);
+            }
+
+            // Make union result subquery so that data can be ordering
+            $store = DB::table(DB::raw('(' . $sql . ') as a'))
+                ->groupBy('name')
+                ->orderBy($sort_by, $sort_mode);
+
             $_store = clone $store;
 
             $take = PaginationNumber::parseTakeFromGet('retailer');
@@ -100,7 +116,7 @@ class StoreAPIController extends ControllerAPI
             $store->skip($skip);
 
             $liststore = $store->get();
-            $count = RecordCounter::create($_store)->count();
+            $count = count($_store->get());
 
             $this->response->data = new stdClass();
             $this->response->data->total_records = $count;
