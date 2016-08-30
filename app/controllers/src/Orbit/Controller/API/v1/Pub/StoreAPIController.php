@@ -47,7 +47,7 @@ class StoreAPIController extends ControllerAPI
 
             $prefix = DB::getTablePrefix();
 
-            $store = Tenant::select('merchants.merchant_id', 'merchants.name',
+            $store = Tenant::select('merchants.*',
                                     DB::raw("count({$prefix}media.object_id) as total_media"),
                                     DB::raw("(select path from {$prefix}media where media_name_long = 'retailer_logo_orig' and object_id = {$prefix}merchants.merchant_id) as logo_url"))
                 ->join(DB::raw("(select merchant_id, status, parent_id from {$prefix}merchants where object_type = 'mall') as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
@@ -58,43 +58,6 @@ class StoreAPIController extends ControllerAPI
                 ->orderBy('merchants.name', 'asc')
                 ->orderBy('total_media', 'desc');
 
-            OrbitInput::get('filter_name', function ($filterName) use ($store, $prefix) {
-                if (! empty($filterName)) {
-                    if ($filterName === '#') {
-                        $store->whereRaw("SUBSTR({$prefix}merchants.name,1,1) not between 'a' and 'z'");
-                    } else {
-                        $filter = explode("-", $filterName);
-                        $store->whereRaw("SUBSTR({$prefix}merchants.name,1,1) between {$this->quote($filter[0])} and {$this->quote($filter[1])}");
-                    }
-                }
-            });
-
-            OrbitInput::get('keyword', function ($keyword) use ($store, $prefix) {
-                if (! empty($keyword)) {
-                    $store = $store->leftJoin('keyword_object', 'merchants.merchant_id', '=', 'keyword_object.object_id')
-                                ->leftJoin('keywords', 'keyword_object.keyword_id', '=', 'keywords.keyword_id')
-                                ->where(function($query) use ($keyword, $prefix)
-                                {
-                                    $word = explode(" ", $keyword);
-                                    foreach ($word as $key => $value) {
-                                        if (strlen($value) === 1 && $value === '%') {
-                                            $query->orWhere(function($q) use ($value, $prefix){
-                                                $q->whereRaw("{$prefix}merchants.name like '%|{$value}%' escape '|'")
-                                                  ->orWhereRaw("{$prefix}merchants.description like '%|{$value}%' escape '|'")
-                                                  ->orWhereRaw("{$prefix}keywords.keyword like '%|{$value}%' escape '|'");
-                                            });
-                                        } else {
-                                            $query->orWhere(function($q) use ($value, $prefix){
-                                                $q->where('merchants.name', 'like', '%' . $value . '%')
-                                                  ->orWhere('merchants.description', 'like', '%' . $value . '%')
-                                                  ->orWhere('keywords.keyword', 'like', '%' . $value . '%');
-                                            });
-                                        }
-                                    }
-                                });
-                }
-            });
-
             $sql = $store->toSql();
             foreach($store->getBindings() as $binding)
             {
@@ -103,9 +66,47 @@ class StoreAPIController extends ControllerAPI
             }
 
             // Make union result subquery so that data can be ordering
-            $store = DB::table(DB::raw('(' . $sql . ') as a'))
+            $store = DB::table(DB::raw('(' . $sql . ') as sub_query'))
+                ->select(DB::raw("sub_query.merchant_id"), 'name', 'logo_url')
                 ->groupBy('name')
                 ->orderBy($sort_by, $sort_mode);
+
+            OrbitInput::get('filter_name', function ($filterName) use ($store, $prefix) {
+                if (! empty($filterName)) {
+                    if ($filterName === '#') {
+                        $store->whereRaw("SUBSTR(sub_query.name,1,1) not between 'a' and 'z'");
+                    } else {
+                        $filter = explode("-", $filterName);
+                        $store->whereRaw("SUBSTR(sub_query.name,1,1) between {$this->quote($filter[0])} and {$this->quote($filter[1])}");
+                    }
+                }
+            });
+
+            OrbitInput::get('keyword', function ($keyword) use ($store, $prefix) {
+                if (! empty($keyword)) {
+                    $store = $store->leftJoin('keyword_object', DB::raw('sub_query.merchant_id'), '=', 'keyword_object.object_id')
+                                ->leftJoin('keywords', 'keyword_object.keyword_id', '=', 'keywords.keyword_id')
+                                ->where(function($query) use ($keyword, $prefix)
+                                {
+                                    $word = explode(" ", $keyword);
+                                    foreach ($word as $key => $value) {
+                                        if (strlen($value) === 1 && $value === '%') {
+                                            $query->orWhere(function($q) use ($value, $prefix){
+                                                $q->whereRaw("sub_query.name like '%|{$value}%' escape '|'")
+                                                  ->orWhereRaw("sub_query.description like '%|{$value}%' escape '|'")
+                                                  ->orWhereRaw("{$prefix}keywords.keyword like '%|{$value}%' escape '|'");
+                                            });
+                                        } else {
+                                            $query->orWhere(function($q) use ($value, $prefix){
+                                                $q->where(DB::raw('sub_query.name'), 'like', '%' . $value . '%')
+                                                  ->orWhere(DB::raw('sub_query.description'), 'like', '%' . $value . '%')
+                                                  ->orWhere('keywords.keyword', 'like', '%' . $value . '%');
+                                            });
+                                        }
+                                    }
+                                });
+                }
+            });
 
             $_store = clone $store;
 
