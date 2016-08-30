@@ -3487,6 +3487,33 @@ return array(
                 'object_type' => 'LuckyDraw',
                 'parameter_name' => 'lucky_draw_id'
             ),
+            // - Clicking on walkthrough page 1
+            '22' => array(
+                'name' => 'click_walkthrough',
+                'name_long' => 'Click Walkthrough Page 1',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - Clicking on walkthrough page 2
+            '23' => array(
+                'name' => 'click_walkthrough',
+                'name_long' => 'Click Walkthrough Page 2',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - Clicking on walkthrough page 3
+            '24' => array(
+                'name' => 'click_walkthrough',
+                'name_long' => 'Click Walkthrough Page 3',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
         ),
     ),
 
