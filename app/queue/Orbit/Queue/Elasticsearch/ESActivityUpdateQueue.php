@@ -15,6 +15,7 @@ use Orbit\Helper\Util\JobBurier;
 use Exception;
 use Log;
 use Orbit\Helper\Util\CampaignSourceParser;
+use Request;
 
 class ESActivityUpdateQueue
 {
@@ -62,6 +63,9 @@ class ESActivityUpdateQueue
                     ->where('activity_id', $activityId)
                     ->where('group', 'mobile-ci')
                     ->first();
+
+        Log::info('ES Queue Update HTTP_REFERER value: ' . $data['referer']);
+        Log::info('ES Queue Update HTTP_X_ORBIT_REFERER value: ' . $data['orbit_referer']);
 
         if (! is_object($activity)) {
             $job->delete();
@@ -134,9 +138,15 @@ class ESActivityUpdateQueue
                 'id' => $activity->activity_id,
                 'body' => []
             ];
+
+            $fullCurrentUrl = Request::fullUrl();
+            $urlForTracking = [ $data['referer'], $fullCurrentUrl ];
             $campaignData = CampaignSourceParser::create()
-                                                ->setUrl($data['referer'])
+                                                ->setUrls($urlForTracking)
                                                 ->getCampaignSource();
+
+            Log::info('ES Queue Update current url value: ' . $fullCurrentUrl);
+            Log::info('ES Queue Update Campaign tracking value: ' . serialize($campaignData));
             $esBody = [
                 'activity_name' =>  $activity->activity_name,
                 'activity_name_long' =>  $activity->activity_name_long,
@@ -215,13 +225,13 @@ class ESActivityUpdateQueue
             // Safely delete the object
             $job->delete();
 
-            $message = sprintf('[Job ID: `%s`] Elasticsearch Update Index; Status: OK; ES Index Name: %s; ES Index Type: %s; Activity %s',
+            $message = sprintf('[Job ID: `%s`] Elasticsearch Update Index; Status: OK; ES Index Name: %s; ES Index Type: %s; Activity ID: %s; Activity Name: %s',
                                 $job->getJobId(),
                                 $esConfig['indices']['activities']['index'],
                                 $esConfig['indices']['activities']['type'],
+                                $activity->activity_id,
                                 $activity->activity_name_long);
             Log::info($message);
-            Log::info('HTTP_REFERER for ES Data: ' . $data['referer']);
 
             return [
                 'status' => 'ok',
