@@ -79,3 +79,23 @@ Route::get('/api/v1/pub/mall-news-list', function()
 });
 
 Route::get('/app/v1/pub/mall-news-list', ['as' => 'pub-mall-news-list', 'uses' => 'IntermediatePubAuthController@News_getMallPerNews']);
+
+/**
+ * Get news detail on landing page
+ */
+Route::get('/api/v1/pub/news/detail', function()
+{
+    return Orbit\Controller\API\v1\Pub\NewsAPIController::create()->getNewsItem();
+});
+
+Route::get('/app/v1/pub/news/detail', ['as' => 'pub-news-detail', 'uses' => 'IntermediatePubAuthController@News_getNewsItem']);
+
+/**
+ * List location of a news
+ */
+Route::get('/api/v1/pub/news-location/list', function()
+{
+    return Orbit\Controller\API\v1\Pub\NewsAPIController::create()->getMallPerNews();
+});
+
+Route::get('/app/v1/pub/news-location/list', ['as' => 'pub-news-location-list', 'uses' => 'IntermediatePubAuthController@News_getNewsLocations']);
