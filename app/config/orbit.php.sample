@@ -288,6 +288,13 @@ return array(
         // will be used to determine the domain in mobile ci prefix dot, example: .gotomalls.cool
         'ci_domain' => '.gotomalls.cool',
 
+        // Flag to displaying a popup the value are using callback
+        'display_campaign_popup' => function($queryString) {
+            // isset no_popup AND no_popup=yes => TRUE
+            // isset no_popup AND no_popup!=yes => FALSE
+            return ! (isset($queryString['no_popup']) && $queryString['no_popup'] === 'yes');
+        },
+
         // Automatically add utm tracking in URL
         'append_utm_tracking_in_url' => FALSE,
 
@@ -3480,6 +3487,33 @@ return array(
                 'object_type' => 'LuckyDraw',
                 'parameter_name' => 'lucky_draw_id'
             ),
+            // - Clicking on walkthrough page 1
+            '22' => array(
+                'name' => 'click_walkthrough',
+                'name_long' => 'Click Walkthrough Page 1',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - Clicking on walkthrough page 2
+            '23' => array(
+                'name' => 'click_walkthrough',
+                'name_long' => 'Click Walkthrough Page 2',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - Clicking on walkthrough page 3
+            '24' => array(
+                'name' => 'click_walkthrough',
+                'name_long' => 'Click Walkthrough Page 3',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
         ),
     ),
 
@@ -3495,6 +3529,13 @@ return array(
             'url' => 'https://www.facebook.com/Gotomalls.Indo',
             'activity_name' => 'click_social_media',
             'activity_name_long' => 'Click Facebook',
+            'activity_module_name' => 'Application',
+            'activity_type' => 'click',
+        ),
+        'blog' => array(
+            'url' => 'https://blog.gotomalls.com',
+            'activity_name' => 'click_blog',
+            'activity_name_long' => 'Click Gotomalls Blog',
             'activity_module_name' => 'Application',
             'activity_type' => 'click',
         ),

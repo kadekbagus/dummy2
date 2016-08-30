@@ -65,9 +65,9 @@
             },
             addToWallet = function (ids, callback) {
                 var element = $("span[data-ids='" + ids +"']");
-
+                var url = '{{ route('coupon-add-to-wallet') }}';
                 $.ajax({
-                    url: apiPath + 'coupon/addtowallet',
+                    url: url,
                     method: 'POST',
                     data: {
                         coupon_id: ids

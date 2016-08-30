@@ -94,19 +94,7 @@ class IntermediateCIAuthController extends IntermediateBaseController
     {
         $userId = $session->read('guest_user_id');
 
-        if (! empty($userId)) {
-            $user = User::with('userDetail')
-                ->where('user_id', $userId)
-                ->whereHas('role', function($q) {
-                    $q->where('role_name', 'guest');
-                })
-                ->first();
-
-            if (! is_object($user)) {
-                $user = NULL;
-                // throw new Exception('Session error: user not found.');
-            }
-        } else {
+        $generateGuest = function ($session) {
             $user = GuestUserGenerator::create()->generate();
 
             $sessionData = $session->read(NULL);
@@ -117,6 +105,23 @@ class IntermediateCIAuthController extends IntermediateBaseController
             $sessionData['fullname'] = '';
 
             $session->update($sessionData);
+
+            return $user;
+        };
+
+        if (! empty($userId)) {
+            $user = User::with('userDetail')
+                ->where('user_id', $userId)
+                ->whereHas('role', function($q) {
+                    $q->where('role_name', 'guest');
+                })
+                ->first();
+
+            if (! is_object($user)) {
+                $user = $generateGuest($session);
+            }
+        } else {
+            $user = $generateGuest($session);
         }
 
         return $user;

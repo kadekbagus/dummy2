@@ -170,7 +170,7 @@ class UrlGenerator extends \Illuminate\Routing\UrlGenerator
             } else {
                 // ....
                 $insert_at = strlen($original);
-                $insert_qmark = true;
+                $insert_qmark = empty($additional_query) ? false : true;
             }
         }
 

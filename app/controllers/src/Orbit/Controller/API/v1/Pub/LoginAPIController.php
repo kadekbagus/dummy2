@@ -346,7 +346,8 @@ class LoginAPIController extends IntermediateBaseController
                     // There is a chance that user not 'grant' his email while approving our app
                     // so we double check it here
                     if (empty($userEmail)) {
-                        if (! empty($angular_ci_from_state)) {
+                        if (! empty($encoded_caller_url_full)) {
+                            $encoded_caller_url_full = $this->addHttps($encoded_caller_url_full);
                             $caller_url = $encoded_caller_url_full;
                         }
                         $parsed_caller_url = parse_url((string)$caller_url);
@@ -414,6 +415,7 @@ class LoginAPIController extends IntermediateBaseController
                             $this->acquireUser($retailer, $user, 'google');
                         }
                     }
+                    $redirect_to_url_from_state = $this->addHttps($redirect_to_url_from_state);
                     // request coming from angular-ci
                     return Redirect::to($redirect_to_url_from_state);
                 }
@@ -516,7 +518,7 @@ class LoginAPIController extends IntermediateBaseController
         $country = '';
 
         if (! is_null($error)) {
-            if ($angular_ci) {
+            if (! empty($encoded_caller_url)) {
                 return $this->getFacebookError($encoded_caller_url);
             }
             return $this->getFacebookError();
@@ -637,7 +639,7 @@ class LoginAPIController extends IntermediateBaseController
         setcookie('orbit_firstname', $firstName, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
         setcookie('login_from', 'Facebook', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
 
-        if ($angular_ci) {
+        if (! empty($encoded_redirect_to_url)) {
 
             if (!empty($mall_id)) {
                 $this->registerCustomValidation();
@@ -667,6 +669,7 @@ class LoginAPIController extends IntermediateBaseController
                     $this->acquireUser($retailer, $user, 'facebook');
                 }
             }
+            $encoded_redirect_to_url = $this->addHttps($encoded_redirect_to_url);
             return Redirect::to($encoded_redirect_to_url);
         }
 
@@ -1107,4 +1110,12 @@ class LoginAPIController extends IntermediateBaseController
                 ->save();
         }
     }
+
+    protected function addHttps($url) {
+        if (!preg_match("~^(?:f|ht)tps?://~i", $url)) {
+            $url = 'https://' . $url;
+        }
+        return $url;
+    }
+
 }
