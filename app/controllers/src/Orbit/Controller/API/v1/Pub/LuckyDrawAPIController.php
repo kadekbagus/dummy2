@@ -19,6 +19,7 @@ use Validator;
 use User;
 use Lang;
 use Mall;
+use Language;
 use Config;
 use LuckyDraw;
 use stdclass;
@@ -75,20 +76,35 @@ class LuckyDrawAPIController extends IntermediateBaseController
 
             $asiaJakartaTime = Carbon::now('Asia/Jakarta');
 
+            // Get language_if of english
+            $languageEnId = null;
+            $language = Language::where('name', 'en')->first();
+
+            if (! empty($language)) {
+                $languageEnId = $language->language_id;
+            }
+
+            $prefix = DB::getTablePrefix();
+
             // add type also
             $luckydraws = LuckyDraw::select(
-                    'lucky_draw_id',
-                    'lucky_draw_name',
+                    'lucky_draws.lucky_draw_id',
+                    'lucky_draw_translations.lucky_draw_name',
                     DB::raw("name as mall_name"),
                     'city',
                     'country',
                     'ci_domain',
-                    DB::raw("(CONCAT(ci_domain, '" . $ciLuckyDrawPath . "?id=', lucky_draw_id)) as ci_path")
+                    DB::raw("(CONCAT(ci_domain, '" . $ciLuckyDrawPath . "?id=', {$prefix}lucky_draws.lucky_draw_id)) as ci_path"),
+                    DB::raw('media.path')
                 )
                 ->leftJoin('merchants', 'lucky_draws.mall_id', '=', 'merchants.merchant_id')
+                ->leftJoin('lucky_draw_translations', 'lucky_draw_translations.lucky_draw_id', '=', 'lucky_draws.lucky_draw_id')
+                ->leftJoin(DB::raw("( SELECT * FROM {$prefix}media WHERE media_name_long = 'lucky_draw_translation_image_orig' ) as media"), 'lucky_draw_translations.lucky_draw_translation_id', '=', DB::raw('media.object_id'))
                 ->active('lucky_draws')
+                ->where('lucky_draw_translations.merchant_language_id', '=', $languageEnId)
                 ->where('lucky_draws.start_date', '<=', $asiaJakartaTime)
                 ->where('lucky_draws.grace_period_date', '>=', $asiaJakartaTime);
+
 
             OrbitInput::get('object_type', function($objType) use($luckydraws) {
                 $luckydraws->where('lucky_draws.object_type', $objType);
