@@ -130,7 +130,27 @@ Route::get('/app/v1/pub/store-list', ['as' => 'pub-store-list', 'uses' => 'Inter
  */
 Route::get('/api/v1/pub/mall-store-list', function()
 {
-    return Orbit\Controller\API\v1\Pub\StoreAPIController::create()->getStoreList();
+    return Orbit\Controller\API\v1\Pub\StoreAPIController::create()->getMallStoreList();
 });
 
 Route::get('/app/v1/pub/mall-store-list', ['as' => 'pub-mall-store-list', 'uses' => 'IntermediatePubAuthController@Store_getMallStoreList']);
+
+/**
+ * Get Store Detail
+ */
+Route::get('/api/v1/pub/store-detail', function()
+{
+    return Orbit\Controller\API\v1\Pub\StoreAPIController::create()->getStoreDetail();
+});
+
+Route::get('/app/v1/pub/store-detail', ['as' => 'pub-store-detail', 'uses' => 'IntermediatePubAuthController@Store_getStoreDetail']);
+
+/**
+ * Get mall detail based on store name
+ */
+Route::get('/api/v1/pub/mall-detail-store', function()
+{
+    return Orbit\Controller\API\v1\Pub\StoreAPIController::create()->getMallDetailStore();
+});
+
+Route::get('/app/v1/pub/mall-detail-store', ['as' => 'pub-mall-detail-store', 'uses' => 'IntermediatePubAuthController@Store_getMallDetailStore']);
