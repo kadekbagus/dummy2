@@ -834,6 +834,22 @@ class IntermediateLoginController extends IntermediateBaseController
         $response = new ResponseProvider();
         try {
             $this->session->start(array(), 'no-session-creation');
+            if (empty($this->session->read('guest_user_id'))) {
+                $guestConfig = [
+                    'session' => $this->session
+                ];
+                $guest = GuestUserGenerator::create($guestConfig)->generate();
+
+                $sessionData = $this->session->read(NULL);
+                $sessionData['logged_in'] = TRUE;
+                $sessionData['guest_user_id'] = $guest->user_id;
+                $sessionData['guest_email'] = $guest->user_email;
+                $sessionData['role'] = $guest->role->role_name;
+                $sessionData['fullname'] = '';
+
+                $this->session->update($sessionData);
+            }
+
             $response->data = $this->session->getSession();
 
             unset($response->data->userAgent);
@@ -847,7 +863,7 @@ class IntermediateLoginController extends IntermediateBaseController
                     $this->session = SessionPreparer::prepareSession();
                 }
                 $guestConfig = [
-                    'record_signin_activity' => FALSE
+                    'session' => $this->session
                 ];
                 $guest = GuestUserGenerator::create($guestConfig)->generate();
 
@@ -860,6 +876,8 @@ class IntermediateLoginController extends IntermediateBaseController
 
                 $this->session->update($sessionData);
                 $response->data = $this->session->getSession();
+                unset($response->data->userAgent);
+                unset($response->data->ipAddress);
             } else {
                 $response->code = $e->getCode();
                 $response->status = 'error';
