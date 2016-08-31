@@ -74,8 +74,6 @@ class LuckyDrawAPIController extends IntermediateBaseController
             $ciLuckyDrawPath = URL::route('ci-luckydraw-detail', []);
             $ciLuckyDrawPath = $this->getRelPathWithoutParam($ciLuckyDrawPath, 'orbit_session');
 
-            $asiaJakartaTime = Carbon::now('Asia/Jakarta');
-
             // Get language_if of english
             $languageEnId = null;
             $language = Language::where('name', 'en')->first();
@@ -96,15 +94,26 @@ class LuckyDrawAPIController extends IntermediateBaseController
                     'ci_domain',
                     'lucky_draw_translations.description',
                     DB::raw("(CONCAT(ci_domain, '" . $ciLuckyDrawPath . "?id=', {$prefix}lucky_draws.lucky_draw_id)) as ci_path"),
-                    DB::raw('media.path as image_url')
+                    DB::raw('media.path as image_url'),
+                    DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
+                             THEN {$prefix}campaign_status.campaign_status_name ELSE (
+                                 CASE WHEN {$prefix}lucky_draws.grace_period_date < (
+                                     SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
+                                     FROM {$prefix}merchants om
+                                     LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
+                                     WHERE om.merchant_id = {$prefix}lucky_draws.mall_id)
+                                 THEN 'expired'
+                             ELSE {$prefix}campaign_status.campaign_status_name END)
+                             END AS campaign_status")
                 )
+                ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'lucky_draws.campaign_status_id')
                 ->leftJoin('merchants', 'lucky_draws.mall_id', '=', 'merchants.merchant_id')
                 ->leftJoin('lucky_draw_translations', 'lucky_draw_translations.lucky_draw_id', '=', 'lucky_draws.lucky_draw_id')
                 ->leftJoin(DB::raw("( SELECT * FROM {$prefix}media WHERE media_name_long = 'lucky_draw_translation_image_orig' ) as media"), 'lucky_draw_translations.lucky_draw_translation_id', '=', DB::raw('media.object_id'))
                 ->active('lucky_draws')
                 ->where('lucky_draw_translations.merchant_language_id', '=', $languageEnId)
-                ->where('lucky_draws.start_date', '<=', $asiaJakartaTime)
-                ->where('lucky_draws.grace_period_date', '>=', $asiaJakartaTime);
+                ->where('lucky_draw_translations.lucky_draw_name', '!=', '')
+                ->havingRaw("campaign_status = 'ongoing'");
 
             OrbitInput::get('object_type', function($objType) use($luckydraws) {
                 $luckydraws->where('lucky_draws.object_type', $objType);
@@ -156,18 +165,6 @@ class LuckyDrawAPIController extends IntermediateBaseController
                 $data->records = $listOfRec;
             }
 
-            if (empty($skip)) {
-                $activityNotes = sprintf('Page viewed: Landing Page Lucky Draw List Page');
-                $activity->setUser($user)
-                    ->setActivityName('view_landing_page_lucky_draw_list')
-                    ->setActivityNameLong('View GoToMalls Lucky Draw List')
-                    ->setObject(null)
-                    ->setModuleName('LuckyDraw')
-                    ->setNotes($activityNotes)
-                    ->responseOK()
-                    ->save();
-            }
-
             $this->response->code = 0;
             $this->response->status = 'success';
             $this->response->message = 'Success';
@@ -181,15 +178,6 @@ class LuckyDrawAPIController extends IntermediateBaseController
             $this->response->data = null;
             $httpCode = 403;
 
-            $activityNotes = sprintf('Failed to view Page: Landing Page Lucky Draw List. Err: %s', $e->getMessage());
-            $activity->setUser($user)
-                ->setActivityName('view_landing_page_lucky_draw_list')
-                ->setActivityNameLong('View GoToMalls Lucky Draw List')
-                ->setObject(null)
-                ->setModuleName('LuckyDraw')
-                ->setNotes($activityNotes)
-                ->responseFailed()
-                ->save();
         } catch (InvalidArgsException $e) {
 
             $this->response->code = $e->getCode();
@@ -198,15 +186,6 @@ class LuckyDrawAPIController extends IntermediateBaseController
             $this->response->data = null;
             $httpCode = 403;
 
-            $activityNotes = sprintf('Failed to view Page: Landing Page Lucky Draw List. Err: %s', $e->getMessage());
-            $activity->setUser($user)
-                ->setActivityName('view_landing_page_lucky_draw_list')
-                ->setActivityNameLong('View GoToMalls Lucky Draw List')
-                ->setObject(null)
-                ->setModuleName('LuckyDraw')
-                ->setNotes($activityNotes)
-                ->responseFailed()
-                ->save();
         } catch (QueryException $e) {
 
             $this->response->code = $e->getCode();
@@ -221,15 +200,6 @@ class LuckyDrawAPIController extends IntermediateBaseController
             $this->response->data = null;
             $httpCode = 500;
 
-            $activityNotes = sprintf('Failed to view Page: Landing Page Lucky Draw List. Err: %s', $e->getMessage());
-            $activity->setUser($user)
-                ->setActivityName('view_landing_page_lucky_draw_list')
-                ->setActivityNameLong('View GoToMalls Lucky Draw List')
-                ->setObject(null)
-                ->setModuleName('LuckyDraw')
-                ->setNotes($activityNotes)
-                ->responseFailed()
-                ->save();
         } catch (\Exception $e) {
 
             $this->response->code = Status::UNKNOWN_ERROR;
@@ -238,15 +208,6 @@ class LuckyDrawAPIController extends IntermediateBaseController
             $this->response->data = null;
             $httpCode = 500;
 
-            $activityNotes = sprintf('Failed to view Page: Landing Page Lucky Draw List. Err: %s', $e->getMessage());
-            $activity->setUser($user)
-                ->setActivityName('view_landing_page_lucky_draw_list')
-                ->setActivityNameLong('View GoToMalls Lucky Draw List')
-                ->setObject(null)
-                ->setModuleName('LuckyDraw')
-                ->setNotes($activityNotes)
-                ->responseFailed()
-                ->save();
         }
 
         return $this->render($this->response);
