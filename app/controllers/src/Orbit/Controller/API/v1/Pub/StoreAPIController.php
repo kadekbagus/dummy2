@@ -325,8 +325,6 @@ class StoreAPIController extends ControllerAPI
     {
         $httpCode = 200;
         try {
-            $sort_by = OrbitInput::get('sortby', 'name');
-            $sort_mode = OrbitInput::get('sortmode','asc');
             $storename = OrbitInput::get('store_name');
 
             $validator = Validator::make(
@@ -352,13 +350,22 @@ class StoreAPIController extends ControllerAPI
             $store = Tenant::select('merchants.merchant_id',
                                 'merchants.name',
                                 'merchants.description',
-                                'merchants.url'
+                                'merchants.url',
+                                DB::Raw("COUNT({$prefix}merchants.merchant_id) as total_location")
                             )
-                ->with('mediaLogo', 'mediaImage')
                 ->with(['categories' => function ($q) {
                         $q->select(
-                                'categories.merchant_id',
                                 'category_name'
+                            );
+                    }, 'mediaLogo' => function ($q) {
+                        $q->select(
+                                'media.path',
+                                'media.object_id'
+                            );
+                    }, 'mediaImage' => function ($q) {
+                        $q->select(
+                                'media.path',
+                                'media.object_id'
                             );
                     }])
                 ->join(DB::raw("(select merchant_id, status, parent_id from {$prefix}merchants where object_type = 'mall') as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
@@ -366,49 +373,9 @@ class StoreAPIController extends ControllerAPI
                 ->whereRaw("oms.status = 'active'")
                 ->where('merchants.name', $storename)
                 ->groupBy('merchants.name')
-                ->orderBy($sort_by, $sort_mode);
+                ->get();
 
-            OrbitInput::get('keyword', function ($keyword) use ($store, $prefix) {
-                if (! empty($keyword)) {
-                    $store = $store->leftJoin('keyword_object', 'merchants.merchant_id', '=', 'keyword_object.object_id')
-                                ->leftJoin('keywords', 'keyword_object.keyword_id', '=', 'keywords.keyword_id')
-                                ->where(function($query) use ($keyword, $prefix)
-                                {
-                                    $word = explode(" ", $keyword);
-                                    foreach ($word as $key => $value) {
-                                        if (strlen($value) === 1 && $value === '%') {
-                                            $query->orWhere(function($q) use ($value, $prefix){
-                                                $q->whereRaw("{$prefix}merchants.name like '%|{$value}%' escape '|'")
-                                                  ->orWhereRaw("{$prefix}merchants.description like '%|{$value}%' escape '|'")
-                                                  ->orWhereRaw("{$prefix}keywords.keyword like '%|{$value}%' escape '|'");
-                                            });
-                                        } else {
-                                            $query->orWhere(function($q) use ($value, $prefix){
-                                                $q->where('merchants.name', 'like', '%' . $value . '%')
-                                                  ->orWhere('merchants.description', 'like', '%' . $value . '%')
-                                                  ->orWhere('keywords.keyword', 'like', '%' . $value . '%');
-                                            });
-                                        }
-                                    }
-                                });
-                }
-            });
-
-            $_store = clone $store;
-
-            $take = PaginationNumber::parseTakeFromGet('retailer');
-            $store->take($take);
-
-            $skip = PaginationNumber::parseSkipFromGet();
-            $store->skip($skip);
-
-            $liststore = $store->get();
-            $count = RecordCounter::create($_store)->count();
-
-            $this->response->data = new stdClass();
-            $this->response->data->total_records = $count;
-            $this->response->data->returned_records = count($liststore);
-            $this->response->data->records = $liststore;
+            $this->response->data = $store;
         } catch (ACLForbiddenException $e) {
 
             $this->response->code = $e->getCode();
@@ -512,7 +479,6 @@ class StoreAPIController extends ControllerAPI
                                         'merchants.phone',
                                         'merchants.url',
                                         'merchants.description',
-                                        'merchants.floor_id',
                                         'merchants.parent_id',
                                         DB::raw("(CASE WHEN unit = '' THEN {$prefix}objects.object_name ELSE CONCAT({$prefix}objects.object_name, \" - \", unit) END) AS location")
                                     )
@@ -523,8 +489,12 @@ class StoreAPIController extends ControllerAPI
                               ->with('mediaMap')
                               ->with(['categories' => function ($q) {
                                     $q->select(
-                                            'categories.merchant_id',
                                             'category_name'
+                                        );
+                                }, 'mediaMap' => function ($q) {
+                                    $q->select(
+                                            'media.object_id',
+                                            'media.path'
                                         );
                                 }]);
                         }]);
