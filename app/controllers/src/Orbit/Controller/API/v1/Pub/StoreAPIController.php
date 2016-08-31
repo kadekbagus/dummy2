@@ -615,14 +615,18 @@ class StoreAPIController extends ControllerAPI
                                         DB::Raw("t.merchant_id as tenant_id"),
                                         DB::Raw("{$prefix}news.news_id as campaign_id"),
                                         DB::Raw("{$prefix}news.news_name as campaign_name"),
-                                        DB::Raw("{$prefix}news.object_type as campaign_type")
+                                        DB::Raw("{$prefix}news.object_type as campaign_type"),
+                                        DB::Raw("img.path as campaign_image")
                                     )
                                 ->leftJoin('news_merchant as nm', DB::Raw('nm.news_id'), '=', 'news.news_id')
                                 ->leftJoin('merchants as t', DB::Raw('t.merchant_id'), '=', DB::Raw('nm.merchant_id'))
                                 ->leftJoin('merchants as m', DB::Raw('m.merchant_id'), '=', DB::Raw('t.parent_id'))
+                                ->leftJoin('media as img', DB::Raw('img.object_id'), '=', 'news.news_id')
                                 ->where(DB::Raw('t.status'), 'active')
                                 ->where(DB::Raw('t.name'), $store_name)
-                                ->where(DB::Raw('m.status'), 'active');
+                                ->where(DB::Raw('m.status'), 'active')
+                                ->whereIn(DB::Raw('img.object_name'), ['news_translation', 'promotion_translation'])
+                                ->where(DB::Raw('img.media_name_long'), 'like', '%_orig');
 
             // get coupon list
             $coupon = DB::table('promotions')
@@ -630,14 +634,18 @@ class StoreAPIController extends ControllerAPI
                                         DB::Raw("t.merchant_id as tenant_id"),
                                         DB::Raw("{$prefix}promotions.promotion_id as campaign_id"),
                                         DB::Raw("{$prefix}promotions.promotion_name as campaign_name"),
-                                        DB::Raw("'coupon' as campaign_type")
+                                        DB::Raw("'coupon' as campaign_type"),
+                                        DB::Raw("img.path as campaign_image")
                                     )
                                 ->leftJoin('promotion_retailer as pr', DB::Raw('pr.promotion_id'), '=', 'promotions.promotion_id')
                                 ->leftJoin('merchants as t', DB::Raw('t.merchant_id'), '=', DB::Raw('pr.retailer_id'))
                                 ->leftJoin('merchants as m', DB::Raw('m.merchant_id'), '=', DB::Raw('t.parent_id'))
+                                ->leftJoin('media as img', DB::Raw('img.object_id'), '=', 'promotions.promotion_id')
                                 ->where(DB::Raw('t.status'), 'active')
                                 ->where(DB::Raw('t.name'), $store_name)
-                                ->where(DB::Raw('m.status'), 'active');
+                                ->where(DB::Raw('m.status'), 'active')
+                                ->where(DB::Raw('img.object_name'), 'coupon_translation')
+                                ->where(DB::Raw('img.media_name_long'), 'like', '%_orig');
 
             $union_campaign = $news_promotion->union($coupon);
 
