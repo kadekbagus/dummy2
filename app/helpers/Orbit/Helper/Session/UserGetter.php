@@ -49,7 +49,10 @@ class UserGetter
         $userId = $session->read('guest_user_id');
 
         $generateGuest = function ($session) {
-            $user = GuestUserGenerator::create()->generate();
+            $guestConfig = [
+                'session' => $this->session
+            ];
+            $user = GuestUserGenerator::create($guestConfig)->generate();
 
             $sessionData = $session->read(NULL);
             $sessionData['logged_in'] = TRUE;
