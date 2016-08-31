@@ -50,7 +50,7 @@ class UserGetter
 
         $generateGuest = function ($session) {
             $guestConfig = [
-                'session' => $this->session
+                'session' => $session
             ];
             $user = GuestUserGenerator::create($guestConfig)->generate();
 
