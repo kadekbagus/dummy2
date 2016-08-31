@@ -89,7 +89,7 @@ class LuckyDrawAPIController extends IntermediateBaseController
                     DB::raw('media.path as image_url'),
                     DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
                              THEN {$prefix}campaign_status.campaign_status_name ELSE (
-                                 CASE WHEN {$prefix}lucky_draws.end_date < (
+                                 CASE WHEN {$prefix}lucky_draws.grace_period_date < (
                                      SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
                                      FROM {$prefix}merchants om
                                      LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
