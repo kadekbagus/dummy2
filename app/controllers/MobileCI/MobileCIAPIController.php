@@ -85,6 +85,7 @@ use MobileCI\ExCaptivePortalController as CaptivePortalController;
 use Orbit\Helper\Net\SessionPreparer;
 use Orbit\Database\ObjectID;
 use Str;
+use Orbit\Helper\Net\SignInRecorder;
 
 class MobileCIAPIController extends BaseCIController
 {
@@ -1224,8 +1225,7 @@ class MobileCIAPIController extends BaseCIController
                     setcookie('orbit_firstname', $firstName, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
                     setcookie('login_from', 'Google', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
 
-
-                    $this->setSignInActivity($loggedInUser, 'google', $retailer);
+                    SignInRecorder::setSignInActivity($loggedInUser, 'google', $retailer, NULL, TRUE);
 
                     // special session value for visited malls within single session
                     $session = $this->session;
@@ -1384,7 +1384,7 @@ class MobileCIAPIController extends BaseCIController
             setcookie('orbit_firstname', $firstName, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
             setcookie('login_from', 'Facebook', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
 
-            $this->setSignInActivity($loggedInUser, 'facebook', $retailer);
+            SignInRecorder::setSignInActivity($loggedInUser, 'facebook', $retailer, NULL, TRUE);
 
             // special session value for visited malls within single session
             $session = $this->session;
@@ -10096,7 +10096,7 @@ class MobileCIAPIController extends BaseCIController
                 $user = $response->data;
                 $mall = Mall::active()->where('merchant_id', OrbitInput::get('retailer_id'))->first();
 
-                $this->setSignInActivity($user, 'form', $mall);
+                SignInRecorder::setSignInActivity($user, 'form', $mall, NULL, TRUE);
             }
 
             $payload = OrbitInput::get('payload');
@@ -10693,7 +10693,10 @@ class MobileCIAPIController extends BaseCIController
 
             // check guest user id on session if empty create new one
             if (empty($guest_id)) {
-                $guest = GuestUserGenerator::create()->generate();
+                $guestConfig = [
+                    'session' => $this->session
+                ];
+                $guest = GuestUserGenerator::create($guestConfig)->generate();
                 $guest_id = $guest->user_id;
                 $sessionData = $this->session->read(NULL);
                 $sessionData['logged_in'] = TRUE;
@@ -10766,7 +10769,7 @@ class MobileCIAPIController extends BaseCIController
 
             // if the user is viewing the mall for the 1st time then set the signup activity
             if ($firstAcquired) {
-                $this->setSignUpActivity($user, $signUpVia, $retailer);
+                SignInRecorder::setSignUpActivity($user, $signUpVia, $retailer);
             }
         }
 
@@ -10776,72 +10779,8 @@ class MobileCIAPIController extends BaseCIController
             $visited_locations = $session->read('visited_location');
         }
         if (! in_array($retailer->merchant_id, $visited_locations)) {
-            $this->setSignInActivity($user, $signUpVia, $retailer, null);
+            SignInRecorder::setSignInActivity($user, $signUpVia, $retailer, NULL, TRUE);
             $session->write('visited_location', array_merge($visited_locations, [$retailer->merchant_id]));
-        }
-    }
-
-    // create activity signup from socmed
-    public function setSignUpActivity($user, $from, $retailer)
-    {
-        $activity = Activity::mobileci()
-            ->setLocation($retailer)
-            ->setActivityType('registration')
-            ->setUser($user)
-            ->setActivityName('registration_ok')
-            ->setObject($user)
-            ->setModuleName('User')
-            ->responseOK();
-
-        if ($from === 'facebook') {
-            $activity->setActivityNameLong('Sign Up via Mobile (Facebook)')
-                    ->setNotes('Sign Up via Mobile (Facebook) OK');
-        } else if ($from === 'google') {
-            $activity->setActivityNameLong('Sign Up via Mobile (Google+)')
-                    ->setNotes('Sign Up via Mobile (Google+) OK');
-        } else if ($from === 'form') {
-            $activity->setActivityNameLong('Sign Up via Mobile (Email Address)')
-                    ->setNotes('Sign Up via Mobile (Email Address) OK');
-        }
-
-        $activity->save();
-    }
-
-    // create activity signin from socmed
-    public function setSignInActivity($user, $from, $retailer, $activity = null)
-    {
-        if (is_object($user)) {
-            if (is_null($activity)) {
-                $activity = Activity::mobileci()
-                        ->setLocation($retailer)
-                        ->setUser($user)
-                        ->setActivityName('login_ok')
-                        ->setActivityNameLong('Sign In')
-                        ->setActivityType('login')
-                        ->setObject($user)
-                        ->setModuleName('Application')
-                        ->responseOK();
-
-                $activity->save();
-            }
-
-            $newUserSignin = new UserSignin();
-            $newUserSignin->user_id = $user->user_id;
-            $newUserSignin->signin_via = $from;
-            $newUserSignin->location_id = $retailer->merchant_id;
-            $newUserSignin->activity_id = $activity->activity_id;
-            $newUserSignin->save();
-        } else {
-            $activity = Activity::mobileci()
-                    ->setLocation($retailer)
-                    ->setUser('guest')
-                    ->setActivityName('login_failed')
-                    ->setActivityNameLong('Sign In Failed')
-                    ->setActivityType('login')
-                    ->setModuleName('Application')
-                    ->responseFailed();
-
-            $activity->save();
         }
     }
 
@@ -10904,8 +10843,7 @@ class MobileCIAPIController extends BaseCIController
             }
             $user = $login_response_data->data;
             $this->linkGuestToUser($user);
-            // fill the user sign in table
-            // $this->setSignInActivity($user, 'form', $retailer, $user->activity);
+
             // acquire user
             $user_obj = User::where('user_id', $user->user_id)->first();
             $this->acquireUser($retailer, $user_obj, 'form');
