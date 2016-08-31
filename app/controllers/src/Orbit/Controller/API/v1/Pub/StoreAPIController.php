@@ -294,14 +294,6 @@ class StoreAPIController extends ControllerAPI
      *
      * @author Irianto <irianto@dominopos.com>
      *
-     * List of API Parameters
-     * ----------------------
-     * @param string sortby
-     * @param string sortmode
-     * @param string take
-     * @param string skip
-     * @param string filter_name
-     *
      * @return Illuminate\Support\Facades\Response
      */
     public function getStoreDetail()
@@ -527,6 +519,146 @@ class StoreAPIController extends ControllerAPI
             $this->response->data->total_records = $count;
             $this->response->data->returned_records = count($listmall);
             $this->response->data->records = $listmall;
+        } catch (ACLForbiddenException $e) {
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (InvalidArgsException $e) {
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $result['total_records'] = 0;
+            $result['returned_records'] = 0;
+            $result['records'] = null;
+
+            $this->response->data = $result;
+            $httpCode = 403;
+        } catch (QueryException $e) {
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+        } catch (Exception $e) {
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 500;
+        }
+
+        $output = $this->render($httpCode);
+
+        return $output;
+    }
+
+    /**
+     * GET - get campaign store list after click store name
+     *
+     * @author Irianto Pratama <irianto@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param string sortby
+     * @param string sortmode
+     * @param string take
+     * @param string skip
+     * @param string filter_name
+     * @param string store_name
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function getCampaignStoreList()
+    {
+        $httpCode = 200;
+        try {
+            $sort_by = OrbitInput::get('sortby', 'merchants.name');
+            $sort_mode = OrbitInput::get('sortmode','asc');
+            $store_name = OrbitInput::get('store_name');
+            $keyword = OrbitInput::get('keyword');
+
+            $validator = Validator::make(
+                array(
+                    'store_name' => $store_name,
+                ),
+                array(
+                    'store_name' => 'required',
+                ),
+                array(
+                    'required' => 'Store name is required',
+                )
+            );
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $prefix = DB::getTablePrefix();
+
+            // get news promotion list
+            $news_promotion = DB::table('news')
+                                ->select(
+                                        DB::Raw("t.merchant_id as tenant_id"),
+                                        DB::Raw("{$prefix}news.news_id as campaign_id"),
+                                        DB::Raw("{$prefix}news.news_name as campaign_name"),
+                                        DB::Raw("{$prefix}news.object_type as campaign_type")
+                                    )
+                                ->leftJoin('news_merchant as nm', DB::Raw('nm.news_id'), '=', 'news.news_id')
+                                ->leftJoin('merchants as t', DB::Raw('t.merchant_id'), '=', DB::Raw('nm.merchant_id'))
+                                ->leftJoin('merchants as m', DB::Raw('m.merchant_id'), '=', DB::Raw('t.parent_id'))
+                                ->where(DB::Raw('t.status'), 'active')
+                                ->where(DB::Raw('t.name'), $store_name)
+                                ->where(DB::Raw('m.status'), 'active');
+
+            // get coupon list
+            $coupon = DB::table('promotions')
+                                ->select(
+                                        DB::Raw("t.merchant_id as tenant_id"),
+                                        DB::Raw("{$prefix}promotions.promotion_id as campaign_id"),
+                                        DB::Raw("{$prefix}promotions.promotion_name as campaign_name"),
+                                        DB::Raw("'coupon' as campaign_type")
+                                    )
+                                ->leftJoin('promotion_retailer as pr', DB::Raw('pr.promotion_id'), '=', 'promotions.promotion_id')
+                                ->leftJoin('merchants as t', DB::Raw('t.merchant_id'), '=', DB::Raw('pr.retailer_id'))
+                                ->leftJoin('merchants as m', DB::Raw('m.merchant_id'), '=', DB::Raw('t.parent_id'))
+                                ->where(DB::Raw('t.status'), 'active')
+                                ->where(DB::Raw('t.name'), $store_name)
+                                ->where(DB::Raw('m.status'), 'active');
+
+            $union_campaign = $news_promotion->union($coupon);
+
+            $querySql = $union_campaign->toSql();
+
+            $campaign = DB::table(DB::Raw("({$querySql}) as campaign"))->mergeBindings($union_campaign);
+
+            $_campaign = clone $campaign;
+
+            $take = PaginationNumber::parseTakeFromGet('campaign');
+            $campaign->take($take);
+
+            $skip = PaginationNumber::parseSkipFromGet();
+            $campaign->skip($skip);
+
+            $listcampaign = $campaign->get();
+
+            $this->response->data = new stdClass();
+            $this->response->data->total_records = count($_campaign->get());
+            $this->response->data->returned_records = count($listcampaign);
+            $this->response->data->records = $listcampaign;
         } catch (ACLForbiddenException $e) {
 
             $this->response->code = $e->getCode();
