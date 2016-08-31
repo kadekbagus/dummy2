@@ -54,6 +54,7 @@ class ESMallUpdateQueue
     public function fire($job, $data)
     {
         $mallId = $data['mall_id'];
+        $prefix = DB::getTablePrefix();
         $mall = Mall::with('country')
                     ->leftJoin(DB::raw("(select * from {$prefix}media where media_name_long = 'mall_logo_orig') as med"), DB::raw("med.object_id"), '=', 'merchants.merchant_id')
                     ->where('merchants.status', '!=', 'deleted')
