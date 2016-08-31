@@ -322,8 +322,8 @@ return array(
         'use'                              => 'Use',
         'next_time'                        => 'Next time',
         'check_coupon'                     => 'You can check your coupons in Home Page <i class="fa fa-arrow-right"></i> Coupons',
-        'add_wallet'                       => 'Add to <br/> Wallet',
-        'added_wallet'                     => 'Added to <br/> Wallet',
+        'add_wallet'                       => 'Get Coupon',
+        'added_wallet'                     => '',
         'login_to_show_coupon_wallet'      => 'You need to sign in to view your coupon wallet.'
     ),
 

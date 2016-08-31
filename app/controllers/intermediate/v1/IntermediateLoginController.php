@@ -719,6 +719,14 @@ class IntermediateLoginController extends IntermediateBaseController
         $location_id = isset($_GET['mall_id']) ? $_GET['mall_id'] : NULL;
         $validFrom = ['portal', 'mobile-ci', 'pos'];
 
+        $expireTime = Config::get('orbit.session.session_origin.cookie.expire');
+        unset($_COOKIE['login_from']);
+        unset($_COOKIE['orbit_email']);
+        unset($_COOKIE['orbit_firstname']);
+        setcookie('orbit_email', '', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+        setcookie('orbit_firstname', '', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+        setcookie('login_from', '', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+
         switch ($from) {
             case 'mobile-ci':
                 $activity = Activity::mobileci()
