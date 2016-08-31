@@ -83,6 +83,9 @@ Artisan::add(new ImportDBIP);
 // Create table for DB IP
 Artisan::add(new CreateTableDBIP);
 
+// Update es mall index
+Artisan::add(new ElasticsearchUpdateMallIndex);
+
 // Insert or update data on settings table
 // @Todo investigate why its error
 // Artisan::add(new MerchantSetting);
