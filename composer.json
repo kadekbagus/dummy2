@@ -32,7 +32,8 @@
                     "Orbit\\Database\\": "vendor/dominopos/orbit-database/",
                     "Orbit\\Queue\\": "app/queue/",
                     "Orbit\\Controller\\": "app/controllers/src",
-                    "Orbit\\Helper\\": "app/helpers"
+                    "Orbit\\Helper\\": "app/helpers",
+                    "Orbit\\Mailchimp\\": "vendor/dominopos/orbit-mailchimp/"
                 },
         "classmap": [
             "app/commands",

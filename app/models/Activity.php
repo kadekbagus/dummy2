@@ -763,11 +763,6 @@ class Activity extends Eloquent
      */
     public function save(array $options = array())
     {
-        if ((App::environment() === 'testing') && (Config::get('orbit.activity.force.save', FALSE) !== TRUE)) {
-            // Skip saving
-            return 1;
-        }
-
         if (empty($this->module_name)) {
             $this->module_name = $this->object_name;
 
@@ -809,6 +804,7 @@ class Activity extends Eloquent
         $this->saveToMerchantPageView();
         $this->saveToWidgetClick();
         $this->saveToConnectionTime();
+        $this->saveEmailToMailchimp();
 
         if ($this->group === 'mobile-ci') {
             $this->saveToElasticSearch();
@@ -1164,7 +1160,7 @@ class Activity extends Eloquent
      * Create new document in elasticsearch.
      *
      * @author Shelgi Prasetyo <shelgi@dominopos.com>
-     * @author Rio Astamal
+     * @author Rio Astamal <rio@dominopos.com>
      * @return void
      */
     protected function saveToElasticSearch()
@@ -1188,6 +1184,24 @@ class Activity extends Eloquent
             'activity_id' => $this->activity_id,
             'referer' => substr($referer, 0, 1024),
             'orbit_referer' => substr($orbitReferer, 0, 1024)
+        ]);
+    }
+
+
+    /**
+     * Add the email to subscriber list in the Mailchimp.
+     *
+     * @author Rio Astamal <rio@dominopos.com>
+     * @return void
+     */
+    protected function saveEmailToMailchimp()
+    {
+        if ($this->activity_name !== 'activation_ok') {
+            return;
+        }
+
+        Queue::push('Orbit\\Queue\\Mailchimp\\MailchimpSubscriberAddQueue', [
+            'activity_id' => $this->activity_id
         ]);
     }
 
