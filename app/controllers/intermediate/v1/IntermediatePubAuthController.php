@@ -94,20 +94,11 @@ class IntermediatePubAuthController extends IntermediateBaseController
     {
         $userId = $session->read('guest_user_id');
 
-        if (! empty($userId)) {
-            $user = User::with('userDetail')
-                ->where('user_id', $userId)
-                ->whereHas('role', function($q) {
-                    $q->where('role_name', 'guest');
-                })
-                ->first();
-
-            if (! is_object($user)) {
-                $user = NULL;
-                // throw new Exception('Session error: user not found.');
-            }
-        } else {
-            $user = GuestUserGenerator::create()->generate();
+        $generateGuest = function ($session) {
+            $guestConfig = [
+                'session' => $session
+            ];
+            $user = GuestUserGenerator::create($guestConfig)->generate();
 
             $sessionData = $session->read(NULL);
             $sessionData['logged_in'] = TRUE;
@@ -117,6 +108,23 @@ class IntermediatePubAuthController extends IntermediateBaseController
             $sessionData['fullname'] = '';
 
             $session->update($sessionData);
+
+            return $user;
+        };
+
+        if (! empty($userId)) {
+            $user = User::with('userDetail')
+                ->where('user_id', $userId)
+                ->whereHas('role', function($q) {
+                    $q->where('role_name', 'guest');
+                })
+                ->first();
+
+            if (! is_object($user)) {
+                $user = $generateGuest($session);
+            }
+        } else {
+            $user = $generateGuest($session);
         }
 
         return $user;

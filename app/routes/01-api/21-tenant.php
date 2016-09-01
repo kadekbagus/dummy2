@@ -130,7 +130,7 @@ Route::get('/app/v1/pub/store-list', ['as' => 'pub-store-list', 'uses' => 'Inter
  */
 Route::get('/api/v1/pub/mall-store-list', function()
 {
-    return Orbit\Controller\API\v1\Pub\StoreAPIController::create()->getStoreList();
+    return Orbit\Controller\API\v1\Pub\StoreAPIController::create()->getMallStoreList();
 });
 
 Route::get('/app/v1/pub/mall-store-list', ['as' => 'pub-mall-store-list', 'uses' => 'IntermediatePubAuthController@Store_getMallStoreList']);
