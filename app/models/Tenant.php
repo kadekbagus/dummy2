@@ -47,6 +47,13 @@ class Tenant extends Eloquent
         return $this->hasOne('RetailerTenant', 'retailer_id', 'merchant_id');
     }
 
+    // @author Irianto Pratama <irianto@dominopos.com>
+    public function tenantFloor()
+    {
+        return $this->hasOne('Object', 'object_id', 'floor_id')
+                ->where('object_type', 'floor');
+    }
+
     public function parent()
     {
         return $this->mall();
