@@ -336,16 +336,16 @@ class CouponAPIController extends ControllerAPI
                 $languageEnId = $language->language_id;
             }
 
-            $couponId = OrbitInput::get('promotion_id', null);
+            $couponId = OrbitInput::get('coupon_id', null);
             $sort_by = OrbitInput::get('sortby', 'name');
             $sort_mode = OrbitInput::get('sortmode','asc');
 
             $validator = Validator::make(
                 array(
-                    'promotion_id' => $couponId,
+                    'coupon_id' => $couponId,
                 ),
                 array(
-                    'promotion_id' => 'required',
+                    'coupon_id' => 'required',
                 ),
                 array(
                     'required' => 'Coupon ID is required',
