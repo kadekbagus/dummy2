@@ -27,6 +27,22 @@ use Mall;
 class ActivationAPIController extends IntermediateBaseController
 {
     protected $tokenObject = NULL;
+
+    /**
+     * Boolean flag to save activation activity without token
+     */
+    protected $saveAsAuto = FALSE;
+
+    /**
+     * User $user
+     */
+    protected $user = NULL;
+
+    /**
+     * string social media from ('facebook', 'google')
+     */
+    protected $socialFrom = NULL;
+
     use CommonAPIControllerTrait;
 
     /**
@@ -46,58 +62,68 @@ class ActivationAPIController extends IntermediateBaseController
         $activity = Activity::mobileci()
                             ->setActivityType('activation');
         try {
-            $tokenValue = trim(OrbitInput::post('token'));
-            $password = OrbitInput::post('password');
-            $password2 = OrbitInput::post('password_confirmation');
+            if(! $this->saveAsAuto) {
+                $activityNameLong = 'Account Activation';
+                $tokenValue = trim(OrbitInput::post('token'));
+                $password = OrbitInput::post('password');
+                $password2 = OrbitInput::post('password_confirmation');
 
-            // Begin database transaction
-            $this->beginTransaction();
+                // Begin database transaction
+                $this->beginTransaction();
 
-            $this->registerCustomValidation();
+                $this->registerCustomValidation();
 
-            $validator = Validator::make(
-                array(
-                    'token'         => $tokenValue,
-                    'password'      => $password,
-                    'password_confirmation' => $password2
-                ),
-                array(
-                    'token'         => 'required|orbit_activation_empty_token',
-                    'password'      => 'min:5|confirmed',
-                ),
-                array(
-                    'orbit_activation_empty_token' => Lang::get('validation.orbit.empty.token')
-                )
-            );
+                $validator = Validator::make(
+                    array(
+                        'token'         => $tokenValue,
+                        'password'      => $password,
+                        'password_confirmation' => $password2
+                    ),
+                    array(
+                        'token'         => 'required|orbit_activation_empty_token',
+                        'password'      => 'min:5|confirmed',
+                    ),
+                    array(
+                        'orbit_activation_empty_token' => Lang::get('validation.orbit.empty.token')
+                    )
+                );
 
-            // Run the validation
-            if ($validator->fails()) {
-                $errorMessage = $validator->messages()->first();
-                OrbitShopAPI::throwInvalidArgument($errorMessage);
+                // Run the validation
+                if ($validator->fails()) {
+                    $errorMessage = $validator->messages()->first();
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+
+                $token = $this->tokenObject;
+                $user = User::with('userdetail')
+                            ->excludeDeleted()
+                            ->where('user_id', $token->user_id)
+                            ->first();
+
+                if (! is_object($token) || ! is_object($user)) {
+                    $message = Lang::get('validation.orbit.access.loginfailed');
+                    ACL::throwAccessForbidden($message);
+                }
+
+                // update the token status so it cannot be use again
+                $token->status = 'deleted';
+                $token->save();
+
+                // Update user password and activate them
+                if (! empty($password)) {
+                    $user->user_password = Hash::make($password);
+                }
+
+                $user->status = 'active';
+                $user->save();
+            } else {
+                $from = $this->socialFrom;
+                $activityNameLong = sprintf('Auto Account Activation from %s', ucfirst($from));
+                $user = $this->user;
+                if (! is_object($user)) {
+                    OrbitShopAPI::throwInvalidArgument('User you specified is not valid');
+                }
             }
-
-            $token = $this->tokenObject;
-            $user = User::with('userdetail')
-                        ->excludeDeleted()
-                        ->where('user_id', $token->user_id)
-                        ->first();
-
-            if (! is_object($token) || ! is_object($user)) {
-                $message = Lang::get('validation.orbit.access.loginfailed');
-                ACL::throwAccessForbidden($message);
-            }
-
-            // update the token status so it cannot be use again
-            $token->status = 'deleted';
-            $token->save();
-
-            // Update user password and activate them
-            if (! empty($password)) {
-                $user->user_password = Hash::make($password);
-            }
-
-            $user->status = 'active';
-            $user->save();
 
             $this->response->message = Lang::get('statuses.orbit.activate.account');
             $this->response->data = $user;
@@ -123,7 +149,7 @@ class ActivationAPIController extends IntermediateBaseController
 
             $activity->setUser($user)
                      ->setActivityName('activation_ok')
-                     ->setActivityNameLong('Account Activation')
+                     ->setActivityNameLong($activityNameLong)
                      ->setModuleName('Application')
                      ->responseOK()
                      ->save();
@@ -155,6 +181,19 @@ class ActivationAPIController extends IntermediateBaseController
         }
 
         return $this->render($this->response);
+    }
+
+    /**
+     * Set saveAsAuto value
+     * @return ActivationAPIController
+     */
+    public function setSaveAsAutoActivation($user, $from)
+    {
+        $this->saveAsAuto = TRUE;
+        $this->user = $user;
+        $this->socialFrom = $from;
+
+        return $this;
     }
 
     /**
@@ -197,19 +236,25 @@ class ActivationAPIController extends IntermediateBaseController
 
             $this->session->update($sessionData);
         } catch (\Exception $e) {
-            $guest = GuestUserGenerator::create()->generate();
-
             // Start the orbit session
             $data = array(
                 'logged_in' => TRUE,
                 'user_id'   => $user->user_id,
                 'email'     => $user->user_email,
                 'role'      => $user->role->role_name,
-                'fullname'  => $user->getFullName(),
-                'guest_user_id' => $guest->user_id,
-                'guest_email' => $guest->user_email
+                'fullname'  => $user->getFullName()
             );
             $this->session->enableForceNew()->start($data);
+
+            $guestConfig = [
+                'session' => $this->session
+            ];
+            $guest = GuestUserGenerator::create($guestConfig)->generate();
+            $guestData = array();
+            $guestData['guest_user_id'] = $guest->user_id;
+            $guestData['guest_email'] = $guest->user_email;
+
+            $this->session->update($guestData);
         }
 
 

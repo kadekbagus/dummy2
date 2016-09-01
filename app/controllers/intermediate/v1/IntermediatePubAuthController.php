@@ -95,7 +95,10 @@ class IntermediatePubAuthController extends IntermediateBaseController
         $userId = $session->read('guest_user_id');
 
         $generateGuest = function ($session) {
-            $user = GuestUserGenerator::create()->generate();
+            $guestConfig = [
+                'session' => $session
+            ];
+            $user = GuestUserGenerator::create($guestConfig)->generate();
 
             $sessionData = $session->read(NULL);
             $sessionData['logged_in'] = TRUE;

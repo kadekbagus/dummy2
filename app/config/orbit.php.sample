@@ -3487,6 +3487,33 @@ return array(
                 'object_type' => 'LuckyDraw',
                 'parameter_name' => 'lucky_draw_id'
             ),
+            // - Clicking on walkthrough page 1
+            '22' => array(
+                'name' => 'click_walkthrough',
+                'name_long' => 'Click Walkthrough Page 1',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - Clicking on walkthrough page 2
+            '23' => array(
+                'name' => 'click_walkthrough',
+                'name_long' => 'Click Walkthrough Page 2',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - Clicking on walkthrough page 3
+            '24' => array(
+                'name' => 'click_walkthrough',
+                'name_long' => 'Click Walkthrough Page 3',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
         ),
     ),
 
@@ -3513,4 +3540,52 @@ return array(
             'activity_type' => 'click',
         ),
     ),
+
+    /**
+     * Mailchimp service integration
+     * http://developer.mailchimp.com/documentation/mailchimp/guides/get-started-with-mailchimp-api-3/
+     */
+    'mailchimp' => [
+        // Valid driver are 'mailchimp-faker' or 'mailchimp'.
+        //
+        // mailchimp-faker driver will not call the real API instead it write to the
+        // log file.
+        'driver' => 'mailchimp-faker',
+
+        'drivers' => [
+            // Real API Call
+            'mailchimp' => [
+                // This could be anything, as long as you fill it. Because mailchimp will ommit
+                // this value.
+                'api_user' => 'gotomalls',
+
+                // The API key used to connect to mailchimp.
+                'api_key' => 'YOUR_KEY',
+
+                // The URL of the API and the version. The end point might be different
+                // from one key to the other. Consult to the
+                // http://developer.mailchimp.com/documentation/mailchimp/guides/get-started-with-mailchimp-api-3/#before-you-start
+                'api_url' => 'https://us13.api.mailchimp.com/3.0/',
+
+                // ID of the list which subscriber should be put when they are activated
+                'list_id' => 'LIST_ID',
+            ],
+
+            // Fake service
+            'mailchimp-faker' => [
+                // Value does not matter
+                'api_user' => 'gotomalls',
+
+                // Value does not matter
+                'api_key' => 'YOUR_KEY',
+
+                // It should be path to some directory which can be written by the
+                // PHP process. e.g laravel storage path
+                'api_url' => storage_path() . '/mailchimp-faker',
+
+                // ID of the list which subscriber should be put when they are activated
+                'list_id' => 'orbit-list-1',
+            ]
+        ]
+    ],
 );

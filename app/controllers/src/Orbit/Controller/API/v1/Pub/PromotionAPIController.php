@@ -15,6 +15,7 @@ use \Exception;
 use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use \DB;
+use \URL;
 use News;
 use NewsMerchant;
 use Language;
@@ -220,15 +221,15 @@ class PromotionAPIController extends ControllerAPI
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
-
+            $replaceIdPattern = '---REPLACE_ME_WITH_ID---';
+            $urlToCI = URL::route('ci-promotion-detail', array('id' => $replaceIdPattern), false);
             $prefix = DB::getTablePrefix();
-
             $promotion = NewsMerchant::select('news.begin_date as begin_date', 'news.end_date as end_date',
                                             DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.merchant_id ELSE {$prefix}merchants.merchant_id END as merchant_id"),
                                             DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.name ELSE {$prefix}merchants.name END as name"),
                                             DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.city ELSE {$prefix}merchants.city END as city"),
                                             DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.description ELSE {$prefix}merchants.description END as description"),
-                                            DB::raw("CONCAT(IF({$prefix}merchants.object_type = 'tenant', oms.ci_domain, {$prefix}merchants.ci_domain), '/customer/mallnewsdetail?id=', {$prefix}news_merchant.news_id) as news_url"),
+                                            DB::raw("CONCAT(IF({$prefix}merchants.object_type = 'tenant', oms.ci_domain, {$prefix}merchants.ci_domain), REPLACE('{$urlToCI}', '$replaceIdPattern', {$prefix}news_merchant.news_id)) as promotion_url"),
                                             DB::raw("( SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
                                                         FROM {$prefix}merchants om
                                                         LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
