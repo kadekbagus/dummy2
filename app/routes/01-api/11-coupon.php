@@ -158,7 +158,7 @@ Route::get('/app/v1/pub/coupon/detail', ['as' => 'pub-coupon-detail', 'uses' => 
  */
 Route::get('/api/v1/pub/coupon-location/list', function()
 {
-    return Orbit\Controller\API\v1\Pub\CouponAPIController::create()->getMallPerCoupon();
+    return Orbit\Controller\API\v1\Pub\CouponAPIController::create()->getCouponLocations();
 });
 
 Route::get('/app/v1/pub/coupon-location/list', ['as' => 'pub-coupon-location-list', 'uses' => 'IntermediatePubAuthController@Coupon_getCouponLocations']);
