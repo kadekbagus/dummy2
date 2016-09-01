@@ -310,6 +310,17 @@ class NewsAPIController extends ControllerAPI
         return $this->render($httpCode);
     }
 
+    /**
+     * GET - get the news detail
+     *
+     * @author Ahmad <ahmad@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param string news_id
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
     public function getNewsItem()
     {
         $httpCode = 200;
@@ -330,9 +341,6 @@ class NewsAPIController extends ControllerAPI
             }
 
             $newsId = OrbitInput::get('news_id', null);
-            $sort_by = OrbitInput::get('sortby', 'name');
-            $sort_mode = OrbitInput::get('sortmode','asc');
-
 
             $validator = Validator::make(
                 array(
@@ -463,6 +471,20 @@ class NewsAPIController extends ControllerAPI
         return $this->render($httpCode);
     }
 
+    /**
+     * GET - get the list of news location
+     *
+     * @author Ahmad <ahmad@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param string sortby
+     * @param string sortmode
+     * @param string take
+     * @param string skip
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
     public function getNewsLocations()
     {
         $httpCode = 200;
