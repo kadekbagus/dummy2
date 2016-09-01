@@ -29,6 +29,7 @@ class MailchimpFactory
     ];
 
     /**
+     * @param array $config
      * @param string $driver Name of the driver
      * @return void
      */
@@ -36,6 +37,16 @@ class MailchimpFactory
     {
         $this->config = $config;
         $this->driver = $driver;
+    }
+
+    /**
+     * @param array $config
+     * @param string $driver Name of the driver
+     * @return MailchimpInterface
+     */
+    public static function create(array $config, $driver='mailchimp-faker')
+    {
+        return new static($config, $driver);
     }
 
     /**
@@ -80,15 +91,6 @@ class MailchimpFactory
     public function getConfig()
     {
         return $this->config;
-    }
-
-    /**
-     * @param string $driver Name of the driver
-     * @return MailchimpInterface
-     */
-    public static function create($driver='mailchimp-faker')
-    {
-        return new static($driver);
     }
 
     /**
