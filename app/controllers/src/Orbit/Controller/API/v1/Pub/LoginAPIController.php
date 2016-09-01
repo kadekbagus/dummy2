@@ -42,7 +42,7 @@ use \Inbox;
 use Orbit\Helper\Session\UserGetter;
 use Orbit\Helper\Net\SessionPreparer;
 use Orbit\Helper\Net\SignInRecorder;
-use ActivationAPIController;
+use Orbit\Controller\API\v1\Pub\ActivationAPIController;
 
 class LoginAPIController extends IntermediateBaseController
 {

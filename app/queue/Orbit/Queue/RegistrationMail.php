@@ -102,7 +102,7 @@ class RegistrationMail
             $from = $emailconf['email'];
             $name = $emailconf['name'];
 
-            $message->from($from, $name)->subject('Activate Your GotoMalls Account');
+            $message->from($from, $name)->subject('Selamat Datang di Gotomalls!');
             $message->to($user->user_email);
         });
     }
