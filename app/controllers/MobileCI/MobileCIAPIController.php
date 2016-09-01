@@ -86,6 +86,7 @@ use Orbit\Helper\Net\SessionPreparer;
 use Orbit\Database\ObjectID;
 use Str;
 use Orbit\Helper\Net\SignInRecorder;
+use Orbit\Controller\API\v1\Pub\ActivationAPIController;
 
 class MobileCIAPIController extends BaseCIController
 {
@@ -1249,7 +1250,6 @@ class MobileCIAPIController extends BaseCIController
                         throw new Exception($response->message, $response->code);
                     }
 
-
                     $loggedInUser = $this->doAutoLogin($response->data->user_email);
                     $this->linkGuestToUser($loggedInUser);
                     $this->loginStage2($loggedInUser, $retailer);
@@ -1260,6 +1260,10 @@ class MobileCIAPIController extends BaseCIController
                     setcookie('login_from', 'Google', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
 
                     $this->acquireUser($retailer, $loggedInUser, 'google');
+                    // create activation_ok activity without using token
+                    $activation_ok = ActivationAPIController::create('raw')
+                        ->setSaveAsAutoActivation($response->data, 'google')
+                        ->postActivateAccount();
 
                     $redirect_to_url_from_state = $this->remove_querystring_var(json_decode($this->base64UrlDecode($state))->redirect_to_url, $this->getOrbitSessionQueryStringName());
 
@@ -1415,6 +1419,11 @@ class MobileCIAPIController extends BaseCIController
             setcookie('login_from', 'Facebook', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
 
             $this->acquireUser($retailer, $loggedInUser, 'facebook');
+
+            // create activation_ok activity without using token
+            $activation_ok = ActivationAPIController::create('raw')
+                ->setSaveAsAutoActivation($response->data, 'facebook')
+                ->postActivateAccount();
 
             $redirect_to_url = $this->remove_querystring_var($redirect_to_url, $this->getOrbitSessionQueryStringName());
 
