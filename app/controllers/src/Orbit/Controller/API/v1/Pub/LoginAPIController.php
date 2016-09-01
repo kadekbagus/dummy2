@@ -42,6 +42,7 @@ use \Inbox;
 use Orbit\Helper\Session\UserGetter;
 use Orbit\Helper\Net\SessionPreparer;
 use Orbit\Helper\Net\SignInRecorder;
+use ActivationAPIController;
 
 class LoginAPIController extends IntermediateBaseController
 {
@@ -374,6 +375,11 @@ class LoginAPIController extends IntermediateBaseController
                         }
 
                         SignInRecorder::setSignUpActivity($response, 'google', NULL);
+                        // create activation_ok activity without using token
+                        $activation_ok = ActivationAPIController::create('raw')
+                            ->setSaveAsAutoActivation($response, 'google')
+                            ->postActivateAccount();
+
                         $loggedInUser = $this->doAutoLogin($response->user_email);
                     }
 
@@ -628,8 +634,12 @@ class LoginAPIController extends IntermediateBaseController
             if (get_class($response) !== 'User') {
                 throw new Exception($response->message, $response->code);
             }
-
+            // create registration_ok activity
             SignInRecorder::setSignUpActivity($response, 'facebook', NULL);
+            // create activation_ok activity without using token
+            $activation_ok = ActivationAPIController::create('raw')
+                ->setSaveAsAutoActivation($response, 'facebook')
+                ->postActivateAccount();
             $loggedInUser = $this->doAutoLogin($response->user_email);
         }
 

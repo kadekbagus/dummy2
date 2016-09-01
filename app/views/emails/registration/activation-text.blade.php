@@ -1,12 +1,6 @@
+Selamat Datang di Gotomalls!
+
 Hi {{ $first_name or $email }},
-
-We hope you had a great experience at "{{ $shop_name }}".
-
-To complete your registration please click "Activate My Account" button below:
+Terima kasih sudah bergabung dengan Gotomalls! Untuk mulai menggunakan Gotomalls, mohon lakukan aktivasi dengan tombol di bawah ini.
 
 {{ $token_url }}
-
-
-Cheers,
-Orbit Team
-
