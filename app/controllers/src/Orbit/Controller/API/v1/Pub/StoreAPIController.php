@@ -47,9 +47,8 @@ class StoreAPIController extends ControllerAPI
 
             $prefix = DB::getTablePrefix();
 
-            $store = Tenant::select('merchants.merchant_id', 'merchants.name', 'merchants.description', DB::raw("media.path as logo_url"))
+            $store = Tenant::select('merchants.merchant_id', 'merchants.name', 'merchants.description', DB::raw("(select path from {$prefix}media where media_name_long = 'retailer_logo_orig' and object_id = {$prefix}merchants.merchant_id) as logo_url"))
                 ->join(DB::raw("(select merchant_id, status, parent_id from {$prefix}merchants where object_type = 'mall') as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
-                ->leftJoin(DB::raw("(select * from {$prefix}media where media_name_long = 'retailer_logo_orig') as media"), DB::raw('media.object_id'), '=', 'merchants.merchant_id')
                 ->where('merchants.status', 'active')
                 ->whereRaw("oms.status = 'active'")
                 ->groupBy('merchants.name')
