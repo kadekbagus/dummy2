@@ -142,3 +142,23 @@ Route::get('/api/v1/pub/mall-coupon-list', function()
 });
 
 Route::get('/app/v1/pub/mall-coupon-list', ['as' => 'pub-mall-coupon-list', 'uses' => 'IntermediatePubAuthController@Coupon_getMallCouponList']);
+
+/**
+ * Get coupon detail on landing page
+ */
+Route::get('/api/v1/pub/coupon/detail', function()
+{
+    return Orbit\Controller\API\v1\Pub\CouponAPIController::create()->getCouponItem();
+});
+
+Route::get('/app/v1/pub/coupon/detail', ['as' => 'pub-coupon-detail', 'uses' => 'IntermediatePubAuthController@Coupon_getCouponItem']);
+
+/**
+ * List location of a coupon
+ */
+Route::get('/api/v1/pub/coupon-location/list', function()
+{
+    return Orbit\Controller\API\v1\Pub\CouponAPIController::create()->getMallPerCoupon();
+});
+
+Route::get('/app/v1/pub/coupon-location/list', ['as' => 'pub-coupon-location-list', 'uses' => 'IntermediatePubAuthController@Coupon_getCouponLocations']);
