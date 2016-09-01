@@ -334,6 +334,9 @@ class CouponAPIController extends ControllerAPI
     public function getCouponWalletList()
     {
         $httpCode = 200;
+        $activity = Activity::mobileci()->setActivityType('view');
+        $user = NULL;
+
         try {
             $this->session = SessionPreparer::prepareSession();
             $user = UserGetter::getLoggedInUserOrGuest($this->session);
@@ -345,16 +348,32 @@ class CouponAPIController extends ControllerAPI
                 ACL::throwAccessForbidden($message);
             }
 
+            // Get language_if of english
+            $languageEnId = null;
+            $language = Language::where('name', 'en')->first();
+
+            if (! empty($language)) {
+                $languageEnId = $language->language_id;
+            }
+
             $sort_by = OrbitInput::get('sortby', 'coupon_name');
             $sort_mode = OrbitInput::get('sortmode','asc');
 
             $prefix = DB::getTablePrefix();
 
-            $coupon = Coupon::select(DB::raw("
-                                {$prefix}promotions.promotion_id as coupon_id,
+            $coupon = Coupon::with(['translations' => function($q) use ($languageEnId) {
+                                $q->addSelect(['coupon_translation_id', 'promotion_id']);
+                                $q->with(['media' => function($q2) {
+                                    $q2->addSelect(['object_id', 'media_name_long', 'path']);
+                                }]);
+                                $q->where('merchant_language_id', $languageEnId);
+                            }])
+                            ->select(DB::raw("
+                                {$prefix}promotions.promotion_id as promotion_id,
                                 {$prefix}coupon_translations.promotion_name as coupon_name,
                                 {$prefix}coupon_translations.description as description,
                                 {$prefix}promotions.end_date,
+                                {$prefix}media.path as original_media_path,
                                 {$prefix}promotions.status,
                                 CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
                                     THEN {$prefix}campaign_status.campaign_status_name
@@ -387,15 +406,17 @@ class CouponAPIController extends ControllerAPI
                             ->leftJoin('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
                             ->leftJoin('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
                             ->leftJoin('languages', 'languages.language_id', '=', 'coupon_translations.merchant_language_id')
+                            ->leftJoin('media', 'media.object_id', '=', 'coupon_translations.coupon_translation_id')
                             ->join('issued_coupons', function ($join) {
                                 $join->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
                                 $join->where('issued_coupons.status', '=', 'active');
                             })
+                            ->where('media.media_name_long', 'coupon_translation_image_orig')
                             ->where('issued_coupons.user_id', $user->user_id)
                             ->where('languages.name', '=', 'en')
                             ->where('coupon_translations.promotion_name', '!=', '')
                             ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
-                            ->groupBy('coupon_id');
+                            ->groupBy('promotion_id');
 
             OrbitInput::get('filter_name', function ($filterName) use ($coupon, $prefix) {
                 if (! empty($filterName)) {
@@ -446,6 +467,18 @@ class CouponAPIController extends ControllerAPI
 
             $listcoupon = $coupon->get();
             $count = RecordCounter::create($_coupon)->count();
+
+            if (empty($skip)) {
+                $activityNotes = sprintf('Page viewed: Landing Page Coupon Wallet List Page');
+                $activity->setUser($user)
+                    ->setActivityName('view_landing_page_coupon_wallet_list')
+                    ->setActivityNameLong('View GoToMalls Coupon Wallet List')
+                    ->setObject(NULL)
+                    ->setModuleName('Coupon')
+                    ->setNotes($activityNotes)
+                    ->responseOK()
+                    ->save();
+            }
 
             $this->response->data = new stdClass();
             $this->response->data->total_records = $count;
