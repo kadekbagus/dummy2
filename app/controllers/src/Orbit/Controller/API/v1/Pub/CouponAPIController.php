@@ -473,17 +473,17 @@ class CouponAPIController extends ControllerAPI
         $this->response = new ResponseProvider();
 
         try{
-            $couponId = OrbitInput::get('promotion_id', null);
+            $couponName = OrbitInput::get('coupon_name', null);
             $sort_by = OrbitInput::get('sortby', 'name');
             $sort_mode = OrbitInput::get('sortmode','asc');
 
 
             $validator = Validator::make(
                 array(
-                    'promotion_id' => $couponId,
+                    'coupon_name' => $couponName,
                 ),
                 array(
-                    'promotion_id' => 'required',
+                    'coupon_name' => 'required',
                 ),
                 array(
                     'required' => 'Coupon ID is required',
@@ -514,7 +514,7 @@ class CouponAPIController extends ControllerAPI
                                     ->leftJoin('promotions', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                                     ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
                                     ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
-                                    ->where('promotion_retailer.promotion_id', '=', $couponId)
+                                    ->where('promotions.promotion_name', '=', $couponName)
                                     ->groupBy('merchant_id')
                                     ->havingRaw('tz <= end_date AND tz >= begin_date');
 
