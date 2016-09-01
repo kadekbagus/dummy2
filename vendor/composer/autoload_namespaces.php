@@ -30,6 +30,7 @@ return array(
     'Patchwork' => array($vendorDir . '/patchwork/utf8/class'),
     'PHPParser' => array($vendorDir . '/nikic/php-parser/lib'),
     'Orbit\\Queue\\' => array($baseDir . '/app/queue'),
+    'Orbit\\Mailchimp\\' => array($vendorDir . '/dominopos/orbit-mailchimp'),
     'Orbit\\Helper\\' => array($baseDir . '/app/helpers'),
     'Orbit\\Database\\' => array($vendorDir . '/dominopos/orbit-database'),
     'Orbit\\Controller\\' => array($baseDir . '/app/controllers/src'),

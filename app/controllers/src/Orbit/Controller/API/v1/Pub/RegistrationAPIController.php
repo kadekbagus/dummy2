@@ -88,7 +88,6 @@ class RegistrationAPIController extends IntermediateBaseController
                     // update the guest session data, append user data to it so the user will be recognized
                     $this->session->update($sessionData);
                 } catch (\Exception $e) {
-                    $guest = GuestUserGenerator::create()->generate();
                     // Start the orbit session
                     $data = array(
                         'logged_in' => TRUE,
@@ -96,11 +95,19 @@ class RegistrationAPIController extends IntermediateBaseController
                         'email'     => $user->user_email,
                         'role'      => $user->role->role_name,
                         'fullname'  => $user->getFullName(),
-                        'guest_user_id' => $guest->user_id,
-                        'guest_email' => $guest->user_email
                     );
 
                     $this->session->enableForceNew()->start($data);
+
+                    $guestConfig = [
+                        'session' => $this->session
+                    ];
+                    $guest = GuestUserGenerator::create($guestConfig)->generate();
+                    $guestData = array();
+                    $guestData['guest_user_id'] = $guest->user_id;
+                    $guestData['guest_email'] = $guest->user_email;
+
+                    $this->session->update($guestData);
                 }
 
                 // Send the session id via HTTP header
