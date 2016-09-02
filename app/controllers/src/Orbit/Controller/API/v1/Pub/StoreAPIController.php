@@ -712,7 +712,6 @@ class StoreAPIController extends ControllerAPI
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
                         ->leftJoin('media', function($q) {
                             $q->on('media.object_id', '=', 'news_translations.news_translation_id');
-                            // $q->on('media.media_name_long', '=', 'news_translation_image_orig');
                             $q->on('media.media_name_long', '=', DB::raw("'news_translation_image_orig'"));
                         })
                         ->where('merchants.name', $store_name)
@@ -763,7 +762,6 @@ class StoreAPIController extends ControllerAPI
                             ->leftJoin('languages', 'languages.language_id', '=', 'coupon_translations.merchant_language_id')
                             ->leftJoin('media', function($q) {
                                 $q->on('media.object_id', '=', 'coupon_translations.coupon_translation_id');
-                                // $q->on('media.media_name_long', '=', 'coupon_translation_image_orig');
                                 $q->on('media.media_name_long', '=', DB::raw("'coupon_translation_image_orig'"));
                             })
                             ->where('merchants.name', $store_name)
