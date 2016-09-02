@@ -201,8 +201,8 @@
                             <!--[if mso | IE]>
         <table border="0" cellpadding="0" cellspacing="0"><tr><td style="vertical-align:top;width:60px;">
         <![endif]-->
-                            <div aria-labelledby="mj-column-per-10" class="mj-column-per-10" style="vertical-align: top; display: inline-block; font-size: 13px; text-align: left; width: 100%;">
-                                <table cellpadding="0" cellspacing="0" width="100%" border="0">
+                            <div aria-labelledby="mj-column-per-10" class="mj-column-per-10" style="vertical-align: top; display: inline-block; font-size: 13px; text-align: left; width: 35px!important">
+                                <table cellpadding="0" cellspacing="0" width="10%" border="0">
                                     <tbody>
                                         <tr>
                                             <td style="word-break: break-word; font-size: 0px; padding: 0px;" align="center"><table cellpadding="0" cellspacing="0" style="border-collapse: collapse; border-spacing: 0px;" align="center" border="0">
@@ -210,7 +210,7 @@
                                                         <tr>
                                                             <td style="width: 40px;" align="center">
                                                                 <a href="https://www.facebook.com/Gotomalls.Indo">
-                                                                    <img alt="Gotomalls Logo" title="" height="auto" src="{{ asset('emails/logo-fb.png') }}" style="border: none; border-radius:; display: block; outline: none; text-decoration: none; width: 30px; height: auto;" width="30"></td>
+                                                                    <img alt="Gotomalls Logo" title="" height="auto" src="../images/logo-fb.png" style="border: none; border-radius:; display: block; outline: none; text-decoration: none; width: 30px; height: auto;" width="30"></td>
                                                                 </a>
                                                         </tr>
                                                     </tbody>
@@ -222,8 +222,8 @@
                             <!--[if mso | IE]>
         </td><td style="vertical-align:top;width:60px;">
         <![endif]-->
-                            <div aria-labelledby="mj-column-per-10" class="mj-column-per-10" style="vertical-align: top; display: inline-block; font-size: 13px; text-align: left; width: 100%;">
-                                <table cellpadding="0" cellspacing="0" width="100%" border="0">
+                            <div aria-labelledby="mj-column-per-10" class="mj-column-per-10" style="vertical-align: top; display: inline-block; font-size: 13px; text-align: left; width: 35px!important;">
+                                <table cellpadding="0" cellspacing="0" width="10%" border="0">
                                     <tbody>
                                         <tr>
                                             <td style="word-break: break-word; font-size: 0px; padding: 0px;" align="center"><table cellpadding="0" cellspacing="0" style="border-collapse: collapse; border-spacing: 0px;" align="center" border="0">
@@ -231,7 +231,7 @@
                                                         <tr>
                                                             <td style="width: 40px;" align="center">
                                                                 <a href="https://www.instagram.com/gotomalls">
-                                                                    <img alt="Gotomalls Logo" title="" height="auto" src="{{ asset('emails/logo-ig.png') }}" style="border: none; border-radius:; display: block; outline: none; text-decoration: none; width: 30px; height: auto;" width="30"></td>
+                                                                    <img alt="Gotomalls Logo" title="" height="auto" src="../images/logo-ig.png" style="border: none; border-radius:; display: block; outline: none; text-decoration: none; width: 30px; height: auto;" width="30"></td>
                                                                 </a>
                                                         </tr>
                                                     </tbody>
@@ -243,8 +243,8 @@
                             <!--[if mso | IE]>
         </td><td style="vertical-align:top;width:60px;">
         <![endif]-->
-                            <div aria-labelledby="mj-column-per-10" class="mj-column-per-10" style="vertical-align: top; display: inline-block; font-size: 13px; text-align: left; width: 100%;">
-                                <table cellpadding="0" cellspacing="0" width="100%" border="0">
+                            <div aria-labelledby="mj-column-per-10" class="mj-column-per-10" style="vertical-align: top; display: inline-block; font-size: 13px; text-align: left; width: 35px!important;">
+                                <table cellpadding="0" cellspacing="0" width="10%" border="0">
                                     <tbody>
                                         <tr>
                                             <td style="word-break: break-word; font-size: 0px; padding: 0px;" align="center"><table cellpadding="0" cellspacing="0" style="border-collapse: collapse; border-spacing: 0px;" align="center" border="0">
@@ -252,7 +252,7 @@
                                                         <tr>
                                                             <td style="width: 40px;" align="center">
                                                                 <a href="https://blog.gotomalls.com">
-                                                                    <img alt="Gotomalls Logo" title="" height="auto" src="{{ asset('emails/logo-blog.png') }}" style="border: none; border-radius:; display: block; outline: none; text-decoration: none; width: 30px; height: auto;" width="30"></td>
+                                                                    <img alt="Gotomalls Logo" title="" height="auto" src="../images/logo-blog.png" style="border: none; border-radius:; display: block; outline: none; text-decoration: none; width: 30px; height: auto;" width="30"></td>
                                                                 </a>
                                                         </tr>
                                                     </tbody>
