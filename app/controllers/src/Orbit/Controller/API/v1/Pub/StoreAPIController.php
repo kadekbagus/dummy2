@@ -659,8 +659,10 @@ class StoreAPIController extends ControllerAPI
                         ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                         ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
-                        ->leftJoin('media', 'media.object_id', '=', 'news_translations.news_translation_id')
-                        ->where('media.media_name_long', 'news_translation_image_orig')
+                        ->leftJoin('media', function($q) {
+                            $q->on('media.object_id', '=', 'news_translations.news_translation_id');
+                            $q->where('media.media_name_long', '=', 'news_translation_image_orig');
+                        })
                         ->where('merchants.name', $store_name)
                         ->where('news_translations.merchant_language_id', '=', $languageEnId)
                         ->where('news.object_type', '=', 'news')
@@ -708,8 +710,10 @@ class StoreAPIController extends ControllerAPI
                         ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                         ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
-                        ->leftJoin('media', 'media.object_id', '=', 'news_translations.news_translation_id')
-                        ->where('media.media_name_long', 'news_translation_image_orig')
+                        ->leftJoin('media', function($q) {
+                            $q->on('media.object_id', '=', 'news_translations.news_translation_id');
+                            $q->where('media.media_name_long', '=', 'news_translation_image_orig');
+                        })
                         ->where('merchants.name', $store_name)
                         ->where('news_translations.merchant_language_id', '=', $languageEnId)
                         ->where('news.object_type', '=', 'promotion')
@@ -756,8 +760,10 @@ class StoreAPIController extends ControllerAPI
                             ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                             ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
                             ->leftJoin('languages', 'languages.language_id', '=', 'coupon_translations.merchant_language_id')
-                            ->leftJoin('media', 'media.object_id', '=', 'coupon_translations.coupon_translation_id')
-                            ->where('media.media_name_long', 'coupon_translation_image_orig')
+                            ->leftJoin('media', function($q) {
+                                $q->on('media.object_id', '=', 'coupon_translations.coupon_translation_id');
+                                $q->where('media.media_name_long', '=', 'coupon_translation_image_orig');
+                            })
                             ->where('merchants.name', $store_name)
                             ->where('coupon_translations.merchant_language_id', '=', $languageEnId)
                             ->where('coupon_translations.promotion_name', '!=', '')
