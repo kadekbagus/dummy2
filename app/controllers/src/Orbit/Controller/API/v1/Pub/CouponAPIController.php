@@ -26,6 +26,10 @@ use Activity;
 use Orbit\Helper\Net\SessionPreparer;
 use Orbit\Helper\Session\UserGetter;
 use Language;
+use Lang;
+use CouponRetailer;
+use Carbon\Carbon;
+use IssuedCoupon;
 
 class CouponAPIController extends ControllerAPI
 {
@@ -314,6 +318,152 @@ class CouponAPIController extends ControllerAPI
         $output = $this->render($httpCode);
 
         return $output;
+    }
+
+    /**
+     * POST - add to wallet
+     *
+     * @param string coupon_id
+     *
+     * @return string
+     *
+     * @author ahmad <ahmad@dominopos.com>
+     */
+    public function postAddToWallet()
+    {
+        $activity = Activity::mobileci()
+                            ->setActivityType('click');
+        $user = NULL;
+        $coupon = NULL;
+        $issuedCoupon = NULL;
+        $retailer = null;
+        try {
+            $this->session = SessionPreparer::prepareSession();
+            $user = UserGetter::getLoggedInUserOrGuest($this->session);
+
+            // should always check the role
+            $role = $user->role->role_name;
+            if (strtolower($role) !== 'consumer') {
+                $message = 'You have to login to continue';
+                OrbitShopAPI::throwInvalidArgument($message);
+            }
+
+            $this->registerCustomValidation();
+            $coupon_id = OrbitInput::post('coupon_id');
+
+            $validator = Validator::make(
+                array(
+                    'coupon_id' => $coupon_id,
+                ),
+                array(
+                    'coupon_id' => 'required|orbit.exists.coupon|orbit.notexists.couponwallet',
+                ),
+                array(
+                    'orbit.exists.coupon' => Lang::get('validation.orbit.empty.coupon'),
+                    'orbit.notexists.couponwallet' => 'Coupon already added to wallet'
+                )
+            );
+
+            $this->beginTransaction();
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $coupon = Coupon::excludeDeleted()
+                ->where('promotion_id', '=', $coupon_id)
+                ->first();
+
+            $newIssuedCoupon = new IssuedCoupon();
+            $issuedCoupon = $newIssuedCoupon->issue($coupon, $user->user_id, $user);
+            $this->commit();
+
+            if ($issuedCoupon) {
+                $this->response->message = 'Request Ok';
+                $this->response->data = NULL;
+                $activityNotes = sprintf('Added to wallet Coupon Id: %s. Issued Coupon Id: %s', $coupon->promotion_id, $issuedCoupon->issued_coupon_id);
+                $activity->setUser($user)
+                    ->setActivityName('click_add_to_wallet')
+                    ->setActivityNameLong('Click Landing Page Add To Wallet')
+                    ->setLocation($retailer)
+                    ->setObject($issuedCoupon)
+                    ->setModuleName('Coupon')
+                    ->setCoupon($coupon)
+                    ->setNotes($activityNotes)
+                    ->responseOK()
+                    ->save();
+            } else {
+                $this->response->message = 'Fail to issue coupon';
+                $this->response->data = NULL;
+                $activityNotes = sprintf('Failed to add to wallet Coupon Id: %s.', $coupon->promotion_id);
+                $activity->setUser($user)
+                    ->setActivityName('click_add_to_wallet')
+                    ->setActivityNameLong('Landing Page Failed to Add To Wallet')
+                    ->setLocation($retailer)
+                    ->setObject($issuedCoupon)
+                    ->setModuleName('Coupon')
+                    ->setCoupon($coupon)
+                    ->setNotes($activityNotes)
+                    ->responseFailed()
+                    ->save();
+            }
+
+        } catch (ACLForbiddenException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = NULL;
+            $this->rollback();
+            $activityNotes = sprintf('Failed to add to wallet. Error: %s', $e->getMessage());
+            $activity->setUser($user)
+                ->setActivityName('click_add_to_wallet')
+                ->setActivityNameLong('Landing Page Failed to Add To Wallet')
+                ->setObject($issuedCoupon)
+                ->setModuleName('Coupon')
+                ->setCoupon($coupon)
+                ->setLocation($retailer)
+                ->setNotes($activityNotes)
+                ->responseFailed()
+                ->save();
+        } catch (InvalidArgsException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = NULL;
+            $this->rollback();
+            $activityNotes = sprintf('Failed to add to wallet. Error: %s', $e->getMessage());
+            $activity->setUser($user)
+                ->setActivityName('click_add_to_wallet')
+                ->setActivityNameLong('Landing Page Failed to Add To Wallet')
+                ->setObject($issuedCoupon)
+                ->setModuleName('Coupon')
+                ->setCoupon($coupon)
+                ->setLocation($retailer)
+                ->setNotes($activityNotes)
+                ->responseFailed()
+                ->save();
+        } catch (Exception $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = $e->getLine();
+            $this->response->message = $e->getMessage();
+            $this->response->data = $e->getFile();
+            $this->rollback();
+            $activityNotes = sprintf('Failed to add to wallet. Error: %s', $e->getMessage());
+            $activity->setUser($user)
+                ->setActivityName('click_add_to_wallet')
+                ->setActivityNameLong('Landing Page Failed to Add To Wallet')
+                ->setObject($issuedCoupon)
+                ->setModuleName('Coupon')
+                ->setCoupon($coupon)
+                ->setLocation($retailer)
+                ->setNotes($activityNotes)
+                ->responseFailed()
+                ->save();
+        }
+
+        return $this->render();
     }
 
     /**
@@ -947,6 +1097,65 @@ class CouponAPIController extends ControllerAPI
         }
 
         return $this->render($httpCode);
+    }
+
+    protected function registerCustomValidation() {
+        // Check coupon, it should exists
+        Validator::extend(
+            'orbit.exists.coupon',
+            function ($attribute, $value, $parameters) {
+                $prefix = DB::getTablePrefix();
+                $nearestMallByTimezoneOffset = CouponRetailer::selectRaw("
+                        CASE WHEN {$prefix}promotion_retailer.object_type = 'tenant' THEN mall.merchant_id ELSE {$prefix}merchants.merchant_id END as id,
+                        CASE WHEN {$prefix}promotion_retailer.object_type = 'tenant' THEN mall.name ELSE {$prefix}merchants.name END as name,
+                        mall.timezone_id,
+                        {$prefix}promotion_retailer.object_type,
+                        {$prefix}timezones.timezone_name,
+                        TIMESTAMPDIFF(HOUR, UTC_TIMESTAMP(), CONVERT_TZ(UTC_TIMESTAMP(), 'Etc/UTC', {$prefix}timezones.timezone_name)) as offset
+                    ")
+                    ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
+                    ->leftJoin(DB::raw("{$prefix}merchants as mall"), DB::raw('mall.merchant_id'), '=', 'merchants.parent_id')
+                    ->leftJoin('timezones', DB::raw("CASE WHEN {$prefix}promotion_retailer.object_type = 'tenant' THEN mall.timezone_id ELSE {$prefix}merchants.timezone_id END"), '=', 'timezones.timezone_id')
+                    ->where('promotion_id', $value)
+                    ->orderBy('offset')
+                    ->first();
+
+                $mallTime = Carbon::now($nearestMallByTimezoneOffset->timezone_name);
+                $coupon = Coupon::active()
+                                ->where('promotion_id', $value)
+                                ->where('begin_date', "<=", $mallTime)
+                                ->where('end_date', '>=', $mallTime)
+                                ->where('coupon_validity_in_date', '>=', $mallTime)
+                                ->first();
+
+                if (! is_object($coupon)) {
+                    return false;
+                }
+
+                \App::instance('orbit.validation.coupon', $coupon);
+
+                return true;
+            }
+        );
+
+        // Check coupon, it should not exists in user wallet
+        Validator::extend(
+            'orbit.notexists.couponwallet',
+            function ($attribute, $value, $parameters) {
+                // check if coupon already add to wallet
+                $user = UserGetter::getLoggedInUserOrGuest($this->session);
+                $wallet = IssuedCoupon::where('promotion_id', '=', $value)
+                                      ->where('user_id', '=', $user->user_id)
+                                      ->where('status', '=', 'active')
+                                      ->first();
+
+                if (is_object($wallet)) {
+                    return false;
+                }
+
+                return true;
+            }
+        );
     }
 
     protected function quote($arg)

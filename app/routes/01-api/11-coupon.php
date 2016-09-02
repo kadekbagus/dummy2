@@ -168,7 +168,7 @@ Route::get('/app/v1/pub/coupon-location/list', ['as' => 'pub-coupon-location-lis
  */
 Route::get('/api/v1/pub/mall-coupon-wallet/list', function()
 {
-        return Orbit\Controller\API\v1\Pub\CouponAPIController::create()->getCouponWalletList();
+    return Orbit\Controller\API\v1\Pub\CouponAPIController::create()->getCouponWalletList();
 });
 
 Route::get('/app/v1/pub/mall-coupon-wallet/list', ['as' => 'pub-mall-coupon-wallet-list', 'uses' => 'IntermediatePubAuthController@Coupon_getCouponWalletList']);
@@ -178,7 +178,17 @@ Route::get('/app/v1/pub/mall-coupon-wallet/list', ['as' => 'pub-mall-coupon-wall
  */
 Route::get('/api/v1/pub/mall-coupon-wallet-location/list', function()
 {
-        return Orbit\Controller\API\v1\Pub\CouponAPIController::create()->getCouponWalletLocations();
+    return Orbit\Controller\API\v1\Pub\CouponAPIController::create()->getCouponWalletLocations();
 });
 
 Route::get('/app/v1/pub/mall-coupon-wallet-location/list', ['as' => 'pub-mall-coupon-wallet-location-list', 'uses' => 'IntermediatePubAuthController@Coupon_getCouponWalletLocations']);
+
+/**
+ * Post issue coupon wallet on landing page
+ */
+Route::post('/api/v1/pub/add-to-wallet', function()
+{
+    return Orbit\Controller\API\v1\Pub\CouponAPIController::create()->postAddToWallet();
+});
+
+Route::post('/app/v1/pub/add-to-wallet', ['as' => 'pub-mall-coupon-add-to-wallet', 'uses' => 'IntermediatePubAuthController@Coupon_postAddToWallet']);
