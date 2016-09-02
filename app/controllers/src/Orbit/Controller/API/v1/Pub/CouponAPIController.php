@@ -344,8 +344,8 @@ class CouponAPIController extends ControllerAPI
             // should always check the role
             $role = $user->role->role_name;
             if (strtolower($role) !== 'consumer') {
-                $message = 'Your role are not allowed to access this resource.';
-                ACL::throwAccessForbidden($message);
+                $message = 'You have to login to continue';
+                OrbitShopAPI::throwInvalidArgument($message);
             }
 
             // Get language_if of english
@@ -553,8 +553,8 @@ class CouponAPIController extends ControllerAPI
             // should always check the role
             $role = $user->role->role_name;
             if (strtolower($role) !== 'consumer') {
-                $message = 'Your role are not allowed to access this resource.';
-                ACL::throwAccessForbidden($message);
+                $message = 'You have to login to continue';
+                OrbitShopAPI::throwInvalidArgument($message);
             }
 
             $sort_by = OrbitInput::get('sortby', 'name');
