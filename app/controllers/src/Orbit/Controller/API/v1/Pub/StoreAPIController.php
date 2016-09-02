@@ -327,8 +327,7 @@ class StoreAPIController extends ControllerAPI
             $store = Tenant::select('merchants.merchant_id',
                                 'merchants.name',
                                 'merchants.description',
-                                'merchants.url',
-                                DB::Raw("COUNT({$prefix}merchants.merchant_id) as total_location")
+                                'merchants.url'
                             )
                 ->with(['categories' => function ($q) {
                         $q->select(
@@ -344,14 +343,14 @@ class StoreAPIController extends ControllerAPI
                                 'media.path',
                                 'media.object_id'
                             )
-                            ->where('media.media_name_long', 'like', '%cropped%');
+                            ->where('media.media_name_long', '=', 'retailer_image_cropped_default');
                     }])
                 ->join(DB::raw("(select merchant_id, status, parent_id from {$prefix}merchants where object_type = 'mall') as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                 ->where('merchants.status', 'active')
                 ->whereRaw("oms.status = 'active'")
                 ->where('merchants.name', $storename)
-                ->groupBy('merchants.name')
-                ->get();
+                ->orderBy('created_at')
+                ->first();
 
             $this->response->data = $store;
         } catch (ACLForbiddenException $e) {
