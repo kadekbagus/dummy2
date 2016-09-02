@@ -400,7 +400,7 @@ class NewsAPIController extends ControllerAPI
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
                         ->leftJoin('media', function($q) {
                             $q->on('media.object_id', '=', 'news_translations.news_translation_id');
-                            $q->where('media.media_name_long', '=', 'news_translation_image_orig');
+                            $q->on('media.media_name_long', '=', DB::raw("'news_translation_image_orig'"));
                         })
                         ->where('news.news_id', $newsId)
                         ->where('news_translations.merchant_language_id', '=', $languageEnId)
