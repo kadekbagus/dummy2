@@ -760,7 +760,7 @@ class StoreAPIController extends ControllerAPI
                             ->leftJoin('media', 'media.object_id', '=', 'coupon_translations.coupon_translation_id')
                             ->where('media.media_name_long', 'coupon_translation_image_orig')
                             ->where('merchants.name', $store_name)
-                            ->where('languages.name', '=', 'en')
+                            ->where('coupon_translations.merchant_language_id', '=', $languageEnId)
                             ->where('coupon_translations.promotion_name', '!=', '')
                             ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                             ->groupBy('campaign_id')
