@@ -556,12 +556,14 @@ class CouponAPIController extends ControllerAPI
                             ->leftJoin('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
                             ->leftJoin('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
                             ->leftJoin('languages', 'languages.language_id', '=', 'coupon_translations.merchant_language_id')
-                            ->leftJoin('media', 'media.object_id', '=', 'coupon_translations.coupon_translation_id')
+                            ->leftJoin('media', function($q) {
+                                $q->on('media.object_id', '=', 'coupon_translations.coupon_translation_id');
+                                $q->on('media.media_name_long', '=', DB::raw("'coupon_translation_image_orig'"));
+                            })
                             ->join('issued_coupons', function ($join) {
                                 $join->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
                                 $join->where('issued_coupons.status', '=', 'active');
                             })
-                            ->where('media.media_name_long', 'coupon_translation_image_orig')
                             ->where('issued_coupons.user_id', $user->user_id)
                             ->where('languages.name', '=', 'en')
                             ->where('coupon_translations.promotion_name', '!=', '')
