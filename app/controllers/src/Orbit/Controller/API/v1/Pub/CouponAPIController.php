@@ -345,8 +345,8 @@ class CouponAPIController extends ControllerAPI
             // should always check the role
             $role = $user->role->role_name;
             if (strtolower($role) !== 'consumer') {
-                $message = 'Your role are not allowed to access this resource.';
-                ACL::throwAccessForbidden($message);
+                $message = 'You have to login to continue';
+                OrbitShopAPI::throwInvalidArgument($message);
             }
 
             // Get language_if of english
@@ -554,8 +554,8 @@ class CouponAPIController extends ControllerAPI
             // should always check the role
             $role = $user->role->role_name;
             if (strtolower($role) !== 'consumer') {
-                $message = 'Your role are not allowed to access this resource.';
-                ACL::throwAccessForbidden($message);
+                $message = 'You have to login to continue';
+                OrbitShopAPI::throwInvalidArgument($message);
             }
 
             $sort_by = OrbitInput::get('sortby', 'name');
@@ -841,17 +841,17 @@ class CouponAPIController extends ControllerAPI
         $this->response = new ResponseProvider();
 
         try{
-            $couponName = OrbitInput::get('coupon_name', null);
+            $couponId = OrbitInput::get('coupon_id', null);
             $sort_by = OrbitInput::get('sortby', 'name');
             $sort_mode = OrbitInput::get('sortmode','asc');
 
 
             $validator = Validator::make(
                 array(
-                    'coupon_name' => $couponName,
+                    'coupon_id' => $couponId,
                 ),
                 array(
-                    'coupon_name' => 'required',
+                    'coupon_id' => 'required',
                 ),
                 array(
                     'required' => 'Coupon ID is required',
@@ -882,7 +882,7 @@ class CouponAPIController extends ControllerAPI
                                     ->leftJoin('promotions', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                                     ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
                                     ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
-                                    ->where('promotions.promotion_name', '=', $couponName)
+                                    ->where('promotions.promotion_id', $couponId)
                                     ->groupBy('merchant_id')
                                     ->havingRaw('tz <= end_date AND tz >= begin_date');
 

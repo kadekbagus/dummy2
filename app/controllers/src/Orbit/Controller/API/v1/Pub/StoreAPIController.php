@@ -19,6 +19,8 @@ use stdClass;
 use Orbit\Helper\Util\PaginationNumber;
 use DB;
 use Validator;
+use Language;
+use Coupon;
 
 class StoreAPIController extends ControllerAPI
 {
@@ -590,6 +592,13 @@ class StoreAPIController extends ControllerAPI
             $store_name = OrbitInput::get('store_name');
             $keyword = OrbitInput::get('keyword');
 
+            $languageEnId = null;
+            $language = Language::where('name', 'en')->first();
+
+            if (! empty($language)) {
+                $languageEnId = $language->language_id;
+            }
+
             $validator = Validator::make(
                 array(
                     'store_name' => $store_name,
@@ -610,53 +619,163 @@ class StoreAPIController extends ControllerAPI
 
             $prefix = DB::getTablePrefix();
 
-            // get news promotion list
-            $news_promotion = DB::table('news')
-                                ->select(
-                                        DB::Raw("t.merchant_id as tenant_id"),
-                                        DB::Raw("{$prefix}news.news_id as campaign_id"),
-                                        DB::Raw("{$prefix}news.news_name as campaign_name"),
-                                        DB::Raw("{$prefix}news.object_type as campaign_type"),
-                                        DB::Raw("img.path as campaign_image")
+            // get news list
+            $news = DB::table('news')->select(
+                        'news.news_id as campaign_id',
+                        'news_translations.news_name as campaign_name',
+                        'news.object_type as campaign_type',
+                        // query for get status active based on timezone
+                        DB::raw("
+                                CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
+                                THEN {$prefix}campaign_status.campaign_status_name
+                                ELSE (
+                                    CASE WHEN {$prefix}news.end_date < (
+                                        SELECT min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
+                                        FROM {$prefix}news_merchant onm
+                                            LEFT JOIN {$prefix}merchants om ON om.merchant_id = onm.merchant_id
+                                            LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
+                                            LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
+                                        WHERE onm.news_id = {$prefix}news.news_id
+                                        AND om.name = '{$store_name}'
                                     )
-                                ->leftJoin('news_merchant as nm', DB::Raw('nm.news_id'), '=', 'news.news_id')
-                                ->leftJoin('merchants as t', DB::Raw('t.merchant_id'), '=', DB::Raw('nm.merchant_id'))
-                                ->leftJoin('merchants as m', DB::Raw('m.merchant_id'), '=', DB::Raw('t.parent_id'))
-                                ->leftJoin('media as img', DB::Raw('img.object_id'), '=', 'news.news_id')
-                                ->where(DB::Raw('t.status'), 'active')
-                                ->where(DB::Raw('t.name'), $store_name)
-                                ->where(DB::Raw('m.status'), 'active')
-                                ->whereIn(DB::Raw('img.object_name'), ['news_translation', 'promotion_translation'])
-                                ->where(DB::Raw('img.media_name_long'), 'like', '%_orig');
+                                    THEN 'expired'
+                                    ELSE {$prefix}campaign_status.campaign_status_name
+                                    END
+                                )
+                                END AS campaign_status,
+                                CASE WHEN (
+                                    SELECT count(onm.merchant_id)
+                                    FROM {$prefix}news_merchant onm
+                                        LEFT JOIN {$prefix}merchants om ON om.merchant_id = onm.merchant_id
+                                        LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
+                                        LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
+                                    WHERE onm.news_id = {$prefix}news.news_id
+                                    AND CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) between {$prefix}news.begin_date and {$prefix}news.end_date) > 0
+                                THEN 'true'
+                                ELSE 'false'
+                                END AS is_started,
+                                {$prefix}media.path as original_media_path
+                            "))
+                        ->join('news_translations', 'news_translations.news_id', '=', 'news.news_id')
+                        ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
+                        ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
+                        ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
+                        ->leftJoin('media', 'media.object_id', '=', 'news_translations.news_translation_id')
+                        ->where('media.media_name_long', 'news_translation_image_orig')
+                        ->where('merchants.name', $store_name)
+                        ->where('news_translations.merchant_language_id', '=', $languageEnId)
+                        ->where('news.object_type', '=', 'news')
+                        ->where('news_translations.news_name', '!=', '')
+                        ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
+                        ->groupBy('campaign_id')
+                        ->orderBy('news_translations.news_name', 'asc');
+
+            $promotions = DB::table('news')->select(
+                        'news.news_id as campaign_id',
+                        'news_translations.news_name as campaign_name',
+                        'news.object_type as campaign_type',
+                        // query for get status active based on timezone
+                        DB::raw("
+                                CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
+                                THEN {$prefix}campaign_status.campaign_status_name
+                                ELSE (
+                                    CASE WHEN {$prefix}news.end_date < (
+                                        SELECT min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
+                                        FROM {$prefix}news_merchant onm
+                                            LEFT JOIN {$prefix}merchants om ON om.merchant_id = onm.merchant_id
+                                            LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
+                                            LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
+                                        WHERE onm.news_id = {$prefix}news.news_id
+                                    )
+                                    THEN 'expired'
+                                    ELSE {$prefix}campaign_status.campaign_status_name
+                                    END
+                                )
+                                END AS campaign_status,
+                                CASE WHEN (
+                                    SELECT count(onm.merchant_id)
+                                    FROM {$prefix}news_merchant onm
+                                        LEFT JOIN {$prefix}merchants om ON om.merchant_id = onm.merchant_id
+                                        LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
+                                        LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
+                                    WHERE onm.news_id = {$prefix}news.news_id
+                                    AND CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) between {$prefix}news.begin_date and {$prefix}news.end_date) > 0
+                                THEN 'true'
+                                ELSE 'false'
+                                END AS is_started,
+                                {$prefix}media.path as original_media_path
+                            "))
+                        ->join('news_translations', 'news_translations.news_id', '=', 'news.news_id')
+                        ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
+                        ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
+                        ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
+                        ->leftJoin('media', 'media.object_id', '=', 'news_translations.news_translation_id')
+                        ->where('media.media_name_long', 'news_translation_image_orig')
+                        ->where('merchants.name', $store_name)
+                        ->where('news_translations.merchant_language_id', '=', $languageEnId)
+                        ->where('news.object_type', '=', 'promotion')
+                        ->where('news_translations.news_name', '!=', '')
+                        ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
+                        ->groupBy('campaign_id')
+                        ->orderBy('news_translations.news_name', 'asc');
 
             // get coupon list
-            $coupon = DB::table('promotions')
-                                ->select(
-                                        DB::Raw("t.merchant_id as tenant_id"),
-                                        DB::Raw("{$prefix}promotions.promotion_id as campaign_id"),
-                                        DB::Raw("{$prefix}promotions.promotion_name as campaign_name"),
-                                        DB::Raw("'coupon' as campaign_type"),
-                                        DB::Raw("img.path as campaign_image")
-                                    )
-                                ->leftJoin('promotion_retailer as pr', DB::Raw('pr.promotion_id'), '=', 'promotions.promotion_id')
-                                ->leftJoin('merchants as t', DB::Raw('t.merchant_id'), '=', DB::Raw('pr.retailer_id'))
-                                ->leftJoin('merchants as m', DB::Raw('m.merchant_id'), '=', DB::Raw('t.parent_id'))
-                                ->leftJoin('media as img', DB::Raw('img.object_id'), '=', 'promotions.promotion_id')
-                                ->where(DB::Raw('t.status'), 'active')
-                                ->where(DB::Raw('t.name'), $store_name)
-                                ->where(DB::Raw('m.status'), 'active')
-                                ->where(DB::Raw('img.object_name'), 'coupon_translation')
-                                ->where(DB::Raw('img.media_name_long'), 'like', '%_orig');
+            $coupons = DB::table('promotions')->select(DB::raw("
+                                {$prefix}promotions.promotion_id as campaign_id,
+                                {$prefix}coupon_translations.promotion_name as campaign_name,
+                                'coupon' as campaign_type,
+                                CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
+                                THEN {$prefix}campaign_status.campaign_status_name
+                                ELSE (
+                                    CASE WHEN {$prefix}promotions.end_date < (
+                                        SELECT min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
+                                        FROM {$prefix}promotion_retailer opt
+                                            LEFT JOIN {$prefix}merchants om ON om.merchant_id = opt.retailer_id
+                                            LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
+                                            LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
+                                        WHERE opt.promotion_id = {$prefix}promotions.promotion_id)
+                                    THEN 'expired'
+                                    ELSE {$prefix}campaign_status.campaign_status_name
+                                    END
+                                )
+                                END AS campaign_status,
+                                CASE WHEN (
+                                    SELECT count(opt.promotion_retailer_id)
+                                    FROM {$prefix}promotion_retailer opt
+                                        LEFT JOIN {$prefix}merchants om ON om.merchant_id = opt.retailer_id
+                                        LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
+                                        LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
+                                    WHERE opt.promotion_id = {$prefix}promotions.promotion_id
+                                        AND CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) between {$prefix}promotions.begin_date and {$prefix}promotions.end_date) > 0
+                                THEN 'true'
+                                ELSE 'false'
+                                END AS is_started,
+                                {$prefix}media.path as original_media_path
+                            "))
+                            ->leftJoin('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
+                            ->leftJoin('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
+                            ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
+                            ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
+                            ->leftJoin('languages', 'languages.language_id', '=', 'coupon_translations.merchant_language_id')
+                            ->leftJoin('media', 'media.object_id', '=', 'coupon_translations.coupon_translation_id')
+                            ->where('media.media_name_long', 'coupon_translation_image_orig')
+                            ->where('merchants.name', $store_name)
+                            ->where('languages.name', '=', 'en')
+                            ->where('coupon_translations.promotion_name', '!=', '')
+                            ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
+                            ->groupBy('campaign_id')
+                            ->orderBy('coupon_translations.promotion_name', 'asc');
 
-            $union_campaign = $news_promotion->union($coupon);
+            $result = $news->unionAll($promotions)->unionAll($coupons);
 
-            $querySql = $union_campaign->toSql();
+            $querySql = $result->toSql();
 
-            $campaign = DB::table(DB::Raw("({$querySql}) as campaign"))->mergeBindings($union_campaign);
+            $campaign = DB::table(DB::Raw("({$querySql}) as campaign"))->mergeBindings($result);
 
             $_campaign = clone $campaign;
 
             $take = PaginationNumber::parseTakeFromGet('campaign');
+
             $campaign->take($take);
 
             $skip = PaginationNumber::parseSkipFromGet();
