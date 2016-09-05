@@ -14,6 +14,7 @@ use OrbitShop\API\v1\ControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
+use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Orbit\Helper\Exception\UrlException;
 use \View;
@@ -1653,19 +1654,20 @@ class MobileCIAPIController extends BaseCIController
         $user = NULL;
         $coupon = NULL;
         $issuedCoupon = NULL;
-        $retailer = null;
+        $retailer = NULL;
+        $coupon_id = OrbitInput::post('coupon_id', NULL);
+
         try {
             $user = $this->getLoggedInUser();
 
             // guest cannot add to wallet
             if (! $user->isConsumer()) {
                 $message = 'You must login to access this.';
-                OrbitShopAPI::throwInvalidArgument($message);
+                ACL::throwAccessForbidden($message);
             }
 
             $retailer = $this->getRetailerInfo();
             $this->registerCustomValidation();
-            $coupon_id = OrbitInput::post('coupon_id');
 
             // check if coupon already add to wallet
             $wallet = IssuedCoupon::where('promotion_id', '=', $coupon_id)
@@ -1720,6 +1722,8 @@ class MobileCIAPIController extends BaseCIController
             }
 
         } catch (ACLForbiddenException $e) {
+            $coupon = Coupon::where('promotion_id', '=', $coupon_id)->first();
+
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
@@ -1729,12 +1733,12 @@ class MobileCIAPIController extends BaseCIController
             $activity->setUser($user)
                 ->setActivityName('click_add_to_wallet')
                 ->setActivityNameLong('Click Add To Wallet')
-                ->setObject($issuedCoupon)
+                ->setObject($coupon)
                 ->setModuleName('Coupon')
                 ->setCoupon($coupon)
                 ->setLocation($retailer)
                 ->setNotes($activityNotes)
-                ->responseFailed()
+                ->responseOK()
                 ->save();
         } catch (InvalidArgsException $e) {
             $this->response->code = $e->getCode();
