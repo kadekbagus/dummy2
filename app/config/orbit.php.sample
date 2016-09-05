@@ -3552,7 +3552,7 @@ return array(
                 'parameter_name' => 'promotion_id'
             ),
             // - Coupons View
-            '30' => array(
+            '29' => array(
                 'name' => 'view_coupons_main_page',
                 'name_long' => 'View Coupons Main Page',
                 'module_name' => 'Application',
@@ -3561,7 +3561,7 @@ return array(
                 'parameter_name' => null
             ),
             // - Clicking on a coupon in list
-            '31' => array(
+            '30' => array(
                 'name' => 'click_coupon_list',
                 'name_long' => 'Click Coupon List',
                 'module_name' => 'Application',
