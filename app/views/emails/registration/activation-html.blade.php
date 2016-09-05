@@ -210,7 +210,7 @@
                                                         <tr>
                                                             <td style="width: 40px;" align="center">
                                                                 <a href="https://www.facebook.com/Gotomalls.Indo">
-                                                                    <img alt="Gotomalls Logo" title="" height="auto" src="../images/logo-fb.png" style="border: none; border-radius:; display: block; outline: none; text-decoration: none; width: 30px; height: auto;" width="30"></td>
+                                                                    <img alt="Gotomalls Logo" title="" height="auto" src="{{ asset('emails/logo-fb.png') }}" style="border: none; border-radius:; display: block; outline: none; text-decoration: none; width: 30px; height: auto;" width="30"></td>
                                                                 </a>
                                                         </tr>
                                                     </tbody>
@@ -231,7 +231,7 @@
                                                         <tr>
                                                             <td style="width: 40px;" align="center">
                                                                 <a href="https://www.instagram.com/gotomalls">
-                                                                    <img alt="Gotomalls Logo" title="" height="auto" src="../images/logo-ig.png" style="border: none; border-radius:; display: block; outline: none; text-decoration: none; width: 30px; height: auto;" width="30"></td>
+                                                                    <img alt="Gotomalls Logo" title="" height="auto" src="{{ asset('emails/logo-ig.png') }}" style="border: none; border-radius:; display: block; outline: none; text-decoration: none; width: 30px; height: auto;" width="30"></td>
                                                                 </a>
                                                         </tr>
                                                     </tbody>
@@ -252,7 +252,7 @@
                                                         <tr>
                                                             <td style="width: 40px;" align="center">
                                                                 <a href="https://blog.gotomalls.com">
-                                                                    <img alt="Gotomalls Logo" title="" height="auto" src="../images/logo-blog.png" style="border: none; border-radius:; display: block; outline: none; text-decoration: none; width: 30px; height: auto;" width="30"></td>
+                                                                    <img alt="Gotomalls Logo" title="" height="auto" src="{{ asset('emails/logo-blog.png') }}" style="border: none; border-radius:; display: block; outline: none; text-decoration: none; width: 30px; height: auto;" width="30"></td>
                                                                 </a>
                                                         </tr>
                                                     </tbody>
