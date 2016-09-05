@@ -78,7 +78,7 @@ class RegistrationMail
     protected function sendActivationEmail($user, $token, $data, $mallName, $baseUrl)
     {
         // URL Activation link
-        $tokenUrl = sprintf($baseUrl, $token->token_value);
+        $tokenUrl = sprintf($baseUrl, $token->token_value, $user->user_email);
         $contactInfo = Config::get('orbit.contact_information.customer_service');
 
         $data = array(
@@ -102,7 +102,7 @@ class RegistrationMail
             $from = $emailconf['email'];
             $name = $emailconf['name'];
 
-            $message->from($from, $name)->subject('Activate Your GotoMalls Account');
+            $message->from($from, $name)->subject('Selamat Datang di Gotomalls!');
             $message->to($user->user_email);
         });
     }

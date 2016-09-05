@@ -310,6 +310,17 @@ class NewsAPIController extends ControllerAPI
         return $this->render($httpCode);
     }
 
+    /**
+     * GET - get the news detail
+     *
+     * @author Ahmad <ahmad@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param string news_id
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
     public function getNewsItem()
     {
         $httpCode = 200;
@@ -330,9 +341,6 @@ class NewsAPIController extends ControllerAPI
             }
 
             $newsId = OrbitInput::get('news_id', null);
-            $sort_by = OrbitInput::get('sortby', 'name');
-            $sort_mode = OrbitInput::get('sortmode','asc');
-
 
             $validator = Validator::make(
                 array(
@@ -391,10 +399,12 @@ class NewsAPIController extends ControllerAPI
                         )
                         ->join('news_translations', 'news_translations.news_id', '=', 'news.news_id')
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
-                        ->leftJoin('media', 'media.object_id', '=', 'news_translations.news_translation_id')
+                        ->leftJoin('media', function($q) {
+                            $q->on('media.object_id', '=', 'news_translations.news_translation_id');
+                            $q->on('media.media_name_long', '=', DB::raw("'news_translation_image_orig'"));
+                        })
                         ->where('news.news_id', $newsId)
                         ->where('news_translations.merchant_language_id', '=', $languageEnId)
-                        ->where('media.media_name_long', 'news_translation_image_orig')
                         ->where('news.object_type', '=', 'news')
                         ->where('news_translations.news_name', '!=', '')
                         ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
@@ -463,6 +473,20 @@ class NewsAPIController extends ControllerAPI
         return $this->render($httpCode);
     }
 
+    /**
+     * GET - get the list of news location
+     *
+     * @author Ahmad <ahmad@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param string sortby
+     * @param string sortmode
+     * @param string take
+     * @param string skip
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
     public function getNewsLocations()
     {
         $httpCode = 200;
