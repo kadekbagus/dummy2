@@ -54,7 +54,8 @@ class StoreAPIController extends ControllerAPI
                 ->where('merchants.status', 'active')
                 ->whereRaw("oms.status = 'active'")
                 ->groupBy('merchants.name')
-                ->orderBy($sort_by, $sort_mode);
+                ->orderBy($sort_by, $sort_mode)
+                ->orderBy('merchants.created_at', 'asc');
 
             OrbitInput::get('filter_name', function ($filterName) use ($store, $prefix) {
                 if (! empty($filterName)) {
