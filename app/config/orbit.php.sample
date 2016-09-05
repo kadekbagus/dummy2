@@ -3515,6 +3515,60 @@ return array(
                 'object_type' => null,
                 'parameter_name' => null
             ),
+            // - News View
+            '25' => array(
+                'name' => 'view_news_main_page',
+                'name_long' => 'View News Main Page',
+                'module_name' => 'Application',
+                'type' => 'view',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - Clicking on a news in list
+            '26' => array(
+                'name' => 'click_news_list',
+                'name_long' => 'Click News List',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => 'News',
+                'parameter_name' => 'news_id'
+            ),
+            // - Promotions View
+            '27' => array(
+                'name' => 'view_promotions_main_page',
+                'name_long' => 'View Promotions Main Page',
+                'module_name' => 'Application',
+                'type' => 'view',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - Clicking on a promotion in list
+            '28' => array(
+                'name' => 'click_promotion_list',
+                'name_long' => 'Click Promotion List',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => 'Promotion',
+                'parameter_name' => 'promotion_id'
+            ),
+            // - Coupons View
+            '30' => array(
+                'name' => 'view_coupons_main_page',
+                'name_long' => 'View Coupons Main Page',
+                'module_name' => 'Application',
+                'type' => 'view',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - Clicking on a coupon in list
+            '31' => array(
+                'name' => 'click_coupon_list',
+                'name_long' => 'Click Coupon List',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'coupon_id'
+            ),
         ),
     ),
 
