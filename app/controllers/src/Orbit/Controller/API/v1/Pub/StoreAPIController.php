@@ -476,7 +476,6 @@ class StoreAPIController extends ControllerAPI
                               ->where('objects.object_type', 'floor')
                               ->where('merchants.name', $storename)
                               ->where('merchants.status', 'active')
-                              ->with('mediaMap')
                               ->with(['categories' => function ($q) {
                                     $q->select(
                                             'category_name'
@@ -487,6 +486,11 @@ class StoreAPIController extends ControllerAPI
                                             'media.path'
                                         );
                                 }]);
+                        }, 'mediaLogo' => function ($q) {
+                                    $q->select(
+                                            'media.object_id',
+                                            'media.path'
+                                        );
                         }]);
 
             // Query list mall based on keyword. Handling description and keyword can be different with other stores
