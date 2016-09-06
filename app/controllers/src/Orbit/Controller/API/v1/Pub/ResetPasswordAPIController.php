@@ -223,6 +223,76 @@ class ResetPasswordAPIController extends ControllerAPI
         return $this->render();
     }
 
+    /**
+     * GET - Check activation token (needed by the frontend)
+     *
+     * @author kadek <kadek@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param string token (required) - Token
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function getCheckActivationToken()
+    {
+        $this->response = new ResponseProvider();
+        try {
+            $this->registerCustomValidation();
+            $tokenValue = trim(OrbitInput::get('token'));
+
+            $validator = Validator::make(
+                array(
+                    'token_value'   => $tokenValue,
+                ),
+                array(
+                    'token_value'   => 'required',
+                )
+            );
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $token = Token::where('token_value', $tokenValue)
+                        ->where('token_name', 'user_registration_mobile')
+                        ->first();
+
+            if (!is_object($token)) {
+                $errorMessage = 'Token Not Found';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            } else {
+                if ($token->status === 'active') {
+                    $this->response->message = 'Token Active';
+                    $this->response->data = null;
+                } else {
+                    $errorMessage = 'Token Already Activated';
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+            }
+
+        } catch (ACLForbiddenException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+        } catch (InvalidArgsException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+        } catch (Exception $e) {
+            $this->response->code = Status::UNKNOWN_ERROR;
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = [$e->getMessage(), $e->getFile(), $e->getLine()];
+        }
+
+        return $this->render();
+    }
+
     protected function registerCustomValidation()
     {
         // Check the existance of token

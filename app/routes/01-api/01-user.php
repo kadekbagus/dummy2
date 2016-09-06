@@ -201,3 +201,14 @@ Route::get(
         return Orbit\Controller\API\v1\Pub\ResetPasswordAPIController::create()->getCheckResetPasswordToken();
     }]
 )->where('prefix', '(api|app)');
+
+
+/**
+ * Route for checking activation token already activate or not
+ */
+Route::get(
+    '/{prefix}/v1/pub/user/check-token-activation', ['as' => 'pub-user-check-token-activation', function()
+    {
+        return Orbit\Controller\API\v1\Pub\ResetPasswordAPIController::create()->getCheckActivationToken();
+    }]
+)->where('prefix', '(api|app)');
