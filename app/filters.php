@@ -143,6 +143,40 @@ Route::filter('fb-bot', function() {
     }
 });
 
+/*
+|--------------------------------------------------------------------------
+| Facebook crawler goes here
+| (Facebook bot filter for pub routes)
+|--------------------------------------------------------------------------
+*/
+Route::filter('pub-fb-bot', function() {
+    Config::set('orbit.session.availability.query_string', false);
+    $gtmUrl = Config::get('orbit.shop.gtm_url');
+    $FBChecker = new FBBotChecker();
+    if (! $FBChecker->isFBCrawler()) {
+        switch (Route::currentRouteName()) {
+            case 'pub-share-promotion':
+                $type = 'promotions';
+                break;
+            case 'pub-share-news':
+                $type = 'news';
+                break;
+            case 'pub-share-coupon':
+                $type = 'coupons';
+                break;
+            default:
+                $type = '';
+                break;
+        }
+
+        // redirect user to gotomalls detail page
+        // needs to be updated if there are route changes on frontend side
+        $redirect_to = URL::to(sprintf('%s/#!/%s/detail/%s/%s', $gtmUrl, $type, Input::get('id'), rawurlencode(Input::get('name', ''))));
+
+        return Redirect::to($redirect_to);
+    }
+});
+
 Route::filter('turn-off-query-string-session', function()
 {
     Config::set('orbit.session.availability.query_string', false);

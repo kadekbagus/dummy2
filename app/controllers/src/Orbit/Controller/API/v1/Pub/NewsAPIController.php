@@ -24,6 +24,7 @@ use Orbit\Helper\Util\PaginationNumber;
 use Activity;
 use Orbit\Helper\Net\SessionPreparer;
 use Orbit\Helper\Session\UserGetter;
+use Orbit\Controller\API\v1\Pub\SocMedAPIController;
 
 class NewsAPIController extends ControllerAPI
 {
@@ -425,6 +426,9 @@ class NewsAPIController extends ControllerAPI
                 ->setNotes($activityNotes)
                 ->responseOK()
                 ->save();
+
+            // add facebook share url dummy page
+            $news->facebook_share_url = SocMedAPIController::getSharedUrl('news', $news->news_id, $news->news_name);
 
             $this->response->data = $news;
             $this->response->code = 0;
