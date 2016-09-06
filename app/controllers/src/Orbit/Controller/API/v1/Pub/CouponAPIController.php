@@ -893,6 +893,12 @@ class CouponAPIController extends ControllerAPI
                             'coupon_translations.description as description',
                             'promotions.end_date',
                             'media.path as original_media_path',
+                            DB::Raw("
+                                    CASE WHEN {$prefix}issued_coupons.user_id is NULL
+                                        THEN 'false'
+                                        ELSE 'true'
+                                    END as get_coupon_status
+                                "),
                             // query for get status active based on timezone
                             DB::raw("
                                     CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
@@ -917,6 +923,11 @@ class CouponAPIController extends ControllerAPI
                         ->join('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
                         ->leftJoin('media', 'media.object_id', '=', 'coupon_translations.coupon_translation_id')
+                        ->leftJoin('issued_coupons', function ($q) use ($user) {
+                                $q->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
+                                $q->on('issued_coupons.user_id', '=', DB::Raw("{$this->quote($user->user_id)}"));
+                                $q->on('issued_coupons.status', '=', DB::Raw("'active'"));
+                            })
                         ->where('promotions.promotion_id', $couponId)
                         ->where('coupon_translations.merchant_language_id', '=', $languageEnId)
                         ->where('media.media_name_long', 'coupon_translation_image_orig')
