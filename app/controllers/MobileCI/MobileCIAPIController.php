@@ -1158,7 +1158,7 @@ class MobileCIAPIController extends BaseCIController
      * Handle google account POST and callback
      *
      * @author shelgi <shelgi@dominopos.com>
-     *
+     * @deprecated
      * @return void
      *
      */
