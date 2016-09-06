@@ -42,7 +42,7 @@ use \Inbox;
 use Orbit\Helper\Session\UserGetter;
 use Orbit\Helper\Net\SessionPreparer;
 use Orbit\Helper\Net\SignInRecorder;
-use ActivationAPIController;
+use Orbit\Controller\API\v1\Pub\ActivationAPIController;
 
 class LoginAPIController extends IntermediateBaseController
 {
@@ -315,119 +315,97 @@ class LoginAPIController extends IntermediateBaseController
                 $redirect_to_url_from_state = empty(json_decode($this->base64UrlDecode($state))->redirect_to_url) ? Config::get('orbit.shop.after_social_sign_in') : json_decode($this->base64UrlDecode($state))->redirect_to_url;
                 $_GET[Config::get('orbit.user_location.query_string.name', 'ul')] = json_decode($this->base64UrlDecode($state))->user_location;
                 $this->session = SessionPreparer::prepareSession();
-                // from mall = yes, indicate the request coming from Mall CI, then use MobileCIAPIController::getGoogleCallbackView
-                // to set the session and other things
-                if (! empty($mall_id_from_state)) {
-                    $_GET['caller_url'] = $caller_url;
-                    $_GET['redirect_to_url'] = $encoded_redirect_to_url;
-                    $_GET['state'] = $state;
-                    $_GET['code'] = $code;
-                    $_GET['mall_id'] = $mall_id_from_state;
-                    $_GET['email'] = $userEmail;
-                    $_GET['first_name'] = $firstName;
-                    $_GET['last_name'] = $lastName;
-                    $_GET['gender'] = $gender;
-                    $_GET['socialid'] = $socialid;
+
+                $data = [
+                    'email' => $userEmail,
+                    'fname' => $firstName,
+                    'lname' => $lastName,
+                    'gender' => $gender,
+                    'login_from'  => 'google',
+                    'social_id'  => $socialid,
+                    'mac' => \Input::get('mac_address', ''),
+                    'ip' => $_SERVER['REMOTE_ADDR'],
+                    'is_captive' => 'yes',
+                    'recognized' => $recognized
+                ];
+                $orbit_origin = \Input::get('orbit_origin', 'google');
+
+                // There is a chance that user not 'grant' his email while approving our app
+                // so we double check it here
+                if (empty($userEmail)) {
+                    if (! empty($encoded_caller_url_full)) {
+                        $encoded_caller_url_full = $this->addHttps($encoded_caller_url_full);
+                        $caller_url = $encoded_caller_url_full;
+                    }
+                    $parsed_caller_url = parse_url((string)$caller_url);
+                    if (isset($parsed_caller_url['query'])) {
+                        $caller_url .= '&error=no_email';
+                    } else {
+                        $caller_url .= '?error=no_email';
+                    }
+
+                    return Redirect::to($encoded_caller_url_full);
+                }
+
+                $loggedInUser = $this->doAutoLogin($userEmail);
+                if (! is_object($loggedInUser)) {
+                    // register user without password and birthdate
+                    $status = 'active';
+                    $response = (new Regs())->createCustomerUser($userEmail, NULL, NULL, $firstName, $lastName, $gender, NULL, NULL, TRUE, NULL, NULL, NULL, $status, 'Google');
+                    if (get_class($response) !== 'User') {
+                        throw new Exception($response->message, $response->code);
+                    }
+
+                    SignInRecorder::setSignUpActivity($response, 'google', NULL);
+                    // create activation_ok activity without using token
+                    $activation_ok = ActivationAPIController::create('raw')
+                        ->setSaveAsAutoActivation($response, 'google')
+                        ->postActivateAccount();
+
+                    $loggedInUser = $this->doAutoLogin($response->user_email);
+                }
+
+                SignInRecorder::setSignInActivity($loggedInUser, 'google', NULL, NULL, TRUE);
+
+                $expireTime = Config::get('orbit.session.session_origin.cookie.expire');
+
+                setcookie('orbit_email', $userEmail, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+                setcookie('orbit_firstname', $firstName, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+                setcookie('login_from', 'Google', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+
+                $mallId = $mall_id_from_desktop_state;
+
+                if (!empty($mallId)) {
+                    // request comes from desktop ci / mobile ci
+                    $this->registerCustomValidation();
+
+                    $validator = Validator::make(
+                        array(
+                            'mall_id' => $mallId,
+                        ),
+                        array(
+                            'mall_id' => 'orbit.empty.mall',
+                        )
+                    );
+
+                    if ($validator->fails()) {
+                        $errorMessage = $validator->messages()->first();
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
+
+                    $retailer = Mall::excludeDeleted()->where('merchant_id', $mallId)->first();
+
                     $this->session->write('login_from', 'google');
 
-                    $response = \MobileCI\MobileCIAPIController::create()->getGoogleCallbackView();
+                    $user = UserGetter::getLoggedInUserOrGuest($this->session);
 
-                    return $response;
-                } else { // the request coming from landing page (gotomalls.com)
-                    $data = [
-                        'email' => $userEmail,
-                        'fname' => $firstName,
-                        'lname' => $lastName,
-                        'gender' => $gender,
-                        'login_from'  => 'google',
-                        'social_id'  => $socialid,
-                        'mac' => \Input::get('mac_address', ''),
-                        'ip' => $_SERVER['REMOTE_ADDR'],
-                        'is_captive' => 'yes',
-                        'recognized' => $recognized
-                    ];
-                    $orbit_origin = \Input::get('orbit_origin', 'google');
-
-                    // There is a chance that user not 'grant' his email while approving our app
-                    // so we double check it here
-                    if (empty($userEmail)) {
-                        if (! empty($encoded_caller_url_full)) {
-                            $encoded_caller_url_full = $this->addHttps($encoded_caller_url_full);
-                            $caller_url = $encoded_caller_url_full;
-                        }
-                        $parsed_caller_url = parse_url((string)$caller_url);
-                        if (isset($parsed_caller_url['query'])) {
-                            $caller_url .= '&error=no_email';
-                        } else {
-                            $caller_url .= '?error=no_email';
-                        }
-
-                        return Redirect::to($encoded_caller_url_full);
+                    if (is_object($user)) {
+                        $this->acquireUser($retailer, $user, 'google');
                     }
-
-                    $loggedInUser = $this->doAutoLogin($userEmail);
-                    if (! is_object($loggedInUser)) {
-                        // register user without password and birthdate
-                        $status = 'active';
-                        $response = (new Regs())->createCustomerUser($userEmail, NULL, NULL, $firstName, $lastName, $gender, NULL, NULL, TRUE, NULL, NULL, NULL, $status, 'Google');
-                        if (get_class($response) !== 'User') {
-                            throw new Exception($response->message, $response->code);
-                        }
-
-                        SignInRecorder::setSignUpActivity($response, 'google', NULL);
-                        // create activation_ok activity without using token
-                        $activation_ok = ActivationAPIController::create('raw')
-                            ->setSaveAsAutoActivation($response, 'google')
-                            ->postActivateAccount();
-
-                        $loggedInUser = $this->doAutoLogin($response->user_email);
-                    }
-
-                    SignInRecorder::setSignInActivity($loggedInUser, 'google', NULL, NULL, TRUE);
-
-                    $expireTime = Config::get('orbit.session.session_origin.cookie.expire');
-
-                    setcookie('orbit_email', $userEmail, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
-                    setcookie('orbit_firstname', $firstName, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
-                    setcookie('login_from', 'Google', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
-
-                    if (empty($angular_ci_from_state)) {
-                        return Redirect::to(Config::get('orbit.shop.after_social_sign_in'));
-                    }
-
-                    $mallId = $mall_id_from_desktop_state;
-                    // this flow coming from desktop ci
-                    if (!empty($mallId)) {
-                        $this->registerCustomValidation();
-
-                        $validator = Validator::make(
-                            array(
-                                'mall_id' => $mallId,
-                            ),
-                            array(
-                                'mall_id' => 'orbit.empty.mall',
-                            )
-                        );
-
-                        if ($validator->fails()) {
-                            $errorMessage = $validator->messages()->first();
-                            OrbitShopAPI::throwInvalidArgument($errorMessage);
-                        }
-
-                        $retailer = Mall::excludeDeleted()->where('merchant_id', $mallId)->first();
-
-                        $this->session->write('login_from', 'google');
-
-                        $user = UserGetter::getLoggedInUserOrGuest($this->session);
-
-                        if (is_object($user)) {
-                            $this->acquireUser($retailer, $user, 'google');
-                        }
-                    }
-                    $redirect_to_url_from_state = $this->addHttps($redirect_to_url_from_state);
-                    // request coming from angular-ci
-                    return Redirect::to($redirect_to_url_from_state);
                 }
+                $redirect_to_url_from_state = $this->addHttps($redirect_to_url_from_state);
+
+                return Redirect::to($redirect_to_url_from_state);
             } catch (Exception $e) {
                 if (! empty($angular_ci)) {
                     $caller_url = $encoded_caller_url_full;
