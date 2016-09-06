@@ -104,19 +104,43 @@ class LandingPageAPIController extends ControllerAPI
         $httpCode = 200;
         try {
             $slideshow = Config::get('dynamic-listing.slideshow', null);
-
+            $maxSlide = 10;
             $slide = array();
+            $slide_fix = array();
+            $random = array();
+
             if (! empty($slideshow)) {
-                $maxSlide = 10;
-                if (count($slideshow) < $maxSlide) {
-                    $maxSlide = count($slideshow);
+                //check slideshow pic no_random is true or not, if true split to another array
+                $slide_random = array();
+                foreach ($slideshow as $sf) {
+                    if($sf['not_random'] === 1) {
+                        array_push($slide_fix, $sf);
+                    } else {
+                        array_push($slide_random, $sf);
+                    }
                 }
 
-                $listSlide = array_rand($slideshow, $maxSlide);
-                foreach ($listSlide as $key => $value) {
-                    array_push($slide, $slideshow[$value]);
+                $maxSlide = $maxSlide - count($slide_fix);
+
+                if (! empty($slide_random)) {
+                    if (count($slide_random) < $maxSlide) {
+                        $maxSlide = count($slide_random);
+                    }
+                    $slides = array();
+                    $listSlide = array_rand($slide_random, $maxSlide);
+                    foreach ($listSlide as $key => $value) {
+                        array_push($slides, $slide_random[$value]);
+                    }
+
+                    $keys = array_keys($slides);
+                    shuffle($keys);
+                    foreach ($keys as $key) {
+                        array_push($random, $slides[$key]);
+                    }
                 }
             }
+
+            $slide = array_merge($slide_fix, $random);
 
             $this->response->data = new stdClass();
             $this->response->data->total_records = count($slideshow);
