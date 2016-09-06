@@ -15,6 +15,7 @@ use \Exception;
 use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use \DB;
+use \URL;
 use News;
 use NewsMerchant;
 use Language;
@@ -222,13 +223,14 @@ class NewsAPIController extends ControllerAPI
             }
 
             $prefix = DB::getTablePrefix();
-
+            $replaceIdPattern = '---REPLACE_ME_WITH_ID---';
+            $urlToCI = URL::route('ci-news-detail', array('id' => $replaceIdPattern), false);
             $news = NewsMerchant::select('news.begin_date as begin_date', 'news.end_date as end_date',
                                             DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.merchant_id ELSE {$prefix}merchants.merchant_id END as merchant_id"),
                                             DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.name ELSE {$prefix}merchants.name END as name"),
                                             DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.city ELSE {$prefix}merchants.city END as city"),
                                             DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.description ELSE {$prefix}merchants.description END as description"),
-                                            DB::raw("CONCAT(IF({$prefix}merchants.object_type = 'tenant', oms.ci_domain, {$prefix}merchants.ci_domain), '/customer/mallnewsdetail?id=', {$prefix}news_merchant.news_id) as news_url"),
+                                            DB::raw("CONCAT(IF({$prefix}merchants.object_type = 'tenant', oms.ci_domain, {$prefix}merchants.ci_domain), REPLACE('{$urlToCI}', '$replaceIdPattern', {$prefix}news_merchant.news_id)) as news_url"),
                                             DB::raw("( SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
                                                         FROM {$prefix}merchants om
                                                         LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
@@ -307,6 +309,17 @@ class NewsAPIController extends ControllerAPI
         return $this->render($httpCode);
     }
 
+    /**
+     * GET - get the news detail
+     *
+     * @author Ahmad <ahmad@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param string news_id
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
     public function getNewsItem()
     {
         $httpCode = 200;
@@ -327,9 +340,6 @@ class NewsAPIController extends ControllerAPI
             }
 
             $newsId = OrbitInput::get('news_id', null);
-            $sort_by = OrbitInput::get('sortby', 'name');
-            $sort_mode = OrbitInput::get('sortmode','asc');
-
 
             $validator = Validator::make(
                 array(
@@ -388,10 +398,12 @@ class NewsAPIController extends ControllerAPI
                         )
                         ->join('news_translations', 'news_translations.news_id', '=', 'news.news_id')
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
-                        ->leftJoin('media', 'media.object_id', '=', 'news_translations.news_translation_id')
+                        ->leftJoin('media', function($q) {
+                            $q->on('media.object_id', '=', 'news_translations.news_translation_id');
+                            $q->on('media.media_name_long', '=', DB::raw("'news_translation_image_orig'"));
+                        })
                         ->where('news.news_id', $newsId)
                         ->where('news_translations.merchant_language_id', '=', $languageEnId)
-                        ->where('media.media_name_long', 'news_translation_image_orig')
                         ->where('news.object_type', '=', 'news')
                         ->where('news_translations.news_name', '!=', '')
                         ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
@@ -460,6 +472,20 @@ class NewsAPIController extends ControllerAPI
         return $this->render($httpCode);
     }
 
+    /**
+     * GET - get the list of news location
+     *
+     * @author Ahmad <ahmad@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param string sortby
+     * @param string sortmode
+     * @param string take
+     * @param string skip
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
     public function getNewsLocations()
     {
         $httpCode = 200;

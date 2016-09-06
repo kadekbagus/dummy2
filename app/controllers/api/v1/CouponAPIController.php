@@ -113,7 +113,7 @@ class CouponAPIController extends ControllerAPI
             $role = $user->role;
             $validRoles = $this->couponModifiyRoles;
             if (! in_array( strtolower($role->role_name), $validRoles)) {
-                $message = 'Your role are not allowed to access this resource.';
+                $message = 'You have to log in to continue';
                 ACL::throwAccessForbidden($message);
             }
 

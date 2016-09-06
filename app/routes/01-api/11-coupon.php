@@ -142,3 +142,53 @@ Route::get('/api/v1/pub/mall-coupon-list', function()
 });
 
 Route::get('/app/v1/pub/mall-coupon-list', ['as' => 'pub-mall-coupon-list', 'uses' => 'IntermediatePubAuthController@Coupon_getMallCouponList']);
+
+/**
+ * Get coupon detail on landing page
+ */
+Route::get('/api/v1/pub/coupon/detail', function()
+{
+    return Orbit\Controller\API\v1\Pub\CouponAPIController::create()->getCouponItem();
+});
+
+Route::get('/app/v1/pub/coupon/detail', ['as' => 'pub-coupon-detail', 'uses' => 'IntermediatePubAuthController@Coupon_getCouponItem']);
+
+/**
+ * List location of a coupon
+ */
+Route::get('/api/v1/pub/coupon-location/list', function()
+{
+    return Orbit\Controller\API\v1\Pub\CouponAPIController::create()->getCouponLocations();
+});
+
+Route::get('/app/v1/pub/coupon-location/list', ['as' => 'pub-coupon-location-list', 'uses' => 'IntermediatePubAuthController@Coupon_getCouponLocations']);
+
+/**
+ * Get coupon wallet list on landing page
+ */
+Route::get('/api/v1/pub/mall-coupon-wallet/list', function()
+{
+    return Orbit\Controller\API\v1\Pub\CouponAPIController::create()->getCouponWalletList();
+});
+
+Route::get('/app/v1/pub/mall-coupon-wallet/list', ['as' => 'pub-mall-coupon-wallet-list', 'uses' => 'IntermediatePubAuthController@Coupon_getCouponWalletList']);
+
+/**
+ * Get coupon wallet location list on landing page
+ */
+Route::get('/api/v1/pub/mall-coupon-wallet-location/list', function()
+{
+    return Orbit\Controller\API\v1\Pub\CouponAPIController::create()->getCouponWalletLocations();
+});
+
+Route::get('/app/v1/pub/mall-coupon-wallet-location/list', ['as' => 'pub-mall-coupon-wallet-location-list', 'uses' => 'IntermediatePubAuthController@Coupon_getCouponWalletLocations']);
+
+/**
+ * Post issue coupon wallet on landing page
+ */
+Route::post('/api/v1/pub/add-to-wallet', function()
+{
+    return Orbit\Controller\API\v1\Pub\CouponAPIController::create()->postAddToWallet();
+});
+
+Route::post('/app/v1/pub/add-to-wallet', ['as' => 'pub-mall-coupon-add-to-wallet', 'uses' => 'IntermediatePubAuthController@Coupon_postAddToWallet']);

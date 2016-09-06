@@ -49,15 +49,15 @@
             </div>
         </div>
         @if(!$wallet['is_coupon_wallet'] || !$wallet['added_to_wallet'])
-        <div class="coupon-wallet pull-right">
-            <a data-href="{{ $wallet['hash_url'] }}" href="{{ $wallet['hash'] }}">
-                <span class="fa-stack fa-2x clickable" data-ids="{{ $coupon->promotion_id }}" data-isaddedtowallet="{{ $wallet['added_to_wallet'] }}">
+        <div class="coupon-wallet {{ $wallet['added_to_wallet'] ? 'padding-uniform' : '' }} pull-right">
+            <a class="clickable" data-href="{{ $wallet['hash_url'] }}" href="{{ $wallet['hash'] }}" data-ids="{{ $coupon->promotion_id }}" data-isaddedtowallet="{{ $wallet['added_to_wallet'] }}">
+                <span class="fa-stack fa-2x">
                     <i class="fa fae-wallet fa-stack-2x"></i>
                     <i class="fa {{ $wallet['circle'] }} fa-circle fa-stack-2x"></i>
                     <i class="fa {{ $wallet['icon'] }} fa-stack-1x state-icon"></i>
                 </span>
+                <span class="wallet-text">{{ $wallet['text'] }}</span>
             </a>
-            <span class="wallet-text">{{ $wallet['text'] }}</span>
         </div>
         @endif
         <div class="actions-panel" style="display: none;">
@@ -242,8 +242,7 @@
         $(document).ready(function(){
             var idForAddWallet = '{{ \Input::get("id") }}' !== '' ? '{{ \Input::get("id") }}' : '',
                 successLogin = '{{ \Input::get("successLogin") }}' !== '' ? '{{ \Input::get("successLogin") }}' : 'false',
-                addToWallet = function (ids, callback) {
-                    var element = $("span[data-ids='" + ids  + "']");
+                addToWallet = function (element, ids, callback) {
                     var url = '{{ route('coupon-add-to-wallet') }}';
                     $.ajax({
                         url: url,
@@ -253,11 +252,14 @@
                         }
                     }).done(function (data) {
                         if(data.status === 'success') {
-                            element.children('.state-icon').removeClass('fa-plus');
-                            element.children('.state-icon').addClass('fa-check');
-                            element.children('.fa-circle').addClass('added');
-                            element.parent().siblings().html('{{ Lang::get("mobileci.coupon.added_wallet") }}');
-                            element.attr('data-isaddedtowallet', true);
+                            var parent = (element) ? element : $("a[data-ids='"+ ids +"']");
+                            var elem = parent.children('span');
+                            parent.parent().addClass('padding-uniform');
+                            elem.children('.state-icon').removeClass('fa-plus');
+                            elem.children('.state-icon').addClass('fa-check');
+                            elem.children('.fa-circle').addClass('added');
+                            elem.siblings('span.wallet-text').html('{{ Lang::get("mobileci.coupon.added_wallet") }}');
+                            parent.attr('data-isaddedtowallet', true);
 
                             if (callback) {
                                 callback();
@@ -267,7 +269,7 @@
                 };
 
             if (idForAddWallet !== '' && successLogin === 'true') {
-                addToWallet(idForAddWallet, function () {
+                addToWallet(null, idForAddWallet, function () {
                     var id = '{{ \Input::get("id") }}',
                         name = '{{ \Input::get("name") }}',
                         type = '{{ \Input::get("type") }}';
@@ -284,11 +286,11 @@
                 var element = $(this),
                     ids = element.data('ids');
 
-                if (element.attr('data-isaddedtowallet') === 'true' || element.parent().attr('href') === '#') {
+                if (element.attr('data-isaddedtowallet') === 'true') {
                     return;
                 }
 
-                addToWallet(ids);
+                addToWallet(element, ids);
             });
 
             // Set fromSource in localStorage.
