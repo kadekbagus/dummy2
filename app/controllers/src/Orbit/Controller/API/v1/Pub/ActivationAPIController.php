@@ -66,12 +66,23 @@ class ActivationAPIController extends IntermediateBaseController
         try {
             if(! $this->saveAsAuto) {
                 $activityNameLong = 'Account Activation';
-                $tokenValue = trim(OrbitInput::post('token'));
+                $tokenValue = trim(OrbitInput::post('token', null));
                 $password = OrbitInput::post('password');
                 $password2 = OrbitInput::post('password_confirmation');
                 $gender = OrbitInput::post('gender');
                 $birthdate = OrbitInput::post('birthdate');
                 $email = trim(OrbitInput::post('email'));
+
+                // check the token first
+                $token = Token::active()
+                        ->where('token_value', $tokenValue)
+                        ->where('token_name', 'user_registration_mobile')
+                        ->first();
+
+                if (!is_object($token)) {
+                    $errorMessage = Lang::get('validation.orbit.empty.token');
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
 
                 // Begin database transaction
                 $this->beginTransaction();
