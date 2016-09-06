@@ -106,10 +106,11 @@ class LandingPageAPIController extends ControllerAPI
             $slideshow = Config::get('dynamic-listing.slideshow', null);
             $maxSlide = 10;
             $slide = array();
+            $slide_fix = array();
+            $random = array();
 
             if (! empty($slideshow)) {
                 //check slideshow pic no_random is true or not, if true split to another array
-                $slide_fix = array();
                 $slide_random = array();
                 foreach ($slideshow as $sf) {
                     if($sf['not_random'] === 1) {
@@ -130,14 +131,13 @@ class LandingPageAPIController extends ControllerAPI
                     foreach ($listSlide as $key => $value) {
                         array_push($slides, $slide_random[$value]);
                     }
-                }
-            }
 
-            $keys = array_keys($slides);
-            shuffle($keys);
-            $random = array();
-            foreach ($keys as $key) {
-                array_push($random, $slides[$key]);
+                    $keys = array_keys($slides);
+                    shuffle($keys);
+                    foreach ($keys as $key) {
+                        array_push($random, $slides[$key]);
+                    }
+                }
             }
 
             $slide = array_merge($slide_fix, $random);
