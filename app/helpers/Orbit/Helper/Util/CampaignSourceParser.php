@@ -19,7 +19,7 @@ class CampaignSourceParser
      *
      * @var array
      */
-    protected $url = NULL;
+    protected $urls = [];
 
     /**
      * Variable to hold the result of the parsed.
@@ -39,11 +39,11 @@ class CampaignSourceParser
     public function __construct($vendor='google_analytics')
     {
         $this->result = [
-            'campaign_source' => NULL,
-            'campaign_medium' => NULL,
-            'campaign_name' => NULL,
-            'campaign_term' => NULL,
-            'campaign_content' => NULL
+            'campaign_source' => 'Other',
+            'campaign_medium' => 'Other',
+            'campaign_name' => 'Other',
+            'campaign_term' => 'Other',
+            'campaign_content' => 'Other'
         ];
     }
 
@@ -74,12 +74,12 @@ class CampaignSourceParser
     /**
      * Set the vendor
      *
-     * @param string
+     * @param array $urls
      * @return CampaignSourceParser
      */
-    public function setUrl($url)
+    public function setUrls(array $urls)
     {
-        $this->url = $url;
+        $this->urls = $urls;
 
         return $this;
     }
@@ -93,14 +93,24 @@ class CampaignSourceParser
     {
         switch ($this->vendor) {
             default:
+
             case 'google_analytics':
-                // Get google analytics parameters
-                parse_str(parse_url($this->url, PHP_URL_QUERY), $params);
-                $this->result['campaign_source'] = isset($params['utm_source']) ? $params['utm_source'] : NULL;
-                $this->result['campaign_medium'] = isset($params['utm_medium']) ? $params['utm_medium'] : NULL;
-                $this->result['campaign_term'] = isset($params['utm_term']) ? $params['utm_term'] : NULL;
-                $this->result['campaign_content'] = isset($params['utm_content']) ? $params['utm_content'] : NULL;
-                $this->result['campaign_name'] = isset($params['utm_campaign']) ? $params['utm_campaign'] : NULL;
+                // Loop each of the URLs, the later will replace the previous one if
+                // it is exists and the value is not empty
+                foreach ($this->urls as $url) {
+                    parse_str(parse_url($url, PHP_URL_QUERY), $params);
+
+                    $this->result['campaign_source'] = isset($params['utm_source']) && !empty($params['utm_source'])
+                        ? $params['utm_source'] : $this->result['campaign_source'];
+                    $this->result['campaign_medium'] = isset($params['utm_medium']) && !empty($params['utm_medium'])
+                        ? $params['utm_medium'] : $this->result['campaign_medium'];
+                    $this->result['campaign_term'] = isset($params['utm_term']) && !empty($params['utm_term'])
+                        ? $params['utm_term'] : $this->result['campaign_term'];
+                    $this->result['campaign_content'] = isset($params['utm_content']) && !empty($params['utm_content'])
+                        ? $params['utm_content'] : $this->result['campaign_content'];
+                    $this->result['campaign_name'] = isset($params['utm_campaign']) && !empty($params['utm_campaign'])
+                        ? $params['utm_campaign'] : $this->result['campaign_name'];
+                }
                 break;
         }
 

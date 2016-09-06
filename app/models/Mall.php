@@ -51,7 +51,7 @@ class Mall extends Eloquent
 
     public function tenants()
     {
-        return $this->hasMany('Tenant', 'parent_id', 'merchant_id')->excludeDeleted();
+        return $this->hasMany('Tenant', 'parent_id', 'merchant_id')->excludeDeleted('merchants');
     }
 
     public function taxes()

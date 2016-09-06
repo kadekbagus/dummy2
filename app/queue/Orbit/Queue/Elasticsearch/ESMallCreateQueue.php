@@ -54,9 +54,11 @@ class ESMallCreateQueue
     public function fire($job, $data)
     {
         $mallId = $data['mall_id'];
+        $prefix = DB::getTablePrefix();
         $mall = Mall::with('country')
-                    ->excludeDeleted()
-                    ->where('merchant_id', $mallId)
+                    ->leftJoin(DB::raw("(select * from {$prefix}media where media_name_long = 'mall_logo_orig') as med"), DB::raw("med.object_id"), '=', 'merchants.merchant_id')
+                    ->where('merchants.status', '!=', 'deleted')
+                    ->where('merchants.merchant_id', $mallId)
                     ->first();
 
         if (! is_object($mall)) {
@@ -86,6 +88,7 @@ class ESMallCreateQueue
                     'phone'           => $mall->phone,
                     'operating_hours' => $mall->operating_hours,
                     'object_type'     => $mall->object_type,
+                    'logo_url'        => $mall->path,
                     'status'          => $mall->status,
                     'ci_domain'       => $mall->ci_domain,
                     'position'        => [

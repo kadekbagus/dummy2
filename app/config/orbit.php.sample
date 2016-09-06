@@ -104,6 +104,7 @@ return array(
         // 'pub-coupon-list',
         // 'pub-mall-coupon-list',
         // 'pub-lucky-draw-list',
+        // 'pub-mall-coupon-add-to-wallet',
     ],
 
     // cdn path
@@ -287,6 +288,13 @@ return array(
 
         // will be used to determine the domain in mobile ci prefix dot, example: .gotomalls.cool
         'ci_domain' => '.gotomalls.cool',
+
+        // Flag to displaying a popup the value are using callback
+        'display_campaign_popup' => function($queryString) {
+            // isset no_popup AND no_popup=yes => TRUE
+            // isset no_popup AND no_popup!=yes => FALSE
+            return ! (isset($queryString['no_popup']) && $queryString['no_popup'] === 'yes');
+        },
 
         // Automatically add utm tracking in URL
         'append_utm_tracking_in_url' => FALSE,
@@ -571,7 +579,7 @@ return array(
             'activation_base_url' => 'http://customer.orbit-mall.here/#/activate-account?token=%s',
 
             // GotoMalls URL (The New Mobile)
-            'gotomalls_activation_base_url' => 'http://gotomalls.here/#/account/activate/%s',
+            'gotomalls_activation_base_url' => 'http://gotomalls.here/#/account/activate/%s?email=%s',
 
             // Setup Password URL
             // This should be frontend URL not backend
@@ -3480,6 +3488,114 @@ return array(
                 'object_type' => 'LuckyDraw',
                 'parameter_name' => 'lucky_draw_id'
             ),
+            // - Clicking on walkthrough page 1
+            '22' => array(
+                'name' => 'click_walkthrough',
+                'name_long' => 'Click Walkthrough Page 1',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - Clicking on walkthrough page 2
+            '23' => array(
+                'name' => 'click_walkthrough',
+                'name_long' => 'Click Walkthrough Page 2',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - Clicking on walkthrough page 3
+            '24' => array(
+                'name' => 'click_walkthrough',
+                'name_long' => 'Click Walkthrough Page 3',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - News Click
+            '25' => array(
+                'name' => 'click_news_main_page',
+                'name_long' => 'Click News Main Page',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - News View
+            '26' => array(
+                'name' => 'view_news_main_page',
+                'name_long' => 'View News Main Page',
+                'module_name' => 'Application',
+                'type' => 'view',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - Clicking on a news in list
+            '27' => array(
+                'name' => 'click_news_list',
+                'name_long' => 'Click News List',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => 'News',
+                'parameter_name' => 'news_id'
+            ),
+            // - Promotion Click
+            '28' => array(
+                'name' => 'click_promotions_main_page',
+                'name_long' => 'Click Promotion Main Page',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - Promotions View
+            '29' => array(
+                'name' => 'view_promotions_main_page',
+                'name_long' => 'View Promotions Main Page',
+                'module_name' => 'Application',
+                'type' => 'view',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - Clicking on a promotion in list
+            '30' => array(
+                'name' => 'click_promotion_list',
+                'name_long' => 'Click Promotion List',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => 'Promotion',
+                'parameter_name' => 'promotion_id'
+            ),
+            // - Coupon Click
+            '31' => array(
+                'name' => 'click_coupons_main_page',
+                'name_long' => 'Click Coupons Main Page',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - Coupons View
+            '32' => array(
+                'name' => 'view_coupons_main_page',
+                'name_long' => 'View Coupons Main Page',
+                'module_name' => 'Application',
+                'type' => 'view',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - Clicking on a coupon in list
+            '33' => array(
+                'name' => 'click_coupon_list',
+                'name_long' => 'Click Coupon List',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'coupon_id'
+            ),
         ),
     ),
 
@@ -3498,5 +3614,60 @@ return array(
             'activity_module_name' => 'Application',
             'activity_type' => 'click',
         ),
+        'blog' => array(
+            'url' => 'https://blog.gotomalls.com',
+            'activity_name' => 'click_blog',
+            'activity_name_long' => 'Click Gotomalls Blog',
+            'activity_module_name' => 'Application',
+            'activity_type' => 'click',
+        ),
     ),
+
+    /**
+     * Mailchimp service integration
+     * http://developer.mailchimp.com/documentation/mailchimp/guides/get-started-with-mailchimp-api-3/
+     */
+    'mailchimp' => [
+        // Valid driver are 'mailchimp-faker' or 'mailchimp'.
+        //
+        // mailchimp-faker driver will not call the real API instead it write to the
+        // log file.
+        'driver' => 'mailchimp-faker',
+
+        'drivers' => [
+            // Real API Call
+            'mailchimp' => [
+                // This could be anything, as long as you fill it. Because mailchimp will ommit
+                // this value.
+                'api_user' => 'gotomalls',
+
+                // The API key used to connect to mailchimp.
+                'api_key' => 'YOUR_KEY',
+
+                // The URL of the API and the version. The end point might be different
+                // from one key to the other. Consult to the
+                // http://developer.mailchimp.com/documentation/mailchimp/guides/get-started-with-mailchimp-api-3/#before-you-start
+                'api_url' => 'https://us13.api.mailchimp.com/3.0/',
+
+                // ID of the list which subscriber should be put when they are activated
+                'list_id' => 'LIST_ID',
+            ],
+
+            // Fake service
+            'mailchimp-faker' => [
+                // Value does not matter
+                'api_user' => 'gotomalls',
+
+                // Value does not matter
+                'api_key' => 'YOUR_KEY',
+
+                // It should be path to some directory which can be written by the
+                // PHP process. e.g laravel storage path
+                'api_url' => storage_path() . '/mailchimp-faker',
+
+                // ID of the list which subscriber should be put when they are activated
+                'list_id' => 'orbit-list-1',
+            ]
+        ]
+    ],
 );

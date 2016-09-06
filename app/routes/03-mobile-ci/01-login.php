@@ -370,10 +370,10 @@ Route::group(
         /**
          * The power search
          */
-        Route::get('/app/v1/keyword/search', function()
+        Route::get('/app/v1/keyword/search', ['as' => 'ci-search', function()
         {
             return MobileCI\MobileCIAPIController::create()->getPowerSearch();
-        });
+        }]);
 
 	    /**
          * Tenant load more

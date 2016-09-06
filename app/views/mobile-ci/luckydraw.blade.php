@@ -478,7 +478,12 @@ if(!empty($luckydraw)) {
             };
 
             var syncDateTimeWithServer = function () {
-                $.get(apiPath + 'server-time?format=Y-m-d%20H:i:s', function (data, status) {
+                var url = '{{ url('/app/v1/server-time') }}';
+                var qm = '?';
+                if (url.indexOf('?') > -1) {
+                    qm = '&';
+                }
+                $.get(url + qm + 'format=Y-m-d%20H:i:s', function (data, status) {
                     if (data.code === 0) {
                         //API always return date with UTC timezone so
                         //we need to convert to mall timezone
