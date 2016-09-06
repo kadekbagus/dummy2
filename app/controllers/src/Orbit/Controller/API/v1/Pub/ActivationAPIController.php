@@ -21,8 +21,10 @@ use Activity;
 use Token;
 use Validator;
 use User;
+use UserDetail;
 use Lang;
 use Mall;
+use Hash;
 
 class ActivationAPIController extends IntermediateBaseController
 {
@@ -67,24 +69,38 @@ class ActivationAPIController extends IntermediateBaseController
                 $tokenValue = trim(OrbitInput::post('token'));
                 $password = OrbitInput::post('password');
                 $password2 = OrbitInput::post('password_confirmation');
+                $gender = OrbitInput::post('gender');
+                $birthdate = OrbitInput::post('birthdate');
+                $email = trim(OrbitInput::post('email'));
 
                 // Begin database transaction
                 $this->beginTransaction();
 
                 $this->registerCustomValidation();
 
+                $current_date = date('Y-m-d');
                 $validator = Validator::make(
                     array(
-                        'token'         => $tokenValue,
-                        'password'      => $password,
-                        'password_confirmation' => $password2
+                        'token'                 => $tokenValue,
+                        'password'              => $password,
+                        'password_confirmation' => $password2,
+                        'date_of_birth'         => $birthdate,
+                        'gender'                => $gender,
                     ),
                     array(
-                        'token'         => 'required|orbit_activation_empty_token',
-                        'password'      => 'min:5|confirmed',
+                        'token'                 => 'required|orbit_activation_empty_token',
+                        'password_confirmation' => 'required|min:6',
+                        'password'              => 'required|min:6|confirmed',
+                        'date_of_birth'         => 'required|date|date_format:d-m-Y|before:' . $current_date,
+                        'gender'                => 'required|in:m,f',
                     ),
                     array(
-                        'orbit_activation_empty_token' => Lang::get('validation.orbit.empty.token')
+                        'orbit_activation_empty_token' => Lang::get('validation.orbit.empty.token'),
+                        'date_of_birth.date' => Lang::get('validation.orbit.formaterror.date.invalid_date'),
+                        'date_of_birth.date_format' => Lang::get('validation.orbit.formaterror.date.dmy_date'),
+                        'date_of_birth.before' => Lang::get('validation.orbit.formaterror.date.cannot_future_date'),
+                        'password_confirmation.min' => Lang::get('validation.orbit.formaterror.min'),
+                        'password.confirmed' => Lang::get('validation.orbit.formaterror.confirmed_password'),
                     )
                 );
 
@@ -100,7 +116,9 @@ class ActivationAPIController extends IntermediateBaseController
                             ->where('user_id', $token->user_id)
                             ->first();
 
-                if (! is_object($token) || ! is_object($user)) {
+                $userDetail = UserDetail::where('user_id', '=', $token->user_id)->first();
+
+                if (! is_object($token) || ! is_object($user) || ! is_object($userDetail)) {
                     $message = Lang::get('validation.orbit.access.loginfailed');
                     ACL::throwAccessForbidden($message);
                 }
@@ -116,6 +134,10 @@ class ActivationAPIController extends IntermediateBaseController
 
                 $user->status = 'active';
                 $user->save();
+
+                $userDetail->gender = $gender;
+                $userDetail->birthdate = $birthdate;
+                $userDetail->save();
             } else {
                 $from = $this->socialFrom;
                 $activityNameLong = sprintf('Auto Account Activation from %s', ucfirst($from));
@@ -242,7 +264,9 @@ class ActivationAPIController extends IntermediateBaseController
                 'user_id'   => $user->user_id,
                 'email'     => $user->user_email,
                 'role'      => $user->role->role_name,
-                'fullname'  => $user->getFullName()
+                'fullname'  => $user->getFullName(),
+                'guest_user_id' => $guest->user_id,
+                'guest_email' => $guest->user_email
             );
             $this->session->enableForceNew()->start($data);
 

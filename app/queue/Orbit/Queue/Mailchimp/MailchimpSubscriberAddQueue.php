@@ -34,6 +34,7 @@ class MailchimpSubscriberAddQueue
             $mailchimpDriver = Config::get('orbit.mailchimp.driver');
             $mailchimpConfig = Config::get('orbit.mailchimp.drivers.' . $mailchimpDriver);
             $listId = $mailchimpConfig['list_id'];
+            Log::info('MAILCHIMP QUEUE -- Add Subscriber -- Using driver: ' . $mailchimpDriver);
 
             $mailchimp = MailchimpFactory::create($mailchimpConfig, $mailchimpDriver)->getInstance();
             $mailchimp->postMembers($listId, [

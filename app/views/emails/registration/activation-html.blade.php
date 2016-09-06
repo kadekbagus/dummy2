@@ -87,27 +87,27 @@
                     <tr>
             <![endif]--><!--[if gte mso 9]>
                 <td style="padding: 15px 10px">
-            <![endif]--><a aria-labelledby="menu-column-per-33" class="menu-column-per-33" href="https://www.gotomalls.com/#!/malls" style="display:inline-block;text-decoration:none;color:#ffffff;font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:11px;font-weight:normal;line-height:22px;background: #BA1F00;padding: 5px 0px !important;width: 88px;margin: 0px 4px;border-radius: 16px;">Malls</a><!--[if gte mso 9]>
+            <![endif]--><a aria-labelledby="menu-column-per-33" class="menu-column-per-33" href="https://www.gotomalls.com/?utm_source=gtm-activation-email&utm_medium=email&utm_content=menulink#!/malls" style="display:inline-block;text-decoration:none;color:#ffffff;font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:11px;font-weight:normal;line-height:22px;background: #BA1F00;padding: 5px 0px !important;width: 88px;margin: 0px 4px;border-radius: 16px;">Malls</a><!--[if gte mso 9]>
                 </td>
             <![endif]--><!--[if gte mso 9]>
                 <td style="padding: 15px 10px">
-            <![endif]--><a aria-labelledby="menu-column-per-33" class="menu-column-per-33" href="https://www.gotomalls.com/#!/stores" style="display:inline-block;text-decoration:none;color:#ffffff;font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:11px;font-weight:normal;line-height:22px;background: #BA1F00;padding: 5px 0px !important;width: 88px;margin: 0px 4px;border-radius: 16px;">Store</a><!--[if gte mso 9]>
+            <![endif]--><a aria-labelledby="menu-column-per-33" class="menu-column-per-33" href="https://www.gotomalls.com/?utm_source=gtm-activation-email&utm_medium=email&utm_content=menulink#!/stores" style="display:inline-block;text-decoration:none;color:#ffffff;font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:11px;font-weight:normal;line-height:22px;background: #BA1F00;padding: 5px 0px !important;width: 88px;margin: 0px 4px;border-radius: 16px;">Stores</a><!--[if gte mso 9]>
                 </td>
             <![endif]--><!--[if gte mso 9]>
                 <td style="padding: 15px 10px">
-            <![endif]--><a aria-labelledby="menu-column-per-33" class="menu-column-per-33" href="https://www.gotomalls.com/#!/promotions" style="display:inline-block;text-decoration:none;color:#ffffff;font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:11px;font-weight:normal;line-height:22px;background: #BA1F00;padding: 5px 0px !important;width: 88px;margin: 0px 4px;border-radius: 16px;">Promotions</a><!--[if gte mso 9]>
+            <![endif]--><a aria-labelledby="menu-column-per-33" class="menu-column-per-33" href="https://www.gotomalls.com/?utm_source=gtm-activation-email&utm_medium=email&utm_content=menulink#!/promotions" style="display:inline-block;text-decoration:none;color:#ffffff;font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:11px;font-weight:normal;line-height:22px;background: #BA1F00;padding: 5px 0px !important;width: 88px;margin: 0px 4px;border-radius: 16px;">Promotions</a><!--[if gte mso 9]>
                 </td>
             <![endif]--><!--[if gte mso 9]>
                 <td style="padding: 15px 10px">
-            <![endif]--><a aria-labelledby="menu-column-per-33" class="menu-column-per-33" href="https://www.gotomalls.com/#!/coupons" style="display:inline-block;text-decoration:none;color:#ffffff;font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:11px;font-weight:normal;line-height:22px;background: #BA1F00;padding: 5px 0px !important;width: 88px;margin: 0px 4px;border-radius: 16px;">Coupons</a><!--[if gte mso 9]>
+            <![endif]--><a aria-labelledby="menu-column-per-33" class="menu-column-per-33" href="https://www.gotomalls.com/?utm_source=gtm-activation-email&utm_medium=email&utm_content=menulink#!/coupons" style="display:inline-block;text-decoration:none;color:#ffffff;font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:11px;font-weight:normal;line-height:22px;background: #BA1F00;padding: 5px 0px !important;width: 88px;margin: 0px 4px;border-radius: 16px;">Coupons</a><!--[if gte mso 9]>
                 </td>
             <![endif]--><!--[if gte mso 9]>
                 <td style="padding: 15px 10px">
-            <![endif]--><a aria-labelledby="menu-column-per-33" class="menu-column-per-33" href="https://www.gotomalls.com/#!/luckydraws" style="display:inline-block;text-decoration:none;color:#ffffff;font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:11px;font-weight:normal;line-height:22px;background: #BA1F00;padding: 5px 0px !important;width: 88px;margin: 0px 4px;border-radius: 16px;">Lucky Draws</a><!--[if gte mso 9]>
+            <![endif]--><a aria-labelledby="menu-column-per-33" class="menu-column-per-33" href="https://www.gotomalls.com/?utm_source=gtm-activation-email&utm_medium=email&utm_content=menulink#!/luckydraws" style="display:inline-block;text-decoration:none;color:#ffffff;font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:11px;font-weight:normal;line-height:22px;background: #BA1F00;padding: 5px 0px !important;width: 88px;margin: 0px 4px;border-radius: 16px;">Lucky Draws</a><!--[if gte mso 9]>
                 </td>
             <![endif]--><!--[if gte mso 9]>
                 <td style="padding: 15px 10px">
-            <![endif]--><a aria-labelledby="menu-column-per-33" class="menu-column-per-33" href="https://www.gotomalls.com/#!/news" style="display:inline-block;text-decoration:none;color:#ffffff;font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:11px;font-weight:normal;line-height:22px;background: #BA1F00;padding: 5px 0px !important;width: 88px;margin: 0px 4px;border-radius: 16px;">News</a><!--[if gte mso 9]>
+            <![endif]--><a aria-labelledby="menu-column-per-33" class="menu-column-per-33" href="https://www.gotomalls.com/?utm_source=gtm-activation-email&utm_medium=email&utm_content=menulink#!/news" style="display:inline-block;text-decoration:none;color:#ffffff;font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:11px;font-weight:normal;line-height:22px;background: #BA1F00;padding: 5px 0px !important;width: 88px;margin: 0px 4px;border-radius: 16px;">News</a><!--[if gte mso 9]>
                 </td>
             <![endif]--><!--[if gte mso 9]>
                     </tr>
@@ -201,8 +201,8 @@
                             <!--[if mso | IE]>
         <table border="0" cellpadding="0" cellspacing="0"><tr><td style="vertical-align:top;width:60px;">
         <![endif]-->
-                            <div aria-labelledby="mj-column-per-10" class="mj-column-per-10" style="vertical-align: top; display: inline-block; font-size: 13px; text-align: left; width: 100%;">
-                                <table cellpadding="0" cellspacing="0" width="100%" border="0">
+                            <div aria-labelledby="mj-column-per-10" class="mj-column-per-10" style="vertical-align: top; display: inline-block; font-size: 13px; text-align: left; width: 35px!important">
+                                <table cellpadding="0" cellspacing="0" width="10%" border="0">
                                     <tbody>
                                         <tr>
                                             <td style="word-break: break-word; font-size: 0px; padding: 0px;" align="center"><table cellpadding="0" cellspacing="0" style="border-collapse: collapse; border-spacing: 0px;" align="center" border="0">
@@ -222,8 +222,8 @@
                             <!--[if mso | IE]>
         </td><td style="vertical-align:top;width:60px;">
         <![endif]-->
-                            <div aria-labelledby="mj-column-per-10" class="mj-column-per-10" style="vertical-align: top; display: inline-block; font-size: 13px; text-align: left; width: 100%;">
-                                <table cellpadding="0" cellspacing="0" width="100%" border="0">
+                            <div aria-labelledby="mj-column-per-10" class="mj-column-per-10" style="vertical-align: top; display: inline-block; font-size: 13px; text-align: left; width: 35px!important;">
+                                <table cellpadding="0" cellspacing="0" width="10%" border="0">
                                     <tbody>
                                         <tr>
                                             <td style="word-break: break-word; font-size: 0px; padding: 0px;" align="center"><table cellpadding="0" cellspacing="0" style="border-collapse: collapse; border-spacing: 0px;" align="center" border="0">
@@ -243,8 +243,8 @@
                             <!--[if mso | IE]>
         </td><td style="vertical-align:top;width:60px;">
         <![endif]-->
-                            <div aria-labelledby="mj-column-per-10" class="mj-column-per-10" style="vertical-align: top; display: inline-block; font-size: 13px; text-align: left; width: 100%;">
-                                <table cellpadding="0" cellspacing="0" width="100%" border="0">
+                            <div aria-labelledby="mj-column-per-10" class="mj-column-per-10" style="vertical-align: top; display: inline-block; font-size: 13px; text-align: left; width: 35px!important;">
+                                <table cellpadding="0" cellspacing="0" width="10%" border="0">
                                     <tbody>
                                         <tr>
                                             <td style="word-break: break-word; font-size: 0px; padding: 0px;" align="center"><table cellpadding="0" cellspacing="0" style="border-collapse: collapse; border-spacing: 0px;" align="center" border="0">
