@@ -30,6 +30,7 @@ use Lang;
 use CouponRetailer;
 use Carbon\Carbon;
 use IssuedCoupon;
+use Orbit\Controller\API\v1\Pub\SocMedAPIController;
 
 class CouponAPIController extends ControllerAPI
 {
@@ -950,6 +951,9 @@ class CouponAPIController extends ControllerAPI
                 ->setNotes($activityNotes)
                 ->responseOK()
                 ->save();
+
+            // add facebook share url dummy page
+            $coupon->facebook_share_url = SocMedAPIController::getSharedUrl('coupon', $coupon->promotion_id, $coupon->promotion_name);
 
             $this->response->data = $coupon;
             $this->response->code = 0;
