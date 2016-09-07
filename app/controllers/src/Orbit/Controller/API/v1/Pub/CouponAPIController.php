@@ -553,7 +553,8 @@ class CouponAPIController extends ControllerAPI
                                     AND CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) between {$prefix}promotions.begin_date and {$prefix}promotions.end_date) > 0
                                 THEN 'true'
                                 ELSE 'false'
-                                END AS is_started
+                                END AS is_started,
+                                {$prefix}issued_coupons.issued_coupon_id
                             "))
                             ->leftJoin('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
                             ->leftJoin('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
