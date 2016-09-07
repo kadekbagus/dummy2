@@ -195,6 +195,9 @@ Route::filter('orbit-settings', function()
     }
 
     // Priority : 1. Cookie 2. Browser 3. Mall_setting 4. Fallback to 'en'
+    if (! isset($_COOKIE['orbit_preferred_language'])) {
+        $_COOKIE['orbit_preferred_language'] = 'id';
+    }
 
     // 1. Cek Cookie orbit_preferred_language
     if (array_key_exists('orbit_preferred_language', $_COOKIE)) {
