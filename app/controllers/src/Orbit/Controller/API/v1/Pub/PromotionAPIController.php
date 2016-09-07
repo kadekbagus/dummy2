@@ -511,7 +511,8 @@ class PromotionAPIController extends ControllerAPI
                                                     LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
                                                     WHERE om.merchant_id = (CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.merchant_id ELSE {$prefix}merchants.merchant_id END)
                                                 ) as tz"),
-                                            DB::Raw("img.path as location_logo")
+                                            DB::Raw("img.path as location_logo"),
+                                            DB::Raw("{$prefix}merchants.phone as phone")
                                     )
                                     ->leftJoin('news', 'news_merchant.news_id', '=', 'news.news_id')
                                     ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
