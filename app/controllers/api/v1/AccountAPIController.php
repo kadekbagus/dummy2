@@ -772,6 +772,7 @@ class AccountAPIController extends ControllerAPI
                 // for handle empty string cause select all tenant is not required
                 $select_all_tenants = 'N';
 
+                // account type master must linkt to all tenants
                 if ($account_type->type_name === 'Master') {
                     OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.access.master_link_to_tenant'));
                 }
@@ -1055,12 +1056,12 @@ class AccountAPIController extends ControllerAPI
                 'city'               => 'required',
                 'country_id'         => 'required|orbit.empty.country',
                 'merchant_ids'       => 'required|array|exists:merchants,merchant_id|orbit.exists.link_to_tenant',
-                'role_name'          => 'required|in:Campaign Owner,Campaign Employee|orbit.empty.role',
+                'role_name'          => 'required|in:Campaign Owner,Campaign Employee,Campaign Admin|orbit.empty.role:' . $account_type->type_name,
                 'user_password'      => 'min:6',
             ];
 
             if ($select_all_tenants === 'Y') {
-                if ($account_type->type_name === 'Dominopos' || $account_type->type_name === '3rd Party') {
+                if (in_array($account_type->type_name, $this->allow_select_all_tenant)) {
                     unset($validation_data['merchant_ids']);
                     unset($validation_error['merchant_ids']);
 
@@ -1071,13 +1072,18 @@ class AccountAPIController extends ControllerAPI
 
                     $del_user_merchant = UserMerchant::whereIn('user_id', $pmp_account)->delete();
                 }
+            } else {
+                // account type master must linkt to all tenants
+                if ($account_type->type_name === 'Master') {
+                    OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.access.master_link_to_tenant'));
+                }
             }
 
             $validator = Validator::make(
                 $validation_data,
                 $validation_error,
                 array(
-                    'orbit.empty.role'  => 'The Role you specified is not found',
+                    'orbit.empty.role'  => Lang::get('validation.orbit.empty.role_name')
                 )
             );
 

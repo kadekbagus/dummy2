@@ -20,6 +20,7 @@ class postUpdateAccountTest extends TestCase
         $this->apiKey = Factory::create('apikey_super_admin');
 
         Factory::create('role_mall_owner');
+        $role_campaign_admin = Factory::create('role_campaign_admin');
         $role_campaign_owner = Factory::create('role_campaign_owner');
         $role_campaign_employee = Factory::create('role_campaign_employee');
 
@@ -32,6 +33,7 @@ class postUpdateAccountTest extends TestCase
         $this->account_type_agency    = Factory::create('account_type_agency');
         $this->account_type_3rd       = Factory::create('account_type_3rd');
         $this->account_type_dominopos = Factory::create('account_type_dominopos');
+        $this->account_type_master    = Factory::create('account_type_master');
 
         // inactive mall
         $this->mall_x = $mall_x = Factory::create('Mall', ['name' => 'Mall X', 'status' => 'inactive']);
@@ -196,6 +198,24 @@ class postUpdateAccountTest extends TestCase
                 'user_id'     => $this->pmp_dominopos_user->user_id,
                 'merchant_id' => $this->tenant_b1->merchant_id,
                 'object_type' => 'tenant'
+            ]);
+
+        // pmp_master
+        $this->pmp_master_user = Factory::create('User', [
+                'user_role_id' => $role_campaign_admin->role_id
+            ]);
+
+        $this->pmp_master_user_detail = Factory::create('UserDetail',[
+                'user_id' => $this->pmp_master_user->user_id
+            ]);
+        $this->pmp_master_campaign_account = Factory::create('CampaignAccount', [
+                'user_id' => $this->pmp_master_user->user_id,
+                'parent_user_id' => NULL,
+                'account_type_id' => $this->account_type_master->account_type_id
+            ]);
+
+        $this->pmp_master_employee = Factory::create('Employee', [
+                'user_id' => $this->pmp_master_user->user_id
             ]);
 
         $_GET = [];
@@ -799,6 +819,109 @@ class postUpdateAccountTest extends TestCase
 
         $response = $this->setRequestPostUpdateAccount($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
         $this->assertSame("Link to tenant is not allowed", $response->message);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+    }
+
+    public function testAccountTypeMasterSuccess()
+    {
+        /*
+        * test create pmp account with account type master
+        */
+        $data = [
+            'id'                 => $this->pmp_master_user->user_id,
+            'account_type_id'    => $this->account_type_master->account_type_id,
+            'user_firstname'     => 'naruto',
+            'user_lastname'      => 'ninja',
+            'user_email'         => 'pmpsatu@campaignadmin.com',
+            'account_name'       => 'PMP Satu',
+            'company_name'       => 'Domino Mall',
+            'address_line1'      => 'Jl. Gunung Salak 31 A',
+            'city'               => 'Badung',
+            'country_id'         => $this->country->country_id,
+            'select_all_tenants' => 'Y',
+            'user_password'      => '123456',
+            'role_name'          => 'Campaign Admin',
+        ];
+
+        $response = $this->setRequestPostUpdateAccount($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame("Request OK", $response->message);
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
+        $this->assertSame('naruto', $response->data->user_firstname);
+
+        $account_type = CampaignAccount::where('user_id', $response->data->user_id)
+                                ->first();
+
+        $this->assertSame($this->account_type_master->account_type_id, $account_type->account_type_id);
+        $this->assertSame('Y', $account_type->is_link_to_all);
+
+        $user_merchant = UserMerchant::where('user_id', $response->data->user_id)
+                                ->first();
+
+        $this->assertSame(empty($user_merchant), true);
+    }
+
+    public function testAccountTypeMasterFailedRole()
+    {
+        /*
+        * test create pmp account with account type master
+        */
+        $data = [
+            'id'              => $this->pmp_master_user->user_id,
+            'account_type_id'    => $this->account_type_master->account_type_id,
+            'user_firstname'     => 'naruto',
+            'user_lastname'      => 'ninja',
+            'user_email'         => 'pmpsatu@campaignadmin.com',
+            'account_name'       => 'PMP Satu',
+            'company_name'       => 'Domino Mall',
+            'address_line1'      => 'Jl. Gunung Salak 31 A',
+            'city'               => 'Badung',
+            'country_id'         => $this->country->country_id,
+            'select_all_tenants' => 'Y',
+            'user_password'      => '123456',
+            'role_name'          => 'Campaign Owner',
+        ];
+
+        $response = $this->setRequestPostUpdateAccount($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame("The Role you specified is not found", $response->message);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+    }
+
+    public function testAccountTypeMasterFailedLinkToTenant()
+    {
+        /*
+        * test create pmp account with account type master
+        */
+        $data = [
+            'id'              => $this->pmp_master_user->user_id,
+            'account_type_id'    => $this->account_type_master->account_type_id,
+            'user_firstname'     => 'naruto',
+            'user_lastname'      => 'ninja',
+            'user_email'         => 'pmpsatu@campaignadmin.com',
+            'account_name'       => 'PMP Satu',
+            'company_name'       => 'Domino Mall',
+            'address_line1'      => 'Jl. Gunung Salak 31 A',
+            'city'               => 'Badung',
+            'country_id'         => $this->country->country_id,
+            'merchant_ids'       => [
+                    $this->mall_a->merchant_id,
+                    $this->mall_b->merchant_id,
+                    $this->mall_c->merchant_id,
+                    $this->mall_x->merchant_id,
+                    $this->tenant_a->merchant_id,
+                    $this->tenant_b1->merchant_id,
+                    $this->tenant_b2->merchant_id,
+                    $this->tenant_c->merchant_id,
+                    $this->tenant_x->merchant_id,
+                ],
+            'user_password'      => '123456',
+            'role_name'          => 'Campaign Admin',
+        ];
+
+        $response = $this->setRequestPostUpdateAccount($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame("Master must link to all tenants", $response->message);
         $this->assertSame(14, $response->code);
         $this->assertSame("error", $response->status);
     }
