@@ -752,15 +752,19 @@ class CouponAPIController extends ControllerAPI
                                 FROM {$prefix}merchants om
                                 LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
                                 WHERE om.merchant_id = (CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.merchant_id ELSE {$prefix}merchants.merchant_id END)
-                            ) as tz")
+                            ) as tz"),
+                    DB::Raw("img.path as location_logo"),
+                    DB::Raw("{$prefix}merchants.phone as phone")
                 )
                 ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
                 ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                 ->leftJoin('promotions', 'promotions.promotion_id', '=', 'promotion_retailer.promotion_id')
+                ->leftJoin(DB::raw("{$prefix}media as img"), DB::raw('img.object_id'), '=', 'merchants.merchant_id')
                 ->join('issued_coupons', function ($join) {
                     $join->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
                     $join->where('issued_coupons.status', '=', 'active');
                 })
+                ->whereIn(DB::raw('img.media_name_long'), ['mall_logo_orig', 'retailer_logo_orig'])
                 ->where('issued_coupons.user_id', $user->user_id)
                 ->where('promotion_retailer.promotion_id', '=', $couponId)
                 ->groupBy('merchant_id')
