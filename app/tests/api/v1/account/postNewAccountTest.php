@@ -20,6 +20,7 @@ class postNewAccountTest extends TestCase
         $this->apiKey = Factory::create('apikey_super_admin');
 
         Factory::create('role_mall_owner');
+        Factory::create('role_campaign_admin');
         $role_campaign_owner = Factory::create('role_campaign_owner');
 
         // country
@@ -31,6 +32,7 @@ class postNewAccountTest extends TestCase
         $this->account_type_agency    = Factory::create('account_type_agency');
         $this->account_type_3rd       = Factory::create('account_type_3rd');
         $this->account_type_dominopos = Factory::create('account_type_dominopos');
+        $this->account_type_master    = Factory::create('account_type_master');
 
         // mall and tenant for list link to tenant
         $this->mall_a = $mall_a = Factory::create('Mall', ['name' => 'Mall A']);
@@ -623,5 +625,103 @@ class postNewAccountTest extends TestCase
 
         $this->assertSame($this->account_type_agency->account_type_id, $account_type->account_type_id);
         $this->assertSame('N', $account_type->is_link_to_all);
+    }
+
+    public function testAccountTypeMasterFailedRole()
+    {
+        /*
+        * test create pmp account with account type master and role campaign owner
+        */
+        $data = [
+            'account_type_id'    => $this->account_type_master->account_type_id,
+            'user_firstname'     => 'irianto',
+            'user_lastname'      => 'pratama',
+            'user_email'         => 'pmpsatu@campaignowner.com',
+            'account_name'       => 'PMP Satu',
+            'status'             => 'active',
+            'company_name'       => 'Domino Mall',
+            'address_line1'      => 'Jl. Gunung Salak 31 A',
+            'city'               => 'Badung',
+            'country_id'         => $this->country->country_id,
+            'select_all_tenants' => 'Y',
+            'user_password'      => '123456',
+            'role_name'          => 'Campaign Owner',
+        ];
+
+        $response = $this->setRequestPostNewAccount($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+        $this->assertSame("The Role you specified is not found", $response->message);
+    }
+
+    public function testAccountTypeMasterFailedLinkToTenant()
+    {
+        /*
+        * test create pmp account with account type master, wrong link to tenant
+        */
+        $data = [
+            'account_type_id' => $this->account_type_master->account_type_id,
+            'user_firstname'  => 'irianto',
+            'user_lastname'   => 'pratama',
+            'user_email'      => 'pmpsatu@campaignowner.com',
+            'account_name'    => 'PMP Satu',
+            'status'          => 'active',
+            'company_name'    => 'Domino Mall',
+            'address_line1'   => 'Jl. Gunung Salak 31 A',
+            'city'            => 'Badung',
+            'country_id'      => $this->country->country_id,
+            'merchant_ids'    => [
+                    $this->mall_b->merchant_id,
+                    $this->mall_a->merchant_id,
+                    $this->tenant_a->merchant_id,
+                    $this->tenant_b1->merchant_id
+                ],
+            'user_password'   => '123456',
+            'role_name'       => 'Campaign Admin',
+        ];
+
+        $response = $this->setRequestPostNewAccount($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame("Master must link to all tenants", $response->message);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+    }
+
+    public function testAccountTypeMasterSuccess()
+    {
+        /*
+        * test create pmp account with account type master
+        */
+        $data = [
+            'account_type_id'    => $this->account_type_master->account_type_id,
+            'user_firstname'     => 'irianto',
+            'user_lastname'      => 'pratama',
+            'user_email'         => 'pmpsatu@campaignowner.com',
+            'account_name'       => 'PMP Satu',
+            'status'             => 'active',
+            'company_name'       => 'Domino Mall',
+            'address_line1'      => 'Jl. Gunung Salak 31 A',
+            'city'               => 'Badung',
+            'country_id'         => $this->country->country_id,
+            'select_all_tenants' => 'Y',
+            'user_password'      => '123456',
+            'role_name'          => 'Campaign Admin',
+        ];
+
+        $response = $this->setRequestPostNewAccount($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame("Request OK", $response->message);
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
+        $this->assertSame('irianto', $response->data->user_firstname);
+
+        $account_type = CampaignAccount::where('user_id', $response->data->user_id)
+                                ->first();
+
+        $this->assertSame($this->account_type_master->account_type_id, $account_type->account_type_id);
+        $this->assertSame('Y', $account_type->is_link_to_all);
+
+        $user_merchant = UserMerchant::where('user_id', $response->data->user_id)
+                                ->first();
+
+        $this->assertSame(empty($user_merchant), true);
     }
 }
