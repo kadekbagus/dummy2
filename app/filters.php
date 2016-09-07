@@ -13,6 +13,7 @@ use Net\Security\RequestAccess;
 use Orbit\Helper\Net\FBBotChecker;
 use Orbit\Helper\Security\MallAccess;
 use Net\Util\MobileDetect;
+use Orbit\Helper\Net\SessionPreparer;
 
 App::after(function($request, $response)
 {
@@ -93,6 +94,16 @@ Route::filter('csrf', function()
     }
 });
 
+Route::filter('orbit-csrf', function()
+{
+    $session = SessionPreparer::prepareSession();
+
+    if ($session->read('orbit_csrf_token') !== Input::get('_token'))
+    {
+        throw new Illuminate\Session\TokenMismatchException;
+    }
+});
+
 /*
 |--------------------------------------------------------------------------
 | Facebook crawler goes here
@@ -152,7 +163,7 @@ Route::filter('orbit-settings', function()
     if (! (new MobileDetect)->isMobile()) {
         Config::set('orbit.error_message.e500', 'Desktop version is coming soon, please use mobile device to access this site at the moment.');
 
-        App::abort(403, Config::get('orbit.error_message.e500'));
+        return Redirect::to(Config::get('app.url'));
     }
 
     if (! App::make('orbitSetting')->getSetting('current_retailer')) {

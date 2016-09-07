@@ -38,14 +38,8 @@ class RegistrationAPIController extends IntermediateBaseController
     public function postRegisterCustomer()
     {
         $this->response = new ResponseProvider();
-        $activity = Activity::portal()
-                            ->setActivityType('registration');
-
-        if ($this->appOrigin === 'mobile_ci') {
-            // set this activity as mobileci instead of portal if coming from mobileci
-            $activity = Activity::mobileci()
-                            ->setActivityType('registration');
-        };
+        $activity = Activity::mobileci()
+            ->setActivityType('registration');
 
         try {
             $email = trim(OrbitInput::post('email'));
@@ -94,7 +88,6 @@ class RegistrationAPIController extends IntermediateBaseController
                     // update the guest session data, append user data to it so the user will be recognized
                     $this->session->update($sessionData);
                 } catch (\Exception $e) {
-                    $guest = GuestUserGenerator::create()->generate();
                     // Start the orbit session
                     $data = array(
                         'logged_in' => TRUE,
@@ -102,11 +95,19 @@ class RegistrationAPIController extends IntermediateBaseController
                         'email'     => $user->user_email,
                         'role'      => $user->role->role_name,
                         'fullname'  => $user->getFullName(),
-                        'guest_user_id' => $guest->user_id,
-                        'guest_email' => $guest->user_email
                     );
 
                     $this->session->enableForceNew()->start($data);
+
+                    $guestConfig = [
+                        'session' => $this->session
+                    ];
+                    $guest = GuestUserGenerator::create($guestConfig)->generate();
+                    $guestData = array();
+                    $guestData['guest_user_id'] = $guest->user_id;
+                    $guestData['guest_email'] = $guest->user_email;
+
+                    $this->session->update($guestData);
                 }
 
                 // Send the session id via HTTP header
@@ -114,13 +115,27 @@ class RegistrationAPIController extends IntermediateBaseController
                 $sessionHeader = 'Set-' . $sessionHeader;
                 $this->customHeaders[$sessionHeader] = $this->session->getSessionId();
 
-                $activity_name_long = 'Sign Up via Mobile (Email Address)';
-                // Successfull login
+                // Registration_ok activity
                 $activity->setUser($user)
-                         ->setActivityName('registration_ok')
-                         ->setActivityNameLong($activity_name_long)
-                         ->responseOK()
-                         ->setModuleName('Application')->save();
+                    ->setObject($user)
+                    ->setActivityName('registration_ok')
+                    ->setActivityNameLong('Sign Up via Mobile (Email Address)')
+                    ->setNotes('Sign Up via Mobile (Email Address) OK')
+                    ->responseOK()
+                    ->setModuleName('Application')
+                    ->save();
+
+                // Login_ok activity
+                $activity_login = Activity::mobileci()
+                    ->setUser($user)
+                    ->setActivityName('login_ok')
+                    ->setActivityNameLong('Sign In')
+                    ->setActivityType('login')
+                    ->setObject($user)
+                    ->setNotes('Sign In via Mobile (Form) OK')
+                    ->setModuleName('Application')
+                    ->responseOK()
+                    ->save();
             }
 
             $this->response->data = $user;
@@ -317,20 +332,10 @@ class RegistrationAPIController extends IntermediateBaseController
             array(
                 'email'      => $email,
                 'first_name' => $firstname,
-                'last_name'  => $lastname,
-                'gender'     => $gender,
-                'date_of_birth' => $birthdate,
-                'password_confirmation' => $password_confirmation,
-                'password' => $password,
             ),
             array(
                 'email'      => 'required|email|orbit_email_exists',
                 'first_name' => 'required',
-                'last_name'  => 'required',
-                'gender'     => 'required|in:m,f',
-                'date_of_birth' => 'required|date|date_format:d-m-Y|before:' . $current_date,
-                'password_confirmation' => 'required|min:6',
-                'password'  => 'min:6|confirmed',
             ),
             array(
                 'date_of_birth.date_format' => Lang::get('validation.orbit.formaterror.date.dmy_date'),

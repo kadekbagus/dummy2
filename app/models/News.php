@@ -70,6 +70,12 @@ class News extends Eloquent
                     ->where('object_name', 'news');
     }
 
+    public function mediaPokestop()
+    {
+        return $this->hasOne('Media', 'object_id', 'news_id')
+                    ->where('object_name', 'pokestop');
+    }
+
     public function genders()
     {
         return $this->hasMany('CampaignGender', 'campaign_id', 'news_id');

@@ -70,11 +70,12 @@ class ESMallUpdateQueue
 
         $esConfig = Config::get('orbit.elasticsearch');
         $geofence = MerchantGeofence::getDefaultValueForAreaAndPosition($mallId);
+        $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
 
         try {
             // check exist elasticsearch index
             $params_search = [
-                'index' => Config::get('orbit.elasticsearch.indices.malldata.index'),
+                'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.malldata.index'),
                 'type' => Config::get('orbit.elasticsearch.indices.malldata.type'),
                 'body' => [
                     'query' => [
@@ -90,7 +91,7 @@ class ESMallUpdateQueue
             $response = NULL;
             if ($response_search['hits']['total'] > 0) {
                 $params = [
-                    'index' => Config::get('orbit.elasticsearch.indices.malldata.index'),
+                    'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.malldata.index'),
                     'type' => Config::get('orbit.elasticsearch.indices.malldata.type'),
                     'id' => $mall->merchant_id,
                     'body' => [
@@ -126,7 +127,7 @@ class ESMallUpdateQueue
                 $response = $this->poster->update($params);
             } else {
                 $params = [
-                    'index' => Config::get('orbit.elasticsearch.indices.malldata.index'),
+                    'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.malldata.index'),
                     'type' => Config::get('orbit.elasticsearch.indices.malldata.type'),
                     'id' => $mall->merchant_id,
                     'body' => [

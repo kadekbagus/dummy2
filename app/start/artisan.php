@@ -74,6 +74,9 @@ Artisan::add(new DestroyMall);
 // Send newsletter email
 Artisan::add(new NewsletterSenderCommand);
 
+// Insert or delete pokestop map
+Artisan::add(new PokestopMap);
+
 // Import DB IP
 Artisan::add(new ImportDBIP);
 

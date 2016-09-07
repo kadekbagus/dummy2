@@ -8120,7 +8120,7 @@ class UploadAPIController extends ControllerAPI
             return TRUE;
         });
 
-        if ($this->calledFrom('default')) {
+        if ($this->calledFrom('default, user.update')) {
             // Check the existance of user id
             Validator::extend('orbit.empty.user', function ($attribute, $value, $parameters) {
                 $user = User::excludeDeleted()

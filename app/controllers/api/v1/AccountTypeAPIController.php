@@ -62,12 +62,12 @@ class AccountTypeAPIController extends ControllerAPI
 
             Event::fire('orbit.accounttype.getaccounttype.after.authz', array($this, $user));
 
-            $maxRecord = (int) Config::get('orbit.pagination.max_record');
+            $maxRecord = (int) Config::get('orbit.pagination.account_type.max_record');
             if ($maxRecord <= 0) {
                 $maxRecord = 20;
             }
 
-            $perPage = (int) Config::get('orbit.pagination.per_page');
+            $perPage = (int) Config::get('orbit.pagination.account_type.per_page');
             if ($perPage <= 0) {
                 $perPage = 20;
             }

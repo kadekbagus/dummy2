@@ -276,8 +276,9 @@ class MallNearbyAPIController extends ControllerAPI
                                 ]
                             }';
 
+            $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
             $param_nearest = [
-                'index'  => Config::get('orbit.elasticsearch.indices.malldata.index'),
+                'index'  => $esPrefix . Config::get('orbit.elasticsearch.indices.malldata.index'),
                 'type'  => Config::get('orbit.elasticsearch.indices.malldata.type'),
                 'body' => $json_search
             ];

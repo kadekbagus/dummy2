@@ -69,10 +69,11 @@ class ESMallDeleteQueue
 
         $esConfig = Config::get('orbit.elasticsearch');
         $geofence = MerchantGeofence::getDefaultValueForAreaAndPosition($mallId);
+        $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
 
         try {
             $params = [
-                'index' => Config::get('orbit.elasticsearch.indices.malldata.index'),
+                'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.malldata.index'),
                 'type' => Config::get('orbit.elasticsearch.indices.malldata.type'),
                 'id' => $mall->merchant_id
             ];

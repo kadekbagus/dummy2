@@ -58,3 +58,23 @@ Route::post('/api/v1/promotion/delete/image', function()
 {
     return UploadAPIController::create()->postDeletePromotionImage();
 });
+
+/**
+ * List of promotion on all malls
+ */
+Route::get('/api/v1/pub/promotion-list', function()
+{
+    return Orbit\Controller\API\v1\Pub\PromotionAPIController::create()->getSearchPromotion();
+});
+
+Route::get('/app/v1/pub/promotion-list', ['as' => 'pub-promotion-list', 'uses' => 'IntermediatePubAuthController@Promotion_getSearchPromotion']);
+
+/**
+ * List mall of promotion
+ */
+Route::get('/api/v1/pub/mall-promotion-list', function()
+{
+    return Orbit\Controller\API\v1\Pub\PromotionAPIController::create()->getMallPerPromotion();
+});
+
+Route::get('/app/v1/pub/mall-promotion-list', ['as' => 'pub-mall-promotion-list', 'uses' => 'IntermediatePubAuthController@Promotion_getMallPerPromotion']);

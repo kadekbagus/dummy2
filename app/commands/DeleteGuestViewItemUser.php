@@ -34,7 +34,7 @@ class DeleteGuestViewItemUser extends Command {
      *
      * @var int
      */
-    protected $defaultDays = 7;
+    protected $days = 7;
 
     /**
      * Create a new command instance.
@@ -69,7 +69,7 @@ class DeleteGuestViewItemUser extends Command {
             $guestRoleId = $guestRoleIds[0];
 
             echo "Counting records...\n\n";
-            $dateString = '-' . $this->defaultDays . ' days';
+            $dateString = '-' . $this->days . ' days';
             $dateThreshold = date('Y-m-d 00:00:00', strtotime($dateString));
 
             $data = DB::table('viewed_item_user')
@@ -90,7 +90,7 @@ class DeleteGuestViewItemUser extends Command {
             }
 
             if (! $confirm) {
-                $question = "Are you sure want to delete " . $limit . " bedge data, which ages over " . $days ." days with total " . $data->count() . " record(s)? [y|n]";
+                $question = "Are you sure want to delete " . $limit . " bedge data, which ages over " . $this->days ." days with total " . $data->count() . " record(s)? [y|n]";
                 if (! $this->confirm($question, false)) {
                     $confirm = false;
                     return;
@@ -127,7 +127,7 @@ class DeleteGuestViewItemUser extends Command {
     protected function getOptions()
     {
         return array(
-            array('days', null, InputOption::VALUE_OPTIONAL, 'Number of day threshold to keep the records, beyond that will be deleted. (Default: ' . $this->defaultDays . ' days)'),
+            array('days', null, InputOption::VALUE_OPTIONAL, 'Number of day threshold to keep the records, beyond that will be deleted. (Default: ' . $this->days . ' days)'),
             array('limit', null, InputOption::VALUE_OPTIONAL, 'Limitation for delete records, default is 5000', 5000),
             array('yes', null, InputOption::VALUE_NONE, 'Confirmation to cleanup bedge'),
         );
@@ -149,7 +149,7 @@ class DeleteGuestViewItemUser extends Command {
                 throw new InvalidArgumentException('Days must be a positive integer');
             }
 
-            $this->defaultDays = $days;
+            $this->days = $days;
         }
     }
 }

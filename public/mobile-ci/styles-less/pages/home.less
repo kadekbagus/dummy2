@@ -366,6 +366,101 @@ i.disableds{
     text-align:center;
   }
 }
+
+
+
+.coupon-wallet {
+  top: 10px;
+  right: 15px;
+  position: absolute;
+  font-size: 0.5em;
+  z-index: 1;
+  background-color:@theme-main-complimentary;
+  border-radius:20px;
+  padding:2px 6px 0px 6px;
+
+  a {
+      display:block;
+  }
+}
+
+.padding-uniform {
+    padding:5px;
+}
+
+.coupon-wallet {
+  .fae-wallet, .wallet-text {
+    color: @theme-main-complimentary-2;
+    font-size:1.5em;
+  }
+
+  .fa-circle, .fa-plus, .fa-check {
+    left: -40%;
+  }
+  .fa-circle {
+    top: 44%;
+    font-size: 1.2em;
+    color: @theme-main-complimentary-3;
+
+    &.added {
+      color: #5cb85c;
+    }
+  }
+  .fa-plus, .fa-check {
+    color: @theme-main-complimentary-2;
+    font-size: 0.7em;
+    top: 23%;
+  }
+
+  .wallet-text {
+    font-size:1.5em;
+    margin-top: 8px;
+  }
+}
+
+.coupon-wallet-message-icon {
+    display: inline-block;
+    font-size: 0.3em;
+    padding: 2px 6px 0px 6px;
+    background-color:@theme-main-complimentary;
+    border-radius:20px;
+
+    div {
+       display:block;
+    }
+}
+
+
+.coupon-wallet-message-icon {
+  .fae-wallet, .wallet-text {
+    color: @theme-main-complimentary-2;
+    font-size:1.5em;
+  }
+
+  .fa-circle, .fa-plus, .fa-check {
+    left: -40%;
+  }
+  .fa-circle {
+    top: 44%;
+    font-size: 1.2em;
+    color: @theme-main-complimentary-3;
+
+    &.added {
+      color: #5cb85c;
+    }
+  }
+  .fa-plus, .fa-check {
+    color: @theme-main-complimentary-2;
+    font-size: 0.7em;
+    top: 23%;
+  }
+
+  .wallet-text {
+    font-size:1.5em;
+    margin-top: 8px;
+  }
+}
+
 .sign-in-popup{
     height: 100%;
     width: 100%;
@@ -614,4 +709,42 @@ i.disableds{
     overflow: hidden;
     text-overflow: ellipsis;
     height: 40px;
+}
+
+.container.pokestop {
+    background-color: #0aa5d5;
+
+    img {
+      margin: 5px 0;
+    }
+}
+
+.pokestop a.widget-link {
+    display: block;
+    text-align: center;
+}
+
+span {
+  &.zoom-info {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    padding: 4px 10px;
+    background-color: #111;
+    border-radius: 3px;
+    color: #fff;
+    opacity: 0.6;
+  }
+}
+
+ul.legends {
+  > li {
+    padding-top: 5px;
+  }
+
+  .legend {
+    > img {
+      width: 20px;
+    }
+  }
 }

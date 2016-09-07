@@ -114,3 +114,23 @@ Route::post('/api/v1/mall-background/delete', function()
 {
     return UploadAPIController::create()->postDeleteMallBackground();
 });
+
+/**
+ * Get Store list for gotomalls landing page
+ */
+Route::get('/api/v1/pub/store-list', function()
+{
+    return Orbit\Controller\API\v1\Pub\StoreAPIController::create()->getStoreList();
+});
+
+Route::get('/app/v1/pub/store-list', ['as' => 'pub-store-list', 'uses' => 'IntermediatePubAuthController@Store_getStoreList']);
+
+/**
+ * Get mall list based on store name
+ */
+Route::get('/api/v1/pub/mall-store-list', function()
+{
+    return Orbit\Controller\API\v1\Pub\StoreAPIController::create()->getMallStoreList();
+});
+
+Route::get('/app/v1/pub/mall-store-list', ['as' => 'pub-mall-store-list', 'uses' => 'IntermediatePubAuthController@Store_getMallStoreList']);

@@ -38,7 +38,7 @@ class ResetPasswordLinkAPIController extends ControllerAPI
     {
         $httpCode = 200;
         $this->response = new ResponseProvider();
-        $activity = Activity::portal()
+        $activity = Activity::mobileci()
                             ->setActivityType('reset_password');
         try {
             $this->beginTransaction();

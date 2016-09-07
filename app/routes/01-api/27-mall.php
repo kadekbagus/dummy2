@@ -109,3 +109,13 @@ Route::get(
         return Orbit\Controller\API\v1\Pub\MallNearestAPIController::create()->getSearchMallNearest();
     }]
 )->where('search', '(api|app)');
+
+/**
+ * Get Mall list
+ */
+Route::get(
+    '/{search}/v1/pub/mall-list', ['as' => 'mall-list', function()
+    {
+        return Orbit\Controller\API\v1\Pub\MallListAPIController::create()->getMallList();
+    }]
+)->where('search', '(api|app)');

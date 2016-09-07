@@ -43,7 +43,7 @@ class ResetPasswordAPIController extends ControllerAPI
     public function postResetPassword()
     {
         $this->response = new ResponseProvider();
-        $activity = Activity::portal()
+        $activity = Activity::mobileci()
                             ->setActivityType('reset_password');
         try {
             $this->registerCustomValidation();

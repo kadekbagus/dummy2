@@ -396,34 +396,122 @@
      * parameters: itemtype(news,promotion,lucky-draw,my-coupon)
      *             ids(array(list of already loaded ids))
      */
-    function loadMoreX(itemtype, ids) {
-        var catalogueWrapper = $('.catalogue-wrapper');
-        var itemList = [];
-        var btn = $('#load-more-x');
-        btn.attr('disabled', 'disabled');
-        btn.html('<i class="fa fa-circle-o-notch fa-spin"></i>');
-        $.ajax({
-            url: apiPath + itemtype + '/load-more',
-            method: 'GET',
-            data: {
+    function loadMoreX(itemtype, ids, helperObject, callback) {
+        var catalogueWrapper = $('.catalogue-wrapper'),
+            itemList = [],
+            btn = $('#load-more-x'),
+            ajaxParams = {
                 take: take,
                 keyword: keyword,
                 skip: skip,
                 ids: ids
+            };
+
+        if (helperObject !== undefined) {
+            /* skip page for coupon only */
+            if (helperObject.skip !== undefined) {
+                ajaxParams.skip = helperObject.skip;
             }
+
+            if (helperObject.coupon_type !== undefined) {
+                ajaxParams.coupon_type = helperObject.coupon_type;
+            }
+        }
+
+        btn.attr('disabled', 'disabled');
+        btn.html('<i class="fa fa-circle-o-notch fa-spin"></i>');
+        switch (itemtype) {
+            case 'my-coupon':
+            var url = '{{ url('/app/v1/my-coupon/load-more') }}';
+            break;
+
+            case 'news':
+            var url = '{{ url('/app/v1/news/load-more') }}';
+            break;
+
+            case 'promotion':
+            var url = '{{ url('/app/v1/promotion/load-more') }}';
+            break;
+
+            case 'service':
+            var url = '{{ url('/app/v1/service/load-more') }}';
+            break;
+
+            case 'tenant':
+            var url = '{{ url('app/v1/tenant/load-more') }}';
+            break;
+
+            case 'lucky-draw':
+            var url = '{{ url('/app/v1/lucky-draw/load-more') }}';
+            break;
+
+            default:
+            break;
+        }
+        $.ajax({
+            url: url,
+            method: 'GET',
+            data: ajaxParams
         }).done(function(data) {
+            if (helperObject !== undefined) {
+                /* skip page for coupon only */
+                if (helperObject.skip !== undefined) {
+                    helperObject.skip += ajaxParams.take;
+                }
+
+                if (helperObject.isProgress !== undefined) {
+                    helperObject.isProgress = false;
+                }
+            }
             if(data.status == 1) {
+
                 skip = skip + take;
                 if(data.records.length > 0) {
                     for(var i = 0; i < data.records.length; i++) {
-                        var coupon_badge = '';
+                        ids.push(data.records[i].item_id);
+                        var coupon_badge = '',
+                            walletIcon = 'fa-plus';
+                            walletText = '{{ Lang::get("mobileci.coupon.add_wallet") }}',
+                            circleColor = '',
+                            couponWallet = '';
+
                         if(itemtype === 'my-coupon') {
-                            coupon_badge = '<div class="coupon-new-badge"><div class="new-number">'+data.records[i].quantity+'</div></div>';
+                            if (data.records[i].added_to_wallet === 'true') {
+                                walletIcon = 'fa-check';
+                                walletText = '{{ Lang::get("mobileci.coupon.added_wallet") }}';
+                                circleColor = 'added';
+                            }
                         }
-                        var list = '<div class="col-xs-12 col-sm-12 item-x" data-ids="'+data.records[i].item_id+'" id="item-'+data.records[i].item_id+'">\
+
+                         if (helperObject !== undefined) {
+                            if (helperObject.coupon_type !== undefined) {
+                                if ('available' === helperObject.coupon_type) {
+                                    var connectionChar = /\?/.test(data.records[i].add_to_wallet_hash_url) ? '&' : '?',
+                                        couponId = 'idForAddWallet=' + data.records[i].item_id;
+
+                                    // couponWallet = '\
+                                    //     <div class="coupon-wallet pull-right">\
+                                    //         <a data-href="' + data.records[i].add_to_wallet_hash_url + connectionChar + couponId + '" href="' + data.records[i].add_to_wallet_hash + '">\
+                                    //             <span class="fa-stack fa-2x clickable" data-ids="' + data.records[i].item_id + '" data-isaddedtowallet="' + data.records[i].added_to_wallet + '">\
+                                    //                 <i class="fa fae-wallet fa-stack-2x"></i>\
+                                    //                 <i class="fa ' + circleColor + ' fa-circle fa-stack-2x"></i>\
+                                    //                 <i class="fa ' + walletIcon + ' fa-stack-1x state-icon"></i>\
+                                    //             </span>\
+                                    //         </a>\
+                                    //         <span class="wallet-text">' + walletText + '</span>\
+                                    //     </div>';
+
+                                    //Vannessa wants to hide add coupon wallet in coupon list
+                                    //to enable just uncomment above code and remove following code
+                                    couponWallet = '';
+                                }
+                            }
+                        }
+
+                        var list = '<div class="col-xs-12 col-sm-12 item-x" data-ids="' + data.records[i].item_id + '" id="item-' + data.records[i].item_id + '">\
                                 <section class="list-item-single-tenant">\
-                                    <a class="list-item-link" href="'+data.records[i].redirect_url+'" href="'+data.records[i].url+'">\
-                                        '+coupon_badge+'\
+                                    '+ couponWallet +'\
+                                    <a class="list-item-link" data-href="'+data.records[i].redirect_url+'" href="'+data.records[i].url+'">\
                                         <div class="list-item-info">\
                                             <header class="list-item-title">\
                                                 <div><strong>'+data.records[i].name+'</strong></div>\
@@ -440,10 +528,44 @@
 
                         itemList.push(list);
                     }
+
+                    $('#load-more-container').remove();
+                    if(data.returned_records < data.total_records) {
+                        var viewMoreButton = '\
+                            <div class="row" id="load-more-container">\
+                                <div class="col-xs-12 padded">\
+                                    <button class="btn btn-info btn-block" id="load-more-x">{{Lang::get('mobileci.notification.load_more_btn')}}</button>\
+                                </div>\
+                            </div>';
+
+                        itemList.push(viewMoreButton);
+                    }
                     catalogueWrapper.append(itemList.join(''));
-                }
-                if (data.total_records - take <= 0) {
-                    btn.remove();
+                } else {
+                    if (helperObject !== undefined) {
+                        if (helperObject.coupon_type !== undefined) {
+                            var message = "{{ Lang::get('mobileci.greetings.no_coupons_listing') }}";
+                            if ('wallet' === helperObject.coupon_type) {
+                                message = " {{ Lang::get('mobileci.greetings.no_coupon_wallet_1') }}\
+                                            <div class='coupon-wallet-message-icon'>\
+                                              <div>\
+                                                <span class='fa-stack fa-2x'>\
+                                                    <i class='fa fae-wallet fa-stack-2x'></i>\
+                                                    <i class='fa fa-circle fa-stack-2x'></i>\
+                                                    <i class='fa fa-plus fa-stack-1x state-icon'></i>\
+                                                </span>\
+                                                <span class=\"wallet-text\">{{ Lang::get("mobileci.coupon.add_wallet") }}</span>\
+                                              </div>\
+                                            </div>\
+                                            {{ Lang::get('mobileci.greetings.no_coupon_wallet_2') }}";
+                            }
+
+                            var elementNoCouponWallet = '<div class="col-xs-12 notification-message">\
+                                                            <h4>' + message + '</h4>\
+                                                         </div>';
+                            catalogueWrapper.html(elementNoCouponWallet);
+                        }
+                    }
                 }
             } else {
                 if(data.message === 'session_expired') {
@@ -453,6 +575,9 @@
         }).always(function(data){
             btn.removeAttr('disabled', 'disabled');
             btn.html('{{Lang::get('mobileci.notification.load_more_btn')}}');
+            if (callback) {
+                callback();
+            }
         });
     }
     var notInMessagesPage = true; {{-- this var is used to enable/disable pop up notification --}}
@@ -490,8 +615,9 @@
             return str.indexOf(value) > -1;
         }
         function viewPopUpActivity(campaign_id, campaign_type) {
+            var url = '{{ url('/app/v1/campaign/activities') }}';
             $.ajax({
-                url: apiPath + 'campaign/activities',
+                url: url,
                 method: 'POST',
                 data: {
                     campaign_id: campaign_id,
@@ -502,10 +628,17 @@
         }
         var slider = null;
         var cookieLang = $.cookie('orbit_preferred_language') ? $.cookie('orbit_preferred_language') : 'en'; //send user lang from cookie
+        <?php $displayPopup = Config::get('orbit.shop.display_campaign_popup', function() {return FALSE;}); ?>
+        @if (is_callable($displayPopup) && $displayPopup($_GET))
         setTimeout(function(){
             if ($.cookie('dismiss_campaign_cards') !== 't') {
+                var url = '{{ url('/app/v1/campaign/list') }}';
+                var qm = '?';
+                if (url.indexOf('?') > -1) {
+                    qm = '&';
+                }
                 $.ajax({
-                    url: apiPath + 'campaign/list?lang='+cookieLang,
+                    url: url + qm + 'lang='+cookieLang,
                     method: 'GET'
                 }).done(function(data) {
                     if(data.data.total_records) {
@@ -568,6 +701,7 @@
                 });
             }
         }, ({{ Config::get('orbit.shop.event_delay', 2.5) }} * 1000));
+        @endif
 
         $('#campaign-cards-close-btn, .campaign-cards-back-drop').click(function(){
             slider.pause();
@@ -581,8 +715,9 @@
             e.preventDefault();
             var campaign_id = $(this).data('id');
             var campaign_type = $(this).data('type');
+            var url = '{{ url('/app/v1/campaign/activities') }}';
             $.ajax({
-                url: apiPath + 'campaign/activities',
+                url: url,
                 method: 'POST',
                 data: {
                     campaign_id: campaign_id,
@@ -657,12 +792,13 @@
                 var loader = '<div class="text-center" id="search-loader" style="font-size:48px;color:#fff;"><i class="fa fa-spinner fa-spin"></i></div>';
                 $('.search-wrapper').append(loader);
 
+                var url = '{{ url('/app/v1/keyword/search') }}';
+                var qm = '?';
+                if (url.indexOf('?') > -1) {
+                    qm = '&';
+                }
                 $.ajax({
-                    @if(Config::get('orbit.session.availability.query_string'))
-                    url: "{{ url('/app/v1/keyword/search') }}&keyword=" + keyword + '&lang=' + cookieLang,
-                    @else
-                    url: "{{ url('/app/v1/keyword/search') }}?keyword=" + keyword + '&lang=' + cookieLang,
-                    @endif
+                    url: url + qm + "keyword=" + keyword + '&lang=' + cookieLang,
                     method: 'GET'
                 }).done(function(data) {
                     if (data.data.total_records > 0) {
@@ -1133,9 +1269,10 @@
             // which is different from the old Orbit behavior
             var userIdentified = function() {
                 $('#btn-signin-form').attr('disabled', 'disabled');
+                var url = '{{ url('/app/v1/customer/login') }}';
                 $.ajax({
                     method: 'post',
-                    url: apiPath + 'customer/login',
+                    url: url,
                     data: {
                         email: custEmail,
                         password: custPassword,
@@ -1241,9 +1378,10 @@
                     'year': $('#signupForm [name=year]').val()
                 };
                 $('#btn-signup-form').attr('disabled', 'disabled');
+                var url = '{{ url('/app/v1/customer/login') }}';
                 $.ajax({
                     method: 'post',
-                    url: apiPath + 'customer/login',
+                    url: url,
                     data: {
                         email: custEmail,
                         payload: "{{{ Input::get('payload', '') }}}",
@@ -1368,9 +1506,10 @@
          * @return void|object
          */
         orbitSignUpForm.checkCustomerEmail = function(custEmail, emptyCallback, dataCallback, errorCallback) {
+            var url = '{{ url('/app/v1/customer/basic-data') }}';
             $.ajax({
                 method: 'POST',
-                url: apiPath + 'customer/basic-data',
+                url: url,
                 data: { email: custEmail }
             }).done(function (data, status, xhr) {
                 if (data.length === 0) {
