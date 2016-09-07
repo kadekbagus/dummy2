@@ -553,7 +553,8 @@ class CouponAPIController extends ControllerAPI
                                     AND CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) between {$prefix}promotions.begin_date and {$prefix}promotions.end_date) > 0
                                 THEN 'true'
                                 ELSE 'false'
-                                END AS is_started
+                                END AS is_started,
+                                {$prefix}issued_coupons.issued_coupon_id
                             "))
                             ->leftJoin('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
                             ->leftJoin('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
@@ -1046,11 +1047,14 @@ class CouponAPIController extends ControllerAPI
                                                         FROM {$prefix}merchants om
                                                         LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
                                                         WHERE om.merchant_id = (CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.merchant_id ELSE {$prefix}merchants.merchant_id END)
-                                                    ) as tz")
+                                                    ) as tz"),
+                                            DB::Raw("img.path as location_logo")
                                         )
                                     ->leftJoin('promotions', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                                     ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
                                     ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
+                                    ->leftJoin(DB::raw("{$prefix}media as img"), DB::raw('img.object_id'), '=', 'merchants.merchant_id')
+                                    ->whereIn(DB::raw('img.media_name_long'), ['mall_logo_orig', 'retailer_logo_orig'])
                                     ->where('promotions.promotion_id', $couponId)
                                     ->groupBy('merchant_id')
                                     ->havingRaw('tz <= end_date AND tz >= begin_date');

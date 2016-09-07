@@ -510,11 +510,14 @@ class PromotionAPIController extends ControllerAPI
                                                     FROM {$prefix}merchants om
                                                     LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
                                                     WHERE om.merchant_id = (CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.merchant_id ELSE {$prefix}merchants.merchant_id END)
-                                                ) as tz")
+                                                ) as tz"),
+                                            DB::Raw("img.path as location_logo")
                                     )
                                     ->leftJoin('news', 'news_merchant.news_id', '=', 'news.news_id')
                                     ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
                                     ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
+                                    ->leftJoin(DB::raw("{$prefix}media as img"), DB::raw('img.object_id'), '=', 'merchants.merchant_id')
+                                    ->whereIn(DB::raw('img.media_name_long'), ['mall_logo_orig', 'retailer_logo_orig'])
                                     ->where('news_merchant.news_id', '=', $promotionId)
                                     ->groupBy('merchant_id')
                                     ->havingRaw('tz <= end_date AND tz >= begin_date');
