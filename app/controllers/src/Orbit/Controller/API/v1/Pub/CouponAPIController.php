@@ -31,6 +31,8 @@ use CouponRetailer;
 use Carbon\Carbon;
 use IssuedCoupon;
 use Orbit\Controller\API\v1\Pub\SocMedAPIController;
+use Orbit\Helper\Security\Encrypter;
+use \Queue;
 
 class CouponAPIController extends ControllerAPI
 {
@@ -327,7 +329,7 @@ class CouponAPIController extends ControllerAPI
      *
      * @param string coupon_id
      *
-     * @return string
+     * @return Illuminate\Support\Facades\Response
      *
      * @author ahmad <ahmad@dominopos.com>
      */
@@ -466,6 +468,400 @@ class CouponAPIController extends ControllerAPI
         }
 
         return $this->render();
+    }
+
+    /**
+     * POST - add coupon to email
+     *
+     * @param string coupon_id
+     * @param string email
+     *
+     * @return Illuminate\Support\Facades\Response
+     *
+     * @author ahmad <ahmad@dominopos.com>
+     */
+    public function postAddCouponToEmail()
+    {
+        $activity = Activity::mobileci()
+                            ->setActivityType('click');
+        $user = NULL;
+        $coupon = NULL;
+        $issuedCoupon = NULL;
+        $retailer = null;
+        $email = NULL;
+        try {
+            $this->session = SessionPreparer::prepareSession();
+            $user = UserGetter::getLoggedInUserOrGuest($this->session);
+
+            $this->registerCustomValidation();
+            $coupon_id = OrbitInput::post('coupon_id');
+            $email = OrbitInput::post('email');
+            $mallId = OrbitInput::post('mall_id');
+
+            $validator = Validator::make(
+                array(
+                    'coupon_id' => $coupon_id,
+                    'email' => $email,
+                ),
+                array(
+                    'coupon_id' => 'required|orbit.exists.coupon',
+                    'email' => 'required|email',
+                ),
+                array(
+                    'orbit.exists.coupon' => Lang::get('validation.orbit.empty.coupon'),
+                )
+            );
+
+            $this->beginTransaction();
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $coupon = Coupon::excludeDeleted()
+                ->where('promotion_id', '=', $coupon_id)
+                ->first();
+
+            $newIssuedCoupon = new IssuedCoupon();
+            $issuedCoupon = $newIssuedCoupon->issue($coupon);
+            $this->commit();
+
+            $hashed_issued_coupon_cid = rawurlencode((new Encrypter(Config::get('orbit.security.encryption_key')))->encrypt($issuedCoupon->issued_coupon_id));
+            $hashed_issued_coupon_uid = rawurlencode((new Encrypter(Config::get('orbit.security.encryption_key')))->encrypt($email));
+
+            // cid=%s&uid=%s
+            $redeem_url = sprintf(Config::get('orbit.coupon.direct_redemption_url'), $hashed_issued_coupon_cid, $hashed_issued_coupon_uid);
+
+            // queue to send coupon redemption page url
+            Queue::push('Orbit\\Queue\\IssuedCouponMailQueue', [
+                'email' => $email,
+                'issued_coupon_id' => $issuedCoupon->issued_coupon_id,
+                'redeem_url' => $redeem_url
+            ]);
+
+            // customize user property before saving activity
+            $user = $this->customizeUserProps($user, $email);
+
+            if (! empty($mallId)) {
+                $retailer = Mall::excludeDeleted()
+                    ->where('merchant_id', $mallId)
+                    ->first();
+            }
+
+            if ($issuedCoupon) {
+                $this->response->message = 'Request Ok';
+                $this->response->data = NULL;
+                $activityNotes = sprintf('Issued to email: %s. Coupon Id: %s. Issued Coupon Id: %s', $email, $coupon->promotion_id, $issuedCoupon->issued_coupon_id);
+                $activity->setUser($user)
+                    ->setActivityName('issue_coupon')
+                    ->setActivityNameLong('Issue Coupon by Email')
+                    ->setObject($issuedCoupon)
+                    ->setLocation($retailer)
+                    ->setModuleName('Coupon')
+                    ->setCoupon($coupon)
+                    ->setNotes($activityNotes)
+                    ->responseOK()
+                    ->save();
+            } else {
+                $this->response->message = 'Fail to issue coupon';
+                $this->response->data = NULL;
+                $activityNotes = sprintf('Failed to issue to email: %s. Coupon Id: %s.', $email, $coupon->promotion_id);
+                $activity->setUser($user)
+                    ->setActivityName('issue_coupon')
+                    ->setActivityNameLong('Failed to Issue Coupon by Email')
+                    ->setObject($issuedCoupon)
+                    ->setLocation($retailer)
+                    ->setModuleName('Coupon')
+                    ->setCoupon($coupon)
+                    ->setNotes($activityNotes)
+                    ->responseFailed()
+                    ->save();
+            }
+
+        } catch (ACLForbiddenException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = NULL;
+            $this->rollback();
+            $activityNotes = sprintf('Failed to add to email. Error: %s', $e->getMessage());
+            $activity->setUser($user)
+                ->setActivityName('issue_coupon')
+                ->setActivityNameLong('Failed to Issue Coupon by Email')
+                ->setObject($issuedCoupon)
+                ->setLocation($retailer)
+                ->setModuleName('Coupon')
+                ->setCoupon($coupon)
+                ->setNotes($activityNotes)
+                ->responseFailed()
+                ->save();
+        } catch (InvalidArgsException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = NULL;
+            $this->rollback();
+            $activityNotes = sprintf('Failed to add to email. Error: %s', $e->getMessage());
+            $activity->setUser($user)
+                ->setActivityName('issue_coupon')
+                ->setActivityNameLong('Failed to Issue Coupon by Email')
+                ->setObject($issuedCoupon)
+                ->setLocation($retailer)
+                ->setModuleName('Coupon')
+                ->setCoupon($coupon)
+                ->setNotes($activityNotes)
+                ->responseFailed()
+                ->save();
+        } catch (Exception $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = $e->getLine();
+            $this->response->message = $e->getMessage();
+            $this->response->data = $e->getFile();
+            $this->rollback();
+            $activityNotes = sprintf('Failed to add to email. Error: %s', $e->getMessage());
+            $activity->setUser($user)
+                ->setActivityName('issue_coupon')
+                ->setActivityNameLong('Failed to Issue Coupon by Email')
+                ->setObject($issuedCoupon)
+                ->setLocation($retailer)
+                ->setModuleName('Coupon')
+                ->setCoupon($coupon)
+                ->setNotes($activityNotes)
+                ->responseFailed()
+                ->save();
+        }
+
+        return $this->render();
+    }
+
+    /**
+     * GET - get coupon redemption page
+     *
+     * @author Ahmad <ahmad@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param string cid (hashed issued coupon id coming from url in email that sent to user)
+     * @param string uid (hashed user identifier coming from url in email that sent to user)
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function getCouponItemRedemption()
+    {
+        $httpCode = 200;
+        $activity = Activity::mobileci()->setActivityType('view');
+        $user = NULL;
+        $issuedCoupon = NULL;
+        $coupon = NULL;
+        $issuedCouponId = NULL;
+
+        try {
+            $this->session = SessionPreparer::prepareSession();
+            $user = UserGetter::getLoggedInUserOrGuest($this->session);
+
+            // Get language_if of english
+            $languageEnId = null;
+            $language = Language::where('name', 'en')->first();
+
+            if (! empty($language)) {
+                $languageEnId = $language->language_id;
+            }
+
+            $prefix = DB::getTablePrefix();
+
+            $issuedCouponId = OrbitInput::get('cid', NULL);
+            $userIdentifier = OrbitInput::get('uid', NULL);
+            $validator = Validator::make(
+                array(
+                    'cid' => $issuedCouponId,
+                ),
+                array(
+                    'cid' => 'required',
+                )
+            );
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            // decrypt hashed coupon id
+            $issuedCouponId = (new Encrypter(Config::get('orbit.security.encryption_key')))->decrypt($issuedCouponId);
+            if (! empty($userIdentifier)) {
+                $userIdentifier = (new Encrypter(Config::get('orbit.security.encryption_key')))->decrypt($userIdentifier);
+            }
+
+            // detect encoding to avoid query error
+            if (! mb_detect_encoding($issuedCouponId, 'ASCII', true)) {
+                $errorMessage = 'Invalid cid';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            if (! empty($userIdentifier) && ! mb_detect_encoding($userIdentifier, 'ASCII', true)) {
+                $errorMessage = 'Invalid uid';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $coupon = Coupon::with(['translations' => function($q) use ($languageEnId) {
+                            $q->addSelect(['coupon_translation_id', 'promotion_id']);
+                            $q->with(['media' => function($q2) {
+                                $q2->addSelect(['object_id', 'media_name_long', 'path']);
+                            }]);
+                            $q->where('merchant_language_id', $languageEnId);
+                        }])
+                        ->select(
+                            'promotions.promotion_id as promotion_id',
+                            'coupon_translations.promotion_name as promotion_name',
+                            'coupon_translations.description as description',
+                            'promotions.end_date',
+                            'media.path as original_media_path',
+                            // query for get status active based on timezone
+                            DB::raw("
+                                    CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
+                                            THEN {$prefix}campaign_status.campaign_status_name
+                                            ELSE (CASE WHEN {$prefix}promotions.end_date < (SELECT min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
+                                                                                        FROM {$prefix}promotion_retailer opr
+                                                                                            LEFT JOIN {$prefix}merchants om ON om.merchant_id = opr.retailer_id
+                                                                                            LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
+                                                                                            LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
+                                                                                        WHERE opr.promotion_id = {$prefix}promotions.promotion_id)
+                                    THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END AS campaign_status,
+                                    CASE WHEN (SELECT count(opr.retailer_id)
+                                                FROM {$prefix}promotion_retailer opr
+                                                    LEFT JOIN {$prefix}merchants om ON om.merchant_id = opr.retailer_id
+                                                    LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
+                                                    LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
+                                                WHERE opr.promotion_id = {$prefix}promotions.promotion_id
+                                                AND CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) between {$prefix}promotions.begin_date and {$prefix}promotions.end_date) > 0
+                                    THEN 'true' ELSE 'false' END AS is_started
+                            ")
+                        )
+                        ->join('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
+                        ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
+                        ->leftJoin('media', function($q) {
+                            $q->on('media.object_id', '=', 'coupon_translations.coupon_translation_id');
+                            $q->on('media.media_name_long', '=', DB::raw("'coupon_translation_image_orig'"));
+                        })
+                        ->join('issued_coupons', function ($q) {
+                            $q->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
+                            $q->on('issued_coupons.status', '=', DB::Raw("'active'"));
+                        })
+                        ->where('issued_coupons.issued_coupon_id', '=', $issuedCouponId)
+                        ->where('coupon_translations.merchant_language_id', '=', $languageEnId)
+                        ->where('coupon_translations.promotion_name', '!=', '')
+                        ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
+                        ->first();
+
+            $message = 'Request Ok';
+            if (! is_object($coupon)) {
+                OrbitShopAPI::throwInvalidArgument('Issued coupon that you specify is not found');
+            }
+
+            // customize user property before saving activity
+            $user = $this->customizeUserProps($user, $userIdentifier);
+
+            $issuedCoupon = IssuedCoupon::where('issued_coupon_id', $issuedCouponId)->first();
+
+            $activityNotes = sprintf('Page viewed: Coupon Redemption Page. Issued Coupon Id: %s', $issuedCouponId);
+            $activity->setUser($user)
+                ->setActivityName('view_redemption_page')
+                ->setActivityNameLong('View Redemption Page')
+                ->setObject($issuedCoupon)
+                ->setCoupon($coupon)
+                ->setModuleName('Coupon')
+                ->setNotes($activityNotes)
+                ->responseOK()
+                ->save();
+
+            $this->response->data = $coupon;
+            $this->response->code = 0;
+            $this->response->status = 'success';
+            $this->response->message = $message;
+        } catch (ACLForbiddenException $e) {
+            $activityNotes = sprintf('Failed view redemption page. Error: %s', $e->getMessage());
+            $activity->setUser($user)
+                ->setActivityName('view_redemption_page')
+                ->setActivityNameLong('Failed to View Redemption Page')
+                ->setObject($issuedCoupon)
+                ->setCoupon($coupon)
+                ->setModuleName('Coupon')
+                ->setNotes($activityNotes)
+                ->responseFailed()
+                ->save();
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (InvalidArgsException $e) {
+            $activityNotes = sprintf('Failed view redemption page. Error: %s', $e->getMessage());
+            $activity->setUser($user)
+                ->setActivityName('view_redemption_page')
+                ->setActivityNameLong('Failed to View Redemption Page')
+                ->setObject($issuedCoupon)
+                ->setCoupon($coupon)
+                ->setModuleName('Coupon')
+                ->setNotes($activityNotes)
+                ->responseFailed()
+                ->save();
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $result['total_records'] = 0;
+            $result['returned_records'] = 0;
+            $result['records'] = null;
+
+            $this->response->data = $result;
+            $httpCode = 403;
+        } catch (QueryException $e) {
+            $activityNotes = sprintf('Failed view redemption page. Error: %s', $e->getMessage());
+            $activity->setUser($user)
+                ->setActivityName('view_redemption_page')
+                ->setActivityNameLong('Failed to View Redemption Page')
+                ->setObject($issuedCoupon)
+                ->setCoupon($coupon)
+                ->setModuleName('Coupon')
+                ->setNotes($activityNotes)
+                ->responseFailed()
+                ->save();
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+        } catch (Exception $e) {
+            $activityNotes = sprintf('Failed view redemption page. Error: %s', $e->getMessage());
+            $activity->setUser($user)
+                ->setActivityName('view_redemption_page')
+                ->setActivityNameLong('Failed to View Redemption Page')
+                ->setObject($issuedCoupon)
+                ->setCoupon($coupon)
+                ->setModuleName('Coupon')
+                ->setNotes($activityNotes)
+                ->responseFailed()
+                ->save();
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 500;
+        }
+
+        $output = $this->render($httpCode);
+
+        return $output;
     }
 
     /**
@@ -739,6 +1135,7 @@ class CouponAPIController extends ControllerAPI
             $urlToCI = URL::route('ci-coupon-detail', array('id' => $replaceIdPattern), false);
             $mall = PromotionRetailer::select(
                     DB::raw("{$prefix}merchants.merchant_id as merchant_id"),
+                    DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN {$prefix}merchants.parent_id ELSE oms.merchant_id END as mall_id"),
                     DB::raw("{$prefix}merchants.object_type as location_type"),
                     DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN CONCAT({$prefix}merchants.name, ' at ', oms.name) ELSE CONCAT('Customer Service at ', {$prefix}merchants.name) END as name"),
                     DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.ci_domain ELSE {$prefix}merchants.ci_domain END as ci_domain"),
@@ -953,7 +1350,7 @@ class CouponAPIController extends ControllerAPI
                 ->setActivityName('view_landing_page_coupon_detail')
                 ->setActivityNameLong('View GoToMalls Coupon Detail')
                 ->setObject($coupon)
-                ->setNews($coupon)
+                ->setCoupon($coupon)
                 ->setModuleName('Coupon')
                 ->setNotes($activityNotes)
                 ->responseOK()
@@ -1134,6 +1531,7 @@ class CouponAPIController extends ControllerAPI
             'orbit.exists.coupon',
             function ($attribute, $value, $parameters) {
                 $prefix = DB::getTablePrefix();
+                // use nearest mall to check the eligibility
                 $nearestMallByTimezoneOffset = CouponRetailer::selectRaw("
                         CASE WHEN {$prefix}promotion_retailer.object_type = 'tenant' THEN mall.merchant_id ELSE {$prefix}merchants.merchant_id END as id,
                         CASE WHEN {$prefix}promotion_retailer.object_type = 'tenant' THEN mall.name ELSE {$prefix}merchants.name END as name,
@@ -1190,5 +1588,23 @@ class CouponAPIController extends ControllerAPI
     protected function quote($arg)
     {
         return DB::connection()->getPdo()->quote($arg);
+    }
+
+    /**
+     * Modify user object property
+     */
+    private function customizeUserProps($user, $email)
+    {
+        $role = $user->role->role_name;
+        if (strtolower($role) === 'consumer') {
+            // change first name and last name to full name + (user_email)
+            $user->user_firstname = $user->getFullName();
+            $user->user_lastname = sprintf("(%s)", $user->user_email);
+        }
+
+        // change user email to email provided by query string
+        $user->user_email = $email;
+
+        return $user;
     }
 }
