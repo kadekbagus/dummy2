@@ -925,4 +925,88 @@ class postUpdateAccountTest extends TestCase
         $this->assertSame(14, $response->code);
         $this->assertSame("error", $response->status);
     }
+
+    public function test3rdFailedNoLinkToTenant()
+    {
+        /*
+        * test pmp account with account type mall failed cause mall has link to other account type
+        */
+        $data = [
+            'id'                 => $this->pmp_3rd_user->user_id,
+            'account_type_id'    => $this->account_type_3rd->account_type_id,
+            'user_firstname'     => 'irianto',
+            'user_lastname'      => 'pratama',
+            'user_email'         => 'pmpsatu@campaignowner.com',
+            'account_name'       => 'PMP Satu',
+            'company_name'       => 'Domino Mall',
+            'address_line1'      => 'Jl. Gunung Salak 31 A',
+            'city'               => 'Badung',
+            'country_id'         => $this->country->country_id,
+            'select_all_tenants' => 'N',
+            'merchant_ids'       => [],
+            'user_password'      => '123456',
+            'role_name'          => 'Campaign Owner',
+        ];
+
+        $response = $this->setRequestPostUpdateAccount($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame("The merchant ids field is required", $response->message);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+    }
+
+    public function testDominoposFailedNoLinkToTenant()
+    {
+        /*
+        * test pmp account with account type mall failed cause mall has link to other account type
+        */
+        $data = [
+            'id'                 => $this->pmp_dominopos_user->user_id,
+            'account_type_id'    => $this->account_type_dominopos->account_type_id,
+            'user_firstname'     => 'irianto',
+            'user_lastname'      => 'pratama',
+            'user_email'         => 'pmpsatu@campaignowner.com',
+            'account_name'       => 'PMP Satu',
+            'company_name'       => 'Domino Mall',
+            'address_line1'      => 'Jl. Gunung Salak 31 A',
+            'city'               => 'Badung',
+            'country_id'         => $this->country->country_id,
+            'select_all_tenants' => 'N',
+            'merchant_ids'       => [],
+            'user_password'      => '123456',
+            'role_name'          => 'Campaign Owner',
+        ];
+
+        $response = $this->setRequestPostUpdateAccount($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame("The merchant ids field is required", $response->message);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+    }
+
+    public function testMasterFailedNoLinkToTenant()
+    {
+        /*
+        * test create pmp account with account type master
+        */
+        $data = [
+            'id'                 => $this->pmp_master_user->user_id,
+            'account_type_id'    => $this->account_type_master->account_type_id,
+            'user_firstname'     => 'naruto',
+            'user_lastname'      => 'ninja',
+            'user_email'         => 'pmpsatu@campaignadmin.com',
+            'account_name'       => 'PMP Satu',
+            'company_name'       => 'Domino Mall',
+            'address_line1'      => 'Jl. Gunung Salak 31 A',
+            'city'               => 'Badung',
+            'country_id'         => $this->country->country_id,
+            'select_all_tenants' => 'N',
+            'merchant_ids'       => [],
+            'user_password'      => '123456',
+            'role_name'          => 'Campaign Admin',
+        ];
+
+        $response = $this->setRequestPostUpdateAccount($this->apiKey->api_key, $this->apiKey->api_secret_key, $data);
+        $this->assertSame("Master must link to all tenants", $response->message);
+        $this->assertSame(14, $response->code);
+        $this->assertSame("error", $response->status);
+    }
 }
