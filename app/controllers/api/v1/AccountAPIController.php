@@ -121,7 +121,8 @@ class AccountAPIController extends ControllerAPI
                 'Merchant'  => 'tenant',
                 'Agency'    => 'mall_tenant',
                 '3rd Party' => 'mall',
-                'Dominopos' => 'mall_tenant'
+                'Dominopos' => 'mall_tenant',
+                'Master'    => 'mall_tenant'
             ];
 
         $get_tenants = CampaignLocation::excludeDeleted();
