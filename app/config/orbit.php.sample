@@ -3681,6 +3681,9 @@ return array(
     'coupon' => [
         // URL redemption page which should be on main page (not CI)
         // e.g: https://www.gotomalls.cool/#!/coupon-redemption?cid=%s&uid=%s
-        'direct_redemption_url' => NULL
+        'direct_redemption_url' => NULL,
+        // string key to encrypt/decrypt coupon redemption url params
+        // e.g: '-!GoToMallsCoupon!-'
+        'coupon_key' => '',
     ],
 );
