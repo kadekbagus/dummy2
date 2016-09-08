@@ -59,7 +59,7 @@ class IssuedCoupon extends Eloquent
      * @param User $admin - The one who issue the coupon
      * @return IssuedCoupon
      */
-    public function issue($promotion, $userId, $admin, $retailer = NULL)
+    public function issue($promotion, $userId = NULL, $admin = NULL, $retailer = NULL)
     {
         $maxIssueId = DB::table('issued_coupons')->max(DB::raw('CAST(issued_coupon_code as UNSIGNED)'));
         if (empty($maxIssueId)) {
