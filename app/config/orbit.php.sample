@@ -3670,4 +3670,13 @@ return array(
             ]
         ]
     ],
+
+    /**
+     * Configuration related with coupon
+     */
+    'coupon' => [
+        // URL redemption page which should be on main page (not CI)
+        // e.g: https://www.gotomalls.cool/#!/coupon-redemption?cid=%s&uid=%s
+        'direct_redemption_url' => NULL
+    ],
 );
