@@ -29,6 +29,7 @@ rsync -avz --delete \
 --exclude=app/config/oauth-4-laravel.php \
 --exclude=app/config/orbit-notifier.php \
 --exclude=app/config/orbit.php \
+--exclude=app/config/dynamic-listing.php \
 --exclude=app/config/mail.php \
 --exclude=app/config/queue.php \
 --exclude=app/config/packages/laraeval/laraeval/config.php \
