@@ -33,6 +33,9 @@ use IssuedCoupon;
 use Orbit\Controller\API\v1\Pub\SocMedAPIController;
 use Orbit\Helper\Security\Encrypter;
 use \Queue;
+use \App;
+use \Exception;
+use \UserVerificationNumber;
 
 class CouponAPIController extends ControllerAPI
 {
@@ -707,10 +710,6 @@ class CouponAPIController extends ControllerAPI
                 $errorMessage = 'Invalid cid';
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
-            if (! empty($userIdentifier) && ! mb_detect_encoding($userIdentifier, 'ASCII', true)) {
-                $errorMessage = 'Invalid uid';
-                OrbitShopAPI::throwInvalidArgument($errorMessage);
-            }
 
             $coupon = Coupon::with(['translations' => function($q) use ($languageEnId) {
                             $q->addSelect(['coupon_translation_id', 'promotion_id']);
@@ -917,37 +916,8 @@ class CouponAPIController extends ControllerAPI
                 ),
                 array(
                     'mall_id'                       => 'required|orbit.empty.merchant',
-                    'cid'                           => 'required',
+                    'cid'                           => 'required|orbit.empty.issuedcoupon',
                     'merchant_verification_number'  => 'required'
-                )
-            );
-
-            $encryptionKey = Config::get('orbit.security.encryption_key');
-            $encryptionDriver = Config::get('orbit.security.encryption_driver');
-            $encrypter = new Encrypter($encryptionKey, $encryptionDriver);
-
-            // decrypt hashed coupon id
-            $issuedCouponId = $encrypter->decrypt($issuedCouponId);
-            if (! empty($userIdentifier)) {
-                $userIdentifier = $encrypter->decrypt($userIdentifier);
-            }
-
-            // detect encoding to avoid query error
-            if (! mb_detect_encoding($issuedCouponId, 'ASCII', true)) {
-                $errorMessage = 'Invalid cid';
-                OrbitShopAPI::throwInvalidArgument($errorMessage);
-            }
-            if (! empty($userIdentifier) && ! mb_detect_encoding($userIdentifier, 'ASCII', true)) {
-                $errorMessage = 'Invalid uid';
-                OrbitShopAPI::throwInvalidArgument($errorMessage);
-            }
-
-            $validator2 = Validator::make(
-                array(
-                    'cid'                           => $issuedCouponId,
-                ),
-                array(
-                    'cid'                           => 'orbit.empty.issuedcoupon',
                 )
             );
 
@@ -960,10 +930,12 @@ class CouponAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            // Run the validation2
-            if ($validator2->fails()) {
-                $errorMessage = $validator2->messages()->first();
-                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            if (! empty($userIdentifier)) {
+                $encryptionKey = Config::get('orbit.security.encryption_key');
+                $encryptionDriver = Config::get('orbit.security.encryption_driver');
+                $encrypter = new Encrypter($encryptionKey, $encryptionDriver);
+
+                $userIdentifier = $encrypter->decrypt($userIdentifier);
             }
 
             $tenant = Tenant::active()
@@ -1028,6 +1000,27 @@ class CouponAPIController extends ControllerAPI
                     ->setModuleName('Coupon')
                     ->responseOK();
 
+        } catch (Defuse\Crypto\Exception\WrongKeyOrModifiedCiphertextException $e) {
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Deletion failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('redeem_coupon')
+                    ->setActivityNameLong('Coupon Redemption (Failed)')
+                    ->setObject($issuedcoupon)
+                    ->setCoupon($coupon)
+                    ->setNotes($e->getMessage())
+                    ->setLocation($mall)
+                    ->setModuleName('Coupon')
+                    ->responseFailed();
         } catch (ACLForbiddenException $e) {
 
             $this->response->code = $e->getCode();
@@ -1792,6 +1785,19 @@ class CouponAPIController extends ControllerAPI
     protected function registerCustomValidation() {
         // Check the existance of issued coupon id
         Validator::extend('orbit.empty.issuedcoupon', function ($attribute, $value, $parameters) {
+
+            // decrypt hashed issued coupon id
+            try {
+                $encryptionKey = Config::get('orbit.security.encryption_key');
+                $encryptionDriver = Config::get('orbit.security.encryption_driver');
+                $encrypter = new Encrypter($encryptionKey, $encryptionDriver);
+
+                $value = $encrypter->decrypt($value);
+            } catch (Exception $e) {
+                $errorMessage = 'Invalid cid';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
             $now = date('Y-m-d H:i:s');
             $number = OrbitInput::post('merchant_verification_number');
             $mall_id = OrbitInput::post('mall_id');
@@ -1809,7 +1815,7 @@ class CouponAPIController extends ControllerAPI
                         ->first();
 
             if (empty($issuedCoupon)) {
-                $errorMessage = sprintf('Issued coupon ID %s is not found.', htmlentities($value));
+                $errorMessage = 'Issued coupon ID is not found.';
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
