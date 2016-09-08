@@ -1696,7 +1696,10 @@ class CouponAPIController extends ControllerAPI
 
             $couponLocations = PromotionRetailer::select(
                                             DB::raw("{$prefix}merchants.merchant_id as merchant_id"),
+                                            DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN {$prefix}merchants.parent_id ELSE oms.merchant_id END as mall_id"),
                                             DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN CONCAT({$prefix}merchants.name, ' at ', oms.name) ELSE CONCAT('Customer Service at ', {$prefix}merchants.name) END as name"),
+                                            DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN {$prefix}merchants.name ELSE 'Customer Service' END as store_name"),
+                                            DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.name ELSE {$prefix}merchants.name END as mall_name"),
                                             DB::raw("{$prefix}merchants.object_type as location_type"),
                                             DB::raw("CONCAT(IF({$prefix}merchants.object_type = 'tenant', oms.ci_domain, {$prefix}merchants.ci_domain), '/customer/mallcoupondetail?id=', {$prefix}promotion_retailer.promotion_id) as url"),
                                             'promotions.begin_date as begin_date',
