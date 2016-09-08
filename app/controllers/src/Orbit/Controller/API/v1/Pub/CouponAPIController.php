@@ -33,6 +33,9 @@ use IssuedCoupon;
 use Orbit\Controller\API\v1\Pub\SocMedAPIController;
 use Orbit\Helper\Security\Encrypter;
 use \Queue;
+use \App;
+use \Exception;
+use \UserVerificationNumber;
 
 class CouponAPIController extends ControllerAPI
 {
@@ -528,11 +531,15 @@ class CouponAPIController extends ControllerAPI
             $issuedCoupon = $newIssuedCoupon->issue($coupon);
             $this->commit();
 
-            $hashed_issued_coupon_cid = rawurlencode((new Encrypter(Config::get('orbit.security.encryption_key')))->encrypt($issuedCoupon->issued_coupon_id));
-            $hashed_issued_coupon_uid = rawurlencode((new Encrypter(Config::get('orbit.security.encryption_key')))->encrypt($email));
+            $encryptionKey = Config::get('orbit.security.encryption_key');
+            $encryptionDriver = Config::get('orbit.security.encryption_driver');
+            $encrypter = new Encrypter($encryptionKey, $encryptionDriver);
+
+            $hashedIssuedCouponCid = rawurlencode($encrypter->encrypt($issuedCoupon->issued_coupon_id));
+            $hashedIssuedCouponUid = rawurlencode($encrypter->encrypt($email));
 
             // cid=%s&uid=%s
-            $redeem_url = sprintf(Config::get('orbit.coupon.direct_redemption_url'), $hashed_issued_coupon_cid, $hashed_issued_coupon_uid);
+            $redeem_url = sprintf(Config::get('orbit.coupon.direct_redemption_url'), $hashedIssuedCouponCid, $hashedIssuedCouponUid);
 
             // queue to send coupon redemption page url
             Queue::push('Orbit\\Queue\\IssuedCouponMailQueue', [
@@ -689,18 +696,18 @@ class CouponAPIController extends ControllerAPI
             }
 
             // decrypt hashed coupon id
-            $issuedCouponId = (new Encrypter(Config::get('orbit.security.encryption_key')))->decrypt($issuedCouponId);
+            $encryptionKey = Config::get('orbit.security.encryption_key');
+            $encryptionDriver = Config::get('orbit.security.encryption_driver');
+            $encrypter = new Encrypter($encryptionKey, $encryptionDriver);
+
+            $issuedCouponId = $encrypter->decrypt($issuedCouponId);
             if (! empty($userIdentifier)) {
-                $userIdentifier = (new Encrypter(Config::get('orbit.security.encryption_key')))->decrypt($userIdentifier);
+                $userIdentifier = $encrypter->decrypt($userIdentifier);
             }
 
             // detect encoding to avoid query error
             if (! mb_detect_encoding($issuedCouponId, 'ASCII', true)) {
                 $errorMessage = 'Invalid cid';
-                OrbitShopAPI::throwInvalidArgument($errorMessage);
-            }
-            if (! empty($userIdentifier) && ! mb_detect_encoding($userIdentifier, 'ASCII', true)) {
-                $errorMessage = 'Invalid uid';
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
@@ -860,6 +867,256 @@ class CouponAPIController extends ControllerAPI
         }
 
         $output = $this->render($httpCode);
+
+        return $output;
+    }
+
+    /**
+     * POST - Pub Redeem Coupon
+     *
+     * @author Ahmad Anshori <ahmad@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param string      `cid`                             (required) - Hashed issued coupon ID
+     * @param string      `uid`                             (optional) - Hashed user identifier
+     * @param string      `merchant_id`                     (required) - ID of the mall
+     * @param string      `merchant_verification_number`    (required) - Merchant/Tenant verification number
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postPubRedeemCoupon()
+    {
+        $activity = Activity::mobileci()
+                          ->setActivityType('coupon');
+
+        $user = NULL;
+        $mall = NULL;
+        $mall_id = NULL;
+        $issuedcoupon = NULL;
+        $coupon = NULL;
+        $httpCode = 200;
+
+        try {
+            $this->session = SessionPreparer::prepareSession();
+            $user = UserGetter::getLoggedInUserOrGuest($this->session);
+
+            $this->registerCustomValidation();
+
+            $mallId = OrbitInput::post('mall_id');
+            $issuedCouponId = OrbitInput::post('cid'); // hashed issued coupon id
+            $userIdentifier = OrbitInput::post('uid', NULL); // hashed user identifier
+            $verificationNumber = OrbitInput::post('merchant_verification_number');
+
+            $validator = Validator::make(
+                array(
+                    'mall_id'                       => $mallId,
+                    'cid'                           => $issuedCouponId,
+                    'merchant_verification_number'  => $verificationNumber,
+                ),
+                array(
+                    'mall_id'                       => 'required|orbit.empty.merchant',
+                    'cid'                           => 'required|orbit.empty.issuedcoupon',
+                    'merchant_verification_number'  => 'required'
+                )
+            );
+
+            // Begin database transaction
+            $this->beginTransaction();
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            if (! empty($userIdentifier)) {
+                $encryptionKey = Config::get('orbit.security.encryption_key');
+                $encryptionDriver = Config::get('orbit.security.encryption_driver');
+                $encrypter = new Encrypter($encryptionKey, $encryptionDriver);
+
+                $userIdentifier = $encrypter->decrypt($userIdentifier);
+            }
+
+            $tenant = Tenant::active()
+                ->where('parent_id', $mallId)
+                ->where('masterbox_number', $verificationNumber)
+                ->first();
+
+            $csVerificationNumber = UserVerificationNumber::
+                where('merchant_id', $mallId)
+                ->where('verification_number', $verificationNumber)
+                ->first();
+
+            $redeem_retailer_id = NULL;
+            $redeem_user_id = NULL;
+            if (! is_object($tenant) && ! is_object($csVerificationNumber)) {
+                // @Todo replace with language
+                $message = 'Store is not found.';
+                OrbitShopAPI::throwInvalidArgument($message);
+            } else {
+                if (is_object($tenant)) {
+                    $redeem_retailer_id = $tenant->merchant_id;
+                }
+                if (is_object($csVerificationNumber)) {
+                    $redeem_user_id = $csVerificationNumber->user_id;
+                }
+            }
+
+            $mall = App::make('orbit.empty.merchant');
+            $issuedcoupon = App::make('orbit.empty.issuedcoupon');
+
+            // The coupon information
+            $coupon = $issuedcoupon->coupon;
+
+            $issuedcoupon->redeemed_date = date('Y-m-d H:i:s');
+            $issuedcoupon->redeem_retailer_id = $redeem_retailer_id;
+            $issuedcoupon->redeem_user_id = $redeem_user_id;
+            $issuedcoupon->redeem_verification_code = $verificationNumber;
+            $issuedcoupon->status = 'redeemed';
+
+            $issuedcoupon->save();
+
+            $this->response->data = null;
+            $this->response->message = Lang::get('statuses.orbit.deleted.coupon');
+
+            // Commit the changes
+            $this->commit();
+
+            $this->response->message = 'Coupon has been successfully redeemed.';
+            $this->response->data = null;
+
+            // customize user property before saving activity
+            $user = $this->customizeUserProps($user, $userIdentifier);
+
+            $activityNotes = sprintf('Coupon Redeemed: %s. Issued Coupon Id: %s.', $issuedcoupon->coupon->promotion_name, $issuedcoupon->issued_coupon_id);
+            $activity->setUser($user)
+                    ->setActivityName('redeem_coupon')
+                    ->setActivityNameLong('Coupon Redemption (Successful)')
+                    ->setObject($issuedcoupon)
+                    ->setCoupon($coupon)
+                    ->setNotes($activityNotes)
+                    ->setLocation($mall)
+                    ->setModuleName('Coupon')
+                    ->responseOK();
+
+        } catch (Defuse\Crypto\Exception\WrongKeyOrModifiedCiphertextException $e) {
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Deletion failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('redeem_coupon')
+                    ->setActivityNameLong('Coupon Redemption (Failed)')
+                    ->setObject($issuedcoupon)
+                    ->setCoupon($coupon)
+                    ->setNotes($e->getMessage())
+                    ->setLocation($mall)
+                    ->setModuleName('Coupon')
+                    ->responseFailed();
+        } catch (ACLForbiddenException $e) {
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Deletion failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('redeem_coupon')
+                    ->setActivityNameLong('Coupon Redemption (Failed)')
+                    ->setObject($issuedcoupon)
+                    ->setCoupon($coupon)
+                    ->setNotes($e->getMessage())
+                    ->setLocation($mall)
+                    ->setModuleName('Coupon')
+                    ->responseFailed();
+        } catch (InvalidArgsException $e) {
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Deletion failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('redeem_coupon')
+                    ->setActivityNameLong('Coupon Redemption (Failed)')
+                    ->setObject($issuedcoupon)
+                    ->setCoupon($coupon)
+                    ->setNotes($e->getMessage())
+                    ->setLocation($mall)
+                    ->setModuleName('Coupon')
+                    ->responseFailed();
+        } catch (QueryException $e) {
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Deletion failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('redeem_coupon')
+                    ->setActivityNameLong('Coupon Redemption (Failed)')
+                    ->setObject($issuedcoupon)
+                    ->setCoupon($coupon)
+                    ->setNotes($e->getMessage())
+                    ->setLocation($mall)
+                    ->setModuleName('Coupon')
+                    ->responseFailed();
+        } catch (Exception $e) {
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 500;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Deletion failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('redeem_coupon')
+                    ->setActivityNameLong('Coupon Redemption (Failed)')
+                    ->setObject($issuedcoupon)
+                    ->setCoupon($coupon)
+                    ->setNotes($e->getMessage())
+                    ->setLocation($mall)
+                    ->setModuleName('Coupon')
+                    ->responseFailed();
+        }
+
+        $output = $this->render($httpCode);
+
+        // Save the activity
+        $activity->save();
 
         return $output;
     }
@@ -1439,7 +1696,10 @@ class CouponAPIController extends ControllerAPI
 
             $couponLocations = PromotionRetailer::select(
                                             DB::raw("{$prefix}merchants.merchant_id as merchant_id"),
+                                            DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN {$prefix}merchants.parent_id ELSE oms.merchant_id END as mall_id"),
                                             DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN CONCAT({$prefix}merchants.name, ' at ', oms.name) ELSE CONCAT('Customer Service at ', {$prefix}merchants.name) END as name"),
+                                            DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN {$prefix}merchants.name ELSE 'Customer Service' END as store_name"),
+                                            DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.name ELSE {$prefix}merchants.name END as mall_name"),
                                             DB::raw("{$prefix}merchants.object_type as location_type"),
                                             DB::raw("CONCAT(IF({$prefix}merchants.object_type = 'tenant', oms.ci_domain, {$prefix}merchants.ci_domain), '/customer/mallcoupondetail?id=', {$prefix}promotion_retailer.promotion_id) as url"),
                                             'promotions.begin_date as begin_date',
@@ -1526,6 +1786,116 @@ class CouponAPIController extends ControllerAPI
     }
 
     protected function registerCustomValidation() {
+        // Check the existance of issued coupon id
+        Validator::extend('orbit.empty.issuedcoupon', function ($attribute, $value, $parameters) {
+
+            // decrypt hashed issued coupon id
+            try {
+                $encryptionKey = Config::get('orbit.security.encryption_key');
+                $encryptionDriver = Config::get('orbit.security.encryption_driver');
+                $encrypter = new Encrypter($encryptionKey, $encryptionDriver);
+
+                $value = $encrypter->decrypt($value);
+            } catch (Exception $e) {
+                $errorMessage = 'Invalid cid';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $now = date('Y-m-d H:i:s');
+            $number = OrbitInput::post('merchant_verification_number');
+            $mall_id = OrbitInput::post('mall_id');
+
+            $prefix = DB::getTablePrefix();
+
+            $issuedCoupon = IssuedCoupon::whereNotIn('issued_coupons.status', ['deleted', 'redeemed'])
+                        ->where('issued_coupons.issued_coupon_id', $value)
+                        ->whereNull('issued_coupons.user_id')
+                        ->with('coupon')
+                        ->whereHas('coupon', function($q) use($now) {
+                            $q->where('promotions.status', 'active');
+                            $q->where('promotions.coupon_validity_in_date', '>=', $now);
+                        })
+                        ->first();
+
+            if (empty($issuedCoupon)) {
+                $errorMessage = 'Issued coupon ID is not found.';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            //Checking verification number in cs and tenant verification number
+            //Checking in tenant verification number first
+            if ($issuedCoupon->coupon->is_all_retailer === 'Y') {
+                $checkIssuedCoupon = Tenant::where('parent_id','=', $mall_id)
+                            ->where('status', 'active')
+                            ->where('masterbox_number', $number)
+                            ->first();
+            } elseif ($issuedCoupon->coupon->is_all_retailer === 'N') {
+                $checkIssuedCoupon = IssuedCoupon::whereNotIn('issued_coupons.status', ['deleted', 'redeemed'])
+                            ->join('promotion_retailer_redeem', 'promotion_retailer_redeem.promotion_id', '=', 'issued_coupons.promotion_id')
+                            ->join('merchants', 'merchants.merchant_id', '=', 'promotion_retailer_redeem.retailer_id')
+                            ->where('issued_coupons.issued_coupon_id', $value)
+                            ->whereNull('issued_coupons.user_id')
+                            ->whereHas('coupon', function($q) use($now) {
+                                $q->where('promotions.status', 'active');
+                                $q->where('promotions.coupon_validity_in_date', '>=', $now);
+                            })
+                            ->where('merchants.masterbox_number', $number)
+                            ->first();
+            }
+
+            // Continue checking to tenant verification number
+            if (empty($checkIssuedCoupon)) {
+                // Checking cs verification number
+                if ($issuedCoupon->coupon->is_all_employee === 'Y') {
+                    $checkIssuedCoupon = UserVerificationNumber::join('users', 'users.user_id', '=', 'user_verification_numbers.user_id')
+                                ->where('status', 'active')
+                                ->where('merchant_id', $mall_id)
+                                ->where('verification_number', $number)
+                                ->first();
+                } elseif ($issuedCoupon->coupon->is_all_employee === 'N') {
+                    $checkIssuedCoupon = IssuedCoupon::whereNotIn('issued_coupons.status', ['deleted', 'redeemed'])
+                                ->join('promotion_employee', 'promotion_employee.promotion_id', '=', 'issued_coupons.promotion_id')
+                                ->join('user_verification_numbers', 'user_verification_numbers.user_id', '=', 'promotion_employee.user_id')
+                                ->join('employees', 'employees.user_id', '=', 'user_verification_numbers.user_id')
+                                ->where('employees.status', 'active')
+                                ->where('issued_coupons.issued_coupon_id', $value)
+                                ->whereNull('issued_coupons.user_id')
+                                ->whereHas('coupon', function($q) use($now) {
+                                    $q->where('promotions.status', 'active');
+                                    $q->where('promotions.coupon_validity_in_date', '>=', $now);
+                                })
+                                ->where('user_verification_numbers.verification_number', $number)
+                                ->first();
+                }
+            }
+
+            if (! isset($checkIssuedCoupon) || empty($checkIssuedCoupon)) {
+                $errorMessage = Lang::get('mobileci.coupon.wrong_verification_number');
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            if (! empty($checkIssuedCoupon)) {
+                App::instance('orbit.empty.issuedcoupon', $issuedCoupon);
+            }
+
+            return TRUE;
+        });
+
+        // Check the existance of merchant id
+        Validator::extend('orbit.empty.merchant', function ($attribute, $value, $parameters) {
+            $merchant = Mall::with('timezone')->excludeDeleted()
+                        ->where('merchant_id', $value)
+                        ->first();
+
+            if (empty($merchant)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.empty.merchant', $merchant);
+
+            return TRUE;
+        });
+
         // Check coupon, it should exists
         Validator::extend(
             'orbit.exists.coupon',

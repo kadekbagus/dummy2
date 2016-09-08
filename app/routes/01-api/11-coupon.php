@@ -212,3 +212,13 @@ Route::get('/api/v1/pub/coupon/redemption', function()
 });
 
 Route::get('/app/v1/pub/coupon/redemption', ['as' => 'pub-mall-coupon-redemption', 'uses' => 'IntermediatePubAuthController@Coupon_getCouponItemRedemption']);
+
+/**
+ * Get coupon redemption detail page on landing page
+ */
+Route::post('/api/v1/pub/coupon/redeem', function()
+{
+    return Orbit\Controller\API\v1\Pub\CouponAPIController::create()->postPubRedeemCoupon();
+});
+
+Route::post('/app/v1/pub/coupon/redeem', ['as' => 'pub-mall-coupon-redeem', 'uses' => 'IntermediatePubAuthController@Coupon_postPubRedeemCoupon']);
