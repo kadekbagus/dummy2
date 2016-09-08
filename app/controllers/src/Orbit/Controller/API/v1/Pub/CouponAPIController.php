@@ -739,6 +739,7 @@ class CouponAPIController extends ControllerAPI
             $urlToCI = URL::route('ci-coupon-detail', array('id' => $replaceIdPattern), false);
             $mall = PromotionRetailer::select(
                     DB::raw("{$prefix}merchants.merchant_id as merchant_id"),
+                    DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN {$prefix}merchants.parent_id ELSE oms.merchant_id END as mall_id"),
                     DB::raw("{$prefix}merchants.object_type as location_type"),
                     DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN CONCAT({$prefix}merchants.name, ' at ', oms.name) ELSE CONCAT('Customer Service at ', {$prefix}merchants.name) END as name"),
                     DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.ci_domain ELSE {$prefix}merchants.ci_domain END as ci_domain"),
