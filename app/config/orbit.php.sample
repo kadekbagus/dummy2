@@ -549,6 +549,12 @@ return array(
             'per_page'      => 50,
             'max_record'    => 1000,
         ),
+
+        // coupon location
+        'coupon_location' => array(
+            'per_page'      => 50,
+            'max_record'    => 200,
+        ),
     ),
 
     'reset_password' => array(
@@ -1095,7 +1101,11 @@ return array(
         // Email validity
         'email' => array(
             'fake_mx' => FALSE
-        )
+        ),
+
+        // string key to encrypt/decrypt coupon redemption url params
+        // e.g: '-!GoToMallsCoupon!-'
+        'encryption_key' => '-!GoToMallsCoupon!-',
     ),
 
     'upload'    => array(
@@ -3682,8 +3692,5 @@ return array(
         // URL redemption page which should be on main page (not CI)
         // e.g: https://www.gotomalls.cool/#!/coupon-redemption?cid=%s&uid=%s
         'direct_redemption_url' => NULL,
-        // string key to encrypt/decrypt coupon redemption url params
-        // e.g: '-!GoToMallsCoupon!-'
-        'coupon_key' => '',
     ],
 );

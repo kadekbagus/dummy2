@@ -528,13 +528,13 @@ class CouponAPIController extends ControllerAPI
             $issuedCoupon = $newIssuedCoupon->issue($coupon);
             $this->commit();
 
-            $hashed_issued_coupon_cid = rawurlencode((new Encrypter(Config::get('orbit.coupon.coupon_key')))->encrypt($issuedCoupon->issued_coupon_id));
-            $hashed_issued_coupon_uid = rawurlencode((new Encrypter(Config::get('orbit.coupon.coupon_key')))->encrypt($email));
+            $hashed_issued_coupon_cid = rawurlencode((new Encrypter(Config::get('orbit.security.encryption_key')))->encrypt($issuedCoupon->issued_coupon_id));
+            $hashed_issued_coupon_uid = rawurlencode((new Encrypter(Config::get('orbit.security.encryption_key')))->encrypt($email));
 
             // cid=%s&uid=%s
             $redeem_url = sprintf(Config::get('orbit.coupon.direct_redemption_url'), $hashed_issued_coupon_cid, $hashed_issued_coupon_uid);
 
-            // todo: add queue to send coupon redemption page url
+            // queue to send coupon redemption page url
             Queue::push('Orbit\\Queue\\IssuedCouponMailQueue', [
                 'email' => $email,
                 'issued_coupon_id' => $issuedCoupon->issued_coupon_id,
@@ -689,9 +689,9 @@ class CouponAPIController extends ControllerAPI
             }
 
             // decrypt hashed coupon id
-            $issuedCouponId = (new Encrypter(Config::get('orbit.coupon.coupon_key')))->decrypt($issuedCouponId);
+            $issuedCouponId = (new Encrypter(Config::get('orbit.security.encryption_key')))->decrypt($issuedCouponId);
             if (! empty($userIdentifier)) {
-                $userIdentifier = (new Encrypter(Config::get('orbit.coupon.coupon_key')))->decrypt($userIdentifier);
+                $userIdentifier = (new Encrypter(Config::get('orbit.security.encryption_key')))->decrypt($userIdentifier);
             }
 
             // detect encoding to avoid query error
