@@ -77,10 +77,11 @@ class ElasticsearchUpdateMallLogoCommand extends Command
                 $response_search = $this->poster->search($params_search);
                 if ($response_search['hits']['total'] > 0) {
                     if (! isset($mall->mediaLogoOrig[0])) {
-                        throw new Exception (sprintf('Logo of mall %s not found.' . "\n", $mall->name));
+                        $params['body']['doc']['logo_url'] = '';
+                    } else {
+                        $params['body']['doc']['logo_url'] = $mall->mediaLogoOrig[0]->path;
                     }
 
-                    $params['body']['doc']['logo_url'] = $mall->mediaLogoOrig[0]->path;
                     $response = $this->poster->update($params);
 
                     $this->info('Updating logo of mall ' . $mall->name . '... OK');
