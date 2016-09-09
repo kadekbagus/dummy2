@@ -2253,6 +2253,10 @@ class CampaignReportAPIController extends ControllerAPI
             $prefix = DB::getTablePrefix();
             $campaign_id = $value;
 
+            if ($user->isCampaignAdmin()) {
+                return TRUE;
+            }
+
             $campaign = UserCampaign::where('campaign_id', '=', $campaign_id)
                                     ->whereRaw("{$prefix}user_campaign.user_id in (
                                             select oca.user_id
