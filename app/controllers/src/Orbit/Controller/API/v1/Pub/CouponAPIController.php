@@ -992,7 +992,7 @@ class CouponAPIController extends ControllerAPI
             $activityNotes = sprintf('Coupon Redeemed: %s. Issued Coupon Id: %s.', $issuedcoupon->coupon->promotion_name, $issuedcoupon->issued_coupon_id);
             $activity->setUser($user)
                     ->setActivityName('redeem_coupon')
-                    ->setActivityNameLong('Coupon Redemption (Successful)')
+                    ->setActivityNameLong('Coupon Redemption Successful')
                     ->setObject($issuedcoupon)
                     ->setCoupon($coupon)
                     ->setNotes($activityNotes)
@@ -1014,7 +1014,7 @@ class CouponAPIController extends ControllerAPI
             // Deletion failed Activity log
             $activity->setUser($user)
                     ->setActivityName('redeem_coupon')
-                    ->setActivityNameLong('Coupon Redemption (Failed)')
+                    ->setActivityNameLong('Coupon Redemption Failed')
                     ->setObject($issuedcoupon)
                     ->setCoupon($coupon)
                     ->setNotes($e->getMessage())
@@ -1035,7 +1035,7 @@ class CouponAPIController extends ControllerAPI
             // Deletion failed Activity log
             $activity->setUser($user)
                     ->setActivityName('redeem_coupon')
-                    ->setActivityNameLong('Coupon Redemption (Failed)')
+                    ->setActivityNameLong('Coupon Redemption Failed')
                     ->setObject($issuedcoupon)
                     ->setCoupon($coupon)
                     ->setNotes($e->getMessage())
@@ -1056,7 +1056,7 @@ class CouponAPIController extends ControllerAPI
             // Deletion failed Activity log
             $activity->setUser($user)
                     ->setActivityName('redeem_coupon')
-                    ->setActivityNameLong('Coupon Redemption (Failed)')
+                    ->setActivityNameLong('Coupon Redemption Failed')
                     ->setObject($issuedcoupon)
                     ->setCoupon($coupon)
                     ->setNotes($e->getMessage())
@@ -1083,7 +1083,7 @@ class CouponAPIController extends ControllerAPI
             // Deletion failed Activity log
             $activity->setUser($user)
                     ->setActivityName('redeem_coupon')
-                    ->setActivityNameLong('Coupon Redemption (Failed)')
+                    ->setActivityNameLong('Coupon Redemption Failed')
                     ->setObject($issuedcoupon)
                     ->setCoupon($coupon)
                     ->setNotes($e->getMessage())
@@ -1104,7 +1104,7 @@ class CouponAPIController extends ControllerAPI
             // Deletion failed Activity log
             $activity->setUser($user)
                     ->setActivityName('redeem_coupon')
-                    ->setActivityNameLong('Coupon Redemption (Failed)')
+                    ->setActivityNameLong('Coupon Redemption Failed')
                     ->setObject($issuedcoupon)
                     ->setCoupon($coupon)
                     ->setNotes($e->getMessage())
