@@ -3581,7 +3581,7 @@ return array(
             // - Clicking on a promotion in list
             '30' => array(
                 'name' => 'click_promotion_list',
-                'name_long' => 'Click Promotions List',
+                'name_long' => 'Click Promotion List',
                 'module_name' => 'Application',
                 'type' => 'click',
                 'object_type' => 'Promotion',
