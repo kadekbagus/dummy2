@@ -21,6 +21,9 @@ use DB;
 use Validator;
 use Language;
 use Coupon;
+use Activity;
+use Orbit\Helper\Net\SessionPreparer;
+use Orbit\Helper\Session\UserGetter;
 
 class StoreAPIController extends ControllerAPI
 {
@@ -314,7 +317,13 @@ class StoreAPIController extends ControllerAPI
     public function getStoreDetail()
     {
         $httpCode = 200;
+        $activity = Activity::mobileci()->setActivityType('view');
+        $user = NULL;
+
         try {
+            $this->session = SessionPreparer::prepareSession();
+            $user = UserGetter::getLoggedInUserOrGuest($this->session);
+
             $storename = OrbitInput::get('store_name');
 
             $validator = Validator::make(
@@ -364,6 +373,17 @@ class StoreAPIController extends ControllerAPI
                 ->where('merchants.name', $storename)
                 ->orderBy('created_at')
                 ->first();
+
+            $activityNotes = sprintf('Page viewed: Landing Page Store Detail Page');
+            $activity->setUser($user)
+                ->setActivityName('view_landing_page_store_detail')
+                ->setActivityNameLong('View GoToMalls Store Detail')
+                ->setObject($store)
+                ->setNews($store)
+                ->setModuleName('Store')
+                ->setNotes($activityNotes)
+                ->responseOK()
+                ->save();
 
             $this->response->data = $store;
         } catch (ACLForbiddenException $e) {
