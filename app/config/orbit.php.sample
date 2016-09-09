@@ -3563,7 +3563,7 @@ return array(
             // - Promotion Click
             '28' => array(
                 'name' => 'click_promotions_main_page',
-                'name_long' => 'Click Promotion Main Page',
+                'name_long' => 'Click Promotions Main Page',
                 'module_name' => 'Application',
                 'type' => 'click',
                 'object_type' => null,
@@ -3613,6 +3613,63 @@ return array(
                 'type' => 'click',
                 'object_type' => 'Coupon',
                 'parameter_name' => 'coupon_id'
+            ),
+
+            // - News Location View
+            '34' => array(
+                'name' => 'view_news_location',
+                'name_long' => 'View News Location Page',
+                'module_name' => 'News',
+                'type' => 'view',
+                'object_type' => 'News',
+                'parameter_name' => 'news_id'
+            ),
+            // - Clicking on a news location
+            '35' => array(
+                'name' => 'click_news_location',
+                'name_long' => 'Click News Location',
+                'module_name' => 'News',
+                'type' => 'click',
+                'object_type' => 'News',
+                'parameter_name' => 'news_id'
+            ),
+
+            // - Promotion Location View
+            '36' => array(
+                'name' => 'view_promotion_location',
+                'name_long' => 'View Promotion Location Page',
+                'module_name' => 'Promotion',
+                'type' => 'view',
+                'object_type' => 'News',
+                'parameter_name' => 'news_id'
+            ),
+            // - Clicking on a promotion location
+            '37' => array(
+                'name' => 'click_promotion_location',
+                'name_long' => 'Click Promotion Location',
+                'module_name' => 'Promotion',
+                'type' => 'click',
+                'object_type' => 'News',
+                'parameter_name' => 'news_id'
+            ),
+
+            // - Coupon Location View
+            '38' => array(
+                'name' => 'view_coupon_location',
+                'name_long' => 'View Coupon Location Page',
+                'module_name' => 'Coupon',
+                'type' => 'view',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'promotion_id'
+            ),
+            // - Clicking on a coupon location
+            '39' => array(
+                'name' => 'click_coupon_location',
+                'name_long' => 'Click Coupon Location',
+                'module_name' => 'Coupon',
+                'type' => 'click',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'promotion_id'
             ),
         ),
     ),
