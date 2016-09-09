@@ -221,7 +221,6 @@ class CampaignReportAPIController extends ControllerAPI
                         ->leftJoin('news_translations', 'news_translations.news_id', '=', 'news.news_id')
                         ->leftJoin('merchant_languages', 'merchant_languages.merchant_language_id', '=', 'news_translations.merchant_language_id')
                         ->leftJoin('languages', 'languages.language_id', '=', 'news_translations.merchant_language_id')
-                        ->where('languages.name', '=', 'en')
                         ->where('news.object_type', '=', 'news')
                         ->whereNotNull('news_merchant.news_merchant_id');
 
@@ -311,7 +310,6 @@ class CampaignReportAPIController extends ControllerAPI
                         ->leftJoin('news_translations', 'news_translations.news_id', '=', 'news.news_id')
                         ->leftJoin('merchant_languages', 'merchant_languages.merchant_language_id', '=', 'news_translations.merchant_language_id')
                         ->leftJoin('languages', 'languages.language_id', '=', 'news_translations.merchant_language_id')
-                        ->where('languages.name', '=', 'en')
                         ->where('news.object_type', '=', 'promotion')
                         ->whereNotNull('news_merchant.news_merchant_id');
 
@@ -396,12 +394,10 @@ class CampaignReportAPIController extends ControllerAPI
                         ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                         ->leftJoin('merchants as mlocation', 'promotion_retailer.retailer_id', '=', DB::raw('mlocation.merchant_id'))
 
-                        ->leftJoin('user_campaign', 'user_campaign.campaign_id', '=', 'promotions.promotion_id')
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
                         ->leftJoin('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
                         ->leftJoin('merchant_languages', 'merchant_languages.merchant_language_id', '=', 'coupon_translations.merchant_language_id')
                         ->leftJoin('languages', 'languages.language_id', '=', 'coupon_translations.merchant_language_id')
-                        ->where('languages.name', '=', 'en')
                         ->whereNotNull('promotion_retailer.promotion_retailer_id');
 
             if (! $user->isCampaignAdmin()) {
