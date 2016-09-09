@@ -3563,7 +3563,7 @@ return array(
             // - Promotion Click
             '28' => array(
                 'name' => 'click_promotions_main_page',
-                'name_long' => 'Click Promotion Main Page',
+                'name_long' => 'Click Promotions Main Page',
                 'module_name' => 'Application',
                 'type' => 'click',
                 'object_type' => null,
