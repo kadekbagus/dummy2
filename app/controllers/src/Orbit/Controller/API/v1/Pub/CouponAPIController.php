@@ -1413,12 +1413,14 @@ class CouponAPIController extends ControllerAPI
                 ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
                 ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                 ->leftJoin('promotions', 'promotions.promotion_id', '=', 'promotion_retailer.promotion_id')
-                ->leftJoin(DB::raw("{$prefix}media as img"), DB::raw('img.object_id'), '=', 'merchants.merchant_id')
                 ->join('issued_coupons', function ($join) {
                     $join->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
                     $join->where('issued_coupons.status', '=', 'active');
                 })
-                ->whereIn(DB::raw('img.media_name_long'), ['mall_logo_orig', 'retailer_logo_orig'])
+                ->leftJoin(DB::raw("{$prefix}media as img"), function($q) {
+                    $q->on(DB::raw('img.object_id'), '=', 'merchants.merchant_id')
+                        ->on(DB::raw('img.media_name_long'), 'IN', DB::raw("('mall_logo_orig', 'retailer_logo_orig')"));
+                })
                 ->where('issued_coupons.user_id', $user->user_id)
                 ->where('promotion_retailer.promotion_id', '=', $couponId)
                 ->groupBy('merchant_id')
@@ -1715,8 +1717,10 @@ class CouponAPIController extends ControllerAPI
                                     ->leftJoin('promotions', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                                     ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
                                     ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
-                                    ->leftJoin(DB::raw("{$prefix}media as img"), DB::raw('img.object_id'), '=', 'merchants.merchant_id')
-                                    ->whereIn(DB::raw('img.media_name_long'), ['mall_logo_orig', 'retailer_logo_orig'])
+                                    ->leftJoin(DB::raw("{$prefix}media as img"), function($q) {
+                                        $q->on(DB::raw('img.object_id'), '=', 'merchants.merchant_id')
+                                            ->on(DB::raw('img.media_name_long'), 'IN', DB::raw("('mall_logo_orig', 'retailer_logo_orig')"));
+                                    })
                                     ->where('promotions.promotion_id', $couponId)
                                     ->groupBy('merchant_id')
                                     ->havingRaw('tz <= end_date AND tz >= begin_date');
