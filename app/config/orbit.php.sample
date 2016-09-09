@@ -549,6 +549,12 @@ return array(
             'per_page'      => 50,
             'max_record'    => 1000,
         ),
+
+        // coupon location
+        'coupon_location' => array(
+            'per_page'      => 50,
+            'max_record'    => 200,
+        ),
     ),
 
     'reset_password' => array(
@@ -1095,7 +1101,15 @@ return array(
         // Email validity
         'email' => array(
             'fake_mx' => FALSE
-        )
+        ),
+
+        // string key to encrypt/decrypt coupon redemption url params
+        // e.g: 'def0000022237f0cf69155b15e3d30811016dd7002d45d500fcd90e2b3c92a51019a0b15f6ef18db370853ece1833184bcf2d2fdf759085fe4d7b8a3e938f98d3029e5f4'
+        'encryption_key' => 'def0000022237f0cf69155b15e3d30811016dd7002d45d500fcd90e2b3c92a51019a0b15f6ef18db370853ece1833184bcf2d2fdf759085fe4d7b8a3e938f98d3029e5f4',
+
+        // encryption driver
+        // e.g: 'mcrypt' or 'defuse-php'
+        'encryption_driver' => 'defuse-php',
     ),
 
     'upload'    => array(
@@ -3673,5 +3687,14 @@ return array(
                 'list_id' => 'orbit-list-1',
             ]
         ]
+    ],
+
+    /**
+     * Configuration related with coupon
+     */
+    'coupon' => [
+        // URL redemption page which should be on main page (not CI)
+        // e.g: https://www.gotomalls.cool/#!/coupon-redemption?cid=%s&uid=%s
+        'direct_redemption_url' => NULL,
     ],
 );
