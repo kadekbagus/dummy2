@@ -416,8 +416,27 @@ class CampaignReportAPIController extends ControllerAPI
             }
 
             // Make union result subquery
-            $campaign = DB::table(DB::raw('(' . $sql . ') as a'));
-
+            $campaign = DB::table(DB::raw('(' . $sql . ') as a'))
+                        ->select(DB::raw("
+                            `campaign_id`,
+                            `campaign_name`,
+                            `campaign_type`,
+                            `total_tenant`,
+                            `total_location`,
+                            `tenant_name`,
+                            `begin_date`,
+                            `end_date`,
+                            `updated_at`,
+                            `base_price`,
+                            `daily`,
+                            `estimated_total`,
+                            `spending`,
+                            `status`,
+                            `campaign_status`,
+                            `order`,
+                            `page_views`,
+                            `popup_views`,
+                            concat(campaign_id, '|', campaign_type) as groupby"));
 
             // Filter by campaign name
             OrbitInput::get('campaign_name', function($campaign_name) use ($campaign) {
@@ -472,7 +491,7 @@ class CampaignReportAPIController extends ControllerAPI
             }
 
             // Grouping campaign
-            $campaign = $campaign->groupBy('campaign_id');
+            $campaign = $campaign->groupBy('groupby');
 
             // Clone the query builder which still does not include the take,
             $_campaign = clone $campaign;
