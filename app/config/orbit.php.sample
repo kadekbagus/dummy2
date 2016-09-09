@@ -3678,8 +3678,8 @@ return array(
                 'name_long' => 'View Store Location Page',
                 'module_name' => 'Store',
                 'type' => 'view',
-                'object_type' => null,
-                'parameter_name' => null
+                'object_type' => 'Tenant',
+                'parameter_name' => 'store_id'
             ),
             // - Clicking on a store location
             '41' => array(
@@ -3687,8 +3687,8 @@ return array(
                 'name_long' => 'Click Store Location',
                 'module_name' => 'Store',
                 'type' => 'click',
-                'object_type' => null,
-                'parameter_name' => null
+                'object_type' => 'Tenant',
+                'parameter_name' => 'store_id'
             ),
         ),
     ),
