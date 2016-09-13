@@ -15,10 +15,10 @@ use Helper\EloquentRecordCounter as RecordCounter;
 class EmployeeAPIController extends ControllerAPI
 {
     protected $employeeViewRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee', 'campaign admin'];
-    protected $employeeModifiyRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee', 'campaign admin'];
-    protected $pmpEmployeeViewRoles = ['campaign owner', 'campaign employee', 'campaign admin'];
-    protected $pmpEmployeeModifiyRoles = ['campaign owner', 'campaign employee', 'campaign admin'];
-    protected $pmpEmployeeCreateRoles = ['campaign owner', 'campaign employee', 'campaign admin'];
+    protected $employeeModifiyRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee'];
+    protected $pmpEmployeeViewRoles = ['campaign owner', 'campaign employee'];
+    protected $pmpEmployeeModifiyRoles = ['campaign owner', 'campaign employee'];
+    protected $pmpEmployeeCreateRoles = ['campaign owner', 'campaign employee'];
 
     /**
      * Flag to return the query builder.

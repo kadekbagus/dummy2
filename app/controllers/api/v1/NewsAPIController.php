@@ -23,7 +23,7 @@ class NewsAPIController extends ControllerAPI
     protected $returnBuilder = FALSE;
 
     protected $newsViewRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee', 'campaign admin'];
-    protected $newsModifiyRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee', 'campaign admin'];
+    protected $newsModifiyRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee'];
 
     /**
      * POST - Create New News
@@ -85,7 +85,7 @@ class NewsAPIController extends ControllerAPI
 */
             // @Todo: Use ACL authentication instead
             $role = $user->role;
-            $validRoles = $this->newsViewRoles;
+            $validRoles = $this->newsModifiyRoles;
             if (! in_array( strtolower($role->role_name), $validRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
@@ -1548,7 +1548,7 @@ class NewsAPIController extends ControllerAPI
 */
             // @Todo: Use ACL authentication instead
             $role = $user->role;
-            $validRoles = $this->newsModifiyRoles;
+            $validRoles = $this->newsViewRoles;
             if (! in_array( strtolower($role->role_name), $validRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
