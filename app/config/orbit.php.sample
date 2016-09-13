@@ -3690,6 +3690,15 @@ return array(
                 'object_type' => 'Tenant',
                 'parameter_name' => 'store_id'
             ),
+            // - Clicking on get coupon button
+            '42' => array(
+                'name' => 'click_get_coupon',
+                'name_long' => 'Click Get Coupon',
+                'module_name' => 'Coupon',
+                'type' => 'click',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'coupon_id'
+            ),
         ),
     ),
 
