@@ -5,6 +5,7 @@
  * @author Tian <tian@dominopos.com>
  */
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
+use Carbon\Carbon as Carbon;
 
 /**
  * Listen on:    `orbit.news.postnewnews.after.save`
@@ -85,7 +86,7 @@ Event::listen('orbit.news.after.translation.save', function($controller, $news_t
 {
 
     $image_id = $news_translations->merchant_language_id;
-    
+
     $files = OrbitInput::files('image_translation_' . $image_id);
     if (! $files) {
         return;
@@ -110,4 +111,48 @@ Event::listen('orbit.news.after.translation.save', function($controller, $news_t
     $news_translations->setRelation('media', $response->data);
     $news_translations->media = $response->data;
     $news_translations->image_translation = $response->data[0]->path;
+});
+
+
+/**
+ * Listen on:    `orbit.news.postnewnews.after.commit`
+ * Purpose:      Send email to marketing after create news
+ *
+ * @author kadek <kadek@dominopos.com>
+ *
+ * @param NewsAPIController $controller
+ * @param NewsTranslations $news_translations
+ */
+Event::listen('orbit.news.postnewnews.after.commit', function($controller, $news)
+{
+
+    $timestamp = new DateTime($news->created_at);
+    $date = $timestamp->format('Y-m-d H:i:s');
+
+    $data = array(
+        'campaignType'      => 'News',
+        'campaignName'      => $news->news_name,
+        'pmpUser'           => $controller->api->user->username,
+        'eventType'         => 'created',
+        'date'              => $date
+    );
+
+    $mailviews = array(
+        'html' => 'emails.campaign-auto-email.campaign-html',
+        'text' => 'emails.campaign-auto-email.campaign-text'
+    );
+
+    Mail::queue($mailviews, $data, function($message) use ($data)
+    {
+        $emailconf = Config::get('orbit.campaign_auto_email.sender');
+        $from = $emailconf['email'];
+        $name = $emailconf['name'];
+
+        $email = Config::get('orbit.campaign_auto_email.email_list');
+        $subject = $data['campaignType'].' - '.$data['campaignName'].' has just been created';
+        $message->from($from, $name);
+        $message->subject($subject);
+        $message->to($email);
+    });
+
 });
