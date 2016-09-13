@@ -113,7 +113,7 @@ Event::listen('orbit.coupon.after.translation.save', function($controller, $coup
  * @author kadek <kadek@dominopos.com>
  *
  * @param CouponAPIController $controller
- * @param CouponTranslations $coupon
+ * @param Coupon $coupon
  */
 Event::listen('orbit.coupon.postnewcoupon.after.commit', function($controller, $coupon)
 {
@@ -141,6 +141,64 @@ Event::listen('orbit.coupon.postnewcoupon.after.commit', function($controller, $
 
         $email = Config::get('orbit.campaign_auto_email.email_list');
         $subject = $data['campaignType'].' - '.$data['campaignName'].' has just been created';
+        $message->from($from, $name);
+        $message->subject($subject);
+        $message->to($email);
+    });
+});
+
+
+/**
+ * Listen on:    `orbit.coupon.postupdatecoupon.after.commit`
+ * Purpose:      Send email to marketing after create coupon
+ *
+ * @author kadek <kadek@dominopos.com>
+ *
+ * @param CouponAPIController $controller
+ * @param Coupon $coupon
+ */
+Event::listen('orbit.coupon.postupdatecoupon.after.commit', function($controller, $coupon, $couponBeforeUpdate)
+{
+    $couponAfterUpdate = Coupon::where('promotion_id', $coupon->promotion_id)->first();
+    $arrDiff = array_diff($couponAfterUpdate->toArray(), $couponBeforeUpdate->toArray());
+    $diff = array();
+    foreach ($arrDiff as $key => $value) {
+
+        if ($key != 'updated_at') {
+            $different = array();
+            $different['column'] = $key;
+            $different['before'] = $couponBeforeUpdate[$key];
+            $different['after']  = $couponAfterUpdate[$key];
+
+            array_push($diff, $different);
+        }
+    }
+
+    $timestamp = new DateTime($couponAfterUpdate->updated_at);
+    $date = $timestamp->format('d F Y H:i').' (UTC)';
+
+    $data = array(
+        'campaignType'      => 'Coupon',
+        'campaignName'      => $couponAfterUpdate->promotion_name,
+        'pmpUser'           => $controller->api->user->username,
+        'eventType'         => 'updated',
+        'date'              => $date,
+        'updates'           => $diff,
+    );
+
+    $mailviews = array(
+        'html' => 'emails.campaign-auto-email.campaign-update-html',
+        'text' => 'emails.campaign-auto-email.campaign-update-text'
+    );
+
+    Mail::queue($mailviews, $data, function($message) use ($data)
+    {
+        $emailconf = Config::get('orbit.campaign_auto_email.sender');
+        $from = $emailconf['email'];
+        $name = $emailconf['name'];
+
+        $email = Config::get('orbit.campaign_auto_email.email_list');
+        $subject = $data['campaignType'].' - '.$data['campaignName'].' has just been updated';
         $message->from($from, $name);
         $message->subject($subject);
         $message->to($email);

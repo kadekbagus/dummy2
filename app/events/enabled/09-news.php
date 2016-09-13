@@ -161,3 +161,68 @@ Event::listen('orbit.news.postnewnews.after.commit', function($controller, $news
     });
 
 });
+
+
+/**
+ * Listen on:    `orbit.news.postupdatenews.after.commit`
+ * Purpose:      Send email to marketing after update news or promotion
+ *
+ * @author kadek <kadek@dominopos.com>
+ *
+ * @param NewsAPIController $controller
+ * @param News $news
+ */
+Event::listen('orbit.news.postupdatenews.after.commit', function($controller, $news, $newsBeforeUpdate)
+{
+    $afterUpdatedNews = News::excludeDeleted()->where('news_id', $news->news_id)->first();
+    $arrDiff = array_diff($afterUpdatedNews->toArray(), $newsBeforeUpdate->toArray());
+    $diff = array();
+    foreach ($arrDiff as $key => $value) {
+
+        if ($key != 'updated_at') {
+            $different = array();
+            $different['column'] = $key;
+            $different['before'] = $newsBeforeUpdate[$key];
+            $different['after'] = $afterUpdatedNews[$key];
+
+            array_push($diff, $different);
+        }
+    }
+
+    $timestamp = new DateTime($afterUpdatedNews->updated_at);
+    $date = $timestamp->format('d F Y H:i').' (UTC)';
+
+    if ($afterUpdatedNews->object_type === 'promotion') {
+        $campaignType = 'Promotion';
+    } else {
+        $campaignType = 'News';
+    }
+
+    $data = array(
+        'campaignType'      => $campaignType,
+        'campaignName'      => $afterUpdatedNews->news_name,
+        'pmpUser'           => $controller->api->user->username,
+        'eventType'         => 'updated',
+        'date'              => $date,
+        'updates'           => $diff,
+    );
+
+    $mailviews = array(
+        'html' => 'emails.campaign-auto-email.campaign-update-html',
+        'text' => 'emails.campaign-auto-email.campaign-update-text'
+    );
+
+    Mail::queue($mailviews, $data, function($message) use ($data)
+    {
+        $emailconf = Config::get('orbit.campaign_auto_email.sender');
+        $from = $emailconf['email'];
+        $name = $emailconf['name'];
+
+        $email = Config::get('orbit.campaign_auto_email.email_list');
+        $subject = $data['campaignType'].' - '.$data['campaignName'].' has just been updated';
+        $message->from($from, $name);
+        $message->subject($subject);
+        $message->to($email);
+    });
+
+});
