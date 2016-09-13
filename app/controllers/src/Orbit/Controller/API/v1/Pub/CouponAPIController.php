@@ -39,6 +39,9 @@ use \UserVerificationNumber;
 
 class CouponAPIController extends ControllerAPI
 {
+
+    protected $valid_language = NULL;
+
     /**
      * GET - get all coupon in all mall
      *
@@ -61,11 +64,34 @@ class CouponAPIController extends ControllerAPI
             $sort_by = OrbitInput::get('sortby', 'coupon_name');
             $sort_mode = OrbitInput::get('sortmode','asc');
             $usingDemo = Config::get('orbit.is_demo', FALSE);
+            $language = OrbitInput::get('language', 'id');
+
+            $this->registerCustomValidation();
+            $validator = Validator::make(
+                array(
+                    'language' => $language,
+                ),
+                array(
+                    'language' => 'required|orbit.empty.language_default',
+                ),
+                array(
+                )
+            );
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $valid_language = $this->valid_language;
 
             $prefix = DB::getTablePrefix();
 
             $coupon = Coupon::select(DB::raw("{$prefix}promotions.promotion_id as coupon_id,
-                                {$prefix}coupon_translations.promotion_name as coupon_name, {$prefix}promotions.status,
+                                CASE WHEN {$prefix}coupon_translations.promotion_name = '' THEN {$prefix}promotions.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as coupon_name,
+                                CASE WHEN {$prefix}coupon_translations.description = '' THEN {$prefix}promotions.description ELSE {$prefix}coupon_translations.description END as description,
+                                {$prefix}promotions.status,
                                 CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name
                                     ELSE (CASE WHEN {$prefix}promotions.end_date < (SELECT min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
                                                                                     FROM {$prefix}promotion_retailer opt
@@ -81,13 +107,13 @@ class CouponAPIController extends ControllerAPI
                                                 LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
                                             WHERE opt.promotion_id = {$prefix}promotions.promotion_id
                                             AND CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) between {$prefix}promotions.begin_date and {$prefix}promotions.end_date) > 0
-                                THEN 'true' ELSE 'false' END AS is_started"), 'promotions.description', DB::raw('media.path as image_url'))
+                                THEN 'true' ELSE 'false' END AS is_started"),
+                                DB::raw('media.path as image_url'))
                             ->leftJoin('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
                             ->leftJoin('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
                             ->leftJoin('languages', 'languages.language_id', '=', 'coupon_translations.merchant_language_id')
                             ->leftJoin(DB::raw("( SELECT * FROM {$prefix}media WHERE media_name_long = 'coupon_translation_image_orig' ) as media"), DB::raw('media.object_id'), '=', 'coupon_translations.coupon_translation_id')
-                            ->where('languages.name', '=', 'en')
-                            ->where('coupon_translations.promotion_name', '!=', '')
+                            ->where('coupon_translations.merchant_language_id', $valid_language->language_id)
                             ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                             ->groupBy('coupon_id');
 
@@ -1510,24 +1536,20 @@ class CouponAPIController extends ControllerAPI
             $this->session = SessionPreparer::prepareSession();
             $user = UserGetter::getLoggedInUserOrGuest($this->session);
 
-            // Get language_if of english
-            $languageEnId = null;
-            $language = Language::where('name', 'en')->first();
-
-            if (! empty($language)) {
-                $languageEnId = $language->language_id;
-            }
-
             $couponId = OrbitInput::get('coupon_id', null);
             $sort_by = OrbitInput::get('sortby', 'name');
             $sort_mode = OrbitInput::get('sortmode','asc');
+            $language = OrbitInput::get('language', 'id');
 
+            $this->registerCustomValidation();
             $validator = Validator::make(
                 array(
                     'coupon_id' => $couponId,
+                    'language' => $language,
                 ),
                 array(
                     'coupon_id' => 'required',
+                    'language' => 'required|orbit.empty.language_default',
                 ),
                 array(
                     'required' => 'Coupon ID is required',
@@ -1540,21 +1562,28 @@ class CouponAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
+            $valid_language = $this->valid_language;
+
             $prefix = DB::getTablePrefix();
 
-            $coupon = Coupon::with(['translations' => function($q) use ($languageEnId) {
-                            $q->addSelect(['coupon_translation_id', 'promotion_id']);
-                            $q->with(['media' => function($q2) {
-                                $q2->addSelect(['object_id', 'media_name_long', 'path']);
-                            }]);
-                            $q->where('merchant_language_id', $languageEnId);
-                        }])
-                        ->select(
+            $coupon = Coupon::select(
                             'promotions.promotion_id as promotion_id',
-                            'coupon_translations.promotion_name as promotion_name',
-                            'coupon_translations.description as description',
+                            DB::Raw("
+                                    CASE WHEN {$prefix}coupon_translations.promotion_name = '' THEN {$prefix}promotions.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as promotion_name,
+                                    CASE WHEN {$prefix}coupon_translations.description = '' THEN {$prefix}promotions.description ELSE {$prefix}coupon_translations.description END as description,
+                                    CASE WHEN {$prefix}media.path is null THEN (
+                                            select m.path
+                                            from {$prefix}promotions c
+                                            join {$prefix}coupon_translations ct
+                                                on ct.promotion_id = c.promotion_id
+                                            join {$prefix}media m
+                                                on m.object_id = ct.coupon_translation_id
+                                                and m.media_name_long = 'coupon_translation_image_orig'
+                                            limit 1
+                                        ) ELSE {$prefix}media.path END as original_media_path
+                                "),
                             'promotions.end_date',
-                            'media.path as original_media_path',
+                            // 'media.path as original_media_path',
                             DB::Raw("
                                     CASE WHEN {$prefix}issued_coupons.user_id is NULL
                                         THEN 'false'
@@ -1594,8 +1623,7 @@ class CouponAPIController extends ControllerAPI
                                 $q->on('issued_coupons.status', '=', DB::Raw("'active'"));
                             })
                         ->where('promotions.promotion_id', $couponId)
-                        ->where('coupon_translations.merchant_language_id', '=', $languageEnId)
-                        ->where('coupon_translations.promotion_name', '!=', '')
+                        ->where('coupon_translations.merchant_language_id', '=', $valid_language->language_id)
                         ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                         ->first();
 
@@ -1957,6 +1985,22 @@ class CouponAPIController extends ControllerAPI
                 return true;
             }
         );
+
+        // Check language is exists
+        Validator::extend('orbit.empty.language_default', function ($attribute, $value, $parameters) {
+            $lang_name = $value;
+
+            $language = Language::where('status', '=', 'active')
+                            ->where('name', $lang_name)
+                            ->first();
+
+            if (empty($language)) {
+                return FALSE;
+            }
+
+            $this->valid_language = $language;
+            return TRUE;
+        });
     }
 
     protected function quote($arg)
