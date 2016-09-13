@@ -27,6 +27,7 @@ use Orbit\Helper\Session\UserGetter;
 
 class StoreAPIController extends ControllerAPI
 {
+    protected $valid_language = NULL;
     /**
      * GET - get all store in all mall, group by name
      *
@@ -49,11 +50,38 @@ class StoreAPIController extends ControllerAPI
             $sort_by = OrbitInput::get('sortby', 'name');
             $sort_mode = OrbitInput::get('sortmode','asc');
             $usingDemo = Config::get('orbit.is_demo', FALSE);
+            $language = OrbitInput::get('language', 'id');
+
+            $this->registerCustomValidation();
+            $validator = Validator::make(
+                array(
+                    'language' => $language,
+                ),
+                array(
+                    'language' => 'required|orbit.empty.language_default',
+                )
+            );
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $valid_language = $this->valid_language;
 
             $prefix = DB::getTablePrefix();
 
-            $store = Tenant::select('merchants.merchant_id', 'merchants.name', 'merchants.description', DB::raw("(select path from {$prefix}media where media_name_long = 'retailer_logo_orig' and object_id = {$prefix}merchants.merchant_id) as logo_url"))
+            $store = Tenant::select(
+                    'merchants.merchant_id',
+                    'merchants.name',
+                    DB::Raw("
+                            CASE WHEN {$prefix}merchant_translations.description = '' THEN {$prefix}merchants.name ELSE {$prefix}merchant_translations.description END as description
+                        "),
+                    DB::raw("(select path from {$prefix}media where media_name_long = 'retailer_logo_orig' and object_id = {$prefix}merchants.merchant_id) as logo_url"))
                 ->join(DB::raw("(select merchant_id, status, parent_id from {$prefix}merchants where object_type = 'mall') as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
+                ->leftJoin('merchant_translations', 'merchant_translations.merchant_id', '=', 'merchants.merchant_id')
+                ->where('merchant_translations.merchant_language_id', $valid_language->language_id)
                 ->where('merchants.status', 'active')
                 ->whereRaw("oms.status = 'active'")
                 ->orderBy('merchants.name', 'asc')
@@ -872,6 +900,24 @@ class StoreAPIController extends ControllerAPI
         $output = $this->render($httpCode);
 
         return $output;
+    }
+
+    protected function registerCustomValidation() {
+        // Check language is exists
+        Validator::extend('orbit.empty.language_default', function ($attribute, $value, $parameters) {
+            $lang_name = $value;
+
+            $language = Language::where('status', '=', 'active')
+                            ->where('name', $lang_name)
+                            ->first();
+
+            if (empty($language)) {
+                return FALSE;
+            }
+
+            $this->valid_language = $language;
+            return TRUE;
+        });
     }
 
     protected function quote($arg)
