@@ -353,13 +353,17 @@ class StoreAPIController extends ControllerAPI
             $user = UserGetter::getLoggedInUserOrGuest($this->session);
 
             $storename = OrbitInput::get('store_name');
+            $language = OrbitInput::get('language', 'id');
 
+            $this->registerCustomValidation();
             $validator = Validator::make(
                 array(
                     'store_name' => $storename,
+                    'language' => $language,
                 ),
                 array(
                     'store_name' => 'required',
+                    'language' => 'required|orbit.empty.language_default',
                 ),
                 array(
                     'required' => 'Store name is required',
@@ -372,17 +376,25 @@ class StoreAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
+            $valid_language = $this->valid_language;
+
             $prefix = DB::getTablePrefix();
 
             $store = Tenant::select('merchants.merchant_id',
                                 'merchants.name',
-                                'merchants.description',
+                                DB::Raw("
+                                        CASE WHEN {$prefix}merchant_translations.description = '' THEN {$prefix}merchants.name ELSE {$prefix}merchant_translations.description END as description
+                                    "),
                                 'merchants.url'
                             )
-                ->with(['categories' => function ($q) {
+                ->with(['categories' => function ($q) use ($valid_language, $prefix) {
                         $q->select(
-                                'category_name'
-                            );
+                                DB::Raw("
+                                        CASE WHEN {$prefix}category_translations.category_name = '' THEN {$prefix}categories.category_name ELSE {$prefix}category_translations.category_name END as category_name
+                                    ")
+                            )
+                            ->leftJoin('category_translations', 'category_translations.category_id', '=', 'categories.category_id')
+                            ->where('category_translations.merchant_language_id', $valid_language->language_id);
                     }, 'mediaLogo' => function ($q) {
                         $q->select(
                                 'media.path',
@@ -396,10 +408,12 @@ class StoreAPIController extends ControllerAPI
                             ->where('media.media_name_long', '=', 'retailer_image_cropped_default');
                     }])
                 ->join(DB::raw("(select merchant_id, status, parent_id from {$prefix}merchants where object_type = 'mall') as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
+                ->leftJoin('merchant_translations', 'merchant_translations.merchant_id', '=', 'merchants.merchant_id')
+                ->where('merchant_translations.merchant_language_id', $valid_language->language_id)
                 ->where('merchants.status', 'active')
                 ->whereRaw("oms.status = 'active'")
                 ->where('merchants.name', $storename)
-                ->orderBy('created_at')
+                ->orderBy('merchants.created_at')
                 ->first();
 
             $activityNotes = sprintf('Page viewed: Landing Page Store Detail Page');
