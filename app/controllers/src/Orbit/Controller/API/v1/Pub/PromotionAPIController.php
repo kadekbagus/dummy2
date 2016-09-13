@@ -352,25 +352,20 @@ class PromotionAPIController extends ControllerAPI
             $this->session = SessionPreparer::prepareSession();
             $user = UserGetter::getLoggedInUserOrGuest($this->session);
 
-            // Get language_if of english
-            $languageEnId = null;
-            $language = Language::where('name', 'en')->first();
-
-            if (! empty($language)) {
-                $languageEnId = $language->language_id;
-            }
-
             $promotionId = OrbitInput::get('promotion_id', null);
             $sort_by = OrbitInput::get('sortby', 'name');
             $sort_mode = OrbitInput::get('sortmode','asc');
+            $language = OrbitInput::get('language', 'id');
 
-
+            $this->registerCustomValidation();
             $validator = Validator::make(
                 array(
                     'promotion_id' => $promotionId,
+                    'language' => $language,
                 ),
                 array(
                     'promotion_id' => 'required',
+                    'language' => 'required|orbit.empty.language_default',
                 ),
                 array(
                     'required' => 'Promotion ID is required',
@@ -383,22 +378,28 @@ class PromotionAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
+            $valid_language = $this->valid_language;
+
             $prefix = DB::getTablePrefix();
 
-            $promotion = News::with(['translations' => function($q) use ($languageEnId) {
-                            $q->addSelect(['news_translation_id', 'news_id']);
-                            $q->with(['media' => function($q2) {
-                                $q2->addSelect(['object_id', 'media_name_long', 'path']);
-                            }]);
-                            $q->where('merchant_language_id', $languageEnId);
-                        }])
-                        ->select(
+            $promotion = News::select(
                             'news.news_id as news_id',
-                            'news_translations.news_name as news_name',
+                            DB::Raw("
+                                CASE WHEN {$prefix}news_translations.news_name = '' THEN {$prefix}news.news_name ELSE {$prefix}news_translations.news_name END as news_name,
+                                CASE WHEN {$prefix}news_translations.description = '' THEN {$prefix}news.description ELSE {$prefix}news_translations.description END as description,
+                                CASE WHEN {$prefix}media.path is null THEN (
+                                        select m.path
+                                        from {$prefix}news n
+                                        join {$prefix}news_translations nt
+                                            on nt.news_id = n.news_id
+                                        join {$prefix}media m
+                                            on m.object_id = nt.news_translation_id
+                                            and m.media_name_long = 'news_translation_image_orig'
+                                        limit 1
+                                    ) ELSE {$prefix}media.path END as original_media_path
+                            "),
                             'news.object_type',
-                            'news_translations.description as description',
                             'news.end_date',
-                            'media.path as original_media_path',
                             // query for get status active based on timezone
                             DB::raw("
                                     CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
@@ -427,9 +428,8 @@ class PromotionAPIController extends ControllerAPI
                             $q->on('media.media_name_long', '=', DB::raw("'news_translation_image_orig'"));
                         })
                         ->where('news.news_id', $promotionId)
-                        ->where('news_translations.merchant_language_id', '=', $languageEnId)
+                        ->where('news_translations.merchant_language_id', '=', $valid_language->language_id)
                         ->where('news.object_type', '=', 'promotion')
-                        ->where('news_translations.news_name', '!=', '')
                         ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                         ->first();
 
