@@ -7,7 +7,7 @@ use OrbitShop\API\v1\OrbitShopAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
 use DominoPOS\OrbitACL\ACL;
-use DominoPOS\OrbitACL\ACL\Exception\ACLForbiddenException;
+use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Text\Util\LineChecker;
 use Helper\EloquentRecordCounter as RecordCounter;
@@ -344,6 +344,7 @@ class CouponAPIController extends ControllerAPI
         $coupon = NULL;
         $issuedCoupon = NULL;
         $retailer = null;
+        $coupon_id = OrbitInput::post('coupon_id', NULL);
         try {
             $this->session = SessionPreparer::prepareSession();
             $user = UserGetter::getLoggedInUserOrGuest($this->session);
@@ -356,7 +357,6 @@ class CouponAPIController extends ControllerAPI
             }
 
             $this->registerCustomValidation();
-            $coupon_id = OrbitInput::post('coupon_id');
 
             $validator = Validator::make(
                 array(
