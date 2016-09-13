@@ -540,8 +540,10 @@ class NewsAPIController extends ControllerAPI
                                     ->leftJoin('news', 'news_merchant.news_id', '=', 'news.news_id')
                                     ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
                                     ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
-                                    ->leftJoin(DB::raw("{$prefix}media as img"), DB::raw('img.object_id'), '=', 'merchants.merchant_id')
-                                    ->whereIn(DB::raw('img.media_name_long'), ['mall_logo_orig', 'retailer_logo_orig'])
+                                    ->leftJoin(DB::raw("{$prefix}media as img"), function($q) {
+                                        $q->on(DB::raw('img.object_id'), '=', 'merchants.merchant_id')
+                                            ->on(DB::raw('img.media_name_long'), 'IN', DB::raw("('mall_logo_orig', 'retailer_logo_orig')"));
+                                    })
                                     ->where('news_merchant.news_id', '=', $newsId)
                                     ->groupBy('merchant_id')
                                     ->havingRaw('tz <= end_date AND tz >= begin_date');
