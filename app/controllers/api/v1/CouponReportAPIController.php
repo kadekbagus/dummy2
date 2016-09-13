@@ -1560,7 +1560,9 @@ class CouponReportAPIController extends ControllerAPI
                 OrbitInput::get('merchant_id', function($mallId) use ($coupons) {
                     $coupons->where('promotions.merchant_id', $mallId);
                 });
-            } else {
+            }
+
+            if (! $user->isCampaignAdmin()){
                 $coupons->where('promotions.merchant_id', $configMallId);
             }
 
