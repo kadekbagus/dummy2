@@ -669,20 +669,17 @@ class StoreAPIController extends ControllerAPI
             $sort_mode = OrbitInput::get('sortmode','asc');
             $store_name = OrbitInput::get('store_name');
             $keyword = OrbitInput::get('keyword');
+            $language = OrbitInput::get('language', 'id');
 
-            $languageEnId = null;
-            $language = Language::where('name', 'en')->first();
-
-            if (! empty($language)) {
-                $languageEnId = $language->language_id;
-            }
-
+            $this->registerCustomValidation();
             $validator = Validator::make(
                 array(
                     'store_name' => $store_name,
+                    'language' => $language,
                 ),
                 array(
                     'store_name' => 'required',
+                    'language' => 'required|orbit.empty.language_default',
                 ),
                 array(
                     'required' => 'Store name is required',
@@ -695,12 +692,16 @@ class StoreAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
+            $valid_language = $this->valid_language;
+
             $prefix = DB::getTablePrefix();
 
             // get news list
             $news = DB::table('news')->select(
                         'news.news_id as campaign_id',
-                        'news_translations.news_name as campaign_name',
+                        DB::Raw("
+                                CASE WHEN {$prefix}news_translations.news_name = '' THEN {$prefix}news.news_name ELSE {$prefix}news_translations.news_name END as campaign_name
+                            "),
                         'news.object_type as campaign_type',
                         // query for get status active based on timezone
                         DB::raw("
@@ -732,7 +733,16 @@ class StoreAPIController extends ControllerAPI
                                 THEN 'true'
                                 ELSE 'false'
                                 END AS is_started,
-                                {$prefix}media.path as original_media_path
+                                CASE WHEN {$prefix}media.path is null THEN (
+                                        select m.path
+                                        from {$prefix}news n
+                                        join {$prefix}news_translations nt
+                                            on nt.news_id = n.news_id
+                                        join {$prefix}media m
+                                            on m.object_id = nt.news_translation_id
+                                            and m.media_name_long = 'news_translation_image_orig'
+                                        limit 1
+                                    ) ELSE {$prefix}media.path END as original_media_path
                             "))
                         ->join('news_translations', 'news_translations.news_id', '=', 'news.news_id')
                         ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
@@ -743,16 +753,27 @@ class StoreAPIController extends ControllerAPI
                             $q->on('media.media_name_long', '=', DB::raw("'news_translation_image_orig'"));
                         })
                         ->where('merchants.name', $store_name)
-                        ->where('news_translations.merchant_language_id', '=', $languageEnId)
+                        ->where('news_translations.merchant_language_id', '=', $valid_language->language_id)
                         ->where('news.object_type', '=', 'news')
-                        ->where('news_translations.news_name', '!=', '')
                         ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                         ->groupBy('campaign_id')
                         ->orderBy('news.created_at', 'desc');
 
             $promotions = DB::table('news')->select(
                         'news.news_id as campaign_id',
-                        'news_translations.news_name as campaign_name',
+                        DB::Raw("
+                            CASE WHEN {$prefix}news_translations.news_name = '' THEN {$prefix}news.news_name ELSE {$prefix}news_translations.news_name END as campaign_name,
+                            CASE WHEN {$prefix}media.path is null THEN (
+                                    select m.path
+                                    from {$prefix}news n
+                                    join {$prefix}news_translations nt
+                                        on nt.news_id = n.news_id
+                                    join {$prefix}media m
+                                        on m.object_id = nt.news_translation_id
+                                        and m.media_name_long = 'news_translation_image_orig'
+                                    limit 1
+                                ) ELSE {$prefix}media.path END as original_media_path
+                        "),
                         'news.object_type as campaign_type',
                         // query for get status active based on timezone
                         DB::raw("
@@ -782,8 +803,7 @@ class StoreAPIController extends ControllerAPI
                                     AND CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) between {$prefix}news.begin_date and {$prefix}news.end_date) > 0
                                 THEN 'true'
                                 ELSE 'false'
-                                END AS is_started,
-                                {$prefix}media.path as original_media_path
+                                END AS is_started
                             "))
                         ->join('news_translations', 'news_translations.news_id', '=', 'news.news_id')
                         ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
@@ -794,9 +814,8 @@ class StoreAPIController extends ControllerAPI
                             $q->on('media.media_name_long', '=', DB::raw("'news_translation_image_orig'"));
                         })
                         ->where('merchants.name', $store_name)
-                        ->where('news_translations.merchant_language_id', '=', $languageEnId)
+                        ->where('news_translations.merchant_language_id', '=', $valid_language->language_id)
                         ->where('news.object_type', '=', 'promotion')
-                        ->where('news_translations.news_name', '!=', '')
                         ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                         ->groupBy('campaign_id')
                         ->orderBy('news.created_at', 'desc');
@@ -804,7 +823,17 @@ class StoreAPIController extends ControllerAPI
             // get coupon list
             $coupons = DB::table('promotions')->select(DB::raw("
                                 {$prefix}promotions.promotion_id as campaign_id,
-                                {$prefix}coupon_translations.promotion_name as campaign_name,
+                                CASE WHEN {$prefix}coupon_translations.promotion_name = '' THEN {$prefix}promotions.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as campaign_name,
+                                CASE WHEN {$prefix}media.path is null THEN (
+                                        select m.path
+                                        from {$prefix}promotions c
+                                        join {$prefix}coupon_translations ct
+                                            on ct.promotion_id = c.promotion_id
+                                        join {$prefix}media m
+                                            on m.object_id = ct.coupon_translation_id
+                                            and m.media_name_long = 'coupon_translation_image_orig'
+                                        limit 1
+                                    ) ELSE {$prefix}media.path END as original_media_path,
                                 'coupon' as campaign_type,
                                 CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
                                 THEN {$prefix}campaign_status.campaign_status_name
@@ -831,8 +860,7 @@ class StoreAPIController extends ControllerAPI
                                         AND CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) between {$prefix}promotions.begin_date and {$prefix}promotions.end_date) > 0
                                 THEN 'true'
                                 ELSE 'false'
-                                END AS is_started,
-                                {$prefix}media.path as original_media_path
+                                END AS is_started
                             "))
                             ->leftJoin('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
                             ->leftJoin('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
@@ -844,8 +872,7 @@ class StoreAPIController extends ControllerAPI
                                 $q->on('media.media_name_long', '=', DB::raw("'coupon_translation_image_orig'"));
                             })
                             ->where('merchants.name', $store_name)
-                            ->where('coupon_translations.merchant_language_id', '=', $languageEnId)
-                            ->where('coupon_translations.promotion_name', '!=', '')
+                            ->where('coupon_translations.merchant_language_id', '=', $valid_language->language_id)
                             ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                             ->groupBy('campaign_id')
                             ->orderBy(DB::raw("{$prefix}promotions.created_at"), 'desc');
