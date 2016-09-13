@@ -436,6 +436,7 @@ class CampaignReportAPIController extends ControllerAPI
                             `order`,
                             `page_views`,
                             `popup_views`,
+                            `popup_clicks`,
                             concat(campaign_id, '|', campaign_type) as groupby"));
 
             // Filter by campaign name
