@@ -5,7 +5,6 @@
  * @author Tian <tian@dominopos.com>
  */
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
-use Carbon\Carbon as Carbon;
 
 /**
  * Listen on:    `orbit.news.postnewnews.after.save`
@@ -129,8 +128,14 @@ Event::listen('orbit.news.postnewnews.after.commit', function($controller, $news
     $timestamp = new DateTime($news->created_at);
     $date = $timestamp->format('Y-m-d H:i:s');
 
+    if ($news->object_type === 'promotion') {
+        $campaignType = 'Promotion';
+    } else {
+        $campaignType = 'News';
+    }
+
     $data = array(
-        'campaignType'      => 'News',
+        'campaignType'      => $campaignType,
         'campaignName'      => $news->news_name,
         'pmpUser'           => $controller->api->user->username,
         'eventType'         => 'created',
