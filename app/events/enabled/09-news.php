@@ -115,12 +115,12 @@ Event::listen('orbit.news.after.translation.save', function($controller, $news_t
 
 /**
  * Listen on:    `orbit.news.postnewnews.after.commit`
- * Purpose:      Send email to marketing after create news
+ * Purpose:      Send email to marketing after create news or promotion
  *
  * @author kadek <kadek@dominopos.com>
  *
  * @param NewsAPIController $controller
- * @param NewsTranslations $news_translations
+ * @param News $news
  */
 Event::listen('orbit.news.postnewnews.after.commit', function($controller, $news)
 {
