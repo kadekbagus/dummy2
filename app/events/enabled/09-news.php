@@ -179,7 +179,7 @@ Event::listen('orbit.news.postupdatenews.after.commit', function($controller, $n
     $diff = array();
     foreach ($arrDiff as $key => $value) {
 
-        if ($key!="updated_at") {
+        if ($key != 'updated_at') {
             $different = array();
             $different['column'] = $key;
             $different['before'] = $newsBeforeUpdate[$key];
