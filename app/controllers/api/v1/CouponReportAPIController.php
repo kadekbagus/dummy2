@@ -1562,10 +1562,6 @@ class CouponReportAPIController extends ControllerAPI
                 });
             }
 
-            if (! $user->isCampaignAdmin()){
-                $coupons->where('promotions.merchant_id', $configMallId);
-            }
-
             // Filter by Promotion ID
             OrbitInput::get('promotion_id', function($pid) use ($coupons) {
                 $pid = (array)$pid;
