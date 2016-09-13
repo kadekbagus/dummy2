@@ -3690,12 +3690,12 @@ return array(
                 'object_type' => 'Tenant',
                 'parameter_name' => 'store_id'
             ),
-            // - Clicking on get coupon button
+            // - View send coupon to email page
             '42' => array(
-                'name' => 'click_get_coupon',
-                'name_long' => 'Click Get Coupon',
+                'name' => 'view_send_coupon_to_email_page',
+                'name_long' => 'View Send Coupon to Email Page',
                 'module_name' => 'Coupon',
-                'type' => 'click',
+                'type' => 'view',
                 'object_type' => 'Coupon',
                 'parameter_name' => 'coupon_id'
             ),
