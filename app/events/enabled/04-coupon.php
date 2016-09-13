@@ -118,7 +118,7 @@ Event::listen('orbit.coupon.after.translation.save', function($controller, $coup
 Event::listen('orbit.coupon.postnewcoupon.after.commit', function($controller, $coupon)
 {
     $timestamp = new DateTime($coupon->created_at);
-    $date = $timestamp->format('Y-m-d H:i:s');
+    $date = $timestamp->format('d F Y H:i');
 
     $data = array(
         'campaignType'      => 'Coupon',

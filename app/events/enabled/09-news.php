@@ -126,7 +126,7 @@ Event::listen('orbit.news.postnewnews.after.commit', function($controller, $news
 {
 
     $timestamp = new DateTime($news->created_at);
-    $date = $timestamp->format('Y-m-d H:i:s');
+    $date = $timestamp->format('d F Y H:i');
 
     if ($news->object_type === 'promotion') {
         $campaignType = 'Promotion';

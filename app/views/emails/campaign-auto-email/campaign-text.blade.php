@@ -1,1 +1,1 @@
-On {{ $date }}, {{ $pmpUser }} has {{ $eventType }} {{ $campaignName }}
+On {{ $date }}, {{ $pmpUser }} has {{ $eventType }} {{ $campaignName }}.
