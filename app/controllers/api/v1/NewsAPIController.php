@@ -724,6 +724,7 @@ class NewsAPIController extends ControllerAPI
             }
 
             $updatednews = News::with('tenants')->excludeDeleted()->where('news_id', $news_id)->first();
+            $beforeUpdatedNews = News::excludeDeleted()->where('news_id', $news_id)->first();
 
             $statusdb = $updatednews->status;
             $enddatedb = $updatednews->end_date;
@@ -1177,7 +1178,7 @@ class NewsAPIController extends ControllerAPI
                     ->setNotes($activityNotes)
                     ->responseOK();
 
-            Event::fire('orbit.news.postupdatenews.after.commit', array($this, $updatednews));
+            Event::fire('orbit.news.postupdatenews.after.commit', array($this, $updatednews, $beforeUpdatedNews));
         } catch (ACLForbiddenException $e) {
             Event::fire('orbit.news.postupdatenews.access.forbidden', array($this, $e));
 
@@ -1247,7 +1248,7 @@ class NewsAPIController extends ControllerAPI
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = null;
+            $this->response->data = [$e->getMessage(), $e->getFile(), $e->getLine()];
 
             // Rollback the changes
             $this->rollBack();
