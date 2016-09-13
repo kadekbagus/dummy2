@@ -86,6 +86,9 @@ Artisan::add(new CreateTableDBIP);
 // Update es mall index
 Artisan::add(new ElasticsearchUpdateMallIndex);
 
+// Update ES mall logo
+Artisan::add(new ElasticsearchUpdateMallLogoCommand);
+
 // Insert or update data on settings table
 // @Todo investigate why its error
 // Artisan::add(new MerchantSetting);
