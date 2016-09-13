@@ -192,3 +192,33 @@ Route::post('/api/v1/pub/add-to-wallet', function()
 });
 
 Route::post('/app/v1/pub/add-to-wallet', ['as' => 'pub-mall-coupon-add-to-wallet', 'uses' => 'IntermediatePubAuthController@Coupon_postAddToWallet']);
+
+/**
+ * Post issue coupon to email on landing page
+ */
+Route::post('/api/v1/pub/coupon/send-to-email', function()
+{
+    return Orbit\Controller\API\v1\Pub\CouponAPIController::create()->postAddCouponToEmail();
+});
+
+Route::post('/app/v1/pub/coupon/send-to-email', ['as' => 'pub-mall-coupon-add-to-email', 'uses' => 'IntermediatePubAuthController@Coupon_postAddCouponToEmail']);
+
+/**
+ * Get coupon redemption detail page on landing page
+ */
+Route::get('/api/v1/pub/coupon/redemption', function()
+{
+    return Orbit\Controller\API\v1\Pub\CouponAPIController::create()->getCouponItemRedemption();
+});
+
+Route::get('/app/v1/pub/coupon/redemption', ['as' => 'pub-mall-coupon-redemption', 'uses' => 'IntermediatePubAuthController@Coupon_getCouponItemRedemption']);
+
+/**
+ * Get coupon redemption detail page on landing page
+ */
+Route::post('/api/v1/pub/coupon/redeem', function()
+{
+    return Orbit\Controller\API\v1\Pub\CouponAPIController::create()->postPubRedeemCoupon();
+});
+
+Route::post('/app/v1/pub/coupon/redeem', ['as' => 'pub-mall-coupon-redeem', 'uses' => 'IntermediatePubAuthController@Coupon_postPubRedeemCoupon']);
