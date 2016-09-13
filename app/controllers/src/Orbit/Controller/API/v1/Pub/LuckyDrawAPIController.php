@@ -28,6 +28,8 @@ use URL;
 
 class LuckyDrawAPIController extends IntermediateBaseController
 {
+    protected $valid_language = NULL;
+
     /**
      * GET - get lucky draw list in all mall
      * the time used here is Asia/Jakarta already confirmed by PO
@@ -74,27 +76,50 @@ class LuckyDrawAPIController extends IntermediateBaseController
             $ciLuckyDrawPath = URL::route('ci-luckydraw-detail', []);
             $ciLuckyDrawPath = $this->getRelPathWithoutParam($ciLuckyDrawPath, 'orbit_session');
 
-            // Get language_if of english
-            $languageEnId = null;
-            $language = Language::where('name', 'en')->first();
+            $language = OrbitInput::get('language', 'id');
 
-            if (! empty($language)) {
-                $languageEnId = $language->language_id;
+            $this->registerCustomValidation();
+            $validator = Validator::make(
+                array(
+                    'language' => $language,
+                ),
+                array(
+                    'language' => 'required|orbit.empty.language_default',
+                )
+            );
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
+
+            $valid_language = $this->valid_language;
 
             $prefix = DB::getTablePrefix();
 
             // add type also
             $luckydraws = LuckyDraw::select(
                     'lucky_draws.lucky_draw_id',
-                    'lucky_draw_translations.lucky_draw_name',
-                    DB::raw("name as mall_name"),
+                    DB::raw("
+                        CASE WHEN {$prefix}lucky_draw_translations.lucky_draw_name = '' THEN {$prefix}lucky_draws.lucky_draw_name ELSE {$prefix}lucky_draw_translations.lucky_draw_name END as lucky_draw_name,
+                        CASE WHEN {$prefix}lucky_draw_translations.description = '' THEN {$prefix}lucky_draws.description ELSE {$prefix}lucky_draw_translations.description END as description,
+                        CASE WHEN {$prefix}media.path is null THEN (
+                                select m.path
+                                from {$prefix}lucky_draws ld
+                                join {$prefix}lucky_draw_translations ldt
+                                    on ldt.lucky_draw_id = ld.lucky_draw_id
+                                join {$prefix}media m
+                                    on m.object_id = ldt.lucky_draw_translation_id
+                                    and m.media_name_long = 'lucky_draw_translation_image_orig'
+                                limit 1
+                            ) ELSE {$prefix}media.path END as image_url,
+                        name as mall_name
+                    "),
                     'city',
                     'country',
                     'ci_domain',
-                    'lucky_draw_translations.description',
                     DB::raw("(CONCAT(ci_domain, '" . $ciLuckyDrawPath . "?id=', {$prefix}lucky_draws.lucky_draw_id)) as ci_path"),
-                    DB::raw('media.path as image_url'),
                     DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
                              THEN {$prefix}campaign_status.campaign_status_name ELSE (
                                  CASE WHEN {$prefix}lucky_draws.grace_period_date < (
@@ -109,10 +134,12 @@ class LuckyDrawAPIController extends IntermediateBaseController
                 ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'lucky_draws.campaign_status_id')
                 ->leftJoin('merchants', 'lucky_draws.mall_id', '=', 'merchants.merchant_id')
                 ->leftJoin('lucky_draw_translations', 'lucky_draw_translations.lucky_draw_id', '=', 'lucky_draws.lucky_draw_id')
-                ->leftJoin(DB::raw("( SELECT * FROM {$prefix}media WHERE media_name_long = 'lucky_draw_translation_image_orig' ) as media"), 'lucky_draw_translations.lucky_draw_translation_id', '=', DB::raw('media.object_id'))
+                ->leftJoin('media', function($q) {
+                    $q->on('media.object_id', '=', 'lucky_draw_translations.lucky_draw_translation_id');
+                    $q->on('media.media_name_long', '=', DB::raw("'lucky_draw_translation_image_orig'"));
+                })
                 ->active('lucky_draws')
-                ->where('lucky_draw_translations.merchant_language_id', '=', $languageEnId)
-                ->where('lucky_draw_translations.lucky_draw_name', '!=', '')
+                ->where('lucky_draw_translations.merchant_language_id', '=', $valid_language->language_id)
                 ->havingRaw("campaign_status = 'ongoing'");
 
             OrbitInput::get('object_type', function($objType) use($luckydraws) {
@@ -221,5 +248,23 @@ class LuckyDrawAPIController extends IntermediateBaseController
         $parsed_url = parse_url((string)$url);
 
         return $parsed_url['path'];
+    }
+
+    protected function registerCustomValidation() {
+        // Check language is exists
+        Validator::extend('orbit.empty.language_default', function ($attribute, $value, $parameters) {
+            $lang_name = $value;
+
+            $language = Language::where('status', '=', 'active')
+                            ->where('name', $lang_name)
+                            ->first();
+
+            if (empty($language)) {
+                return FALSE;
+            }
+
+            $this->valid_language = $language;
+            return TRUE;
+        });
     }
 }
