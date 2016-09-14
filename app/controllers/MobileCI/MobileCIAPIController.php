@@ -14,6 +14,7 @@ use OrbitShop\API\v1\ControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
+use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Orbit\Helper\Exception\UrlException;
 use \View;
@@ -1653,19 +1654,20 @@ class MobileCIAPIController extends BaseCIController
         $user = NULL;
         $coupon = NULL;
         $issuedCoupon = NULL;
-        $retailer = null;
+        $retailer = NULL;
+        $coupon_id = OrbitInput::post('coupon_id', NULL);
+
         try {
             $user = $this->getLoggedInUser();
 
             // guest cannot add to wallet
             if (! $user->isConsumer()) {
                 $message = 'You must login to access this.';
-                OrbitShopAPI::throwInvalidArgument($message);
+                ACL::throwAccessForbidden($message);
             }
 
             $retailer = $this->getRetailerInfo();
             $this->registerCustomValidation();
-            $coupon_id = OrbitInput::post('coupon_id');
 
             // check if coupon already add to wallet
             $wallet = IssuedCoupon::where('promotion_id', '=', $coupon_id)
@@ -1720,6 +1722,8 @@ class MobileCIAPIController extends BaseCIController
             }
 
         } catch (ACLForbiddenException $e) {
+            $coupon = Coupon::where('promotion_id', '=', $coupon_id)->first();
+
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
@@ -1728,13 +1732,13 @@ class MobileCIAPIController extends BaseCIController
             $activityNotes = sprintf('Failed to add to wallet. Error: %s', $e->getMessage());
             $activity->setUser($user)
                 ->setActivityName('click_add_to_wallet')
-                ->setActivityNameLong('Failed to Click Add To Wallet')
-                ->setObject($issuedCoupon)
+                ->setActivityNameLong('Click Add To Wallet')
+                ->setObject($coupon)
                 ->setModuleName('Coupon')
                 ->setCoupon($coupon)
                 ->setLocation($retailer)
                 ->setNotes($activityNotes)
-                ->responseFailed()
+                ->responseOK()
                 ->save();
         } catch (InvalidArgsException $e) {
             $this->response->code = $e->getCode();
@@ -6123,6 +6127,7 @@ class MobileCIAPIController extends BaseCIController
     public function getSearchCoupon() {
         $retailer = null;
         $user = null;
+        $type = OrbitInput::get('coupon_type', 'available');
         try {
             // Require authentication
             $this->registerCustomValidation();
@@ -6141,7 +6146,7 @@ class MobileCIAPIController extends BaseCIController
             if ($user->userDetail->gender !== '' && $user->userDetail->gender !== null) {
                 $userGender =  $user->userDetail->gender;
             }
-            $type = OrbitInput::get('coupon_type', 'available');
+
             $ids = OrbitInput::get('ids', []);
             $is_coupon_wallet = false;
             $mallid = $retailer->merchant_id;
@@ -6149,7 +6154,11 @@ class MobileCIAPIController extends BaseCIController
             $prefix = DB::getTablePrefix();
 
             if ($type === 'wallet') {
-                $coupons = Coupon::selectRaw("*, {$prefix}promotions.promotion_id AS promotion_id,
+                if (! $user->isConsumer()) {
+                    $message = 'You must login to access this.';
+                    OrbitShopAPI::throwInvalidArgument($message);
+                } else {
+                    $coupons = Coupon::selectRaw("*, {$prefix}promotions.promotion_id AS promotion_id,
                         {$prefix}promotions.description AS description,
                         {$prefix}promotions.long_description AS long_description,
                         {$prefix}promotions.image AS promo_image,
@@ -6190,7 +6199,9 @@ class MobileCIAPIController extends BaseCIController
                     })
                     ->where('promotions.coupon_validity_in_date', '>=', Carbon::now($retailer->timezone->timezone_name))
                     ->where('issued_coupons.user_id', $user->user_id);
-                $is_coupon_wallet = true;
+                    $is_coupon_wallet = true;
+                }
+
             } else {
                 $coupons = Coupon::selectRaw("*, {$prefix}promotions.promotion_id AS promotion_id,
                         {$prefix}promotions.description AS description,
@@ -6392,6 +6403,30 @@ class MobileCIAPIController extends BaseCIController
             return Response::json($data);
 
         } catch (Exception $e) {
+            $activityPage = Activity::mobileci()
+                            ->setActivityType('view');
+            if ($type === 'wallet') {
+                $activityPageNotes = sprintf('Failed to view Page: %s', 'Coupon Wallet List');
+                $activityPage->setUser($user)
+                    ->setActivityName('view_coupon_wallet_list')
+                    ->setActivityNameLong('View Coupon Wallet List')
+                    ->setObject(null)
+                    ->setLocation($retailer)
+                    ->setModuleName('Coupon')
+                    ->setNotes($activityPageNotes)
+                    ->save();
+            } else {
+                $activityPageNotes = sprintf('Failed to view Page: %s', 'Coupon List');
+                $activityPage->setUser($user)
+                    ->setActivityName('view_coupon_list')
+                    ->setActivityNameLong('View Coupon List')
+                    ->setObject(null)
+                    ->setLocation($retailer)
+                    ->setModuleName('Coupon')
+                    ->setNotes($activityPageNotes)
+                    ->save();
+            }
+
             switch ($e->getCode()) {
                 case Session::ERR_UNKNOWN;
                 case Session::ERR_IP_MISS_MATCH;

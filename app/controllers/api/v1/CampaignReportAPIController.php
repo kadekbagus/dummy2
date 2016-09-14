@@ -150,7 +150,7 @@ class CampaignReportAPIController extends ControllerAPI
 
             // Get data all campaign (news, promotions, coupons), and then use union to join all campaign
             $news = DB::table('news')->selectraw(DB::raw("{$tablePrefix}news.news_id AS campaign_id,
-                CASE WHEN {$tablePrefix}news_translations.news_name !='' THEN {$tablePrefix}news_translations.news_name ELSE {$tablePrefix}news.news_name END as campaign_name,
+                {$tablePrefix}news.news_name as campaign_name,
                 {$tablePrefix}news.object_type AS campaign_type,
                 IFNULL(total_tenant, 0) AS total_tenant,
                 IFNULL(total_location, 0) AS total_location,
@@ -218,28 +218,25 @@ class CampaignReportAPIController extends ControllerAPI
                         ->leftJoin('merchants as mlocation', 'news_merchant.merchant_id', '=', DB::raw('mlocation.merchant_id'))
 
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
-                        ->leftJoin('news_translations', 'news_translations.news_id', '=', 'news.news_id')
-                        ->leftJoin('merchant_languages', 'merchant_languages.merchant_language_id', '=', 'news_translations.merchant_language_id')
-                        ->leftJoin('languages', 'languages.language_id', '=', 'news_translations.merchant_language_id')
-
-                        // Join to get access rule pmp
-                        ->leftJoin('user_campaign as uc', DB::raw('uc.campaign_id'), '=', 'news.news_id')
-                        ->leftJoin('campaign_account as ca', DB::raw('ca.user_id'), '=', DB::raw('uc.user_id'))
-                        ->leftJoin('campaign_account as cas', DB::raw('cas.parent_user_id'), '=', DB::raw('ca.parent_user_id'))
-
-                        ->where('languages.name', '=', 'en')
                         ->where('news.object_type', '=', 'news')
+                        ->whereNotNull('news_merchant.news_merchant_id');
 
-                        ->where(function ($q) use ($user, $tablePrefix) {
-                                $q->WhereRaw("ca.user_id = (select parent_user_id from {$tablePrefix}campaign_account where user_id = '{$user->user_id}')
-                                                or
-                                              ca.parent_user_id = (select parent_user_id from {$tablePrefix}campaign_account where user_id = '{$user->user_id}')")
-                                    ->orWhere(DB::raw('ca.user_id'), '=', $user->user_id)
-                                    ->orWhere(DB::raw('ca.parent_user_id'), '=', $user->user_id);
-                            });
+            if (! $user->isCampaignAdmin()) {
+                // Join to get access rule pmp
+                $news = $news->leftJoin('user_campaign as uc', DB::raw('uc.campaign_id'), '=', 'news.news_id')
+                            ->leftJoin('campaign_account as ca', DB::raw('ca.user_id'), '=', DB::raw('uc.user_id'))
+                            ->leftJoin('campaign_account as cas', DB::raw('cas.parent_user_id'), '=', DB::raw('ca.parent_user_id'))
+                            ->where(function ($q) use ($user, $tablePrefix) {
+                                    $q->WhereRaw("ca.user_id = (select parent_user_id from {$tablePrefix}campaign_account where user_id = '{$user->user_id}')
+                                                    or
+                                                  ca.parent_user_id = (select parent_user_id from {$tablePrefix}campaign_account where user_id = '{$user->user_id}')")
+                                        ->orWhere(DB::raw('ca.user_id'), '=', $user->user_id)
+                                        ->orWhere(DB::raw('ca.parent_user_id'), '=', $user->user_id);
+                                });
+            }
 
             $promotions = DB::table('news')->selectraw(DB::raw("{$tablePrefix}news.news_id AS campaign_id,
-                CASE WHEN {$tablePrefix}news_translations.news_name !='' THEN {$tablePrefix}news_translations.news_name ELSE {$tablePrefix}news.news_name END as campaign_name,
+                {$tablePrefix}news.news_name as campaign_name,
                 {$tablePrefix}news.object_type AS campaign_type,
                 IFNULL(total_tenant, 0) AS total_tenant,
                 IFNULL(total_location, 0) AS total_location,
@@ -307,28 +304,25 @@ class CampaignReportAPIController extends ControllerAPI
                         ->leftJoin('merchants as mlocation', 'news_merchant.merchant_id', '=', DB::raw('mlocation.merchant_id'))
 
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
-                        ->leftJoin('news_translations', 'news_translations.news_id', '=', 'news.news_id')
-                        ->leftJoin('merchant_languages', 'merchant_languages.merchant_language_id', '=', 'news_translations.merchant_language_id')
-                        ->leftJoin('languages', 'languages.language_id', '=', 'news_translations.merchant_language_id')
-
-                        // Join to get access rule pmp
-                        ->leftJoin('user_campaign as uc', DB::raw('uc.campaign_id'), '=', 'news.news_id')
-                        ->leftJoin('campaign_account as ca', DB::raw('ca.user_id'), '=', DB::raw('uc.user_id'))
-                        ->leftJoin('campaign_account as cas', DB::raw('cas.parent_user_id'), '=', DB::raw('ca.parent_user_id'))
-
-                        ->where('languages.name', '=', 'en')
                         ->where('news.object_type', '=', 'promotion')
+                        ->whereNotNull('news_merchant.news_merchant_id');
 
-                        ->where(function ($q) use ($user, $tablePrefix) {
-                                $q->WhereRaw("ca.user_id = (select parent_user_id from {$tablePrefix}campaign_account where user_id = '{$user->user_id}')
-                                                or
-                                              ca.parent_user_id = (select parent_user_id from {$tablePrefix}campaign_account where user_id = '{$user->user_id}')")
-                                    ->orWhere(DB::raw('ca.user_id'), '=', $user->user_id)
-                                    ->orWhere(DB::raw('ca.parent_user_id'), '=', $user->user_id);
-                            });
+            if (! $user->isCampaignAdmin()) {
+                // Join to get access rule pmp
+                $promotions = $promotions->leftJoin('user_campaign as uc', DB::raw('uc.campaign_id'), '=', 'news.news_id')
+                                ->leftJoin('campaign_account as ca', DB::raw('ca.user_id'), '=', DB::raw('uc.user_id'))
+                                ->leftJoin('campaign_account as cas', DB::raw('cas.parent_user_id'), '=', DB::raw('ca.parent_user_id'))
+                                ->where(function ($q) use ($user, $tablePrefix) {
+                                        $q->WhereRaw("ca.user_id = (select parent_user_id from {$tablePrefix}campaign_account where user_id = '{$user->user_id}')
+                                                        or
+                                                      ca.parent_user_id = (select parent_user_id from {$tablePrefix}campaign_account where user_id = '{$user->user_id}')")
+                                            ->orWhere(DB::raw('ca.user_id'), '=', $user->user_id)
+                                            ->orWhere(DB::raw('ca.parent_user_id'), '=', $user->user_id);
+                                    });
+            }
 
             $coupons = DB::table('promotions')->selectraw(DB::raw("{$tablePrefix}promotions.promotion_id AS campaign_id,
-                CASE WHEN {$tablePrefix}coupon_translations.promotion_name !='' THEN {$tablePrefix}coupon_translations.promotion_name ELSE {$tablePrefix}promotions.promotion_name END as campaign_name,
+                {$tablePrefix}promotions.promotion_name as campaign_name,
                 IF(1=1,'coupon', '') AS campaign_type,
                 IFNULL(total_tenant, 0) AS total_tenant,
                 IFNULL(total_location, 0) AS total_location,
@@ -394,26 +388,22 @@ class CampaignReportAPIController extends ControllerAPI
                         ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                         ->leftJoin('merchants as mlocation', 'promotion_retailer.retailer_id', '=', DB::raw('mlocation.merchant_id'))
 
-                        ->leftJoin('user_campaign', 'user_campaign.campaign_id', '=', 'promotions.promotion_id')
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
-                        ->leftJoin('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
-                        ->leftJoin('merchant_languages', 'merchant_languages.merchant_language_id', '=', 'coupon_translations.merchant_language_id')
-                        ->leftJoin('languages', 'languages.language_id', '=', 'coupon_translations.merchant_language_id')
+                        ->whereNotNull('promotion_retailer.promotion_retailer_id');
 
-                        // Join to get access rule pmp
-                        ->leftJoin('user_campaign as uc', DB::raw('uc.campaign_id'), '=', 'promotions.promotion_id')
-                        ->leftJoin('campaign_account as ca', DB::raw('ca.user_id'), '=', DB::raw('uc.user_id'))
-                        ->leftJoin('campaign_account as cas', DB::raw('cas.parent_user_id'), '=', DB::raw('ca.parent_user_id'))
-
-                        ->where('languages.name', '=', 'en')
-
-                        ->where(function ($q) use ($user, $tablePrefix) {
-                                $q->WhereRaw("ca.user_id = (select parent_user_id from {$tablePrefix}campaign_account where user_id = '{$user->user_id}')
-                                                or
-                                              ca.parent_user_id = (select parent_user_id from {$tablePrefix}campaign_account where user_id = '{$user->user_id}')")
-                                    ->orWhere(DB::raw('ca.user_id'), '=', $user->user_id)
-                                    ->orWhere(DB::raw('ca.parent_user_id'), '=', $user->user_id);
-                            });
+            if (! $user->isCampaignAdmin()) {
+                // Join to get access rule pmp
+                $coupons = $coupons->leftJoin('user_campaign as uc', DB::raw('uc.campaign_id'), '=', 'promotions.promotion_id')
+                            ->leftJoin('campaign_account as ca', DB::raw('ca.user_id'), '=', DB::raw('uc.user_id'))
+                            ->leftJoin('campaign_account as cas', DB::raw('cas.parent_user_id'), '=', DB::raw('ca.parent_user_id'))
+                            ->where(function ($q) use ($user, $tablePrefix) {
+                                    $q->WhereRaw("ca.user_id = (select parent_user_id from {$tablePrefix}campaign_account where user_id = '{$user->user_id}')
+                                                    or
+                                                  ca.parent_user_id = (select parent_user_id from {$tablePrefix}campaign_account where user_id = '{$user->user_id}')")
+                                        ->orWhere(DB::raw('ca.user_id'), '=', $user->user_id)
+                                        ->orWhere(DB::raw('ca.parent_user_id'), '=', $user->user_id);
+                                });
+            }
 
 
             $campaign = $news->unionAll($promotions)->unionAll($coupons);
@@ -426,8 +416,28 @@ class CampaignReportAPIController extends ControllerAPI
             }
 
             // Make union result subquery
-            $campaign = DB::table(DB::raw('(' . $sql . ') as a'));
-
+            $campaign = DB::table(DB::raw('(' . $sql . ') as a'))
+                        ->select(DB::raw("
+                            `campaign_id`,
+                            `campaign_name`,
+                            `campaign_type`,
+                            `total_tenant`,
+                            `total_location`,
+                            `tenant_name`,
+                            `begin_date`,
+                            `end_date`,
+                            `updated_at`,
+                            `base_price`,
+                            `daily`,
+                            `estimated_total`,
+                            `spending`,
+                            `status`,
+                            `campaign_status`,
+                            `order`,
+                            `page_views`,
+                            `popup_views`,
+                            `popup_clicks`,
+                            concat(campaign_id, '|', campaign_type) as groupby"));
 
             // Filter by campaign name
             OrbitInput::get('campaign_name', function($campaign_name) use ($campaign) {
@@ -482,7 +492,7 @@ class CampaignReportAPIController extends ControllerAPI
             }
 
             // Grouping campaign
-            $campaign = $campaign->groupBy('campaign_id');
+            $campaign = $campaign->groupBy('groupby');
 
             // Clone the query builder which still does not include the take,
             $_campaign = clone $campaign;
@@ -2262,6 +2272,10 @@ class CampaignReportAPIController extends ControllerAPI
             $user = $this->api->user;
             $prefix = DB::getTablePrefix();
             $campaign_id = $value;
+
+            if ($user->isCampaignAdmin()) {
+                return TRUE;
+            }
 
             $campaign = UserCampaign::where('campaign_id', '=', $campaign_id)
                                     ->whereRaw("{$prefix}user_campaign.user_id in (

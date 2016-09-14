@@ -359,6 +359,17 @@ class Tenant extends Eloquent
     }
 
     /**
+     * Retailer has many uploaded images.
+     *
+     * @author Irianto <irianto@dominopos.com>
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function mediaImageCroppedDefault()
+    {
+        return $this->mediaCroppedDefault()->where('media_name_id', 'retailer_image');
+    }
+
+    /**
      * Retailer has many uploaded maps.
      *
      * @author Rio Astamal <me@rioastamal.net>

@@ -23,7 +23,7 @@ class NewsAPIController extends ControllerAPI
     protected $returnBuilder = FALSE;
 
     protected $newsViewRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee', 'campaign admin'];
-    protected $newsModifiyRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee', 'campaign admin'];
+    protected $newsModifiyRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee'];
 
     /**
      * POST - Create New News
@@ -85,7 +85,7 @@ class NewsAPIController extends ControllerAPI
 */
             // @Todo: Use ACL authentication instead
             $role = $user->role;
-            $validRoles = $this->newsViewRoles;
+            $validRoles = $this->newsModifiyRoles;
             if (! in_array( strtolower($role->role_name), $validRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
@@ -724,6 +724,7 @@ class NewsAPIController extends ControllerAPI
             }
 
             $updatednews = News::with('tenants')->excludeDeleted()->where('news_id', $news_id)->first();
+            $beforeUpdatedNews = News::with('translations.language', 'translations.media', 'ages.ageRange', 'genders', 'keywords')->excludeDeleted()->where('news_id', $news_id)->first();
 
             $statusdb = $updatednews->status;
             $enddatedb = $updatednews->end_date;
@@ -1155,6 +1156,10 @@ class NewsAPIController extends ControllerAPI
                 }
             }
 
+            $tempContent = new TemporaryContent();
+            $tempContent->contents = serialize($beforeUpdatedNews);
+            $tempContent->save();
+
             Event::fire('orbit.news.postupdatenews.after.save', array($this, $updatednews));
             $this->response->data = $updatednews;
             // $this->response->data->translation_default = $updatednews_default_language;
@@ -1177,7 +1182,7 @@ class NewsAPIController extends ControllerAPI
                     ->setNotes($activityNotes)
                     ->responseOK();
 
-            Event::fire('orbit.news.postupdatenews.after.commit', array($this, $updatednews));
+            Event::fire('orbit.news.postupdatenews.after.commit', array($this, $updatednews, $tempContent->temporary_content_id));
         } catch (ACLForbiddenException $e) {
             Event::fire('orbit.news.postupdatenews.access.forbidden', array($this, $e));
 
@@ -1247,7 +1252,7 @@ class NewsAPIController extends ControllerAPI
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = null;
+            $this->response->data = [$e->getMessage(), $e->getFile(), $e->getLine()];
 
             // Rollback the changes
             $this->rollBack();
@@ -1548,7 +1553,7 @@ class NewsAPIController extends ControllerAPI
 */
             // @Todo: Use ACL authentication instead
             $role = $user->role;
-            $validRoles = $this->newsModifiyRoles;
+            $validRoles = $this->newsViewRoles;
             if (! in_array( strtolower($role->role_name), $validRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
