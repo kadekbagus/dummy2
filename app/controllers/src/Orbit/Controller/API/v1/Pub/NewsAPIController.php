@@ -53,6 +53,8 @@ class NewsAPIController extends ControllerAPI
         $keyword = null;
 
         try{
+            $sort_by = OrbitInput::get('sortby', 'news_name');
+            $sort_mode = OrbitInput::get('sortmode','asc');
             $language = OrbitInput::get('language', 'id');
 
             $this->registerCustomValidation();
@@ -158,6 +160,7 @@ class NewsAPIController extends ControllerAPI
             });
 
             $news = $news->groupBy('news.news_id');
+            $news = $news->orderBy($sort_by, $sort_mode);
 
             $_news = clone($news);
 
@@ -166,8 +169,6 @@ class NewsAPIController extends ControllerAPI
 
             $skip = PaginationNumber::parseSkipFromGet();
             $news->skip($skip);
-
-            $news->orderBy('news_translations.news_name', 'asc');
 
             $totalRec = count($_news->get());
             $listOfRec = $news->get();
