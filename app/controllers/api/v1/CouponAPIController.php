@@ -1064,7 +1064,7 @@ class CouponAPIController extends ControllerAPI
             }
 
             $updatedcoupon = Coupon::where('promotion_id', $promotion_id)->first();
-            $beforeUpdatedCoupon = Coupon::where('promotion_id', $promotion_id)->first();
+            $beforeUpdatedCoupon = Coupon::with('translations.language', 'translations.media', 'ages.ageRange', 'genders', 'keywords')->excludeDeleted()->where('promotion_id', $promotion_id)->first();
 
             $statusdb = $updatedcoupon->status;
             $enddatedb = $updatedcoupon->end_date;
@@ -1686,6 +1686,10 @@ class CouponAPIController extends ControllerAPI
                 $updatedcoupon->keywords = $couponKeywords;
             });
 
+            $tempContent = new TemporaryContent();
+            $tempContent->contents = serialize($beforeUpdatedCoupon);
+            $tempContent->save();
+
             Event::fire('orbit.coupon.postupdatecoupon.after.save', array($this, $updatedcoupon));
 
             OrbitInput::post('translations', function($translation_json_string) use ($updatedcoupon, $mallid) {
@@ -1755,7 +1759,7 @@ class CouponAPIController extends ControllerAPI
                     ->setNotes($activityNotes)
                     ->responseOK();
 
-            Event::fire('orbit.coupon.postupdatecoupon.after.commit', array($this, $updatedcoupon, $beforeUpdatedCoupon));
+            Event::fire('orbit.coupon.postupdatecoupon.after.commit', array($this, $updatedcoupon, $tempContent->temporary_content_id));
         } catch (ACLForbiddenException $e) {
             Event::fire('orbit.coupon.postupdatecoupon.access.forbidden', array($this, $e));
 
