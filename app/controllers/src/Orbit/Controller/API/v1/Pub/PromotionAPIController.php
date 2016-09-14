@@ -54,6 +54,8 @@ class PromotionAPIController extends ControllerAPI
         $keyword = null;
 
         try{
+            $sort_by = OrbitInput::get('sortby', 'news_name');
+            $sort_mode = OrbitInput::get('sortmode','asc');
             $language = OrbitInput::get('language', 'id');
 
             $this->registerCustomValidation();
@@ -160,6 +162,7 @@ class PromotionAPIController extends ControllerAPI
             });
 
             $promotion = $promotion->groupBy('news.news_id');
+            $promotion = $promotion->orderBy($sort_by, $sort_mode);
 
             $_promotion = clone($promotion);
 
@@ -168,8 +171,6 @@ class PromotionAPIController extends ControllerAPI
 
             $skip = PaginationNumber::parseSkipFromGet();
             $promotion->skip($skip);
-
-            $promotion->orderBy('news_translations.news_name', 'asc');
 
             $totalRec = count($_promotion->get());
             $listOfRec = $promotion->get();
