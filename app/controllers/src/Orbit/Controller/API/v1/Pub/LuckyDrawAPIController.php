@@ -76,6 +76,8 @@ class LuckyDrawAPIController extends IntermediateBaseController
             $ciLuckyDrawPath = URL::route('ci-luckydraw-detail', []);
             $ciLuckyDrawPath = $this->getRelPathWithoutParam($ciLuckyDrawPath, 'orbit_session');
 
+            $sort_by = OrbitInput::get('sortby', 'lucky_draw_name');
+            $sort_mode = OrbitInput::get('sortmode','asc');
             $language = OrbitInput::get('language', 'id');
 
             $this->registerCustomValidation();
@@ -173,7 +175,7 @@ class LuckyDrawAPIController extends IntermediateBaseController
             );
             $luckydraws->skip($skip);
 
-            $luckydraws->orderBy('lucky_draw_name', 'asc');
+            $luckydraws->orderBy($sort_by, $sort_mode);
 
             $totalRec = RecordCounter::create($_luckydraws)->count();
             $listOfRec = $luckydraws->get();
