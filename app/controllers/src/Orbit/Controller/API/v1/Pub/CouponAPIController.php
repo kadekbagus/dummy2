@@ -7,7 +7,7 @@ use OrbitShop\API\v1\OrbitShopAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
 use DominoPOS\OrbitACL\ACL;
-use DominoPOS\OrbitACL\ACL\Exception\ACLForbiddenException;
+use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Text\Util\LineChecker;
 use Helper\EloquentRecordCounter as RecordCounter;
@@ -383,6 +383,7 @@ class CouponAPIController extends ControllerAPI
         $coupon = NULL;
         $issuedCoupon = NULL;
         $retailer = null;
+        $coupon_id = OrbitInput::post('coupon_id', NULL);
         try {
             $this->session = SessionPreparer::prepareSession();
             $user = UserGetter::getLoggedInUserOrGuest($this->session);
@@ -390,12 +391,11 @@ class CouponAPIController extends ControllerAPI
             // should always check the role
             $role = $user->role->role_name;
             if (strtolower($role) !== 'consumer') {
-                $message = 'You have to login to continue';
-                OrbitShopAPI::throwInvalidArgument($message);
+                $message = 'You must login to access this.';
+                ACL::throwAccessForbidden($message);
             }
 
             $this->registerCustomValidation();
-            $coupon_id = OrbitInput::post('coupon_id');
 
             $validator = Validator::make(
                 array(
@@ -443,20 +443,11 @@ class CouponAPIController extends ControllerAPI
             } else {
                 $this->response->message = 'Fail to issue coupon';
                 $this->response->data = NULL;
-                $activityNotes = sprintf('Failed to add to wallet Coupon Id: %s.', $coupon->promotion_id);
-                $activity->setUser($user)
-                    ->setActivityName('click_add_to_wallet')
-                    ->setActivityNameLong('Landing Page Failed to Add To Wallet')
-                    ->setLocation($retailer)
-                    ->setObject($issuedCoupon)
-                    ->setModuleName('Coupon')
-                    ->setCoupon($coupon)
-                    ->setNotes($activityNotes)
-                    ->responseFailed()
-                    ->save();
             }
 
         } catch (ACLForbiddenException $e) {
+            $coupon = Coupon::where('promotion_id', '=', $coupon_id)->first();
+
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
@@ -465,13 +456,13 @@ class CouponAPIController extends ControllerAPI
             $activityNotes = sprintf('Failed to add to wallet. Error: %s', $e->getMessage());
             $activity->setUser($user)
                 ->setActivityName('click_add_to_wallet')
-                ->setActivityNameLong('Landing Page Failed to Add To Wallet')
-                ->setObject($issuedCoupon)
+                ->setActivityNameLong('Click Landing Page Add To Wallet')
+                ->setObject($coupon)
                 ->setModuleName('Coupon')
                 ->setCoupon($coupon)
                 ->setLocation($retailer)
                 ->setNotes($activityNotes)
-                ->responseFailed()
+                ->responseOK()
                 ->save();
         } catch (InvalidArgsException $e) {
             $this->response->code = $e->getCode();
@@ -482,7 +473,7 @@ class CouponAPIController extends ControllerAPI
             $activityNotes = sprintf('Failed to add to wallet. Error: %s', $e->getMessage());
             $activity->setUser($user)
                 ->setActivityName('click_add_to_wallet')
-                ->setActivityNameLong('Landing Page Failed to Add To Wallet')
+                ->setActivityNameLong('Click Landing Page Add To Wallet Failed')
                 ->setObject($issuedCoupon)
                 ->setModuleName('Coupon')
                 ->setCoupon($coupon)
@@ -499,7 +490,7 @@ class CouponAPIController extends ControllerAPI
             $activityNotes = sprintf('Failed to add to wallet. Error: %s', $e->getMessage());
             $activity->setUser($user)
                 ->setActivityName('click_add_to_wallet')
-                ->setActivityNameLong('Landing Page Failed to Add To Wallet')
+                ->setActivityNameLong('Click Landing Page Add To Wallet Failed')
                 ->setObject($issuedCoupon)
                 ->setModuleName('Coupon')
                 ->setCoupon($coupon)
@@ -1457,7 +1448,7 @@ class CouponAPIController extends ControllerAPI
             $urlToCI = URL::route('ci-coupon-detail', array('id' => $replaceIdPattern), false);
             $mall = PromotionRetailer::select(
                     DB::raw("{$prefix}merchants.merchant_id as merchant_id"),
-                    DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN {$prefix}merchants.parent_id ELSE oms.merchant_id END as mall_id"),
+                    DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN {$prefix}merchants.parent_id ELSE {$prefix}merchants.merchant_id END as mall_id"),
                     DB::raw("{$prefix}merchants.object_type as location_type"),
                     DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN CONCAT({$prefix}merchants.name, ' at ', oms.name) ELSE CONCAT('Customer Service at ', {$prefix}merchants.name) END as name"),
                     DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.ci_domain ELSE {$prefix}merchants.ci_domain END as ci_domain"),

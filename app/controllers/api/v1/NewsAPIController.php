@@ -724,7 +724,7 @@ class NewsAPIController extends ControllerAPI
             }
 
             $updatednews = News::with('tenants')->excludeDeleted()->where('news_id', $news_id)->first();
-            $beforeUpdatedNews = News::excludeDeleted()->where('news_id', $news_id)->first();
+            $beforeUpdatedNews = News::with('translations','media')->excludeDeleted()->where('news_id', $news_id)->first();
 
             $statusdb = $updatednews->status;
             $enddatedb = $updatednews->end_date;
@@ -1155,6 +1155,10 @@ class NewsAPIController extends ControllerAPI
                     }
                 }
             }
+
+            $tempContent = new TemporaryContent();
+            $tempContent->contents = serialize($beforeUpdatedNews->toArray());
+            $tempContent->save();
 
             Event::fire('orbit.news.postupdatenews.after.save', array($this, $updatednews));
             $this->response->data = $updatednews;
