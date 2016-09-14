@@ -400,7 +400,12 @@ class StoreAPIController extends ControllerAPI
                                 'media.path',
                                 'media.object_id'
                             );
-                    }, 'mediaImage' => function ($q) {
+                    }, 'mediaImageOrig' => function ($q) {
+                        $q->select(
+                                'media.path',
+                                'media.object_id'
+                            );
+                    }, 'mediaImageCroppedDefault' => function ($q) {
                         $q->select(
                                 'media.path',
                                 'media.object_id'
