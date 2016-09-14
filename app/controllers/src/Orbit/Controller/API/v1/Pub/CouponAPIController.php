@@ -756,13 +756,12 @@ class CouponAPIController extends ControllerAPI
                                     CASE WHEN {$prefix}coupon_translations.description = '' THEN {$prefix}promotions.description ELSE {$prefix}coupon_translations.description END as description,
                                     CASE WHEN {$prefix}media.path is null THEN (
                                             select m.path
-                                            from {$prefix}promotions c
-                                            join {$prefix}coupon_translations ct
-                                                on ct.promotion_id = c.promotion_id
+                                            from {$prefix}coupon_translations ct
                                             join {$prefix}media m
                                                 on m.object_id = ct.coupon_translation_id
                                                 and m.media_name_long = 'coupon_translation_image_orig'
-                                            limit 1
+                                            where ct.promotion_id = {$prefix}promotions.promotion_id
+                                            group by ct.promotion_id
                                         ) ELSE {$prefix}media.path END as original_media_path
                                 "),
                             'promotions.end_date',
@@ -1225,13 +1224,12 @@ class CouponAPIController extends ControllerAPI
                                 CASE WHEN {$prefix}coupon_translations.description = '' THEN {$prefix}promotions.description ELSE {$prefix}coupon_translations.description END as description,
                                 CASE WHEN {$prefix}media.path is null THEN (
                                         select m.path
-                                        from {$prefix}promotions c
-                                        join {$prefix}coupon_translations ct
-                                            on ct.promotion_id = c.promotion_id
+                                        from {$prefix}coupon_translations ct
                                         join {$prefix}media m
                                             on m.object_id = ct.coupon_translation_id
                                             and m.media_name_long = 'coupon_translation_image_orig'
-                                        limit 1
+                                        where ct.promotion_id = {$prefix}promotions.promotion_id
+                                        group by ct.promotion_id
                                     ) ELSE {$prefix}media.path END as original_media_path,
                                 {$prefix}promotions.end_date,
                                 {$prefix}promotions.status,
@@ -1601,13 +1599,12 @@ class CouponAPIController extends ControllerAPI
                                     CASE WHEN {$prefix}coupon_translations.description = '' THEN {$prefix}promotions.description ELSE {$prefix}coupon_translations.description END as description,
                                     CASE WHEN {$prefix}media.path is null THEN (
                                             select m.path
-                                            from {$prefix}promotions c
-                                            join {$prefix}coupon_translations ct
-                                                on ct.promotion_id = c.promotion_id
+                                            from {$prefix}coupon_translations ct
                                             join {$prefix}media m
                                                 on m.object_id = ct.coupon_translation_id
                                                 and m.media_name_long = 'coupon_translation_image_orig'
-                                            limit 1
+                                            where ct.promotion_id = {$prefix}promotions.promotion_id
+                                            group by ct.promotion_id
                                         ) ELSE {$prefix}media.path END as original_media_path
                                 "),
                             'promotions.end_date',

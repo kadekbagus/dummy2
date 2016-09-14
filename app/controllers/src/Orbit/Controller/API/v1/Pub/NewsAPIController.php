@@ -81,13 +81,12 @@ class NewsAPIController extends ControllerAPI
                                     CASE WHEN {$prefix}news_translations.description = '' THEN {$prefix}news.description ELSE {$prefix}news_translations.description END as description,
                                     CASE WHEN {$prefix}media.path is null THEN (
                                             select m.path
-                                            from {$prefix}news n
-                                            join {$prefix}news_translations nt
-                                                on nt.news_id = n.news_id
+                                            from {$prefix}news_translations nt
                                             join {$prefix}media m
                                                 on m.object_id = nt.news_translation_id
                                                 and m.media_name_long = 'news_translation_image_orig'
-                                            limit 1
+                                            where nt.news_id = {$prefix}news.news_id
+                                            group by nt.news_id
                                         ) ELSE {$prefix}media.path END as image_url
                                 "),
                                 'news.object_type',
@@ -397,13 +396,12 @@ class NewsAPIController extends ControllerAPI
                                 CASE WHEN {$prefix}news_translations.description = '' THEN {$prefix}news.description ELSE {$prefix}news_translations.description END as description,
                                 CASE WHEN {$prefix}media.path is null THEN (
                                         select m.path
-                                        from {$prefix}news n
-                                        join {$prefix}news_translations nt
-                                            on nt.news_id = n.news_id
+                                        from {$prefix}news_translations nt
                                         join {$prefix}media m
                                             on m.object_id = nt.news_translation_id
                                             and m.media_name_long = 'news_translation_image_orig'
-                                        limit 1
+                                        where nt.news_id = {$prefix}news.news_id
+                                        group by nt.news_id
                                     ) ELSE {$prefix}media.path END as original_media_path
                             "),
                             'news.object_type',

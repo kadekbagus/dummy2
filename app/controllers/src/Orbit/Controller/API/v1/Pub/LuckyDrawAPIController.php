@@ -106,13 +106,12 @@ class LuckyDrawAPIController extends IntermediateBaseController
                         CASE WHEN {$prefix}lucky_draw_translations.description = '' THEN {$prefix}lucky_draws.description ELSE {$prefix}lucky_draw_translations.description END as description,
                         CASE WHEN {$prefix}media.path is null THEN (
                                 select m.path
-                                from {$prefix}lucky_draws ld
-                                join {$prefix}lucky_draw_translations ldt
-                                    on ldt.lucky_draw_id = ld.lucky_draw_id
+                                from {$prefix}lucky_draw_translations ldt
                                 join {$prefix}media m
                                     on m.object_id = ldt.lucky_draw_translation_id
                                     and m.media_name_long = 'lucky_draw_translation_image_orig'
-                                limit 1
+                                where ldt.lucky_draw_id = {$prefix}lucky_draws.lucky_draw_id
+                                group by ldt.lucky_draw_id
                             ) ELSE {$prefix}media.path END as image_url,
                         name as mall_name
                     "),

@@ -735,13 +735,12 @@ class StoreAPIController extends ControllerAPI
                                 END AS is_started,
                                 CASE WHEN {$prefix}media.path is null THEN (
                                         select m.path
-                                        from {$prefix}news n
-                                        join {$prefix}news_translations nt
-                                            on nt.news_id = n.news_id
+                                        from {$prefix}news_translations nt
                                         join {$prefix}media m
                                             on m.object_id = nt.news_translation_id
                                             and m.media_name_long = 'news_translation_image_orig'
-                                        limit 1
+                                        where nt.news_id = {$prefix}news.news_id
+                                        group by nt.news_id
                                     ) ELSE {$prefix}media.path END as original_media_path
                             "))
                         ->join('news_translations', 'news_translations.news_id', '=', 'news.news_id')
@@ -762,17 +761,7 @@ class StoreAPIController extends ControllerAPI
             $promotions = DB::table('news')->select(
                         'news.news_id as campaign_id',
                         DB::Raw("
-                            CASE WHEN {$prefix}news_translations.news_name = '' THEN {$prefix}news.news_name ELSE {$prefix}news_translations.news_name END as campaign_name,
-                            CASE WHEN {$prefix}media.path is null THEN (
-                                    select m.path
-                                    from {$prefix}news n
-                                    join {$prefix}news_translations nt
-                                        on nt.news_id = n.news_id
-                                    join {$prefix}media m
-                                        on m.object_id = nt.news_translation_id
-                                        and m.media_name_long = 'news_translation_image_orig'
-                                    limit 1
-                                ) ELSE {$prefix}media.path END as original_media_path
+                            CASE WHEN {$prefix}news_translations.news_name = '' THEN {$prefix}news.news_name ELSE {$prefix}news_translations.news_name END as campaign_name
                         "),
                         'news.object_type as campaign_type',
                         // query for get status active based on timezone
@@ -803,7 +792,16 @@ class StoreAPIController extends ControllerAPI
                                     AND CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) between {$prefix}news.begin_date and {$prefix}news.end_date) > 0
                                 THEN 'true'
                                 ELSE 'false'
-                                END AS is_started
+                                END AS is_started,
+                                CASE WHEN {$prefix}media.path is null THEN (
+                                        select m.path
+                                        from {$prefix}news_translations nt
+                                        join {$prefix}media m
+                                            on m.object_id = nt.news_translation_id
+                                            and m.media_name_long = 'news_translation_image_orig'
+                                        where nt.news_id = {$prefix}news.news_id
+                                        group by nt.news_id
+                                    ) ELSE {$prefix}media.path END as original_media_path
                             "))
                         ->join('news_translations', 'news_translations.news_id', '=', 'news.news_id')
                         ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
@@ -824,16 +822,6 @@ class StoreAPIController extends ControllerAPI
             $coupons = DB::table('promotions')->select(DB::raw("
                                 {$prefix}promotions.promotion_id as campaign_id,
                                 CASE WHEN {$prefix}coupon_translations.promotion_name = '' THEN {$prefix}promotions.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as campaign_name,
-                                CASE WHEN {$prefix}media.path is null THEN (
-                                        select m.path
-                                        from {$prefix}promotions c
-                                        join {$prefix}coupon_translations ct
-                                            on ct.promotion_id = c.promotion_id
-                                        join {$prefix}media m
-                                            on m.object_id = ct.coupon_translation_id
-                                            and m.media_name_long = 'coupon_translation_image_orig'
-                                        limit 1
-                                    ) ELSE {$prefix}media.path END as original_media_path,
                                 'coupon' as campaign_type,
                                 CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
                                 THEN {$prefix}campaign_status.campaign_status_name
@@ -860,7 +848,16 @@ class StoreAPIController extends ControllerAPI
                                         AND CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) between {$prefix}promotions.begin_date and {$prefix}promotions.end_date) > 0
                                 THEN 'true'
                                 ELSE 'false'
-                                END AS is_started
+                                END AS is_started,
+                                CASE WHEN {$prefix}media.path is null THEN (
+                                        select m.path
+                                        from {$prefix}coupon_translations ct
+                                        join {$prefix}media m
+                                            on m.object_id = ct.coupon_translation_id
+                                            and m.media_name_long = 'coupon_translation_image_orig'
+                                        where ct.promotion_id = {$prefix}promotions.promotion_id
+                                        group by ct.promotion_id
+                                    ) ELSE {$prefix}media.path END as original_media_path
                             "))
                             ->leftJoin('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
                             ->leftJoin('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
