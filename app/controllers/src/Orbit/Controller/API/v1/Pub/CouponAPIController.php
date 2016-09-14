@@ -1799,7 +1799,7 @@ class CouponAPIController extends ControllerAPI
             $skip = PaginationNumber::parseSkipFromGet();
             $couponLocations->skip($skip);
 
-            $couponLocations->orderBy('name', 'asc');
+            $couponLocations->orderBy($sort_by, $sort_mode);
 
             $listOfRec = $couponLocations->get();
 
