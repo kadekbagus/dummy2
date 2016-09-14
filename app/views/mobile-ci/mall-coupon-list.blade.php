@@ -106,6 +106,7 @@
             // validate user login
             if ('wallet' === helperObject.coupon_type && !Boolean({{$is_logged_in}})) {
                 messageNotLogin();
+                loadMoreX('my-coupon', listOfIDs, helperObject);
                 helperObject.isProgress = false;
                 return;
             }
