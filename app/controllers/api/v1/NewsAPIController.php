@@ -724,7 +724,7 @@ class NewsAPIController extends ControllerAPI
             }
 
             $updatednews = News::with('tenants')->excludeDeleted()->where('news_id', $news_id)->first();
-            $beforeUpdatedNews = News::with('translations','media')->excludeDeleted()->where('news_id', $news_id)->first();
+            $beforeUpdatedNews = News::with('translations.language', 'translations.media', 'ages.ageRange', 'genders', 'keywords')->excludeDeleted()->where('news_id', $news_id)->first();
 
             $statusdb = $updatednews->status;
             $enddatedb = $updatednews->end_date;
@@ -1157,7 +1157,7 @@ class NewsAPIController extends ControllerAPI
             }
 
             $tempContent = new TemporaryContent();
-            $tempContent->contents = serialize($beforeUpdatedNews->toArray());
+            $tempContent->contents = serialize($beforeUpdatedNews);
             $tempContent->save();
 
             Event::fire('orbit.news.postupdatenews.after.save', array($this, $updatednews));
@@ -1182,7 +1182,7 @@ class NewsAPIController extends ControllerAPI
                     ->setNotes($activityNotes)
                     ->responseOK();
 
-            Event::fire('orbit.news.postupdatenews.after.commit', array($this, $updatednews, $beforeUpdatedNews));
+            Event::fire('orbit.news.postupdatenews.after.commit', array($this, $updatednews, $tempContent->temporary_content_id));
         } catch (ACLForbiddenException $e) {
             Event::fire('orbit.news.postupdatenews.access.forbidden', array($this, $e));
 

@@ -126,7 +126,7 @@ Event::listen('orbit.news.postnewnews.after.commit', function($controller, $news
 {
 
     $timestamp = new DateTime($news->created_at);
-    $date = $timestamp->format('d F Y H:i');
+    $date = $timestamp->format('d F Y H:i').' (UTC)';
 
     if ($news->object_type === 'promotion') {
         $campaignType = 'Promotion';
@@ -134,31 +134,16 @@ Event::listen('orbit.news.postnewnews.after.commit', function($controller, $news
         $campaignType = 'News';
     }
 
-    $data = array(
-        'campaignType'      => $campaignType,
-        'campaignName'      => $news->news_name,
-        'pmpUser'           => $controller->api->user->username,
-        'eventType'         => 'created',
-        'date'              => $date
-    );
-
-    $mailviews = array(
-        'html' => 'emails.campaign-auto-email.campaign-html',
-        'text' => 'emails.campaign-auto-email.campaign-text'
-    );
-
-    Mail::queue($mailviews, $data, function($message) use ($data)
-    {
-        $emailconf = Config::get('orbit.campaign_auto_email.sender');
-        $from = $emailconf['email'];
-        $name = $emailconf['name'];
-
-        $email = Config::get('orbit.campaign_auto_email.email_list');
-        $subject = $data['campaignType'].' - '.$data['campaignName'].' has just been created';
-        $message->from($from, $name);
-        $message->subject($subject);
-        $message->to($email);
-    });
+    // Send email process to the queue
+    Queue::push('Orbit\\Queue\\CampaignMail', [
+        'campaignType'       => $campaignType,
+        'campaignName'       => $news->news_name,
+        'pmpUser'            => $controller->api->user->username,
+        'eventType'          => 'created',
+        'date'               => $date,
+        'campaignId'         => $news->news_id,
+        'mode'               => 'create'
+    ]);
 
 });
 
@@ -172,57 +157,27 @@ Event::listen('orbit.news.postnewnews.after.commit', function($controller, $news
  * @param NewsAPIController $controller
  * @param News $news
  */
-Event::listen('orbit.news.postupdatenews.after.commit', function($controller, $news, $newsBeforeUpdate)
+Event::listen('orbit.news.postupdatenews.after.commit', function($controller, $news, $temporaryContentId)
 {
-    // $afterUpdatedNews = News::excludeDeleted()->where('news_id', $news->news_id)->first();
-    // $arrDiff = array_diff($afterUpdatedNews->toArray(), $newsBeforeUpdate->toArray());
-    // $diff = array();
-    // foreach ($arrDiff as $key => $value) {
+    $timestamp = new DateTime($news->updated_at);
+    $date = $timestamp->format('d F Y H:i').' (UTC)';
 
-    //     if ($key != 'updated_at') {
-    //         $different = array();
-    //         $different['column'] = $key;
-    //         $different['before'] = $newsBeforeUpdate[$key];
-    //         $different['after'] = $afterUpdatedNews[$key];
+    if ($news->object_type === 'promotion') {
+        $campaignType = 'Promotion';
+    } else {
+        $campaignType = 'News';
+    }
 
-    //         array_push($diff, $different);
-    //     }
-    // }
-
-    // $timestamp = new DateTime($afterUpdatedNews->updated_at);
-    // $date = $timestamp->format('d F Y H:i').' (UTC)';
-
-    // if ($afterUpdatedNews->object_type === 'promotion') {
-    //     $campaignType = 'Promotion';
-    // } else {
-    //     $campaignType = 'News';
-    // }
-
-    // $data = array(
-    //     'campaignType'      => $campaignType,
-    //     'campaignName'      => $afterUpdatedNews->news_name,
-    //     'pmpUser'           => $controller->api->user->username,
-    //     'eventType'         => 'updated',
-    //     'date'              => $date,
-    //     'updates'           => $diff,
-    // );
-
-    // $mailviews = array(
-    //     'html' => 'emails.campaign-auto-email.campaign-update-html',
-    //     'text' => 'emails.campaign-auto-email.campaign-update-text'
-    // );
-
-    // Mail::queue($mailviews, $data, function($message) use ($data)
-    // {
-    //     $emailconf = Config::get('orbit.campaign_auto_email.sender');
-    //     $from = $emailconf['email'];
-    //     $name = $emailconf['name'];
-
-    //     $email = Config::get('orbit.campaign_auto_email.email_list');
-    //     $subject = $data['campaignType'].' - '.$data['campaignName'].' has just been updated';
-    //     $message->from($from, $name);
-    //     $message->subject($subject);
-    //     $message->to($email);
-    // });
+    // Send email process to the queue
+    Queue::push('Orbit\\Queue\\CampaignMail', [
+        'campaignType'       => $campaignType,
+        'campaignName'       => $news->news_name,
+        'pmpUser'            => $controller->api->user->username,
+        'eventType'          => 'updated',
+        'date'               => $date,
+        'campaignId'         => $news->news_id,
+        'temporaryContentId' => $temporaryContentId,
+        'mode'               => 'update'
+    ]);
 
 });
