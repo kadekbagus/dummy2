@@ -1473,8 +1473,17 @@ class CouponAPIController extends ControllerAPI
                     $join->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
                     $join->where('issued_coupons.status', '=', 'active');
                 })
-                ->leftJoin(DB::raw("{$prefix}media as img"), function($q) {
-                    $q->on(DB::raw('img.object_id'), '=', 'merchants.merchant_id')
+                ->leftJoin(DB::raw("{$prefix}media as img"), function($q) use ($prefix) {
+                    $q->on(DB::raw('img.object_id'), '=', DB::Raw("
+                                                        (select CASE WHEN t.object_type = 'tenant'
+                                                                    THEN m.merchant_id
+                                                                    ELSE t.merchant_id
+                                                                END as mall_id
+                                                        from orb_merchants t
+                                                        join orb_merchants m
+                                                            on m.merchant_id = t.parent_id
+                                                        where t.merchant_id = {$prefix}merchants.merchant_id)
+                                            "))
                         ->on(DB::raw('img.media_name_long'), 'IN', DB::raw("('mall_logo_orig', 'retailer_logo_orig')"));
                 })
                 ->where('issued_coupons.user_id', $user->user_id)
@@ -1774,8 +1783,17 @@ class CouponAPIController extends ControllerAPI
                                     ->leftJoin('promotions', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                                     ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
                                     ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
-                                    ->leftJoin(DB::raw("{$prefix}media as img"), function($q) {
-                                        $q->on(DB::raw('img.object_id'), '=', 'merchants.merchant_id')
+                                    ->leftJoin(DB::raw("{$prefix}media as img"), function($q) use ($prefix) {
+                                        $q->on(DB::raw('img.object_id'), '=', DB::Raw("
+                                                        (select CASE WHEN t.object_type = 'tenant'
+                                                                    THEN m.merchant_id
+                                                                    ELSE t.merchant_id
+                                                                END as mall_id
+                                                        from orb_merchants t
+                                                        join orb_merchants m
+                                                            on m.merchant_id = t.parent_id
+                                                        where t.merchant_id = {$prefix}merchants.merchant_id)
+                                            "))
                                             ->on(DB::raw('img.media_name_long'), 'IN', DB::raw("('mall_logo_orig', 'retailer_logo_orig')"));
                                     })
                                     ->where('promotions.promotion_id', $couponId)
