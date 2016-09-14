@@ -400,12 +400,16 @@ class StoreAPIController extends ControllerAPI
                                 'media.path',
                                 'media.object_id'
                             );
-                    }, 'mediaImage' => function ($q) {
+                    }, 'mediaImageOrig' => function ($q) {
                         $q->select(
                                 'media.path',
                                 'media.object_id'
-                            )
-                            ->where('media.media_name_long', '=', 'retailer_image_cropped_default');
+                            );
+                    }, 'mediaImageCroppedDefault' => function ($q) {
+                        $q->select(
+                                'media.path',
+                                'media.object_id'
+                            );
                     }])
                 ->join(DB::raw("(select merchant_id, status, parent_id from {$prefix}merchants where object_type = 'mall') as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                 ->leftJoin('merchant_translations', 'merchant_translations.merchant_id', '=', 'merchants.merchant_id')
