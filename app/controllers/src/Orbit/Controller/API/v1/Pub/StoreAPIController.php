@@ -665,7 +665,7 @@ class StoreAPIController extends ControllerAPI
     {
         $httpCode = 200;
         try {
-            $sort_by = OrbitInput::get('sortby', 'merchants.name');
+            $sort_by = OrbitInput::get('sortby', 'campaign_name');
             $sort_mode = OrbitInput::get('sortmode','asc');
             $store_name = OrbitInput::get('store_name');
             $keyword = OrbitInput::get('keyword');
@@ -888,6 +888,8 @@ class StoreAPIController extends ControllerAPI
 
             $skip = PaginationNumber::parseSkipFromGet();
             $campaign->skip($skip);
+
+            $campaign->orderBy($sort_by, $sort_mode);
 
             $listcampaign = $campaign->get();
 

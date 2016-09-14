@@ -585,7 +585,7 @@ class NewsAPIController extends ControllerAPI
             $skip = PaginationNumber::parseSkipFromGet();
             $newsLocations->skip($skip);
 
-            $newsLocations->orderBy('name', 'asc');
+            $newsLocations->orderBy($sort_by, $sort_mode);
 
             $listOfRec = $newsLocations->get();
 
