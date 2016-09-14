@@ -21,9 +21,13 @@ use DB;
 use Validator;
 use Language;
 use Coupon;
+use Activity;
+use Orbit\Helper\Net\SessionPreparer;
+use Orbit\Helper\Session\UserGetter;
 
 class StoreAPIController extends ControllerAPI
 {
+    protected $valid_language = NULL;
     /**
      * GET - get all store in all mall, group by name
      *
@@ -46,11 +50,38 @@ class StoreAPIController extends ControllerAPI
             $sort_by = OrbitInput::get('sortby', 'name');
             $sort_mode = OrbitInput::get('sortmode','asc');
             $usingDemo = Config::get('orbit.is_demo', FALSE);
+            $language = OrbitInput::get('language', 'id');
+
+            $this->registerCustomValidation();
+            $validator = Validator::make(
+                array(
+                    'language' => $language,
+                ),
+                array(
+                    'language' => 'required|orbit.empty.language_default',
+                )
+            );
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $valid_language = $this->valid_language;
 
             $prefix = DB::getTablePrefix();
 
-            $store = Tenant::select('merchants.merchant_id', 'merchants.name', 'merchants.description', DB::raw("(select path from {$prefix}media where media_name_long = 'retailer_logo_orig' and object_id = {$prefix}merchants.merchant_id) as logo_url"))
+            $store = Tenant::select(
+                    'merchants.merchant_id',
+                    'merchants.name',
+                    DB::Raw("
+                            CASE WHEN {$prefix}merchant_translations.description = '' THEN {$prefix}merchants.name ELSE {$prefix}merchant_translations.description END as description
+                        "),
+                    DB::raw("(select path from {$prefix}media where media_name_long = 'retailer_logo_orig' and object_id = {$prefix}merchants.merchant_id) as logo_url"))
                 ->join(DB::raw("(select merchant_id, status, parent_id from {$prefix}merchants where object_type = 'mall') as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
+                ->leftJoin('merchant_translations', 'merchant_translations.merchant_id', '=', 'merchants.merchant_id')
+                ->where('merchant_translations.merchant_language_id', $valid_language->language_id)
                 ->where('merchants.status', 'active')
                 ->whereRaw("oms.status = 'active'")
                 ->orderBy('merchants.name', 'asc')
@@ -314,15 +345,25 @@ class StoreAPIController extends ControllerAPI
     public function getStoreDetail()
     {
         $httpCode = 200;
-        try {
-            $storename = OrbitInput::get('store_name');
+        $activity = Activity::mobileci()->setActivityType('view');
+        $user = NULL;
 
+        try {
+            $this->session = SessionPreparer::prepareSession();
+            $user = UserGetter::getLoggedInUserOrGuest($this->session);
+
+            $storename = OrbitInput::get('store_name');
+            $language = OrbitInput::get('language', 'id');
+
+            $this->registerCustomValidation();
             $validator = Validator::make(
                 array(
                     'store_name' => $storename,
+                    'language' => $language,
                 ),
                 array(
                     'store_name' => 'required',
+                    'language' => 'required|orbit.empty.language_default',
                 ),
                 array(
                     'required' => 'Store name is required',
@@ -335,17 +376,25 @@ class StoreAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
+            $valid_language = $this->valid_language;
+
             $prefix = DB::getTablePrefix();
 
             $store = Tenant::select('merchants.merchant_id',
                                 'merchants.name',
-                                'merchants.description',
+                                DB::Raw("
+                                        CASE WHEN {$prefix}merchant_translations.description = '' THEN {$prefix}merchants.name ELSE {$prefix}merchant_translations.description END as description
+                                    "),
                                 'merchants.url'
                             )
-                ->with(['categories' => function ($q) {
+                ->with(['categories' => function ($q) use ($valid_language, $prefix) {
                         $q->select(
-                                'category_name'
-                            );
+                                DB::Raw("
+                                        CASE WHEN {$prefix}category_translations.category_name = '' THEN {$prefix}categories.category_name ELSE {$prefix}category_translations.category_name END as category_name
+                                    ")
+                            )
+                            ->leftJoin('category_translations', 'category_translations.category_id', '=', 'categories.category_id')
+                            ->where('category_translations.merchant_language_id', $valid_language->language_id);
                     }, 'mediaLogo' => function ($q) {
                         $q->select(
                                 'media.path',
@@ -355,15 +404,27 @@ class StoreAPIController extends ControllerAPI
                         $q->select(
                                 'media.path',
                                 'media.object_id'
-                            )
-                            ->where('media.media_name_long', '=', 'retailer_image_cropped_default');
+                            );
                     }])
                 ->join(DB::raw("(select merchant_id, status, parent_id from {$prefix}merchants where object_type = 'mall') as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
+                ->leftJoin('merchant_translations', 'merchant_translations.merchant_id', '=', 'merchants.merchant_id')
+                ->where('merchant_translations.merchant_language_id', $valid_language->language_id)
                 ->where('merchants.status', 'active')
                 ->whereRaw("oms.status = 'active'")
                 ->where('merchants.name', $storename)
-                ->orderBy('created_at')
+                ->orderBy('merchants.created_at')
                 ->first();
+
+            $activityNotes = sprintf('Page viewed: Landing Page Store Detail Page');
+            $activity->setUser($user)
+                ->setActivityName('view_landing_page_store_detail')
+                ->setActivityNameLong('View GoToMalls Store Detail')
+                ->setObject($store)
+                ->setNews($store)
+                ->setModuleName('Store')
+                ->setNotes($activityNotes)
+                ->responseOK()
+                ->save();
 
             $this->response->data = $store;
         } catch (ACLForbiddenException $e) {
@@ -603,24 +664,21 @@ class StoreAPIController extends ControllerAPI
     {
         $httpCode = 200;
         try {
-            $sort_by = OrbitInput::get('sortby', 'merchants.name');
+            $sort_by = OrbitInput::get('sortby', 'campaign_name');
             $sort_mode = OrbitInput::get('sortmode','asc');
             $store_name = OrbitInput::get('store_name');
             $keyword = OrbitInput::get('keyword');
+            $language = OrbitInput::get('language', 'id');
 
-            $languageEnId = null;
-            $language = Language::where('name', 'en')->first();
-
-            if (! empty($language)) {
-                $languageEnId = $language->language_id;
-            }
-
+            $this->registerCustomValidation();
             $validator = Validator::make(
                 array(
                     'store_name' => $store_name,
+                    'language' => $language,
                 ),
                 array(
                     'store_name' => 'required',
+                    'language' => 'required|orbit.empty.language_default',
                 ),
                 array(
                     'required' => 'Store name is required',
@@ -633,12 +691,16 @@ class StoreAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
+            $valid_language = $this->valid_language;
+
             $prefix = DB::getTablePrefix();
 
             // get news list
             $news = DB::table('news')->select(
                         'news.news_id as campaign_id',
-                        'news_translations.news_name as campaign_name',
+                        DB::Raw("
+                                CASE WHEN {$prefix}news_translations.news_name = '' THEN {$prefix}news.news_name ELSE {$prefix}news_translations.news_name END as campaign_name
+                            "),
                         'news.object_type as campaign_type',
                         // query for get status active based on timezone
                         DB::raw("
@@ -670,7 +732,15 @@ class StoreAPIController extends ControllerAPI
                                 THEN 'true'
                                 ELSE 'false'
                                 END AS is_started,
-                                {$prefix}media.path as original_media_path
+                                CASE WHEN {$prefix}media.path is null THEN (
+                                        select m.path
+                                        from {$prefix}news_translations nt
+                                        join {$prefix}media m
+                                            on m.object_id = nt.news_translation_id
+                                            and m.media_name_long = 'news_translation_image_orig'
+                                        where nt.news_id = {$prefix}news.news_id
+                                        group by nt.news_id
+                                    ) ELSE {$prefix}media.path END as original_media_path
                             "))
                         ->join('news_translations', 'news_translations.news_id', '=', 'news.news_id')
                         ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
@@ -681,16 +751,17 @@ class StoreAPIController extends ControllerAPI
                             $q->on('media.media_name_long', '=', DB::raw("'news_translation_image_orig'"));
                         })
                         ->where('merchants.name', $store_name)
-                        ->where('news_translations.merchant_language_id', '=', $languageEnId)
+                        ->where('news_translations.merchant_language_id', '=', $valid_language->language_id)
                         ->where('news.object_type', '=', 'news')
-                        ->where('news_translations.news_name', '!=', '')
                         ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                         ->groupBy('campaign_id')
-                        ->orderBy('news_translations.news_name', 'asc');
+                        ->orderBy('news.created_at', 'desc');
 
             $promotions = DB::table('news')->select(
                         'news.news_id as campaign_id',
-                        'news_translations.news_name as campaign_name',
+                        DB::Raw("
+                            CASE WHEN {$prefix}news_translations.news_name = '' THEN {$prefix}news.news_name ELSE {$prefix}news_translations.news_name END as campaign_name
+                        "),
                         'news.object_type as campaign_type',
                         // query for get status active based on timezone
                         DB::raw("
@@ -721,7 +792,15 @@ class StoreAPIController extends ControllerAPI
                                 THEN 'true'
                                 ELSE 'false'
                                 END AS is_started,
-                                {$prefix}media.path as original_media_path
+                                CASE WHEN {$prefix}media.path is null THEN (
+                                        select m.path
+                                        from {$prefix}news_translations nt
+                                        join {$prefix}media m
+                                            on m.object_id = nt.news_translation_id
+                                            and m.media_name_long = 'news_translation_image_orig'
+                                        where nt.news_id = {$prefix}news.news_id
+                                        group by nt.news_id
+                                    ) ELSE {$prefix}media.path END as original_media_path
                             "))
                         ->join('news_translations', 'news_translations.news_id', '=', 'news.news_id')
                         ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
@@ -732,17 +811,16 @@ class StoreAPIController extends ControllerAPI
                             $q->on('media.media_name_long', '=', DB::raw("'news_translation_image_orig'"));
                         })
                         ->where('merchants.name', $store_name)
-                        ->where('news_translations.merchant_language_id', '=', $languageEnId)
+                        ->where('news_translations.merchant_language_id', '=', $valid_language->language_id)
                         ->where('news.object_type', '=', 'promotion')
-                        ->where('news_translations.news_name', '!=', '')
                         ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                         ->groupBy('campaign_id')
-                        ->orderBy('news_translations.news_name', 'asc');
+                        ->orderBy('news.created_at', 'desc');
 
             // get coupon list
             $coupons = DB::table('promotions')->select(DB::raw("
                                 {$prefix}promotions.promotion_id as campaign_id,
-                                {$prefix}coupon_translations.promotion_name as campaign_name,
+                                CASE WHEN {$prefix}coupon_translations.promotion_name = '' THEN {$prefix}promotions.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as campaign_name,
                                 'coupon' as campaign_type,
                                 CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
                                 THEN {$prefix}campaign_status.campaign_status_name
@@ -770,7 +848,15 @@ class StoreAPIController extends ControllerAPI
                                 THEN 'true'
                                 ELSE 'false'
                                 END AS is_started,
-                                {$prefix}media.path as original_media_path
+                                CASE WHEN {$prefix}media.path is null THEN (
+                                        select m.path
+                                        from {$prefix}coupon_translations ct
+                                        join {$prefix}media m
+                                            on m.object_id = ct.coupon_translation_id
+                                            and m.media_name_long = 'coupon_translation_image_orig'
+                                        where ct.promotion_id = {$prefix}promotions.promotion_id
+                                        group by ct.promotion_id
+                                    ) ELSE {$prefix}media.path END as original_media_path
                             "))
                             ->leftJoin('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
                             ->leftJoin('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
@@ -782,11 +868,10 @@ class StoreAPIController extends ControllerAPI
                                 $q->on('media.media_name_long', '=', DB::raw("'coupon_translation_image_orig'"));
                             })
                             ->where('merchants.name', $store_name)
-                            ->where('coupon_translations.merchant_language_id', '=', $languageEnId)
-                            ->where('coupon_translations.promotion_name', '!=', '')
+                            ->where('coupon_translations.merchant_language_id', '=', $valid_language->language_id)
                             ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                             ->groupBy('campaign_id')
-                            ->orderBy('coupon_translations.promotion_name', 'asc');
+                            ->orderBy(DB::raw("{$prefix}promotions.created_at"), 'desc');
 
             $result = $news->unionAll($promotions)->unionAll($coupons);
 
@@ -802,6 +887,8 @@ class StoreAPIController extends ControllerAPI
 
             $skip = PaginationNumber::parseSkipFromGet();
             $campaign->skip($skip);
+
+            $campaign->orderBy($sort_by, $sort_mode);
 
             $listcampaign = $campaign->get();
 
@@ -852,6 +939,24 @@ class StoreAPIController extends ControllerAPI
         $output = $this->render($httpCode);
 
         return $output;
+    }
+
+    protected function registerCustomValidation() {
+        // Check language is exists
+        Validator::extend('orbit.empty.language_default', function ($attribute, $value, $parameters) {
+            $lang_name = $value;
+
+            $language = Language::where('status', '=', 'active')
+                            ->where('name', $lang_name)
+                            ->first();
+
+            if (empty($language)) {
+                return FALSE;
+            }
+
+            $this->valid_language = $language;
+            return TRUE;
+        });
     }
 
     protected function quote($arg)

@@ -26,6 +26,7 @@ class AccountAPIController extends ControllerAPI
     protected $valid_role    = NULL;
     protected $valid_country = NULL;
     protected $valid_account_type = NULL;
+    protected $allow_select_all_tenant = ['Dominopos', '3rd Party', 'Master'];
 
     /**
      * The main method
@@ -120,7 +121,8 @@ class AccountAPIController extends ControllerAPI
                 'Merchant'  => 'tenant',
                 'Agency'    => 'mall_tenant',
                 '3rd Party' => 'mall',
-                'Dominopos' => 'mall_tenant'
+                'Dominopos' => 'mall_tenant',
+                'Master'    => 'mall_tenant'
             ];
 
         $get_tenants = CampaignLocation::excludeDeleted();
@@ -554,7 +556,7 @@ class AccountAPIController extends ControllerAPI
 
         $records = [];
         foreach ($pmpAccounts as $row) {
-            if ($row->campaignAccount->is_link_to_all === 'Y') {
+            if ($row->campaignAccount->is_link_to_all === 'Y' && in_array($row->type_name, $this->allow_select_all_tenant)) {
                 $tenantAtMallArray = $this->getTenantAtMallArray($row->type_name);
             } else {
                 $tenantAtMallArray = $this->getTenantAtMallArray($row->type_name, $row->userTenants()->lists('merchant_id'));
@@ -759,25 +761,30 @@ class AccountAPIController extends ControllerAPI
                 'country_id'         => 'required|orbit.empty.country',
                 'merchant_ids'       => 'required|array|exists:merchants,merchant_id|orbit.exists.link_to_tenant',
                 'user_password'      => 'required|min:6',
-                'role_name'          => 'required|in:Campaign Owner|orbit.empty.role',
+                'role_name'          => 'required|in:Campaign Owner,Campaign Admin|orbit.empty.role:' . $account_type->type_name,
             ];
 
             if ($select_all_tenants === 'Y') {
-                if ($account_type->type_name === 'Dominopos' || $account_type->type_name === '3rd Party') {
+                if (in_array($account_type->type_name, $this->allow_select_all_tenant)) {
                     unset($validation_data['merchant_ids']);
                     unset($validation_error['merchant_ids']);
                 }
             } else {
                 // for handle empty string cause select all tenant is not required
                 $select_all_tenants = 'N';
+
+                // account type master must linkt to all tenants
+                if ($account_type->type_name === 'Master') {
+                    OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.access.master_link_to_tenant'));
+                }
             }
 
             $validator = Validator::make(
                 $validation_data,
                 $validation_error,
                 array(
-                    'user_password.min' => 'Password must more than 5 character',
-                    'orbit.empty.role'  => 'The Role you specified is not found',
+                    'user_password.min' => Lang::get('validation.orbit.formaterror.min'),
+                    'orbit.empty.role' => Lang::get('validation.orbit.empty.role_name')
                 )
             );
 
@@ -1050,12 +1057,12 @@ class AccountAPIController extends ControllerAPI
                 'city'               => 'required',
                 'country_id'         => 'required|orbit.empty.country',
                 'merchant_ids'       => 'required|array|exists:merchants,merchant_id|orbit.exists.link_to_tenant',
-                'role_name'          => 'required|in:Campaign Owner,Campaign Employee|orbit.empty.role',
+                'role_name'          => 'required|in:Campaign Owner,Campaign Employee,Campaign Admin|orbit.empty.role:' . $account_type->type_name,
                 'user_password'      => 'min:6',
             ];
 
             if ($select_all_tenants === 'Y') {
-                if ($account_type->type_name === 'Dominopos' || $account_type->type_name === '3rd Party') {
+                if (in_array($account_type->type_name, $this->allow_select_all_tenant)) {
                     unset($validation_data['merchant_ids']);
                     unset($validation_error['merchant_ids']);
 
@@ -1066,13 +1073,18 @@ class AccountAPIController extends ControllerAPI
 
                     $del_user_merchant = UserMerchant::whereIn('user_id', $pmp_account)->delete();
                 }
+            } else {
+                // account type master must linkt to all tenants
+                if ($account_type->type_name === 'Master') {
+                    OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.access.master_link_to_tenant'));
+                }
             }
 
             $validator = Validator::make(
                 $validation_data,
                 $validation_error,
                 array(
-                    'orbit.empty.role'  => 'The Role you specified is not found',
+                    'orbit.empty.role'  => Lang::get('validation.orbit.empty.role_name')
                 )
             );
 
@@ -1496,6 +1508,12 @@ class AccountAPIController extends ControllerAPI
 
         // Check role, it should not empty
         Validator::extend('orbit.empty.role', function ($attribute, $value, $parameters) {
+            $account_type = $parameters[0];
+
+            if ($account_type === 'Master' && $value !== 'Campaign Admin') {
+                return FALSE;
+            }
+
             $role = Role::where('role_name', $value)
                         ->first();
 
@@ -1592,11 +1610,10 @@ class AccountAPIController extends ControllerAPI
             $select_all_tenants = $value;
 
             if ($select_all_tenants === 'Y') {
-                if ($type_name === 'Dominopos' || $type_name === '3rd Party') {
+                if (in_array($type_name, $this->allow_select_all_tenant)) {
                     return TRUE;
-                } else {
-                    return FALSE;
                 }
+                return FALSE;
             }
 
             return TRUE;

@@ -165,6 +165,7 @@ return array(
             'wrongmasterpassword'    => 'The master password is incorrect',
             'agreement'              => 'Agreement is not accepted yet',
             'select_all_tenants'     => 'You do not have permission to select all tenants',
+            'master_link_to_tenant'  => 'Master must link to all tenants',
         ),
         'empty' => array(
             'age'                  => 'The Age Range ID you specified is not found',
@@ -173,6 +174,7 @@ return array(
             'is_all_age'           => 'The All Age must be Y or N',
             'status_link_to'       => 'The Link To must be Y or N',
             'role'                 => 'The Role ID you specified is not found',
+            'role_name'            => 'The Role you specified is not found',
             'consumer_role'        => 'The Consumer role does not exist',
             'token'                => 'The token you specified is no longer available',
             'user'                 => 'The User ID you specified is not found',

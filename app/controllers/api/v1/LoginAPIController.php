@@ -214,6 +214,10 @@ class LoginAPIController extends ControllerAPI
                 $mall = Mall::excludeDeleted()
                             ->with('timezone')
                             ->get();
+
+                if(($key = array_search('pmp_employee', $menus)) !== false) {
+                    unset($menus[$key]);
+                }
             }
 
             $user->mall = $mall;

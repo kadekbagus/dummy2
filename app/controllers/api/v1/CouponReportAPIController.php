@@ -1560,8 +1560,6 @@ class CouponReportAPIController extends ControllerAPI
                 OrbitInput::get('merchant_id', function($mallId) use ($coupons) {
                     $coupons->where('promotions.merchant_id', $mallId);
                 });
-            } else {
-                $coupons->where('promotions.merchant_id', $configMallId);
             }
 
             // Filter by Promotion ID

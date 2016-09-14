@@ -23,7 +23,7 @@ class CouponAPIController extends ControllerAPI
     protected $returnBuilder = FALSE;
 
     protected $couponViewRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee', 'campaign admin'];
-    protected $couponModifiyRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign admin', 'campaign employee'];
+    protected $couponModifiyRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee'];
     protected $couponModifiyRolesWithConsumer = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign admin', 'consumer'];
 
     /**
@@ -1064,6 +1064,7 @@ class CouponAPIController extends ControllerAPI
             }
 
             $updatedcoupon = Coupon::where('promotion_id', $promotion_id)->first();
+            $beforeUpdatedCoupon = Coupon::where('promotion_id', $promotion_id)->first();
 
             $statusdb = $updatedcoupon->status;
             $enddatedb = $updatedcoupon->end_date;
@@ -1754,7 +1755,7 @@ class CouponAPIController extends ControllerAPI
                     ->setNotes($activityNotes)
                     ->responseOK();
 
-            Event::fire('orbit.coupon.postupdatecoupon.after.commit', array($this, $updatedcoupon));
+            Event::fire('orbit.coupon.postupdatecoupon.after.commit', array($this, $updatedcoupon, $beforeUpdatedCoupon));
         } catch (ACLForbiddenException $e) {
             Event::fire('orbit.coupon.postupdatecoupon.access.forbidden', array($this, $e));
 
@@ -1824,7 +1825,7 @@ class CouponAPIController extends ControllerAPI
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = null;
+            $this->response->data = [$e->getMessage(), $e->getFile(), $e->getLine()];
 
             // Rollback the changes
             $this->rollBack();
