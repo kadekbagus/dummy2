@@ -108,11 +108,24 @@ class CouponAPIController extends ControllerAPI
                                             WHERE opt.promotion_id = {$prefix}promotions.promotion_id
                                             AND CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) between {$prefix}promotions.begin_date and {$prefix}promotions.end_date) > 0
                                 THEN 'true' ELSE 'false' END AS is_started"),
-                                DB::raw('media.path as image_url'))
+                                DB::raw("
+                                        CASE WHEN {$prefix}media.path is null THEN (
+                                                select m.path
+                                                from {$prefix}coupon_translations ct
+                                                join {$prefix}media m
+                                                    on m.object_id = ct.coupon_translation_id
+                                                    and m.media_name_long = 'coupon_translation_image_orig'
+                                                where ct.promotion_id = {$prefix}promotions.promotion_id
+                                                group by ct.promotion_id
+                                            ) ELSE {$prefix}media.path END as image_url
+                                    "))
                             ->leftJoin('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
                             ->leftJoin('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
                             ->leftJoin('languages', 'languages.language_id', '=', 'coupon_translations.merchant_language_id')
-                            ->leftJoin(DB::raw("( SELECT * FROM {$prefix}media WHERE media_name_long = 'coupon_translation_image_orig' ) as media"), DB::raw('media.object_id'), '=', 'coupon_translations.coupon_translation_id')
+                            ->leftJoin('media', function($q) {
+                                $q->on('media.object_id', '=', 'coupon_translations.coupon_translation_id');
+                                $q->on('media.media_name_long', '=', DB::raw("'coupon_translation_image_orig'"));
+                            })
                             ->where('coupon_translations.merchant_language_id', $valid_language->language_id)
                             ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                             ->groupBy('coupon_id');
