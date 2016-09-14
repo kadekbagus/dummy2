@@ -4,6 +4,7 @@
  * An API controller for managing Social Media Share Page.
  */
 use Log;
+use OrbitShop\API\v1\OrbitShopAPI;
 use SocMed\Facebook;
 use OrbitShop\API\v1\ControllerAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
@@ -111,7 +112,10 @@ class SocMedAPIController extends ControllerAPI
                     ->first();
 
         if (! is_object($promotion)) {
-            OrbitShopAPI::throwInvalidArgument('Promotion that you specify is not found');
+            // item not found
+            $data = $this->createEmptyViewData();
+
+            return View::make('mobile-ci.templates.fb-sharer', compact('data'));
         }
 
         $data = new stdclass();
@@ -204,7 +208,10 @@ class SocMedAPIController extends ControllerAPI
                     ->first();
 
         if (! is_object($news)) {
-            OrbitShopAPI::throwInvalidArgument('News that you specify is not found');
+            // item not found
+            $data = $this->createEmptyViewData();
+
+            return View::make('mobile-ci.templates.fb-sharer', compact('data'));
         }
 
         $data = new stdclass();
@@ -283,16 +290,21 @@ class SocMedAPIController extends ControllerAPI
                     )
                     ->join('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
                     ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
-                    ->leftJoin('media', 'media.object_id', '=', 'coupon_translations.coupon_translation_id')
+                    ->leftJoin('media', function($q) {
+                        $q->on('media.object_id', '=', 'coupon_translations.coupon_translation_id');
+                        $q->on('media.media_name_long', '=', DB::raw("'coupon_translation_image_orig'"));
+                    })
                     ->where('promotions.promotion_id', $id)
                     ->where('coupon_translations.merchant_language_id', '=', $languageEnId)
-                    ->where('media.media_name_long', 'coupon_translation_image_orig')
                     ->where('coupon_translations.promotion_name', '!=', '')
                     ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                     ->first();
 
         if (! is_object($coupon)) {
-            OrbitShopAPI::throwInvalidArgument('Coupon that you specify is not found');
+            // item not found
+            $data = $this->createEmptyViewData();
+
+            return View::make('mobile-ci.templates.fb-sharer', compact('data'));
         }
 
         $data = new stdclass();
@@ -416,5 +428,19 @@ class SocMedAPIController extends ControllerAPI
 
         // above methods did not result in any selected language, use mall default
         return null;
+    }
+
+    private function createEmptyViewData()
+    {
+        $data = new stdclass();
+        $data->url = 'http://www.gotomalls.com';
+        $data->title = '';
+        $data->description = '';
+        $data->mall = new stdclass();
+        $data->mall->name = 'Gotomalls.com';
+        $data->image_url = NULL;
+        $data->image_dimension = NULL;
+
+        return $data;
     }
 }

@@ -153,25 +153,48 @@ Route::filter('pub-fb-bot', function() {
     Config::set('orbit.session.availability.query_string', false);
     $gtmUrl = Config::get('orbit.shop.gtm_url');
     $FBChecker = new FBBotChecker();
+    $item = NULL;
     if (! $FBChecker->isFBCrawler()) {
         switch (Route::currentRouteName()) {
             case 'pub-share-promotion':
                 $type = 'promotions';
+
+                $item = News::excludeDeleted()
+                    ->where('object_type', 'promotion')
+                    ->where('news_id', Input::get('id', NULL))
+                    ->first();
+
                 break;
             case 'pub-share-news':
                 $type = 'news';
+
+                $item = News::excludeDeleted()
+                    ->where('object_type', 'news')
+                    ->where('news_id', Input::get('id', NULL))
+                    ->first();
+
                 break;
             case 'pub-share-coupon':
                 $type = 'coupons';
+
+                $item = Coupon::excludeDeleted()
+                    ->where('promotion_id', Input::get('id', NULL))
+                    ->first();
+
                 break;
             default:
                 $type = '';
+
                 break;
         }
 
-        // redirect user to gotomalls detail page
-        // needs to be updated if there are route changes on frontend side
-        $redirect_to = URL::to(sprintf('%s/#!/%s/detail/%s/%s', $gtmUrl, $type, Input::get('id'), rawurlencode(Input::get('name', ''))));
+        if (is_object($item)) {
+            // redirect user to gotomalls detail page
+            // needs to be updated if there are route changes on frontend side
+            $redirect_to = URL::to(sprintf('%s/#!/%s/detail/%s/%s', $gtmUrl, $type, Input::get('id'), rawurlencode(Input::get('name', ''))));
+        } else {
+            $redirect_to = URL::to($gtmUrl);
+        }
 
         return Redirect::to($redirect_to);
     }
