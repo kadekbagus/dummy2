@@ -80,13 +80,13 @@
             </tr>
           @endif
         @endforeach
-        <tr><td colspan="3"><h6>Image</h6></td></tr>
+
         @foreach($translation->media as $key3 => $media)
 
             @if($campaignType === 'News' || $campaignType === 'Promotion')
               @if($media->media_name_long === 'news_translation_image_orig')
                 <tr>
-                  <td>{{ 'path' }}</td>
+                  <td>{{ 'image' }}</td>
                   <td>{{ $media->path }}</td>
                   <td>{{ $campaign_after->translations[$key1]->media[$key3]->path }}</td>
                 </tr>
@@ -94,7 +94,7 @@
             @else
               @if($media->media_name_long === 'coupon_translation_image_orig')
                 <tr>
-                  <td>{{ 'path' }}</td>
+                  <td>{{ 'image' }}</td>
                   <td>{{ $media->path }}</td>
                   <td>{{ $campaign_after->translations[$key1]->media[$key3]->path }}</td>
                 </tr>
