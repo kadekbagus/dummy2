@@ -419,7 +419,7 @@ class StoreAPIController extends ControllerAPI
                                     ")
                             )
                             ->groupBy('categories.category_id')
-                            ->orderBy('categories.category_id')
+                            ->orderBy('category_name')
                             ;
                     }, 'mediaLogo' => function ($q) {
                         $q->select(
