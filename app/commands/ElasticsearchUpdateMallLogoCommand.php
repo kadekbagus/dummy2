@@ -50,7 +50,7 @@ class ElasticsearchUpdateMallLogoCommand extends Command
     {
         $prefix = DB::getTablePrefix();
         $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
-        $malls = Mall::active()->get();
+        $malls = Mall::excludeDeleted()->get();
 
         foreach ($malls as $mall) {
             try {
