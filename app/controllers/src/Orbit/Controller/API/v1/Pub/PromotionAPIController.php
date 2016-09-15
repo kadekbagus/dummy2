@@ -78,7 +78,7 @@ class PromotionAPIController extends ControllerAPI
 
             $prefix = DB::getTablePrefix();
 
-            $promotion = News::select(
+            $promotions = News::select(
                             'news.news_id as news_id',
                             DB::Raw("
                                 CASE WHEN {$prefix}news_translations.news_name = '' THEN {$prefix}news.news_name ELSE {$prefix}news_translations.news_name END as news_name,
@@ -122,11 +122,19 @@ class PromotionAPIController extends ControllerAPI
                             })
                             ->where('news_translations.merchant_language_id', '=', $valid_language->language_id)
                             ->where('news.object_type', '=', 'promotion')
-                            ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'");
+                            ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
+                            ->orderBy('news.news_id');
+
+            $querySql = $promotions->toSql();
+
+            $promotion = DB::table(DB::Raw("({$querySql}) as sub_query"))->mergeBindings($promotions->getQuery())
+                            ->select(DB::raw("sub_query.news_id"), 'news_name', 'description', DB::raw("sub_query.object_type"), 'image_url', 'campaign_status', 'is_started')
+                            ->groupBy(DB::Raw("sub_query.news_id"))
+                            ->orderBy($sort_by, $sort_mode);
 
             OrbitInput::get('keyword', function($keyword) use ($promotion, $prefix) {
                  if (! empty($keyword)) {
-                    $promotion = $promotion->leftJoin('keyword_object', 'news.news_id', '=', 'keyword_object.object_id')
+                    $promotion = $promotion->leftJoin('keyword_object', DB::Raw("sub_query.news_id"), '=', 'keyword_object.object_id')
                                 ->leftJoin('keywords', 'keyword_object.keyword_id', '=', 'keywords.keyword_id')
                                 ->where(function($query) use ($keyword, $prefix){
                                     //Search per word
@@ -134,14 +142,14 @@ class PromotionAPIController extends ControllerAPI
                                     foreach ($words as $key => $word) {
                                         if (strlen($word) === 1 && $word === '%') {
                                             $query->orWhere(function($q) use ($word, $prefix){
-                                                $q->whereRaw("{$prefix}news_translations.news_name like '%|{$word}%' escape '|'")
-                                                  ->orWhereRaw("{$prefix}news_translations.description like '%|{$word}%' escape '|'")
+                                                $q->whereRaw("sub_query.news_name like '%|{$word}%' escape '|'")
+                                                  ->orWhereRaw("sub_query.description like '%|{$word}%' escape '|'")
                                                   ->orWhereRaw("{$prefix}keywords.keyword like '%|{$word}%' escape '|'");
                                             });
                                         } else {
                                             $query->orWhere(function($q) use ($word, $prefix){
-                                                $q->where('news_translations.news_name', 'like', '%' . $word . '%')
-                                                  ->orWhere('news_translations.description', 'like', '%' . $word . '%')
+                                                $q->where(DB::raw('sub_query.news_name'), 'like', '%' . $word . '%')
+                                                  ->orWhere(DB::raw('sub_query.description'), 'like', '%' . $word . '%')
                                                   ->orWhere('keywords.keyword', 'like', '%' . $word . '%');
                                             });
                                         }
@@ -153,16 +161,13 @@ class PromotionAPIController extends ControllerAPI
             OrbitInput::get('filter_name', function ($filterName) use ($promotion, $prefix) {
                 if (! empty($filterName)) {
                     if ($filterName === '#') {
-                        $promotion->whereRaw("SUBSTR({$prefix}news_translations.news_name,1,1) not between 'a' and 'z'");
+                        $promotion->whereRaw("SUBSTR(sub_query.news_name,1,1) not between 'a' and 'z'");
                     } else {
                         $filter = explode("-", $filterName);
-                        $promotion->whereRaw("SUBSTR({$prefix}news_translations.news_name,1,1) between {$this->quote($filter[0])} and {$this->quote($filter[1])}");
+                        $promotion->whereRaw("SUBSTR(sub_query.news_name,1,1) between {$this->quote($filter[0])} and {$this->quote($filter[1])}");
                     }
                 }
             });
-
-            $promotion = $promotion->groupBy('news.news_id');
-            $promotion = $promotion->orderBy($sort_by, $sort_mode);
 
             $_promotion = clone($promotion);
 
@@ -177,7 +182,7 @@ class PromotionAPIController extends ControllerAPI
 
             $data = new \stdclass();
             $data->returned_records = count($listOfRec);
-            $data->total_records = RecordCounter::create($_promotion)->count();
+            $data->total_records = $totalRec;
             $data->records = $listOfRec;
 
             $this->response->data = $data;
