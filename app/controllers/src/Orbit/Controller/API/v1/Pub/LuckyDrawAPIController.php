@@ -141,7 +141,9 @@ class LuckyDrawAPIController extends IntermediateBaseController
                 })
                 ->active('lucky_draws')
                 ->where('lucky_draw_translations.merchant_language_id', '=', $valid_language->language_id)
-                ->havingRaw("campaign_status = 'ongoing'");
+                ->havingRaw("campaign_status = 'ongoing'")
+                ->groupBy('lucky_draws.lucky_draw_id')
+                ->orderBy($sort_by, $sort_mode);
 
             OrbitInput::get('object_type', function($objType) use($luckydraws) {
                 $luckydraws->where('lucky_draws.object_type', $objType);
@@ -174,8 +176,6 @@ class LuckyDrawAPIController extends IntermediateBaseController
                 }
             );
             $luckydraws->skip($skip);
-
-            $luckydraws->orderBy($sort_by, $sort_mode);
 
             $totalRec = RecordCounter::create($_luckydraws)->count();
             $listOfRec = $luckydraws->get();
