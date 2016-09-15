@@ -78,7 +78,7 @@ class SendEmailCampaignExpired extends Command {
                             )
                             END AS campaign_status,
                             CASE WHEN {$prefix}news.end_date = (
-                                SELECT min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
+                                SELECT DATE_FORMAT(min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name)), '%Y-%m-%d %H:%i:00')
                                 FROM {$prefix}news_merchant onm
                                     LEFT JOIN {$prefix}merchants om ON om.merchant_id = onm.merchant_id
                                     LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
@@ -128,7 +128,7 @@ class SendEmailCampaignExpired extends Command {
                             )
                             END AS campaign_status,
                             CASE WHEN {$prefix}news.end_date = (
-                                SELECT min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
+                                SELECT DATE_FORMAT(min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name)), '%Y-%m-%d %H:%i:00')
                                 FROM {$prefix}news_merchant onm
                                     LEFT JOIN {$prefix}merchants om ON om.merchant_id = onm.merchant_id
                                     LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
@@ -176,7 +176,7 @@ class SendEmailCampaignExpired extends Command {
                             )
                             END AS campaign_status,
                             CASE WHEN {$prefix}promotions.end_date = (
-                                SELECT min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
+                                SELECT DATE_FORMAT(min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name)), '%Y-%m-%d %H:%i:00')
                                 FROM {$prefix}promotion_retailer opt
                                     LEFT JOIN {$prefix}merchants om ON om.merchant_id = opt.retailer_id
                                     LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
