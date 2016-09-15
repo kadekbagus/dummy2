@@ -64,7 +64,12 @@ class CampaignMail
 
                     $data['campaign_before'] = unserialize($tmpCampaign->contents);
                     \Log::info('cmpgnBfr: '. serialize($data['campaign_before']));
-                    $data['campaign_after'] = $updatedCampaign->load('translations.language', 'translations.media', 'ages.ageRange', 'genders', 'keywords');
+                    if ($data['campaignType'] === 'Coupon') {
+                        $data['campaign_after'] = $updatedCampaign->load('translations.language', 'translations.media', 'ages.ageRange', 'genders', 'keywords', 'campaign_status', 'tenants', 'employee');
+                    } else {
+                        $data['campaign_after'] = $updatedCampaign->load('translations.language', 'translations.media', 'ages.ageRange', 'genders', 'keywords', 'campaign_status');
+                    }
+
                 break;
 
             case 'create':

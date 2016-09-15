@@ -1064,7 +1064,13 @@ class CouponAPIController extends ControllerAPI
             }
 
             $updatedcoupon = Coupon::where('promotion_id', $promotion_id)->first();
-            $beforeUpdatedCoupon = Coupon::with('translations.language', 'translations.media', 'ages.ageRange', 'genders', 'keywords')->excludeDeleted()->where('promotion_id', $promotion_id)->first();
+
+            // this is for send email to marketing, before and after list
+            $beforeUpdatedCoupon = Coupon::with('translations.language', 'translations.media', 'ages.ageRange',
+                                                'genders', 'keywords', 'campaign_status', 'tenants', 'employee')
+                                        ->excludeDeleted()
+                                        ->where('promotion_id', $promotion_id)
+                                        ->first();
 
             $statusdb = $updatedcoupon->status;
             $enddatedb = $updatedcoupon->end_date;
