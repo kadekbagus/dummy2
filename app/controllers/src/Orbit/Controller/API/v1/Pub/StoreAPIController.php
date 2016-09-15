@@ -75,13 +75,23 @@ class StoreAPIController extends ControllerAPI
             $store = Tenant::select(
                     'merchants.merchant_id',
                     'merchants.name',
-                    DB::Raw("
-                            CASE WHEN {$prefix}merchant_translations.description = '' THEN {$prefix}merchants.description ELSE {$prefix}merchant_translations.description END as description
+                    DB::Raw("CASE WHEN (
+                                    select mt.description
+                                    from {$prefix}merchant_translations mt
+                                    where mt.merchant_id = {$prefix}merchants.merchant_id
+                                        and mt.merchant_language_id = {$this->quote($valid_language->language_id)}
+                                ) = ''
+                                THEN {$prefix}merchants.description
+                                ELSE (
+                                    select mt.description
+                                    from {$prefix}merchant_translations mt
+                                    where mt.merchant_id = {$prefix}merchants.merchant_id
+                                        and mt.merchant_language_id = {$this->quote($valid_language->language_id)}
+                                )
+                            END as description
                         "),
                     DB::raw("(select path from {$prefix}media where media_name_long = 'retailer_logo_orig' and object_id = {$prefix}merchants.merchant_id) as logo_url"))
-                ->leftJoin(DB::raw("(select merchant_id, status, parent_id from {$prefix}merchants where object_type = 'mall') as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
-                ->leftJoin('merchant_translations', 'merchant_translations.merchant_id', '=', 'merchants.merchant_id')
-                ->where('merchant_translations.merchant_language_id', $valid_language->language_id)
+                ->join(DB::raw("(select merchant_id, status, parent_id from {$prefix}merchants where object_type = 'mall') as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                 ->where('merchants.status', 'active')
                 ->whereRaw("oms.status = 'active'")
                 ->orderBy('merchants.name', 'asc')
@@ -390,11 +400,27 @@ class StoreAPIController extends ControllerAPI
                 ->with(['categories' => function ($q) use ($valid_language, $prefix) {
                         $q->select(
                                 DB::Raw("
-                                        CASE WHEN {$prefix}category_translations.category_name = '' THEN {$prefix}categories.category_name ELSE {$prefix}category_translations.category_name END as category_name
+                                        CASE WHEN (
+                                                    SELECT ct.category_name
+                                                    FROM {$prefix}category_translations ct
+                                                        WHERE ct.status = 'active'
+                                                            and ct.merchant_language_id = {$this->quote($valid_language->language_id)}
+                                                            and ct.category_id = {$prefix}categories.category_id
+                                                    ) != ''
+                                            THEN (
+                                                    SELECT ct.category_name
+                                                    FROM {$prefix}category_translations ct
+                                                    WHERE ct.status = 'active'
+                                                        and ct.merchant_language_id = {$this->quote($valid_language->language_id)}
+                                                        and category_id = {$prefix}categories.category_id
+                                                    )
+                                            ELSE {$prefix}categories.category_name
+                                        END AS category_name
                                     ")
                             )
-                            ->leftJoin('category_translations', 'category_translations.category_id', '=', 'categories.category_id')
-                            ->where('category_translations.merchant_language_id', $valid_language->language_id);
+                            ->groupBy('categories.category_id')
+                            ->orderBy('categories.category_id')
+                            ;
                     }, 'mediaLogo' => function ($q) {
                         $q->select(
                                 'media.path',
