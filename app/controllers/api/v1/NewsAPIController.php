@@ -724,7 +724,12 @@ class NewsAPIController extends ControllerAPI
             }
 
             $updatednews = News::with('tenants')->excludeDeleted()->where('news_id', $news_id)->first();
-            $beforeUpdatedNews = News::with('translations.language', 'translations.media', 'ages.ageRange', 'genders', 'keywords')->excludeDeleted()->where('news_id', $news_id)->first();
+
+            // this is for send email to marketing, before and after list
+            $beforeUpdatedNews = News::with('translations.language', 'translations.media', 'ages.ageRange', 'genders', 'keywords', 'campaign_status')
+                                    ->excludeDeleted()
+                                    ->where('news_id', $news_id)
+                                    ->first();
 
             $statusdb = $updatednews->status;
             $enddatedb = $updatednews->end_date;
