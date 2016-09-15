@@ -88,7 +88,7 @@ class CouponAPIController extends ControllerAPI
 
             $prefix = DB::getTablePrefix();
 
-            $coupon = Coupon::select(DB::raw("{$prefix}promotions.promotion_id as coupon_id,
+            $coupons = Coupon::select(DB::raw("{$prefix}promotions.promotion_id as coupon_id,
                                 CASE WHEN {$prefix}coupon_translations.promotion_name = '' THEN {$prefix}promotions.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as coupon_name,
                                 CASE WHEN {$prefix}coupon_translations.description = '' THEN {$prefix}promotions.description ELSE {$prefix}coupon_translations.description END as description,
                                 {$prefix}promotions.status,
@@ -128,22 +128,29 @@ class CouponAPIController extends ControllerAPI
                             })
                             ->where('coupon_translations.merchant_language_id', $valid_language->language_id)
                             ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
-                            ->groupBy('coupon_id');
+                            ->orderBy('coupon_name', 'asc');
+
+            $querySql = $coupons->toSql();
+
+            $coupon = DB::table(DB::Raw("({$querySql}) as sub_query"))->mergeBindings($coupons->getQuery())
+                            ->select('coupon_id', 'coupon_name', 'description', DB::raw("sub_query.status"), 'campaign_status', 'is_started', 'image_url')
+                            ->groupBy('coupon_id')
+                            ->orderBy($sort_by, $sort_mode);
 
             OrbitInput::get('filter_name', function ($filterName) use ($coupon, $prefix) {
                 if (! empty($filterName)) {
                     if ($filterName === '#') {
-                        $coupon->whereRaw("SUBSTR({$prefix}coupon_translations.promotion_name,1,1) not between 'a' and 'z'");
+                        $coupon->whereRaw("SUBSTR(sub_query.coupon_name,1,1) not between 'a' and 'z'");
                     } else {
                         $filter = explode("-", $filterName);
-                        $coupon->whereRaw("SUBSTR({$prefix}coupon_translations.promotion_name,1,1) between {$this->quote($filter[0])} and {$this->quote($filter[1])}");
+                        $coupon->whereRaw("SUBSTR(sub_query.coupon_name,1,1) between {$this->quote($filter[0])} and {$this->quote($filter[1])}");
                     }
                 }
             });
 
             OrbitInput::get('keyword', function ($keyword) use ($coupon, $prefix) {
                 if (! empty($keyword)) {
-                    $coupon = $coupon->leftJoin('keyword_object', 'promotions.promotion_id', '=', 'keyword_object.object_id')
+                    $coupon = $coupon->leftJoin('keyword_object', DB::Raw("sub_query.coupon_id"), '=', 'keyword_object.object_id')
                                 ->leftJoin('keywords', 'keyword_object.keyword_id', '=', 'keywords.keyword_id')
                                 ->where(function($query) use ($keyword, $prefix)
                                 {
@@ -151,14 +158,14 @@ class CouponAPIController extends ControllerAPI
                                     foreach ($word as $key => $value) {
                                         if (strlen($value) === 1 && $value === '%') {
                                             $query->orWhere(function($q) use ($value, $prefix){
-                                                $q->whereRaw("{$prefix}coupon_translations.promotion_name like '%|{$value}%' escape '|'")
-                                                  ->orWhereRaw("{$prefix}coupon_translations.description like '%|{$value}%' escape '|'")
+                                                $q->whereRaw("sub_query.coupon_name like '%|{$value}%' escape '|'")
+                                                  ->orWhereRaw("sub_query.description like '%|{$value}%' escape '|'")
                                                   ->orWhereRaw("{$prefix}keywords.keyword like '%|{$value}%' escape '|'");
                                             });
                                         } else {
                                             $query->orWhere(function($q) use ($value, $prefix){
-                                                $q->where('coupon_translations.promotion_name', 'like', '%' . $value . '%')
-                                                  ->orWhere('coupon_translations.description', 'like', '%' . $value . '%')
+                                                $q->where(DB::raw('sub_query.coupon_name'), 'like', '%' . $value . '%')
+                                                  ->orWhere(DB::raw('sub_query.description'), 'like', '%' . $value . '%')
                                                   ->orWhere('keywords.keyword', 'like', '%' . $value . '%');
                                             });
                                         }
@@ -166,8 +173,6 @@ class CouponAPIController extends ControllerAPI
                                 });
                 }
             });
-
-            $coupon = $coupon->orderBy($sort_by, $sort_mode);
 
             $_coupon = clone $coupon;
 
@@ -178,7 +183,7 @@ class CouponAPIController extends ControllerAPI
             $coupon->skip($skip);
 
             $listcoupon = $coupon->get();
-            $count = RecordCounter::create($_coupon)->count();
+            $count = count($_coupon->get());
 
             $this->response->data = new stdClass();
             $this->response->data->total_records = $count;
