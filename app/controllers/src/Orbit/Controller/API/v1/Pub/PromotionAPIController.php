@@ -123,7 +123,7 @@ class PromotionAPIController extends ControllerAPI
                             ->where('news_translations.merchant_language_id', '=', $valid_language->language_id)
                             ->where('news.object_type', '=', 'promotion')
                             ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
-                            ->orderBy('news.news_id');
+                            ->orderBy('news_name', 'asc');
 
             $querySql = $promotions->toSql();
 

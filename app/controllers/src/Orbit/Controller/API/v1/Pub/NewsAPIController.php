@@ -120,11 +120,19 @@ class NewsAPIController extends ControllerAPI
                         })
                         ->where('news_translations.merchant_language_id', '=', $valid_language->language_id)
                         ->where('news.object_type', '=', 'news')
-                        ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'");
+                        ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
+                        ->orderBy('news_name', 'asc');
+
+            $querySql = $news->toSql();
+
+            $news = DB::table(DB::Raw("({$querySql}) as sub_query"))->mergeBindings($news->getQuery())
+                            ->select(DB::raw("sub_query.news_id"), 'news_name', 'description', DB::raw("sub_query.object_type"), 'image_url', 'campaign_status', 'is_started')
+                            ->groupBy(DB::Raw("sub_query.news_id"))
+                            ->orderBy($sort_by, $sort_mode);
 
             OrbitInput::get('keyword', function($keyword) use ($news, $prefix) {
                  if (! empty($keyword)) {
-                    $news = $news->leftJoin('keyword_object', 'news.news_id', '=', 'keyword_object.object_id')
+                    $news = $news->leftJoin('keyword_object', DB::Raw("sub_query.news_id"), '=', 'keyword_object.object_id')
                                 ->leftJoin('keywords', 'keyword_object.keyword_id', '=', 'keywords.keyword_id')
                                 ->where(function($query) use ($keyword, $prefix){
                                     //Search per word
@@ -132,14 +140,14 @@ class NewsAPIController extends ControllerAPI
                                     foreach ($words as $key => $word) {
                                         if (strlen($word) === 1 && $word === '%') {
                                             $query->orWhere(function($q) use ($word, $prefix){
-                                                $q->whereRaw("{$prefix}news_translations.news_name like '%|{$word}%' escape '|'")
-                                                  ->orWhereRaw("{$prefix}news_translations.description like '%|{$word}%' escape '|'")
+                                                $q->whereRaw("sub_query.news_name like '%|{$word}%' escape '|'")
+                                                  ->orWhereRaw("sub_query.description like '%|{$word}%' escape '|'")
                                                   ->orWhereRaw("{$prefix}keywords.keyword like '%|{$word}%' escape '|'");
                                             });
                                         } else {
                                             $query->orWhere(function($q) use ($word, $prefix){
-                                                $q->where('news_translations.news_name', 'like', '%' . $word . '%')
-                                                  ->orWhere('news_translations.description', 'like', '%' . $word . '%')
+                                                $q->where(DB::raw('sub_query.news_name'), 'like', '%' . $word . '%')
+                                                  ->orWhere(DB::raw('sub_query.description'), 'like', '%' . $word . '%')
                                                   ->orWhere('keywords.keyword', 'like', '%' . $word . '%');
                                             });
                                         }
@@ -151,16 +159,13 @@ class NewsAPIController extends ControllerAPI
             OrbitInput::get('filter_name', function ($filterName) use ($news, $prefix) {
                 if (! empty($filterName)) {
                     if ($filterName === '#') {
-                        $news->whereRaw("SUBSTR({$prefix}news_translations.news_name,1,1) not between 'a' and 'z'");
+                        $news->whereRaw("SUBSTR(sub_query.news_name,1,1) not between 'a' and 'z'");
                     } else {
                         $filter = explode("-", $filterName);
-                        $news->whereRaw("SUBSTR({$prefix}news_translations.news_name,1,1) between {$this->quote($filter[0])} and {$this->quote($filter[1])}");
+                        $news->whereRaw("SUBSTR(sub_query.news_name,1,1) between {$this->quote($filter[0])} and {$this->quote($filter[1])}");
                     }
                 }
             });
-
-            $news = $news->groupBy('news.news_id');
-            $news = $news->orderBy($sort_by, $sort_mode);
 
             $_news = clone($news);
 
@@ -175,7 +180,7 @@ class NewsAPIController extends ControllerAPI
 
             $data = new \stdclass();
             $data->returned_records = count($listOfRec);
-            $data->total_records = RecordCounter::create($_news)->count();
+            $data->total_records = $totalRec;
             $data->records = $listOfRec;
 
             $this->response->data = $data;
