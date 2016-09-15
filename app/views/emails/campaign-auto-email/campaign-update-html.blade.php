@@ -18,11 +18,12 @@
                               'is_redeemed_at_cs', 'coupon_notification', 'created_by', 'modified_by',
                               'created_at', 'updated_at', 'is_all_gender', 'is_all_age', 'is_permanent',
                               'is_coupon', 'mall_id', 'object_type', 'sticky_order', 'coupon_validity_in_days',
-                              'link_object_type', 'maximum_issued_coupon_type', 'status', 'campaign_status_id'
+                              'link_object_type', 'maximum_issued_coupon_type', 'status', 'campaign_status_id',
+                              'begin_date'
           ]))
           <tr>
             @if($key == 'is_popup')
-              <td>{{ 'coupon pop up in mobile' }}</td>
+              <td>{{ 'pop up in mobile' }}</td>
             @else
               <td>{{ $key }}</td>
             @endif
