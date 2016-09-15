@@ -76,10 +76,10 @@ class StoreAPIController extends ControllerAPI
                     'merchants.merchant_id',
                     'merchants.name',
                     DB::Raw("
-                            CASE WHEN {$prefix}merchant_translations.description = '' THEN {$prefix}merchants.name ELSE {$prefix}merchant_translations.description END as description
+                            CASE WHEN {$prefix}merchant_translations.description = '' THEN {$prefix}merchants.description ELSE {$prefix}merchant_translations.description END as description
                         "),
                     DB::raw("(select path from {$prefix}media where media_name_long = 'retailer_logo_orig' and object_id = {$prefix}merchants.merchant_id) as logo_url"))
-                ->join(DB::raw("(select merchant_id, status, parent_id from {$prefix}merchants where object_type = 'mall') as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
+                ->leftJoin(DB::raw("(select merchant_id, status, parent_id from {$prefix}merchants where object_type = 'mall') as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                 ->leftJoin('merchant_translations', 'merchant_translations.merchant_id', '=', 'merchants.merchant_id')
                 ->where('merchant_translations.merchant_language_id', $valid_language->language_id)
                 ->where('merchants.status', 'active')
@@ -383,7 +383,7 @@ class StoreAPIController extends ControllerAPI
             $store = Tenant::select('merchants.merchant_id',
                                 'merchants.name',
                                 DB::Raw("
-                                        CASE WHEN {$prefix}merchant_translations.description = '' THEN {$prefix}merchants.name ELSE {$prefix}merchant_translations.description END as description
+                                        CASE WHEN {$prefix}merchant_translations.description = '' THEN {$prefix}merchants.description ELSE {$prefix}merchant_translations.description END as description
                                     "),
                                 'merchants.url'
                             )
