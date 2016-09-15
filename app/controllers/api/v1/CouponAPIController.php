@@ -1067,7 +1067,8 @@ class CouponAPIController extends ControllerAPI
 
             // this is for send email to marketing, before and after list
             $beforeUpdatedCoupon = Coupon::with('translations.language', 'translations.media', 'ages.ageRange',
-                                                'genders', 'keywords', 'campaign_status', 'tenants', 'employee')
+                                                'genders', 'keywords', 'campaign_status', 'tenants', 'employee',
+                                                'couponRule')
                                         ->excludeDeleted()
                                         ->where('promotion_id', $promotion_id)
                                         ->first();

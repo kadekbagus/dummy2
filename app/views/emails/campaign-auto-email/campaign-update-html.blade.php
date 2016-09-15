@@ -27,11 +27,24 @@
             @else
               <td>{{ $key }}</td>
             @endif
-            <td>{{ $value }}</td>
-            <td>{{ $campaign_after[$key] }}</td>
+              <td>{{ $value }}</td>
+              <td>{{ $campaign_after[$key] }}</td>
           </tr>
         @endif
       @endforeach
+
+      @if($campaignType === 'Coupon')
+      <tr>
+        <td>{{ 'coupon rule' }}</td>
+        <td>{{ $campaign_before->coupon_rule->rule_type }}</td>
+        <td>{{ $campaign_after->coupon_rule->rule_type }}</td>
+      </tr>
+      <tr>
+        <td>{{ 'rule end date' }}</td>
+        <td>{{ $campaign_before->coupon_rule->rule_end_date }}</td>
+        <td>{{ $campaign_after->coupon_rule->rule_end_date }}</td>
+      </tr>
+      @endif
     </table>
 
     <h4>Campaign status:</h4>
@@ -214,7 +227,6 @@
       </tr>
     </table>
     @endif
-
 
 </body>
 </html>
