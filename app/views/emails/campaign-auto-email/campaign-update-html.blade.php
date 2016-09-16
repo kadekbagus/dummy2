@@ -153,15 +153,34 @@
       </tr>
       <tr>
         <td>{{ 'keyword' }}</td>
+        <?php
+          $campaignBeforeNonFilteredKeyword = array();
+          foreach($campaign_before->keywords as $key1 => $keyword1) {
+              $campaignBeforeNonFilteredKeyword[] = $keyword1->keyword;
+          }
+          $campaignAfterNonFilteredKeyword = array();
+          foreach($campaign_after->keywords as $key1 => $keyword2) {
+              $campaignAfterNonFilteredKeyword[] = $keyword2->keyword;
+          }
+          // eliminate duplicate keywords
+          $campaignBeforeFilteredKeyword = array();
+          foreach($campaignBeforeNonFilteredKeyword as $keyword3) {
+              if (! in_array($keyword3, $campaignBeforeFilteredKeyword)) {
+                  $campaignBeforeFilteredKeyword[] = $keyword3;
+              }
+          }
+          $campaignAfterFilteredKeyword = array();
+          foreach($campaignAfterNonFilteredKeyword as $keyword4) {
+              if (! in_array($keyword3, $campaignAfterFilteredKeyword)) {
+                  $campaignAfterFilteredKeyword[] = $keyword4;
+              }
+          }
+        ?>
         <td>
-          @foreach($campaign_before->keywords as $key1 => $keyword)
-            {{ $keyword->keyword . (($key1 < count($campaign_before->keywords) - 1) ? ', ' : '') }}
-          @endforeach
+          {{ implode(', ', $campaignBeforeFilteredKeyword) }}
         </td>
         <td>
-          @foreach($campaign_after->keywords as $key1 => $keyword)
-            {{ $keyword->keyword . (($key1 < count($campaign_after->keywords) - 1) ? ', ' : '') }}
-          @endforeach
+          {{ implode(', ', $campaignAfterFilteredKeyword) }}
         </td>
       </tr>
     </table>
