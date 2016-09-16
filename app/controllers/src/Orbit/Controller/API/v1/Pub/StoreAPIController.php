@@ -21,6 +21,9 @@ use DB;
 use Validator;
 use Language;
 use Coupon;
+use Activity;
+use Orbit\Helper\Net\SessionPreparer;
+use Orbit\Helper\Session\UserGetter;
 
 class StoreAPIController extends ControllerAPI
 {
@@ -314,7 +317,13 @@ class StoreAPIController extends ControllerAPI
     public function getStoreDetail()
     {
         $httpCode = 200;
+        $activity = Activity::mobileci()->setActivityType('view');
+        $user = NULL;
+
         try {
+            $this->session = SessionPreparer::prepareSession();
+            $user = UserGetter::getLoggedInUserOrGuest($this->session);
+
             $storename = OrbitInput::get('store_name');
 
             $validator = Validator::make(
@@ -364,6 +373,17 @@ class StoreAPIController extends ControllerAPI
                 ->where('merchants.name', $storename)
                 ->orderBy('created_at')
                 ->first();
+
+            $activityNotes = sprintf('Page viewed: Landing Page Store Detail Page');
+            $activity->setUser($user)
+                ->setActivityName('view_landing_page_store_detail')
+                ->setActivityNameLong('View GoToMalls Store Detail')
+                ->setObject($store)
+                ->setNews($store)
+                ->setModuleName('Store')
+                ->setNotes($activityNotes)
+                ->responseOK()
+                ->save();
 
             $this->response->data = $store;
         } catch (ACLForbiddenException $e) {
@@ -686,7 +706,7 @@ class StoreAPIController extends ControllerAPI
                         ->where('news_translations.news_name', '!=', '')
                         ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                         ->groupBy('campaign_id')
-                        ->orderBy('news_translations.news_name', 'asc');
+                        ->orderBy('news.created_at', 'desc');
 
             $promotions = DB::table('news')->select(
                         'news.news_id as campaign_id',
@@ -737,7 +757,7 @@ class StoreAPIController extends ControllerAPI
                         ->where('news_translations.news_name', '!=', '')
                         ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                         ->groupBy('campaign_id')
-                        ->orderBy('news_translations.news_name', 'asc');
+                        ->orderBy('news.created_at', 'desc');
 
             // get coupon list
             $coupons = DB::table('promotions')->select(DB::raw("
@@ -786,7 +806,7 @@ class StoreAPIController extends ControllerAPI
                             ->where('coupon_translations.promotion_name', '!=', '')
                             ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                             ->groupBy('campaign_id')
-                            ->orderBy('coupon_translations.promotion_name', 'asc');
+                            ->orderBy(DB::raw("{$prefix}promotions.created_at"), 'desc');
 
             $result = $news->unionAll($promotions)->unionAll($coupons);
 

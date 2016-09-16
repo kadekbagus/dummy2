@@ -24,6 +24,7 @@ use Orbit\Helper\Util\PaginationNumber;
 use Activity;
 use Orbit\Helper\Net\SessionPreparer;
 use Orbit\Helper\Session\UserGetter;
+use Orbit\Controller\API\v1\Pub\SocMedAPIController;
 
 class PromotionAPIController extends ControllerAPI
 {
@@ -417,6 +418,9 @@ class PromotionAPIController extends ControllerAPI
                 ->responseOK()
                 ->save();
 
+            // add facebook share url dummy page
+            $promotion->facebook_share_url = SocMedAPIController::getSharedUrl('promotion', $promotion->news_id, $promotion->news_name);
+
             $this->response->data = $promotion;
             $this->response->code = 0;
             $this->response->status = 'success';
@@ -497,7 +501,7 @@ class PromotionAPIController extends ControllerAPI
 
             $promotionLocation = NewsMerchant::select(
                                         DB::raw("{$prefix}merchants.merchant_id as merchant_id"),
-                                        DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN CONCAT({$prefix}merchants.name, ' at ', oms.name) ELSE CONCAT('Customer Service at ', {$prefix}merchants.name) END as name"),
+                                        DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN CONCAT({$prefix}merchants.name, ' at ', oms.name) ELSE {$prefix}merchants.name END as name"),
                                         DB::raw("{$prefix}merchants.object_type as location_type"),
                                         DB::raw("CONCAT(IF({$prefix}merchants.object_type = 'tenant', oms.ci_domain, {$prefix}merchants.ci_domain), '/customer/mallpromotion?id=', {$prefix}news_merchant.news_id) as url"),
                                         'news.begin_date as begin_date',
@@ -506,11 +510,17 @@ class PromotionAPIController extends ControllerAPI
                                                     FROM {$prefix}merchants om
                                                     LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
                                                     WHERE om.merchant_id = (CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.merchant_id ELSE {$prefix}merchants.merchant_id END)
-                                                ) as tz")
+                                                ) as tz"),
+                                            DB::Raw("img.path as location_logo"),
+                                            DB::Raw("{$prefix}merchants.phone as phone")
                                     )
                                     ->leftJoin('news', 'news_merchant.news_id', '=', 'news.news_id')
                                     ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
                                     ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
+                                    ->leftJoin(DB::raw("{$prefix}media as img"), function($q) {
+                                        $q->on(DB::raw('img.object_id'), '=', 'merchants.merchant_id')
+                                            ->on(DB::raw('img.media_name_long'), 'IN', DB::raw("('mall_logo_orig', 'retailer_logo_orig')"));
+                                    })
                                     ->where('news_merchant.news_id', '=', $promotionId)
                                     ->groupBy('merchant_id')
                                     ->havingRaw('tz <= end_date AND tz >= begin_date');

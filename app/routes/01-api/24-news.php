@@ -95,7 +95,7 @@ Route::get('/app/v1/pub/news/detail', ['as' => 'pub-news-detail', 'uses' => 'Int
  */
 Route::get('/api/v1/pub/news-location/list', function()
 {
-    return Orbit\Controller\API\v1\Pub\NewsAPIController::create()->getMallPerNews();
+    return Orbit\Controller\API\v1\Pub\NewsAPIController::create()->getNewsLocations();
 });
 
 Route::get('/app/v1/pub/news-location/list', ['as' => 'pub-news-location-list', 'uses' => 'IntermediatePubAuthController@News_getNewsLocations']);
