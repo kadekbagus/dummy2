@@ -89,6 +89,9 @@ Artisan::add(new ElasticsearchUpdateMallIndex);
 // Update ES mall logo
 Artisan::add(new ElasticsearchUpdateMallLogoCommand);
 
+// Send Email about campaign expired
+Artisan::add(new SendEmailCampaignExpired);
+
 // Insert or update data on settings table
 // @Todo investigate why its error
 // Artisan::add(new MerchantSetting);
