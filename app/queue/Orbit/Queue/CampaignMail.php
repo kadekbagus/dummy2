@@ -60,7 +60,8 @@ class CampaignMail
                         default:
                             $updatedCampaign = Coupon::selectRaw("{$prefix}promotions.*,
                                                         DATE_FORMAT({$prefix}promotions.end_date, '%d/%m/%Y %H:%i') as end_date,
-                                                        DATE_FORMAT({$prefix}promotions.coupon_validity_in_date, '%d/%m/%Y %H:%i') as coupon_validity_in_date
+                                                        DATE_FORMAT({$prefix}promotions.coupon_validity_in_date, '%d/%m/%Y %H:%i') as coupon_validity_in_date,
+                                                        IF({$prefix}promotions.maximum_issued_coupon = 0, 'Unlimited', {$prefix}promotions.maximum_issued_coupon) as maximum_issued_coupon
                                                     ")
                                                     ->excludeDeleted()
                                                     ->where('promotion_id', $data['campaignId'])
