@@ -16,8 +16,7 @@ use \Carbon\Carbon as Carbon;
 class DashboardAPIController extends ControllerAPI
 {
 
-    protected $newsViewRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee', 'campaign admin'];
-    protected $newsModifiyRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee', 'campaign admin'];
+    protected $DashboardViewRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee', 'campaign admin'];
 
     /**
      * Flag to return the query builder.
@@ -224,7 +223,7 @@ class DashboardAPIController extends ControllerAPI
 
             // @Todo: Use ACL authentication instead
             $role = $user->role;
-            if (! in_array( strtolower($role->role_name), $this->newsViewRoles)) {
+            if (! in_array( strtolower($role->role_name), $this->DashboardViewRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
             }
@@ -521,7 +520,7 @@ class DashboardAPIController extends ControllerAPI
 
             // @Todo: Use ACL authentication instead
             $role = $user->role;
-            if (! in_array( strtolower($role->role_name), $this->newsViewRoles)) {
+            if (! in_array( strtolower($role->role_name), $this->DashboardViewRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
             }
@@ -703,10 +702,20 @@ class DashboardAPIController extends ControllerAPI
             $user = $this->api->user;
             Event::fire('orbit.dashboard.getdetailtopcustomerview.before.auth', array($this, $user));
 
+/*
             if (! ACL::create($user)->isAllowed('view_product')) {
                 Event::fire('orbit.dashboard.getdetailtopcustomerview.auth.notallowed', array($this, $user));
                 $viewCouponLang = Lang::get('validation.orbit.actionlist.view_product');
                 $message = Lang::get('validation.orbit.access.forbidden', array('action' => $viewCouponLang));
+                ACL::throwAccessForbidden($message);
+            }
+*/
+
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = $this->DashboardViewRoles;
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
             }
 
@@ -928,7 +937,7 @@ class DashboardAPIController extends ControllerAPI
             // }
 
             $role = $user->role;
-            $validRoles = $this->newsViewRoles;
+            $validRoles = $this->DashboardViewRoles;
             if (! in_array( strtolower($role->role_name), $validRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
@@ -1667,7 +1676,7 @@ class DashboardAPIController extends ControllerAPI
 
             // @Todo: Use ACL authentication instead
             $role = $user->role;
-            if (! in_array( strtolower($role->role_name), $this->newsViewRoles)) {
+            if (! in_array( strtolower($role->role_name), $this->DashboardViewRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
             }
@@ -4319,7 +4328,7 @@ class DashboardAPIController extends ControllerAPI
 
             // @Todo: Use ACL authentication instead
             $role = $user->role;
-            $validRoles = $this->newsViewRoles;
+            $validRoles = $this->DashboardViewRoles;
             if (! in_array( strtolower($role->role_name), $validRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
@@ -4618,7 +4627,7 @@ class DashboardAPIController extends ControllerAPI
 
             // @Todo: Use ACL authentication instead
             $role = $user->role;
-            if (! in_array( strtolower($role->role_name), $this->newsViewRoles)) {
+            if (! in_array( strtolower($role->role_name), $this->DashboardViewRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
             }
@@ -4807,7 +4816,7 @@ class DashboardAPIController extends ControllerAPI
 
             // @Todo: Use ACL authentication instead
             $role = $user->role;
-            if (! in_array( strtolower($role->role_name), $this->newsViewRoles)) {
+            if (! in_array( strtolower($role->role_name), $this->DashboardViewRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
             }
@@ -4943,7 +4952,7 @@ class DashboardAPIController extends ControllerAPI
 
             // @Todo: Use ACL authentication instead
             $role = $user->role;
-            $validRoles = $this->newsViewRoles;
+            $validRoles = $this->DashboardViewRoles;
             if (! in_array( strtolower($role->role_name), $validRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);

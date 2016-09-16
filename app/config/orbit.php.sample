@@ -3782,4 +3782,13 @@ return array(
         // e.g: https://www.gotomalls.cool/#!/coupon-redemption?cid=%s&uid=%s
         'direct_redemption_url' => NULL,
     ],
+
+    'campaign_auto_email' => array(
+        // example 'email_list' => array('oktaviano@domminopos.com', 'nabilla@gotomalls.com')
+        'email_list' => array('marketing@domminopos.com'),
+        'sender' => array(
+            'email' => 'no-reply@gotomalls.com',
+            'name'  => 'Gotomalls'
+        ),
+    ),
 );

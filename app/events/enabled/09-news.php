@@ -85,7 +85,7 @@ Event::listen('orbit.news.after.translation.save', function($controller, $news_t
 {
 
     $image_id = $news_translations->merchant_language_id;
-    
+
     $files = OrbitInput::files('image_translation_' . $image_id);
     if (! $files) {
         return;
@@ -110,4 +110,74 @@ Event::listen('orbit.news.after.translation.save', function($controller, $news_t
     $news_translations->setRelation('media', $response->data);
     $news_translations->media = $response->data;
     $news_translations->image_translation = $response->data[0]->path;
+});
+
+
+/**
+ * Listen on:    `orbit.news.postnewnews.after.commit`
+ * Purpose:      Send email to marketing after create news or promotion
+ *
+ * @author kadek <kadek@dominopos.com>
+ *
+ * @param NewsAPIController $controller
+ * @param News $news
+ */
+Event::listen('orbit.news.postnewnews.after.commit', function($controller, $news)
+{
+
+    $timestamp = new DateTime($news->created_at);
+    $date = $timestamp->format('d F Y H:i').' (UTC)';
+
+    if ($news->object_type === 'promotion') {
+        $campaignType = 'Promotion';
+    } else {
+        $campaignType = 'News';
+    }
+
+    // Send email process to the queue
+    Queue::push('Orbit\\Queue\\CampaignMail', [
+        'campaignType'       => $campaignType,
+        'campaignName'       => $news->news_name,
+        'pmpUser'            => $controller->api->user->username,
+        'eventType'          => 'created',
+        'date'               => $date,
+        'campaignId'         => $news->news_id,
+        'mode'               => 'create'
+    ]);
+
+});
+
+
+/**
+ * Listen on:    `orbit.news.postupdatenews.after.commit`
+ * Purpose:      Send email to marketing after update news or promotion
+ *
+ * @author kadek <kadek@dominopos.com>
+ *
+ * @param NewsAPIController $controller
+ * @param News $news
+ */
+Event::listen('orbit.news.postupdatenews.after.commit', function($controller, $news, $temporaryContentId)
+{
+    $timestamp = new DateTime($news->updated_at);
+    $date = $timestamp->format('d F Y H:i').' (UTC)';
+
+    if ($news->object_type === 'promotion') {
+        $campaignType = 'Promotion';
+    } else {
+        $campaignType = 'News';
+    }
+
+    // Send email process to the queue
+    Queue::push('Orbit\\Queue\\CampaignMail', [
+        'campaignType'       => $campaignType,
+        'campaignName'       => $news->news_name,
+        'pmpUser'            => $controller->api->user->username,
+        'eventType'          => 'updated',
+        'date'               => $date,
+        'campaignId'         => $news->news_id,
+        'temporaryContentId' => $temporaryContentId,
+        'mode'               => 'update'
+    ]);
+
 });

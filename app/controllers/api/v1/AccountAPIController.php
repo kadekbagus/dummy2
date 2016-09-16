@@ -121,7 +121,8 @@ class AccountAPIController extends ControllerAPI
                 'Merchant'  => 'tenant',
                 'Agency'    => 'mall_tenant',
                 '3rd Party' => 'mall',
-                'Dominopos' => 'mall_tenant'
+                'Dominopos' => 'mall_tenant',
+                'Master'    => 'mall_tenant'
             ];
 
         $get_tenants = CampaignLocation::excludeDeleted();
@@ -555,7 +556,7 @@ class AccountAPIController extends ControllerAPI
 
         $records = [];
         foreach ($pmpAccounts as $row) {
-            if ($row->campaignAccount->is_link_to_all === 'Y') {
+            if ($row->campaignAccount->is_link_to_all === 'Y' && in_array($row->type_name, $this->allow_select_all_tenant)) {
                 $tenantAtMallArray = $this->getTenantAtMallArray($row->type_name);
             } else {
                 $tenantAtMallArray = $this->getTenantAtMallArray($row->type_name, $row->userTenants()->lists('merchant_id'));

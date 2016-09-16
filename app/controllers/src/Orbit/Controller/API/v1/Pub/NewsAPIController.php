@@ -29,7 +29,7 @@ use Orbit\Controller\API\v1\Pub\SocMedAPIController;
 class NewsAPIController extends ControllerAPI
 {
 	protected $validRoles = ['super admin', 'consumer', 'guest'];
-
+    protected $valid_language = NULL;
     /**
      * GET - get active news in all mall, and also provide for searching
      *
@@ -53,17 +53,45 @@ class NewsAPIController extends ControllerAPI
         $keyword = null;
 
         try{
-            // Get language_if of english
-            $languageEnId = null;
-            $language = Language::where('name', 'en')->first();
+            $sort_by = OrbitInput::get('sortby', 'news_name');
+            $sort_mode = OrbitInput::get('sortmode','asc');
+            $language = OrbitInput::get('language', 'id');
 
-            if (! empty($language)) {
-                $languageEnId = $language->language_id;
+            $this->registerCustomValidation();
+            $validator = Validator::make(
+                array(
+                    'language' => $language,
+                ),
+                array(
+                    'language' => 'required|orbit.empty.language_default',
+                )
+            );
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
+            $valid_language = $this->valid_language;
             $prefix = DB::getTablePrefix();
 
-            $news = News::select('news.news_id as news_id', 'news_translations.news_name as news_name', 'news.object_type', 'news.description', DB::raw('media.path as image_url'),
+            $news = News::select(
+                                'news.news_id as news_id',
+                                DB::Raw("
+                                    CASE WHEN {$prefix}news_translations.news_name = '' THEN {$prefix}news.news_name ELSE {$prefix}news_translations.news_name END as news_name,
+                                    CASE WHEN {$prefix}news_translations.description = '' THEN {$prefix}news.description ELSE {$prefix}news_translations.description END as description,
+                                    CASE WHEN {$prefix}media.path is null THEN (
+                                            select m.path
+                                            from {$prefix}news_translations nt
+                                            join {$prefix}media m
+                                                on m.object_id = nt.news_translation_id
+                                                and m.media_name_long = 'news_translation_image_orig'
+                                            where nt.news_id = {$prefix}news.news_id
+                                            group by nt.news_id
+                                        ) ELSE {$prefix}media.path END as image_url
+                                "),
+                                'news.object_type',
                         // query for get status active based on timezone
                         DB::raw("
                                 CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
@@ -86,15 +114,25 @@ class NewsAPIController extends ControllerAPI
                             "))
                         ->join('news_translations', 'news_translations.news_id', '=', 'news.news_id')
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
-                        ->leftJoin(DB::raw("( SELECT * FROM {$prefix}media WHERE media_name_long = 'news_translation_image_orig' ) as media"), DB::raw('media.object_id'), '=', 'news_translations.news_translation_id')
-                        ->where('news_translations.merchant_language_id', '=', $languageEnId)
+                        ->leftJoin('media', function($q) {
+                            $q->on('media.object_id', '=', 'news_translations.news_translation_id');
+                            $q->on('media.media_name_long', '=', DB::raw("'news_translation_image_orig'"));
+                        })
+                        ->where('news_translations.merchant_language_id', '=', $valid_language->language_id)
                         ->where('news.object_type', '=', 'news')
-                        ->where('news_translations.news_name', '!=', '')
-                        ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'");
+                        ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
+                        ->orderBy('news_name', 'asc');
+
+            $querySql = $news->toSql();
+
+            $news = DB::table(DB::Raw("({$querySql}) as sub_query"))->mergeBindings($news->getQuery())
+                            ->select(DB::raw("sub_query.news_id"), 'news_name', 'description', DB::raw("sub_query.object_type"), 'image_url', 'campaign_status', 'is_started')
+                            ->groupBy(DB::Raw("sub_query.news_id"))
+                            ->orderBy($sort_by, $sort_mode);
 
             OrbitInput::get('keyword', function($keyword) use ($news, $prefix) {
                  if (! empty($keyword)) {
-                    $news = $news->leftJoin('keyword_object', 'news.news_id', '=', 'keyword_object.object_id')
+                    $news = $news->leftJoin('keyword_object', DB::Raw("sub_query.news_id"), '=', 'keyword_object.object_id')
                                 ->leftJoin('keywords', 'keyword_object.keyword_id', '=', 'keywords.keyword_id')
                                 ->where(function($query) use ($keyword, $prefix){
                                     //Search per word
@@ -102,14 +140,14 @@ class NewsAPIController extends ControllerAPI
                                     foreach ($words as $key => $word) {
                                         if (strlen($word) === 1 && $word === '%') {
                                             $query->orWhere(function($q) use ($word, $prefix){
-                                                $q->whereRaw("{$prefix}news_translations.news_name like '%|{$word}%' escape '|'")
-                                                  ->orWhereRaw("{$prefix}news_translations.description like '%|{$word}%' escape '|'")
+                                                $q->whereRaw("sub_query.news_name like '%|{$word}%' escape '|'")
+                                                  ->orWhereRaw("sub_query.description like '%|{$word}%' escape '|'")
                                                   ->orWhereRaw("{$prefix}keywords.keyword like '%|{$word}%' escape '|'");
                                             });
                                         } else {
                                             $query->orWhere(function($q) use ($word, $prefix){
-                                                $q->where('news_translations.news_name', 'like', '%' . $word . '%')
-                                                  ->orWhere('news_translations.description', 'like', '%' . $word . '%')
+                                                $q->where(DB::raw('sub_query.news_name'), 'like', '%' . $word . '%')
+                                                  ->orWhere(DB::raw('sub_query.description'), 'like', '%' . $word . '%')
                                                   ->orWhere('keywords.keyword', 'like', '%' . $word . '%');
                                             });
                                         }
@@ -121,15 +159,13 @@ class NewsAPIController extends ControllerAPI
             OrbitInput::get('filter_name', function ($filterName) use ($news, $prefix) {
                 if (! empty($filterName)) {
                     if ($filterName === '#') {
-                        $news->whereRaw("SUBSTR({$prefix}news_translations.news_name,1,1) not between 'a' and 'z'");
+                        $news->whereRaw("SUBSTR(sub_query.news_name,1,1) not between 'a' and 'z'");
                     } else {
                         $filter = explode("-", $filterName);
-                        $news->whereRaw("SUBSTR({$prefix}news_translations.news_name,1,1) between {$this->quote($filter[0])} and {$this->quote($filter[1])}");
+                        $news->whereRaw("SUBSTR(sub_query.news_name,1,1) between {$this->quote($filter[0])} and {$this->quote($filter[1])}");
                     }
                 }
             });
-
-            $news = $news->groupBy('news.news_id');
 
             $_news = clone($news);
 
@@ -139,14 +175,12 @@ class NewsAPIController extends ControllerAPI
             $skip = PaginationNumber::parseSkipFromGet();
             $news->skip($skip);
 
-            $news->orderBy('news_translations.news_name', 'asc');
-
             $totalRec = count($_news->get());
             $listOfRec = $news->get();
 
             $data = new \stdclass();
             $data->returned_records = count($listOfRec);
-            $data->total_records = RecordCounter::create($_news)->count();
+            $data->total_records = $totalRec;
             $data->records = $listOfRec;
 
             $this->response->data = $data;
@@ -333,22 +367,18 @@ class NewsAPIController extends ControllerAPI
             $this->session = SessionPreparer::prepareSession();
             $user = UserGetter::getLoggedInUserOrGuest($this->session);
 
-            // Get language_if of english
-            $languageEnId = null;
-            $language = Language::where('name', 'en')->first();
-
-            if (! empty($language)) {
-                $languageEnId = $language->language_id;
-            }
-
             $newsId = OrbitInput::get('news_id', null);
+            $language = OrbitInput::get('language', 'id');
 
+            $this->registerCustomValidation();
             $validator = Validator::make(
                 array(
                     'news_id' => $newsId,
+                    'language' => $language,
                 ),
                 array(
                     'news_id' => 'required',
+                    'language' => 'required|orbit.empty.language_default',
                 ),
                 array(
                     'required' => 'News ID is required',
@@ -361,22 +391,27 @@ class NewsAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
+            $valid_language = $this->valid_language;
+
             $prefix = DB::getTablePrefix();
 
-            $news = News::with(['translations' => function($q) use ($languageEnId) {
-                            $q->addSelect(['news_translation_id', 'news_id']);
-                            $q->with(['media' => function($q2) {
-                                $q2->addSelect(['object_id', 'media_name_long', 'path']);
-                            }]);
-                            $q->where('merchant_language_id', $languageEnId);
-                        }])
-                        ->select(
+            $news = News::select(
                             'news.news_id as news_id',
-                            'news_translations.news_name as news_name',
+                            DB::Raw("
+                                CASE WHEN {$prefix}news_translations.news_name = '' THEN {$prefix}news.news_name ELSE {$prefix}news_translations.news_name END as news_name,
+                                CASE WHEN {$prefix}news_translations.description = '' THEN {$prefix}news.description ELSE {$prefix}news_translations.description END as description,
+                                CASE WHEN {$prefix}media.path is null THEN (
+                                        select m.path
+                                        from {$prefix}news_translations nt
+                                        join {$prefix}media m
+                                            on m.object_id = nt.news_translation_id
+                                            and m.media_name_long = 'news_translation_image_orig'
+                                        where nt.news_id = {$prefix}news.news_id
+                                        group by nt.news_id
+                                    ) ELSE {$prefix}media.path END as original_media_path
+                            "),
                             'news.object_type',
-                            'news_translations.description as description',
                             'news.end_date',
-                            'media.path as original_media_path',
                             // query for get status active based on timezone
                             DB::raw("
                                     CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
@@ -405,9 +440,8 @@ class NewsAPIController extends ControllerAPI
                             $q->on('media.media_name_long', '=', DB::raw("'news_translation_image_orig'"));
                         })
                         ->where('news.news_id', $newsId)
-                        ->where('news_translations.merchant_language_id', '=', $languageEnId)
+                        ->where('news_translations.merchant_language_id', '=', $valid_language->language_id)
                         ->where('news.object_type', '=', 'news')
-                        ->where('news_translations.news_name', '!=', '')
                         ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                         ->first();
 
@@ -540,8 +574,17 @@ class NewsAPIController extends ControllerAPI
                                     ->leftJoin('news', 'news_merchant.news_id', '=', 'news.news_id')
                                     ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
                                     ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
-                                    ->leftJoin(DB::raw("{$prefix}media as img"), function($q) {
-                                        $q->on(DB::raw('img.object_id'), '=', 'merchants.merchant_id')
+                                    ->leftJoin(DB::raw("{$prefix}media as img"), function($q) use ($prefix) {
+                                        $q->on(DB::raw('img.object_id'), '=', DB::Raw("
+                                                        (select CASE WHEN t.object_type = 'tenant'
+                                                                    THEN m.merchant_id
+                                                                    ELSE t.merchant_id
+                                                                END as mall_id
+                                                        from orb_merchants t
+                                                        join orb_merchants m
+                                                            on m.merchant_id = t.parent_id
+                                                        where t.merchant_id = {$prefix}merchants.merchant_id)
+                                            "))
                                             ->on(DB::raw('img.media_name_long'), 'IN', DB::raw("('mall_logo_orig', 'retailer_logo_orig')"));
                                     })
                                     ->where('news_merchant.news_id', '=', $newsId)
@@ -556,7 +599,7 @@ class NewsAPIController extends ControllerAPI
             $skip = PaginationNumber::parseSkipFromGet();
             $newsLocations->skip($skip);
 
-            $newsLocations->orderBy('name', 'asc');
+            $newsLocations->orderBy($sort_by, $sort_mode);
 
             $listOfRec = $newsLocations->get();
 
@@ -610,6 +653,24 @@ class NewsAPIController extends ControllerAPI
         }
 
         return $this->render($httpCode);
+    }
+
+    protected function registerCustomValidation() {
+        // Check language is exists
+        Validator::extend('orbit.empty.language_default', function ($attribute, $value, $parameters) {
+            $lang_name = $value;
+
+            $language = Language::where('status', '=', 'active')
+                            ->where('name', $lang_name)
+                            ->first();
+
+            if (empty($language)) {
+                return FALSE;
+            }
+
+            $this->valid_language = $language;
+            return TRUE;
+        });
     }
 
     protected function quote($arg)
