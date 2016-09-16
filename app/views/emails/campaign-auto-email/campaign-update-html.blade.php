@@ -195,14 +195,22 @@
       <tr>
         <td>{{ 'age_range' }}</td>
         <td>
-          @foreach($campaign_before->ages as $key1 => $campaignAge)
-            {{ $campaignAge->range_name . (($key1 < count($campaign_before->ages) - 1) ? ', ' : '') }}
-          @endforeach
+          @if(count($campaign_before->ages) > 0)
+            @foreach($campaign_before->ages as $key1 => $campaignAge)
+              {{ $campaignAge->range_name . (($key1 < count($campaign_before->ages) - 1) ? ', ' : '') }}
+            @endforeach
+          @else
+            {{ 'All'}}
+          @endif
         </td>
         <td>
-          @foreach($campaign_after->ages as $key1 => $campaignAge)
-            {{ $campaignAge->range_name . (($key1 < count($campaign_after->ages) - 1) ? ', ' : '') }}
-          @endforeach
+          @if(count($campaign_after->ages) > 0)
+            @foreach($campaign_after->ages as $key1 => $campaignAge)
+              {{ $campaignAge->range_name . (($key1 < count($campaign_after->ages) - 1) ? ', ' : '') }}
+            @endforeach
+          @else
+            {{ 'All'}}
+          @endif
         </td>
       </tr>
     </table>
@@ -215,14 +223,22 @@
       <tr>
         <td>{{ 'gender' }}</td>
         <td>
-          @foreach($campaign_before->genders as $key1 => $gender)
-            {{ $gender->gender_value . (($key1 < count($campaign_before->genders) - 1) ? ', ' : '') }}
-          @endforeach
+          @if(count($campaign_before->genders) > 0)
+            @foreach($campaign_before->genders as $key1 => $gender)
+              {{ $gender->gender_value . (($key1 < count($campaign_before->genders) - 1) ? ', ' : '') }}
+            @endforeach
+          @else
+            {{ 'All'}}
+          @endif
         </td>
         <td>
-          @foreach($campaign_after->genders as $key1 => $gender)
-            {{ $gender->gender_value . (($key1 < count($campaign_after->genders) - 1) ? ', ' : '') }}
-          @endforeach
+          @if(count($campaign_after->genders) > 0)
+            @foreach($campaign_after->genders as $key1 => $gender)
+              {{ $gender->gender_value . (($key1 < count($campaign_after->genders) - 1) ? ', ' : '') }}
+            @endforeach
+          @else
+            {{ 'All'}}
+          @endif
         </td>
       </tr>
     </table>
