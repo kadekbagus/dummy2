@@ -171,7 +171,7 @@
           }
           $campaignAfterFilteredKeyword = array();
           foreach($campaignAfterNonFilteredKeyword as $keyword4) {
-              if (! in_array($keyword3, $campaignAfterFilteredKeyword)) {
+              if (! in_array($keyword4, $campaignAfterFilteredKeyword)) {
                   $campaignAfterFilteredKeyword[] = $keyword4;
               }
           }
