@@ -37,7 +37,8 @@ class SendEmailCampaignExpired extends Command {
      */
     public function fire()
     {
-        $list_campaign = $this->getExpiredCampaignQuery();
+        $expired_in_last = $this->option('expired-in-last');
+        $list_campaign = $this->getExpiredCampaignQuery($expired_in_last);
         $total_email = count($list_campaign);
         if ($total_email > 0) {
             $this->info("Success, Send {$total_email} Email Campaign Expired!");
@@ -51,7 +52,7 @@ class SendEmailCampaignExpired extends Command {
      *
      * @return array
      */
-    public function getExpiredCampaignQuery(){
+    public function getExpiredCampaignQuery($expired_in_last = 0){
         $prefix = DB::getTablePrefix();
 
         // get news list
@@ -77,14 +78,14 @@ class SendEmailCampaignExpired extends Command {
                                 END
                             )
                             END AS campaign_status,
-                            CASE WHEN {$prefix}news.end_date = (
+                            CASE WHEN {$prefix}news.end_date >= ((
                                 SELECT DATE_FORMAT(min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name)), '%Y-%m-%d %H:%i:00')
                                 FROM {$prefix}news_merchant onm
                                     LEFT JOIN {$prefix}merchants om ON om.merchant_id = onm.merchant_id
                                     LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
                                     LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
                                 WHERE onm.news_id = {$prefix}news.news_id
-                            )
+                            ) - INTERVAL {$expired_in_last} MINUTE)
                             THEN 'true'
                             ELSE 'false'
                             END as send_email,
@@ -130,14 +131,14 @@ class SendEmailCampaignExpired extends Command {
                                 END
                             )
                             END AS campaign_status,
-                            CASE WHEN {$prefix}news.end_date = (
+                            CASE WHEN {$prefix}news.end_date >= ((
                                 SELECT DATE_FORMAT(min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name)), '%Y-%m-%d %H:%i:00')
                                 FROM {$prefix}news_merchant onm
                                     LEFT JOIN {$prefix}merchants om ON om.merchant_id = onm.merchant_id
                                     LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
                                     LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
                                 WHERE onm.news_id = {$prefix}news.news_id
-                            )
+                            ) - INTERVAL {$expired_in_last} MINUTE)
                             THEN 'true'
                             ELSE 'false'
                             END as send_email,
@@ -181,13 +182,14 @@ class SendEmailCampaignExpired extends Command {
                                 END
                             )
                             END AS campaign_status,
-                            CASE WHEN {$prefix}promotions.end_date = (
+                            CASE WHEN {$prefix}promotions.end_date >= ((
                                 SELECT DATE_FORMAT(min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name)), '%Y-%m-%d %H:%i:00')
                                 FROM {$prefix}promotion_retailer opt
                                     LEFT JOIN {$prefix}merchants om ON om.merchant_id = opt.retailer_id
                                     LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
                                     LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
-                                WHERE opt.promotion_id = {$prefix}promotions.promotion_id)
+                                WHERE opt.promotion_id = {$prefix}promotions.promotion_id
+                            ) - INTERVAL {$expired_in_last} MINUTE)
                             THEN 'true'
                             ELSE 'false'
                             END AS send_email,
@@ -214,7 +216,7 @@ class SendEmailCampaignExpired extends Command {
         $querySql = $result->toSql();
 
         $campaigns = DB::table(DB::Raw("({$querySql}) as campaign"))->mergeBindings($result)
-                    ->orderBy('campaign_name', 'asc')
+                    ->orderBy('end_date', 'asc')
                     ->get();
 
         $list_campaign = [];
@@ -253,7 +255,9 @@ class SendEmailCampaignExpired extends Command {
      */
     protected function getOptions()
     {
-        return array();
+        return array(
+                array('expired-in-last', 0, InputOption::VALUE_REQUIRED, 'Expired Time in Minute.', null),
+            );
     }
 
 }
