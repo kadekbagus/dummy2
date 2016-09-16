@@ -1005,9 +1005,9 @@ class TenantAPIController extends ControllerAPI
                 $updatedtenant->email = $email;
             });
 
-            // OrbitInput::post('name', function($name) use ($updatedtenant) {
-            //     $updatedtenant->name = $name;
-            // });
+            OrbitInput::post('name', function($name) use ($updatedtenant) {
+                $updatedtenant->name = $name;
+            });
 
             // OrbitInput::post('description', function($description) use ($updatedtenant) {
             //     $updatedtenant->description = $description;
