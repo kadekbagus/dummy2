@@ -35,14 +35,9 @@
 
       @if($campaignType === 'Coupon')
       <tr>
-        <td>{{ 'coupon rule' }}</td>
-        <td>{{ $campaign_before->coupon_rule->rule_type }}</td>
-        <td>{{ $campaign_after->coupon_rule->rule_type }}</td>
-      </tr>
-      <tr>
         <td>{{ 'rule end date' }}</td>
-        <td>{{ $campaign_before->coupon_rule->rule_end_date }}</td>
-        <td>{{ $campaign_after->coupon_rule->rule_end_date }}</td>
+        <td>{{ $campaign_before->couponRule->rule_end_date }}</td>
+        <td>{{ $campaign_after->couponRule->rule_end_date }}</td>
       </tr>
       @endif
     </table>
@@ -94,27 +89,57 @@
           @endif
         @endforeach
 
-        @foreach($translation->media as $key3 => $media)
+        @if(count($translation->media) > 0)
+          @foreach($translation->media as $key3 => $media)
 
-            @if($campaignType === 'News' || $campaignType === 'Promotion')
-              @if($media->media_name_long === 'news_translation_image_orig')
-                <tr>
-                  <td>{{ 'image' }}</td>
-                  <td>{{ $media->path }}</td>
-                  <td>{{ $campaign_after->translations[$key1]->media[$key3]->path }}</td>
-                </tr>
+              @if($campaignType === 'News' || $campaignType === 'Promotion')
+                @if($media->media_name_long === 'news_translation_image_orig')
+                  <tr>
+                    <td>{{ 'image' }}</td>
+                    <td>{{ $media->path }}</td>
+                    <td>{{ $campaign_after->translations[$key1]->media[$key3]->path }}</td>
+                  </tr>
+                @endif
+              @else
+                @if($media->media_name_long === 'coupon_translation_image_orig')
+                  <tr>
+                    <td>{{ 'image' }}</td>
+                    <td>{{ $media->path }}</td>
+                    <td>{{ $campaign_after->translations[$key1]->media[$key3]->path }}</td>
+                  </tr>
+                @endif
               @endif
-            @else
-              @if($media->media_name_long === 'coupon_translation_image_orig')
-                <tr>
-                  <td>{{ 'image' }}</td>
-                  <td>{{ $media->path }}</td>
-                  <td>{{ $campaign_after->translations[$key1]->media[$key3]->path }}</td>
-                </tr>
-              @endif
-            @endif
 
-        @endforeach
+          @endforeach
+        @elseif(count($campaign_after->translations[$key1]->media) > 0)
+          @foreach($campaign_after->translations[$key1]->media as $key3 => $media)
+
+              @if($campaignType === 'News' || $campaignType === 'Promotion')
+                @if($media->media_name_long === 'news_translation_image_orig')
+                  <tr>
+                    <td>{{ 'image' }}</td>
+                    <td>{{ '' }}</td>
+                    <td>{{ $media->path }}</td>
+                  </tr>
+                @endif
+              @else
+                @if($media->media_name_long === 'coupon_translation_image_orig')
+                  <tr>
+                    <td>{{ 'image' }}</td>
+                    <td>{{ '' }}</td>
+                    <td>{{ $media->path }}</td>
+                  </tr>
+                @endif
+              @endif
+
+          @endforeach
+        @else
+                  <tr>
+                    <td>{{ 'image' }}</td>
+                    <td>{{ '' }}</td>
+                    <td>{{ '' }}</td>
+                  </tr>
+        @endif
 
       @endforeach
     </table>

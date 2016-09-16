@@ -14,6 +14,7 @@ use Mall;
 use TemporaryContent;
 use News;
 use Coupon;
+use DB;
 
 class CampaignMail
 {
@@ -26,6 +27,7 @@ class CampaignMail
      */
     public function fire($job, $data)
     {
+        $prefix = DB::getTablePrefix();
         // Get data information from the queue
         switch ($data['mode']) {
             case 'update':
@@ -33,27 +35,33 @@ class CampaignMail
                     $tmpCampaign = TemporaryContent::where('temporary_content_id', $temporaryContentId)->first();
 
                     if (! is_object($tmpCampaign)) {
-                        \Log::error('Temporary content not found.');
+                        \Log::error('*** CampaignMail Queue: Temporary content not found. ***');
                         return ;
                     }
 
                     switch (ucfirst($data['campaignType'])) {
                         case 'News':
                         case 'Promotion':
-                            $updatedCampaign = News::excludeDeleted()
+                            $updatedCampaign = News::selectRaw("{$prefix}news.*,
+                                                        DATE_FORMAT({$prefix}news.end_date, '%d/%m/%Y %H:%i') as end_date")
+                                                    ->excludeDeleted()
                                                     ->where('news_id', $data['campaignId'])
                                                     ->first();
                             break;
 
                         case 'Coupon':
                         default:
-                            $updatedCampaign = Coupon::excludeDeleted()
+                            $updatedCampaign = Coupon::selectRaw("{$prefix}promotions.*,
+                                                        DATE_FORMAT({$prefix}promotions.end_date, '%d/%m/%Y %H:%i') as end_date,
+                                                        DATE_FORMAT({$prefix}promotions.coupon_validity_in_date, '%d/%m/%Y %H:%i') as coupon_validity_in_date
+                                                    ")
+                                                    ->excludeDeleted()
                                                     ->where('promotion_id', $data['campaignId'])
                                                     ->first();
                     }
 
                     if (! is_object($updatedCampaign)) {
-                        \Log::error('Campaign not found.');
+                        \Log::error('*** CampaignMail Queue: Campaign not found. ***');
                         return ;
                     }
 
@@ -63,9 +71,23 @@ class CampaignMail
                     );
 
                     $data['campaign_before'] = unserialize($tmpCampaign->contents);
-                    \Log::info('cmpgnBfr: '. serialize($data['campaign_before']));
                     if ($data['campaignType'] === 'Coupon') {
-                        $data['campaign_after'] = $updatedCampaign->load('translations.language', 'translations.media', 'ages.ageRange', 'genders', 'keywords', 'campaign_status', 'tenants', 'employee', 'couponRule');
+                        $data['campaign_after'] = $updatedCampaign->load([
+                            'translations.language',
+                            'translations.media',
+                            'ages.ageRange',
+                            'genders',
+                            'keywords',
+                            'campaign_status',
+                            'tenants' => function($q) use($prefix) {
+                                $q->addSelect(DB::raw("CONCAT ({$prefix}merchants.name, ' at ', malls.name) as name"));
+                                $q->join(DB::raw("{$prefix}merchants malls"), DB::raw("malls.merchant_id"), '=', 'merchants.parent_id');
+                            },
+                            'employee',
+                            'couponRule' => function($q) use($prefix) {
+                                $q->select('promotion_rule_id', 'promotion_id', DB::raw("DATE_FORMAT({$prefix}promotion_rules.rule_end_date, '%d/%m/%Y %H:%i') as rule_end_date"));
+                            }
+                        ]);
                     } else {
                         $data['campaign_after'] = $updatedCampaign->load('translations.language', 'translations.media', 'ages.ageRange', 'genders', 'keywords', 'campaign_status');
                     }

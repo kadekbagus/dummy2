@@ -1065,10 +1065,28 @@ class CouponAPIController extends ControllerAPI
 
             $updatedcoupon = Coupon::where('promotion_id', $promotion_id)->first();
 
+            $prefix = DB::getTablePrefix();
             // this is for send email to marketing, before and after list
-            $beforeUpdatedCoupon = Coupon::with('translations.language', 'translations.media', 'ages.ageRange',
-                                                'genders', 'keywords', 'campaign_status', 'tenants', 'employee',
-                                                'couponRule')
+            $beforeUpdatedCoupon = Coupon::with([
+                                            'translations.language',
+                                            'translations.media',
+                                            'ages.ageRange',
+                                            'genders',
+                                            'keywords',
+                                            'campaign_status',
+                                            'tenants' => function($q) use($prefix) {
+                                                $q->addSelect(DB::raw("CONCAT ({$prefix}merchants.name, ' at ', malls.name) as name"));
+                                                $q->join(DB::raw("{$prefix}merchants malls"), DB::raw("malls.merchant_id"), '=', 'merchants.parent_id');
+                                            },
+                                            'employee',
+                                            'couponRule' => function($q) use($prefix) {
+                                                $q->select('promotion_rule_id', 'promotion_id', DB::raw("DATE_FORMAT({$prefix}promotion_rules.rule_end_date, '%d/%m/%Y %H:%i') as rule_end_date"));
+                                            }
+                                        ])
+                                        ->selectRaw("{$prefix}promotions.*,
+                                            DATE_FORMAT({$prefix}promotions.end_date, '%d/%m/%Y %H:%i') as end_date,
+                                            DATE_FORMAT({$prefix}promotions.coupon_validity_in_date, '%d/%m/%Y %H:%i') as coupon_validity_in_date
+                                        ")
                                         ->excludeDeleted()
                                         ->where('promotion_id', $promotion_id)
                                         ->first();
