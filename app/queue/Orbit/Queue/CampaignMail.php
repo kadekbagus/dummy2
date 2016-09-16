@@ -112,9 +112,9 @@ class CampaignMail
             $email = Config::get('orbit.campaign_auto_email.email_list');
 
             if ($data['eventType'] === 'expired') {
-                $subject = $data['campaignType'] .' - '. $data['campaignName'] .' has just been '. $data['eventType'];
-            } else {
                 $subject = $data['campaignType'] .' - '. $data['campaignName'] .' is '. $data['eventType'];
+            } else {
+                $subject = $data['campaignType'] .' - '. $data['campaignName'] .' has just been '. $data['eventType'];
             }
 
             $message->from($from, $name);

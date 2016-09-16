@@ -89,12 +89,15 @@ class SendEmailCampaignExpired extends Command {
                             ELSE 'false'
                             END as send_email,
                             (
-                                select GROUP_CONCAT(IF(m.object_type = 'tenant', CONCAT(m.name,' at ', pm.name), CONCAT('Mall at ',m.name) ) separator ', ')
+                                select GROUP_CONCAT(IF(m.object_type = 'tenant', CONCAT(m.name,' at ', pm.name), CONCAT('Mall at ',m.name) ) separator '<br/>')
                                 from {$prefix}news_merchant
                                 left join {$prefix}merchants m on m.merchant_id = {$prefix}news_merchant.merchant_id
                                 left join {$prefix}merchants pm on m.parent_id = pm.merchant_id
                                 where {$prefix}news_merchant.news_id = {$prefix}news.news_id
-                            ) as campaign_location
+                            ) as campaign_location,
+                            (
+                                select DATE_FORMAT({$prefix}news.end_date, '%d %M %Y %H:%i')
+                            ) as end_date
                         "),
                         'news.created_at')
                     ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
@@ -139,12 +142,15 @@ class SendEmailCampaignExpired extends Command {
                             ELSE 'false'
                             END as send_email,
                             (
-                                select GROUP_CONCAT(IF(m.object_type = 'tenant', CONCAT(m.name,' at ', pm.name), CONCAT('Mall at ',m.name) ) separator ', ')
+                                select GROUP_CONCAT(IF(m.object_type = 'tenant', CONCAT(m.name,' at ', pm.name), CONCAT('Mall at ',m.name) ) separator '<br/>')
                                 from {$prefix}news_merchant
                                 left join {$prefix}merchants m on m.merchant_id = {$prefix}news_merchant.merchant_id
                                 left join {$prefix}merchants pm on m.parent_id = pm.merchant_id
                                 where {$prefix}news_merchant.news_id = {$prefix}news.news_id
-                            ) as campaign_location
+                            ) as campaign_location,
+                            (
+                                select DATE_FORMAT({$prefix}news.end_date, '%d %M %Y %H:%i')
+                            ) as end_date
                         "),
                         'news.created_at')
                     ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
@@ -186,11 +192,14 @@ class SendEmailCampaignExpired extends Command {
                             ELSE 'false'
                             END AS send_email,
                             (
-                                select GROUP_CONCAT(IF(m.object_type = 'tenant', CONCAT(m.name,' at ', pm.name), CONCAT('Mall at ',m.name)) separator ', ') from {$prefix}promotion_retailer
+                                select GROUP_CONCAT(IF(m.object_type = 'tenant', CONCAT(m.name,' at ', pm.name), CONCAT('Mall at ',m.name)) separator '<br/>') from {$prefix}promotion_retailer
                                 left join {$prefix}merchants m on m.merchant_id = {$prefix}promotion_retailer.retailer_id
                                 left join {$prefix}merchants pm on m.parent_id = pm.merchant_id
                                 where {$prefix}promotion_retailer.promotion_id = {$prefix}promotions.promotion_id
-                            ) as campaign_location
+                            ) as campaign_location,
+                            (
+                                select DATE_FORMAT({$prefix}promotions.end_date, '%d %M %Y %H:%i')
+                            ) as end_date
                         "),
                         'promotions.created_at')
                         ->leftJoin('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
@@ -210,16 +219,13 @@ class SendEmailCampaignExpired extends Command {
 
         $list_campaign = [];
         foreach ($campaigns as $key => $campaign) {
-            $timestamp = new DateTime($campaign->created_at);
-            $date = $timestamp->format('d F Y H:i').' (UTC)';
-
             // Send email process to the queue
             Queue::push('Orbit\\Queue\\CampaignMail', [
-                'campaignType'       => $campaign->campaign_type,
+                'campaignType'       => ucfirst($campaign->campaign_type),
                 'campaignName'       => $campaign->campaign_name,
                 'campaignLocation'   => $campaign->campaign_location,
                 'eventType'          => 'expired',
-                'date'               => $date,
+                'date'               => $campaign->end_date,
                 'campaignId'         => $campaign->campaign_id,
                 'mode'               => 'expired'
             ]);
