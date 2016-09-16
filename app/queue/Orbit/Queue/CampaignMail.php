@@ -30,6 +30,13 @@ class CampaignMail
         $prefix = DB::getTablePrefix();
         // Get data information from the queue
         switch ($data['mode']) {
+            case 'expired':
+                    $mailviews = array(
+                        'html' => 'emails.campaign-auto-email.campaign-expired-html',
+                        'text' => 'emails.campaign-auto-email.campaign-expired-text'
+                    );
+                break;
+
             case 'update':
                     $temporaryContentId = $data['temporaryContentId'];
                     $tmpCampaign = TemporaryContent::where('temporary_content_id', $temporaryContentId)->first();
@@ -126,7 +133,13 @@ class CampaignMail
             $name = $emailconf['name'];
 
             $email = Config::get('orbit.campaign_auto_email.email_list');
-            $subject = $data['campaignType'].' - '.$data['campaignName'].' has just been '.$data['eventType'];
+
+            if ($data['eventType'] === 'expired') {
+                $subject = $data['campaignType'] .' - '. $data['campaignName'] .' is '. $data['eventType'];
+            } else {
+                $subject = $data['campaignType'] .' - '. $data['campaignName'] .' has just been '. $data['eventType'];
+            }
+
             $message->from($from, $name);
             $message->subject($subject);
             $message->to($email);
