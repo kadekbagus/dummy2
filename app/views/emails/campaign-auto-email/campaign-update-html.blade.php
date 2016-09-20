@@ -35,14 +35,9 @@
 
       @if($campaignType === 'Coupon')
       <tr>
-        <td>{{ 'coupon rule' }}</td>
-        <td>{{ $campaign_before->coupon_rule->rule_type }}</td>
-        <td>{{ $campaign_after->coupon_rule->rule_type }}</td>
-      </tr>
-      <tr>
         <td>{{ 'rule end date' }}</td>
-        <td>{{ $campaign_before->coupon_rule->rule_end_date }}</td>
-        <td>{{ $campaign_after->coupon_rule->rule_end_date }}</td>
+        <td>{{ $campaign_before->couponRule->rule_end_date }}</td>
+        <td>{{ $campaign_after->couponRule->rule_end_date }}</td>
       </tr>
       @endif
     </table>
@@ -94,27 +89,57 @@
           @endif
         @endforeach
 
-        @foreach($translation->media as $key3 => $media)
+        @if(count($translation->media) > 0)
+          @foreach($translation->media as $key3 => $media)
 
-            @if($campaignType === 'News' || $campaignType === 'Promotion')
-              @if($media->media_name_long === 'news_translation_image_orig')
-                <tr>
-                  <td>{{ 'image' }}</td>
-                  <td>{{ $media->path }}</td>
-                  <td>{{ $campaign_after->translations[$key1]->media[$key3]->path }}</td>
-                </tr>
+              @if($campaignType === 'News' || $campaignType === 'Promotion')
+                @if($media->media_name_long === 'news_translation_image_orig')
+                  <tr>
+                    <td>{{ 'image' }}</td>
+                    <td>{{ $media->path }}</td>
+                    <td>{{ $campaign_after->translations[$key1]->media[$key3]->path }}</td>
+                  </tr>
+                @endif
+              @else
+                @if($media->media_name_long === 'coupon_translation_image_orig')
+                  <tr>
+                    <td>{{ 'image' }}</td>
+                    <td>{{ $media->path }}</td>
+                    <td>{{ $campaign_after->translations[$key1]->media[$key3]->path }}</td>
+                  </tr>
+                @endif
               @endif
-            @else
-              @if($media->media_name_long === 'coupon_translation_image_orig')
-                <tr>
-                  <td>{{ 'image' }}</td>
-                  <td>{{ $media->path }}</td>
-                  <td>{{ $campaign_after->translations[$key1]->media[$key3]->path }}</td>
-                </tr>
-              @endif
-            @endif
 
-        @endforeach
+          @endforeach
+        @elseif(count($campaign_after->translations[$key1]->media) > 0)
+          @foreach($campaign_after->translations[$key1]->media as $key3 => $media)
+
+              @if($campaignType === 'News' || $campaignType === 'Promotion')
+                @if($media->media_name_long === 'news_translation_image_orig')
+                  <tr>
+                    <td>{{ 'image' }}</td>
+                    <td>{{ '' }}</td>
+                    <td>{{ $media->path }}</td>
+                  </tr>
+                @endif
+              @else
+                @if($media->media_name_long === 'coupon_translation_image_orig')
+                  <tr>
+                    <td>{{ 'image' }}</td>
+                    <td>{{ '' }}</td>
+                    <td>{{ $media->path }}</td>
+                  </tr>
+                @endif
+              @endif
+
+          @endforeach
+        @else
+                  <tr>
+                    <td>{{ 'image' }}</td>
+                    <td>{{ '' }}</td>
+                    <td>{{ '' }}</td>
+                  </tr>
+        @endif
 
       @endforeach
     </table>
@@ -128,15 +153,34 @@
       </tr>
       <tr>
         <td>{{ 'keyword' }}</td>
+        <?php
+          $campaignBeforeNonFilteredKeyword = array();
+          foreach($campaign_before->keywords as $key1 => $keyword1) {
+              $campaignBeforeNonFilteredKeyword[] = $keyword1->keyword;
+          }
+          $campaignAfterNonFilteredKeyword = array();
+          foreach($campaign_after->keywords as $key1 => $keyword2) {
+              $campaignAfterNonFilteredKeyword[] = $keyword2->keyword;
+          }
+          // eliminate duplicate keywords
+          $campaignBeforeFilteredKeyword = array();
+          foreach($campaignBeforeNonFilteredKeyword as $keyword3) {
+              if (! in_array($keyword3, $campaignBeforeFilteredKeyword)) {
+                  $campaignBeforeFilteredKeyword[] = $keyword3;
+              }
+          }
+          $campaignAfterFilteredKeyword = array();
+          foreach($campaignAfterNonFilteredKeyword as $keyword4) {
+              if (! in_array($keyword4, $campaignAfterFilteredKeyword)) {
+                  $campaignAfterFilteredKeyword[] = $keyword4;
+              }
+          }
+        ?>
         <td>
-          @foreach($campaign_before->keywords as $key1 => $keyword)
-            {{ $keyword->keyword . (($key1 < count($campaign_before->keywords) - 1) ? ', ' : '') }}
-          @endforeach
+          {{ implode(', ', $campaignBeforeFilteredKeyword) }}
         </td>
         <td>
-          @foreach($campaign_after->keywords as $key1 => $keyword)
-            {{ $keyword->keyword . (($key1 < count($campaign_after->keywords) - 1) ? ', ' : '') }}
-          @endforeach
+          {{ implode(', ', $campaignAfterFilteredKeyword) }}
         </td>
       </tr>
     </table>
@@ -151,14 +195,22 @@
       <tr>
         <td>{{ 'age_range' }}</td>
         <td>
-          @foreach($campaign_before->ages as $key1 => $campaignAge)
-            {{ $campaignAge->range_name . (($key1 < count($campaign_before->ages) - 1) ? ', ' : '') }}
-          @endforeach
+          @if(count($campaign_before->ages) > 0)
+            @foreach($campaign_before->ages as $key1 => $campaignAge)
+              {{ $campaignAge->range_name . (($key1 < count($campaign_before->ages) - 1) ? ', ' : '') }}
+            @endforeach
+          @else
+            {{ 'All'}}
+          @endif
         </td>
         <td>
-          @foreach($campaign_after->ages as $key1 => $campaignAge)
-            {{ $campaignAge->range_name . (($key1 < count($campaign_after->ages) - 1) ? ', ' : '') }}
-          @endforeach
+          @if(count($campaign_after->ages) > 0)
+            @foreach($campaign_after->ages as $key1 => $campaignAge)
+              {{ $campaignAge->range_name . (($key1 < count($campaign_after->ages) - 1) ? ', ' : '') }}
+            @endforeach
+          @else
+            {{ 'All'}}
+          @endif
         </td>
       </tr>
     </table>
@@ -171,14 +223,22 @@
       <tr>
         <td>{{ 'gender' }}</td>
         <td>
-          @foreach($campaign_before->genders as $key1 => $gender)
-            {{ $gender->gender_value . (($key1 < count($campaign_before->genders) - 1) ? ', ' : '') }}
-          @endforeach
+          @if(count($campaign_before->genders) > 0)
+            @foreach($campaign_before->genders as $key1 => $gender)
+              {{ $gender->gender_value . (($key1 < count($campaign_before->genders) - 1) ? ', ' : '') }}
+            @endforeach
+          @else
+            {{ 'All'}}
+          @endif
         </td>
         <td>
-          @foreach($campaign_after->genders as $key1 => $gender)
-            {{ $gender->gender_value . (($key1 < count($campaign_after->genders) - 1) ? ', ' : '') }}
-          @endforeach
+          @if(count($campaign_after->genders) > 0)
+            @foreach($campaign_after->genders as $key1 => $gender)
+              {{ $gender->gender_value . (($key1 < count($campaign_after->genders) - 1) ? ', ' : '') }}
+            @endforeach
+          @else
+            {{ 'All'}}
+          @endif
         </td>
       </tr>
     </table>

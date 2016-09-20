@@ -1606,7 +1606,7 @@ class LoginAPIController extends ControllerAPI
 
         $get_mall = CampaignLocation::with('timezone')
                                     ->leftJoin('merchants as pm', DB::Raw('pm.merchant_id'), '=', 'merchants.parent_id')
-                                    ->leftJoin('timezones as ot', DB::Raw('ot.timezone_id'), '=', DB::Raw('pm.timezone_id'))
+                                    ->leftJoin('timezones as ot', DB::Raw('ot.timezone_id'), '=', 'merchants.timezone_id')
                                     ->select(
                                               DB::Raw("IF ({$prefix}merchants.object_type = 'tenant', pm.merchant_id, {$prefix}merchants.merchant_id) as merchant_id"),
                                               DB::Raw("IF ({$prefix}merchants.object_type = 'tenant', pm.name, {$prefix}merchants.name) as name"),
@@ -1616,6 +1616,7 @@ class LoginAPIController extends ControllerAPI
                                               DB::Raw("TIMESTAMPDIFF(HOUR, UTC_TIMESTAMP(), CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)) as timezone_offset")
                                         )
                                     ->where('merchants.status', '=', 'active')
+                                    ->having(DB::Raw('object_type'), '=', 'mall')
                                     ->orderBy('timezone_offset')
                                     ->groupBy('merchant_id');
 

@@ -390,10 +390,23 @@ class StoreAPIController extends ControllerAPI
 
             $prefix = DB::getTablePrefix();
 
-            $store = Tenant::select('merchants.merchant_id',
+            $store = Tenant::select(
+                                'merchants.merchant_id',
                                 'merchants.name',
-                                DB::Raw("
-                                        CASE WHEN {$prefix}merchant_translations.description = '' THEN {$prefix}merchants.description ELSE {$prefix}merchant_translations.description END as description
+                                DB::Raw("CASE WHEN (
+                                                select mt.description
+                                                from {$prefix}merchant_translations mt
+                                                where mt.merchant_id = {$prefix}merchants.merchant_id
+                                                    and mt.merchant_language_id = {$this->quote($valid_language->language_id)}
+                                            ) = ''
+                                            THEN {$prefix}merchants.description
+                                            ELSE (
+                                                select mt.description
+                                                from {$prefix}merchant_translations mt
+                                                where mt.merchant_id = {$prefix}merchants.merchant_id
+                                                    and mt.merchant_language_id = {$this->quote($valid_language->language_id)}
+                                            )
+                                        END as description
                                     "),
                                 'merchants.url'
                             )
@@ -438,12 +451,10 @@ class StoreAPIController extends ControllerAPI
                             );
                     }])
                 ->join(DB::raw("(select merchant_id, status, parent_id from {$prefix}merchants where object_type = 'mall') as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
-                ->leftJoin('merchant_translations', 'merchant_translations.merchant_id', '=', 'merchants.merchant_id')
-                ->where('merchant_translations.merchant_language_id', $valid_language->language_id)
                 ->where('merchants.status', 'active')
                 ->whereRaw("oms.status = 'active'")
                 ->where('merchants.name', $storename)
-                ->orderBy('merchants.created_at')
+                ->orderBy('merchants.created_at', 'asc')
                 ->first();
 
             $activityNotes = sprintf('Page viewed: Landing Page Store Detail Page');

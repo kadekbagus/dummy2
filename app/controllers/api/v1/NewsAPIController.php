@@ -723,10 +723,14 @@ class NewsAPIController extends ControllerAPI
                 $retailernew[] = $tenant_id;
             }
 
+            $prefix = DB::getTablePrefix();
+
             $updatednews = News::with('tenants')->excludeDeleted()->where('news_id', $news_id)->first();
 
             // this is for send email to marketing, before and after list
-            $beforeUpdatedNews = News::with('translations.language', 'translations.media', 'ages.ageRange', 'genders', 'keywords', 'campaign_status')
+            $beforeUpdatedNews = News::selectRaw("{$prefix}news.*,
+                                                        DATE_FORMAT({$prefix}news.end_date, '%d/%m/%Y %H:%i') as end_date")
+                                    ->with('translations.language', 'translations.media', 'ages.ageRange', 'genders', 'keywords', 'campaign_status')
                                     ->excludeDeleted()
                                     ->where('news_id', $news_id)
                                     ->first();
