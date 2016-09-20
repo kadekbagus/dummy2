@@ -83,6 +83,15 @@ Artisan::add(new ImportDBIP);
 // Create table for DB IP
 Artisan::add(new CreateTableDBIP);
 
+// Update es mall index
+Artisan::add(new ElasticsearchUpdateMallIndex);
+
+// Update ES mall logo
+Artisan::add(new ElasticsearchUpdateMallLogoCommand);
+
+// Send Email about campaign expired
+Artisan::add(new SendEmailCampaignExpired);
+
 // Insert or update data on settings table
 // @Todo investigate why its error
 // Artisan::add(new MerchantSetting);

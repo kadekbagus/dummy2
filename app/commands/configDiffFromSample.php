@@ -1,6 +1,7 @@
 <?php
 use Illuminate\Console\Command;
-
+use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Input\InputArgument;
 /**
  * Diffs configs vs sample to catch anything added in sample that is not in current config.
  */
@@ -11,12 +12,12 @@ class configDiffFromSample extends Command
 
     public function fire()
     {
-        $config_files = ['app.php', 'orbit.php'];
-        foreach ($config_files as $config_file) {
-            $sample_config = require(app_path('config/' . $config_file . '.sample'));
-            $current_config = require(app_path('config/' . $config_file));
-            $this->recursiveDiff($config_file, '', $sample_config, $current_config);
-        }
+        $sample_file = $this->option('sample-file');
+        $config_file = $this->option('config-file');
+
+        $sample_config = require($sample_file);
+        $current_config = require($config_file);
+        $this->recursiveDiff($config_file, '', $sample_config, $current_config);
     }
 
     private function isKeyValueArray($array)
@@ -55,5 +56,18 @@ class configDiffFromSample extends Command
                 }
             }
         }
+    }
+
+    /**
+     * Get the console command options.
+     *
+     * @return array
+     */
+    protected function getOptions()
+    {
+        return array(
+            array('sample-file', null, InputOption::VALUE_REQUIRED, 'Sample file (full-path)'),
+            array('config-file', null, InputOption::VALUE_REQUIRED, 'Config file (full-path)'),
+        );
     }
 }

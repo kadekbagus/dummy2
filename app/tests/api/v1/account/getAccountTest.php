@@ -22,6 +22,7 @@ class getAccountTest extends TestCase
         Factory::create('role_mall_owner');
         $role_campaign_owner = Factory::create('role_campaign_owner');
         $role_campaign_employee = Factory::create('role_campaign_employee');
+        $role_campaign_admin = Factory::create('role_campaign_admin');
 
         // country
         $this->country = Factory::create('Country');
@@ -32,6 +33,7 @@ class getAccountTest extends TestCase
         $this->account_type_agency    = Factory::create('account_type_agency');
         $this->account_type_3rd       = Factory::create('account_type_3rd');
         $this->account_type_dominopos = Factory::create('account_type_dominopos');
+        $this->account_type_master    = Factory::create('account_type_master');
 
         // mall and tenant for list link to tenant
         $this->mall_a = $mall_a = Factory::create('Mall', ['name' => 'Mall A']);
@@ -238,6 +240,25 @@ class getAccountTest extends TestCase
                 'user_id' => $this->pmp_3rd_all_link_user->user_id
             ]);
 
+        // pmp_master select all link to tenants
+        $this->pmp_master_account = Factory::create('User', [
+                'user_role_id' => $role_campaign_admin->role_id
+            ]);
+
+        $this->pmp_master_account_detail = Factory::create('UserDetail',[
+                'user_id' => $this->pmp_master_account->user_id
+            ]);
+        $this->pmp_master_campaign_account = Factory::create('CampaignAccount', [
+                'user_id' => $this->pmp_master_account->user_id,
+                'parent_user_id' => NULL,
+                'is_link_to_all' => 'Y',
+                'account_type_id' => $this->account_type_master->account_type_id
+            ]);
+
+        $this->pmp_master_employee = Factory::create('Employee', [
+                'user_id' => $this->pmp_master_account->user_id
+            ]);
+
         $_GET = [];
         $_POST = [];
     }
@@ -325,6 +346,31 @@ class getAccountTest extends TestCase
                                             ->get();
                 $this->assertSame($pmp_account->tenant_count, count($mall));
             }
+        }
+    }
+
+    public function testGetAccountMasterFilteringRole()
+    {
+        /*
+        *
+        */
+        $filter = [
+            'take'      => 15,
+            'role_name' => 'Campaign Admin',
+        ];
+
+        $response = $this->setRequestGetAccount($this->apiKey->api_key, $this->apiKey->api_secret_key, $filter);
+        $this->assertSame("Request OK", $response->message);
+        $this->assertSame(0, $response->code);
+        $this->assertSame("success", $response->status);
+
+        foreach ($response->data->records as $key => $pmp_account) {
+            $mall = CampaignLocation::where('status', '!=', 'deleted')
+                                        ->whereIn('object_type', ['mall', 'tenant'])
+                                        ->get();
+            $this->assertSame($pmp_account->tenant_count, count($mall));
+            $this->assertSame($pmp_account->type_name, 'Master');
+            $this->assertSame($pmp_account->select_all_tenants, 'Y');
         }
     }
 }

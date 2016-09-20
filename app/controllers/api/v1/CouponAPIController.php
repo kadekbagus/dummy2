@@ -23,7 +23,7 @@ class CouponAPIController extends ControllerAPI
     protected $returnBuilder = FALSE;
 
     protected $couponViewRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee', 'campaign admin'];
-    protected $couponModifiyRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign admin', 'campaign employee'];
+    protected $couponModifiyRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee'];
     protected $couponModifiyRolesWithConsumer = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign admin', 'consumer'];
 
     /**
@@ -113,7 +113,7 @@ class CouponAPIController extends ControllerAPI
             $role = $user->role;
             $validRoles = $this->couponModifiyRoles;
             if (! in_array( strtolower($role->role_name), $validRoles)) {
-                $message = 'Your role are not allowed to access this resource.';
+                $message = 'You have to log in to continue';
                 ACL::throwAccessForbidden($message);
             }
 
@@ -1065,6 +1065,33 @@ class CouponAPIController extends ControllerAPI
 
             $updatedcoupon = Coupon::where('promotion_id', $promotion_id)->first();
 
+            $prefix = DB::getTablePrefix();
+            // this is for send email to marketing, before and after list
+            $beforeUpdatedCoupon = Coupon::with([
+                                            'translations.language',
+                                            'translations.media',
+                                            'ages.ageRange',
+                                            'genders',
+                                            'keywords',
+                                            'campaign_status',
+                                            'tenants' => function($q) use($prefix) {
+                                                $q->addSelect(DB::raw("CONCAT ({$prefix}merchants.name, ' at ', malls.name) as name"));
+                                                $q->join(DB::raw("{$prefix}merchants malls"), DB::raw("malls.merchant_id"), '=', 'merchants.parent_id');
+                                            },
+                                            'employee',
+                                            'couponRule' => function($q) use($prefix) {
+                                                $q->select('promotion_rule_id', 'promotion_id', DB::raw("DATE_FORMAT({$prefix}promotion_rules.rule_end_date, '%d/%m/%Y %H:%i') as rule_end_date"));
+                                            }
+                                        ])
+                                        ->selectRaw("{$prefix}promotions.*,
+                                            DATE_FORMAT({$prefix}promotions.end_date, '%d/%m/%Y %H:%i') as end_date,
+                                            DATE_FORMAT({$prefix}promotions.coupon_validity_in_date, '%d/%m/%Y %H:%i') as coupon_validity_in_date,
+                                            IF({$prefix}promotions.maximum_issued_coupon = 0, 'Unlimited', {$prefix}promotions.maximum_issued_coupon) as maximum_issued_coupon
+                                        ")
+                                        ->excludeDeleted()
+                                        ->where('promotion_id', $promotion_id)
+                                        ->first();
+
             $statusdb = $updatedcoupon->status;
             $enddatedb = $updatedcoupon->end_date;
 
@@ -1685,6 +1712,10 @@ class CouponAPIController extends ControllerAPI
                 $updatedcoupon->keywords = $couponKeywords;
             });
 
+            $tempContent = new TemporaryContent();
+            $tempContent->contents = serialize($beforeUpdatedCoupon);
+            $tempContent->save();
+
             Event::fire('orbit.coupon.postupdatecoupon.after.save', array($this, $updatedcoupon));
 
             OrbitInput::post('translations', function($translation_json_string) use ($updatedcoupon, $mallid) {
@@ -1754,7 +1785,7 @@ class CouponAPIController extends ControllerAPI
                     ->setNotes($activityNotes)
                     ->responseOK();
 
-            Event::fire('orbit.coupon.postupdatecoupon.after.commit', array($this, $updatedcoupon));
+            Event::fire('orbit.coupon.postupdatecoupon.after.commit', array($this, $updatedcoupon, $tempContent->temporary_content_id));
         } catch (ACLForbiddenException $e) {
             Event::fire('orbit.coupon.postupdatecoupon.access.forbidden', array($this, $e));
 
@@ -1824,7 +1855,7 @@ class CouponAPIController extends ControllerAPI
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = null;
+            $this->response->data = [$e->getMessage(), $e->getFile(), $e->getLine()];
 
             // Rollback the changes
             $this->rollBack();

@@ -54,6 +54,12 @@ $factory('Role',  'role_campaign_employee', [
     'role_order' => 1
 ]);
 
+$factory('Role',  'role_campaign_admin', [
+    'role_name' => 'Campaign Admin',
+    'role_order' => 1
+]);
+
+
 $factory('Role', 'role_mall_customer_service', [
     'role_name' => 'Mall Customer Service',
     'role_order' => 1

@@ -47,6 +47,13 @@ class Tenant extends Eloquent
         return $this->hasOne('RetailerTenant', 'retailer_id', 'merchant_id');
     }
 
+    // @author Irianto Pratama <irianto@dominopos.com>
+    public function tenantFloor()
+    {
+        return $this->hasOne('Object', 'object_id', 'floor_id')
+                ->where('object_type', 'floor');
+    }
+
     public function parent()
     {
         return $this->mall();
@@ -349,6 +356,17 @@ class Tenant extends Eloquent
     public function mediaImageOrig()
     {
         return $this->mediaOrig()->where('media_name_id', 'retailer_image');
+    }
+
+    /**
+     * Retailer has many uploaded images.
+     *
+     * @author Irianto <irianto@dominopos.com>
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function mediaImageCroppedDefault()
+    {
+        return $this->mediaCroppedDefault()->where('media_name_id', 'retailer_image');
     }
 
     /**

@@ -9,6 +9,7 @@ use Activity;
 use User;
 use Config;
 use Orbit\Mailchimp\MailchimpFactory;
+use Orbit\Helper\Util\JobBurier;
 
 class MailchimpSubscriberAddQueue
 {
@@ -46,6 +47,9 @@ class MailchimpSubscriberAddQueue
             $message = 'Subscriber successfully added to the mailchimp';
             $message = sprintf('[Job ID: `%s`] MAILCHIMP QUEUE -- Add Subscriber: %s -- Status: OK -- Message: %s',
                                 $job->getJobId(), $user->user_email, $message);
+
+            $job->delete();
+
             Log::info($message);
 
             return ['status' => 'ok', 'message' => $message];
@@ -57,8 +61,13 @@ class MailchimpSubscriberAddQueue
                                 $job->getJobId(), $user->user_email, $e->getMessage());
         }
 
-        Log::info($message);
+        // Bury the job for later inspection
+        JobBurier::create($job, function($theJob) {
+            // The queue driver does not support bury.
+            $theJob->delete();
+        })->bury();
 
+        Log::info($message);
         return ['status' => 'fail', 'message' => $message];
     }
 }

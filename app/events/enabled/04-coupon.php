@@ -104,3 +104,60 @@ Event::listen('orbit.coupon.after.translation.save', function($controller, $coup
     $coupon_translations->media = $response->data;
     $coupon_translations->image_translation = $response->data[0]->path;
 });
+
+
+/**
+ * Listen on:    `orbit.coupon.postnewcoupon.after.commit`
+ * Purpose:      Send email to marketing after create coupon
+ *
+ * @author kadek <kadek@dominopos.com>
+ *
+ * @param CouponAPIController $controller
+ * @param Coupon $coupon
+ */
+Event::listen('orbit.coupon.postnewcoupon.after.commit', function($controller, $coupon)
+{
+    $timestamp = new DateTime($coupon->created_at);
+    $date = $timestamp->format('d F Y H:i').' (UTC)';
+
+    // Send email process to the queue
+    Queue::push('Orbit\\Queue\\CampaignMail', [
+        'campaignType'       => 'Coupon',
+        'campaignName'       => $coupon->promotion_name,
+        'pmpUser'            => $controller->api->user->username,
+        'eventType'          => 'created',
+        'date'               => $date,
+        'campaignId'         => $coupon->promotion_id,
+        'mode'               => 'create'
+    ]);
+
+});
+
+
+/**
+ * Listen on:    `orbit.coupon.postupdatecoupon.after.commit`
+ * Purpose:      Send email to marketing after create coupon
+ *
+ * @author kadek <kadek@dominopos.com>
+ *
+ * @param CouponAPIController $controller
+ * @param Coupon $coupon
+ */
+Event::listen('orbit.coupon.postupdatecoupon.after.commit', function($controller, $coupon, $temporaryContentId)
+{
+    $timestamp = new DateTime($coupon->updated_at);
+    $date = $timestamp->format('d F Y H:i').' (UTC)';
+
+    // Send email process to the queue
+    Queue::push('Orbit\\Queue\\CampaignMail', [
+        'campaignType'       => 'Coupon',
+        'campaignName'       => $coupon->promotion_name,
+        'pmpUser'            => $controller->api->user->username,
+        'eventType'          => 'updated',
+        'date'               => $date,
+        'campaignId'         => $coupon->promotion_id,
+        'temporaryContentId' => $temporaryContentId,
+        'mode'               => 'update'
+    ]);
+
+});

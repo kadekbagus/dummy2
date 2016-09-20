@@ -104,6 +104,7 @@ return array(
         // 'pub-coupon-list',
         // 'pub-mall-coupon-list',
         // 'pub-lucky-draw-list',
+        // 'pub-mall-coupon-add-to-wallet',
     ],
 
     // cdn path
@@ -300,6 +301,10 @@ return array(
 
         // tracked utm parameters
         'utm_parameters' => ['utm_source', 'utm_medium', 'utm_term', 'utm_content', 'utm_campaign'],
+
+        // gotomalls landing page domain (used in shared url redirection in pub-fb-bot filter)
+        // fill with: 'http://v27.gotomalls.cool' if in testing environment
+        'gtm_url' => 'http://www.gotomalls.cool',
     ),
 
     // General contact data
@@ -544,6 +549,12 @@ return array(
             'per_page'      => 50,
             'max_record'    => 1000,
         ),
+
+        // coupon location
+        'coupon_location' => array(
+            'per_page'      => 50,
+            'max_record'    => 200,
+        ),
     ),
 
     'reset_password' => array(
@@ -578,7 +589,7 @@ return array(
             'activation_base_url' => 'http://customer.orbit-mall.here/#/activate-account?token=%s',
 
             // GotoMalls URL (The New Mobile)
-            'gotomalls_activation_base_url' => 'http://gotomalls.here/#/account/activate/%s',
+            'gotomalls_activation_base_url' => 'http://gotomalls.here/#/account/activate/%s?email=%s',
 
             // Setup Password URL
             // This should be frontend URL not backend
@@ -1090,7 +1101,15 @@ return array(
         // Email validity
         'email' => array(
             'fake_mx' => FALSE
-        )
+        ),
+
+        // string key to encrypt/decrypt coupon redemption url params
+        // e.g: 'def0000022237f0cf69155b15e3d30811016dd7002d45d500fcd90e2b3c92a51019a0b15f6ef18db370853ece1833184bcf2d2fdf759085fe4d7b8a3e938f98d3029e5f4'
+        'encryption_key' => 'def0000022237f0cf69155b15e3d30811016dd7002d45d500fcd90e2b3c92a51019a0b15f6ef18db370853ece1833184bcf2d2fdf759085fe4d7b8a3e938f98d3029e5f4',
+
+        // encryption driver
+        // e.g: 'mcrypt' or 'defuse-php'
+        'encryption_driver' => 'defuse-php',
     ),
 
     'upload'    => array(
@@ -3514,6 +3533,172 @@ return array(
                 'object_type' => null,
                 'parameter_name' => null
             ),
+            // - News Click
+            '25' => array(
+                'name' => 'click_news_main_page',
+                'name_long' => 'Click News Main Page',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - News View
+            '26' => array(
+                'name' => 'view_news_main_page',
+                'name_long' => 'View News Main Page',
+                'module_name' => 'Application',
+                'type' => 'view',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - Clicking on a news in list
+            '27' => array(
+                'name' => 'click_news_list',
+                'name_long' => 'Click News List',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => 'News',
+                'parameter_name' => 'news_id'
+            ),
+            // - Promotion Click
+            '28' => array(
+                'name' => 'click_promotions_main_page',
+                'name_long' => 'Click Promotions Main Page',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - Promotions View
+            '29' => array(
+                'name' => 'view_promotions_main_page',
+                'name_long' => 'View Promotions Main Page',
+                'module_name' => 'Application',
+                'type' => 'view',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - Clicking on a promotion in list
+            '30' => array(
+                'name' => 'click_promotion_list',
+                'name_long' => 'Click Promotion List',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => 'Promotion',
+                'parameter_name' => 'promotion_id'
+            ),
+            // - Coupon Click
+            '31' => array(
+                'name' => 'click_coupons_main_page',
+                'name_long' => 'Click Coupons Main Page',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - Coupons View
+            '32' => array(
+                'name' => 'view_coupons_main_page',
+                'name_long' => 'View Coupons Main Page',
+                'module_name' => 'Application',
+                'type' => 'view',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - Clicking on a coupon in list
+            '33' => array(
+                'name' => 'click_coupon_list',
+                'name_long' => 'Click Coupon List',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'coupon_id'
+            ),
+
+            // - News Location View
+            '34' => array(
+                'name' => 'view_news_location',
+                'name_long' => 'View News Location Page',
+                'module_name' => 'News',
+                'type' => 'view',
+                'object_type' => 'News',
+                'parameter_name' => 'news_id'
+            ),
+            // - Clicking on a news location
+            '35' => array(
+                'name' => 'click_news_location',
+                'name_long' => 'Click News Location',
+                'module_name' => 'News',
+                'type' => 'click',
+                'object_type' => 'News',
+                'parameter_name' => 'news_id'
+            ),
+
+            // - Promotion Location View
+            '36' => array(
+                'name' => 'view_promotion_location',
+                'name_long' => 'View Promotion Location Page',
+                'module_name' => 'Promotion',
+                'type' => 'view',
+                'object_type' => 'Promotion',
+                'parameter_name' => 'promotion_id'
+            ),
+            // - Clicking on a promotion location
+            '37' => array(
+                'name' => 'click_promotion_location',
+                'name_long' => 'Click Promotion Location',
+                'module_name' => 'Promotion',
+                'type' => 'click',
+                'object_type' => 'Promotion',
+                'parameter_name' => 'promotion_id'
+            ),
+
+            // - Coupon Location View
+            '38' => array(
+                'name' => 'view_coupon_location',
+                'name_long' => 'View Coupon Location Page',
+                'module_name' => 'Coupon',
+                'type' => 'view',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'coupon_id'
+            ),
+            // - Clicking on a coupon location
+            '39' => array(
+                'name' => 'click_coupon_location',
+                'name_long' => 'Click Coupon Location',
+                'module_name' => 'Coupon',
+                'type' => 'click',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'coupon_id'
+            ),
+
+            // - Store Location View
+            '40' => array(
+                'name' => 'view_store_location',
+                'name_long' => 'View Store Location Page',
+                'module_name' => 'Store',
+                'type' => 'view',
+                'object_type' => 'Tenant',
+                'parameter_name' => 'store_id'
+            ),
+            // - Clicking on a store location
+            '41' => array(
+                'name' => 'click_store_location',
+                'name_long' => 'Click Store Location',
+                'module_name' => 'Store',
+                'type' => 'click',
+                'object_type' => 'Tenant',
+                'parameter_name' => 'store_id'
+            ),
+            // - View send coupon to email page
+            '42' => array(
+                'name' => 'view_send_coupon_to_email_page',
+                'name_long' => 'View Send Coupon to Email Page',
+                'module_name' => 'Coupon',
+                'type' => 'view',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'coupon_id'
+            ),
         ),
     ),
 
@@ -3588,4 +3773,22 @@ return array(
             ]
         ]
     ],
+
+    /**
+     * Configuration related with coupon
+     */
+    'coupon' => [
+        // URL redemption page which should be on main page (not CI)
+        // e.g: https://www.gotomalls.cool/#!/coupon-redemption?cid=%s&uid=%s
+        'direct_redemption_url' => NULL,
+    ],
+
+    'campaign_auto_email' => array(
+        // example 'email_list' => array('oktaviano@domminopos.com', 'nabilla@gotomalls.com')
+        'email_list' => array('marketing@domminopos.com'),
+        'sender' => array(
+            'email' => 'no-reply@gotomalls.com',
+            'name'  => 'Gotomalls'
+        ),
+    ),
 );

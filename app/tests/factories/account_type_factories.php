@@ -55,3 +55,10 @@ $factory('AccountType', 'account_type_dominopos', [
     'account_order' => 4,
     'status'        => 'active',
 ]);
+
+$factory('AccountType', 'account_type_master', [
+    'type_name'     => 'Master',
+    'unique_rule'   => 'none',
+    'account_order' => 5,
+    'status'        => 'active',
+]);

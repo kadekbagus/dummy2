@@ -16,7 +16,7 @@ use Carbon\Carbon as Carbon;
 class TenantAPIController extends ControllerAPI
 {
 
-    protected $tenantViewRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee', 'mall customer service'];
+    protected $tenantViewRoles = ['super admin', 'mall admin', 'mall owner', 'campaign admin','campaign owner', 'campaign employee', 'mall customer service'];
     protected $tenantModifiyRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee'];
     protected $campaignRole = ['campaign owner', 'campaign employee'];
     protected $valid_floor = Null;
@@ -1005,9 +1005,9 @@ class TenantAPIController extends ControllerAPI
                 $updatedtenant->email = $email;
             });
 
-            // OrbitInput::post('name', function($name) use ($updatedtenant) {
-            //     $updatedtenant->name = $name;
-            // });
+            OrbitInput::post('name', function($name) use ($updatedtenant) {
+                $updatedtenant->name = $name;
+            });
 
             // OrbitInput::post('description', function($description) use ($updatedtenant) {
             //     $updatedtenant->description = $description;
