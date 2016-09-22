@@ -45,6 +45,7 @@ class MallListAPIController extends ControllerAPI
             $userLocationCookieName = Config::get('orbit.user_location.cookie.name');
             $latitude = '';
             $longitude = '';
+            $locationFilter = '';
 
             $client = ClientBuilder::create() // Instantiate a new ClientBuilder
                     ->setHosts($host['hosts']) // Set the hosts
