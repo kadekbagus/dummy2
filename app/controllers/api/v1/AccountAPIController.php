@@ -570,6 +570,7 @@ class AccountAPIController extends ControllerAPI
                 'account_type_id'    => $row->campaignAccount->account_type_id,
                 'type_name'          => $row->type_name,
                 'select_all_tenants' => $row->campaignAccount->is_link_to_all,
+                'is_subscribed'      => $row->campaignAccount->is_subscribed,
                 'tenant_count'       => count($tenantAtMallArray),
                 'tenants'            => $tenantAtMallArray,
 
@@ -713,6 +714,13 @@ class AccountAPIController extends ControllerAPI
             // select all link to tenant just for 3rd and dominopos
             $select_all_tenants = OrbitInput::post('select_all_tenants', 'N');
 
+            $is_subscribed = OrbitInput::post('is_subscribed', 'N');
+
+            // for handle empty string cause select all tenant is not required
+            if ($is_subscribed !== 'Y') {
+                $is_subscribed = 'N';
+            }
+
             // split validation account type for support select all tenant for account type 3rd and dominopos
             $validator = Validator::make(
                 array(
@@ -733,6 +741,7 @@ class AccountAPIController extends ControllerAPI
             $account_type = $this->valid_account_type;
 
             $validation_data = [
+                'is_subscribed'      => $is_subscribed,
                 'select_all_tenants' => $select_all_tenants,
                 'user_firstname'     => $user_firstname,
                 'user_lastname'      => $user_lastname,
@@ -749,6 +758,7 @@ class AccountAPIController extends ControllerAPI
             ];
 
             $validation_error = [
+                'is_subscribed'      => 'in:N,Y',
                 'select_all_tenants' => 'in:N,Y|orbit.access.select_all_tenants:' . $account_type->type_name,
                 'user_firstname'     => 'required',
                 'user_lastname'      => 'required',
@@ -832,6 +842,7 @@ class AccountAPIController extends ControllerAPI
             $campaignAccount->account_type_id = $account_type->account_type_id;
             $campaignAccount->account_name    = $account_name;
             $campaignAccount->is_link_to_all  = $select_all_tenants;
+            $campaignAccount->is_subscribed   = $is_subscribed;
             $campaignAccount->position        = $position;
             $campaignAccount->status          = $status;
             $campaignAccount->save();
@@ -1008,6 +1019,8 @@ class AccountAPIController extends ControllerAPI
             // select all link to tenant just for 3rd and dominopos
             $select_all_tenants = OrbitInput::post('select_all_tenants', 'N');
 
+            $is_subscribed = OrbitInput::post('is_subscribed', 'N');
+
             // split validation account type for support select all tenant for account type 3rd and dominopos
             $validator = Validator::make(
                 array(
@@ -1029,6 +1042,7 @@ class AccountAPIController extends ControllerAPI
 
             $validation_data = [
                 'id'                 => $user_id,
+                'is_subscribed'      => $is_subscribed,
                 'select_all_tenants' => $select_all_tenants,
                 'user_firstname'     => $user_firstname,
                 'user_lastname'      => $user_lastname,
@@ -1046,6 +1060,7 @@ class AccountAPIController extends ControllerAPI
 
             $validation_error = [
                 'id'                 => 'required|exists:users,user_id',
+                'is_subscribed'      => 'in:N,Y',
                 'select_all_tenants' => 'in:N,Y|orbit.access.select_all_tenants:' . $account_type->type_name,
                 'user_firstname'     => 'required',
                 'user_lastname'      => 'required',
@@ -1190,6 +1205,22 @@ class AccountAPIController extends ControllerAPI
                 if (count($pmp_employee) > 0) {
                     foreach ($pmp_employee as $employee) {
                         $employee->is_link_to_all = $select_all_tenants;
+                        $employee->save();
+                    }
+                }
+            });
+
+            OrbitInput::post('is_subscribed', function($is_subscribed) use ($campaignAccount, $pmp_employee) {
+                // for handle empty string cause select all tenant is not required
+                if ($is_subscribed !== 'Y') {
+                    $is_subscribed = 'N';
+                }
+
+                $campaignAccount->is_subscribed = $is_subscribed;
+
+                if (count($pmp_employee) > 0) {
+                    foreach ($pmp_employee as $employee) {
+                        $employee->is_subscribed = $is_subscribed;
                         $employee->save();
                     }
                 }
