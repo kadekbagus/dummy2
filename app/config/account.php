@@ -12,6 +12,10 @@ return [
             'title' => 'Type Name',
             'sort_key' => 'type_name',
         ],
+        'is_subscribed' => [
+            'title' => 'Subscription',
+            'sort_key' => 'is_subscribed',
+        ],
         'company_name' => [
             'title' => 'Company Name',
             'sort_key' => 'company_name',

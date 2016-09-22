@@ -34,17 +34,17 @@ class MallListAPIController extends ControllerAPI
     {
         $httpCode = 200;
         try {
-            $latitude = OrbitInput::get('latitude',null);
-            $longitude = OrbitInput::get('longitude',null);
-
             $keyword = OrbitInput::get('keyword');
-            $filterName = OrbitInput::get('filter_name');
-
+            $location = OrbitInput::get('location', null);
             $usingDemo = Config::get('orbit.is_demo', FALSE);
             $host = Config::get('orbit.elasticsearch');
-
-            $sort_by = OrbitInput::get('sortby',null);
+            $sort_by = OrbitInput::get('sortby', null);
             $sort_mode = OrbitInput::get('sortmode','asc');
+            $ul = OrbitInput::get('ul', null);
+            $radius = Config::get('orbit.geo_location.distance', 10);
+            $userLocationCookieName = Config::get('orbit.user_location.cookie.name');
+            $latitude = '';
+            $longitude = '';
 
             $client = ClientBuilder::create() // Instantiate a new ClientBuilder
                     ->setHosts($host['hosts']) // Set the hosts
@@ -66,7 +66,20 @@ class MallListAPIController extends ControllerAPI
                     }';
             }
 
-            // Filter
+            // get user location, latitude and longitude. If latitude and longitude doesn't exist in query string, the code will be read cookie to get lat and lon
+            if (empty($ul)) {
+                $userLocationCookieArray = isset($_COOKIE[$userLocationCookieName]) ? explode('|', $_COOKIE[$userLocationCookieName]) : NULL;
+                if (! is_null($userLocationCookieArray) && isset($userLocationCookieArray[0]) && isset($userLocationCookieArray[1])) {
+                    $longitude = $userLocationCookieArray[0];
+                    $latitude = $userLocationCookieArray[1];
+                }
+            } else {
+                $loc = explode('|', $ul);
+                $longitude = $loc[0];
+                $latitude = $loc[1];
+            }
+
+            // search by keyword
             $filterKeyword = '';
             if ($keyword != '') {
                 $filterKeyword = '"query": {
@@ -74,8 +87,6 @@ class MallListAPIController extends ControllerAPI
                                         "query": "' . $keyword . '",
                                         "fields": [
                                             "name",
-                                            "city",
-                                            "country",
                                             "address_line",
                                             "description"
                                         ]
@@ -83,26 +94,46 @@ class MallListAPIController extends ControllerAPI
                                   },';
             }
 
-            $namebetween = '';
-            if (! empty($filterName)) {
-                $filter = '[^a-zA-Z].*';
-                if ($filterName != "#") {
-                    $upper = strtoupper($filterName);
-                    $filter = '[' . $filterName . $upper . '].*';
-                }
-                
-                $namebetween = '{ 
-                            "regexp":{
-                                "name.raw": "' . $filter . '"
+            // filter by location (city or user location)
+            if (! empty($location)) {
+                $locationFilter = '{ 
+                            "match":{
+                                "city": "' . $location . '"
                             }
                         },';
+
+                if ($location === "mylocation" && $latitude != '' && $longitude != '') {
+                    $locationFilter = '{
+                                "geo_distance" : {
+                                    "distance" : "' . $radius . 'km",
+                                    "position" : {
+                                        "lon": ' . $longitude . ',
+                                        "lat": ' . $latitude . '
+                                    }
+                                }
+                            },';
+                }
+            }
+
+            // sort by name or location
+            $sortby = '{"name.raw" : {"order" : "' . $sort_mode . '"}}';
+            if($sort_by === 'location' && $latitude != '' && $longitude != '') {
+                $sortby = ' {
+                                "_geo_distance": {
+                                    "position": {
+                                        "lon": ' . $longitude . ',
+                                        "lat": ' . $latitude . '
+                                    },
+                                    "order": "' . $sort_mode . '",
+                                    "unit": "km",
+                                    "distance_type": "plane"
+                                }
+                            }';
+                
             }
 
             $take = PaginationNumber::parseTakeFromGet('retailer');
             $skip = PaginationNumber::parseSkipFromGet();
-
-            $sortby = '{"name.raw" : {"order" : "' . $sort_mode . '"}}';
-
             $json_area = '{
                         "from" : ' . $skip . ', "size" : ' . $take . ',
                             "query": {
@@ -110,7 +141,7 @@ class MallListAPIController extends ControllerAPI
                                     ' . $filterKeyword . '
                                     "filter": {
                                         "and": [
-                                            ' . $namebetween . '
+                                            ' . $locationFilter . '
                                             {
                                                 "query": {
                                                     ' . $filterStatus . '
@@ -148,6 +179,88 @@ class MallListAPIController extends ControllerAPI
             $this->response->data->total_records = $area_data['total'];
             $this->response->data->returned_records = count($listmall);
             $this->response->data->records = $listmall;
+        } catch (ACLForbiddenException $e) {
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (InvalidArgsException $e) {
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $result['total_records'] = 0;
+            $result['returned_records'] = 0;
+            $result['records'] = null;
+
+            $this->response->data = $result;
+            $httpCode = 403;
+        } catch (QueryException $e) {
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+        } catch (Exception $e) {
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 500;
+        }
+
+        $output = $this->render($httpCode);
+
+        return $output;
+    }
+
+    /**
+     * GET - City list from mall
+     *
+     * @author Shelgi Prasetyo <shelgi@dominopos.com>
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function getCityMallList()
+    {
+        $httpCode = 200;
+        try {
+            $usingDemo = Config::get('orbit.is_demo', FALSE);
+            $sort_by = OrbitInput::get('sortby', 'city');
+            $sort_mode = OrbitInput::get('sortmode','asc');
+            $city = Mall::select('city')->groupBy('city')->orderBy($sort_by, $sort_mode);
+
+            if ($usingDemo) {
+                $city = $city->excludeDeleted();
+            } else {
+                $city = $city->active();
+            }
+
+            $_city = clone $city;
+
+            $take = PaginationNumber::parseTakeFromGet('retailer');
+            $city->take($take);
+
+            $skip = PaginationNumber::parseSkipFromGet();
+            $city->skip($skip);
+
+            $listcity = $city->get();
+            $count = count($_city->get());
+
+            $this->response->data = new stdClass();
+            $this->response->data->total_records = $count;
+            $this->response->data->returned_records = count($listcity);
+            $this->response->data->records = $listcity;
         } catch (ACLForbiddenException $e) {
 
             $this->response->code = $e->getCode();

@@ -234,6 +234,8 @@ return array(
             ),
             'language' => 'Language ID tidak ditemukan',
             'merchant_language' => 'Merchant Language ID tidak ditemukan',
+            'lucky_draw'           => 'Lucky draw tidak ditemukan',
+            'language_default'     => 'Bahasa default tidak ditemukan',
         ),
         'queryerror' => 'Error pada database query, nyalakan mode debug untuk melihat seluruh query.',
         'jsonerror'  => array(
