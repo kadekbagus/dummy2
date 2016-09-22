@@ -160,9 +160,9 @@ class CampaignReportAPIController extends ControllerAPI
                 total_tenant * {$tablePrefix}campaign_price.base_price AS daily,
                 total_tenant * {$tablePrefix}campaign_price.base_price * (DATEDIFF( {$tablePrefix}news.end_date, {$tablePrefix}news.begin_date) + 1) AS estimated_total,
                 ocds.total_spending AS spending,
-                ocpv.page_views,
-                ocpuv.popup_views,
-                ocpuc.popup_clicks,
+                IFNULL(ocpv.page_views, 0) AS page_views,
+                IFNULL(ocpuv.popup_views, 0) AS popup_views,
+                IFNULL(ocpuc.popup_clicks, 0) AS popup_clicks,
                 (
                     select GROUP_CONCAT(IF({$tablePrefix}merchants.object_type = 'tenant', CONCAT({$tablePrefix}merchants.name,' at ', pm.name), CONCAT('Mall at ',{$tablePrefix}merchants.name) ) separator ', ')
                     from {$tablePrefix}news_merchant
@@ -268,9 +268,9 @@ class CampaignReportAPIController extends ControllerAPI
                 total_tenant * {$tablePrefix}campaign_price.base_price AS daily,
                 total_tenant * {$tablePrefix}campaign_price.base_price * (DATEDIFF({$tablePrefix}news.end_date, {$tablePrefix}news.begin_date) + 1) AS estimated_total,
                 ocds.total_spending AS spending,
-                ocpv.page_views,
-                ocpuv.popup_views,
-                ocpuc.popup_clicks,
+                IFNULL(ocpv.page_views, 0) AS page_views,
+                IFNULL(ocpuv.popup_views, 0) AS popup_views,
+                IFNULL(ocpuc.popup_clicks, 0) AS popup_clicks,
                 (
                     select GROUP_CONCAT(IF({$tablePrefix}merchants.object_type = 'tenant', CONCAT({$tablePrefix}merchants.name,' at ', pm.name), CONCAT('Mall at ',{$tablePrefix}merchants.name) ) separator ', ')
                     from {$tablePrefix}news_merchant
@@ -375,9 +375,9 @@ class CampaignReportAPIController extends ControllerAPI
                 total_tenant * {$tablePrefix}campaign_price.base_price AS daily,
                 total_tenant * {$tablePrefix}campaign_price.base_price * (DATEDIFF({$tablePrefix}promotions.end_date, {$tablePrefix}promotions.begin_date) + 1) AS estimated_total,
                 ocds.total_spending AS spending,
-                ocpv.page_views,
-                ocpuv.popup_views,
-                ocpuc.popup_clicks,
+                IFNULL(ocpv.page_views, 0) AS page_views,
+                IFNULL(ocpuv.popup_views, 0) AS popup_views,
+                IFNULL(ocpuc.popup_clicks, 0) AS popup_clicks,
                 (
                     select GROUP_CONCAT(IF({$tablePrefix}merchants.object_type = 'tenant', CONCAT({$tablePrefix}merchants.name,' at ', pm.name), CONCAT('Mall at ',{$tablePrefix}merchants.name)) separator ', ') from {$tablePrefix}promotion_retailer
                     left join {$tablePrefix}merchants on {$tablePrefix}merchants.merchant_id = {$tablePrefix}promotion_retailer.retailer_id
