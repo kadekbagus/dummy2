@@ -975,10 +975,13 @@ class Activity extends Eloquent
             case 'view_lucky_draw':
             case 'view_event':
             case 'view_news':
+            case 'view_landing_page_coupon_detail':
+            case 'view_landing_page_news_detail':
+            case 'view_landing_page_promotion_detail':
                 $campaign = new CampaignPageView();
                 $campaign->campaign_id = $this->object_id;
                 $campaign->user_id = $this->user_id;
-                $campaign->location_id = $this->location_id;
+                $campaign->location_id = ! empty($this->location_id) ? $this->location_id : 0;
                 $campaign->activity_id = $this->activity_id;
                 $campaign->campaign_group_name_id = $this->campaignGroupNameIdFromActivityName();
                 $campaign->save();
@@ -1372,6 +1375,18 @@ class Activity extends Eloquent
 
             case 'click_news_popup':
                 $groupName = 'News';
+                break;
+
+            case 'view_landing_page_coupon_detail':
+                $groupName = 'Coupon';
+                break;
+
+            case 'view_landing_page_news_detail':
+                $groupName = 'News';
+                break;
+
+            case 'view_landing_page_promotion_detail':
+                $groupName = 'Promotion';
                 break;
         }
 
