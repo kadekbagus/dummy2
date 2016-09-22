@@ -137,3 +137,8 @@ Route::get('/app/v1/pub/lucky-draw/list', ['as' => 'pub-lucky-draw-list', 'uses'
  * Route for getting detail of lucky draw
  */
 Route::get('/api/v1/pub/lucky-draw/detail', ['as' => 'pub-lucky-draw-detail', 'uses' => 'IntermediatePubAuthController@LuckyDraw_getLuckyDrawItem']);
+
+/**
+ * Route for issue auto lucky draw number (fake image upload)
+ */
+Route::post('/api/v1/pub/lucky-draw/issue', ['as' => 'pub-lucky-draw-issue', 'uses' => 'IntermediatePubAuthController@LuckyDraw_postLuckyDrawAutoIssue']);
