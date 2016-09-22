@@ -256,7 +256,7 @@ class SendEmailCampaignExpired extends Command {
     protected function getOptions()
     {
         return array(
-                array('expired-in-last', 0, InputOption::VALUE_REQUIRED, 'Expired Time in Minute.', null),
+                array('expired-in-last', 0, InputOption::VALUE_REQUIRED, 'Expired Time in Minute.', 0),
             );
     }
 
