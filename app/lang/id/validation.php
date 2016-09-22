@@ -350,6 +350,11 @@ return array(
             'view_role'                 => 'lihat role',
             'view_transaction_history'  => 'lihat transaction history'
         ),
+        'exceed' => array(
+            'lucky_draw' => array(
+                'max_issuance' => 'Lucky draw sudah mencapai angka maksimal (:max_number)',
+            ),
+        ),
     ),
 
     /*
