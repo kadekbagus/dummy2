@@ -160,27 +160,9 @@ class CampaignReportAPIController extends ControllerAPI
                 total_tenant * {$tablePrefix}campaign_price.base_price AS daily,
                 total_tenant * {$tablePrefix}campaign_price.base_price * (DATEDIFF( {$tablePrefix}news.end_date, {$tablePrefix}news.begin_date) + 1) AS estimated_total,
                 ocds.total_spending AS spending,
-                (
-                    select count(campaign_page_view_id) as value
-                    from {$tablePrefix}campaign_page_views ocpv
-                    inner join {$tablePrefix}campaign_group_names ocgn ON ocgn.campaign_group_name_id = ocpv.campaign_group_name_id
-                    where campaign_id = {$tablePrefix}news.news_id
-                    and ocgn.campaign_group_name = 'News'
-                ) as page_views,
-                (
-                    select count(campaign_popup_view_id) as value
-                    from {$tablePrefix}campaign_popup_views ocpv
-                    inner join {$tablePrefix}campaign_group_names ocgn ON ocgn.campaign_group_name_id = ocpv.campaign_group_name_id
-                    where campaign_id = {$tablePrefix}news.news_id
-                    and ocgn.campaign_group_name = 'News'
-                ) as popup_views,
-                (
-                    select count(campaign_click_id) as value
-                    from {$tablePrefix}campaign_clicks occ
-                    inner join {$tablePrefix}campaign_group_names ocgn ON ocgn.campaign_group_name_id = occ.campaign_group_name_id
-                    where campaign_id = {$tablePrefix}news.news_id
-                    and ocgn.campaign_group_name = 'News'
-                ) as popup_clicks,
+                IFNULL(ocpv.page_views, 0) AS page_views,
+                IFNULL(ocpuv.popup_views, 0) AS popup_views,
+                IFNULL(ocpuc.popup_clicks, 0) AS popup_clicks,
                 (
                     select GROUP_CONCAT(IF({$tablePrefix}merchants.object_type = 'tenant', CONCAT({$tablePrefix}merchants.name,' at ', pm.name), CONCAT('Mall at ',{$tablePrefix}merchants.name) ) separator ', ')
                     from {$tablePrefix}news_merchant
@@ -195,6 +177,46 @@ class CampaignReportAPIController extends ControllerAPI
                         DB::raw('ocds.campaign_id'), '=', 'news.news_id')
                         // Join for get campaign price
                         ->leftJoin('campaign_price', 'campaign_price.campaign_id', '=', 'news.news_id')
+
+                        // Join for get total page views
+                        ->leftJoin(DB::raw("
+                            (
+                                SELECT campaign_id, campaign_page_view_id, count(campaign_page_view_id) as page_views
+                                FROM {$tablePrefix}campaign_page_views ocpv
+                                INNER JOIN {$tablePrefix}campaign_group_names ocgn ON ocgn.campaign_group_name_id = ocpv.campaign_group_name_id
+                                WHERE ocgn.campaign_group_name = 'News'
+                                group by campaign_id
+                            ) AS ocpv
+                        "),
+                        // On
+                        DB::raw('ocpv.campaign_id'), '=', 'news.news_id')
+
+                        // Join for get total popup views
+                        ->leftJoin(DB::raw("
+                            (
+                                SELECT campaign_id, campaign_popup_view_id, count(campaign_popup_view_id) as popup_views
+                                FROM {$tablePrefix}campaign_popup_views ocpuv
+                                INNER JOIN {$tablePrefix}campaign_group_names ocgn ON ocgn.campaign_group_name_id = ocpuv.campaign_group_name_id
+                                WHERE ocgn.campaign_group_name = 'News'
+                                group by campaign_id
+                            ) AS ocpuv
+                        "),
+                        // On
+                        DB::raw('ocpuv.campaign_id'), '=', 'news.news_id')
+
+                        // Join for get total popup click
+                        ->leftJoin(DB::raw("
+                            (
+                                SELECT campaign_id, campaign_click_id, count(campaign_click_id) as popup_clicks
+                                FROM {$tablePrefix}campaign_clicks ocpuc
+                                INNER JOIN {$tablePrefix}campaign_group_names ocgn ON ocgn.campaign_group_name_id = ocpuc.campaign_group_name_id
+                                WHERE ocgn.campaign_group_name = 'News'
+                                group by campaign_id
+                            ) AS ocpuc
+                        "),
+                        // On
+                        DB::raw('ocpuc.campaign_id'), '=', 'news.news_id')
+
                         // Join for get mall name
                         // ->leftJoin('merchants as merchants2', 'news.mall_id', '=', DB::raw('merchants2.merchant_id'))
                         // Join for get total tenant percampaign
@@ -246,27 +268,9 @@ class CampaignReportAPIController extends ControllerAPI
                 total_tenant * {$tablePrefix}campaign_price.base_price AS daily,
                 total_tenant * {$tablePrefix}campaign_price.base_price * (DATEDIFF({$tablePrefix}news.end_date, {$tablePrefix}news.begin_date) + 1) AS estimated_total,
                 ocds.total_spending AS spending,
-                (
-                    select count(campaign_page_view_id) as value
-                    from {$tablePrefix}campaign_page_views ocpv
-                    inner join {$tablePrefix}campaign_group_names ocgn ON ocgn.campaign_group_name_id = ocpv.campaign_group_name_id
-                    where campaign_id = {$tablePrefix}news.news_id
-                    and ocgn.campaign_group_name = 'Promotion'
-                ) as page_views,
-                (
-                    select count(campaign_popup_view_id) as value
-                    from {$tablePrefix}campaign_popup_views ocpv
-                    inner join {$tablePrefix}campaign_group_names ocgn ON ocgn.campaign_group_name_id = ocpv.campaign_group_name_id
-                    where campaign_id = {$tablePrefix}news.news_id
-                    and ocgn.campaign_group_name = 'Promotion'
-                ) as popup_views,
-                (
-                    select count(campaign_click_id) as value
-                    from {$tablePrefix}campaign_clicks occ
-                    inner join {$tablePrefix}campaign_group_names ocgn ON ocgn.campaign_group_name_id = occ.campaign_group_name_id
-                    where campaign_id = {$tablePrefix}news.news_id
-                    and ocgn.campaign_group_name = 'Promotion'
-                ) as popup_clicks,
+                IFNULL(ocpv.page_views, 0) AS page_views,
+                IFNULL(ocpuv.popup_views, 0) AS popup_views,
+                IFNULL(ocpuc.popup_clicks, 0) AS popup_clicks,
                 (
                     select GROUP_CONCAT(IF({$tablePrefix}merchants.object_type = 'tenant', CONCAT({$tablePrefix}merchants.name,' at ', pm.name), CONCAT('Mall at ',{$tablePrefix}merchants.name) ) separator ', ')
                     from {$tablePrefix}news_merchant
@@ -276,11 +280,50 @@ class CampaignReportAPIController extends ControllerAPI
                 ) as campaign_location_names,
                 {$tablePrefix}news.status, CASE WHEN {$tablePrefix}campaign_status.campaign_status_name = 'expired' THEN {$tablePrefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$tablePrefix}news.end_date < {$this->quote($now)} THEN 'expired' ELSE {$tablePrefix}campaign_status.campaign_status_name END) END  AS campaign_status, {$tablePrefix}campaign_status.order"))
                         // Join for get total spending
-                        // ->leftJoin(DB::raw("( SELECT campaign_id, sum(total_spending) as total_spending FROM {$tablePrefix}campaign_daily_spendings group by campaign_id ) AS ocds"),
                         ->leftJoin(DB::raw("( SELECT campaign_id, sum(total_spending) as total_spending FROM {$tablePrefix}campaign_daily_spendings group by campaign_id ) AS ocds"),
                         DB::raw('ocds.campaign_id'), '=', 'news.news_id')
                         // Join for get campaign price
                         ->leftJoin('campaign_price', 'campaign_price.campaign_id', '=', 'news.news_id')
+
+                        // Join for get total page views
+                        ->leftJoin(DB::raw("
+                            (
+                                SELECT campaign_id, campaign_page_view_id, count(campaign_page_view_id) as page_views
+                                FROM {$tablePrefix}campaign_page_views ocpv
+                                INNER JOIN {$tablePrefix}campaign_group_names ocgn ON ocgn.campaign_group_name_id = ocpv.campaign_group_name_id
+                                WHERE ocgn.campaign_group_name = 'Promotion'
+                                group by campaign_id
+                            ) AS ocpv
+                        "),
+                        // On
+                        DB::raw('ocpv.campaign_id'), '=', 'news.news_id')
+
+                        // Join for get total popup views
+                        ->leftJoin(DB::raw("
+                            (
+                                SELECT campaign_id, campaign_popup_view_id, count(campaign_popup_view_id) as popup_views
+                                FROM {$tablePrefix}campaign_popup_views ocpuv
+                                INNER JOIN {$tablePrefix}campaign_group_names ocgn ON ocgn.campaign_group_name_id = ocpuv.campaign_group_name_id
+                                WHERE ocgn.campaign_group_name = 'Promotion'
+                                group by campaign_id
+                            ) AS ocpuv
+                        "),
+                        // On
+                        DB::raw('ocpuv.campaign_id'), '=', 'news.news_id')
+
+                        // Join for get total popup click
+                        ->leftJoin(DB::raw("
+                            (
+                                SELECT campaign_id, campaign_click_id, count(campaign_click_id) as popup_clicks
+                                FROM {$tablePrefix}campaign_clicks ocpuc
+                                INNER JOIN {$tablePrefix}campaign_group_names ocgn ON ocgn.campaign_group_name_id = ocpuc.campaign_group_name_id
+                                WHERE ocgn.campaign_group_name = 'Promotion'
+                                group by campaign_id
+                            ) AS ocpuc
+                        "),
+                        // On
+                        DB::raw('ocpuc.campaign_id'), '=', 'news.news_id')
+
                         // Join for get mall name
                         // ->leftJoin('merchants as merchants2', 'news.mall_id', '=', DB::raw('merchants2.merchant_id'))
                         // Joint for get total tenant percampaign
@@ -332,27 +375,9 @@ class CampaignReportAPIController extends ControllerAPI
                 total_tenant * {$tablePrefix}campaign_price.base_price AS daily,
                 total_tenant * {$tablePrefix}campaign_price.base_price * (DATEDIFF({$tablePrefix}promotions.end_date, {$tablePrefix}promotions.begin_date) + 1) AS estimated_total,
                 ocds.total_spending AS spending,
-                (
-                    select count(campaign_page_view_id) as value
-                    from {$tablePrefix}campaign_page_views ocpv
-                    inner join {$tablePrefix}campaign_group_names ocgn ON ocgn.campaign_group_name_id = ocpv.campaign_group_name_id
-                    where campaign_id = {$tablePrefix}promotions.promotion_id
-                    and ocgn.campaign_group_name = 'Coupon'
-                ) as page_views,
-                (
-                    select count(campaign_popup_view_id) as value
-                    from {$tablePrefix}campaign_popup_views ocpv
-                    inner join {$tablePrefix}campaign_group_names ocgn ON ocgn.campaign_group_name_id = ocpv.campaign_group_name_id
-                    where campaign_id = {$tablePrefix}promotions.promotion_id
-                    and ocgn.campaign_group_name = 'Coupon'
-                ) as popup_views,
-                (
-                    select count(campaign_click_id) as value
-                    from {$tablePrefix}campaign_clicks occ
-                    inner join {$tablePrefix}campaign_group_names ocgn ON ocgn.campaign_group_name_id = occ.campaign_group_name_id
-                    where campaign_id = {$tablePrefix}promotions.promotion_id
-                    and ocgn.campaign_group_name = 'Coupon'
-                ) as popup_clicks,
+                IFNULL(ocpv.page_views, 0) AS page_views,
+                IFNULL(ocpuv.popup_views, 0) AS popup_views,
+                IFNULL(ocpuc.popup_clicks, 0) AS popup_clicks,
                 (
                     select GROUP_CONCAT(IF({$tablePrefix}merchants.object_type = 'tenant', CONCAT({$tablePrefix}merchants.name,' at ', pm.name), CONCAT('Mall at ',{$tablePrefix}merchants.name)) separator ', ') from {$tablePrefix}promotion_retailer
                     left join {$tablePrefix}merchants on {$tablePrefix}merchants.merchant_id = {$tablePrefix}promotion_retailer.retailer_id
@@ -367,6 +392,47 @@ class CampaignReportAPIController extends ControllerAPI
                         // Join for get campaign price
                         ->leftJoin('campaign_price', 'campaign_price.campaign_id', '=', 'promotions.promotion_id')
                         // Join for get mall name
+
+                        // Join for get total page views
+                        ->leftJoin(DB::raw("
+                            (
+                                SELECT campaign_id, campaign_page_view_id, count(campaign_page_view_id) as page_views
+                                FROM {$tablePrefix}campaign_page_views ocpv
+                                INNER JOIN {$tablePrefix}campaign_group_names ocgn ON ocgn.campaign_group_name_id = ocpv.campaign_group_name_id
+                                WHERE ocgn.campaign_group_name = 'Coupon'
+                                group by campaign_id
+                            ) AS ocpv
+                        "),
+                        // On
+                        DB::raw('ocpv.campaign_id'), '=', 'promotions.promotion_id')
+
+                        // Join for get total popup views
+                        ->leftJoin(DB::raw("
+                            (
+                                SELECT campaign_id, campaign_popup_view_id, count(campaign_popup_view_id) as popup_views
+                                FROM {$tablePrefix}campaign_popup_views ocpuv
+                                INNER JOIN {$tablePrefix}campaign_group_names ocgn ON ocgn.campaign_group_name_id = ocpuv.campaign_group_name_id
+                                WHERE ocgn.campaign_group_name = 'Coupon'
+                                group by campaign_id
+                            ) AS ocpuv
+                        "),
+                        // On
+                        DB::raw('ocpuv.campaign_id'), '=', 'promotions.promotion_id')
+
+                        // Join for get total popup click
+                        ->leftJoin(DB::raw("
+                            (
+                                SELECT campaign_id, campaign_click_id, count(campaign_click_id) as popup_clicks
+                                FROM {$tablePrefix}campaign_clicks ocpuc
+                                INNER JOIN {$tablePrefix}campaign_group_names ocgn ON ocgn.campaign_group_name_id = ocpuc.campaign_group_name_id
+                                WHERE ocgn.campaign_group_name = 'Coupon'
+                                group by campaign_id
+                            ) AS ocpuc
+                        "),
+                        // On
+                        DB::raw('ocpuc.campaign_id'), '=', 'promotions.promotion_id')
+
+
                         // ->leftJoin('merchants as merchants2', 'promotions.merchant_id', '=', DB::raw('merchants2.merchant_id'))
                         // Joint for get total tenant percampaign
                         ->leftJoin(DB::raw("
@@ -2280,7 +2346,7 @@ class CampaignReportAPIController extends ControllerAPI
             $campaign = UserCampaign::where('campaign_id', '=', $campaign_id)
                                     ->whereRaw("{$prefix}user_campaign.user_id in (
                                             select oca.user_id
-                                            from orb_campaign_account oca,
+                                            from {$prefix}campaign_account oca,
                                             (
                                                 select ifnull(ca.parent_user_id, ca.user_id) as uid
                                                 from {$prefix}campaign_account ca
