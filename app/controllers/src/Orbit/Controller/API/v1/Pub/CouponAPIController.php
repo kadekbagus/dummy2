@@ -187,14 +187,15 @@ class CouponAPIController extends ControllerAPI
             $coupon = DB::table(DB::Raw("({$querySql}) as sub_query"))->mergeBindings($coupons->getQuery());
 
             if ($sort_by === 'location' && !empty($lon) && !empty($lat)) {
+                $sort_by = 'distance';
                 $coupon = $coupon->select('coupon_id', 'coupon_name', 'description', DB::raw("sub_query.status"), 'campaign_status', 'is_started', 'image_url', DB::raw("min(distance) as distance"))
                                  ->groupBy('coupon_id')
-                                 ->orderBy('distance', $sort_mode)
+                                 ->orderBy($sort_by, $sort_mode)
                                  ->orderBy('coupon_name', $sort_mode);
             } else {
                 $coupon = $coupon->select('coupon_id', 'coupon_name', 'description', DB::raw("sub_query.status"), 'campaign_status', 'is_started', 'image_url')
                                  ->groupBy('coupon_id')
-                                 ->orderBy('coupon_name', $sort_mode);
+                                 ->orderBy($sort_by, $sort_mode);
             }
 
             OrbitInput::get('filter_name', function ($filterName) use ($coupon, $prefix) {
