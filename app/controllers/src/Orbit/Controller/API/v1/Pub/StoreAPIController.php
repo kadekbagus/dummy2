@@ -159,7 +159,7 @@ class StoreAPIController extends ControllerAPI
             } else {
                 $store = $store->select(DB::raw("sub_query.merchant_id"), 'name', 'description', 'logo_url')
                                 ->groupBy('name')
-                                ->orderBy('name', $sort_mode);
+                                ->orderBy($sort_by, $sort_mode);
             }
 
             OrbitInput::get('filter_name', function ($filterName) use ($store, $prefix) {
