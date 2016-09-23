@@ -143,6 +143,7 @@ class LuckyDrawAPIController extends IntermediateBaseController
                 })
                 ->active('lucky_draws')
                 ->where('lucky_draw_translations.merchant_language_id', '=', $valid_language->language_id)
+                ->where('object_type', '=', 'auto')
                 ->havingRaw("campaign_status = 'ongoing'")
                 ->groupBy('lucky_draws.lucky_draw_id')
                 ->orderBy($sort_by, $sort_mode);
@@ -266,13 +267,6 @@ class LuckyDrawAPIController extends IntermediateBaseController
             $this->session = SessionPreparer::prepareSession();
             $user = UserGetter::getLoggedInUserOrGuest($this->session);
 
-            // should always check the role
-            $role = $user->role->role_name;
-            if (strtolower($role) !== 'consumer') {
-                $message = 'You must login to access this.';
-                ACL::throwAccessForbidden($message);
-            }
-
             $language = OrbitInput::get('language', 'id');
             $luckyDrawId = OrbitInput::get('lucky_draw_id');
 
@@ -359,6 +353,7 @@ class LuckyDrawAPIController extends IntermediateBaseController
                 ->active('lucky_draws')
                 ->where('lucky_draw_translations.merchant_language_id', '=', $valid_language->language_id)
                 ->where('lucky_draws.lucky_draw_id', $luckyDrawId)
+                ->where('lucky_draws.object_type', 'auto')
                 ->first();
 
             $csrf_token = csrf_token();
@@ -462,6 +457,7 @@ class LuckyDrawAPIController extends IntermediateBaseController
 
             $luckyDraw = LuckyDraw::active()
                 ->where('lucky_draw_id', $lucky_draw_id)
+                ->where('lucky_draws.object_type', 'auto')
                 ->first();
 
             // check lucky draw existance
@@ -495,6 +491,7 @@ class LuckyDrawAPIController extends IntermediateBaseController
                 ->where('start_date', '<=', Carbon::now($mall->timezone->timezone_name))
                 ->where('end_date', '>=', Carbon::now($mall->timezone->timezone_name))
                 ->where('lucky_draw_id', $lucky_draw_id)
+                ->where('lucky_draws.object_type', 'auto')
                 ->lockForUpdate()
                 ->first();
 
@@ -516,6 +513,7 @@ class LuckyDrawAPIController extends IntermediateBaseController
                 ->where('start_date', '<=', Carbon::now($mall->timezone->timezone_name))
                 ->where('end_date', '>=', Carbon::now($mall->timezone->timezone_name))
                 ->where('lucky_draw_id', $lucky_draw_id)
+                ->where('lucky_draws.object_type', 'auto')
                 ->lockForUpdate()
                 ->first();
 
@@ -549,7 +547,9 @@ class LuckyDrawAPIController extends IntermediateBaseController
             $lucky_draw_number->save();
 
             // update free_number_batch and generated_numbers
-            $updated_luckydraw = LuckyDraw::where('lucky_draw_id', $lucky_draw_id)->first();
+            $updated_luckydraw = LuckyDraw::where('lucky_draw_id', $lucky_draw_id)
+                ->where('lucky_draws.object_type', 'auto')
+                ->first();
             $updated_luckydraw->free_number_batch = 0;
             $updated_luckydraw->generated_numbers = $updated_luckydraw->generated_numbers + 1;
             $updated_luckydraw->save();
@@ -572,6 +572,10 @@ class LuckyDrawAPIController extends IntermediateBaseController
 
             DB::connection()->commit();
 
+            $total_lucky_draw_number = LuckyDrawNumber::where('lucky_draw_id', $lucky_draw_id)
+                ->where('user_id', $user->user_id)
+                ->get()->count();
+
             // Successfull Creation
             $activity->setUser($user)
                 ->setActivityName('issue_lucky_draw')
@@ -583,6 +587,7 @@ class LuckyDrawAPIController extends IntermediateBaseController
             $response = new stdclass();
             $response->lucky_draw_number_code = $lucky_draw_number->lucky_draw_number_code;
             $response->token = $csrf_token;
+            $response->total_number = $total_lucky_draw_number;
 
             $this->response->data = $response;
 
@@ -861,6 +866,7 @@ class LuckyDrawAPIController extends IntermediateBaseController
                 })
                 ->active('lucky_draws')
                 ->where('lucky_draw_translations.merchant_language_id', '=', $valid_language->language_id)
+                ->where('lucky_draws.object_type', 'auto')
                 ->havingRaw("campaign_status = 'ongoing'")
                 ->groupBy('lucky_draws.lucky_draw_id')
                 ->orderBy($sort_by, $sort_mode);
