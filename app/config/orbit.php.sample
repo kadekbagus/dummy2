@@ -105,6 +105,9 @@ return array(
         // 'pub-mall-coupon-list',
         // 'pub-lucky-draw-list',
         // 'pub-mall-coupon-add-to-wallet',
+        // 'pub-lucky-draw-list',
+        // 'pub-lucky-draw-detail',
+        // 'pub-lucky-draw-issue',
     ],
 
     // cdn path

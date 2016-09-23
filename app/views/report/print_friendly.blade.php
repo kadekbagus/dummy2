@@ -144,6 +144,9 @@
                             @elseif ($fieldName == 'city')
                                 <?php $countryName = ($row['country']->name) ? ', '.$row['country']->name : '' ?>
                                 {{ $row['city'].$countryName }}
+                            @elseif ($fieldName == 'is_subscribed')
+                                <?php $isSubscribed = ($row['is_subscribed'] === 'Y') ? 'Subscribed' : 'Not Subscribed' ?>
+                                {{ $isSubscribed }}
                             @else
                                 {{ $row[$fieldName] }}
                             @endif

@@ -234,6 +234,8 @@ return array(
             ),
             'language' => 'Language ID tidak ditemukan',
             'merchant_language' => 'Merchant Language ID tidak ditemukan',
+            'lucky_draw'           => 'Lucky draw tidak ditemukan',
+            'language_default'     => 'Bahasa default tidak ditemukan',
         ),
         'queryerror' => 'Error pada database query, nyalakan mode debug untuk melihat seluruh query.',
         'jsonerror'  => array(
@@ -347,6 +349,11 @@ return array(
             'view_personal_interest'    => 'lihat personal interest',
             'view_role'                 => 'lihat role',
             'view_transaction_history'  => 'lihat transaction history'
+        ),
+        'exceed' => array(
+            'lucky_draw' => array(
+                'max_issuance' => 'Lucky draw sudah mencapai angka maksimal (:max_number)',
+            ),
         ),
     ),
 
