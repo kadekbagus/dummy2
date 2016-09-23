@@ -61,9 +61,11 @@ class StoreAPIController extends ControllerAPI
             $this->registerCustomValidation();
             $validator = Validator::make(
                 array(
+                    'sortby' => $sort_by,
                     'language' => $language,
                 ),
                 array(
+                    'sortby' => 'in:name,location',
                     'language' => 'required|orbit.empty.language_default',
                 )
             );
