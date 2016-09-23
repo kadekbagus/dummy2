@@ -56,8 +56,12 @@ class NewsAPIController extends ControllerAPI
             $sort_by = OrbitInput::get('sortby', 'news_name');
             $sort_mode = OrbitInput::get('sortmode','asc');
             $language = OrbitInput::get('language', 'id');
-            $ul = OrbitInput::get('ul');
+            $location = OrbitInput::get('location', null);
+            $ul = OrbitInput::get('ul', null);
             $userLocationCookieName = Config::get('orbit.user_location.cookie.name');
+            $distance = Config::get('orbit.geo_location.distance', 10);
+            $lon = '';
+            $lat = '';
 
             $this->registerCustomValidation();
             $validator = Validator::make(
@@ -130,21 +134,8 @@ class NewsAPIController extends ControllerAPI
                         ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                         ->orderBy('news_name', 'asc');
 
-            // filter by category_id
-            OrbitInput::get('category_id', function($category_id) use ($news, $prefix) {
-                $news = $news->leftJoin('category_merchant as cm', function($q) {
-                                $q->on(DB::raw('cm.merchant_id'), '=', DB::raw("m.merchant_id"));
-                                $q->on(DB::raw("m.object_type"), '=', DB::raw("'tenant'"));
-                            })
-                ->where(DB::raw('cm.category_id'), $category_id);
-            });
-
-            // filter by city
-            OrbitInput::get('location', function($location) use ($news, $prefix, $ul, $userLocationCookieName) {
-                $distance = Config::get('orbit.geo_location.distance');
-                $lon = '';
-                $lat = '';
-
+            //calculate distance if user using my current location as filter and sort by location for listing
+            if ($sort_by == 'location' || $location == 'mylocation') {
                 if (! empty($ul)) {
                     $position = explode("|", $ul);
                     $lon = $position[0];
@@ -158,26 +149,37 @@ class NewsAPIController extends ControllerAPI
                     }
                 }
 
-                $news = $news->leftJoin('merchants as mp', function($q) {
-                                $q->on(DB::raw("mp.merchant_id"), '=', DB::raw("m.parent_id"));
-                                $q->on(DB::raw("mp.object_type"), '=', DB::raw("'mall'"));
-                                $q->on(DB::raw("m.status"), '=', DB::raw("'active'"));
-                            });
-
                 if (! empty($lon) && ! empty($lat)) {
-                    $news = $news->addSelect(
-                                                        DB::raw("6371 * acos( cos( radians({$lat}) ) * cos( radians( x({$prefix}merchant_geofences.position) ) ) * cos( radians( y({$prefix}merchant_geofences.position) ) - radians({$lon}) ) + sin( radians({$lat}) ) * sin( radians( x({$prefix}merchant_geofences.position) ) ) ) AS distance")
+                    $news = $news->addSelect(DB::raw("6371 * acos( cos( radians({$lat}) ) * cos( radians( x({$prefix}merchant_geofences.position) ) ) * cos( radians( y({$prefix}merchant_geofences.position) ) - radians({$lon}) ) + sin( radians({$lat}) ) * sin( radians( x({$prefix}merchant_geofences.position) ) ) ) AS distance")
                                                 )
                                             ->leftJoin('merchant_geofences', function ($q) use($prefix) {
                                                         $q->on('merchant_geofences.merchant_id', '=',
                                                         DB::raw("CASE WHEN m.object_type = 'tenant' THEN m.parent_id ELSE m.merchant_id END"));
                                                 });
                 }
+            }
 
-                if ($location === 'mylocation' && ! empty($ul)) {
+            // filter by category_id
+            OrbitInput::get('category_id', function($category_id) use ($news, $prefix) {
+                $news = $news->leftJoin('category_merchant as cm', function($q) {
+                                $q->on(DB::raw('cm.merchant_id'), '=', DB::raw("m.merchant_id"));
+                                $q->on(DB::raw("m.object_type"), '=', DB::raw("'tenant'"));
+                            })
+                ->where(DB::raw('cm.category_id'), $category_id);
+            });
+
+            // filter by city
+            OrbitInput::get('location', function($location) use ($news, $prefix, $lon, $lat, $userLocationCookieName, $distance) {
+                $news = $news->leftJoin('merchants as mp', function($q) {
+                                $q->on(DB::raw("mp.merchant_id"), '=', DB::raw("m.parent_id"));
+                                $q->on(DB::raw("mp.object_type"), '=', DB::raw("'mall'"));
+                                $q->on(DB::raw("m.status"), '=', DB::raw("'active'"));
+                            });
+
+                if ($location === 'mylocation' && !empty($lon) && !empty($lat)) {
                     $news = $news->havingRaw("distance <= {$distance}");
                 } else {
-                    $news = $news->where(DB::raw('mp.city'), $location);
+                    $news = $news->where(DB::raw("(CASE WHEN m.object_type = 'tenant' THEN mp.city ELSE m.city END)"), $location);
                 }
             });
 
@@ -185,11 +187,9 @@ class NewsAPIController extends ControllerAPI
 
             $news = DB::table(DB::Raw("({$querySql}) as sub_query"))->mergeBindings($news->getQuery());
 
-            $location = OrbitInput::get('location', null);
-
-            if (! empty($ul)) {
+            if ($sort_by === 'location' && !empty($lon) && !empty($lat)) {
                 $news = $news->select(DB::raw("sub_query.news_id"), 'news_name', 'description', DB::raw("sub_query.object_type"), 'image_url', 'campaign_status', 'is_started', DB::raw("min(distance) as distance"))
-                                       ->orderBy($sort_by, $sort_mode);
+                                       ->orderBy('distance', $sort_mode);
             } else {
                 $news = $news->select(DB::raw("sub_query.news_id"), 'news_name', 'description', DB::raw("sub_query.object_type"), 'image_url', 'campaign_status', 'is_started');
             }
