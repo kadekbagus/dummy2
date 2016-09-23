@@ -3785,7 +3785,7 @@ return array(
 
     'campaign_auto_email' => array(
         // example 'email_list' => array('oktaviano@domminopos.com', 'nabilla@gotomalls.com')
-        'email_list' => array('marketing@domminopos.com'),
+        'email_list' => array('marketing@dominopos.com'),
         'sender' => array(
             'email' => 'no-reply@gotomalls.com',
             'name'  => 'Gotomalls'
