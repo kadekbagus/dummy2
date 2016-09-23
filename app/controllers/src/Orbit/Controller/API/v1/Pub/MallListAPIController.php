@@ -232,7 +232,7 @@ class MallListAPIController extends ControllerAPI
      *
      * @return Illuminate\Support\Facades\Response
      */
-    public function getCityMallList()
+    public function getMallLocationList()
     {
         $httpCode = 200;
         try {
