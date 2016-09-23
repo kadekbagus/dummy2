@@ -487,6 +487,7 @@ class CampaignReportAPIController extends ControllerAPI
                             `campaign_id`,
                             `campaign_name`,
                             `campaign_type`,
+                            `campaign_location_names`,
                             `total_tenant`,
                             `total_location`,
                             `tenant_name`,
