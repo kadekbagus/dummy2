@@ -61,9 +61,11 @@ class StoreAPIController extends ControllerAPI
             $this->registerCustomValidation();
             $validator = Validator::make(
                 array(
+                    'sortby' => $sort_by,
                     'language' => $language,
                 ),
                 array(
+                    'sortby' => 'in:name,location',
                     'language' => 'required|orbit.empty.language_default',
                 )
             );
@@ -157,7 +159,7 @@ class StoreAPIController extends ControllerAPI
             } else {
                 $store = $store->select(DB::raw("sub_query.merchant_id"), 'name', 'description', 'logo_url')
                                 ->groupBy('name')
-                                ->orderBy('name', $sort_mode);
+                                ->orderBy($sort_by, $sort_mode);
             }
 
             OrbitInput::get('filter_name', function ($filterName) use ($store, $prefix) {
