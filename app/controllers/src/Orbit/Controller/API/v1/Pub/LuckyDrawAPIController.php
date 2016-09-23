@@ -143,7 +143,6 @@ class LuckyDrawAPIController extends IntermediateBaseController
                 })
                 ->active('lucky_draws')
                 ->where('lucky_draw_translations.merchant_language_id', '=', $valid_language->language_id)
-                ->where('object_type', '=', 'auto')
                 ->havingRaw("campaign_status = 'ongoing'")
                 ->groupBy('lucky_draws.lucky_draw_id')
                 ->orderBy($sort_by, $sort_mode);
@@ -866,7 +865,6 @@ class LuckyDrawAPIController extends IntermediateBaseController
                 })
                 ->active('lucky_draws')
                 ->where('lucky_draw_translations.merchant_language_id', '=', $valid_language->language_id)
-                ->where('lucky_draws.object_type', 'auto')
                 ->havingRaw("campaign_status = 'ongoing'")
                 ->groupBy('lucky_draws.lucky_draw_id')
                 ->orderBy($sort_by, $sort_mode);
