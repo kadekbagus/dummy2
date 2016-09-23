@@ -125,7 +125,7 @@ class LuckyDrawAPIController extends IntermediateBaseController
                     DB::raw("(CONCAT(ci_domain, '" . $ciLuckyDrawPath . "?id=', {$prefix}lucky_draws.lucky_draw_id)) as ci_path"),
                     DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
                              THEN {$prefix}campaign_status.campaign_status_name ELSE (
-                                 CASE WHEN {$prefix}lucky_draws.grace_period_date < (
+                                 CASE WHEN {$prefix}lucky_draws.draw_date < (
                                      SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
                                      FROM {$prefix}merchants om
                                      LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
@@ -326,7 +326,7 @@ class LuckyDrawAPIController extends IntermediateBaseController
                     DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
                             THEN {$prefix}campaign_status.campaign_status_name
                             ELSE (
-                                CASE WHEN {$prefix}lucky_draws.grace_period_date < (
+                                CASE WHEN {$prefix}lucky_draws.draw_date < (
                                         SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
                                         FROM {$prefix}merchants om
                                         LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
