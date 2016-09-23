@@ -195,7 +195,7 @@ class CouponAPIController extends ControllerAPI
             } else {
                 $coupon = $coupon->select('coupon_id', 'coupon_name', 'description', DB::raw("sub_query.status"), 'campaign_status', 'is_started', 'image_url')
                                  ->groupBy('coupon_id')
-                                 ->orderBy($sort_by, $sort_mode);
+                                 ->orderBy('coupon_name', $sort_mode);
             }
 
             OrbitInput::get('filter_name', function ($filterName) use ($coupon, $prefix) {
