@@ -34,3 +34,14 @@ Route::get('/api/v1/category/{search}', function()
 {
     return CategoryAPIController::create()->getSearchCategory();
 })->where('search', '(list|search)');
+
+
+/**
+ * Get Category list
+ */
+Route::get(
+    '/{search}/v1/pub/category-list', ['as' => 'category-list', function()
+    {
+        return Orbit\Controller\API\v1\Pub\CategoryAPIController::create()->getCategoryList();
+    }]
+)->where('search', '(api|app)');
