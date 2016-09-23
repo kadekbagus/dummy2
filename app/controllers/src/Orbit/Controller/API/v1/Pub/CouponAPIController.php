@@ -162,11 +162,15 @@ class CouponAPIController extends ControllerAPI
 
             // filter by category_id
             OrbitInput::get('category_id', function($category_id) use ($coupons, $prefix) {
-                $coupons = $coupons->leftJoin('category_merchant as cm', function($q) {
-                                $q->on(DB::raw('cm.merchant_id'), '=', DB::raw("m.merchant_id"));
-                                $q->on(DB::raw("m.object_type"), '=', DB::raw("'tenant'"));
-                            })
-                ->where(DB::raw('cm.category_id'), $category_id);
+                if ($category_id === 'mall') {
+                    $coupons = $coupons->where(DB::raw("m.object_type"), $category_id);
+                } else {
+                    $coupons = $coupons->leftJoin('category_merchant as cm', function($q) {
+                                    $q->on(DB::raw('cm.merchant_id'), '=', DB::raw("m.merchant_id"));
+                                    $q->on(DB::raw("m.object_type"), '=', DB::raw("'tenant'"));
+                                })
+                        ->where(DB::raw('cm.category_id'), $category_id);
+                }
             });
 
             // filter by city
