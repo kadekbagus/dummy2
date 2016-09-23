@@ -123,7 +123,10 @@ class PromotionAPIController extends ControllerAPI
                                 $q->on('media.media_name_long', '=', DB::raw("'news_translation_image_orig'"));
                             })
                             ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
-                            ->leftJoin('merchants as m', DB::raw("m.merchant_id"), '=', 'news_merchant.merchant_id')
+                            ->leftJoin('merchants as m', function($q) {
+                                $q->on(DB::raw("m.merchant_id"), '=', 'news_merchant.merchant_id');
+                                $q->on(DB::raw("m.status"), '=', DB::raw("'active'"));
+                            })
                             ->where('news_translations.merchant_language_id', '=', $valid_language->language_id)
                             ->where('news.object_type', '=', 'promotion')
                             ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
@@ -160,6 +163,7 @@ class PromotionAPIController extends ControllerAPI
                 $promotions = $promotions->leftJoin('merchants as mp', function($q) {
                                 $q->on(DB::raw("mp.merchant_id"), '=', DB::raw("m.parent_id"));
                                 $q->on(DB::raw("mp.object_type"), '=', DB::raw("'mall'"));
+                                $q->on(DB::raw("m.status"), '=', DB::raw("'active'"));
                             });
 
                 if (! empty($lon) && ! empty($lat)) {
