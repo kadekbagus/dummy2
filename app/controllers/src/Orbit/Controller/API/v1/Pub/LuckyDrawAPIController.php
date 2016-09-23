@@ -852,6 +852,7 @@ class LuckyDrawAPIController extends IntermediateBaseController
                         mall_media.path as mall_logo_url
                     ")
                 )
+                ->join('lucky_draw_numbers', 'lucky_draw_numbers.lucky_draw_id', '=', 'lucky_draws.lucky_draw_id')
                 ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'lucky_draws.campaign_status_id')
                 ->leftJoin('merchants', 'lucky_draws.mall_id', '=', 'merchants.merchant_id')
                 ->leftJoin('lucky_draw_translations', 'lucky_draw_translations.lucky_draw_id', '=', 'lucky_draws.lucky_draw_id')
@@ -864,6 +865,7 @@ class LuckyDrawAPIController extends IntermediateBaseController
                     $q->on(DB::raw('mall_media.media_name_long'), 'IN', DB::raw("('mall_logo_orig', 'retailer_logo_orig')"));
                 })
                 ->active('lucky_draws')
+                ->where('lucky_draw_numbers.user_id', $user->user_id)
                 ->where('lucky_draw_translations.merchant_language_id', '=', $valid_language->language_id)
                 ->havingRaw("campaign_status = 'ongoing'")
                 ->groupBy('lucky_draws.lucky_draw_id')
