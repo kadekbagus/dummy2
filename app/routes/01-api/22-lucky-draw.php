@@ -142,3 +142,13 @@ Route::get('/api/v1/pub/lucky-draw/detail', ['as' => 'pub-lucky-draw-detail', 'u
  * Route for issue auto lucky draw number (fake image upload)
  */
 Route::post('/api/v1/pub/lucky-draw/issue', ['as' => 'pub-lucky-draw-issue', 'uses' => 'IntermediatePubAuthController@LuckyDraw_postLuckyDrawAutoIssue']);
+
+/**
+ * Route for getting list of my lucky draw on all malls
+ */
+Route::get('/app/v1/pub/lucky-draw/number/list', function()
+{
+    return Orbit\Controller\API\v1\Pub\LuckyDrawAPIController::create()->getMyLuckyDrawList();
+});
+
+Route::get('/api/v1/pub/lucky-draw/number/list', ['as' => 'pub-lucky-draw-number-list', 'uses' => 'IntermediatePubAuthController@LuckyDraw_getMyLuckyDrawList']);

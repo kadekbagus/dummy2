@@ -124,8 +124,8 @@ Route::get(
  * Get City list
  */
 Route::get(
-    '/{search}/v1/pub/city-mall-list', ['as' => 'city-mall-list', function()
+    '/{search}/v1/pub/mall-location-list', ['as' => 'mall-location-list', function()
     {
-        return Orbit\Controller\API\v1\Pub\MallListAPIController::create()->getCityMallList();
+        return Orbit\Controller\API\v1\Pub\MallListAPIController::create()->getMallLocationList();
     }]
 )->where('search', '(api|app)');

@@ -64,7 +64,13 @@ class CouponAPIController extends ControllerAPI
             $sort_by = OrbitInput::get('sortby', 'coupon_name');
             $sort_mode = OrbitInput::get('sortmode','asc');
             $usingDemo = Config::get('orbit.is_demo', FALSE);
+            $location = OrbitInput::get('location', null);
+            $ul = OrbitInput::get('ul', null);
             $language = OrbitInput::get('language', 'id');
+            $userLocationCookieName = Config::get('orbit.user_location.cookie.name');
+            $distance = Config::get('orbit.geo_location.distance', 10);
+            $lon = '';
+            $lat = '';
 
             $this->registerCustomValidation();
             $validator = Validator::make(
@@ -126,16 +132,71 @@ class CouponAPIController extends ControllerAPI
                                 $q->on('media.object_id', '=', 'coupon_translations.coupon_translation_id');
                                 $q->on('media.media_name_long', '=', DB::raw("'coupon_translation_image_orig'"));
                             })
+                            ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
+                            ->leftJoin('merchants as m', DB::raw("m.merchant_id"), '=', 'promotion_retailer.retailer_id')
                             ->where('coupon_translations.merchant_language_id', $valid_language->language_id)
                             ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                             ->orderBy('coupon_name', 'asc');
 
-            $querySql = $coupons->toSql();
+            //calculate distance if user using my current location as filter and sort by location for listing
+            if ($sort_by == 'location' || $location == 'mylocation') {
+                if (! empty($ul)) {
+                    $position = explode("|", $ul);
+                    $lon = $position[0];
+                    $lat = $position[1];
+                } else {
+                    // get lon lat from cookie
+                    $userLocationCookieArray = isset($_COOKIE[$userLocationCookieName]) ? explode('|', $_COOKIE[$userLocationCookieName]) : NULL;
+                    if (! is_null($userLocationCookieArray) && isset($userLocationCookieArray[0]) && isset($userLocationCookieArray[1])) {
+                        $lon = $userLocationCookieArray[0];
+                        $lat = $userLocationCookieArray[1];
+                    }
+                }
+                if (!empty($lon) && !empty($lat)) {
+                    $coupons = $coupons->addSelect(DB::raw("6371 * acos( cos( radians({$lat}) ) * cos( radians( x({$prefix}merchant_geofences.position) ) ) * cos( radians( y({$prefix}merchant_geofences.position) ) - radians({$lon}) ) + sin( radians({$lat}) ) * sin( radians( x({$prefix}merchant_geofences.position) ) ) ) AS distance"))
+                                    ->leftJoin('merchant_geofences', function ($q) use($prefix) {
+                                            $q->on('merchant_geofences.merchant_id', '=', DB::raw("CASE WHEN m.object_type = 'tenant' THEN m.parent_id ELSE m.merchant_id END"));
+                                    });
+                }
+            }
 
-            $coupon = DB::table(DB::Raw("({$querySql}) as sub_query"))->mergeBindings($coupons->getQuery())
-                            ->select('coupon_id', 'coupon_name', 'description', DB::raw("sub_query.status"), 'campaign_status', 'is_started', 'image_url')
-                            ->groupBy('coupon_id')
-                            ->orderBy($sort_by, $sort_mode);
+            // filter by category_id
+            OrbitInput::get('category_id', function($category_id) use ($coupons, $prefix) {
+                $coupons = $coupons->leftJoin('category_merchant as cm', function($q) {
+                                $q->on(DB::raw('cm.merchant_id'), '=', DB::raw("m.merchant_id"));
+                                $q->on(DB::raw("m.object_type"), '=', DB::raw("'tenant'"));
+                            })
+                ->where(DB::raw('cm.category_id'), $category_id);
+            });
+
+            // filter by city
+            OrbitInput::get('location', function($location) use ($coupons, $prefix, $lat, $lon, $distance) {
+                $coupons = $coupons->leftJoin('merchants as mp', function($q) {
+                                $q->on(DB::raw("mp.merchant_id"), '=', DB::raw("m.parent_id"));
+                                $q->on(DB::raw("mp.object_type"), '=', DB::raw("'mall'"));
+                            });
+
+                if ($location === 'mylocation' && !empty($lon) && !empty($lat)) {
+                    $coupons = $coupons->havingRaw("distance <= {$distance}");
+                } else {
+                    $coupons = $coupons->where(DB::raw("(CASE WHEN m.object_type = 'tenant' THEN mp.city ELSE m.city END)"), $location);
+                }
+            });
+
+            $querySql = $coupons->toSql();
+            $coupon = DB::table(DB::Raw("({$querySql}) as sub_query"))->mergeBindings($coupons->getQuery());
+
+            if ($sort_by === 'location' && !empty($lon) && !empty($lat)) {
+                $sort_by = 'distance';
+                $coupon = $coupon->select('coupon_id', 'coupon_name', 'description', DB::raw("sub_query.status"), 'campaign_status', 'is_started', 'image_url', DB::raw("min(distance) as distance"))
+                                 ->groupBy('coupon_id')
+                                 ->orderBy($sort_by, $sort_mode)
+                                 ->orderBy('coupon_name', $sort_mode);
+            } else {
+                $coupon = $coupon->select('coupon_id', 'coupon_name', 'description', DB::raw("sub_query.status"), 'campaign_status', 'is_started', 'image_url')
+                                 ->groupBy('coupon_id')
+                                 ->orderBy('coupon_name', $sort_mode);
+            }
 
             OrbitInput::get('filter_name', function ($filterName) use ($coupon, $prefix) {
                 if (! empty($filterName)) {
