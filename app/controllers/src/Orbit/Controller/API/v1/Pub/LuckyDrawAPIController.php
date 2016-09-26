@@ -924,6 +924,18 @@ class LuckyDrawAPIController extends IntermediateBaseController
             $this->response->message = 'Success';
             $this->response->data = $data;
 
+            if (empty($skip)) {
+                $activityNotes = sprintf('Page viewed: Landing Page My Lucky Number List');
+                $activity->setUser($user)
+                    ->setActivityName('view_landing_page_my_lucky_number_list')
+                    ->setActivityNameLong('View GoToMalls My Lucky Number List')
+                    ->setObject(null)
+                    ->setModuleName('LuckyDraw')
+                    ->setNotes($activityNotes)
+                    ->responseOK()
+                    ->save();
+            }
+
         } catch (ACLForbiddenException $e) {
 
             $this->response->code = $e->getCode();
