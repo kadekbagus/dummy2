@@ -566,6 +566,10 @@ class LuckyDrawAPIController extends ControllerAPI
                 $updatedluckydraw->external_lucky_draw_id = $data;
             });
 
+            OrbitInput::post('lucky_draw_name', function($data) use ($updatedluckydraw) {
+                $updatedluckydraw->lucky_draw_name = $data;
+            });
+
             OrbitInput::post('description', function($data) use ($updatedluckydraw) {
                 $updatedluckydraw->description = $data;
             });
