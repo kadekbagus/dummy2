@@ -809,7 +809,16 @@ class LuckyDrawAPIController extends IntermediateBaseController
                             $qldn->on('lucky_draw_numbers.lucky_draw_id', '=', 'lucky_draw_winners.lucky_draw_id')
                                 ->on('lucky_draw_numbers.lucky_draw_number_code', '=', DB::Raw("{$prefix}lucky_draw_winners.lucky_draw_winner_code"));
                         })
-                        ->leftJoin('users', 'users.user_id', '=', 'lucky_draw_numbers.user_id');
+                        ->leftJoin('lucky_draws as ld', DB::Raw('ld.lucky_draw_id'), '=', 'lucky_draw_winners.lucky_draw_id')
+                        ->leftJoin('users', 'users.user_id', '=', 'lucky_draw_numbers.user_id')
+                        ->whereRaw("
+                                ld.draw_date <= (
+                                         SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
+                                         FROM {$prefix}merchants om
+                                         LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
+                                         WHERE om.merchant_id = ld.mall_id
+                                    )
+                            ");
                     }]);
                 }, 'numbers' => function ($qn) use($user) {
                     $qn->select(
