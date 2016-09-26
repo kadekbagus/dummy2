@@ -5360,8 +5360,14 @@ class MobileCIAPIController extends BaseCIController
             $lucky_draw_id = OrbitInput::get('id');
 
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
+            $mallTime = Carbon::now($retailer->timezone->timezone_name);
 
-            $luckydraw = LuckyDraw::with('translations', 'prizes', 'announcements')->excludeDeleted()->where('mall_id', $retailer->merchant_id)->where('lucky_draw_id', $lucky_draw_id)->first();
+            $luckydraw = LuckyDraw::with('translations', 'prizes', 'announcements')
+                ->excludeDeleted()
+                ->where('mall_id', $retailer->merchant_id)
+                ->where('lucky_draw_id', $lucky_draw_id)
+                ->whereRaw("? between start_date and grace_period_date", [$mallTime]);
+                ->first();
 
             $languages = $this->getListLanguages($retailer);
 
@@ -7452,6 +7458,7 @@ class MobileCIAPIController extends BaseCIController
             $promotion_id = trim(OrbitInput::get('id'));
 
             $mallid = $retailer->merchant_id;
+            $mallTime = Carbon::now($retailer->timezone->timezone_name);
 
             $promotion = \News::with(['tenants' => function($q) use($retailer) {
                     $q->where('merchants.status', 'active');
@@ -7464,9 +7471,10 @@ class MobileCIAPIController extends BaseCIController
                     $q->where('merchants.parent_id', '=', $mallid)
                       ->orWhere('merchants.merchant_id', '=', $mallid);
                 })
-                ->where('news.object_type', 'promotion')
                 ->where('news.news_id', $promotion_id)
                 ->where('news.status', 'active')
+                ->whereRaw("? between begin_date and end_date", [$mallTime]);
+                ->where('news.object_type', 'promotion')
                 ->first();
 
             if (empty($promotion)) {
@@ -8187,6 +8195,7 @@ class MobileCIAPIController extends BaseCIController
             $product_id = trim(OrbitInput::get('id'));
 
             $mallid = $retailer->merchant_id;
+            $mallTime = Carbon::now($retailer->timezone->timezone_name);
 
             $news = \News::with(['tenants' => function($q) use($retailer) {
                     $q->where('merchants.status', 'active');
@@ -8199,9 +8208,10 @@ class MobileCIAPIController extends BaseCIController
                     $q->where('merchants.parent_id', '=', $mallid)
                       ->orWhere('merchants.merchant_id', '=', $mallid);
                 })
-                ->where('news.object_type', 'news')
                 ->where('news.news_id', $product_id)
                 ->where('news.status', 'active')
+                ->whereRaw("? between begin_date and end_date", [$mallTime]);
+                ->where('news.object_type', 'news')
                 ->first();
 
             if (empty($news)) {
