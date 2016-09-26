@@ -5366,7 +5366,7 @@ class MobileCIAPIController extends BaseCIController
                 ->excludeDeleted()
                 ->where('mall_id', $retailer->merchant_id)
                 ->where('lucky_draw_id', $lucky_draw_id)
-                ->whereRaw("? between start_date and grace_period_date", [$mallTime]);
+                ->whereRaw("? between start_date and grace_period_date", [$mallTime])
                 ->first();
 
             $languages = $this->getListLanguages($retailer);
@@ -5388,6 +5388,7 @@ class MobileCIAPIController extends BaseCIController
                                 'servertime'    => null,
                                 'session' => $this->session,
                                 'is_logged_in' => UrlBlock::isLoggedIn($this->session),
+                                'user_email' => $user->role->role_name !== 'Guest' ? $user->user_email : ''
                 ]);
             }
 
@@ -7473,7 +7474,7 @@ class MobileCIAPIController extends BaseCIController
                 })
                 ->where('news.news_id', $promotion_id)
                 ->where('news.status', 'active')
-                ->whereRaw("? between begin_date and end_date", [$mallTime]);
+                ->whereRaw("? between begin_date and end_date", [$mallTime])
                 ->where('news.object_type', 'promotion')
                 ->first();
 
@@ -7485,6 +7486,7 @@ class MobileCIAPIController extends BaseCIController
                     'session' => $this->session,
                     'is_logged_in' => UrlBlock::isLoggedIn($this->session),
                     'languages' => $languages,
+                    'user_email' => $user->role->role_name !== 'Guest' ? $user->user_email : ''
                 ));
             }
 
@@ -8210,7 +8212,7 @@ class MobileCIAPIController extends BaseCIController
                 })
                 ->where('news.news_id', $product_id)
                 ->where('news.status', 'active')
-                ->whereRaw("? between begin_date and end_date", [$mallTime]);
+                ->whereRaw("? between begin_date and end_date", [$mallTime])
                 ->where('news.object_type', 'news')
                 ->first();
 
@@ -8222,6 +8224,7 @@ class MobileCIAPIController extends BaseCIController
                     'session' => $this->session,
                     'is_logged_in' => UrlBlock::isLoggedIn($this->session),
                     'languages' => $languages,
+                    'user_email' => $user->role->role_name !== 'Guest' ? $user->user_email : ''
                 ));
             }
 
