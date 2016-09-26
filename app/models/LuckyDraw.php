@@ -13,6 +13,9 @@ class LuckyDraw extends Eloquent
      */
     use ModelStatusTrait;
 
+    const LUCKY_DRAW_MAX_NUMBER_REACHED_ERROR_CODE = 1111;
+    const LUCKY_DRAW_EXPIRED_ERROR_CODE = 1112;
+
     protected $table = 'lucky_draws';
 
     protected $primaryKey = 'lucky_draw_id';
