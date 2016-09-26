@@ -8,6 +8,7 @@ use OrbitShop\API\v1\ResponseProvider;
 use Orbit\Helper\Session\UserGetter;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
+use Orbit\Helper\Exception\OrbitCustomException;
 use OrbitShop\API\v1\OrbitShopAPI;
 use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\ACL\Exception\ACLForbiddenException;
@@ -482,7 +483,7 @@ class LuckyDrawAPIController extends IntermediateBaseController
             // check lucky draw validity date (now against end_date)
             if ($now > $luckyDrawDate) {
                 $errorMessage = sprintf('The lucky draw already expired on %s.', date('d/m/Y', strtotime($luckyDraw->end_date)));
-                OrbitShopAPI::throwInvalidArgument(htmlentities($errorMessage));
+                throw new OrbitCustomException($errorMessage, LuckyDraw::LUCKY_DRAW_EXPIRED_ERROR_CODE, NULL);
             }
 
             $checkMaxIssuance = DB::table('lucky_draws')
@@ -504,7 +505,9 @@ class LuckyDrawAPIController extends IntermediateBaseController
             if ((((int) $checkMaxIssuance->max_number - (int) $checkMaxIssuance->min_number + 1) <= (int) $checkMaxIssuance->generated_numbers) && ((int) $checkMaxIssuance->free_number_batch === 0)) {
                 DB::connection()->rollBack();
                 $errorMessage = Lang::get('validation.orbit.exceed.lucky_draw.max_issuance', ['max_number' => $checkMaxIssuance->max_number]);
-                OrbitShopAPI::throwInvalidArgument($errorMessage);
+                $customData = new stdclass();
+                $customData->max_number = $checkMaxIssuance->max_number;
+                throw new OrbitCustomException($errorMessage, LuckyDraw::LUCKY_DRAW_MAX_NUMBER_REACHED_ERROR_CODE, $customData);
             }
 
             $activeluckydraw = DB::table('lucky_draws')
@@ -658,6 +661,21 @@ class LuckyDrawAPIController extends IntermediateBaseController
                 ->setObject($luckyDraw)
                 ->setNotes($e->getMessage())
                 ->responseFailed();
+
+        } catch (\Orbit\Helper\Exception\OrbitCustomException $e) {
+            DB::connection()->rollBack();
+            $token = $this->refreshCSRFToken($this->session);
+            $data = new stdclass();
+            $data->token = $token;
+            if ($e->getCode() === LuckyDraw::LUCKY_DRAW_MAX_NUMBER_REACHED_ERROR_CODE) {
+                $data->custom_data = $e->getCustomData();
+            }
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = $data;
+            $httpCode = 500;
 
         } catch (\Illuminate\Session\TokenMismatchException $e) {
             DB::connection()->rollBack();
