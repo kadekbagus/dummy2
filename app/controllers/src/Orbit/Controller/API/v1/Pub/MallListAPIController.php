@@ -99,7 +99,10 @@ class MallListAPIController extends ControllerAPI
             if (! empty($location)) {
                 $locationFilter = '{ 
                             "match":{
-                                "city": "' . $location . '"
+                                "city": {
+                                    "query":    "' . $location . '",
+                                    "operator": "and"
+                                }
                             }
                         },';
 
