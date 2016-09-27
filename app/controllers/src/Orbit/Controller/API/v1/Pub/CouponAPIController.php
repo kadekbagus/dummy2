@@ -162,11 +162,15 @@ class CouponAPIController extends ControllerAPI
 
             // filter by category_id
             OrbitInput::get('category_id', function($category_id) use ($coupons, $prefix) {
-                $coupons = $coupons->leftJoin('category_merchant as cm', function($q) {
-                                $q->on(DB::raw('cm.merchant_id'), '=', DB::raw("m.merchant_id"));
-                                $q->on(DB::raw("m.object_type"), '=', DB::raw("'tenant'"));
-                            })
-                ->where(DB::raw('cm.category_id'), $category_id);
+                if ($category_id === 'mall') {
+                    $coupons = $coupons->where(DB::raw("m.object_type"), $category_id);
+                } else {
+                    $coupons = $coupons->leftJoin('category_merchant as cm', function($q) {
+                                    $q->on(DB::raw('cm.merchant_id'), '=', DB::raw("m.merchant_id"));
+                                    $q->on(DB::raw("m.object_type"), '=', DB::raw("'tenant'"));
+                                })
+                        ->where(DB::raw('cm.category_id'), $category_id);
+                }
             });
 
             // filter by city
@@ -187,9 +191,10 @@ class CouponAPIController extends ControllerAPI
             $coupon = DB::table(DB::Raw("({$querySql}) as sub_query"))->mergeBindings($coupons->getQuery());
 
             if ($sort_by === 'location' && !empty($lon) && !empty($lat)) {
+                $sort_by = 'distance';
                 $coupon = $coupon->select('coupon_id', 'coupon_name', 'description', DB::raw("sub_query.status"), 'campaign_status', 'is_started', 'image_url', DB::raw("min(distance) as distance"))
                                  ->groupBy('coupon_id')
-                                 ->orderBy('distance', $sort_mode)
+                                 ->orderBy($sort_by, $sort_mode)
                                  ->orderBy('coupon_name', $sort_mode);
             } else {
                 $coupon = $coupon->select('coupon_id', 'coupon_name', 'description', DB::raw("sub_query.status"), 'campaign_status', 'is_started', 'image_url')

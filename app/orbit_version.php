@@ -23,9 +23,9 @@ if (! defined('ORBIT_APP_BUILD_NUMBER')) {
  */
 if (! defined('ORBIT_APP_VERSION')) {
     if (Config::get('app.debug')) {
-        define('ORBIT_APP_VERSION', '2.8-dev b' . ORBIT_APP_BUILD_NUMBER);
+        define('ORBIT_APP_VERSION', '2.8.9-dev b' . ORBIT_APP_BUILD_NUMBER);
     } else {
-        define('ORBIT_APP_VERSION', '2.8');
+        define('ORBIT_APP_VERSION', '2.8.9');
     }
 }
 

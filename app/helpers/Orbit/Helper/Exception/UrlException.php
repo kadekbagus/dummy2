@@ -3,7 +3,7 @@ namespace Orbit\Helper\Exception;
 /**
  * Exception class for Url Checker.
  *
- * @author Rio Astamal <me@rioastamal.net>
+ * @author Ahmad <ahmad@dominopos.com>
  */
 class UrlException extends \Exception {
     protected $redirectRoute;
