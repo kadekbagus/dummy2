@@ -17,6 +17,7 @@ use Category;
 use stdClass;
 use Orbit\Helper\Util\PaginationNumber;
 use Elasticsearch\ClientBuilder;
+use Language;
 
 class CategoryAPIController extends ControllerAPI
 {
@@ -41,9 +42,16 @@ class CategoryAPIController extends ControllerAPI
             $sort_mode = OrbitInput::get('sortmode','asc');
 
             $merchant_id = OrbitInput::get('merchant_id', 0);
+            $lang = OrbitInput::get('language', 'id');
 
-            $categories = Category::select('categories.category_id','category_name')
-                                ->where('merchant_id', $merchant_id)
+            $language = Language::where('status', '=', 'active')
+                            ->where('name', $lang)
+                            ->first();
+
+            $categories = Category::select('categories.category_id','category_translations.category_name')
+                                ->join('category_translations', 'category_translations.category_id', '=', 'categories.category_id')
+                                ->where('category_translations.merchant_language_id', '=', $language->language_id)
+                                ->where('categories.merchant_id', $merchant_id)
                                 ->excludeDeleted('categories')
                                 ->orderBy($sort_by, $sort_mode);
 

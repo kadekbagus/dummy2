@@ -812,32 +812,33 @@ class LuckyDrawAPIController extends IntermediateBaseController
                             'winner_number'
                         )
                     ->with(['winners' => function ($qw) use ($prefix, $user) {
-                        $qw->select(
-                                'lucky_draw_winners.lucky_draw_id',
-                                'lucky_draw_winner_id',
-                                'lucky_draw_prize_id',
-                                'lucky_draw_winner_code',
-                                'user_firstname',
-                                'user_lastname',
-                                DB::Raw("
-                                        CASE WHEN {$prefix}users.user_id = {$this->quote($user->user_id)} THEN 'Y' ELSE 'N' END as my_number
-                                    ")
-                            )
-                        ->leftJoin('lucky_draw_numbers', function ($qldn) use ($prefix) {
-                            $qldn->on('lucky_draw_numbers.lucky_draw_id', '=', 'lucky_draw_winners.lucky_draw_id')
-                                ->on('lucky_draw_numbers.lucky_draw_number_code', '=', DB::Raw("{$prefix}lucky_draw_winners.lucky_draw_winner_code"));
-                        })
-                        ->leftJoin('lucky_draws as ld', DB::Raw('ld.lucky_draw_id'), '=', 'lucky_draw_winners.lucky_draw_id')
-                        ->join('users', 'users.user_id', '=', 'lucky_draw_numbers.user_id')
-                        ->whereRaw("
-                                ld.draw_date <= (
-                                         SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
-                                         FROM {$prefix}merchants om
-                                         LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
-                                         WHERE om.merchant_id = ld.mall_id
-                                    )
-                            ");
-                    }]);
+                            $qw->select(
+                                    'lucky_draw_winners.lucky_draw_id',
+                                    'lucky_draw_winner_id',
+                                    'lucky_draw_prize_id',
+                                    'lucky_draw_winner_code',
+                                    'user_firstname',
+                                    'user_lastname',
+                                    DB::Raw("
+                                            CASE WHEN {$prefix}users.user_id = {$this->quote($user->user_id)} THEN 'Y' ELSE 'N' END as my_number
+                                        ")
+                                )
+                            ->leftJoin('lucky_draw_numbers', function ($qldn) use ($prefix) {
+                                $qldn->on('lucky_draw_numbers.lucky_draw_id', '=', 'lucky_draw_winners.lucky_draw_id')
+                                    ->on('lucky_draw_numbers.lucky_draw_number_code', '=', DB::Raw("{$prefix}lucky_draw_winners.lucky_draw_winner_code"));
+                            })
+                            ->leftJoin('lucky_draws as ld', DB::Raw('ld.lucky_draw_id'), '=', 'lucky_draw_winners.lucky_draw_id')
+                            ->join('users', 'users.user_id', '=', 'lucky_draw_numbers.user_id')
+                            ->whereRaw("
+                                    ld.draw_date <= (
+                                             SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
+                                             FROM {$prefix}merchants om
+                                             LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
+                                             WHERE om.merchant_id = ld.mall_id
+                                        )
+                                ");
+                        }])
+                    ->orderBy('order');
                 }, 'numbers' => function ($qn) use($user) {
                     $qn->select(
                             'lucky_draw_id',
