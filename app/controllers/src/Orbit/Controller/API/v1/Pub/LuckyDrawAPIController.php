@@ -8,6 +8,7 @@ use OrbitShop\API\v1\ResponseProvider;
 use Orbit\Helper\Session\UserGetter;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
+use Orbit\Helper\Exception\OrbitCustomException;
 use OrbitShop\API\v1\OrbitShopAPI;
 use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\ACL\Exception\ACLForbiddenException;
@@ -125,7 +126,7 @@ class LuckyDrawAPIController extends IntermediateBaseController
                     DB::raw("(CONCAT(ci_domain, '" . $ciLuckyDrawPath . "?id=', {$prefix}lucky_draws.lucky_draw_id)) as ci_path"),
                     DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
                              THEN {$prefix}campaign_status.campaign_status_name ELSE (
-                                 CASE WHEN {$prefix}lucky_draws.grace_period_date < (
+                                 CASE WHEN {$prefix}lucky_draws.draw_date < (
                                      SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
                                      FROM {$prefix}merchants om
                                      LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
@@ -326,7 +327,7 @@ class LuckyDrawAPIController extends IntermediateBaseController
                     DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
                             THEN {$prefix}campaign_status.campaign_status_name
                             ELSE (
-                                CASE WHEN {$prefix}lucky_draws.grace_period_date < (
+                                CASE WHEN {$prefix}lucky_draws.draw_date < (
                                         SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
                                         FROM {$prefix}merchants om
                                         LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
@@ -482,7 +483,7 @@ class LuckyDrawAPIController extends IntermediateBaseController
             // check lucky draw validity date (now against end_date)
             if ($now > $luckyDrawDate) {
                 $errorMessage = sprintf('The lucky draw already expired on %s.', date('d/m/Y', strtotime($luckyDraw->end_date)));
-                OrbitShopAPI::throwInvalidArgument(htmlentities($errorMessage));
+                throw new OrbitCustomException($errorMessage, LuckyDraw::LUCKY_DRAW_EXPIRED_ERROR_CODE, NULL);
             }
 
             $checkMaxIssuance = DB::table('lucky_draws')
@@ -504,7 +505,9 @@ class LuckyDrawAPIController extends IntermediateBaseController
             if ((((int) $checkMaxIssuance->max_number - (int) $checkMaxIssuance->min_number + 1) <= (int) $checkMaxIssuance->generated_numbers) && ((int) $checkMaxIssuance->free_number_batch === 0)) {
                 DB::connection()->rollBack();
                 $errorMessage = Lang::get('validation.orbit.exceed.lucky_draw.max_issuance', ['max_number' => $checkMaxIssuance->max_number]);
-                OrbitShopAPI::throwInvalidArgument($errorMessage);
+                $customData = new stdclass();
+                $customData->max_number = $checkMaxIssuance->max_number;
+                throw new OrbitCustomException($errorMessage, LuckyDraw::LUCKY_DRAW_MAX_NUMBER_REACHED_ERROR_CODE, $customData);
             }
 
             $activeluckydraw = DB::table('lucky_draws')
@@ -659,6 +662,21 @@ class LuckyDrawAPIController extends IntermediateBaseController
                 ->setNotes($e->getMessage())
                 ->responseFailed();
 
+        } catch (\Orbit\Helper\Exception\OrbitCustomException $e) {
+            DB::connection()->rollBack();
+            $token = $this->refreshCSRFToken($this->session);
+            $data = new stdclass();
+            $data->token = $token;
+            if ($e->getCode() === LuckyDraw::LUCKY_DRAW_MAX_NUMBER_REACHED_ERROR_CODE) {
+                $data->custom_data = $e->getCustomData();
+            }
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = $data;
+            $httpCode = 500;
+
         } catch (\Illuminate\Session\TokenMismatchException $e) {
             DB::connection()->rollBack();
             $token = $this->refreshCSRFToken($this->session);
@@ -786,27 +804,39 @@ class LuckyDrawAPIController extends IntermediateBaseController
             $prefix = DB::getTablePrefix();
 
             // add type also
-            $luckydraws = LuckyDraw::with(['prizes' => function ($q) use ($prefix) {
+            $luckydraws = LuckyDraw::with(['prizes' => function ($q) use ($prefix, $user) {
                     $q->select(
                             'lucky_draw_id',
                             'lucky_draw_prize_id',
                             'prize_name',
                             'winner_number'
                         )
-                    ->with(['winners' => function ($qw) use ($prefix) {
+                    ->with(['winners' => function ($qw) use ($prefix, $user) {
                         $qw->select(
                                 'lucky_draw_winners.lucky_draw_id',
                                 'lucky_draw_winner_id',
                                 'lucky_draw_prize_id',
                                 'lucky_draw_winner_code',
                                 'user_firstname',
-                                'user_lastname'
+                                'user_lastname',
+                                DB::Raw("
+                                        CASE WHEN {$prefix}users.user_id = {$this->quote($user->user_id)} THEN 'Y' ELSE 'N' END as my_number
+                                    ")
                             )
                         ->leftJoin('lucky_draw_numbers', function ($qldn) use ($prefix) {
                             $qldn->on('lucky_draw_numbers.lucky_draw_id', '=', 'lucky_draw_winners.lucky_draw_id')
                                 ->on('lucky_draw_numbers.lucky_draw_number_code', '=', DB::Raw("{$prefix}lucky_draw_winners.lucky_draw_winner_code"));
                         })
-                        ->leftJoin('users', 'users.user_id', '=', 'lucky_draw_numbers.user_id');
+                        ->leftJoin('lucky_draws as ld', DB::Raw('ld.lucky_draw_id'), '=', 'lucky_draw_winners.lucky_draw_id')
+                        ->leftJoin('users', 'users.user_id', '=', 'lucky_draw_numbers.user_id')
+                        ->whereRaw("
+                                ld.draw_date <= (
+                                         SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
+                                         FROM {$prefix}merchants om
+                                         LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
+                                         WHERE om.merchant_id = ld.mall_id
+                                    )
+                            ");
                     }]);
                 }, 'numbers' => function ($qn) use($user) {
                     $qn->select(
@@ -924,6 +954,18 @@ class LuckyDrawAPIController extends IntermediateBaseController
             $this->response->message = 'Success';
             $this->response->data = $data;
 
+            if (empty($skip)) {
+                $activityNotes = sprintf('Page viewed: Landing Page My Lucky Number List');
+                $activity->setUser($user)
+                    ->setActivityName('view_landing_page_my_lucky_number_list')
+                    ->setActivityNameLong('View GoToMalls My Lucky Number List')
+                    ->setObject(null)
+                    ->setModuleName('LuckyDraw')
+                    ->setNotes($activityNotes)
+                    ->responseOK()
+                    ->save();
+            }
+
         } catch (ACLForbiddenException $e) {
 
             $this->response->code = $e->getCode();
@@ -1016,5 +1058,10 @@ class LuckyDrawAPIController extends IntermediateBaseController
 
             return TRUE;
         });
+    }
+
+    protected function quote($arg)
+    {
+        return DB::connection()->getPdo()->quote($arg);
     }
 }
