@@ -156,6 +156,7 @@ class MallListAPIController extends ControllerAPI
                                 }
                             },
                             "sort": [
+                                "_score",
                                 ' . $sortby . '
                             ]
                         }';
