@@ -80,7 +80,7 @@ class StoreAPIController extends ControllerAPI
             $prefix = DB::getTablePrefix();
 
             $store = Tenant::select(
-                    DB::raw("{$prefix}merchants.merchant_id as store_id"),
+                    DB::raw("{$prefix}merchants.merchant_id"),
                     'merchants.name',
                     DB::Raw("CASE WHEN (
                                     select mt.description
@@ -106,14 +106,14 @@ class StoreAPIController extends ControllerAPI
 
             $querySql = $store->toSql();
 
-            $store = DB::table(DB::Raw("({$querySql}) as subQuery"))->mergeBindings($store->getQuery())
-                        ->select('store_id', 'name', 'description', 'logo_url')
+            $store = DB::table(DB::raw("({$querySql}) as subQuery"))->mergeBindings($store->getQuery())
+                        ->select(DB::raw('subQuery.merchant_id'), 'name', 'description', 'logo_url')
                         ->groupBy('name')
                         ->orderBy('name', 'asc');
 
             // filter by category just on first store
             OrbitInput::get('category_id', function ($category_id) use ($store, $prefix) {
-                $store->leftJoin(DB::raw("{$prefix}category_merchant cm"), DB::Raw("cm.merchant_id"), '=', DB::Raw("subQuery.store_id"))
+                $store->leftJoin(DB::raw("{$prefix}category_merchant cm"), DB::Raw("cm.merchant_id"), '=', DB::Raw("subQuery.merchant_id"))
                     ->where(DB::raw("cm.category_id"), $category_id);
             });
 
@@ -176,7 +176,7 @@ class StoreAPIController extends ControllerAPI
             $querySql = $store->toSql();
 
             $store = DB::table(DB::Raw("({$querySql}) as sub_query"))->mergeBindings($store)
-                        ->select('store_id', 'name', 'description', 'logo_url');
+                        ->select(DB::raw('sub_query.merchant_id'), 'name', 'description', 'logo_url');
 
             if ($sort_by === 'location' && ! empty($lon) && ! empty($lat)) {
                 $sort_by = 'distance';
@@ -202,7 +202,7 @@ class StoreAPIController extends ControllerAPI
 
             OrbitInput::get('keyword', function ($keyword) use ($store, $prefix) {
                 if (! empty($keyword)) {
-                    $store = $store->leftJoin('keyword_object', DB::raw('sub_query.store_id'), '=', 'keyword_object.object_id')
+                    $store = $store->leftJoin('keyword_object', DB::raw('sub_query.merchant_id'), '=', 'keyword_object.object_id')
                                 ->leftJoin('keywords', 'keyword_object.keyword_id', '=', 'keywords.keyword_id')
                                 ->where(function($query) use ($keyword, $prefix)
                                 {
