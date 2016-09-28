@@ -677,6 +677,15 @@ class LuckyDrawAPIController extends IntermediateBaseController
             $this->response->data = $data;
             $httpCode = 500;
 
+            // Creation failed Activity log
+            $activity->setUser($user)
+                ->setModuleName('LuckyDraw')
+                ->setActivityName('issue_lucky_draw')
+                ->setActivityNameLong('Lucky Draw Number Auto Issuance Failed')
+                ->setObject($luckyDraw)
+                ->setNotes($e->getMessage())
+                ->responseFailed();
+
         } catch (\Illuminate\Session\TokenMismatchException $e) {
             DB::connection()->rollBack();
             $token = $this->refreshCSRFToken($this->session);
