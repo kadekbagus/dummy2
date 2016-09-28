@@ -179,6 +179,7 @@ class MallListAPIController extends ControllerAPI
 
             $area_data = $response['hits'];
             $listmall = array();
+            $total = $area_data['total'];
             foreach ($area_data['hits'] as $dt) {
                 $areadata = array();
                 if ($words === 1) {
@@ -192,7 +193,7 @@ class MallListAPIController extends ControllerAPI
                         }
                         $listmall[] = $areadata;
                     }
-
+                    $total = count($listmall);
                 } else {
                     $areadata['id'] = $dt['_id'];
                     foreach ($dt['_source'] as $source => $val) {
@@ -203,7 +204,7 @@ class MallListAPIController extends ControllerAPI
             }
 
             $this->response->data = new stdClass();
-            $this->response->data->total_records = count($listmall);
+            $this->response->data->total_records = $total;
             $this->response->data->returned_records = count($listmall);
             $this->response->data->records = $listmall;
         } catch (ACLForbiddenException $e) {
