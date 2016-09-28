@@ -98,7 +98,13 @@ class MallListAPIController extends ControllerAPI
             }
 
             // filter by location (city or user location)
+            $words = 0;
             if (! empty($location)) {
+                $words = count(explode(" ", $location));
+                if ($location === "mylocation") {
+                    $words = 0;
+                }
+
                 $locationFilter = '{ 
                             "match":{
                                 "city": {
@@ -158,7 +164,6 @@ class MallListAPIController extends ControllerAPI
                                 }
                             },
                             "sort": [
-                                ' . $withscore . '
                                 ' . $sortby . '
                             ]
                         }';
@@ -175,15 +180,30 @@ class MallListAPIController extends ControllerAPI
             $area_data = $response['hits'];
             $listmall = array();
             foreach ($area_data['hits'] as $dt) {
-                $areadata['id'] = $dt['_id'];
-                foreach ($dt['_source'] as $source => $val) {
-                    $areadata[$source] = $val;
+                $areadata = array();
+                if ($words === 1) {
+                    // handle if user filter location with one word, ex "jakarta", data in city "jakarta selatan", "jakarta barat" etc will be dissapear
+                    if (strtolower($dt['_source']['city']) === strtolower($location)) {
+                        $areadata['id'] = $dt['_id'];
+                        foreach ($dt['_source'] as $source => $val) {
+                            if (strtolower($dt['_source']['city']) === strtolower($location)) {
+                                $areadata[$source] = $val;
+                            }
+                        }
+                        $listmall[] = $areadata;
+                    }
+
+                } else {
+                    $areadata['id'] = $dt['_id'];
+                    foreach ($dt['_source'] as $source => $val) {
+                        $areadata[$source] = $val;
+                    }
+                    $listmall[] = $areadata;
                 }
-                $listmall[] = $areadata;
             }
 
             $this->response->data = new stdClass();
-            $this->response->data->total_records = $area_data['total'];
+            $this->response->data->total_records = count($listmall);
             $this->response->data->returned_records = count($listmall);
             $this->response->data->records = $listmall;
         } catch (ACLForbiddenException $e) {
