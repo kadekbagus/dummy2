@@ -1306,11 +1306,12 @@ class CouponAPIController extends ControllerAPI
                                         group by ct.promotion_id
                                     ) ELSE {$prefix}media.path END as original_media_path,
                                 {$prefix}promotions.end_date,
+                                {$prefix}promotions.coupon_validity_in_date,
                                 {$prefix}promotions.status,
                                 CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
                                     THEN {$prefix}campaign_status.campaign_status_name
                                     ELSE (
-                                        CASE WHEN {$prefix}promotions.end_date < (
+                                        CASE WHEN {$prefix}promotions.coupon_validity_in_date < (
                                             SELECT min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
                                             FROM {$prefix}promotion_retailer opt
                                                 LEFT JOIN {$prefix}merchants om ON om.merchant_id = opt.retailer_id
@@ -1330,7 +1331,7 @@ class CouponAPIController extends ControllerAPI
                                         LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
                                         LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
                                     WHERE opt.promotion_id = {$prefix}promotions.promotion_id
-                                    AND CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) between {$prefix}promotions.begin_date and {$prefix}promotions.end_date) > 0
+                                    AND CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) between {$prefix}promotions.begin_date and {$prefix}promotions.coupon_validity_in_date) > 0
                                 THEN 'true'
                                 ELSE 'false'
                                 END AS is_started,
