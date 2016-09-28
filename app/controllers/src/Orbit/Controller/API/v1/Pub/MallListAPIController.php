@@ -82,7 +82,9 @@ class MallListAPIController extends ControllerAPI
 
             // search by keyword
             $filterKeyword = '';
+            $withscore = '';
             if ($keyword != '') {
+                $withscore = '"_score",';
                 $filterKeyword = '"query": {
                                     "multi_match" : {
                                         "query": "' . $keyword . '",
@@ -156,7 +158,7 @@ class MallListAPIController extends ControllerAPI
                                 }
                             },
                             "sort": [
-                                "_score",
+                                ' . $withscore . '
                                 ' . $sortby . '
                             ]
                         }';
