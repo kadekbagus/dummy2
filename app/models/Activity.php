@@ -335,6 +335,11 @@ class Activity extends Eloquent
 
             switch (get_class($object)) {
                 case 'News':
+                    if (strtolower($object->object_type) === 'promotion') {
+                        $this->object_name = "Promotion";
+                    } elseif (strtolower($object->object_type) === 'pokestop') {
+                        $this->object_name = "Pokestop";
+                    }
                     $this->object_display_name = $object->news_name;
                     break;
 
