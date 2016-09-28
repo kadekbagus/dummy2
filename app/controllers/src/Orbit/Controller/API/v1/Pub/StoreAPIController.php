@@ -101,6 +101,7 @@ class StoreAPIController extends ControllerAPI
                 ->join(DB::raw("(select merchant_id, status, parent_id, city from {$prefix}merchants where object_type = 'mall') as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                 ->where('merchants.status', 'active')
                 ->whereRaw("oms.status = 'active'")
+                ->groupBy('merchants.name')
                 ->orderBy('merchants.name', 'asc')
                 ->orderBy('merchants.created_at', 'asc');
 
