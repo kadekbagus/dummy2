@@ -54,8 +54,8 @@ class StoreAPIController extends ControllerAPI
             $userLocationCookieName = Config::get('orbit.user_location.cookie.name');
             $distance = Config::get('orbit.geo_location.distance');
             $ul = OrbitInput::get('ul');
-            $lon = '';
-            $lat = '';
+            $lon = 0;
+            $lat = 0;
 
             $this->registerCustomValidation();
             $validator = Validator::make(
@@ -152,7 +152,7 @@ class StoreAPIController extends ControllerAPI
             }
 
             // filter by city before grouping
-            OrbitInput::get('location', function ($location) use ($store, $prefix, $lon, $lat) {
+            OrbitInput::get('location', function ($location) use ($store, $prefix, $lon, $lat, $distance) {
                 if ($location === 'mylocation' && ! empty($lon) && ! empty($lat)) {
                     $store->havingRaw("distance <= {$distance}");
                 } else {
@@ -175,16 +175,18 @@ class StoreAPIController extends ControllerAPI
 
             $querySql = $store->toSql();
 
-            $store = DB::table(DB::Raw("({$querySql}) as sub_query"))->mergeBindings($store);
+            $store = DB::table(DB::Raw("({$querySql}) as sub_query"))->mergeBindings($store)
+                        ->select('store_id', 'name', 'description', 'logo_url');
 
-            if ($sort_by === 'location' && !empty($lon) && !empty($lat)) {
+            if ($sort_by === 'location' && ! empty($lon) && ! empty($lat)) {
                 $sort_by = 'distance';
-                $store = $store->groupBy('name')
+                $store = $store->addSelect('distance')
+                                ->groupBy('name')
                                 ->orderBy($sort_by, $sort_mode)
                                 ->orderBy('name', 'asc');
             } else {
                 $store = $store->groupBy('name')
-                                ->orderBy($sort_by, $sort_mode);
+                                ->orderBy('name', 'asc');
             }
 
             OrbitInput::get('filter_name', function ($filterName) use ($store, $prefix) {
@@ -200,7 +202,7 @@ class StoreAPIController extends ControllerAPI
 
             OrbitInput::get('keyword', function ($keyword) use ($store, $prefix) {
                 if (! empty($keyword)) {
-                    $store = $store->leftJoin('keyword_object', DB::raw('sub_query.merchant_id'), '=', 'keyword_object.object_id')
+                    $store = $store->leftJoin('keyword_object', DB::raw('sub_query.store_id'), '=', 'keyword_object.object_id')
                                 ->leftJoin('keywords', 'keyword_object.keyword_id', '=', 'keywords.keyword_id')
                                 ->where(function($query) use ($keyword, $prefix)
                                 {
