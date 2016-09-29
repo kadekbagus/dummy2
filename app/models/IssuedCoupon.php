@@ -12,6 +12,8 @@ class IssuedCoupon extends Eloquent
      * with `status` field.
      */
     use ModelStatusTrait;
+    use Orbit\Database\ObjectID;
+    use DB;
 
     const ISSUE_COUPON_INCREMENT = 1111110;
 
@@ -50,6 +52,11 @@ class IssuedCoupon extends Eloquent
                     ->where('object_name', 'retailer');
     }
 
+    public function scopeAvailable($query)
+    {
+        return $query->where('status', 'available');
+    }
+
     /**
      * Save issued coupon based on promotion object.
      *
@@ -78,5 +85,77 @@ class IssuedCoupon extends Eloquent
         $issued->save();
 
         return $issued;
+    }
+
+    /**
+     * Bulk release issued coupon
+     * Make multiple issued coupon available by coupon codes
+     * Available means that this issued coupon is not gotten by user
+     * Proper validation is expected before accessing this method
+     *
+     * @author Ahmad <ahmad@dominopos.com>
+     * @param array $couponCodes
+     * @param string $promotionId
+     * @param string $couponValidityDate
+     * @param User $admin
+     * @return void
+     */
+    public static function bulkIssue($couponCodes, $promotionId, $couponValidityDate, $admin = NULL) {
+        $issuerUserId = NULL;
+        if (! is_null($admin)) {
+            $issuerUserId = $admin->user_id;
+        }
+
+        // create array of data
+        $data = array();
+        $now = date('Y-m-d H:i:s');
+        foreach ($couponCodes as $couponCode) {
+            $data[] = array(
+                    'issued_coupon_id' => ObjectID::make(),
+                    'promotion_id' => $promotionId,
+                    'issued_coupon_code' => $couponCode,
+                    'expired_date' => $couponValidityDate,
+                    'issuer_user_id' => $issuerUserId,
+                    'status' => 'available',
+                    'created_at' => $now,
+                    'updated_at' => $now
+                );
+        }
+
+        DB::table('issued_coupons')->insert($data);
+    }
+
+    /**
+     * Get available coupon code
+     * If there are already active coupon with user_email return those issued coupon
+     * else return activated coupon with user_email
+     * Proper validation is expected before accessing this method
+     *
+     * @author Ahmad <ahmad@dominopos.com>
+     * @param string $promotionId
+     * @param string $userEmail
+     * @return IssuedCoupon
+     */
+    public function issueActiveCoupon($promotionId, $userEmail) {
+        // get active issued coupon with the same user_email
+        $issuedCoupon = static::active()
+            ->where('promotion_id', $promotionId)
+            ->where('user_email', $userEmail)
+            ->first();
+
+        if (! is_object($issuedCoupon)) {
+            // get available issued coupon
+            $issuedCoupon = static::available()
+                ->where('promotion_id', $promotionId)
+                ->whereNull('user_email')
+                ->first();
+
+            // set user_email to it and make it active
+            $issuedCoupon->user_email = $userEmail;
+            $issuedCoupon->issued_date = date('Y-m-d H:i:s');
+            $IssuedCoupon->status = 'active';
+        }
+
+        return $issuedCoupon;
     }
 }
