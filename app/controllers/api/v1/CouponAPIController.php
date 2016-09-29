@@ -174,6 +174,7 @@ class CouponAPIController extends ControllerAPI
             $keywords = (array) $keywords;
             $linkToTenantIds = OrbitInput::post('link_to_tenant_ids');
             $linkToTenantIds = (array) $linkToTenantIds;
+            $couponCodes = OrbitInput::post('coupon_codes');
 
             if (empty($campaignStatus)) {
                 $campaignStatus = 'not started';
@@ -202,7 +203,7 @@ class CouponAPIController extends ControllerAPI
                     'rule_end_date'           => $rule_end_date,
                     'is_all_gender'           => $is_all_gender,
                     'is_all_age'              => $is_all_age,
-                    'is_popup'            => $is_popup,
+                    'is_popup'                => $is_popup,
                 ),
                 array(
                     'promotion_name'          => 'required|max:255',
@@ -221,7 +222,7 @@ class CouponAPIController extends ControllerAPI
                     'rule_end_date'           => 'date_format:Y-m-d H:i:s',
                     'is_all_gender'           => 'required|orbit.empty.is_all_gender',
                     'is_all_age'              => 'required|orbit.empty.is_all_age',
-                    'is_popup'            => 'required|in:Y,N',
+                    'is_popup'                => 'required|in:Y,N',
                 ),
                 array(
                     'rule_value.required'     => 'The amount to obtain is required',
@@ -345,6 +346,23 @@ class CouponAPIController extends ControllerAPI
                 Event::fire('orbit.coupon.postnewcoupon.after.retailervalidation', array($this, $validator));
             }
 
+            // validate coupon codes
+            if (! empty($couponCodes)) {
+                $dupes = array();
+                // trim and explode coupon codes to array
+                $arrayCouponCode = array_map('trim', explode("\n", $value));
+
+                // find the dupes
+                foreach(array_count_values($arrayCouponCode) as $val => $frequency) {
+                    if ($frequency > 1) $dupes[] = $val;
+                }
+
+                if (! empty($dupes)) {
+                    $stringDupes = implode(',', $dupes);
+                    $errorMessage = 'The coupon codes you supplied have duplicates: %s';
+                    OrbitShopAPI::throwInvalidArgument(sprintf($errorMessage, $stringDupes));
+                }
+            }
 
             Event::fire('orbit.coupon.postnewcoupon.after.validation', array($this, $validator));
 
@@ -727,6 +745,11 @@ class CouponAPIController extends ControllerAPI
 
             $this->response->data = $newcoupon;
             // $this->response->data->translation_default = $coupon_translation_default;
+
+            // issue coupon if coupon code is supplied
+            if (! empty($arrayCouponCode)) {
+                IssuedCoupon::bulkIssue($arrayCouponCode, $newcoupon->promotion_id, $newcoupon->coupon_validity_in_date, $user);
+            }
 
             // Commit the changes
             $this->commit();
@@ -3388,7 +3411,6 @@ class CouponAPIController extends ControllerAPI
 
             return TRUE;
         });
-
 
         // Check the existance of id_language_default
         Validator::extend('orbit.empty.language_default', function ($attribute, $value, $parameters) {
