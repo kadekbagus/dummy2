@@ -190,7 +190,7 @@ class MallListAPIController extends ControllerAPI
             // record GTM search activity
             if ($searchFlag) {
                 $parameters = [
-                    'displayName' => 'News',
+                    'displayName' => 'Mall',
                     'keywords' => OrbitInput::get('keyword', NULL),
                     'categories' => NULL,
                     'location' => OrbitInput::get('location', NULL),
