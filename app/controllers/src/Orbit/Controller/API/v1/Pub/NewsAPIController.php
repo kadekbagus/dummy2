@@ -25,6 +25,7 @@ use Activity;
 use Orbit\Helper\Net\SessionPreparer;
 use Orbit\Helper\Session\UserGetter;
 use Orbit\Controller\API\v1\Pub\SocMedAPIController;
+use Orbit\Helper\Util\GTMSearchRecorder;
 
 class NewsAPIController extends ControllerAPI
 {
@@ -53,6 +54,9 @@ class NewsAPIController extends ControllerAPI
         $keyword = null;
 
         try{
+            $this->session = SessionPreparer::prepareSession();
+            $user = UserGetter::getLoggedInUserOrGuest($this->session);
+
             $sort_by = OrbitInput::get('sortby', 'news_name');
             $sort_mode = OrbitInput::get('sortmode','asc');
             $language = OrbitInput::get('language', 'id');
@@ -62,6 +66,9 @@ class NewsAPIController extends ControllerAPI
             $distance = Config::get('orbit.geo_location.distance', 10);
             $lon = '';
             $lat = '';
+
+            // search by key word or filter or sort by flag
+            $searchFlag = FALSE;
 
             $this->registerCustomValidation();
             $validator = Validator::make(
@@ -160,7 +167,8 @@ class NewsAPIController extends ControllerAPI
             }
 
             // filter by category_id
-            OrbitInput::get('category_id', function($category_id) use ($news, $prefix) {
+            OrbitInput::get('category_id', function($category_id) use ($news, $prefix, &$searchFlag) {
+                $searchFlag = $searchFlag || TRUE;
                 if ($category_id === 'mall') {
                     $news = $news->where(DB::raw("m.object_type"), $category_id);
                 } else {
@@ -173,7 +181,8 @@ class NewsAPIController extends ControllerAPI
             });
 
             // filter by city
-            OrbitInput::get('location', function($location) use ($news, $prefix, $lon, $lat, $userLocationCookieName, $distance) {
+            OrbitInput::get('location', function($location) use ($news, $prefix, $lon, $lat, $userLocationCookieName, $distance, &$searchFlag) {
+                $searchFlag = $searchFlag || TRUE;
                 $news = $news->leftJoin('merchants as mp', function($q) {
                                 $q->on(DB::raw("mp.merchant_id"), '=', DB::raw("m.parent_id"));
                                 $q->on(DB::raw("mp.object_type"), '=', DB::raw("'mall'"));
@@ -202,8 +211,9 @@ class NewsAPIController extends ControllerAPI
 
             $news = $news->orderBy('news_name', 'asc');
 
-            OrbitInput::get('keyword', function($keyword) use ($news, $prefix) {
-                 if (! empty($keyword)) {
+            OrbitInput::get('keyword', function($keyword) use ($news, $prefix, &$searchFlag) {
+                $searchFlag = $searchFlag || TRUE;
+                if (! empty($keyword)) {
                     $news = $news->leftJoin('keyword_object', DB::Raw("sub_query.news_id"), '=', 'keyword_object.object_id')
                                 ->leftJoin('keywords', 'keyword_object.keyword_id', '=', 'keywords.keyword_id')
                                 ->where(function($query) use ($keyword, $prefix){
@@ -225,7 +235,7 @@ class NewsAPIController extends ControllerAPI
                                         }
                                     }
                                 });
-                 }
+                }
             });
 
             OrbitInput::get('filter_name', function ($filterName) use ($news, $prefix) {
@@ -238,6 +248,19 @@ class NewsAPIController extends ControllerAPI
                     }
                 }
             });
+
+            // record GTM search activity
+            if ($searchFlag) {
+                $parameters = [
+                    'displayName' => 'News',
+                    'keywords' => OrbitInput::get('keyword', NULL),
+                    'categories' => OrbitInput::get('category_id', NULL),
+                    'location' => OrbitInput::get('location', NULL),
+                    'sortBy' => OrbitInput::get('sortby', 'name')
+                ];
+
+                GTMSearchRecorder::create($parameters)->saveActivity($user);
+            }
 
             $_news = clone($news);
 

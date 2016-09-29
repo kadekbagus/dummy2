@@ -25,6 +25,7 @@ use Activity;
 use Orbit\Helper\Net\SessionPreparer;
 use Orbit\Helper\Session\UserGetter;
 use Orbit\Controller\API\v1\Pub\SocMedAPIController;
+use Orbit\Helper\Util\GTMSearchRecorder;
 
 class PromotionAPIController extends ControllerAPI
 {
@@ -54,6 +55,9 @@ class PromotionAPIController extends ControllerAPI
         $keyword = null;
 
         try{
+            $this->session = SessionPreparer::prepareSession();
+            $user = UserGetter::getLoggedInUserOrGuest($this->session);
+
             $sort_by = OrbitInput::get('sortby', 'news_name');
             $sort_mode = OrbitInput::get('sortmode','asc');
             $language = OrbitInput::get('language', 'id');
@@ -63,6 +67,9 @@ class PromotionAPIController extends ControllerAPI
             $distance = Config::get('orbit.geo_location.distance', 10);
             $lon = '';
             $lat = '';
+
+            // search by key word or filter or sort by flag
+            $searchFlag = FALSE;
 
             $this->registerCustomValidation();
             $validator = Validator::make(
@@ -162,7 +169,8 @@ class PromotionAPIController extends ControllerAPI
             }
 
             // filter by category_id
-            OrbitInput::get('category_id', function($category_id) use ($promotions, $prefix) {
+            OrbitInput::get('category_id', function($category_id) use ($promotions, $prefix, &$searchFlag) {
+                $searchFlag = $searchFlag || TRUE;
                 if ($category_id === 'mall') {
                     $promotions = $promotions->where(DB::raw("m.object_type"), $category_id);
                 } else {
@@ -175,7 +183,8 @@ class PromotionAPIController extends ControllerAPI
             });
 
             // filter by city
-            OrbitInput::get('location', function($location) use ($promotions, $prefix, $lon, $lat, $userLocationCookieName, $distance) {
+            OrbitInput::get('location', function($location) use ($promotions, $prefix, $lon, $lat, $userLocationCookieName, $distance, &$searchFlag) {
+                $searchFlag = $searchFlag || TRUE;
                 $promotions = $promotions->leftJoin('merchants as mp', function($q) {
                                 $q->on(DB::raw("mp.merchant_id"), '=', DB::raw("m.parent_id"));
                                 $q->on(DB::raw("mp.object_type"), '=', DB::raw("'mall'"));
@@ -204,7 +213,8 @@ class PromotionAPIController extends ControllerAPI
 
             $promotion = $promotion->orderBy('news_name', 'asc');
 
-            OrbitInput::get('keyword', function($keyword) use ($promotion, $prefix) {
+            OrbitInput::get('keyword', function($keyword) use ($promotion, $prefix, &$searchFlag) {
+                $searchFlag = $searchFlag || TRUE;
                  if (! empty($keyword)) {
                     $promotion = $promotion->leftJoin('keyword_object', DB::Raw("sub_query.news_id"), '=', 'keyword_object.object_id')
                                 ->leftJoin('keywords', 'keyword_object.keyword_id', '=', 'keywords.keyword_id')
@@ -240,6 +250,19 @@ class PromotionAPIController extends ControllerAPI
                     }
                 }
             });
+
+            // record GTM search activity
+            if ($searchFlag) {
+                $parameters = [
+                    'displayName' => 'News',
+                    'keywords' => OrbitInput::get('keyword', NULL),
+                    'categories' => OrbitInput::get('category_id', NULL),
+                    'location' => OrbitInput::get('location', NULL),
+                    'sortBy' => OrbitInput::get('sortby', 'name')
+                ];
+
+                GTMSearchRecorder::create($parameters)->saveActivity($user);
+            }
 
             $_promotion = clone($promotion);
 

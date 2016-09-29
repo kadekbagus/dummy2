@@ -24,6 +24,7 @@ use Coupon;
 use Activity;
 use Orbit\Helper\Net\SessionPreparer;
 use Orbit\Helper\Session\UserGetter;
+use Orbit\Helper\Util\GTMSearchRecorder;
 
 class StoreAPIController extends ControllerAPI
 {
@@ -47,6 +48,9 @@ class StoreAPIController extends ControllerAPI
     {
         $httpCode = 200;
         try {
+            $this->session = SessionPreparer::prepareSession();
+            $user = UserGetter::getLoggedInUserOrGuest($this->session);
+
             $sort_by = OrbitInput::get('sortby', 'name');
             $sort_mode = OrbitInput::get('sortmode','asc');
             $usingDemo = Config::get('orbit.is_demo', FALSE);
@@ -56,6 +60,9 @@ class StoreAPIController extends ControllerAPI
             $ul = OrbitInput::get('ul');
             $lon = 0;
             $lat = 0;
+
+            // search by key word or filter or sort by flag
+            $searchFlag = FALSE;
 
             $this->registerCustomValidation();
             $validator = Validator::make(
@@ -113,7 +120,8 @@ class StoreAPIController extends ControllerAPI
                         ->orderBy('name', 'asc');
 
             // filter by category just on first store
-            OrbitInput::get('category_id', function ($category_id) use ($store, $prefix) {
+            OrbitInput::get('category_id', function ($category_id) use ($store, $prefix, &$searchFlag) {
+                $searchFlag = $searchFlag || TRUE;
                 $store->leftJoin(DB::raw("{$prefix}category_merchant cm"), DB::Raw("cm.merchant_id"), '=', DB::Raw("subQuery.merchant_id"))
                     ->where(DB::raw("cm.category_id"), $category_id);
             });
@@ -153,7 +161,8 @@ class StoreAPIController extends ControllerAPI
             }
 
             // filter by city before grouping
-            OrbitInput::get('location', function ($location) use ($store, $prefix, $lon, $lat, $distance) {
+            OrbitInput::get('location', function ($location) use ($store, $prefix, $lon, $lat, $distance, &$searchFlag) {
+                $searchFlag = $searchFlag || TRUE;
                 if ($location === 'mylocation' && ! empty($lon) && ! empty($lat)) {
                     $store->havingRaw("distance <= {$distance}");
                 } else {
@@ -201,7 +210,8 @@ class StoreAPIController extends ControllerAPI
                 }
             });
 
-            OrbitInput::get('keyword', function ($keyword) use ($store, $prefix) {
+            OrbitInput::get('keyword', function ($keyword) use ($store, $prefix, &$searchFlag) {
+                $searchFlag = $searchFlag || TRUE;
                 if (! empty($keyword)) {
                     $store = $store->leftJoin('keyword_object', DB::raw('sub_query.merchant_id'), '=', 'keyword_object.object_id')
                                 ->leftJoin('keywords', 'keyword_object.keyword_id', '=', 'keywords.keyword_id')
@@ -226,6 +236,19 @@ class StoreAPIController extends ControllerAPI
                                 });
                 }
             });
+
+            // record GTM search activity
+            if ($searchFlag) {
+                $parameters = [
+                    'displayName' => 'Store',
+                    'keywords' => OrbitInput::get('keyword', NULL),
+                    'categories' => OrbitInput::get('category_id', NULL),
+                    'location' => OrbitInput::get('location', NULL),
+                    'sortBy' => OrbitInput::get('sortby', 'name')
+                ];
+
+                GTMSearchRecorder::create($parameters)->saveActivity($user);
+            }
 
             $_store = clone $store;
 
