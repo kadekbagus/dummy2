@@ -189,6 +189,7 @@ class StoreAPIController extends ControllerAPI
                         ->select(DB::raw('sub_query.merchant_id'), 'name', 'description', 'logo_url');
 
             if ($sort_by === 'location' && ! empty($lon) && ! empty($lat)) {
+                $searchFlag = $searchFlag || TRUE;
                 $sort_by = 'distance';
                 $store = $store->addSelect('distance')
                                 ->groupBy('name')

@@ -44,7 +44,11 @@ class GTMSearchRecorder
         $location = isset($parameters['location']) ? $parameters['location'] : 'All Location';
         $sortBy = isset($parameters['sortBy']) ? $parameters['sortBy'] : NULL;
 
-        $category_name = 'All Category';
+        $category_name = NULL;
+        if ($this->displayName != 'Mall') {
+            $category_name = 'All Category';
+        }
+
         if (! empty($categories)) {
             $category = Category::where('category_id', $categories)->first();
             if (is_object($category)) {

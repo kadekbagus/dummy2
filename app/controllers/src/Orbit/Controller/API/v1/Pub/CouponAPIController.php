@@ -200,6 +200,7 @@ class CouponAPIController extends ControllerAPI
             $coupon = DB::table(DB::Raw("({$querySql}) as sub_query"))->mergeBindings($coupons->getQuery());
 
             if ($sort_by === 'location' && !empty($lon) && !empty($lat)) {
+                $searchFlag = $searchFlag || TRUE;
                 $sort_by = 'distance';
                 $coupon = $coupon->select('coupon_id', 'coupon_name', 'description', DB::raw("sub_query.status"), 'campaign_status', 'is_started', 'image_url', DB::raw("min(distance) as distance"))
                                  ->groupBy('coupon_id')
@@ -252,7 +253,7 @@ class CouponAPIController extends ControllerAPI
             // record GTM search activity
             if ($searchFlag) {
                 $parameters = [
-                    'displayName' => 'News',
+                    'displayName' => 'Coupon',
                     'keywords' => OrbitInput::get('keyword', NULL),
                     'categories' => OrbitInput::get('category_id', NULL),
                     'location' => OrbitInput::get('location', NULL),

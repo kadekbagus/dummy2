@@ -203,6 +203,7 @@ class PromotionAPIController extends ControllerAPI
             $promotion = DB::table(DB::Raw("({$querySql}) as sub_query"))->mergeBindings($promotions->getQuery());
 
             if ($sort_by === 'location' && !empty($lon) && !empty($lat)) {
+                $searchFlag = $searchFlag || TRUE;
                 $promotion = $promotion->select(DB::raw("sub_query.news_id"), 'news_name', 'description', DB::raw("sub_query.object_type"), 'image_url', 'campaign_status', 'is_started', DB::raw("min(distance) as distance"))
                                        ->orderBy('distance', $sort_mode);
             } else {
@@ -254,7 +255,7 @@ class PromotionAPIController extends ControllerAPI
             // record GTM search activity
             if ($searchFlag) {
                 $parameters = [
-                    'displayName' => 'News',
+                    'displayName' => 'Promotion',
                     'keywords' => OrbitInput::get('keyword', NULL),
                     'categories' => OrbitInput::get('category_id', NULL),
                     'location' => OrbitInput::get('location', NULL),
