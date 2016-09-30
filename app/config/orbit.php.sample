@@ -105,6 +105,9 @@ return array(
         // 'pub-mall-coupon-list',
         // 'pub-lucky-draw-list',
         // 'pub-mall-coupon-add-to-wallet',
+        // 'pub-lucky-draw-list',
+        // 'pub-lucky-draw-detail',
+        // 'pub-lucky-draw-issue',
     ],
 
     // cdn path
@@ -3699,6 +3702,15 @@ return array(
                 'object_type' => 'Coupon',
                 'parameter_name' => 'coupon_id'
             ),
+            // - Clicking on my lucky number list
+            '43' => array(
+                'name' => 'click_my_lucky_number_list',
+                'name_long' => 'Click My Lucky Number List',
+                'module_name' => 'LuckyDraw',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
         ),
     ),
 
@@ -3785,7 +3797,7 @@ return array(
 
     'campaign_auto_email' => array(
         // example 'email_list' => array('oktaviano@domminopos.com', 'nabilla@gotomalls.com')
-        'email_list' => array('marketing@domminopos.com'),
+        'email_list' => array('marketing@dominopos.com'),
         'sender' => array(
             'email' => 'no-reply@gotomalls.com',
             'name'  => 'Gotomalls'

@@ -51,14 +51,21 @@ class StoreAPIController extends ControllerAPI
             $sort_mode = OrbitInput::get('sortmode','asc');
             $usingDemo = Config::get('orbit.is_demo', FALSE);
             $language = OrbitInput::get('language', 'id');
+            $userLocationCookieName = Config::get('orbit.user_location.cookie.name');
+            $distance = Config::get('orbit.geo_location.distance');
+            $ul = OrbitInput::get('ul');
+            $lon = 0;
+            $lat = 0;
 
             $this->registerCustomValidation();
             $validator = Validator::make(
                 array(
                     'language' => $language,
+                    'sortby'   => $sort_by,
                 ),
                 array(
                     'language' => 'required|orbit.empty.language_default',
+                    'sortby'   => 'in:name,location',
                 )
             );
 
@@ -73,7 +80,7 @@ class StoreAPIController extends ControllerAPI
             $prefix = DB::getTablePrefix();
 
             $store = Tenant::select(
-                    'merchants.merchant_id',
+                    DB::raw("{$prefix}merchants.merchant_id"),
                     'merchants.name',
                     DB::Raw("CASE WHEN (
                                     select mt.description
@@ -91,24 +98,97 @@ class StoreAPIController extends ControllerAPI
                             END as description
                         "),
                     DB::raw("(select path from {$prefix}media where media_name_long = 'retailer_logo_orig' and object_id = {$prefix}merchants.merchant_id) as logo_url"))
-                ->join(DB::raw("(select merchant_id, status, parent_id from {$prefix}merchants where object_type = 'mall') as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
+                ->join(DB::raw("(select merchant_id, status, parent_id, city from {$prefix}merchants where object_type = 'mall') as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                 ->where('merchants.status', 'active')
                 ->whereRaw("oms.status = 'active'")
+                ->groupBy('merchants.name')
                 ->orderBy('merchants.name', 'asc')
                 ->orderBy('merchants.created_at', 'asc');
 
-            $sql = $store->toSql();
-            foreach($store->getBindings() as $binding)
-            {
-              $value = is_numeric($binding) ? $binding : $this->quote($binding);
-              $sql = preg_replace('/\?/', $value, $sql, 1);
+            $querySql = $store->toSql();
+
+            $store = DB::table(DB::raw("({$querySql}) as subQuery"))->mergeBindings($store->getQuery())
+                        ->select(DB::raw('subQuery.merchant_id'), 'name', 'description', 'logo_url')
+                        ->groupBy('name')
+                        ->orderBy('name', 'asc');
+
+            // filter by category just on first store
+            OrbitInput::get('category_id', function ($category_id) use ($store, $prefix) {
+                $store->leftJoin(DB::raw("{$prefix}category_merchant cm"), DB::Raw("cm.merchant_id"), '=', DB::Raw("subQuery.merchant_id"))
+                    ->where(DB::raw("cm.category_id"), $category_id);
+            });
+
+            // prepare my location
+            if (! empty($ul)) {
+                $position = explode("|", $ul);
+                $lon = $position[0];
+                $lat = $position[1];
+            } else {
+                // get lon lat from cookie
+                $userLocationCookieArray = isset($_COOKIE[$userLocationCookieName]) ? explode('|', $_COOKIE[$userLocationCookieName]) : NULL;
+                if (! is_null($userLocationCookieArray) && isset($userLocationCookieArray[0]) && isset($userLocationCookieArray[1])) {
+                    $lon = $userLocationCookieArray[0];
+                    $lat = $userLocationCookieArray[1];
+                }
             }
 
-            // Make union result subquery so that data can be ordering
-            $store = DB::table(DB::raw('(' . $sql . ') as sub_query'))
-                ->select(DB::raw("sub_query.merchant_id"), 'name', 'description', 'logo_url')
-                ->groupBy('name')
-                ->orderBy($sort_by, $sort_mode);
+            if (! empty($lon) && ! empty($lat)) {
+                $store = $store->addSelect(
+                                        DB::raw("min( 6371 * acos( cos( radians({$lat}) ) * cos( radians( x(tmp_mg.position) ) ) * cos( radians( y(tmp_mg.position) ) - radians({$lon}) ) + sin( radians({$lat}) ) * sin( radians( x(tmp_mg.position) ) ) ) ) AS distance")
+                                )
+                                ->leftJoin(DB::Raw("
+                                        (SELECT
+                                            store.name as store_name,
+                                            mg.position
+                                        FROM {$prefix}merchants store
+                                        LEFT JOIN {$prefix}merchants mall
+                                            ON mall.merchant_id = store.parent_id
+                                        LEFT JOIN {$prefix}merchant_geofences mg
+                                            ON mg.merchant_id = mall.merchant_id
+                                        WHERE store.status = 'active'
+                                            AND store.object_type = 'tenant'
+                                            AND mall.status = 'active'
+                                        ) as tmp_mg
+                                    "), DB::Raw("tmp_mg.store_name"), '=', DB::raw("subQuery.name"));
+            }
+
+            // filter by city before grouping
+            OrbitInput::get('location', function ($location) use ($store, $prefix, $lon, $lat, $distance) {
+                if ($location === 'mylocation' && ! empty($lon) && ! empty($lat)) {
+                    $store->havingRaw("distance <= {$distance}");
+                } else {
+                    $store->leftJoin(DB::Raw("
+                            (SELECT
+                                s.name as s_name,
+                                m.city as m_city
+                            FROM {$prefix}merchants s
+                            LEFT JOIN {$prefix}merchants m
+                                ON m.merchant_id = s.parent_id
+                                AND m.city = {$this->quote($location)}
+                            WHERE s.object_type = 'tenant'
+                                AND s.status = 'active'
+                                AND m.status = 'active'
+                            ) as tmp_city
+                        "), DB::Raw("tmp_city.s_name"), '=', DB::raw('subQuery.name'))
+                        ->where(DB::Raw("tmp_city.m_city"), $location);
+                }
+            });
+
+            $querySql = $store->toSql();
+
+            $store = DB::table(DB::Raw("({$querySql}) as sub_query"))->mergeBindings($store)
+                        ->select(DB::raw('sub_query.merchant_id'), 'name', 'description', 'logo_url');
+
+            if ($sort_by === 'location' && ! empty($lon) && ! empty($lat)) {
+                $sort_by = 'distance';
+                $store = $store->addSelect('distance')
+                                ->groupBy('name')
+                                ->orderBy($sort_by, $sort_mode)
+                                ->orderBy('name', 'asc');
+            } else {
+                $store = $store->groupBy('name')
+                                ->orderBy('name', 'asc');
+            }
 
             OrbitInput::get('filter_name', function ($filterName) use ($store, $prefix) {
                 if (! empty($filterName)) {
