@@ -1,7 +1,7 @@
 <?php
 
 use Laracasts\TestDummy\Factory;
-use IssuedCoupon;
+use \IssuedCoupon;
 use Illuminate\Database\QueryException;
 
 class IssuedCouponTest extends TestCase
