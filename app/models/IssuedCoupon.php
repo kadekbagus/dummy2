@@ -1,4 +1,6 @@
 <?php
+use Orbit\Database\ObjectID;
+
 class IssuedCoupon extends Eloquent
 {
     /**
@@ -12,8 +14,6 @@ class IssuedCoupon extends Eloquent
      * with `status` field.
      */
     use ModelStatusTrait;
-    use Orbit\Database\ObjectID;
-    use DB;
 
     const ISSUE_COUPON_INCREMENT = 1111110;
 
@@ -109,11 +109,11 @@ class IssuedCoupon extends Eloquent
         // create array of data
         $data = array();
         $now = date('Y-m-d H:i:s');
-        foreach ($couponCodes as $couponCode) {
+        for ($i = 0; $i < count($couponCodes); $i++) {
             $data[] = array(
                     'issued_coupon_id' => ObjectID::make(),
                     'promotion_id' => $promotionId,
-                    'issued_coupon_code' => $couponCode,
+                    'issued_coupon_code' => $couponCodes[$i],
                     'expired_date' => $couponValidityDate,
                     'issuer_user_id' => $issuerUserId,
                     'status' => 'available',
@@ -122,7 +122,19 @@ class IssuedCoupon extends Eloquent
                 );
         }
 
-        DB::table('issued_coupons')->insert($data);
+        // create collection from array
+        $collection = new \Illuminate\Database\Eloquent\Collection($data);
+        // chunk into smaller pieces,
+        // optimum 1000 items
+        // 9000 array item will raise error
+        $chunks = $collection->chunk(1000);
+        //convert chunk to array
+        $chunks->toArray();
+
+        //loop through chunks:
+        foreach($chunks as $chunk) {
+            DB::table('issued_coupons')->insert($chunk->toArray());
+        }
     }
 
     /**
