@@ -146,7 +146,7 @@ class IssuedCoupon extends Eloquent
      * @author Ahmad <ahmad@dominopos.com>
      * @param string $promotionId
      * @param string $userEmail
-     * @return IssuedCoupon
+     * @return IssuedCoupon | null
      */
     public function issueActiveCoupon($promotionId, $userEmail) {
         // get active issued coupon with the same user_email
@@ -162,10 +162,12 @@ class IssuedCoupon extends Eloquent
                 ->whereNull('user_email')
                 ->first();
 
-            // set user_email to it and make it active
-            $issuedCoupon->user_email = $userEmail;
-            $issuedCoupon->issued_date = date('Y-m-d H:i:s');
-            $IssuedCoupon->status = 'active';
+            if (is_object($issuedCoupon)) {
+                // set user_email to it and make it active
+                $issuedCoupon->user_email = $userEmail;
+                $issuedCoupon->issued_date = date('Y-m-d H:i:s');
+                $IssuedCoupon->status = 'active';
+            }
         }
 
         return $issuedCoupon;
