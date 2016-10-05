@@ -165,6 +165,25 @@ class MallPrinterController extends DataPrinterController
         return utf8_encode($input);
     }
 
+
+    /**
+     * output subscription.
+     *
+     * @param string $input
+     * @return string
+     */
+    public function printSubscription($is_subscribed)
+    {
+        $subscription = 'Not Subscribed';
+
+        if ($is_subscribed === 'Y') {
+            $subscription = 'Subscribed';
+        }
+
+        return utf8_encode($subscription);
+    }
+
+
     /**
      * output timezone name.
      *
