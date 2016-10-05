@@ -316,92 +316,114 @@ class MallAPIController extends ControllerAPI
             $geo_area = OrbitInput::post('geo_area');
             $free_wifi_status = OrbitInput::post('free_wifi_status', 'inactive');
             $operating_hours = OrbitInput::post('operating_hours');
+            $is_subscribed = OrbitInput::post('is_subscribed', 'Y');
 
             // for a while this declaration with default value
             $widgets = OrbitInput::post('widgets', $this->default['widgets']);
             $age_ranges = OrbitInput::post('age_ranges', $this->default['age_ranges']);
 
-            $validator = Validator::make(
-                array(
-                    'name'                          => $mall_name,
-                    'email'                         => $email,
-                    'password'                      => $password,
-                    'address_line1'                 => $address_line1,
-                    'city'                          => $city,
-                    'country'                       => $country,
-                    'phone'                         => $phone,
-                    'url'                           => $url,
-                    'contact_person_firstname'      => $contact_person_firstname,
-                    'contact_person_lastname'       => $contact_person_lastname,
-                    'contact_person_email'          => $contact_person_email,
-                    'status'                        => $status,
-                    'parent_id'                     => $parent_id,
-                    'start_date_activity'           => $start_date_activity,
-                    'end_date_activity'             => $end_date_activity,
-                    'timezone'                      => $timezoneName,
-                    'currency'                      => $currency,
-                    'currency_symbol'               => $currency_symbol,
-                    'vat_included'                  => $vat_included,
-                    'sector_of_activity'            => $sector_of_activity,
-                    'languages'                     => $languages,
-                    'mobile_default_language'       => $mobile_default_language,
-                    'domain'                        => $domain,
-                    'geo_point_latitude'            => $geo_point_latitude,
-                    'geo_point_longitude'           => $geo_point_longitude,
-                    'geo_area'                      => $geo_area,
-                    'campaign_base_price_promotion' => $campaign_base_price_promotion,
-                    'campaign_base_price_coupon'    => $campaign_base_price_coupon,
-                    'campaign_base_price_news'      => $campaign_base_price_news,
-                    'floors'                        => $floors,
-                    'free_wifi_status'              => $free_wifi_status,
-                    'description'                   => $description,
-                ),
-                array(
-                    'name'                          => 'required|orbit.exists.mall_name',
-                    'email'                         => 'required|email|orbit.exists.email',
-                    'password'                      => 'required|min:6',
-                    'address_line1'                 => 'required',
-                    'city'                          => 'required',
-                    'country'                       => 'required|orbit.empty.country',
-                    'phone'                         => 'required',
-                    'url'                           => 'orbit.formaterror.url.web',
-                    'contact_person_firstname'      => 'required',
-                    'contact_person_lastname'       => 'required',
-                    'contact_person_email'          => 'email',
-                    'status'                        => 'required|orbit.empty.mall_status',
-                    'parent_id'                     => 'orbit.empty.mallgroup',
-                    'start_date_activity'           => 'date_format:Y-m-d H:i:s',
-                    'end_date_activity'             => 'date_format:Y-m-d H:i:s',
-                    'timezone'                      => 'required|timezone|orbit.exists.timezone',
-                    'currency'                      => 'required|size:3',
-                    'currency_symbol'               => 'required',
-                    'vat_included'                  => 'required|in:yes,no',
-                    'sector_of_activity'            => 'required',
-                    'languages'                     => 'required|array',
-                    'mobile_default_language'       => 'required|size:2|orbit.formaterror.language',
-                    'domain'                        => 'required|orbit.exists.domain',
-                    'geo_point_latitude'            => 'required|orbit.formaterror.geo_latitude',
-                    'geo_point_longitude'           => 'required|orbit.formaterror.geo_longitude',
-                    'geo_area'                      => 'required|orbit.formaterror.geo_area',
-                    'campaign_base_price_promotion' => 'required',
-                    'campaign_base_price_coupon'    => 'required',
-                    'campaign_base_price_news'      => 'required',
-                    'floors'                        => 'required|array',
-                    'free_wifi_status'              => 'in:active,inactive',
-                    'description'                   => 'max:25',
-                ),
-                array(
-                    'name.required'                     => 'Mall name is required',
-                    'orbit.exists.mall_name'            => 'Mall name already exists',
-                    'email.required'                    => 'The email address is required',
-                    'address_line1.required'            => 'The address is required',
-                    'phone.required'                    => 'The mall phone number is required',
-                    'contact_person_firstname.required' => 'The first name is required',
-                    'contact_person_lastname.required'  => 'The last name is required',
-                    'contact_person_phone.required'     => 'The phone number 1 is required',
-                    'contact_person_email.required'     => 'The email address is required'
-                )
-            );
+            $validation_data = [
+                'name'                          => $mall_name,
+                'email'                         => $email,
+                'password'                      => $password,
+                'address_line1'                 => $address_line1,
+                'city'                          => $city,
+                'country'                       => $country,
+                'phone'                         => $phone,
+                'url'                           => $url,
+                'contact_person_firstname'      => $contact_person_firstname,
+                'contact_person_lastname'       => $contact_person_lastname,
+                'contact_person_email'          => $contact_person_email,
+                'status'                        => $status,
+                'parent_id'                     => $parent_id,
+                'start_date_activity'           => $start_date_activity,
+                'end_date_activity'             => $end_date_activity,
+                'timezone'                      => $timezoneName,
+                'currency'                      => $currency,
+                'currency_symbol'               => $currency_symbol,
+                'vat_included'                  => $vat_included,
+                'sector_of_activity'            => $sector_of_activity,
+                'languages'                     => $languages,
+                'mobile_default_language'       => $mobile_default_language,
+                'domain'                        => $domain,
+                'geo_point_latitude'            => $geo_point_latitude,
+                'geo_point_longitude'           => $geo_point_longitude,
+                'geo_area'                      => $geo_area,
+                'campaign_base_price_promotion' => $campaign_base_price_promotion,
+                'campaign_base_price_coupon'    => $campaign_base_price_coupon,
+                'campaign_base_price_news'      => $campaign_base_price_news,
+                'floors'                        => $floors,
+                'free_wifi_status'              => $free_wifi_status,
+                'description'                   => $description,
+            ];
+
+            $validation_error = [
+                'name'                          => 'required|orbit.exists.mall_name',
+                'email'                         => 'required|email|orbit.exists.email',
+                'password'                      => 'required|min:6',
+                'address_line1'                 => 'required',
+                'city'                          => 'required',
+                'country'                       => 'required|orbit.empty.country',
+                'phone'                         => 'required',
+                'url'                           => 'orbit.formaterror.url.web',
+                'contact_person_firstname'      => 'required',
+                'contact_person_lastname'       => 'required',
+                'contact_person_email'          => 'email',
+                'status'                        => 'required|orbit.empty.mall_status',
+                'parent_id'                     => 'orbit.empty.mallgroup',
+                'start_date_activity'           => 'date_format:Y-m-d H:i:s',
+                'end_date_activity'             => 'date_format:Y-m-d H:i:s',
+                'timezone'                      => 'required|timezone|orbit.exists.timezone',
+                'currency'                      => 'required|size:3',
+                'currency_symbol'               => 'required',
+                'vat_included'                  => 'required|in:yes,no',
+                'sector_of_activity'            => 'required',
+                'languages'                     => 'required|array',
+                'mobile_default_language'       => 'required|size:2|orbit.formaterror.language',
+                'domain'                        => 'required|orbit.exists.domain',
+                'geo_point_latitude'            => 'required|orbit.formaterror.geo_latitude',
+                'geo_point_longitude'           => 'required|orbit.formaterror.geo_longitude',
+                'geo_area'                      => 'required|orbit.formaterror.geo_area',
+                'campaign_base_price_promotion' => 'required',
+                'campaign_base_price_coupon'    => 'required',
+                'campaign_base_price_news'      => 'required',
+                'floors'                        => 'required|array',
+                'free_wifi_status'              => 'in:active,inactive',
+                'description'                   => 'max:25',
+            ];
+
+            $validation_error_message = [
+                'name.required'                     => 'Mall name is required',
+                'orbit.exists.mall_name'            => 'Mall name already exists',
+                'email.required'                    => 'The email address is required',
+                'address_line1.required'            => 'The address is required',
+                'phone.required'                    => 'The mall phone number is required',
+                'contact_person_firstname.required' => 'The first name is required',
+                'contact_person_lastname.required'  => 'The last name is required',
+                'contact_person_phone.required'     => 'The phone number 1 is required',
+                'contact_person_email.required'     => 'The email address is required'
+            ];
+
+            // handle empty string
+            if ($is_subscribed !== 'Y') {
+                $is_subscribed = 'N';
+
+                unset($validation_data['phone']);
+                unset($validation_data['languages']);
+                unset($validation_data['mobile_default_language']);
+                unset($validation_data['domain']);
+                unset($validation_data['geo_area']);
+
+                unset($validation_error['phone']);
+                unset($validation_error['languages']);
+                unset($validation_error['mobile_default_language']);
+                unset($validation_error['domain']);
+                unset($validation_error['geo_area']);
+
+                unset($validation_error_message['phone.required']);
+            }
+
+            $validator = Validator::make($validation_data, $validation_error, $validation_error_message);
 
             Event::fire('orbit.mall.postnewmall.before.validation', array($this, $validator));
 
@@ -488,14 +510,17 @@ class MallAPIController extends ControllerAPI
                 $newmall->parent_id = $parent_id;
             }
             $newmall->is_mall = 'yes';
+            $newmall->is_subscribed = $is_subscribed;
             $newmall->url = $url;
             $newmall->ci_domain = $domain . Config::get('orbit.shop.ci_domain');
             $newmall->masterbox_number = $masterbox_number;
             $newmall->slavebox_number = $slavebox_number;
-            if (in_array($mobile_default_language, $languages)) {
-                $newmall->mobile_default_language = $mobile_default_language;
-            } else {
-                OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.mobile_default_lang'));
+            if ($is_subscribed === 'Y') {
+                if (in_array($mobile_default_language, $languages)) {
+                    $newmall->mobile_default_language = $mobile_default_language;
+                } else {
+                    OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.mobile_default_lang'));
+                }
             }
             $newmall->pos_language = $pos_language;
             $newmall->modified_by = $this->api->user->user_id;
@@ -561,19 +586,20 @@ class MallAPIController extends ControllerAPI
                 // Insert the translation for the slogan
                 $new_widget_trans = new stdClass();
                 $slogan = $data_widget['slogan'];
-                foreach ($languages as $lang) {
-                    if (isset($slogan[$lang])) {
-                        // Get the Language ID
-                        // The content for this particular language is available
-                        $new_widget_trans = new WidgetTranslation();
-                        $new_widget_trans->widget_id = $new_widget->widget_id;
-                        $new_widget_trans->merchant_language_id = $languages_by_name[$lang]->language_id;
-                        $new_widget_trans->widget_slogan = $slogan[$lang];
-                        $new_widget_trans->status = 'active';
-                        $new_widget_trans->save();
+                if (count($languages) > 0) {
+                    foreach ($languages as $lang) {
+                        if (isset($slogan[$lang])) {
+                            // Get the Language ID
+                            // The content for this particular language is available
+                            $new_widget_trans = new WidgetTranslation();
+                            $new_widget_trans->widget_id = $new_widget->widget_id;
+                            $new_widget_trans->merchant_language_id = $languages_by_name[$lang]->language_id;
+                            $new_widget_trans->widget_slogan = $slogan[$lang];
+                            $new_widget_trans->status = 'active';
+                            $new_widget_trans->save();
+                        }
                     }
                 }
-                // $new_widget->translations = $new_widget_trans;
             }
             $newmall->free_wifi_status = $new_widget->status;
 
