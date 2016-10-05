@@ -134,6 +134,13 @@ class NewsAPIController extends ControllerAPI
                         ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                         ->orderBy('news_name', 'asc');
 
+             // filter news by mall id
+             OrbitInput::get('mall_id', function($mallid) use ($news) {
+                $news->where(DB::raw("m.parent_id"), '=', $mallid)
+                      ->orWhere(DB::raw("m.merchant_id"), '=', $mallid)
+                      ->where('news.object_type', '=', 'news');
+             });
+
             //calculate distance if user using my current location as filter and sort by location for listing
             if ($sort_by == 'location' || $location == 'mylocation') {
                 if (! empty($ul)) {
