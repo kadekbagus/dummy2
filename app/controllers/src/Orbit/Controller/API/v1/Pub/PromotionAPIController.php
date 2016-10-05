@@ -25,6 +25,7 @@ use Activity;
 use Orbit\Helper\Net\SessionPreparer;
 use Orbit\Helper\Session\UserGetter;
 use Orbit\Controller\API\v1\Pub\SocMedAPIController;
+use Mall;
 
 class PromotionAPIController extends ControllerAPI
 {
@@ -63,6 +64,7 @@ class PromotionAPIController extends ControllerAPI
             $distance = Config::get('orbit.geo_location.distance', 10);
             $lon = '';
             $lat = '';
+            $mallId = OrbitInput::get('mall_id', null);
 
             $this->registerCustomValidation();
             $validator = Validator::make(
@@ -174,6 +176,19 @@ class PromotionAPIController extends ControllerAPI
                 }
             });
 
+            // filter promotions by mall id
+             OrbitInput::get('mall_id', function($mallid) use ($promotions) {
+                $promotions->where(DB::raw("m.parent_id"), '=', $mallid)
+                      ->orWhere(DB::raw("m.merchant_id"), '=', $mallid)
+                      ->where('news.object_type', '=', 'promotion');
+             });
+
+            // frontend need the mall name
+             $mall = null;
+             if (! empty($mallId)) {
+                $mall = Mall::select('name')->where('merchant_id', '=', $mallId)->first();
+             }
+
             // filter by city
             OrbitInput::get('location', function($location) use ($promotions, $prefix, $lon, $lat, $userLocationCookieName, $distance) {
                 $promotions = $promotions->leftJoin('merchants as mp', function($q) {
@@ -255,6 +270,9 @@ class PromotionAPIController extends ControllerAPI
             $data = new \stdclass();
             $data->returned_records = count($listOfRec);
             $data->total_records = $totalRec;
+            if (is_object($mall)) {
+                $data->mall_name = $mall->name;
+            }
             $data->records = $listOfRec;
 
             $this->response->data = $data;

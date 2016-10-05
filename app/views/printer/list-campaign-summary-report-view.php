@@ -127,11 +127,6 @@
             <td><strong><?php echo number_format($totalPageViews, 0); ?></strong></td>
         </tr>
         <tr>
-            <td>Total Pop Up Views</td>
-            <td>:</td>
-            <td><strong><?php echo number_format($totalPopUpViews, 0); ?></strong></td>
-        </tr>
-        <tr>
             <td>Estimated Total Cost (IDR)</td>
             <td>:</td>
             <td><strong><?php echo number_format($totalEstimatedCost, 0); ?></strong></td>
@@ -238,7 +233,6 @@
             <th style="text-align:left;">Location(s)</th>
             <th style="text-align:left;">Campaign Dates</th>
             <th style="text-align:left;">Page Views</th>
-            <th style="text-align:left;">Pop Up Views</th>
             <th style="text-align:left;">Pop Up Clicks</th>
             <th style="text-align:left;">Daily Cost (IDR)</th>
             <th style="text-align:left;">Estimated Total Cost (IDR)</th>
@@ -261,7 +255,6 @@
                     </td>
                     <td><?php echo date('d M Y', strtotime($row->begin_date)) . ' - ' . date('d M Y', strtotime($row->end_date)); ?></td>
                     <td><?php echo number_format($row->page_views); ?></td>
-                    <td><?php echo number_format($row->popup_views); ?></td>
                     <td><?php echo number_format($row->popup_clicks); ?></td>
                     <td><?php echo number_format($row->daily, 0); ?></td>
                     <td><?php echo number_format($row->estimated_total, 0); ?></td>
