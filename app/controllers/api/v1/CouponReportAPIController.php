@@ -1535,11 +1535,22 @@ class CouponReportAPIController extends ControllerAPI
                 $coupons = IssuedCoupon::select('issued_coupons.*', 'promotions.begin_date', 'promotions.end_date',
                                             DB::raw("CASE WHEN {$prefix}user_details.gender = 'f' THEN 'female' WHEN {$prefix}user_details.gender = 'm' THEN 'male' ELSE 'unknown' END AS gender"),
                                             DB::raw("IFNULL(timestampdiff(year, {$prefix}user_details.birthdate, curdate()), 'unknown') AS age"),
-                                            DB::raw("CASE WHEN {$prefix}issued_coupons.redeem_user_id IS NOT NULL THEN CONCAT({$prefix}users.user_firstname, ' ', {$prefix}users.user_lastname) ELSE {$prefix}merchants.name END AS redemption_place"))
+                                            DB::raw("
+                                                        CASE WHEN {$prefix}issued_coupons.redeem_user_id IS NOT NULL THEN CONCAT({$prefix}users.user_firstname, ' ', {$prefix}users.user_lastname, ' at ', om_employee.name)
+                                                        ELSE CONCAT({$prefix}merchants.name, ' at ', om_parent.name)
+                                                        END AS redemption_place
+                                                "))
                                        ->join('promotions', 'promotions.promotion_id', '=', 'issued_coupons.promotion_id')
                                        ->leftJoin('user_details', 'user_details.user_id', '=', 'issued_coupons.user_id')
                                        ->leftJoin('merchants', 'merchants.merchant_id', '=', 'issued_coupons.redeem_retailer_id')
-                                       ->leftJoin('users', 'users.user_id', '=', 'issued_coupons.redeem_user_id');
+                                       ->leftJoin('users', 'users.user_id', '=', 'issued_coupons.redeem_user_id')
+
+                                        // join for get <redemtion_place>_<at>_<mall_name>
+                                       ->leftJoin('merchants as om_parent', DB::raw('om_parent.merchant_id'), '=', 'merchants.parent_id')
+                                       ->leftJoin('employees as oe', DB::raw('oe.user_id'), '=', 'issued_coupons.redeem_user_id')
+                                       ->leftJoin('employee_retailer as oer', DB::raw('oer.employee_id'), '=', DB::raw('oe.employee_id'))
+                                       ->leftJoin('merchants as om_employee', DB::raw('om_employee.merchant_id'), '=', DB::raw('oer.employee_id'));
+
             }
 
             //GET active days from campaign histories
