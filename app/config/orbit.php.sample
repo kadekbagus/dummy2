@@ -3711,6 +3711,57 @@ return array(
                 'object_type' => null,
                 'parameter_name' => null
             ),
+
+            // - User clicks on "Events" from mall sidebar menu
+            '44' => array(
+                'name' => 'click_mall_menu_events',
+                'name_long' => 'Click mall menu (Events)',
+                'module_name' => 'News',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+
+            // - User clicks on "See all" on event carousel in mall page
+            '45' => array(
+                'name' => 'click_see_all_mall_events',
+                'name_long' => 'Click see all (Mall Events)',
+                'module_name' => 'News',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+
+            // - View mall event list page
+            '46' => array(
+                'name' => 'view_mall_event_list',
+                'name_long' => 'View mall event list',
+                'module_name' => 'News',
+                'type' => 'view',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+
+            // - User clicks an event from mall event list page
+            '47' => array(
+                'name' => 'click_in_mall_event_list',
+                'name_long' => 'Click event from mall event list',
+                'module_name' => 'News',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+
+            // - View event detail page
+            '48' => array(
+                'name' => 'view_event_detail',
+                'name_long' => 'View event detail',
+                'module_name' => 'News',
+                'type' => 'view',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+
         ),
     ),
 

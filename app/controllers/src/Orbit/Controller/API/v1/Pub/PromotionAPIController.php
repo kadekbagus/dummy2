@@ -174,6 +174,13 @@ class PromotionAPIController extends ControllerAPI
                 }
             });
 
+            // filter promotions by mall id
+             OrbitInput::get('mall_id', function($mallid) use ($promotions) {
+                $promotions->where(DB::raw("m.parent_id"), '=', $mallid)
+                      ->orWhere(DB::raw("m.merchant_id"), '=', $mallid)
+                      ->where('news.object_type', '=', 'promotion');
+             });
+
             // filter by city
             OrbitInput::get('location', function($location) use ($promotions, $prefix, $lon, $lat, $userLocationCookieName, $distance) {
                 $promotions = $promotions->leftJoin('merchants as mp', function($q) {
