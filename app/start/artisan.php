@@ -92,6 +92,9 @@ Artisan::add(new ElasticsearchUpdateMallLogoCommand);
 // Send Email about campaign expired
 Artisan::add(new SendEmailCampaignExpired);
 
+// Update ES mall is_subscribed
+Artisan::add(new ElasticsearchUpdateMallIsSubscribed);
+
 // Insert or update data on settings table
 // @Todo investigate why its error
 // Artisan::add(new MerchantSetting);

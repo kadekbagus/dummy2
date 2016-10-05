@@ -124,6 +124,13 @@ class MallAreaAPIController extends ControllerAPI
                                                 }
                                             },
                                             {
+                                                "query": {
+                                                    "match" : {
+                                                        "is_subscribed" : "Y"
+                                                    }
+                                                }
+                                            },
+                                            {
                                                 "geo_bounding_box": {
                                                     "type": "indexed",
                                                     "position": {
