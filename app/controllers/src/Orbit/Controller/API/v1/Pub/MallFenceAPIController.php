@@ -103,6 +103,13 @@ class MallFenceAPIController extends ControllerAPI
                                                 "query": {
                                                     ' . $filterStatus . '
                                                 }
+                                            },
+                                            {
+                                                "query": {
+                                                    "match" : {
+                                                        "is_subscribed" : "Y"
+                                                    }
+                                                }
                                             }
                                         ]
                                     }
