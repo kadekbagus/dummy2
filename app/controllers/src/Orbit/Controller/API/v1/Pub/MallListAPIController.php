@@ -105,7 +105,7 @@ class MallListAPIController extends ControllerAPI
                     $words = 0;
                 }
 
-                $locationFilter = '{ 
+                $locationFilter = '{
                             "match":{
                                 "city": {
                                     "query":    "' . $location . '",
@@ -141,7 +141,6 @@ class MallListAPIController extends ControllerAPI
                                     "distance_type": "plane"
                                 }
                             }';
-                
             }
 
             $take = PaginationNumber::parseTakeFromGet('retailer');
@@ -157,6 +156,13 @@ class MallListAPIController extends ControllerAPI
                                             {
                                                 "query": {
                                                     ' . $filterStatus . '
+                                                }
+                                            },
+                                            {
+                                                "query": {
+                                                    "match" : {
+                                                        "is_subscribed" : "Y"
+                                                    }
                                                 }
                                             }
                                         ]
