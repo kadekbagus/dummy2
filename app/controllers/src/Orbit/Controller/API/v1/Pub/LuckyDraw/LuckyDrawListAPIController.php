@@ -11,7 +11,6 @@ use DominoPOS\OrbitACL\ACL\Exception\ACLForbiddenException;
 use DominoPOS\OrbitAPI\v10\StatusInterface as Status;
 use Helper\EloquentRecordCounter as RecordCounter;
 use Orbit\Helper\Net\SessionPreparer;
-use Activity;
 use Validator;
 use Lang;
 use Config;
@@ -38,7 +37,6 @@ class LuckyDrawListAPIController extends IntermediateBaseController
     public function getSearchLuckyDraw()
     {
         $this->response = new ResponseProvider();
-        $activity = Activity::mobileci()->setActivityType('view');
         $user = NULL;
         $httpCode = 200;
 
