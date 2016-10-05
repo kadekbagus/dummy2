@@ -1549,7 +1549,7 @@ class CouponReportAPIController extends ControllerAPI
                                        ->leftJoin('merchants as om_parent', DB::raw('om_parent.merchant_id'), '=', 'merchants.parent_id')
                                        ->leftJoin('employees as oe', DB::raw('oe.user_id'), '=', 'issued_coupons.redeem_user_id')
                                        ->leftJoin('employee_retailer as oer', DB::raw('oer.employee_id'), '=', DB::raw('oe.employee_id'))
-                                       ->leftJoin('merchants as om_employee', DB::raw('om_employee.merchant_id'), '=', DB::raw('oer.employee_id'));
+                                       ->leftJoin('merchants as om_employee', DB::raw('om_employee.merchant_id'), '=', DB::raw('oer.retailer_id'));
 
             }
 
