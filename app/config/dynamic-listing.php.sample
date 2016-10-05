@@ -176,25 +176,6 @@ return array(
             'created_at' => '2016-08-16 20:00:00'
         ),
         '9' => array(
-            'widget_id' => 'icon10',
-            'widget_type' => 'landing_page',
-            'widget_order' => 10,
-            'merchant_id' => 0,
-            'widget_label' => 'PokéMAPS<sup>TM</sup>',
-            'widget_slogan' => 'PokéMAPS<sup>TM</sup>',
-            'widget_url' => '#!/games/pokestops',
-            'widget_image_url' => '',
-            'widget_image_menu_url' => '',
-            'widget_image_type' => 'web-font',
-            'widget_image_class' => 'gtm-icon gtm-icon-pokemaps',
-            'widget_image_menu_class' => 'gtm-icon gtm-icon-pokemaps-s',
-            'widget_activity' => 18,
-            'status' => 'active',
-            'enable_on_mainpage' => true,
-            'enable_on_menu' => true,
-            'created_at' => '2016-08-16 20:00:00'
-        ),
-        '10' => array(
             'widget_id' => 'icon11',
             'widget_type' => 'landing_page',
             'widget_order' => 11,
