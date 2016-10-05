@@ -409,16 +409,12 @@ class MallAPIController extends ControllerAPI
                 $is_subscribed = 'N';
 
                 unset($validation_data['phone']);
-                unset($validation_data['languages']);
-                unset($validation_data['mobile_default_language']);
-                unset($validation_data['domain']);
-                unset($validation_data['geo_area']);
 
                 unset($validation_error['phone']);
-                unset($validation_error['languages']);
-                unset($validation_error['mobile_default_language']);
-                unset($validation_error['domain']);
-                unset($validation_error['geo_area']);
+                $validation_error['languages']               = 'array';
+                $validation_error['mobile_default_language'] = 'size:2|orbit.formaterror.language';
+                $validation_error['domain']                  = 'orbit.exists.domain';
+                $validation_error['geo_area']                = 'orbit.formaterror.geo_area';
 
                 unset($validation_error_message['phone.required']);
             }
@@ -504,18 +500,18 @@ class MallAPIController extends ControllerAPI
             $newmall->sector_of_activity = $sector_of_activity;
             $newmall->operating_hours = $operating_hours;
             $newmall->object_type = $object_type;
-            if (empty($parent_id)) {
-                $newmall->parent_id = null;
-            } else {
+            if (! empty($parent_id)) {
                 $newmall->parent_id = $parent_id;
             }
             $newmall->is_mall = 'yes';
             $newmall->is_subscribed = $is_subscribed;
             $newmall->url = $url;
-            $newmall->ci_domain = $domain . Config::get('orbit.shop.ci_domain');
+            if (! empty($domain)) {
+                $newmall->ci_domain = $domain . Config::get('orbit.shop.ci_domain');
+            }
             $newmall->masterbox_number = $masterbox_number;
             $newmall->slavebox_number = $slavebox_number;
-            if ($is_subscribed === 'Y') {
+            if (! empty($languages)) {
                 if (in_array($mobile_default_language, $languages)) {
                     $newmall->mobile_default_language = $mobile_default_language;
                 } else {
