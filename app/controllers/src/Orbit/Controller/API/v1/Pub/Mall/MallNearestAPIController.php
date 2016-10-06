@@ -1,4 +1,4 @@
-<?php namespace Orbit\Controller\API\v1\Pub;
+<?php namespace Orbit\Controller\API\v1\Pub\Mall;
 /**
  * An API controller for managing mall geo location.
  */
@@ -72,13 +72,13 @@ class MallNearestAPIController extends ControllerAPI
                     "sort": [
                        {
                       "_geo_distance": {
-                        "position": { 
-                          "lat": ' . $lat . ', 
+                        "position": {
+                          "lat": ' . $lat . ',
                           "lon": ' . $long . '
                         },
                         "order":         "asc",
-                        "unit":          "km", 
-                        "distance_type": "plane" 
+                        "unit":          "km",
+                        "distance_type": "plane"
                       }
                     }
                     ]
@@ -93,11 +93,11 @@ class MallNearestAPIController extends ControllerAPI
 
             $response = $client->search($param_nearest);
             $nearest = $response['hits']['hits'][0]['_source']['position'];
-            
+
             $maxtry = Config::get('orbit.elasticsearch.nearest.max_try', 10);
             $multiple = Config::get('orbit.elasticsearch.nearest.multiple', 5);
 
-            for ($i=0; $i<$maxtry; $i++) { 
+            for ($i=0; $i<$maxtry; $i++) {
 
                 $area = array();
                 $topLeft = array();
@@ -154,18 +154,18 @@ class MallNearestAPIController extends ControllerAPI
                               "sort": [
                                {
                               "_geo_distance": {
-                                "position": { 
-                                  "lat": ' . $cy . ', 
+                                "position": {
+                                  "lat": ' . $cy . ',
                                   "lon": ' . $cx . '
                                 },
                                 "order":         "asc",
-                                "unit":          "km", 
-                                "distance_type": "plane" 
+                                "unit":          "km",
+                                "distance_type": "plane"
                               }
                             }
                             ]
                           }';
-                
+
                 $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
                 $param_area = [
                     'index'  => $esPrefix . Config::get('orbit.elasticsearch.indices.malldata.index'),
@@ -182,10 +182,10 @@ class MallNearestAPIController extends ControllerAPI
 
                 $multiple += $multiple;
             }
-            
+
             $take = PaginationNumber::parseTakeFromGet('geo_location');
             $skip = PaginationNumber::parseSkipFromGet();
-            
+
             $area_data = $response['hits'];
             $listmall = array();
             $loop = 0;
