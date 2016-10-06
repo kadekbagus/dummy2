@@ -161,14 +161,15 @@ class CouponListAPIController extends ControllerAPI
             // filter by city
             OrbitInput::get('location', function($location) use ($coupons, $prefix, $lat, $lon, $distance) {
                 $coupons = $coupons->leftJoin('merchants as mp', function($q) {
-                                $q->on(DB::raw("mp.merchant_id"), '=', DB::raw("m.parent_id"));
+                                $q->on(DB::raw("mp.merchant_id"), '=', DB::raw("t.parent_id"));
                                 $q->on(DB::raw("mp.object_type"), '=', DB::raw("'mall'"));
+                                $q->on(DB::raw("m.status"), '=', DB::raw("'active'"));
                             });
 
                 if ($location === 'mylocation' && !empty($lon) && !empty($lat)) {
                     $coupons = $coupons->havingRaw("distance <= {$distance}");
                 } else {
-                    $coupons = $coupons->where(DB::raw("(CASE WHEN m.object_type = 'tenant' THEN mp.city ELSE m.city END)"), $location);
+                    $coupons = $coupons->where(DB::raw("(CASE WHEN t.object_type = 'tenant' THEN mp.city ELSE t.city END)"), $location);
                 }
             });
 
