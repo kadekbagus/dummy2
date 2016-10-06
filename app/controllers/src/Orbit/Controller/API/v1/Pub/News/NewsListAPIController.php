@@ -177,12 +177,12 @@ class NewsListAPIController extends ControllerAPI
                 }
             });
 
-
             // filter news by mall id
              OrbitInput::get('mall_id', function($mallid) use ($news) {
-                $news->where(DB::raw("m.parent_id"), '=', $mallid)
-                      ->orWhere(DB::raw("m.merchant_id"), '=', $mallid)
-                      ->where('news.object_type', '=', 'news');
+                $news->where(function($q) use ($mallId){
+                        $q->where(DB::raw("m.parent_id"), '=', $mallId)
+                          ->orWhere(DB::raw("m.merchant_id"), '=', $mallId);
+                    });
              });
 
              // frontend need the mall name
