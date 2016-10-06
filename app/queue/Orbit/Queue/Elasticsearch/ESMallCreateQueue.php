@@ -91,6 +91,7 @@ class ESMallCreateQueue
                     'logo_url'        => $mall->path,
                     'status'          => $mall->status,
                     'ci_domain'       => $mall->ci_domain,
+                    'is_subscribed'   => $mall->is_subscribed,
                     'position'        => [
                         'lon' => $geofence->longitude,
                         'lat' => $geofence->latitude
