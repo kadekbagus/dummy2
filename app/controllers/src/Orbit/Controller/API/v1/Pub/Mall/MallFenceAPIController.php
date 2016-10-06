@@ -1,4 +1,4 @@
-<?php namespace Orbit\Controller\API\v1\Pub;
+<?php namespace Orbit\Controller\API\v1\Pub\Mall;
 /**
  * An API controller for managing mall geo location.
  */
@@ -17,42 +17,36 @@ use stdClass;
 use Orbit\Helper\Util\PaginationNumber;
 use Elasticsearch\ClientBuilder;
 
-class MallAreaAPIController extends ControllerAPI
+class MallFenceAPIController extends ControllerAPI
 {
     /**
-     * GET - check if mall inside map area
+     * GET - check if user inside mall area
      *
      * @author Shelgi Prasetyo <shelgi@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
-     * @param string area
+     * @param string latitude
+     * @param string longitude
      *
      * @return Illuminate\Support\Facades\Response
      */
-    public function getMallArea()
+    public function getMallFence()
     {
         $httpCode = 200;
         try {
-            $latitude = OrbitInput::get('latitude',null);
-            $longitude = OrbitInput::get('longitude',null);
-
-            $area = OrbitInput::get('area', null);
-            $keyword = OrbitInput::get('keyword_search');
-
             $usingDemo = Config::get('orbit.is_demo', FALSE);
             $host = Config::get('orbit.elasticsearch');
-
-            $sort_by = OrbitInput::get('sortby',null);
+            $sort_by = OrbitInput::get('sortby', 'name');
             $sort_mode = OrbitInput::get('sortmode','asc');
+            $ul = OrbitInput::get('ul', null);
+            $userLocationCookieName = Config::get('orbit.user_location.cookie.name');
+            $latitude = '';
+            $longitude = '';
 
             $client = ClientBuilder::create() // Instantiate a new ClientBuilder
                     ->setHosts($host['hosts']) // Set the hosts
                     ->build();
-
-            $getArea = explode(", ", $area);
-            $topLeft = explode(" ", $getArea[1]);
-            $bottomRight = explode(" ", $getArea[3]);
 
             $filterStatus = '';
             if ($usingDemo) {
@@ -70,54 +64,41 @@ class MallAreaAPIController extends ControllerAPI
                     }';
             }
 
-            // Filter
-            $filterKeyword = '';
-            if ($keyword != '') {
-                $filterKeyword = '"query": {
-                                    "multi_match" : {
-                                        "query": "' . $keyword . '",
-                                        "fields": [
-                                            "name^10",
-                                            "city^2",
-                                            "country^2",
-                                            "address_line",
-                                            "description"
-                                        ]
-                                    }
-                                  },';
+            // get user location, latitude and longitude. If latitude and longitude doesn't exist in query string, the code will be read cookie to get lat and lon
+            if (empty($ul)) {
+                $userLocationCookieArray = isset($_COOKIE[$userLocationCookieName]) ? explode('|', $_COOKIE[$userLocationCookieName]) : NULL;
+                if (! is_null($userLocationCookieArray) && isset($userLocationCookieArray[0]) && isset($userLocationCookieArray[1])) {
+                    $longitude = $userLocationCookieArray[0];
+                    $latitude = $userLocationCookieArray[1];
+                }
+            } else {
+                $loc = explode('|', $ul);
+                $longitude = $loc[0];
+                $latitude = $loc[1];
             }
 
-            $take = PaginationNumber::parseTakeFromGet('geo_location');
+            $take = PaginationNumber::parseTakeFromGet('retailer');
             $skip = PaginationNumber::parseSkipFromGet();
-
-            switch ($sort_by) {
-                case 'name':
-                    $sortby = '{"name.raw" : {"order" : "' . $sort_mode . '"}}';
-                    break;
-
-                default:
-                    $sortby = '{"_score" : {"order" : "' . $sort_mode . '"}},
-                        {
-                            "_geo_distance": {
-                                "position": {
-                                    "lon": ' . $longitude . ',
-                                    "lat": ' . $latitude . '
-                                },
-                                "order": "' . $sort_mode . '",
-                                "unit": "km",
-                                "distance_type": "plane"
-                            }
-                        }';
-                    break;
-            }
-
+            $sortby = '{"name.raw" : {"order" : "' . $sort_mode . '"}}';
             $json_area = '{
                         "from" : ' . $skip . ', "size" : ' . $take . ',
                             "query": {
                                 "filtered": {
-                                    ' . $filterKeyword . '
                                     "filter": {
                                         "and": [
+                                            {
+                                                "geo_shape": {
+                                                  "area": {
+                                                    "relation": "intersects",
+                                                    "shape": {
+                                                      "coordinates": [
+                                                        ' . $longitude . ', ' . $latitude . '
+                                                      ],
+                                                      "type": "point"
+                                                    }
+                                                  }
+                                                }
+                                            },
                                             {
                                                 "query": {
                                                     ' . $filterStatus . '
@@ -127,21 +108,6 @@ class MallAreaAPIController extends ControllerAPI
                                                 "query": {
                                                     "match" : {
                                                         "is_subscribed" : "Y"
-                                                    }
-                                                }
-                                            },
-                                            {
-                                                "geo_bounding_box": {
-                                                    "type": "indexed",
-                                                    "position": {
-                                                        "top_left": {
-                                                            "lat": ' . $topLeft[0] . ',
-                                                            "lon": ' . $topLeft[1] . '
-                                                        },
-                                                        "bottom_right": {
-                                                            "lat": ' . $bottomRight[0] . ',
-                                                            "lon": ' . $bottomRight[1] . '
-                                                        }
                                                     }
                                                 }
                                             }
@@ -165,7 +131,9 @@ class MallAreaAPIController extends ControllerAPI
 
             $area_data = $response['hits'];
             $listmall = array();
+            $total = $area_data['total'];
             foreach ($area_data['hits'] as $dt) {
+                $areadata = array();
                 $areadata['id'] = $dt['_id'];
                 foreach ($dt['_source'] as $source => $val) {
                     $areadata[$source] = $val;
@@ -174,9 +142,10 @@ class MallAreaAPIController extends ControllerAPI
             }
 
             $this->response->data = new stdClass();
-            $this->response->data->total_records = $area_data['total'];
+            $this->response->data->total_records = $total;
             $this->response->data->returned_records = count($listmall);
             $this->response->data->records = $listmall;
+
         } catch (ACLForbiddenException $e) {
 
             $this->response->code = $e->getCode();

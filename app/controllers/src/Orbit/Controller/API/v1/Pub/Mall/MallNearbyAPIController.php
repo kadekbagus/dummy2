@@ -1,4 +1,4 @@
-<?php namespace Orbit\Controller\API\v1\Pub;
+<?php namespace Orbit\Controller\API\v1\Pub\Mall;
 /**
  * An API controller for managing mall geo location.
  */
