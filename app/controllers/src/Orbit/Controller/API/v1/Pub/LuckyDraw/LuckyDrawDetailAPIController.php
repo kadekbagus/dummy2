@@ -141,7 +141,7 @@ class LuckyDrawDetailAPIController extends IntermediateBaseController
                 ->where('lucky_draws.lucky_draw_id', $luckyDrawId)
                 ->where('lucky_draws.object_type', 'auto');
 
-            OrbitInput::get('mall_id', function($mallId) use (&$luckyDraw) {
+            OrbitInput::get('mall_id', function($mallId) use ($luckyDraw) {
                 $luckyDraw->where('lucky_draws.mall_id', $mallId);
             });
 
