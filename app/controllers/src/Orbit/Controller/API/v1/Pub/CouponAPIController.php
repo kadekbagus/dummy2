@@ -1551,7 +1551,7 @@ class CouponAPIController extends ControllerAPI
                                                                     ELSE t.merchant_id
                                                                 END as mall_id
                                                         from orb_merchants t
-                                                        join orb_merchants m
+                                                        left join orb_merchants m
                                                             on m.merchant_id = t.parent_id
                                                         where t.merchant_id = {$prefix}merchants.merchant_id)
                                             "))
@@ -1861,7 +1861,7 @@ class CouponAPIController extends ControllerAPI
                                                                     ELSE t.merchant_id
                                                                 END as mall_id
                                                         from orb_merchants t
-                                                        join orb_merchants m
+                                                        left join orb_merchants m
                                                             on m.merchant_id = t.parent_id
                                                         where t.merchant_id = {$prefix}merchants.merchant_id)
                                             "))
