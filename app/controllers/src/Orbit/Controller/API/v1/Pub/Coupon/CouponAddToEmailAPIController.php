@@ -83,7 +83,7 @@ class CouponAddToEmailAPIController extends ControllerAPI
                 ->first();
 
             $newIssuedCoupon = new IssuedCoupon();
-            $issuedCoupon = $newIssuedCoupon->issue($coupon);
+            $issuedCoupon = $newIssuedCoupon->issue($coupon, $user->user_id);
             $this->commit();
 
             $encryptionKey = Config::get('orbit.security.encryption_key');
