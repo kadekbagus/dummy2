@@ -287,7 +287,7 @@ class ResetPasswordAPIController extends ControllerAPI
             $this->response->code = Status::UNKNOWN_ERROR;
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = [$e->getMessage(), $e->getFile(), $e->getLine()];
+            $this->response->data = null;
         }
 
         return $this->render();

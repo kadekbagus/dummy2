@@ -835,12 +835,6 @@ class CampaignReportAPIController extends ControllerAPI
                         where {$tablePrefix}news_merchant.news_id = {$this->quote($campaign_id)}
                     ) as campaign_location_names
                 ";
-                $locationId = "select IF({$tablePrefix}merchants.object_type = 'tenant', pm.merchant_id, {$tablePrefix}merchants.merchant_id)
-                        from {$tablePrefix}news_merchant
-                        inner join {$tablePrefix}merchants on {$tablePrefix}merchants.merchant_id = {$tablePrefix}news_merchant.merchant_id
-                        inner join {$tablePrefix}merchants pm on {$tablePrefix}merchants.parent_id = pm.merchant_id
-                        where {$tablePrefix}news_merchant.news_id = {$this->quote($campaign_id)}
-                ";
 
             } elseif ($campaign_type === 'coupon') {
                 // Get begin and end
@@ -860,12 +854,6 @@ class CampaignReportAPIController extends ControllerAPI
                         left join {$tablePrefix}merchants pm on {$tablePrefix}merchants.parent_id = pm.merchant_id
                         where {$tablePrefix}promotion_retailer.promotion_id = {$this->quote($campaign_id)}
                     ) as campaign_location_names
-                ";
-                $locationId = "select IF({$tablePrefix}merchants.object_type = 'tenant', pm.merchant_id, {$tablePrefix}merchants.merchant_id)
-                        from {$tablePrefix}promotion_retailer
-                        left join {$tablePrefix}merchants on {$tablePrefix}merchants.merchant_id = {$tablePrefix}promotion_retailer.retailer_id
-                        left join {$tablePrefix}merchants pm on {$tablePrefix}merchants.parent_id = pm.merchant_id
-                        where {$tablePrefix}promotion_retailer.promotion_id = {$this->quote($campaign_id)}
                 ";
             }
 
@@ -889,7 +877,6 @@ class CampaignReportAPIController extends ControllerAPI
                                 SELECT COUNT(DISTINCT user_id)
                                 FROM {$tablePrefix}user_signin
                                 WHERE DATE(created_at) = date
-                                    and location_id in ( " . $locationId . " )
                             ) AS unique_users,
                             (
                                 SELECT COUNT(ocpv.campaign_page_view_id) AS value

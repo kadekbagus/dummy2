@@ -331,11 +331,9 @@ class RegistrationAPIController extends IntermediateBaseController
         $validator = Validator::make(
             array(
                 'email'      => $email,
-                'first_name' => $firstname,
             ),
             array(
                 'email'      => 'required|email|orbit_email_exists',
-                'first_name' => 'required',
             ),
             array(
                 'date_of_birth.date_format' => Lang::get('validation.orbit.formaterror.date.dmy_date'),

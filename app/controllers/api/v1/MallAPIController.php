@@ -306,7 +306,7 @@ class MallAPIController extends ControllerAPI
             $pos_language = OrbitInput::post('pos_language');
             $timezoneName = OrbitInput::post('timezone', $this->default['timezone']);
             $domain = OrbitInput::post('domain');
-            $languages = OrbitInput::post('languages');
+            $languages = OrbitInput::post('languages', []);
             $floors = OrbitInput::post('floors');
             $campaign_base_price_promotion = OrbitInput::post('campaign_base_price_promotion', $this->default['campaign_base_price_promotion']);
             $campaign_base_price_coupon = OrbitInput::post('campaign_base_price_coupon', $this->default['campaign_base_price_coupon']);
@@ -400,8 +400,6 @@ class MallAPIController extends ControllerAPI
                 'phone.required'                    => 'The mall phone number is required',
                 'contact_person_firstname.required' => 'The first name is required',
                 'contact_person_lastname.required'  => 'The last name is required',
-                'contact_person_phone.required'     => 'The phone number 1 is required',
-                'contact_person_email.required'     => 'The email address is required'
             ];
 
             // handle empty string
@@ -409,14 +407,18 @@ class MallAPIController extends ControllerAPI
                 $is_subscribed = 'N';
 
                 unset($validation_data['phone']);
+                unset($validation_data['contact_person_firstname']);
+                unset($validation_data['contact_person_lastname']);
 
                 unset($validation_error['phone']);
-                $validation_error['languages']               = 'array';
-                $validation_error['mobile_default_language'] = 'size:2|orbit.formaterror.language';
+                unset($validation_error['contact_person_firstname']);
+                unset($validation_error['contact_person_lastname']);
                 $validation_error['domain']                  = 'orbit.exists.domain';
                 $validation_error['geo_area']                = 'orbit.formaterror.geo_area';
 
                 unset($validation_error_message['phone.required']);
+                unset($validation_error_message['contact_person_firstname.required']);
+                unset($validation_error_message['contact_person_lastname.required']);
             }
 
             $validator = Validator::make($validation_data, $validation_error, $validation_error_message);
@@ -511,12 +513,10 @@ class MallAPIController extends ControllerAPI
             }
             $newmall->masterbox_number = $masterbox_number;
             $newmall->slavebox_number = $slavebox_number;
-            if (! empty($languages)) {
-                if (in_array($mobile_default_language, $languages)) {
-                    $newmall->mobile_default_language = $mobile_default_language;
-                } else {
-                    OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.mobile_default_lang'));
-                }
+            if (in_array($mobile_default_language, $languages)) {
+                $newmall->mobile_default_language = $mobile_default_language;
+            } else {
+                OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.mobile_default_lang'));
             }
             $newmall->pos_language = $pos_language;
             $newmall->modified_by = $this->api->user->user_id;
