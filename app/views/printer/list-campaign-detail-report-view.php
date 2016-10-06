@@ -128,11 +128,6 @@
             <td><strong><?php echo number_format($totalPageViews, 0); ?></strong></td>
         </tr>
         <tr>
-            <td>Total Pop Up Views</td>
-            <td>:</td>
-            <td><strong><?php echo number_format($totalPopupViews, 0); ?></strong></td>
-        </tr>
-        <tr>
             <td>Total Pop Up Clicks</td>
             <td>:</td>
             <td><strong><?php echo number_format($totalPopupClicks, 0); ?></strong></td>
@@ -191,10 +186,7 @@
             <th style="text-align:left;">Unique Sign In</th>
             <th style="text-align:left;">Campaign Page Views</th>
             <th style="text-align:left;">Campaign Page View Rate (%)</th>
-            <th style="text-align:left;">Pop Up Views</th>
-            <th style="text-align:left;">Pop Up View Rate (%)</th>
             <th style="text-align:left;">Pop Up Clicks</th>
-            <th style="text-align:left;">Pop Up Click Rate (%)</th>
             <th style="text-align:left;">Spending (IDR)</th>
         </thead>
         <tbody>
@@ -213,10 +205,7 @@
                     <td><?php echo number_format($row->unique_users); ?></td>
                     <td><?php echo number_format($row->campaign_pages_views); ?></td>
                     <td><?php echo round($row->campaign_pages_view_rate, 2); ?></td>
-                    <td><?php echo number_format($row->popup_views); ?></td>
-                    <td><?php echo round($row->popup_view_rate, 2); ?></td>
                     <td><?php echo number_format($row->popup_clicks); ?></td>
-                    <td><?php echo round($row->popup_click_rate, 2); ?></td>
                     <td><?php echo number_format($row->spending, 0); ?></td>
                 </tr>
             <?php endwhile ; ?>
