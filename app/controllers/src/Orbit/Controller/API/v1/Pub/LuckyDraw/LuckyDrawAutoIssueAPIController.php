@@ -21,6 +21,7 @@ use Mall;
 use Carbon\Carbon;
 use LuckyDrawNumber;
 use Inbox;
+use \Orbit\Helper\Exception\OrbitCustomException;
 
 class LuckyDrawAutoIssueAPIController extends IntermediateBaseController
 {
