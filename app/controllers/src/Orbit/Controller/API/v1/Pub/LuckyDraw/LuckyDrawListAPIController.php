@@ -18,6 +18,8 @@ use LuckyDraw;
 use stdclass;
 use DB;
 use URL;
+use Activity;
+use Mall;
 use Orbit\Controller\API\v1\Pub\LuckyDraw\LuckyDrawHelper;
 
 class LuckyDrawListAPIController extends IntermediateBaseController
@@ -37,7 +39,9 @@ class LuckyDrawListAPIController extends IntermediateBaseController
     public function getSearchLuckyDraw()
     {
         $this->response = new ResponseProvider();
+        $activity = Activity::mobileci()->setActivityType('view');
         $user = NULL;
+        $mall = NULL;
         $httpCode = 200;
 
         try {
@@ -136,8 +140,12 @@ class LuckyDrawListAPIController extends IntermediateBaseController
                 $luckydraws->where('lucky_draws.object_type', $objType);
             });
 
-            OrbitInput::get('mall_id', function($mallId) use($luckydraws) {
+            OrbitInput::get('mall_id', function($mallId) use($luckydraws, &$mall) {
+                // indicates this API is accessed from mall ci
                 $luckydraws->where('lucky_draws.mall_id', $mallId);
+                $mall = Mall::excludeDeleted()
+                        ->where('merchant_id', OrbitInput::get('mall_id'))
+                        ->first();
             });
 
             $_luckydraws = clone $luckydraws;
@@ -167,6 +175,22 @@ class LuckyDrawListAPIController extends IntermediateBaseController
                 }
             );
             $luckydraws->skip($skip);
+
+            // save activity when accessing listing
+            // omit save activity if accessed from mall ci campaign list 'from_mall_ci' !== 'y'
+            // moved from generic activity number 17
+            if (empty($skip) && OrbitInput::get('from_mall_ci', '') !== 'y') {
+                $activityNotes = sprintf('Page viewed: Lucky draw list');
+                $activity->setUser($user)
+                    ->setActivityName('view_lucky_draws_main_page')
+                    ->setActivityNameLong('View Lucky Draws Main Page')
+                    ->setObject(null)
+                    ->setLocation($mall)
+                    ->setModuleName('LuckyDraw')
+                    ->setNotes($activityNotes)
+                    ->responseOK()
+                    ->save();
+            }
 
             $totalRec = RecordCounter::create($_luckydraws)->count();
             $listOfRec = $luckydraws->get();
