@@ -123,6 +123,7 @@
         <thead>
            <!--  <th style="text-align:left;">No.</th> -->
             <th style="text-align:left;">Mall Name</th>
+            <th style="text-align:left;">Subscription</th>
             <th style="text-align:left;">Location</th>
             <th style="text-align:left;">Start Date</th>
             <th style="text-align:left;">End Date</th>
@@ -134,6 +135,7 @@
             <tr class="{{ $rowCounter % 2 === 0 ? 'zebra' : '' }}">
                 <!-- <td><?php //echo ($count); ?></td> -->
                  <td><?php echo $me->printUtf8($row->name); ?></td>
+                 <td><?php echo $me->printSubscription($row->is_subscribed); ?></td>
                  <td><?php echo $me->printLocation($row); ?></td>
                  <td><?php echo $me->printDateTime($row->start_date_activity, 'UTC', 'd F Y'); ?></td>
                  <td><?php echo $me->printDateTime($row->end_date_activity, 'UTC', 'd F Y'); ?></td>

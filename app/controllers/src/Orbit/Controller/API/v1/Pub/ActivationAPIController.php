@@ -147,7 +147,7 @@ class ActivationAPIController extends IntermediateBaseController
                 $user->save();
 
                 $userDetail->gender = $gender;
-                $userDetail->birthdate = $birthdate;
+                $userDetail->birthdate = date("Y-m-d", strtotime($birthdate)); // format date in database is Y-m-d
                 $userDetail->save();
             } else {
                 $from = $this->socialFrom;
