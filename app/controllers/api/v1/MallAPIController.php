@@ -306,7 +306,7 @@ class MallAPIController extends ControllerAPI
             $pos_language = OrbitInput::post('pos_language');
             $timezoneName = OrbitInput::post('timezone', $this->default['timezone']);
             $domain = OrbitInput::post('domain');
-            $languages = OrbitInput::post('languages');
+            $languages = OrbitInput::post('languages', []);
             $floors = OrbitInput::post('floors');
             $campaign_base_price_promotion = OrbitInput::post('campaign_base_price_promotion', $this->default['campaign_base_price_promotion']);
             $campaign_base_price_coupon = OrbitInput::post('campaign_base_price_coupon', $this->default['campaign_base_price_coupon']);
@@ -413,8 +413,6 @@ class MallAPIController extends ControllerAPI
                 unset($validation_error['phone']);
                 unset($validation_error['contact_person_firstname']);
                 unset($validation_error['contact_person_lastname']);
-                $validation_error['languages']               = 'array';
-                $validation_error['mobile_default_language'] = 'size:2|orbit.formaterror.language';
                 $validation_error['domain']                  = 'orbit.exists.domain';
                 $validation_error['geo_area']                = 'orbit.formaterror.geo_area';
 
@@ -515,12 +513,10 @@ class MallAPIController extends ControllerAPI
             }
             $newmall->masterbox_number = $masterbox_number;
             $newmall->slavebox_number = $slavebox_number;
-            if (! empty($languages)) {
-                if (in_array($mobile_default_language, $languages)) {
-                    $newmall->mobile_default_language = $mobile_default_language;
-                } else {
-                    OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.mobile_default_lang'));
-                }
+            if (in_array($mobile_default_language, $languages)) {
+                $newmall->mobile_default_language = $mobile_default_language;
+            } else {
+                OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.mobile_default_lang'));
             }
             $newmall->pos_language = $pos_language;
             $newmall->modified_by = $this->api->user->user_id;

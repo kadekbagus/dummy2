@@ -3464,6 +3464,7 @@ return array(
                 'parameter_name' => null
             ),
             // - Lucky Draws View
+            // *** Moved to the getSearchLuckyDraw() ***
             '17' => array(
                 'name' => 'view_lucky_draws_main_page',
                 'name_long' => 'View Lucky Draws Main Page',
@@ -3821,8 +3822,42 @@ return array(
                 'object_type' => 'Promotion',
                 'parameter_name' => 'promotion_id'
             ),
-
-
+            // - User clicks on "Lucky draws" from mall sidebar menu Gotomalls
+            '55' => array(
+                'name' => 'click_mall_menu_lucky_draws',
+                'name_long' => 'Click mall menu (Lucky draws)',
+                'module_name' => 'LuckyDraw',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - User clicks on "See all" on lucky draw carousel in mall page
+            '56' => array(
+                'name' => 'click_see_all_mall_lucky_draws',
+                'name_long' => 'Click see all (Mall Lucky Draws)',
+                'module_name' => 'LuckyDraw',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - User clicks a lucky draw from mall lucky draw list page
+            '57' => array(
+                'name' => 'click_in_mall_lucky_draw_list',
+                'name_long' => 'Click lucky draw from mall lucky draw list',
+                'module_name' => 'LuckyDraw',
+                'type' => 'click',
+                'object_type' => 'LuckyDraw',
+                'parameter_name' => 'lucky_draw_id'
+            ),
+            // - User clicks on one of the lucky draw featured in lucky draw carousel (mall page)
+            '58' => array(
+                'name' => 'click_mall_featured_lucky_draw',
+                'name_long' => 'Click mall featured lucky draw',
+                'module_name' => 'LuckyDraw',
+                'type' => 'click',
+                'object_type' => 'LuckyDraw',
+                'parameter_name' => 'lucky_draw_id'
+            ),
         ),
     ),
 

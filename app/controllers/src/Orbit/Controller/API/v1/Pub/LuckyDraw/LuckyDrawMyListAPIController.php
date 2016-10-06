@@ -12,6 +12,7 @@ use DominoPOS\OrbitAPI\v10\StatusInterface as Status;
 use Helper\EloquentRecordCounter as RecordCounter;
 use Orbit\Helper\Net\SessionPreparer;
 use Activity;
+use Mall;
 use Validator;
 use Lang;
 use Config;
@@ -40,6 +41,7 @@ class LuckyDrawMyListAPIController extends IntermediateBaseController
         $this->response = new ResponseProvider();
         $activity = Activity::mobileci()->setActivityType('view');
         $user = NULL;
+        $mall = NULL;
         $httpCode = 200;
 
         try {
@@ -198,8 +200,11 @@ class LuckyDrawMyListAPIController extends IntermediateBaseController
                 $luckydraws->where('lucky_draws.object_type', $objType);
             });
 
-            OrbitInput::get('mall_id', function($mallId) use($luckydraws) {
+            OrbitInput::get('mall_id', function($mallId) use($luckydraws, &$mall) {
                 $luckydraws->where('lucky_draws.mall_id', $mallId);
+                $mall = Mall::excludeDeleted()
+                        ->where('merchant_id', OrbitInput::get('mall_id'))
+                        ->first();
             });
 
             $_luckydraws = clone $luckydraws;
@@ -257,6 +262,7 @@ class LuckyDrawMyListAPIController extends IntermediateBaseController
                     ->setActivityName('view_landing_page_my_lucky_number_list')
                     ->setActivityNameLong('View GoToMalls My Lucky Number List')
                     ->setObject(null)
+                    ->setLocation($mall)
                     ->setModuleName('LuckyDraw')
                     ->setNotes($activityNotes)
                     ->responseOK()

@@ -45,6 +45,7 @@ class LuckyDrawDetailAPIController extends IntermediateBaseController
         $this->response = new ResponseProvider();
         $activity = Activity::mobileci()->setActivityType('view');
         $user = NULL;
+        $mall = NULL;
         $httpCode = 200;
 
         try {
@@ -141,8 +142,11 @@ class LuckyDrawDetailAPIController extends IntermediateBaseController
                 ->where('lucky_draws.lucky_draw_id', $luckyDrawId)
                 ->where('lucky_draws.object_type', 'auto');
 
-            OrbitInput::get('mall_id', function($mallId) use ($luckyDraw) {
+            OrbitInput::get('mall_id', function($mallId) use ($luckyDraw, &$mall) {
                 $luckyDraw->where('lucky_draws.mall_id', $mallId);
+                $mall = Mall::excludeDeleted()
+                        ->where('merchant_id', OrbitInput::get('mall_id'))
+                        ->first();
             });
 
             $luckyDraw = $luckyDraw->first();
@@ -167,6 +171,7 @@ class LuckyDrawDetailAPIController extends IntermediateBaseController
                 ->setActivityName('view_landing_page_lucky_draw_detail')
                 ->setActivityNameLong('View GoToMalls Lucky Draw Detail')
                 ->setObject($luckyDraw)
+                ->setLocation($mall)
                 ->setModuleName('LuckyDraw')
                 ->setNotes($activityNotes)
                 ->responseOK()
