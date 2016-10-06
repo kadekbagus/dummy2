@@ -992,7 +992,7 @@ class LoginAPIController extends IntermediateBaseController
             $this->response->code = Status::UNKNOWN_ERROR;
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = [$e->getFile(), $e->getLine()];
+            $this->response->data = null;
 
             $activity->setUser('guest')
                      ->setActivityName('login_failed')

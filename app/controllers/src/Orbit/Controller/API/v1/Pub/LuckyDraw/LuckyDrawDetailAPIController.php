@@ -207,7 +207,7 @@ class LuckyDrawDetailAPIController extends IntermediateBaseController
             $this->response->code = Status::UNKNOWN_ERROR;
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = [$e->getLine(), $e->getFile(), $e->getTraceAsString()];
+            $this->response->data = null;
             $httpCode = 500;
 
         }

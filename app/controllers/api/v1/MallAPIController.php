@@ -400,8 +400,6 @@ class MallAPIController extends ControllerAPI
                 'phone.required'                    => 'The mall phone number is required',
                 'contact_person_firstname.required' => 'The first name is required',
                 'contact_person_lastname.required'  => 'The last name is required',
-                'contact_person_phone.required'     => 'The phone number 1 is required',
-                'contact_person_email.required'     => 'The email address is required'
             ];
 
             // handle empty string
@@ -409,14 +407,20 @@ class MallAPIController extends ControllerAPI
                 $is_subscribed = 'N';
 
                 unset($validation_data['phone']);
+                unset($validation_data['contact_person_firstname']);
+                unset($validation_data['contact_person_lastname']);
 
                 unset($validation_error['phone']);
+                unset($validation_error['contact_person_firstname']);
+                unset($validation_error['contact_person_lastname']);
                 $validation_error['languages']               = 'array';
                 $validation_error['mobile_default_language'] = 'size:2|orbit.formaterror.language';
                 $validation_error['domain']                  = 'orbit.exists.domain';
                 $validation_error['geo_area']                = 'orbit.formaterror.geo_area';
 
                 unset($validation_error_message['phone.required']);
+                unset($validation_error_message['contact_person_firstname.required']);
+                unset($validation_error_message['contact_person_lastname.required']);
             }
 
             $validator = Validator::make($validation_data, $validation_error, $validation_error_message);
