@@ -187,6 +187,10 @@ class LoginAPIController extends IntermediateBaseController
                          ->responseOK()->setModuleName('Application')->save();
 
                 $user->activity = $activity;
+
+                // Save also activity user sign in in user_signin table
+                SignInRecorder::setSignInActivity($user, 'form', NULL, 1, TRUE);
+
             } else {
                 // set \MobileCI\MobileCIAPIController->session using $this->session
                 $CIsession = \MobileCI\MobileCIAPIController::create()->setSession($this->session);
