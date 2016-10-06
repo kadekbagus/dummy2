@@ -189,7 +189,7 @@ class LoginAPIController extends IntermediateBaseController
                 $user->activity = $activity;
 
                 // Save also activity user sign in in user_signin table
-                SignInRecorder::setSignInActivity($user, 'form', NULL, 1, TRUE);
+                SignInRecorder::setSignInActivity($user, 'form', NULL, $activity, TRUE);
 
             } else {
                 // set \MobileCI\MobileCIAPIController->session using $this->session
