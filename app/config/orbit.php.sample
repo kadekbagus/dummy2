@@ -3711,6 +3711,118 @@ return array(
                 'object_type' => null,
                 'parameter_name' => null
             ),
+
+            // - User clicks on "Events" from mall sidebar menu
+            '44' => array(
+                'name' => 'click_mall_menu_events',
+                'name_long' => 'Click mall menu (Events)',
+                'module_name' => 'News',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+
+            // - User clicks on "See all" on event carousel in mall page
+            '45' => array(
+                'name' => 'click_see_all_mall_events',
+                'name_long' => 'Click see all (Mall Events)',
+                'module_name' => 'News',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+
+            // - View mall event list page
+            '46' => array(
+                'name' => 'view_mall_event_list',
+                'name_long' => 'View mall event list',
+                'module_name' => 'News',
+                'type' => 'view',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+
+            // - User clicks an event from mall event list page
+            '47' => array(
+                'name' => 'click_in_mall_event_list',
+                'name_long' => 'Click event from mall event list',
+                'module_name' => 'News',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+
+            // - View event detail page
+            '48' => array(
+                'name' => 'view_event_detail',
+                'name_long' => 'View event detail',
+                'module_name' => 'News',
+                'type' => 'view',
+                'object_type' => 'News',
+                'parameter_name' => 'news_id'
+            ),
+
+            // - User clicks on "Promotions" from mall sidebar menu
+            '49' => array(
+                'name' => 'click_mall_menu_promotions',
+                'name_long' => 'Click mall menu (Promotions)',
+                'module_name' => 'Promotion',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+
+            // - User clicks on "See all" on promotion carousel in mall page
+            '50' => array(
+                'name' => 'click_see_all_mall_promotions',
+                'name_long' => 'Click see all (Mall Promotions)',
+                'module_name' => 'Promotion',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+
+            // - View mall promotion list page
+            '51' => array(
+                'name' => 'view_mall_promotion_list',
+                'name_long' => 'View mall promotion list',
+                'module_name' => 'Promotion',
+                'type' => 'view',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+
+            // - User clicks a promotion from mall promotion list page
+            '52' => array(
+                'name' => 'click_in_mall_promotion_list',
+                'name_long' => 'Click promotion from mall promotion list',
+                'module_name' => 'Promotion',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+
+            // - User clicks on one of the promotions featured in promotion carousel (mall page)
+            '53' => array(
+                'name' => 'click_mall_featured_promotion',
+                'name_long' => 'Click mall featured promotion',
+                'module_name' => 'Promotion',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+
+            // - View promotion detail page
+            '54' => array(
+                'name' => 'view_promotion_detail',
+                'name_long' => 'View promotion detail',
+                'module_name' => 'Promotion',
+                'type' => 'view',
+                'object_type' => 'Promotion',
+                'parameter_name' => 'promotion_id'
+            ),
+
+
         ),
     ),
 

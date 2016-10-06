@@ -187,6 +187,10 @@ class LoginAPIController extends IntermediateBaseController
                          ->responseOK()->setModuleName('Application')->save();
 
                 $user->activity = $activity;
+
+                // Save also activity user sign in in user_signin table
+                SignInRecorder::setSignInActivity($user, 'form', NULL, 1, TRUE);
+
             } else {
                 // set \MobileCI\MobileCIAPIController->session using $this->session
                 $CIsession = \MobileCI\MobileCIAPIController::create()->setSession($this->session);
@@ -988,7 +992,7 @@ class LoginAPIController extends IntermediateBaseController
             $this->response->code = Status::UNKNOWN_ERROR;
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = [$e->getFile(), $e->getLine()];
+            $this->response->data = null;
 
             $activity->setUser('guest')
                      ->setActivityName('login_failed')

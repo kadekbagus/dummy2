@@ -40,7 +40,6 @@ class CampaignReportPrinterController extends DataPrinterController
         $campaign = $response['builder'];
         $totalRecord = $response['count'];
         $totalPageViews = $response['totalPageViews'];
-        $totalPopUpViews = $response['totalPopUpViews'];
         $totalEstimatedCost = $response['totalEstimatedCost'];
         $totalSpending = $response['totalSpending'];
 
@@ -78,7 +77,6 @@ class CampaignReportPrinterController extends DataPrinterController
 
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Number of Campaigns', $totalRecord, '', '', '','');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Page Views', $totalPageViews, '', '', '','');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Pop Up Views', $totalPopUpViews, '', '', '','');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Estimated Total Cost (IDR)',  number_format($totalEstimatedCost, 0, '', ''), '', '', '','');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Spending (IDR)',  number_format($totalSpending, 0, '', ''), '', '', '','');
 
@@ -126,7 +124,7 @@ class CampaignReportPrinterController extends DataPrinterController
                 }
 
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Campaign Name', 'Campaign Type', 'Location(s)', 'Campaign Dates', 'Page Views', 'Pop Up Views', 'Pop Up Clicks', 'Daily Cost (IDR)', 'Estimated Total Cost (IDR)', 'Spending (IDR)', 'Status');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Campaign Name', 'Campaign Type', 'Location(s)', 'Campaign Dates', 'Page Views', 'Pop Up Clicks', 'Daily Cost (IDR)', 'Estimated Total Cost (IDR)', 'Spending (IDR)', 'Status');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
 
                 $count = 1;
@@ -139,7 +137,6 @@ class CampaignReportPrinterController extends DataPrinterController
                             date('d M Y', strtotime($row->begin_date)),
                             date('d M Y', strtotime($row->end_date)),
                             $row->page_views,
-                            $row->popup_views,
                             $row->popup_clicks,
                             number_format($row->daily, 0, '', ''),
                             number_format($row->estimated_total, 0, '', ''),
@@ -181,7 +178,6 @@ class CampaignReportPrinterController extends DataPrinterController
         $campaign = $response['builder'];
         $totalCampaign = $response['count'];
         $totalPageViews = $response['totalPageViews'];
-        $totalPopupViews = $response['totalPopupViews'];
         $totalPopupClicks = $response['totalPopupClicks'];
         $totalSpending = $response['totalSpending'];
         $campaignName = $response['campaignName'];
@@ -217,7 +213,6 @@ class CampaignReportPrinterController extends DataPrinterController
 
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Active Campaign Days', $totalCampaign, '', '', '','');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Page Views', $totalPageViews, '', '', '','');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Pop Up Views', $totalPopupViews, '', '', '','');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Pop Up Clicks', $totalPopupClicks, '', '', '','');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Spending (IDR)', $totalSpending, '', '', '','');
 
@@ -241,22 +236,19 @@ class CampaignReportPrinterController extends DataPrinterController
                 }
 
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Date', 'Location(s)', 'Unique Sign In', 'Campaign Page Views', 'Campaign Page View Rate (%)', 'Pop Up Views', 'Pop Up View Rate (%)', 'Pop Up Clicks', 'Pop Up Click Rate (%)', 'Spending (IDR)');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Date', 'Location(s)', 'Unique Sign In', 'Campaign Page Views', 'Campaign Page View Rate (%)', 'Pop Up Clicks', 'Spending (IDR)');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
 
                 $count = 1;
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
-                        printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
+                        printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
                             $count,
                             $this->printDateTime($row->campaign_date . '00:00:00', $timezone, 'd M Y'),
                             str_replace(', ', "\n", $this->printUtf8($row->campaign_location_names)),
                             $row->unique_users,
                             $row->campaign_pages_views,
                             round($row->campaign_pages_view_rate, 2),
-                            $row->popup_views,
-                            round($row->popup_view_rate, 2),
                             $row->popup_clicks,
-                            round($row->popup_click_rate, 2),
                             round($row->spending, 2)
                     );
                     $count++;
