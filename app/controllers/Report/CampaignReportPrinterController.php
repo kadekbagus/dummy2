@@ -236,12 +236,12 @@ class CampaignReportPrinterController extends DataPrinterController
                 }
 
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Date', 'Location(s)', 'Unique Sign In', 'Campaign Page Views', 'Campaign Page View Rate (%)', 'Pop Up Clicks', 'Spending (IDR)');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Date', 'Location(s)', 'Unique Sign In', 'Campaign Page Views', 'Campaign Page View Rate (%)', 'Pop Up Clicks', 'Spending (IDR)');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
 
                 $count = 1;
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
-                        printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
+                        printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
                             $count,
                             $this->printDateTime($row->campaign_date . '00:00:00', $timezone, 'd M Y'),
                             str_replace(', ', "\n", $this->printUtf8($row->campaign_location_names)),
