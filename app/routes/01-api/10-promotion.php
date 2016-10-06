@@ -64,20 +64,20 @@ Route::post('/api/v1/promotion/delete/image', function()
  */
 Route::get('/api/v1/pub/promotion-list', function()
 {
-    return Orbit\Controller\API\v1\Pub\PromotionAPIController::create()->getSearchPromotion();
+    return Orbit\Controller\API\v1\Pub\Promotion\PromotionListAPIController::create()->getSearchPromotion();
 });
 
-Route::get('/app/v1/pub/promotion-list', ['as' => 'pub-promotion-list', 'uses' => 'IntermediatePubAuthController@Promotion_getSearchPromotion']);
+Route::get('/app/v1/pub/promotion-list', ['as' => 'pub-promotion-list', 'uses' => 'IntermediatePubAuthController@Promotion\Promotion_getSearchPromotion']);
 
 /**
  * List mall of promotion
  */
 Route::get('/api/v1/pub/mall-promotion-list', function()
 {
-    return Orbit\Controller\API\v1\Pub\PromotionAPIController::create()->getMallPerPromotion();
+    return Orbit\Controller\API\v1\Pub\Promotion\PromotionMallAPIController::create()->getMallPerPromotion();
 });
 
-Route::get('/app/v1/pub/mall-promotion-list', ['as' => 'pub-mall-promotion-list', 'uses' => 'IntermediatePubAuthController@Promotion_getMallPerPromotion']);
+Route::get('/app/v1/pub/mall-promotion-list', ['as' => 'pub-mall-promotion-list', 'uses' => 'IntermediatePubAuthController@Promotion\Promotion_getMallPerPromotion']);
 
 
 /**
@@ -85,17 +85,17 @@ Route::get('/app/v1/pub/mall-promotion-list', ['as' => 'pub-mall-promotion-list'
  */
 Route::get('/api/v1/pub/mall-promotion/detail', function()
 {
-    return Orbit\Controller\API\v1\Pub\PromotionAPIController::create()->getPromotionItem();
+    return Orbit\Controller\API\v1\Pub\Promotion\PromotionDetailAPIController::create()->getPromotionItem();
 });
 
-Route::get('/app/v1/pub/mall-promotion/detail', ['as' => 'pub-mall-promotion-detail', 'uses' => 'IntermediatePubAuthController@Promotion_getPromotionItem']);
+Route::get('/app/v1/pub/mall-promotion/detail', ['as' => 'pub-mall-promotion-detail', 'uses' => 'IntermediatePubAuthController@Promotion\Promotion_getPromotionItem']);
 
 /**
  * List location of a news
  */
 Route::get('/api/v1/pub/mall-promotion-location/list', function()
 {
-    return Orbit\Controller\API\v1\Pub\PromotionAPIController::create()->getPromotionLocations();
+    return Orbit\Controller\API\v1\Pub\Promotion\PromotionLocationAPIController::create()->getPromotionLocations();
 });
 
-Route::get('/app/v1/pub/mall-promotion-location/list', ['as' => 'pub-mall-promotion-location-list', 'uses' => 'IntermediatePubAuthController@Promotion_getPromotionLocations']);
+Route::get('/app/v1/pub/mall-promotion-location/list', ['as' => 'pub-mall-promotion-location-list', 'uses' => 'IntermediatePubAuthController@Promotion\Promotion_getPromotionLocations']);

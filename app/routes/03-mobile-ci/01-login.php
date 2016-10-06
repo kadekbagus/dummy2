@@ -273,7 +273,8 @@ Route::group(
         Route::get(
             '/customer/pokestopdetail', ['as' => 'ci-pokesyop-detail',
             function () {
-                return MobileCI\MobileCIAPIController::create()->getMallPokestopDetailView();
+                // return MobileCI\MobileCIAPIController::create()->getMallPokestopDetailView();
+                return View::make('errors/404');
             }]
         );
 
