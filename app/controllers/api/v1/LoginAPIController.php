@@ -1595,6 +1595,7 @@ class LoginAPIController extends ControllerAPI
 
     protected function getListMall($type_name, $tenantIds = NULL)
     {
+        // print_r([$type_name, $tenantIds]); die();
         $permission = [
                 'Mall'      => 'mall',
                 'Merchant'  => 'tenant',
@@ -1606,7 +1607,7 @@ class LoginAPIController extends ControllerAPI
 
         $get_mall = CampaignLocation::with('timezone')
                                     ->leftJoin('merchants as pm', DB::Raw('pm.merchant_id'), '=', 'merchants.parent_id')
-                                    ->leftJoin('timezones as ot', DB::Raw('ot.timezone_id'), '=', 'merchants.timezone_id')
+                                    ->leftJoin('timezones as ot', DB::Raw('ot.timezone_id'), '=', DB::Raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN pm.timezone_id ELSE {$prefix}merchants.timezone_id END"))
                                     ->select(
                                               DB::Raw("IF ({$prefix}merchants.object_type = 'tenant', pm.merchant_id, {$prefix}merchants.merchant_id) as merchant_id"),
                                               DB::Raw("IF ({$prefix}merchants.object_type = 'tenant', pm.name, {$prefix}merchants.name) as name"),
