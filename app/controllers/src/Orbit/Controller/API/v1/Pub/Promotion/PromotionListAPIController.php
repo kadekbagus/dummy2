@@ -50,9 +50,15 @@ class PromotionListAPIController extends ControllerAPI
     {
         $httpCode = 200;
         $this->response = new ResponseProvider();
+        $activity = Activity::mobileci()->setActivityType('view');
         $keyword = null;
+        $user = null;
+        $mall = null;
 
         try{
+            $this->session = SessionPreparer::prepareSession();
+            $user = UserGetter::getLoggedInUserOrGuest($this->session);
+
             $sort_by = OrbitInput::get('sortby', 'news_name');
             $sort_mode = OrbitInput::get('sortmode','asc');
             $language = OrbitInput::get('language', 'id');
@@ -186,7 +192,7 @@ class PromotionListAPIController extends ControllerAPI
             // frontend need the mall name
              $mall = null;
              if (! empty($mallId)) {
-                $mall = Mall::select('name')->where('merchant_id', '=', $mallId)->first();
+                $mall = Mall::where('merchant_id', '=', $mallId)->first();
              }
 
             // filter by city
@@ -292,6 +298,19 @@ class PromotionListAPIController extends ControllerAPI
                 $data->mall_name = $mall->name;
             }
             $data->records = $listOfRec;
+
+            if (empty($skip) && OrbitInput::get('from_mall_ci', '') !== 'y') {
+                $activityNotes = sprintf('Page viewed: Promotion list');
+                $activity->setUser($user)
+                    ->setActivityName('view_promotions_main_page')
+                    ->setActivityNameLong('View Promotions Main Page')
+                    ->setObject(null)
+                    ->setLocation($mall)
+                    ->setModuleName('Promotion')
+                    ->setNotes($activityNotes)
+                    ->responseOK()
+                    ->save();
+            }
 
             $this->response->data = $data;
             $this->response->code = 0;
