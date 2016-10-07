@@ -186,9 +186,9 @@ class NewsListAPIController extends ControllerAPI
 
             // filter news by mall id
              OrbitInput::get('mall_id', function($mallid) use ($news) {
-                $news->where(function($q) use ($mallId){
-                        $q->where(DB::raw("m.parent_id"), '=', $mallId)
-                          ->orWhere(DB::raw("m.merchant_id"), '=', $mallId);
+                $news->where(function($q) use ($mallid){
+                        $q->where(DB::raw("m.parent_id"), '=', $mallid)
+                          ->orWhere(DB::raw("m.merchant_id"), '=', $mallid);
                     });
              });
 
@@ -231,7 +231,7 @@ class NewsListAPIController extends ControllerAPI
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
                     'name'          => 'news_name',
-                    'created_at'    => 'created_at'
+                    'created_date'  => 'created_at'
                 );
 
                 $sort_by = $sortByMapping[$_sortBy];

@@ -221,8 +221,8 @@ class PromotionListAPIController extends ControllerAPI
             {
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
-                    'name'          => 'news_name',
-                    'created_at'    => 'created_at'
+                    'name'            => 'news_name',
+                    'created_date'    => 'created_at'
                 );
 
                 $sort_by = $sortByMapping[$_sortBy];
