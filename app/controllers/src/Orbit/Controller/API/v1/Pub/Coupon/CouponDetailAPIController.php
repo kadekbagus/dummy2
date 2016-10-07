@@ -140,7 +140,7 @@ class CouponDetailAPIController extends ControllerAPI
             OrbitInput::get('mall_id', function($mallId) use ($coupon, &$mall) {
                 $coupon->havingRaw("mall_id = {$this->quote($mallId)}");
                 $mall = Mall::excludeDeleted()
-                        ->where('merchant_id', OrbitInput::get('mall_id'))
+                        ->where('merchant_id', $mallId)
                         ->first();
             });
 
