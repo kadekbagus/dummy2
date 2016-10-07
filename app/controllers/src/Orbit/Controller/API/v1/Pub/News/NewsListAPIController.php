@@ -126,7 +126,8 @@ class NewsListAPIController extends ControllerAPI
                                             WHERE onm.news_id = {$prefix}news.news_id
                                             AND CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) between {$prefix}news.begin_date and {$prefix}news.end_date) > 0
                                 THEN 'true' ELSE 'false' END AS is_started
-                            "))
+                            "),
+                        'news.created_at')
                         ->join('news_translations', 'news_translations.news_id', '=', 'news.news_id')
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
                         ->leftJoin('media', function($q) {
@@ -218,14 +219,32 @@ class NewsListAPIController extends ControllerAPI
 
             if ($sort_by === 'location' && !empty($lon) && !empty($lat)) {
                 $news = $news->select(DB::raw("sub_query.news_id"), 'news_name', 'description', DB::raw("sub_query.object_type"), 'image_url', 'campaign_status', 'is_started', DB::raw("min(distance) as distance"))
-                                       ->orderBy('distance', $sort_mode);
+                                       ->orderBy('distance', 'asc');
             } else {
                 $news = $news->select(DB::raw("sub_query.news_id"), 'news_name', 'description', DB::raw("sub_query.object_type"), 'image_url', 'campaign_status', 'is_started');
             }
 
             $news = $news->groupBy(DB::Raw("sub_query.news_id"));
 
-            $news = $news->orderBy('news_name', 'asc');
+            OrbitInput::get('sortby', function($_sortBy) use (&$sort_by)
+            {
+                // Map the sortby request to the real column name
+                $sortByMapping = array(
+                    'name'          => 'news_name',
+                    'created_at'    => 'created_at'
+                );
+
+                $sort_by = $sortByMapping[$_sortBy];
+            });
+
+            OrbitInput::get('sortmode', function($_sortMode) use (&$sort_mode)
+            {
+                if (strtolower($_sortMode) !== 'asc') {
+                    $sort_mode = 'desc';
+                }
+            });
+
+            $news = $news->orderBy($sort_by, $sort_mode);
 
             OrbitInput::get('keyword', function($keyword) use ($news, $prefix) {
                  if (! empty($keyword)) {
