@@ -382,6 +382,28 @@ class Mall extends Eloquent
     }
 
     /**
+     * Merchant has many uploaded map.
+     *
+     * @author Irianto <irianto@dominopos.com>
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function mediaMap()
+    {
+        return $this->media()->where('media_name_id', 'mall_map');
+    }
+
+    /**
+     * Merchant has many uploaded map.
+     *
+     * @author Irianto <irianto@dominopos.com>
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function mediaMapOrig()
+    {
+        return $this->mediaOrig()->where('media_name_id', 'mall_map');
+    }
+
+    /**
      * Merchant has many uploaded logo.
      *
      * @author Rio Astamal <me@rioastamal.net>
