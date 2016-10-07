@@ -38,6 +38,7 @@ class CouponDetailAPIController extends ControllerAPI
         try{
             $this->session = SessionPreparer::prepareSession();
             $user = UserGetter::getLoggedInUserOrGuest($this->session);
+            $role = $user->role->role_name;
 
             $couponId = OrbitInput::get('coupon_id', null);
             $sort_by = OrbitInput::get('sortby', 'name');
@@ -70,6 +71,16 @@ class CouponDetailAPIController extends ControllerAPI
 
             $prefix = DB::getTablePrefix();
 
+            // This condition only for guest can issued multiple coupon with multiple email
+            if ($role == 'Guest') {
+                $getCouponStatusSql = " 'false' as get_coupon_status ";
+            } else {
+                $getCouponStatusSql = " CASE WHEN {$prefix}issued_coupons.user_id is NULL
+                                            THEN 'false'
+                                            ELSE 'true'
+                                        END as get_coupon_status ";
+            }
+
             $coupon = Coupon::select(
                             'promotions.promotion_id as promotion_id',
                             DB::Raw("
@@ -88,12 +99,7 @@ class CouponDetailAPIController extends ControllerAPI
                             'promotions.end_date',
                             DB::raw("CASE WHEN m.object_type = 'tenant' THEN m.parent_id ELSE m.merchant_id END as mall_id"),
                             // 'media.path as original_media_path',
-                            DB::Raw("
-                                    CASE WHEN {$prefix}issued_coupons.user_id is NULL
-                                        THEN 'false'
-                                        ELSE 'true'
-                                    END as get_coupon_status
-                                "),
+                            DB::Raw($getCouponStatusSql),
                             // query for get status active based on timezone
                             DB::raw("
                                     CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
