@@ -15,6 +15,7 @@ use DB;
 use Validator;
 use OrbitShop\API\v1\ResponseProvider;
 use Activity;
+use Mall;
 use Orbit\Helper\Net\SessionPreparer;
 use Orbit\Helper\Session\UserGetter;
 use Lang;
@@ -40,8 +41,14 @@ class CouponListAPIController extends ControllerAPI
      */
     public function getCouponList()
     {
+        $activity = Activity::mobileci()->setActivityType('view');
+        $mall = NULL;
+        $user = NULL;
         $httpCode = 200;
         try {
+            $this->session = SessionPreparer::prepareSession();
+            $user = UserGetter::getLoggedInUserOrGuest($this->session);
+
             $sort_by = OrbitInput::get('sortby', 'coupon_name');
             $sort_mode = OrbitInput::get('sortmode','asc');
             $usingDemo = Config::get('orbit.is_demo', FALSE);
@@ -259,6 +266,22 @@ class CouponListAPIController extends ControllerAPI
 
             $listcoupon = $coupon->get();
             $count = count($_coupon->get());
+
+            // save activity when accessing listing
+            // omit save activity if accessed from mall ci campaign list 'from_mall_ci' !== 'y'
+            // moved from generic activity number 32
+            if (empty($skip) && OrbitInput::get('from_mall_ci', '') !== 'y') {
+                $activityNotes = sprintf('Page viewed: Coupon list');
+                $activity->setUser($user)
+                    ->setActivityName('view_coupons_main_page')
+                    ->setActivityNameLong('View Coupons Main Page')
+                    ->setObject(null)
+                    ->setLocation($mall)
+                    ->setModuleName('Coupon')
+                    ->setNotes($activityNotes)
+                    ->responseOK()
+                    ->save();
+            }
 
             $this->response->data = new stdClass();
             $this->response->data->total_records = $count;

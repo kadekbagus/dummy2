@@ -21,6 +21,7 @@ use Orbit\Helper\Net\SessionPreparer;
 use Orbit\Helper\Session\UserGetter;
 use Lang;
 use \Exception;
+use Mall;
 use Orbit\Controller\API\v1\Pub\Coupon\CouponHelper;
 use Orbit\Controller\API\v1\Pub\SocMedAPIController;
 
@@ -32,6 +33,7 @@ class CouponDetailAPIController extends ControllerAPI
         $this->response = new ResponseProvider();
         $activity = Activity::mobileci()->setActivityType('view');
         $user = NULL;
+        $mall = NULL;
 
         try{
             $this->session = SessionPreparer::prepareSession();
@@ -129,8 +131,11 @@ class CouponDetailAPIController extends ControllerAPI
                         ->where('promotions.promotion_id', $couponId)
                         ->where('coupon_translations.merchant_language_id', '=', $valid_language->language_id);
 
-            OrbitInput::get('mall_id', function($mallId) use ($coupon) {
+            OrbitInput::get('mall_id', function($mallId) use ($coupon, &$mall) {
                 $coupon->havingRaw("mall_id = {$this->quote($mallId)}");
+                $mall = Mall::excludeDeleted()
+                        ->where('merchant_id', OrbitInput::get('mall_id'))
+                        ->first();
             });
 
             $coupon = $coupon->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
@@ -147,6 +152,7 @@ class CouponDetailAPIController extends ControllerAPI
                 ->setActivityNameLong('View GoToMalls Coupon Detail')
                 ->setObject($coupon)
                 ->setCoupon($coupon)
+                ->setLocation($mall)
                 ->setModuleName('Coupon')
                 ->setNotes($activityNotes)
                 ->responseOK()

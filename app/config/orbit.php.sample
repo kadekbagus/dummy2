@@ -3601,6 +3601,7 @@ return array(
                 'parameter_name' => null
             ),
             // - Coupons View
+            // *** Moved to the getCouponList() ***
             '32' => array(
                 'name' => 'view_coupons_main_page',
                 'name_long' => 'View Coupons Main Page',
@@ -3828,6 +3829,96 @@ return array(
                 'type' => 'click',
                 'object_type' => 'LuckyDraw',
                 'parameter_name' => 'lucky_draw_id'
+            ),
+            // - View progressive sign in (name) pop up page
+            '56' => array(
+                'name' => 'view_prog_login_name',
+                'name_long' => 'View progressive sign in (Name)',
+                'module_name' => 'Application',
+                'type' => 'view',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - User gives name in progressive sign in (name) pop up page
+            '57' => array(
+                'name' => 'prog_login_name_ok',
+                'name_long' => 'Progressive sign in (Name)',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - User does not give name or dismiss progressive sign in (name) pop up page
+            '58' => array(
+                'name' => 'prog_login_name_canceled',
+                'name_long' => 'Progressive sign in (Name) canceled',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - View progressive sign in (email) pop up page
+            '59' => array(
+                'name' => 'view_prog_login_email',
+                'name_long' => 'View progressive sign in (Email)',
+                'module_name' => 'Application',
+                'type' => 'view',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - User gives email in progressive sign in (email) pop up page
+            '60' => array(
+                'name' => 'prog_login_email_ok',
+                'name_long' => 'Progressive sign in (Email)',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - User does not give email or dismiss progressive sign in (email) pop up page
+            '61' => array(
+                'name' => 'prog_login_email_canceled',
+                'name_long' => 'Progressive sign in (Email) canceled',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - User clicks on "Coupons" from mall sidebar menu
+            '62' => array(
+                'name' => 'click_mall_menu_coupons',
+                'name_long' => 'Click mall menu (Coupons)',
+                'module_name' => 'Coupon',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - User clicks on "See all" on coupon carousel in mall page
+            '63' => array(
+                'name' => 'click_see_all_mall_coupons',
+                'name_long' => 'Click see all (Mall Coupons)',
+                'module_name' => 'Coupon',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - User clicks a coupon from mall coupon list page
+            '64' => array(
+                'name' => 'click_in_mall_coupon_list',
+                'name_long' => 'Click coupon from mall coupon listt',
+                'module_name' => 'Coupon',
+                'type' => 'click',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'coupon_id'
+            ),
+            // - User clicks on one of the coupons featured in coupon carousel (mall page)
+            '65' => array(
+                'name' => 'click_mall_featured_coupon',
+                'name_long' => 'Click mall featured coupon',
+                'module_name' => 'Coupon',
+                'type' => 'click',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'coupon_id'
             ),
         ),
     ),
