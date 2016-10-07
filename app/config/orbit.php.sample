@@ -3464,6 +3464,7 @@ return array(
                 'parameter_name' => null
             ),
             // - Lucky Draws View
+            // *** Moved to the getSearchLuckyDraw() ***
             '17' => array(
                 'name' => 'view_lucky_draws_main_page',
                 'name_long' => 'View Lucky Draws Main Page',
@@ -3728,42 +3729,32 @@ return array(
                 'name_long' => 'Click see all (Mall Events)',
                 'module_name' => 'News',
                 'type' => 'click',
-                'object_type' => null,
-                'parameter_name' => null
-            ),
-
-            // - View mall event list page
-            '46' => array(
-                'name' => 'view_mall_event_list',
-                'name_long' => 'View mall event list',
-                'module_name' => 'News',
-                'type' => 'view',
-                'object_type' => null,
-                'parameter_name' => null
+                'object_type' => 'News',
+                'parameter_name' => 'news_id'
             ),
 
             // - User clicks an event from mall event list page
-            '47' => array(
+            '46' => array(
                 'name' => 'click_in_mall_event_list',
                 'name_long' => 'Click event from mall event list',
                 'module_name' => 'News',
                 'type' => 'click',
-                'object_type' => null,
-                'parameter_name' => null
+                'object_type' => 'News',
+                'parameter_name' => 'news_id'
             ),
 
-            // - View event detail page
-            '48' => array(
-                'name' => 'view_event_detail',
-                'name_long' => 'View event detail',
+            // - User clicks on one of the events featured in event carousel (mall page)
+            '47' => array(
+                'name' => 'click_mall_featured_event',
+                'name_long' => 'Click mall featured event',
                 'module_name' => 'News',
-                'type' => 'view',
+                'type' => 'click',
                 'object_type' => 'News',
                 'parameter_name' => 'news_id'
             ),
 
             // - User clicks on "Promotions" from mall sidebar menu
-            '49' => array(
+            '48' => array(
                 'name' => 'click_mall_menu_promotions',
                 'name_long' => 'Click mall menu (Promotions)',
                 'module_name' => 'Promotion',
@@ -3773,7 +3764,7 @@ return array(
             ),
 
             // - User clicks on "See all" on promotion carousel in mall page
-            '50' => array(
+            '49' => array(
                 'name' => 'click_see_all_mall_promotions',
                 'name_long' => 'Click see all (Mall Promotions)',
                 'module_name' => 'Promotion',
@@ -3782,47 +3773,62 @@ return array(
                 'parameter_name' => null
             ),
 
-            // - View mall promotion list page
-            '51' => array(
-                'name' => 'view_mall_promotion_list',
-                'name_long' => 'View mall promotion list',
-                'module_name' => 'Promotion',
-                'type' => 'view',
-                'object_type' => null,
-                'parameter_name' => null
-            ),
-
             // - User clicks a promotion from mall promotion list page
-            '52' => array(
+            '50' => array(
                 'name' => 'click_in_mall_promotion_list',
                 'name_long' => 'Click promotion from mall promotion list',
                 'module_name' => 'Promotion',
                 'type' => 'click',
-                'object_type' => null,
-                'parameter_name' => null
-            ),
-
-            // - User clicks on one of the promotions featured in promotion carousel (mall page)
-            '53' => array(
-                'name' => 'click_mall_featured_promotion',
-                'name_long' => 'Click mall featured promotion',
-                'module_name' => 'Promotion',
-                'type' => 'click',
-                'object_type' => null,
-                'parameter_name' => null
-            ),
-
-            // - View promotion detail page
-            '54' => array(
-                'name' => 'view_promotion_detail',
-                'name_long' => 'View promotion detail',
-                'module_name' => 'Promotion',
-                'type' => 'view',
                 'object_type' => 'Promotion',
                 'parameter_name' => 'promotion_id'
             ),
 
+            // - User clicks on one of the promotions featured in promotion carousel (mall page)
+            '51' => array(
+                'name' => 'click_mall_featured_promotion',
+                'name_long' => 'Click mall featured promotion',
+                'module_name' => 'Promotion',
+                'type' => 'click',
+                'object_type' => 'Promotion',
+                'parameter_name' => 'promotion_id'
+            ),
 
+            // - User clicks on "Lucky draws" from mall sidebar menu Gotomalls
+            '52' => array(
+                'name' => 'click_mall_menu_lucky_draws',
+                'name_long' => 'Click mall menu (Lucky draws)',
+                'module_name' => 'LuckyDraw',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - User clicks on "See all" on lucky draw carousel in mall page
+            '53' => array(
+                'name' => 'click_see_all_mall_lucky_draws',
+                'name_long' => 'Click see all (Mall Lucky Draws)',
+                'module_name' => 'LuckyDraw',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - User clicks a lucky draw from mall lucky draw list page
+            '54' => array(
+                'name' => 'click_in_mall_lucky_draw_list',
+                'name_long' => 'Click lucky draw from mall lucky draw list',
+                'module_name' => 'LuckyDraw',
+                'type' => 'click',
+                'object_type' => 'LuckyDraw',
+                'parameter_name' => 'lucky_draw_id'
+            ),
+            // - User clicks on one of the lucky draw featured in lucky draw carousel (mall page)
+            '55' => array(
+                'name' => 'click_mall_featured_lucky_draw',
+                'name_long' => 'Click mall featured lucky draw',
+                'module_name' => 'LuckyDraw',
+                'type' => 'click',
+                'object_type' => 'LuckyDraw',
+                'parameter_name' => 'lucky_draw_id'
+            ),
         ),
     ),
 
