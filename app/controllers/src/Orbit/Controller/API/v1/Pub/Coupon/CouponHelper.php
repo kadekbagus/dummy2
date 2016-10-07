@@ -67,7 +67,6 @@ class CouponHelper
 
             $issuedCoupon = IssuedCoupon::whereNotIn('issued_coupons.status', ['deleted', 'redeemed'])
                         ->where('issued_coupons.issued_coupon_id', $value)
-                        ->whereNull('issued_coupons.user_id')
                         ->with('coupon')
                         ->whereHas('coupon', function($q) use($now) {
                             $q->where('promotions.status', 'active');
@@ -92,7 +91,6 @@ class CouponHelper
                             ->join('promotion_retailer_redeem', 'promotion_retailer_redeem.promotion_id', '=', 'issued_coupons.promotion_id')
                             ->join('merchants', 'merchants.merchant_id', '=', 'promotion_retailer_redeem.retailer_id')
                             ->where('issued_coupons.issued_coupon_id', $value)
-                            ->whereNull('issued_coupons.user_id')
                             ->whereHas('coupon', function($q) use($now) {
                                 $q->where('promotions.status', 'active');
                                 $q->where('promotions.coupon_validity_in_date', '>=', $now);
@@ -117,7 +115,6 @@ class CouponHelper
                                 ->join('employees', 'employees.user_id', '=', 'user_verification_numbers.user_id')
                                 ->where('employees.status', 'active')
                                 ->where('issued_coupons.issued_coupon_id', $value)
-                                ->whereNull('issued_coupons.user_id')
                                 ->whereHas('coupon', function($q) use($now) {
                                     $q->where('promotions.status', 'active');
                                     $q->where('promotions.coupon_validity_in_date', '>=', $now);
