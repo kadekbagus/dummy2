@@ -133,8 +133,26 @@ class LuckyDrawListAPIController extends IntermediateBaseController
                 ->active('lucky_draws')
                 ->where('lucky_draw_translations.merchant_language_id', '=', $valid_language->language_id)
                 ->havingRaw("campaign_status = 'ongoing'")
-                ->groupBy('lucky_draws.lucky_draw_id')
-                ->orderBy($sort_by, $sort_mode);
+                ->groupBy('lucky_draws.lucky_draw_id');
+
+            OrbitInput::get('sortby', function($_sortBy) use (&$sort_by)
+            {
+                // Map the sortby request to the real column name
+                $sortByMapping = array(
+                    'name'          => 'lucky_draw_name',
+                    'created_at'    => 'lucky_draws.created_at'
+                );
+
+                $sort_by = $sortByMapping[$_sortBy];
+            });
+
+            OrbitInput::get('sortmode', function($_sortMode) use (&$sort_mode)
+            {
+                if (strtolower($_sortMode) !== 'asc') {
+                    $sort_mode = 'desc';
+                }
+            });
+            $luckydraws = $luckydraws->orderBy($sort_by, $sort_mode);
 
             OrbitInput::get('object_type', function($objType) use($luckydraws) {
                 $luckydraws->where('lucky_draws.object_type', $objType);
