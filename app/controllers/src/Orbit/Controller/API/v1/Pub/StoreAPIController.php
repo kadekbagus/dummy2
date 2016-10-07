@@ -100,10 +100,15 @@ class StoreAPIController extends ControllerAPI
                     DB::raw("(select path from {$prefix}media where media_name_long = 'retailer_logo_orig' and object_id = {$prefix}merchants.merchant_id) as logo_url"))
                 ->join(DB::raw("(select merchant_id, status, parent_id, city from {$prefix}merchants where object_type = 'mall') as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                 ->where('merchants.status', 'active')
+                ->where('merchants.object_type', 'tenant')
                 ->whereRaw("oms.status = 'active'")
                 ->groupBy('merchants.name')
                 ->orderBy('merchants.name', 'asc')
                 ->orderBy('merchants.created_at', 'asc');
+
+            OrbitInput::get('mall_id', function($mallid) use ($store) {
+                $store->where(DB::raw("oms.merchant_id"), '=', $mallid);
+            });
 
             $querySql = $store->toSql();
 

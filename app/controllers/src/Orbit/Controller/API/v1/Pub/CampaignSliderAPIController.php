@@ -200,11 +200,7 @@ class CampaignSliderAPIController extends ControllerAPI
             $data = new \stdclass();
             $data->returned_records = count($listOfRec);
             $data->total_records = $totalRec;
-            // if (is_object($mall)) {
-            //     $data->mall_name = $mall->name;
-            // }
             $data->records = $listOfRec;
-
 
             $this->response->data = $data;
             $this->response->code = 0;

@@ -50,9 +50,15 @@ class PromotionListAPIController extends ControllerAPI
     {
         $httpCode = 200;
         $this->response = new ResponseProvider();
+        $activity = Activity::mobileci()->setActivityType('view');
         $keyword = null;
+        $user = null;
+        $mall = null;
 
         try{
+            $this->session = SessionPreparer::prepareSession();
+            $user = UserGetter::getLoggedInUserOrGuest($this->session);
+
             $sort_by = OrbitInput::get('sortby', 'news_name');
             $sort_mode = OrbitInput::get('sortmode','asc');
             $language = OrbitInput::get('language', 'id');
@@ -120,7 +126,8 @@ class PromotionListAPIController extends ControllerAPI
                                                 WHERE onm.news_id = {$prefix}news.news_id
                                                 AND CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) between {$prefix}news.begin_date and {$prefix}news.end_date) > 0
                                     THEN 'true' ELSE 'false' END AS is_started
-                                "))
+                                "),
+                            'news.created_at')
                             ->join('news_translations', 'news_translations.news_id', '=', 'news.news_id')
                             ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
                             ->leftJoin('media', function($q) {
@@ -185,7 +192,7 @@ class PromotionListAPIController extends ControllerAPI
             // frontend need the mall name
              $mall = null;
              if (! empty($mallId)) {
-                $mall = Mall::select('name')->where('merchant_id', '=', $mallId)->first();
+                $mall = Mall::where('merchant_id', '=', $mallId)->first();
              }
 
             // filter by city
@@ -209,14 +216,32 @@ class PromotionListAPIController extends ControllerAPI
 
             if ($sort_by === 'location' && !empty($lon) && !empty($lat)) {
                 $promotion = $promotion->select(DB::raw("sub_query.news_id"), 'news_name', 'description', DB::raw("sub_query.object_type"), 'image_url', 'campaign_status', 'is_started', DB::raw("min(distance) as distance"))
-                                       ->orderBy('distance', $sort_mode);
+                                       ->orderBy('distance', 'asc');
             } else {
                 $promotion = $promotion->select(DB::raw("sub_query.news_id"), 'news_name', 'description', DB::raw("sub_query.object_type"), 'image_url', 'campaign_status', 'is_started');
             }
 
             $promotion = $promotion->groupBy(DB::Raw("sub_query.news_id"));
 
-            $promotion = $promotion->orderBy('news_name', 'asc');
+            OrbitInput::get('sortby', function($_sortBy) use (&$sort_by)
+            {
+                // Map the sortby request to the real column name
+                $sortByMapping = array(
+                    'name'            => 'news_name',
+                    'created_date'    => 'created_at'
+                );
+
+                $sort_by = $sortByMapping[$_sortBy];
+            });
+
+            OrbitInput::get('sortmode', function($_sortMode) use (&$sort_mode)
+            {
+                if (strtolower($_sortMode) !== 'asc') {
+                    $sort_mode = 'desc';
+                }
+            });
+
+            $promotion = $promotion->orderBy($sort_by, $sort_mode);
 
             OrbitInput::get('keyword', function($keyword) use ($promotion, $prefix) {
                  if (! empty($keyword)) {
@@ -273,6 +298,19 @@ class PromotionListAPIController extends ControllerAPI
                 $data->mall_name = $mall->name;
             }
             $data->records = $listOfRec;
+
+            if (empty($skip) && OrbitInput::get('from_mall_ci', '') !== 'y') {
+                $activityNotes = sprintf('Page viewed: Promotion list');
+                $activity->setUser($user)
+                    ->setActivityName('view_promotions_main_page')
+                    ->setActivityNameLong('View Promotions Main Page')
+                    ->setObject(null)
+                    ->setLocation($mall)
+                    ->setModuleName('Promotion')
+                    ->setNotes($activityNotes)
+                    ->responseOK()
+                    ->save();
+            }
 
             $this->response->data = $data;
             $this->response->code = 0;
