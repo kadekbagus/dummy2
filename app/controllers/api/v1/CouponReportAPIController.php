@@ -1779,11 +1779,7 @@ class CouponReportAPIController extends ControllerAPI
                 }
             });
 
-            if ($sortBy === 'age') {
-                $coupons->orderByRaw('CAST(age AS UNSIGNED) ' . $sortMode);
-            } else {
-                $coupons->orderBy($sortBy, $sortMode);
-            }
+            $coupons->orderBy($sortBy, $sortMode);
 
             // include sorting coupon code
             if ($sortBy !== 'issued_coupons.issued_coupon_code') {
