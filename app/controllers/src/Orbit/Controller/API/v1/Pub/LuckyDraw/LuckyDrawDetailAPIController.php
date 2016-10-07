@@ -22,6 +22,7 @@ use Config;
 use LuckyDraw;
 use stdclass;
 use DB;
+use Mall;
 use URL;
 use Orbit\Controller\API\v1\Pub\LuckyDraw\LuckyDrawHelper;
 use Carbon\Carbon;
