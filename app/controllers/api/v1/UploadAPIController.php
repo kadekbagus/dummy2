@@ -8216,16 +8216,16 @@ class UploadAPIController extends ControllerAPI
 
             // Application input
             $merchant_id = OrbitInput::post('merchant_id');
-            $picture_index = OrbitInput::post('picture_index');
+            $delete_index = OrbitInput::post('delete_index');
 
             $validator = Validator::make(
                 array(
                     'merchant_id'   => $merchant_id,
-                    'picture_index' => $picture_index,
+                    'delete_index' => $delete_index,
                 ),
                 array(
                     'merchant_id'   => 'required|orbit.empty.mall',
-                    'picture_index' => 'array',
+                    'delete_index' => 'array',
                 )
             );
 
@@ -8252,9 +8252,9 @@ class UploadAPIController extends ControllerAPI
                               ->where('object_name', 'mall')
                               ->where('media_name_id', 'mall_map');
 
-            if (! empty($picture_index)) {
-                $pastMedia->where(function($q) use ($picture_index) {
-                    foreach ($picture_index as $indexOrder) {
+            if (! empty($delete_index)) {
+                $pastMedia->where(function($q) use ($delete_index) {
+                    foreach ($delete_index as $indexOrder) {
                         $q->orWhere('metadata', 'order-' . $indexOrder);
                     }
                 });
