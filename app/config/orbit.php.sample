@@ -3446,6 +3446,7 @@ return array(
                 'parameter_name' => null
             ),
             // - Stores View
+            // *** Moved to the getStoreList() ***
             '15' => array(
                 'name' => 'view_stores_main_page',
                 'name_long' => 'View Stores Main Page',
@@ -3905,7 +3906,7 @@ return array(
             // - User clicks a coupon from mall coupon list page
             '64' => array(
                 'name' => 'click_in_mall_coupon_list',
-                'name_long' => 'Click coupon from mall coupon listt',
+                'name_long' => 'Click coupon from mall coupon list',
                 'module_name' => 'Coupon',
                 'type' => 'click',
                 'object_type' => 'Coupon',
@@ -3915,6 +3916,80 @@ return array(
             '65' => array(
                 'name' => 'click_mall_featured_coupon',
                 'name_long' => 'Click mall featured coupon',
+                'module_name' => 'Coupon',
+                'type' => 'click',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'coupon_id'
+            ),
+            // - User clicks on "Stores" from mall sidebar menu
+            '66' => array(
+                'name' => 'click_mall_menu_stores',
+                'name_long' => 'Click mall menu (Stores)',
+                'module_name' => 'Store',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - User clicks on "See all" on coupon carousel in mall page
+            '67' => array(
+                'name' => 'click_see_all_mall_stores',
+                'name_long' => 'Click see all (Mall Stores)',
+                'module_name' => 'Store',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - User clicks a store from mall store list page
+            '68' => array(
+                'name' => 'click_in_mall_store_list',
+                'name_long' => 'Click store from mall store list',
+                'module_name' => 'Store',
+                'type' => 'click',
+                'object_type' => 'Tenant',
+                'parameter_name' => 'store_id'
+            ),
+            // - User clicks on one of the stores featured in store carousel (mall page)
+            '69' => array(
+                'name' => 'click_mall_featured_store',
+                'name_long' => 'Click mall featured store',
+                'module_name' => 'Store',
+                'type' => 'click',
+                'object_type' => 'Tenant',
+                'parameter_name' => 'store_id'
+            ),
+            // - User clicks on mall sidebar menu
+            '70' => array(
+                'name' => 'click_mall_menu',
+                'name_long' => 'Click mall menu',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - User clicks on one of the news/event featured in mall carousel (top of mall page)
+            '71' => array(
+                'name' => 'click_mall_featured_carousel',
+                'name_long' => 'Click mall featured carousel',
+                'module_name' => 'News',
+                'type' => 'click',
+                'object_type' => 'News',
+                'parameter_name' => 'news_id'
+            ),
+
+            // - User clicks on one of the promotion featured in mall carousel (top of mall page)
+            '72' => array(
+                'name' => 'click_mall_featured_carousel',
+                'name_long' => 'Click mall featured carousel',
+                'module_name' => 'Promotion',
+                'type' => 'click',
+                'object_type' => 'Promotion',
+                'parameter_name' => 'promotion_id'
+            ),
+
+            // - User clicks on one of the coupon featured in mall carousel (top of mall page)
+            '73' => array(
+                'name' => 'click_mall_featured_carousel',
+                'name_long' => 'Click mall featured carousel',
                 'module_name' => 'Coupon',
                 'type' => 'click',
                 'object_type' => 'Coupon',
