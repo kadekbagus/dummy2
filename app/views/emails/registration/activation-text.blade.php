@@ -1,6 +1,6 @@
 Selamat Datang di Gotomalls!
 
-Hi {{ $first_name or $email }},
+Hello {{ $first_name or $email }},
 Terima kasih sudah bergabung dengan Gotomalls! Untuk mulai menggunakan Gotomalls, Untuk mengaktifkan akun Anda, silakan klik di bawah ini.
 
 {{ $token_url }}
@@ -12,3 +12,6 @@ Setelah itu, Anda dapet mengakses Gotomalls dengan akun yang sama di perangkat y
 
 
 Have fun with Gotomalls!
+
+
+Gotomalls Team
