@@ -86,7 +86,7 @@ class ElasticsearchUpdateMallIsSubscribed extends Command
 
                     $this->info('Updating is_subscribed field in mall ' . $mall->name . '... OK');
                 } else {
-                    throw new Exception("Mall %s not found in Elasticsearch.\n", $mall->name);
+                    throw new Exception(sprintf("Mall %s not found in Elasticsearch.\n", $mall->name));
                 }
             } catch (Exception $e) {
                 $this->error('Updating is_subscribed field in mall ' . $mall->name . '... FAILED.' . "\n  Message: {$e->getMessage()}");
