@@ -3446,6 +3446,7 @@ return array(
                 'parameter_name' => null
             ),
             // - Stores View
+            // *** Moved to the getStoreList() ***
             '15' => array(
                 'name' => 'view_stores_main_page',
                 'name_long' => 'View Stores Main Page',
