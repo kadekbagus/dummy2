@@ -165,7 +165,7 @@ class CouponWalletListAPIController extends ControllerAPI
                 $coupon->addSelect(DB::raw("CASE WHEN t.object_type = 'tenant' THEN m.name ELSE t.name END as mall_name"));
                 $coupon->havingRaw("mall_id = {$this->quote($mallId)}");
                 $mall = Mall::excludeDeleted()
-                        ->where('merchant_id', OrbitInput::get('mall_id'))
+                        ->where('merchant_id', $mallId)
                         ->first();
             });
 
