@@ -198,7 +198,7 @@ class CouponListAPIController extends ControllerAPI
                 $coupon->addSelect(DB::raw('mall_name'));
                 $coupon->where(DB::raw('mall_id'), '=', DB::raw("{$this->quote($mallId)}"));
                 $mall = Mall::excludeDeleted()
-                        ->where('merchant_id', OrbitInput::get('mall_id'))
+                        ->where('merchant_id', $mallId)
                         ->first();
             });
 

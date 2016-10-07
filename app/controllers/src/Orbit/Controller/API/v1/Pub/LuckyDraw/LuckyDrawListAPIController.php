@@ -162,7 +162,7 @@ class LuckyDrawListAPIController extends IntermediateBaseController
                 // indicates this API is accessed from mall ci
                 $luckydraws->where('lucky_draws.mall_id', $mallid);
                 $mall = Mall::excludeDeleted()
-                        ->where('merchant_id', OrbitInput::get('mall_id'))
+                        ->where('merchant_id', $mallid)
                         ->first();
             });
 
