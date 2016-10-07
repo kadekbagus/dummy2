@@ -184,12 +184,6 @@ class CouponListAPIController extends ControllerAPI
             $querySql = $coupons->toSql();
             $coupon = DB::table(DB::Raw("({$querySql}) as sub_query"))->mergeBindings($coupons->getQuery());
 
-            OrbitInput::get('mall_id', function ($mallid) use ($coupon, $prefix) {
-                $coupon->addSelect(DB::raw('mall_id'));
-                $coupon->addSelect(DB::raw('mall_name'));
-                $coupon->where(DB::raw('mall_id'), '=', DB::raw("{$this->quote($mallid)}"));
-            });
-
             if ($sort_by === 'location' && !empty($lon) && !empty($lat)) {
                 $coupon = $coupon->select('coupon_id', 'coupon_name', 'description', DB::raw("sub_query.status"), 'campaign_status', 'is_started', 'image_url', DB::raw("min(distance) as distance"))
                                  ->groupBy('coupon_id')
@@ -198,6 +192,15 @@ class CouponListAPIController extends ControllerAPI
                 $coupon = $coupon->select('coupon_id', 'coupon_name', 'description', DB::raw("sub_query.status"), 'campaign_status', 'is_started', 'image_url')
                                  ->groupBy('coupon_id');
             }
+
+            OrbitInput::get('mall_id', function ($mallId) use ($coupon, $prefix, &$mall) {
+                $coupon->addSelect(DB::raw('mall_id'));
+                $coupon->addSelect(DB::raw('mall_name'));
+                $coupon->where(DB::raw('mall_id'), '=', DB::raw("{$this->quote($mallId)}"));
+                $mall = Mall::excludeDeleted()
+                        ->where('merchant_id', OrbitInput::get('mall_id'))
+                        ->first();
+            });
 
             OrbitInput::get('sortby', function($_sortBy) use (&$sort_by)
             {
