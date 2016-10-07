@@ -114,7 +114,7 @@ class CampaignLocationAPIController extends ControllerAPI
                             IF({$tablePrefix}news_merchant.object_type = 'retailer', CONCAT(om.name,' at ', pm.name), CONCAT('Mall at ', om.name) )
                             FROM {$tablePrefix}news_merchant
                             inner join {$tablePrefix}merchants om on om.merchant_id = {$tablePrefix}news_merchant.merchant_id
-                            inner join {$tablePrefix}merchants pm on om.parent_id = pm.merchant_id
+                            left join {$tablePrefix}merchants pm on om.parent_id = pm.merchant_id
                             where 1=1
                             and {$tablePrefix}news_merchant.news_id = {$this->quote($campaign_id)}
                             and {$tablePrefix}news_merchant.merchant_id = `{$tablePrefix}merchants`.`merchant_id`
@@ -130,7 +130,7 @@ class CampaignLocationAPIController extends ControllerAPI
                             IF({$tablePrefix}promotion_retailer.object_type = 'tenant', CONCAT(om.name,' at ', pm.name), CONCAT('Mall at ', om.name) )
                             FROM {$tablePrefix}promotion_retailer
                             inner join {$tablePrefix}merchants om on om.merchant_id = {$tablePrefix}promotion_retailer.retailer_id
-                            inner join {$tablePrefix}merchants pm on om.parent_id = pm.merchant_id
+                            left join {$tablePrefix}merchants pm on om.parent_id = pm.merchant_id
                             where 1=1
                             and {$tablePrefix}promotion_retailer.promotion_id = {$this->quote($campaign_id)}
                             and {$tablePrefix}promotion_retailer.retailer_id = `{$tablePrefix}merchants`.`merchant_id`
