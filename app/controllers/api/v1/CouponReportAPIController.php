@@ -1662,11 +1662,11 @@ class CouponReportAPIController extends ControllerAPI
 
             // Filter by redemption place
             OrbitInput::get('redemption_place', function($place) use ($coupons, $prefix) {
-                $coupons->whereRaw("
+                $coupons->whereRaw("(
                                         CONCAT({$prefix}users.user_firstname, ' ', {$prefix}users.user_lastname, ' at ', om_employee.name) like '%{$place}%'
                                         OR
                                         CONCAT({$prefix}merchants.name, ' at ', om_parent.name) like '%{$place}%'
-                                    ");
+                                    )");
             });
 
             // Filter by gender
