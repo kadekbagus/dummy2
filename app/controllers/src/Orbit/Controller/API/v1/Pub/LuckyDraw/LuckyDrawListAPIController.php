@@ -140,7 +140,7 @@ class LuckyDrawListAPIController extends IntermediateBaseController
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
                     'name'          => 'lucky_draw_name',
-                    'created_at'    => 'lucky_draws.created_at'
+                    'created_date'  => 'lucky_draws.created_at'
                 );
 
                 $sort_by = $sortByMapping[$_sortBy];
@@ -158,9 +158,9 @@ class LuckyDrawListAPIController extends IntermediateBaseController
                 $luckydraws->where('lucky_draws.object_type', $objType);
             });
 
-            OrbitInput::get('mall_id', function($mallId) use($luckydraws, &$mall) {
+            OrbitInput::get('mall_id', function($mallid) use($luckydraws, &$mall) {
                 // indicates this API is accessed from mall ci
-                $luckydraws->where('lucky_draws.mall_id', $mallId);
+                $luckydraws->where('lucky_draws.mall_id', $mallid);
                 $mall = Mall::excludeDeleted()
                         ->where('merchant_id', OrbitInput::get('mall_id'))
                         ->first();

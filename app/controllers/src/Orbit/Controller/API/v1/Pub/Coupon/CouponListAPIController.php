@@ -184,10 +184,10 @@ class CouponListAPIController extends ControllerAPI
             $querySql = $coupons->toSql();
             $coupon = DB::table(DB::Raw("({$querySql}) as sub_query"))->mergeBindings($coupons->getQuery());
 
-            OrbitInput::get('mall_id', function ($mallId) use ($coupon, $prefix) {
+            OrbitInput::get('mall_id', function ($mallid) use ($coupon, $prefix) {
                 $coupon->addSelect(DB::raw('mall_id'));
                 $coupon->addSelect(DB::raw('mall_name'));
-                $coupon->where(DB::raw('mall_id'), '=', DB::raw("{$this->quote($mallId)}"));
+                $coupon->where(DB::raw('mall_id'), '=', DB::raw("{$this->quote($mallid)}"));
             });
 
             if ($sort_by === 'location' && !empty($lon) && !empty($lat)) {
@@ -203,8 +203,8 @@ class CouponListAPIController extends ControllerAPI
             {
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
-                    'name'          => 'coupon_name',
-                    'created_at'    => 'created_at'
+                    'name'            => 'coupon_name',
+                    'created_date'    => 'created_at'
                 );
 
                 $sort_by = $sortByMapping[$_sortBy];
