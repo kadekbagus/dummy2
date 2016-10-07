@@ -105,8 +105,8 @@ class GenericActivityAPIController extends IntermediateBaseController
                     $objectString = OrbitInput::post($activityObjectTypeParamName, NULL);
                     if ($activityObjectType === '--SET BY object_type_parameter_name--' && ! empty($objectString)) {
                         // check if class exists
-                        if (class_exists(ucfirst($objectString)) ) {
-                            $activityObjectType = ucfirst($objectString);
+                        if (class_exists($objectString) ) {
+                            $activityObjectType = $objectString;
                             // check if model name is instance of Model
                             if (! (new $activityObjectType instanceof Model)) {
                                 OrbitShopAPI::throwInvalidArgument('Invalid object type parameter name');
