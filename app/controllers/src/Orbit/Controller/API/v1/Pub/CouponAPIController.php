@@ -95,8 +95,8 @@ class CouponAPIController extends ControllerAPI
             $prefix = DB::getTablePrefix();
 
             $coupons = Coupon::select(DB::raw("{$prefix}promotions.promotion_id as coupon_id,
-                                CASE WHEN {$prefix}coupon_translations.promotion_name = '' THEN {$prefix}promotions.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as coupon_name,
-                                CASE WHEN {$prefix}coupon_translations.description = '' THEN {$prefix}promotions.description ELSE {$prefix}coupon_translations.description END as description,
+                                CASE WHEN ({$prefix}coupon_translations.promotion_name = '' or {$prefix}coupon_translations.promotion_name is null) THEN {$prefix}promotions.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as coupon_name,
+                                CASE WHEN ({$prefix}coupon_translations.description = '' or {$prefix}coupon_translations.description is null) THEN {$prefix}promotions.description ELSE {$prefix}coupon_translations.description END as description,
                                 {$prefix}promotions.status,
                                 CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name
                                     ELSE (CASE WHEN {$prefix}promotions.end_date < (SELECT min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
@@ -126,15 +126,17 @@ class CouponAPIController extends ControllerAPI
                                             ) ELSE {$prefix}media.path END as image_url
                                     "))
                             ->leftJoin('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
-                            ->leftJoin('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
+                            ->leftJoin('coupon_translations', function ($q) use ($valid_language) {
+                                $q->on('coupon_translations.promotion_id', '=', 'promotions.promotion_id')
+                                  ->on('coupon_translations.merchant_language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
+                            })
                             ->leftJoin('languages', 'languages.language_id', '=', 'coupon_translations.merchant_language_id')
-                            ->leftJoin('media', function($q) {
+                            ->leftJoin('media', function ($q) {
                                 $q->on('media.object_id', '=', 'coupon_translations.coupon_translation_id');
                                 $q->on('media.media_name_long', '=', DB::raw("'coupon_translation_image_orig'"));
                             })
                             ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                             ->leftJoin('merchants as m', DB::raw("m.merchant_id"), '=', 'promotion_retailer.retailer_id')
-                            ->where('coupon_translations.merchant_language_id', $valid_language->language_id)
                             ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                             ->orderBy('coupon_name', 'asc');
 
@@ -826,8 +828,8 @@ class CouponAPIController extends ControllerAPI
             $coupon = Coupon::select(
                             'promotions.promotion_id as promotion_id',
                             DB::Raw("
-                                    CASE WHEN {$prefix}coupon_translations.promotion_name = '' THEN {$prefix}promotions.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as promotion_name,
-                                    CASE WHEN {$prefix}coupon_translations.description = '' THEN {$prefix}promotions.description ELSE {$prefix}coupon_translations.description END as description,
+                                CASE WHEN ({$prefix}coupon_translations.promotion_name = '' or {$prefix}coupon_translations.promotion_name is null) THEN {$prefix}promotions.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as promotion_name,
+                                CASE WHEN ({$prefix}coupon_translations.description = '' or {$prefix}coupon_translations.description is null) THEN {$prefix}promotions.description ELSE {$prefix}coupon_translations.description END as description,
                                     CASE WHEN {$prefix}media.path is null THEN (
                                             select m.path
                                             from {$prefix}coupon_translations ct
@@ -860,9 +862,12 @@ class CouponAPIController extends ControllerAPI
                                     THEN 'true' ELSE 'false' END AS is_started
                             ")
                         )
-                        ->join('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
+                        ->leftJoin('coupon_translations', function ($q) use ($valid_language) {
+                            $q->on('coupon_translations.promotion_id', '=', 'promotions.promotion_id')
+                              ->on('coupon_translations.merchant_language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
+                        })
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
-                        ->leftJoin('media', function($q) {
+                        ->leftJoin('media', function ($q) {
                             $q->on('media.object_id', '=', 'coupon_translations.coupon_translation_id');
                             $q->on('media.media_name_long', '=', DB::raw("'coupon_translation_image_orig'"));
                         })
@@ -871,7 +876,6 @@ class CouponAPIController extends ControllerAPI
                             $q->on('issued_coupons.status', '=', DB::Raw("'active'"));
                         })
                         ->where('issued_coupons.issued_coupon_id', '=', $issuedCouponId)
-                        ->where('coupon_translations.merchant_language_id', '=', $valid_language->language_id)
                         ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                         ->first();
 
@@ -1294,8 +1298,8 @@ class CouponAPIController extends ControllerAPI
 
             $coupon = Coupon::select(DB::raw("
                                 {$prefix}promotions.promotion_id as promotion_id,
-                                CASE WHEN {$prefix}coupon_translations.promotion_name = '' THEN {$prefix}promotions.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as coupon_name,
-                                CASE WHEN {$prefix}coupon_translations.description = '' THEN {$prefix}promotions.description ELSE {$prefix}coupon_translations.description END as description,
+                                CASE WHEN ({$prefix}coupon_translations.promotion_name = '' or {$prefix}coupon_translations.promotion_name is null) THEN {$prefix}promotions.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as coupon_name,
+                                CASE WHEN ({$prefix}coupon_translations.description = '' or {$prefix}coupon_translations.description is null) THEN {$prefix}promotions.description ELSE {$prefix}coupon_translations.description END as description,
                                 CASE WHEN {$prefix}media.path is null THEN (
                                         select m.path
                                         from {$prefix}coupon_translations ct
@@ -1338,9 +1342,12 @@ class CouponAPIController extends ControllerAPI
                                 {$prefix}issued_coupons.issued_coupon_id
                             "))
                             ->leftJoin('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
-                            ->leftJoin('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
+                            ->leftJoin('coupon_translations', function ($q) use ($valid_language) {
+                                $q->on('coupon_translations.promotion_id', '=', 'promotions.promotion_id')
+                                  ->on('coupon_translations.merchant_language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
+                            })
                             ->leftJoin('languages', 'languages.language_id', '=', 'coupon_translations.merchant_language_id')
-                            ->leftJoin('media', function($q) {
+                            ->leftJoin('media', function ($q) {
                                 $q->on('media.object_id', '=', 'coupon_translations.coupon_translation_id');
                                 $q->on('media.media_name_long', '=', DB::raw("'coupon_translation_image_orig'"));
                             })
@@ -1349,7 +1356,6 @@ class CouponAPIController extends ControllerAPI
                                 $join->where('issued_coupons.status', '=', 'active');
                             })
                             ->where('issued_coupons.user_id', $user->user_id)
-                            ->where('coupon_translations.merchant_language_id', $valid_language->language_id)
                             ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                             ->groupBy('promotion_id');
 
@@ -1679,8 +1685,8 @@ class CouponAPIController extends ControllerAPI
             $coupon = Coupon::select(
                             'promotions.promotion_id as promotion_id',
                             DB::Raw("
-                                    CASE WHEN {$prefix}coupon_translations.promotion_name = '' THEN {$prefix}promotions.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as promotion_name,
-                                    CASE WHEN {$prefix}coupon_translations.description = '' THEN {$prefix}promotions.description ELSE {$prefix}coupon_translations.description END as description,
+                                CASE WHEN ({$prefix}coupon_translations.promotion_name = '' or {$prefix}coupon_translations.promotion_name is null) THEN {$prefix}promotions.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as promotion_name,
+                                CASE WHEN ({$prefix}coupon_translations.description = '' or {$prefix}coupon_translations.description is null) THEN {$prefix}promotions.description ELSE {$prefix}coupon_translations.description END as description,
                                     CASE WHEN {$prefix}media.path is null THEN (
                                             select m.path
                                             from {$prefix}coupon_translations ct
@@ -1720,9 +1726,12 @@ class CouponAPIController extends ControllerAPI
                                     THEN 'true' ELSE 'false' END AS is_started
                             ")
                         )
-                        ->join('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
+                        ->leftJoin('coupon_translations', function ($q) use ($valid_language) {
+                            $q->on('coupon_translations.promotion_id', '=', 'promotions.promotion_id')
+                              ->on('coupon_translations.merchant_language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
+                        })
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
-                        ->leftJoin('media', function($q) {
+                        ->leftJoin('media', function ($q) {
                             $q->on('media.object_id', '=', 'coupon_translations.coupon_translation_id');
                             $q->on('media.media_name_long', '=', DB::raw("'coupon_translation_image_orig'"));
                         })
@@ -1732,7 +1741,6 @@ class CouponAPIController extends ControllerAPI
                                 $q->on('issued_coupons.status', '=', DB::Raw("'active'"));
                             })
                         ->where('promotions.promotion_id', $couponId)
-                        ->where('coupon_translations.merchant_language_id', '=', $valid_language->language_id)
                         ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                         ->first();
 
