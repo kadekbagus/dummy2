@@ -80,7 +80,7 @@ class NewsListAPIController extends ControllerAPI
                 ),
                 array(
                     'language' => 'required|orbit.empty.language_default',
-                    'sortby'   => 'in:name,location',
+                    'sortby'   => 'in:name,location,created_date',
                 )
             );
 
@@ -228,18 +228,15 @@ class NewsListAPIController extends ControllerAPI
 
             $news = $news->groupBy(DB::Raw("sub_query.news_id"));
 
-            OrbitInput::get('sortby', function($_sortBy) use (&$sort_by)
-            {
-                if ($sort_by !== 'location') {
-                    // Map the sortby request to the real column name
-                    $sortByMapping = array(
-                        'name'          => 'news_name',
-                        'created_date'  => 'created_at'
-                    );
+            if ($sort_by !== 'location') {
+                // Map the sortby request to the real column name
+                $sortByMapping = array(
+                    'name'          => 'news_name',
+                    'created_date'  => 'created_at'
+                );
 
-                    $sort_by = $sortByMapping[$_sortBy];
-                }
-            });
+                $sort_by = $sortByMapping[$sort_by];
+            }
 
             OrbitInput::get('sortmode', function($_sortMode) use (&$sort_mode)
             {

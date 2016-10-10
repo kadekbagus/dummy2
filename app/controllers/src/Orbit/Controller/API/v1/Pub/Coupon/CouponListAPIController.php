@@ -69,7 +69,7 @@ class CouponListAPIController extends ControllerAPI
                 ),
                 array(
                     'language' => 'required|orbit.empty.language_default',
-                    'sortby'   => 'in:name,location',
+                    'sortby'   => 'in:name,location,created_date',
                 ),
                 array(
                 )
@@ -209,18 +209,15 @@ class CouponListAPIController extends ControllerAPI
                         ->first();
             });
 
-            OrbitInput::get('sortby', function($_sortBy) use (&$sort_by)
-            {
-                if ($sort_by !== 'location') {
-                    // Map the sortby request to the real column name
-                    $sortByMapping = array(
-                        'name'            => 'coupon_name',
-                        'created_date'    => 'created_at'
-                    );
+            if ($sort_by !== 'location') {
+                // Map the sortby request to the real column name
+                $sortByMapping = array(
+                    'name'            => 'coupon_name',
+                    'created_date'    => 'created_at'
+                );
 
-                    $sort_by = $sortByMapping[$_sortBy];
-                }
-            });
+                $sort_by = $sortByMapping[$sort_by];
+            }
 
             OrbitInput::get('sortmode', function($_sortMode) use (&$sort_mode)
             {
