@@ -53,7 +53,7 @@ class ESMallDeleteQueue
     public function fire($job, $data)
     {
         $mallId = $data['mall_id'];
-        $mall = Mall::with('country')
+        $mall = Mall::with('country', 'mediaMapOrig')
                     ->where('status', 'deleted')
                     ->where('merchant_id', $mallId)
                     ->first();
@@ -68,7 +68,6 @@ class ESMallDeleteQueue
         }
 
         $esConfig = Config::get('orbit.elasticsearch');
-        $geofence = MerchantGeofence::getDefaultValueForAreaAndPosition($mallId);
         $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
 
         try {
