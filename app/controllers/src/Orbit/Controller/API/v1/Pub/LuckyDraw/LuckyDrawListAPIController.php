@@ -67,7 +67,7 @@ class LuckyDrawListAPIController extends IntermediateBaseController
                 }
             }
 
-            $sort_by = OrbitInput::get('sortby', 'lucky_draw_name');
+            $sort_by = OrbitInput::get('sortby', 'name');
             $sort_mode = OrbitInput::get('sortmode','asc');
             $language = OrbitInput::get('language', 'id');
 
