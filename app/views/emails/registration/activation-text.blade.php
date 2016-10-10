@@ -5,7 +5,7 @@ Terima kasih sudah bergabung dengan Gotomalls! Untuk mulai menggunakan Gotomalls
 
 {{ $token_url }}
 
-Setelah itu, Anda dapet mengakses Gotomalls dengan akun yang sama di perangkat yang lain dengan cara:
+Setelah itu, Anda dapat mengakses Gotomalls dengan akun yang sama di perangkat yang lain dengan cara:
 1. Menekan tombol "Sign In"
 2. Masukan alamat email
 3. Input password

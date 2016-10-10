@@ -1109,9 +1109,10 @@ class Activity extends Eloquent
     protected function saveToCampaignPopUpClick()
     {
         $activity_name_long_array = array(
-            'Click Coupon Pop Up'      => 'Click Coupon Pop Up',
-            'Click Promotion Pop Up'   => 'Click Promotion Pop Up',
-            'Click News Pop Up'        => 'Click News Pop Up',
+            'Click Coupon Pop Up'          => 'Click Coupon Pop Up',
+            'Click Promotion Pop Up'       => 'Click Promotion Pop Up',
+            'Click News Pop Up'            => 'Click News Pop Up',
+            'Click mall featured carousel' => 'Click mall featured carousel',
         );
 
         $proceed = in_array($this->activity_name_long, $activity_name_long_array);
