@@ -55,7 +55,7 @@ class ESMallUpdateQueue
     {
         $mallId = $data['mall_id'];
         $prefix = DB::getTablePrefix();
-        $mall = Mall::with('country')
+        $mall = Mall::with('country', 'mediaMapOrig')
                     ->leftJoin(DB::raw("(select * from {$prefix}media where media_name_long = 'mall_logo_orig') as med"), DB::raw("med.object_id"), '=', 'merchants.merchant_id')
                     ->where('merchants.status', '!=', 'deleted')
                     ->where('merchants.merchant_id', $mallId)
@@ -69,6 +69,8 @@ class ESMallUpdateQueue
                 'message' => sprintf('[Job ID: `%s`] Mall ID %s is not found.', $job->getJobId(), $mallId)
             ];
         }
+
+        $maps_url = $mall->mediaMapOrig->lists('path');
 
         $esConfig = Config::get('orbit.elasticsearch');
         $geofence = MerchantGeofence::getDefaultValueForAreaAndPosition($mallId);
@@ -107,6 +109,7 @@ class ESMallUpdateQueue
                             'operating_hours' => $mall->operating_hours,
                             'object_type'     => $mall->object_type,
                             'logo_url'        => $mall->path,
+                            'maps_url'        => $maps_url,
                             'status'          => $mall->status,
                             'ci_domain'       => $mall->ci_domain,
                             'is_subscribed'   => $mall->is_subscribed,
@@ -144,6 +147,7 @@ class ESMallUpdateQueue
                         'operating_hours' => $mall->operating_hours,
                         'object_type'     => $mall->object_type,
                         'logo_url'        => $mall->path,
+                        'maps_url'        => $maps_url,
                         'status'          => $mall->status,
                         'ci_domain'       => $mall->ci_domain,
                         'is_subscribed'   => $mall->is_subscribed,
