@@ -337,7 +337,7 @@
                                             <td style="word-break:break-word;font-size:0px;padding:10px 25px;" align="center">
                                                 <div style="cursor:auto;color:#000000;font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:22px;">
                                                     <p align="justify" style="margin:0">
-                                                    Setelah itu, Anda dapet mengakses Gotomalls dengan akun yang sama di perangkat yang lain dengan cara:
+                                                    Setelah itu, Anda dapat mengakses Gotomalls dengan akun yang sama di perangkat yang lain dengan cara:
                                                     </p>
                                                       <ol>
                                                         <li style="text-align:left;">Menekan tombol "Sign In"</li>
