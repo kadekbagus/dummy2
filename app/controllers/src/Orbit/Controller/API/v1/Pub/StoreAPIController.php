@@ -568,17 +568,17 @@ class StoreAPIController extends ControllerAPI
                 ->join(DB::raw("(select merchant_id, status, parent_id from {$prefix}merchants where object_type = 'mall') as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                 ->where('merchants.status', 'active')
                 ->whereRaw("oms.status = 'active'")
-                ->where('merchants.name', $storename)
-                ->orderBy('merchants.created_at', 'asc');
+                ->where('merchants.name', $storename);
 
-            OrbitInput::get('mall_id', function($mallId) use ($coupon, &$mall) {
-                $coupon->havingRaw("mall_id = {$this->quote($mallId)}");
+            OrbitInput::get('mall_id', function($mallId) use ($store, &$mall, $prefix) {
+                $store->where('merchants.parent_id', $mallId);
                 $mall = Mall::excludeDeleted()
                         ->where('merchant_id', $mallId)
                         ->first();
             });
 
-            $store->first();
+            $store = $store->orderBy('merchants.created_at', 'asc')
+                ->first();
 
             $activityNotes = sprintf('Page viewed: Landing Page Store Detail Page');
             $activity->setUser($user)
