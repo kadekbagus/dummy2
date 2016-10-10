@@ -13,6 +13,9 @@ use Text\Util\LineChecker;
 use Helper\EloquentRecordCounter as RecordCounter;
 use Config;
 use Mall;
+use Activity;
+use Orbit\Helper\Net\SessionPreparer;
+use Orbit\Helper\Session\UserGetter;
 use stdClass;
 use Orbit\Helper\Util\PaginationNumber;
 use Elasticsearch\ClientBuilder;
@@ -34,9 +37,19 @@ class MallInfoAPIController extends ControllerAPI
     {
         $httpCode = 200;
         try {
+            $activity = Activity::mobileci()->setActivityType('view');
+            $this->session = SessionPreparer::prepareSession();
+            $user = UserGetter::getLoggedInUserOrGuest($this->session);
+            $from_mall_ci = OrbitInput::get('from_mall_ci', 'y');
+
             $usingDemo = Config::get('orbit.is_demo', FALSE);
             $host = Config::get('orbit.elasticsearch');
             $mallId = OrbitInput::get('mall_id', null);
+
+            $mall = null;
+            if (! empty($mallId)) {
+                $mall = Mall::where('merchant_id', '=', $mallId)->first();
+            }
 
             $client = ClientBuilder::create() // Instantiate a new ClientBuilder
                     ->setHosts($host['hosts']) // Set the hosts
@@ -113,6 +126,30 @@ class MallInfoAPIController extends ControllerAPI
                     $areadata[$source] = $val;
                 }
                 $listmall[] = $areadata;
+            }
+
+            if ($from_mall_ci === 'y') {
+                $activityNotes = sprintf('Page viewed: View mall page');
+                $activity->setUser($user)
+                    ->setActivityName('view_mall')
+                    ->setActivityNameLong('View mall page')
+                    ->setObject(null)
+                    ->setLocation($mall)
+                    ->setModuleName('Mall')
+                    ->setNotes($activityNotes)
+                    ->responseOK()
+                    ->save();
+            } else {
+                $activityNotes = sprintf('Page viewed: View mall info');
+                $activity->setUser($user)
+                    ->setActivityName('view_mall_info')
+                    ->setActivityNameLong('View mall info')
+                    ->setObject(null)
+                    ->setLocation($mall)
+                    ->setModuleName('Mall')
+                    ->setNotes($activityNotes)
+                    ->responseOK()
+                    ->save();
             }
 
             $this->response->data = new stdClass();
