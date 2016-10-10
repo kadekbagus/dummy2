@@ -137,14 +137,11 @@ class CouponWalletListAPIController extends ControllerAPI
                                 $q->on('media.object_id', '=', 'coupon_translations.coupon_translation_id');
                                 $q->on('media.media_name_long', '=', DB::raw("'coupon_translation_image_orig'"));
                             })
-                            ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
-                            ->leftJoin('merchants as t', DB::raw("t.merchant_id"), '=', 'promotion_retailer.retailer_id')
-                            ->leftJoin('merchants as m', DB::raw("m.merchant_id"), '=', DB::raw("t.parent_id"))
                             ->join('issued_coupons', function ($join) {
                                 $join->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
                                 $join->where('issued_coupons.status', '=', 'active');
                             })
-                            ->where('issued_coupons.user_id', $user->user_id)
+                            // ->where('issued_coupons.user_id', $user->user_id)
                             ->where('coupon_translations.merchant_language_id', $valid_language->language_id)
                             ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                             ->groupBy('promotion_id');
@@ -161,9 +158,13 @@ class CouponWalletListAPIController extends ControllerAPI
             });
 
             OrbitInput::get('mall_id', function ($mallId) use ($coupon, $prefix, &$mall) {
-                $coupon->addSelect(DB::raw("CASE WHEN t.object_type = 'tenant' THEN t.parent_id ELSE t.merchant_id END as mall_id"));
-                $coupon->addSelect(DB::raw("CASE WHEN t.object_type = 'tenant' THEN m.name ELSE t.name END as mall_name"));
-                $coupon->havingRaw("mall_id = {$this->quote($mallId)}");
+                $coupon->addSelect(DB::raw('m.merchant_id as mall_id'));
+                $coupon->addSelect(DB::raw('m.name as mall_name'));
+                $coupon->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
+                    ->leftJoin('merchants as t', DB::raw("t.merchant_id"), '=', 'promotion_retailer.retailer_id')
+                    ->leftJoin('merchants as m', DB::raw("m.merchant_id"), '=', DB::raw("t.parent_id"));
+                $coupon->where(DB::raw('m.merchant_id'), '=', DB::raw("{$this->quote($mallId)}"));
+
                 $mall = Mall::excludeDeleted()
                         ->where('merchant_id', $mallId)
                         ->first();
