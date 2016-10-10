@@ -4063,6 +4063,16 @@ return array(
                 'object_type' => 'Coupon',
                 'parameter_name' => 'coupon_id'
             ),
+
+            // - View mall page (either from mall list, search, map or geofencing)
+            '74' => array(
+                'name' => 'view_mall',
+                'name_long' => 'View mall page',
+                'module_name' => 'Mall',
+                'type' => 'view',
+                'object_type' => 'Mall',
+                'parameter_name' => 'mall_id'
+            ),
         ),
     ),
 
