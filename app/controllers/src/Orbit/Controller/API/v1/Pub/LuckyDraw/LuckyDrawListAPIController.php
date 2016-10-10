@@ -76,9 +76,11 @@ class LuckyDrawListAPIController extends IntermediateBaseController
             $validator = Validator::make(
                 array(
                     'language' => $language,
+                    'sortby'   => $sort_by,
                 ),
                 array(
                     'language' => 'required|orbit.empty.language_default',
+                    'sortby'   => 'in:name,location',
                 )
             );
 

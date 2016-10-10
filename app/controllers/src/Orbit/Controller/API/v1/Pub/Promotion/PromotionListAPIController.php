@@ -75,9 +75,11 @@ class PromotionListAPIController extends ControllerAPI
             $validator = Validator::make(
                 array(
                     'language' => $language,
+                    'sortby'   => $sort_by,
                 ),
                 array(
                     'language' => 'required|orbit.empty.language_default',
+                    'sortby'   => 'in:name,location',
                 )
             );
 
@@ -225,13 +227,15 @@ class PromotionListAPIController extends ControllerAPI
 
             OrbitInput::get('sortby', function($_sortBy) use (&$sort_by)
             {
-                // Map the sortby request to the real column name
-                $sortByMapping = array(
-                    'name'            => 'news_name',
-                    'created_date'    => 'created_at'
-                );
+                if ($sort_by !== 'location') {
+                    // Map the sortby request to the real column name
+                    $sortByMapping = array(
+                        'name'            => 'news_name',
+                        'created_date'    => 'created_at',
+                    );
 
-                $sort_by = $sortByMapping[$_sortBy];
+                    $sort_by = $sortByMapping[$_sortBy];
+                }
             });
 
             OrbitInput::get('sortmode', function($_sortMode) use (&$sort_mode)
@@ -241,7 +245,9 @@ class PromotionListAPIController extends ControllerAPI
                 }
             });
 
-            $promotion = $promotion->orderBy($sort_by, $sort_mode);
+            if ($sort_by !== 'location') {
+                $promotion = $promotion->orderBy($sort_by, $sort_mode);
+            }
 
             OrbitInput::get('keyword', function($keyword) use ($promotion, $prefix) {
                  if (! empty($keyword)) {
