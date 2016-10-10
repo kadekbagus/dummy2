@@ -59,7 +59,7 @@ class PromotionListAPIController extends ControllerAPI
             $this->session = SessionPreparer::prepareSession();
             $user = UserGetter::getLoggedInUserOrGuest($this->session);
 
-            $sort_by = OrbitInput::get('sortby', 'news_name');
+            $sort_by = OrbitInput::get('sortby', 'name');
             $sort_mode = OrbitInput::get('sortmode','asc');
             $language = OrbitInput::get('language', 'id');
             $location = OrbitInput::get('location', null);
@@ -75,9 +75,11 @@ class PromotionListAPIController extends ControllerAPI
             $validator = Validator::make(
                 array(
                     'language' => $language,
+                    'sortby'   => $sort_by,
                 ),
                 array(
                     'language' => 'required|orbit.empty.language_default',
+                    'sortby'   => 'in:name,location,created_date',
                 )
             );
 
@@ -183,17 +185,17 @@ class PromotionListAPIController extends ControllerAPI
             });
 
             // filter promotions by mall id
-             OrbitInput::get('mall_id', function($mallid) use ($promotions) {
+            OrbitInput::get('mall_id', function($mallid) use ($promotions) {
                 $promotions->where(DB::raw("m.parent_id"), '=', $mallid)
                       ->orWhere(DB::raw("m.merchant_id"), '=', $mallid)
                       ->where('news.object_type', '=', 'promotion');
-             });
+            });
 
             // frontend need the mall name
-             $mall = null;
-             if (! empty($mallId)) {
+            $mall = null;
+            if (! empty($mallId)) {
                 $mall = Mall::where('merchant_id', '=', $mallId)->first();
-             }
+            }
 
             // filter by city
             OrbitInput::get('location', function($location) use ($promotions, $prefix, $lon, $lat, $userLocationCookieName, $distance) {
@@ -223,16 +225,15 @@ class PromotionListAPIController extends ControllerAPI
 
             $promotion = $promotion->groupBy(DB::Raw("sub_query.news_id"));
 
-            OrbitInput::get('sortby', function($_sortBy) use (&$sort_by)
-            {
+            if ($sort_by !== 'location') {
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
                     'name'            => 'news_name',
-                    'created_date'    => 'created_at'
+                    'created_date'    => 'created_at',
                 );
 
-                $sort_by = $sortByMapping[$_sortBy];
-            });
+                $sort_by = $sortByMapping[$sort_by];
+            }
 
             OrbitInput::get('sortmode', function($_sortMode) use (&$sort_mode)
             {
@@ -241,7 +242,9 @@ class PromotionListAPIController extends ControllerAPI
                 }
             });
 
-            $promotion = $promotion->orderBy($sort_by, $sort_mode);
+            if ($sort_by !== 'location') {
+                $promotion = $promotion->orderBy($sort_by, $sort_mode);
+            }
 
             OrbitInput::get('keyword', function($keyword) use ($promotion, $prefix) {
                  if (! empty($keyword)) {

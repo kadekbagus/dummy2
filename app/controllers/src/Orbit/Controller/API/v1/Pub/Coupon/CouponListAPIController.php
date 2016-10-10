@@ -49,7 +49,7 @@ class CouponListAPIController extends ControllerAPI
             $this->session = SessionPreparer::prepareSession();
             $user = UserGetter::getLoggedInUserOrGuest($this->session);
 
-            $sort_by = OrbitInput::get('sortby', 'coupon_name');
+            $sort_by = OrbitInput::get('sortby', 'name');
             $sort_mode = OrbitInput::get('sortmode','asc');
             $usingDemo = Config::get('orbit.is_demo', FALSE);
             $location = OrbitInput::get('location', null);
@@ -65,9 +65,11 @@ class CouponListAPIController extends ControllerAPI
             $validator = Validator::make(
                 array(
                     'language' => $language,
+                    'sortby'   => $sort_by,
                 ),
                 array(
                     'language' => 'required|orbit.empty.language_default',
+                    'sortby'   => 'in:name,location,created_date',
                 ),
                 array(
                 )
@@ -146,7 +148,7 @@ class CouponListAPIController extends ControllerAPI
                 if (!empty($lon) && !empty($lat)) {
                     $coupons = $coupons->addSelect(DB::raw("6371 * acos( cos( radians({$lat}) ) * cos( radians( x({$prefix}merchant_geofences.position) ) ) * cos( radians( y({$prefix}merchant_geofences.position) ) - radians({$lon}) ) + sin( radians({$lat}) ) * sin( radians( x({$prefix}merchant_geofences.position) ) ) ) AS distance"))
                                     ->leftJoin('merchant_geofences', function ($q) use($prefix) {
-                                            $q->on('merchant_geofences.merchant_id', '=', DB::raw("CASE WHEN m.object_type = 'tenant' THEN m.parent_id ELSE m.merchant_id END"));
+                                            $q->on('merchant_geofences.merchant_id', '=', DB::raw("CASE WHEN t.object_type = 'tenant' THEN t.parent_id ELSE t.merchant_id END"));
                                     });
                 }
             }
@@ -154,11 +156,11 @@ class CouponListAPIController extends ControllerAPI
             // filter by category_id
             OrbitInput::get('category_id', function($category_id) use ($coupons, $prefix) {
                 if ($category_id === 'mall') {
-                    $coupons = $coupons->where(DB::raw("m.object_type"), $category_id);
+                    $coupons = $coupons->where(DB::raw("t.object_type"), $category_id);
                 } else {
                     $coupons = $coupons->leftJoin('category_merchant as cm', function($q) {
-                                    $q->on(DB::raw('cm.merchant_id'), '=', DB::raw("m.merchant_id"));
-                                    $q->on(DB::raw("m.object_type"), '=', DB::raw("'tenant'"));
+                                    $q->on(DB::raw('cm.merchant_id'), '=', DB::raw("t.merchant_id"));
+                                    $q->on(DB::raw("t.object_type"), '=', DB::raw("'tenant'"));
                                 })
                         ->where(DB::raw('cm.category_id'), $category_id);
                 }
@@ -169,7 +171,7 @@ class CouponListAPIController extends ControllerAPI
                 $coupons = $coupons->leftJoin('merchants as mp', function($q) {
                                 $q->on(DB::raw("mp.merchant_id"), '=', DB::raw("t.parent_id"));
                                 $q->on(DB::raw("mp.object_type"), '=', DB::raw("'mall'"));
-                                $q->on(DB::raw("m.status"), '=', DB::raw("'active'"));
+                                $q->on(DB::raw("mp.status"), '=', DB::raw("'active'"));
                             });
 
                 if ($location === 'mylocation' && !empty($lon) && !empty($lat)) {
@@ -207,16 +209,15 @@ class CouponListAPIController extends ControllerAPI
                         ->first();
             });
 
-            OrbitInput::get('sortby', function($_sortBy) use (&$sort_by)
-            {
+            if ($sort_by !== 'location') {
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
                     'name'            => 'coupon_name',
                     'created_date'    => 'created_at'
                 );
 
-                $sort_by = $sortByMapping[$_sortBy];
-            });
+                $sort_by = $sortByMapping[$sort_by];
+            }
 
             OrbitInput::get('sortmode', function($_sortMode) use (&$sort_mode)
             {
@@ -225,7 +226,9 @@ class CouponListAPIController extends ControllerAPI
                 }
             });
 
-            $coupon = $coupon->orderBy($sort_by, $sort_mode);
+            if ($sort_by !== 'location') {
+                $coupon = $coupon->orderBy($sort_by, $sort_mode);
+            }
 
             OrbitInput::get('filter_name', function ($filterName) use ($coupon, $prefix) {
                 if (! empty($filterName)) {
