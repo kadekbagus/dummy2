@@ -103,8 +103,6 @@ class CouponListAPIController extends ControllerAPI
                                             WHERE opt.promotion_id = {$prefix}promotions.promotion_id
                                             AND CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) between {$prefix}promotions.begin_date and {$prefix}promotions.end_date) > 0
                                 THEN 'true' ELSE 'false' END AS is_started"),
-                                DB::raw("CASE WHEN t.object_type = 'tenant' THEN t.parent_id ELSE t.merchant_id END as mall_id"),
-                                DB::raw("CASE WHEN t.object_type = 'tenant' THEN m.name ELSE t.name END as mall_name"),
                                 DB::raw("
                                         CASE WHEN {$prefix}media.path is null THEN (
                                                 select m.path
@@ -124,9 +122,6 @@ class CouponListAPIController extends ControllerAPI
                                 $q->on('media.object_id', '=', 'coupon_translations.coupon_translation_id');
                                 $q->on('media.media_name_long', '=', DB::raw("'coupon_translation_image_orig'"));
                             })
-                            ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
-                            ->leftJoin('merchants as t', DB::raw("t.merchant_id"), '=', 'promotion_retailer.retailer_id')
-                            ->leftJoin('merchants as m', DB::raw("m.merchant_id"), '=', DB::raw("t.parent_id"))
                             ->where('coupon_translations.merchant_language_id', $valid_language->language_id)
                             ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                             ->orderBy('coupon_name', 'asc');
@@ -185,18 +180,22 @@ class CouponListAPIController extends ControllerAPI
             $coupon = DB::table(DB::Raw("({$querySql}) as sub_query"))->mergeBindings($coupons->getQuery());
 
             if ($sort_by === 'location' && !empty($lon) && !empty($lat)) {
-                $coupon = $coupon->select('coupon_id', 'coupon_name', 'description', DB::raw("sub_query.status"), 'campaign_status', 'is_started', 'image_url', DB::raw("min(distance) as distance"))
+                $coupon = $coupon->select('coupon_id', 'coupon_name', DB::raw("sub_query.description"), DB::raw("sub_query.status"), 'campaign_status', 'is_started', 'image_url', DB::raw("min(distance) as distance"), DB::raw("sub_query.created_at"))
                                  ->groupBy('coupon_id')
                                  ->orderBy('distance', 'asc');
             } else {
-                $coupon = $coupon->select('coupon_id', 'coupon_name', 'description', DB::raw("sub_query.status"), 'campaign_status', 'is_started', 'image_url')
+                $coupon = $coupon->select('coupon_id', 'coupon_name', DB::raw("sub_query.description"), DB::raw("sub_query.status"), 'campaign_status', 'is_started', 'image_url', DB::raw("sub_query.created_at"))
                                  ->groupBy('coupon_id');
             }
 
             OrbitInput::get('mall_id', function ($mallId) use ($coupon, $prefix, &$mall) {
-                $coupon->addSelect(DB::raw('mall_id'));
-                $coupon->addSelect(DB::raw('mall_name'));
-                $coupon->where(DB::raw('mall_id'), '=', DB::raw("{$this->quote($mallId)}"));
+                $coupon->addSelect(DB::raw('m.merchant_id as mall_id'));
+                $coupon->addSelect(DB::raw('m.name as mall_name'));
+                $coupon->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'coupon_id')
+                    ->leftJoin('merchants as t', DB::raw("t.merchant_id"), '=', 'promotion_retailer.retailer_id')
+                    ->leftJoin('merchants as m', DB::raw("m.merchant_id"), '=', DB::raw("t.parent_id"));
+                $coupon->where(DB::raw('m.merchant_id'), '=', DB::raw("{$this->quote($mallId)}"));
+
                 $mall = Mall::excludeDeleted()
                         ->where('merchant_id', $mallId)
                         ->first();
