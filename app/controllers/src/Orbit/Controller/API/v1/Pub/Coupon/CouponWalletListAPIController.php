@@ -158,12 +158,15 @@ class CouponWalletListAPIController extends ControllerAPI
             });
 
             OrbitInput::get('mall_id', function ($mallId) use ($coupon, $prefix, &$mall) {
-                $coupon->addSelect(DB::raw('m.merchant_id as mall_id'));
-                $coupon->addSelect(DB::raw('m.name as mall_name'));
+                $coupon->addSelect(DB::raw("CASE WHEN t.object_type = 'tenant' THEN t.parent_id ELSE t.merchant_id END as mall_id"));
+                $coupon->addSelect(DB::raw("CASE WHEN t.object_type = 'tenant' THEN m.name ELSE t.name END as mall_name"));
                 $coupon->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                     ->leftJoin('merchants as t', DB::raw("t.merchant_id"), '=', 'promotion_retailer.retailer_id')
                     ->leftJoin('merchants as m', DB::raw("m.merchant_id"), '=', DB::raw("t.parent_id"));
-                $coupon->where(DB::raw('m.merchant_id'), '=', DB::raw("{$this->quote($mallId)}"));
+                $coupon->where(function($q) use ($mallId) {
+                    $q->where(DB::raw('t.merchant_id'), '=', DB::raw("{$this->quote($mallId)}"));
+                    $q->orWhere(DB::raw('m.merchant_id'), '=', DB::raw("{$this->quote($mallId)}"));
+                });
 
                 $mall = Mall::excludeDeleted()
                         ->where('merchant_id', $mallId)
