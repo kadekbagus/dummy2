@@ -3966,14 +3966,34 @@ return array(
                 'object_type' => null,
                 'parameter_name' => null
             ),
-            // - User clicks on one of the campaigns featured in mall carousel (top of mall page)
+            // - User clicks on one of the news/event featured in mall carousel (top of mall page)
             '71' => array(
                 'name' => 'click_mall_featured_carousel',
                 'name_long' => 'Click mall featured carousel',
-                'module_name' => 'Application',
+                'module_name' => 'News',
                 'type' => 'click',
-                'object_type' => null,
-                'parameter_name' => null
+                'object_type' => 'News',
+                'parameter_name' => 'news_id'
+            ),
+
+            // - User clicks on one of the promotion featured in mall carousel (top of mall page)
+            '72' => array(
+                'name' => 'click_mall_featured_carousel',
+                'name_long' => 'Click mall featured carousel',
+                'module_name' => 'Promotion',
+                'type' => 'click',
+                'object_type' => 'Promotion',
+                'parameter_name' => 'promotion_id'
+            ),
+
+            // - User clicks on one of the coupon featured in mall carousel (top of mall page)
+            '73' => array(
+                'name' => 'click_mall_featured_carousel',
+                'name_long' => 'Click mall featured carousel',
+                'module_name' => 'Coupon',
+                'type' => 'click',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'coupon_id'
             ),
         ),
     ),

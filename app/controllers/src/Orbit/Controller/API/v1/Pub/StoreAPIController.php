@@ -569,7 +569,7 @@ class StoreAPIController extends ControllerAPI
                 ->where('merchants.status', 'active')
                 ->whereRaw("oms.status = 'active'")
                 ->where('merchants.name', $storename)
-                ->orderBy('merchants.created_at', 'asc')
+                ->orderBy('merchants.created_at', 'asc');
 
             OrbitInput::get('mall_id', function($mallId) use ($coupon, &$mall) {
                 $coupon->havingRaw("mall_id = {$this->quote($mallId)}");
