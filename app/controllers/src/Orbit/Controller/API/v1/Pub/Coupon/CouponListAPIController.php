@@ -146,7 +146,7 @@ class CouponListAPIController extends ControllerAPI
                 if (!empty($lon) && !empty($lat)) {
                     $coupons = $coupons->addSelect(DB::raw("6371 * acos( cos( radians({$lat}) ) * cos( radians( x({$prefix}merchant_geofences.position) ) ) * cos( radians( y({$prefix}merchant_geofences.position) ) - radians({$lon}) ) + sin( radians({$lat}) ) * sin( radians( x({$prefix}merchant_geofences.position) ) ) ) AS distance"))
                                     ->leftJoin('merchant_geofences', function ($q) use($prefix) {
-                                            $q->on('merchant_geofences.merchant_id', '=', DB::raw("CASE WHEN m.object_type = 'tenant' THEN m.parent_id ELSE m.merchant_id END"));
+                                            $q->on('merchant_geofences.merchant_id', '=', DB::raw("CASE WHEN t.object_type = 'tenant' THEN t.parent_id ELSE t.merchant_id END"));
                                     });
                 }
             }
@@ -154,11 +154,11 @@ class CouponListAPIController extends ControllerAPI
             // filter by category_id
             OrbitInput::get('category_id', function($category_id) use ($coupons, $prefix) {
                 if ($category_id === 'mall') {
-                    $coupons = $coupons->where(DB::raw("m.object_type"), $category_id);
+                    $coupons = $coupons->where(DB::raw("t.object_type"), $category_id);
                 } else {
                     $coupons = $coupons->leftJoin('category_merchant as cm', function($q) {
-                                    $q->on(DB::raw('cm.merchant_id'), '=', DB::raw("m.merchant_id"));
-                                    $q->on(DB::raw("m.object_type"), '=', DB::raw("'tenant'"));
+                                    $q->on(DB::raw('cm.merchant_id'), '=', DB::raw("t.merchant_id"));
+                                    $q->on(DB::raw("t.object_type"), '=', DB::raw("'tenant'"));
                                 })
                         ->where(DB::raw('cm.category_id'), $category_id);
                 }
@@ -169,7 +169,7 @@ class CouponListAPIController extends ControllerAPI
                 $coupons = $coupons->leftJoin('merchants as mp', function($q) {
                                 $q->on(DB::raw("mp.merchant_id"), '=', DB::raw("t.parent_id"));
                                 $q->on(DB::raw("mp.object_type"), '=', DB::raw("'mall'"));
-                                $q->on(DB::raw("m.status"), '=', DB::raw("'active'"));
+                                $q->on(DB::raw("mp.status"), '=', DB::raw("'active'"));
                             });
 
                 if ($location === 'mylocation' && !empty($lon) && !empty($lat)) {
