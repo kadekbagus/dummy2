@@ -109,8 +109,16 @@ class StoreAPIController extends ControllerAPI
                 ->join(DB::raw("(select merchant_id, name, status, parent_id, city from {$prefix}merchants where object_type = 'mall') as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                 ->where('merchants.status', 'active')
                 ->where('merchants.object_type', 'tenant')
-                ->whereRaw("oms.status = 'active'")
-                ->groupBy('merchants.name')
+                ->whereRaw("oms.status = 'active'");
+
+            OrbitInput::get('mall_id', function ($mallId) use ($store, $prefix, &$mall) {
+                $store->where('merchants.parent_id', '=', DB::raw("{$this->quote($mallId)}"));
+                $mall = Mall::excludeDeleted()
+                        ->where('merchant_id', $mallId)
+                        ->first();
+            });
+
+            $store->groupBy('merchants.name')
                 ->orderBy('merchants.name', 'asc')
                 ->orderBy('merchants.created_at', 'asc');
 
@@ -211,12 +219,8 @@ class StoreAPIController extends ControllerAPI
             });
 
             OrbitInput::get('mall_id', function ($mallId) use ($store, $prefix, &$mall) {
-                $store->addSelect(DB::raw('mall_id'));
-                $store->addSelect(DB::raw('mall_name'));
-                $store->where(DB::raw('mall_id'), '=', DB::raw("{$this->quote($mallId)}"));
-                $mall = Mall::excludeDeleted()
-                        ->where('merchant_id', $mallId)
-                        ->first();
+                $store->addSelect('mall_id');
+                $store->addSelect('mall_name');
             });
 
             OrbitInput::get('keyword', function ($keyword) use ($store, $prefix) {
