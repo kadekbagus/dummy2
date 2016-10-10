@@ -382,6 +382,53 @@ class Mall extends Eloquent
     }
 
     /**
+     * Mall has many uploaded media with cropped type.
+     *
+     * @author Irianto <irianto@dominopos.com>
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function mediaCropped()
+    {
+        return $this->hasMany('Media', 'object_id', 'merchant_id')
+                    ->where('object_name', 'mall')
+                    ->where('media_name_long', 'like', '%_cropped_default')
+                    ->orderBy('metadata', 'asc');
+    }
+
+    /**
+     * Merchant has many uploaded map.
+     *
+     * @author Irianto <irianto@dominopos.com>
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function mediaMap()
+    {
+        return $this->media()->where('media_name_id', 'mall_map');
+    }
+
+    /**
+     * Merchant has many uploaded map.
+     *
+     * @author Irianto <irianto@dominopos.com>
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function mediaMapOrig()
+    {
+        return $this->mediaOrig()->where('media_name_id', 'mall_map');
+    }
+
+    /**
+     * Merchant has many uploaded map.
+     *
+     * @author Irianto <irianto@dominopos.com>
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function mediaMapCropped()
+    {
+        return $this->mediaCropped()->where('media_name_id', 'mall_map');
+    }
+
+    /**
      * Merchant has many uploaded logo.
      *
      * @author Rio Astamal <me@rioastamal.net>
