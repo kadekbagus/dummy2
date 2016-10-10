@@ -170,7 +170,7 @@ class CampaignSliderAPIController extends ControllerAPI
             $newsSql = DB::table(DB::Raw("({$newsSql}) as sub_query"))->mergeBindings($news->getQuery())->toSql();
 
             $couponSql = $coupons->toSql();
-            $couponSql = DB::table(DB::Raw("({$newsSql}) as sub_query"))->mergeBindings($coupons->getQuery())->toSql();
+            $couponSql = DB::table(DB::Raw("({$couponSql}) as sub_query"))->mergeBindings($coupons->getQuery())->toSql();
 
             $campaign = DB::table(DB::raw('((' . $newsSql . ') UNION (' . $couponSql . ')) as a'));
 
