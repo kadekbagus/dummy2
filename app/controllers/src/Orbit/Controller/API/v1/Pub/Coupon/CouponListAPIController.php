@@ -122,6 +122,9 @@ class CouponListAPIController extends ControllerAPI
                                 $q->on('media.object_id', '=', 'coupon_translations.coupon_translation_id');
                                 $q->on('media.media_name_long', '=', DB::raw("'coupon_translation_image_orig'"));
                             })
+                            ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
+                            ->leftJoin('merchants as t', DB::raw("t.merchant_id"), '=', 'promotion_retailer.retailer_id')
+                            ->leftJoin('merchants as m', DB::raw("m.merchant_id"), '=', DB::raw("t.parent_id"))
                             ->where('coupon_translations.merchant_language_id', $valid_language->language_id)
                             ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                             ->orderBy('coupon_name', 'asc');
