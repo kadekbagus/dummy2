@@ -15,6 +15,7 @@ use DB;
 use Validator;
 use OrbitShop\API\v1\ResponseProvider;
 use Activity;
+use Mall;
 use Orbit\Helper\Net\SessionPreparer;
 use Orbit\Helper\Session\UserGetter;
 use Lang;
@@ -45,6 +46,7 @@ class CouponWalletListAPIController extends ControllerAPI
         $httpCode = 200;
         $activity = Activity::mobileci()->setActivityType('view');
         $user = NULL;
+        $mall = NULL;
 
         try {
             $this->session = SessionPreparer::prepareSession();
@@ -158,10 +160,13 @@ class CouponWalletListAPIController extends ControllerAPI
                 }
             });
 
-            OrbitInput::get('mall_id', function ($mallId) use ($coupon, $prefix) {
+            OrbitInput::get('mall_id', function ($mallId) use ($coupon, $prefix, &$mall) {
                 $coupon->addSelect(DB::raw("CASE WHEN t.object_type = 'tenant' THEN t.parent_id ELSE t.merchant_id END as mall_id"));
                 $coupon->addSelect(DB::raw("CASE WHEN t.object_type = 'tenant' THEN m.name ELSE t.name END as mall_name"));
                 $coupon->havingRaw("mall_id = {$this->quote($mallId)}");
+                $mall = Mall::excludeDeleted()
+                        ->where('merchant_id', $mallId)
+                        ->first();
             });
 
             OrbitInput::get('keyword', function ($keyword) use ($coupon, $prefix) {
@@ -209,6 +214,7 @@ class CouponWalletListAPIController extends ControllerAPI
                     ->setActivityName('view_landing_page_coupon_wallet_list')
                     ->setActivityNameLong('View GoToMalls Coupon Wallet List')
                     ->setObject(NULL)
+                    ->setLocation($mall)
                     ->setModuleName('Coupon')
                     ->setNotes($activityNotes)
                     ->responseOK()

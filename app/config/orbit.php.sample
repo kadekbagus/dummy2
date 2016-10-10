@@ -3446,6 +3446,7 @@ return array(
                 'parameter_name' => null
             ),
             // - Stores View
+            // *** Moved to the getStoreList() ***
             '15' => array(
                 'name' => 'view_stores_main_page',
                 'name_long' => 'View Stores Main Page',
@@ -3601,6 +3602,7 @@ return array(
                 'parameter_name' => null
             ),
             // - Coupons View
+            // *** Moved to the getCouponList() ***
             '32' => array(
                 'name' => 'view_coupons_main_page',
                 'name_long' => 'View Coupons Main Page',
@@ -3828,6 +3830,170 @@ return array(
                 'type' => 'click',
                 'object_type' => 'LuckyDraw',
                 'parameter_name' => 'lucky_draw_id'
+            ),
+            // - View progressive sign in (name) pop up page
+            '56' => array(
+                'name' => 'view_prog_login_name',
+                'name_long' => 'View progressive sign in (Name)',
+                'module_name' => 'Application',
+                'type' => 'view',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - User gives name in progressive sign in (name) pop up page
+            '57' => array(
+                'name' => 'prog_login_name_ok',
+                'name_long' => 'Progressive sign in (Name)',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - User does not give name or dismiss progressive sign in (name) pop up page
+            '58' => array(
+                'name' => 'prog_login_name_canceled',
+                'name_long' => 'Progressive sign in (Name) canceled',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - View progressive sign in (email) pop up page
+            '59' => array(
+                'name' => 'view_prog_login_email',
+                'name_long' => 'View progressive sign in (Email)',
+                'module_name' => 'Application',
+                'type' => 'view',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - User gives email in progressive sign in (email) pop up page
+            '60' => array(
+                'name' => 'prog_login_email_ok',
+                'name_long' => 'Progressive sign in (Email)',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - User does not give email or dismiss progressive sign in (email) pop up page
+            '61' => array(
+                'name' => 'prog_login_email_canceled',
+                'name_long' => 'Progressive sign in (Email) canceled',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - User clicks on "Coupons" from mall sidebar menu
+            '62' => array(
+                'name' => 'click_mall_menu_coupons',
+                'name_long' => 'Click mall menu (Coupons)',
+                'module_name' => 'Coupon',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - User clicks on "See all" on coupon carousel in mall page
+            '63' => array(
+                'name' => 'click_see_all_mall_coupons',
+                'name_long' => 'Click see all (Mall Coupons)',
+                'module_name' => 'Coupon',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - User clicks a coupon from mall coupon list page
+            '64' => array(
+                'name' => 'click_in_mall_coupon_list',
+                'name_long' => 'Click coupon from mall coupon list',
+                'module_name' => 'Coupon',
+                'type' => 'click',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'coupon_id'
+            ),
+            // - User clicks on one of the coupons featured in coupon carousel (mall page)
+            '65' => array(
+                'name' => 'click_mall_featured_coupon',
+                'name_long' => 'Click mall featured coupon',
+                'module_name' => 'Coupon',
+                'type' => 'click',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'coupon_id'
+            ),
+            // - User clicks on "Stores" from mall sidebar menu
+            '66' => array(
+                'name' => 'click_mall_menu_stores',
+                'name_long' => 'Click mall menu (Stores)',
+                'module_name' => 'Store',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - User clicks on "See all" on coupon carousel in mall page
+            '67' => array(
+                'name' => 'click_see_all_mall_stores',
+                'name_long' => 'Click see all (Mall Stores)',
+                'module_name' => 'Store',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - User clicks a store from mall store list page
+            '68' => array(
+                'name' => 'click_in_mall_store_list',
+                'name_long' => 'Click store from mall store list',
+                'module_name' => 'Store',
+                'type' => 'click',
+                'object_type' => 'Tenant',
+                'parameter_name' => 'store_id'
+            ),
+            // - User clicks on one of the stores featured in store carousel (mall page)
+            '69' => array(
+                'name' => 'click_mall_featured_store',
+                'name_long' => 'Click mall featured store',
+                'module_name' => 'Store',
+                'type' => 'click',
+                'object_type' => 'Tenant',
+                'parameter_name' => 'store_id'
+            ),
+            // - User clicks on mall sidebar menu
+            '70' => array(
+                'name' => 'click_mall_menu',
+                'name_long' => 'Click mall menu',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - User clicks on one of the news/event featured in mall carousel (top of mall page)
+            '71' => array(
+                'name' => 'click_mall_featured_carousel',
+                'name_long' => 'Click mall featured carousel',
+                'module_name' => 'News',
+                'type' => 'click',
+                'object_type' => 'News',
+                'parameter_name' => 'news_id'
+            ),
+
+            // - User clicks on one of the promotion featured in mall carousel (top of mall page)
+            '72' => array(
+                'name' => 'click_mall_featured_carousel',
+                'name_long' => 'Click mall featured carousel',
+                'module_name' => 'Promotion',
+                'type' => 'click',
+                'object_type' => 'Promotion',
+                'parameter_name' => 'promotion_id'
+            ),
+
+            // - User clicks on one of the coupon featured in mall carousel (top of mall page)
+            '73' => array(
+                'name' => 'click_mall_featured_carousel',
+                'name_long' => 'Click mall featured carousel',
+                'module_name' => 'Coupon',
+                'type' => 'click',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'coupon_id'
             ),
         ),
     ),
