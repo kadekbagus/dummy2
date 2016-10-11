@@ -27,6 +27,7 @@ use Orbit\Helper\Session\UserGetter;
 use Orbit\Controller\API\v1\Pub\SocMedAPIController;
 use Orbit\Controller\API\v1\Pub\Promotion\PromotionHelper;
 use Mall;
+use Orbit\Helper\Util\GTMSearchRecorder;
 
 class PromotionListAPIController extends ControllerAPI
 {
@@ -59,7 +60,7 @@ class PromotionListAPIController extends ControllerAPI
             $this->session = SessionPreparer::prepareSession();
             $user = UserGetter::getLoggedInUserOrGuest($this->session);
 
-            $sort_by = OrbitInput::get('sortby', 'news_name');
+            $sort_by = OrbitInput::get('sortby', 'name');
             $sort_mode = OrbitInput::get('sortmode','asc');
             $language = OrbitInput::get('language', 'id');
             $location = OrbitInput::get('location', null);
@@ -70,14 +71,19 @@ class PromotionListAPIController extends ControllerAPI
             $lat = '';
             $mallId = OrbitInput::get('mall_id', null);
 
+             // search by key word or filter or sort by flag
+            $searchFlag = FALSE;
+
             $promotionHelper = PromotionHelper::create();
             $promotionHelper->registerCustomValidation();
             $validator = Validator::make(
                 array(
                     'language' => $language,
+                    'sortby'   => $sort_by,
                 ),
                 array(
                     'language' => 'required|orbit.empty.language_default',
+                    'sortby'   => 'in:name,location,created_date',
                 )
             );
 
@@ -170,7 +176,8 @@ class PromotionListAPIController extends ControllerAPI
             }
 
             // filter by category_id
-            OrbitInput::get('category_id', function($category_id) use ($promotions, $prefix) {
+            OrbitInput::get('category_id', function($category_id) use ($promotions, $prefix, &$searchFlag) {
+                $searchFlag = $searchFlag || TRUE;
                 if ($category_id === 'mall') {
                     $promotions = $promotions->where(DB::raw("m.object_type"), $category_id);
                 } else {
@@ -183,20 +190,21 @@ class PromotionListAPIController extends ControllerAPI
             });
 
             // filter promotions by mall id
-             OrbitInput::get('mall_id', function($mallid) use ($promotions) {
+            OrbitInput::get('mall_id', function($mallid) use ($promotions) {
                 $promotions->where(DB::raw("m.parent_id"), '=', $mallid)
                       ->orWhere(DB::raw("m.merchant_id"), '=', $mallid)
                       ->where('news.object_type', '=', 'promotion');
-             });
+            });
 
             // frontend need the mall name
-             $mall = null;
-             if (! empty($mallId)) {
+            $mall = null;
+            if (! empty($mallId)) {
                 $mall = Mall::where('merchant_id', '=', $mallId)->first();
-             }
+            }
 
             // filter by city
-            OrbitInput::get('location', function($location) use ($promotions, $prefix, $lon, $lat, $userLocationCookieName, $distance) {
+            OrbitInput::get('location', function($location) use ($promotions, $prefix, $lon, $lat, $userLocationCookieName, $distance, &$searchFlag) {
+                $searchFlag = $searchFlag || TRUE;
                 $promotions = $promotions->leftJoin('merchants as mp', function($q) {
                                 $q->on(DB::raw("mp.merchant_id"), '=', DB::raw("m.parent_id"));
                                 $q->on(DB::raw("mp.object_type"), '=', DB::raw("'mall'"));
@@ -215,6 +223,7 @@ class PromotionListAPIController extends ControllerAPI
             $promotion = DB::table(DB::Raw("({$querySql}) as sub_query"))->mergeBindings($promotions->getQuery());
 
             if ($sort_by === 'location' && !empty($lon) && !empty($lat)) {
+                $searchFlag = $searchFlag || TRUE;
                 $promotion = $promotion->select(DB::raw("sub_query.news_id"), 'news_name', 'description', DB::raw("sub_query.object_type"), 'image_url', 'campaign_status', 'is_started', DB::raw("min(distance) as distance"))
                                        ->orderBy('distance', 'asc');
             } else {
@@ -223,16 +232,15 @@ class PromotionListAPIController extends ControllerAPI
 
             $promotion = $promotion->groupBy(DB::Raw("sub_query.news_id"));
 
-            OrbitInput::get('sortby', function($_sortBy) use (&$sort_by)
-            {
+            if ($sort_by !== 'location') {
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
                     'name'            => 'news_name',
-                    'created_date'    => 'created_at'
+                    'created_date'    => 'created_at',
                 );
 
-                $sort_by = $sortByMapping[$_sortBy];
-            });
+                $sort_by = $sortByMapping[$sort_by];
+            }
 
             OrbitInput::get('sortmode', function($_sortMode) use (&$sort_mode)
             {
@@ -241,10 +249,13 @@ class PromotionListAPIController extends ControllerAPI
                 }
             });
 
-            $promotion = $promotion->orderBy($sort_by, $sort_mode);
+            if ($sort_by !== 'location') {
+                $promotion = $promotion->orderBy($sort_by, $sort_mode);
+            }
 
-            OrbitInput::get('keyword', function($keyword) use ($promotion, $prefix) {
-                 if (! empty($keyword)) {
+            OrbitInput::get('keyword', function($keyword) use ($promotion, $prefix, &$searchFlag) {
+                $searchFlag = $searchFlag || TRUE;
+                if (! empty($keyword)) {
                     $promotion = $promotion->leftJoin('keyword_object', DB::Raw("sub_query.news_id"), '=', 'keyword_object.object_id')
                                 ->leftJoin('keywords', 'keyword_object.keyword_id', '=', 'keywords.keyword_id')
                                 ->where(function($query) use ($keyword, $prefix){
@@ -266,7 +277,7 @@ class PromotionListAPIController extends ControllerAPI
                                         }
                                     }
                                 });
-                 }
+                }
             });
 
             OrbitInput::get('filter_name', function ($filterName) use ($promotion, $prefix) {
@@ -280,6 +291,18 @@ class PromotionListAPIController extends ControllerAPI
                 }
             });
 
+            // record GTM search activity
+            if ($searchFlag) {
+                $parameters = [
+                    'displayName' => 'Promotion',
+                    'keywords' => OrbitInput::get('keyword', NULL),
+                    'categories' => OrbitInput::get('category_id', NULL),
+                    'location' => OrbitInput::get('location', NULL),
+                    'sortBy' => OrbitInput::get('sortby', 'name')
+                ];
+
+                GTMSearchRecorder::create($parameters)->saveActivity($user);
+            }
             $_promotion = clone($promotion);
 
             $take = PaginationNumber::parseTakeFromGet('promotion');
@@ -300,16 +323,29 @@ class PromotionListAPIController extends ControllerAPI
             $data->records = $listOfRec;
 
             if (empty($skip) && OrbitInput::get('from_mall_ci', '') !== 'y') {
-                $activityNotes = sprintf('Page viewed: Promotion list');
-                $activity->setUser($user)
-                    ->setActivityName('view_promotions_main_page')
-                    ->setActivityNameLong('View Promotions Main Page')
-                    ->setObject(null)
-                    ->setLocation($mall)
-                    ->setModuleName('Promotion')
-                    ->setNotes($activityNotes)
-                    ->responseOK()
-                    ->save();
+                if (is_object($mall)) {
+                    $activityNotes = sprintf('Page viewed:  View mall promotion list');
+                    $activity->setUser($user)
+                        ->setActivityName('view_mall_promotion_list')
+                        ->setActivityNameLong(' View mall promotion list')
+                        ->setObject(null)
+                        ->setLocation($mall)
+                        ->setModuleName('Promotion')
+                        ->setNotes($activityNotes)
+                        ->responseOK()
+                        ->save();
+                } else {
+                    $activityNotes = sprintf('Page viewed: Promotion list');
+                    $activity->setUser($user)
+                        ->setActivityName('view_promotions_main_page')
+                        ->setActivityNameLong('View Promotions Main Page')
+                        ->setObject(null)
+                        ->setLocation($mall)
+                        ->setModuleName('Promotion')
+                        ->setNotes($activityNotes)
+                        ->responseOK()
+                        ->save();
+                }
             }
 
             $this->response->data = $data;

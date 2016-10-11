@@ -24,6 +24,7 @@ use Coupon;
 use Activity;
 use Orbit\Helper\Net\SessionPreparer;
 use Orbit\Helper\Session\UserGetter;
+use Orbit\Helper\Util\GTMSearchRecorder;
 
 class StoreAPIController extends ControllerAPI
 {
@@ -62,6 +63,9 @@ class StoreAPIController extends ControllerAPI
             $ul = OrbitInput::get('ul');
             $lon = 0;
             $lat = 0;
+
+            // search by key word or filter or sort by flag
+            $searchFlag = FALSE;
 
             $this->registerCustomValidation();
             $validator = Validator::make(
@@ -109,8 +113,16 @@ class StoreAPIController extends ControllerAPI
                 ->join(DB::raw("(select merchant_id, name, status, parent_id, city from {$prefix}merchants where object_type = 'mall') as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                 ->where('merchants.status', 'active')
                 ->where('merchants.object_type', 'tenant')
-                ->whereRaw("oms.status = 'active'")
-                ->groupBy('merchants.name')
+                ->whereRaw("oms.status = 'active'");
+
+            OrbitInput::get('mall_id', function ($mallId) use ($store, $prefix, &$mall) {
+                $store->where('merchants.parent_id', '=', DB::raw("{$this->quote($mallId)}"));
+                $mall = Mall::excludeDeleted()
+                        ->where('merchant_id', $mallId)
+                        ->first();
+            });
+
+            $store->groupBy('merchants.name')
                 ->orderBy('merchants.name', 'asc')
                 ->orderBy('merchants.created_at', 'asc');
 
@@ -122,7 +134,8 @@ class StoreAPIController extends ControllerAPI
                         ->orderBy('name', 'asc');
 
             // filter by category just on first store
-            OrbitInput::get('category_id', function ($category_id) use ($store, $prefix) {
+            OrbitInput::get('category_id', function ($category_id) use ($store, $prefix, &$searchFlag) {
+                $searchFlag = $searchFlag || TRUE;
                 $store->leftJoin(DB::raw("{$prefix}category_merchant cm"), DB::Raw("cm.merchant_id"), '=', DB::Raw("subQuery.merchant_id"))
                     ->where(DB::raw("cm.category_id"), $category_id);
             });
@@ -162,7 +175,8 @@ class StoreAPIController extends ControllerAPI
             }
 
             // filter by city before grouping
-            OrbitInput::get('location', function ($location) use ($store, $prefix, $lon, $lat, $distance) {
+            OrbitInput::get('location', function ($location) use ($store, $prefix, $lon, $lat, $distance, &$searchFlag) {
+                $searchFlag = $searchFlag || TRUE;
                 if ($location === 'mylocation' && ! empty($lon) && ! empty($lat)) {
                     $store->havingRaw("distance <= {$distance}");
                 } else {
@@ -189,6 +203,7 @@ class StoreAPIController extends ControllerAPI
                         ->select(DB::raw('sub_query.merchant_id'), 'name', 'description', 'logo_url');
 
             if ($sort_by === 'location' && ! empty($lon) && ! empty($lat)) {
+                $searchFlag = $searchFlag || TRUE;
                 $sort_by = 'distance';
                 $store = $store->addSelect('distance')
                                 ->groupBy('name')
@@ -211,15 +226,12 @@ class StoreAPIController extends ControllerAPI
             });
 
             OrbitInput::get('mall_id', function ($mallId) use ($store, $prefix, &$mall) {
-                $store->addSelect(DB::raw('mall_id'));
-                $store->addSelect(DB::raw('mall_name'));
-                $store->where(DB::raw('mall_id'), '=', DB::raw("{$this->quote($mallId)}"));
-                $mall = Mall::excludeDeleted()
-                        ->where('merchant_id', $mallId)
-                        ->first();
+                $store->addSelect('mall_id');
+                $store->addSelect('mall_name');
             });
 
-            OrbitInput::get('keyword', function ($keyword) use ($store, $prefix) {
+            OrbitInput::get('keyword', function ($keyword) use ($store, $prefix, &$searchFlag) {
+                $searchFlag = $searchFlag || TRUE;
                 if (! empty($keyword)) {
                     $store = $store->leftJoin('keyword_object', DB::raw('sub_query.merchant_id'), '=', 'keyword_object.object_id')
                                 ->leftJoin('keywords', 'keyword_object.keyword_id', '=', 'keywords.keyword_id')
@@ -245,6 +257,19 @@ class StoreAPIController extends ControllerAPI
                 }
             });
 
+            // record GTM search activity
+            if ($searchFlag) {
+                $parameters = [
+                    'displayName' => 'Store',
+                    'keywords' => OrbitInput::get('keyword', NULL),
+                    'categories' => OrbitInput::get('category_id', NULL),
+                    'location' => OrbitInput::get('location', NULL),
+                    'sortBy' => OrbitInput::get('sortby', 'name')
+                ];
+
+                GTMSearchRecorder::create($parameters)->saveActivity($user);
+            }
+
             $_store = clone $store;
 
             $take = PaginationNumber::parseTakeFromGet('retailer');
@@ -260,16 +285,29 @@ class StoreAPIController extends ControllerAPI
             // omit save activity if accessed from mall ci campaign list 'from_mall_ci' !== 'y'
             // moved from generic activity number 32
             if (empty($skip) && OrbitInput::get('from_mall_ci', '') !== 'y') {
-                $activityNotes = sprintf('Page viewed: Store list');
-                $activity->setUser($user)
-                    ->setActivityName('view_stores_main_page')
-                    ->setActivityNameLong('View Stores Main Page')
-                    ->setObject(null)
-                    ->setLocation($mall)
-                    ->setModuleName('Store')
-                    ->setNotes($activityNotes)
-                    ->responseOK()
-                    ->save();
+                if (is_object($mall)) {
+                    $activityNotes = sprintf('Page viewed: View mall store list page');
+                    $activity->setUser($user)
+                        ->setActivityName('view_mall_store_list')
+                        ->setActivityNameLong('View mall store list')
+                        ->setObject(null)
+                        ->setLocation($mall)
+                        ->setModuleName('Store')
+                        ->setNotes($activityNotes)
+                        ->responseOK()
+                        ->save();
+                } else {
+                    $activityNotes = sprintf('Page viewed: Store list');
+                    $activity->setUser($user)
+                        ->setActivityName('view_stores_main_page')
+                        ->setActivityNameLong('View Stores Main Page')
+                        ->setObject(null)
+                        ->setLocation($mall)
+                        ->setModuleName('Store')
+                        ->setNotes($activityNotes)
+                        ->responseOK()
+                        ->save();
+                }
             }
 
             $this->response->data = new stdClass();
@@ -568,28 +606,41 @@ class StoreAPIController extends ControllerAPI
                 ->join(DB::raw("(select merchant_id, status, parent_id from {$prefix}merchants where object_type = 'mall') as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                 ->where('merchants.status', 'active')
                 ->whereRaw("oms.status = 'active'")
-                ->where('merchants.name', $storename)
-                ->orderBy('merchants.created_at', 'asc');
+                ->where('merchants.name', $storename);
 
-            OrbitInput::get('mall_id', function($mallId) use ($coupon, &$mall) {
-                $coupon->havingRaw("mall_id = {$this->quote($mallId)}");
+            OrbitInput::get('mall_id', function($mallId) use ($store, &$mall, $prefix) {
+                $store->where('merchants.parent_id', $mallId);
                 $mall = Mall::excludeDeleted()
                         ->where('merchant_id', $mallId)
                         ->first();
             });
 
-            $store->first();
+            $store = $store->orderBy('merchants.created_at', 'asc')
+                ->first();
 
-            $activityNotes = sprintf('Page viewed: Landing Page Store Detail Page');
-            $activity->setUser($user)
-                ->setActivityName('view_landing_page_store_detail')
-                ->setActivityNameLong('View GoToMalls Store Detail')
-                ->setObject($store)
-                ->setLocation($mall)
-                ->setModuleName('Store')
-                ->setNotes($activityNotes)
-                ->responseOK()
-                ->save();
+            if (is_object($mall)) {
+                $activityNotes = sprintf('Page viewed: View mall store detail page');
+                $activity->setUser($user)
+                    ->setActivityName('view_mall_store_detail')
+                    ->setActivityNameLong('View mall store detail')
+                    ->setObject($store)
+                    ->setLocation($mall)
+                    ->setModuleName('Store')
+                    ->setNotes($activityNotes)
+                    ->responseOK()
+                    ->save();
+            } else {
+                $activityNotes = sprintf('Page viewed: Landing Page Store Detail Page');
+                $activity->setUser($user)
+                    ->setActivityName('view_landing_page_store_detail')
+                    ->setActivityNameLong('View GoToMalls Store Detail')
+                    ->setObject($store)
+                    ->setLocation($mall)
+                    ->setModuleName('Store')
+                    ->setNotes($activityNotes)
+                    ->responseOK()
+                    ->save();
+            }
 
             $this->response->data = $store;
         } catch (ACLForbiddenException $e) {
@@ -864,7 +915,7 @@ class StoreAPIController extends ControllerAPI
             $news = DB::table('news')->select(
                         'news.news_id as campaign_id',
                         DB::Raw("
-                                CASE WHEN {$prefix}news_translations.news_name = '' THEN {$prefix}news.news_name ELSE {$prefix}news_translations.news_name END as campaign_name
+                                 CASE WHEN ({$prefix}news_translations.news_name = '' or {$prefix}news_translations.news_name is null) THEN {$prefix}news.news_name ELSE {$prefix}news_translations.news_name END as campaign_name
                             "),
                         'news.object_type as campaign_type',
                         // query for get status active based on timezone
@@ -907,16 +958,18 @@ class StoreAPIController extends ControllerAPI
                                         group by nt.news_id
                                     ) ELSE {$prefix}media.path END as original_media_path
                             "))
-                        ->join('news_translations', 'news_translations.news_id', '=', 'news.news_id')
+                        ->leftJoin('news_translations', function ($q) use ($valid_language) {
+                            $q->on('news_translations.news_id', '=', 'news.news_id')
+                              ->on('news_translations.merchant_language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
+                        })
                         ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                         ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
-                        ->leftJoin('media', function($q) {
+                        ->leftJoin('media', function ($q) {
                             $q->on('media.object_id', '=', 'news_translations.news_translation_id');
                             $q->on('media.media_name_long', '=', DB::raw("'news_translation_image_orig'"));
                         })
                         ->where('merchants.name', $store_name)
-                        ->where('news_translations.merchant_language_id', '=', $valid_language->language_id)
                         ->where('news.object_type', '=', 'news')
                         ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                         ->groupBy('campaign_id')
@@ -925,7 +978,7 @@ class StoreAPIController extends ControllerAPI
             $promotions = DB::table('news')->select(
                         'news.news_id as campaign_id',
                         DB::Raw("
-                            CASE WHEN {$prefix}news_translations.news_name = '' THEN {$prefix}news.news_name ELSE {$prefix}news_translations.news_name END as campaign_name
+                                CASE WHEN ({$prefix}news_translations.news_name = '' or {$prefix}news_translations.news_name is null) THEN {$prefix}news.news_name ELSE {$prefix}news_translations.news_name END as campaign_name
                         "),
                         'news.object_type as campaign_type',
                         // query for get status active based on timezone
@@ -967,16 +1020,19 @@ class StoreAPIController extends ControllerAPI
                                         group by nt.news_id
                                     ) ELSE {$prefix}media.path END as original_media_path
                             "))
-                        ->join('news_translations', 'news_translations.news_id', '=', 'news.news_id')
+                        ->leftJoin('news_translations', function ($q) use ($valid_language) {
+                            $q->on('news_translations.news_id', '=', 'news.news_id')
+                              ->on('news_translations.merchant_language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
+                        })
+
                         ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                         ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
-                        ->leftJoin('media', function($q) {
+                        ->leftJoin('media', function ($q) {
                             $q->on('media.object_id', '=', 'news_translations.news_translation_id');
                             $q->on('media.media_name_long', '=', DB::raw("'news_translation_image_orig'"));
                         })
                         ->where('merchants.name', $store_name)
-                        ->where('news_translations.merchant_language_id', '=', $valid_language->language_id)
                         ->where('news.object_type', '=', 'promotion')
                         ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                         ->groupBy('campaign_id')
@@ -985,7 +1041,7 @@ class StoreAPIController extends ControllerAPI
             // get coupon list
             $coupons = DB::table('promotions')->select(DB::raw("
                                 {$prefix}promotions.promotion_id as campaign_id,
-                                CASE WHEN {$prefix}coupon_translations.promotion_name = '' THEN {$prefix}promotions.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as campaign_name,
+                                CASE WHEN ({$prefix}coupon_translations.promotion_name = '' or {$prefix}coupon_translations.promotion_name is null) THEN {$prefix}promotions.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as campaign_name,
                                 'coupon' as campaign_type,
                                 CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
                                 THEN {$prefix}campaign_status.campaign_status_name
@@ -1024,7 +1080,10 @@ class StoreAPIController extends ControllerAPI
                                     ) ELSE {$prefix}media.path END as original_media_path
                             "))
                             ->leftJoin('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
-                            ->leftJoin('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
+                            ->leftJoin('coupon_translations', function ($q) use ($valid_language) {
+                                $q->on('coupon_translations.promotion_id', '=', 'promotions.promotion_id')
+                                  ->on('coupon_translations.merchant_language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
+                            })
                             ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                             ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
                             ->leftJoin('languages', 'languages.language_id', '=', 'coupon_translations.merchant_language_id')
@@ -1033,7 +1092,6 @@ class StoreAPIController extends ControllerAPI
                                 $q->on('media.media_name_long', '=', DB::raw("'coupon_translation_image_orig'"));
                             })
                             ->where('merchants.name', $store_name)
-                            ->where('coupon_translations.merchant_language_id', '=', $valid_language->language_id)
                             ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                             ->groupBy('campaign_id')
                             ->orderBy(DB::raw("{$prefix}promotions.created_at"), 'desc');
