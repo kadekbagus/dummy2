@@ -50,9 +50,17 @@ class GTMSearchRecorder
         }
 
         if (! empty($categories)) {
-            $category = Category::where('category_id', $categories)->first();
-            if (is_object($category)) {
-                $category_name = $category->category_name;
+            if ($categories === 'mall') {
+                $disp = $this->displayName;
+                if (strtolower($this->displayName) === 'news') {
+                    $disp = 'Events';
+                }
+                $category_name =  'Mall ' . $disp;
+            } else {
+                $category = Category::where('category_id', $categories)->first();
+                if (is_object($category)) {
+                    $category_name = $category->category_name;
+                }
             }
         }
 
