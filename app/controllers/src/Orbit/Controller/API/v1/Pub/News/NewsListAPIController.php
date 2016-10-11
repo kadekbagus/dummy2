@@ -27,6 +27,7 @@ use Orbit\Helper\Session\UserGetter;
 use Orbit\Controller\API\v1\Pub\SocMedAPIController;
 use Orbit\Controller\API\v1\Pub\News\NewsHelper;
 use Mall;
+use Orbit\Helper\Util\GTMSearchRecorder;
 
 class NewsListAPIController extends ControllerAPI
 {

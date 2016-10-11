@@ -21,6 +21,7 @@ use Orbit\Helper\Session\UserGetter;
 use Lang;
 use \Exception;
 use Orbit\Controller\API\v1\Pub\Coupon\CouponHelper;
+use Orbit\Helper\Util\GTMSearchRecorder;
 
 class CouponListAPIController extends ControllerAPI
 {
