@@ -1412,8 +1412,10 @@ class Activity extends Eloquent
                 break;
 
             case 'click_mall_featured_carousel':
-                if ($this->module_name == 'News' || $this->module_name == 'Promotion') {
+                if ($this->module_name == 'News') {
                     $groupName = 'News';
+                } elseif ($this->module_name == 'Promotion') {
+                    $groupName = 'Promotion';
                 } elseif ($this->module_name == 'Coupon') {
                     $groupName = 'Coupon';
                 }
