@@ -4099,7 +4099,7 @@ return array(
                 'module_name' => 'Application',
                 'type' => 'click',
                 'object_type' => 'Mall',
-                'parameter_name' => 'mall_id'l
+                'parameter_name' => 'mall_id'
             ),
         ),
     ),
