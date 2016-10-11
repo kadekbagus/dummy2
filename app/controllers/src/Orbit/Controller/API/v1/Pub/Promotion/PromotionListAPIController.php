@@ -97,6 +97,11 @@ class PromotionListAPIController extends ControllerAPI
 
             $prefix = DB::getTablePrefix();
 
+            $withMallId = '';
+            if (! empty($mallId)) {
+                $withMallId = "AND (CASE WHEN om.object_type = 'tenant' THEN oms.merchant_id ELSE om.merchant_id END) = {$this->quote($mallId)}";
+            }
+
             $promotions = News::select(
                             'news.news_id as news_id',
                             DB::Raw("
@@ -122,7 +127,8 @@ class PromotionListAPIController extends ControllerAPI
                                                                                             LEFT JOIN {$prefix}merchants om ON om.merchant_id = onm.merchant_id
                                                                                             LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
                                                                                             LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
-                                                                                        WHERE onm.news_id = {$prefix}news.news_id)
+                                                                                        WHERE onm.news_id = {$prefix}news.news_id
+                                                                                        {$withMallId})
                                     THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END AS campaign_status,
                                     CASE WHEN (SELECT count(onm.merchant_id)
                                                 FROM {$prefix}news_merchant onm
@@ -130,6 +136,7 @@ class PromotionListAPIController extends ControllerAPI
                                                     LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
                                                     LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
                                                 WHERE onm.news_id = {$prefix}news.news_id
+                                                {$withMallId}
                                                 AND CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) between {$prefix}news.begin_date and {$prefix}news.end_date) > 0
                                     THEN 'true' ELSE 'false' END AS is_started
                                 "),
