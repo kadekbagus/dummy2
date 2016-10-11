@@ -4050,7 +4050,7 @@ return array(
                 'name_long' => 'Click mall featured carousel',
                 'module_name' => 'Promotion',
                 'type' => 'click',
-                'object_type' => 'Promotion',
+                'object_type' => 'News',
                 'parameter_name' => 'promotion_id'
             ),
 
