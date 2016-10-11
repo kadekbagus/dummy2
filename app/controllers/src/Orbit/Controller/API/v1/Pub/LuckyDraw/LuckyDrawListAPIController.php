@@ -199,16 +199,29 @@ class LuckyDrawListAPIController extends IntermediateBaseController
             // omit save activity if accessed from mall ci campaign list 'from_mall_ci' !== 'y'
             // moved from generic activity number 17
             if (empty($skip) && OrbitInput::get('from_mall_ci', '') !== 'y') {
-                $activityNotes = sprintf('Page viewed: Lucky draw list');
-                $activity->setUser($user)
-                    ->setActivityName('view_lucky_draws_main_page')
-                    ->setActivityNameLong('View Lucky Draws Main Page')
-                    ->setObject(null)
-                    ->setLocation($mall)
-                    ->setModuleName('LuckyDraw')
-                    ->setNotes($activityNotes)
-                    ->responseOK()
-                    ->save();
+                if (is_object($mall)) {
+                    $activityNotes = sprintf('Page viewed: View mall lucky draw list page');
+                    $activity->setUser($user)
+                        ->setActivityName('view_mall_lucky_draw_list')
+                        ->setActivityNameLong('View mall lucky draw list')
+                        ->setObject(null)
+                        ->setLocation($mall)
+                        ->setModuleName('LuckyDraw')
+                        ->setNotes($activityNotes)
+                        ->responseOK()
+                        ->save();
+                } else {
+                    $activityNotes = sprintf('Page viewed: Lucky draw list');
+                    $activity->setUser($user)
+                        ->setActivityName('view_lucky_draws_main_page')
+                        ->setActivityNameLong('View Lucky Draws Main Page')
+                        ->setObject(null)
+                        ->setLocation($mall)
+                        ->setModuleName('LuckyDraw')
+                        ->setNotes($activityNotes)
+                        ->responseOK()
+                        ->save();
+                }
             }
 
             $totalRec = RecordCounter::create($_luckydraws)->count();
