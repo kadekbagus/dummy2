@@ -86,8 +86,8 @@ class CouponWalletListAPIController extends ControllerAPI
 
             $coupon = Coupon::select(DB::raw("
                                     {$prefix}promotions.promotion_id as promotion_id,
-                                    CASE WHEN {$prefix}coupon_translations.promotion_name = '' THEN {$prefix}promotions.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as coupon_name,
-                                    CASE WHEN {$prefix}coupon_translations.description = '' THEN {$prefix}promotions.description ELSE {$prefix}coupon_translations.description END as description,
+                                    CASE WHEN ({$prefix}coupon_translations.promotion_name = '' or {$prefix}coupon_translations.promotion_name is null) THEN {$prefix}promotions.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as coupon_name,
+                                    CASE WHEN ({$prefix}coupon_translations.description = '' or {$prefix}coupon_translations.description is null) THEN {$prefix}promotions.description ELSE {$prefix}coupon_translations.description END as description,
                                     CASE WHEN {$prefix}media.path is null THEN (
                                             select m.path
                                             from {$prefix}coupon_translations ct
@@ -131,9 +131,12 @@ class CouponWalletListAPIController extends ControllerAPI
                                 ")
                             )
                             ->leftJoin('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
-                            ->leftJoin('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
+                            ->leftJoin('coupon_translations', function ($q) use ($valid_language) {
+                                $q->on('coupon_translations.promotion_id', '=', 'promotions.promotion_id')
+                                  ->on('coupon_translations.merchant_language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
+                            })
                             ->leftJoin('languages', 'languages.language_id', '=', 'coupon_translations.merchant_language_id')
-                            ->leftJoin('media', function($q) {
+                            ->leftJoin('media', function ($q) {
                                 $q->on('media.object_id', '=', 'coupon_translations.coupon_translation_id');
                                 $q->on('media.media_name_long', '=', DB::raw("'coupon_translation_image_orig'"));
                             })
@@ -142,7 +145,6 @@ class CouponWalletListAPIController extends ControllerAPI
                                 $join->where('issued_coupons.status', '=', 'active');
                             })
                             ->where('issued_coupons.user_id', $user->user_id)
-                            ->where('coupon_translations.merchant_language_id', $valid_language->language_id)
                             ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                             ->groupBy('promotion_id');
 
