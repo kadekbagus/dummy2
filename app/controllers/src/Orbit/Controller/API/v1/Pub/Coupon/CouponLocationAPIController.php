@@ -21,6 +21,8 @@ use \Exception;
 use PromotionRetailer;
 use Helper\EloquentRecordCounter as RecordCounter;
 use OrbitShop\API\v1\ResponseProvider;
+use Activity;
+use Coupon;
 
 class CouponLocationAPIController extends ControllerAPI
 {
@@ -28,8 +30,13 @@ class CouponLocationAPIController extends ControllerAPI
     {
         $httpCode = 200;
         $this->response = new ResponseProvider();
+        $activity = Activity::mobileci()->setActivityType('view');
+        $user = null;
 
         try{
+            $this->session = SessionPreparer::prepareSession();
+            $user = UserGetter::getLoggedInUserOrGuest($this->session);
+
             $couponId = OrbitInput::get('coupon_id', null);
             $sort_by = OrbitInput::get('sortby', 'name');
             $sort_mode = OrbitInput::get('sortmode','asc');
@@ -104,6 +111,23 @@ class CouponLocationAPIController extends ControllerAPI
             $couponLocations->orderBy($sort_by, $sort_mode);
 
             $listOfRec = $couponLocations->get();
+
+            // moved from generic activity number 38
+            if (empty($skip)) {
+                $coupon = Coupon::excludeDeleted()
+                    ->where('promotion_id', $couponId)
+                    ->first();
+
+                $activityNotes = sprintf('Page viewed: Coupon location list');
+                $activity->setUser($user)
+                    ->setActivityName('view_coupon_location')
+                    ->setActivityNameLong('View Coupon Location Page')
+                    ->setObject($coupon)
+                    ->setModuleName('Coupon')
+                    ->setNotes($activityNotes)
+                    ->responseOK()
+                    ->save();
+            }
 
             $data = new \stdclass();
             $data->returned_records = count($listOfRec);

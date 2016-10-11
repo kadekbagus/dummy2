@@ -3690,6 +3690,7 @@ return array(
             ),
 
             // - News Location View
+            // *** Moved to the getNewsLocations() ***
             '34' => array(
                 'name' => 'view_news_location',
                 'name_long' => 'View News Location Page',
@@ -3709,6 +3710,7 @@ return array(
             ),
 
             // - Promotion Location View
+            // *** Moved to the getPromotionLocations() ***
             '36' => array(
                 'name' => 'view_promotion_location',
                 'name_long' => 'View Promotion Location Page',
@@ -3728,6 +3730,7 @@ return array(
             ),
 
             // - Coupon Location View
+            // *** Moved to the getCouponLocations() ***
             '38' => array(
                 'name' => 'view_coupon_location',
                 'name_long' => 'View Coupon Location Page',
