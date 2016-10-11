@@ -4063,6 +4063,35 @@ return array(
                 'object_type' => 'Coupon',
                 'parameter_name' => 'coupon_id'
             ),
+            // - Click share button in detail page
+            '74' => array(
+                'name' => 'click_share',
+                'name_long' => 'Click Share',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => '--SET BY object_type_parameter_name--',
+                'object_type_parameter_name' => 'object_type',
+                'parameter_name' => 'object_id'
+            ),
+            // - Click sharing platform e.g: Facebook, email, etc.
+            '75' => array(
+                'name' => 'click_share',
+                'name_long' => 'Click Share Type',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => '--SET BY object_type_parameter_name--',
+                'object_type_parameter_name' => 'object_type',
+                'parameter_name' => 'object_id'
+            ),
+            // - User clicks back to Gotomalls home page
+            '76' => array(
+                'name' => 'click_back_to_GTM',
+                'name_long' => 'Click back to Gotomalls',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => 'Mall',
+                'parameter_name' => 'mall_id'
+            ),
         ),
     ),
 
