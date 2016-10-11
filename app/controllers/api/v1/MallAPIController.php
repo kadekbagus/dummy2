@@ -1576,69 +1576,92 @@ die();
             $geo_point_longitude = OrbitInput::post('geo_point_longitude');
             $geo_area = OrbitInput::post('geo_area');
             $description = OrbitInput::post('description');
+            $logo = OrbitInput::files('logo');
+            $maps = OrbitInput::files('maps');
+
+            // generate array validation image
+            $logo_validation = $this->generate_validation_image('mall_logo', $logo, 'orbit.upload.mall.logo');
+            $maps_validation = $this->generate_validation_image('mall_map', $maps, 'orbit.upload.mall.map', 3);
+
+            $validation_data = [
+                'merchant_id'                      => $merchant_id,
+                'name'                             => $name,
+                'email'                            => $email,
+                'password'                         => $password,
+                'country'                          => $country,
+                'url'                              => $url,
+                'contact_person_email'             => $contact_person_email,
+                'status'                           => $status,
+                'parent_id'                        => $parent_id,
+                'ticket_header'                    => $ticket_header,
+                'ticket_footer'                    => $ticket_footer,
+                'start_date_activity'              => $start_date_activity,
+                'end_date_activity'                => $end_date_activity,
+                'languages'                        => $languages,
+                'domain'                           => $domain,
+                'mobile_default_language'          => $mobile_default_language,
+                'floors'                           => $floors,
+                'description'                      => $description,
+                'free_wifi_status'                 => $free_wifi_status,
+                'geo_point_latitude'               => $geo_point_latitude,
+                'geo_point_longitude'              => $geo_point_longitude,
+                'geo_area'                         => $geo_area
+            ];
+            $validation_error = [
+                'merchant_id'                      => 'required|orbit.empty.mall',
+                'name'                             => 'mall_name_exists_but_me',
+                'email'                            => 'email|email_exists_but_me',
+                'password'                         => 'min:6',
+                'country'                          => 'orbit.empty.country',
+                'url'                              => 'orbit.formaterror.url.web',
+                'contact_person_email'             => 'email',
+                'status'                           => 'orbit.empty.mall_status|orbit_check_link_mallgroup|orbit_check_link_campaign|orbit_check_tenant_mall',
+                'parent_id'                        => 'orbit.empty.mallgroup',
+                'ticket_header'                    => 'ticket_header_max_length',
+                'ticket_footer'                    => 'ticket_footer_max_length',
+                'start_date_activity'              => 'date_format:Y-m-d H:i:s',
+                'end_date_activity'                => 'date_format:Y-m-d H:i:s',
+                'vat_included'                     => 'in:yes,no',
+                'languages'                        => 'array',
+                'domain'                           => 'domain_exist_but_not_me:' . $merchant_id,
+                'mobile_default_language'          => 'size:2|orbit.formaterror.language',
+                'floors'                           => 'array',
+                'description'                      => 'max:25',
+                'free_wifi_status'                 => 'in:active,inactive',
+                'geo_point_latitude'               => 'orbit.formaterror.geo_latitude',
+                'geo_point_longitude'              => 'orbit.formaterror.geo_longitude',
+                'geo_area'                         => 'orbit.formaterror.geo_area'
+            ];
+            $validation_error_message = [
+               'domain_exist_but_not_me'    => Lang::get('validation.orbit.exists.domain'),
+               'mall_name_exists_but_me'    => 'Mall name already exists',
+               'email_exists_but_me'        => Lang::get('validation.orbit.exists.email'),
+               'contact_person_email.email' => 'Email must be a valid email address',
+               'orbit.empty.mall_status'    => 'Mall status you specified is not found',
+               'orbit_check_link_mallgroup' => 'Mall is not linked to active mall group',
+               'orbit_check_link_campaign'  => 'Mall is linked to active campaign(s)',
+               'ticket_header_max_length'   => Lang::get('validation.orbit.formaterror.merchant.ticket_header.max_length'),
+               'ticket_footer_max_length'   => Lang::get('validation.orbit.formaterror.merchant.ticket_footer.max_length'),
+               'orbit_check_tenant_mall'    => 'Mall can not be deactivated, because it has active tenant'
+            ];
+
+            // add validation image
+            if (! empty($logo_validation)) {
+                $validation_data += $logo_validation['data'];
+                $validation_error += $logo_validation['error'];
+                $validation_error_message += $logo_validation['error_message'];
+            }
+
+            if (! empty($maps_validation)) {
+                $validation_data += $maps_validation['data'];
+                $validation_error += $maps_validation['error'];
+                $validation_error_message += $maps_validation['error_message'];
+            }
 
             $validator = Validator::make(
-                array(
-                    'merchant_id'                      => $merchant_id,
-                    'name'                             => $name,
-                    'email'                            => $email,
-                    'password'                         => $password,
-                    'country'                          => $country,
-                    'url'                              => $url,
-                    'contact_person_email'             => $contact_person_email,
-                    'status'                           => $status,
-                    'parent_id'                        => $parent_id,
-                    'ticket_header'                    => $ticket_header,
-                    'ticket_footer'                    => $ticket_footer,
-                    'start_date_activity'              => $start_date_activity,
-                    'end_date_activity'                => $end_date_activity,
-                    'languages'                        => $languages,
-                    'domain'                           => $domain,
-                    'mobile_default_language'          => $mobile_default_language,
-                    'floors'                           => $floors,
-                    'description'                      => $description,
-                    'free_wifi_status'                 => $free_wifi_status,
-                    'geo_point_latitude'               => $geo_point_latitude,
-                    'geo_point_longitude'              => $geo_point_longitude,
-                    'geo_area'                         => $geo_area
-                ),
-                array(
-                    'merchant_id'                      => 'required|orbit.empty.mall',
-                    'name'                             => 'mall_name_exists_but_me',
-                    'email'                            => 'email|email_exists_but_me',
-                    'password'                         => 'min:6',
-                    'country'                          => 'orbit.empty.country',
-                    'url'                              => 'orbit.formaterror.url.web',
-                    'contact_person_email'             => 'email',
-                    'status'                           => 'orbit.empty.mall_status|orbit_check_link_mallgroup|orbit_check_link_campaign|orbit_check_tenant_mall',
-                    'parent_id'                        => 'orbit.empty.mallgroup',
-                    'ticket_header'                    => 'ticket_header_max_length',
-                    'ticket_footer'                    => 'ticket_footer_max_length',
-                    'start_date_activity'              => 'date_format:Y-m-d H:i:s',
-                    'end_date_activity'                => 'date_format:Y-m-d H:i:s',
-                    'vat_included'                     => 'in:yes,no',
-                    'languages'                        => 'array',
-                    'domain'                           => 'domain_exist_but_not_me:' . $merchant_id,
-                    'mobile_default_language'          => 'size:2|orbit.formaterror.language',
-                    'floors'                           => 'array',
-                    'description'                      => 'max:25',
-                    'free_wifi_status'                 => 'in:active,inactive',
-                    'geo_point_latitude'               => 'orbit.formaterror.geo_latitude',
-                    'geo_point_longitude'              => 'orbit.formaterror.geo_longitude',
-                    'geo_area'                         => 'orbit.formaterror.geo_area'
-                ),
-                array(
-                   'domain_exist_but_not_me'    => Lang::get('validation.orbit.exists.domain'),
-                   'mall_name_exists_but_me'    => 'Mall name already exists',
-                   'email_exists_but_me'        => Lang::get('validation.orbit.exists.email'),
-                   'contact_person_email.email' => 'Email must be a valid email address',
-                   'orbit.empty.mall_status'    => 'Mall status you specified is not found',
-                   'orbit_check_link_mallgroup' => 'Mall is not linked to active mall group',
-                   'orbit_check_link_campaign'  => 'Mall is linked to active campaign(s)',
-                   'ticket_header_max_length'   => Lang::get('validation.orbit.formaterror.merchant.ticket_header.max_length'),
-                   'ticket_footer_max_length'   => Lang::get('validation.orbit.formaterror.merchant.ticket_footer.max_length'),
-                   'orbit_check_tenant_mall'    => 'Mall can not be deactivated, because it has active tenant'
-               )
+                $validation_data,
+                $validation_error,
+                $validation_error_message
             );
 
             Event::fire('orbit.mall.postupdatemall.before.validation', array($this, $validator));
