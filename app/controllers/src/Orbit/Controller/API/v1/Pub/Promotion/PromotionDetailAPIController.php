@@ -76,8 +76,8 @@ class PromotionDetailAPIController extends ControllerAPI
             $promotion = News::select(
                             'news.news_id as news_id',
                             DB::Raw("
-                                CASE WHEN {$prefix}news_translations.news_name = '' THEN {$prefix}news.news_name ELSE {$prefix}news_translations.news_name END as news_name,
-                                CASE WHEN {$prefix}news_translations.description = '' THEN {$prefix}news.description ELSE {$prefix}news_translations.description END as description,
+                                CASE WHEN ({$prefix}news_translations.news_name = '' or {$prefix}news_translations.news_name is null) THEN {$prefix}news.news_name ELSE {$prefix}news_translations.news_name END as news_name,
+                                CASE WHEN ({$prefix}news_translations.description = '' or {$prefix}news_translations.description is null) THEN {$prefix}news.description ELSE {$prefix}news_translations.description END as description,
                                 CASE WHEN {$prefix}media.path is null THEN (
                                         select m.path
                                         from {$prefix}news_translations nt
@@ -111,14 +111,16 @@ class PromotionDetailAPIController extends ControllerAPI
                                     THEN 'true' ELSE 'false' END AS is_started
                             ")
                         )
-                        ->join('news_translations', 'news_translations.news_id', '=', 'news.news_id')
+                        ->leftJoin('news_translations', function ($q) use ($valid_language) {
+                            $q->on('news_translations.news_id', '=', 'news.news_id')
+                              ->on('news_translations.merchant_language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
+                        })
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
-                        ->leftJoin('media', function($q) {
+                        ->leftJoin('media', function ($q) {
                             $q->on('media.object_id', '=', 'news_translations.news_translation_id');
                             $q->on('media.media_name_long', '=', DB::raw("'news_translation_image_orig'"));
                         })
                         ->where('news.news_id', $promotionId)
-                        ->where('news_translations.merchant_language_id', '=', $valid_language->language_id)
                         ->where('news.object_type', '=', 'promotion')
                         ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                         ->first();
@@ -206,5 +208,10 @@ class PromotionDetailAPIController extends ControllerAPI
         }
 
         return $this->render($httpCode);
+    }
+
+    protected function quote($arg)
+    {
+        return DB::connection()->getPdo()->quote($arg);
     }
 }
