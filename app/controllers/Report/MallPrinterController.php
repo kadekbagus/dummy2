@@ -65,15 +65,15 @@ class MallPrinterController extends DataPrinterController
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Mall List', '', '', '', '', '','','','','');
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Malls', $totalRec, '', '', '', '','','','','');
 
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '','','','','','');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '','','','','');
 
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Mall Name', 'Subscription', 'Location', 'Start Date', 'End Date', 'Mall Group', 'Status');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Mall Name', 'Subscription', 'Location', 'Start Date', 'End Date', 'Mall Group', 'Status');
 
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '','','','','','');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '','','','','');
 
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
 
-                    printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
+                    printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
                         '', $this->printUtf8($row->name),
                             $this->printSubscription($row->is_subscribed),
                             $this->printLocation($row),
