@@ -21,6 +21,7 @@ use Orbit\Helper\Session\UserGetter;
 use Lang;
 use \Exception;
 use Orbit\Controller\API\v1\Pub\Coupon\CouponHelper;
+use Orbit\Helper\Util\GTMSearchRecorder;
 
 class CouponListAPIController extends ControllerAPI
 {
@@ -62,6 +63,9 @@ class CouponListAPIController extends ControllerAPI
 
             $couponHelper = CouponHelper::create();
             $couponHelper->couponCustomValidator();
+            // search by key word or filter or sort by flag
+            $searchFlag = FALSE;
+
             $validator = Validator::make(
                 array(
                     'language' => $language,
@@ -154,7 +158,8 @@ class CouponListAPIController extends ControllerAPI
             }
 
             // filter by category_id
-            OrbitInput::get('category_id', function($category_id) use ($coupons, $prefix) {
+            OrbitInput::get('category_id', function($category_id) use ($coupons, $prefix, &$searchFlag) {
+                $searchFlag = $searchFlag || TRUE;
                 if ($category_id === 'mall') {
                     $coupons = $coupons->where(DB::raw("t.object_type"), $category_id);
                 } else {
@@ -167,7 +172,8 @@ class CouponListAPIController extends ControllerAPI
             });
 
             // filter by city
-            OrbitInput::get('location', function($location) use ($coupons, $prefix, $lat, $lon, $distance) {
+            OrbitInput::get('location', function($location) use ($coupons, $prefix, $lat, $lon, $distance, &$searchFlag) {
+                $searchFlag = $searchFlag || TRUE;
                 $coupons = $coupons->leftJoin('merchants as mp', function($q) {
                                 $q->on(DB::raw("mp.merchant_id"), '=', DB::raw("t.parent_id"));
                                 $q->on(DB::raw("mp.object_type"), '=', DB::raw("'mall'"));
@@ -241,7 +247,8 @@ class CouponListAPIController extends ControllerAPI
                 }
             });
 
-            OrbitInput::get('keyword', function ($keyword) use ($coupon, $prefix) {
+            OrbitInput::get('keyword', function ($keyword) use ($coupon, $prefix, &$searchFlag) {
+                $searchFlag = $searchFlag || TRUE;
                 if (! empty($keyword)) {
                     $coupon = $coupon->leftJoin('keyword_object', DB::Raw("sub_query.coupon_id"), '=', 'keyword_object.object_id')
                                 ->leftJoin('keywords', 'keyword_object.keyword_id', '=', 'keywords.keyword_id')
@@ -267,6 +274,18 @@ class CouponListAPIController extends ControllerAPI
                 }
             });
 
+            // record GTM search activity
+            if ($searchFlag) {
+                $parameters = [
+                    'displayName' => 'Coupon',
+                    'keywords' => OrbitInput::get('keyword', NULL),
+                    'categories' => OrbitInput::get('category_id', NULL),
+                    'location' => OrbitInput::get('location', NULL),
+                    'sortBy' => OrbitInput::get('sortby', 'name')
+                ];
+
+                GTMSearchRecorder::create($parameters)->saveActivity($user);
+            }
             $_coupon = clone $coupon;
 
             $take = PaginationNumber::parseTakeFromGet('coupon');

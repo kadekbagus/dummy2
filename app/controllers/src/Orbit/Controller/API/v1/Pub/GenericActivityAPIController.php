@@ -24,6 +24,7 @@ use Lang;
 use Mall;
 use App;
 use Orbit\Helper\Session\UserGetter;
+use Illuminate\Database\Eloquent\Model;
 
 class GenericActivityAPIController extends IntermediateBaseController
 {
@@ -83,6 +84,11 @@ class GenericActivityAPIController extends IntermediateBaseController
         $activityType = $genericActivityConfig['activity_list'][$activityNumber]['type'];
         $activityObjectType = $genericActivityConfig['activity_list'][$activityNumber]['object_type'];
         $activityObjectIDParamName = $genericActivityConfig['activity_list'][$activityNumber]['parameter_name'];
+        // object type is supplied by frontend
+        $activityObjectTypeParamName = NULL;
+        if (isset($genericActivityConfig['activity_list'][$activityNumber]['object_type_parameter_name'])) {
+            $activityObjectTypeParamName = $genericActivityConfig['activity_list'][$activityNumber]['object_type_parameter_name'];
+        }
 
         $activity = Activity::mobileci()->setActivityType($activityType);
         try {
@@ -95,6 +101,20 @@ class GenericActivityAPIController extends IntermediateBaseController
                 $object_id = OrbitInput::post($activityObjectIDParamName, null);
 
                 if (! empty($object_id)) {
+                    // Model name is provided from frontend, need to double check
+                    $objectString = OrbitInput::post($activityObjectTypeParamName, NULL);
+                    if ($activityObjectType === '--SET BY object_type_parameter_name--' && ! empty($objectString)) {
+                        // check if class exists
+                        if (class_exists($objectString) ) {
+                            $activityObjectType = $objectString;
+                            // check if model name is instance of Model
+                            if (! (new $activityObjectType instanceof Model)) {
+                                OrbitShopAPI::throwInvalidArgument('Invalid object type parameter name');
+                            }
+                        } else {
+                            OrbitShopAPI::throwInvalidArgument('Invalid object type parameter name');
+                        }
+                    }
                     $object_primary_name = App::make($activityObjectType)->getkeyName();
 
                     $savedObject = $activityObjectType::excludeDeleted()
@@ -103,6 +123,11 @@ class GenericActivityAPIController extends IntermediateBaseController
 
                     if (is_object($savedObject)) {
                         $object = $savedObject;
+                    } else {
+                        // should throw error if object is not found when Object Name is provided by frontend
+                        if (! empty($objectString)) {
+                            OrbitShopAPI::throwInvalidArgument('Object ID not found');
+                        }
                     }
                 }
             }
@@ -194,4 +219,6 @@ class GenericActivityAPIController extends IntermediateBaseController
 
         return $this->render($this->response);
     }
+
+
 }

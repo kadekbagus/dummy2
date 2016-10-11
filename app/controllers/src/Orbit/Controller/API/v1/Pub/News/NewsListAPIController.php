@@ -27,6 +27,7 @@ use Orbit\Helper\Session\UserGetter;
 use Orbit\Controller\API\v1\Pub\SocMedAPIController;
 use Orbit\Controller\API\v1\Pub\News\NewsHelper;
 use Mall;
+use Orbit\Helper\Util\GTMSearchRecorder;
 
 class NewsListAPIController extends ControllerAPI
 {
@@ -70,6 +71,9 @@ class NewsListAPIController extends ControllerAPI
             $lon = '';
             $lat = '';
             $mallId = OrbitInput::get('mall_id', null);
+
+            // search by key word or filter or sort by flag
+            $searchFlag = FALSE;
 
             $newsHelper = NewsHelper::create();
             $newsHelper->registerCustomValidation();
@@ -174,7 +178,8 @@ class NewsListAPIController extends ControllerAPI
             }
 
             // filter by category_id
-            OrbitInput::get('category_id', function($category_id) use ($news, $prefix) {
+            OrbitInput::get('category_id', function($category_id) use ($news, $prefix, &$searchFlag) {
+                $searchFlag = $searchFlag || TRUE;
                 if ($category_id === 'mall') {
                     $news = $news->where(DB::raw("m.object_type"), $category_id);
                 } else {
@@ -201,7 +206,8 @@ class NewsListAPIController extends ControllerAPI
              }
 
             // filter by city
-            OrbitInput::get('location', function($location) use ($news, $prefix, $lon, $lat, $userLocationCookieName, $distance) {
+            OrbitInput::get('location', function($location) use ($news, $prefix, $lon, $lat, $userLocationCookieName, $distance, &$searchFlag) {
+                $searchFlag = $searchFlag || TRUE;
                 $news = $news->leftJoin('merchants as mp', function($q) {
                                 $q->on(DB::raw("mp.merchant_id"), '=', DB::raw("m.parent_id"));
                                 $q->on(DB::raw("mp.object_type"), '=', DB::raw("'mall'"));
@@ -220,6 +226,7 @@ class NewsListAPIController extends ControllerAPI
             $news = DB::table(DB::Raw("({$querySql}) as sub_query"))->mergeBindings($news->getQuery());
 
             if ($sort_by === 'location' && !empty($lon) && !empty($lat)) {
+                $searchFlag = $searchFlag || TRUE;
                 $news = $news->select(DB::raw("sub_query.news_id"), 'news_name', 'description', DB::raw("sub_query.object_type"), 'image_url', 'campaign_status', 'is_started', DB::raw("min(distance) as distance"))
                                        ->orderBy('distance', 'asc');
             } else {
@@ -249,7 +256,8 @@ class NewsListAPIController extends ControllerAPI
                 $news = $news->orderBy($sort_by, $sort_mode);
             }
 
-            OrbitInput::get('keyword', function($keyword) use ($news, $prefix) {
+            OrbitInput::get('keyword', function($keyword) use ($news, $prefix, &$searchFlag) {
+                $searchFlag = $searchFlag || TRUE;
                  if (! empty($keyword)) {
                     $news = $news->leftJoin('keyword_object', DB::Raw("sub_query.news_id"), '=', 'keyword_object.object_id')
                                 ->leftJoin('keywords', 'keyword_object.keyword_id', '=', 'keywords.keyword_id')
@@ -286,6 +294,18 @@ class NewsListAPIController extends ControllerAPI
                 }
             });
 
+            // record GTM search activity
+            if ($searchFlag) {
+                $parameters = [
+                    'displayName' => 'News',
+                    'keywords' => OrbitInput::get('keyword', NULL),
+                    'categories' => OrbitInput::get('category_id', NULL),
+                    'location' => OrbitInput::get('location', NULL),
+                    'sortBy' => OrbitInput::get('sortby', 'name')
+                ];
+
+                GTMSearchRecorder::create($parameters)->saveActivity($user);
+            }
             $_news = clone($news);
 
             $take = PaginationNumber::parseTakeFromGet('news');
@@ -357,7 +377,7 @@ class NewsListAPIController extends ControllerAPI
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = [$e->getMessage(), $e->getFile(), $e->getLine()];
+            $this->response->data = null;
             $httpCode = 500;
         }
 

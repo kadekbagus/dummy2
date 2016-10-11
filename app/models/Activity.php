@@ -320,6 +320,17 @@ class Activity extends Eloquent
     }
 
     /**
+     * Set the value of object_display_name
+     * @author Ahmad <ahmad@dominopos.com>
+     */
+    public function setObjectDisplayName($name = NULL)
+    {
+        $this->object_display_name = $name;
+
+        return $this;
+    }
+
+    /**
      * Set the value of `object_id`, `object_name`, and `metadata_object`.
      *
      * @author Rio Astamal <me@rioastamal.net>
@@ -1108,10 +1119,6 @@ class Activity extends Eloquent
      */
     protected function saveToCampaignPopUpClick()
     {
-        if (empty($this->object_id)) {
-            return;
-        }
-
         $activity_name_long_array = array(
             'Click Coupon Pop Up'          => 'Click Coupon Pop Up',
             'Click Promotion Pop Up'       => 'Click Promotion Pop Up',
@@ -1129,17 +1136,13 @@ class Activity extends Eloquent
             $location_id = 0;
         }
 
-        // Get campaign group name id
-        $campaignGroupNameIdCheck = CampaignGroupName::get()->keyBy('campaign_group_name')->get($this->object_name);
-        $campaignGroupNameId = is_object($campaignGroupNameIdCheck) ? $campaignGroupNameIdCheck->campaign_group_name_id : '0';
-
         // Save also the activity to particular `campaign_xyz` table
         $popupview = new CampaignClicks();
         $popupview->campaign_id = $this->object_id;
         $popupview->user_id = $this->user_id;
         $popupview->location_id = $location_id;
         $popupview->activity_id = $this->activity_id;
-        $popupview->campaign_group_name_id = $campaignGroupNameId;
+        $popupview->campaign_group_name_id = $this->campaignGroupNameIdFromActivityName();
         $popupview->save();
     }
 
@@ -1406,6 +1409,14 @@ class Activity extends Eloquent
 
             case 'view_landing_page_promotion_detail':
                 $groupName = 'Promotion';
+                break;
+
+            case 'click_mall_featured_carousel':
+                if ($this->module_name == 'News' || $this->module_name == 'Promotion') {
+                    $groupName = 'News';
+                } elseif ($this->module_name == 'Coupon') {
+                    $groupName = 'Coupon';
+                }
                 break;
         }
 
