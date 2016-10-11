@@ -707,7 +707,13 @@ class StoreAPIController extends ControllerAPI
     public function getMallDetailStore()
     {
         $httpCode = 200;
+        $activity = Activity::mobileci()->setActivityType('view');
+        $user = null;
+
         try {
+            $this->session = SessionPreparer::prepareSession();
+            $user = UserGetter::getLoggedInUserOrGuest($this->session);
+
             $sort_by = OrbitInput::get('sortby', 'merchants.name');
             $sort_mode = OrbitInput::get('sortmode','asc');
             $storename = OrbitInput::get('store_name');
@@ -807,6 +813,20 @@ class StoreAPIController extends ControllerAPI
 
             $skip = PaginationNumber::parseSkipFromGet();
             $mall->skip($skip);
+
+            // moved from generic activity number 40
+            if (empty($skip)) {
+                $activityNotes = sprintf('Page viewed: Store location list');
+                $activity->setUser($user)
+                    ->setActivityName('view_store_location')
+                    ->setActivityNameLong('View Store Location Page')
+                    ->setObject(null)
+                    ->setObjectDisplayName($storename)
+                    ->setModuleName('Store')
+                    ->setNotes($activityNotes)
+                    ->responseOK()
+                    ->save();
+            }
 
             $listmall = $mall->get();
             $count = RecordCounter::create($_mall)->count();
