@@ -320,6 +320,17 @@ class Activity extends Eloquent
     }
 
     /**
+     * Set the value of object_display_name
+     * @author Ahmad <ahmad@dominopos.com>
+     */
+    public function setObjectDisplayName($name = NULL)
+    {
+        $this->object_display_name = $name;
+
+        return $this;
+    }
+
+    /**
      * Set the value of `object_id`, `object_name`, and `metadata_object`.
      *
      * @author Rio Astamal <me@rioastamal.net>

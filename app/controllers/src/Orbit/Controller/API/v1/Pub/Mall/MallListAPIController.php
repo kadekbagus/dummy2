@@ -1,4 +1,4 @@
-<?php namespace Orbit\Controller\API\v1\Pub\Mall;
+<?php namespace Orbit\Controller\API\v1\Pub;
 /**
  * An API controller for managing mall geo location.
  */
@@ -16,6 +16,9 @@ use Mall;
 use stdClass;
 use Orbit\Helper\Util\PaginationNumber;
 use Elasticsearch\ClientBuilder;
+use Orbit\Helper\Net\SessionPreparer;
+use Orbit\Helper\Session\UserGetter;
+use Orbit\Helper\Util\GTMSearchRecorder;
 
 class MallListAPIController extends ControllerAPI
 {
@@ -34,6 +37,9 @@ class MallListAPIController extends ControllerAPI
     {
         $httpCode = 200;
         try {
+            $this->session = SessionPreparer::prepareSession();
+            $user = UserGetter::getLoggedInUserOrGuest($this->session);
+
             $keyword = OrbitInput::get('keyword');
             $location = OrbitInput::get('location', null);
             $usingDemo = Config::get('orbit.is_demo', FALSE);
@@ -46,6 +52,9 @@ class MallListAPIController extends ControllerAPI
             $latitude = '';
             $longitude = '';
             $locationFilter = '';
+
+            // search by key word or filter or sort by flag
+            $searchFlag = FALSE;
 
             $client = ClientBuilder::create() // Instantiate a new ClientBuilder
                     ->setHosts($host['hosts']) // Set the hosts
@@ -84,6 +93,7 @@ class MallListAPIController extends ControllerAPI
             $filterKeyword = '';
             $withscore = '';
             if ($keyword != '') {
+                $searchFlag = $searchFlag || TRUE;
                 $withscore = '"_score",';
                 $filterKeyword = '"query": {
                                     "multi_match" : {
@@ -100,6 +110,7 @@ class MallListAPIController extends ControllerAPI
             // filter by location (city or user location)
             $words = 0;
             if (! empty($location)) {
+                $searchFlag = $searchFlag || TRUE;
                 $words = count(explode(" ", $location));
                 if ($location === "mylocation") {
                     $words = 0;
@@ -130,6 +141,7 @@ class MallListAPIController extends ControllerAPI
             // sort by name or location
             $sortby = '{"name.raw" : {"order" : "' . $sort_mode . '"}}';
             if($sort_by === 'location' && $latitude != '' && $longitude != '') {
+                $searchFlag = $searchFlag || TRUE;
                 $sortby = ' {
                                 "_geo_distance": {
                                     "position": {
@@ -141,6 +153,7 @@ class MallListAPIController extends ControllerAPI
                                     "distance_type": "plane"
                                 }
                             }';
+              
             }
 
             $take = PaginationNumber::parseTakeFromGet('retailer');
@@ -180,6 +193,19 @@ class MallListAPIController extends ControllerAPI
                 'type'   => Config::get('orbit.elasticsearch.indices.malldata.type'),
                 'body' => $json_area
             ];
+
+            // record GTM search activity
+            if ($searchFlag) {
+                $parameters = [
+                    'displayName' => 'Mall',
+                    'keywords' => OrbitInput::get('keyword', NULL),
+                    'categories' => NULL,
+                    'location' => OrbitInput::get('location', NULL),
+                    'sortBy' => OrbitInput::get('sortby', 'name')
+                ];
+
+                GTMSearchRecorder::create($parameters)->saveActivity($user);
+            }
 
             $response = $client->search($param_area);
 
