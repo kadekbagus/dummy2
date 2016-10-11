@@ -45,6 +45,7 @@ class PromotionDetailAPIController extends ControllerAPI
             $sort_by = OrbitInput::get('sortby', 'name');
             $sort_mode = OrbitInput::get('sortmode','asc');
             $language = OrbitInput::get('language', 'id');
+            $mallId = OrbitInput::get('mall_id', null);
 
             $promotionHelper = PromotionHelper::create();
             $promotionHelper->registerCustomValidation();
@@ -127,16 +128,35 @@ class PromotionDetailAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument('Promotion that you specify is not found');
             }
 
-            $activityNotes = sprintf('Page viewed: Landing Page Promotion Detail Page');
-            $activity->setUser($user)
-                ->setActivityName('view_landing_page_promotion_detail')
-                ->setActivityNameLong('View GoToMalls Promotion Detail')
-                ->setObject($promotion)
-                ->setNews($promotion)
-                ->setModuleName('Promotion')
-                ->setNotes($activityNotes)
-                ->responseOK()
-                ->save();
+            $mall = null;
+            if (! empty($mallId)) {
+                $mall = Mall::where('merchant_id', '=', $mallId)->first();
+            }
+
+            if (is_object($mall)) {
+                $activityNotes = sprintf('Page viewed: View mall promotion detail');
+                $activity->setUser($user)
+                    ->setActivityName('view_mall_promotion_detail')
+                    ->setActivityNameLong('View mall promotion detail')
+                    ->setObject($promotion)
+                    ->setNews($promotion)
+                    ->setLocation($mall)
+                    ->setModuleName('Promotion')
+                    ->setNotes($activityNotes)
+                    ->responseOK()
+                    ->save();
+            } else {
+                $activityNotes = sprintf('Page viewed: Landing Page Promotion Detail Page');
+                $activity->setUser($user)
+                    ->setActivityName('view_landing_page_promotion_detail')
+                    ->setActivityNameLong('View GoToMalls Promotion Detail')
+                    ->setObject($promotion)
+                    ->setNews($promotion)
+                    ->setModuleName('Promotion')
+                    ->setNotes($activityNotes)
+                    ->responseOK()
+                    ->save();
+            }
 
             // add facebook share url dummy page
             $promotion->facebook_share_url = SocMedAPIController::getSharedUrl('promotion', $promotion->news_id, $promotion->news_name);

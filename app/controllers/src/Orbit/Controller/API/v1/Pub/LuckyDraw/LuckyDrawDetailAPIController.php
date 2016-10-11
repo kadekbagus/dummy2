@@ -167,16 +167,29 @@ class LuckyDrawDetailAPIController extends IntermediateBaseController
             $this->response->message = 'Success';
             $this->response->data = $luckyDraw;
 
-            $activityNotes = sprintf('Page viewed: Landing Page Lucky Draw Detail Page');
-            $activity->setUser($user)
-                ->setActivityName('view_landing_page_lucky_draw_detail')
-                ->setActivityNameLong('View GoToMalls Lucky Draw Detail')
-                ->setObject($luckyDraw)
-                ->setLocation($mall)
-                ->setModuleName('LuckyDraw')
-                ->setNotes($activityNotes)
-                ->responseOK()
-                ->save();
+            if (is_object($mall)) {
+                $activityNotes = sprintf('Page viewed: View mall lucky draw detail page');
+                $activity->setUser($user)
+                    ->setActivityName('view_mall_lucky_draw_detail')
+                    ->setActivityNameLong('View mall lucky draw detail')
+                    ->setObject($luckyDraw)
+                    ->setLocation($mall)
+                    ->setModuleName('LuckyDraw')
+                    ->setNotes($activityNotes)
+                    ->responseOK()
+                    ->save();
+            } else {
+                $activityNotes = sprintf('Page viewed: Landing Page Lucky Draw Detail Page');
+                $activity->setUser($user)
+                    ->setActivityName('view_landing_page_lucky_draw_detail')
+                    ->setActivityNameLong('View GoToMalls Lucky Draw Detail')
+                    ->setObject($luckyDraw)
+                    ->setLocation($mall)
+                    ->setModuleName('LuckyDraw')
+                    ->setNotes($activityNotes)
+                    ->responseOK()
+                    ->save();
+            }
 
         } catch (ACLForbiddenException $e) {
 
