@@ -67,7 +67,7 @@ class LuckyDrawListAPIController extends IntermediateBaseController
                 }
             }
 
-            $sort_by = OrbitInput::get('sortby', 'lucky_draw_name');
+            $sort_by = OrbitInput::get('sortby', 'name');
             $sort_mode = OrbitInput::get('sortmode','asc');
             $language = OrbitInput::get('language', 'id');
 
@@ -76,9 +76,11 @@ class LuckyDrawListAPIController extends IntermediateBaseController
             $validator = Validator::make(
                 array(
                     'language' => $language,
+                    'sortby'   => $sort_by,
                 ),
                 array(
                     'language' => 'required|orbit.empty.language_default',
+                    'sortby'   => 'in:name,created_date',
                 )
             );
 
@@ -135,16 +137,15 @@ class LuckyDrawListAPIController extends IntermediateBaseController
                 ->havingRaw("campaign_status = 'ongoing'")
                 ->groupBy('lucky_draws.lucky_draw_id');
 
-            OrbitInput::get('sortby', function($_sortBy) use (&$sort_by)
-            {
+            if ($sort_by !== 'location') {
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
                     'name'          => 'lucky_draw_name',
                     'created_date'  => 'lucky_draws.created_at'
                 );
 
-                $sort_by = $sortByMapping[$_sortBy];
-            });
+                $sort_by = $sortByMapping[$sort_by];
+            }
 
             OrbitInput::get('sortmode', function($_sortMode) use (&$sort_mode)
             {
