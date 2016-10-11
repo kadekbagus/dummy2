@@ -4095,7 +4095,7 @@ return array(
             // - User clicks on "Mall info" from mall sidebar menu
             '77' => array(
                 'name' => 'click_mall_menu_info',
-                'name_long' => 'lick mall menu (Info)',
+                'name_long' => 'Click mall menu (Info)',
                 'module_name' => 'Application',
                 'type' => 'click',
                 'object_type' => 'Mall',
