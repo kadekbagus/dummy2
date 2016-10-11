@@ -1108,10 +1108,15 @@ class Activity extends Eloquent
      */
     protected function saveToCampaignPopUpClick()
     {
+        if (empty($this->object_id)) {
+            return;
+        }
+
         $activity_name_long_array = array(
-            'Click Coupon Pop Up'      => 'Click Coupon Pop Up',
-            'Click Promotion Pop Up'   => 'Click Promotion Pop Up',
-            'Click News Pop Up'        => 'Click News Pop Up',
+            'Click Coupon Pop Up'          => 'Click Coupon Pop Up',
+            'Click Promotion Pop Up'       => 'Click Promotion Pop Up',
+            'Click News Pop Up'            => 'Click News Pop Up',
+            'Click mall featured carousel' => 'Click mall featured carousel',
         );
 
         $proceed = in_array($this->activity_name_long, $activity_name_long_array);
@@ -1119,13 +1124,22 @@ class Activity extends Eloquent
             return;
         }
 
+        $location_id = $this->location_id;
+        if ($this->activity_name === 'click_mall_featured_carousel') {
+            $location_id = 0;
+        }
+
+        // Get campaign group name id
+        $campaignGroupNameIdCheck = CampaignGroupName::get()->keyBy('campaign_group_name')->get($this->object_name);
+        $campaignGroupNameId = is_object($campaignGroupNameIdCheck) ? $campaignGroupNameIdCheck->campaign_group_name_id : '0';
+
         // Save also the activity to particular `campaign_xyz` table
         $popupview = new CampaignClicks();
         $popupview->campaign_id = $this->object_id;
         $popupview->user_id = $this->user_id;
-        $popupview->location_id = $this->location_id;
+        $popupview->location_id = $location_id;
         $popupview->activity_id = $this->activity_id;
-        $popupview->campaign_group_name_id = $this->campaignGroupNameIdFromActivityName();
+        $popupview->campaign_group_name_id = $campaignGroupNameId;
         $popupview->save();
     }
 

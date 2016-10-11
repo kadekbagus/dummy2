@@ -60,7 +60,7 @@ class NewsListAPIController extends ControllerAPI
             $this->session = SessionPreparer::prepareSession();
             $user = UserGetter::getLoggedInUserOrGuest($this->session);
 
-            $sort_by = OrbitInput::get('sortby', 'news_name');
+            $sort_by = OrbitInput::get('sortby', 'name');
             $sort_mode = OrbitInput::get('sortmode','asc');
             $language = OrbitInput::get('language', 'id');
             $location = OrbitInput::get('location', null);
@@ -76,9 +76,11 @@ class NewsListAPIController extends ControllerAPI
             $validator = Validator::make(
                 array(
                     'language' => $language,
+                    'sortby'   => $sort_by,
                 ),
                 array(
                     'language' => 'required|orbit.empty.language_default',
+                    'sortby'   => 'in:name,location,created_date',
                 )
             );
 
@@ -126,7 +128,8 @@ class NewsListAPIController extends ControllerAPI
                                             WHERE onm.news_id = {$prefix}news.news_id
                                             AND CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) between {$prefix}news.begin_date and {$prefix}news.end_date) > 0
                                 THEN 'true' ELSE 'false' END AS is_started
-                            "))
+                            "),
+                        'news.created_at')
                         ->join('news_translations', 'news_translations.news_id', '=', 'news.news_id')
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
                         ->leftJoin('media', function($q) {
@@ -183,12 +186,12 @@ class NewsListAPIController extends ControllerAPI
                 }
             });
 
-
             // filter news by mall id
              OrbitInput::get('mall_id', function($mallid) use ($news) {
-                $news->where(DB::raw("m.parent_id"), '=', $mallid)
-                      ->orWhere(DB::raw("m.merchant_id"), '=', $mallid)
-                      ->where('news.object_type', '=', 'news');
+                $news->where(function($q) use ($mallid){
+                        $q->where(DB::raw("m.parent_id"), '=', $mallid)
+                          ->orWhere(DB::raw("m.merchant_id"), '=', $mallid);
+                    });
              });
 
              // frontend need the mall name
@@ -218,14 +221,33 @@ class NewsListAPIController extends ControllerAPI
 
             if ($sort_by === 'location' && !empty($lon) && !empty($lat)) {
                 $news = $news->select(DB::raw("sub_query.news_id"), 'news_name', 'description', DB::raw("sub_query.object_type"), 'image_url', 'campaign_status', 'is_started', DB::raw("min(distance) as distance"))
-                                       ->orderBy('distance', $sort_mode);
+                                       ->orderBy('distance', 'asc');
             } else {
                 $news = $news->select(DB::raw("sub_query.news_id"), 'news_name', 'description', DB::raw("sub_query.object_type"), 'image_url', 'campaign_status', 'is_started');
             }
 
             $news = $news->groupBy(DB::Raw("sub_query.news_id"));
 
-            $news = $news->orderBy('news_name', 'asc');
+            if ($sort_by !== 'location') {
+                // Map the sortby request to the real column name
+                $sortByMapping = array(
+                    'name'          => 'news_name',
+                    'created_date'  => 'created_at'
+                );
+
+                $sort_by = $sortByMapping[$sort_by];
+            }
+
+            OrbitInput::get('sortmode', function($_sortMode) use (&$sort_mode)
+            {
+                if (strtolower($_sortMode) !== 'asc') {
+                    $sort_mode = 'desc';
+                }
+            });
+
+            if ($sort_by !== 'location') {
+                $news = $news->orderBy($sort_by, $sort_mode);
+            }
 
             OrbitInput::get('keyword', function($keyword) use ($news, $prefix) {
                  if (! empty($keyword)) {

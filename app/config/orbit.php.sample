@@ -1804,6 +1804,74 @@ return array(
                 'after_saving'  => NULL,
             ),
 
+            'map' => array(
+                // Allowed Extension
+                'file_type'     => array('jpg', 'png', 'jpeg', 'gif'),
+
+                // Allowed Mimetype
+                'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
+
+                // Maximum file size allowed in bytes
+                'file_size'     => 90000,
+
+                // The target path which file to be stored
+                'path'          => 'uploads/malls/maps',
+
+                // Default HTML element name
+                'name'          => 'maps',
+
+                // Force create directory when not exists
+                'create_directory'  => TRUE,
+
+                // Append year and month to the path
+                'append_year_month' => FALSE,
+
+                // Keeping the aspect ratio
+                'keep_aspect_ratio' => TRUE,
+
+                // Resize the image
+                'resize_image'      => TRUE,
+
+                // Crop the image
+                'crop_image'        => TRUE,
+
+                // Scale the image
+                'scale_image'       => FALSE,
+
+                // Name suffix of the generated image
+                'suffix'            => '',
+
+                // Resize the image
+                'resize'        => array(
+                    // Profile name
+                    'default'   => array(
+                        'width'     => 200,
+                        'height'    => 200
+                    )
+                ),
+
+                // Crop the image
+                'crop'          => array(
+                    // Profile name
+                    'default' => array(
+                        'width'     => 100,
+                        'height'    => 100,
+                    )
+                ),
+
+                // Scale the image in percent
+                'scale'         => array(
+                    // Profile name
+                    'default'   => 50
+                ),
+
+                // Callback before saving the file
+                'before_saving' => NULL,
+
+                // Callback after saving the file
+                'after_saving'  => NULL,
+            ),
+
         ),
 
         // -------------------------------------------------------------------//
@@ -3446,6 +3514,7 @@ return array(
                 'parameter_name' => null
             ),
             // - Stores View
+            // *** Moved to the getStoreList() ***
             '15' => array(
                 'name' => 'view_stores_main_page',
                 'name_long' => 'View Stores Main Page',
@@ -3601,6 +3670,7 @@ return array(
                 'parameter_name' => null
             ),
             // - Coupons View
+            // *** Moved to the getCouponList() ***
             '32' => array(
                 'name' => 'view_coupons_main_page',
                 'name_long' => 'View Coupons Main Page',
@@ -3882,6 +3952,116 @@ return array(
                 'type' => 'click',
                 'object_type' => null,
                 'parameter_name' => null
+            ),
+            // - User clicks on "Coupons" from mall sidebar menu
+            '62' => array(
+                'name' => 'click_mall_menu_coupons',
+                'name_long' => 'Click mall menu (Coupons)',
+                'module_name' => 'Coupon',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - User clicks on "See all" on coupon carousel in mall page
+            '63' => array(
+                'name' => 'click_see_all_mall_coupons',
+                'name_long' => 'Click see all (Mall Coupons)',
+                'module_name' => 'Coupon',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - User clicks a coupon from mall coupon list page
+            '64' => array(
+                'name' => 'click_in_mall_coupon_list',
+                'name_long' => 'Click coupon from mall coupon list',
+                'module_name' => 'Coupon',
+                'type' => 'click',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'coupon_id'
+            ),
+            // - User clicks on one of the coupons featured in coupon carousel (mall page)
+            '65' => array(
+                'name' => 'click_mall_featured_coupon',
+                'name_long' => 'Click mall featured coupon',
+                'module_name' => 'Coupon',
+                'type' => 'click',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'coupon_id'
+            ),
+            // - User clicks on "Stores" from mall sidebar menu
+            '66' => array(
+                'name' => 'click_mall_menu_stores',
+                'name_long' => 'Click mall menu (Stores)',
+                'module_name' => 'Store',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - User clicks on "See all" on coupon carousel in mall page
+            '67' => array(
+                'name' => 'click_see_all_mall_stores',
+                'name_long' => 'Click see all (Mall Stores)',
+                'module_name' => 'Store',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - User clicks a store from mall store list page
+            '68' => array(
+                'name' => 'click_in_mall_store_list',
+                'name_long' => 'Click store from mall store list',
+                'module_name' => 'Store',
+                'type' => 'click',
+                'object_type' => 'Tenant',
+                'parameter_name' => 'store_id'
+            ),
+            // - User clicks on one of the stores featured in store carousel (mall page)
+            '69' => array(
+                'name' => 'click_mall_featured_store',
+                'name_long' => 'Click mall featured store',
+                'module_name' => 'Store',
+                'type' => 'click',
+                'object_type' => 'Tenant',
+                'parameter_name' => 'store_id'
+            ),
+            // - User clicks on mall sidebar menu
+            '70' => array(
+                'name' => 'click_mall_menu',
+                'name_long' => 'Click mall menu',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - User clicks on one of the news/event featured in mall carousel (top of mall page)
+            '71' => array(
+                'name' => 'click_mall_featured_carousel',
+                'name_long' => 'Click mall featured carousel',
+                'module_name' => 'News',
+                'type' => 'click',
+                'object_type' => 'News',
+                'parameter_name' => 'news_id'
+            ),
+
+            // - User clicks on one of the promotion featured in mall carousel (top of mall page)
+            '72' => array(
+                'name' => 'click_mall_featured_carousel',
+                'name_long' => 'Click mall featured carousel',
+                'module_name' => 'Promotion',
+                'type' => 'click',
+                'object_type' => 'Promotion',
+                'parameter_name' => 'promotion_id'
+            ),
+
+            // - User clicks on one of the coupon featured in mall carousel (top of mall page)
+            '73' => array(
+                'name' => 'click_mall_featured_carousel',
+                'name_long' => 'Click mall featured carousel',
+                'module_name' => 'Coupon',
+                'type' => 'click',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'coupon_id'
             ),
         ),
     ),

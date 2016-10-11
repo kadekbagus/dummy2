@@ -22,6 +22,7 @@ use Config;
 use LuckyDraw;
 use stdclass;
 use DB;
+use Mall;
 use URL;
 use Orbit\Controller\API\v1\Pub\LuckyDraw\LuckyDrawHelper;
 use Carbon\Carbon;
@@ -145,7 +146,7 @@ class LuckyDrawDetailAPIController extends IntermediateBaseController
             OrbitInput::get('mall_id', function($mallId) use ($luckyDraw, &$mall) {
                 $luckyDraw->where('lucky_draws.mall_id', $mallId);
                 $mall = Mall::excludeDeleted()
-                        ->where('merchant_id', OrbitInput::get('mall_id'))
+                        ->where('merchant_id', $mallId)
                         ->first();
             });
 

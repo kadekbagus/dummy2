@@ -45,8 +45,14 @@ class StoreAPIController extends ControllerAPI
      */
     public function getStoreList()
     {
+        $activity = Activity::mobileci()->setActivityType('view');
+        $mall = NULL;
+        $user = NULL;
         $httpCode = 200;
         try {
+            $this->session = SessionPreparer::prepareSession();
+            $user = UserGetter::getLoggedInUserOrGuest($this->session);
+
             $sort_by = OrbitInput::get('sortby', 'name');
             $sort_mode = OrbitInput::get('sortmode','asc');
             $usingDemo = Config::get('orbit.is_demo', FALSE);
@@ -81,7 +87,7 @@ class StoreAPIController extends ControllerAPI
 
             $store = Tenant::select(
                     DB::raw("{$prefix}merchants.merchant_id"),
-                    'merchants.name',
+                    DB::raw("{$prefix}merchants.name"),
                     DB::Raw("CASE WHEN (
                                     select mt.description
                                     from {$prefix}merchant_translations mt
@@ -97,18 +103,29 @@ class StoreAPIController extends ControllerAPI
                                 )
                             END as description
                         "),
+                    DB::raw("oms.merchant_id as mall_id"),
+                    DB::raw("oms.name as mall_name"),
                     DB::raw("(select path from {$prefix}media where media_name_long = 'retailer_logo_orig' and object_id = {$prefix}merchants.merchant_id) as logo_url"))
-                ->join(DB::raw("(select merchant_id, status, parent_id, city from {$prefix}merchants where object_type = 'mall') as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
+                ->join(DB::raw("(select merchant_id, name, status, parent_id, city from {$prefix}merchants where object_type = 'mall') as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                 ->where('merchants.status', 'active')
-                ->whereRaw("oms.status = 'active'")
-                ->groupBy('merchants.name')
+                ->where('merchants.object_type', 'tenant')
+                ->whereRaw("oms.status = 'active'");
+
+            OrbitInput::get('mall_id', function ($mallId) use ($store, $prefix, &$mall) {
+                $store->where('merchants.parent_id', '=', DB::raw("{$this->quote($mallId)}"));
+                $mall = Mall::excludeDeleted()
+                        ->where('merchant_id', $mallId)
+                        ->first();
+            });
+
+            $store->groupBy('merchants.name')
                 ->orderBy('merchants.name', 'asc')
                 ->orderBy('merchants.created_at', 'asc');
 
             $querySql = $store->toSql();
 
             $store = DB::table(DB::raw("({$querySql}) as subQuery"))->mergeBindings($store->getQuery())
-                        ->select(DB::raw('subQuery.merchant_id'), 'name', 'description', 'logo_url')
+                        ->select(DB::raw('subQuery.merchant_id'), 'name', 'description', 'logo_url', 'mall_id', 'mall_name')
                         ->groupBy('name')
                         ->orderBy('name', 'asc');
 
@@ -201,6 +218,11 @@ class StoreAPIController extends ControllerAPI
                 }
             });
 
+            OrbitInput::get('mall_id', function ($mallId) use ($store, $prefix, &$mall) {
+                $store->addSelect('mall_id');
+                $store->addSelect('mall_name');
+            });
+
             OrbitInput::get('keyword', function ($keyword) use ($store, $prefix) {
                 if (! empty($keyword)) {
                     $store = $store->leftJoin('keyword_object', DB::raw('sub_query.merchant_id'), '=', 'keyword_object.object_id')
@@ -237,6 +259,22 @@ class StoreAPIController extends ControllerAPI
 
             $liststore = $store->get();
             $count = count($_store->get());
+
+            // save activity when accessing listing
+            // omit save activity if accessed from mall ci campaign list 'from_mall_ci' !== 'y'
+            // moved from generic activity number 32
+            if (empty($skip) && OrbitInput::get('from_mall_ci', '') !== 'y') {
+                $activityNotes = sprintf('Page viewed: Store list');
+                $activity->setUser($user)
+                    ->setActivityName('view_stores_main_page')
+                    ->setActivityNameLong('View Stores Main Page')
+                    ->setObject(null)
+                    ->setLocation($mall)
+                    ->setModuleName('Store')
+                    ->setNotes($activityNotes)
+                    ->responseOK()
+                    ->save();
+            }
 
             $this->response->data = new stdClass();
             $this->response->data->total_records = $count;
@@ -437,6 +475,7 @@ class StoreAPIController extends ControllerAPI
         $httpCode = 200;
         $activity = Activity::mobileci()->setActivityType('view');
         $user = NULL;
+        $mall = NULL;
 
         try {
             $this->session = SessionPreparer::prepareSession();
@@ -533,8 +572,16 @@ class StoreAPIController extends ControllerAPI
                 ->join(DB::raw("(select merchant_id, status, parent_id from {$prefix}merchants where object_type = 'mall') as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                 ->where('merchants.status', 'active')
                 ->whereRaw("oms.status = 'active'")
-                ->where('merchants.name', $storename)
-                ->orderBy('merchants.created_at', 'asc')
+                ->where('merchants.name', $storename);
+
+            OrbitInput::get('mall_id', function($mallId) use ($store, &$mall, $prefix) {
+                $store->where('merchants.parent_id', $mallId);
+                $mall = Mall::excludeDeleted()
+                        ->where('merchant_id', $mallId)
+                        ->first();
+            });
+
+            $store = $store->orderBy('merchants.created_at', 'asc')
                 ->first();
 
             $activityNotes = sprintf('Page viewed: Landing Page Store Detail Page');
@@ -542,7 +589,7 @@ class StoreAPIController extends ControllerAPI
                 ->setActivityName('view_landing_page_store_detail')
                 ->setActivityNameLong('View GoToMalls Store Detail')
                 ->setObject($store)
-                ->setNews($store)
+                ->setLocation($mall)
                 ->setModuleName('Store')
                 ->setNotes($activityNotes)
                 ->responseOK()

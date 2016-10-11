@@ -68,12 +68,6 @@ class CampaignSliderAPIController extends ControllerAPI
             $language_id = $lang->language_id;
             $prefix = DB::getTablePrefix();
 
-            // frontend need the mall name
-            $mall = null;
-            if (! empty($mallId)) {
-                $mall = Mall::select('name')->where('merchant_id', '=', $mallId)->first();
-            }
-
             $news = News::select(
                                 'news.news_id as campaign_id',
                                 DB::Raw("
@@ -120,12 +114,9 @@ class CampaignSliderAPIController extends ControllerAPI
                                 $q->on(DB::raw("m.merchant_id"), '=', 'news_merchant.merchant_id');
                                 $q->on(DB::raw("m.status"), '=', DB::raw("'active'"));
                         })
-                        ->where('news_translations.merchant_language_id', '=', $language_id)
-                        ->where(function($q) use ($mallId){
-                            $q->where(DB::raw("m.parent_id"), '=', $mallId)
-                              ->orWhere(DB::raw("m.merchant_id"), '=', $mallId);
-                        })
-                        ->where('news.is_popup', '=', 'Y')
+                        ->whereRaw("{$prefix}news_translations.merchant_language_id = '{$language_id}'")
+                        ->whereRaw("(CASE WHEN m.object_type = 'tenant' THEN m.parent_id ELSE m.merchant_id END) = '{$mallId}'")
+                        ->whereRaw("{$prefix}news.is_popup = 'Y'")
                         ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                         ->groupBy('campaign_id')
                         ->orderBy('campaign_name', 'asc');
@@ -168,12 +159,9 @@ class CampaignSliderAPIController extends ControllerAPI
                             ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                             ->leftJoin('merchants as t', DB::raw("t.merchant_id"), '=', 'promotion_retailer.retailer_id')
                             ->leftJoin('merchants as m', DB::raw("m.merchant_id"), '=', DB::raw("t.parent_id"))
-                            ->where('coupon_translations.merchant_language_id', $language_id)
-                            ->where(function($q) use ($mallId){
-                                $q->where(DB::raw("t.parent_id"), '=', $mallId)
-                                  ->orWhere(DB::raw("t.merchant_id"), '=', $mallId);
-                            })
-                            ->where('promotions.is_popup', '=', 'Y')
+                            ->whereRaw("{$prefix}coupon_translations.merchant_language_id = '{$language_id}'")
+                            ->whereRaw("(CASE WHEN t.object_type = 'tenant' THEN t.parent_id ELSE t.merchant_id END) = '{$mallId}'")
+                            ->whereRaw("{$prefix}promotions.is_popup = 'Y'")
                             ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                             ->groupBy('campaign_id')
                             ->orderBy('campaign_name', 'asc');
@@ -182,7 +170,7 @@ class CampaignSliderAPIController extends ControllerAPI
             $newsSql = DB::table(DB::Raw("({$newsSql}) as sub_query"))->mergeBindings($news->getQuery())->toSql();
 
             $couponSql = $coupons->toSql();
-            $couponSql = DB::table(DB::Raw("({$newsSql}) as sub_query"))->mergeBindings($coupons->getQuery())->toSql();
+            $couponSql = DB::table(DB::Raw("({$couponSql}) as sub_query"))->mergeBindings($coupons->getQuery())->toSql();
 
             $campaign = DB::table(DB::raw('((' . $newsSql . ') UNION (' . $couponSql . ')) as a'));
 
@@ -200,11 +188,7 @@ class CampaignSliderAPIController extends ControllerAPI
             $data = new \stdclass();
             $data->returned_records = count($listOfRec);
             $data->total_records = $totalRec;
-            // if (is_object($mall)) {
-            //     $data->mall_name = $mall->name;
-            // }
             $data->records = $listOfRec;
-
 
             $this->response->data = $data;
             $this->response->code = 0;

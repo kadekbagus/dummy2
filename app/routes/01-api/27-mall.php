@@ -129,3 +129,13 @@ Route::get('/api/v1/pub/mall-location-list', function()
 });
 
 Route::get('/app/v1/pub/mall-location-list', ['as' => 'mall-location-list', 'uses' => 'IntermediatePubAuthController@Mall\MallList_getMallLocationList']);
+
+/**
+ * Get Mall Info
+ */
+Route::get('/api/v1/pub/mall-info', function()
+{
+    return Orbit\Controller\API\v1\Pub\Mall\MallInfoAPIController::create()->getMallInfo();
+});
+
+Route::get('/app/v1/pub/mall-info', ['as' => 'mall-info', 'uses' => 'IntermediatePubAuthController@Mall\MallList_getMallInfo']);

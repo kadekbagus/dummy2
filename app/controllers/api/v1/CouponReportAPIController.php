@@ -1662,7 +1662,11 @@ class CouponReportAPIController extends ControllerAPI
 
             // Filter by redemption place
             OrbitInput::get('redemption_place', function($place) use ($coupons, $prefix) {
-                $coupons->whereRaw("CASE WHEN {$prefix}issued_coupons.redeem_user_id IS NOT NULL THEN CONCAT({$prefix}users.user_firstname, ' ', {$prefix}users.user_lastname) ELSE {$prefix}merchants.name END like '%{$place}%' ");
+                $coupons->whereRaw("(
+                                        CONCAT({$prefix}users.user_firstname, ' ', {$prefix}users.user_lastname, ' at ', om_employee.name) like '%{$place}%'
+                                        OR
+                                        CONCAT({$prefix}merchants.name, ' at ', om_parent.name) like '%{$place}%'
+                                    )");
             });
 
             // Filter by gender
@@ -1775,11 +1779,7 @@ class CouponReportAPIController extends ControllerAPI
                 }
             });
 
-            if ($sortBy === 'age') {
-                $coupons->orderByRaw('CAST(age AS UNSIGNED) ' . $sortMode);
-            } else {
-                $coupons->orderBy($sortBy, $sortMode);
-            }
+            $coupons->orderBy($sortBy, $sortMode);
 
             // include sorting coupon code
             if ($sortBy !== 'issued_coupons.issued_coupon_code') {

@@ -21,6 +21,7 @@ use Orbit\Helper\Net\SessionPreparer;
 use Orbit\Helper\Session\UserGetter;
 use Lang;
 use \Exception;
+use Mall;
 use Orbit\Controller\API\v1\Pub\Coupon\CouponHelper;
 use Orbit\Controller\API\v1\Pub\SocMedAPIController;
 
@@ -32,10 +33,12 @@ class CouponDetailAPIController extends ControllerAPI
         $this->response = new ResponseProvider();
         $activity = Activity::mobileci()->setActivityType('view');
         $user = NULL;
+        $mall = NULL;
 
         try{
             $this->session = SessionPreparer::prepareSession();
             $user = UserGetter::getLoggedInUserOrGuest($this->session);
+            $role = $user->role->role_name;
 
             $couponId = OrbitInput::get('coupon_id', null);
             $sort_by = OrbitInput::get('sortby', 'name');
@@ -68,6 +71,16 @@ class CouponDetailAPIController extends ControllerAPI
 
             $prefix = DB::getTablePrefix();
 
+            // This condition only for guest can issued multiple coupon with multiple email
+            if ($role == 'Guest') {
+                $getCouponStatusSql = " 'false' as get_coupon_status ";
+            } else {
+                $getCouponStatusSql = " CASE WHEN {$prefix}issued_coupons.user_id is NULL
+                                            THEN 'false'
+                                            ELSE 'true'
+                                        END as get_coupon_status ";
+            }
+
             $coupon = Coupon::select(
                             'promotions.promotion_id as promotion_id',
                             DB::Raw("
@@ -86,12 +99,7 @@ class CouponDetailAPIController extends ControllerAPI
                             'promotions.end_date',
                             DB::raw("CASE WHEN m.object_type = 'tenant' THEN m.parent_id ELSE m.merchant_id END as mall_id"),
                             // 'media.path as original_media_path',
-                            DB::Raw("
-                                    CASE WHEN {$prefix}issued_coupons.user_id is NULL
-                                        THEN 'false'
-                                        ELSE 'true'
-                                    END as get_coupon_status
-                                "),
+                            DB::Raw($getCouponStatusSql),
                             // query for get status active based on timezone
                             DB::raw("
                                     CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
@@ -129,8 +137,11 @@ class CouponDetailAPIController extends ControllerAPI
                         ->where('promotions.promotion_id', $couponId)
                         ->where('coupon_translations.merchant_language_id', '=', $valid_language->language_id);
 
-            OrbitInput::get('mall_id', function($mallId) use ($coupon) {
+            OrbitInput::get('mall_id', function($mallId) use ($coupon, &$mall) {
                 $coupon->havingRaw("mall_id = {$this->quote($mallId)}");
+                $mall = Mall::excludeDeleted()
+                        ->where('merchant_id', $mallId)
+                        ->first();
             });
 
             $coupon = $coupon->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
@@ -147,6 +158,7 @@ class CouponDetailAPIController extends ControllerAPI
                 ->setActivityNameLong('View GoToMalls Coupon Detail')
                 ->setObject($coupon)
                 ->setCoupon($coupon)
+                ->setLocation($mall)
                 ->setModuleName('Coupon')
                 ->setNotes($activityNotes)
                 ->responseOK()

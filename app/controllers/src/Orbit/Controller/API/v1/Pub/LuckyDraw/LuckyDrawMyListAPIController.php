@@ -203,7 +203,7 @@ class LuckyDrawMyListAPIController extends IntermediateBaseController
             OrbitInput::get('mall_id', function($mallId) use($luckydraws, &$mall) {
                 $luckydraws->where('lucky_draws.mall_id', $mallId);
                 $mall = Mall::excludeDeleted()
-                        ->where('merchant_id', OrbitInput::get('mall_id'))
+                        ->where('merchant_id', $mallId)
                         ->first();
             });
 
