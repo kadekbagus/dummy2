@@ -11,6 +11,7 @@ use DominoPOS\OrbitACL\ACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Text\Util\LineChecker;
 use Helper\EloquentRecordCounter as RecordCounter;
+use DominoPOS\OrbitUploader\Uploader as OrbitUploader;
 
 class MallAPIController extends ControllerAPI
 {
@@ -282,7 +283,6 @@ class MallAPIController extends ControllerAPI
             $start_date_activity = OrbitInput::post('start_date_activity');
             $end_date_activity = OrbitInput::post('end_date_activity');
             $status = OrbitInput::post('status');
-            // $logo = OrbitInput::post('logo');
             $currency = OrbitInput::post('currency', $this->default['currency']);
             $currency_symbol = OrbitInput::post('currency_symbol', $this->default['currency_symbol']);
             $tax_code1 = OrbitInput::post('tax_code1');
@@ -317,6 +317,12 @@ class MallAPIController extends ControllerAPI
             $free_wifi_status = OrbitInput::post('free_wifi_status', 'inactive');
             $operating_hours = OrbitInput::post('operating_hours');
             $is_subscribed = OrbitInput::post('is_subscribed', 'Y');
+            $logo = OrbitInput::files('logo');
+            $maps = OrbitInput::files('maps');
+
+            // generate array validation image
+            $logo_validation = $this->generate_validation_image('mall_logo', $logo, 'orbit.upload.mall.logo');
+            $maps_validation = $this->generate_validation_image('mall_map', $maps, 'orbit.upload.mall.map', 3);
 
             // for a while this declaration with default value
             $widgets = OrbitInput::post('widgets', $this->default['widgets']);
@@ -402,6 +408,19 @@ class MallAPIController extends ControllerAPI
                 'contact_person_lastname.required'  => 'The last name is required',
             ];
 
+            // add validation image
+            if (! empty($logo_validation)) {
+                $validation_data += $logo_validation['data'];
+                $validation_error += $logo_validation['error'];
+                $validation_error_message += $logo_validation['error_message'];
+            }
+
+            if (! empty($maps_validation)) {
+                $validation_data += $maps_validation['data'];
+                $validation_error += $maps_validation['error'];
+                $validation_error_message += $maps_validation['error_message'];
+            }
+
             // handle empty string
             if ($is_subscribed !== 'Y') {
                 $is_subscribed = 'N';
@@ -439,7 +458,7 @@ class MallAPIController extends ControllerAPI
             if (empty($roleMerchant)) {
                 OrbitShopAPI::throwInvalidArgument('Could not find role named "Mall Owner".');
             }
-
+die();
             $newuser = new User();
             $newuser->username = $email;
             $newuser->user_firstname = $mall_name;
@@ -3144,6 +3163,28 @@ class MallAPIController extends ControllerAPI
 
             return TRUE;
         });
+
+        Validator::extend('orbit.file.max_size', function ($attribute, $value, $parameters) {
+            $config_size = $parameters[0];
+            $file_size = $value;
+
+            if ($file_size > $config_size) {
+                return false;
+            }
+
+            return true;
+        });
+
+        // Check the images, we are allowed array of images but not more than
+        Validator::extend('nomore.than', function ($attribute, $value, $parameters) {
+            $max_count = $parameters[0];
+
+            if (is_array($value['name']) && count($value['name']) > $max_count) {
+                return FALSE;
+            }
+
+            return TRUE;
+        });
     }
 
 
@@ -3340,6 +3381,51 @@ class MallAPIController extends ControllerAPI
         $this->returnBuilder = $bool;
 
         return $this;
+    }
+
+    protected function generate_validation_image($image_name, $images, $config, $max_count = 1) {
+        $validation = [];
+        if (! empty($images)) {
+            $images_properties = OrbitUploader::simplifyFilesVar($images);
+            $image_config = Config::get($config);
+            $image_type =  "image/" . implode(",image/", $image_config['file_type']);
+            $image_units = OrbitUploader::bytesToUnits($image_config['file_size']);
+
+            $validation['data'] = [
+                $image_name => $images
+            ];
+            $validation['error'] = [
+                $image_name => 'nomore.than:' . $max_count
+            ];
+            $validation['error_message'] = [
+                $image_name . '.nomore.than' => Lang::get('validation.max.array', array('max' => $max_count))
+            ];
+
+            foreach ($images_properties as $idx => $image) {
+                if ($max_count === 1) {
+                    $validation['data'][$image_name . '_type'] = $image->type;
+                    $validation['data'][$image_name . '_size'] = $image->size;
+
+                    $validation['error'][$image_name . '_type'] = 'in:' . $image_type;
+                    $validation['error'][$image_name . '_size'] = 'orbit.file.max_size:' . $image_config['file_size'];
+
+                    $validation['error_message'][$image_name . '_type' . '.in'] = Lang::get('validation.orbit.file.type', array('idx' => '', 'type' => $image->type));
+                    $validation['error_message'][$image_name . '_size' . '.orbit.file.max_size'] = Lang::get('validation.orbit.file.max_size', array('name' => $image_config['name'], 'idx' => '', 'size' => $image_units['newsize'], 'unit' => $image_units['unit']));
+                } else {
+                    $idx+=1;
+                    $validation['data'][$image_name . '_type_' . $idx] = $image->type;
+                    $validation['data'][$image_name . '_size_' . $idx] = $image->size;
+
+                    $validation['error'][$image_name . '_type_' . $idx] = 'in:' . $image_type;
+                    $validation['error'][$image_name . '_size_' . $idx] = 'orbit.file.max_size:' . $image_config['file_size'];
+
+                    $validation['error_message'][$image_name . '_type_' . $idx . '.in'] = Lang::get('validation.orbit.file.type', array('idx' => ' ' . $idx, 'type' => $image->type));
+                    $validation['error_message'][$image_name . '_size_' . $idx . '.orbit.file.max_size'] = Lang::get('validation.orbit.file.max_size', array('name' => $image_config['name'], 'idx' => ' ' . $idx, 'size' => $image_units['newsize'], 'unit' => $image_units['unit']));
+                }
+            }
+        }
+
+        return $validation;
     }
 
     protected function quote($arg)

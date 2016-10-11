@@ -489,6 +489,10 @@ return array(
         'max' => array(
             'total_issued_coupons' => 'Number can not be less than current total issued coupons',
         ),
+        'file' => array(
+            'max_size' => 'The :name:idx size is too big, maximum size allowed is :size:unit',
+            'type' => "File:idx extension \":type\" is not allowed" ,
+        ),
     ),
 
     /*
