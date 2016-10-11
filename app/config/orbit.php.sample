@@ -3750,6 +3750,7 @@ return array(
             ),
 
             // - Store Location View
+            // *** Moved to the getMallDetailStore() ***
             '40' => array(
                 'name' => 'view_store_location',
                 'name_long' => 'View Store Location Page',
