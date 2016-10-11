@@ -285,16 +285,29 @@ class StoreAPIController extends ControllerAPI
             // omit save activity if accessed from mall ci campaign list 'from_mall_ci' !== 'y'
             // moved from generic activity number 32
             if (empty($skip) && OrbitInput::get('from_mall_ci', '') !== 'y') {
-                $activityNotes = sprintf('Page viewed: Store list');
-                $activity->setUser($user)
-                    ->setActivityName('view_stores_main_page')
-                    ->setActivityNameLong('View Stores Main Page')
-                    ->setObject(null)
-                    ->setLocation($mall)
-                    ->setModuleName('Store')
-                    ->setNotes($activityNotes)
-                    ->responseOK()
-                    ->save();
+                if (is_object($mall)) {
+                    $activityNotes = sprintf('Page viewed: View mall store list page');
+                    $activity->setUser($user)
+                        ->setActivityName('view_mall_store_list')
+                        ->setActivityNameLong('View mall store list')
+                        ->setObject(null)
+                        ->setLocation($mall)
+                        ->setModuleName('Store')
+                        ->setNotes($activityNotes)
+                        ->responseOK()
+                        ->save();
+                } else {
+                    $activityNotes = sprintf('Page viewed: Store list');
+                    $activity->setUser($user)
+                        ->setActivityName('view_stores_main_page')
+                        ->setActivityNameLong('View Stores Main Page')
+                        ->setObject(null)
+                        ->setLocation($mall)
+                        ->setModuleName('Store')
+                        ->setNotes($activityNotes)
+                        ->responseOK()
+                        ->save();
+                }
             }
 
             $this->response->data = new stdClass();
@@ -605,16 +618,29 @@ class StoreAPIController extends ControllerAPI
             $store = $store->orderBy('merchants.created_at', 'asc')
                 ->first();
 
-            $activityNotes = sprintf('Page viewed: Landing Page Store Detail Page');
-            $activity->setUser($user)
-                ->setActivityName('view_landing_page_store_detail')
-                ->setActivityNameLong('View GoToMalls Store Detail')
-                ->setObject($store)
-                ->setLocation($mall)
-                ->setModuleName('Store')
-                ->setNotes($activityNotes)
-                ->responseOK()
-                ->save();
+            if (is_object($mall)) {
+                $activityNotes = sprintf('Page viewed: View mall store detail page');
+                $activity->setUser($user)
+                    ->setActivityName('view_mall_store_detail')
+                    ->setActivityNameLong('View mall store detail')
+                    ->setObject($store)
+                    ->setLocation($mall)
+                    ->setModuleName('Store')
+                    ->setNotes($activityNotes)
+                    ->responseOK()
+                    ->save();
+            } else {
+                $activityNotes = sprintf('Page viewed: Landing Page Store Detail Page');
+                $activity->setUser($user)
+                    ->setActivityName('view_landing_page_store_detail')
+                    ->setActivityNameLong('View GoToMalls Store Detail')
+                    ->setObject($store)
+                    ->setLocation($mall)
+                    ->setModuleName('Store')
+                    ->setNotes($activityNotes)
+                    ->responseOK()
+                    ->save();
+            }
 
             $this->response->data = $store;
         } catch (ACLForbiddenException $e) {

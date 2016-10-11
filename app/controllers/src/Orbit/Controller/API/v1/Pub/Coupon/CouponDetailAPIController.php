@@ -152,17 +152,33 @@ class CouponDetailAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument('Coupon that you specify is not found');
             }
 
-            $activityNotes = sprintf('Page viewed: Landing Page Coupon Detail Page');
-            $activity->setUser($user)
-                ->setActivityName('view_landing_page_coupon_detail')
-                ->setActivityNameLong('View GoToMalls Coupon Detail')
-                ->setObject($coupon)
-                ->setCoupon($coupon)
-                ->setLocation($mall)
-                ->setModuleName('Coupon')
-                ->setNotes($activityNotes)
-                ->responseOK()
-                ->save();
+            if (is_object($mall)) {
+                $activityNotes = sprintf('Page viewed: View mall coupon detail');
+                $activity->setUser($user)
+                    ->setActivityName('view_mall_coupon_detail')
+                    ->setActivityNameLong('View mall coupon detail')
+                    ->setObject($coupon)
+                    ->setCoupon($coupon)
+                    ->setLocation($mall)
+                    ->setModuleName('Coupon')
+                    ->setNotes($activityNotes)
+                    ->responseOK()
+                    ->save();
+            } else {
+                $activityNotes = sprintf('Page viewed: Landing Page Coupon Detail Page');
+                $activity->setUser($user)
+                    ->setActivityName('view_landing_page_coupon_detail')
+                    ->setActivityNameLong('View GoToMalls Coupon Detail')
+                    ->setObject($coupon)
+                    ->setCoupon($coupon)
+                    ->setLocation($mall)
+                    ->setModuleName('Coupon')
+                    ->setNotes($activityNotes)
+                    ->responseOK()
+                    ->save();
+            }
+
+
 
             // add facebook share url dummy page
             $coupon->facebook_share_url = SocMedAPIController::getSharedUrl('coupon', $coupon->promotion_id, $coupon->promotion_name);
