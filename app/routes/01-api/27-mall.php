@@ -61,6 +61,22 @@ Route::post('/api/v1/mall-logo/delete', function()
 });
 
 /**
+ * Upload mall map
+ */
+Route::post('/api/v1/mall-map/upload', function()
+{
+    return UploadAPIController::create()->postUploadMallMap();
+});
+
+/**
+ * Delete mall map
+ */
+Route::post('/api/v1/mall-map/delete', function()
+{
+    return UploadAPIController::create()->postDeleteMallMap();
+});
+
+/**
  * Get Mall geofence
  */
 Route::get('/api/v1/pub/mall-fence', function()
