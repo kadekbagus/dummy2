@@ -1644,6 +1644,9 @@ die();
                'ticket_footer_max_length'   => Lang::get('validation.orbit.formaterror.merchant.ticket_footer.max_length'),
                'orbit_check_tenant_mall'    => 'Mall can not be deactivated, because it has active tenant'
             ];
+$validation_data = [];
+$validation_error = [];
+$validation_error_message = [];
 
             // add validation image
             if (! empty($logo_validation)) {
@@ -1657,7 +1660,11 @@ die();
                 $validation_error += $maps_validation['error'];
                 $validation_error_message += $maps_validation['error_message'];
             }
-
+print_r([
+        $validation_data,
+        $validation_error,
+        $validation_error_message,
+    ]); die();
             $validator = Validator::make(
                 $validation_data,
                 $validation_error,
@@ -3425,26 +3432,17 @@ die();
             ];
 
             foreach ($images_properties as $idx => $image) {
-                if ($max_count === 1) {
-                    $validation['data'][$image_name . '_type'] = $image->type;
-                    $validation['data'][$image_name . '_size'] = $image->size;
+                $ext = strtolower(substr(strrchr($image->name, '.'), 1));
+                $idx+=1;
 
-                    $validation['error'][$image_name . '_type'] = 'in:' . $image_type;
-                    $validation['error'][$image_name . '_size'] = 'orbit.file.max_size:' . $image_config['file_size'];
+                $validation['data'][$image_name . '_type_' . $idx] = $image->type;
+                $validation['data'][$image_name . '_size_' . $idx] = $image->size;
 
-                    $validation['error_message'][$image_name . '_type' . '.in'] = Lang::get('validation.orbit.file.type', array('idx' => '', 'type' => $image->type));
-                    $validation['error_message'][$image_name . '_size' . '.orbit.file.max_size'] = Lang::get('validation.orbit.file.max_size', array('name' => $image_config['name'], 'idx' => '', 'size' => $image_units['newsize'], 'unit' => $image_units['unit']));
-                } else {
-                    $idx+=1;
-                    $validation['data'][$image_name . '_type_' . $idx] = $image->type;
-                    $validation['data'][$image_name . '_size_' . $idx] = $image->size;
+                $validation['error'][$image_name . '_type_' . $idx] = 'in:' . $image_type;
+                $validation['error'][$image_name . '_size_' . $idx] = 'orbit.file.max_size:' . $image_config['file_size'];
 
-                    $validation['error'][$image_name . '_type_' . $idx] = 'in:' . $image_type;
-                    $validation['error'][$image_name . '_size_' . $idx] = 'orbit.file.max_size:' . $image_config['file_size'];
-
-                    $validation['error_message'][$image_name . '_type_' . $idx . '.in'] = Lang::get('validation.orbit.file.type', array('idx' => ' ' . $idx, 'type' => $image->type));
-                    $validation['error_message'][$image_name . '_size_' . $idx . '.orbit.file.max_size'] = Lang::get('validation.orbit.file.max_size', array('name' => $image_config['name'], 'idx' => ' ' . $idx, 'size' => $image_units['newsize'], 'unit' => $image_units['unit']));
-                }
+                $validation['error_message'][$image_name . '_type_' . $idx . '.in'] = Lang::get('validation.orbit.file.type', array('ext' => $ext));
+                $validation['error_message'][$image_name . '_size_' . $idx . '.orbit.file.max_size'] = Lang::get('validation.orbit.file.max_size', array('name' => $image_config['name'], 'size' => $image_units['newsize'], 'unit' => $image_units['unit']));
             }
         }
 
