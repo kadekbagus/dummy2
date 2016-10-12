@@ -124,21 +124,8 @@ Event::listen('orbit.mall.postupdatemall.after.save', function($controller, $mal
         $mall->setRelation('media_map', $response->data);
         $mall->media_map = $response->data;
     }
-
-    // delete map
-    OrbitInput::post('delete_index', function ($delete_index) use ($controller) {
-        // This will be used on UploadAPIController
-        App::instance('orbit.upload.user', $controller->api->user);
-
-        $response = UploadAPIController::create('raw')
-                                       ->setCalledFrom('mall.update')
-                                       ->postDeleteMallMap();
-        if ($response->code !== 0)
-        {
-            throw new \Exception($response->message, $response->code);
-        }
-    });
     $mall->load('mediaMap');
+
 });
 
 /**

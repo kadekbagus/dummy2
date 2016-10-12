@@ -21,6 +21,7 @@ use Orbit\Helper\Session\UserGetter;
 use Lang;
 use \Exception;
 use Orbit\Controller\API\v1\Pub\Coupon\CouponHelper;
+use Orbit\Helper\Util\GTMSearchRecorder;
 
 class CouponListAPIController extends ControllerAPI
 {
@@ -59,9 +60,13 @@ class CouponListAPIController extends ControllerAPI
             $distance = Config::get('orbit.geo_location.distance', 10);
             $lon = '';
             $lat = '';
+            $mallId = OrbitInput::get('mall_id', null);
 
             $couponHelper = CouponHelper::create();
             $couponHelper->couponCustomValidator();
+            // search by key word or filter or sort by flag
+            $searchFlag = FALSE;
+
             $validator = Validator::make(
                 array(
                     'language' => $language,
@@ -84,10 +89,14 @@ class CouponListAPIController extends ControllerAPI
             $valid_language = $couponHelper->getValidLanguage();
 
             $prefix = DB::getTablePrefix();
+            $withMallId = '';
+            if (! empty($mallId)) {
+                $withMallId = "AND (CASE WHEN om.object_type = 'tenant' THEN oms.merchant_id ELSE om.merchant_id END) = {$this->quote($mallId)}";
+            }
 
             $coupons = Coupon::select(DB::raw("{$prefix}promotions.promotion_id as coupon_id,
-                                CASE WHEN {$prefix}coupon_translations.promotion_name = '' THEN {$prefix}promotions.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as coupon_name,
-                                CASE WHEN {$prefix}coupon_translations.description = '' THEN {$prefix}promotions.description ELSE {$prefix}coupon_translations.description END as description,
+                                CASE WHEN ({$prefix}coupon_translations.promotion_name = '' or {$prefix}coupon_translations.promotion_name is null) THEN {$prefix}promotions.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as coupon_name,
+                                CASE WHEN ({$prefix}coupon_translations.description = '' or {$prefix}coupon_translations.description is null) THEN {$prefix}promotions.description ELSE {$prefix}coupon_translations.description END as description,
                                 {$prefix}promotions.status,
                                 CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name
                                     ELSE (CASE WHEN {$prefix}promotions.end_date < (SELECT min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
@@ -95,7 +104,8 @@ class CouponListAPIController extends ControllerAPI
                                                                                         LEFT JOIN {$prefix}merchants om ON om.merchant_id = opt.retailer_id
                                                                                         LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
                                                                                         LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
-                                                                                    WHERE opt.promotion_id = {$prefix}promotions.promotion_id)
+                                                                                    WHERE opt.promotion_id = {$prefix}promotions.promotion_id
+                                                                                        {$withMallId})
                                     THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END AS campaign_status,
                                 CASE WHEN (SELECT count(opt.promotion_retailer_id)
                                             FROM {$prefix}promotion_retailer opt
@@ -103,6 +113,7 @@ class CouponListAPIController extends ControllerAPI
                                                 LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
                                                 LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
                                             WHERE opt.promotion_id = {$prefix}promotions.promotion_id
+                                            {$withMallId}
                                             AND CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) between {$prefix}promotions.begin_date and {$prefix}promotions.end_date) > 0
                                 THEN 'true' ELSE 'false' END AS is_started"),
                                 DB::raw("
@@ -118,16 +129,18 @@ class CouponListAPIController extends ControllerAPI
                                     "),
                             'promotions.created_at')
                             ->leftJoin('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
-                            ->leftJoin('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
+                            ->leftJoin('coupon_translations', function ($q) use ($valid_language) {
+                                $q->on('coupon_translations.promotion_id', '=', 'promotions.promotion_id')
+                                  ->on('coupon_translations.merchant_language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
+                            })
                             ->leftJoin('languages', 'languages.language_id', '=', 'coupon_translations.merchant_language_id')
-                            ->leftJoin('media', function($q) {
+                            ->leftJoin('media', function ($q) {
                                 $q->on('media.object_id', '=', 'coupon_translations.coupon_translation_id');
                                 $q->on('media.media_name_long', '=', DB::raw("'coupon_translation_image_orig'"));
                             })
                             ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                             ->leftJoin('merchants as t', DB::raw("t.merchant_id"), '=', 'promotion_retailer.retailer_id')
                             ->leftJoin('merchants as m', DB::raw("m.merchant_id"), '=', DB::raw("t.parent_id"))
-                            ->where('coupon_translations.merchant_language_id', $valid_language->language_id)
                             ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                             ->orderBy('coupon_name', 'asc');
 
@@ -154,7 +167,8 @@ class CouponListAPIController extends ControllerAPI
             }
 
             // filter by category_id
-            OrbitInput::get('category_id', function($category_id) use ($coupons, $prefix) {
+            OrbitInput::get('category_id', function($category_id) use ($coupons, $prefix, &$searchFlag) {
+                $searchFlag = $searchFlag || TRUE;
                 if ($category_id === 'mall') {
                     $coupons = $coupons->where(DB::raw("t.object_type"), $category_id);
                 } else {
@@ -167,7 +181,8 @@ class CouponListAPIController extends ControllerAPI
             });
 
             // filter by city
-            OrbitInput::get('location', function($location) use ($coupons, $prefix, $lat, $lon, $distance) {
+            OrbitInput::get('location', function($location) use ($coupons, $prefix, $lat, $lon, $distance, &$searchFlag) {
+                $searchFlag = $searchFlag || TRUE;
                 $coupons = $coupons->leftJoin('merchants as mp', function($q) {
                                 $q->on(DB::raw("mp.merchant_id"), '=', DB::raw("t.parent_id"));
                                 $q->on(DB::raw("mp.object_type"), '=', DB::raw("'mall'"));
@@ -241,7 +256,8 @@ class CouponListAPIController extends ControllerAPI
                 }
             });
 
-            OrbitInput::get('keyword', function ($keyword) use ($coupon, $prefix) {
+            OrbitInput::get('keyword', function ($keyword) use ($coupon, $prefix, &$searchFlag) {
+                $searchFlag = $searchFlag || TRUE;
                 if (! empty($keyword)) {
                     $coupon = $coupon->leftJoin('keyword_object', DB::Raw("sub_query.coupon_id"), '=', 'keyword_object.object_id')
                                 ->leftJoin('keywords', 'keyword_object.keyword_id', '=', 'keywords.keyword_id')
@@ -267,6 +283,18 @@ class CouponListAPIController extends ControllerAPI
                 }
             });
 
+            // record GTM search activity
+            if ($searchFlag) {
+                $parameters = [
+                    'displayName' => 'Coupon',
+                    'keywords' => OrbitInput::get('keyword', NULL),
+                    'categories' => OrbitInput::get('category_id', NULL),
+                    'location' => OrbitInput::get('location', NULL),
+                    'sortBy' => OrbitInput::get('sortby', 'name')
+                ];
+
+                GTMSearchRecorder::create($parameters)->saveActivity($user);
+            }
             $_coupon = clone $coupon;
 
             $take = PaginationNumber::parseTakeFromGet('coupon');
@@ -282,16 +310,30 @@ class CouponListAPIController extends ControllerAPI
             // omit save activity if accessed from mall ci campaign list 'from_mall_ci' !== 'y'
             // moved from generic activity number 32
             if (empty($skip) && OrbitInput::get('from_mall_ci', '') !== 'y') {
-                $activityNotes = sprintf('Page viewed: Coupon list');
-                $activity->setUser($user)
-                    ->setActivityName('view_coupons_main_page')
-                    ->setActivityNameLong('View Coupons Main Page')
-                    ->setObject(null)
-                    ->setLocation($mall)
-                    ->setModuleName('Coupon')
-                    ->setNotes($activityNotes)
-                    ->responseOK()
-                    ->save();
+                if (is_object($mall)) {
+                    $activityNotes = sprintf('Page viewed: View mall coupon list');
+                    $activity->setUser($user)
+                        ->setActivityName('view_mall_coupon_list')
+                        ->setActivityNameLong('View mall coupon list')
+                        ->setObject(null)
+                        ->setLocation($mall)
+                        ->setModuleName('Coupon')
+                        ->setNotes($activityNotes)
+                        ->responseOK()
+                        ->save();
+                } else {
+                    $activityNotes = sprintf('Page viewed: Coupon list');
+                    $activity->setUser($user)
+                        ->setActivityName('view_coupons_main_page')
+                        ->setActivityNameLong('View Coupons Main Page')
+                        ->setObject(null)
+                        ->setLocation($mall)
+                        ->setModuleName('Coupon')
+                        ->setNotes($activityNotes)
+                        ->responseOK()
+                        ->save();
+                }
+
             }
 
             $this->response->data = new stdClass();

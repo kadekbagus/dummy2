@@ -27,6 +27,7 @@ use Orbit\Helper\Session\UserGetter;
 use Orbit\Controller\API\v1\Pub\SocMedAPIController;
 use Orbit\Controller\API\v1\Pub\Promotion\PromotionHelper;
 use Mall;
+use Orbit\Helper\Util\GTMSearchRecorder;
 
 class PromotionListAPIController extends ControllerAPI
 {
@@ -70,6 +71,9 @@ class PromotionListAPIController extends ControllerAPI
             $lat = '';
             $mallId = OrbitInput::get('mall_id', null);
 
+             // search by key word or filter or sort by flag
+            $searchFlag = FALSE;
+
             $promotionHelper = PromotionHelper::create();
             $promotionHelper->registerCustomValidation();
             $validator = Validator::make(
@@ -93,11 +97,16 @@ class PromotionListAPIController extends ControllerAPI
 
             $prefix = DB::getTablePrefix();
 
+            $withMallId = '';
+            if (! empty($mallId)) {
+                $withMallId = "AND (CASE WHEN om.object_type = 'tenant' THEN oms.merchant_id ELSE om.merchant_id END) = {$this->quote($mallId)}";
+            }
+
             $promotions = News::select(
                             'news.news_id as news_id',
                             DB::Raw("
-                                CASE WHEN {$prefix}news_translations.news_name = '' THEN {$prefix}news.news_name ELSE {$prefix}news_translations.news_name END as news_name,
-                                CASE WHEN {$prefix}news_translations.description = '' THEN {$prefix}news.description ELSE {$prefix}news_translations.description END as description,
+                                CASE WHEN ({$prefix}news_translations.news_name = '' or {$prefix}news_translations.news_name is null) THEN {$prefix}news.news_name ELSE {$prefix}news_translations.news_name END as news_name,
+                                CASE WHEN ({$prefix}news_translations.description = '' or {$prefix}news_translations.description is null) THEN {$prefix}news.description ELSE {$prefix}news_translations.description END as description,
                                 CASE WHEN {$prefix}media.path is null THEN (
                                         select m.path
                                         from {$prefix}news_translations nt
@@ -118,7 +127,8 @@ class PromotionListAPIController extends ControllerAPI
                                                                                             LEFT JOIN {$prefix}merchants om ON om.merchant_id = onm.merchant_id
                                                                                             LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
                                                                                             LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
-                                                                                        WHERE onm.news_id = {$prefix}news.news_id)
+                                                                                        WHERE onm.news_id = {$prefix}news.news_id
+                                                                                        {$withMallId})
                                     THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END AS campaign_status,
                                     CASE WHEN (SELECT count(onm.merchant_id)
                                                 FROM {$prefix}news_merchant onm
@@ -126,22 +136,25 @@ class PromotionListAPIController extends ControllerAPI
                                                     LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
                                                     LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
                                                 WHERE onm.news_id = {$prefix}news.news_id
+                                                {$withMallId}
                                                 AND CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) between {$prefix}news.begin_date and {$prefix}news.end_date) > 0
                                     THEN 'true' ELSE 'false' END AS is_started
                                 "),
                             'news.created_at')
-                            ->join('news_translations', 'news_translations.news_id', '=', 'news.news_id')
+                            ->leftJoin('news_translations', function ($q) use ($valid_language) {
+                                $q->on('news_translations.news_id', '=', 'news.news_id')
+                                  ->on('news_translations.merchant_language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
+                            })
                             ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
-                            ->leftJoin('media', function($q) {
+                            ->leftJoin('media', function ($q) {
                                 $q->on('media.object_id', '=', 'news_translations.news_translation_id');
                                 $q->on('media.media_name_long', '=', DB::raw("'news_translation_image_orig'"));
                             })
                             ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
-                            ->leftJoin('merchants as m', function($q) {
+                            ->leftJoin('merchants as m', function ($q) {
                                 $q->on(DB::raw("m.merchant_id"), '=', 'news_merchant.merchant_id');
                                 $q->on(DB::raw("m.status"), '=', DB::raw("'active'"));
                             })
-                            ->where('news_translations.merchant_language_id', '=', $valid_language->language_id)
                             ->where('news.object_type', '=', 'promotion')
                             ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                             ->orderBy('news_name', 'asc');
@@ -172,7 +185,8 @@ class PromotionListAPIController extends ControllerAPI
             }
 
             // filter by category_id
-            OrbitInput::get('category_id', function($category_id) use ($promotions, $prefix) {
+            OrbitInput::get('category_id', function($category_id) use ($promotions, $prefix, &$searchFlag) {
+                $searchFlag = $searchFlag || TRUE;
                 if ($category_id === 'mall') {
                     $promotions = $promotions->where(DB::raw("m.object_type"), $category_id);
                 } else {
@@ -198,7 +212,8 @@ class PromotionListAPIController extends ControllerAPI
             }
 
             // filter by city
-            OrbitInput::get('location', function($location) use ($promotions, $prefix, $lon, $lat, $userLocationCookieName, $distance) {
+            OrbitInput::get('location', function($location) use ($promotions, $prefix, $lon, $lat, $userLocationCookieName, $distance, &$searchFlag) {
+                $searchFlag = $searchFlag || TRUE;
                 $promotions = $promotions->leftJoin('merchants as mp', function($q) {
                                 $q->on(DB::raw("mp.merchant_id"), '=', DB::raw("m.parent_id"));
                                 $q->on(DB::raw("mp.object_type"), '=', DB::raw("'mall'"));
@@ -217,6 +232,7 @@ class PromotionListAPIController extends ControllerAPI
             $promotion = DB::table(DB::Raw("({$querySql}) as sub_query"))->mergeBindings($promotions->getQuery());
 
             if ($sort_by === 'location' && !empty($lon) && !empty($lat)) {
+                $searchFlag = $searchFlag || TRUE;
                 $promotion = $promotion->select(DB::raw("sub_query.news_id"), 'news_name', 'description', DB::raw("sub_query.object_type"), 'image_url', 'campaign_status', 'is_started', DB::raw("min(distance) as distance"))
                                        ->orderBy('distance', 'asc');
             } else {
@@ -246,8 +262,9 @@ class PromotionListAPIController extends ControllerAPI
                 $promotion = $promotion->orderBy($sort_by, $sort_mode);
             }
 
-            OrbitInput::get('keyword', function($keyword) use ($promotion, $prefix) {
-                 if (! empty($keyword)) {
+            OrbitInput::get('keyword', function($keyword) use ($promotion, $prefix, &$searchFlag) {
+                $searchFlag = $searchFlag || TRUE;
+                if (! empty($keyword)) {
                     $promotion = $promotion->leftJoin('keyword_object', DB::Raw("sub_query.news_id"), '=', 'keyword_object.object_id')
                                 ->leftJoin('keywords', 'keyword_object.keyword_id', '=', 'keywords.keyword_id')
                                 ->where(function($query) use ($keyword, $prefix){
@@ -269,7 +286,7 @@ class PromotionListAPIController extends ControllerAPI
                                         }
                                     }
                                 });
-                 }
+                }
             });
 
             OrbitInput::get('filter_name', function ($filterName) use ($promotion, $prefix) {
@@ -283,6 +300,18 @@ class PromotionListAPIController extends ControllerAPI
                 }
             });
 
+            // record GTM search activity
+            if ($searchFlag) {
+                $parameters = [
+                    'displayName' => 'Promotion',
+                    'keywords' => OrbitInput::get('keyword', NULL),
+                    'categories' => OrbitInput::get('category_id', NULL),
+                    'location' => OrbitInput::get('location', NULL),
+                    'sortBy' => OrbitInput::get('sortby', 'name')
+                ];
+
+                GTMSearchRecorder::create($parameters)->saveActivity($user);
+            }
             $_promotion = clone($promotion);
 
             $take = PaginationNumber::parseTakeFromGet('promotion');
@@ -303,16 +332,29 @@ class PromotionListAPIController extends ControllerAPI
             $data->records = $listOfRec;
 
             if (empty($skip) && OrbitInput::get('from_mall_ci', '') !== 'y') {
-                $activityNotes = sprintf('Page viewed: Promotion list');
-                $activity->setUser($user)
-                    ->setActivityName('view_promotions_main_page')
-                    ->setActivityNameLong('View Promotions Main Page')
-                    ->setObject(null)
-                    ->setLocation($mall)
-                    ->setModuleName('Promotion')
-                    ->setNotes($activityNotes)
-                    ->responseOK()
-                    ->save();
+                if (is_object($mall)) {
+                    $activityNotes = sprintf('Page viewed:  View mall promotion list');
+                    $activity->setUser($user)
+                        ->setActivityName('view_mall_promotion_list')
+                        ->setActivityNameLong(' View mall promotion list')
+                        ->setObject(null)
+                        ->setLocation($mall)
+                        ->setModuleName('Promotion')
+                        ->setNotes($activityNotes)
+                        ->responseOK()
+                        ->save();
+                } else {
+                    $activityNotes = sprintf('Page viewed: Promotion list');
+                    $activity->setUser($user)
+                        ->setActivityName('view_promotions_main_page')
+                        ->setActivityNameLong('View Promotions Main Page')
+                        ->setObject(null)
+                        ->setLocation($mall)
+                        ->setModuleName('Promotion')
+                        ->setNotes($activityNotes)
+                        ->responseOK()
+                        ->save();
+                }
             }
 
             $this->response->data = $data;

@@ -81,14 +81,8 @@ class LuckyDrawDetailAPIController extends IntermediateBaseController
             $luckyDraw = LuckyDraw::select(
                     'lucky_draws.lucky_draw_id',
                     DB::raw("
-                        CASE WHEN {$prefix}lucky_draw_translations.lucky_draw_name = ''
-                            THEN {$prefix}lucky_draws.lucky_draw_name
-                            ELSE {$prefix}lucky_draw_translations.lucky_draw_name
-                        END as lucky_draw_name,
-                        CASE WHEN {$prefix}lucky_draw_translations.description = ''
-                            THEN {$prefix}lucky_draws.description
-                            ELSE {$prefix}lucky_draw_translations.description
-                        END as description,
+                        CASE WHEN ({$prefix}lucky_draw_translations.lucky_draw_name = '' or {$prefix}lucky_draw_translations.lucky_draw_name is null) THEN {$prefix}lucky_draws.lucky_draw_name ELSE {$prefix}lucky_draw_translations.lucky_draw_name END as lucky_draw_name,
+                        CASE WHEN ({$prefix}lucky_draw_translations.description = '' or {$prefix}lucky_draw_translations.description is null) THEN {$prefix}lucky_draws.description ELSE {$prefix}lucky_draw_translations.description END as description,
                         CASE WHEN {$prefix}media.path is null
                             THEN (
                                 select m.path
@@ -128,18 +122,20 @@ class LuckyDrawDetailAPIController extends IntermediateBaseController
                 )
                 ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'lucky_draws.campaign_status_id')
                 ->leftJoin('merchants', 'lucky_draws.mall_id', '=', 'merchants.merchant_id')
-                ->leftJoin('lucky_draw_translations', 'lucky_draw_translations.lucky_draw_id', '=', 'lucky_draws.lucky_draw_id')
-                ->leftJoin('media', function($q) {
+                ->leftJoin('lucky_draw_translations', function ($q) use ($valid_language) {
+                    $q->on('lucky_draw_translations.lucky_draw_id', '=', 'lucky_draws.lucky_draw_id')
+                      ->on('lucky_draw_translations.merchant_language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
+                })
+                ->leftJoin('media', function ($q) {
                     $q->on('media.object_id', '=', 'lucky_draw_translations.lucky_draw_translation_id');
                     $q->on('media.media_name_long', '=', DB::raw("'lucky_draw_translation_image_orig'"));
                 })
-                ->leftJoin(DB::raw("{$prefix}media mall_media"), function($q) {
+                ->leftJoin(DB::raw("{$prefix}media mall_media"), function ($q) {
                     $q->on(DB::raw('mall_media.object_id'), '=', 'merchants.merchant_id');
                     $q->on(DB::raw('mall_media.media_name_long'), 'IN', DB::raw("('mall_logo_orig', 'retailer_logo_orig')"));
                 })
                 ->leftJoin('timezones', 'merchants.timezone_id', '=', 'timezones.timezone_id')
                 ->active('lucky_draws')
-                ->where('lucky_draw_translations.merchant_language_id', '=', $valid_language->language_id)
                 ->where('lucky_draws.lucky_draw_id', $luckyDrawId)
                 ->where('lucky_draws.object_type', 'auto');
 
@@ -167,16 +163,29 @@ class LuckyDrawDetailAPIController extends IntermediateBaseController
             $this->response->message = 'Success';
             $this->response->data = $luckyDraw;
 
-            $activityNotes = sprintf('Page viewed: Landing Page Lucky Draw Detail Page');
-            $activity->setUser($user)
-                ->setActivityName('view_landing_page_lucky_draw_detail')
-                ->setActivityNameLong('View GoToMalls Lucky Draw Detail')
-                ->setObject($luckyDraw)
-                ->setLocation($mall)
-                ->setModuleName('LuckyDraw')
-                ->setNotes($activityNotes)
-                ->responseOK()
-                ->save();
+            if (is_object($mall)) {
+                $activityNotes = sprintf('Page viewed: View mall lucky draw detail page');
+                $activity->setUser($user)
+                    ->setActivityName('view_mall_lucky_draw_detail')
+                    ->setActivityNameLong('View mall lucky draw detail')
+                    ->setObject($luckyDraw)
+                    ->setLocation($mall)
+                    ->setModuleName('LuckyDraw')
+                    ->setNotes($activityNotes)
+                    ->responseOK()
+                    ->save();
+            } else {
+                $activityNotes = sprintf('Page viewed: Landing Page Lucky Draw Detail Page');
+                $activity->setUser($user)
+                    ->setActivityName('view_landing_page_lucky_draw_detail')
+                    ->setActivityNameLong('View GoToMalls Lucky Draw Detail')
+                    ->setObject($luckyDraw)
+                    ->setLocation($mall)
+                    ->setModuleName('LuckyDraw')
+                    ->setNotes($activityNotes)
+                    ->responseOK()
+                    ->save();
+            }
 
         } catch (ACLForbiddenException $e) {
 
@@ -219,5 +228,10 @@ class LuckyDrawDetailAPIController extends IntermediateBaseController
         }
 
         return $this->render($this->response);
+    }
+
+    protected function quote($arg)
+    {
+        return DB::connection()->getPdo()->quote($arg);
     }
 }

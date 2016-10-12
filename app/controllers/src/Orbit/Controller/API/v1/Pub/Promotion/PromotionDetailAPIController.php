@@ -45,6 +45,7 @@ class PromotionDetailAPIController extends ControllerAPI
             $sort_by = OrbitInput::get('sortby', 'name');
             $sort_mode = OrbitInput::get('sortmode','asc');
             $language = OrbitInput::get('language', 'id');
+            $mallId = OrbitInput::get('mall_id', null);
 
             $promotionHelper = PromotionHelper::create();
             $promotionHelper->registerCustomValidation();
@@ -75,8 +76,8 @@ class PromotionDetailAPIController extends ControllerAPI
             $promotion = News::select(
                             'news.news_id as news_id',
                             DB::Raw("
-                                CASE WHEN {$prefix}news_translations.news_name = '' THEN {$prefix}news.news_name ELSE {$prefix}news_translations.news_name END as news_name,
-                                CASE WHEN {$prefix}news_translations.description = '' THEN {$prefix}news.description ELSE {$prefix}news_translations.description END as description,
+                                CASE WHEN ({$prefix}news_translations.news_name = '' or {$prefix}news_translations.news_name is null) THEN {$prefix}news.news_name ELSE {$prefix}news_translations.news_name END as news_name,
+                                CASE WHEN ({$prefix}news_translations.description = '' or {$prefix}news_translations.description is null) THEN {$prefix}news.description ELSE {$prefix}news_translations.description END as description,
                                 CASE WHEN {$prefix}media.path is null THEN (
                                         select m.path
                                         from {$prefix}news_translations nt
@@ -110,14 +111,16 @@ class PromotionDetailAPIController extends ControllerAPI
                                     THEN 'true' ELSE 'false' END AS is_started
                             ")
                         )
-                        ->join('news_translations', 'news_translations.news_id', '=', 'news.news_id')
+                        ->leftJoin('news_translations', function ($q) use ($valid_language) {
+                            $q->on('news_translations.news_id', '=', 'news.news_id')
+                              ->on('news_translations.merchant_language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
+                        })
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
-                        ->leftJoin('media', function($q) {
+                        ->leftJoin('media', function ($q) {
                             $q->on('media.object_id', '=', 'news_translations.news_translation_id');
                             $q->on('media.media_name_long', '=', DB::raw("'news_translation_image_orig'"));
                         })
                         ->where('news.news_id', $promotionId)
-                        ->where('news_translations.merchant_language_id', '=', $valid_language->language_id)
                         ->where('news.object_type', '=', 'promotion')
                         ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                         ->first();
@@ -127,16 +130,35 @@ class PromotionDetailAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument('Promotion that you specify is not found');
             }
 
-            $activityNotes = sprintf('Page viewed: Landing Page Promotion Detail Page');
-            $activity->setUser($user)
-                ->setActivityName('view_landing_page_promotion_detail')
-                ->setActivityNameLong('View GoToMalls Promotion Detail')
-                ->setObject($promotion)
-                ->setNews($promotion)
-                ->setModuleName('Promotion')
-                ->setNotes($activityNotes)
-                ->responseOK()
-                ->save();
+            $mall = null;
+            if (! empty($mallId)) {
+                $mall = Mall::where('merchant_id', '=', $mallId)->first();
+            }
+
+            if (is_object($mall)) {
+                $activityNotes = sprintf('Page viewed: View mall promotion detail');
+                $activity->setUser($user)
+                    ->setActivityName('view_mall_promotion_detail')
+                    ->setActivityNameLong('View mall promotion detail')
+                    ->setObject($promotion)
+                    ->setNews($promotion)
+                    ->setLocation($mall)
+                    ->setModuleName('Promotion')
+                    ->setNotes($activityNotes)
+                    ->responseOK()
+                    ->save();
+            } else {
+                $activityNotes = sprintf('Page viewed: Landing Page Promotion Detail Page');
+                $activity->setUser($user)
+                    ->setActivityName('view_landing_page_promotion_detail')
+                    ->setActivityNameLong('View GoToMalls Promotion Detail')
+                    ->setObject($promotion)
+                    ->setNews($promotion)
+                    ->setModuleName('Promotion')
+                    ->setNotes($activityNotes)
+                    ->responseOK()
+                    ->save();
+            }
 
             // add facebook share url dummy page
             $promotion->facebook_share_url = SocMedAPIController::getSharedUrl('promotion', $promotion->news_id, $promotion->news_name);
@@ -186,5 +208,10 @@ class PromotionDetailAPIController extends ControllerAPI
         }
 
         return $this->render($httpCode);
+    }
+
+    protected function quote($arg)
+    {
+        return DB::connection()->getPdo()->quote($arg);
     }
 }

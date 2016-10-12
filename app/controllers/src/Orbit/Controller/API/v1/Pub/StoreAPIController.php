@@ -24,6 +24,7 @@ use Coupon;
 use Activity;
 use Orbit\Helper\Net\SessionPreparer;
 use Orbit\Helper\Session\UserGetter;
+use Orbit\Helper\Util\GTMSearchRecorder;
 
 class StoreAPIController extends ControllerAPI
 {
@@ -62,6 +63,9 @@ class StoreAPIController extends ControllerAPI
             $ul = OrbitInput::get('ul');
             $lon = 0;
             $lat = 0;
+
+            // search by key word or filter or sort by flag
+            $searchFlag = FALSE;
 
             $this->registerCustomValidation();
             $validator = Validator::make(
@@ -130,7 +134,8 @@ class StoreAPIController extends ControllerAPI
                         ->orderBy('name', 'asc');
 
             // filter by category just on first store
-            OrbitInput::get('category_id', function ($category_id) use ($store, $prefix) {
+            OrbitInput::get('category_id', function ($category_id) use ($store, $prefix, &$searchFlag) {
+                $searchFlag = $searchFlag || TRUE;
                 $store->leftJoin(DB::raw("{$prefix}category_merchant cm"), DB::Raw("cm.merchant_id"), '=', DB::Raw("subQuery.merchant_id"))
                     ->where(DB::raw("cm.category_id"), $category_id);
             });
@@ -170,7 +175,8 @@ class StoreAPIController extends ControllerAPI
             }
 
             // filter by city before grouping
-            OrbitInput::get('location', function ($location) use ($store, $prefix, $lon, $lat, $distance) {
+            OrbitInput::get('location', function ($location) use ($store, $prefix, $lon, $lat, $distance, &$searchFlag) {
+                $searchFlag = $searchFlag || TRUE;
                 if ($location === 'mylocation' && ! empty($lon) && ! empty($lat)) {
                     $store->havingRaw("distance <= {$distance}");
                 } else {
@@ -197,6 +203,7 @@ class StoreAPIController extends ControllerAPI
                         ->select(DB::raw('sub_query.merchant_id'), 'name', 'description', 'logo_url');
 
             if ($sort_by === 'location' && ! empty($lon) && ! empty($lat)) {
+                $searchFlag = $searchFlag || TRUE;
                 $sort_by = 'distance';
                 $store = $store->addSelect('distance')
                                 ->groupBy('name')
@@ -223,7 +230,8 @@ class StoreAPIController extends ControllerAPI
                 $store->addSelect('mall_name');
             });
 
-            OrbitInput::get('keyword', function ($keyword) use ($store, $prefix) {
+            OrbitInput::get('keyword', function ($keyword) use ($store, $prefix, &$searchFlag) {
+                $searchFlag = $searchFlag || TRUE;
                 if (! empty($keyword)) {
                     $store = $store->leftJoin('keyword_object', DB::raw('sub_query.merchant_id'), '=', 'keyword_object.object_id')
                                 ->leftJoin('keywords', 'keyword_object.keyword_id', '=', 'keywords.keyword_id')
@@ -249,6 +257,19 @@ class StoreAPIController extends ControllerAPI
                 }
             });
 
+            // record GTM search activity
+            if ($searchFlag) {
+                $parameters = [
+                    'displayName' => 'Store',
+                    'keywords' => OrbitInput::get('keyword', NULL),
+                    'categories' => OrbitInput::get('category_id', NULL),
+                    'location' => OrbitInput::get('location', NULL),
+                    'sortBy' => OrbitInput::get('sortby', 'name')
+                ];
+
+                GTMSearchRecorder::create($parameters)->saveActivity($user);
+            }
+
             $_store = clone $store;
 
             $take = PaginationNumber::parseTakeFromGet('retailer');
@@ -264,16 +285,29 @@ class StoreAPIController extends ControllerAPI
             // omit save activity if accessed from mall ci campaign list 'from_mall_ci' !== 'y'
             // moved from generic activity number 32
             if (empty($skip) && OrbitInput::get('from_mall_ci', '') !== 'y') {
-                $activityNotes = sprintf('Page viewed: Store list');
-                $activity->setUser($user)
-                    ->setActivityName('view_stores_main_page')
-                    ->setActivityNameLong('View Stores Main Page')
-                    ->setObject(null)
-                    ->setLocation($mall)
-                    ->setModuleName('Store')
-                    ->setNotes($activityNotes)
-                    ->responseOK()
-                    ->save();
+                if (is_object($mall)) {
+                    $activityNotes = sprintf('Page viewed: View mall store list page');
+                    $activity->setUser($user)
+                        ->setActivityName('view_mall_store_list')
+                        ->setActivityNameLong('View mall store list')
+                        ->setObject(null)
+                        ->setLocation($mall)
+                        ->setModuleName('Store')
+                        ->setNotes($activityNotes)
+                        ->responseOK()
+                        ->save();
+                } else {
+                    $activityNotes = sprintf('Page viewed: Store list');
+                    $activity->setUser($user)
+                        ->setActivityName('view_stores_main_page')
+                        ->setActivityNameLong('View Stores Main Page')
+                        ->setObject(null)
+                        ->setLocation($mall)
+                        ->setModuleName('Store')
+                        ->setNotes($activityNotes)
+                        ->responseOK()
+                        ->save();
+                }
             }
 
             $this->response->data = new stdClass();
@@ -584,16 +618,29 @@ class StoreAPIController extends ControllerAPI
             $store = $store->orderBy('merchants.created_at', 'asc')
                 ->first();
 
-            $activityNotes = sprintf('Page viewed: Landing Page Store Detail Page');
-            $activity->setUser($user)
-                ->setActivityName('view_landing_page_store_detail')
-                ->setActivityNameLong('View GoToMalls Store Detail')
-                ->setObject($store)
-                ->setLocation($mall)
-                ->setModuleName('Store')
-                ->setNotes($activityNotes)
-                ->responseOK()
-                ->save();
+            if (is_object($mall)) {
+                $activityNotes = sprintf('Page viewed: View mall store detail page');
+                $activity->setUser($user)
+                    ->setActivityName('view_mall_store_detail')
+                    ->setActivityNameLong('View mall store detail')
+                    ->setObject($store)
+                    ->setLocation($mall)
+                    ->setModuleName('Store')
+                    ->setNotes($activityNotes)
+                    ->responseOK()
+                    ->save();
+            } else {
+                $activityNotes = sprintf('Page viewed: Landing Page Store Detail Page');
+                $activity->setUser($user)
+                    ->setActivityName('view_landing_page_store_detail')
+                    ->setActivityNameLong('View GoToMalls Store Detail')
+                    ->setObject($store)
+                    ->setLocation($mall)
+                    ->setModuleName('Store')
+                    ->setNotes($activityNotes)
+                    ->responseOK()
+                    ->save();
+            }
 
             $this->response->data = $store;
         } catch (ACLForbiddenException $e) {
@@ -660,7 +707,13 @@ class StoreAPIController extends ControllerAPI
     public function getMallDetailStore()
     {
         $httpCode = 200;
+        $activity = Activity::mobileci()->setActivityType('view');
+        $user = null;
+
         try {
+            $this->session = SessionPreparer::prepareSession();
+            $user = UserGetter::getLoggedInUserOrGuest($this->session);
+
             $sort_by = OrbitInput::get('sortby', 'merchants.name');
             $sort_mode = OrbitInput::get('sortmode','asc');
             $storename = OrbitInput::get('store_name');
@@ -760,6 +813,20 @@ class StoreAPIController extends ControllerAPI
 
             $skip = PaginationNumber::parseSkipFromGet();
             $mall->skip($skip);
+
+            // moved from generic activity number 40
+            if (empty($skip)) {
+                $activityNotes = sprintf('Page viewed: Store location list');
+                $activity->setUser($user)
+                    ->setActivityName('view_store_location')
+                    ->setActivityNameLong('View Store Location Page')
+                    ->setObject(null)
+                    ->setObjectDisplayName($storename)
+                    ->setModuleName('Store')
+                    ->setNotes($activityNotes)
+                    ->responseOK()
+                    ->save();
+            }
 
             $listmall = $mall->get();
             $count = RecordCounter::create($_mall)->count();
