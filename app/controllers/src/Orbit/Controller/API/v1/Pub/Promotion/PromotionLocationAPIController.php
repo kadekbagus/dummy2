@@ -114,7 +114,7 @@ class PromotionLocationAPIController extends ControllerAPI
             $listOfRec = $promotionLocation->get();
 
             // moved from generic activity number 36
-            if (empty($skip)) {
+            if (empty($skip) && OrbitInput::get('is_detail', 'n') === 'y'  ) {
                 $promotion = News::excludeDeleted()
                     ->where('news_id', $promotionId)
                     ->first();
