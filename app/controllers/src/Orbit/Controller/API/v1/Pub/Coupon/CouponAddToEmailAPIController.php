@@ -70,6 +70,11 @@ class CouponAddToEmailAPIController extends ControllerAPI
                 )
             );
 
+            // requested coupon before validation
+            $coupon = Coupon::excludeDeleted()
+                ->where('promotion_id', '=', $coupon_id)
+                ->first();
+
             $this->beginTransaction();
 
             // Run the validation
@@ -78,6 +83,7 @@ class CouponAddToEmailAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
+            // requested coupon after validation
             $coupon = Coupon::excludeDeleted()
                 ->where('promotion_id', '=', $coupon_id)
                 ->first();
@@ -119,7 +125,7 @@ class CouponAddToEmailAPIController extends ControllerAPI
                 $activity->setUser($user)
                     ->setActivityName('issue_coupon')
                     ->setActivityNameLong('Issue Coupon by Email')
-                    ->setObject($issuedCoupon)
+                    ->setObject($coupon)
                     ->setLocation($retailer)
                     ->setModuleName('Coupon')
                     ->setCoupon($coupon)
@@ -133,7 +139,7 @@ class CouponAddToEmailAPIController extends ControllerAPI
                 $activity->setUser($user)
                     ->setActivityName('issue_coupon')
                     ->setActivityNameLong('Failed to Issue Coupon by Email')
-                    ->setObject($issuedCoupon)
+                    ->setObject($coupon)
                     ->setLocation($retailer)
                     ->setModuleName('Coupon')
                     ->setCoupon($coupon)
@@ -152,7 +158,7 @@ class CouponAddToEmailAPIController extends ControllerAPI
             $activity->setUser($user)
                 ->setActivityName('issue_coupon')
                 ->setActivityNameLong('Failed to Issue Coupon by Email')
-                ->setObject($issuedCoupon)
+                ->setObject($coupon)
                 ->setLocation($retailer)
                 ->setModuleName('Coupon')
                 ->setCoupon($coupon)
@@ -169,7 +175,7 @@ class CouponAddToEmailAPIController extends ControllerAPI
             $activity->setUser($user)
                 ->setActivityName('issue_coupon')
                 ->setActivityNameLong('Failed to Issue Coupon by Email')
-                ->setObject($issuedCoupon)
+                ->setObject($coupon)
                 ->setLocation($retailer)
                 ->setModuleName('Coupon')
                 ->setCoupon($coupon)
@@ -186,7 +192,7 @@ class CouponAddToEmailAPIController extends ControllerAPI
             $activity->setUser($user)
                 ->setActivityName('issue_coupon')
                 ->setActivityNameLong('Failed to Issue Coupon by Email')
-                ->setObject($issuedCoupon)
+                ->setObject($coupon)
                 ->setLocation($retailer)
                 ->setModuleName('Coupon')
                 ->setCoupon($coupon)
