@@ -50,6 +50,7 @@ class CouponRedemptionPageAPIController extends ControllerAPI
 
             $couponHelper = CouponHelper::create();
             $couponHelper->couponCustomValidator();
+
             $validator = Validator::make(
                 array(
                     'language' => $language,
@@ -71,6 +72,19 @@ class CouponRedemptionPageAPIController extends ControllerAPI
 
             $issuedCouponId = OrbitInput::get('cid', NULL);
             $userIdentifier = OrbitInput::get('uid', NULL);
+
+            $encryptionKey = Config::get('orbit.security.encryption_key');
+            $encryptionDriver = Config::get('orbit.security.encryption_driver');
+            $encrypter = new Encrypter($encryptionKey, $encryptionDriver);
+
+            $requestedIssuedCouponId = $encrypter->decrypt($issuedCouponId);
+
+            // requested coupon before validation
+            $coupon = Coupon::excludeDeleted('promotions')
+                ->leftJoin('issued_coupons', 'issued_coupons.promotion_id', '=', 'promotions.promotion_id')
+                ->where('issued_coupon_id', $requestedIssuedCouponId)
+                ->first();
+
             $validator = Validator::make(
                 array(
                     'cid' => $issuedCouponId,
@@ -87,10 +101,6 @@ class CouponRedemptionPageAPIController extends ControllerAPI
             }
 
             // decrypt hashed coupon id
-            $encryptionKey = Config::get('orbit.security.encryption_key');
-            $encryptionDriver = Config::get('orbit.security.encryption_driver');
-            $encrypter = new Encrypter($encryptionKey, $encryptionDriver);
-
             $issuedCouponId = $encrypter->decrypt($issuedCouponId);
             if (! empty($userIdentifier)) {
                 $userIdentifier = $encrypter->decrypt($userIdentifier);
@@ -164,13 +174,11 @@ class CouponRedemptionPageAPIController extends ControllerAPI
             // customize user property before saving activity
             $user = $couponHelper->customizeUserProps($user, $userIdentifier);
 
-            $issuedCoupon = IssuedCoupon::where('issued_coupon_id', $issuedCouponId)->first();
-
             $activityNotes = sprintf('Page viewed: Coupon Redemption Page. Issued Coupon Id: %s', $issuedCouponId);
             $activity->setUser($user)
                 ->setActivityName('view_redemption_page')
                 ->setActivityNameLong('View Redemption Page')
-                ->setObject($issuedCoupon)
+                ->setObject($coupon)
                 ->setCoupon($coupon)
                 ->setModuleName('Coupon')
                 ->setNotes($activityNotes)
@@ -186,7 +194,7 @@ class CouponRedemptionPageAPIController extends ControllerAPI
             $activity->setUser($user)
                 ->setActivityName('view_redemption_page')
                 ->setActivityNameLong('Failed to View Redemption Page')
-                ->setObject($issuedCoupon)
+                ->setObject($coupon)
                 ->setCoupon($coupon)
                 ->setModuleName('Coupon')
                 ->setNotes($activityNotes)
@@ -203,7 +211,7 @@ class CouponRedemptionPageAPIController extends ControllerAPI
             $activity->setUser($user)
                 ->setActivityName('view_redemption_page')
                 ->setActivityNameLong('Failed to View Redemption Page')
-                ->setObject($issuedCoupon)
+                ->setObject($coupon)
                 ->setCoupon($coupon)
                 ->setModuleName('Coupon')
                 ->setNotes($activityNotes)
@@ -224,7 +232,7 @@ class CouponRedemptionPageAPIController extends ControllerAPI
             $activity->setUser($user)
                 ->setActivityName('view_redemption_page')
                 ->setActivityNameLong('Failed to View Redemption Page')
-                ->setObject($issuedCoupon)
+                ->setObject($coupon)
                 ->setCoupon($coupon)
                 ->setModuleName('Coupon')
                 ->setNotes($activityNotes)
@@ -248,7 +256,7 @@ class CouponRedemptionPageAPIController extends ControllerAPI
             $activity->setUser($user)
                 ->setActivityName('view_redemption_page')
                 ->setActivityNameLong('Failed to View Redemption Page')
-                ->setObject($issuedCoupon)
+                ->setObject($coupon)
                 ->setCoupon($coupon)
                 ->setModuleName('Coupon')
                 ->setNotes($activityNotes)
@@ -265,5 +273,10 @@ class CouponRedemptionPageAPIController extends ControllerAPI
         $output = $this->render($httpCode);
 
         return $output;
+    }
+
+    protected function quote($arg)
+    {
+        return DB::connection()->getPdo()->quote($arg);
     }
 }

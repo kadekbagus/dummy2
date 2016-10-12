@@ -75,6 +75,18 @@ class CouponRedeemAPIController extends ControllerAPI
             $userIdentifier = OrbitInput::post('uid', NULL); // hashed user identifier
             $verificationNumber = OrbitInput::post('merchant_verification_number');
 
+            $encryptionKey = Config::get('orbit.security.encryption_key');
+            $encryptionDriver = Config::get('orbit.security.encryption_driver');
+            $encrypter = new Encrypter($encryptionKey, $encryptionDriver);
+
+            $requestedIssuedCouponId = $encrypter->decrypt($issuedCouponId);
+
+            // requested coupon before validation
+            $coupon = Coupon::excludeDeleted('promotions')
+                ->leftJoin('issued_coupons', 'issued_coupons.promotion_id', '=', 'promotions.promotion_id')
+                ->where('issued_coupon_id', $requestedIssuedCouponId)
+                ->first();
+
             $validator = Validator::make(
                 array(
                     'mall_id'                       => $mallId,
@@ -160,7 +172,7 @@ class CouponRedeemAPIController extends ControllerAPI
             $activity->setUser($user)
                     ->setActivityName('redeem_coupon')
                     ->setActivityNameLong('Coupon Redemption Successful')
-                    ->setObject($issuedcoupon)
+                    ->setObject($coupon)
                     ->setCoupon($coupon)
                     ->setNotes($activityNotes)
                     ->setLocation($mall)
@@ -182,7 +194,7 @@ class CouponRedeemAPIController extends ControllerAPI
             $activity->setUser($user)
                     ->setActivityName('redeem_coupon')
                     ->setActivityNameLong('Coupon Redemption Failed')
-                    ->setObject($issuedcoupon)
+                    ->setObject($coupon)
                     ->setCoupon($coupon)
                     ->setNotes($e->getMessage())
                     ->setLocation($mall)
@@ -203,7 +215,7 @@ class CouponRedeemAPIController extends ControllerAPI
             $activity->setUser($user)
                     ->setActivityName('redeem_coupon')
                     ->setActivityNameLong('Coupon Redemption Failed')
-                    ->setObject($issuedcoupon)
+                    ->setObject($coupon)
                     ->setCoupon($coupon)
                     ->setNotes($e->getMessage())
                     ->setLocation($mall)
@@ -224,7 +236,7 @@ class CouponRedeemAPIController extends ControllerAPI
             $activity->setUser($user)
                     ->setActivityName('redeem_coupon')
                     ->setActivityNameLong('Coupon Redemption Failed')
-                    ->setObject($issuedcoupon)
+                    ->setObject($coupon)
                     ->setCoupon($coupon)
                     ->setNotes($e->getMessage())
                     ->setLocation($mall)
@@ -251,7 +263,7 @@ class CouponRedeemAPIController extends ControllerAPI
             $activity->setUser($user)
                     ->setActivityName('redeem_coupon')
                     ->setActivityNameLong('Coupon Redemption Failed')
-                    ->setObject($issuedcoupon)
+                    ->setObject($coupon)
                     ->setCoupon($coupon)
                     ->setNotes($e->getMessage())
                     ->setLocation($mall)
@@ -272,7 +284,7 @@ class CouponRedeemAPIController extends ControllerAPI
             $activity->setUser($user)
                     ->setActivityName('redeem_coupon')
                     ->setActivityNameLong('Coupon Redemption Failed')
-                    ->setObject($issuedcoupon)
+                    ->setObject($coupon)
                     ->setCoupon($coupon)
                     ->setNotes($e->getMessage())
                     ->setLocation($mall)
