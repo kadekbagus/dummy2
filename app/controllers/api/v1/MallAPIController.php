@@ -458,7 +458,7 @@ class MallAPIController extends ControllerAPI
             if (empty($roleMerchant)) {
                 OrbitShopAPI::throwInvalidArgument('Could not find role named "Mall Owner".');
             }
-die();
+
             $newuser = new User();
             $newuser->username = $email;
             $newuser->user_firstname = $mall_name;
