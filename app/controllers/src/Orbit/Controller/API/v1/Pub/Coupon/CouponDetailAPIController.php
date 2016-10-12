@@ -84,8 +84,8 @@ class CouponDetailAPIController extends ControllerAPI
             $coupon = Coupon::select(
                             'promotions.promotion_id as promotion_id',
                             DB::Raw("
-                                    CASE WHEN {$prefix}coupon_translations.promotion_name = '' THEN {$prefix}promotions.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as promotion_name,
-                                    CASE WHEN {$prefix}coupon_translations.description = '' THEN {$prefix}promotions.description ELSE {$prefix}coupon_translations.description END as description,
+                                    CASE WHEN ({$prefix}coupon_translations.promotion_name = '' or {$prefix}coupon_translations.promotion_name is null) THEN {$prefix}promotions.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as promotion_name,
+                                    CASE WHEN ({$prefix}coupon_translations.description = '' or {$prefix}coupon_translations.description is null) THEN {$prefix}promotions.description ELSE {$prefix}coupon_translations.description END as description,
                                     CASE WHEN {$prefix}media.path is null THEN (
                                             select m.path
                                             from {$prefix}coupon_translations ct
@@ -121,9 +121,12 @@ class CouponDetailAPIController extends ControllerAPI
                                     THEN 'true' ELSE 'false' END AS is_started
                             ")
                         )
-                        ->join('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
+                        ->leftJoin('coupon_translations', function ($q) use ($valid_language) {
+                            $q->on('coupon_translations.promotion_id', '=', 'promotions.promotion_id')
+                              ->on('coupon_translations.merchant_language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
+                        })
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
-                        ->leftJoin('media', function($q) {
+                        ->leftJoin('media', function ($q) {
                             $q->on('media.object_id', '=', 'coupon_translations.coupon_translation_id');
                             $q->on('media.media_name_long', '=', DB::raw("'coupon_translation_image_orig'"));
                         })
@@ -134,8 +137,7 @@ class CouponDetailAPIController extends ControllerAPI
                             })
                         ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                         ->leftJoin('merchants as m', DB::raw("m.merchant_id"), '=', 'promotion_retailer.retailer_id')
-                        ->where('promotions.promotion_id', $couponId)
-                        ->where('coupon_translations.merchant_language_id', '=', $valid_language->language_id);
+                        ->where('promotions.promotion_id', $couponId);
 
             OrbitInput::get('mall_id', function($mallId) use ($coupon, &$mall) {
                 $coupon->havingRaw("mall_id = {$this->quote($mallId)}");

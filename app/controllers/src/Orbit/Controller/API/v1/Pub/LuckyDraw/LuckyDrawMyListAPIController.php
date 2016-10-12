@@ -145,8 +145,8 @@ class LuckyDrawMyListAPIController extends IntermediateBaseController
                 ->select(
                     'lucky_draws.lucky_draw_id',
                     DB::raw("
-                        CASE WHEN {$prefix}lucky_draw_translations.lucky_draw_name = '' THEN {$prefix}lucky_draws.lucky_draw_name ELSE {$prefix}lucky_draw_translations.lucky_draw_name END as lucky_draw_name,
-                        CASE WHEN {$prefix}lucky_draw_translations.description = '' THEN {$prefix}lucky_draws.description ELSE {$prefix}lucky_draw_translations.description END as description,
+                        CASE WHEN ({$prefix}lucky_draw_translations.lucky_draw_name = '' or {$prefix}lucky_draw_translations.lucky_draw_name is null) THEN {$prefix}lucky_draws.lucky_draw_name ELSE {$prefix}lucky_draw_translations.lucky_draw_name END as lucky_draw_name,
+                        CASE WHEN ({$prefix}lucky_draw_translations.description = '' or {$prefix}lucky_draw_translations.description is null) THEN {$prefix}lucky_draws.description ELSE {$prefix}lucky_draw_translations.description END as description,
                         CASE WHEN {$prefix}media.path is null THEN (
                                 select m.path
                                 from {$prefix}lucky_draw_translations ldt
@@ -180,18 +180,20 @@ class LuckyDrawMyListAPIController extends IntermediateBaseController
                 ->join('lucky_draw_numbers', 'lucky_draw_numbers.lucky_draw_id', '=', 'lucky_draws.lucky_draw_id')
                 ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'lucky_draws.campaign_status_id')
                 ->leftJoin('merchants', 'lucky_draws.mall_id', '=', 'merchants.merchant_id')
-                ->leftJoin('lucky_draw_translations', 'lucky_draw_translations.lucky_draw_id', '=', 'lucky_draws.lucky_draw_id')
-                ->leftJoin('media', function($q) {
+                ->leftJoin('lucky_draw_translations', function ($q) use ($valid_language) {
+                    $q->on('lucky_draw_translations.lucky_draw_id', '=', 'lucky_draws.lucky_draw_id')
+                      ->on('lucky_draw_translations.merchant_language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
+                })
+                ->leftJoin('media', function ($q) {
                     $q->on('media.object_id', '=', 'lucky_draw_translations.lucky_draw_translation_id');
                     $q->on('media.media_name_long', '=', DB::raw("'lucky_draw_translation_image_orig'"));
                 })
-                ->leftJoin(DB::raw("{$prefix}media mall_media"), function($q) {
+                ->leftJoin(DB::raw("{$prefix}media mall_media"), function ($q) {
                     $q->on(DB::raw('mall_media.object_id'), '=', 'merchants.merchant_id');
                     $q->on(DB::raw('mall_media.media_name_long'), 'IN', DB::raw("('mall_logo_orig', 'retailer_logo_orig')"));
                 })
                 ->active('lucky_draws')
                 ->where('lucky_draw_numbers.user_id', $user->user_id)
-                ->where('lucky_draw_translations.merchant_language_id', '=', $valid_language->language_id)
                 ->havingRaw("campaign_status = 'ongoing'")
                 ->groupBy('lucky_draws.lucky_draw_id')
                 ->orderBy($sort_by, $sort_mode);

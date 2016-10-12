@@ -34,8 +34,13 @@ class PromotionLocationAPIController extends ControllerAPI
     {
         $httpCode = 200;
         $this->response = new ResponseProvider();
+        $activity = Activity::mobileci()->setActivityType('view');
+        $user = null;
 
         try{
+            $this->session = SessionPreparer::prepareSession();
+            $user = UserGetter::getLoggedInUserOrGuest($this->session);
+
             $promotionId = OrbitInput::get('promotion_id', null);
             $sort_by = OrbitInput::get('sortby', 'name');
             $sort_mode = OrbitInput::get('sortmode','asc');
@@ -107,6 +112,23 @@ class PromotionLocationAPIController extends ControllerAPI
             $promotionLocation->orderBy($sort_by, $sort_mode);
 
             $listOfRec = $promotionLocation->get();
+
+            // moved from generic activity number 36
+            if (empty($skip)) {
+                $promotion = News::excludeDeleted()
+                    ->where('news_id', $promotionId)
+                    ->first();
+
+                $activityNotes = sprintf('Page viewed: Promotion location list');
+                $activity->setUser($user)
+                    ->setActivityName('view_promotion_location')
+                    ->setActivityNameLong('View Promotion Location Page')
+                    ->setObject($promotion)
+                    ->setModuleName('Promotion')
+                    ->setNotes($activityNotes)
+                    ->responseOK()
+                    ->save();
+            }
 
             $data = new \stdclass();
             $data->returned_records = count($listOfRec);

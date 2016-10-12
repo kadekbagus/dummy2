@@ -43,8 +43,13 @@ class NewsLocationAPIController extends ControllerAPI
     {
         $httpCode = 200;
         $this->response = new ResponseProvider();
+        $activity = Activity::mobileci()->setActivityType('view');
+        $user = null;
 
         try{
+            $this->session = SessionPreparer::prepareSession();
+            $user = UserGetter::getLoggedInUserOrGuest($this->session);
+
             $newsId = OrbitInput::get('news_id', null);
             $sort_by = OrbitInput::get('sortby', 'name');
             $sort_mode = OrbitInput::get('sortmode','asc');
@@ -116,6 +121,23 @@ class NewsLocationAPIController extends ControllerAPI
             $newsLocations->orderBy($sort_by, $sort_mode);
 
             $listOfRec = $newsLocations->get();
+
+            // moved from generic activity number 34
+            if (empty($skip)) {
+                $news = News::excludeDeleted()
+                    ->where('news_id', $newsId)
+                    ->first();
+
+                $activityNotes = sprintf('Page viewed: News location list');
+                $activity->setUser($user)
+                    ->setActivityName('view_news_location')
+                    ->setActivityNameLong('View News Location Page')
+                    ->setObject($news)
+                    ->setModuleName('News')
+                    ->setNotes($activityNotes)
+                    ->responseOK()
+                    ->save();
+            }
 
             $data = new \stdclass();
             $data->returned_records = count($listOfRec);
