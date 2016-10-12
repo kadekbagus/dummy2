@@ -140,10 +140,10 @@ class MallInfoAPIController extends ControllerAPI
                     ->responseOK()
                     ->save();
             } else {
-                $activityNotes = sprintf('Page viewed: View mall info');
+                $activityNotes = sprintf('Page viewed: View sidebar mall info');
                 $activity->setUser($user)
-                    ->setActivityName('view_mall_info')
-                    ->setActivityNameLong('View mall info')
+                    ->setActivityName('view_sidebar_mall_info')
+                    ->setActivityNameLong('View sidebar mall info')
                     ->setObject(null)
                     ->setLocation($mall)
                     ->setModuleName('Mall')

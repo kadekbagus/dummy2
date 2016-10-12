@@ -113,7 +113,7 @@ class CouponLocationAPIController extends ControllerAPI
             $listOfRec = $couponLocations->get();
 
             // moved from generic activity number 38
-            if (empty($skip)) {
+            if (empty($skip) && OrbitInput::get('is_detail', 'n') === 'y'  ) {
                 $coupon = Coupon::excludeDeleted()
                     ->where('promotion_id', $couponId)
                     ->first();
