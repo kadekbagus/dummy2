@@ -1644,9 +1644,6 @@ die();
                'ticket_footer_max_length'   => Lang::get('validation.orbit.formaterror.merchant.ticket_footer.max_length'),
                'orbit_check_tenant_mall'    => 'Mall can not be deactivated, because it has active tenant'
             ];
-$validation_data = [];
-$validation_error = [];
-$validation_error_message = [];
 
             // add validation image
             if (! empty($logo_validation)) {
@@ -1660,11 +1657,7 @@ $validation_error_message = [];
                 $validation_error += $maps_validation['error'];
                 $validation_error_message += $maps_validation['error_message'];
             }
-print_r([
-        $validation_data,
-        $validation_error,
-        $validation_error_message,
-    ]); die();
+
             $validator = Validator::make(
                 $validation_data,
                 $validation_error,
