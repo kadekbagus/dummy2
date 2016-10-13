@@ -336,7 +336,7 @@ class PromotionListAPIController extends ControllerAPI
                     $activityNotes = sprintf('Page viewed:  View mall promotion list');
                     $activity->setUser($user)
                         ->setActivityName('view_mall_promotion_list')
-                        ->setActivityNameLong(' View mall promotion list')
+                        ->setActivityNameLong('View mall promotion list')
                         ->setObject(null)
                         ->setLocation($mall)
                         ->setModuleName('Promotion')
