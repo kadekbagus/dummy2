@@ -233,10 +233,10 @@ class PromotionListAPIController extends ControllerAPI
 
             if ($sort_by === 'location' && !empty($lon) && !empty($lat)) {
                 $searchFlag = $searchFlag || TRUE;
-                $promotion = $promotion->select(DB::raw("sub_query.news_id"), 'news_name', 'description', DB::raw("sub_query.object_type"), 'image_url', 'campaign_status', 'is_started', DB::raw("min(distance) as distance"))
+                $promotion = $promotion->select(DB::raw("sub_query.news_id"), 'news_name', 'description', DB::raw("sub_query.object_type"), 'image_url', 'campaign_status', 'is_started', DB::raw("min(distance) as distance"), DB::raw("sub_query.created_at"))
                                        ->orderBy('distance', 'asc');
             } else {
-                $promotion = $promotion->select(DB::raw("sub_query.news_id"), 'news_name', 'description', DB::raw("sub_query.object_type"), 'image_url', 'campaign_status', 'is_started');
+                $promotion = $promotion->select(DB::raw("sub_query.news_id"), 'news_name', 'description', DB::raw("sub_query.object_type"), 'image_url', 'campaign_status', 'is_started', DB::raw("sub_query.created_at"));
             }
 
             $promotion = $promotion->groupBy(DB::Raw("sub_query.news_id"));
