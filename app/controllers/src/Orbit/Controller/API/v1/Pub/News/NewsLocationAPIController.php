@@ -123,7 +123,7 @@ class NewsLocationAPIController extends ControllerAPI
             $listOfRec = $newsLocations->get();
 
             // moved from generic activity number 34
-            if (empty($skip)) {
+            if (empty($skip) && OrbitInput::get('is_detail', 'n') === 'y'  ) {
                 $news = News::excludeDeleted()
                     ->where('news_id', $newsId)
                     ->first();

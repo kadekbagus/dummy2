@@ -1595,7 +1595,6 @@ class LoginAPIController extends ControllerAPI
 
     protected function getListMall($type_name, $tenantIds = NULL)
     {
-        // print_r([$type_name, $tenantIds]); die();
         $permission = [
                 'Mall'      => 'mall',
                 'Merchant'  => 'tenant',
