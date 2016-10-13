@@ -95,6 +95,9 @@ Artisan::add(new SendEmailCampaignExpired);
 // Update ES mall is_subscribed
 Artisan::add(new ElasticsearchUpdateMallIsSubscribed);
 
+// Sync to elasticsearch from activity table
+Artisan::add(new ElasticsearchResyncActivityCommand);
+
 // Insert or update data on settings table
 // @Todo investigate why its error
 // Artisan::add(new MerchantSetting);
