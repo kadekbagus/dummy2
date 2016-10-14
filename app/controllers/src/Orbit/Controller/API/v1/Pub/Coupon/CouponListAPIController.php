@@ -127,7 +127,8 @@ class CouponListAPIController extends ControllerAPI
                                                 group by ct.promotion_id
                                             ) ELSE {$prefix}media.path END as image_url
                                     "),
-                            'promotions.created_at')
+                                'promotions.created_at',
+                                DB::raw("(SELECT COUNT(*) FROM {$prefix}issued_coupons WHERE promotion_id = {$prefix}promotions.promotion_id AND status = 'available') as available_coupon"))
                             ->leftJoin('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
                             ->leftJoin('coupon_translations', function ($q) use ($valid_language) {
                                 $q->on('coupon_translations.promotion_id', '=', 'promotions.promotion_id')
@@ -141,7 +142,7 @@ class CouponListAPIController extends ControllerAPI
                             ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                             ->leftJoin('merchants as t', DB::raw("t.merchant_id"), '=', 'promotion_retailer.retailer_id')
                             ->leftJoin('merchants as m', DB::raw("m.merchant_id"), '=', DB::raw("t.parent_id"))
-                            ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
+                            ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true' AND available_coupon > 0")
                             ->orderBy('coupon_name', 'asc');
 
             //calculate distance if user using my current location as filter and sort by location for listing
