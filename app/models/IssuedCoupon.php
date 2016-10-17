@@ -57,6 +57,16 @@ class IssuedCoupon extends Eloquent
         return $query->where('status', 'available');
     }
 
+    public function scopeIssued($query)
+    {
+        return $query->where('status', 'issued');
+    }
+
+    public function scopeRedeemed($query)
+    {
+        return $query->where('status', 'redeemed');
+    }
+
     /**
      * Save issued coupon based on promotion object.
      *
@@ -139,8 +149,8 @@ class IssuedCoupon extends Eloquent
 
     /**
      * Get available coupon code
-     * If there are already active coupon with user_email return those issued coupon
-     * else return activated coupon with user_email
+     * If there are already 'issued' coupon with user_email return those issued coupon
+     * else return 'issued' coupon with user_email
      * Proper validation is expected before accessing this method
      *
      * @author Ahmad <ahmad@dominopos.com>
@@ -148,9 +158,9 @@ class IssuedCoupon extends Eloquent
      * @param string $userEmail
      * @return IssuedCoupon | null
      */
-    public function issueActiveCoupon($promotionId, $userEmail) {
-        // get active issued coupon with the same user_email
-        $issuedCoupon = static::active()
+    public function issueCoupon($promotionId, $userEmail) {
+        // get 'issued' coupon with the same user_email
+        $issuedCoupon = static::issued()
             ->where('promotion_id', $promotionId)
             ->where('user_email', $userEmail)
             ->first();
@@ -163,10 +173,10 @@ class IssuedCoupon extends Eloquent
                 ->first();
 
             if (is_object($issuedCoupon)) {
-                // set user_email to it and make it active
+                // set user_email to it and make it issued
                 $issuedCoupon->user_email = $userEmail;
                 $issuedCoupon->issued_date = date('Y-m-d H:i:s');
-                $IssuedCoupon->status = 'active';
+                $IssuedCoupon->status = 'issued';
             }
         }
 
