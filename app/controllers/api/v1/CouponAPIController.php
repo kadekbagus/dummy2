@@ -350,7 +350,7 @@ class CouponAPIController extends ControllerAPI
             if (! empty($couponCodes)) {
                 $dupes = array();
                 // trim and explode coupon codes to array
-                $arrayCouponCode = array_map('trim', explode("\n", $value));
+                $arrayCouponCode = array_map('trim', explode("\n", $couponCodes));
 
                 // find the dupes
                 foreach(array_count_values($arrayCouponCode) as $val => $frequency) {
