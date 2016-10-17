@@ -236,10 +236,10 @@ class NewsListAPIController extends ControllerAPI
 
             if ($sort_by === 'location' && !empty($lon) && !empty($lat)) {
                 $searchFlag = $searchFlag || TRUE;
-                $news = $news->select(DB::raw("sub_query.news_id"), 'news_name', 'description', DB::raw("sub_query.object_type"), 'image_url', 'campaign_status', 'is_started', DB::raw("min(distance) as distance"))
+                $news = $news->select(DB::raw("sub_query.news_id"), 'news_name', 'description', DB::raw("sub_query.object_type"), 'image_url', 'campaign_status', 'is_started', DB::raw("min(distance) as distance"), DB::raw("sub_query.created_at"))
                                        ->orderBy('distance', 'asc');
             } else {
-                $news = $news->select(DB::raw("sub_query.news_id"), 'news_name', 'description', DB::raw("sub_query.object_type"), 'image_url', 'campaign_status', 'is_started');
+                $news = $news->select(DB::raw("sub_query.news_id"), 'news_name', 'description', DB::raw("sub_query.object_type"), 'image_url', 'campaign_status', 'is_started', DB::raw("sub_query.created_at"));
             }
 
             $news = $news->groupBy(DB::Raw("sub_query.news_id"));

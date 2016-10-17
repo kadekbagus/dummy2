@@ -197,7 +197,7 @@ class ESActivityUpdateQueue
 
             if ($response_search['hits']['total'] > 0) {
                 $params['body'] = [
-                    'docs' => $esBody
+                    'doc' => $esBody
                 ];
                 $response = $this->poster->update($params);
             } else {
