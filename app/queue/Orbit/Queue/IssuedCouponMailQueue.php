@@ -14,6 +14,7 @@ use DB;
 use Exception;
 use ModelNotFoundException;
 use Log;
+use Coupon;
 
 class IssuedCouponMailQueue
 {
