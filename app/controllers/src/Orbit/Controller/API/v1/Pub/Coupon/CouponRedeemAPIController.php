@@ -83,8 +83,7 @@ class CouponRedeemAPIController extends ControllerAPI
 
             // requested coupon before validation
             $coupon = Coupon::excludeDeleted('promotions')
-                ->leftJoin('issued_coupons', 'issued_coupons.promotion_id', '=', 'promotions.promotion_id')
-                ->where('issued_coupon_id', $requestedIssuedCouponId)
+                ->where('promotion_id', $requestedIssuedCouponId)
                 ->first();
 
             $validator = Validator::make(
@@ -95,7 +94,7 @@ class CouponRedeemAPIController extends ControllerAPI
                 ),
                 array(
                     'mall_id'                       => 'required|orbit.empty.merchant',
-                    'cid'                           => 'required|orbit.empty.issuedcoupon',
+                    'cid'                           => 'required',
                     'merchant_verification_number'  => 'required'
                 )
             );
@@ -115,6 +114,12 @@ class CouponRedeemAPIController extends ControllerAPI
                 $encrypter = new Encrypter($encryptionKey, $encryptionDriver);
 
                 $userIdentifier = $encrypter->decrypt($userIdentifier);
+            }
+
+            $isAvailable = (new IssuedCoupon())->issueCoupon($requestedIssuedCouponId, $userIdentifier);
+            if (! is_object($isAvailable)) {
+                $errorMessage = 'Issued coupon is not found';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
             $tenant = Tenant::active()
@@ -143,18 +148,14 @@ class CouponRedeemAPIController extends ControllerAPI
             }
 
             $mall = App::make('orbit.empty.merchant');
-            $issuedcoupon = App::make('orbit.empty.issuedcoupon');
 
-            // The coupon information
-            $coupon = $issuedcoupon->coupon;
+            $isAvailable->redeemed_date = date('Y-m-d H:i:s');
+            $isAvailable->redeem_retailer_id = $redeem_retailer_id;
+            $isAvailable->redeem_user_id = $redeem_user_id;
+            $isAvailable->redeem_verification_code = $verificationNumber;
+            $isAvailable->status = 'redeemed';
 
-            $issuedcoupon->redeemed_date = date('Y-m-d H:i:s');
-            $issuedcoupon->redeem_retailer_id = $redeem_retailer_id;
-            $issuedcoupon->redeem_user_id = $redeem_user_id;
-            $issuedcoupon->redeem_verification_code = $verificationNumber;
-            $issuedcoupon->status = 'redeemed';
-
-            $issuedcoupon->save();
+            $isAvailable->save();
 
             $this->response->data = null;
             $this->response->message = Lang::get('statuses.orbit.deleted.coupon');
@@ -168,7 +169,7 @@ class CouponRedeemAPIController extends ControllerAPI
             // customize user property before saving activity
             $user = $couponHelper->customizeUserProps($user, $userIdentifier);
 
-            $activityNotes = sprintf('Coupon Redeemed: %s. Issued Coupon Id: %s.', $issuedcoupon->coupon->promotion_name, $issuedcoupon->issued_coupon_id);
+            $activityNotes = sprintf('Coupon Redeemed: %s. Issued Coupon Id: %s.', $coupon->promotion_name, $isAvailable->issued_coupon_id);
             $activity->setUser($user)
                     ->setActivityName('redeem_coupon')
                     ->setActivityNameLong('Coupon Redemption Successful')
