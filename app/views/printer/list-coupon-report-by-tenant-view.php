@@ -194,8 +194,8 @@
             <th style="text-align:left;">Coupon Code</th>
             <th style="text-align:left;">Customer Age</th>
             <th style="text-align:left;">Customer Gender</th>
-            <th style="text-align:left;">Type</th>
-            <th style="text-align:left;">Email</th>
+            <th style="text-align:left;">Customer Type</th>
+            <th style="text-align:left;">Customer Email</th>
             <th style="text-align:left;">Issued Date & Time</th>
             <th style="text-align:left;">Redeemed Date & Time</th>
             <th style="text-align:left;">Redemption Place</th>
@@ -208,7 +208,18 @@
                 <td><?php echo $row->issued_coupon_code; ?></td>
                 <td><?php echo $row->age; ?></td>
                 <td><?php echo $row->gender; ?></td>
-                <td><?php echo $row->user_type; ?></td>
+                <td>
+                    <?php
+                        if (empty($row->user_type)) {
+                            $userType = '--';
+                        } elseif ($row->user_type === 'Consumer') {
+                            $userType = 'User';
+                        } else {
+                            $userType = $row->user_type;
+                        }
+                        echo $userType;
+                    ?>
+                </td>
                 <td><?php echo $row->user_email; ?></td>
                 <td><?php echo $this->printDateTime($row->issued_date, '', 'd M Y H:i'); ?> (UTC)</td>
                 <td><?php if (! empty($row->redeemed_date)) { echo $this->printDateTime($row->redeemed_date, '', 'd M Y H:i') . ' (UTC)'; } else { echo '--'; } ?></td>
