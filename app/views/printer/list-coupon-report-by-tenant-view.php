@@ -212,8 +212,6 @@
                     <?php
                         if (empty($row->user_type)) {
                             $userType = '--';
-                        } elseif ($row->user_type === 'Consumer') {
-                            $userType = 'User';
                         } else {
                             $userType = $row->user_type;
                         }
