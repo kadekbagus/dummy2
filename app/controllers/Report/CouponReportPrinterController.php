@@ -429,13 +429,19 @@ class CouponReportPrinterController extends DataPrinterController
                         $userType = $row->user_type;
                     }
 
+                    if (empty($row->user_email)) {
+                        $userEmail = '--';
+                    } else {
+                        $userEmail = $row->user_email;
+                    }
+
                     printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
                             $count,
                             $row->issued_coupon_code,
                             $row->age,
                             $row->gender,
                             $userType,
-                            $row->user_email,
+                            $userEmail,
                             $this->printDateTime($row->issued_date, '', 'd M Y H:i') . ' (UTC)',
                             $dateRedeem,
                             $place,

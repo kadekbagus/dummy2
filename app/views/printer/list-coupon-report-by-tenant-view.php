@@ -220,7 +220,16 @@
                         echo $userType;
                     ?>
                 </td>
-                <td><?php echo $row->user_email; ?></td>
+                <td>
+                    <?php
+                        if (empty($row->user_email)) {
+                            $userEmail = '--';
+                        } else {
+                            $userEmail = $row->user_email;
+                        }
+                        echo $userEmail;
+                    ?>
+                </td>
                 <td><?php echo $this->printDateTime($row->issued_date, '', 'd M Y H:i'); ?> (UTC)</td>
                 <td><?php if (! empty($row->redeemed_date)) { echo $this->printDateTime($row->redeemed_date, '', 'd M Y H:i') . ' (UTC)'; } else { echo '--'; } ?></td>
                 <td><?php if (! empty($row->redemption_place)) { echo htmlentities($row->redemption_place); } else { echo '--'; } ?></td>
