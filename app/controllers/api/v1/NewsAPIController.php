@@ -102,7 +102,7 @@ class NewsAPIController extends ControllerAPI
             $description = OrbitInput::post('description');
             $begin_date = OrbitInput::post('begin_date');
             $end_date = OrbitInput::post('end_date');
-            $is_premium = OrbitInput::post('is_premium');
+            $sticky_order = OrbitInput::post('sticky_order');
             $link_object_type = OrbitInput::post('link_object_type');
             $id_language_default = OrbitInput::post('id_language_default');
             $is_all_gender = OrbitInput::post('is_all_gender');
@@ -116,6 +116,7 @@ class NewsAPIController extends ControllerAPI
             $keywords = OrbitInput::post('keywords');
             $keywords = (array) $keywords;
             $translations = OrbitInput::post('translations');
+            $sticky_order = OrbitInput::post('sticky_order');
 
             if (empty($campaignStatus)) {
                 $campaignStatus = 'not started';
@@ -137,7 +138,7 @@ class NewsAPIController extends ControllerAPI
                     'id_language_default' => $id_language_default,
                     'is_all_gender'       => $is_all_gender,
                     'is_all_age'          => $is_all_age,
-                    'is_premium'            => $is_premium,
+                    'sticky_order'        => $sticky_order,
                 ),
                 array(
                     'news_name'           => 'required|max:255',
@@ -149,10 +150,10 @@ class NewsAPIController extends ControllerAPI
                     'id_language_default' => 'required|orbit.empty.language_default',
                     'is_all_gender'       => 'required|orbit.empty.is_all_gender',
                     'is_all_age'          => 'required|orbit.empty.is_all_age',
-                    'is_premium'          => 'required|in:0,1',
+                    'sticky_order'        => 'required|in:0,1',
                 ),
                 array(
-                    'is_premium.in' => 'is premium must 0 or 1',
+                    'sticky_order.in' => 'The sticky order value must 0 or 1',
                 )
             );
 
@@ -229,7 +230,7 @@ class NewsAPIController extends ControllerAPI
             $newnews->is_all_age = $is_all_age;
             $newnews->is_all_gender = $is_all_gender;
             $newnews->created_by = $this->api->user->user_id;
-            $newnews->sticky_order = $is_premium;
+            $newnews->sticky_order = $sticky_order;
 
             // Check for english content
             $dataTranslations = @json_decode($translations);
@@ -787,8 +788,8 @@ class NewsAPIController extends ControllerAPI
                 $updatednews->is_popup = $is_popup;
             });
 
-            OrbitInput::post('is_premium', function($is_premium) use ($updatednews) {
-                $updatednews->sticky_order = $is_premium;
+            OrbitInput::post('sticky_order', function($sticky_order) use ($updatednews) {
+                $updatednews->sticky_order = $sticky_order;
             });
 
             OrbitInput::post('link_object_type', function($link_object_type) use ($updatednews) {
