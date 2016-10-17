@@ -1435,7 +1435,7 @@ class CouponReportAPIController extends ControllerAPI
                 ),
                 array(
                     'current_mall' => 'required|orbit.empty.mall',
-                    'sort_by' => 'in:promotion_id,promotion_name,begin_date,end_date,user_email,issued_coupon_code,redeemed_date,issued_date,redeem_verification_code,total_issued,total_redeemed,gender,age,redemption_place,status',
+                    'sort_by' => 'in:promotion_id,promotion_name,begin_date,end_date,user_email,issued_coupon_code,redeemed_date,issued_date,redeem_verification_code,total_issued,total_redeemed,gender,age,redemption_place,status,user_type,user_email',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.couponreportbytenant_sortby'),
@@ -1534,6 +1534,8 @@ class CouponReportAPIController extends ControllerAPI
             } elseif ($redeemedBy === 'all') {
                 $coupons = IssuedCoupon::select('issued_coupons.*', 'promotions.begin_date', 'promotions.end_date',
                                             DB::raw("CASE WHEN {$prefix}user_details.gender = 'f' THEN 'female' WHEN {$prefix}user_details.gender = 'm' THEN 'male' ELSE 'unknown' END AS gender"),
+                                            'roles.role_name AS user_type',
+                                            DB::raw("ou.user_email"),
                                             DB::raw("IFNULL(timestampdiff(year, {$prefix}user_details.birthdate, curdate()), 'unknown') AS age"),
                                             DB::raw("
                                                         CASE WHEN {$prefix}issued_coupons.redeem_user_id IS NOT NULL THEN CONCAT({$prefix}users.user_firstname, ' ', {$prefix}users.user_lastname, ' at ', om_employee.name)
@@ -1549,8 +1551,11 @@ class CouponReportAPIController extends ControllerAPI
                                        ->leftJoin('merchants as om_parent', DB::raw('om_parent.merchant_id'), '=', 'merchants.parent_id')
                                        ->leftJoin('employees as oe', DB::raw('oe.user_id'), '=', 'issued_coupons.redeem_user_id')
                                        ->leftJoin('employee_retailer as oer', DB::raw('oer.employee_id'), '=', DB::raw('oe.employee_id'))
-                                       ->leftJoin('merchants as om_employee', DB::raw('om_employee.merchant_id'), '=', DB::raw('oer.retailer_id'));
+                                       ->leftJoin('merchants as om_employee', DB::raw('om_employee.merchant_id'), '=', DB::raw('oer.retailer_id'))
 
+                                       // joint for get user role(guest or customer) and user_email
+                                       ->leftJoin('users as ou', DB::raw('ou.user_id'), '=', 'issued_coupons.user_id')
+                                       ->leftJoin('roles', 'roles.role_id', '=', DB::raw('ou.user_role_id'));
             }
 
             //GET active days from campaign histories
@@ -1753,20 +1758,22 @@ class CouponReportAPIController extends ControllerAPI
             {
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
-                    'promotion_id'              => 'promotions.promotion_id',
-                    'promotion_name'            => 'promotions.promotion_name',
-                    'redeem_retailer_name'      => 'merchants.name',
-                    'redeemed_date'             => 'issued_coupons.redeemed_date',
-                    'issued_date'               => 'issued_coupons.issued_date',
-                    'redeem_verification_code'  => 'issued_coupons.redeem_verification_code',
-                    'issued_coupon_code'        => 'issued_coupons.issued_coupon_code',
-                    'user_email'                => 'users.user_email',
-                    'total_issued'              => 'total_issued',
-                    'total_redeemed'            => 'total_redeemed',
-                    'gender'                    => 'gender',
-                    'age'                       => 'age',
-                    'redemption_place'          => 'redemption_place',
-                    'status'                    => 'issued_coupons.status',
+                    'promotion_id'             => 'promotions.promotion_id',
+                    'promotion_name'           => 'promotions.promotion_name',
+                    'redeem_retailer_name'     => 'merchants.name',
+                    'redeemed_date'            => 'issued_coupons.redeemed_date',
+                    'issued_date'              => 'issued_coupons.issued_date',
+                    'redeem_verification_code' => 'issued_coupons.redeem_verification_code',
+                    'issued_coupon_code'       => 'issued_coupons.issued_coupon_code',
+                    'user_email'               => 'users.user_email',
+                    'total_issued'             => 'total_issued',
+                    'total_redeemed'           => 'total_redeemed',
+                    'gender'                   => 'gender',
+                    'age'                      => 'age',
+                    'redemption_place'         => 'redemption_place',
+                    'user_type'                => 'user_type',
+                    'user_email'               => DB::raw("ou.user_email"),
+                    'status'                   => 'issued_coupons.status',
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];

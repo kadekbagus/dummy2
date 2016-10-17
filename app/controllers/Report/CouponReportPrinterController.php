@@ -395,9 +395,9 @@ class CouponReportPrinterController extends DataPrinterController
                     printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Redeemed Date', $dateRange, '', '', '', '', '');
                 }
 
-                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Coupon Code', 'Customer Age', 'Customer Gender', 'Issued Date & Time', 'Redeemed Date & Time', 'Redemption Place', 'Coupon Status');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Coupon Code', 'Customer Age', 'Customer Gender', 'Type', 'Email', 'Issued Date & Time', 'Redeemed Date & Time', 'Redemption Place', 'Coupon Status');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '');
 
                 $count = 1;
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
@@ -425,6 +425,8 @@ class CouponReportPrinterController extends DataPrinterController
                             $row->issued_coupon_code,
                             $row->age,
                             $row->gender,
+                            $row->user_type,
+                            $row->user_email,
                             $this->printDateTime($row->issued_date, '', 'd M Y H:i') . ' (UTC)',
                             $dateRedeem,
                             $place,
