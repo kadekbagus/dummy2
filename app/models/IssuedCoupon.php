@@ -176,7 +176,8 @@ class IssuedCoupon extends Eloquent
                 // set user_email to it and make it issued
                 $issuedCoupon->user_email = $userEmail;
                 $issuedCoupon->issued_date = date('Y-m-d H:i:s');
-                $IssuedCoupon->status = 'issued';
+                $issuedCoupon->status = 'issued';
+                $issuedCoupon->save();
             }
         }
 
