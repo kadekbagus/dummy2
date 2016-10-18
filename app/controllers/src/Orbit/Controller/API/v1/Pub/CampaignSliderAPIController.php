@@ -45,7 +45,6 @@ class CampaignSliderAPIController extends ControllerAPI
             $ul = OrbitInput::get('ul', null);
             $mallId = OrbitInput::get('mall_id', null);
             $maxSlide = OrbitInput::get('take', 10);
-            $mallId = OrbitInput::get('mall_id', null);
 
             $this->registerCustomValidation();
 
