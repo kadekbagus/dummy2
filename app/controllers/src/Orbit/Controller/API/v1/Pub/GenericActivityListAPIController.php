@@ -35,6 +35,7 @@ class GenericActivityListAPIController extends ControllerAPI
     	try {
 
     		$genAct = Config::get('orbit.generic_activity.activity_list');
+    		$paramName = Config::get('orbit.generic_activity.parameter_name');
 
     		// check for empty config
     		if (empty($genAct)) {
@@ -49,10 +50,14 @@ class GenericActivityListAPIController extends ControllerAPI
 
 			$tot = count($arr);
 
+			$data = new stdClass();
+			$data->parameter_name = $paramName;
+			$data->activity_list = $arr[$tot];
+
 			$this->response->code = 0;
             $this->response->status = 'success';
             $this->response->message = 'Success';
-            $this->response->data = $arr[$tot];
+            $this->response->data = $data;
 
     	} catch (ACLForbiddenException $e) {
 
