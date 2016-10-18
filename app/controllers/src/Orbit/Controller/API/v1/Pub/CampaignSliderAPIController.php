@@ -45,6 +45,7 @@ class CampaignSliderAPIController extends ControllerAPI
             $ul = OrbitInput::get('ul', null);
             $mallId = OrbitInput::get('mall_id', null);
             $maxSlide = OrbitInput::get('take', 10);
+            $mallId = OrbitInput::get('mall_id', null);
 
             $this->registerCustomValidation();
 
@@ -68,6 +69,11 @@ class CampaignSliderAPIController extends ControllerAPI
                             ->first();
             $language_id = $lang->language_id;
             $prefix = DB::getTablePrefix();
+
+            $withMallId = '';
+            if (! empty($mallId)) {
+                $withMallId = "AND (CASE WHEN om.object_type = 'tenant' THEN oms.merchant_id ELSE om.merchant_id END) = {$this->quote($mallId)}";
+            }
 
             $news = News::select(
                                 'news.news_id as campaign_id',
@@ -93,7 +99,8 @@ class CampaignSliderAPIController extends ControllerAPI
                                                                                         LEFT JOIN {$prefix}merchants om ON om.merchant_id = onm.merchant_id
                                                                                         LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
                                                                                         LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
-                                                                                    WHERE onm.news_id = {$prefix}news.news_id)
+                                                                                    WHERE onm.news_id = {$prefix}news.news_id
+                                                                                    {$withMallId})
                                 THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END AS campaign_status,
                                 CASE WHEN (SELECT count(onm.merchant_id)
                                             FROM {$prefix}news_merchant onm
@@ -101,6 +108,7 @@ class CampaignSliderAPIController extends ControllerAPI
                                                 LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
                                                 LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
                                             WHERE onm.news_id = {$prefix}news.news_id
+                                            {$withMallId}
                                             AND CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) between {$prefix}news.begin_date and {$prefix}news.end_date) > 0
                                 THEN 'true' ELSE 'false' END AS is_started
                             "))
@@ -139,7 +147,8 @@ class CampaignSliderAPIController extends ControllerAPI
                                                                                         LEFT JOIN {$prefix}merchants om ON om.merchant_id = opt.retailer_id
                                                                                         LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
                                                                                         LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
-                                                                                    WHERE opt.promotion_id = {$prefix}promotions.promotion_id)
+                                                                                    WHERE opt.promotion_id = {$prefix}promotions.promotion_id
+                                                                                    {$withMallId})
                                     THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END AS campaign_status,
                                 CASE WHEN (SELECT count(opt.promotion_retailer_id)
                                             FROM {$prefix}promotion_retailer opt
@@ -147,6 +156,7 @@ class CampaignSliderAPIController extends ControllerAPI
                                                 LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
                                                 LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
                                             WHERE opt.promotion_id = {$prefix}promotions.promotion_id
+                                            {$withMallId}
                                             AND CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) between {$prefix}promotions.begin_date and {$prefix}promotions.end_date) > 0
                                 THEN 'true' ELSE 'false' END AS is_started"))
                             ->leftJoin('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
@@ -276,5 +286,10 @@ class CampaignSliderAPIController extends ControllerAPI
 
             return TRUE;
         });
+    }
+
+    protected function quote($arg)
+    {
+        return DB::connection()->getPdo()->quote($arg);
     }
 }
