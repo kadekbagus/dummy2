@@ -88,15 +88,23 @@ class CouponAddToEmailAPIController extends ControllerAPI
                 ->where('promotion_id', '=', $coupon_id)
                 ->first();
 
-            $newIssuedCoupon = new IssuedCoupon();
-            $issuedCoupon = $newIssuedCoupon->issue($coupon, $user->user_id);
+            $checkAvailable = IssuedCoupon::where('status', 'active')
+                                    ->where('user_email', $email)
+                                    ->where('promotion_id', $coupon_id)
+                                    ->first();
+
+            if (is_object($checkAvailable)) {
+                $errorMessage = 'You already have this coupon in your email';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
             $this->commit();
 
             $encryptionKey = Config::get('orbit.security.encryption_key');
             $encryptionDriver = Config::get('orbit.security.encryption_driver');
             $encrypter = new Encrypter($encryptionKey, $encryptionDriver);
 
-            $hashedIssuedCouponCid = rawurlencode($encrypter->encrypt($issuedCoupon->issued_coupon_id));
+            $hashedIssuedCouponCid = rawurlencode($encrypter->encrypt($coupon->promotion_id));
             $hashedIssuedCouponUid = rawurlencode($encrypter->encrypt($email));
 
             // cid=%s&uid=%s
@@ -105,7 +113,7 @@ class CouponAddToEmailAPIController extends ControllerAPI
             // queue to send coupon redemption page url
             Queue::push('Orbit\\Queue\\IssuedCouponMailQueue', [
                 'email' => $email,
-                'issued_coupon_id' => $issuedCoupon->issued_coupon_id,
+                'coupon_id' => $coupon->promotion_id,
                 'redeem_url' => $redeem_url
             ]);
 
@@ -118,10 +126,10 @@ class CouponAddToEmailAPIController extends ControllerAPI
                     ->first();
             }
 
-            if ($issuedCoupon) {
+            if (! is_object($checkAvailable)) {
                 $this->response->message = 'Request Ok';
                 $this->response->data = NULL;
-                $activityNotes = sprintf('Issued to email: %s. Coupon Id: %s. Issued Coupon Id: %s', $email, $coupon->promotion_id, $issuedCoupon->issued_coupon_id);
+                $activityNotes = sprintf('Issued to email: %s. Coupon Id: %s', $email, $coupon->promotion_id);
                 $activity->setUser($user)
                     ->setActivityName('issue_coupon')
                     ->setActivityNameLong('Issue Coupon by Email')
