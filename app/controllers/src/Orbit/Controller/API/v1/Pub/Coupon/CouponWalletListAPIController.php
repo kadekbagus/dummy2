@@ -142,7 +142,7 @@ class CouponWalletListAPIController extends ControllerAPI
                             })
                             ->join('issued_coupons', function ($join) {
                                 $join->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
-                                $join->where('issued_coupons.status', '=', 'active');
+                                $join->where('issued_coupons.status', '=', 'issued');
                             })
                             ->where('issued_coupons.user_id', $user->user_id)
                             ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")

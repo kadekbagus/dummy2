@@ -1,4 +1,6 @@
 <?php
+use Orbit\Database\ObjectID;
+
 class IssuedCoupon extends Eloquent
 {
     /**
@@ -50,6 +52,21 @@ class IssuedCoupon extends Eloquent
                     ->where('object_name', 'retailer');
     }
 
+    public function scopeAvailable($query)
+    {
+        return $query->where('status', 'available');
+    }
+
+    public function scopeIssued($query)
+    {
+        return $query->where('status', 'issued');
+    }
+
+    public function scopeRedeemed($query)
+    {
+        return $query->where('status', 'redeemed');
+    }
+
     /**
      * Save issued coupon based on promotion object.
      *
@@ -78,5 +95,113 @@ class IssuedCoupon extends Eloquent
         $issued->save();
 
         return $issued;
+    }
+
+    /**
+     * Bulk release issued coupon
+     * Make multiple issued coupon available by coupon codes
+     * Available means that this issued coupon is not gotten by user
+     * Proper validation is expected before accessing this method
+     *
+     * @author Ahmad <ahmad@dominopos.com>
+     * @param array $couponCodes
+     * @param string $promotionId
+     * @param string $couponValidityDate
+     * @param User $admin
+     * @return void
+     */
+    public static function bulkIssue($couponCodes, $promotionId, $couponValidityDate, $admin = NULL) {
+        $issuerUserId = NULL;
+        if (! is_null($admin)) {
+            $issuerUserId = $admin->user_id;
+        }
+
+        // create array of data
+        $data = array();
+        $now = date('Y-m-d H:i:s');
+        for ($i = 0; $i < count($couponCodes); $i++) {
+            $data[] = array(
+                    'issued_coupon_id' => ObjectID::make(),
+                    'promotion_id' => $promotionId,
+                    'issued_coupon_code' => $couponCodes[$i],
+                    'expired_date' => $couponValidityDate,
+                    'issuer_user_id' => $issuerUserId,
+                    'status' => 'available',
+                    'created_at' => $now,
+                    'updated_at' => $now
+                );
+        }
+
+        // create collection from array
+        $collection = new \Illuminate\Database\Eloquent\Collection($data);
+        // chunk into smaller pieces,
+        // optimum 1000 items
+        // 9000 array item will raise error
+        $chunks = $collection->chunk(1000);
+        //convert chunk to array
+        $chunks->toArray();
+
+        //loop through chunks:
+        foreach($chunks as $chunk) {
+            DB::table('issued_coupons')->insert($chunk->toArray());
+        }
+    }
+
+    /**
+     * Get available coupon code
+     * If there are already 'issued' coupon with user_email return those issued coupon
+     * else return 'issued' coupon with user_email
+     * Proper validation is expected before accessing this method
+     *
+     * @author Ahmad <ahmad@dominopos.com>
+     * @param string $promotionId
+     * @param string $userEmail
+     * @param string $userId (from wallet)
+     * @param string $issuedCouponCode (from SMS)
+     * @return IssuedCoupon | null
+     */
+    public function issueCoupon($promotionId, $userEmail, $userId = NULL, $issuedCouponCode = NULL) {
+        // get 'issued' coupon with the same user_email
+        $issuedCoupon = static::issued()
+            ->where('promotion_id', $promotionId)
+            ->where('user_email', $userEmail)
+            ->first();
+
+        // if issuedCouponCode is supplied then use it instead
+        if (! is_null($issuedCouponCode)) {
+            $issuedCoupon = static::issued()
+                ->where('promotion_id', $promotionId)
+                ->where('issued_coupon_code', $issuedCouponCode)
+                ->where('user_email', $userEmail)
+                ->first();
+        }
+
+        if (! is_object($issuedCoupon)) {
+            // get available issued coupon
+            $issuedCoupon = static::available()
+                ->where('promotion_id', $promotionId)
+                ->whereNull('user_email')
+                ->first();
+
+            // if issuedCouponCode is supplied then use it instead
+            if (! is_null($issuedCouponCode)) {
+                $issuedCoupon = static::available()
+                    ->where('promotion_id', $promotionId)
+                    ->where('issued_coupon_code', $issuedCouponCode)
+                    ->whereNull('user_email')
+                    ->first();
+            }
+
+            if (is_object($issuedCoupon)) {
+                // set user_email to it and make it issued
+                $issuedCoupon->user_id = $userId;
+                $issuedCoupon->user_email = $userEmail;
+                $issuedCoupon->issued_date = date('Y-m-d H:i:s');
+                $issuedCoupon->status = 'issued';
+                $issuedCoupon->save();
+            }
+        }
+
+        return $issuedCoupon;
     }
 }

@@ -136,6 +136,26 @@ class CouponHelper
             return TRUE;
         });
 
+        // Check issued_coupon_code if exists in SMS coupon
+        Validator::extend('orbit.exists.issued_coupon_code_sms', function ($attribute, $value, $parameters) {
+            $promotionId = $parameters[0];
+
+            $issuedCoupon = IssuedCoupon::
+                join('promotions', 'promotions.promotion_id', '=', 'issued_coupons.promotion_id')
+                ->join('promotion_rules', 'promotions.promotion_id', '=', 'promotion_rules.promotion_id')
+                ->available()
+                ->where('promotion_rules.rule_type', 'blast_via_sms')
+                ->where('issued_coupons.promotion_id', $promotionId)
+                ->where('issued_coupon_code', $value)
+                ->first();
+
+            if (empty($issuedCoupon)) {
+                return FALSE;
+            }
+
+            return true;
+        });
+
         // Check the existance of merchant id
         Validator::extend('orbit.empty.merchant', function ($attribute, $value, $parameters) {
             $merchant = Mall::with('timezone')->excludeDeleted()
@@ -196,9 +216,10 @@ class CouponHelper
             function ($attribute, $value, $parameters) {
                 // check if coupon already add to wallet
                 $user = UserGetter::getLoggedInUserOrGuest($this->session);
+
                 $wallet = IssuedCoupon::where('promotion_id', '=', $value)
-                                      ->where('user_id', '=', $user->user_id)
-                                      ->where('status', '=', 'active')
+                                      ->where('user_email', '=', $user->user_email)
+                                      ->where('status', '=', 'issued')
                                       ->first();
 
                 if (is_object($wallet)) {
