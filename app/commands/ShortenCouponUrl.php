@@ -97,8 +97,6 @@ class ShortenCouponUrl extends Command
             foreach($arrayOfCouponRedeemUrl as $key => $redeemUrl) {
                 if ($verbose === 'Y') {
                     $this->info(sprintf('Shortening coupon code: %s', $arrayOfCouponCodes[$key]));
-                } else {
-                    echo "\r Processing (". ($key+1) ."/".count($arrayOfCouponRedeemUrl).")";
                 }
                 $bitlyConfig = array(
                     'access_token' => Config::get('orbit.social_login.bitly.generic_access_token'),
@@ -117,8 +115,7 @@ class ShortenCouponUrl extends Command
                 }
             }
         }
-        echo "\n";
-        $this->info(implode(',', $shortUrls));
+        $this->info(implode("\n", $shortUrls));
     }
 
     /**
