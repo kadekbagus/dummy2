@@ -160,6 +160,7 @@ class CampaignSliderAPIController extends ControllerAPI
                                             AND CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) between {$prefix}promotions.begin_date and {$prefix}promotions.end_date) > 0
                                 THEN 'true' ELSE 'false' END AS is_started,
                                 (SELECT COUNT(*) FROM {$prefix}issued_coupons WHERE promotion_id = {$prefix}promotions.promotion_id AND status = 'available') as available_campaign"))
+                            ->leftJoin('promotion_rules', 'promotion_rules.promotion_id', '=', 'promotions.promotion_id')
                             ->leftJoin('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
                             ->leftJoin('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
                             ->leftJoin('languages', 'languages.language_id', '=', 'coupon_translations.merchant_language_id')
@@ -172,6 +173,7 @@ class CampaignSliderAPIController extends ControllerAPI
                             ->leftJoin('merchants as m', DB::raw("m.merchant_id"), '=', DB::raw("t.parent_id"))
                             ->whereRaw("{$prefix}coupon_translations.merchant_language_id = '{$language_id}'")
                             ->whereRaw("{$prefix}promotions.sticky_order = 1")
+                            ->whereRaw("{$prefix}promotion_rules.rule_type != 'blast_via_sms'")
                             ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true' AND available_campaign > 0")
                             ->groupBy('campaign_id');
 
