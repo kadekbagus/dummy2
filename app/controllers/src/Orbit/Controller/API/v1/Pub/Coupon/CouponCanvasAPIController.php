@@ -180,7 +180,6 @@ class CouponCanvasAPIController extends ControllerAPI
                     ->setActivityName('issue_coupon')
                     ->setActivityNameLong('Failed to Issue Coupon by Email')
                     ->setObject($coupon)
-                    ->setLocation($retailer)
                     ->setModuleName('Coupon')
                     ->setCoupon($coupon)
                     ->setNotes($activityNotes)
