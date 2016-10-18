@@ -109,7 +109,8 @@ class CampaignSliderAPIController extends ControllerAPI
                                             WHERE onm.news_id = {$prefix}news.news_id
                                             {$withMallId}
                                             AND CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) between {$prefix}news.begin_date and {$prefix}news.end_date) > 0
-                                THEN 'true' ELSE 'false' END AS is_started
+                                THEN 'true' ELSE 'false' END AS is_started,
+                                '1' as available_campaign
                             "))
                         ->join('news_translations', 'news_translations.news_id', '=', 'news.news_id')
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
@@ -157,7 +158,8 @@ class CampaignSliderAPIController extends ControllerAPI
                                             WHERE opt.promotion_id = {$prefix}promotions.promotion_id
                                             {$withMallId}
                                             AND CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) between {$prefix}promotions.begin_date and {$prefix}promotions.end_date) > 0
-                                THEN 'true' ELSE 'false' END AS is_started"))
+                                THEN 'true' ELSE 'false' END AS is_started,
+                                (SELECT COUNT(*) FROM {$prefix}issued_coupons WHERE promotion_id = {$prefix}promotions.promotion_id AND status = 'available') as available_campaign"))
                             ->leftJoin('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
                             ->leftJoin('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
                             ->leftJoin('languages', 'languages.language_id', '=', 'coupon_translations.merchant_language_id')
@@ -170,7 +172,7 @@ class CampaignSliderAPIController extends ControllerAPI
                             ->leftJoin('merchants as m', DB::raw("m.merchant_id"), '=', DB::raw("t.parent_id"))
                             ->whereRaw("{$prefix}coupon_translations.merchant_language_id = '{$language_id}'")
                             ->whereRaw("{$prefix}promotions.sticky_order = 1")
-                            ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
+                            ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true' AND available_campaign > 0")
                             ->groupBy('campaign_id');
 
             OrbitInput::get('mall_id', function ($mallId) use ($coupons, $news, $prefix) {
