@@ -2941,7 +2941,7 @@ class CouponAPIController extends ControllerAPI
             $this->commit();
 
             $this->response->message = 'Coupon has been successfully redeemed.';
-            $this->response->data = $issuedcoupon;
+            $this->response->data = $issuedcoupon->issued_coupon_code;
 
             // Successfull Creation
             $activityNotes = sprintf('Coupon Redeemed: %s', $issuedcoupon->coupon->promotion_name);
