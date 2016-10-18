@@ -44,6 +44,7 @@ class CampaignSliderAPIController extends ControllerAPI
             $language = OrbitInput::get('language', 'id');
             $ul = OrbitInput::get('ul', null);
             $mallId = OrbitInput::get('mall_id', null);
+            $maxSlide = OrbitInput::get('take', 10);
 
             $this->registerCustomValidation();
 
@@ -115,11 +116,10 @@ class CampaignSliderAPIController extends ControllerAPI
                                 $q->on(DB::raw("m.status"), '=', DB::raw("'active'"));
                         })
                         ->whereRaw("{$prefix}news_translations.merchant_language_id = '{$language_id}'")
-                        ->whereRaw("(CASE WHEN m.object_type = 'tenant' THEN m.parent_id ELSE m.merchant_id END) = '{$mallId}'")
-                        ->whereRaw("{$prefix}news.is_popup = 'Y'")
+                        ->whereRaw("{$prefix}news.object_type = 'promotion'")
+                        ->whereRaw("{$prefix}news.sticky_order = 1")
                         ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
-                        ->groupBy('campaign_id')
-                        ->orderBy('campaign_name', 'asc');
+                        ->groupBy('campaign_id');
 
             $coupons = Coupon::select(DB::raw("{$prefix}promotions.promotion_id as campaign_id,
                                 CASE WHEN {$prefix}coupon_translations.promotion_name = '' THEN {$prefix}promotions.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as campaign_name,
@@ -160,11 +160,14 @@ class CampaignSliderAPIController extends ControllerAPI
                             ->leftJoin('merchants as t', DB::raw("t.merchant_id"), '=', 'promotion_retailer.retailer_id')
                             ->leftJoin('merchants as m', DB::raw("m.merchant_id"), '=', DB::raw("t.parent_id"))
                             ->whereRaw("{$prefix}coupon_translations.merchant_language_id = '{$language_id}'")
-                            ->whereRaw("(CASE WHEN t.object_type = 'tenant' THEN t.parent_id ELSE t.merchant_id END) = '{$mallId}'")
-                            ->whereRaw("{$prefix}promotions.is_popup = 'Y'")
+                            ->whereRaw("{$prefix}promotions.sticky_order = 1")
                             ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
-                            ->groupBy('campaign_id')
-                            ->orderBy('campaign_name', 'asc');
+                            ->groupBy('campaign_id');
+
+            OrbitInput::get('mall_id', function ($mallId) use ($coupons, $news, $prefix) {
+                $news = $news->whereRaw("(CASE WHEN m.object_type = 'tenant' THEN m.parent_id ELSE m.merchant_id END) = '{$mallId}'");
+                $coupons = $coupons->whereRaw("(CASE WHEN t.object_type = 'tenant' THEN t.parent_id ELSE t.merchant_id END) = '{$mallId}'");
+            });
 
             $newsSql = $news->toSql();
             $newsSql = DB::table(DB::Raw("({$newsSql}) as sub_query"))->mergeBindings($news->getQuery())->toSql();
@@ -176,19 +179,41 @@ class CampaignSliderAPIController extends ControllerAPI
 
             $_campaign = clone($campaign);
 
-            $take = PaginationNumber::parseTakeFromGet('news');
-            $campaign->take($take);
-
-            $skip = PaginationNumber::parseSkipFromGet();
-            $campaign->skip($skip);
-
             $totalRec = count($_campaign->get());
-            $listOfRec = $campaign->get();
+            $slideshow = $campaign->get();
+
+            $slide_fix = array();
+            $random = array();
+
+            // random process
+            if (count($slideshow) > 1) {
+                if (count($slideshow) < $maxSlide) {
+                    $maxSlide = count($slideshow);
+                }
+
+                $slides = array();
+                $listSlide = array_rand($slideshow, $maxSlide);
+                if (count($listSlide) > 1) {
+                    foreach ($listSlide as $key => $value) {
+                        array_push($slides, $slideshow[$value]);
+                    }
+
+                    $keys = array_keys($slides);
+                    shuffle($keys);
+                    foreach ($keys as $key) {
+                        array_push($random, $slides[$key]);
+                    }
+                } else {
+                    $random = $slideshow[$listSlide];
+                }
+            } else {
+                $random = $slideshow;
+            }
 
             $data = new \stdclass();
-            $data->returned_records = count($listOfRec);
+            $data->returned_records = count($random);;
             $data->total_records = $totalRec;
-            $data->records = $listOfRec;
+            $data->records = $random;
 
             $this->response->data = $data;
             $this->response->code = 0;
