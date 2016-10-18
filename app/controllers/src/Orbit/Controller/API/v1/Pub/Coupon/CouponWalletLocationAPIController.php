@@ -98,7 +98,7 @@ class CouponWalletLocationAPIController extends ControllerAPI
                 ->leftJoin('promotions', 'promotions.promotion_id', '=', 'promotion_retailer.promotion_id')
                 ->join('issued_coupons', function ($join) {
                     $join->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
-                    $join->where('issued_coupons.status', '=', 'active');
+                    $join->where('issued_coupons.status', '=', 'issued');
                 })
                 ->leftJoin(DB::raw("{$prefix}media as img"), function($q) use ($prefix) {
                     $q->on(DB::raw('img.object_id'), '=', DB::Raw("
