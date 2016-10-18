@@ -2315,6 +2315,7 @@ class CouponAPIController extends ControllerAPI
                 ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
                 ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                 ->leftJoin('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
+                ->leftJoin('languages', 'languages.language_id', '=', 'coupon_translations.merchant_language_id')
                 ->leftJoin(DB::raw("( SELECT * FROM {$table_prefix}media WHERE media_name_long = 'coupon_translation_image_resized_default' ) as media"), DB::raw('media.object_id'), '=', 'coupon_translations.coupon_translation_id')
                 ->joinPromotionRules()
                 ->groupBy('promotions.promotion_id');
