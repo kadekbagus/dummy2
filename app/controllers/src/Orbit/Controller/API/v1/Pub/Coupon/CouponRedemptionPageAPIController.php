@@ -82,8 +82,7 @@ class CouponRedemptionPageAPIController extends ControllerAPI
 
             // requested coupon before validation
             $coupon = Coupon::excludeDeleted('promotions')
-                ->leftJoin('issued_coupons', 'issued_coupons.promotion_id', '=', 'promotions.promotion_id')
-                ->where('issued_coupon_id', $requestedIssuedCouponId)
+                ->where('promotion_id', $couponId)
                 ->first();
 
             $validator = Validator::make(
@@ -111,11 +110,12 @@ class CouponRedemptionPageAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $isAvailable = (new IssuedCoupon())->issueActiveCoupon($couponId, $userIdentifier);
+            $isAvailable = (new IssuedCoupon())->issueCoupon($couponId, $userIdentifier, $user->user_id);
             if (! is_object($isAvailable)) {
                 $errorMessage = 'This coupon is out of limit';
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
+
             $coupon = Coupon::select(
                             'promotions.promotion_id as promotion_id',
                             DB::Raw("
@@ -164,9 +164,9 @@ class CouponRedemptionPageAPIController extends ControllerAPI
                         })
                         ->join('issued_coupons', function ($q) {
                             $q->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
-                            $q->on('issued_coupons.status', '=', DB::Raw("'active'"));
+                            $q->on('issued_coupons.status', 'IN', DB::Raw("('available', 'issued')"));
                         })
-                        ->where('issued_coupons.issued_coupon_id', '=', $issuedCouponId)
+                        ->where('issued_coupons.issued_coupon_id', '=', $isAvailable->issued_coupon_id)
                         ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                         ->first();
 

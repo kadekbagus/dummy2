@@ -57,6 +57,16 @@ class IssuedCoupon extends Eloquent
         return $query->where('status', 'available');
     }
 
+    public function scopeIssued($query)
+    {
+        return $query->where('status', 'issued');
+    }
+
+    public function scopeRedeemed($query)
+    {
+        return $query->where('status', 'redeemed');
+    }
+
     /**
      * Save issued coupon based on promotion object.
      *
@@ -139,21 +149,32 @@ class IssuedCoupon extends Eloquent
 
     /**
      * Get available coupon code
-     * If there are already active coupon with user_email return those issued coupon
-     * else return activated coupon with user_email
+     * If there are already 'issued' coupon with user_email return those issued coupon
+     * else return 'issued' coupon with user_email
      * Proper validation is expected before accessing this method
      *
      * @author Ahmad <ahmad@dominopos.com>
      * @param string $promotionId
      * @param string $userEmail
+     * @param string $userId (from wallet)
+     * @param string $issuedCouponCode (from SMS)
      * @return IssuedCoupon | null
      */
-    public function issueActiveCoupon($promotionId, $userEmail) {
-        // get active issued coupon with the same user_email
-        $issuedCoupon = static::active()
+    public function issueCoupon($promotionId, $userEmail, $userId = NULL, $issuedCouponCode = NULL) {
+        // get 'issued' coupon with the same user_email
+        $issuedCoupon = static::issued()
             ->where('promotion_id', $promotionId)
             ->where('user_email', $userEmail)
             ->first();
+
+        // if issuedCouponCode is supplied then use it instead
+        if (! is_null($issuedCouponCode)) {
+            $issuedCoupon = static::issued()
+                ->where('promotion_id', $promotionId)
+                ->where('issued_coupon_code', $issuedCouponCode)
+                ->where('user_email', $userEmail)
+                ->first();
+        }
 
         if (! is_object($issuedCoupon)) {
             // get available issued coupon
@@ -162,11 +183,22 @@ class IssuedCoupon extends Eloquent
                 ->whereNull('user_email')
                 ->first();
 
+            // if issuedCouponCode is supplied then use it instead
+            if (! is_null($issuedCouponCode)) {
+                $issuedCoupon = static::available()
+                    ->where('promotion_id', $promotionId)
+                    ->where('issued_coupon_code', $issuedCouponCode)
+                    ->whereNull('user_email')
+                    ->first();
+            }
+
             if (is_object($issuedCoupon)) {
-                // set user_email to it and make it active
+                // set user_email to it and make it issued
+                $issuedCoupon->user_id = $userId;
                 $issuedCoupon->user_email = $userEmail;
                 $issuedCoupon->issued_date = date('Y-m-d H:i:s');
-                $IssuedCoupon->status = 'active';
+                $issuedCoupon->status = 'issued';
+                $issuedCoupon->save();
             }
         }
 
