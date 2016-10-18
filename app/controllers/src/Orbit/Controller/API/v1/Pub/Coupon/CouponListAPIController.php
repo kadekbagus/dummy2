@@ -61,7 +61,7 @@ class CouponListAPIController extends ControllerAPI
             $lon = '';
             $lat = '';
             $mallId = OrbitInput::get('mall_id', null);
-            $withPremium = OrbitInput::get('with_premium', null);
+            $withPremium = OrbitInput::get('is_premium', null);
 
             $couponHelper = CouponHelper::create();
             $couponHelper->couponCustomValidator();
