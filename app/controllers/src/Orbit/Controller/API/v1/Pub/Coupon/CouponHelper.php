@@ -136,12 +136,16 @@ class CouponHelper
             return TRUE;
         });
 
-        // Check issued_coupon_code if exists
-        Validator::extend('orbit.exists.issued_coupon_code', function ($attribute, $value, $parameters) {
+        // Check issued_coupon_code if exists in SMS coupon
+        Validator::extend('orbit.exists.issued_coupon_code_sms', function ($attribute, $value, $parameters) {
             $promotionId = $parameters[0];
 
-            $issuedCoupon = IssuedCoupon::available()
-                ->where('promotion_id', $promotionId)
+            $issuedCoupon = IssuedCoupon::
+                join('promotions', 'promotions.promotion_id', '=', 'issued_coupons.promotion_id')
+                ->join('promotion_rules', 'promotions.promotion_id', '=', 'promotion_rules.promotion_id')
+                ->available()
+                ->where('promotion_rules.rule_type', 'blast_via_sms')
+                ->where('issued_coupons.promotion_id', $promotionId)
                 ->where('issued_coupon_code', $value)
                 ->first();
 
