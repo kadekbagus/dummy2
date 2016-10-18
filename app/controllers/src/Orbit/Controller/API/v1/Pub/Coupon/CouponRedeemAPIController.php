@@ -71,7 +71,7 @@ class CouponRedeemAPIController extends ControllerAPI
             $couponHelper->couponCustomValidator();
 
             $mallId = OrbitInput::post('mall_id');
-            $issuedCouponId = OrbitInput::post('cid'); // hashed issued coupon id
+            $couponId = OrbitInput::post('cid'); // hashed issued coupon id
             $userIdentifier = OrbitInput::post('uid', NULL); // hashed user identifier
             $verificationNumber = OrbitInput::post('merchant_verification_number');
 
@@ -79,17 +79,17 @@ class CouponRedeemAPIController extends ControllerAPI
             $encryptionDriver = Config::get('orbit.security.encryption_driver');
             $encrypter = new Encrypter($encryptionKey, $encryptionDriver);
 
-            $requestedIssuedCouponId = $encrypter->decrypt($issuedCouponId);
+            $requestedCouponId = $encrypter->decrypt($couponId);
 
             // requested coupon before validation
             $coupon = Coupon::excludeDeleted('promotions')
-                ->where('promotion_id', $requestedIssuedCouponId)
+                ->where('promotion_id', $requestedCouponId)
                 ->first();
 
             $validator = Validator::make(
                 array(
                     'mall_id'                       => $mallId,
-                    'cid'                           => $issuedCouponId,
+                    'cid'                           => $couponId,
                     'merchant_verification_number'  => $verificationNumber,
                 ),
                 array(
@@ -116,19 +116,22 @@ class CouponRedeemAPIController extends ControllerAPI
                 $userIdentifier = $encrypter->decrypt($userIdentifier);
             }
 
-            $isAvailable = (new IssuedCoupon())->issueCoupon($requestedIssuedCouponId, $userIdentifier);
+            $isAvailable = (new IssuedCoupon())->issueCoupon($requestedCouponId, $userIdentifier);
             if (! is_object($isAvailable)) {
                 $errorMessage = 'Issued coupon is not found';
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $tenant = Tenant::active()
+            $tenant = Tenant::join('promotion_retailer_redeem', 'promotion_retailer_redeem.retailer_id', '=', 'merchants.merchant_id')
+                ->where('promotion_id', $requestedCouponId)
                 ->where('parent_id', $mallId)
                 ->where('masterbox_number', $verificationNumber)
                 ->first();
 
             $csVerificationNumber = UserVerificationNumber::
-                where('merchant_id', $mallId)
+                join('promotion_employee', 'promotion_employee.user_id', '=', 'user_verification_numbers.user_id')
+                ->where('promotion_employee.promotion_id', $requestedCouponId)
+                ->where('merchant_id', $mallId)
                 ->where('verification_number', $verificationNumber)
                 ->first();
 
@@ -136,8 +139,8 @@ class CouponRedeemAPIController extends ControllerAPI
             $redeem_user_id = NULL;
             if (! is_object($tenant) && ! is_object($csVerificationNumber)) {
                 // @Todo replace with language
-                $message = 'Store is not found.';
-                OrbitShopAPI::throwInvalidArgument($message);
+                $errorMessage = Lang::get('mobileci.coupon.wrong_verification_number');
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
             } else {
                 if (is_object($tenant)) {
                     $redeem_retailer_id = $tenant->merchant_id;

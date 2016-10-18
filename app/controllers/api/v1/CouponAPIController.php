@@ -2941,7 +2941,7 @@ class CouponAPIController extends ControllerAPI
             $this->commit();
 
             $this->response->message = 'Coupon has been successfully redeemed.';
-            $this->response->data = $issuedcoupon;
+            $this->response->data = $issuedcoupon->issued_coupon_code;
 
             // Successfull Creation
             $activityNotes = sprintf('Coupon Redeemed: %s', $issuedcoupon->coupon->promotion_name);
@@ -3489,7 +3489,7 @@ class CouponAPIController extends ControllerAPI
 
             $prefix = DB::getTablePrefix();
 
-            $issuedCoupon = IssuedCoupon::whereNotIn('issued_coupons.status', ['deleted', 'redeemed'])
+            $issuedCoupon = IssuedCoupon::whereNotIn('issued_coupons.status', ['deleted', 'redeemed', 'available'])
                         ->where('issued_coupons.issued_coupon_id', $value)
                         ->where('issued_coupons.user_id', $user->user_id)
                         // ->whereRaw("({$prefix}issued_coupons.expired_date >= ? or {$prefix}issued_coupons.expired_date is null)", [$now])
@@ -3513,7 +3513,7 @@ class CouponAPIController extends ControllerAPI
                             ->where('masterbox_number', $number)
                             ->first();
             } elseif ($issuedCoupon->coupon->is_all_retailer === 'N') {
-                $checkIssuedCoupon = IssuedCoupon::whereNotIn('issued_coupons.status', ['deleted', 'redeemed'])
+                $checkIssuedCoupon = IssuedCoupon::whereNotIn('issued_coupons.status', ['deleted', 'redeemed', 'available'])
                             ->join('promotion_retailer_redeem', 'promotion_retailer_redeem.promotion_id', '=', 'issued_coupons.promotion_id')
                             ->join('merchants', 'merchants.merchant_id', '=', 'promotion_retailer_redeem.retailer_id')
                             ->where('issued_coupons.issued_coupon_id', $value)
@@ -3538,7 +3538,7 @@ class CouponAPIController extends ControllerAPI
                                 ->where('verification_number', $number)
                                 ->first();
                 } elseif ($issuedCoupon->coupon->is_all_employee === 'N') {
-                    $checkIssuedCoupon = IssuedCoupon::whereNotIn('issued_coupons.status', ['deleted', 'redeemed'])
+                    $checkIssuedCoupon = IssuedCoupon::whereNotIn('issued_coupons.status', ['deleted', 'redeemed', 'available'])
                                 ->join('promotion_employee', 'promotion_employee.promotion_id', '=', 'issued_coupons.promotion_id')
                                 ->join('user_verification_numbers', 'user_verification_numbers.user_id', '=', 'promotion_employee.user_id')
                                 ->join('employees', 'employees.user_id', '=', 'user_verification_numbers.user_id')

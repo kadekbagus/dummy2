@@ -156,14 +156,25 @@ class IssuedCoupon extends Eloquent
      * @author Ahmad <ahmad@dominopos.com>
      * @param string $promotionId
      * @param string $userEmail
+     * @param string $userId (from wallet)
+     * @param string $issuedCouponCode (from SMS)
      * @return IssuedCoupon | null
      */
-    public function issueCoupon($promotionId, $userEmail) {
+    public function issueCoupon($promotionId, $userEmail, $userId = NULL, $issuedCouponCode = NULL) {
         // get 'issued' coupon with the same user_email
         $issuedCoupon = static::issued()
             ->where('promotion_id', $promotionId)
             ->where('user_email', $userEmail)
             ->first();
+
+        // if issuedCouponCode is supplied then use it instead
+        if (! is_null($issuedCouponCode)) {
+            $issuedCoupon = static::issued()
+                ->where('promotion_id', $promotionId)
+                ->where('issued_coupon_code', $issuedCouponCode)
+                ->where('user_email', $userEmail)
+                ->first();
+        }
 
         if (! is_object($issuedCoupon)) {
             // get available issued coupon
@@ -172,8 +183,18 @@ class IssuedCoupon extends Eloquent
                 ->whereNull('user_email')
                 ->first();
 
+            // if issuedCouponCode is supplied then use it instead
+            if (! is_null($issuedCouponCode)) {
+                $issuedCoupon = static::available()
+                    ->where('promotion_id', $promotionId)
+                    ->where('issued_coupon_code', $issuedCouponCode)
+                    ->whereNull('user_email')
+                    ->first();
+            }
+
             if (is_object($issuedCoupon)) {
                 // set user_email to it and make it issued
+                $issuedCoupon->user_id = $userId;
                 $issuedCoupon->user_email = $userEmail;
                 $issuedCoupon->issued_date = date('Y-m-d H:i:s');
                 $issuedCoupon->status = 'issued';
