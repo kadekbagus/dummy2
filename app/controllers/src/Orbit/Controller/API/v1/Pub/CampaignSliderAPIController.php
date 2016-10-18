@@ -116,7 +116,6 @@ class CampaignSliderAPIController extends ControllerAPI
                                 $q->on(DB::raw("m.status"), '=', DB::raw("'active'"));
                         })
                         ->whereRaw("{$prefix}news_translations.merchant_language_id = '{$language_id}'")
-
                         ->whereRaw("{$prefix}news.object_type = 'promotion'")
                         ->whereRaw("{$prefix}news.sticky_order = 1")
                         ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
