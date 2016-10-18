@@ -3264,6 +3264,10 @@ return array(
         'google' => array(
             'callback_url' => 'http://mall-api.gotomalls.cool/pub/social-google-callback',
         ),
+        'bitly' => array(
+            // bitly app should be registered and has generic_access_token
+            'generic_access_token' => NULL,
+        )
     ],
 
     // set the external crawler user agent
@@ -4187,6 +4191,9 @@ return array(
         // URL redemption page which should be on main page (not CI)
         // e.g: https://www.gotomalls.cool/#!/coupon-redemption?cid=%s&uid=%s
         'direct_redemption_url' => NULL,
+        // URL coupon canvas
+        // e.g: https://www.gotomalls.cool/#!/coupon-canvas?cid=%s&pid=%s
+        'sms_direct_redemption_url' => NULL,
     ],
 
     'campaign_auto_email' => array(
