@@ -77,7 +77,7 @@ class CouponAPIController extends ControllerAPI
      * @param string     `gender_ids`                        (optional) - for Male, Female. Unknown. Valid value: M, F, U.
      * @param string     `age_range_ids`                     (optional) - Age Range IDs
      * @param string     `translations`                      (optional) - For Translations
-     * @param string     `is_premium`                        (required) - For set premium content, Default : 0
+     * @param string     `sticky_order`                      (required) - For set premium content, Default : 0
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -174,7 +174,7 @@ class CouponAPIController extends ControllerAPI
             $keywords = (array) $keywords;
             $linkToTenantIds = OrbitInput::post('link_to_tenant_ids');
             $linkToTenantIds = (array) $linkToTenantIds;
-            $is_premium = OrbitInput::post('is_premium');
+            $sticky_order = OrbitInput::post('sticky_order');
 
             if (empty($campaignStatus)) {
                 $campaignStatus = 'not started';
@@ -203,7 +203,7 @@ class CouponAPIController extends ControllerAPI
                     'rule_end_date'           => $rule_end_date,
                     'is_all_gender'           => $is_all_gender,
                     'is_all_age'              => $is_all_age,
-                    'is_premium'              => $is_premium,
+                    'sticky_order'            => $sticky_order,
                 ),
                 array(
                     'promotion_name'          => 'required|max:255',
@@ -222,7 +222,7 @@ class CouponAPIController extends ControllerAPI
                     'rule_end_date'           => 'date_format:Y-m-d H:i:s',
                     'is_all_gender'           => 'required|orbit.empty.is_all_gender',
                     'is_all_age'              => 'required|orbit.empty.is_all_age',
-                    'is_premium'              => 'required|in:0,1',
+                    'sticky_order'            => 'required|in:0,1',
                 ),
                 array(
                     'rule_value.required'     => 'The amount to obtain is required',
@@ -231,7 +231,7 @@ class CouponAPIController extends ControllerAPI
                     'discount_value.required' => 'The coupon value is required',
                     'discount_value.numeric'  => 'The coupon value must be a number',
                     'discount_value.min'      => 'The coupon value must be greater than zero',
-                    'is_premium.in'           => 'is popup must 0 or 1',
+                    'sticky_order.in'         => 'The sticky order value must 0 or 1',
                 )
             );
 
@@ -373,7 +373,7 @@ class CouponAPIController extends ControllerAPI
             $newcoupon->created_by = $this->api->user->user_id;
             $newcoupon->is_all_age = $is_all_age;
             $newcoupon->is_all_gender = $is_all_gender;
-            $newcoupon->sticky_order = $is_premium;
+            $newcoupon->sticky_order = $sticky_order;
 
             Event::fire('orbit.coupon.postnewcoupon.before.save', array($this, $newcoupon));
 
@@ -886,7 +886,7 @@ class CouponAPIController extends ControllerAPI
      * @param string     `gender_ids`                        (optional) - for Male, Female. Unknown. Valid value: M, F, U.
      * @param string     `age_range_ids`                     (optional) - Age Range IDs
      * @param string     `translations`                      (optional) - For translations
-     * @param string     `is_premium`                        (required) - For set premium content, Default : 0
+     * @param string     `sticky_order`                      (required) - For set premium content, Default : 0
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -1277,8 +1277,8 @@ class CouponAPIController extends ControllerAPI
                 }
             });
 
-            OrbitInput::post('is_premium', function($is_premium) use ($updatedcoupon) {
-                $updatedcoupon->sticky_order = $is_premium;
+            OrbitInput::post('sticky_order', function($sticky_order) use ($updatedcoupon) {
+                $updatedcoupon->sticky_order = $sticky_order;
             });
 
             OrbitInput::post('maximum_issued_coupon_type', function($maximum_issued_coupon_type) use ($updatedcoupon) {
