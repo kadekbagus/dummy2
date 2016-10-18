@@ -20,6 +20,7 @@ use Orbit\Controller\API\v1\Pub\Coupon\CouponHelper;
 use Activity;
 use Coupon;
 use IssuedCoupon;
+use Orbit\Helper\Security\Encrypter;
 
 class CouponAddToWalletAPIController extends ControllerAPI
 {
@@ -40,6 +41,7 @@ class CouponAddToWalletAPIController extends ControllerAPI
         $coupon = NULL;
         $issuedCoupon = NULL;
         $retailer = null;
+        $issued_coupon_code = null;
         $coupon_id = OrbitInput::post('coupon_id', NULL);
         try {
             $this->session = SessionPreparer::prepareSession();
@@ -50,6 +52,18 @@ class CouponAddToWalletAPIController extends ControllerAPI
             if (strtolower($role) !== 'consumer') {
                 $message = 'You must login to access this.';
                 ACL::throwAccessForbidden($message);
+            }
+
+            $hashedIssuedCouponCode = OrbitInput::post('cid', NULL); // hashed issued coupon code
+            $hashedPromotionCouponId = OrbitInput::post('pid', NULL); // hashed promotion id
+
+            // add to wallet via SMS
+            if (! empty($hashedIssuedCouponCode) && ! empty($hashedPromotionCouponId)) {
+                $data = $this->decryptCouponParams($hashedIssuedCouponCode, $hashedPromotionCouponId);
+                if ($data->message === 'OK') {
+                    $coupon_id = $data->promotionId;
+                    $issued_coupon_code = $data->issuedCouponCode;
+                }
             }
 
             $couponHelper = CouponHelper::create($this->session);
@@ -76,12 +90,32 @@ class CouponAddToWalletAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
+            if (! empty($issued_coupon_code) && ! empty($coupon_id)) {
+                $validator2 = Validator::make(
+                    array(
+                        'issued_coupon_code' => $issued_coupon_code,
+                    ),
+                    array(
+                        'issued_coupon_code' => 'orbit.exists.issued_coupon_code:' . $coupon_id,
+                    ),
+                    array(
+                        'orbit.notexists.couponwallet' => 'Invalid issued coupon code'
+                    )
+                );
+
+                // Run the validation
+                if ($validator2->fails()) {
+                    $errorMessage = $validator2->messages()->first();
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+            }
+
             $coupon = Coupon::excludeDeleted()
                 ->where('promotion_id', '=', $coupon_id)
                 ->first();
 
             $newIssuedCoupon = new IssuedCoupon();
-            $issuedCoupon = $newIssuedCoupon->issue($coupon, $user->user_id, $user);
+            $issuedCoupon = $newIssuedCoupon->issueCoupon($coupon->promotion_id, $user->user_email, $user->user_id, $issued_coupon_code);
             $this->commit();
 
             if ($issuedCoupon) {
@@ -159,5 +193,30 @@ class CouponAddToWalletAPIController extends ControllerAPI
         }
 
         return $this->render();
+    }
+
+    private function decryptCouponParams($cid, $pid)
+    {
+        try {
+            $encryptionKey = Config::get('orbit.security.encryption_key');
+            $encryptionDriver = Config::get('orbit.security.encryption_driver');
+            $encrypter = new Encrypter($encryptionKey, $encryptionDriver);
+
+            $message = 'OK';
+            $issuedCouponCode = $encrypter->decrypt($cid);
+            $promotionId = $encrypter->decrypt($pid);
+
+        } catch (Defuse\Crypto\Exception\WrongKeyOrModifiedCiphertextException $e) {
+            $message = $e->getMessage();
+        } catch (Exception $e) {
+            $message = $e->getMessage();
+        }
+
+        $data = new \stdClass();
+        $data->message = $message;
+        $data->issuedCouponCode = $issuedCouponCode;
+        $data->promotionId = $promotionId;
+
+        return $data;
     }
 }
