@@ -110,7 +110,7 @@ class CouponRedemptionPageAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $isAvailable = (new IssuedCoupon())->issueCoupon($couponId, $userIdentifier);
+            $isAvailable = (new IssuedCoupon())->issueCoupon($couponId, $userIdentifier, $user->user_id);
             if (! is_object($isAvailable)) {
                 $errorMessage = 'This coupon is out of limit';
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
