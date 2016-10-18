@@ -121,3 +121,14 @@ Route::post(
         return Orbit\Controller\API\v1\Pub\GenericActivityAPIController::create()->postNewGenericActivity();
     }]
 )->where('search', '(api|app)');
+
+
+/**
+ * Get generic activity list
+ */
+Route::get(
+    '/{search}/v1/pub/generic-activity/list', ['as' => 'generic-activity-list', function()
+    {
+        return Orbit\Controller\API\v1\Pub\GenericActivityListAPIController::create()->getGenericActivityList();
+    }]
+)->where('search', '(api|app)');

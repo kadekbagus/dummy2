@@ -395,11 +395,12 @@ class CouponReportPrinterController extends DataPrinterController
                     printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Redeemed Date', $dateRange, '', '', '', '', '');
                 }
 
-                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Coupon Code', 'Customer Age', 'Customer Gender', 'Issued Date & Time', 'Redeemed Date & Time', 'Redemption Place', 'Coupon Status');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '', '');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Coupon Code', 'Customer Age', 'Customer Gender', 'Customer Type', 'Customer Email', 'Issued Date & Time', 'Redeemed Date & Time', 'Redemption Place', 'Coupon Status');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '', '');
 
                 $count = 1;
+
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
 
                     if ($row->status === 'active') {
@@ -420,11 +421,25 @@ class CouponReportPrinterController extends DataPrinterController
                         $place = $row->redemption_place;
                     }
 
+                    if (empty($row->user_type)) {
+                        $userType = '--';
+                    } else {
+                        $userType = $row->user_type;
+                    }
+
+                    if (empty($row->user_email)) {
+                        $userEmail = '--';
+                    } else {
+                        $userEmail = $row->user_email;
+                    }
+
                     printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
                             $count,
                             $row->issued_coupon_code,
                             $row->age,
                             $row->gender,
+                            $userType,
+                            $userEmail,
                             $this->printDateTime($row->issued_date, '', 'd M Y H:i') . ' (UTC)',
                             $dateRedeem,
                             $place,

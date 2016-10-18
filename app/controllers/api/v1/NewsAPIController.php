@@ -115,8 +115,8 @@ class NewsAPIController extends ControllerAPI
             $age_range_ids = (array) $age_range_ids;
             $keywords = OrbitInput::post('keywords');
             $keywords = (array) $keywords;
-            $is_popup = OrbitInput::post('is_popup');
             $translations = OrbitInput::post('translations');
+            $sticky_order = OrbitInput::post('sticky_order');
 
             if (empty($campaignStatus)) {
                 $campaignStatus = 'not started';
@@ -138,7 +138,7 @@ class NewsAPIController extends ControllerAPI
                     'id_language_default' => $id_language_default,
                     'is_all_gender'       => $is_all_gender,
                     'is_all_age'          => $is_all_age,
-                    'is_popup'            => $is_popup,
+                    'sticky_order'        => $sticky_order,
                 ),
                 array(
                     'news_name'           => 'required|max:255',
@@ -150,10 +150,10 @@ class NewsAPIController extends ControllerAPI
                     'id_language_default' => 'required|orbit.empty.language_default',
                     'is_all_gender'       => 'required|orbit.empty.is_all_gender',
                     'is_all_age'          => 'required|orbit.empty.is_all_age',
-                    'is_popup'            => 'required|in:Y,N',
+                    'sticky_order'        => 'required|in:0,1',
                 ),
                 array(
-                    'is_popup.in' => 'is popup must Y or N',
+                    'sticky_order.in' => 'The sticky order value must 0 or 1',
                 )
             );
 
@@ -214,9 +214,6 @@ class NewsAPIController extends ControllerAPI
 
             Event::fire('orbit.news.postnewnews.after.validation', array($this, $validator));
 
-            // Reformat sticky order
-            $sticky_order = (string)$sticky_order === 'true' && (string)$sticky_order !== '0' ? 1 : 0;
-
             // Get data status like ongoing, stopped etc
             $idStatus = CampaignStatus::select('campaign_status_id','campaign_status_name')->where('campaign_status_name', $campaignStatus)->first();
 
@@ -229,12 +226,11 @@ class NewsAPIController extends ControllerAPI
             $newnews->campaign_status_id = $idStatus->campaign_status_id;
             $newnews->begin_date = $begin_date;
             $newnews->end_date = $end_date;
-            $newnews->sticky_order = $sticky_order;
             $newnews->link_object_type = $link_object_type;
             $newnews->is_all_age = $is_all_age;
             $newnews->is_all_gender = $is_all_gender;
             $newnews->created_by = $this->api->user->user_id;
-            $newnews->is_popup = $is_popup;
+            $newnews->sticky_order = $sticky_order;
 
             // Check for english content
             $dataTranslations = @json_decode($translations);
@@ -793,9 +789,6 @@ class NewsAPIController extends ControllerAPI
             });
 
             OrbitInput::post('sticky_order', function($sticky_order) use ($updatednews) {
-                // Reformat sticky order
-                $sticky_order = (string)$sticky_order === 'true' && (string)$sticky_order !== '0' ? 1 : 0;
-
                 $updatednews->sticky_order = $sticky_order;
             });
 
