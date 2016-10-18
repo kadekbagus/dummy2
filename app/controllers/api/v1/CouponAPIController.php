@@ -204,6 +204,7 @@ class CouponAPIController extends ControllerAPI
                     'is_all_gender'           => $is_all_gender,
                     'is_all_age'              => $is_all_age,
                     'is_popup'                => $is_popup,
+                    'coupon_codes'            => $couponCodes,
                 ),
                 array(
                     'promotion_name'          => 'required|max:255',
@@ -223,6 +224,7 @@ class CouponAPIController extends ControllerAPI
                     'is_all_gender'           => 'required|orbit.empty.is_all_gender',
                     'is_all_age'              => 'required|orbit.empty.is_all_age',
                     'is_popup'                => 'in:Y,N',
+                    'coupon_codes'            => 'required',
                 ),
                 array(
                     'rule_value.required'     => 'The amount to obtain is required',
