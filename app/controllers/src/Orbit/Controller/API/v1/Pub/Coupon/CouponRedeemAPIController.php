@@ -157,14 +157,11 @@ class CouponRedeemAPIController extends ControllerAPI
 
             $isAvailable->save();
 
-            $this->response->data = null;
-            $this->response->message = Lang::get('statuses.orbit.deleted.coupon');
-
             // Commit the changes
             $this->commit();
 
             $this->response->message = 'Coupon has been successfully redeemed.';
-            $this->response->data = null;
+            $this->response->data = $isAvailable->issued_coupon_code;
 
             // customize user property before saving activity
             $user = $couponHelper->customizeUserProps($user, $userIdentifier);
