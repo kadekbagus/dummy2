@@ -91,9 +91,9 @@ class CouponPrinterController extends DataPrinterController
                     foreach ($ruleType as $key => $valrule){
                         $rule_type = $valrule;
                         if ($rule_type === 'auto_issue_on_first_signin') {
-                            $rule_type = 'Blast Upon Sign Up';
-                        } elseif ($rule_type === 'auto_issue_on_signup') {
                             $rule_type = 'Blast Upon First Sign In';
+                        } elseif ($rule_type === 'auto_issue_on_signup') {
+                            $rule_type = 'Blast Upon Sign Up';
                         } elseif ($rule_type === 'auto_issue_on_every_signin') {
                             $rule_type = 'Blast Upon Every Sign In';
                         } elseif ($rule_type === 'manual') {
