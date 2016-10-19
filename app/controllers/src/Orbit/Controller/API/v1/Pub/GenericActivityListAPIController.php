@@ -44,7 +44,7 @@ class GenericActivityListAPIController extends ControllerAPI
 
     		foreach($genAct as $key => $value)
 			{
-				$act[camel_case($value['name'])][] = array('value' => $key, 'objectParams' => $value['parameter_name']);
+				$act[camel_case($value['name']).$key] = array('value' => $key, 'objectParams' => $value['parameter_name']);
 				$arr[$key] = $act;
 			}
 
