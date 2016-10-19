@@ -353,6 +353,8 @@ class CouponAPIController extends ControllerAPI
                 $dupes = array();
                 // trim and explode coupon codes to array
                 $arrayCouponCode = array_map('trim', explode("\n", $couponCodes));
+                // delete empty array and reorder it
+                $arrayCouponCode = array_values(array_filter($arrayCouponCode));
 
                 // find the dupes
                 foreach(array_count_values($arrayCouponCode) as $val => $frequency) {
@@ -2666,6 +2668,10 @@ class CouponAPIController extends ControllerAPI
                         $coupons->with('ages');
                     } elseif ($relation === 'keywords') {
                         $coupons->with('keywords');
+                    } elseif ($relation === 'issuedCoupons') {
+                        $coupons->with(['issuedCoupons' => function ($q) {
+                            $q->select('promotion_id', 'issued_coupon_code');
+                        }]);
                     }
                 }
             });
