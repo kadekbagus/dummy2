@@ -22,7 +22,7 @@ class CampaignShareMail
     /**
      * Laravel main method to fire a job on a queue.
      *
-     * @author Rio Astamal <me@rioastamal.net>
+     * @author kadek <kadek@dominopos.com>
      * @param Job $job
      * @param array $data [user_id => NUM]
      */
@@ -33,6 +33,9 @@ class CampaignShareMail
         $valid_language = Language::where('status', '=', 'active')
                             ->where('name', $data['languageId'])
                             ->first();
+
+        $user = User::where('user_id','=', $data['userId'])
+                    ->first();
 
         switch($data['campaignType']) {
             case 'promotion' :
@@ -62,6 +65,9 @@ class CampaignShareMail
                                 ->where('news.news_id', $data['campaignId'])
                                 ->where('news.object_type', '=', 'promotion')
                                 ->first();
+
+                    $campaign_url = Config::get('orbit.campaign_share_email.promotion_detail_base_url').$campaign->campaign_id.'/'.$this->getUrl($campaign->campaign_name);
+
                     break;
 
             case 'news' :
@@ -92,6 +98,8 @@ class CampaignShareMail
                                 ->where('news.object_type', '=', 'news')
                                 ->first();
 
+                    $campaign_url = Config::get('orbit.campaign_share_email.news_detail_base_url').$campaign->campaign_id.'/'.$this->getUrl($campaign->campaign_name);
+
                     break;
 
             case 'coupon' :
@@ -121,20 +129,28 @@ class CampaignShareMail
                         ->where('promotions.promotion_id', $data['campaignId'])
                         ->first();
 
+                    $campaign_url = Config::get('orbit.campaign_share_email.coupon_detail_base_url').$campaign->campaign_id.'/'.$this->getUrl($campaign->campaign_name);
+
                     break;
             default :
                     $campaign = null;
         }
 
-        //$dataView['campaign_name'] = $campaign->campaign_name;
-        //$dataView['campaign_name'] = $campaign->campaign_name;
+        $campaign_image = Config::get('orbit.campaign_share_email.mall_api_base_url').$campaign->original_media_path;
+
+        $dataView['campaignName'] = $campaign->campaign_name;
+        $dataView['campaignType'] = $data['campaignType'];
+        $dataView['campaignImage'] = $campaign_image;
+        $dataView['campaignUrl'] = $campaign_url;
+        $dataView['email'] = $data['email'];
+        $dataView['name'] = $user->user_firstname;
 
         $mailViews = array(
                     'html' => 'emails.campaign-share-email.campaign-share-html',
                     'text' => 'emails.campaign-share-email.campaign-share-text'
         );
 
-        $this->sendCampaignEmail($mailViews, $dataView);
+        $this->sendCampaignShareEmail($mailViews, $dataView);
 
         // Don't care if the job success or not we will provide user
         // another link to resend the activation
@@ -152,17 +168,13 @@ class CampaignShareMail
 
         Mail::send($mailviews, $data, function($message) use ($data)
         {
-            $emailconf = Config::get('orbit.campaign_auto_email.sender');
+            $emailconf = Config::get('orbit.campaign_share_email.sender');
             $from = $emailconf['email'];
             $name = $emailconf['name'];
 
-            $email = Config::get('orbit.campaign_auto_email.email_list');
+            $email = $data['email'];
 
-            if ($data['eventType'] === 'expired') {
-                $subject = $data['campaignType'] .' - '. $data['campaignName'] .' is '. $data['eventType'];
-            } else {
-                $subject = $data['campaignType'] .' - '. $data['campaignName'] .' has just been '. $data['eventType'];
-            }
+            $subject = Config::get('orbit.campaign_share_email.subject');
 
             $message->from($from, $name);
             $message->subject($subject);
@@ -173,5 +185,18 @@ class CampaignShareMail
     protected function quote($arg)
     {
         return DB::connection()->getPdo()->quote($arg);
+    }
+
+    protected function getUrl($string)
+    {
+        //Lower case everything
+        $string = strtolower($string);
+        //Make alphanumeric (removes all other characters)
+        $string = preg_replace("/[^a-z0-9_\s-]/", "", $string);
+        //Clean up multiple dashes or whitespaces
+        $string = preg_replace("/[\s-]+/", " ", $string);
+        //Convert whitespaces and underscore to dash
+        $string = preg_replace("/[\s_]/", "-", $string);
+        return $string;
     }
 }

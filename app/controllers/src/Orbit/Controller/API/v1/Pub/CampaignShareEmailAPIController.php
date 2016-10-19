@@ -84,7 +84,7 @@ class CampaignShareEmailAPIController extends ControllerAPI
 			$this->response->code = 0;
             $this->response->status = 'success';
             $this->response->message = 'Success';
-            $this->response->data = $data;
+            $this->response->data = null;
 
     	} catch (ACLForbiddenException $e) {
 
