@@ -17,6 +17,7 @@ return array(
     'AgeRangesTableSeeder' => $baseDir . '/app/database/seeds/AgeRangesTableSeeder.php',
     'AlterActivitiesAddOsLoginTime' => $baseDir . '/app/database/migrations/2015_11_23_032746_alter_activities_add_os_login_time.php',
     'AlterIndexesUserSignin' => $baseDir . '/app/database/migrations/2016_01_21_230428_alter_indexes_user_signin.php',
+    'AlterIssuedCouponsAddRecordExists' => $baseDir . '/app/database/migrations/2016_10_19_041235_alter_issued_coupons_add_record_exists.php',
     'AlterSessionsAddApplicationId' => $baseDir . '/app/database/migrations/2015_10_30_112636_alter_sessions_add_application_id.php',
     'AlterSessionsAddIndexExpireAt' => $baseDir . '/app/database/migrations/2015_10_27_094038_alter_sessions_add_index_expire_at.php',
     'AlterTableAccountTypeAddFieldAccountOrder' => $baseDir . '/app/database/migrations/2016_07_22_034157_alter_table_account_type_add_field_account_order.php',

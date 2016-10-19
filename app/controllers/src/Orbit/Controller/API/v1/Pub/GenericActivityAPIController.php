@@ -32,6 +32,7 @@ class GenericActivityAPIController extends IntermediateBaseController
     {
         $this->response = new ResponseProvider();
         $user = NULL;
+        $mall = NULL;
         $httpCode = 200;
 
         $genericActivityConfig = Config::get('orbit.generic_activity');
@@ -132,11 +133,21 @@ class GenericActivityAPIController extends IntermediateBaseController
                 }
             }
 
+            // Get mall object for set setLocation activity
+            $mallId = OrbitInput::post('mall_id', null);
+
+            if (! empty($mallId)) {
+                $mall = Mall::excludeDeleted()
+                        ->where('merchant_id', $mallId)
+                        ->first();
+            }
+
             $activity->setUser($user)
                 ->setActivityName($activityName)
                 ->setActivityNameLong($activityNameLong)
                 ->setObject($object)
                 ->setModuleName($activityModuleName)
+                ->setLocation($mall)
                 ->responseOK()
                 ->save();
 
