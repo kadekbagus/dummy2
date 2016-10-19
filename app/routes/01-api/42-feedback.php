@@ -6,7 +6,7 @@
 /**
  * Post Feedback
  */
-Route::get('/api/v1/pub/send-feedback', function()
+Route::get('/app/v1/pub/send-feedback', function()
 {
     return Orbit\Controller\API\v1\Pub\FeedbackAPIController::create()->postSendFeedback();
 });
