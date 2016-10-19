@@ -358,7 +358,8 @@ class CouponAPIController extends ControllerAPI
                 $dupes = array();
                 // trim and explode coupon codes to array
                 $arrayCouponCode = array_map('trim', explode("\n", $couponCodes));
-
+                // delete empty array and reorder it
+                $arrayCouponCode = array_values(array_filter($arrayCouponCode));
                 // find the dupes
                 foreach(array_count_values($arrayCouponCode) as $val => $frequency) {
                     if ($frequency > 1) $dupes[] = $val;
@@ -2302,11 +2303,7 @@ class CouponAPIController extends ControllerAPI
                         {$table_prefix}promotions.status
                     END as 'coupon_status'"),
                     DB::raw("((CASE WHEN {$table_prefix}campaign_price.base_price is null THEN 0 ELSE {$table_prefix}campaign_price.base_price END) * (DATEDIFF({$table_prefix}promotions.end_date, {$table_prefix}promotions.begin_date) + 1) * (SELECT COUNT(pr.promotion_retailer_id) FROM {$table_prefix}promotion_retailer as pr WHERE pr.object_type != 'mall' and pr.promotion_id = {$table_prefix}promotions.promotion_id)) AS estimated"),
-                    DB::raw("COUNT(DISTINCT {$table_prefix}promotion_retailer.promotion_retailer_id) as total_location"),
-                    DB::raw("(SELECT GROUP_CONCAT(issued_coupon_code separator '\n')
-                        FROM {$table_prefix}issued_coupons ic
-                        WHERE ic.promotion_id = {$table_prefix}promotions.promotion_id
-                            ) as coupon_codes")
+                    DB::raw("COUNT(DISTINCT {$table_prefix}promotion_retailer.promotion_retailer_id) as total_location")
                 )
                 ->leftJoin('campaign_price', function ($join) {
                          $join->on('promotions.promotion_id', '=', 'campaign_price.campaign_id')
@@ -2677,6 +2674,10 @@ class CouponAPIController extends ControllerAPI
                         $coupons->with('ages');
                     } elseif ($relation === 'keywords') {
                         $coupons->with('keywords');
+                    } elseif ($relation === 'issuedCoupons') {
+                        $coupons->with(['issuedCoupons' => function ($q) {
+                            $q->select('promotion_id', 'issued_coupon_code');
+                        }]);
                     }
                 }
             });
