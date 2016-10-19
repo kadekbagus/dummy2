@@ -99,7 +99,7 @@ class CouponPrinterController extends DataPrinterController
                         } elseif ($rule_type === 'manual') {
                             $rule_type = 'Manual issued';
                         } elseif ($rule_type === 'blast_via_sms') {
-                            $rule_type = 'Blast via sms';
+                            $rule_type = 'Blast via SMS';
                         }
 
                         $rule_type_string .= $rule_type . ', ';
