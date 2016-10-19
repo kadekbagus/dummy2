@@ -32,34 +32,38 @@ class GenericActivityListAPIController extends ControllerAPI
 
         $httpCode = 200;
         $this->response = new ResponseProvider();
-    	try {
+        try {
 
-    		$genAct = Config::get('orbit.generic_activity.activity_list');
-    		$paramName = Config::get('orbit.generic_activity.parameter_name');
+            $genAct = Config::get('orbit.generic_activity.activity_list');
+            $paramName = Config::get('orbit.generic_activity.parameter_name');
 
-    		// check for empty config
-    		if (empty($genAct)) {
-    			OrbitShopAPI::throwInvalidArgument('Generic Activity is empty');
-    		}
+            // check for empty config
+            if (empty($genAct)) {
+                OrbitShopAPI::throwInvalidArgument('Generic Activity is empty');
+            }
 
-    		foreach($genAct as $key => $value)
-			{
-				$act[camel_case($value['name']).$key] = array('value' => $key, 'objectParams' => $value['parameter_name']);
-				$arr[$key] = $act;
-			}
+            $lastKey = 0;
+            foreach($genAct as $key => $value)
+            {
+                $act[camel_case($value['name']).$key] = array(
+                        'value' => $key,
+                        'objectParams' => $value['parameter_name'],
+                        'objectTypeParams' => isset($value['object_type_parameter_name']) ? $value['object_type_parameter_name'] : null
+                    );
+                $arr[$key] = $act;
+                $lastKey = $key;
+            }
 
-			$tot = count($arr);
+            $data = new stdClass();
+            $data->parameter_name = $paramName;
+            $data->activity_list = $arr[$lastKey];
 
-			$data = new stdClass();
-			$data->parameter_name = $paramName;
-			$data->activity_list = $arr[$tot];
-
-			$this->response->code = 0;
+            $this->response->code = 0;
             $this->response->status = 'success';
             $this->response->message = 'Success';
             $this->response->data = $data;
 
-    	} catch (ACLForbiddenException $e) {
+        } catch (ACLForbiddenException $e) {
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';

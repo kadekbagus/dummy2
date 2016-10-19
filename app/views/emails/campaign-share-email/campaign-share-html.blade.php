@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
 
 <head>
-    <title>Selamat Datang di Gotomalls!</title>
+    <title>Gotomalls</title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
     <style type="text/css">
@@ -117,7 +117,6 @@
                 <tbody>
                     <tr>
                         <td style="text-align:center;vertical-align:top;font-size:0px;padding:0px;">
-                            <img ng-src="https://mall-api-v211.gotomalls.cool/uploads/news/translation/2016/10/KzMgQOXoxTS9ulWI-promotion-artha-gading-1475734643_1.png" class="news-logo ng-scope" src="https://mall-api-v211.gotomalls.cool/uploads/news/translation/2016/10/KzMgQOXoxTS9ulWI-promotion-artha-gading-1475734643_1.png">
                             <!--[if mso | IE]>
         <table border="0" cellpadding="0" cellspacing="0"><tr><td style="vertical-align:top;width:600px;">
         <![endif]-->
@@ -312,7 +311,7 @@
                                         <tr>
                                             <td style="word-break:break-word;font-size:0px;padding:10px 25px;" align="center">
                                                 <div style="cursor:auto;color:#000000;font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:22px;">
-                                                    <p align="justify" style="margin:0">
+                                                    <p align="center" style="margin:0">
                                                         Hai {{{ $email }}},
                                                         <br \>
                                                         @if (empty($name))
@@ -320,7 +319,7 @@
                                                         @else
                                                             {{{ $name }}}
                                                         @endif
-                                                         ingin anda untuk melihat {{{ $campaign_type }}}
+                                                         ingin anda untuk melihat {{{ $campaignType }}}
                                                     </p>
                                                 </div>
                                             </td>
@@ -330,9 +329,15 @@
                                                 <table cellpadding="0" cellspacing="0" align="center" border="0">
                                                     <tbody>
                                                         <tr>
-                                                            {{{ $campaign_name }}}
+                                                            <div style="cursor:auto;color:#000000;font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:22px;">
+                                                            <p> {{{ $campaignName }}} </p>
+                                                            </div>
+                                                            <div style="padding-bottom: 10px;">
+                                                            <img ng-src="{{{ $campaignImage }}}" class="news-logo ng-scope" src="{{{ $campaignImage }}}">
+                                                            </div>
+                                                            <br/><br/>
                                                             <td style="border-radius:3px;color:white;cursor:auto;padding:10px 25px; border-radius: 16px;" align="center" valign="middle" bgcolor="#BA1F00">
-                                                                <a href="{{ $campaign_url }}" style="display:inline-block;text-decoration:none;background:#BA1F00;border-radius:3px;color:white;font-family:Helvetica;font-size:13px;font-weight:normal;margin:0px;">Lihat Sekarang!
+                                                                <a href="{{{ $campaignUrl }}}" style="display:inline-block;text-decoration:none;background:#BA1F00;border-radius:3px;color:white;font-family:Helvetica;font-size:13px;font-weight:normal;margin:0px;">Lihat Sekarang!
                                                                 </a>
                                                             </td>
                                                         </tr>
