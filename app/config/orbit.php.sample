@@ -4109,6 +4109,24 @@ return array(
                 'object_type' => 'Mall',
                 'parameter_name' => 'mall_id'
             ),
+            // - User clicks on interested coupon
+            '78' => array(
+                'name' => 'click_interested_coupon_sms',
+                'name_long' => 'Click interested coupon sms',
+                'module_name' => 'Coupon',
+                'type' => 'click',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'coupon_id'
+            ),
+            // - User clicks on not interested coupon
+            '79' => array(
+                'name' => 'click_not_interested_coupon_sms',
+                'name_long' => 'click_not_interested_coupon_sms',
+                'module_name' => 'Coupon',
+                'type' => 'click',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'coupon_id'
+            ),
         ),
     ),
 
