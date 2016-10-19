@@ -1535,7 +1535,6 @@ class CouponReportAPIController extends ControllerAPI
                 $coupons = IssuedCoupon::select('issued_coupons.*', 'promotions.begin_date', 'promotions.end_date',
                                             DB::raw("CASE WHEN {$prefix}user_details.gender = 'f' THEN 'female' WHEN {$prefix}user_details.gender = 'm' THEN 'male' ELSE 'unknown' END AS gender"),
                                             DB::raw(" CASE WHEN {$prefix}roles.role_name = 'Consumer' THEN 'User' ELSE {$prefix}roles.role_name END AS user_type"),
-                                            DB::raw("ou.user_email"),
                                             DB::raw("IFNULL(timestampdiff(year, {$prefix}user_details.birthdate, curdate()), 'unknown') AS age"),
                                             DB::raw("
                                                         CASE WHEN {$prefix}issued_coupons.redeem_user_id IS NOT NULL THEN CONCAT({$prefix}users.user_firstname, ' ', {$prefix}users.user_lastname, ' at ', om_employee.name)
