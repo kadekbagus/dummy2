@@ -97,8 +97,23 @@ class CouponLocationAPIController extends ControllerAPI
                                             ->on(DB::raw('img.media_name_long'), 'IN', DB::raw("('mall_logo_orig', 'retailer_logo_orig')"));
                                     })
                                     ->where('promotions.promotion_id', $couponId)
-                                    ->groupBy('merchant_id')
                                     ->havingRaw('tz <= end_date AND tz >= begin_date');
+
+            // filter news by mall id
+            $group_by = '';
+            OrbitInput::get('mall_id', function($mallid) use ($couponLocations, &$group_by) {
+                $couponLocations->where(function($q) use ($mallid){
+                                    $q->where('merchants.parent_id', '=', $mallid)
+                                      ->orWhere('merchants.merchant_id', '=', $mallid);
+                                });
+                $group_by = 'mall';
+            });
+
+            if ($group_by === 'mall') {
+                $couponLocations->groupBy('mall_id');
+            } else {
+                $couponLocations->groupBy('merchants.merchant_id');
+            }
 
             $_couponLocations = clone($couponLocations);
 
