@@ -13,7 +13,7 @@ use \Config;
 use \Coupon;
 use \IssuedCoupon;
 
-class ShortenCouponUrl extends Command
+class UrlShortenerCommand extends Command
 {
 
     /**
@@ -56,31 +56,38 @@ class ShortenCouponUrl extends Command
     {
         $mode = $this->option('mode');
         $couponId = $this->option('couponid');
-        $verbose = $this->option('v');
+        $verbose = $this->option('verbose');
+        $forceUpdate = $this->option('forceupdate');
 
         $coupon = Coupon::where('promotion_id', $couponId)->first();
 
+        // check for coupon existance
         if (! is_object($coupon)) {
             $this->error('Coupon not found.');
-            die();
+            return;
         }
 
+        // check for accepted mode
         if (! in_array($mode, $this->accepted_mode)) {
             $this->error('Not supported shortening mode.');
-            die();
+            return;
         }
 
+        // get redeem url format from config
         $redeemUrl = Config::get('orbit.coupon.sms_direct_redemption_url');
+
+        // get list of coupon codes for the provided coupon id
         $arrayOfCouponCodes = IssuedCoupon::where('promotion_id', $couponId)
             ->get()->lists('issued_coupon_code');
 
+        // check if coupon has any issued coupon
         if (empty($arrayOfCouponCodes)) {
             $this->error('This coupon does not have coupon codes.');
-            die();
+            return;
         }
         
         $arrayOfCouponRedeemUrl = array();
-        
+
         $encryptionKey = Config::get('orbit.security.encryption_key');
         $encryptionDriver = Config::get('orbit.security.encryption_driver');
         $encrypter = new Encrypter($encryptionKey, $encryptionDriver);
@@ -88,34 +95,80 @@ class ShortenCouponUrl extends Command
         foreach($arrayOfCouponCodes as $couponCode) {
             $hashedCid = rawurlencode($encrypter->encrypt($couponCode));
             $hashedPid = rawurlencode($encrypter->encrypt($couponId));
-            $arrayOfCouponRedeemUrl[] = sprintf($redeemUrl, $hashedCid, $hashedPid);
+
+            $couponRedeemUrlObj = new \stdClass();
+            $couponRedeemUrlObj->redeemUrl = sprintf($redeemUrl, $hashedCid, $hashedPid);
+            $couponRedeemUrlObj->couponCode = $couponCode;
+
+            $arrayOfCouponRedeemUrl[] = $couponRedeemUrlObj;
         }
 
+        // end result array
         $shortUrls = array();
 
-        if ($mode === 'bitly') {
+        // repeat until all request successful, make sure the internet connection is good
+        while(! empty($arrayOfCouponRedeemUrl)) {
             foreach($arrayOfCouponRedeemUrl as $key => $redeemUrl) {
-                if ($verbose === 'Y') {
-                    $this->info(sprintf('Shortening coupon code: %s', $arrayOfCouponCodes[$key]));
-                }
-                $bitlyConfig = array(
-                    'access_token' => Config::get('orbit.social_login.bitly.generic_access_token'),
-                    'domain' => 'bit.ly',
-                    'longUrl' => $redeemUrl
-                );
-                $shortUrl = BitlyShortener::create($bitlyConfig)->bitly_get('shorten');
-                if ($verbose === 'Y') {
-                    $this->info(sprintf('Shortening coupon code: %s, Response status: %s', $arrayOfCouponCodes[$key], $shortUrl['status_code']));
-                }
-                if ($shortUrl['status_code'] === 200) {
-                    $shortUrls[] = $shortUrl['data']['url'];
-                    if ($verbose === 'Y') {
-                        $this->info(sprintf('Shortening coupon code: %s, Short url: %s', $arrayOfCouponCodes[$key], $shortUrl['data']['url']));
+                
+                // fetch url from table if any
+                $shortUrlFromTable = IssuedCoupon::where('issued_coupon_code', $redeemUrl->couponCode)
+                    ->where('promotion_id', $couponId)
+                    ->first()->url;
+
+                if (! empty($shortUrlFromTable) && ! $forceUpdate) {
+                    if ($verbose) {
+                        $this->info(sprintf('Taking url of coupon code: %s from table', $arrayOfCouponCodes[$key]));
+                    }
+                    if ($verbose) {
+                        $this->info(sprintf('Coupon code: %s, Short url: %s', $arrayOfCouponCodes[$key], $shortUrlFromTable));
+                    }
+                    $shortUrls[] = $shortUrlFromTable;
+                    // remove successful one
+                    unset($arrayOfCouponRedeemUrl[$key]);
+                } else {
+                    // call shortener service if url not found in table or when forceupdate flag is true
+                    if ($mode === 'bitly') {
+                        if ($verbose) {
+                            $this->info(sprintf('Shortening coupon code: %s', $arrayOfCouponCodes[$key]));
+                        }
+                        // set bitly parameters
+                        $bitlyConfig = array(
+                            'access_token' => Config::get('orbit.social_login.bitly.generic_access_token'),
+                            'domain' => 'bit.ly',
+                            'longUrl' => $redeemUrl->redeemUrl
+                        );
+                        // call bitly
+                        $shortUrl = BitlyShortener::create($bitlyConfig)->bitlyGet('shorten');
+                        // add .5 second delay for good measure
+                        usleep(500000);
+                        // check for response
+                        if ($shortUrl['status_code'] === 200) {
+                            if ($verbose) {
+                                $this->info(sprintf('Shortening coupon code: %s, Response status: %s', $arrayOfCouponCodes[$key], $shortUrl['status_code']));
+                            }
+                            if ($verbose) {
+                                $this->info(sprintf('Shortening coupon code: %s, Short url: %s', $arrayOfCouponCodes[$key], $shortUrl['data']['url']));
+                            }
+
+                            $shortUrls[] = $shortUrl['data']['url'];
+                            // save url to issued coupon
+                            $issuedCoupon = DB::table('issued_coupons')
+                                ->where('issued_coupon_code', $redeemUrl->couponCode)
+                                ->where('promotion_id', $couponId)
+                                ->update(['url' => $shortUrl['data']['url']]);
+
+                            // remove successful one
+                            unset($arrayOfCouponRedeemUrl[$key]);
+                        }
                     }
                 }
             }
         }
-        $this->info(implode("\n", $shortUrls));
+
+        if (! $verbose) {
+            // display results
+            $this->info(implode("\n", $shortUrls));
+        }
     }
 
     /**
@@ -136,9 +189,9 @@ class ShortenCouponUrl extends Command
     protected function getOptions()
     {
         return array(
-                array('couponid', 0, InputOption::VALUE_REQUIRED, 'Coupon ID', 0),
-                array('mode', 0, InputOption::VALUE_REQUIRED, 'Shortener service, eg: bitly', 0),
-                array('v', 0, InputOption::VALUE_OPTIONAL, 'Display process (Y/N)', 'N'),
+                array('couponid', 0, InputOption::VALUE_REQUIRED, 'Coupon ID (required)'),
+                array('mode', 0, InputOption::VALUE_REQUIRED, 'Shortener service, eg: bitly (required)'),
+                array('forceupdate', 0, InputOption::VALUE_NONE, 'Force update saved url in table with new one'),
             );
     }
 }
