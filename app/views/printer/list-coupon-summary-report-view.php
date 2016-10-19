@@ -136,15 +136,15 @@
 
                 $rule_type = $val_rule_type;
                 if ($rule_type === 'auto_issue_on_first_signin') {
-                    $rule_type = 'Blast Upon First Sign In';
+                    $rule_type = 'Blast upon first sign in';
                 } elseif ($rule_type === 'auto_issue_on_signup') {
-                    $rule_type = 'Blast Upon Sign Up';
+                    $rule_type = 'Blast upon sign up';
                 } elseif ($rule_type === 'auto_issue_on_every_signin') {
-                    $rule_type = 'Blast Upon Every Sign In';
+                    $rule_type = 'Blast upon every sign in';
                 } elseif ($rule_type === 'manual') {
-                    $rule_type = 'Manual Issued';
+                    $rule_type = 'Manual issued';
                 } elseif ($rule_type === 'blast_via_sms') {
-                    $rule_type = 'Blast Via SMS';
+                    $rule_type = 'Blast via sms';
                 }
 
                 $rule_type_string .= $rule_type . ', ';
@@ -218,15 +218,15 @@
                     <?php
                         $rule_type = $row->rule_type;
                         if ($rule_type === 'auto_issue_on_first_signin') {
-                            $rule_type = 'Blast Upon First Sign In';
+                            $rule_type = 'Blast upon first sign in';
                         } elseif ($rule_type === 'auto_issue_on_signup') {
-                            $rule_type = 'Blast Upon Sign Up';
+                            $rule_type = 'Blast upon sign up';
                         } elseif ($rule_type === 'auto_issue_on_every_signin') {
-                            $rule_type = 'Blast Upon Every Sign In';
+                            $rule_type = 'Blast upon every sign in';
                         } elseif ($rule_type === 'manual') {
-                            $rule_type = 'Manual Issued';
+                            $rule_type = 'Manual issued';
                         } elseif ($rule_type === 'blast_via_sms') {
-                            $rule_type = 'Blast Via SMS';
+                            $rule_type = 'Blast via sms';
                         }
 
                         echo $rule_type;
