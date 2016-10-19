@@ -4197,4 +4197,27 @@ return array(
             'name'  => 'Gotomalls'
         ),
     ),
+
+    /**
+     * Configuration for share via email on campaign detail page
+     */
+    'campaign_share_email' => array(
+        'sender' => array(
+            'email' => 'no-reply@gotomalls.com',
+            'name'  => 'Gotomalls'
+        ),
+
+        // subject of the email
+        'subject' => 'Gotomalls.com',
+
+        // base url of the campaign detail, needed for showing link on the email
+        'news_detail_base_url' => 'https://v211.gotomalls.cool/#!/news/detail/',
+
+        'promotion_detail_base_url' => 'https://v211.gotomalls.cool/#!/promotions/detail/',
+
+        'coupon_detail_base_url' => 'https://v211.gotomalls.cool/#!/coupons/detail/',
+
+        // base url of the mall api, needed to show image of the campaign on the email
+        'mall_api_base_url' => 'https://mall-api-v211.gotomalls.cool/',
+    ),
 );
