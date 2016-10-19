@@ -3265,7 +3265,7 @@ return array(
             'callback_url' => 'http://mall-api.gotomalls.cool/pub/social-google-callback',
         ),
         'bitly' => array(
-            // bitly app should be registered and has generic_access_token
+            // bitly generic_access_token
             'generic_access_token' => NULL,
         )
     ],
