@@ -158,13 +158,15 @@
                             foreach ($ruleType as $key => $valrule){
                                 $rule_type = $valrule;
                                 if ($rule_type === 'auto_issue_on_first_signin') {
-                                    $rule_type = 'coupon blast upon first sign in';
+                                    $rule_type = 'Blast upon first sign in';
                                 } elseif ($rule_type === 'auto_issue_on_signup') {
-                                    $rule_type = 'coupon blast upon sign up';
+                                    $rule_type = 'Blast upon sign up';
                                 } elseif ($rule_type === 'auto_issue_on_every_signin') {
-                                    $rule_type = 'coupon blast upon every sign in';
+                                    $rule_type = 'Blast upon every sign in';
                                 } elseif ($rule_type === 'manual') {
-                                    $rule_type = 'manual issued';
+                                    $rule_type = 'Manual issued';
+                                } elseif ($rule_type === 'blast_via_sms') {
+                                    $rule_type = 'Blast via SMS';
                                 }
 
                                 $rule_type_string .= $rule_type . ', ';

@@ -70,7 +70,7 @@ class PromotionListAPIController extends ControllerAPI
             $lon = '';
             $lat = '';
             $mallId = OrbitInput::get('mall_id', null);
-            $withPremium = OrbitInput::get('with_premium', null);
+            $withPremium = OrbitInput::get('is_premium', null);
 
              // search by key word or filter or sort by flag
             $searchFlag = FALSE;

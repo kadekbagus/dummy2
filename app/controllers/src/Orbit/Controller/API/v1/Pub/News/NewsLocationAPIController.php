@@ -77,6 +77,7 @@ class NewsLocationAPIController extends ControllerAPI
 
             $newsLocations = NewsMerchant::select(
                                             DB::raw("{$prefix}merchants.merchant_id as merchant_id"),
+                                            DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN {$prefix}merchants.parent_id ELSE {$prefix}merchants.merchant_id END as mall_id"),
                                             DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN CONCAT({$prefix}merchants.name, ' at ', oms.name) ELSE {$prefix}merchants.name END as name"),
                                             DB::raw("{$prefix}merchants.object_type as location_type"),
                                             DB::raw("CONCAT(IF({$prefix}merchants.object_type = 'tenant', oms.ci_domain, {$prefix}merchants.ci_domain), '/customer/mallnewsdetail?id=', {$prefix}news_merchant.news_id) as url"),
@@ -107,8 +108,24 @@ class NewsLocationAPIController extends ControllerAPI
                                             ->on(DB::raw('img.media_name_long'), 'IN', DB::raw("('mall_logo_orig', 'retailer_logo_orig')"));
                                     })
                                     ->where('news_merchant.news_id', '=', $newsId)
-                                    ->groupBy('merchant_id')
                                     ->havingRaw('tz <= end_date AND tz >= begin_date');
+
+            // filter news by mall id
+            $group_by = '';
+            OrbitInput::get('mall_id', function($mallid) use ($newsLocations, &$group_by) {
+                $newsLocations->where(function($q) use ($mallid){
+                                    $q->where('merchants.parent_id', '=', $mallid)
+                                      ->orWhere('merchants.merchant_id', '=', $mallid);
+                                });
+                $group_by = 'mall';
+            });
+
+            if ($group_by === 'mall') {
+                $newsLocations->groupBy('mall_id');
+            } else {
+                $newsLocations->groupBy('merchants.merchant_id');
+            }
+
 
             $_newsLocations = clone($newsLocations);
 

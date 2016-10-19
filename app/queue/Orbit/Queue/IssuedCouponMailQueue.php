@@ -14,6 +14,7 @@ use DB;
 use Exception;
 use ModelNotFoundException;
 use Log;
+use Coupon;
 
 class IssuedCouponMailQueue
 {
@@ -30,7 +31,7 @@ class IssuedCouponMailQueue
      */
     public function fire($job, $data)
     {
-        $issuedCouponId = $data['issued_coupon_id'];
+        $couponId = $data['coupon_id'];
         $email = $data['email'];
         $user = new \stdClass();
         $user->user_email = $email;
@@ -38,14 +39,11 @@ class IssuedCouponMailQueue
         try {
             // We do not check the validity of the issued coupon, because it
             // should be validated in code which calls this queue
-            $issuedCoupon = IssuedCoupon::with('coupon')->active()
-                                    ->where('issued_coupon_id', $issuedCouponId)
-                                    ->firstOrFail();
-            $coupon = $issuedCoupon->coupon;
+            $coupon = Coupon::active()->where('promotion_id', $couponId)->first();
 
             $message = 'Coupon name: ' . $coupon->promotion_name;
-            $message = sprintf('[Job ID: `%s`] ISSUED COUPON MAIL QUEUE -- Status: OK -- Send email to: %s -- Issued Coupon ID: %s -- Message: %s',
-                                $job->getJobId(), $user->user_email, $issuedCouponId, $message);
+            $message = sprintf('[Job ID: `%s`] ISSUED COUPON MAIL QUEUE -- Status: OK -- Send email to: %s -- Coupon ID: %s -- Message: %s',
+                                $job->getJobId(), $user->user_email, $couponId, $message);
 
             $this->sendCouponEmail(['user' => $user, 'coupon' => $coupon, 'redeem_url' => $data['redeem_url']]);
 
@@ -55,12 +53,12 @@ class IssuedCouponMailQueue
 
             return ['status' => 'ok', 'message' => $message];
         } catch (ModelNotFoundException $e) {
-            $message = sprintf('[Job ID: `%s`] ISSUED COUPON MAIL QUEUE -- Status: FAIL -- Send email to: %s -- Issued Coupon ID: %s -- Message: %s -- File: %s -- Line: %s',
-                                $job->getJobId(), $email, $issuedCouponId,
+            $message = sprintf('[Job ID: `%s`] ISSUED COUPON MAIL QUEUE -- Status: FAIL -- Send email to: %s -- Coupon ID: %s -- Message: %s -- File: %s -- Line: %s',
+                                $job->getJobId(), $email, $couponId,
                                 $e->getMessage(), $e->getFile(), $e->getLine());
         } catch (Exception $e) {
-            $message = sprintf('[Job ID: `%s`] ISSUED COUPON MAIL QUEUE -- Status: FAIL -- Send email to: %s -- Issued Coupon ID: %s -- Message: %s -- File: %s -- Line: %s',
-                                $job->getJobId(), $email, $issuedCouponId,
+            $message = sprintf('[Job ID: `%s`] ISSUED COUPON MAIL QUEUE -- Status: FAIL -- Send email to: %s -- Coupon ID: %s -- Message: %s -- File: %s -- Line: %s',
+                                $job->getJobId(), $email, $couponId,
                                 $e->getMessage(), $e->getFile(), $e->getLine());
         }
 

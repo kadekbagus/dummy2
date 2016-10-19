@@ -41,6 +41,7 @@ class CouponRedemptionPageAPIController extends ControllerAPI
         $issuedCoupon = NULL;
         $coupon = NULL;
         $issuedCouponId = NULL;
+        $isAvailable = NULL;
 
         try {
             $this->session = SessionPreparer::prepareSession();
@@ -70,24 +71,23 @@ class CouponRedemptionPageAPIController extends ControllerAPI
 
             $prefix = DB::getTablePrefix();
 
-            $issuedCouponId = OrbitInput::get('cid', NULL);
+            $couponId = OrbitInput::get('cid', NULL);
             $userIdentifier = OrbitInput::get('uid', NULL);
 
             $encryptionKey = Config::get('orbit.security.encryption_key');
             $encryptionDriver = Config::get('orbit.security.encryption_driver');
             $encrypter = new Encrypter($encryptionKey, $encryptionDriver);
 
-            $requestedIssuedCouponId = $encrypter->decrypt($issuedCouponId);
+            $couponId = $encrypter->decrypt($couponId);
 
             // requested coupon before validation
             $coupon = Coupon::excludeDeleted('promotions')
-                ->leftJoin('issued_coupons', 'issued_coupons.promotion_id', '=', 'promotions.promotion_id')
-                ->where('issued_coupon_id', $requestedIssuedCouponId)
+                ->where('promotion_id', $couponId)
                 ->first();
 
             $validator = Validator::make(
                 array(
-                    'cid' => $issuedCouponId,
+                    'cid' => $couponId,
                 ),
                 array(
                     'cid' => 'required',
@@ -100,15 +100,19 @@ class CouponRedemptionPageAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            // decrypt hashed coupon id
-            $issuedCouponId = $encrypter->decrypt($issuedCouponId);
             if (! empty($userIdentifier)) {
                 $userIdentifier = $encrypter->decrypt($userIdentifier);
             }
 
             // detect encoding to avoid query error
-            if (! mb_detect_encoding($issuedCouponId, 'ASCII', true)) {
+            if (! mb_detect_encoding($couponId, 'ASCII', true)) {
                 $errorMessage = 'Invalid cid';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $isAvailable = (new IssuedCoupon())->issueCoupon($couponId, $userIdentifier, $user->user_id);
+            if (! is_object($isAvailable)) {
+                $errorMessage = 'This coupon is out of limit';
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
@@ -160,9 +164,9 @@ class CouponRedemptionPageAPIController extends ControllerAPI
                         })
                         ->join('issued_coupons', function ($q) {
                             $q->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
-                            $q->on('issued_coupons.status', '=', DB::Raw("'active'"));
+                            $q->on('issued_coupons.status', 'IN', DB::Raw("('available', 'issued')"));
                         })
-                        ->where('issued_coupons.issued_coupon_id', '=', $issuedCouponId)
+                        ->where('issued_coupons.issued_coupon_id', '=', $isAvailable->issued_coupon_id)
                         ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                         ->first();
 
@@ -173,6 +177,7 @@ class CouponRedemptionPageAPIController extends ControllerAPI
 
             // customize user property before saving activity
             $user = $couponHelper->customizeUserProps($user, $userIdentifier);
+            $issuedCouponId = $isAvailable->issued_coupon_id;
 
             $activityNotes = sprintf('Page viewed: Coupon Redemption Page. Issued Coupon Id: %s', $issuedCouponId);
             $activity->setUser($user)
