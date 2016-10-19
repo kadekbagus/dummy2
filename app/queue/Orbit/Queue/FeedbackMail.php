@@ -58,7 +58,7 @@ class FeedbackMail
             $from = $emailconf['email'];
             $name = $emailconf['name'];
 
-            $message->from($from, $name)->subject('Feedback Email!');
+            $message->from($from, $name)->subject('Feedback from Customers');
             $message->to($cs_email);
         });
     }
