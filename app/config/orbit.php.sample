@@ -4192,7 +4192,7 @@ return array(
         // e.g: https://www.gotomalls.cool/#!/coupon-redemption?cid=%s&uid=%s
         'direct_redemption_url' => NULL,
         // URL coupon canvas
-        // e.g: https://www.gotomalls.cool/#!/coupon-canvas?cid=%s&pid=%s
+        // e.g: https://www.gotomalls.cool/#!/coupon-blasting?cid=%s&pid=%s
         'sms_direct_redemption_url' => NULL,
     ],
 
