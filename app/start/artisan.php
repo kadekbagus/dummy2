@@ -99,7 +99,7 @@ Artisan::add(new ElasticsearchUpdateMallIsSubscribed);
 Artisan::add(new ElasticsearchResyncActivityCommand);
 
 // Shorten Coupon Url
-Artisan::add(new ShortenCouponUrl);
+Artisan::add(new UrlShortenerCommand);
 
 // Insert or update data on settings table
 // @Todo investigate why its error
