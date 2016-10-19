@@ -316,6 +316,11 @@ class Activity extends Eloquent
             $this->metadata_location = $location->toJSON();
         }
 
+        if (! is_object($location) && $this->group === 'mobile-ci') {
+            $this->location_id = 0;
+            $this->location_name = 'gtm';
+        }
+
         return $this;
     }
 
