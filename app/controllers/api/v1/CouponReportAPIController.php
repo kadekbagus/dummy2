@@ -1541,12 +1541,17 @@ class CouponReportAPIController extends ControllerAPI
                                              "),
                                             DB::raw("
                                                         CASE
-                                                        WHEN {$prefix}roles.role_name = 'Consumer' THEN 'User'
-                                                        WHEN {$prefix}roles.role_name = 'Guest' THEN 'Guest'
-                                                        ELSE '--'
+                                                        WHEN {$prefix}roles.role_name = 'Consumer'
+                                                        THEN 'User' ELSE {$prefix}roles.role_name
                                                         END AS user_type
                                                 "),
-                                            DB::raw("IFNULL(timestampdiff(year, {$prefix}user_details.birthdate, curdate()), 'unknown') AS age"),
+                                            DB::raw("
+                                                        CASE
+                                                        WHEN TIMESTAMPDIFF(YEAR, orb_user_details.birthdate, CURDATE()) IS NOT NULL THEN TIMESTAMPDIFF(YEAR, orb_user_details.birthdate, CURDATE())
+                                                        WHEN (orb_user_details.gender IS NULL AND orb_issued_coupons.user_id IS NOT NULL) THEN 'unknown'
+                                                        ELSE null
+                                                        END AS age
+                                                    "),
                                             DB::raw("
                                                         CASE WHEN {$prefix}issued_coupons.redeem_user_id IS NOT NULL THEN CONCAT({$prefix}users.user_firstname, ' ', {$prefix}users.user_lastname, ' at ', om_employee.name)
                                                         ELSE CONCAT({$prefix}merchants.name, ' at ', om_parent.name)
