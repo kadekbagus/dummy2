@@ -142,12 +142,16 @@ class GenericActivityAPIController extends IntermediateBaseController
                         ->first();
             }
 
+            // Get notes
+            $notes = OrbitInput::post('notes', null);
+
             $activity->setUser($user)
                 ->setActivityName($activityName)
                 ->setActivityNameLong($activityNameLong)
                 ->setObject($object)
                 ->setModuleName($activityModuleName)
                 ->setLocation($mall)
+                ->setNotes($notes)
                 ->responseOK()
                 ->save();
 
