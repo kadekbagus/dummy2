@@ -27,6 +27,7 @@ class Coupon extends Eloquent
      * Column name which determine the type of Promotion or Coupon.
      */
     const OBJECT_TYPE = 'is_coupon';
+    const NO_AVAILABLE_COUPON_ERROR_CODE = 1211;
 
     protected $table = 'promotions';
 
