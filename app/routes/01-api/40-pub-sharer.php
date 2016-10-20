@@ -45,3 +45,14 @@ Route::post(
         return Orbit\Controller\API\v1\Pub\CampaignShareEmailAPIController::create()->postCampaignShareEmail();
     }]
 )->where('search', '(api|app)');
+
+
+/**
+ * share landing page via email
+ */
+Route::post(
+    '/{search}/v1/pub/sharer/email/landingpage', ['as' => 'pub-share-email-landingpage', function()
+    {
+        return Orbit\Controller\API\v1\Pub\LandingPageShareEmailAPIController::create()->postLandingPageShareEmail();
+    }]
+)->where('search', '(api|app)');

@@ -202,19 +202,11 @@ class CouponReportAPIController extends ControllerAPI
                                         'promotions.end_date',
                                         'promotions.coupon_validity_in_date',
                                         'promotion_rules.rule_type',
-                                        DB::raw("IFNULL(issued.total_issued, 0) AS total_issued"),
-
                                         DB::raw("'coupon' as campaign_type"),
-
+                                        DB::raw("IFNULL(issued.total_issued, 0) AS total_issued"),
                                         DB::raw("IFNULL(redeemed.total_redeemed, 0) AS total_redeemed"),
-                                        DB::raw("IF(maximum_issued_coupon = 0, 'Unlimited', maximum_issued_coupon) as maximum_issued_coupon"),
-                                        DB::raw("CASE WHEN {$prefix}promotions.maximum_issued_coupon = 0 THEN
-                                                    'Unlimited'
-                                                ELSE
-                                                    IFNULL({$prefix}promotions.maximum_issued_coupon - total_issued, {$prefix}promotions.maximum_issued_coupon)
-                                                END as available"),
+                                        DB::raw("IFNULL(coupons_code.total_coupons, 0) as available"),
                                         'promotions.updated_at',
-
                                         DB::raw("(select GROUP_CONCAT(IF({$prefix}merchants.object_type = 'tenant', CONCAT({$prefix}merchants.name,' at ', pm.name), CONCAT('Mall at ',{$prefix}merchants.name)) separator ', ') from {$prefix}promotion_retailer
                                         left join {$prefix}merchants on {$prefix}merchants.merchant_id = {$prefix}promotion_retailer.retailer_id
                                         left join {$prefix}merchants pm on {$prefix}merchants.parent_id = pm.merchant_id
@@ -232,7 +224,7 @@ class CouponReportAPIController extends ControllerAPI
                                         // Left Join for get total issued
                                         ->leftJoin(DB::raw("(select ic_issued.promotion_id, count(ic_issued.promotion_id) as total_issued
                                                           FROM {$prefix}issued_coupons ic_issued
-                                                          WHERE ic_issued.status = 'active' or ic_issued.status = 'redeemed'
+                                                          WHERE ic_issued.status = 'issued'
                                                           GROUP BY promotion_id) issued"),
                                             // On
                                             DB::raw('issued.promotion_id'), '=', 'promotions.promotion_id')
@@ -244,7 +236,14 @@ class CouponReportAPIController extends ControllerAPI
                                                             GROUP BY promotion_id
                                                         ) redeemed"),
                                             // On
-                                            DB::raw('redeemed.promotion_id'), '=', 'promotions.promotion_id');
+                                            DB::raw('redeemed.promotion_id'), '=', 'promotions.promotion_id')
+                                        // Left Join for get total coupon code
+                                        ->leftJoin(DB::raw("(select ic_code.promotion_id, count(ic_code.issued_coupon_code) as total_coupons
+                                                          FROM {$prefix}issued_coupons ic_code
+                                                          WHERE ic_code.status = 'available'
+                                                          GROUP BY promotion_id) coupons_code"),
+                                            // On
+                                            DB::raw('coupons_code.promotion_id'), '=', 'promotions.promotion_id');
 
             // Filter by Promotion Name
             OrbitInput::get('promotion_name', function($name) use ($coupons) {
