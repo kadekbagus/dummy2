@@ -94,9 +94,11 @@ class CouponCanvasAPIController extends ControllerAPI
             $issuedCouponCode = $encrypter->decrypt($issuedCouponCode);
             $promotioId = $encrypter->decrypt($promotioId);
 
-            // requested coupon before validation
+            // Check coupon code must be available
             $checkIssuedCoupon = IssuedCoupon::where('issued_coupon_code', $issuedCouponCode)
                 ->where('promotion_id', $promotioId)
+                ->where('user_id', $user->user_id)
+                ->where('status', 'available')
                 ->first();
 
             if (! empty($checkIssuedCoupon)) {
@@ -117,6 +119,7 @@ class CouponCanvasAPIController extends ControllerAPI
                                     "),
                                 'promotions.end_date',
                                 DB::raw("CASE WHEN m.object_type = 'tenant' THEN m.parent_id ELSE m.merchant_id END as mall_id"),
+                                'issued_coupons.status as coupon_status',
                                 // query for get status active based on timezone
                                 DB::raw("
                                         CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
@@ -147,10 +150,9 @@ class CouponCanvasAPIController extends ControllerAPI
                                 $q->on('media.object_id', '=', 'coupon_translations.coupon_translation_id');
                                 $q->on('media.media_name_long', '=', DB::raw("'coupon_translation_image_orig'"));
                             })
-                            ->leftJoin('issued_coupons', function ($q) use ($user) {
+                            ->leftJoin('issued_coupons', function ($q) {
                                     $q->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
-                                    $q->on('issued_coupons.user_id', '=', DB::Raw("{$this->quote($user->user_id)}"));
-                                    $q->on('issued_coupons.status', '=', DB::Raw("'active'"));
+                                    $q->on('issued_coupons.status', '=', DB::Raw("'available'"));
                                 })
                             ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                             ->leftJoin('merchants as m', DB::raw("m.merchant_id"), '=', 'promotion_retailer.retailer_id')
@@ -173,12 +175,12 @@ class CouponCanvasAPIController extends ControllerAPI
                     ->responseOK()
                     ->save();
             } else {
-                $this->response->message = 'Fail to view coupon via sms';
+                $this->response->message = 'Failed to view coupon via sms';
                 $this->response->data = NULL;
                 $activityNotes = sprintf('Failed to view coupon via sms issued coupon code: %s. Coupon Id: %s.', $issuedCouponCode, $promotioId);
                 $activity->setUser($user)
-                    ->setActivityName('issue_coupon')
-                    ->setActivityNameLong('Failed to Issue Coupon by Email')
+                    ->setActivityName('view_coupon_link_expired')
+                    ->setActivityNameLong('View coupon link expired')
                     ->setObject($coupon)
                     ->setModuleName('Coupon')
                     ->setCoupon($coupon)
@@ -192,7 +194,7 @@ class CouponCanvasAPIController extends ControllerAPI
         } catch (ACLForbiddenException $e) {
             $activityNotes = sprintf('Failed view redemption page. Error: %s', $e->getMessage());
             $activity->setUser($user)
-                ->setActivityName('view_coupon_from_sms')
+                ->setActivityName('view_coupon_link_expired')
                 ->setActivityNameLong('Failed to View Coupon From SMS Page')
                 ->setObject($coupon)
                 ->setCoupon($coupon)
@@ -209,7 +211,7 @@ class CouponCanvasAPIController extends ControllerAPI
         } catch (InvalidArgsException $e) {
             $activityNotes = sprintf('Failed view redemption page. Error: %s', $e->getMessage());
             $activity->setUser($user)
-                ->setActivityName('view_coupon_from_sms')
+                ->setActivityName('view_coupon_link_expired')
                 ->setActivityNameLong('Failed to View Coupon From SMS Page')
                 ->setObject($coupon)
                 ->setCoupon($coupon)
@@ -230,7 +232,7 @@ class CouponCanvasAPIController extends ControllerAPI
         } catch (QueryException $e) {
             $activityNotes = sprintf('Failed view redemption page. Error: %s', $e->getMessage());
             $activity->setUser($user)
-                ->setActivityName('view_coupon_from_sms')
+                ->setActivityName('view_coupon_link_expired')
                 ->setActivityNameLong('Failed to View Coupon From SMS Page')
                 ->setObject($coupon)
                 ->setCoupon($coupon)
@@ -253,7 +255,7 @@ class CouponCanvasAPIController extends ControllerAPI
         } catch (Exception $e) {
             $activityNotes = sprintf('Failed view redemption page. Error: %s', $e->getMessage());
             $activity->setUser($user)
-                ->setActivityName('view_coupon_from_sms')
+                ->setActivityName('view_coupon_link_expired')
                 ->setActivityNameLong('Failed to View Coupon From SMS Page')
                 ->setObject($coupon)
                 ->setCoupon($coupon)

@@ -217,12 +217,6 @@ Route::filter('turn-off-query-string-session', function()
 */
 Route::filter('orbit-settings', function()
 {
-    if (! (new MobileDetect)->isMobile()) {
-        Config::set('orbit.error_message.e500', 'Desktop version is coming soon, please use mobile device to access this site at the moment.');
-
-        return Redirect::to(Config::get('app.url'));
-    }
-
     if (! App::make('orbitSetting')->getSetting('current_retailer')) {
         throw new Exception ('You have to setup current retailer first on Admin Portal.');
     }
@@ -241,6 +235,16 @@ Route::filter('orbit-settings', function()
 
     if (! MallAccess::create()->isAccessible($retailer)) {
         App::abort(403, sprintf('%s is inaccessible at the moment.', htmlentities($retailer->name)));
+    }
+
+    // Redirect mall to the new URL
+    $mallLandingPageUrl = rtrim(Config::get('app.url'), '/') . '/#!/mall/' . $retailer->merchant_id;
+    Return Redirect::to($mallLandingPageUrl);
+
+    if (! (new MobileDetect)->isMobile()) {
+        Config::set('orbit.error_message.e500', 'Desktop version is coming soon, please use mobile device to access this site at the moment.');
+
+        return Redirect::to(Config::get('app.url'));
     }
 
     View::share('this_mall', $retailer);
