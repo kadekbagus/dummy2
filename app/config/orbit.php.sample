@@ -4115,6 +4115,24 @@ return array(
                 'object_type_parameter_name' => 'object_type',
                 'parameter_name' => 'object_id'
             ),
+            // - User clicks on share us via Facebook/Email
+            '81' => array(
+                'name' => 'click_share_us',
+                'name_long' => 'Click Share Us',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - User clicks on Facebook/Instagram/Twitter icon in about us section
+            '82' => array(
+                'name' => 'click_social_media',
+                'name_long' => 'Click GTM Social Media',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
         ),
     ),
 
