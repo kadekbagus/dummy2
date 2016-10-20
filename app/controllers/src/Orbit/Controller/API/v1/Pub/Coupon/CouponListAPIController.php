@@ -142,6 +142,8 @@ class CouponListAPIController extends ControllerAPI
                             ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                             ->leftJoin('merchants as t', DB::raw("t.merchant_id"), '=', 'promotion_retailer.retailer_id')
                             ->leftJoin('merchants as m', DB::raw("m.merchant_id"), '=', DB::raw("t.parent_id"))
+                            ->leftJoin('promotion_rules', 'promotion_rules.promotion_id', '=', 'promotions.promotion_id')
+                            ->where('promotion_rules.rule_type', '!=', 'blast_via_sms')
                             ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true' AND available_coupon > 0")
                             ->orderBy('coupon_name', 'asc');
 
