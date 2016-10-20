@@ -66,7 +66,8 @@ class CampaignShareMail
                                 ->where('news.object_type', '=', 'promotion')
                                 ->first();
 
-                    $campaign_url = Config::get('orbit.campaign_share_email.promotion_detail_base_url').$campaign->campaign_id.'/'.$this->getUrl($campaign->campaign_name);
+                    $baseUrl = Config::get('orbit.campaign_share_email.promotion_detail_base_url');
+                    $campaignUrl = sprintf($baseUrl, $campaign->campaign_id, $campaign->campaign_name);
 
                     break;
 
@@ -98,7 +99,8 @@ class CampaignShareMail
                                 ->where('news.object_type', '=', 'news')
                                 ->first();
 
-                    $campaign_url = Config::get('orbit.campaign_share_email.news_detail_base_url').$campaign->campaign_id.'/'.$this->getUrl($campaign->campaign_name);
+                    $baseUrl = Config::get('orbit.campaign_share_email.news_detail_base_url');
+                    $campaignUrl = sprintf($baseUrl, $campaign->campaign_id, $campaign->campaign_name);
 
                     break;
 
@@ -129,19 +131,20 @@ class CampaignShareMail
                         ->where('promotions.promotion_id', $data['campaignId'])
                         ->first();
 
-                    $campaign_url = Config::get('orbit.campaign_share_email.coupon_detail_base_url').$campaign->campaign_id.'/'.$this->getUrl($campaign->campaign_name);
+                    $baseUrl = Config::get('orbit.campaign_share_email.coupon_detail_base_url');
+                    $campaignUrl = sprintf($baseUrl, $campaign->campaign_id, $campaign->campaign_name);
 
                     break;
             default :
                     $campaign = null;
         }
 
-        $campaign_image = Config::get('orbit.campaign_share_email.mall_api_base_url').$campaign->original_media_path;
+        $campaignImage = $campaign->original_media_path;
 
         $dataView['campaignName'] = $campaign->campaign_name;
         $dataView['campaignType'] = $data['campaignType'];
-        $dataView['campaignImage'] = $campaign_image;
-        $dataView['campaignUrl'] = $campaign_url;
+        $dataView['campaignImage'] = $campaignImage;
+        $dataView['campaignUrl'] = $campaignUrl;
         $dataView['email'] = $data['email'];
         $dataView['name'] = $user->user_firstname;
 
