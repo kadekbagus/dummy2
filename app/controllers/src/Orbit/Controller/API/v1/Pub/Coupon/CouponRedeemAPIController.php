@@ -71,6 +71,7 @@ class CouponRedeemAPIController extends ControllerAPI
             $couponHelper->couponCustomValidator();
 
             $mallId = OrbitInput::post('mall_id');
+            $storeId = OrbitInput::post('store_id');
             $couponId = OrbitInput::post('cid'); // hashed issued coupon id
             $userIdentifier = OrbitInput::post('uid', NULL); // hashed user identifier
             $verificationNumber = OrbitInput::post('merchant_verification_number');
@@ -88,11 +89,13 @@ class CouponRedeemAPIController extends ControllerAPI
 
             $validator = Validator::make(
                 array(
+                    'store_id'                      => $storeId,
                     'mall_id'                       => $mallId,
                     'cid'                           => $couponId,
                     'merchant_verification_number'  => $verificationNumber,
                 ),
                 array(
+                    'store_id'                      => 'required',
                     'mall_id'                       => 'required|orbit.empty.merchant',
                     'cid'                           => 'required',
                     'merchant_verification_number'  => 'required'
@@ -124,7 +127,7 @@ class CouponRedeemAPIController extends ControllerAPI
 
             $tenant = Tenant::join('promotion_retailer_redeem', 'promotion_retailer_redeem.retailer_id', '=', 'merchants.merchant_id')
                 ->where('promotion_id', $requestedCouponId)
-                ->where('parent_id', $mallId)
+                ->where('merchant_id', $storeId)
                 ->where('masterbox_number', $verificationNumber)
                 ->first();
 
