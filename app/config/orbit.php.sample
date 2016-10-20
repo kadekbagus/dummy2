@@ -4230,4 +4230,23 @@ return array(
         // base url of the mall api, needed to show image of the campaign on the email
         'mall_api_base_url' => 'https://mall-api-v211.gotomalls.cool/',
     ),
+
+    /**
+     * Configuration for share via email on sidebar GTM
+     */
+    'landingpage_share_email' => array(
+        'sender' => array(
+            'email' => 'no-reply@gotomalls.com',
+            'name'  => 'Gotomalls'
+        ),
+
+        // subject of the email
+        'subject' => 'Gotomalls.com',
+
+        // the share url
+        'share_url' => 'https://www.gotomalls.com',
+
+        // the video url
+        'video_url' => 'https://www.youtube.com/watch?v=v7x-Avxb38E',
+    ),
 );
