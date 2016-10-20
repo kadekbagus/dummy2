@@ -100,7 +100,12 @@ class CouponCanvasAPIController extends ControllerAPI
                 ->where('status', 'available')
                 ->first();
 
-            if (! empty($checkIssuedCoupon)) {
+            // Check user must have one issued coupon code per coupon
+            $checkUserCoupon = IssuedCoupon::where('promotion_id', $promotioId)
+                ->where('user_id', '=', $user->user_id)
+                ->count();
+
+            if (! empty($checkIssuedCoupon) && $checkUserCoupon == 0) {
                 $coupon = Coupon::select(
                                 'promotions.promotion_id as promotion_id',
                                 DB::Raw("
