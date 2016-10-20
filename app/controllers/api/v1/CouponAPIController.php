@@ -2876,6 +2876,7 @@ class CouponAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $mall_id = OrbitInput::post('current_mall');
+            $storeId = OrbitInput::post('store_id');
 
             $issuedCouponId = OrbitInput::post('issued_coupon_id');
             $verificationNumber = OrbitInput::post('merchant_verification_number');
@@ -2883,11 +2884,13 @@ class CouponAPIController extends ControllerAPI
             $validator = Validator::make(
                 array(
                     'current_mall' => $mall_id,
+                    'store_id' => $storeId,
                     'issued_coupon_id' => $issuedCouponId,
                     'merchant_verification_number' => $verificationNumber,
                 ),
                 array(
                     'current_mall'                  => 'required|orbit.empty.merchant',
+                    'store_id'                      => 'required',
                     'issued_coupon_id'              => 'required|orbit.empty.issuedcoupon',
                     'merchant_verification_number'  => 'required'
                 )
@@ -3498,6 +3501,7 @@ class CouponAPIController extends ControllerAPI
             $now = date('Y-m-d H:i:s');
             $number = OrbitInput::post('merchant_verification_number');
             $mall_id = OrbitInput::post('current_mall');
+            $storeId = OrbitInput::post('store_id');
 
             $prefix = DB::getTablePrefix();
 
@@ -3520,7 +3524,7 @@ class CouponAPIController extends ControllerAPI
             //Checking verification number in cs and tenant verification number
             //Checking in tenant verification number first
             if ($issuedCoupon->coupon->is_all_retailer === 'Y') {
-                $checkIssuedCoupon = Tenant::where('parent_id','=', $mall_id)
+                $checkIssuedCoupon = Tenant::where('merchant_id','=', $storeId)
                             ->where('status', 'active')
                             ->where('masterbox_number', $number)
                             ->first();
@@ -3535,6 +3539,7 @@ class CouponAPIController extends ControllerAPI
                                 $q->where('promotions.status', 'active');
                                 $q->where('promotions.coupon_validity_in_date', '>=', $now);
                             })
+                            ->where('merchants.merchant_id', $storeId)
                             ->where('merchants.masterbox_number', $number)
                             ->first();
             }
