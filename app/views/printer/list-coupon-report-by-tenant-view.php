@@ -206,8 +206,26 @@
             <tr class="{{ $rowCounter % 2 === 0 ? 'zebra' : '' }}">
                 <td><?php echo (++$rowCounter); ?></td>
                 <td><?php echo $row->issued_coupon_code; ?></td>
-                <td><?php echo $row->age; ?></td>
-                <td><?php echo $row->gender; ?></td>
+                <td>
+                    <?php
+                        if (empty($row->age)) {
+                            $userAge = '--';
+                        } else {
+                            $userAge = $row->age;
+                        }
+                        echo $userAge;
+                    ?>
+                </td>
+                <td>
+                    <?php
+                        if (empty($row->gender)) {
+                            $userGender = '--';
+                        } else {
+                            $userGender = $row->gender;
+                        }
+                        echo $userGender;
+                    ?>
+                </td>
                 <td>
                     <?php
                         if (empty($row->user_type)) {

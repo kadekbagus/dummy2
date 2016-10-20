@@ -1537,7 +1537,7 @@ class CouponReportAPIController extends ControllerAPI
                                                         WHEN {$prefix}user_details.gender = 'f' THEN 'female'
                                                         WHEN {$prefix}user_details.gender = 'm' THEN 'male'
                                                         WHEN ({$prefix}user_details.gender IS NULL AND {$prefix}issued_coupons.user_id IS NOT NULL) THEN 'unknown'
-                                                        ELSE '--' END AS gender
+                                                        ELSE null END AS gender
                                              "),
                                             DB::raw("
                                                         CASE
@@ -1547,8 +1547,8 @@ class CouponReportAPIController extends ControllerAPI
                                                 "),
                                             DB::raw("
                                                         CASE
-                                                        WHEN TIMESTAMPDIFF(YEAR, orb_user_details.birthdate, CURDATE()) IS NOT NULL THEN TIMESTAMPDIFF(YEAR, orb_user_details.birthdate, CURDATE())
-                                                        WHEN (orb_user_details.gender IS NULL AND orb_issued_coupons.user_id IS NOT NULL) THEN 'unknown'
+                                                        WHEN TIMESTAMPDIFF(YEAR, {$prefix}user_details.birthdate, CURDATE()) IS NOT NULL THEN TIMESTAMPDIFF(YEAR, {$prefix}user_details.birthdate, CURDATE())
+                                                        WHEN ({$prefix}user_details.birthdate = '0000-00-00' AND {$prefix}issued_coupons.user_id IS NOT NULL) THEN 'unknown'
                                                         ELSE null
                                                         END AS age
                                                     "),
