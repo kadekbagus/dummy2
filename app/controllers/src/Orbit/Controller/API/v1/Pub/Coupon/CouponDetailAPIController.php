@@ -133,7 +133,7 @@ class CouponDetailAPIController extends ControllerAPI
                         ->leftJoin('issued_coupons', function ($q) use ($user) {
                                 $q->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
                                 $q->on('issued_coupons.user_id', '=', DB::Raw("{$this->quote($user->user_id)}"));
-                                $q->on('issued_coupons.status', '=', DB::Raw("'active'"));
+                                $q->on('issued_coupons.status', '=', DB::Raw("'issued'"));
                             })
                         ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                         ->leftJoin('merchants as m', DB::raw("m.merchant_id"), '=', 'promotion_retailer.retailer_id')
