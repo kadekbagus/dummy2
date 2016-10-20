@@ -97,6 +97,7 @@ class CouponCanvasAPIController extends ControllerAPI
             // Check coupon code must be available
             $checkIssuedCoupon = IssuedCoupon::where('issued_coupon_code', $issuedCouponCode)
                 ->where('promotion_id', $promotioId)
+                ->where('user_id', $user->user_id)
                 ->where('status', 'available')
                 ->first();
 
