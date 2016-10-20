@@ -98,6 +98,9 @@ Artisan::add(new ElasticsearchUpdateMallIsSubscribed);
 // Sync to elasticsearch from activity table
 Artisan::add(new ElasticsearchResyncActivityCommand);
 
+// Shorten Coupon Url
+Artisan::add(new UrlShortenerCommand);
+
 // Insert or update data on settings table
 // @Todo investigate why its error
 // Artisan::add(new MerchantSetting);
