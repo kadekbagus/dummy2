@@ -4239,14 +4239,11 @@ return array(
         'subject' => 'Gotomalls.com',
 
         // base url of the campaign detail, needed for showing link on the email
-        'news_detail_base_url' => 'https://v211.gotomalls.cool/#!/news/detail/',
+        'news_detail_base_url' => 'https://v211.gotomalls.cool/#!/news/detail/%s/%s',
 
-        'promotion_detail_base_url' => 'https://v211.gotomalls.cool/#!/promotions/detail/',
+        'promotion_detail_base_url' => 'https://v211.gotomalls.cool/#!/promotions/detail/%s/%s',
 
-        'coupon_detail_base_url' => 'https://v211.gotomalls.cool/#!/coupons/detail/',
-
-        // base url of the mall api, needed to show image of the campaign on the email
-        'mall_api_base_url' => 'https://mall-api-v211.gotomalls.cool/',
+        'coupon_detail_base_url' => 'https://v211.gotomalls.cool/#!/coupons/detail/%s/%s',
     ),
 
     /**
