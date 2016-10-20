@@ -143,7 +143,7 @@ class CouponHelper
             $issuedCoupon = IssuedCoupon::
                 join('promotions', 'promotions.promotion_id', '=', 'issued_coupons.promotion_id')
                 ->join('promotion_rules', 'promotions.promotion_id', '=', 'promotion_rules.promotion_id')
-                ->available()
+                ->where('issued_coupons.status', 'available')
                 ->where('promotion_rules.rule_type', 'blast_via_sms')
                 ->where('issued_coupons.promotion_id', $promotionId)
                 ->where('issued_coupon_code', $value)

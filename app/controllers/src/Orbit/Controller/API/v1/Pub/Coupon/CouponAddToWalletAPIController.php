@@ -99,7 +99,7 @@ class CouponAddToWalletAPIController extends ControllerAPI
                         'issued_coupon_code' => 'orbit.exists.issued_coupon_code_sms:' . $coupon_id,
                     ),
                     array(
-                        'orbit.notexists.couponwallet' => 'Invalid issued coupon code'
+                        'orbit.exists.issued_coupon_code_sms' => 'Invalid issued coupon code'
                     )
                 );
 
