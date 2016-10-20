@@ -228,7 +228,16 @@
                         echo $userEmail;
                     ?>
                 </td>
-                <td><?php echo $this->printDateTime($row->issued_date, '', 'd M Y H:i'); ?> (UTC)</td>
+                <td>
+                    <?php
+                        if (empty($row->issued_date)) {
+                            $issuedDate = '--';
+                        } else {
+                            $issuedDate = $this->printDateTime($row->issued_date, '', 'd M Y H:i') . '(UTC)';
+                        }
+                        echo $issuedDate;
+                    ?>
+                </td>
                 <td><?php if (! empty($row->redeemed_date)) { echo $this->printDateTime($row->redeemed_date, '', 'd M Y H:i') . ' (UTC)'; } else { echo '--'; } ?></td>
                 <td><?php if (! empty($row->redemption_place)) { echo htmlentities($row->redemption_place); } else { echo '--'; } ?></td>
                 <td><?php if ($row->status != 'active') { echo $row->status; } else { echo 'issued'; } ?></td>
