@@ -4111,8 +4111,8 @@ return array(
             ),
             // - User clicks on interested coupon
             '78' => array(
-                'name' => 'click_interested_coupon_sms',
-                'name_long' => 'Click interested coupon sms',
+                'name' => 'click_interested',
+                'name_long' => 'Click Interested',
                 'module_name' => 'Coupon',
                 'type' => 'click',
                 'object_type' => 'Coupon',
@@ -4120,8 +4120,8 @@ return array(
             ),
             // - User clicks on not interested coupon
             '79' => array(
-                'name' => 'click_not_interested_coupon_sms',
-                'name_long' => 'click_not_interested_coupon_sms',
+                'name' => 'click_not_interested ',
+                'name_long' => 'Click Not Interested',
                 'module_name' => 'Coupon',
                 'type' => 'click',
                 'object_type' => 'Coupon',
@@ -4191,6 +4191,15 @@ return array(
                 'object_type' => '--SET BY object_type_parameter_name--',
                 'object_type_parameter_name' => 'object_type',
                 'parameter_name' => 'object_id'
+            ),
+            // - User clicks on sidebar menu (Put Home, My Coupon, etc in notes)
+            '87' => array(
+                'name' => 'click_menu',
+                'name_long' => 'Click Menu',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
             ),
         ),
     ),

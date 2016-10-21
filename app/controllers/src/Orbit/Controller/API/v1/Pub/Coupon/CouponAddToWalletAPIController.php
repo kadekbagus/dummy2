@@ -123,7 +123,7 @@ class CouponAddToWalletAPIController extends ControllerAPI
                 ->first();
 
             if (! is_object($isAvailable)) {
-                $errorMessage = 'There is no available coupon for this coupon campaign.';
+                $errorMessage = 'There is no available coupon.';
                 throw new OrbitCustomException($errorMessage, Coupon::NO_AVAILABLE_COUPON_ERROR_CODE, NULL);
             }
 
