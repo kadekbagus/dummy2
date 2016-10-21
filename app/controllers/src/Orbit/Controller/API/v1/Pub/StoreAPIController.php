@@ -1099,6 +1099,7 @@ class StoreAPIController extends ControllerAPI
                                         group by ct.promotion_id
                                     ) ELSE {$prefix}media.path END as original_media_path
                             "))
+                            ->leftJoin('promotion_rules', 'promotion_rules.promotion_id', '=', 'promotions.promotion_id')
                             ->leftJoin('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
                             ->leftJoin('coupon_translations', function ($q) use ($valid_language) {
                                 $q->on('coupon_translations.promotion_id', '=', 'promotions.promotion_id')
@@ -1111,6 +1112,9 @@ class StoreAPIController extends ControllerAPI
                                 $q->on('media.object_id', '=', 'coupon_translations.coupon_translation_id');
                                 $q->on('media.media_name_long', '=', DB::raw("'coupon_translation_image_orig'"));
                             })
+                            ->leftJoin(DB::raw("(SELECT promotion_id, COUNT(*) as tot FROM {$prefix}issued_coupons WHERE status = 'available' GROUP BY promotion_id) as available"), DB::raw("available.promotion_id"), '=', 'promotions.promotion_id')
+                            ->whereRaw("available.tot > 0")
+                            ->whereRaw("{$prefix}promotion_rules.rule_type != 'blast_via_sms'")
                             ->where('merchants.name', $store_name)
                             ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                             ->groupBy('campaign_id')
