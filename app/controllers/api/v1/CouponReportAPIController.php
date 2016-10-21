@@ -1547,8 +1547,8 @@ class CouponReportAPIController extends ControllerAPI
                                                 "),
                                             DB::raw("
                                                         CASE
-                                                        WHEN TIMESTAMPDIFF(YEAR, {$prefix}user_details.birthdate, CURDATE()) IS NOT NULL THEN TIMESTAMPDIFF(YEAR, {$prefix}user_details.birthdate, CURDATE())
-                                                        WHEN ({$prefix}user_details.birthdate = '0000-00-00' AND {$prefix}issued_coupons.user_id IS NOT NULL) THEN 'unknown'
+                                                        WHEN (TIMESTAMPDIFF(YEAR, {$prefix}user_details.birthdate, CURDATE()) IS NOT NULL AND {$prefix}issued_coupons.user_id IS NOT NULL)THEN TIMESTAMPDIFF(YEAR, {$prefix}user_details.birthdate, CURDATE())
+                                                        WHEN (TIMESTAMPDIFF(YEAR, {$prefix}user_details.birthdate, CURDATE()) IS NULL AND {$prefix}issued_coupons.user_id IS NOT NULL ) THEN 'unknown'
                                                         ELSE null
                                                         END AS age
                                                     "),
