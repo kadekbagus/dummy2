@@ -160,38 +160,38 @@ class IssuedCoupon extends Eloquent
      * @param string $issuedCouponCode (from SMS)
      * @return IssuedCoupon | null
      */
-    public function issueCoupon($promotionId, $userEmail, $userId = NULL, $issuedCouponCode = NULL) {
+    public function issueCouponViaWallet($promotionId, $userEmail, $userId = NULL, $issuedCouponCode = NULL) {
         // get 'issued' coupon with the same user_email
         $issuedCoupon = static::issued()
+            ->where('user_id', $userId)
             ->where('promotion_id', $promotionId)
-            ->where('user_email', $userEmail)
             ->first();
 
         // if issuedCouponCode is supplied then use it instead
+        // From SMS
         if (! is_null($issuedCouponCode)) {
             $issuedCoupon = static::issued()
                 ->where('promotion_id', $promotionId)
+                ->where('user_id', $userId)
                 ->where('issued_coupon_code', $issuedCouponCode)
-                ->where('user_email', $userEmail)
                 ->first();
         }
-
         if (! is_object($issuedCoupon)) {
             // get available issued coupon
             $issuedCoupon = static::available()
                 ->where('promotion_id', $promotionId)
-                ->whereNull('user_email')
+                ->whereNull('user_id')
                 ->first();
 
             // if issuedCouponCode is supplied then use it instead
+            // From SMS
             if (! is_null($issuedCouponCode)) {
                 $issuedCoupon = static::available()
                     ->where('promotion_id', $promotionId)
                     ->where('issued_coupon_code', $issuedCouponCode)
-                    ->whereNull('user_email')
+                    ->whereNull('user_id')
                     ->first();
             }
-
             if (is_object($issuedCoupon)) {
                 // set user_email to it and make it issued
                 $issuedCoupon->user_id = $userId;
@@ -201,7 +201,47 @@ class IssuedCoupon extends Eloquent
                 $issuedCoupon->save();
             }
         }
+        return $issuedCoupon;
+    }
 
+    /**
+     * Get available coupon code
+     * If there are already 'issued' coupon with user_email return those issued coupon
+     * else return 'issued' coupon with user_email
+     * Proper validation is expected before accessing this method
+     *
+     * @author Ahmad <ahmad@dominopos.com>
+     * @param string $promotionId
+     * @param string $userEmail
+     * @param string $userId (from wallet)
+     * @return IssuedCoupon | null
+     */
+    public function issueCouponViaEmail($promotionId, $userEmail, $userId = NULL) {
+        // get 'issued' coupon with the same user_email
+        $issuedCoupon = static::join('users', 'users.user_id', '=', 'issued_coupons.user_id')
+            ->join('roles', 'users.user_role_id', '=', 'roles.role_id')
+            ->where('roles.role_name', 'Guest')
+            ->where('issued_coupons.status', 'issued')
+            ->where('promotion_id', $promotionId)
+            ->where('user_email', $userEmail)
+            ->first();
+        if (! is_object($issuedCoupon)) {
+            // get available issued coupon
+            $issuedCoupon = static::available()
+                ->where('promotion_id', $promotionId)
+                ->whereNull('user_email')
+                ->first();
+            if (is_object($issuedCoupon)) {
+                // set user_email to it and make it issued
+                $issuedCoupon->user_id = $userId;
+                $issuedCoupon->user_email = $userEmail;
+                $issuedCoupon->issued_date = date('Y-m-d H:i:s');
+                $issuedCoupon->status = 'issued';
+                $issuedCoupon->save();
+            } else {
+                $issuedCoupon = NULL;
+            }
+        }
         return $issuedCoupon;
     }
 }
