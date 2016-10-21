@@ -425,6 +425,18 @@ class CouponReportPrinterController extends DataPrinterController
                         $place = $row->redemption_place;
                     }
 
+                    if (empty($row->age)) {
+                        $userAge = '--';
+                    } else {
+                        $userAge = $row->age;
+                    }
+
+                    if (empty($row->gender)) {
+                        $userGender = '--';
+                    } else {
+                        $userGender = $row->gender;
+                    }
+
                     if (empty($row->user_type)) {
                         $userType = '--';
                     } else {
@@ -440,8 +452,8 @@ class CouponReportPrinterController extends DataPrinterController
                     printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
                             $count,
                             $row->issued_coupon_code,
-                            $row->age,
-                            $row->gender,
+                            $userAge,
+                            $userGender,
                             $userType,
                             $userEmail,
                             $this->printDateTime($row->issued_date, '', 'd M Y H:i') . ' (UTC)',

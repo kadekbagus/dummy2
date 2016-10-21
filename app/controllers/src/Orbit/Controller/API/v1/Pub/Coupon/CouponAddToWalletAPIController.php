@@ -21,6 +21,7 @@ use Activity;
 use Coupon;
 use IssuedCoupon;
 use Orbit\Helper\Security\Encrypter;
+use \Orbit\Helper\Exception\OrbitCustomException;
 
 class CouponAddToWalletAPIController extends ControllerAPI
 {
@@ -66,6 +67,11 @@ class CouponAddToWalletAPIController extends ControllerAPI
                 }
             }
 
+            // added this to make coupon recorded even the validator fails
+            $coupon = Coupon::excludeDeleted()
+                ->where('promotion_id', '=', $coupon_id)
+                ->first();
+
             $couponHelper = CouponHelper::create($this->session);
             $couponHelper->couponCustomValidator();
 
@@ -110,9 +116,16 @@ class CouponAddToWalletAPIController extends ControllerAPI
                 }
             }
 
-            $coupon = Coupon::excludeDeleted()
-                ->where('promotion_id', '=', $coupon_id)
+            $isAvailable = Coupon::leftJoin('issued_coupons', 'issued_coupons.promotion_id', '=', 'promotions.promotion_id')
+                ->where('issued_coupons.status', 'available')
+                ->where('promotions.status', 'active')
+                ->where('promotions.promotion_id', '=', $coupon_id)
                 ->first();
+
+            if (! is_object($isAvailable)) {
+                $errorMessage = 'There is no available coupon for this coupon campaign.';
+                throw new OrbitCustomException($errorMessage, Coupon::NO_AVAILABLE_COUPON_ERROR_CODE, NULL);
+            }
 
             $newIssuedCoupon = new IssuedCoupon();
             $issuedCoupon = $newIssuedCoupon->issueCoupon($coupon->promotion_id, $user->user_email, $user->user_id, $issued_coupon_code);
@@ -166,13 +179,31 @@ class CouponAddToWalletAPIController extends ControllerAPI
             $activity->setUser($user)
                 ->setActivityName('click_add_to_wallet')
                 ->setActivityNameLong('Click Landing Page Add To Wallet Failed')
-                ->setObject($issuedCoupon)
+                ->setObject($coupon)
                 ->setModuleName('Coupon')
                 ->setCoupon($coupon)
                 ->setLocation($retailer)
                 ->setNotes($activityNotes)
                 ->responseFailed()
                 ->save();
+        } catch (\Orbit\Helper\Exception\OrbitCustomException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = NULL;
+            $this->rollback();
+            $activityNotes = sprintf('Failed to add to wallet. Error: %s', $e->getMessage());
+            $activity->setUser($user)
+                ->setActivityName('click_add_to_wallet')
+                ->setActivityNameLong('Click Landing Page Add To Wallet Failed')
+                ->setObject($coupon)
+                ->setModuleName('Coupon')
+                ->setCoupon($coupon)
+                ->setLocation($retailer)
+                ->setNotes($activityNotes)
+                ->responseFailed()
+                ->save();
+
         } catch (Exception $e) {
             $this->response->code = $e->getCode();
             $this->response->status = $e->getLine();
@@ -183,7 +214,7 @@ class CouponAddToWalletAPIController extends ControllerAPI
             $activity->setUser($user)
                 ->setActivityName('click_add_to_wallet')
                 ->setActivityNameLong('Click Landing Page Add To Wallet Failed')
-                ->setObject($issuedCoupon)
+                ->setObject($coupon)
                 ->setModuleName('Coupon')
                 ->setCoupon($coupon)
                 ->setLocation($retailer)

@@ -2893,16 +2893,22 @@ class CouponAPIController extends ControllerAPI
 
             $validator = Validator::make(
                 array(
-                    'current_mall' => $mall_id,
                     'store_id' => $storeId,
-                    'issued_coupon_id' => $issuedCouponId,
+                    'current_mall' => $mall_id,
                     'merchant_verification_number' => $verificationNumber,
                 ),
                 array(
-                    'current_mall'                  => 'required|orbit.empty.merchant',
                     'store_id'                      => 'required',
-                    'issued_coupon_id'              => 'required|orbit.empty.issuedcoupon',
+                    'current_mall'                  => 'required|orbit.empty.merchant',
                     'merchant_verification_number'  => 'required'
+                )
+            );
+            $validator2 = Validator::make(
+                array(
+                    'issued_coupon_id' => $issuedCouponId,
+                ),
+                array(
+                    'issued_coupon_id'              => 'required|orbit.empty.issuedcoupon',
                 )
             );
             Event::fire('orbit.coupon.redeemcoupon.before.validation', array($this, $validator));
@@ -2913,6 +2919,11 @@ class CouponAPIController extends ControllerAPI
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            // Run the validation
+            if ($validator2->fails()) {
+                $errorMessage = $validator2->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.coupon.postissuedcoupon.after.validation', array($this, $validator));
