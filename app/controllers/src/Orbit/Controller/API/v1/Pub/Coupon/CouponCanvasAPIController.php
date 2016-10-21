@@ -185,7 +185,7 @@ class CouponCanvasAPIController extends ControllerAPI
                 $activityNotes = sprintf('Failed to view coupon via sms issued coupon code: %s. Coupon Id: %s.', $issuedCouponCode, $promotioId);
                 $activity->setUser($user)
                     ->setActivityName('view_link_page_failed')
-                    ->setActivityNameLong('View coupon link expired')
+                    ->setActivityNameLong('View Link Page Failed')
                     ->setObject($coupon)
                     ->setModuleName('Coupon')
                     ->setCoupon($coupon)
