@@ -4173,6 +4173,15 @@ return array(
                 'object_type' => 'LuckyDraw',
                 'parameter_name' => 'lucky_draw_id'
             ),
+            // - User view the about us page
+            '85' => array(
+                'name' => 'view_about_us',
+                'name_long' => 'View About Us',
+                'module_name' => 'Application',
+                'type' => 'view',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
         ),
     ),
 
