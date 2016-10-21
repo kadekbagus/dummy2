@@ -128,7 +128,7 @@ class CouponAddToWalletAPIController extends ControllerAPI
             }
 
             $newIssuedCoupon = new IssuedCoupon();
-            $issuedCoupon = $newIssuedCoupon->issueCoupon($coupon->promotion_id, $user->user_email, $user->user_id, $issued_coupon_code);
+            $issuedCoupon = $newIssuedCoupon->issueCouponViaWallet($coupon->promotion_id, $user->user_email, $user->user_id, $issued_coupon_code);
             $this->commit();
 
             if ($issuedCoupon) {
