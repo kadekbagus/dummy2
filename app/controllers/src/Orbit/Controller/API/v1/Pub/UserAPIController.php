@@ -82,6 +82,11 @@ class UserAPIController extends IntermediateBaseController
 
             $updateUser->save();
 
+            // Update session fullname
+            $sessionData = $this->session->read(NULL);
+            $sessionData['fullname'] = $updateUser->user_firstname. ' ' . $updateUser->user_lastname;
+            $this->session->update($sessionData);
+
             // Even for upload user picture profile
             Event::fire('orbit.user.postupdateuser.after.save', array($this, $updateUser));
 

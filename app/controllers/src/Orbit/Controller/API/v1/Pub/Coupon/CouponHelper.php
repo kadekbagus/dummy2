@@ -218,7 +218,7 @@ class CouponHelper
                 $user = UserGetter::getLoggedInUserOrGuest($this->session);
 
                 $wallet = IssuedCoupon::where('promotion_id', '=', $value)
-                                      ->where('user_email', '=', $user->user_email)
+                                      ->where('user_id', '=', $user->user_id)
                                       ->where('status', '=', 'issued')
                                       ->first();
 

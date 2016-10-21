@@ -94,7 +94,7 @@ class CouponCanvasAPIController extends ControllerAPI
             $issuedCouponCode = $encrypter->decrypt($issuedCouponCode);
             $promotioId = $encrypter->decrypt($promotioId);
 
-            // Check coupon code must be available
+            // Validate issued coupon link from sms
             $checkIssuedCoupon = IssuedCoupon::where('issued_coupon_code', $issuedCouponCode)
                 ->where('promotion_id', $promotioId)
                 ->where('status', 'available')
@@ -103,6 +103,7 @@ class CouponCanvasAPIController extends ControllerAPI
             // Check user must have one issued coupon code per coupon
             $checkUserCoupon = IssuedCoupon::where('promotion_id', $promotioId)
                 ->where('user_id', '=', $user->user_id)
+                ->where('status', 'issued')
                 ->count();
 
             if (! empty($checkIssuedCoupon) && $checkUserCoupon == 0) {
@@ -170,8 +171,8 @@ class CouponCanvasAPIController extends ControllerAPI
                 $this->response->data = $coupon;
                 $activityNotes = sprintf('Page viewed: Coupon From SMS Page. Issued Coupon Id: %s', $checkIssuedCoupon->issued_coupon_id);
                 $activity->setUser($user)
-                    ->setActivityName('view_coupon_from_sms')
-                    ->setActivityNameLong('View Coupon From SMS')
+                    ->setActivityName('view_link_page')
+                    ->setActivityNameLong('View Link Page')
                     ->setObject($coupon)
                     ->setCoupon($coupon)
                     ->setModuleName('Coupon')
@@ -183,7 +184,7 @@ class CouponCanvasAPIController extends ControllerAPI
                 $this->response->data = NULL;
                 $activityNotes = sprintf('Failed to view coupon via sms issued coupon code: %s. Coupon Id: %s.', $issuedCouponCode, $promotioId);
                 $activity->setUser($user)
-                    ->setActivityName('view_coupon_link_expired')
+                    ->setActivityName('view_link_page_failed')
                     ->setActivityNameLong('View coupon link expired')
                     ->setObject($coupon)
                     ->setModuleName('Coupon')
@@ -198,8 +199,8 @@ class CouponCanvasAPIController extends ControllerAPI
         } catch (ACLForbiddenException $e) {
             $activityNotes = sprintf('Failed view redemption page. Error: %s', $e->getMessage());
             $activity->setUser($user)
-                ->setActivityName('view_coupon_link_expired')
-                ->setActivityNameLong('Failed to View Coupon From SMS Page')
+                ->setActivityName('view_link_page_failed')
+                ->setActivityNameLong('View Link Page Failed')
                 ->setObject($coupon)
                 ->setCoupon($coupon)
                 ->setModuleName('Coupon')
@@ -215,8 +216,8 @@ class CouponCanvasAPIController extends ControllerAPI
         } catch (InvalidArgsException $e) {
             $activityNotes = sprintf('Failed view redemption page. Error: %s', $e->getMessage());
             $activity->setUser($user)
-                ->setActivityName('view_coupon_link_expired')
-                ->setActivityNameLong('Failed to View Coupon From SMS Page')
+                ->setActivityName('view_link_page_failed')
+                ->setActivityNameLong('View Link Page Failed')
                 ->setObject($coupon)
                 ->setCoupon($coupon)
                 ->setModuleName('Coupon')
@@ -236,8 +237,8 @@ class CouponCanvasAPIController extends ControllerAPI
         } catch (QueryException $e) {
             $activityNotes = sprintf('Failed view redemption page. Error: %s', $e->getMessage());
             $activity->setUser($user)
-                ->setActivityName('view_coupon_link_expired')
-                ->setActivityNameLong('Failed to View Coupon From SMS Page')
+                ->setActivityName('view_link_page_failed')
+                ->setActivityNameLong('View Link Page Failed')
                 ->setObject($coupon)
                 ->setCoupon($coupon)
                 ->setModuleName('Coupon')
@@ -259,8 +260,8 @@ class CouponCanvasAPIController extends ControllerAPI
         } catch (Exception $e) {
             $activityNotes = sprintf('Failed view redemption page. Error: %s', $e->getMessage());
             $activity->setUser($user)
-                ->setActivityName('view_coupon_link_expired')
-                ->setActivityNameLong('Failed to View Coupon From SMS Page')
+                ->setActivityName('view_link_page_failed')
+                ->setActivityNameLong('View Link Page Failed')
                 ->setObject($coupon)
                 ->setCoupon($coupon)
                 ->setModuleName('Coupon')
