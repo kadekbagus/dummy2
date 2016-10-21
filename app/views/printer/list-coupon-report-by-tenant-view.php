@@ -194,6 +194,8 @@
             <th style="text-align:left;">Coupon Code</th>
             <th style="text-align:left;">Customer Age</th>
             <th style="text-align:left;">Customer Gender</th>
+            <th style="text-align:left;">Customer Type</th>
+            <th style="text-align:left;">Customer Email</th>
             <th style="text-align:left;">Issued Date & Time</th>
             <th style="text-align:left;">Redeemed Date & Time</th>
             <th style="text-align:left;">Redemption Place</th>
@@ -204,9 +206,56 @@
             <tr class="{{ $rowCounter % 2 === 0 ? 'zebra' : '' }}">
                 <td><?php echo (++$rowCounter); ?></td>
                 <td><?php echo $row->issued_coupon_code; ?></td>
-                <td><?php echo $row->age; ?></td>
-                <td><?php echo $row->gender; ?></td>
-                <td><?php echo $this->printDateTime($row->issued_date, '', 'd M Y H:i'); ?> (UTC)</td>
+                <td>
+                    <?php
+                        if (empty($row->age)) {
+                            $userAge = '--';
+                        } else {
+                            $userAge = $row->age;
+                        }
+                        echo $userAge;
+                    ?>
+                </td>
+                <td>
+                    <?php
+                        if (empty($row->gender)) {
+                            $userGender = '--';
+                        } else {
+                            $userGender = $row->gender;
+                        }
+                        echo $userGender;
+                    ?>
+                </td>
+                <td>
+                    <?php
+                        if (empty($row->user_type)) {
+                            $userType = '--';
+                        } else {
+                            $userType = $row->user_type;
+                        }
+                        echo $userType;
+                    ?>
+                </td>
+                <td>
+                    <?php
+                        if (empty($row->user_email)) {
+                            $userEmail = '--';
+                        } else {
+                            $userEmail = $row->user_email;
+                        }
+                        echo $userEmail;
+                    ?>
+                </td>
+                <td>
+                    <?php
+                        if (empty($row->issued_date)) {
+                            $issuedDate = '--';
+                        } else {
+                            $issuedDate = $this->printDateTime($row->issued_date, '', 'd M Y H:i') . '(UTC)';
+                        }
+                        echo $issuedDate;
+                    ?>
+                </td>
                 <td><?php if (! empty($row->redeemed_date)) { echo $this->printDateTime($row->redeemed_date, '', 'd M Y H:i') . ' (UTC)'; } else { echo '--'; } ?></td>
                 <td><?php if (! empty($row->redemption_place)) { echo htmlentities($row->redemption_place); } else { echo '--'; } ?></td>
                 <td><?php if ($row->status != 'active') { echo $row->status; } else { echo 'issued'; } ?></td>

@@ -44,6 +44,7 @@ class CampaignSliderAPIController extends ControllerAPI
             $language = OrbitInput::get('language', 'id');
             $ul = OrbitInput::get('ul', null);
             $mallId = OrbitInput::get('mall_id', null);
+            $maxSlide = OrbitInput::get('take', 10);
 
             $this->registerCustomValidation();
 
@@ -68,10 +69,15 @@ class CampaignSliderAPIController extends ControllerAPI
             $language_id = $lang->language_id;
             $prefix = DB::getTablePrefix();
 
+            $withMallId = '';
+            if (! empty($mallId)) {
+                $withMallId = "AND (CASE WHEN om.object_type = 'tenant' THEN oms.merchant_id ELSE om.merchant_id END) = {$this->quote($mallId)}";
+            }
+
             $news = News::select(
                                 'news.news_id as campaign_id',
                                 DB::Raw("
-                                    CASE WHEN {$prefix}news_translations.news_name = '' THEN {$prefix}news.news_name ELSE {$prefix}news_translations.news_name END as campaign_name,
+                                    CASE WHEN ({$prefix}news_translations.news_name = '' or {$prefix}news_translations.news_name is null) THEN {$prefix}news.news_name ELSE {$prefix}news_translations.news_name END as campaign_name,
                                     CASE WHEN {$prefix}media.path is null THEN (
                                             select m.path
                                             from {$prefix}news_translations nt
@@ -92,7 +98,8 @@ class CampaignSliderAPIController extends ControllerAPI
                                                                                         LEFT JOIN {$prefix}merchants om ON om.merchant_id = onm.merchant_id
                                                                                         LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
                                                                                         LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
-                                                                                    WHERE onm.news_id = {$prefix}news.news_id)
+                                                                                    WHERE onm.news_id = {$prefix}news.news_id
+                                                                                    {$withMallId})
                                 THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END AS campaign_status,
                                 CASE WHEN (SELECT count(onm.merchant_id)
                                             FROM {$prefix}news_merchant onm
@@ -100,10 +107,14 @@ class CampaignSliderAPIController extends ControllerAPI
                                                 LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
                                                 LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
                                             WHERE onm.news_id = {$prefix}news.news_id
+                                            {$withMallId}
                                             AND CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) between {$prefix}news.begin_date and {$prefix}news.end_date) > 0
                                 THEN 'true' ELSE 'false' END AS is_started
                             "))
-                        ->join('news_translations', 'news_translations.news_id', '=', 'news.news_id')
+                        ->leftJoin('news_translations', function ($q) use ($language_id) {
+                            $q->on('news_translations.news_id', '=', 'news.news_id')
+                              ->on('news_translations.merchant_language_id', '=', DB::raw("{$this->quote($language_id)}"));
+                        })
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
                         ->leftJoin('media', function($q) {
                             $q->on('media.object_id', '=', 'news_translations.news_translation_id');
@@ -114,15 +125,13 @@ class CampaignSliderAPIController extends ControllerAPI
                                 $q->on(DB::raw("m.merchant_id"), '=', 'news_merchant.merchant_id');
                                 $q->on(DB::raw("m.status"), '=', DB::raw("'active'"));
                         })
-                        ->whereRaw("{$prefix}news_translations.merchant_language_id = '{$language_id}'")
-                        ->whereRaw("(CASE WHEN m.object_type = 'tenant' THEN m.parent_id ELSE m.merchant_id END) = '{$mallId}'")
-                        ->whereRaw("{$prefix}news.is_popup = 'Y'")
+                        ->whereRaw("{$prefix}news.object_type = 'promotion'")
+                        ->whereRaw("{$prefix}news.sticky_order = 1")
                         ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
-                        ->groupBy('campaign_id')
-                        ->orderBy('campaign_name', 'asc');
+                        ->groupBy('campaign_id');
 
             $coupons = Coupon::select(DB::raw("{$prefix}promotions.promotion_id as campaign_id,
-                                CASE WHEN {$prefix}coupon_translations.promotion_name = '' THEN {$prefix}promotions.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as campaign_name,
+                                CASE WHEN ({$prefix}coupon_translations.promotion_name = '' or {$prefix}coupon_translations.promotion_name is null) THEN {$prefix}promotions.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as campaign_name,
                                 CASE WHEN {$prefix}media.path is null THEN (
                                                 select m.path
                                                 from {$prefix}coupon_translations ct
@@ -139,7 +148,8 @@ class CampaignSliderAPIController extends ControllerAPI
                                                                                         LEFT JOIN {$prefix}merchants om ON om.merchant_id = opt.retailer_id
                                                                                         LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
                                                                                         LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
-                                                                                    WHERE opt.promotion_id = {$prefix}promotions.promotion_id)
+                                                                                    WHERE opt.promotion_id = {$prefix}promotions.promotion_id
+                                                                                    {$withMallId})
                                     THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END AS campaign_status,
                                 CASE WHEN (SELECT count(opt.promotion_retailer_id)
                                             FROM {$prefix}promotion_retailer opt
@@ -147,10 +157,15 @@ class CampaignSliderAPIController extends ControllerAPI
                                                 LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
                                                 LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
                                             WHERE opt.promotion_id = {$prefix}promotions.promotion_id
+                                            {$withMallId}
                                             AND CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) between {$prefix}promotions.begin_date and {$prefix}promotions.end_date) > 0
                                 THEN 'true' ELSE 'false' END AS is_started"))
+                            ->leftJoin('promotion_rules', 'promotion_rules.promotion_id', '=', 'promotions.promotion_id')
                             ->leftJoin('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
-                            ->leftJoin('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
+                            ->leftJoin('coupon_translations', function ($q) use ($language_id) {
+                                $q->on('coupon_translations.promotion_id', '=', 'promotions.promotion_id')
+                                  ->on('coupon_translations.merchant_language_id', '=', DB::raw("{$this->quote($language_id)}"));
+                            })
                             ->leftJoin('languages', 'languages.language_id', '=', 'coupon_translations.merchant_language_id')
                             ->leftJoin('media', function($q) {
                                 $q->on('media.object_id', '=', 'coupon_translations.coupon_translation_id');
@@ -159,12 +174,17 @@ class CampaignSliderAPIController extends ControllerAPI
                             ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                             ->leftJoin('merchants as t', DB::raw("t.merchant_id"), '=', 'promotion_retailer.retailer_id')
                             ->leftJoin('merchants as m', DB::raw("m.merchant_id"), '=', DB::raw("t.parent_id"))
-                            ->whereRaw("{$prefix}coupon_translations.merchant_language_id = '{$language_id}'")
-                            ->whereRaw("(CASE WHEN t.object_type = 'tenant' THEN t.parent_id ELSE t.merchant_id END) = '{$mallId}'")
-                            ->whereRaw("{$prefix}promotions.is_popup = 'Y'")
+                            ->leftJoin(DB::raw("(SELECT promotion_id, COUNT(*) as tot FROM {$prefix}issued_coupons WHERE status = 'available' GROUP BY promotion_id) as available"), DB::raw("available.promotion_id"), '=', 'promotions.promotion_id')
+                            ->whereRaw("{$prefix}promotions.sticky_order = 1")
+                            ->whereRaw("available.tot > 0")
+                            ->whereRaw("{$prefix}promotion_rules.rule_type != 'blast_via_sms'")
                             ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
-                            ->groupBy('campaign_id')
-                            ->orderBy('campaign_name', 'asc');
+                            ->groupBy('campaign_id');
+
+            OrbitInput::get('mall_id', function ($mallId) use ($coupons, $news, $prefix) {
+                $news = $news->whereRaw("(CASE WHEN m.object_type = 'tenant' THEN m.parent_id ELSE m.merchant_id END) = '{$mallId}'");
+                $coupons = $coupons->whereRaw("(CASE WHEN t.object_type = 'tenant' THEN t.parent_id ELSE t.merchant_id END) = '{$mallId}'");
+            });
 
             $newsSql = $news->toSql();
             $newsSql = DB::table(DB::Raw("({$newsSql}) as sub_query"))->mergeBindings($news->getQuery())->toSql();
@@ -176,19 +196,41 @@ class CampaignSliderAPIController extends ControllerAPI
 
             $_campaign = clone($campaign);
 
-            $take = PaginationNumber::parseTakeFromGet('news');
-            $campaign->take($take);
-
-            $skip = PaginationNumber::parseSkipFromGet();
-            $campaign->skip($skip);
-
             $totalRec = count($_campaign->get());
-            $listOfRec = $campaign->get();
+            $slideshow = $campaign->get();
+
+            $slide_fix = array();
+            $random = array();
+
+            // random process
+            if (count($slideshow) > 1) {
+                if (count($slideshow) < $maxSlide) {
+                    $maxSlide = count($slideshow);
+                }
+
+                $slides = array();
+                $listSlide = array_rand($slideshow, $maxSlide);
+                if (count($listSlide) > 1) {
+                    foreach ($listSlide as $key => $value) {
+                        array_push($slides, $slideshow[$value]);
+                    }
+
+                    $keys = array_keys($slides);
+                    shuffle($keys);
+                    foreach ($keys as $key) {
+                        array_push($random, $slides[$key]);
+                    }
+                } else {
+                    $random = $slideshow[$listSlide];
+                }
+            } else {
+                $random = $slideshow;
+            }
 
             $data = new \stdclass();
-            $data->returned_records = count($listOfRec);
+            $data->returned_records = count($random);;
             $data->total_records = $totalRec;
-            $data->records = $listOfRec;
+            $data->records = $random;
 
             $this->response->data = $data;
             $this->response->code = 0;
@@ -251,5 +293,10 @@ class CampaignSliderAPIController extends ControllerAPI
 
             return TRUE;
         });
+    }
+
+    protected function quote($arg)
+    {
+        return DB::connection()->getPdo()->quote($arg);
     }
 }

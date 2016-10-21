@@ -34,3 +34,25 @@ Route::group(
         );
     }
 );
+
+
+/**
+ * share campaign via email
+ */
+Route::post(
+    '/{search}/v1/pub/sharer/email/campaign', ['as' => 'pub-share-email-campaign', function()
+    {
+        return Orbit\Controller\API\v1\Pub\CampaignShareEmailAPIController::create()->postCampaignShareEmail();
+    }]
+)->where('search', '(api|app)');
+
+
+/**
+ * share landing page via email
+ */
+Route::post(
+    '/{search}/v1/pub/sharer/email/landingpage', ['as' => 'pub-share-email-landingpage', function()
+    {
+        return Orbit\Controller\API\v1\Pub\LandingPageShareEmailAPIController::create()->postLandingPageShareEmail();
+    }]
+)->where('search', '(api|app)');

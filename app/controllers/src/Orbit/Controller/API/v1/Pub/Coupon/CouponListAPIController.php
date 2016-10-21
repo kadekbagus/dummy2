@@ -61,6 +61,7 @@ class CouponListAPIController extends ControllerAPI
             $lon = '';
             $lat = '';
             $mallId = OrbitInput::get('mall_id', null);
+            $withPremium = OrbitInput::get('is_premium', null);
 
             $couponHelper = CouponHelper::create();
             $couponHelper->couponCustomValidator();
@@ -127,7 +128,7 @@ class CouponListAPIController extends ControllerAPI
                                                 group by ct.promotion_id
                                             ) ELSE {$prefix}media.path END as image_url
                                     "),
-                                'promotions.created_at')
+                            'promotions.sticky_order', 'promotions.created_at')
                             ->leftJoin('promotion_rules', 'promotion_rules.promotion_id', '=', 'promotions.promotion_id')
                             ->leftJoin('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
                             ->leftJoin('coupon_translations', function ($q) use ($valid_language) {
@@ -204,12 +205,21 @@ class CouponListAPIController extends ControllerAPI
             $coupon = DB::table(DB::Raw("({$querySql}) as sub_query"))->mergeBindings($coupons->getQuery());
 
             if ($sort_by === 'location' && !empty($lon) && !empty($lat)) {
-                $coupon = $coupon->select('coupon_id', 'coupon_name', DB::raw("sub_query.description"), DB::raw("sub_query.status"), 'campaign_status', 'is_started', 'image_url', DB::raw("min(distance) as distance"), DB::raw("sub_query.created_at"))
-                                 ->groupBy('coupon_id')
-                                 ->orderBy('distance', 'asc');
-            } else {
-                $coupon = $coupon->select('coupon_id', 'coupon_name', DB::raw("sub_query.description"), DB::raw("sub_query.status"), 'campaign_status', 'is_started', 'image_url', DB::raw("sub_query.created_at"))
+                $coupon = $coupon->select('coupon_id', 'coupon_name', DB::raw("sub_query.description"), DB::raw("sub_query.status"), 'campaign_status', 'is_started', 'image_url', DB::raw("min(distance) as distance"), 'sticky_order', DB::raw("sub_query.created_at"))
                                  ->groupBy('coupon_id');
+
+                if (! empty($withPremium)) {
+                    $coupon = $coupon->orderBy('sticky_order', 'desc');
+                }
+                $coupon = $coupon->orderBy('distance', 'asc');
+
+            } else {
+                $coupon = $coupon->select('coupon_id', 'coupon_name', DB::raw("sub_query.description"), DB::raw("sub_query.status"), 'campaign_status', 'is_started', 'image_url', 'sticky_order', DB::raw("sub_query.created_at"))
+                                 ->groupBy('coupon_id');
+
+                if (! empty($withPremium)) {
+                    $coupon = $coupon->orderBy('sticky_order', 'desc');
+                }
             }
 
             OrbitInput::get('mall_id', function ($mallId) use ($coupon, $prefix, &$mall) {
