@@ -4155,21 +4155,21 @@ return array(
                 'object_type' => null,
                 'parameter_name' => null
             ),
-            // - Lucky Draw Location View
-            '83' => array(
-                'name' => 'view_lucky_draw_location',
-                'name_long' => 'View Lucky Draw Location Page',
-                'module_name' => 'LuckyDraw',
-                'type' => 'view',
-                'object_type' => 'LuckyDraw',
-                'parameter_name' => 'lucky_draw_id'
-            ),
             // - Clicking on a lucky draw location
-            '84' => array(
+            '83' => array(
                 'name' => 'click_lucky_draw_location',
                 'name_long' => 'Click Lucky Draw Location',
                 'module_name' => 'LuckyDraw',
                 'type' => 'click',
+                'object_type' => 'LuckyDraw',
+                'parameter_name' => 'lucky_draw_id'
+            ),
+            // - Lucky Draw Location View
+            '84' => array(
+                'name' => 'view_lucky_draw_location',
+                'name_long' => 'View Lucky Draw Location Page',
+                'module_name' => 'LuckyDraw',
+                'type' => 'view',
                 'object_type' => 'LuckyDraw',
                 'parameter_name' => 'lucky_draw_id'
             ),
