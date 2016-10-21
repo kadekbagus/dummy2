@@ -1532,9 +1532,26 @@ class CouponReportAPIController extends ControllerAPI
                             ->where('issued_coupons.status', 'redeemed');
             } elseif ($redeemedBy === 'all') {
                 $coupons = IssuedCoupon::select('issued_coupons.*', 'promotions.begin_date', 'promotions.end_date',
-                                            DB::raw("CASE WHEN {$prefix}user_details.gender = 'f' THEN 'female' WHEN {$prefix}user_details.gender = 'm' THEN 'male' ELSE 'unknown' END AS gender"),
-                                            DB::raw(" CASE WHEN {$prefix}roles.role_name = 'Consumer' THEN 'User' ELSE {$prefix}roles.role_name END AS user_type"),
-                                            DB::raw("IFNULL(timestampdiff(year, {$prefix}user_details.birthdate, curdate()), 'unknown') AS age"),
+                                            DB::raw("
+                                                        CASE
+                                                        WHEN {$prefix}user_details.gender = 'f' THEN 'female'
+                                                        WHEN {$prefix}user_details.gender = 'm' THEN 'male'
+                                                        WHEN ({$prefix}user_details.gender IS NULL AND {$prefix}issued_coupons.user_id IS NOT NULL) THEN 'unknown'
+                                                        ELSE null END AS gender
+                                             "),
+                                            DB::raw("
+                                                        CASE
+                                                        WHEN {$prefix}roles.role_name = 'Consumer'
+                                                        THEN 'User' ELSE {$prefix}roles.role_name
+                                                        END AS user_type
+                                                "),
+                                            DB::raw("
+                                                        CASE
+                                                        WHEN TIMESTAMPDIFF(YEAR, {$prefix}user_details.birthdate, CURDATE()) IS NOT NULL THEN TIMESTAMPDIFF(YEAR, {$prefix}user_details.birthdate, CURDATE())
+                                                        WHEN ({$prefix}user_details.birthdate = '0000-00-00' AND {$prefix}issued_coupons.user_id IS NOT NULL) THEN 'unknown'
+                                                        ELSE null
+                                                        END AS age
+                                                    "),
                                             DB::raw("
                                                         CASE WHEN {$prefix}issued_coupons.redeem_user_id IS NOT NULL THEN CONCAT({$prefix}users.user_firstname, ' ', {$prefix}users.user_lastname, ' at ', om_employee.name)
                                                         ELSE CONCAT({$prefix}merchants.name, ' at ', om_parent.name)

@@ -113,7 +113,8 @@ class StoreAPIController extends ControllerAPI
                 ->join(DB::raw("(select merchant_id, name, status, parent_id, city from {$prefix}merchants where object_type = 'mall') as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                 ->where('merchants.status', 'active')
                 ->where('merchants.object_type', 'tenant')
-                ->whereRaw("oms.status = 'active'");
+                ->whereRaw("oms.status = 'active'")
+                ->orderBy('merchants.created_at', 'asc');
 
             OrbitInput::get('mall_id', function ($mallId) use ($store, $prefix, &$mall) {
                 $store->where('merchants.parent_id', '=', DB::raw("{$this->quote($mallId)}"));
@@ -121,10 +122,6 @@ class StoreAPIController extends ControllerAPI
                         ->where('merchant_id', $mallId)
                         ->first();
             });
-
-            $store->groupBy('merchants.name')
-                ->orderBy('merchants.name', 'asc')
-                ->orderBy('merchants.created_at', 'asc');
 
             $querySql = $store->toSql();
 
