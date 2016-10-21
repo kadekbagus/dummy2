@@ -2668,10 +2668,6 @@ class CouponAPIController extends ControllerAPI
                         $coupons->with('ages');
                     } elseif ($relation === 'keywords') {
                         $coupons->with('keywords');
-                    } elseif ($relation === 'issuedCoupons') {
-                        $coupons->with(['issuedCoupons' => function ($q) {
-                            $q->select('promotion_id', 'issued_coupon_code');
-                        }]);
                     }
                 }
             });
