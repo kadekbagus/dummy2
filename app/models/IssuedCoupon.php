@@ -54,17 +54,17 @@ class IssuedCoupon extends Eloquent
 
     public function scopeAvailable($query)
     {
-        return $query->where('status', 'available');
+        return $query->where('issued_coupons.status', 'available');
     }
 
     public function scopeIssued($query)
     {
-        return $query->where('status', 'issued');
+        return $query->where('issued_coupons.status', 'issued');
     }
 
     public function scopeRedeemed($query)
     {
-        return $query->where('status', 'redeemed');
+        return $query->where('issued_coupons.status', 'redeemed');
     }
 
     /**

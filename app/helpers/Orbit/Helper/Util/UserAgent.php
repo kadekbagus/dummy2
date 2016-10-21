@@ -10,7 +10,11 @@ use Net\Util\MobileDetect;
 
 class UserAgent extends MobileDetect
 {
-    protected $rules = array();
+    protected $rules = [
+        'browser' => [],
+        'device_model' => [],
+        'platform' => []
+    ];
 
     protected static $additionalOperatingSystems = array(
         'Windows'           => 'Windows',
@@ -75,6 +79,7 @@ class UserAgent extends MobileDetect
             self::$tabletDevices,
             self::$utilities
         );
+        $rules = $this->rules['device_model'] + $rules;
 
         return $this->findDetectionRulesAgainstUA($rules, $userAgent);
     }
@@ -92,6 +97,8 @@ class UserAgent extends MobileDetect
             self::$operatingSystems,
             self::$additionalOperatingSystems
         );
+        $rules = $this->rules['platform'] + $rules;
+
         return $this->findDetectionRulesAgainstUA($rules, $userAgent);
     }
 
@@ -103,7 +110,35 @@ class UserAgent extends MobileDetect
     public function browser($userAgent = null)
     {
         // Get browser rules
-        $rules = self::$browsers;
+        $rules = $this->rules['browser'] + self::$browsers;
+
         return $this->findDetectionRulesAgainstUA($rules, $userAgent);
+    }
+
+    /**
+     * Add new custom rules to the object.
+     *
+     * @string $ruleType One of 'browser', 'platform', 'device_model'
+     * @array $newRules Rules to be applied
+     * @return UserAgent
+     */
+    public function addRules($ruleType, array $newRules)
+    {
+        $this->rules[$ruleType] = array_merge($this->rules[$ruleType], $newRules);
+
+        return $this;
+    }
+
+    /**
+     * Replace custom rules in the object.
+     *
+     * @array $newRules Rules to be applied
+     * @return UserAgent
+     */
+    public function setRules($newRules)
+    {
+        $this->rules = $newRules;
+
+        return $this;
     }
 }

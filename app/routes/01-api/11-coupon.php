@@ -222,3 +222,14 @@ Route::post('/api/v1/pub/coupon/redeem', function()
 });
 
 Route::post('/app/v1/pub/coupon/redeem', ['as' => 'pub-mall-coupon-redeem', 'uses' => 'IntermediatePubAuthController@Coupon\CouponRedeem_postPubRedeemCoupon']);
+
+
+/**
+ * Check validity of issued coupon from sms
+ */
+Route::get('/api/v1/pub/coupon/canvas', function()
+{
+    return Orbit\Controller\API\v1\Pub\Coupon\CouponCanvasAPIController::create()->getCheckValidityCoupon();
+});
+
+Route::get('/app/v1/pub/coupon/canvas', ['as' => 'pub-mall-coupon-canvas', 'uses' => 'IntermediatePubAuthController@Coupon\CouponCanvas_getCheckValidityCoupon']);

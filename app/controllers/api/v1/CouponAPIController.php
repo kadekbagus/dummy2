@@ -2303,7 +2303,11 @@ class CouponAPIController extends ControllerAPI
                         {$table_prefix}promotions.status
                     END as 'coupon_status'"),
                     DB::raw("((CASE WHEN {$table_prefix}campaign_price.base_price is null THEN 0 ELSE {$table_prefix}campaign_price.base_price END) * (DATEDIFF({$table_prefix}promotions.end_date, {$table_prefix}promotions.begin_date) + 1) * (SELECT COUNT(pr.promotion_retailer_id) FROM {$table_prefix}promotion_retailer as pr WHERE pr.object_type != 'mall' and pr.promotion_id = {$table_prefix}promotions.promotion_id)) AS estimated"),
-                    DB::raw("COUNT(DISTINCT {$table_prefix}promotion_retailer.promotion_retailer_id) as total_location")
+                    DB::raw("COUNT(DISTINCT {$table_prefix}promotion_retailer.promotion_retailer_id) as total_location"),
+                    DB::raw("(SELECT GROUP_CONCAT(issued_coupon_code separator '\n')
+                        FROM {$table_prefix}issued_coupons ic
+                        WHERE ic.promotion_id = {$table_prefix}promotions.promotion_id
+                            ) as coupon_codes")
                 )
                 ->leftJoin('campaign_price', function ($join) {
                          $join->on('promotions.promotion_id', '=', 'campaign_price.campaign_id')
@@ -2878,20 +2882,29 @@ class CouponAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $mall_id = OrbitInput::post('current_mall');
+            $storeId = OrbitInput::post('store_id');
 
             $issuedCouponId = OrbitInput::post('issued_coupon_id');
             $verificationNumber = OrbitInput::post('merchant_verification_number');
 
             $validator = Validator::make(
                 array(
+                    'store_id' => $storeId,
                     'current_mall' => $mall_id,
-                    'issued_coupon_id' => $issuedCouponId,
                     'merchant_verification_number' => $verificationNumber,
                 ),
                 array(
+                    'store_id'                      => 'required',
                     'current_mall'                  => 'required|orbit.empty.merchant',
-                    'issued_coupon_id'              => 'required|orbit.empty.issuedcoupon',
                     'merchant_verification_number'  => 'required'
+                )
+            );
+            $validator2 = Validator::make(
+                array(
+                    'issued_coupon_id' => $issuedCouponId,
+                ),
+                array(
+                    'issued_coupon_id'              => 'required|orbit.empty.issuedcoupon',
                 )
             );
             Event::fire('orbit.coupon.redeemcoupon.before.validation', array($this, $validator));
@@ -2902,6 +2915,11 @@ class CouponAPIController extends ControllerAPI
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            // Run the validation
+            if ($validator2->fails()) {
+                $errorMessage = $validator2->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.coupon.postissuedcoupon.after.validation', array($this, $validator));
@@ -3500,6 +3518,7 @@ class CouponAPIController extends ControllerAPI
             $now = date('Y-m-d H:i:s');
             $number = OrbitInput::post('merchant_verification_number');
             $mall_id = OrbitInput::post('current_mall');
+            $storeId = OrbitInput::post('store_id');
 
             $prefix = DB::getTablePrefix();
 
@@ -3522,7 +3541,7 @@ class CouponAPIController extends ControllerAPI
             //Checking verification number in cs and tenant verification number
             //Checking in tenant verification number first
             if ($issuedCoupon->coupon->is_all_retailer === 'Y') {
-                $checkIssuedCoupon = Tenant::where('parent_id','=', $mall_id)
+                $checkIssuedCoupon = Tenant::where('merchant_id','=', $storeId)
                             ->where('status', 'active')
                             ->where('masterbox_number', $number)
                             ->first();
@@ -3537,6 +3556,7 @@ class CouponAPIController extends ControllerAPI
                                 $q->where('promotions.status', 'active');
                                 $q->where('promotions.coupon_validity_in_date', '>=', $now);
                             })
+                            ->where('merchants.merchant_id', $storeId)
                             ->where('merchants.masterbox_number', $number)
                             ->first();
             }

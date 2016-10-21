@@ -271,7 +271,7 @@
                                             <td style="word-break:break-word;font-size:0px;padding:0 25px;" align="center">
                                                 <div style="cursor:auto;color:#000000;font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:22px;">
                                                     <h1 style="font-size: 1.6em;">
-                        Sudahkah anda melihat gotomalls.com?
+                        Sudahkah anda mencoba Gotomalls.com ?
                     </h1>
                                                 </div>
                                             </td>
@@ -319,7 +319,7 @@
                                                         @else
                                                             {{{ $name }}}
                                                         @endif
-                                                         ingin anda untuk melihat {{{ $campaignType }}}
+                                                         ingin anda untuk mencoba Gotomalls.com.
                                                     </p>
                                                 </div>
                                             </td>
@@ -329,15 +329,14 @@
                                                 <table cellpadding="0" cellspacing="0" align="center" border="0">
                                                     <tbody>
                                                         <tr>
-                                                            <div style="cursor:auto;color:#000000;font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:22px;">
-                                                            <p> {{{ $campaignName }}} </p>
-                                                            </div>
                                                             <div style="padding-bottom: 10px;">
-                                                            <img ng-src="{{{ asset($campaignImage) }}}" class="news-logo ng-scope" src="{{{ asset($campaignImage) }}}">
+                                                                <a href="{{{ $videoUrl }}}">
+                                                                <img ng-src="{{ asset('emails/video-thumbnail.jpg') }}" class="news-logo ng-scope" src="{{ asset('emails/video-thumbnail.jpg') }}">
+                                                                </a>
                                                             </div>
                                                             <br/><br/>
                                                             <td style="border-radius:3px;color:white;cursor:auto;padding:10px 25px; border-radius: 16px;" align="center" valign="middle" bgcolor="#BA1F00">
-                                                                <a href="{{{ $campaignUrl }}}" style="display:inline-block;text-decoration:none;background:#BA1F00;border-radius:3px;color:white;font-family:Helvetica;font-size:13px;font-weight:normal;margin:0px;">Lihat Sekarang!
+                                                                <a href="{{{ $shareUrl }}}" style="display:inline-block;text-decoration:none;background:#BA1F00;border-radius:3px;color:white;font-family:Helvetica;font-size:13px;font-weight:normal;margin:0px;">Coba Sekarang!
                                                                 </a>
                                                             </td>
                                                         </tr>
