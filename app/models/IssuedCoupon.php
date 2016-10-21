@@ -160,7 +160,8 @@ class IssuedCoupon extends Eloquent
      * @param string $issuedCouponCode (from SMS)
      * @return IssuedCoupon | null
      */
-    public function issueCouponViaWallet($promotionId, $userEmail, $userId = NULL, $issuedCouponCode = NULL) {
+    public function issueCouponViaWallet($promotionId, $userEmail, $userId = NULL, $issuedCouponCode = NULL)
+    {
         // get 'issued' coupon with the same user_email
         $issuedCoupon = static::issued()
             ->where('user_id', $userId)
@@ -216,14 +217,15 @@ class IssuedCoupon extends Eloquent
      * @param string $userId (from wallet)
      * @return IssuedCoupon | null
      */
-    public function issueCouponViaEmail($promotionId, $userEmail, $userId = NULL) {
+    public function issueCouponViaEmail($promotionId, $userEmail, $userId = NULL)
+    {
         // get 'issued' coupon with the same user_email
         $issuedCoupon = static::join('users', 'users.user_id', '=', 'issued_coupons.user_id')
             ->join('roles', 'users.user_role_id', '=', 'roles.role_id')
             ->where('roles.role_name', 'Guest')
             ->where('issued_coupons.status', 'issued')
             ->where('promotion_id', $promotionId)
-            ->where('user_email', $userEmail)
+            ->where('users.user_email', $userEmail)
             ->first();
         if (! is_object($issuedCoupon)) {
             // get available issued coupon
