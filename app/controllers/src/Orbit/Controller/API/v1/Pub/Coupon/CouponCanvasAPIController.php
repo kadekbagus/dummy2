@@ -169,7 +169,7 @@ class CouponCanvasAPIController extends ControllerAPI
             if (is_object($coupon)) {
                 $this->response->message = 'Request Ok';
                 $this->response->data = $coupon;
-                $activityNotes = sprintf('Page viewed: Coupon From SMS Page. Issued Coupon Id: %s', $checkIssuedCoupon->issued_coupon_id);
+                $activityNotes = 'SMS / Email';
                 $activity->setUser($user)
                     ->setActivityName('view_link_page')
                     ->setActivityNameLong('View Link Page')
@@ -182,7 +182,7 @@ class CouponCanvasAPIController extends ControllerAPI
             } else {
                 $this->response->message = 'Failed to view coupon via sms';
                 $this->response->data = NULL;
-                $activityNotes = sprintf('Failed to view coupon via sms issued coupon code: %s. Coupon Id: %s.', $issuedCouponCode, $promotioId);
+                $activityNotes = 'SMS / Email';;
                 $activity->setUser($user)
                     ->setActivityName('view_link_page_failed')
                     ->setActivityNameLong('View Link Page Failed')
@@ -197,7 +197,7 @@ class CouponCanvasAPIController extends ControllerAPI
             $this->response->code = 0;
             $this->response->status = 'success';
         } catch (ACLForbiddenException $e) {
-            $activityNotes = sprintf('Failed view redemption page. Error: %s', $e->getMessage());
+            $activityNotes = 'SMS / Email';
             $activity->setUser($user)
                 ->setActivityName('view_link_page_failed')
                 ->setActivityNameLong('View Link Page Failed')
@@ -214,7 +214,7 @@ class CouponCanvasAPIController extends ControllerAPI
             $this->response->data = null;
             $httpCode = 403;
         } catch (InvalidArgsException $e) {
-            $activityNotes = sprintf('Failed view redemption page. Error: %s', $e->getMessage());
+            $activityNotes = 'SMS / Email';
             $activity->setUser($user)
                 ->setActivityName('view_link_page_failed')
                 ->setActivityNameLong('View Link Page Failed')
@@ -235,7 +235,7 @@ class CouponCanvasAPIController extends ControllerAPI
             $this->response->data = $result;
             $httpCode = 403;
         } catch (QueryException $e) {
-            $activityNotes = sprintf('Failed view redemption page. Error: %s', $e->getMessage());
+            $activityNotes = 'SMS / Email';
             $activity->setUser($user)
                 ->setActivityName('view_link_page_failed')
                 ->setActivityNameLong('View Link Page Failed')
@@ -258,7 +258,7 @@ class CouponCanvasAPIController extends ControllerAPI
             $this->response->data = null;
             $httpCode = 500;
         } catch (Exception $e) {
-            $activityNotes = sprintf('Failed view redemption page. Error: %s', $e->getMessage());
+            $activityNotes = 'SMS / Email';
             $activity->setUser($user)
                 ->setActivityName('view_link_page_failed')
                 ->setActivityNameLong('View Link Page Failed')
