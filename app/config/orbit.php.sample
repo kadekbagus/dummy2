@@ -3265,7 +3265,7 @@ return array(
             'callback_url' => 'http://mall-api.gotomalls.cool/pub/social-google-callback',
         ),
         'bitly' => array(
-            // bitly app should be registered and has generic_access_token
+            // bitly generic_access_token
             'generic_access_token' => NULL,
         )
     ],
@@ -4109,6 +4109,24 @@ return array(
                 'object_type' => 'Mall',
                 'parameter_name' => 'mall_id'
             ),
+            // - User clicks on interested coupon
+            '78' => array(
+                'name' => 'click_interested',
+                'name_long' => 'Click Interested',
+                'module_name' => 'Coupon',
+                'type' => 'click',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'coupon_id'
+            ),
+            // - User clicks on not interested coupon
+            '79' => array(
+                'name' => 'click_not_interested ',
+                'name_long' => 'Click Not Interested',
+                'module_name' => 'Coupon',
+                'type' => 'click',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'coupon_id'
+            ),
         ),
     ),
 
@@ -4192,7 +4210,7 @@ return array(
         // e.g: https://www.gotomalls.cool/#!/coupon-redemption?cid=%s&uid=%s
         'direct_redemption_url' => NULL,
         // URL coupon canvas
-        // e.g: https://www.gotomalls.cool/#!/coupon-canvas?cid=%s&pid=%s
+        // e.g: https://www.gotomalls.cool/#!/coupon-blasting?cid=%s&pid=%s
         'sms_direct_redemption_url' => NULL,
     ],
 
@@ -4204,4 +4222,48 @@ return array(
             'name'  => 'Gotomalls'
         ),
     ),
+
+    /**
+     * List of user agent rules used by UserAgent parser. This rules serve as additional rules
+     * that already defined in MobileDetect class.
+     */
+    'user_agent_rules' => [
+        // Returning the browser name
+        'browser' => [
+            'Opera' => 'Opera.*Mini|Opera.*Mobi|Android.*Opera|Mobile.*OPR/[0-9.]+|Coast/[0-9.]+|Opera/[0-9.]+.*Presto|AppleWebKit/[0-9.]+.*Safari/[0-9]+.*OPR/[0-9]+|AppleWebKit/[0-9.]+.*OPiOS/[0-9]+',
+            'UCBrowser' => 'UC.*Browser|UCWEB|UBrowser/[0-9.].* Safari',
+            // It should come after UCBrowser or Opera Mobile because this pattern more generic and it will override the chrome if it put on top
+            'Chrome' => '\bCrMo\b|CriOS|Android.*Chrome/[.0-9]* (Mobile)?|Chrome/.*Safari',
+            // It should come after 'Chrome' because this pattern more generic than Chrome and it will override the chrome if it put on top
+            'Android Browser' => 'Android [0-9.].*AppleWebKit.*Mobile Safari/',
+            'Firefox' => 'fennec|firefox.*maemo|(Mobile|Tablet).*Firefox|Firefox.*Mobile|Firefox/[0-9]+',
+            'Instagram Browser' => 'Instagram [0-9]*',
+            'Facebook Browser' => 'FBAV/[0-9.]+',
+
+            // Bots
+            'GoogleBot' => 'GoogleBot/.*bot\.html|Google Keyword Suggestion|AdsBot-Google',
+            'BingBot' => 'bingbot',
+            'Slurp (Yahoo Bot)' => 'Slurp',
+            'DuckDuckBot' => 'DuckDuckBot',
+            'Baiduspider' => 'Baiduspider',
+            'YandexBot' => 'YandexBot',
+            'SogouBot' => '\bSogou\b',
+            'Exabot' => '\bExabot\b',
+            'FacebookBot' => 'facebot|facebookexternalhit',
+            'AlexaBot' => 'ia_archiver',
+            'Bot' => 'AhrefsBot|Ezooms|GSLFbot|WBSearchBot|Twitterbot|TweetmemeBot|Twikle|PaperLiBot|Wotbox|UnwindFetchor|Exabot|MJ12bot|TurnitinBot|Pingdom|YahooSeeker/M1A1-R2D2',
+
+            'IE' => 'IEMobile|MSIEMobile|MSIE',
+        ],
+
+        // Returning the platform name
+        'platform' => [
+            'Bot' => '\bSogou\b|Baiduspider|DuckDuckBot|Googlebot|facebookexternalhit|AdsBot-Google|Google Keyword Suggestion|Facebot|YandexBot|bingbot|ia_archiver|AhrefsBot|Ezooms|GSLFbot|WBSearchBot|Twitterbot|TweetmemeBot|Twikle|PaperLiBot|Wotbox|UnwindFetchor|Exabot|MJ12bot|YandexImages|TurnitinBot|Pingdom|Googlebot-Mobile|AdsBot-Google-Mobile|YahooSeeker/M1A1-R2D2',
+        ],
+
+        // Returning the device model
+        'device_model' => [
+            'Bot' => '\bSogou\b|Baiduspider|DuckDuckBot|Googlebot|facebookexternalhit|AdsBot-Google|Google Keyword Suggestion|Facebot|YandexBot|bingbot|ia_archiver|AhrefsBot|Ezooms|GSLFbot|WBSearchBot|Twitterbot|TweetmemeBot|Twikle|PaperLiBot|Wotbox|UnwindFetchor|Exabot|MJ12bot|YandexImages|TurnitinBot|Pingdom|Googlebot-Mobile|AdsBot-Google-Mobile|YahooSeeker/M1A1-R2D2',
+        ]
+    ],
 );
