@@ -4155,6 +4155,43 @@ return array(
                 'object_type' => null,
                 'parameter_name' => null
             ),
+            // - Clicking on a lucky draw location
+            '83' => array(
+                'name' => 'click_lucky_draw_location',
+                'name_long' => 'Click Lucky Draw Location',
+                'module_name' => 'LuckyDraw',
+                'type' => 'click',
+                'object_type' => 'LuckyDraw',
+                'parameter_name' => 'lucky_draw_id'
+            ),
+            // - Lucky Draw Location View
+            '84' => array(
+                'name' => 'view_lucky_draw_location',
+                'name_long' => 'View Lucky Draw Location Page',
+                'module_name' => 'LuckyDraw',
+                'type' => 'view',
+                'object_type' => 'LuckyDraw',
+                'parameter_name' => 'lucky_draw_id'
+            ),
+            // - User view the about us page
+            '85' => array(
+                'name' => 'view_about_us',
+                'name_long' => 'View About Us',
+                'module_name' => 'Application',
+                'type' => 'view',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - Event click in the carousel
+            '86' => array(
+                'name' => 'click_carousel',
+                'name_long' => 'Click Carousel',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => '--SET BY object_type_parameter_name--',
+                'object_type_parameter_name' => 'object_type',
+                'parameter_name' => 'object_id'
+            ),
         ),
     ),
 
