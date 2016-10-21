@@ -119,7 +119,7 @@ class CouponRedeemAPIController extends ControllerAPI
                 $userIdentifier = $encrypter->decrypt($userIdentifier);
             }
 
-            $isAvailable = (new IssuedCoupon())->issueCoupon($requestedCouponId, $userIdentifier);
+            $isAvailable = (new IssuedCoupon())->issueCouponViaEmail($requestedCouponId, $userIdentifier);
             if (! is_object($isAvailable)) {
                 $errorMessage = 'Issued coupon is not found';
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
