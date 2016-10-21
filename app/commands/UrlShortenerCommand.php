@@ -1,8 +1,9 @@
 <?php
 /**
  * Command to shorten coupon urls
- * 
+ *
  * @author Ahmad <ahmad@dominopos.com>
+ * @author Rio Astamal <rio@dominopos.com>
  */
 use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputOption;
@@ -55,11 +56,11 @@ class UrlShortenerCommand extends Command
     public function fire()
     {
         $mode = $this->option('mode');
-        $couponId = $this->option('couponid');
+        $couponId = $this->option('coupon-id');
         $verbose = $this->option('verbose');
-        $forceUpdate = $this->option('forceupdate');
+        $forceUpdate = $this->option('force-update');
 
-        $coupon = Coupon::where('promotion_id', $couponId)->first();
+        $coupon = Coupon::excludeDeleted()->where('promotion_id', $couponId)->first();
 
         // check for coupon existance
         if (! is_object($coupon)) {
@@ -77,15 +78,17 @@ class UrlShortenerCommand extends Command
         $redeemUrl = Config::get('orbit.coupon.sms_direct_redemption_url');
 
         // get list of coupon codes for the provided coupon id
-        $arrayOfCouponCodes = IssuedCoupon::where('promotion_id', $couponId)
-            ->get()->lists('issued_coupon_code');
+        $arrayOfCouponCodes = IssuedCoupon::select('issued_coupon_code')
+                                        ->where('promotion_id', $couponId)
+                                        ->get()
+                                        ->lists('issued_coupon_code');
 
         // check if coupon has any issued coupon
         if (empty($arrayOfCouponCodes)) {
             $this->error('This coupon does not have coupon codes.');
             return;
         }
-        
+
         $arrayOfCouponRedeemUrl = array();
 
         $encryptionKey = Config::get('orbit.security.encryption_key');
@@ -109,9 +112,10 @@ class UrlShortenerCommand extends Command
         // repeat until all request successful, make sure the internet connection is good
         while(! empty($arrayOfCouponRedeemUrl)) {
             foreach($arrayOfCouponRedeemUrl as $key => $redeemUrl) {
-                
+
                 // fetch url from table if any
-                $shortUrlFromTable = IssuedCoupon::where('issued_coupon_code', $redeemUrl->couponCode)
+                $shortUrlFromTable = IssuedCoupon::excludeDeleted()
+                    ->where('issued_coupon_code', $redeemUrl->couponCode)
                     ->where('promotion_id', $couponId)
                     ->first()->url;
 
@@ -131,6 +135,7 @@ class UrlShortenerCommand extends Command
                         if ($verbose) {
                             $this->info(sprintf('Shortening coupon code: %s', $arrayOfCouponCodes[$key]));
                         }
+
                         // set bitly parameters
                         $bitlyConfig = array(
                             'access_token' => Config::get('orbit.social_login.bitly.generic_access_token'),
@@ -139,15 +144,13 @@ class UrlShortenerCommand extends Command
                         );
                         // call bitly
                         $shortUrl = BitlyShortener::create($bitlyConfig)->bitlyGet('shorten');
+
                         // add .5 second delay for good measure
                         usleep(500000);
                         // check for response
                         if ($shortUrl['status_code'] === 200) {
                             if ($verbose) {
-                                $this->info(sprintf('Shortening coupon code: %s, Response status: %s', $arrayOfCouponCodes[$key], $shortUrl['status_code']));
-                            }
-                            if ($verbose) {
-                                $this->info(sprintf('Shortening coupon code: %s, Short url: %s', $arrayOfCouponCodes[$key], $shortUrl['data']['url']));
+                                $this->info(sprintf('    Done. Response status: %s, Short url: %s', $shortUrl['status_code'], $shortUrl['data']['url']));
                             }
 
                             $shortUrls[] = $shortUrl['data']['url'];
@@ -189,9 +192,9 @@ class UrlShortenerCommand extends Command
     protected function getOptions()
     {
         return array(
-                array('couponid', 0, InputOption::VALUE_REQUIRED, 'Coupon ID (required)'),
-                array('mode', 0, InputOption::VALUE_REQUIRED, 'Shortener service, eg: bitly (required)'),
-                array('forceupdate', 0, InputOption::VALUE_NONE, 'Force update saved url in table with new one'),
+                array('coupon-id', 0, InputOption::VALUE_REQUIRED, 'Coupon ID (required)'),
+                array('mode', 0, InputOption::VALUE_REQUIRED, 'Shortener service e.g: bitly (required). Default set to bitly.', 'bitly'),
+                array('force-update', 0, InputOption::VALUE_NONE, 'Force update saved url in table with new one'),
             );
     }
 }
