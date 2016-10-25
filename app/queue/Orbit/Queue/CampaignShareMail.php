@@ -145,7 +145,11 @@ class CampaignShareMail
                     $campaign = null;
         }
 
-        $campaignImage = $campaign->original_media_path;
+        if (empty($campaign->original_media_path)) {
+            $campaignImage = 'emails/campaign-default-picture.png';
+        } else {
+            $campaignImage = $campaign->original_media_path;
+        }
 
         $dataView['campaignName'] = $campaign->campaign_name;
         $dataView['campaignType'] = $data['campaignType'];
