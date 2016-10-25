@@ -4323,7 +4323,7 @@ return array(
         ),
 
         // subject of the email
-        'subject' => 'Gotomalls.com',
+        'subject' => 'Sudahkah anda mencoba Gotomalls.com?',
 
         // the share url
         'share_url' => 'https://www.gotomalls.com',
