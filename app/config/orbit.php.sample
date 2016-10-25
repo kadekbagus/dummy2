@@ -4303,7 +4303,7 @@ return array(
         ),
 
         // subject of the email
-        'subject' => 'Gotomalls.com',
+        'subject' => '[%s] %s Gotomalls.com',
 
         // base url of the campaign detail, needed for showing link on the email
         'news_detail_base_url' => 'https://v211.gotomalls.cool/#!/news/detail/%s/%s',
