@@ -68,6 +68,8 @@ class CampaignShareMail
 
                     $baseUrl = Config::get('orbit.campaign_share_email.promotion_detail_base_url');
                     $campaignUrl = sprintf($baseUrl, $campaign->campaign_id, $campaign->campaign_name);
+                    $campaignTypeEn = 'promotion';
+                    $campaignTypeId = 'promosi';
 
                     break;
 
@@ -101,6 +103,8 @@ class CampaignShareMail
 
                     $baseUrl = Config::get('orbit.campaign_share_email.news_detail_base_url');
                     $campaignUrl = sprintf($baseUrl, $campaign->campaign_id, $campaign->campaign_name);
+                    $campaignTypeEn = 'event';
+                    $campaignTypeId = 'event';
 
                     break;
 
@@ -133,6 +137,8 @@ class CampaignShareMail
 
                     $baseUrl = Config::get('orbit.campaign_share_email.coupon_detail_base_url');
                     $campaignUrl = sprintf($baseUrl, $campaign->campaign_id, $campaign->campaign_name);
+                    $campaignTypeEn = 'coupon';
+                    $campaignTypeId = 'kupon';
 
                     break;
             default :
@@ -143,6 +149,8 @@ class CampaignShareMail
 
         $dataView['campaignName'] = $campaign->campaign_name;
         $dataView['campaignType'] = $data['campaignType'];
+        $dataView['campaignTypeEn'] = $campaignTypeEn;
+        $dataView['campaignTypeId'] = $campaignTypeId;
         $dataView['campaignImage'] = $campaignImage;
         $dataView['campaignUrl'] = $campaignUrl;
         $dataView['email'] = $data['email'];
@@ -177,7 +185,8 @@ class CampaignShareMail
 
             $email = $data['email'];
 
-            $subject = Config::get('orbit.campaign_share_email.subject');
+            $subjectConfig = Config::get('orbit.campaign_share_email.subject');
+            $subject = sprintf($subjectConfig, ucfirst($data['campaignTypeId']), $data['campaignName']);
 
             $message->from($from, $name);
             $message->subject($subject);
